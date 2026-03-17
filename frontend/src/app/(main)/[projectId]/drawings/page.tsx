@@ -57,7 +57,7 @@ export default function ProjectDrawingsPage() {
     pathname,
     router,
     defaults: {
-      view: "table",
+      view: "card",
       allowedViews: ["table", "card", "list"],
       page: 1,
       perPage: 50,

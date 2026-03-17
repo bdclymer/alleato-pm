@@ -60,7 +60,7 @@ export function ProjectSelector({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "h-8 max-w-[200px] justify-between border border-border/40 px-2 hover:bg-muted focus-visible:ring-0 focus-visible:ring-offset-0",
+            "h-8 w-64 justify-between border border-border/40 bg-surface-soft px-2 hover:bg-surface-soft focus-visible:ring-0 focus-visible:ring-offset-0",
             !currentProject && "text-muted-foreground"
           )}
         >
@@ -79,7 +79,7 @@ export function ProjectSelector({
       <PopoverContent
         align="start"
         sideOffset={6}
-        className="w-[300px] p-0"
+        className="w-80 p-0"
       >
         <Command
           filter={(value, search) => {
@@ -88,7 +88,7 @@ export function ProjectSelector({
           }}
         >
           <CommandInput placeholder="Search projects..." />
-          <CommandList className="max-h-[280px]">
+          <CommandList className="max-h-72">
             <CommandEmpty>
               {loadingProjects ? "Loading..." : "No projects found"}
             </CommandEmpty>
@@ -131,7 +131,7 @@ export function ProjectSelector({
                 }}
                 className="cursor-pointer font-medium"
               >
-                View All Projects
+                View
               </CommandItem>
             </CommandGroup>
           </CommandList>

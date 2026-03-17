@@ -213,7 +213,7 @@ function TeamRoles({ projectId }: { projectId: number }) {
   }
 
   return (
-    <div className="space-y-0.5">
+    <div className="space-y-3">
       {roles.map((role) => {
         const member = role.members[0]?.person;
         const isActive = activeRoleId === role.id;
@@ -229,25 +229,37 @@ function TeamRoles({ projectId }: { projectId: number }) {
             <PopoverTrigger asChild>
               <button
                 disabled={busy}
-                className="w-full group flex items-center gap-2.5 rounded-md py-1.5 px-2 -mx-2 hover:bg-muted/50 transition-colors text-left"
+                className="w-full relative group rounded-2xl border border-border/70 bg-card px-5 py-4 text-left hover:bg-muted/30 transition-colors"
               >
-                <Avatar className="h-7 w-7 flex-shrink-0">
-                  <AvatarFallback className="text-[10px] bg-muted text-muted-foreground">
-                    {member ? initials(`${member.first_name} ${member.last_name}`) : "—"}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                  <p className={cn("text-sm leading-tight truncate", member ? "text-foreground" : "text-muted-foreground/50 italic")}>
-                    {member ? `${member.first_name} ${member.last_name}`.trim() : role.role_name}
+                <div className="space-y-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/90">
+                    {role.role_name}
                   </p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {member ? role.role_name : "Click to assign"}
-                  </p>
+                  <div className="flex items-center gap-3.5">
+                    <Avatar className="h-14 w-14 flex-shrink-0">
+                      <AvatarFallback className="text-xl font-semibold bg-status-warning/25 text-status-warning">
+                        {member ? initials(`${member.first_name} ${member.last_name}`) : "—"}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className={cn(
+                          "text-2xl font-semibold tracking-tight leading-none truncate",
+                          member ? "text-foreground" : "text-muted-foreground/50 italic",
+                        )}
+                      >
+                        {member ? `${member.first_name} ${member.last_name}`.trim() : "Unassigned"}
+                      </p>
+                      <p className="text-lg text-muted-foreground leading-tight truncate mt-1">
+                        {member?.company_name || member?.email || "Click to assign"}
+                      </p>
+                    </div>
+                  </div>
                 </div>
                 {member && (
                   <button
                     onClick={(e) => handleUnassign(role.id, e)}
-                    className="h-5 w-5 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 text-muted-foreground/40 hover:text-red-500 transition-all flex-shrink-0"
+                    className="h-5 w-5 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 text-muted-foreground/40 hover:text-status-error transition-all absolute right-4 top-4"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -1046,10 +1058,7 @@ export function ProjectHomeRedesign({
                 Project Directory
               </h2>
               <div className="space-y-4">
-                <div className="space-y-2">
-                  <p className="text-xs font-medium text-muted-foreground">Project Team</p>
-                  <TeamRoles projectId={project.id} />
-                </div>
+                <TeamRoles projectId={project.id} />
 
                 <div className="space-y-2 border-t border-border/40 pt-3">
                   <p className="text-xs font-medium text-muted-foreground">Vendors</p>

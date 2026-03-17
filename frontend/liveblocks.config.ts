@@ -89,7 +89,7 @@ import type { JsonObject, LiveList, LiveObject } from "@liveblocks/client";
 declare global {
   interface Liveblocks {
     Presence: {
-      selectedCell?: { col: string; row: string } | null;
+      selectedCell?: string | null;
     };
 
     Storage: {

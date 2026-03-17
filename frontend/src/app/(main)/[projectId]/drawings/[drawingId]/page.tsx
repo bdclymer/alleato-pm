@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   ArrowLeft,
@@ -11,6 +11,7 @@ import {
   Info,
   Link2,
   Mail,
+  MessageSquare,
   MoreHorizontal,
   Pencil,
   PenLine,
@@ -69,6 +70,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { EmptyState } from "@/components/ds";
+import { DrawingComments } from "@/components/drawings/DrawingComments";
 
 import { useDrawing, useUpdateDrawing } from "@/hooks/use-drawings";
 import { useDrawingRevisions } from "@/hooks/use-drawing-revisions";
@@ -244,12 +246,27 @@ export default function DrawingDetailPage() {
   const updateDrawing = useUpdateDrawing(projectId);
 
   const [isEditing, setIsEditing] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
   const [editForm, setEditForm] = useState<EditFormState>({
     drawing_number: "",
     title: "",
     discipline: "",
     drawing_type: "",
   });
+
+  // Fetch signed preview URL once drawing is loaded
+  useEffect(() => {
+    if (!drawing?.current_revision?.file_url) return;
+    setPreviewLoading(true);
+    fetch(`/api/projects/${projectId}/drawings/${drawingId}/download`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => {
+        if (data?.downloadUrl) setPreviewUrl(data.downloadUrl);
+      })
+      .catch(() => {})
+      .finally(() => setPreviewLoading(false));
+  }, [drawing, projectId, drawingId]);
 
   // Kick off editing mode — pre-fill the form from drawing data
   const handleStartEdit = () => {
@@ -290,17 +307,16 @@ export default function DrawingDetailPage() {
         `/api/projects/${projectId}/drawings/${drawingId}/download`,
       );
       if (!response.ok) throw new Error("Failed to download drawing");
-
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `${drawing.drawing_number ?? drawing.title}-${drawing.current_revision?.revision_number ?? "latest"}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-      toast.success("Drawing downloaded successfully");
+      const data = await response.json();
+      if (data.downloadUrl) {
+        const a = document.createElement("a");
+        a.href = data.downloadUrl;
+        a.download = data.fileName ?? `${drawing.drawing_number ?? drawing.title}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        toast.success("Drawing downloaded successfully");
+      }
     } catch {
       toast.error("Failed to download drawing");
     }
@@ -310,20 +326,19 @@ export default function DrawingDetailPage() {
     async (revision: DrawingRevision) => {
       try {
         const response = await fetch(
-          `/api/projects/${projectId}/drawings/${drawingId}/download?revisionId=${revision.id}`,
+          `/api/projects/${projectId}/drawings/${drawingId}/download`,
         );
         if (!response.ok) throw new Error("Failed to download revision");
-
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = revision.file_name ?? `revision-${revision.revision_number}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        toast.success("Revision downloaded");
+        const data = await response.json();
+        if (data.downloadUrl) {
+          const a = document.createElement("a");
+          a.href = data.downloadUrl;
+          a.download = revision.file_name ?? `revision-${revision.revision_number}.pdf`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          toast.success("Revision downloaded");
+        }
       } catch {
         toast.error("Failed to download revision");
       }
@@ -529,6 +544,10 @@ export default function DrawingDetailPage() {
             </TabsTrigger>
             <TabsTrigger value="emails">Emails</TabsTrigger>
             <TabsTrigger value="change-history">Change History</TabsTrigger>
+            <TabsTrigger value="comments">
+              <MessageSquare className="h-3.5 w-3.5 mr-1.5" />
+              Comments
+            </TabsTrigger>
           </TabsList>
 
           {/* ---------------------------------------------------------------- */}
@@ -734,22 +753,26 @@ export default function DrawingDetailPage() {
                   <CardContent>
                     {currentRevision?.file_url ? (
                       <div className="space-y-3">
-                        {isPdf ? (
+                        {previewLoading ? (
+                          <div className="w-full rounded-md border border-border bg-muted flex items-center justify-center" style={{ height: 340 }}>
+                            <Skeleton className="h-full w-full rounded-md" />
+                          </div>
+                        ) : isPdf && previewUrl ? (
                           <iframe
-                            src={`${currentRevision.file_url}#toolbar=0&navpanes=0`}
+                            src={`${previewUrl}#toolbar=0&navpanes=0`}
                             className="w-full rounded-md border border-border bg-muted"
                             style={{ height: 340 }}
                             title={`Preview of ${drawing.title}`}
                           />
-                        ) : (
+                        ) : !isPdf && previewUrl ? (
                           /* Image preview */
                           <img
-                            src={currentRevision.file_url}
+                            src={previewUrl}
                             alt={`Preview of ${drawing.title}`}
                             className="w-full rounded-md border border-border object-contain bg-muted"
                             style={{ maxHeight: 340 }}
                           />
-                        )}
+                        ) : null}
 
                         <div className="text-xs text-muted-foreground space-y-0.5">
                           <p className="font-medium text-foreground truncate">
@@ -892,6 +915,15 @@ export default function DrawingDetailPage() {
               title="No changes recorded"
               description="All edits and status changes to this drawing will be tracked here."
             />
+          </TabsContent>
+
+          {/* ---------------------------------------------------------------- */}
+          {/* COMMENTS TAB                                                      */}
+          {/* ---------------------------------------------------------------- */}
+          <TabsContent value="comments">
+            <div className="max-w-2xl">
+              <DrawingComments drawingId={drawingId} />
+            </div>
           </TabsContent>
         </Tabs>
       </PageContainer>

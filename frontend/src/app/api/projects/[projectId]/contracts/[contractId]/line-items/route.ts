@@ -45,7 +45,75 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    return NextResponse.json(data || []);
+    const lineItems = data || [];
+    const costCodeIds = Array.from(
+      new Set(
+        lineItems
+          .map((item) => item.cost_code_id)
+          .filter((id): id is number => id != null),
+      ),
+    );
+
+    // cost_codes table uses string id (the cost code like "01-100") and title (not name)
+    // contract_line_items.cost_code_id is numeric — cast for comparison
+    const costCodesById = new Map<number, { id: number; code: string; name: string }>();
+    if (costCodeIds.length > 0) {
+      const { data: costCodes, error: costCodesError } = await supabase
+        .from("cost_codes")
+        .select("id, title");
+
+      if (!costCodesError && costCodes) {
+        // Build map: integer cost_code_id → { id, code, name }
+        // cost_codes.id is the code string; we need to match against numeric IDs
+        // Try direct match first, then try matching code strings
+        for (const costCode of costCodes) {
+          // The id may be numeric (stored as string) matching contract_line_items.cost_code_id
+          const numericId = Number(costCode.id);
+          if (!Number.isNaN(numericId) && costCodeIds.includes(numericId)) {
+            costCodesById.set(numericId, {
+              id: numericId,
+              code: costCode.id,
+              name: costCode.title || "",
+            });
+          }
+        }
+      }
+
+      // If direct numeric match didn't work, try loading from project_cost_codes
+      // which bridges budget code UUIDs to cost_code string IDs
+      if (costCodesById.size === 0) {
+        const { data: projectCostCodes } = await supabase
+          .from("project_cost_codes")
+          .select("id, cost_code_id, cost_codes(id, title)")
+          .eq("project_id", parseInt(projectId, 10));
+
+        if (projectCostCodes) {
+          for (const pcc of projectCostCodes) {
+            const costCodeData = Array.isArray(pcc.cost_codes) ? pcc.cost_codes[0] : pcc.cost_codes;
+            if (costCodeData) {
+              const numericId = Number(costCodeData.id);
+              if (!Number.isNaN(numericId) && costCodeIds.includes(numericId)) {
+                costCodesById.set(numericId, {
+                  id: numericId,
+                  code: pcc.cost_code_id,
+                  name: costCodeData.title || "",
+                });
+              }
+            }
+          }
+        }
+      }
+    }
+
+    return NextResponse.json(
+      lineItems.map((item) => ({
+        ...item,
+        cost_code:
+          item.cost_code_id != null
+            ? costCodesById.get(item.cost_code_id) ?? undefined
+            : undefined,
+      })),
+    );
   } catch (error) {
     return NextResponse.json(
       { error: "Internal server error" },

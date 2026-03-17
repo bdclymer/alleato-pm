@@ -757,7 +757,6 @@ export function DirectCostsClient({
         }}
         layout={{
           headerAlignment: "left",
-          toolbarInlineWithHeader: true,
         }}
         tabs={tabs}
         toolbar={{

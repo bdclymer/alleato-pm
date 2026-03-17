@@ -46,6 +46,7 @@
     --popover: 0 0% 100%;           /* #FFFFFF — floating surfaces */
     --popover-foreground: 240 6% 12%;
     --surface-alt: 216 100% 99%;    /* #FAFCFF — subtle blue-white tint for sidebars & sections */
+    --surface-soft: 230 43% 97%;    /* #F3F4FA — soft chip background for header controls */
     --right-sidebar-bg: 210 100% 99%; /* #FAFCFF */
 
     /* Primary Accent — Soft purple */
@@ -166,6 +167,7 @@
     --card-foreground: 0 0% 92%;
     --popover: 240 5% 18%;          /* #2C2C35 — closest/floating */
     --popover-foreground: 0 0% 92%;
+    --surface-soft: 240 5% 18%;     /* dark-mode equivalent chip surface */
     --right-sidebar-bg: 210 100% 99%; /* Keep right sidebar bright in dark mode too */
     --primary: 245 58% 62%;         /* #7B79E5 — slightly lighter for dark bg */
     --primary-foreground: 0 0% 100%;
@@ -204,6 +206,12 @@
     --status-warning: 38 92% 55%;
     --status-error: 0 72% 55%;
     --status-info: 217 91% 65%;
+  }
+}
+
+@layer utilities {
+  .bg-surface-soft {
+    background-color: hsl(var(--surface-soft));
   }
 }
 

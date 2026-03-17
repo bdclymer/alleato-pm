@@ -38,12 +38,16 @@ export function EntityComments({
   title = "Comments",
   className,
 }: EntityCommentsProps) {
+  const hasTitle = Boolean(title?.trim());
+
   return (
     <div className={className}>
-      <div className="flex items-center gap-2 mb-4">
-        <MessageSquare className="h-4 w-4 text-muted-foreground" />
-        <h3 className="text-sm font-medium text-foreground">{title}</h3>
-      </div>
+      {hasTitle ? (
+        <div className="mb-4 flex items-center gap-2">
+          <MessageSquare className="h-4 w-4 text-muted-foreground" />
+          <h3 className="text-sm font-medium text-foreground">{title}</h3>
+        </div>
+      ) : null}
       <ClientSideSuspense
         fallback={
           <div className="space-y-3">

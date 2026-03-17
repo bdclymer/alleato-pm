@@ -12,7 +12,14 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { createAcumaticaClient } from "./client";
-import type { FlatBill, FlatVendor } from "./types";
+import type {
+  FlatBill,
+  FlatInvoice,
+  FlatPayment,
+  FlatPurchaseOrder,
+  FlatSubcontract,
+  FlatVendor,
+} from "./types";
 
 export interface VendorSyncResult {
   created: number;
@@ -244,4 +251,566 @@ export async function syncDirectCosts(
   }
 
   return result;
+}
+
+// ---------------------------------------------------------------------------
+// Shared sync result type
+// ---------------------------------------------------------------------------
+
+export interface SyncResult {
+  created: number;
+  updated: number;
+  errors: string[];
+}
+
+// ---------------------------------------------------------------------------
+// AR Invoices Sync (Acumatica Invoice → owner_invoices + line items)
+// ---------------------------------------------------------------------------
+
+function mapInvoiceStatus(acuStatus: string): string {
+  switch (acuStatus) {
+    case "Open":
+      return "submitted";
+    case "Closed":
+      return "approved";
+    case "Released":
+      return "approved";
+    case "Balanced":
+      return "submitted";
+    case "On Hold":
+      return "draft";
+    default:
+      return "draft";
+  }
+}
+
+/**
+ * Pull AR Invoices from Acumatica and upsert into owner_invoices + owner_invoice_line_items.
+ *
+ * Matching: acumatica_ref_nbr (unique per invoice).
+ * Links to prime_contracts via the project's prime contract.
+ */
+export async function syncARInvoices(
+  projectId: number,
+  _userId: string,
+): Promise<SyncResult> {
+  const result: SyncResult = { created: 0, updated: 0, errors: [] };
+
+  const acuClient = createAcumaticaClient();
+  await acuClient.login();
+
+  // Get AR invoices with line item details
+  const acuInvoices = await acuClient.getInvoices({
+    $top: 500,
+    $expand: "Details",
+  });
+
+  const supabase = await createClient();
+
+  // We need a contract_id to associate invoices. Get the project's primary prime contract.
+  const { data: primeContract } = await supabase
+    .from("prime_contracts")
+    .select("id")
+    .eq("project_id", projectId)
+    .limit(1)
+    .single();
+
+  if (!primeContract) {
+    result.errors.push("No prime contract found for this project. Create one first.");
+    return result;
+  }
+
+  // Also look up the project's Acumatica project ID to filter invoices
+  const { data: project } = await supabase
+    .from("projects")
+    .select("acumatica_project_id")
+    .eq("id", projectId)
+    .single();
+
+  const acuProjectId = project?.acumatica_project_id;
+
+  // Filter invoices to this project if we have an Acumatica project mapping
+  const projectInvoices = acuProjectId
+    ? acuInvoices.filter((inv) => {
+        // Check if any detail line references this project
+        if (inv.Details?.some((d) => d.ProjectID === acuProjectId)) return true;
+        return false;
+      })
+    : acuInvoices;
+
+  // Load existing owner_invoices with acumatica_ref_nbr
+  const { data: existingInvoices, error: fetchError } = await supabase
+    .from("owner_invoices")
+    .select("id, acumatica_ref_nbr")
+    .eq("contract_id", primeContract.id)
+    .not("acumatica_ref_nbr", "is", null);
+
+  if (fetchError) {
+    result.errors.push(`Failed to load existing invoices: ${fetchError.message}`);
+    return result;
+  }
+
+  const byRefNbr = new Map<string, number>();
+  for (const inv of existingInvoices ?? []) {
+    if (inv.acumatica_ref_nbr) byRefNbr.set(inv.acumatica_ref_nbr, inv.id);
+  }
+
+  const now = new Date().toISOString();
+
+  for (const invoice of projectInvoices) {
+    const refNbr = invoice.ReferenceNbr;
+    const invoiceDate = invoice.Date ? invoice.Date.split("T")[0] : now.split("T")[0];
+
+    const fields = {
+      invoice_number: refNbr,
+      status: mapInvoiceStatus(invoice.Status),
+      period_start: invoiceDate,
+      period_end: invoice.DueDate ? invoice.DueDate.split("T")[0] : null,
+      acumatica_ref_nbr: refNbr,
+      acumatica_doc_type: invoice.Type ?? null,
+      acumatica_sync_at: now,
+      ...(invoice.Status === "Released" || invoice.Status === "Closed"
+        ? { approved_at: now }
+        : {}),
+      ...(invoice.Status !== "On Hold" ? { submitted_at: now } : {}),
+    };
+
+    try {
+      const existingId = byRefNbr.get(refNbr);
+      if (existingId) {
+        const { error } = await supabase
+          .from("owner_invoices")
+          .update(fields)
+          .eq("id", existingId);
+        if (error) {
+          result.errors.push(`Invoice ${refNbr}: ${error.message}`);
+          continue;
+        }
+        result.updated++;
+
+        // Update line items: delete existing and re-insert
+        await supabase
+          .from("owner_invoice_line_items")
+          .delete()
+          .eq("invoice_id", existingId);
+
+        if (invoice.Details?.length) {
+          const lineItems = invoice.Details.map((detail) => ({
+            invoice_id: existingId,
+            description: detail.TransactionDescription ?? `Line ${detail.LineNbr ?? 0}`,
+            approved_amount: detail.ExtendedPrice ?? 0,
+            category: detail.AccountID ?? null,
+            acumatica_line_nbr: detail.LineNbr ?? null,
+          }));
+          await supabase.from("owner_invoice_line_items").insert(lineItems);
+        }
+      } else {
+        const { data: newInvoice, error } = await supabase
+          .from("owner_invoices")
+          .insert({
+            ...fields,
+            contract_id: primeContract.id,
+          })
+          .select("id")
+          .single();
+
+        if (error || !newInvoice) {
+          result.errors.push(`Invoice ${refNbr}: ${error?.message ?? "Insert failed"}`);
+          continue;
+        }
+        result.created++;
+
+        if (invoice.Details?.length) {
+          const lineItems = invoice.Details.map((detail) => ({
+            invoice_id: newInvoice.id,
+            description: detail.TransactionDescription ?? `Line ${detail.LineNbr ?? 0}`,
+            approved_amount: detail.ExtendedPrice ?? 0,
+            category: detail.AccountID ?? null,
+            acumatica_line_nbr: detail.LineNbr ?? null,
+          }));
+          await supabase.from("owner_invoice_line_items").insert(lineItems);
+        }
+      }
+    } catch (err) {
+      result.errors.push(`Invoice ${refNbr}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// AR Payments Sync (Acumatica Payment → prime_contract_payments)
+// ---------------------------------------------------------------------------
+
+/**
+ * Pull AR Payments from Acumatica and upsert into prime_contract_payments.
+ *
+ * Matching: acumatica_ref_nbr (unique per payment).
+ */
+export async function syncARPayments(
+  projectId: number,
+  _userId: string,
+): Promise<SyncResult> {
+  const result: SyncResult = { created: 0, updated: 0, errors: [] };
+
+  const acuClient = createAcumaticaClient();
+  await acuClient.login();
+
+  const acuPayments = await acuClient.getPayments({ $top: 500 });
+
+  const supabase = await createClient();
+
+  // Get the project's primary prime contract
+  const { data: primeContract } = await supabase
+    .from("prime_contracts")
+    .select("id")
+    .eq("project_id", projectId)
+    .limit(1)
+    .single();
+
+  if (!primeContract) {
+    result.errors.push("No prime contract found for this project.");
+    return result;
+  }
+
+  // Load existing payments with acumatica_ref_nbr
+  const { data: existingPayments, error: fetchError } = await supabase
+    .from("prime_contract_payments")
+    .select("id, acumatica_ref_nbr")
+    .eq("contract_id", primeContract.id)
+    .not("acumatica_ref_nbr", "is", null);
+
+  if (fetchError) {
+    result.errors.push(`Failed to load existing payments: ${fetchError.message}`);
+    return result;
+  }
+
+  const byRefNbr = new Map<string, string>();
+  for (const p of existingPayments ?? []) {
+    if (p.acumatica_ref_nbr) byRefNbr.set(p.acumatica_ref_nbr, p.id);
+  }
+
+  const now = new Date().toISOString();
+
+  // Filter to released/closed payments (not voided)
+  const validPayments = acuPayments.filter(
+    (p) => p.Status === "Released" || p.Status === "Closed" || p.Status === "Open",
+  );
+
+  for (const payment of validPayments) {
+    const refNbr = payment.ReferenceNbr;
+    const paymentDate = payment.Date ? payment.Date.split("T")[0] : now.split("T")[0];
+
+    const fields = {
+      amount: payment.PaymentAmount ?? 0,
+      payment_date: paymentDate,
+      payment_number: refNbr,
+      method: payment.PaymentMethod ?? null,
+      reference_number: payment.ExternalRef ?? null,
+      notes: payment.Description ?? null,
+      acumatica_ref_nbr: refNbr,
+      acumatica_doc_type: payment.Type ?? null,
+      acumatica_sync_at: now,
+    };
+
+    try {
+      const existingId = byRefNbr.get(refNbr);
+      if (existingId) {
+        const { error } = await supabase
+          .from("prime_contract_payments")
+          .update(fields)
+          .eq("id", existingId);
+        if (error) result.errors.push(`Payment ${refNbr}: ${error.message}`);
+        else result.updated++;
+      } else {
+        const { error } = await supabase.from("prime_contract_payments").insert({
+          ...fields,
+          contract_id: primeContract.id,
+          project_id: projectId,
+        });
+        if (error) result.errors.push(`Payment ${refNbr}: ${error.message}`);
+        else result.created++;
+      }
+    } catch (err) {
+      result.errors.push(`Payment ${refNbr}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// Subcontracts Sync (Acumatica Subcontract → subcontracts)
+// ---------------------------------------------------------------------------
+
+function mapSubcontractStatus(acuStatus: string): string {
+  switch (acuStatus) {
+    case "Open":
+      return "approved";
+    case "Closed":
+      return "closed";
+    case "Hold":
+      return "draft";
+    case "Pending Print":
+      return "out_for_signature";
+    case "Pending Email":
+      return "out_for_signature";
+    default:
+      return "draft";
+  }
+}
+
+/**
+ * Pull Subcontracts from Acumatica and upsert into the subcontracts table.
+ *
+ * Matching: acumatica_external_key (SubcontractNbr).
+ */
+export async function syncSubcontracts(
+  projectId: number,
+  userId: string,
+): Promise<SyncResult> {
+  const result: SyncResult = { created: 0, updated: 0, errors: [] };
+
+  const acuClient = createAcumaticaClient();
+  await acuClient.login();
+
+  const acuSubcontracts = await acuClient.getSubcontracts({ $top: 500 });
+
+  const supabase = await createClient();
+
+  // Get project's Acumatica ID for filtering
+  const { data: project } = await supabase
+    .from("projects")
+    .select("acumatica_project_id")
+    .eq("id", projectId)
+    .single();
+
+  const acuProjectId = project?.acumatica_project_id;
+
+  // Filter to this project's subcontracts
+  const projectSubs = acuProjectId
+    ? acuSubcontracts.filter((s) => s.ProjectID === acuProjectId)
+    : acuSubcontracts;
+
+  // Load existing subcontracts
+  const { data: existingSubs, error: fetchError } = await supabase
+    .from("subcontracts")
+    .select("id, acumatica_external_key, contract_number")
+    .eq("project_id", projectId);
+
+  if (fetchError) {
+    result.errors.push(`Failed to load existing subcontracts: ${fetchError.message}`);
+    return result;
+  }
+
+  const byExternalKey = new Map<string, string>();
+  const byContractNumber = new Map<string, string>();
+  for (const s of existingSubs ?? []) {
+    if (s.acumatica_external_key) byExternalKey.set(s.acumatica_external_key, s.id);
+    byContractNumber.set(s.contract_number, s.id);
+  }
+
+  // Vendor lookup
+  const { data: vendors } = await supabase
+    .from("vendors")
+    .select("id, acumatica_vendor_id");
+  const vendorByAcuId = new Map<string, string>();
+  for (const v of vendors ?? []) {
+    if (v.acumatica_vendor_id) vendorByAcuId.set(v.acumatica_vendor_id, v.id);
+  }
+
+  const now = new Date().toISOString();
+
+  for (const sub of projectSubs) {
+    const subNbr = sub.SubcontractNbr;
+    const contractDate = sub.Date ? sub.Date.split("T")[0] : now.split("T")[0];
+
+    const fields = {
+      title: sub.Description ?? `Subcontract ${subNbr}`,
+      status: mapSubcontractStatus(sub.Status),
+      description: sub.Description ?? null,
+      contract_date: contractDate,
+      contract_company_id: vendorByAcuId.get(sub.Vendor) ?? null,
+      executed: sub.Status === "Open" || sub.Status === "Closed",
+      acumatica_external_key: subNbr,
+    };
+
+    try {
+      const existingId = byExternalKey.get(subNbr) ?? byContractNumber.get(subNbr);
+
+      if (existingId) {
+        const { error } = await supabase
+          .from("subcontracts")
+          .update(fields)
+          .eq("id", existingId);
+        if (error) result.errors.push(`Sub ${subNbr}: ${error.message}`);
+        else result.updated++;
+      } else {
+        const { error } = await supabase.from("subcontracts").insert({
+          ...fields,
+          contract_number: subNbr,
+          project_id: projectId,
+          created_by: userId,
+        });
+        if (error) result.errors.push(`Sub ${subNbr}: ${error.message}`);
+        else result.created++;
+      }
+    } catch (err) {
+      result.errors.push(`Sub ${subNbr}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// Purchase Orders Sync (Acumatica PO → purchase_orders)
+// ---------------------------------------------------------------------------
+
+function mapPOStatus(acuStatus: string): string {
+  switch (acuStatus) {
+    case "Open":
+      return "approved";
+    case "Closed":
+      return "closed";
+    case "Hold":
+      return "draft";
+    case "Pending Print":
+      return "out_for_signature";
+    case "Pending Email":
+      return "out_for_signature";
+    default:
+      return "draft";
+  }
+}
+
+/**
+ * Pull Purchase Orders from Acumatica and upsert into the purchase_orders table.
+ *
+ * Matching: acumatica_external_key (OrderNbr).
+ */
+export async function syncPurchaseOrders(
+  projectId: number,
+  userId: string,
+): Promise<SyncResult> {
+  const result: SyncResult = { created: 0, updated: 0, errors: [] };
+
+  const acuClient = createAcumaticaClient();
+  await acuClient.login();
+
+  const acuPOs = await acuClient.getPurchaseOrders({ $top: 500 });
+
+  const supabase = await createClient();
+
+  // Get project's Acumatica ID for filtering
+  const { data: project } = await supabase
+    .from("projects")
+    .select("acumatica_project_id")
+    .eq("id", projectId)
+    .single();
+
+  const acuProjectId = project?.acumatica_project_id;
+
+  // Filter POs: check if any line item references this project
+  const projectPOs = acuProjectId
+    ? acuPOs.filter((po) =>
+        po.Details?.some((d) => d.ProjectID === acuProjectId),
+      )
+    : acuPOs;
+
+  // Load existing purchase_orders
+  const { data: existingPOs, error: fetchError } = await supabase
+    .from("purchase_orders")
+    .select("id, acumatica_external_key, contract_number")
+    .eq("project_id", projectId);
+
+  if (fetchError) {
+    result.errors.push(`Failed to load existing POs: ${fetchError.message}`);
+    return result;
+  }
+
+  const byExternalKey = new Map<string, string>();
+  const byContractNumber = new Map<string, string>();
+  for (const po of existingPOs ?? []) {
+    if (po.acumatica_external_key) byExternalKey.set(po.acumatica_external_key, po.id);
+    byContractNumber.set(po.contract_number, po.id);
+  }
+
+  // Vendor lookup
+  const { data: vendors } = await supabase
+    .from("vendors")
+    .select("id, acumatica_vendor_id");
+  const vendorByAcuId = new Map<string, string>();
+  for (const v of vendors ?? []) {
+    if (v.acumatica_vendor_id) vendorByAcuId.set(v.acumatica_vendor_id, v.id);
+  }
+
+  const now = new Date().toISOString();
+
+  for (const po of projectPOs) {
+    const orderNbr = po.OrderNbr;
+    const orderDate = po.Date ? po.Date.split("T")[0] : now.split("T")[0];
+
+    const fields = {
+      title: po.Description ?? `PO ${orderNbr}`,
+      status: mapPOStatus(po.Status),
+      description: po.Description ?? null,
+      contract_date: orderDate,
+      delivery_date: po.PromisedOn ? po.PromisedOn.split("T")[0] : null,
+      contract_company_id: vendorByAcuId.get(po.Vendor) ?? null,
+      executed: po.Status === "Open" || po.Status === "Closed",
+      payment_terms: null as string | null,
+      acumatica_external_key: orderNbr,
+    };
+
+    try {
+      const existingId = byExternalKey.get(orderNbr) ?? byContractNumber.get(orderNbr);
+
+      if (existingId) {
+        const { error } = await supabase
+          .from("purchase_orders")
+          .update(fields)
+          .eq("id", existingId);
+        if (error) result.errors.push(`PO ${orderNbr}: ${error.message}`);
+        else result.updated++;
+      } else {
+        const { error } = await supabase.from("purchase_orders").insert({
+          ...fields,
+          contract_number: orderNbr,
+          project_id: projectId,
+          created_by: userId,
+        });
+        if (error) result.errors.push(`PO ${orderNbr}: ${error.message}`);
+        else result.created++;
+      }
+    } catch (err) {
+      result.errors.push(`PO ${orderNbr}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// Commitments Sync (combines Subcontracts + POs)
+// ---------------------------------------------------------------------------
+
+/**
+ * Sync both subcontracts and purchase orders from Acumatica.
+ */
+export async function syncCommitments(
+  projectId: number,
+  userId: string,
+): Promise<SyncResult> {
+  const [subResult, poResult] = await Promise.all([
+    syncSubcontracts(projectId, userId),
+    syncPurchaseOrders(projectId, userId),
+  ]);
+
+  return {
+    created: subResult.created + poResult.created,
+    updated: subResult.updated + poResult.updated,
+    errors: [...subResult.errors, ...poResult.errors],
+  };
 }

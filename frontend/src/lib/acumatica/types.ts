@@ -543,6 +543,70 @@ export interface FlatPurchaseOrder {
 }
 
 // ---------------------------------------------------------------------------
+// Subcontract (Acumatica Construction module)
+// ---------------------------------------------------------------------------
+
+export interface RawSubcontractDetail {
+  LineNbr?: AcuField<number>;
+  InventoryID?: AcuField<string>;
+  Description?: AcuField<string>;
+  Quantity?: AcuField<number>;
+  UOM?: AcuField<string>;
+  UnitCost?: AcuField<number>;
+  Amount?: AcuField<number>;
+  BilledAmount?: AcuField<number>;
+  ProjectID?: AcuField<string>;
+  ProjectTaskID?: AcuField<string>;
+  CostCodeID?: AcuField<string>;
+  LineStatus?: AcuField<string>;
+}
+
+export interface RawSubcontract {
+  SubcontractNbr: AcuField<string>;
+  Vendor: AcuField<string>;
+  VendorRef?: AcuField<string>;
+  Date: AcuField<string>;
+  Status: AcuField<string>;
+  SubcontractTotal?: AcuField<number>;
+  BilledAmount?: AcuField<number>;
+  Description?: AcuField<string>;
+  ProjectID?: AcuField<string>;
+  BranchID?: AcuField<string>;
+  LastModifiedDateTime?: AcuField<string>;
+  Details?: RawSubcontractDetail[];
+}
+
+export interface FlatSubcontractDetail {
+  LineNbr?: number;
+  InventoryID?: string;
+  Description?: string;
+  Quantity?: number;
+  UOM?: string;
+  UnitCost?: number;
+  Amount?: number;
+  BilledAmount?: number;
+  ProjectID?: string;
+  ProjectTaskID?: string;
+  CostCodeID?: string;
+  LineStatus?: string;
+}
+
+export interface FlatSubcontract {
+  SubcontractNbr: string;
+  Vendor: string;
+  VendorRef?: string;
+  Date: string;
+  Status: string;
+  SubcontractTotal?: number;
+  BilledAmount?: number;
+  Description?: string;
+  ProjectID?: string;
+  BranchID?: string;
+  LastModifiedDateTime?: string;
+  Details?: FlatSubcontractDetail[];
+}
+
+// ---------------------------------------------------------------------------
 // Project
 // ---------------------------------------------------------------------------
 

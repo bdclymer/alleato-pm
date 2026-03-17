@@ -7,6 +7,7 @@ type BudgetCodeResponse = {
   budgetCodes: Array<{
     id: string;
     code: string;
+    legacyCostCodeId: number | null;
     description: string;
     costType: string | null;
     costTypeId: string | null;
@@ -93,6 +94,20 @@ export async function GET(
     }
 
     // Transform the data
+    const uniqueCostCodeCodes = Array.from(
+      new Set((projectBudgetCodesData || []).map((item) => (item as ProjectBudgetCodeRow).cost_code_id)),
+    );
+    const { data: legacyCostCodes } = uniqueCostCodeCodes.length
+      ? await supabase
+          .from("cost_codes")
+          .select("id, code")
+          .in("code", uniqueCostCodeCodes)
+      : { data: [] };
+
+    const legacyCostCodeIdByCode = new Map<string, number>(
+      (legacyCostCodes || []).map((item) => [item.code, item.id]),
+    );
+
     const budgetCodes: BudgetCodeResponse["budgetCodes"] = (
       projectBudgetCodesData || []
     ).map((item: unknown) => {
@@ -111,6 +126,7 @@ export async function GET(
       return {
         id: row.id,
         code: row.cost_code_id,
+        legacyCostCodeId: legacyCostCodeIdByCode.get(row.cost_code_id) ?? null,
         description,
         costType,
         costTypeId,
@@ -247,9 +263,16 @@ export async function POST(
     const divisionId = costCodeData?.division_id || null;
     const divisionTitle = costCodeData?.division_title || null;
 
+    const { data: legacyCostCode } = await supabase
+      .from("cost_codes")
+      .select("id")
+      .eq("code", newProjectBudgetCode.cost_code_id)
+      .maybeSingle();
+
     const budgetCode = {
       id: newProjectBudgetCode.id,
       code: newProjectBudgetCode.cost_code_id,
+      legacyCostCodeId: legacyCostCode?.id ?? null,
       description: finalDescription,
       costType,
       costTypeId: newProjectBudgetCode.cost_type_id,

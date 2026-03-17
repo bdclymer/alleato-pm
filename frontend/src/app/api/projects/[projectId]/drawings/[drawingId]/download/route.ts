@@ -37,25 +37,37 @@ export async function GET(
       return NextResponse.json({ error: "No current revision found" }, { status: 404 });
     }
 
-    // Get signed URL for file download
-    const { data: signedUrlData, error: urlError } = await serviceClient.storage
-      .from("drawings")
-      .createSignedUrl(revision.file_url, 3600);
-
-    if (urlError) {
-      return NextResponse.json({ error: "Failed to generate download URL" }, { status: 500 });
+    // Extract storage path from the full URL
+    // file_url format: https://<project>.supabase.co/storage/v1/object/public/<bucket>/<path>
+    let downloadUrl = revision.file_url;
+    try {
+      const fileUrl = new URL(revision.file_url);
+      const pathParts = fileUrl.pathname.split("/object/public/project-files/");
+      if (pathParts.length === 2) {
+        const storagePath = pathParts[1];
+        const { data: signedUrlData, error: urlError } = await serviceClient.storage
+          .from("project-files")
+          .createSignedUrl(storagePath, 3600);
+        if (!urlError && signedUrlData?.signedUrl) {
+          downloadUrl = signedUrlData.signedUrl;
+        }
+      }
+    } catch {
+      // Fall back to public URL if signed URL creation fails
     }
 
-    // Log download for audit trail
-    await serviceClient.from("drawing_downloads").insert({
-      drawing_revision_id: revision.id,
-      downloaded_by: user.id,
-      ip_address: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || null,
-      user_agent: request.headers.get("user-agent") || null,
-    });
+    // Log download for audit trail (non-critical - swallow errors)
+    try {
+      await serviceClient.from("drawing_downloads").insert({
+        drawing_revision_id: revision.id,
+        downloaded_by: user.id,
+        ip_address: request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || null,
+        user_agent: request.headers.get("user-agent") || null,
+      });
+    } catch { /* non-critical */ }
 
     return NextResponse.json({
-      downloadUrl: signedUrlData.signedUrl,
+      downloadUrl,
       fileName: revision.file_name,
       fileSize: revision.file_size,
       expiresAt: new Date(Date.now() + 3600 * 1000).toISOString(),

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { buildLiveblocksUserInfo } from "@/lib/liveblocks/user-info";
 
 /**
  * GET /api/liveblocks/users?userIds=id1,id2
@@ -34,9 +35,11 @@ export async function GET(request: NextRequest) {
     // Return users in the same order as requested
     const users = ids.map((id) => {
       const profile = profileMap.get(id);
-      return {
-        name: profile?.full_name ?? profile?.email ?? "Unknown",
-      };
+      return buildLiveblocksUserInfo({
+        email: profile?.email,
+        fullName: profile?.full_name,
+        id,
+      });
     });
 
     return NextResponse.json(users);

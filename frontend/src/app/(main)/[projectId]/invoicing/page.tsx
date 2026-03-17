@@ -3,7 +3,7 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ChevronDown, Plus } from "lucide-react";
+import { ChevronDown, Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -23,6 +23,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   UnifiedTablePage,
   useUnifiedTableState,
@@ -67,6 +73,7 @@ export default function ProjectInvoicingPage(): ReactElement {
 
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [invoiceToDelete, setInvoiceToDelete] = React.useState<OwnerInvoice | null>(null);
+  const [isSyncing, setIsSyncing] = React.useState(false);
 
   // Active tab from URL (owner | subcontractor | billing-periods)
   const activeTab = searchParams.get("tab") ?? "owner";
@@ -123,6 +130,31 @@ export default function ProjectInvoicingPage(): ReactElement {
     error instanceof Error ? error : error ? new Error("Failed to load invoices") : undefined;
 
   const deleteInvoice = useDeleteOwnerInvoice(projectId);
+
+  // ─── Acumatica Sync ──────────────────────────────────────────────────────
+
+  const handleErpSync = React.useCallback(async () => {
+    setIsSyncing(true);
+    try {
+      const resp = await fetch("/api/sync/acumatica/ar-invoices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId: Number(projectId) }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error ?? "Sync failed");
+      const { result } = data;
+      toast.success(
+        `Invoice sync complete: ${result.created} created, ${result.updated} updated` +
+          (result.errors.length > 0 ? ` (${result.errors.length} errors)` : ""),
+      );
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Invoice sync failed");
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [projectId, router]);
 
   // ─── Client-side filtering / sorting ───────────────────────────────────────
 
@@ -324,6 +356,25 @@ export default function ProjectInvoicingPage(): ReactElement {
           columns: invoiceColumns,
           visibleColumns: tableState.visibleColumns,
           onColumnVisibilityChange: tableState.setVisibleColumns,
+          customActions: (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    disabled={isSyncing}
+                    onClick={handleErpSync}
+                    aria-label="Sync from ERP"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Sync invoices from Acumatica</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ),
         }}
         data={{
           items: sortedInvoices,

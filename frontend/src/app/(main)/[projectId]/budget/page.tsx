@@ -56,7 +56,6 @@ import {
 } from "@/lib/budget-filters";
 import type { QuickFilterType } from "@/components/budget/budget-filters";
 import { applyGrouping, type GroupingType } from "@/lib/budget-grouping";
-import { openCommentsSidebar } from "@/components/header/comments-sidebar";
 import { BudgetTableCommentsWrapper } from "@/components/budget/budget-table-comments-wrapper";
 
 function BudgetTableSkeleton() {
@@ -254,10 +253,6 @@ function BudgetPageContent() {
     // TODO: Implement ERP integration
     toast.info("ERP integration coming soon");
   };
-
-  const handleOpenChat = React.useCallback(() => {
-    openCommentsSidebar();
-  }, []);
 
   const handleLockBudget = async () => {
     try {
@@ -901,7 +896,6 @@ function BudgetPageContent() {
           lockedBy={lockedBy}
           onCreateClick={handleCreateClick}
           onCreateSnapshot={handleCreateSnapshot}
-          onOpenChat={handleOpenChat}
           onModificationClick={handleModificationClick}
           onResendToERP={handleResendToERP}
           onLockBudget={handleLockBudget}

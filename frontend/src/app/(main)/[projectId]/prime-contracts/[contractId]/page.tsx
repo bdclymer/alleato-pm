@@ -18,13 +18,13 @@ import {
   Settings,
   X,
   AlertTriangle,
+  RefreshCw,
 } from "lucide-react";
 
 import { toast } from "sonner";
 
 import { ProjectPageHeader } from "@/components/layout";
 import { PageContainer } from "@/components/layout/PageContainer";
-import { TableLayout } from "@/components/layouts";
 import { DocumentDeliveryDialog } from "@/components/documents/DocumentDeliveryDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -78,6 +78,10 @@ import type {
   VerticalMarkup,
 } from "./types";
 
+type BudgetCodeCreateTarget =
+  | { type: "line-item-form" }
+  | { type: "sov-line"; lineId: string };
+
 export default function ProjectContractDetailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -128,8 +132,11 @@ export default function ProjectContractDetailPage() {
   const [calculationResult, setCalculationResult] = useState<MarkupCalculationResponse | null>(null);
   const [calculationLoading, setCalculationLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<ContractTab>("overview");
-  const [isSovFullscreen, setIsSovFullscreen] = useState(false);
   const [isSovOpen, setIsSovOpen] = useState(true);
+  const [isSovEditing, setIsSovEditing] = useState(false);
+  const [isSavingSovChanges, setIsSavingSovChanges] = useState(false);
+  const [sovDraftItems, setSovDraftItems] = useState<ContractLineItem[]>([]);
+  const [sovDraftBudgetCodeIds, setSovDraftBudgetCodeIds] = useState<Record<string, string>>({});
   const [showAddLineItemDialog, setShowAddLineItemDialog] = useState(false);
   const [lineItemForm, setLineItemForm] = useState<LineItemFormState>({
     lineNumber: "",
@@ -146,6 +153,8 @@ export default function ProjectContractDetailPage() {
   const [budgetCodesLoading, setBudgetCodesLoading] = useState(false);
   const [showCreateBudgetCodeModal, setShowCreateBudgetCodeModal] =
     useState(false);
+  const [budgetCodeCreateTarget, setBudgetCodeCreateTarget] =
+    useState<BudgetCodeCreateTarget | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
@@ -171,6 +180,7 @@ export default function ProjectContractDetailPage() {
   const [documentDialogTab, setDocumentDialogTab] = useState<"download" | "email">(
     "download",
   );
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     const fetchContract = async () => {
@@ -550,6 +560,48 @@ export default function ProjectContractDetailPage() {
     setIsEditing(true);
   };
 
+  // ─── Acumatica Sync (AR Invoices + AR Payments) ──────────────────────────
+
+  const handleErpSync = async () => {
+    setIsSyncing(true);
+    try {
+      const [invResp, payResp] = await Promise.all([
+        fetch("/api/sync/acumatica/ar-invoices", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ projectId: Number(projectId) }),
+        }),
+        fetch("/api/sync/acumatica/ar-payments", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ projectId: Number(projectId) }),
+        }),
+      ]);
+
+      const invData = await invResp.json();
+      const payData = await payResp.json();
+
+      if (!invResp.ok) throw new Error(invData.error ?? "Invoice sync failed");
+      if (!payResp.ok) throw new Error(payData.error ?? "Payment sync failed");
+
+      const inv = invData.result;
+      const pay = payData.result;
+      const totalCreated = inv.created + pay.created;
+      const totalUpdated = inv.updated + pay.updated;
+      const totalErrors = inv.errors.length + pay.errors.length;
+
+      toast.success(
+        `ERP sync complete: ${totalCreated} created, ${totalUpdated} updated` +
+          (totalErrors > 0 ? ` (${totalErrors} errors)` : ""),
+      );
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "ERP sync failed");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   const existingCostCodeByLineId = useMemo(
     () => new Map(lineItems.map((item) => [item.id, item.cost_code_id ?? null])),
     [lineItems],
@@ -621,18 +673,19 @@ export default function ProjectContractDetailPage() {
 
       const budgetCodeIdToCostCode = new Map(
         (budgetCodesPayload.budgetCodes || []).map(
-          (code: { id: string; code: string }) => [code.id, code.code],
+          (code: { id: string; legacyCostCodeId?: number | null }) => [
+            code.id,
+            typeof code.legacyCostCodeId === "number" ? code.legacyCostCodeId : null,
+          ],
         ),
       );
 
       const sovItems = data.sovItems || [];
       const itemsToPersist = sovItems.map((item, index) => {
         const budgetCodeId = item.budgetCodeId || "";
-        const budgetCodeValue = budgetCodeIdToCostCode.get(budgetCodeId);
+        const budgetCodeValue = budgetCodeIdToCostCode.get(budgetCodeId) ?? null;
         const fallbackCostCode = existingCostCodeByLineId.get(item.id) ?? null;
-        const parsedCostCodeId = budgetCodeValue
-          ? Number.parseInt(budgetCodeValue as string, 10)
-          : fallbackCostCode;
+        const parsedCostCodeId = budgetCodeValue ?? fallbackCostCode;
         const costCodeId =
           parsedCostCodeId !== null && Number.isNaN(parsedCostCodeId)
             ? null
@@ -732,11 +785,12 @@ export default function ProjectContractDetailPage() {
     const selectedBudgetCode = budgetCodes.find(
       (code) => code.id === lineItemForm.budgetCodeId,
     );
-    const parsedCostCodeId = selectedBudgetCode?.code
-      ? Number.parseInt(selectedBudgetCode.code, 10)
-      : null;
+    const parsedCostCodeId =
+      typeof selectedBudgetCode?.legacyCostCodeId === "number"
+        ? selectedBudgetCode.legacyCostCodeId
+        : null;
 
-    if (selectedBudgetCode?.code && Number.isNaN(parsedCostCodeId)) {
+    if (!selectedBudgetCode || parsedCostCodeId === null) {
       toast.error(
         "Selected budget code could not be applied. Please choose a valid budget code.",
       );
@@ -815,6 +869,238 @@ export default function ProjectContractDetailPage() {
     } finally {
       setIsDeletingLineItem(false);
       setLineItemToDelete(null);
+    }
+  };
+
+  const normalizeSovDraftItems = (items: ContractLineItem[]) =>
+    items.map((item, index) => {
+      const quantity = Number(item.quantity) || 0;
+      const unitCost = Number(item.unit_cost) || 0;
+      return {
+        ...item,
+        line_number: index + 1,
+        total_cost: quantity * unitCost,
+      };
+    });
+
+  const handleStartSovEdit = () => {
+    setSovDraftItems(normalizeSovDraftItems(lineItems.map((item) => ({ ...item }))));
+    // Build a map from cost_code_id (number) → budget code UUID
+    // legacyCostCodeId may be number or numeric string — coerce both
+    const budgetCodeIdByCostCodeId = new Map<number, string>();
+    budgetCodes.forEach((budgetCode) => {
+      const rawId = budgetCode.legacyCostCodeId;
+      const numericId = rawId != null ? (typeof rawId === "number" ? rawId : Number(rawId)) : null;
+      if (numericId != null && !Number.isNaN(numericId) && !budgetCodeIdByCostCodeId.has(numericId)) {
+        budgetCodeIdByCostCodeId.set(numericId, budgetCode.id);
+      }
+    });
+
+    const nextDraftBudgetCodeIds: Record<string, string> = {};
+    lineItems.forEach((item) => {
+      if (item.cost_code_id != null) {
+        const numericCostCodeId = typeof item.cost_code_id === "number" ? item.cost_code_id : Number(item.cost_code_id);
+        const budgetCodeId = budgetCodeIdByCostCodeId.get(numericCostCodeId);
+        if (budgetCodeId) {
+          nextDraftBudgetCodeIds[item.id] = budgetCodeId;
+        }
+      }
+    });
+    setSovDraftBudgetCodeIds(nextDraftBudgetCodeIds);
+    setIsSovEditing(true);
+  };
+
+  const handleCancelSovEdit = () => {
+    setSovDraftItems([]);
+    setSovDraftBudgetCodeIds({});
+    setIsSovEditing(false);
+  };
+
+  const handleAddSovLine = () => {
+    setSovDraftItems((prev) =>
+      normalizeSovDraftItems([
+        ...prev,
+        {
+          id: `new-${crypto.randomUUID()}`,
+          contract_id: contractId,
+          line_number: prev.length + 1,
+          description: "",
+          cost_code_id: null,
+          quantity: 1,
+          unit_of_measure: null,
+          unit_cost: 0,
+          total_cost: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        },
+      ]),
+    );
+  };
+
+  const handleUpdateSovLine = (
+    lineId: string,
+    updates: Partial<
+      Pick<
+        ContractLineItem,
+        "description" | "quantity" | "unit_of_measure" | "unit_cost" | "cost_code_id"
+      >
+    >,
+  ) => {
+    setSovDraftItems((prev) =>
+      normalizeSovDraftItems(
+        prev.map((item) => (item.id === lineId ? { ...item, ...updates } : item)),
+      ),
+    );
+  };
+
+  const handleUpdateSovLineBudgetCode = (lineId: string, budgetCodeId: string) => {
+    const selectedCode = budgetCodes.find((code) => code.id === budgetCodeId);
+    // legacyCostCodeId may be a number OR a numeric string from DB — coerce safely
+    const rawId = selectedCode?.legacyCostCodeId;
+    const mappedCostCodeId =
+      rawId != null && rawId !== undefined
+        ? typeof rawId === "number"
+          ? rawId
+          : Number(rawId) || null
+        : null;
+
+    setSovDraftBudgetCodeIds((prev) => ({
+      ...prev,
+      [lineId]: budgetCodeId,
+    }));
+    setSovDraftItems((prev) =>
+      normalizeSovDraftItems(
+        prev.map((item) =>
+          item.id === lineId
+            ? {
+                ...item,
+                cost_code_id: mappedCostCodeId,
+                // Preserve budget code info for read-mode display
+                cost_code: selectedCode
+                  ? {
+                      id: mappedCostCodeId ?? 0,
+                      code: selectedCode.code,
+                      name: selectedCode.description,
+                    }
+                  : item.cost_code,
+              }
+            : item,
+        ),
+      ),
+    );
+  };
+
+  const handleRemoveSovLine = (lineId: string) => {
+    setSovDraftBudgetCodeIds((prev) => {
+      const next = { ...prev };
+      delete next[lineId];
+      return next;
+    });
+    setSovDraftItems((prev) =>
+      normalizeSovDraftItems(prev.filter((item) => item.id !== lineId)),
+    );
+  };
+
+  const handleSaveSovEdit = async () => {
+    const normalizedDraftItems = normalizeSovDraftItems(sovDraftItems);
+
+    if (normalizedDraftItems.length === 0) {
+      toast.error("At least one SOV line item is required");
+      return;
+    }
+
+    if (
+      normalizedDraftItems.some(
+        (item) => item.cost_code_id === null || item.cost_code_id === undefined,
+      )
+    ) {
+      toast.error("Each SOV line must include a budget code");
+      return;
+    }
+
+    setIsSavingSovChanges(true);
+    try {
+      const existingIds = new Set(lineItems.map((item) => item.id));
+      const incomingIds = new Set(
+        normalizedDraftItems
+          .filter((item) => existingIds.has(item.id))
+          .map((item) => item.id),
+      );
+
+      const updatePayload = normalizedDraftItems.filter((item) =>
+        existingIds.has(item.id),
+      );
+      const createPayload = normalizedDraftItems.filter(
+        (item) => !existingIds.has(item.id),
+      );
+      const deletionIds = lineItems
+        .filter((item) => !incomingIds.has(item.id))
+        .map((item) => item.id);
+
+      const responses = await Promise.all([
+        ...updatePayload.map((item) =>
+          fetch(
+            `/api/projects/${projectId}/contracts/${contractId}/line-items/${item.id}`,
+            {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                line_number: item.line_number,
+                description: item.description || `Line ${item.line_number}`,
+                cost_code_id: item.cost_code_id,
+                quantity: Number(item.quantity) || 0,
+                unit_cost: Number(item.unit_cost) || 0,
+                unit_of_measure: item.unit_of_measure || null,
+              }),
+            },
+          ),
+        ),
+        ...createPayload.map((item) =>
+          fetch(`/api/projects/${projectId}/contracts/${contractId}/line-items`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              line_number: item.line_number,
+              description: item.description || `Line ${item.line_number}`,
+              cost_code_id: item.cost_code_id,
+              quantity: Number(item.quantity) || 0,
+              unit_cost: Number(item.unit_cost) || 0,
+              unit_of_measure: item.unit_of_measure || null,
+            }),
+          }),
+        ),
+        ...deletionIds.map((lineItemId) =>
+          fetch(
+            `/api/projects/${projectId}/contracts/${contractId}/line-items/${lineItemId}`,
+            { method: "DELETE" },
+          ),
+        ),
+      ]);
+
+      const failedResponse = responses.find((response) => !response.ok);
+      if (failedResponse) {
+        const errorData = await failedResponse.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to save SOV line items");
+      }
+
+      const refreshedLineItemsResponse = await fetch(
+        `/api/projects/${projectId}/contracts/${contractId}/line-items`,
+      );
+      if (refreshedLineItemsResponse.ok) {
+        const refreshedLineItems = await refreshedLineItemsResponse.json();
+        setLineItems(refreshedLineItems || []);
+      }
+
+      setIsSovEditing(false);
+      setSovDraftItems([]);
+      setSovDraftBudgetCodeIds({});
+      toast.success("Schedule of values updated");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Failed to save schedule of values",
+      );
+    } finally {
+      setIsSavingSovChanges(false);
     }
   };
 
@@ -1016,10 +1302,48 @@ export default function ProjectContractDetailPage() {
         budgetCodes: BudgetCode[];
       };
       setBudgetCodes(codes || []);
-      setLineItemForm((prev) => ({ ...prev, budgetCodeId }));
+
+      const createdBudgetCode = (codes || []).find((code) => code.id === budgetCodeId);
+      const parsedCostCodeId =
+        typeof createdBudgetCode?.legacyCostCodeId === "number"
+          ? createdBudgetCode.legacyCostCodeId
+          : null;
+
+      if (
+        budgetCodeCreateTarget?.type === "sov-line" &&
+        parsedCostCodeId !== null &&
+        !Number.isNaN(parsedCostCodeId)
+      ) {
+        setSovDraftItems((prev) =>
+          normalizeSovDraftItems(
+            prev.map((item) =>
+              item.id === budgetCodeCreateTarget.lineId
+                ? { ...item, cost_code_id: parsedCostCodeId }
+                : item,
+            ),
+          ),
+        );
+        setSovDraftBudgetCodeIds((prev) => ({
+          ...prev,
+          [budgetCodeCreateTarget.lineId]: budgetCodeId,
+        }));
+      } else {
+        setLineItemForm((prev) => ({ ...prev, budgetCodeId }));
+      }
     } finally {
       setBudgetCodesLoading(false);
+      setBudgetCodeCreateTarget(null);
     }
+  };
+
+  const handleRequestCreateBudgetCodeForLineItemForm = () => {
+    setBudgetCodeCreateTarget({ type: "line-item-form" });
+    setShowCreateBudgetCodeModal(true);
+  };
+
+  const handleRequestCreateBudgetCodeForSovLine = (lineId: string) => {
+    setBudgetCodeCreateTarget({ type: "sov-line", lineId });
+    setShowCreateBudgetCodeModal(true);
   };
 
   const formatCurrency = (value: number | null | undefined) => {
@@ -1108,30 +1432,21 @@ export default function ProjectContractDetailPage() {
     () => parseBulletList(contract?.exclusions),
     [contract?.exclusions],
   );
-  const sovTotal = useMemo(
-    () => lineItems.reduce((sum, item) => sum + (item.total_cost ?? 0), 0),
-    [lineItems],
-  );
-  const sovBilledToDateTotal = sovTotal;
-  const sovRemainingTotal = 0;
-
   if (loading) {
     return (
-      <>
+      <PageContainer>
         <ProjectPageHeader
           title="Prime Contract"
           description="Loading contract details..."
         />
-        <TableLayout>
-          <Skeleton className="h-96" />
-        </TableLayout>
-      </>
+        <Skeleton className="h-96" />
+      </PageContainer>
     );
   }
 
   if (error || !contract) {
     return (
-      <>
+      <PageContainer>
         <ProjectPageHeader
           title="Prime Contract"
           description="Unable to load contract"
@@ -1140,23 +1455,21 @@ export default function ProjectContractDetailPage() {
             { label: "Contract Details" },
           ]}
         />
-        <TableLayout>
-          <Card className="p-[var(--card-padding)]">
-            <div className="flex items-center gap-4 text-destructive">
-              <AlertCircle className="h-5 w-5" />
-              <p>{error || "Contract not found"}</p>
-            </div>
-            <Button
-              variant="outline"
-              onClick={handleBack}
-              className="mt-[var(--group-gap)]"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back to Contracts
-            </Button>
-          </Card>
-        </TableLayout>
-      </>
+        <Card className="p-[var(--card-padding)]">
+          <div className="flex items-center gap-4 text-destructive">
+            <AlertCircle className="h-5 w-5" />
+            <p>{error || "Contract not found"}</p>
+          </div>
+          <Button
+            variant="outline"
+            onClick={handleBack}
+            className="mt-[var(--group-gap)]"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to Contracts
+          </Button>
+        </Card>
+      </PageContainer>
     );
   }
 
@@ -1241,7 +1554,7 @@ export default function ProjectContractDetailPage() {
   }
 
   return (
-    <>
+    <PageContainer>
       <ProjectPageHeader
         title={`${contract.title} - #${contract.contract_number || contract.id.slice(0, 8)}`}
         description={
@@ -1311,6 +1624,16 @@ export default function ProjectContractDetailPage() {
             <Button
               variant="outline"
               size="icon"
+              disabled={isSyncing}
+              onClick={handleErpSync}
+              aria-label="Sync from Acumatica"
+              title="Sync invoices & payments from Acumatica"
+            >
+              <RefreshCw className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
               onClick={() => {
                 setDocumentDialogTab("email");
                 setIsDocumentDialogOpen(true);
@@ -1354,7 +1677,7 @@ export default function ProjectContractDetailPage() {
         paymentsCount={payments.length}
       />
 
-      <TableLayout>
+      <div className="space-y-[var(--section-gap)]">
         <PrimeContractOverviewTab
           activeTab={activeTab}
           contract={contract}
@@ -1372,17 +1695,23 @@ export default function ProjectContractDetailPage() {
           exclusionsList={exclusionsList}
           formatStatusLabel={formatStatusLabel}
           formatCurrency={formatCurrency}
-          isSovFullscreen={isSovFullscreen}
-          setIsSovFullscreen={setIsSovFullscreen}
           isSovOpen={isSovOpen}
           setIsSovOpen={setIsSovOpen}
           lineItemsLoading={lineItemsLoading}
           lineItems={lineItems}
-          sovTotal={sovTotal}
-          sovBilledToDateTotal={sovBilledToDateTotal}
-          sovRemainingTotal={sovRemainingTotal}
-          setShowAddLineItemDialog={setShowAddLineItemDialog}
-          setLineItemToDelete={setLineItemToDelete}
+          budgetCodes={budgetCodes}
+          sovDraftBudgetCodeIds={sovDraftBudgetCodeIds}
+          isSovEditing={isSovEditing}
+          isSavingSovChanges={isSavingSovChanges}
+          sovDraftItems={sovDraftItems}
+          onStartSovEdit={handleStartSovEdit}
+          onCancelSovEdit={handleCancelSovEdit}
+          onSaveSovEdit={handleSaveSovEdit}
+          onAddSovLine={handleAddSovLine}
+          onUpdateSovLine={handleUpdateSovLine}
+          onUpdateSovLineBudgetCode={handleUpdateSovLineBudgetCode}
+          onRemoveSovLine={handleRemoveSovLine}
+          onRequestCreateBudgetCode={handleRequestCreateBudgetCodeForSovLine}
         />
 
         
@@ -2303,7 +2632,7 @@ export default function ProjectContractDetailPage() {
             </div>
           </div>
         )}
-      </TableLayout>
+      </div>
 
       <PrimeContractDialogs
         showAddLineItemDialog={showAddLineItemDialog}
@@ -2313,6 +2642,7 @@ export default function ProjectContractDetailPage() {
         budgetCodes={budgetCodes}
         budgetCodesLoading={budgetCodesLoading}
         setShowCreateBudgetCodeModal={setShowCreateBudgetCodeModal}
+        onRequestCreateBudgetCode={handleRequestCreateBudgetCodeForLineItemForm}
         showCreateBudgetCodeModal={showCreateBudgetCodeModal}
         projectId={projectId}
         handleBudgetCodeCreated={handleBudgetCodeCreated}
@@ -2348,6 +2678,6 @@ export default function ProjectContractDetailPage() {
           title={contract.title}
         />
       ) : null}
-    </>
+    </PageContainer>
   );
 }

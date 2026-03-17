@@ -136,7 +136,8 @@ function InputGroupInput({
     <Input
       data-slot="input-group-control"
       className={cn(
-        "h-full flex-1 rounded-none border-0 bg-transparent shadow-none focus-visible:ring-0 dark:bg-transparent",
+        "h-full flex-1 rounded-none border-0 !bg-transparent shadow-none focus-visible:ring-0 dark:!bg-transparent autofill:!bg-transparent",
+        "[&:-webkit-autofill]:!bg-transparent [&:-webkit-autofill]:[box-shadow:inset_0_0_0px_1000px_transparent]",
         className
       )}
       {...props}
@@ -152,7 +153,7 @@ function InputGroupTextarea({
     <Textarea
       data-slot="input-group-control"
       className={cn(
-        "flex-1 resize-none rounded-none border-0 bg-transparent py-4 shadow-none focus-visible:ring-0 dark:bg-transparent",
+        "flex-1 resize-none rounded-none border-0 !bg-transparent py-4 shadow-none focus-visible:ring-0 dark:!bg-transparent",
         className
       )}
       {...props}

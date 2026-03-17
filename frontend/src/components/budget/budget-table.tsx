@@ -3,6 +3,7 @@
 import * as React from "react";
 import {
   ColumnDef,
+  ColumnSizingState,
   flexRender,
   getCoreRowModel,
   useReactTable,
@@ -149,14 +150,63 @@ interface ColumnHeaderProps {
   columnKey?: ColumnTooltipKey;
 }
 
+function TruncatedHeaderLabel({ text }: { text: string }) {
+  const labelRef = React.useRef<HTMLDivElement>(null);
+  const [isTruncated, setIsTruncated] = React.useState(false);
+
+  React.useEffect(() => {
+    const node = labelRef.current;
+    if (!node) {
+      return;
+    }
+
+    const checkTruncation = () => {
+      setIsTruncated(node.scrollWidth > node.clientWidth);
+    };
+
+    checkTruncation();
+
+    if (typeof ResizeObserver === "undefined") {
+      return;
+    }
+
+    const observer = new ResizeObserver(checkTruncation);
+    observer.observe(node);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [text]);
+
+  const label = (
+    <div
+      ref={labelRef}
+      className="truncate whitespace-nowrap text-center text-[11px] leading-tight"
+    >
+      {text}
+    </div>
+  );
+
+  if (!isTruncated) {
+    return label;
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <div className="cursor-help">{label}</div>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" align="center" className="max-w-xs text-xs">
+        {text}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 function ColumnHeader({ lines, columnKey }: ColumnHeaderProps) {
   const labelText = lines.join(" ");
 
-  const label = (
-    <div className="whitespace-nowrap text-center text-[11px] leading-tight">
-      {labelText}
-    </div>
-  );
+  const label = <TruncatedHeaderLabel text={labelText} />;
 
   if (!columnKey) {
     return label;
@@ -299,31 +349,7 @@ function EditableCurrencyCell({
   );
 }
 
-const columnWidthClasses: Record<string, string> = {
-  select: "w-6 min-w-[24px]",
-  expander: "w-6 min-w-[24px]",
-  description: "w-[140px] min-w-[140px]",
-  originalBudgetAmount: "w-[140px] min-w-[140px]",
-  budgetModifications: "w-[140px] min-w-[140px]",
-  approvedCOs: "w-[140px] min-w-[140px]",
-  revisedBudget: "w-[140px] min-w-[140px]",
-  jobToDateCostDetail: "w-[160px] min-w-[160px]",
-  directCosts: "w-[140px] min-w-[140px]",
-  pendingChanges: "w-[150px] min-w-[150px]",
-  projectedBudget: "w-[140px] min-w-[140px]",
-  committedCosts: "w-[140px] min-w-[140px]",
-  pendingCostChanges: "w-[160px] min-w-[160px]",
-  projectedCosts: "w-[140px] min-w-[140px]",
-  forecastToComplete: "w-[160px] min-w-[160px]",
-  estimatedCostAtCompletion: "w-[170px] min-w-[170px]",
-  projectedOverUnder: "w-[160px] min-w-[160px]",
-};
-
 const depthPaddingClasses = ["pl-0", "pl-4", "pl-8", "pl-12", "pl-16", "pl-20"];
-
-function getWidthClass(id: string | undefined) {
-  return columnWidthClasses[id ?? ""] ?? "min-w-[120px]";
-}
 
 function getDepthPadding(depth: number) {
   const index = Math.min(depth, depthPaddingClasses.length - 1);
@@ -351,6 +377,7 @@ export function BudgetTable({
 }: BudgetTableProps) {
   const [expanded, setExpanded] = React.useState<ExpandedState>({});
   const [rowSelection, setRowSelection] = React.useState<RowSelectionState>({});
+  const [columnSizing, setColumnSizing] = React.useState<ColumnSizingState>({});
   // Use prop if provided, otherwise use internal state
   const [showInlineCreateInternal, setShowInlineCreateInternal] = React.useState(false);
   const showInlineCreate = onShowInlineCreateChange ? showInlineCreateProp : showInlineCreateInternal;
@@ -462,6 +489,9 @@ export function BudgetTable({
         );
       },
       size: 24,
+      minSize: 24,
+      maxSize: 24,
+      enableResizing: false,
     },
     {
       id: "expander",
@@ -495,10 +525,13 @@ export function BudgetTable({
         );
       },
       size: 24,
+      minSize: 24,
+      maxSize: 24,
+      enableResizing: false,
     },
     {
       accessorKey: "description",
-      header: "Description",
+      header: () => <ColumnHeader lines={["Description"]} />,
       cell: ({ row }) => {
         const hasChildren = Boolean(
           row.original.children && row.original.children.length > 0);
@@ -883,6 +916,41 @@ export function BudgetTable({
       },
       size: 130,
     },
+    {
+      id: "actions",
+      header: () => <ColumnHeader lines={["Actions"]} />,
+      cell: ({ row }) => {
+        const hasChildren = Boolean(
+          row.original.children && row.original.children.length > 0
+        );
+        if (hasChildren || !onEditLineItem) {
+          return null;
+        }
+
+        const handleEdit = createSafeClickHandler(
+          isLocked,
+          "edit line items",
+          () => onEditLineItem(row.original)
+        );
+
+        return (
+          <div className="flex justify-end">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-7 px-2 text-xs"
+              onClick={handleEdit}
+            >
+              Edit
+            </Button>
+          </div>
+        );
+      },
+      size: 88,
+      minSize: 80,
+      maxSize: 120,
+    },
   ];
 
   const table = useReactTable({
@@ -891,9 +959,17 @@ export function BudgetTable({
     state: {
       expanded,
       rowSelection,
+      columnSizing,
     },
     onExpandedChange: setExpanded,
     onRowSelectionChange: setRowSelection,
+    onColumnSizingChange: setColumnSizing,
+    columnResizeMode: "onChange",
+    enableColumnResizing: true,
+    defaultColumn: {
+      minSize: 96,
+      maxSize: 600,
+    },
     getCoreRowModel: getCoreRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
     getSubRows: (row) => row.children,
@@ -906,12 +982,22 @@ export function BudgetTable({
   const hasRows = rows.length > 0;
   const emptyRowCount = hasRows ? 0 : 8;
   const visibleColumnCount = table.getVisibleLeafColumns().length;
+  const trailingInlineCreateColumnSpan = Math.max(0, visibleColumnCount - 5);
+  const tableWidth = table.getTotalSize();
+  const getColumnSizeStyle = (columnId: string) => {
+    const column = table.getColumn(columnId);
+    const width = column?.getSize();
+    return width ? { width: `${width}px`, minWidth: `${width}px` } : undefined;
+  };
 
   return (
     <div className="flex h-full flex-col overflow-hidden rounded-md bg-background">
       {/* Hide scrollbar while maintaining scroll functionality */}
       <div className="flex-1 overflow-auto scrollbar-hide">
-        <Table className="min-w-[2240px] table-fixed bg-background">
+        <Table
+          className="table-fixed bg-background"
+          style={{ width: `${tableWidth}px`, minWidth: "100%" }}
+        >
               <TableHeader className="sticky top-0 bg-background z-10">
                 {table.getHeaderGroups().map((headerGroup) => (
                   <TableRow
@@ -922,14 +1008,14 @@ export function BudgetTable({
                       <TableHead
                         key={header.id}
                         className={cn(
-                          "bg-background py-2 text-center text-[11px] font-semibold text-foreground",
+                          "relative bg-background py-2 text-center text-[11px] font-semibold text-foreground",
                           header.column.id === "select"
                             ? "pl-1 pr-0.5"
                             : header.column.id === "expander"
                               ? "px-0.5"
                               : "px-1.5",
-                          getWidthClass(header.column.id),
                         )}
+                        style={getColumnSizeStyle(header.column.id)}
                       >
                         {header.isPlaceholder
                           ? null
@@ -937,6 +1023,18 @@ export function BudgetTable({
                               header.column.columnDef.header,
                               header.getContext(),
                             )}
+                        {header.column.getCanResize() ? (
+                          <div
+                            onMouseDown={header.getResizeHandler()}
+                            onTouchStart={header.getResizeHandler()}
+                            className={cn(
+                              "absolute right-0 top-0 h-full w-1.5 cursor-col-resize select-none touch-none",
+                              "bg-transparent hover:bg-border/80",
+                              header.column.getIsResizing() && "bg-border",
+                            )}
+                            aria-hidden="true"
+                          />
+                        ) : null}
                       </TableHead>
                     ))}
                   </TableRow>
@@ -960,7 +1058,8 @@ export function BudgetTable({
                         const isDataColumn =
                           cell.column.id !== "select" &&
                           cell.column.id !== "expander" &&
-                          cell.column.id !== "description";
+                          cell.column.id !== "description" &&
+                          cell.column.id !== "actions";
 
                         return (
                           <TableCell
@@ -973,9 +1072,9 @@ export function BudgetTable({
                                   ? "px-0.5"
                                   : "px-1.5",
                               row.depth > 0 && "text-foreground",
-                              getWidthClass(cell.column.id),
                               isDataColumn && "group/cell",
                             )}
+                            style={getColumnSizeStyle(cell.column.id)}
                           >
                             {isDataColumn ? (
                               <div className="flex items-center gap-0.5">
@@ -1077,19 +1176,11 @@ export function BudgetTable({
                     }}
                   />
                 </TableCell>
-                {/* Empty cells for other columns */}
-                <TableCell className="py-2 px-2" />
-                <TableCell className="py-2 px-2" />
-                <TableCell className="py-2 px-2" />
-                <TableCell className="py-2 px-2" />
-                <TableCell className="py-2 px-2" />
-                <TableCell className="py-2 px-2" />
-                <TableCell className="py-2 px-2" />
-                <TableCell className="py-2 px-2" />
-                <TableCell className="py-2 px-2" />
-                <TableCell className="py-2 px-2" />
-                <TableCell className="py-2 px-2" />
-                <TableCell className="py-2 px-2">
+                {/* Empty cells for remaining data columns */}
+                <TableCell className="py-2 px-2" colSpan={trailingInlineCreateColumnSpan}>
+                  &nbsp;
+                </TableCell>
+                <TableCell className="py-2 px-2" style={getColumnSizeStyle("actions")}>
                   <div className="flex items-center gap-1 justify-end">
                     <Button
                       size="icon"
@@ -1122,144 +1213,119 @@ export function BudgetTable({
 
       {/* Grand Totals Row - Fixed at bottom */}
       <div className="sticky bottom-0 border-t border-border bg-background">
-          <table className="min-w-[2240px] w-full caption-bottom text-sm table-fixed">
+          <table
+            className="w-full caption-bottom text-sm table-fixed"
+            style={{ width: `${tableWidth}px`, minWidth: "100%" }}
+          >
             <TableFooter className="bg-muted/50 border-t">
               <tr className="bg-muted/50 hover:bg-muted/50 transition-colors">
-                <td className={cn("py-4 pl-1 pr-0.5", getWidthClass("select"))} />
-                <td className={cn("py-4 px-0.5", getWidthClass("expander"))} />
+                <td className="py-4 pl-1 pr-0.5" style={getColumnSizeStyle("select")} />
+                <td className="py-4 px-0.5" style={getColumnSizeStyle("expander")} />
                 <td
-                  className={cn(
-                    "py-4 px-2 text-sm font-semibold text-foreground",
-                    getWidthClass("description"),
-                  )}
+                  className="py-4 px-2 text-sm font-semibold text-foreground"
+                  style={getColumnSizeStyle("description")}
                 >
                   Grand Totals
                 </td>
                 <td
-                  className={cn(
-                    "py-4 px-2 text-sm",
-                    getWidthClass("originalBudgetAmount"),
-                  )}
+                  className="py-4 px-2 text-sm"
+                  style={getColumnSizeStyle("originalBudgetAmount")}
                 >
                   <div className="text-right">
                     <CurrencyCell value={grandTotals.originalBudgetAmount} />
                   </div>
                 </td>
                 <td
-                  className={cn(
-                    "py-4 px-2 text-sm",
-                    getWidthClass("budgetModifications"),
-                  )}
+                  className="py-4 px-2 text-sm"
+                  style={getColumnSizeStyle("budgetModifications")}
                 >
                   <div className="text-right">
                     <CurrencyCell value={grandTotals.budgetModifications} />
                   </div>
                 </td>
                 <td
-                  className={cn(
-                    "py-4 px-2 text-sm",
-                    getWidthClass("approvedCOs"),
-                  )}
+                  className="py-4 px-2 text-sm"
+                  style={getColumnSizeStyle("approvedCOs")}
                 >
                   <div className="text-right">
                     <CurrencyCell value={grandTotals.approvedCOs} />
                   </div>
                 </td>
                 <td
-                  className={cn(
-                    "py-4 px-2 text-sm",
-                    getWidthClass("revisedBudget"),
-                  )}
+                  className="py-4 px-2 text-sm"
+                  style={getColumnSizeStyle("revisedBudget")}
                 >
                   <div className="text-right">
                     <CurrencyCell value={grandTotals.revisedBudget} />
                   </div>
                 </td>
                 <td
-                  className={cn(
-                    "py-4 px-2 text-sm",
-                    getWidthClass("jobToDateCostDetail"),
-                  )}
+                  className="py-4 px-2 text-sm"
+                  style={getColumnSizeStyle("jobToDateCostDetail")}
                 >
                   <div className="text-right">
                     <CurrencyCell value={grandTotals.jobToDateCostDetail} />
                   </div>
                 </td>
                 <td
-                  className={cn(
-                    "py-4 px-2 text-sm",
-                    getWidthClass("directCosts"),
-                  )}
+                  className="py-4 px-2 text-sm"
+                  style={getColumnSizeStyle("directCosts")}
                 >
                   <div className="text-right">
                     <CurrencyCell value={grandTotals.directCosts} />
                   </div>
                 </td>
                 <td
-                  className={cn(
-                    "py-4 px-2 text-sm",
-                    getWidthClass("pendingChanges"),
-                  )}
+                  className="py-4 px-2 text-sm"
+                  style={getColumnSizeStyle("pendingChanges")}
                 >
                   <div className="text-right">
                     <CurrencyCell value={grandTotals.pendingChanges} />
                   </div>
                 </td>
                 <td
-                  className={cn(
-                    "py-4 px-2 text-sm",
-                    getWidthClass("projectedBudget"),
-                  )}
+                  className="py-4 px-2 text-sm"
+                  style={getColumnSizeStyle("projectedBudget")}
                 >
                   <div className="text-right">
                     <CurrencyCell value={grandTotals.projectedBudget} />
                   </div>
                 </td>
                 <td
-                  className={cn(
-                    "py-4 px-2 text-sm",
-                    getWidthClass("committedCosts"),
-                  )}
+                  className="py-4 px-2 text-sm"
+                  style={getColumnSizeStyle("committedCosts")}
                 >
                   <div className="text-right">
                     <CurrencyCell value={grandTotals.committedCosts} />
                   </div>
                 </td>
                 <td
-                  className={cn(
-                    "py-4 px-2 text-sm",
-                    getWidthClass("pendingCostChanges"),
-                  )}
+                  className="py-4 px-2 text-sm"
+                  style={getColumnSizeStyle("pendingCostChanges")}
                 >
                   <div className="text-right">
                     <CurrencyCell value={grandTotals.pendingCostChanges} />
                   </div>
                 </td>
                 <td
-                  className={cn(
-                    "py-4 px-2 text-sm",
-                    getWidthClass("projectedCosts"),
-                  )}
+                  className="py-4 px-2 text-sm"
+                  style={getColumnSizeStyle("projectedCosts")}
                 >
                   <div className="text-right">
                     <CurrencyCell value={grandTotals.projectedCosts} />
                   </div>
                 </td>
                 <td
-                  className={cn(
-                    "py-4 px-2 text-sm",
-                    getWidthClass("forecastToComplete"),
-                  )}
+                  className="py-4 px-2 text-sm"
+                  style={getColumnSizeStyle("forecastToComplete")}
                 >
                   <div className="text-right">
                     <CurrencyCell value={grandTotals.forecastToComplete} />
                   </div>
                 </td>
                 <td
-                  className={cn(
-                    "py-4 px-2 text-sm",
-                    getWidthClass("estimatedCostAtCompletion"),
-                  )}
+                  className="py-4 px-2 text-sm"
+                  style={getColumnSizeStyle("estimatedCostAtCompletion")}
                 >
                   <div className="text-right">
                     <CurrencyCell
@@ -1268,15 +1334,14 @@ export function BudgetTable({
                   </div>
                 </td>
                 <td
-                  className={cn(
-                    "py-4 px-2 text-sm",
-                    getWidthClass("projectedOverUnder"),
-                  )}
+                  className="py-4 px-2 text-sm"
+                  style={getColumnSizeStyle("projectedOverUnder")}
                 >
                   <div className="text-right">
                     <CurrencyCell value={grandTotals.projectedOverUnder} />
                   </div>
                 </td>
+                <td className="py-4 px-2 text-sm" style={getColumnSizeStyle("actions")} />
               </tr>
             </TableFooter>
           </table>

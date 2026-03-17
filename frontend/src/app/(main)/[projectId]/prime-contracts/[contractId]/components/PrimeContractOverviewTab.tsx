@@ -1,16 +1,29 @@
 import {
-  ChevronDown,
   ChevronRight,
   FileText,
-  Maximize2,
-  Trash2,
-  Shrink,
+  GripVertical,
+  MoreVertical,
   Plus,
+  Trash2,
 } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
 
 import { cn } from "@/lib/utils";
+import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
 import { Button } from "@/components/ui/button";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupInput,
+} from "@/components/ui/input-group";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Collapsible,
   CollapsibleContent,
@@ -23,7 +36,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { UnitTypes } from "@/lib/schemas/direct-costs";
 import type {
+  BudgetCode,
   Contract,
   ContractAttachment,
   ContractLineItem,
@@ -49,17 +64,26 @@ interface PrimeContractOverviewTabProps {
   exclusionsList: string[];
   formatStatusLabel: (status: Contract["status"]) => string;
   formatCurrency: (value: number | null | undefined) => string;
-  isSovFullscreen: boolean;
-  setIsSovFullscreen: Dispatch<SetStateAction<boolean>>;
   isSovOpen: boolean;
   setIsSovOpen: Dispatch<SetStateAction<boolean>>;
   lineItemsLoading: boolean;
   lineItems: ContractLineItem[];
-  sovTotal: number;
-  sovBilledToDateTotal: number;
-  sovRemainingTotal: number;
-  setShowAddLineItemDialog: Dispatch<SetStateAction<boolean>>;
-  setLineItemToDelete: Dispatch<SetStateAction<ContractLineItem | null>>;
+  budgetCodes: BudgetCode[];
+  sovDraftBudgetCodeIds: Record<string, string>;
+  isSovEditing: boolean;
+  isSavingSovChanges: boolean;
+  sovDraftItems: ContractLineItem[];
+  onStartSovEdit: () => void;
+  onCancelSovEdit: () => void;
+  onSaveSovEdit: () => Promise<void>;
+  onAddSovLine: () => void;
+  onUpdateSovLine: (
+    lineId: string,
+    updates: Partial<Pick<ContractLineItem, "description" | "quantity" | "unit_of_measure" | "unit_cost" | "cost_code_id">>,
+  ) => void;
+  onUpdateSovLineBudgetCode: (lineId: string, budgetCodeId: string) => void;
+  onRemoveSovLine: (lineId: string) => void;
+  onRequestCreateBudgetCode: (lineId: string) => void;
 }
 
 export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
@@ -80,19 +104,30 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
     exclusionsList,
     formatStatusLabel,
     formatCurrency,
-    isSovFullscreen,
-    setIsSovFullscreen,
     isSovOpen,
     setIsSovOpen,
     lineItemsLoading,
     lineItems,
-    sovTotal,
-    sovBilledToDateTotal,
-    sovRemainingTotal,
-    setShowAddLineItemDialog,
-    setLineItemToDelete,
+    budgetCodes,
+    sovDraftBudgetCodeIds,
+    isSovEditing,
+    isSavingSovChanges,
+    sovDraftItems,
+    onStartSovEdit,
+    onCancelSovEdit,
+    onSaveSovEdit,
+    onAddSovLine,
+    onUpdateSovLine,
+    onUpdateSovLineBudgetCode,
+    onRemoveSovLine,
+    onRequestCreateBudgetCode,
   } = props;
   const ownerName = contract.contract_company?.name || contract.client?.name;
+  const displayedSovItems = isSovEditing ? sovDraftItems : lineItems;
+  const displayedSovTotal = displayedSovItems.reduce(
+    (sum, item) => sum + (Number(item.quantity) || 0) * (Number(item.unit_cost) || 0),
+    0,
+  );
 
   return (
     <>
@@ -102,7 +137,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
               <div className="pb-6 pt-4">
                 <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
                   <div className="space-y-6">
-                    <div className="rounded-xl bg-muted/40 p-4">
+                    <div className="rounded-xl border border-border/60 p-4">
                       <div className="flex flex-wrap items-center justify-between gap-4">
                         <div>
                           <h3 className="text-base font-semibold">Parties & Terms</h3>
@@ -215,7 +250,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                       </Collapsible>
                     </div>
 
-                    <div className="rounded-xl bg-muted/40 p-4">
+                    <div className="rounded-xl border border-border/60 p-4">
                       <h3 className="text-base font-semibold">Description</h3>
                       <div className="mt-4 grid gap-6">
                         <div>
@@ -230,7 +265,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                             {getTextValue(contract.description).text}
                           </p>
                         </div>
-                        <div className="rounded-lg border border-border bg-muted/30 p-4">
+                        <div className="rounded-lg border border-border/60 p-4">
                           <div className="flex items-center justify-between mb-4">
                             <p className="text-xs font-medium text-muted-foreground">
                               Attachments {attachments.length > 0 && `(${attachments.length})`}
@@ -272,7 +307,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                                       href={att.downloadUrl || att.url || "#"}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="text-blue-600 hover:underline truncate max-w-[60%]"
+                                      className="truncate max-w-[60%] text-foreground hover:underline"
                                     >
                                       {att.fileName}
                                     </a>
@@ -292,7 +327,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                       </div>
                     </div>
 
-                    <div className="rounded-xl bg-muted/40 p-4">
+                    <div className="rounded-xl border border-border/60 p-4">
                       <h3 className="text-base font-semibold">Inclusions & Exclusions</h3>
                       <div className="mt-4 space-y-6">
                         <div>
@@ -324,7 +359,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                   </div>
 
                   <div className="space-y-6">
-                    <div className="rounded-xl bg-muted/40 p-4">
+                    <div className="rounded-xl border border-border/60 p-4">
                       <div className="flex items-center justify-between">
                         <div>
                           <h3 className="text-base font-semibold">Financial Snapshot</h3>
@@ -410,7 +445,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                       </Collapsible>
                     </div>
 
-                    <div className="rounded-xl bg-muted/40 p-4">
+                    <div className="rounded-xl border border-border/60 p-4">
                       <h3 className="text-base font-semibold">Key Dates</h3>
                       <dl className="mt-4 space-y-4 text-sm">
                         <div className="flex items-center justify-between">
@@ -464,12 +499,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
               </div>
             </section>
 
-            <section
-              className={cn(
-                "rounded-xl bg-muted/40 px-6 py-6",
-                isSovFullscreen && "fixed inset-3 z-50 overflow-auto rounded-2xl bg-background shadow-2xl",
-              )}
-            >
+            <section className="rounded-xl px-6 py-6">
               <div className="flex items-center justify-between">
                 <button
                   type="button"
@@ -482,32 +512,22 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                   <h3 className="text-2xl font-semibold">Schedule of Values</h3>
                 </button>
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsSovFullscreen((prev) => !prev)}
-                  >
-                    {isSovFullscreen ? (
-                      <Shrink className="h-4 w-4 mr-2" />
-                    ) : (
-                      <Maximize2 className="h-4 w-4 mr-2" />
-                    )}
-                    {isSovFullscreen ? "Close Fullscreen" : "Open Fullscreen"}
-                  </Button>
-                  <Button variant="secondary" size="sm" onClick={() => setIsSovFullscreen(true)}>
-                    Edit
-                  </Button>
+                  {isSovEditing ? (
+                    <>
+                      <Button variant="ghost" size="sm" onClick={onCancelSovEdit}>
+                        Cancel
+                      </Button>
+                      <Button size="sm" onClick={onSaveSovEdit} disabled={isSavingSovChanges}>
+                        {isSavingSovChanges ? "Saving..." : "Save"}
+                      </Button>
+                    </>
+                  ) : null}
                 </div>
               </div>
 
               {isSovOpen && (
                 <div className="mt-4 space-y-4">
-                  <Button variant="outline" size="sm" className="min-w-[180px] justify-between">
-                    Add Group
-                    <ChevronDown className="h-4 w-4 ml-2" />
-                  </Button>
-
-                  {isSovFullscreen && (
+                  {isSovEditing && (
                     <div className="rounded-md border-l-4 border-amber-500 bg-amber-50 p-4 text-sm">
                       <p className="font-semibold">Any changes will only apply to future invoices</p>
                       <p>Existing invoices will not be affected.</p>
@@ -518,7 +538,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                     <div className="text-center py-8 text-muted-foreground">
                       Loading schedule of values...
                     </div>
-                  ) : lineItems.length === 0 ? (
+                  ) : displayedSovItems.length === 0 ? (
                     <div className="text-center py-8 text-muted-foreground">
                       <FileText className="h-12 w-12 mx-auto mb-[var(--group-gap)] opacity-50" />
                       <p>No SOV lines yet</p>
@@ -527,96 +547,232 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                       </p>
                     </div>
                   ) : (
-                    <div className="rounded-xl border border-border bg-background overflow-hidden">
+                    <div className="overflow-x-auto overflow-hidden rounded-lg border border-border bg-background">
                       <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Budget Code</TableHead>
-                            <TableHead>Description</TableHead>
-                            <TableHead className="text-right">Amount</TableHead>
-                            <TableHead className="text-right">Billed to Date</TableHead>
-                            <TableHead className="text-right">Amount Remaining</TableHead>
-                            <TableHead className="w-14 text-right">Actions</TableHead>
+                        <TableHeader className="border-y-0 [&_tr]:border-b-0">
+                          <TableRow className="bg-muted/40 hover:bg-muted/40">
+                            <TableHead className="w-10 px-1 py-1.5" />
+                            <TableHead className="min-w-72 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                              Budget Code *
+                            </TableHead>
+                            <TableHead className="min-w-64 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                              Description
+                            </TableHead>
+                            <TableHead className="w-36 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                              Quantity *
+                            </TableHead>
+                            <TableHead className="w-36 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                              UOM
+                            </TableHead>
+                            <TableHead className="w-44 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                              Unit Cost *
+                            </TableHead>
+                            <TableHead className="w-40 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                              Line Total
+                            </TableHead>
+                            <TableHead className="w-24 px-1 py-1.5" />
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {lineItems.map((item) => {
-                            const code = item.cost_code?.code || "--";
-                            const name = item.cost_code?.name || "";
-                            const amount = item.total_cost ?? 0;
-                            const billedToDate = amount;
-                            const amountRemaining = 0;
+                          {displayedSovItems.map((item) => {
+                            const lineTotal =
+                              (Number(item.quantity) || 0) * (Number(item.unit_cost) || 0);
+                            const selectedBudgetCode = budgetCodes.find(
+                              (code) =>
+                                code.legacyCostCodeId === item.cost_code_id ||
+                                (!!item.cost_code?.code && code.code === item.cost_code.code),
+                            );
+                            const selectedBudgetCodeId =
+                              (isSovEditing ? sovDraftBudgetCodeIds[item.id] : undefined) ||
+                              selectedBudgetCode?.id ||
+                              "";
 
                             return (
-                              <TableRow key={item.id} className="hover:bg-muted/50">
-                                <TableCell>
-                                  <div className="font-medium">{code}</div>
-                                  <div className="text-muted-foreground text-sm">{name}</div>
+                              <TableRow
+                                key={item.id}
+                                className="group border-b border-border/60 bg-background transition-colors hover:bg-muted/20"
+                              >
+                                <TableCell className="w-10 px-1 py-1.5 align-top">
+                                  <div className="mt-1 rounded-md p-1 text-muted-foreground">
+                                    <GripVertical className="h-4 w-4" />
+                                  </div>
                                 </TableCell>
-                                <TableCell>{item.description || "--"}</TableCell>
-                                <TableCell className="text-right tabular-nums">
-                                  {formatCurrency(amount)}
+                                <TableCell className="min-w-72 px-1 py-1.5 align-top">
+                                  {isSovEditing ? (
+                                    <BudgetCodeSelector
+                                      value={selectedBudgetCodeId}
+                                      onValueChange={(budgetCodeId) =>
+                                        onUpdateSovLineBudgetCode(item.id, budgetCodeId)
+                                      }
+                                      budgetCodes={budgetCodes}
+                                      onCreateNew={() => onRequestCreateBudgetCode(item.id)}
+                                      placeholder="Select budget code..."
+                                    />
+                                  ) : (
+                                    <div>
+                                      <div className="font-medium">
+                                        {selectedBudgetCode?.code || item.cost_code?.code || "--"}
+                                      </div>
+                                      <div className="text-sm text-muted-foreground">
+                                        {selectedBudgetCode?.description || item.cost_code?.name || ""}
+                                      </div>
+                                    </div>
+                                  )}
                                 </TableCell>
-                                <TableCell className="text-right tabular-nums">
-                                  {formatCurrency(billedToDate)}
+                                <TableCell className="min-w-64 px-1 py-1.5 align-top">
+                                  {isSovEditing ? (
+                                    <Input
+                                      value={item.description || ""}
+                                      onChange={(event) =>
+                                        onUpdateSovLine(item.id, {
+                                          description: event.target.value,
+                                        })
+                                      }
+                                      placeholder="Enter description"
+                                    />
+                                  ) : (
+                                    item.description || "--"
+                                  )}
                                 </TableCell>
-                                <TableCell className="text-right tabular-nums">
-                                  {formatCurrency(amountRemaining)}
+                                <TableCell className="w-36 px-1 py-1.5 align-top">
+                                  {isSovEditing ? (
+                                    <Input
+                                      type="number"
+                                      min="0"
+                                      step="0.01"
+                                      className="text-right"
+                                      value={item.quantity ?? 0}
+                                      onChange={(event) =>
+                                        onUpdateSovLine(item.id, {
+                                          quantity:
+                                            event.target.value === ""
+                                              ? 0
+                                              : Number(event.target.value),
+                                        })
+                                      }
+                                    />
+                                  ) : (
+                                    <div className="pt-2 text-right text-sm tabular-nums">
+                                      {item.quantity ?? 0}
+                                    </div>
+                                  )}
                                 </TableCell>
-                                <TableCell className="text-right">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                                    onClick={() => setLineItemToDelete(item)}
-                                    aria-label={`Delete line item ${item.line_number}`}
-                                    title="Delete line item"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
+                                <TableCell className="w-36 px-1 py-1.5 align-top">
+                                  {isSovEditing ? (
+                                    <Select
+                                      onValueChange={(value) =>
+                                        onUpdateSovLine(item.id, {
+                                          unit_of_measure: value || null,
+                                        })
+                                      }
+                                      value={item.unit_of_measure || undefined}
+                                    >
+                                      <SelectTrigger className="h-10 w-full">
+                                        <SelectValue placeholder="Select" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {UnitTypes.map((unit) => (
+                                          <SelectItem key={unit} value={unit}>
+                                            {unit}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  ) : (
+                                    <div className="pt-2 text-sm">
+                                      {item.unit_of_measure || "--"}
+                                    </div>
+                                  )}
+                                </TableCell>
+                                <TableCell className="w-44 px-1 py-1.5 align-top">
+                                  {isSovEditing ? (
+                                    <InputGroup>
+                                      <InputGroupAddon>$</InputGroupAddon>
+                                      <InputGroupInput
+                                        type="number"
+                                        min="0"
+                                        step="0.01"
+                                        className="h-10 text-right"
+                                        value={item.unit_cost ?? 0}
+                                        onChange={(event) =>
+                                          onUpdateSovLine(item.id, {
+                                            unit_cost:
+                                              event.target.value === ""
+                                                ? 0
+                                                : Number(event.target.value),
+                                          })
+                                        }
+                                      />
+                                    </InputGroup>
+                                  ) : (
+                                    <div className="pt-2 text-right text-sm tabular-nums">
+                                      {formatCurrency(item.unit_cost ?? 0)}
+                                    </div>
+                                  )}
+                                </TableCell>
+                                <TableCell className="w-40 px-1 py-1.5 align-top">
+                                  <div className="pt-2 text-right text-sm font-semibold">
+                                    {formatCurrency(lineTotal)}
+                                  </div>
+                                </TableCell>
+                                <TableCell className="w-24 px-1 py-1.5 align-top">
+                                  {isSovEditing ? (
+                                    <div className="flex justify-end">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                                        onClick={() => onRemoveSovLine(item.id)}
+                                        aria-label={`Remove line item ${item.line_number}`}
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  ) : (
+                                    <div className="flex justify-end">
+                                      <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="h-8 w-8 p-0 text-muted-foreground"
+                                        onClick={onStartSovEdit}
+                                        aria-label={`Edit line item ${item.line_number}`}
+                                      >
+                                        <MoreVertical className="h-4 w-4" />
+                                      </Button>
+                                    </div>
+                                  )}
                                 </TableCell>
                               </TableRow>
                             );
                           })}
-                        </TableBody>
-                        <tfoot>
-                          <TableRow className="bg-muted/60 font-medium">
-                            <TableCell>
-                              <Button size="sm" onClick={() => setShowAddLineItemDialog(true)}>
-                                Add Line
-                              </Button>
+                          <TableRow className="hover:bg-muted">
+                            <TableCell className="px-1 py-2" />
+                            <TableCell colSpan={5} className="px-1 py-3 text-xs font-semibold text-foreground">
+                              Totals
                             </TableCell>
-                            <TableCell className="text-right">Total:</TableCell>
-                            <TableCell className="text-right tabular-nums">
-                              {formatCurrency(sovTotal)}
+                            <TableCell className="px-1 py-2 text-right text-sm font-semibold text-foreground">
+                              {formatCurrency(displayedSovTotal)}
                             </TableCell>
-                            <TableCell className="text-right tabular-nums">
-                              {formatCurrency(sovBilledToDateTotal)}
-                            </TableCell>
-                            <TableCell className="text-right tabular-nums">
-                              {formatCurrency(sovRemainingTotal)}
-                            </TableCell>
-                            <TableCell />
+                            <TableCell className="px-1 py-2" />
                           </TableRow>
-                        </tfoot>
+                        </TableBody>
                       </Table>
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between">
-                    <Button variant="outline" size="sm" className="min-w-[100px] justify-between">
-                      Import
-                      <ChevronDown className="h-4 w-4 ml-2" />
-                    </Button>
-                    {isSovFullscreen && (
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" onClick={() => setIsSovFullscreen(false)}>
-                          Cancel
-                        </Button>
-                        <Button onClick={() => setIsSovFullscreen(false)}>Save</Button>
-                      </div>
-                    )}
-                  </div>
+                  {isSovEditing ? (
+                    <div className="pt-4">
+                      <Button
+                        type="button"
+                        size="default"
+                        className="h-10 gap-2 px-4"
+                        onClick={onAddSovLine}
+                      >
+                        <Plus className="h-4 w-4" />
+                        Add Line Item
+                      </Button>
+                    </div>
+                  ) : null}
                 </div>
               )}
             </section>

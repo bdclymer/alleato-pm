@@ -1,4 +1,6 @@
 import type { ReactElement } from "react";
+import { useState, useEffect } from "react";
+import { FileText } from "lucide-react";
 
 import type {
   ColumnConfig,
@@ -210,40 +212,78 @@ export function buildDrawingTableColumns(): TableColumn<DrawingLogTableRow>[] {
 
 // ─── Card / List views ──────────────────────────────────────────────────────
 
+// ─── Drawing grid card component ────────────────────────────────────────────
+
+interface DrawingGridCardProps {
+  item: DrawingLogTableRow;
+  onClick: (item: DrawingLogTableRow) => void;
+}
+
+function DrawingGridCard({ item, onClick }: DrawingGridCardProps) {
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!item.fileUrl) return;
+    fetch(`/api/projects/${item.projectId}/drawings/${item.id}/download`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => { if (data?.downloadUrl) setPreviewUrl(data.downloadUrl); })
+      .catch(() => {});
+  }, [item.id, item.projectId, item.fileUrl]);
+
+  const isPdf =
+    item.fileType?.toLowerCase().includes("pdf") ||
+    item.fileUrl?.toLowerCase().endsWith(".pdf");
+  const isImage =
+    item.fileType?.startsWith("image/") ||
+    /\.(png|jpe?g|tiff?)$/i.test(item.fileUrl ?? "");
+
+  return (
+    <button
+      type="button"
+      className="w-full cursor-pointer rounded-lg border border-border text-left transition-shadow hover:shadow-md overflow-hidden bg-card"
+      onClick={() => onClick(item)}
+    >
+      {/* Landscape PDF thumbnail (11 × 8.5) */}
+      <div className="relative w-full bg-muted" style={{ aspectRatio: "11 / 8.5" }}>
+        {previewUrl && isPdf ? (
+          <iframe
+            src={`${previewUrl}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`}
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            title={item.title}
+            tabIndex={-1}
+          />
+        ) : previewUrl && isImage ? (
+          <img
+            src={previewUrl}
+            alt={item.title}
+            className="absolute inset-0 w-full h-full object-contain"
+          />
+        ) : (
+          <div className="absolute inset-0 flex items-center justify-center text-muted-foreground/40">
+            <FileText className="h-12 w-12" />
+          </div>
+        )}
+      </div>
+
+      {/* Minimal footer */}
+      <div className="px-2.5 py-2 border-t border-border">
+        <p className="text-xs font-medium text-foreground truncate leading-tight">
+          {item.title || "Untitled"}
+        </p>
+        <p className="text-xs text-muted-foreground truncate mt-0.5">
+          {item.drawingNumber}
+          {item.revisionNumber ? ` · Rev ${item.revisionNumber}` : ""}
+        </p>
+      </div>
+    </button>
+  );
+}
+
 export function renderDrawingCard(
   item: DrawingLogTableRow,
   onClick: (item: DrawingLogTableRow) => void,
 ): ReactElement {
-  return (
-    <button
-      type="button"
-      className="w-full cursor-pointer rounded-lg border border-border p-4 text-left transition-colors hover:bg-muted/50"
-      onClick={() => onClick(item)}
-    >
-      <div className="mb-2 flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs uppercase text-muted-foreground">
-            {item.drawingNumber}
-            {item.revisionNumber ? ` Rev. ${item.revisionNumber}` : ""}
-          </p>
-          <h3 className="font-medium">{item.title || "Untitled"}</h3>
-        </div>
-        {item.status && (
-          <Badge variant={statusVariantMap[item.status] ?? "outline"}>
-            {formatStatus(item.status)}
-          </Badge>
-        )}
-      </div>
-      <p className="text-sm text-muted-foreground">
-        {[item.discipline, item.drawingType].filter(Boolean).join(" · ") || "-"}
-      </p>
-      {item.areaName && (
-        <p className="mt-1 text-xs text-muted-foreground">
-          Area: {item.areaName}
-        </p>
-      )}
-    </button>
-  );
+  return <DrawingGridCard item={item} onClick={onClick} />;
 }
 
 export function renderDrawingList(

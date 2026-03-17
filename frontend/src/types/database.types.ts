@@ -1,3 +1,4 @@
+Using workdir /Users/meganharrison/Documents/alleato-pm
 export type Json =
   | string
   | number
@@ -447,6 +448,159 @@ export type Database = {
           },
         ]
       }
+      acumatica_change_orders: {
+        Row: {
+          acumatica_sync_at: string | null
+          change_date: string | null
+          class: string | null
+          commitments_change_total: number | null
+          company_id: string | null
+          completion_date: string | null
+          contract_time_change_days: number | null
+          cost_budget_change_total: number | null
+          created_at: string
+          customer_id: string | null
+          description: string | null
+          detailed_description: string | null
+          external_key: string
+          external_ref_nbr: string | null
+          gross_margin: number | null
+          gross_margin_amount: number | null
+          hold: boolean | null
+          id: number
+          last_modified_at: string | null
+          original_co_ref_nbr: string | null
+          project_code: string | null
+          project_id: number | null
+          raw_payload: Json | null
+          reference_nbr: string
+          revenue_budget_change_total: number | null
+          revenue_change_nbr: string | null
+          reverse_status: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          acumatica_sync_at?: string | null
+          change_date?: string | null
+          class?: string | null
+          commitments_change_total?: number | null
+          company_id?: string | null
+          completion_date?: string | null
+          contract_time_change_days?: number | null
+          cost_budget_change_total?: number | null
+          created_at?: string
+          customer_id?: string | null
+          description?: string | null
+          detailed_description?: string | null
+          external_key: string
+          external_ref_nbr?: string | null
+          gross_margin?: number | null
+          gross_margin_amount?: number | null
+          hold?: boolean | null
+          id?: number
+          last_modified_at?: string | null
+          original_co_ref_nbr?: string | null
+          project_code?: string | null
+          project_id?: number | null
+          raw_payload?: Json | null
+          reference_nbr: string
+          revenue_budget_change_total?: number | null
+          revenue_change_nbr?: string | null
+          reverse_status?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          acumatica_sync_at?: string | null
+          change_date?: string | null
+          class?: string | null
+          commitments_change_total?: number | null
+          company_id?: string | null
+          completion_date?: string | null
+          contract_time_change_days?: number | null
+          cost_budget_change_total?: number | null
+          created_at?: string
+          customer_id?: string | null
+          description?: string | null
+          detailed_description?: string | null
+          external_key?: string
+          external_ref_nbr?: string | null
+          gross_margin?: number | null
+          gross_margin_amount?: number | null
+          hold?: boolean | null
+          id?: number
+          last_modified_at?: string | null
+          original_co_ref_nbr?: string | null
+          project_code?: string | null
+          project_id?: number | null
+          raw_payload?: Json | null
+          reference_nbr?: string
+          revenue_budget_change_total?: number | null
+          revenue_change_nbr?: string | null
+          reverse_status?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acumatica_change_orders_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_change_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "acumatica_change_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_change_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_change_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "acumatica_change_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_change_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_change_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       acumatica_checks: {
         Row: {
           acumatica_sync_at: string | null
@@ -512,6 +666,144 @@ export type Database = {
           vendor_name?: string | null
         }
         Relationships: []
+      }
+      acumatica_payments: {
+        Row: {
+          acumatica_sync_at: string | null
+          application_date: string | null
+          available_balance: number | null
+          cash_account: string | null
+          company_id: string | null
+          created_at: string
+          currency_id: string | null
+          customer_id: string | null
+          description: string | null
+          document_type: string | null
+          external_key: string
+          external_ref: string | null
+          hold: boolean | null
+          id: number
+          last_modified_at: string | null
+          payment_amount: number | null
+          payment_method: string | null
+          payment_ref: string | null
+          project_code: string | null
+          project_id: number | null
+          raw_payload: Json | null
+          reference_nbr: string
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          acumatica_sync_at?: string | null
+          application_date?: string | null
+          available_balance?: number | null
+          cash_account?: string | null
+          company_id?: string | null
+          created_at?: string
+          currency_id?: string | null
+          customer_id?: string | null
+          description?: string | null
+          document_type?: string | null
+          external_key: string
+          external_ref?: string | null
+          hold?: boolean | null
+          id?: number
+          last_modified_at?: string | null
+          payment_amount?: number | null
+          payment_method?: string | null
+          payment_ref?: string | null
+          project_code?: string | null
+          project_id?: number | null
+          raw_payload?: Json | null
+          reference_nbr: string
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          acumatica_sync_at?: string | null
+          application_date?: string | null
+          available_balance?: number | null
+          cash_account?: string | null
+          company_id?: string | null
+          created_at?: string
+          currency_id?: string | null
+          customer_id?: string | null
+          description?: string | null
+          document_type?: string | null
+          external_key?: string
+          external_ref?: string | null
+          hold?: boolean | null
+          id?: number
+          last_modified_at?: string | null
+          payment_amount?: number | null
+          payment_method?: string | null
+          payment_ref?: string | null
+          project_code?: string | null
+          project_id?: number | null
+          raw_payload?: Json | null
+          reference_nbr?: string
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acumatica_payments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_payments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "acumatica_payments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_payments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_payments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "acumatica_payments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_payments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_payments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       acumatica_project_budgets: {
         Row: {
@@ -680,6 +972,323 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      acumatica_purchase_orders: {
+        Row: {
+          acumatica_sync_at: string | null
+          company_id: string | null
+          control_total: number | null
+          created_at: string
+          currency_id: string | null
+          date: string | null
+          description: string | null
+          external_key: string
+          hold: boolean | null
+          id: number
+          last_modified_at: string | null
+          line_total: number | null
+          order_nbr: string
+          order_total: number | null
+          order_type: string | null
+          project_code: string | null
+          project_id: number | null
+          promised_on: string | null
+          raw_payload: Json | null
+          status: string | null
+          tax_total: number | null
+          terms: string | null
+          updated_at: string
+          vendor_acumatica_id: string | null
+          vendor_id: string | null
+          vendor_ref: string | null
+          vendor_uuid: string | null
+        }
+        Insert: {
+          acumatica_sync_at?: string | null
+          company_id?: string | null
+          control_total?: number | null
+          created_at?: string
+          currency_id?: string | null
+          date?: string | null
+          description?: string | null
+          external_key: string
+          hold?: boolean | null
+          id?: number
+          last_modified_at?: string | null
+          line_total?: number | null
+          order_nbr: string
+          order_total?: number | null
+          order_type?: string | null
+          project_code?: string | null
+          project_id?: number | null
+          promised_on?: string | null
+          raw_payload?: Json | null
+          status?: string | null
+          tax_total?: number | null
+          terms?: string | null
+          updated_at?: string
+          vendor_acumatica_id?: string | null
+          vendor_id?: string | null
+          vendor_ref?: string | null
+          vendor_uuid?: string | null
+        }
+        Update: {
+          acumatica_sync_at?: string | null
+          company_id?: string | null
+          control_total?: number | null
+          created_at?: string
+          currency_id?: string | null
+          date?: string | null
+          description?: string | null
+          external_key?: string
+          hold?: boolean | null
+          id?: number
+          last_modified_at?: string | null
+          line_total?: number | null
+          order_nbr?: string
+          order_total?: number | null
+          order_type?: string | null
+          project_code?: string | null
+          project_id?: number | null
+          promised_on?: string | null
+          raw_payload?: Json | null
+          status?: string | null
+          tax_total?: number | null
+          terms?: string | null
+          updated_at?: string
+          vendor_acumatica_id?: string | null
+          vendor_id?: string | null
+          vendor_ref?: string | null
+          vendor_uuid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acumatica_purchase_orders_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_purchase_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "acumatica_purchase_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_purchase_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_purchase_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "acumatica_purchase_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_purchase_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_purchase_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_purchase_orders_vendor_uuid_fkey"
+            columns: ["vendor_uuid"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      acumatica_subcontracts: {
+        Row: {
+          acumatica_sync_at: string | null
+          apply_retainage: boolean | null
+          company_id: string | null
+          control_total: number | null
+          created_at: string
+          currency_id: string | null
+          date: string | null
+          description: string | null
+          discount_total: number | null
+          external_key: string
+          id: number
+          last_modified_at: string | null
+          line_total: number | null
+          owner: string | null
+          project_code: string | null
+          project_id: number | null
+          raw_payload: Json | null
+          retainage_pct: number | null
+          retainage_total: number | null
+          start_date: string | null
+          status: string | null
+          subcontract_nbr: string
+          subcontract_total: number | null
+          tax_total: number | null
+          terms: string | null
+          updated_at: string
+          vendor_acumatica_id: string | null
+          vendor_id: string | null
+          vendor_ref: string | null
+          vendor_uuid: string | null
+        }
+        Insert: {
+          acumatica_sync_at?: string | null
+          apply_retainage?: boolean | null
+          company_id?: string | null
+          control_total?: number | null
+          created_at?: string
+          currency_id?: string | null
+          date?: string | null
+          description?: string | null
+          discount_total?: number | null
+          external_key: string
+          id?: number
+          last_modified_at?: string | null
+          line_total?: number | null
+          owner?: string | null
+          project_code?: string | null
+          project_id?: number | null
+          raw_payload?: Json | null
+          retainage_pct?: number | null
+          retainage_total?: number | null
+          start_date?: string | null
+          status?: string | null
+          subcontract_nbr: string
+          subcontract_total?: number | null
+          tax_total?: number | null
+          terms?: string | null
+          updated_at?: string
+          vendor_acumatica_id?: string | null
+          vendor_id?: string | null
+          vendor_ref?: string | null
+          vendor_uuid?: string | null
+        }
+        Update: {
+          acumatica_sync_at?: string | null
+          apply_retainage?: boolean | null
+          company_id?: string | null
+          control_total?: number | null
+          created_at?: string
+          currency_id?: string | null
+          date?: string | null
+          description?: string | null
+          discount_total?: number | null
+          external_key?: string
+          id?: number
+          last_modified_at?: string | null
+          line_total?: number | null
+          owner?: string | null
+          project_code?: string | null
+          project_id?: number | null
+          raw_payload?: Json | null
+          retainage_pct?: number | null
+          retainage_total?: number | null
+          start_date?: string | null
+          status?: string | null
+          subcontract_nbr?: string
+          subcontract_total?: number | null
+          tax_total?: number | null
+          terms?: string | null
+          updated_at?: string
+          vendor_acumatica_id?: string | null
+          vendor_id?: string | null
+          vendor_ref?: string | null
+          vendor_uuid?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acumatica_subcontracts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_subcontracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "acumatica_subcontracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_subcontracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_subcontracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "acumatica_subcontracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_subcontracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_subcontracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_subcontracts_vendor_uuid_fkey"
+            columns: ["vendor_uuid"]
+            isOneToOne: false
+            referencedRelation: "vendors"
             referencedColumns: ["id"]
           },
         ]
@@ -4401,44 +5010,6 @@ export type Database = {
           },
         ]
       }
-      clients: {
-        Row: {
-          company_id: string | null
-          company_name: string | null
-          created_at: string
-          customer_id: string | null
-          id: number
-          name: string | null
-          status: string | null
-        }
-        Insert: {
-          company_id?: string | null
-          company_name?: string | null
-          created_at?: string
-          customer_id?: string | null
-          id?: number
-          name?: string | null
-          status?: string | null
-        }
-        Update: {
-          company_id?: string | null
-          company_name?: string | null
-          created_at?: string
-          customer_id?: string | null
-          id?: number
-          name?: string | null
-          status?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "clients_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       code_examples: {
         Row: {
           chunk_number: number
@@ -4882,6 +5453,7 @@ export type Database = {
       }
       contract_change_orders: {
         Row: {
+          acumatica_external_key: string | null
           amount: number
           approved_by: string | null
           approved_date: string | null
@@ -4897,6 +5469,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          acumatica_external_key?: string | null
           amount: number
           approved_by?: string | null
           approved_date?: string | null
@@ -4912,6 +5485,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          acumatica_external_key?: string | null
           amount?: number
           approved_by?: string | null
           approved_date?: string | null
@@ -5251,12 +5825,12 @@ export type Database = {
           actual_completion_date: string | null
           apply_vertical_markup: boolean | null
           approved_change_orders: number | null
-          architect_engineer_id: number | null
+          architect_engineer_id: string | null
           attachment_count: number | null
-          client_id: number
+          client_id: string | null
           contract_number: string | null
           contract_termination_date: string | null
-          contractor_id: number | null
+          contractor_id: string | null
           created_at: string
           default_retainage: number | null
           description: string | null
@@ -5270,7 +5844,7 @@ export type Database = {
           invoiced_amount: number | null
           notes: string | null
           original_contract_amount: number | null
-          owner_client_id: number | null
+          owner_client_id: string | null
           payments_received: number | null
           pending_change_orders: number | null
           percent_paid: number | null
@@ -5289,12 +5863,12 @@ export type Database = {
           actual_completion_date?: string | null
           apply_vertical_markup?: boolean | null
           approved_change_orders?: number | null
-          architect_engineer_id?: number | null
+          architect_engineer_id?: string | null
           attachment_count?: number | null
-          client_id: number
+          client_id?: string | null
           contract_number?: string | null
           contract_termination_date?: string | null
-          contractor_id?: number | null
+          contractor_id?: string | null
           created_at?: string
           default_retainage?: number | null
           description?: string | null
@@ -5308,7 +5882,7 @@ export type Database = {
           invoiced_amount?: number | null
           notes?: string | null
           original_contract_amount?: number | null
-          owner_client_id?: number | null
+          owner_client_id?: string | null
           payments_received?: number | null
           pending_change_orders?: number | null
           percent_paid?: number | null
@@ -5327,12 +5901,12 @@ export type Database = {
           actual_completion_date?: string | null
           apply_vertical_markup?: boolean | null
           approved_change_orders?: number | null
-          architect_engineer_id?: number | null
+          architect_engineer_id?: string | null
           attachment_count?: number | null
-          client_id?: number
+          client_id?: string | null
           contract_number?: string | null
           contract_termination_date?: string | null
-          contractor_id?: number | null
+          contractor_id?: string | null
           created_at?: string
           default_retainage?: number | null
           description?: string | null
@@ -5346,7 +5920,7 @@ export type Database = {
           invoiced_amount?: number | null
           notes?: string | null
           original_contract_amount?: number | null
-          owner_client_id?: number | null
+          owner_client_id?: string | null
           payments_received?: number | null
           pending_change_orders?: number | null
           percent_paid?: number | null
@@ -5366,28 +5940,28 @@ export type Database = {
             foreignKeyName: "contracts_architect_engineer_id_fkey"
             columns: ["architect_engineer_id"]
             isOneToOne: false
-            referencedRelation: "clients"
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "contracts_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
-            referencedRelation: "clients"
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "contracts_contractor_id_fkey"
             columns: ["contractor_id"]
             isOneToOne: false
-            referencedRelation: "clients"
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
             foreignKeyName: "contracts_owner_client_id_fkey"
             columns: ["owner_client_id"]
             isOneToOne: false
-            referencedRelation: "clients"
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
@@ -5973,7 +6547,9 @@ export type Database = {
           primary_keys: string | null
           rls_enabled: boolean | null
           row_count: number | null
+          schema: string | null
           schema_name: string
+          status: string | null
           table_comment: string | null
           table_name: string
         }
@@ -5983,7 +6559,9 @@ export type Database = {
           primary_keys?: string | null
           rls_enabled?: boolean | null
           row_count?: number | null
+          schema?: string | null
           schema_name: string
+          status?: string | null
           table_comment?: string | null
           table_name: string
         }
@@ -5993,7 +6571,9 @@ export type Database = {
           primary_keys?: string | null
           rls_enabled?: boolean | null
           row_count?: number | null
+          schema?: string | null
           schema_name?: string
+          status?: string | null
           table_comment?: string | null
           table_name?: string
         }
@@ -6185,6 +6765,13 @@ export type Database = {
             columns: ["direct_cost_id"]
             isOneToOne: false
             referencedRelation: "direct_costs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "direct_cost_line_items_direct_cost_id_fkey"
+            columns: ["direct_cost_id"]
+            isOneToOne: false
+            referencedRelation: "direct_costs_with_project"
             referencedColumns: ["id"]
           },
         ]
@@ -9661,13 +10248,19 @@ export type Database = {
       meeting_segments: {
         Row: {
           created_at: string
+          data_class: string[] | null
           decisions: Json
           end_index: number
+          enriched_at: string | null
+          enrichment_model: string | null
           id: string
+          mentioned_people: string[] | null
           metadata_id: string
           project_ids: number[] | null
+          project_impact: string[] | null
           risks: Json
           segment_index: number
+          sentiment: string | null
           start_index: number
           summary: string | null
           summary_embedding: string | null
@@ -9677,13 +10270,19 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          data_class?: string[] | null
           decisions?: Json
           end_index: number
+          enriched_at?: string | null
+          enrichment_model?: string | null
           id?: string
+          mentioned_people?: string[] | null
           metadata_id: string
           project_ids?: number[] | null
+          project_impact?: string[] | null
           risks?: Json
           segment_index: number
+          sentiment?: string | null
           start_index: number
           summary?: string | null
           summary_embedding?: string | null
@@ -9693,13 +10292,19 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          data_class?: string[] | null
           decisions?: Json
           end_index?: number
+          enriched_at?: string | null
+          enrichment_model?: string | null
           id?: string
+          mentioned_people?: string[] | null
           metadata_id?: string
           project_ids?: number[] | null
+          project_impact?: string[] | null
           risks?: Json
           segment_index?: number
+          sentiment?: string | null
           start_index?: number
           summary?: string | null
           summary_embedding?: string | null
@@ -10513,6 +11118,7 @@ export type Database = {
           auth_user_id: string | null
           business_unit: string | null
           city: string | null
+          company: string | null
           company_id: string | null
           country: string | null
           created_at: string | null
@@ -10539,6 +11145,7 @@ export type Database = {
           auth_user_id?: string | null
           business_unit?: string | null
           city?: string | null
+          company?: string | null
           company_id?: string | null
           country?: string | null
           created_at?: string | null
@@ -10565,6 +11172,7 @@ export type Database = {
           auth_user_id?: string | null
           business_unit?: string | null
           city?: string | null
+          company?: string | null
           company_id?: string | null
           country?: string | null
           created_at?: string | null
@@ -10645,36 +11253,42 @@ export type Database = {
       }
       prime_contract_change_orders: {
         Row: {
+          acumatica_external_key: string | null
           approved_at: string | null
-          contract_id: number
+          contract_id: number | null
           created_at: string | null
           executed: boolean | null
           id: number
           pcco_number: string | null
+          project_id: number | null
           status: string | null
           submitted_at: string | null
           title: string
           total_amount: number | null
         }
         Insert: {
+          acumatica_external_key?: string | null
           approved_at?: string | null
-          contract_id: number
+          contract_id?: number | null
           created_at?: string | null
           executed?: boolean | null
           id?: number
           pcco_number?: string | null
+          project_id?: number | null
           status?: string | null
           submitted_at?: string | null
           title: string
           total_amount?: number | null
         }
         Update: {
+          acumatica_external_key?: string | null
           approved_at?: string | null
-          contract_id?: number
+          contract_id?: number | null
           created_at?: string | null
           executed?: boolean | null
           id?: number
           pcco_number?: string | null
+          project_id?: number | null
           status?: string | null
           submitted_at?: string | null
           title?: string
@@ -10700,6 +11314,55 @@ export type Database = {
             columns: ["contract_id"]
             isOneToOne: false
             referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contract_change_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "prime_contract_change_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contract_change_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contract_change_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "prime_contract_change_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contract_change_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contract_change_orders_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
         ]
@@ -11101,6 +11764,20 @@ export type Database = {
             referencedRelation: "contracts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "prime_contract_sovs_cost_code_fkey"
+            columns: ["cost_code"]
+            isOneToOne: false
+            referencedRelation: "cost_codes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contract_sovs_cost_code_fkey"
+            columns: ["cost_code"]
+            isOneToOne: false
+            referencedRelation: "cost_codes_with_division_title"
+            referencedColumns: ["id"]
+          },
         ]
       }
       prime_contracts: {
@@ -11108,7 +11785,7 @@ export type Database = {
           actual_completion_date: string | null
           architect_engineer_id: string | null
           billing_schedule: string | null
-          client_id: number | null
+          client_id: string | null
           contract_company_id: string | null
           contract_number: string
           contract_termination_date: string | null
@@ -11140,7 +11817,7 @@ export type Database = {
           actual_completion_date?: string | null
           architect_engineer_id?: string | null
           billing_schedule?: string | null
-          client_id?: number | null
+          client_id?: string | null
           contract_company_id?: string | null
           contract_number: string
           contract_termination_date?: string | null
@@ -11172,7 +11849,7 @@ export type Database = {
           actual_completion_date?: string | null
           architect_engineer_id?: string | null
           billing_schedule?: string | null
-          client_id?: number | null
+          client_id?: string | null
           contract_company_id?: string | null
           contract_number?: string
           contract_termination_date?: string | null
@@ -11209,10 +11886,10 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "prime_contracts_client_id_fkey"
+            foreignKeyName: "prime_contracts_client_company_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
-            referencedRelation: "clients"
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
@@ -12603,6 +13280,104 @@ export type Database = {
           },
         ]
       }
+      project_risk_snapshots: {
+        Row: {
+          aging_rfis: number | null
+          created_at: string
+          critical_risks: number | null
+          id: string
+          open_issues: number | null
+          open_risks: number | null
+          overdue_tasks: number | null
+          project_id: number
+          risk_narrative: string | null
+          risk_score: number | null
+          snapshot_date: string
+          trend: string | null
+          unresolved_insights: number | null
+        }
+        Insert: {
+          aging_rfis?: number | null
+          created_at?: string
+          critical_risks?: number | null
+          id?: string
+          open_issues?: number | null
+          open_risks?: number | null
+          overdue_tasks?: number | null
+          project_id: number
+          risk_narrative?: string | null
+          risk_score?: number | null
+          snapshot_date?: string
+          trend?: string | null
+          unresolved_insights?: number | null
+        }
+        Update: {
+          aging_rfis?: number | null
+          created_at?: string
+          critical_risks?: number | null
+          id?: string
+          open_issues?: number | null
+          open_risks?: number | null
+          overdue_tasks?: number | null
+          project_id?: number
+          risk_narrative?: string | null
+          risk_score?: number | null
+          snapshot_date?: string
+          trend?: string | null
+          unresolved_insights?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_risk_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_risk_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_risk_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_risk_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_risk_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_risk_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_risk_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_role_members: {
         Row: {
           assigned_at: string | null
@@ -12729,6 +13504,97 @@ export type Database = {
           },
         ]
       }
+      project_vendors: {
+        Row: {
+          added_at: string
+          added_by: string | null
+          id: string
+          notes: string | null
+          project_id: number
+          vendor_id: string
+        }
+        Insert: {
+          added_at?: string
+          added_by?: string | null
+          id?: string
+          notes?: string | null
+          project_id: number
+          vendor_id: string
+        }
+        Update: {
+          added_at?: string
+          added_by?: string | null
+          id?: string
+          notes?: string | null
+          project_id?: number
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_vendors_added_by_fkey"
+            columns: ["added_by"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_vendors_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_vendors_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_vendors_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_vendors_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_vendors_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_vendors_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_vendors_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_vendors_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects: {
         Row: {
           access: string | null
@@ -12745,7 +13611,7 @@ export type Database = {
           budget_used: number | null
           category: string | null
           client: string | null
-          client_id: number | null
+          client_id: string | null
           company_id: string | null
           completion_percentage: number | null
           created_at: string
@@ -12795,7 +13661,7 @@ export type Database = {
           budget_used?: number | null
           category?: string | null
           client?: string | null
-          client_id?: number | null
+          client_id?: string | null
           company_id?: string | null
           completion_percentage?: number | null
           created_at?: string
@@ -12845,7 +13711,7 @@ export type Database = {
           budget_used?: number | null
           category?: string | null
           client?: string | null
-          client_id?: number | null
+          client_id?: string | null
           company_id?: string | null
           completion_percentage?: number | null
           created_at?: string
@@ -12882,10 +13748,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "projects_client_id_fkey"
+            foreignKeyName: "projects_client_company_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
-            referencedRelation: "clients"
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
@@ -12938,7 +13804,7 @@ export type Database = {
           ai_score: number | null
           ai_summary: string | null
           assigned_to: string | null
-          client_id: number | null
+          client_id: string | null
           company_name: string
           contact_email: string | null
           contact_name: string | null
@@ -12966,7 +13832,7 @@ export type Database = {
           ai_score?: number | null
           ai_summary?: string | null
           assigned_to?: string | null
-          client_id?: number | null
+          client_id?: string | null
           company_name: string
           contact_email?: string | null
           contact_name?: string | null
@@ -12994,7 +13860,7 @@ export type Database = {
           ai_score?: number | null
           ai_summary?: string | null
           assigned_to?: string | null
-          client_id?: number | null
+          client_id?: string | null
           company_name?: string
           contact_email?: string | null
           contact_name?: string | null
@@ -13020,10 +13886,17 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "prospects_client_company_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "prospects_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
-            referencedRelation: "clients"
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
@@ -13219,6 +14092,7 @@ export type Database = {
       }
       purchase_order_sov_items: {
         Row: {
+          acumatica_line_nbr: number | null
           amount: number
           billed_to_date: number
           budget_code: string | null
@@ -13235,6 +14109,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          acumatica_line_nbr?: number | null
           amount?: number
           billed_to_date?: number
           budget_code?: string | null
@@ -13251,6 +14126,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          acumatica_line_nbr?: number | null
           amount?: number
           billed_to_date?: number
           budget_code?: string | null
@@ -13286,6 +14162,7 @@ export type Database = {
       purchase_orders: {
         Row: {
           accounting_method: string | null
+          acumatica_external_key: string | null
           allow_non_admin_view_sov_items: boolean | null
           assigned_to: string | null
           bill_to: string | null
@@ -13315,6 +14192,7 @@ export type Database = {
         }
         Insert: {
           accounting_method?: string | null
+          acumatica_external_key?: string | null
           allow_non_admin_view_sov_items?: boolean | null
           assigned_to?: string | null
           bill_to?: string | null
@@ -13344,6 +14222,7 @@ export type Database = {
         }
         Update: {
           accounting_method?: string | null
+          acumatica_external_key?: string | null
           allow_non_admin_view_sov_items?: boolean | null
           assigned_to?: string | null
           bill_to?: string | null
@@ -15008,6 +15887,7 @@ export type Database = {
       }
       subcontract_sov_items: {
         Row: {
+          acumatica_line_nbr: number | null
           amount: number | null
           billed_to_date: number | null
           budget_code: string | null
@@ -15021,6 +15901,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          acumatica_line_nbr?: number | null
           amount?: number | null
           billed_to_date?: number | null
           budget_code?: string | null
@@ -15034,6 +15915,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          acumatica_line_nbr?: number | null
           amount?: number | null
           billed_to_date?: number | null
           budget_code?: string | null
@@ -15450,6 +16332,7 @@ export type Database = {
       subcontracts: {
         Row: {
           actual_completion_date: string | null
+          acumatica_external_key: string | null
           allow_non_admin_view_sov_items: boolean | null
           contract_company_id: string | null
           contract_date: string | null
@@ -15468,6 +16351,7 @@ export type Database = {
           is_private: boolean | null
           issued_on_date: string | null
           non_admin_user_ids: string[] | null
+          project: string | null
           project_id: number
           signed_contract_received_date: string | null
           start_date: string | null
@@ -15477,6 +16361,7 @@ export type Database = {
         }
         Insert: {
           actual_completion_date?: string | null
+          acumatica_external_key?: string | null
           allow_non_admin_view_sov_items?: boolean | null
           contract_company_id?: string | null
           contract_date?: string | null
@@ -15495,6 +16380,7 @@ export type Database = {
           is_private?: boolean | null
           issued_on_date?: string | null
           non_admin_user_ids?: string[] | null
+          project?: string | null
           project_id: number
           signed_contract_received_date?: string | null
           start_date?: string | null
@@ -15504,6 +16390,7 @@ export type Database = {
         }
         Update: {
           actual_completion_date?: string | null
+          acumatica_external_key?: string | null
           allow_non_admin_view_sov_items?: boolean | null
           contract_company_id?: string | null
           contract_date?: string | null
@@ -15522,6 +16409,7 @@ export type Database = {
           is_private?: boolean | null
           issued_on_date?: string | null
           non_admin_user_ids?: string[] | null
+          project?: string | null
           project_id?: number
           signed_contract_received_date?: string | null
           start_date?: string | null
@@ -15534,7 +16422,7 @@ export type Database = {
             foreignKeyName: "subcontracts_contract_company_id_fkey"
             columns: ["contract_company_id"]
             isOneToOne: false
-            referencedRelation: "companies"
+            referencedRelation: "vendors"
             referencedColumns: ["id"]
           },
           {
@@ -17851,37 +18739,7 @@ export type Database = {
       contract_financial_summary: {
         Row: {
           approved_change_orders: number | null
-          client_id: number | null
-          contract_id: number | null
-          contract_number: string | null
-          draft_change_orders: number | null
-          erp_status: string | null
-          executed: boolean | null
-          invoiced_amount: number | null
-          original_contract_amount: number | null
-          payments_received: number | null
-          pending_change_orders: number | null
-          percent_paid: number | null
-          private: boolean | null
-          remaining_balance: number | null
-          revised_contract_amount: number | null
-          status: string | null
-          title: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "contracts_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "clients"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      contract_financial_summary_mv: {
-        Row: {
-          approved_change_orders: number | null
-          client_id: number | null
+          client_id: string | null
           contract_id: number | null
           contract_number: string | null
           draft_change_orders: number | null
@@ -17904,7 +18762,87 @@ export type Database = {
             foreignKeyName: "contracts_client_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
-            referencedRelation: "clients"
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "contracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "contracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contracts_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contract_financial_summary_mv: {
+        Row: {
+          approved_change_orders: number | null
+          client_id: string | null
+          contract_id: number | null
+          contract_number: string | null
+          draft_change_orders: number | null
+          erp_status: string | null
+          executed: boolean | null
+          invoiced_amount: number | null
+          original_contract_amount: number | null
+          payments_received: number | null
+          pending_change_orders: number | null
+          percent_paid: number | null
+          private: boolean | null
+          project_id: number | null
+          remaining_balance: number | null
+          revised_contract_amount: number | null
+          status: string | null
+          title: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
@@ -17984,6 +18922,99 @@ export type Database = {
             columns: ["division_id"]
             isOneToOne: false
             referencedRelation: "cost_code_divisions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      direct_costs_with_project: {
+        Row: {
+          acumatica_doc_type: string | null
+          acumatica_document_key: string | null
+          acumatica_financial_period: string | null
+          acumatica_ref_nbr: string | null
+          acumatica_sync_at: string | null
+          cost_type: string | null
+          created_at: string | null
+          created_by_user_id: string | null
+          date: string | null
+          description: string | null
+          employee_id: string | null
+          id: string | null
+          invoice_number: string | null
+          is_deleted: boolean | null
+          paid_date: string | null
+          project_id: number | null
+          project_name: string | null
+          received_date: string | null
+          status: string | null
+          terms: string | null
+          total_amount: number | null
+          updated_at: string | null
+          updated_by_user_id: string | null
+          vendor_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "direct_costs_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "direct_costs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "direct_costs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "direct_costs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "direct_costs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "direct_costs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "direct_costs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "direct_costs_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "direct_costs_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
             referencedColumns: ["id"]
           },
         ]
@@ -18452,7 +19483,7 @@ export type Database = {
       prime_contract_financial_summary: {
         Row: {
           approved_change_orders: number | null
-          client_id: number | null
+          client_id: string | null
           contract_id: string | null
           contract_number: string | null
           draft_change_orders: number | null
@@ -18472,10 +19503,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "prime_contracts_client_id_fkey"
+            foreignKeyName: "prime_contracts_client_company_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
-            referencedRelation: "clients"
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
           {
@@ -18724,6 +19755,137 @@ export type Database = {
         }
         Relationships: []
       }
+      project_risk_current: {
+        Row: {
+          aging_rfis: number | null
+          created_at: string | null
+          critical_risks: number | null
+          id: string | null
+          open_issues: number | null
+          open_risks: number | null
+          overdue_tasks: number | null
+          project_id: number | null
+          project_name: string | null
+          risk_narrative: string | null
+          risk_score: number | null
+          snapshot_date: string | null
+          trend: string | null
+          unresolved_insights: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_risk_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_risk_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_risk_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_risk_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_risk_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_risk_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_risk_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_risk_deteriorating: {
+        Row: {
+          deteriorating_days: number | null
+          project_id: number | null
+          project_name: string | null
+          risk_narrative: string | null
+          risk_score: number | null
+          snapshot_date: string | null
+          trend: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_risk_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_risk_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_risk_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_risk_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_risk_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_risk_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_risk_snapshots_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       projects_with_counts: {
         Row: {
           access: string | null
@@ -18739,7 +19901,7 @@ export type Database = {
           budget_used: number | null
           category: string | null
           client: string | null
-          client_id: number | null
+          client_id: string | null
           completion_percentage: number | null
           created_at: string | null
           current_phase: string | null
@@ -18775,10 +19937,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "projects_client_id_fkey"
+            foreignKeyName: "projects_client_company_id_fkey"
             columns: ["client_id"]
             isOneToOne: false
-            referencedRelation: "clients"
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -18956,7 +20118,7 @@ export type Database = {
             foreignKeyName: "subcontracts_contract_company_id_fkey"
             columns: ["contract_company_id"]
             isOneToOne: false
-            referencedRelation: "companies"
+            referencedRelation: "vendors"
             referencedColumns: ["id"]
           },
           {

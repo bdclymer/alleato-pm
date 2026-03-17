@@ -2,6 +2,7 @@ import { Liveblocks } from "@liveblocks/node";
 import { NextRequest, NextResponse } from "next/server";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { buildLiveblocksUserInfo } from "@/lib/liveblocks/user-info";
 
 const liveblocks = new Liveblocks({
   secret: process.env.LIVEBLOCKS_SECRET_KEY!,
@@ -14,8 +15,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  // Fetch the user profile for display name
-  let name = user.email ?? "Unknown";
+  let fullName = user.user_metadata?.full_name ?? user.email ?? "Unknown";
+  let email = user.email ?? "";
   try {
     const supabase = createServiceClient();
     const { data: profile } = await supabase
@@ -25,15 +26,24 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (profile?.full_name) {
-      name = profile.full_name;
+      fullName = profile.full_name;
+    }
+
+    if (profile?.email) {
+      email = profile.email;
     }
   } catch {
-    // Continue with email as fallback name
+    // Continue with auth metadata fallback
   }
 
-  // Use prepareSession + allow() so the user can create/join any alleato: room
+  const userInfo = buildLiveblocksUserInfo({
+    email,
+    fullName,
+    id: user.id,
+  });
+
   const session = liveblocks.prepareSession(user.id, {
-    userInfo: { name },
+    userInfo,
   });
 
   // Grant full access to all alleato rooms (comments, threads, notifications)

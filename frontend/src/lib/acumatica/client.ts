@@ -33,6 +33,7 @@ import type {
   FlatProjectBudget,
   FlatProjectTask,
   FlatPurchaseOrder,
+  FlatSubcontract,
   FlatVendor,
   ProjectBudgetSummary,
   RawBill,
@@ -46,6 +47,7 @@ import type {
   RawProjectBudget,
   RawProjectTask,
   RawPurchaseOrder,
+  RawSubcontract,
   RawVendor,
   VendorSpendSummary,
 } from "./types";
@@ -362,6 +364,15 @@ class AcumaticaClient {
       "PurchaseOrder",
       { $top: 200, ...options },
     );
+  }
+
+  async getSubcontracts(
+    options: AcuQueryOptions = {},
+  ): Promise<FlatSubcontract[]> {
+    return this.fetchEntity<RawSubcontract, FlatSubcontract>("Subcontract", {
+      $top: 200,
+      ...options,
+    });
   }
 
   // -----------------------------------------------------------------------

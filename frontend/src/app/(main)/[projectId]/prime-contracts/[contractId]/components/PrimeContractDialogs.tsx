@@ -28,6 +28,7 @@ interface PrimeContractDialogsProps {
   budgetCodes: BudgetCode[];
   budgetCodesLoading: boolean;
   setShowCreateBudgetCodeModal: Dispatch<SetStateAction<boolean>>;
+  onRequestCreateBudgetCode: () => void;
   showCreateBudgetCodeModal: boolean;
   projectId: string;
   handleBudgetCodeCreated: (budgetCodeId: string) => Promise<void>;
@@ -62,6 +63,7 @@ export function PrimeContractDialogs(props: PrimeContractDialogsProps) {
     budgetCodes,
     budgetCodesLoading,
     setShowCreateBudgetCodeModal,
+    onRequestCreateBudgetCode,
     showCreateBudgetCodeModal,
     projectId,
     handleBudgetCodeCreated,
@@ -109,7 +111,7 @@ export function PrimeContractDialogs(props: PrimeContractDialogsProps) {
                 }
                 budgetCodes={budgetCodes}
                 loading={budgetCodesLoading}
-                onCreateNew={() => setShowCreateBudgetCodeModal(true)}
+                onCreateNew={onRequestCreateBudgetCode}
                 placeholder="Select budget code..."
               />
             </div>

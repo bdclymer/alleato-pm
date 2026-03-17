@@ -107,9 +107,8 @@ export function PageHeader({
   void breadcrumbs;
   const { selectedProject, isLoading } = useProject();
 
-  // Show project name by default for non-executive variants when in project context
-  const shouldShowProjectName =
-    showProjectName || (variant !== "executive" && selectedProject);
+  // Only show project name when explicitly requested
+  const shouldShowProjectName = showProjectName && selectedProject;
 
   if (variant === "executive") {
     return (

@@ -74,9 +74,6 @@ export function BudgetFilters({
               >
                 <SlidersHorizontal className="h-4 w-4" />
                 <span className="hidden text-sm sm:inline">View</span>
-                <span className="hidden max-w-56 truncate text-xs text-muted-foreground xl:inline">
-                  {filterSummary}
-                </span>
               </Button>
             </DropdownMenuTrigger>
           </TooltipTrigger>

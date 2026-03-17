@@ -3,7 +3,7 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ChevronDown, Plus } from "lucide-react";
+import { ChevronDown, Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -23,6 +23,12 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { ExportDialog } from "@/components/commitments/ExportDialog";
 import {
   UnifiedTablePage,
@@ -69,6 +75,7 @@ export default function ProjectCommitmentsPage(): ReactElement {
   const [commitmentToDelete, setCommitmentToDelete] = React.useState<CommitmentListItem | null>(
     null,
   );
+  const [isSyncing, setIsSyncing] = React.useState(false);
 
   const initialStatus = searchParams.get("status") ?? "";
   const initialType = searchParams.get("type") ?? "";
@@ -144,6 +151,31 @@ export default function ProjectCommitmentsPage(): ReactElement {
 
   const deleteCommitment = useDeleteCommitment(projectId);
   const inlineUpdateMutation = useUpdateCommitmentInline();
+
+  // ─── Acumatica Sync ──────────────────────────────────────────────────────
+
+  const handleErpSync = React.useCallback(async () => {
+    setIsSyncing(true);
+    try {
+      const resp = await fetch("/api/sync/acumatica/commitments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ projectId: Number(projectId) }),
+      });
+      const data = await resp.json();
+      if (!resp.ok) throw new Error(data.error ?? "Sync failed");
+      const { result } = data;
+      toast.success(
+        `Commitments sync complete: ${result.created} created, ${result.updated} updated` +
+          (result.errors.length > 0 ? ` (${result.errors.length} errors)` : ""),
+      );
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Commitments sync failed");
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [projectId, router]);
 
   const commitments = response?.data ?? [];
 
@@ -429,6 +461,25 @@ export default function ProjectCommitmentsPage(): ReactElement {
           onBulkDelete: tableState.selectedIds.length > 0
             ? () => setBulkDeleteDialogOpen(true)
             : undefined,
+          customActions: (
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
+                    disabled={isSyncing}
+                    onClick={handleErpSync}
+                    aria-label="Sync from ERP"
+                  >
+                    <RefreshCw className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Sync commitments from Acumatica</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
+          ),
         }}
         data={{
           items: sortedCommitments,

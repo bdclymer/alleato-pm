@@ -149,7 +149,7 @@ function ToolsDropdown({
           type="button"
           variant="ghost"
           size="sm"
-          className="h-8 max-w-[200px] justify-between border border-border/40 px-2 hover:bg-muted focus-visible:ring-0 focus-visible:ring-offset-0"
+          className="h-8 w-64 justify-between border border-border/40 bg-surface-soft px-2 hover:bg-surface-soft focus-visible:ring-0 focus-visible:ring-offset-0"
         >
           <span className="truncate text-xs text-foreground/80 sm:text-sm">
             {activeToolName === "Projects" ? "Tools" : activeToolName}

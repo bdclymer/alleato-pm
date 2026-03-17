@@ -1,0 +1,520 @@
+"use client";
+
+import { useState } from "react";
+import { useRfis, useCreateRfi } from "@/hooks/use-rfis";
+import { usePunchItems, useCreatePunchItem } from "@/hooks/use-punch-items";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { cn } from "@/lib/utils";
+import type { DrawingMarkupPin, CreatePinInput } from "@/hooks/use-drawing-pins";
+import { FileText, Wrench, AlertTriangle, CheckSquare, Link2 } from "lucide-react";
+
+// ── Pin type config ─────────────────────────────────────────────────────────
+
+export const PIN_TYPE_CONFIG: Record<
+  DrawingMarkupPin["pin_type"],
+  { label: string; color: string; icon: React.ReactNode }
+> = {
+  rfi: { label: "RFI", color: "#3b82f6", icon: <FileText className="h-4 w-4" /> },
+  punch_item: { label: "Punch Item", color: "#f97316", icon: <Wrench className="h-4 w-4" /> },
+  coordination_issue: { label: "Coordination Issue", color: "#ef4444", icon: <AlertTriangle className="h-4 w-4" /> },
+  task: { label: "Task", color: "#8b5cf6", icon: <CheckSquare className="h-4 w-4" /> },
+  drawing: { label: "Drawing Link", color: "#22c55e", icon: <Link2 className="h-4 w-4" /> },
+  document: { label: "Document", color: "#64748b", icon: <FileText className="h-4 w-4" /> },
+  photo: { label: "Photo", color: "#eab308", icon: <FileText className="h-4 w-4" /> },
+};
+
+// ── Types ────────────────────────────────────────────────────────────────────
+
+interface LinkPinModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  projectId: string;
+  pendingPosition: { x: number; y: number; page: number } | null;
+  onConfirm: (input: CreatePinInput) => void;
+}
+
+// ── Main modal ───────────────────────────────────────────────────────────────
+
+export function LinkPinModal({
+  open,
+  onOpenChange,
+  projectId,
+  pendingPosition,
+  onConfirm,
+}: LinkPinModalProps) {
+  const [selectedType, setSelectedType] = useState<DrawingMarkupPin["pin_type"]>("rfi");
+
+  const handleConfirm = (input: CreatePinInput) => {
+    onConfirm(input);
+    onOpenChange(false);
+  };
+
+  const config = PIN_TYPE_CONFIG[selectedType];
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Add Link to Drawing</DialogTitle>
+        </DialogHeader>
+
+        {/* Type selector */}
+        <div>
+          <Label className="text-xs text-muted-foreground mb-2 block">Link type</Label>
+          <div className="grid grid-cols-4 gap-2">
+            {(["rfi", "punch_item", "coordination_issue", "task"] as const).map((type) => {
+              const c = PIN_TYPE_CONFIG[type];
+              return (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => setSelectedType(type)}
+                  className={cn(
+                    "flex flex-col items-center gap-1.5 p-2.5 rounded-lg border text-xs font-medium transition-all",
+                    selectedType === type
+                      ? "border-primary bg-primary/5 text-primary"
+                      : "border-border text-muted-foreground hover:border-border/80 hover:bg-muted/40"
+                  )}
+                >
+                  <div
+                    className="h-7 w-7 rounded-full flex items-center justify-center text-white"
+                    style={{ backgroundColor: c.color }}
+                  >
+                    {c.icon}
+                  </div>
+                  {c.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Type-specific content */}
+        {selectedType === "rfi" && (
+          <RfiContent
+            projectId={projectId}
+            position={pendingPosition}
+            color={config.color}
+            onConfirm={handleConfirm}
+            onCancel={() => onOpenChange(false)}
+          />
+        )}
+        {selectedType === "punch_item" && (
+          <PunchItemContent
+            projectId={projectId}
+            position={pendingPosition}
+            color={config.color}
+            onConfirm={handleConfirm}
+            onCancel={() => onOpenChange(false)}
+          />
+        )}
+        {selectedType === "coordination_issue" && (
+          <CoordinationIssueContent
+            position={pendingPosition}
+            color={config.color}
+            onConfirm={handleConfirm}
+            onCancel={() => onOpenChange(false)}
+          />
+        )}
+        {selectedType === "task" && (
+          <TaskContent
+            position={pendingPosition}
+            color={config.color}
+            onConfirm={handleConfirm}
+            onCancel={() => onOpenChange(false)}
+          />
+        )}
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ── RFI panel ────────────────────────────────────────────────────────────────
+
+function RfiContent({
+  projectId,
+  position,
+  color,
+  onConfirm,
+  onCancel,
+}: {
+  projectId: string;
+  position: { x: number; y: number; page: number } | null;
+  color: string;
+  onConfirm: (input: CreatePinInput) => void;
+  onCancel: () => void;
+}) {
+  const [mode, setMode] = useState<"link" | "create">("link");
+  const [subject, setSubject] = useState("");
+  const [question, setQuestion] = useState("");
+  const [selectedRfiId, setSelectedRfiId] = useState<string | null>(null);
+  const [selectedRfiLabel, setSelectedRfiLabel] = useState<string | null>(null);
+  const [selectedRfiNumber, setSelectedRfiNumber] = useState<string | null>(null);
+
+  const projectIdNum = Number(projectId);
+  const { data: rfis, isLoading } = useRfis(projectIdNum);
+  const createRfi = useCreateRfi(projectIdNum);
+
+  const handleLink = () => {
+    if (!position || !selectedRfiId) return;
+    onConfirm({
+      ...position,
+      pin_type: "rfi",
+      entity_id: selectedRfiId,
+      entity_label: selectedRfiLabel ?? undefined,
+      entity_number: selectedRfiNumber ?? undefined,
+      color,
+    });
+  };
+
+  const handleCreate = async () => {
+    if (!position || !subject.trim()) return;
+    const rfi = await createRfi.mutateAsync({
+      subject: subject.trim(),
+      question: question.trim(),
+      status: "draft",
+    });
+    onConfirm({
+      ...position,
+      pin_type: "rfi",
+      entity_id: rfi.id,
+      entity_label: rfi.subject,
+      entity_number: rfi.number ? `RFI-${rfi.number}` : undefined,
+      entity_status: "draft",
+      color,
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      <Tabs value={mode} onValueChange={(v) => setMode(v as "link" | "create")}>
+        <TabsList className="w-full">
+          <TabsTrigger value="link" className="flex-1">Link Existing RFI</TabsTrigger>
+          <TabsTrigger value="create" className="flex-1">Create New RFI</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="link" className="mt-3">
+          <Command className="border rounded-md">
+            <CommandInput placeholder="Search RFIs…" />
+            <CommandList className="max-h-48">
+              {isLoading ? (
+                <CommandEmpty>Loading…</CommandEmpty>
+              ) : (
+                <CommandGroup>
+                  {(rfis ?? []).map((rfi) => (
+                    <CommandItem
+                      key={rfi.id}
+                      value={`${rfi.number} ${rfi.subject}`}
+                      onSelect={() => {
+                        setSelectedRfiId(rfi.id);
+                        setSelectedRfiLabel(rfi.subject);
+                        setSelectedRfiNumber(rfi.number ? `RFI-${rfi.number}` : null);
+                      }}
+                      className={cn(
+                        "cursor-pointer",
+                        selectedRfiId === rfi.id && "bg-accent"
+                      )}
+                    >
+                      <span className="text-muted-foreground text-xs mr-2">
+                        #{rfi.number}
+                      </span>
+                      {rfi.subject}
+                    </CommandItem>
+                  ))}
+                  {!isLoading && (rfis ?? []).length === 0 && (
+                    <CommandEmpty>No RFIs found</CommandEmpty>
+                  )}
+                </CommandGroup>
+              )}
+            </CommandList>
+          </Command>
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={onCancel}>Cancel</Button>
+            <Button onClick={handleLink} disabled={!selectedRfiId}>Link RFI</Button>
+          </DialogFooter>
+        </TabsContent>
+
+        <TabsContent value="create" className="mt-3 space-y-3">
+          <div>
+            <Label htmlFor="rfi-subject">Subject *</Label>
+            <Input
+              id="rfi-subject"
+              value={subject}
+              onChange={(e) => setSubject(e.target.value)}
+              placeholder="What is this RFI about?"
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label htmlFor="rfi-question">Question</Label>
+            <Input
+              id="rfi-question"
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              placeholder="Describe the question or issue…"
+              className="mt-1"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Creates a Draft RFI. Open the RFI tool to complete and submit it.
+          </p>
+          <DialogFooter>
+            <Button variant="outline" onClick={onCancel}>Cancel</Button>
+            <Button
+              onClick={handleCreate}
+              disabled={!subject.trim() || createRfi.isPending}
+            >
+              {createRfi.isPending ? "Creating…" : "Create & Link"}
+            </Button>
+          </DialogFooter>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+// ── Punch Item panel ──────────────────────────────────────────────────────────
+
+function PunchItemContent({
+  projectId,
+  position,
+  color,
+  onConfirm,
+  onCancel,
+}: {
+  projectId: string;
+  position: { x: number; y: number; page: number } | null;
+  color: string;
+  onConfirm: (input: CreatePinInput) => void;
+  onCancel: () => void;
+}) {
+  const [mode, setMode] = useState<"link" | "create">("link");
+  const [title, setTitle] = useState("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedLabel, setSelectedLabel] = useState<string | null>(null);
+  const [selectedNumber, setSelectedNumber] = useState<string | null>(null);
+
+  const projectIdNum = Number(projectId);
+  const { data: items, isLoading } = usePunchItems(projectIdNum);
+  const createItem = useCreatePunchItem(projectIdNum);
+
+  const handleLink = () => {
+    if (!position || !selectedId) return;
+    onConfirm({
+      ...position,
+      pin_type: "punch_item",
+      entity_id: selectedId,
+      entity_label: selectedLabel ?? undefined,
+      entity_number: selectedNumber ?? undefined,
+      color,
+    });
+  };
+
+  const handleCreate = async () => {
+    if (!position || !title.trim()) return;
+    const item = await createItem.mutateAsync({ title: title.trim(), status: "open" });
+    onConfirm({
+      ...position,
+      pin_type: "punch_item",
+      entity_id: item.id,
+      entity_label: item.title,
+      entity_number: item.number ? `#${item.number}` : undefined,
+      entity_status: "open",
+      color,
+    });
+  };
+
+  return (
+    <div className="space-y-4">
+      <Tabs value={mode} onValueChange={(v) => setMode(v as "link" | "create")}>
+        <TabsList className="w-full">
+          <TabsTrigger value="link" className="flex-1">Link Existing Item</TabsTrigger>
+          <TabsTrigger value="create" className="flex-1">Create New Item</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="link" className="mt-3">
+          <Command className="border rounded-md">
+            <CommandInput placeholder="Search punch items…" />
+            <CommandList className="max-h-48">
+              {isLoading ? (
+                <CommandEmpty>Loading…</CommandEmpty>
+              ) : (
+                <CommandGroup>
+                  {(items ?? []).map((item) => (
+                    <CommandItem
+                      key={item.id}
+                      value={`${item.number} ${item.title}`}
+                      onSelect={() => {
+                        setSelectedId(item.id);
+                        setSelectedLabel(item.title);
+                        setSelectedNumber(item.number ? `#${item.number}` : null);
+                      }}
+                      className={cn("cursor-pointer", selectedId === item.id && "bg-accent")}
+                    >
+                      <span className="text-muted-foreground text-xs mr-2">#{item.number}</span>
+                      {item.title}
+                    </CommandItem>
+                  ))}
+                  {!isLoading && (items ?? []).length === 0 && (
+                    <CommandEmpty>No punch items found</CommandEmpty>
+                  )}
+                </CommandGroup>
+              )}
+            </CommandList>
+          </Command>
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={onCancel}>Cancel</Button>
+            <Button onClick={handleLink} disabled={!selectedId}>Link Item</Button>
+          </DialogFooter>
+        </TabsContent>
+
+        <TabsContent value="create" className="mt-3 space-y-3">
+          <div>
+            <Label htmlFor="punch-title">Title *</Label>
+            <Input
+              id="punch-title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Describe the punch item…"
+              className="mt-1"
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={onCancel}>Cancel</Button>
+            <Button
+              onClick={handleCreate}
+              disabled={!title.trim() || createItem.isPending}
+            >
+              {createItem.isPending ? "Creating…" : "Create & Link"}
+            </Button>
+          </DialogFooter>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}
+
+// ── Coordination Issue panel ──────────────────────────────────────────────────
+
+function CoordinationIssueContent({
+  position,
+  color,
+  onConfirm,
+  onCancel,
+}: {
+  position: { x: number; y: number; page: number } | null;
+  color: string;
+  onConfirm: (input: CreatePinInput) => void;
+  onCancel: () => void;
+}) {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+
+  const handleCreate = () => {
+    if (!position || !title.trim()) return;
+    // Coordination issues are stored as pins with draft_data until a dedicated table exists
+    onConfirm({
+      ...position,
+      pin_type: "coordination_issue",
+      entity_label: title.trim(),
+      entity_status: "open",
+      color,
+    });
+  };
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <Label htmlFor="ci-title">Title *</Label>
+        <Input
+          id="ci-title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="Describe the coordination issue…"
+          className="mt-1"
+        />
+      </div>
+      <div>
+        <Label htmlFor="ci-desc">Description</Label>
+        <Input
+          id="ci-desc"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Additional details…"
+          className="mt-1"
+        />
+      </div>
+      <p className="text-xs text-muted-foreground">
+        Places a pin on the drawing. Future: sync with Coordination Issues module.
+      </p>
+      <DialogFooter>
+        <Button variant="outline" onClick={onCancel}>Cancel</Button>
+        <Button onClick={handleCreate} disabled={!title.trim()}>Place Pin</Button>
+      </DialogFooter>
+    </div>
+  );
+}
+
+// ── Task panel ───────────────────────────────────────────────────────────────
+
+function TaskContent({
+  position,
+  color,
+  onConfirm,
+  onCancel,
+}: {
+  position: { x: number; y: number; page: number } | null;
+  color: string;
+  onConfirm: (input: CreatePinInput) => void;
+  onCancel: () => void;
+}) {
+  const [title, setTitle] = useState("");
+
+  const handleCreate = () => {
+    if (!position || !title.trim()) return;
+    onConfirm({
+      ...position,
+      pin_type: "task",
+      entity_label: title.trim(),
+      entity_status: "open",
+      color,
+    });
+  };
+
+  return (
+    <div className="space-y-3">
+      <div>
+        <Label htmlFor="task-title">Task Title *</Label>
+        <Input
+          id="task-title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          placeholder="What needs to be done?"
+          className="mt-1"
+        />
+      </div>
+      <DialogFooter>
+        <Button variant="outline" onClick={onCancel}>Cancel</Button>
+        <Button onClick={handleCreate} disabled={!title.trim()}>Place Pin</Button>
+      </DialogFooter>
+    </div>
+  );
+}

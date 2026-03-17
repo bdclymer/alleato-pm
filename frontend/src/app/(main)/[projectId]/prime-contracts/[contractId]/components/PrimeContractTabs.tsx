@@ -17,7 +17,7 @@ export function PrimeContractTabs({
   paymentsCount,
 }: PrimeContractTabsProps) {
   return (
-    <div className="px-6 lg:px-8 mb-[var(--card-gap)]">
+    <div className="mb-[var(--card-gap)]">
       <nav className="-mb-px flex overflow-x-auto border-b border-border" aria-label="Contract tabs">
         <div className="flex min-w-max space-x-6 md:space-x-8">
           <button

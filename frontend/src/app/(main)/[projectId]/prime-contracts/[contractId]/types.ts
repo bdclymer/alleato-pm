@@ -136,6 +136,7 @@ export interface Contract {
 export interface BudgetCode {
   id: string;
   code: string;
+  legacyCostCodeId?: number | null;
   description: string;
   costType: string | null;
   fullLabel: string;
