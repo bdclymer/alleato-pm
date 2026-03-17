@@ -8,6 +8,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { LiveCursors } from "@/components/live-cursors/LiveCursors";
+import { CanvasComments } from "@/components/canvas-comments/CanvasComments";
 
 /**
  * Main layout with sidebar as primary navigation.
@@ -32,6 +33,9 @@ export default function MainLayout({
           <AIChatWidgetLazy />
           <React.Suspense fallback={null}>
             <LiveCursors />
+          </React.Suspense>
+          <React.Suspense fallback={null}>
+            <CanvasComments />
           </React.Suspense>
         </CreateProjectDevConfigProvider>
       </SidebarInset>

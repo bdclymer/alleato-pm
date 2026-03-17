@@ -56,6 +56,13 @@ import {
   RHFComboboxField,
 } from "@/components/forms";
 import { RHFTextField } from "@/components/forms/fields/RHFTextField";
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { FormServerError } from "@/components/forms/FormServerError";
 
 interface CreatePurchaseOrderFormProps {
@@ -187,7 +194,7 @@ export function CreatePurchaseOrderForm({
     },
   });
 
-  const { handleSubmit, formState: { errors }, setValue, control } = form;
+  const { handleSubmit, formState: { errors }, setValue, setError, control } = form;
 
   const contractCompanyId = useWatch({ control, name: "contractCompanyId" });
   const privacyIsPrivate = useWatch({ control, name: "privacy.isPrivate" }) ?? true;
@@ -344,6 +351,10 @@ export function CreatePurchaseOrderForm({
     try {
       const submitData = { ...data, sov: sovLines, accountingMethod };
       await onSubmit(submitData);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Failed to create purchase order";
+      setError("root", { message });
+      toast.error(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -411,6 +422,9 @@ export function CreatePurchaseOrderForm({
     event.preventDefault();
   };
 
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
+
   const totals = calculateSOVTotals();
 
   return (
@@ -423,11 +437,39 @@ export function CreatePurchaseOrderForm({
         description="Define the purchase order identity, vendor, and commercial terms."
       >
         <FormGrid columns={2}>
-          <RHFTextField
+          <FormField
             control={control}
             name="contractNumber"
-            label="Contract #"
-            disabled={isSubmitting}
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Contract #</FormLabel>
+                <div className="flex gap-2">
+                  <FormControl>
+                    <Input
+                      {...field}
+                      value={field.value ?? ""}
+                      placeholder="e.g., PO-001"
+                      disabled={isSubmitting}
+                    />
+                  </FormControl>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="shrink-0"
+                    disabled={isSubmitting}
+                    onClick={() =>
+                      setValue("contractNumber", `PO-${Date.now()}`, {
+                        shouldValidate: true,
+                      })
+                    }
+                  >
+                    Generate
+                  </Button>
+                </div>
+                <FormMessage />
+              </FormItem>
+            )}
           />
 
           <RHFComboboxField
@@ -611,25 +653,20 @@ export function CreatePurchaseOrderForm({
         description="Build line items and totals that define the PO financial breakdown."
       >
         {/* Accounting Method */}
-        <div className="flex items-center justify-between rounded-md bg-muted px-4 py-3">
-          <p className="text-sm text-foreground">
-            Accounting method:{" "}
-            <span className="font-medium">
-              {accountingMethod === "unit-quantity" ? "Unit / Quantity" : "Amount-Based"}
-            </span>
-          </p>
-          <Button
+        <p className="text-sm text-muted-foreground">
+          This purchase order&apos;s accounting method is{" "}
+          <strong>{accountingMethod === "unit-quantity" ? "unit/quantity" : "amount-based"}</strong>.{" "}
+          <button
             type="button"
-            variant="outline"
-            size="sm"
+            className="underline hover:text-foreground transition-colors"
+            disabled={isSubmitting}
             onClick={() =>
               setAccountingMethod(accountingMethod === "unit-quantity" ? "amount" : "unit-quantity")
             }
-            disabled={isSubmitting}
           >
-            Switch to {accountingMethod === "unit-quantity" ? "Amount-Based" : "Unit / Quantity"}
-          </Button>
-        </div>
+            Change to {accountingMethod === "unit-quantity" ? "Amount-based" : "Unit/Quantity"}
+          </button>
+        </p>
 
         {budgetCodesError && (
           <Alert variant="destructive">
@@ -652,189 +689,182 @@ export function CreatePurchaseOrderForm({
           </Alert>
         )}
 
-        {/* SOV Table */}
-        {sovLines.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 space-y-4">
-            <div className="text-muted-foreground">
-              <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center">
-                <Package className="h-10 w-10" />
-              </div>
-            </div>
-            <p className="text-lg font-medium text-foreground">You Have No Line Items Yet</p>
-            <div className="flex gap-2">
-              <Button type="button" onClick={addSOVLine} disabled={isSubmitting}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Line
-              </Button>
-              <Button type="button" variant="outline" disabled={isSubmitting}>
-                Import SOV from CSV
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="flex gap-2">
-              <Button type="button" onClick={addSOVLine} size="sm" disabled={isSubmitting}>
-                <Plus className="mr-2 h-4 w-4" />
-                Add Line
-              </Button>
-              <Button type="button" variant="outline" size="sm" disabled={isSubmitting}>
-                Import SOV from CSV
-              </Button>
-            </div>
-
-            <div className="overflow-x-auto">
-              <table className="w-full border">
-                <thead className="bg-muted">
-                  <tr>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-foreground w-12">#</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-foreground">Change Event</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-foreground">Budget Code</th>
-                    <th className="px-4 py-2 text-left text-xs font-medium text-foreground">Description</th>
-                    {accountingMethod === "unit-quantity" && (
-                      <>
-                        <th className="px-4 py-2 text-right text-xs font-medium text-foreground">Qty</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-foreground">UOM</th>
-                        <th className="px-4 py-2 text-right text-xs font-medium text-foreground">Unit Cost</th>
-                      </>
-                    )}
-                    <th className="px-4 py-2 text-right text-xs font-medium text-foreground">Amount</th>
-                    <th className="px-4 py-2 text-right text-xs font-medium text-foreground">Billed to Date</th>
-                    <th className="px-4 py-2 text-right text-xs font-medium text-foreground">Amount Remaining</th>
-                    <th className="px-4 py-2 w-12" aria-label="Actions"></th>
-                  </tr>
-                </thead>
-                <tbody className="bg-background divide-y">
-                  {sovLines.map((line, index) => (
-                    <tr
-                      key={
-                        (line as PurchaseOrderSovLineItem & { _id?: string })._id ||
-                        `line-${index}`
+        {/* SOV Table — always shown */}
+        <div className="overflow-x-auto rounded-lg border border-border/70 bg-muted/20">
+          <table className="min-w-max w-max text-sm">
+            <thead>
+              <tr className="bg-muted/70 hover:bg-muted/70">
+                <th className="w-12 px-2 py-1.5 text-left text-[11px] font-normal tracking-normal text-muted-foreground">#</th>
+                <th className="min-w-60 px-2 py-1.5 text-left text-[11px] font-normal tracking-normal text-muted-foreground">Budget Code</th>
+                <th className="min-w-80 px-2 py-1.5 text-left text-[11px] font-normal tracking-normal text-muted-foreground">Description</th>
+                {accountingMethod === "unit-quantity" && (
+                  <>
+                    <th className="min-w-32 px-2 py-1.5 text-right text-[11px] font-normal tracking-normal text-muted-foreground">Qty</th>
+                    <th className="min-w-36 px-2 py-1.5 text-left text-[11px] font-normal tracking-normal text-muted-foreground">UOM</th>
+                    <th className="min-w-44 px-2 py-1.5 text-right text-[11px] font-normal tracking-normal text-muted-foreground">Unit Cost</th>
+                  </>
+                )}
+                <th className="min-w-44 px-2 py-1.5 text-right text-[11px] font-normal tracking-normal text-muted-foreground">Amount</th>
+                <th className="min-w-44 px-2 py-1.5 text-right text-[11px] font-normal tracking-normal text-muted-foreground">Billed to Date</th>
+                <th className="min-w-44 px-2 py-1.5 text-right text-[11px] font-normal tracking-normal text-muted-foreground">Amount Remaining</th>
+                <th className="w-12 px-2 py-1.5" />
+              </tr>
+            </thead>
+            <tbody>
+              {sovLines.map((line, index) => (
+                <tr
+                  key={
+                    (line as PurchaseOrderSovLineItem & { _id?: string })._id ||
+                    `line-${index}`
+                  }
+                  className="group border-b border-border/60 bg-background transition-colors hover:bg-muted/20"
+                >
+                  <td className="px-2 py-1.5 text-sm text-muted-foreground">{index + 1}</td>
+                  <td className="min-w-60 px-2 py-1.5">
+                    <BudgetCodeSelector
+                      value={
+                        budgetCodes.find(
+                          (code) => code.code === (line.budgetCode || ""),
+                        )?.id || ""
                       }
-                    >
-                      <td className="px-4 py-2 text-sm">{index + 1}</td>
-                      <td className="px-4 py-2">
+                      onValueChange={(_, code) =>
+                        updateSOVLine(index, "budgetCode", code.code)
+                      }
+                      budgetCodes={budgetCodes}
+                      loading={!budgetCodesLoaded}
+                      onCreateNew={() => setShowCreateBudgetCodeModal(true)}
+                      placeholder="Select budget code..."
+                      className="h-10"
+                    />
+                  </td>
+                  <td className="min-w-80 px-2 py-1.5">
+                    <Input
+                      placeholder="Description"
+                      value={line.description || ""}
+                      onChange={(e) =>
+                        updateSOVLine(index, "description", e.target.value)
+                      }
+                      className="h-10 min-w-72"
+                    />
+                  </td>
+                  {accountingMethod === "unit-quantity" && (
+                    <>
+                      <td className="min-w-32 px-2 py-1.5">
                         <Input
-                          className="text-sm"
-                          placeholder="Change Event"
-                          value={line.changeEventLineItem || ""}
+                          type="number"
+                          step="0.01"
+                          placeholder="1"
+                          value={line.quantity ?? 1}
                           onChange={(e) =>
-                            updateSOVLine(index, "changeEventLineItem", e.target.value)
+                            updateSOVLine(index, "quantity", parseFloat(e.target.value) || 0)
                           }
+                          className="h-10 min-w-24 text-right"
                         />
                       </td>
-                      <td className="px-4 py-2">
-                        <BudgetCodeSelector
-                          value={
-                            budgetCodes.find(
-                              (code) => code.code === (line.budgetCode || ""),
-                            )?.id || ""
-                          }
-                          onValueChange={(_, code) =>
-                            updateSOVLine(index, "budgetCode", code.code)
-                          }
-                          budgetCodes={budgetCodes}
-                          loading={!budgetCodesLoaded}
-                          onCreateNew={() => setShowCreateBudgetCodeModal(true)}
-                          placeholder="Select budget code..."
-                          className="h-8 text-sm"
-                        />
-                      </td>
-                      <td className="px-4 py-2">
-                        <Input
-                          className="text-sm"
-                          placeholder="Description"
-                          value={line.description || ""}
-                          onChange={(e) =>
-                            updateSOVLine(index, "description", e.target.value)
-                          }
-                        />
-                      </td>
-                      {accountingMethod === "unit-quantity" && (
-                        <>
-                          <td className="px-4 py-2">
-                            <Input
-                              className="text-sm text-right"
-                              type="number"
-                              step="0.01"
-                              placeholder="1"
-                              value={line.quantity ?? 1}
-                              onChange={(e) =>
-                                updateSOVLine(index, "quantity", parseFloat(e.target.value) || 0)
-                              }
-                            />
-                          </td>
-                          <td className="px-4 py-2">
-                            <Select
-                              value={line.uom || undefined}
-                              onValueChange={(value) => updateSOVLine(index, "uom", value)}
-                            >
-                              <SelectTrigger className="text-sm">
-                                <SelectValue placeholder="Select UOM" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {UNIT_OF_MEASURES.map((uom) => (
-                                  <SelectItem key={uom.value} value={uom.value}>
-                                    {uom.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </td>
-                          <td className="px-4 py-2">
-                            <Input
-                              className="text-sm text-right"
-                              type="number"
-                              step="0.01"
-                              placeholder="$0.00"
-                              value={line.unitCost || 0}
-                              onChange={(e) =>
-                                updateSOVLine(index, "unitCost", parseFloat(e.target.value) || 0)
-                              }
-                            />
-                          </td>
-                        </>
-                      )}
-                      <td className="px-4 py-2 text-sm text-right">
-                        ${(line.amount || 0).toFixed(2)}
-                      </td>
-                      <td className="px-4 py-2 text-sm text-right">
-                        ${(line.billedToDate || 0).toFixed(2)}
-                      </td>
-                      <td className="px-4 py-2 text-sm text-right">
-                        ${((line.amount || 0) - (line.billedToDate || 0)).toFixed(2)}
-                      </td>
-                      <td className="px-4 py-2">
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => removeSOVLine(index)}
+                      <td className="min-w-36 px-2 py-1.5">
+                        <Select
+                          value={line.uom || undefined}
+                          onValueChange={(value) => updateSOVLine(index, "uom", value)}
                         >
-                          <X className="h-4 w-4" />
-                        </Button>
+                          <SelectTrigger className="h-10">
+                            <SelectValue placeholder="UOM" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {UNIT_OF_MEASURES.map((uom) => (
+                              <SelectItem key={uom.value} value={uom.value}>
+                                {uom.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot className="bg-muted font-semibold">
-                  <tr>
-                    <td
-                      colSpan={accountingMethod === "unit-quantity" ? 7 : 4}
-                      className="px-4 py-2 text-sm"
+                      <td className="min-w-44 px-2 py-1.5">
+                        <Input
+                          type="number"
+                          step="0.01"
+                          placeholder="$0.00"
+                          value={line.unitCost || 0}
+                          onChange={(e) =>
+                            updateSOVLine(index, "unitCost", parseFloat(e.target.value) || 0)
+                          }
+                          className="h-10 min-w-36 text-right"
+                        />
+                      </td>
+                    </>
+                  )}
+                  <td className="min-w-44 px-2 py-1.5 text-right text-sm whitespace-nowrap">
+                    {formatCurrency(line.amount || 0)}
+                  </td>
+                  <td className="min-w-44 px-2 py-1.5 text-right text-sm whitespace-nowrap">
+                    {formatCurrency(line.billedToDate || 0)}
+                  </td>
+                  <td className="min-w-44 px-2 py-1.5 text-right text-sm whitespace-nowrap">
+                    {formatCurrency((line.amount || 0) - (line.billedToDate || 0))}
+                  </td>
+                  <td className="px-2 py-1.5">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removeSOVLine(index)}
+                      className="h-8 w-8 p-0 text-muted-foreground hover:text-red-600"
                     >
-                      Total:
-                    </td>
-                    <td className="px-4 py-2 text-sm text-right">${totals.amount.toFixed(2)}</td>
-                    <td className="px-4 py-2 text-sm text-right">${totals.billedToDate.toFixed(2)}</td>
-                    <td className="px-4 py-2 text-sm text-right">${totals.amountRemaining.toFixed(2)}</td>
-                    <td></td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
-          </div>
-        )}
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr>
+                <td className="px-2 py-2" />
+                <td
+                  colSpan={accountingMethod === "unit-quantity" ? 5 : 2}
+                  className="px-2 py-3 text-xs font-semibold text-foreground"
+                >
+                  Totals
+                </td>
+                <td className="px-2 py-2 text-right text-sm font-semibold text-foreground whitespace-nowrap">
+                  {formatCurrency(totals.amount)}
+                </td>
+                <td className="px-2 py-2 text-right text-sm font-semibold text-foreground whitespace-nowrap">
+                  {formatCurrency(totals.billedToDate)}
+                </td>
+                <td className="px-2 py-2 text-right text-sm font-semibold text-foreground whitespace-nowrap">
+                  {formatCurrency(totals.amountRemaining)}
+                </td>
+                <td className="px-2 py-2" />
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <div className="flex flex-col gap-4 pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <Button
+            type="button"
+            onClick={addSOVLine}
+            disabled={isSubmitting}
+            className="h-10 gap-2 px-4"
+          >
+            <Plus className="h-4 w-4" />
+            Add Line Item
+          </Button>
+          <Select
+            onValueChange={(value) => {
+              if (value === "csv") {
+                // CSV import placeholder
+              }
+            }}
+          >
+            <SelectTrigger className="w-24">
+              <SelectValue placeholder="Import" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="csv">CSV</SelectItem>
+              <SelectItem value="excel">Excel</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </FormSection>
 
       {/* Contract Dates */}

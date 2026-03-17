@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { AI_USER_ID, AI_USER_INFO } from "@/lib/liveblocks/ai-user";
 
 /**
  * GET /api/liveblocks/users/search?text=john
@@ -9,6 +10,12 @@ import { createServiceClient } from "@/lib/supabase/service";
  */
 export async function GET(request: NextRequest) {
   const text = request.nextUrl.searchParams.get("text") ?? "";
+  const normalised = text.trim().toLowerCase();
+
+  // Always surface the AI user when the query matches its name (or is empty)
+  const aiMatches =
+    normalised.length === 0 ||
+    AI_USER_INFO.name.toLowerCase().includes(normalised);
 
   try {
     const supabase = createServiceClient();
@@ -18,8 +25,7 @@ export async function GET(request: NextRequest) {
       .select("id, full_name, email")
       .limit(10);
 
-    if (text.trim().length > 0) {
-      // Search by name or email (case-insensitive)
+    if (normalised.length > 0) {
       query = query.or(
         `full_name.ilike.%${text}%,email.ilike.%${text}%`,
       );
@@ -27,8 +33,13 @@ export async function GET(request: NextRequest) {
 
     const { data: profiles } = await query;
 
-    // Return just the user IDs — Liveblocks resolves display info via resolveUsers
-    const userIds = (profiles ?? []).map((p) => p.id);
+    // Human user IDs
+    const humanIds = (profiles ?? []).map((p) => p.id);
+
+    // Prepend AI so it always shows at the top of the mention picker
+    const userIds = aiMatches
+      ? [AI_USER_ID, ...humanIds]
+      : humanIds;
 
     return NextResponse.json(userIds);
   } catch (error) {

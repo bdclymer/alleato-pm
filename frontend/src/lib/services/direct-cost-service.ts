@@ -191,7 +191,10 @@ export class DirectCostService {
       .select(
         `
         *,
-        line_items:direct_cost_line_items(*),
+        line_items:direct_cost_line_items(
+          *,
+          budget_code:budget_codes(code, description)
+        ),
         vendor:vendors(*)
       `
       )

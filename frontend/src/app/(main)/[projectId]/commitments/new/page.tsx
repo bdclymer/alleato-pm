@@ -112,20 +112,11 @@ export default function NewCommitmentPage() {
       };
       detailedError.details = responseData.details;
       detailedError.status = response.status;
-      console.error("[New Commitment Page] Submission failed:", {
-        status: response.status,
-        error: errorMessage,
-        details: responseData.details,
-      });
+      console.error("[New Commitment Page] PO submission failed", response.status, errorMessage, responseData.details);
       throw detailedError;
     }
 
     const responseData = await response.json();
-    console.warn("[New Commitment Page] Response status:", response.status);
-    console.warn(
-      "[New Commitment Page] Purchase order created successfully:",
-      responseData.data,
-    );
     router.push(`/${projectId}/commitments`);
   };
 
@@ -150,7 +141,7 @@ export default function NewCommitmentPage() {
       }
       onBack={() => router.back()}
       backLabel="Back"
-      maxWidth="xl"
+      maxWidth="3xl"
     >
       {type === "purchase_order" ? (
         <CreatePurchaseOrderForm

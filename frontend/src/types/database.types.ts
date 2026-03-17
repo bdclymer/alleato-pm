@@ -1,4 +1,3 @@
-npm warn exec The following package was not found and will be installed: supabase@2.81.0
 export type Json =
   | string
   | number
@@ -10795,12 +10794,13 @@ export type Database = {
         Row: {
           approved_at: string | null
           billing_period_id: string | null
-          contract_id: number
+          contract_id: number | null
           created_at: string | null
           id: number
           invoice_number: string | null
           period_end: string | null
           period_start: string | null
+          prime_contract_id: string | null
           status: string | null
           submitted_at: string | null
           updated_at: string
@@ -10808,12 +10808,13 @@ export type Database = {
         Insert: {
           approved_at?: string | null
           billing_period_id?: string | null
-          contract_id: number
+          contract_id?: number | null
           created_at?: string | null
           id?: number
           invoice_number?: string | null
           period_end?: string | null
           period_start?: string | null
+          prime_contract_id?: string | null
           status?: string | null
           submitted_at?: string | null
           updated_at?: string
@@ -10821,12 +10822,13 @@ export type Database = {
         Update: {
           approved_at?: string | null
           billing_period_id?: string | null
-          contract_id?: number
+          contract_id?: number | null
           created_at?: string | null
           id?: number
           invoice_number?: string | null
           period_end?: string | null
           period_start?: string | null
+          prime_contract_id?: string | null
           status?: string | null
           submitted_at?: string | null
           updated_at?: string
@@ -10858,6 +10860,20 @@ export type Database = {
             columns: ["contract_id"]
             isOneToOne: false
             referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owner_invoices_prime_contract_id_fkey"
+            columns: ["prime_contract_id"]
+            isOneToOne: false
+            referencedRelation: "prime_contract_financial_summary"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "owner_invoices_prime_contract_id_fkey"
+            columns: ["prime_contract_id"]
+            isOneToOne: false
+            referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
         ]

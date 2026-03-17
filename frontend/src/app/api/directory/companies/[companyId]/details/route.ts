@@ -48,7 +48,7 @@ type InvoiceItem = {
   id: number;
   invoice_number: string | null;
   status: string | null;
-  contract_id: number;
+  contract_id: number | null;
   contract_number: string | null;
   contract_title: string | null;
   project_id: number | null;
@@ -305,7 +305,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
         }
 
         invoicesPayload = (invoiceData || []).map((invoice) => {
-          const contract = contractMap.get(invoice.contract_id);
+          const contract = invoice.contract_id != null ? contractMap.get(invoice.contract_id) : undefined;
           const project = contract ? projectMap.get(contract.project_id) : null;
 
           return {

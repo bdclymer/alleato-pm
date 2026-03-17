@@ -41,6 +41,7 @@ const meetingTitleCache = new Map<string, string>();
 const globalMeetingTitleCache = new Map<string, string>();
 const primeContractTitleCache = new Map<string, string>();
 const companyTitleCache = new Map<string, string>();
+const commitmentTitleCache = new Map<string, string>();
 
 const TABLE_ROUTE_ALIASES: Record<string, string> = {
   tasks: "tasks",
@@ -62,6 +63,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
     null,
   );
   const [companyTitle, setCompanyTitle] = useState<string | null>(null);
+  const [commitmentTitle, setCommitmentTitle] = useState<string | null>(null);
 
   // Extract project ID from URL path or query parameters
   const projectId = useMemo(() => {
@@ -146,6 +148,13 @@ export function useHeaderNav(): UseHeaderNavReturn {
       segments.length >= 3 &&
       /^\d+$/.test(segments[0]) &&
       segments[1] === "prime-contracts";
+    const isCommitmentDetailRoute =
+      segments.length >= 3 &&
+      /^\d+$/.test(segments[0]) &&
+      segments[1] === "commitments" &&
+      segments[2] !== "new" &&
+      segments[2] !== "recycle-bin" &&
+      segments[2] !== "settings";
     const isGlobalCompanyDetailRoute =
       segments.length >= 3 &&
       segments[0] === "directory" &&
@@ -175,6 +184,8 @@ export function useHeaderNav(): UseHeaderNavReturn {
         label = meetingTitle || "Meeting";
       } else if (isPrimeContractDetailRoute && index === 2) {
         label = primeContractTitle || "Prime Contract";
+      } else if (isCommitmentDetailRoute && index === 2) {
+        label = commitmentTitle || "Commitment";
       } else if (isGlobalCompanyDetailRoute && index === 2) {
         label = companyTitle || "Company";
       } else if (isProjectCompanyDetailRoute && index === 3) {
@@ -226,7 +237,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
     });
 
     return crumbs;
-  }, [pathname, companyTitle, currentProject, meetingTitle, globalMeetingTitle, primeContractTitle]);
+  }, [pathname, companyTitle, currentProject, meetingTitle, globalMeetingTitle, primeContractTitle, commitmentTitle]);
   useEffect(() => {
     const segments = pathname?.split("/").filter(Boolean) ?? [];
     const isMeetingDetailRoute =
@@ -377,6 +388,61 @@ export function useHeaderNav(): UseHeaderNavReturn {
     };
 
     fetchPrimeContractTitle();
+    return () => {
+      isActive = false;
+    };
+  }, [pathname]);
+
+  useEffect(() => {
+    const segments = pathname?.split("/").filter(Boolean) ?? [];
+    const isCommitmentDetailRoute =
+      segments.length >= 3 &&
+      /^\d+$/.test(segments[0]) &&
+      segments[1] === "commitments" &&
+      segments[2] !== "new" &&
+      segments[2] !== "recycle-bin" &&
+      segments[2] !== "settings";
+
+    if (!isCommitmentDetailRoute) {
+      setCommitmentTitle(null);
+      return;
+    }
+
+    const commitmentId = segments[2];
+    const cacheKey = `${segments[0]}:${commitmentId}`;
+    const cachedTitle = commitmentTitleCache.get(cacheKey);
+    if (cachedTitle) {
+      setCommitmentTitle(cachedTitle);
+      return;
+    }
+
+    let isActive = true;
+    const fetchCommitmentTitle = async () => {
+      try {
+        const response = await fetch(`/api/commitments/${commitmentId}`);
+        if (!response.ok) return;
+
+        const contentType = response.headers.get("content-type") || "";
+        if (!contentType.includes("application/json")) return;
+
+        const data = await response.json();
+        const number = typeof data?.number === "string" && data.number.length > 0 && !/^[0-9a-f-]{36}$/i.test(data.number) ? data.number : null;
+        const title = number ?? (typeof data?.title === "string" && data.title.length > 0 ? data.title : null);
+
+        if (isActive) {
+          if (title) {
+            commitmentTitleCache.set(cacheKey, title);
+            setCommitmentTitle(title);
+          } else {
+            setCommitmentTitle(null);
+          }
+        }
+      } catch {
+        // Best-effort only
+      }
+    };
+
+    fetchCommitmentTitle();
     return () => {
       isActive = false;
     };

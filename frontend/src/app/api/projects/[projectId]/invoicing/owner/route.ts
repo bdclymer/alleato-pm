@@ -30,21 +30,21 @@ export async function POST(
 
     const projectIdNum = parseInt(projectId, 10);
     const body = await request.json();
-    const { contract_id, invoice_number, period_start, period_end, billing_period_id, status } = body;
+    const { prime_contract_id, invoice_number, period_start, period_end, billing_period_id, status } = body;
 
     // Validate required fields
-    if (!contract_id) {
+    if (!prime_contract_id) {
       return NextResponse.json(
-        { error: "contract_id is required" },
+        { error: "prime_contract_id is required" },
         { status: 400 },
       );
     }
 
-    // Verify the contract belongs to this project
+    // Verify the prime contract belongs to this project
     const { data: contract, error: contractError } = await supabase
-      .from("contracts")
+      .from("prime_contracts")
       .select("id")
-      .eq("id", contract_id)
+      .eq("id", prime_contract_id)
       .eq("project_id", projectIdNum)
       .single();
 
@@ -59,7 +59,7 @@ export async function POST(
     const { data: invoice, error: insertError } = await supabase
       .from("owner_invoices")
       .insert({
-        contract_id: Number(contract_id),
+        prime_contract_id,
         invoice_number: invoice_number ?? null,
         period_start: period_start ?? null,
         period_end: period_end ?? null,
@@ -114,18 +114,18 @@ export async function GET(
 
     const projectIdNum = parseInt(projectId, 10);
 
-    // Fetch owner invoices with line items, scoped to the project via contracts
+    // Fetch owner invoices with line items, scoped to the project via prime_contracts
     const { data: invoices, error: invoicesError } = await supabase
       .from("owner_invoices")
       .select(
         `
         *,
         owner_invoice_line_items(*),
-        contracts!inner(project_id)
+        prime_contracts!inner(id, project_id, contract_number, title)
       `,
       )
-      .eq("contracts.project_id", projectIdNum)
-      .order("created_at", { ascending: false});
+      .eq("prime_contracts.project_id", projectIdNum)
+      .order("created_at", { ascending: false });
 
     if (invoicesError) {
       return NextResponse.json(
@@ -142,11 +142,12 @@ export async function GET(
         0,
       );
 
-      // Remove the contracts join data from response
-      const { contracts, ...invoiceData } = invoice;
+      const { prime_contracts: pc, ...invoiceData } = invoice;
 
       return {
         ...invoiceData,
+        contract_number: pc?.contract_number ?? null,
+        contract_title: pc?.title ?? null,
         total_amount,
       };
     });

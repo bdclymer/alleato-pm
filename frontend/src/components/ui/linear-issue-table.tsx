@@ -202,23 +202,23 @@ function LinearIssueGroupSection({
   const StatusIcon = statusConfig.icon;
 
   return (
-    <div className="border-b border-border/50 last:border-b-0">
+    <div>
       {/* Group Header */}
       <button
         onClick={() => setIsExpanded(!isExpanded)}
-        className="flex items-center gap-2 w-full px-4 py-2 text-left hover:bg-muted/50 transition-colors group"
+        className="flex items-center gap-2 w-full px-4 py-1.5 text-left hover:bg-muted/40 transition-colors group sticky top-0 bg-background z-10"
       >
         <ChevronRight
           className={cn(
-            "w-4 h-4 text-muted-foreground transition-transform duration-200",
+            "w-3.5 h-3.5 text-muted-foreground/60 transition-transform duration-150",
             isExpanded && "rotate-90"
           )}
         />
-        <StatusIcon className={cn("w-4 h-4", statusConfig.colorClass)} />
-        <span className="text-sm font-medium text-foreground">
+        <StatusIcon className={cn("w-3.5 h-3.5", statusConfig.colorClass)} />
+        <span className="text-xs font-medium text-foreground">
           {group.label}
         </span>
-        <span className="text-xs text-muted-foreground tabular-nums">
+        <span className="text-xs text-muted-foreground tabular-nums font-normal">
           {group.issues.length}
         </span>
         <div className="flex-1" />
@@ -227,10 +227,10 @@ function LinearIssueGroupSection({
             e.stopPropagation();
             onAddIssue?.(group.status);
           }}
-          className="opacity-0 group-hover:opacity-100 p-1 rounded-sm hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
+          className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
           title="Add issue"
         >
-          <Plus className="w-3.5 h-3.5" />
+          <Plus className="w-3 h-3" />
         </button>
       </button>
 
@@ -260,166 +260,115 @@ interface LinearIssueRowProps {
 }
 
 function LinearIssueRow({ issue, onClick }: LinearIssueRowProps) {
-  const [isChecked, setIsChecked] = React.useState(false);
   const statusConfig = STATUS_CONFIG[issue.status] || STATUS_CONFIG.open;
   const StatusIcon = statusConfig.icon;
 
   return (
     <div
       onClick={onClick}
-      className="flex items-center gap-2 px-4 py-1.5 hover:bg-muted/50 cursor-pointer group transition-colors"
+      className="flex items-center gap-0 px-4 h-[34px] hover:bg-muted/40 cursor-pointer group transition-colors border-b border-border/30 last:border-b-0"
     >
-      {/* Drag Handle */}
-      <div className="opacity-0 group-hover:opacity-100 text-muted-foreground cursor-grab transition-opacity">
-        <GripVertical className="w-3.5 h-3.5" />
+      {/* Drag Handle — hidden until hover */}
+      <div className="w-5 opacity-0 group-hover:opacity-100 text-muted-foreground/40 cursor-grab transition-opacity flex-shrink-0 flex items-center">
+        <GripVertical className="w-3 h-3" />
       </div>
-
-      {/* Checkbox */}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          setIsChecked(!isChecked);
-        }}
-        className={cn(
-          "w-4 h-4 rounded-[3px] border flex items-center justify-center transition-colors flex-shrink-0",
-          isChecked
-            ? "bg-primary border-primary"
-            : "border-border hover:border-foreground/50"
-        )}
-      >
-        {isChecked && (
-          <svg
-            className="w-2.5 h-2.5 text-primary-foreground"
-            viewBox="0 0 10 10"
-            fill="none"
-          >
-            <path
-              d="M2 5L4 7L8 3"
-              stroke="currentColor"
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        )}
-      </button>
 
       {/* Issue ID */}
       {issue.identifier && (
-        <span className="text-xs text-muted-foreground font-mono w-16 flex-shrink-0">
+        <span className="text-xs text-muted-foreground/70 font-mono w-[58px] flex-shrink-0 pr-1 tabular-nums">
           {issue.identifier}
         </span>
       )}
 
       {/* Status Icon */}
-      <StatusIcon className={cn("w-4 h-4 flex-shrink-0", statusConfig.colorClass)} />
+      <StatusIcon className={cn("w-3.5 h-3.5 flex-shrink-0 mr-2", statusConfig.colorClass)} />
 
       {/* Title */}
       <span className="text-sm text-foreground truncate flex-1 min-w-0">
         {issue.title}
       </span>
 
-      {/* Category Badge */}
-      {issue.category && (
-        <span
-          className={cn(
-            "px-1.5 py-0.5 rounded text-[10px] font-medium capitalize",
-            CATEGORY_COLORS[issue.category.toLowerCase()] || CATEGORY_COLORS.other
-          )}
-        >
-          {issue.category}
-        </span>
-      )}
-
-      {/* Severity Badge */}
-      {issue.severity && (
-        <span
-          className={cn(
-            "px-1.5 py-0.5 rounded text-[10px] font-medium capitalize",
-            SEVERITY_COLORS[issue.severity]
-          )}
-        >
-          {issue.severity}
-        </span>
-      )}
-
-      {/* Labels */}
-      {issue.labels && issue.labels.length > 0 && (
-        <div className="flex items-center gap-2 flex-shrink-0">
-          {issue.labels.slice(0, 2).map((label) => (
-            <span
-              key={label.id}
-              className={cn(
-                "px-1.5 py-0.5 rounded text-[10px] font-medium",
-                LABEL_COLORS[label.color]
-              )}
-            >
-              {label.name}
-            </span>
-          ))}
-          {issue.labels.length > 2 && (
-            <span className="text-[10px] text-muted-foreground">
-              +{issue.labels.length - 2}
-            </span>
-          )}
-        </div>
-      )}
-
-      {/* PR Link */}
-      {issue.pullRequest && (
-        <div
-          className={cn(
-            "flex items-center gap-1 text-xs flex-shrink-0",
-            issue.pullRequest.state === "merged"
-              ? "text-purple-500"
-              : issue.pullRequest.state === "open"
-                ? "text-green-500"
-                : "text-muted-foreground"
-          )}
-        >
-          <GitPullRequest className="w-3.5 h-3.5" />
-          <span>#{issue.pullRequest.number}</span>
-        </div>
-      )}
-
-      {/* Total Cost */}
-      {issue.totalCost !== undefined && issue.totalCost > 0 && (
-        <span className="text-xs text-muted-foreground tabular-nums flex-shrink-0">
-          ${issue.totalCost.toLocaleString()}
-        </span>
-      )}
-
-      {/* Assignee / Reported By */}
-      <div className="w-6 h-6 flex-shrink-0">
-        {issue.assignee ? (
-          issue.assignee.avatar ? (
-            <img
-              src={issue.assignee.avatar}
-              alt={issue.assignee.name}
-              className="w-6 h-6 rounded-full object-cover"
-            />
-          ) : (
-            <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center">
-              <span className="text-[10px] font-medium text-primary">
-                {issue.assignee.name.charAt(0).toUpperCase()}
+      {/* Right metadata — only show on hover or if present */}
+      <div className="flex items-center gap-2 ml-2 flex-shrink-0">
+        {/* Labels */}
+        {issue.labels && issue.labels.length > 0 && (
+          <>
+            {issue.labels.slice(0, 2).map((label) => (
+              <span
+                key={label.id}
+                className={cn(
+                  "px-1.5 py-0.5 rounded-sm text-[10px] font-medium",
+                  LABEL_COLORS[label.color]
+                )}
+              >
+                {label.name}
               </span>
-            </div>
-          )
-        ) : issue.reportedBy ? (
-          <div className="w-6 h-6 rounded-full bg-muted flex items-center justify-center">
-            <span className="text-[10px] font-medium text-muted-foreground">
-              {issue.reportedBy.charAt(0).toUpperCase()}
-            </span>
-          </div>
-        ) : (
-          <div className="w-6 h-6 rounded-full border border-dashed border-border opacity-0 group-hover:opacity-100 transition-opacity" />
+            ))}
+          </>
         )}
-      </div>
 
-      {/* Date */}
-      <span className="text-xs text-muted-foreground w-16 text-right flex-shrink-0">
-        {formatDate(issue.dateReported || issue.updatedAt || issue.createdAt)}
-      </span>
+        {/* Category — shown as a muted label matching Linear's "Data Model" style */}
+        {issue.category && (
+          <span className="text-xs text-muted-foreground/70">
+            {issue.category}
+          </span>
+        )}
+
+        {/* Severity */}
+        {issue.severity && !issue.category && (
+          <span
+            className={cn(
+              "px-1.5 py-0.5 rounded-sm text-[10px] font-medium capitalize",
+              SEVERITY_COLORS[issue.severity]
+            )}
+          >
+            {issue.severity}
+          </span>
+        )}
+
+        {/* PR Link */}
+        {issue.pullRequest && (
+          <div
+            className={cn(
+              "flex items-center gap-0.5 text-xs",
+              issue.pullRequest.state === "merged"
+                ? "text-purple-500"
+                : issue.pullRequest.state === "open"
+                  ? "text-green-500"
+                  : "text-muted-foreground"
+            )}
+          >
+            <GitPullRequest className="w-3 h-3" />
+            <span className="tabular-nums">#{issue.pullRequest.number}</span>
+          </div>
+        )}
+
+        {/* Assignee avatar */}
+        <div className="w-5 h-5 flex-shrink-0">
+          {issue.assignee ? (
+            issue.assignee.avatar ? (
+              <img
+                src={issue.assignee.avatar}
+                alt={issue.assignee.name}
+                className="w-5 h-5 rounded-full object-cover"
+              />
+            ) : (
+              <div className="w-5 h-5 rounded-full bg-muted flex items-center justify-center">
+                <span className="text-[9px] font-medium text-muted-foreground">
+                  {issue.assignee.name.charAt(0).toUpperCase()}
+                </span>
+              </div>
+            )
+          ) : (
+            <div className="w-5 h-5 rounded-full border border-dashed border-border/50 opacity-0 group-hover:opacity-60 transition-opacity" />
+          )}
+        </div>
+
+        {/* Date */}
+        <span className="text-xs text-muted-foreground/70 w-14 text-right tabular-nums">
+          {formatDate(issue.dateReported || issue.updatedAt || issue.createdAt)}
+        </span>
+      </div>
     </div>
   );
 }

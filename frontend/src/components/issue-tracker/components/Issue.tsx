@@ -13,16 +13,13 @@ import { IssueLinks } from "@/components/issue-tracker/components/IssueLinks";
 import { $convertToMarkdownString, TRANSFORMERS } from "@lexical/markdown";
 import { marked } from "marked";
 import sanitizeHtml from "sanitize-html";
-import Link from "next/link";
 import { Status } from "./Status";
 
 export async function Issue({ issueId }: { issueId: string }) {
   const roomId = getRoomId(issueId);
 
-  // Get storage contents of room (e.g. issue properties) to render placeholder on load
   const storagePromise = liveblocks.getStorageDocument(roomId, "json");
 
-  // Get content and convert it to markdown for displaying a placeholder
   const contentHtmlPromise = withLexicalDocument(
     {
       roomId,
@@ -33,15 +30,12 @@ export async function Issue({ issueId }: { issueId: string }) {
       let markdown = "";
 
       doc.getEditorState().read(() => {
-        // Get markdown version of Lexical state
         markdown = $convertToMarkdownString(TRANSFORMERS, undefined, true)
-          // Make new lines display correctly
           .replace(/\n{2,}/g, (match) => "<p><br></p>".repeat(match.length - 1))
           .replace(/\n(?!$)/g, "\n\n")
           .replace(/(\n+)$/g, (match) => "<p><br></p>".repeat(match.length));
       });
 
-      // Remove all HTML tags but "p" and "br"
       markdown = sanitizeHtml(markdown, {
         allowedTags: ["p", "br"],
         disallowedTagsMode: "escape",
@@ -54,9 +48,7 @@ export async function Issue({ issueId }: { issueId: string }) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let storage: any;
   let contentHtml: string | undefined;
-  let error: unknown;
 
-  // Default storage for new rooms not yet initialised in Liveblocks
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const emptyStorage: any = {
     meta: { title: "" },
@@ -66,72 +58,73 @@ export async function Issue({ issueId }: { issueId: string }) {
   };
 
   try {
-    // Await separately to avoid "excessively deep" TS error from Promise.all
-    // combining Liveblocks recursive storage types
     [storage, contentHtml] = await Promise.all([
       storagePromise as Promise<unknown>,
       contentHtmlPromise,
     ]);
   } catch (err) {
-    // Room may not exist yet — the client RoomProvider will initialise it on
-    // first connect. Fall through to empty storage so the editor renders.
     console.log("[Issue] server-side fetch failed, using empty storage:", err);
   }
 
-  // Empty or missing storage = new issue, not a deleted one
   if (!storage || Object.keys(storage).length === 0) {
     storage = emptyStorage;
     contentHtml = "";
   }
 
   return (
-    <div className="h-full flex flex-col">
-      <header className="flex justify-between border-b h-10 px-4 items-center">
+    <div className="h-full flex flex-col bg-background">
+      {/* ── Top bar ─────────────────────────────────────────────── */}
+      <header className="flex justify-between border-b border-border/60 h-10 px-4 items-center shrink-0">
         <Status />
         <Presence />
       </header>
-      <div className="flex-grow relative">
-        <div className="absolute inset-0 flex flex-row">
-          <div className="flex-grow h-full overflow-y-scroll">
-            <div className="max-w-[840px] mx-auto py-6 relative">
-              <div className="px-12">
-                <Editor
-                  storageFallback={storage}
-                  contentFallback={
-                    <div dangerouslySetInnerHTML={{ __html: contentHtml ?? "" }} />
-                  }
-                />
-                <div className="my-6">
-                  <IssueLinks storageFallback={storage} />
-                </div>
-                <div className="border-t my-6" />
-                <Comments />
-              </div>
-            </div>
-          </div>
-          <div className="border-l flex-grow-0 flex-shrink-0 w-[200px] lg:w-[260px] px-4 flex flex-col gap-4">
-            <div>
-              <div className="text-xs font-medium text-neutral-600 mb-2 h-10 flex items-center">
-                Properties
-              </div>
-              <IssueProperties storageFallback={storage} />
-            </div>
 
-            <div>
-              <div className="text-xs font-medium text-neutral-600 mb-0 h-10 flex items-center">
-                Labels
-              </div>
-              <IssueLabels storageFallback={storage} />
+      {/* ── Body ────────────────────────────────────────────────── */}
+      <div className="flex-1 flex overflow-hidden min-h-0">
+        {/* Main content */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-[780px] mx-auto py-8 px-10">
+            <Editor
+              storageFallback={storage}
+              contentFallback={
+                <div dangerouslySetInnerHTML={{ __html: contentHtml ?? "" }} />
+              }
+            />
+            <div className="mt-6">
+              <IssueLinks storageFallback={storage} />
             </div>
-
-            <div>
-              <div className="text-xs font-medium text-neutral-600 mb-0 h-10 flex items-center">
-                Actions
-              </div>
-              <IssueActions issueId={issueId} />
-            </div>
+            <div className="border-t border-border/50 mt-8 mb-6" />
+            <Comments />
           </div>
         </div>
+
+        {/* ── Linear-style right sidebar ──────────────────────── */}
+        <aside className="border-l border-border/60 w-[240px] shrink-0 overflow-y-auto">
+          {/* Properties section */}
+          <div className="px-4 pt-4 pb-2">
+            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">
+              Properties
+            </p>
+            <IssueProperties storageFallback={storage} />
+          </div>
+
+          <div className="border-t border-border/40 mx-4" />
+
+          {/* Labels section */}
+          <div className="px-4 py-3">
+            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-3">
+              Labels
+            </p>
+            <IssueLabels storageFallback={storage} />
+          </div>
+
+          <div className="border-t border-border/40 mx-4" />
+
+          {/* Actions section */}
+          <div className="px-4 py-3">
+            <IssueActions issueId={issueId} />
+          </div>
+        </aside>
       </div>
     </div>
   );

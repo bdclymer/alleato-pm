@@ -38,13 +38,11 @@ import {
 import {
   useCommitmentsList,
   useDeleteCommitment,
-  useUpdateCommitmentInline,
 } from "@/hooks/use-commitments-query";
 import type { CommitmentListItem } from "@/lib/validation/commitments";
 import { formatCurrency } from "@/lib/utils";
 import {
   buildCommitmentTableColumns,
-  type CommitmentInlineEditableField,
   commitmentColumns,
   commitmentDefaultVisibleColumns,
   commitmentFilters,
@@ -150,7 +148,6 @@ export default function ProjectCommitmentsPage(): ReactElement {
         : undefined;
 
   const deleteCommitment = useDeleteCommitment(projectId);
-  const inlineUpdateMutation = useUpdateCommitmentInline();
 
   // ─── Acumatica Sync ──────────────────────────────────────────────────────
 
@@ -211,29 +208,9 @@ export default function ProjectCommitmentsPage(): ReactElement {
     );
   }, [commitments]);
 
-  const handleInlineEdit = React.useCallback(
-    async (
-      item: CommitmentListItem,
-      field: CommitmentInlineEditableField,
-      value: string,
-    ) => {
-      const trimmed = value.trim();
-      if (!trimmed) {
-        throw new Error("Value cannot be empty");
-      }
-
-      await inlineUpdateMutation.mutateAsync({
-        id: item.id,
-        field,
-        value: trimmed,
-      });
-    },
-    [inlineUpdateMutation],
-  );
-
   const tableColumns = React.useMemo(
-    () => buildCommitmentTableColumns({ onInlineEdit: handleInlineEdit }),
-    [handleInlineEdit],
+    () => buildCommitmentTableColumns(projectId),
+    [projectId],
   );
   const sortedCommitments = React.useMemo(() => {
     if (!tableState.sortBy) return commitments;
@@ -435,9 +412,6 @@ export default function ProjectCommitmentsPage(): ReactElement {
         tabs={tabs}
         layout={{
           fullBleedTable: false,
-        }}
-        features={{
-          enableInlineEditing: true,
         }}
         toolbar={{
           totalItems,

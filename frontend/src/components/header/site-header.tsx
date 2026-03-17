@@ -18,6 +18,7 @@ import {
   buildToolUrl,
   filterToolsByPermission,
   type HeaderNavGroup,
+  type HeaderNavigationTool,
 } from "@/lib/navigation-config";
 
 import { useHeaderNav } from "./use-header-nav";
@@ -116,7 +117,7 @@ export function SiteHeader() {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
- * Tools dropdown — clean popover with grouped tool links
+ * Tools dropdown
  * ───────────────────────────────────────────────────────────────────────────── */
 
 function ToolsDropdown({
@@ -134,7 +135,6 @@ function ToolsDropdown({
 }) {
   const [open, setOpen] = React.useState(false);
 
-  // Build visible tools per group
   const groups = headerNavGroups.map((group) => ({
     ...group,
     visibleTools: filterToolsByPermission(
@@ -153,23 +153,33 @@ function ToolsDropdown({
           type="button"
           variant="ghost"
           size="sm"
-          className="h-8 w-64 justify-between border border-border/40 bg-surface-soft px-2 hover:bg-surface-soft focus-visible:ring-0 focus-visible:ring-offset-0"
+          className="h-8 w-52 justify-between gap-1.5 border border-border/60 bg-surface-soft px-2.5 hover:bg-surface-soft focus-visible:ring-0 focus-visible:ring-offset-0"
         >
-          <span className="truncate text-xs text-foreground/80 sm:text-sm">
-            {activeToolName === "Projects" ? "Tools" : activeToolName}
+          <span className="truncate text-sm text-foreground/80">
+            {activeToolName === "Projects" ? "Switch Tool" : activeToolName}
           </span>
           <ChevronsUpDown
-            className="ml-1.5 h-3 w-3 shrink-0 text-muted-foreground"
+            className="h-3 w-3 shrink-0 text-muted-foreground/60"
             strokeWidth={1.6}
           />
         </Button>
       </PopoverTrigger>
-      <PopoverContent
-        align="end"
-        sideOffset={6}
-        className="w-auto p-0"
-      >
-        <div className="flex gap-8 p-5">
+
+      <PopoverContent align="end" sideOffset={6} className="w-[860px] p-0 bg-[#F9FAFB] border border-[#E5E7EB] shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
+        {/* Panel header */}
+        <div className="flex items-center justify-between border-b border-border/50 px-5 py-2.5">
+          <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+            Navigate to
+          </span>
+          {!projectId && (
+            <span className="rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+              Select a project to unlock more tools
+            </span>
+          )}
+        </div>
+
+        {/* Groups */}
+        <div className="flex divide-x divide-border/40">
           {groups.map((group) => (
             <ToolsGroup
               key={group.id}
@@ -181,13 +191,6 @@ function ToolsDropdown({
             />
           ))}
         </div>
-        {!projectId && (
-          <div className="border-t border-border/40 px-5 py-2.5">
-            <p className="text-xs text-muted-foreground text-center">
-              Select a project to access project tools
-            </p>
-          </div>
-        )}
       </PopoverContent>
     </Popover>
   );
@@ -200,54 +203,121 @@ function ToolsGroup({
   activeToolName,
   onClose,
 }: {
-  group: HeaderNavGroup;
-  visibleTools: HeaderNavGroup["tools"];
+  group: HeaderNavGroup & { visibleTools: HeaderNavigationTool[] };
+  visibleTools: HeaderNavigationTool[];
   projectId: number | null;
   activeToolName: string;
   onClose: () => void;
 }) {
-  return (
-    <div className="min-w-[140px]">
-      <h3 className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
-        {group.label}
-      </h3>
-      <div className="flex flex-col">
-        {group.tools.map((tool) => {
-          const isActive = tool.name === activeToolName;
-          const isDisabled =
-            (tool.requiresProject && !projectId) ||
-            !visibleTools.includes(tool);
-          const href = buildToolUrl(
-            tool.path,
-            projectId,
-            tool.requiresProject
+  // If the group has subGroups, render with sub-section headers
+  if (group.subGroups && group.subGroups.length > 0) {
+    return (
+      <div className="flex flex-1 flex-col gap-0 p-4">
+        <p className="mb-3 px-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+          {group.label}
+        </p>
+        {group.subGroups.map((subGroup) => {
+          const subTools = group.tools.filter((t) =>
+            subGroup.toolNames.includes(t.name)
           );
-
           return (
-            <Link
-              key={tool.name}
-              href={href}
-              onClick={(e) => {
-                if (isDisabled) {
-                  e.preventDefault();
-                  return;
-                }
-                onClose();
-              }}
-              className={cn(
-                "rounded-md px-2 py-1.5 text-[13px] transition-colors",
-                isDisabled
-                  ? "cursor-not-allowed opacity-30"
-                  : "hover:bg-muted",
-                isActive && "bg-muted font-medium text-foreground",
-                !isActive && !isDisabled && "text-foreground/80"
-              )}
-            >
-              {tool.name}
-            </Link>
+            <div key={subGroup.label} className="mb-3 last:mb-0">
+              <p className="mb-1 px-2 text-[10px] font-medium text-muted-foreground/40">
+                {subGroup.label}
+              </p>
+              {subTools.map((tool) => (
+                <ToolItem
+                  key={tool.name}
+                  tool={tool}
+                  projectId={projectId}
+                  isActive={tool.name === activeToolName}
+                  isDisabled={
+                    (tool.requiresProject && !projectId) ||
+                    !visibleTools.includes(tool)
+                  }
+                  onClose={onClose}
+                />
+              ))}
+            </div>
           );
         })}
       </div>
+    );
+  }
+
+  // Default: flat list
+  return (
+    <div className="flex flex-1 flex-col gap-0 p-4">
+      <p className="mb-3 px-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+        {group.label}
+      </p>
+      {group.tools.map((tool) => (
+        <ToolItem
+          key={tool.name}
+          tool={tool}
+          projectId={projectId}
+          isActive={tool.name === activeToolName}
+          isDisabled={
+            (tool.requiresProject && !projectId) ||
+            !visibleTools.includes(tool)
+          }
+          onClose={onClose}
+        />
+      ))}
     </div>
+  );
+}
+
+function ToolItem({
+  tool,
+  projectId,
+  isActive,
+  isDisabled,
+  onClose,
+}: {
+  tool: HeaderNavigationTool;
+  projectId: number | null;
+  isActive: boolean;
+  isDisabled: boolean;
+  onClose: () => void;
+}) {
+  const href = buildToolUrl(tool.path, projectId, tool.requiresProject);
+  const Icon = tool.icon;
+
+  return (
+    <Link
+      href={href}
+      onClick={(e) => {
+        if (isDisabled) {
+          e.preventDefault();
+          return;
+        }
+        onClose();
+      }}
+      className={cn(
+        "group flex items-center gap-2.5 rounded-md px-2 py-1.5 transition-colors",
+        isDisabled
+          ? "pointer-events-none opacity-30"
+          : isActive
+          ? "bg-muted text-foreground"
+          : "text-foreground/75 hover:bg-muted hover:text-foreground"
+      )}
+    >
+      {Icon && (
+        <span
+          className={cn(
+            "flex h-6 w-6 shrink-0 items-center justify-center rounded border",
+            isActive
+              ? "border-border text-foreground"
+              : "border-border/50 text-muted-foreground group-hover:border-border group-hover:text-foreground"
+          )}
+        >
+          <Icon className="h-3.5 w-3.5" strokeWidth={1.6} />
+        </span>
+      )}
+      <span className={cn("text-[13px]", isActive ? "font-semibold" : "font-normal")}>
+        {tool.name}
+      </span>
+    </Link>
   );
 }

@@ -60,6 +60,11 @@ export function RHFDateField<TFieldValues extends FieldValues>({
       return Number.isNaN(value.getTime()) ? undefined : value
     }
     if (typeof value === "string") {
+      // Parse as local date (not UTC) to avoid off-by-one-day timezone issue
+      const parts = value.match(/^(\d{4})-(\d{2})-(\d{2})/)
+      if (parts) {
+        return new Date(Number(parts[1]), Number(parts[2]) - 1, Number(parts[3]))
+      }
       const parsed = new Date(value)
       return Number.isNaN(parsed.getTime()) ? undefined : parsed
     }

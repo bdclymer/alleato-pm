@@ -133,6 +133,12 @@ declare global {
       resolved?: boolean;
       rowId?: string;
       columnId?: string;
+      // Canvas comments — position on screen + page context
+      x?: number;
+      y?: number;
+      zIndex?: number;
+      url?: string;
+      pageTitle?: string;
     };
 
     RoomInfo: {

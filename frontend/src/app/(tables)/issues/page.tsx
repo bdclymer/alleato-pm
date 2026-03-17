@@ -1,31 +1,29 @@
 import { createClient } from "@/lib/supabase/server";
-import { TablePageWrapper } from "@/components/tables/table-page-wrapper";
 import { IssuesClientPage } from "./issues-client";
-
-const PAGE_TITLE = "Issues";
-const PAGE_DESCRIPTION = "Track and manage project issues";
 
 export default async function IssuesPage() {
   const supabase = await createClient();
 
   const { data, error } = await supabase
-    .from("issues")
+    .from("tasks")
     .select("*")
     .order("created_at", { ascending: false });
 
   if (error) {
     return (
-      <TablePageWrapper title={PAGE_TITLE} description={PAGE_DESCRIPTION}>
-        <div className="text-center text-destructive p-6">
-          Error loading data. Please try again later.
-        </div>
-      </TablePageWrapper>
+      <div className="flex items-center justify-center h-40 text-sm text-destructive">
+        Error loading issues. Please try again.
+      </div>
     );
   }
 
   return (
-    <TablePageWrapper title={PAGE_TITLE} description={PAGE_DESCRIPTION}>
+    <div className="flex flex-col h-full min-h-0">
+      {/* ── Linear-style header ────────────────────────────── */}
+      <div className="flex items-center gap-2 px-4 h-11 border-b border-border/60 shrink-0">
+        <span className="text-sm font-medium text-foreground">Issues</span>
+      </div>
       <IssuesClientPage data={data || []} />
-    </TablePageWrapper>
+    </div>
   );
 }

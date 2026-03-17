@@ -18,7 +18,7 @@ import { SelectField } from "@/components/forms/SelectField";
 import { DateField } from "@/components/forms/DateField";
 
 const createInvoiceSchema = z.object({
-  contract_id: z.number().min(1, "Contract is required"),
+  prime_contract_id: z.string().min(1, "Contract is required"),
   invoice_number: z.string().optional(),
   period_start: z.string().optional(),
   period_end: z.string().optional(),
@@ -28,7 +28,7 @@ const createInvoiceSchema = z.object({
 type CreateInvoiceValues = z.infer<typeof createInvoiceSchema>;
 
 interface ContractOption {
-  id: number;
+  id: string;
   contract_number: string;
   title: string | null;
 }
@@ -56,6 +56,7 @@ export default function NewInvoicePage() {
   const form = useForm<CreateInvoiceValues>({
     resolver: zodResolver(createInvoiceSchema),
     defaultValues: {
+      prime_contract_id: "",
       status: "draft",
       invoice_number: "",
       period_start: "",
@@ -83,16 +84,16 @@ export default function NewInvoicePage() {
 
   useEffect(() => {
     if (isLoadingContracts || contracts.length === 0) return;
-    const selectedContract = form.getValues("contract_id");
+    const selectedContract = form.getValues("prime_contract_id");
     if (selectedContract) return;
-    form.setValue("contract_id", contracts[0].id, { shouldValidate: true });
+    form.setValue("prime_contract_id", contracts[0].id, { shouldValidate: true });
   }, [contracts, isLoadingContracts, form]);
 
   const handleDevAutoFill = () => {
     const now = Date.now();
     const firstContractId = contracts[0]?.id;
     if (firstContractId) {
-      form.setValue("contract_id", firstContractId, { shouldValidate: true });
+      form.setValue("prime_contract_id", firstContractId, { shouldValidate: true });
     }
     form.setValue("invoice_number", `INV-${now}`, { shouldValidate: true });
     form.setValue("status", "draft", { shouldValidate: true });
@@ -149,11 +150,11 @@ export default function NewInvoicePage() {
               label="Contract"
               required
               fullWidth
-              value={values.contract_id ? String(values.contract_id) : undefined}
+              value={values.prime_contract_id || undefined}
               onValueChange={(value) =>
-                form.setValue("contract_id", Number(value), { shouldValidate: true })
+                form.setValue("prime_contract_id", value, { shouldValidate: true })
               }
-              error={form.formState.errors.contract_id?.message}
+              error={form.formState.errors.prime_contract_id?.message}
               disabled={isLoadingContracts}
               placeholder={isLoadingContracts ? "Loading contracts..." : "Select a contract"}
               options={contracts.map((contract) => ({

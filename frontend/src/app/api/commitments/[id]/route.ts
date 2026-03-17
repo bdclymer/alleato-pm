@@ -69,16 +69,14 @@ export async function GET(
       issued_on_date, default_retainage_percent,
       is_private, non_admin_user_ids, allow_non_admin_view_sov_items,
       invoice_contact_ids, created_by, created_at, updated_at, deleted_at,
-      inclusions, exclusions,
-      contract_company:companies!contract_company_id(id, name, type)
+      inclusions, exclusions
     `;
     const purchaseOrderBaseSelect = `
       id, project_id, contract_number, title, description, status, executed,
       contract_company_id, contract_date, signed_po_received_date,
       issued_on_date, default_retainage_percent, accounting_method,
       is_private, non_admin_user_ids, allow_non_admin_view_sov_items,
-      invoice_contact_ids, created_by, created_at, updated_at, deleted_at,
-      contract_company:companies!contract_company_id(id, name, type)
+      invoice_contact_ids, created_by, created_at, updated_at, deleted_at
     `;
 
     // Performance optimization: Run all detail queries in parallel
@@ -155,6 +153,7 @@ export async function GET(
     const { data: changeOrders } = coResult;
 
     if (error) {
+      console.error("[commitments/[id] GET] base query error:", error);
       if (error.code === "PGRST116") {
         return NextResponse.json(
           { error: "Commitment not found" },
@@ -192,6 +191,18 @@ export async function GET(
       }
     }
 
+    // Fetch company separately (avoids PostgREST schema cache join issues)
+    const record = data as Record<string, unknown>;
+    let contractCompany: { id: string; name: string; type: string | null } | null = null;
+    if (record?.contract_company_id) {
+      const { data: companyData } = await supabase
+        .from("companies")
+        .select("id, name, type")
+        .eq("id", record.contract_company_id as string)
+        .single();
+      contractCompany = companyData ?? null;
+    }
+
     const originalAmount = Number(totalsData?.total_sov_amount) || 0;
     const billedToDate = Number(totalsData?.total_billed_to_date) || 0;
     // Revised amount = original + approved change orders
@@ -200,6 +211,7 @@ export async function GET(
 
     const responseData = {
       ...data,
+      contract_company: contractCompany,
       type: unifiedData.commitment_type,
       // Normalize date field names across subcontracts and purchase orders.
       signed_received_date:

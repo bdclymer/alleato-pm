@@ -32,16 +32,17 @@ export function Select({
     <RadixSelect.Root onValueChange={onValueChange} value={value}>
       <RadixSelect.Trigger
         aria-label={id}
-        className="flex items-center justify-between bg-transparent border-0 h-7 px-2 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-neutral-200/60 appearance-none data-[state=open]:bg-neutral-200/60"
+        className="flex items-center gap-1.5 bg-transparent border-0 h-7 px-2 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring hover:bg-muted/60 appearance-none data-[state=open]:bg-muted/60 text-sm w-full text-left"
       >
         {current ? current.text || current.jsx : <RadixSelect.Value />}
       </RadixSelect.Trigger>
       <RadixSelect.Portal>
         <RadixSelect.Content
-          className="overflow-hidden bg-white rounded-lg border border-neutral-200 shadow relative right-full -top-8 -mt-0.5 mr-1"
+          className="overflow-hidden bg-white dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-700 shadow-md z-[200] min-w-[160px]"
           position="popper"
-          sideOffset={5}
-          avoidCollisions={false}
+          sideOffset={4}
+          align="start"
+          avoidCollisions={true}
         >
           <RadixSelect.ScrollUpButton className="flex items-center justify-center h-[25px] bg-white cursor-default">
             <ChevronUpIcon className="w-4 h-4" />
@@ -53,7 +54,7 @@ export function Select({
                   key={firstItem.id}
                   value={firstItem.id}
                   className={classnames(
-                    "text-sm leading-none flex items-center h-7 pr-8 pl-2 relative select-none data-[disabled]:pointer-events-none data-[highlighted]:outline-none hover:bg-neutral-200/60 rounded"
+                    "text-sm leading-none flex items-center h-7 pr-8 pl-2 relative select-none data-[disabled]:pointer-events-none data-[highlighted]:outline-none hover:bg-muted/70 rounded-sm"
                   )}
                 >
                   <RadixSelect.ItemText>{firstItem.jsx}</RadixSelect.ItemText>
@@ -69,7 +70,7 @@ export function Select({
                   key={item.id}
                   value={item.id}
                   className={classnames(
-                    "text-sm leading-none flex items-center h-7 pr-8 pl-2 relative select-none data-[disabled]:pointer-events-none data-[highlighted]:outline-none hover:bg-neutral-200/60 rounded data-[disabled]:opacity-40"
+                    "text-sm leading-none flex items-center h-7 pr-8 pl-2 relative select-none data-[disabled]:pointer-events-none data-[highlighted]:outline-none hover:bg-muted/70 rounded-sm data-[disabled]:opacity-40"
                   )}
                   disabled={item.disabled}
                 >

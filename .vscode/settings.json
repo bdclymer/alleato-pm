@@ -28,6 +28,10 @@
         {
             "filePath": "frontend/src/components/direct-costs/DirectCostForm.tsx",
             "group": "Default"
+        },
+        {
+            "filePath": "docs/design/design-inspiration/original-7f238f33228255d5d2a8b52982074cca.webp",
+            "group": "Default"
         }
     ],
     "files.exclude": {
