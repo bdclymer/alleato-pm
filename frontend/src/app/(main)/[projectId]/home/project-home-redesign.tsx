@@ -528,72 +528,6 @@ export function ProjectHomeRedesign({
       .slice(0, 7);
   }, [pendingCOs, openRfis, openCEs, lastLogDaysAgo, hasBudget, committedPct, revisedBudget, committedCosts, scheduleStats, project.id]);
 
-  const recentActivity = React.useMemo(() => {
-    const items: Array<{
-      id: string;
-      title: string;
-      meta: string;
-      date: Date;
-      href: string;
-    }> = [];
-
-    meetings.forEach((meeting) => {
-      const rawDate = meeting.date || meeting.created_at;
-      if (!rawDate) return;
-      const date = new Date(rawDate);
-      if (Number.isNaN(date.getTime())) return;
-      items.push({
-        id: `meeting-${meeting.id}`,
-        title: meeting.title || meeting.file_name || "Meeting recorded",
-        meta: "Meeting",
-        date,
-        href: `/${project.id}/meetings`,
-      });
-    });
-
-    dailyLogs.forEach((log) => {
-      const rawDate = log.log_date || log.created_at;
-      if (!rawDate) return;
-      const date = new Date(rawDate);
-      if (Number.isNaN(date.getTime())) return;
-      items.push({
-        id: `daily-log-${log.id}`,
-        title: "Daily log filed",
-        meta: "Daily Log",
-        date,
-        href: `/${project.id}/daily-log`,
-      });
-    });
-
-    changeOrders.forEach((changeOrder) => {
-      if (!changeOrder.created_at) return;
-      const date = new Date(changeOrder.created_at);
-      if (Number.isNaN(date.getTime())) return;
-      items.push({
-        id: `change-order-${changeOrder.id}`,
-        title: changeOrder.title || `Change Order ${changeOrder.co_number || ""}`.trim(),
-        meta: "Change Order",
-        date,
-        href: `/${project.id}/change-orders`,
-      });
-    });
-
-    rfis.forEach((rfi) => {
-      if (!rfi.created_at) return;
-      const date = new Date(rfi.created_at);
-      if (Number.isNaN(date.getTime())) return;
-      items.push({
-        id: `rfi-${rfi.id}`,
-        title: rfi.subject || `RFI ${rfi.number || ""}`.trim(),
-        meta: "RFI",
-        date,
-        href: `/${project.id}/rfis`,
-      });
-    });
-
-    return items.sort((a, b) => b.date.getTime() - a.date.getTime()).slice(0, 8);
-  }, [meetings, dailyLogs, changeOrders, rfis, project.id]);
-
   const scheduleBarColor = scheduleStats
     ? scheduleStats.overdue > 5 ? "#ef4444" : scheduleStats.overdue > 2 ? "#f59e0b" : "#22c55e"
     : "#94a3b8";
@@ -727,6 +661,67 @@ export function ProjectHomeRedesign({
               </div>
             </section>
 
+          {/* ── MEETINGS ── */}
+            <section className="space-y-5 pt-1">
+              <div className="flex items-baseline justify-between">
+                <div className="flex items-baseline gap-2">
+                  <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">Meetings</h2>
+                  <span className="text-xs text-muted-foreground/50">{meetings.length}</span>
+                </div>
+                <Link href={`/${project.id}/meetings`} className="text-xs text-muted-foreground hover:text-foreground transition-colors">View all →</Link>
+              </div>
+              {meetings.length > 0 ? (
+                <div>
+                  <div className="grid grid-cols-[88px_minmax(0,1fr)_auto] px-2 py-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-muted-foreground">
+                    <span>Date</span>
+                    <span>Meeting</span>
+                    <span className="text-right">Duration</span>
+                  </div>
+                  {meetings.slice(0, 5).map((m) => {
+                    const meetingDate = m.date ? new Date(m.date) : m.created_at ? new Date(m.created_at) : null;
+                    const monthStr = meetingDate ? format(meetingDate, "MMM") : "";
+                    const dayStr = meetingDate ? format(meetingDate, "d") : "";
+                    return (
+                      <Link
+                        key={m.id}
+                        href={`/${project.id}/meetings/${m.id}`}
+                        className="group grid grid-cols-[88px_minmax(0,1fr)_auto] gap-4 px-2 py-3 border-b border-border/40 last:border-0 hover:bg-muted/30 transition-colors"
+                      >
+                        <div className="text-left">
+                          <div className="inline-flex min-w-12 flex-col items-center rounded-md border border-primary/25 bg-primary/10 px-2 py-1">
+                            <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-primary">{monthStr}</div>
+                            <div className="text-sm font-semibold tracking-tight leading-none text-primary">{dayStr}</div>
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm font-medium text-foreground leading-snug group-hover:text-primary transition-colors line-clamp-1">
+                            {m.title || m.file_name || "Meeting"}
+                          </h3>
+                          {m.summary && (
+                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
+                              {m.summary}
+                            </p>
+                          )}
+                          {m.participants_array && m.participants_array.length > 0 && (
+                            <p className="text-xs text-muted-foreground/80 mt-1">
+                              {m.participants_array.length} attendee{m.participants_array.length === 1 ? "" : "s"}
+                            </p>
+                          )}
+                        </div>
+                        <div className="text-xs text-muted-foreground tabular-nums text-right whitespace-nowrap pt-0.5">
+                          {m.duration_minutes ? `${m.duration_minutes}m` : "—"}
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="px-2 py-2">
+                  <p className="text-sm text-muted-foreground">No meetings recorded yet.</p>
+                </div>
+              )}
+            </section>
+
           {/* ── TASKS ── */}
             <section className="space-y-5 pt-1">
               <div className="flex items-center justify-between">
@@ -790,53 +785,6 @@ export function ProjectHomeRedesign({
                 </div>
               )}
             </section>
-
-          {/* ── MEETINGS ── */}
-            <section className="space-y-5 pt-1">
-              <div className="flex items-baseline justify-between">
-                <div className="flex items-baseline gap-2">
-                  <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">Meetings</h2>
-                  <span className="text-xs text-muted-foreground/50">{meetings.length}</span>
-                </div>
-                <Link href={`/${project.id}/meetings`} className="text-xs text-muted-foreground hover:text-foreground transition-colors">View all →</Link>
-              </div>
-              {meetings.length > 0 ? (
-                <div>
-                  {meetings.slice(0, 5).map((m) => {
-                    const meetingDate = m.date ? new Date(m.date) : m.created_at ? new Date(m.created_at) : null;
-                    const monthStr = meetingDate ? format(meetingDate, "MMM") : "";
-                    const dayStr = meetingDate ? format(meetingDate, "d") : "";
-                    return (
-                      <Link
-                        key={m.id}
-                        href={`/${project.id}/meetings`}
-                        className="group flex gap-4 py-3.5 border-b border-border/40 last:border-0 hover:bg-muted/30 -mx-2 px-2 rounded-md transition-colors"
-                      >
-                        <div className="w-11 flex-shrink-0 text-center pt-0.5">
-                          <div className="text-[10px] font-semibold uppercase tracking-[0.06em] text-muted-foreground">{monthStr}</div>
-                          <div className="text-xl font-semibold tracking-tight leading-none">{dayStr}</div>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-medium text-foreground leading-snug group-hover:text-primary transition-colors line-clamp-1">
-                            {m.title || m.file_name || "Meeting"}
-                          </h3>
-                          {m.summary && (
-                            <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
-                              {m.summary}
-                            </p>
-                          )}
-                        </div>
-                      </Link>
-                    );
-                  })}
-                  {meetings.length > 5 && (
-                    <p className="text-xs text-muted-foreground/50 pt-1">+{meetings.length - 5} more</p>
-                  )}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">No meetings recorded yet.</p>
-              )}
-            </section>
           </div>
 
           <aside className="space-y-8">
@@ -850,6 +798,12 @@ export function ProjectHomeRedesign({
                   className="text-sm text-foreground hover:text-primary transition-colors"
                 >
                   Prime Contracts
+                </Link>
+                <Link
+                  href={`/${project.id}/commitments`}
+                  className="text-sm text-foreground hover:text-primary transition-colors"
+                >
+                  Commitments
                 </Link>
                 <Link
                   href={`/${project.id}/change-orders`}
@@ -868,6 +822,37 @@ export function ProjectHomeRedesign({
                   className="text-sm text-foreground hover:text-primary transition-colors"
                 >
                   Direct Costs
+                </Link>
+              </div>
+            </section>
+
+            <section className="space-y-4">
+              <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
+                Field Tools
+              </h2>
+              <div className="space-y-2">
+                <Link
+                  href={`/${project.id}/drawings`}
+                  className="flex items-center justify-between text-sm text-foreground hover:text-primary transition-colors"
+                >
+                  <span>Drawings</span>
+                  <span className="text-xs text-muted-foreground">Open</span>
+                </Link>
+                <Link
+                  href={`/${project.id}/submittals`}
+                  className="flex items-center justify-between text-sm text-foreground hover:text-primary transition-colors"
+                >
+                  <span>Submittals</span>
+                  <span className="text-xs text-muted-foreground">Open</span>
+                </Link>
+                <Link
+                  href={`/${project.id}/daily-log`}
+                  className="flex items-center justify-between text-sm text-foreground hover:text-primary transition-colors"
+                >
+                  <span>Daily Log</span>
+                  <span className="text-xs text-muted-foreground tabular-nums">
+                    {dailyLogs.length > 0 ? `${dailyLogs.length} entries` : "No entries"}
+                  </span>
                 </Link>
               </div>
             </section>
@@ -908,40 +893,6 @@ export function ProjectHomeRedesign({
                   </div>
                 </div>
               </div>
-            </section>
-
-            <section className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
-                  Recent Activity
-                </h2>
-                <Link href={`/${project.id}/updates`} className="text-xs text-muted-foreground hover:text-foreground">
-                  View all →
-                </Link>
-              </div>
-              {recentActivity.length > 0 ? (
-                <div>
-                  {recentActivity.slice(0, 6).map((item) => (
-                    <Link
-                      key={item.id}
-                      href={item.href}
-                      className="group flex items-start justify-between gap-3 py-3 border-b border-border/40 last:border-0"
-                    >
-                      <div className="min-w-0">
-                        <p className="text-sm text-foreground line-clamp-1 group-hover:text-primary transition-colors">
-                          {item.title}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{item.meta}</p>
-                      </div>
-                      <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60 flex-shrink-0 pt-0.5">
-                        {format(item.date, "MMM d")}
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              ) : (
-                <p className="text-sm text-muted-foreground">No recent activity yet.</p>
-              )}
             </section>
 
             <section className="space-y-4">

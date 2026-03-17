@@ -111,7 +111,7 @@ export function ExportCommitmentDialog({
       } else if (format === "excel") {
         filename += ".xlsx";
       } else if (format === "pdf") {
-        filename += ".html"; // HTML that can be printed to PDF
+        filename += ".pdf";
       }
 
       if (contentDisposition) {

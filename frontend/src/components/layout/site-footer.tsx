@@ -6,7 +6,7 @@ const footerLinks = [
   { label: "Projects", href: "/" },
   { label: "Settings", href: "/settings/plugins" },
   { label: "Docs", href: "/docs" },
-  { label: "Support", href: "mailto:support@alleatogroup.com" },
+  { label: "Sitemap", href: "/site-map" },
 ];
 
 export function SiteFooter() {

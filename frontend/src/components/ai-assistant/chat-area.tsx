@@ -716,7 +716,7 @@ export function ChatArea({
           </Conversation>
 
           {/* Prompt input — pinned to bottom in conversation mode */}
-          <div className="mx-auto w-full max-w-3xl px-4 pb-6 pt-2">
+          <div className="mx-auto w-full max-w-3xl shrink-0 px-4 pb-6 pt-2">
             {promptInputEl}
             {poweredByEl}
           </div>

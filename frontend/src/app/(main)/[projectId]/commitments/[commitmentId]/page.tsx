@@ -12,12 +12,11 @@ import { AttachmentsTab } from "@/components/commitments/tabs/AttachmentsTab";
 import { ChangeOrdersTab } from "@/components/commitments/tabs/ChangeOrdersTab";
 import { InvoicesTab } from "@/components/commitments/tabs/InvoicesTab";
 import { ScheduleOfValuesTab } from "@/components/commitments/tabs/ScheduleOfValuesTab";
-import { EmailCommitmentDialog } from "@/components/commitments/EmailCommitmentDialog";
-import { ExportDialog } from "@/components/commitments/ExportDialog";
 import {
   CreatePurchaseOrderForm,
   CreateSubcontractForm,
 } from "@/components/domain/contracts";
+import { DocumentDeliveryDialog } from "@/components/documents/DocumentDeliveryDialog";
 import { ProjectPageHeader } from "@/components/layout";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Button } from "@/components/ui/button";
@@ -232,6 +231,9 @@ export default function CommitmentDetailPage() {
 
   const [isExportDialogOpen, setIsExportDialogOpen] = useState(false);
   const [isEmailDialogOpen, setIsEmailDialogOpen] = useState(false);
+  const [documentDialogTab, setDocumentDialogTab] = useState<"download" | "email">(
+    "download",
+  );
   const [isEditing, setIsEditing] = useState(false);
 
   // Use React Query for cached, deduplicated data fetching
@@ -299,10 +301,12 @@ export default function CommitmentDetailPage() {
   }, [commitment, commitmentId, projectId, router, queryClient]);
 
   const handleExport = useCallback(() => {
+    setDocumentDialogTab("download");
     setIsExportDialogOpen(true);
   }, []);
 
   const handleEmail = useCallback(() => {
+    setDocumentDialogTab("email");
     setIsEmailDialogOpen(true);
   }, []);
 
@@ -1014,24 +1018,17 @@ export default function CommitmentDetailPage() {
 
       </Tabs>
 
-      {/* Export Dialog */}
-      <ExportDialog
-        open={isExportDialogOpen}
-        onOpenChange={setIsExportDialogOpen}
-        projectId={String(projectId)}
-        commitmentId={commitment.id}
-        commitmentNumber={commitment.number}
-      />
-
-      {/* Email Dialog */}
-      <EmailCommitmentDialog
-        open={isEmailDialogOpen}
-        onOpenChange={setIsEmailDialogOpen}
-        commitmentId={commitment.id}
-        commitmentNumber={commitment.number}
-        commitmentTitle={commitment.title}
-        companyId={commitment.contract_company_id}
-        companyName={commitment.contract_company?.name}
+      <DocumentDeliveryDialog
+        open={isExportDialogOpen || isEmailDialogOpen}
+        onOpenChange={(nextOpen) => {
+          setIsExportDialogOpen(nextOpen);
+          setIsEmailDialogOpen(nextOpen);
+        }}
+        initialTab={documentDialogTab}
+        recordType="commitment"
+        recordId={commitment.id}
+        number={commitment.number}
+        title={commitment.title}
       />
       </PageContainer>
     </>

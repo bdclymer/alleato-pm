@@ -253,7 +253,9 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
     id: "admin",
     label: "Admin",
     icon: Settings,
-    tools: adminTools,
+    tools: adminTools.filter(
+      (tool) => tool.path !== "/admin/documents/pipeline"
+    ),
   },
 ];
 

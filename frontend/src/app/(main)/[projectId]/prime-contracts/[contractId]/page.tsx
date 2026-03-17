@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import { ProjectPageHeader } from "@/components/layout";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { TableLayout } from "@/components/layouts";
+import { DocumentDeliveryDialog } from "@/components/documents/DocumentDeliveryDialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -166,6 +167,10 @@ export default function ProjectContractDetailPage() {
   const [rejectingCoId, setRejectingCoId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [isRejectingCo, setIsRejectingCo] = useState(false);
+  const [isDocumentDialogOpen, setIsDocumentDialogOpen] = useState(false);
+  const [documentDialogTab, setDocumentDialogTab] = useState<"download" | "email">(
+    "download",
+  );
 
   useEffect(() => {
     const fetchContract = async () => {
@@ -1271,7 +1276,10 @@ export default function ProjectContractDetailPage() {
             <Button
               variant="outline"
               size="icon"
-              onClick={() => setActiveTab("emails")}
+              onClick={() => {
+                setDocumentDialogTab("email");
+                setIsDocumentDialogOpen(true);
+              }}
               aria-label="Email"
               title="Email"
             >
@@ -1280,7 +1288,10 @@ export default function ProjectContractDetailPage() {
             <Button
               variant="outline"
               size="icon"
-              onClick={() => window.print()}
+              onClick={() => {
+                setDocumentDialogTab("download");
+                setIsDocumentDialogOpen(true);
+              }}
               aria-label="Export"
               title="Export"
             >
@@ -2278,6 +2289,17 @@ export default function ProjectContractDetailPage() {
         isDeletingLineItem={isDeletingLineItem}
         handleDeleteLineItem={handleDeleteLineItem}
       />
+      {contract ? (
+        <DocumentDeliveryDialog
+          open={isDocumentDialogOpen}
+          onOpenChange={setIsDocumentDialogOpen}
+          initialTab={documentDialogTab}
+          recordType="prime-contract"
+          recordId={contract.id}
+          number={contract.contract_number || "Prime Contract"}
+          title={contract.title}
+        />
+      ) : null}
     </>
   );
 }

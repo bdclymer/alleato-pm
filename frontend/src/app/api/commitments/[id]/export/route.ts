@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 import { createClient } from "@/lib/supabase/server";
+import { renderPdfFromHtml } from "@/lib/documents/pdf";
 
 interface ExportParams {
   format: "csv" | "excel" | "pdf";
@@ -26,6 +27,7 @@ interface SovItem {
   budget_code: string | null;
   amount: number | null;
   billed_to_date: number | null;
+  type: string | null;
 }
 
 interface CommitmentData {
@@ -45,9 +47,44 @@ interface CommitmentData {
   executed_date: string | null;
   substantial_completion_date: string | null;
   accounting_method: string | null;
+  contract_date: string | null;
+  payment_terms: string | null;
+  delivery_date: string | null;
+  bill_to: string | null;
+  ship_to: string | null;
+  issued_on_date: string | null;
   contract_company: {
+    id?: string;
     name: string;
+    address?: string | null;
+    city?: string | null;
+    state?: string | null;
   } | null;
+  project: {
+    id: number;
+    name: string | null;
+    project_number: string | null;
+    address: string | null;
+    state: string | null;
+    company_id: string | null;
+  } | null;
+  project_company: {
+    name: string;
+    address?: string | null;
+    city?: string | null;
+    state?: string | null;
+  } | null;
+  vendor_contact: {
+    name: string;
+    phone: string | null;
+    email: string | null;
+  } | null;
+  invoice_contact: {
+    name: string;
+    phone: string | null;
+    email: string | null;
+  } | null;
+  created_by_name: string | null;
   line_items: SovItem[];
   created_at: string;
   updated_at: string;
@@ -144,11 +181,12 @@ export async function POST(
       });
     } else if (exportParams.format === "pdf") {
       const html = generatePDFHTML(commitmentData, exportParams);
-      return new NextResponse(html, {
+      const pdfBuffer = await renderPdfFromHtml(html);
+      return new NextResponse(pdfBuffer, {
         status: 200,
         headers: {
-          "Content-Type": "text/html; charset=utf-8",
-          "Content-Disposition": `inline; filename="${baseFilename}-${dateStr}.html"`,
+          "Content-Type": "application/pdf",
+          "Content-Disposition": `attachment; filename="${baseFilename}-${dateStr}.pdf"`,
         },
       });
     }
@@ -204,7 +242,7 @@ async function fetchCommitmentData(
     .select(
       `
       *,
-      contract_company:companies!contract_company_id(name)
+      contract_company:companies!contract_company_id(id, name, address, city, state)
     `
     )
     .eq("id", id)
@@ -233,11 +271,90 @@ async function fetchCommitmentData(
   const originalAmount = Number(totalsData?.total_sov_amount) || 0;
   const billedToDate = Number(totalsData?.total_billed_to_date) || 0;
   const balanceToFinish = Number(totalsData?.total_amount_remaining) || 0;
+  const invoiceContactIds = Array.isArray(data.invoice_contact_ids)
+    ? data.invoice_contact_ids
+    : [];
+
+  const { data: projectData } = await (supabase as any)
+    .from("projects")
+    .select("id, name, project_number, address, state, company_id")
+    .eq("id", data.project_id)
+    .maybeSingle();
+
+  let projectCompany: CommitmentData["project_company"] = null;
+  if (projectData?.company_id) {
+    const { data: projectCompanyData } = await (supabase as any)
+      .from("companies")
+      .select("name, address, city, state")
+      .eq("id", projectData.company_id)
+      .maybeSingle();
+
+    if (projectCompanyData?.name) {
+      projectCompany = {
+        name: projectCompanyData.name,
+        address: projectCompanyData.address,
+        city: projectCompanyData.city,
+        state: projectCompanyData.state,
+      };
+    }
+  }
+
+  let invoiceContact: CommitmentData["invoice_contact"] = null;
+  if (invoiceContactIds.length > 0) {
+    const { data: invoicePeople } = await (supabase as any)
+      .from("people")
+      .select("first_name, last_name, email, phone_business, phone_mobile")
+      .in("id", invoiceContactIds)
+      .limit(1);
+
+    const person = invoicePeople?.[0];
+    if (person) {
+      invoiceContact = {
+        name: `${person.first_name || ""} ${person.last_name || ""}`.trim(),
+        email: person.email || null,
+        phone: person.phone_business || person.phone_mobile || null,
+      };
+    }
+  }
+
+  let vendorContact: CommitmentData["vendor_contact"] = null;
+  if (data.contract_company_id) {
+    const { data: vendorPeople } = await (supabase as any)
+      .from("people")
+      .select("first_name, last_name, email, phone_business, phone_mobile")
+      .eq("company_id", data.contract_company_id)
+      .order("created_at", { ascending: true })
+      .limit(1);
+
+    const person = vendorPeople?.[0];
+    if (person) {
+      vendorContact = {
+        name: `${person.first_name || ""} ${person.last_name || ""}`.trim(),
+        email: person.email || null,
+        phone: person.phone_business || person.phone_mobile || null,
+      };
+    }
+  }
+
+  let createdByName: string | null = null;
+  if (data.created_by) {
+    const { data: createdByPerson } = await (supabase as any)
+      .from("people")
+      .select("first_name, last_name")
+      .eq("auth_user_id", data.created_by)
+      .maybeSingle();
+
+    if (createdByPerson) {
+      createdByName =
+        `${createdByPerson.first_name || ""} ${createdByPerson.last_name || ""}`.trim() ||
+        null;
+    }
+  }
 
   return {
     id: data.id,
-    number: data.number,
-    title: data.title,
+    number: data.contract_number || data.id,
+    title: data.title || (isSubcontract ? "Subcontract" : "Purchase Order"),
     description: data.description,
     status: data.status,
     type: unifiedData.commitment_type,
@@ -246,12 +363,33 @@ async function fetchCommitmentData(
     revised_contract_amount: originalAmount,
     billed_to_date: billedToDate,
     balance_to_finish: balanceToFinish,
-    retention_percentage: data.default_retainage,
+    retention_percentage: data.default_retainage_percent ?? null,
     start_date: data.start_date,
-    executed_date: data.executed_date,
-    substantial_completion_date: data.substantial_completion_date,
+    executed_date: data.contract_date || null,
+    substantial_completion_date:
+      data.estimated_completion_date || data.substantial_completion_date || null,
     accounting_method: data.accounting_method,
+    contract_date: data.contract_date || null,
+    payment_terms: data.payment_terms || null,
+    delivery_date: data.delivery_date || null,
+    bill_to: data.bill_to || null,
+    ship_to: data.ship_to || null,
+    issued_on_date: data.issued_on_date || null,
     contract_company: data.contract_company,
+    project: projectData
+      ? {
+          id: projectData.id,
+          name: projectData.name,
+          project_number: projectData.project_number,
+          address: projectData.address,
+          state: projectData.state,
+          company_id: projectData.company_id,
+        }
+      : null,
+    project_company: projectCompany,
+    vendor_contact: vendorContact,
+    invoice_contact: invoiceContact,
+    created_by_name: createdByName,
     line_items: (sovItems || []).map((item: any) => ({
       id: item.id,
       line_number: item.line_number,
@@ -259,6 +397,7 @@ async function fetchCommitmentData(
       budget_code: item.budget_code,
       amount: item.amount,
       billed_to_date: item.billed_to_date || 0,
+      type: item.change_event_line_item || (isSubcontract ? "Subcontract" : "Material"),
     })),
     created_at: data.created_at,
     updated_at: data.updated_at,
@@ -407,294 +546,292 @@ function generateExcel(data: CommitmentData, params: ExportParams): ArrayBuffer 
 // =============================================================================
 
 function generatePDFHTML(data: CommitmentData, params: ExportParams): string {
-  let sovTableHTML = "";
-  if (params.include_sov_items && data.line_items.length > 0) {
-    const sovRows = data.line_items
-      .map((item) => {
-        const amount = item.amount || 0;
-        const billed = item.billed_to_date || 0;
-        return `
+  const isPurchaseOrder = data.type === "purchase_order";
+  const documentType = isPurchaseOrder ? "Purchase Order" : "Subcontract";
+  const projectLabel = [data.project?.project_number, data.project?.name]
+    .filter(Boolean)
+    .join(" ")
+    .trim();
+  const projectAddress = [data.project?.address, data.project?.state]
+    .filter(Boolean)
+    .join(", ");
+  const contractorAddress = [
+    data.project_company?.address,
+    data.project_company?.city,
+    data.project_company?.state,
+  ]
+    .filter(Boolean)
+    .join(", ");
+  const vendorAddress = [
+    data.contract_company?.address,
+    data.contract_company?.city,
+    data.contract_company?.state,
+  ]
+    .filter(Boolean)
+    .join(", ");
+  const invoiceContactLine = data.invoice_contact
+    ? [data.invoice_contact.name, data.invoice_contact.phone, data.invoice_contact.email]
+        .filter(Boolean)
+        .join(" ")
+    : "N/A";
+  const vendorContactLine = data.vendor_contact
+    ? [data.vendor_contact.name, data.vendor_contact.phone, data.vendor_contact.email]
+        .filter(Boolean)
+        .join(" ")
+    : "N/A";
+  const createdDate = formatDate(data.created_at);
+  const startDate = formatDate(data.start_date);
+  const contractDate = formatDate(data.contract_date);
+  const estCompleteDate = formatDate(data.substantial_completion_date);
+  const deliveryDate = formatDate(data.delivery_date);
+  const statusLabel = data.status ? `${data.status.charAt(0).toUpperCase()}${data.status.slice(1)}` : "Draft";
+  const workRetainage = isPurchaseOrder ? "0%" : `${data.retention_percentage ?? 0}%`;
+  const materialRetainage = `${data.retention_percentage ?? 0}%`;
+
+  const lineItemsForTable = params.include_sov_items ? data.line_items : [];
+  const lineItemsRows = lineItemsForTable
+    .map((item) => {
+      const amount = item.amount || 0;
+      return `
         <tr>
-          <td>${item.line_number || "-"}</td>
-          <td>${escapeHTML(item.description || "")}</td>
+          <td class="center">${item.line_number || ""}</td>
           <td>${escapeHTML(item.budget_code || "")}</td>
+          <td>${escapeHTML(item.type || (isPurchaseOrder ? "Material" : "Subcontract"))}</td>
+          <td>${escapeHTML(item.description || "")}</td>
           <td class="amount">${formatCurrency(amount)}</td>
-          <td class="amount">${formatCurrency(billed)}</td>
-          <td class="amount">${formatCurrency(amount - billed)}</td>
         </tr>
       `;
-      })
-      .join("");
+    })
+    .join("");
 
-    const totalAmount = data.line_items.reduce((sum, item) => sum + (item.amount || 0), 0);
-    const totalBilled = data.line_items.reduce((sum, item) => sum + (item.billed_to_date || 0), 0);
-
-    sovTableHTML = `
-      <h2>Schedule of Values</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Line #</th>
-            <th>Description</th>
-            <th>Budget Code</th>
-            <th class="amount">Amount</th>
-            <th class="amount">Billed</th>
-            <th class="amount">Remaining</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${sovRows}
-        </tbody>
-        <tfoot>
-          <tr class="totals">
-            <td colspan="3"><strong>TOTAL</strong></td>
-            <td class="amount"><strong>${formatCurrency(totalAmount)}</strong></td>
-            <td class="amount"><strong>${formatCurrency(totalBilled)}</strong></td>
-            <td class="amount"><strong>${formatCurrency(totalAmount - totalBilled)}</strong></td>
-          </tr>
-        </tfoot>
-      </table>
-    `;
-  }
+  const totalAmount = lineItemsForTable.reduce((sum, item) => sum + (item.amount || 0), 0);
+  const subtotalAmount = totalAmount || data.original_amount || 0;
 
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Commitment ${escapeHTML(data.number)} - ${escapeHTML(data.title)}</title>
+  <title>${escapeHTML(documentType)} ${escapeHTML(data.number)}</title>
   <style>
-    @media print {
-      @page {
-        margin: 0.5in;
-        size: letter;
-      }
-      .no-print { display: none; }
-    }
-    * {
-      box-sizing: border-box;
-    }
+    @page { margin: 0.45in; size: letter; }
+    * { box-sizing: border-box; }
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-      font-size: 11pt;
-      line-height: 1.4;
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 10pt;
+      line-height: 1.35;
       margin: 0;
-      padding: 20px;
-      color: #333;
+      color: #111827;
     }
-    .header {
+    .page {
+      min-height: 9.8in;
+      display: flex;
+      flex-direction: column;
+    }
+    .page-break {
+      page-break-before: always;
+    }
+    .top-row {
       display: flex;
       justify-content: space-between;
-      align-items: flex-start;
-      margin-bottom: 24px;
-      padding-bottom: 16px;
-      border-bottom: 2px solid #2563eb;
-    }
-    .header h1 {
-      font-size: 24pt;
-      margin: 0 0 4px 0;
-      color: #1e40af;
-    }
-    .header .commitment-number {
-      font-size: 14pt;
-      color: #64748b;
-      margin: 0;
-    }
-    .status-badge {
-      display: inline-block;
-      padding: 4px 12px;
-      border-radius: 12px;
-      font-size: 10pt;
-      font-weight: 600;
-      text-transform: uppercase;
-      background: #dbeafe;
-      color: #1e40af;
-    }
-    .section {
-      margin-bottom: 24px;
-    }
-    h2 {
-      font-size: 14pt;
-      color: #1e40af;
-      margin: 0 0 12px 0;
-      padding-bottom: 4px;
-      border-bottom: 1px solid #e2e8f0;
-    }
-    .info-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
-    }
-    .info-item {
-      padding: 8px 0;
-    }
-    .info-item label {
-      display: block;
       font-size: 9pt;
-      color: #64748b;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 2px;
+      margin-bottom: 6px;
     }
-    .info-item .value {
-      font-size: 11pt;
-      font-weight: 500;
-    }
-    .financial-summary {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 16px;
-      background: #f8fafc;
-      padding: 16px;
-      border-radius: 8px;
-      margin-bottom: 24px;
-    }
-    .financial-item {
-      text-align: center;
-    }
-    .financial-item label {
-      display: block;
+    .company-block {
+      border-top: 1px solid #374151;
+      border-bottom: 1px solid #374151;
+      padding: 6px 0;
+      margin-bottom: 8px;
       font-size: 9pt;
-      color: #64748b;
+    }
+    .headline {
+      font-size: 18pt;
+      font-weight: 700;
+      margin: 0 0 8px 0;
+    }
+    .meta-line {
+      margin: 2px 0;
+      font-size: 9.5pt;
+    }
+    .label {
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+    .description-block {
+      margin: 8px 0 10px;
+      min-height: 20px;
+    }
+    .sov-title {
+      margin-top: 10px;
       margin-bottom: 4px;
-    }
-    .financial-item .value {
-      font-size: 16pt;
-      font-weight: 600;
-      color: #1e40af;
+      font-weight: 700;
+      font-size: 10pt;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 8px;
-      font-size: 10pt;
+      font-size: 9pt;
+      margin-top: 4px;
     }
     th, td {
-      border: 1px solid #e2e8f0;
-      padding: 8px 12px;
-      text-align: left;
+      border: 1px solid #9ca3af;
+      padding: 5px 6px;
+      vertical-align: top;
     }
     th {
-      background-color: #f1f5f9;
-      font-weight: 600;
-      font-size: 9pt;
-      text-transform: uppercase;
-      letter-spacing: 0.3px;
+      background: #f3f4f6;
+      font-weight: 700;
+      text-align: left;
     }
+    .center { text-align: center; }
     .amount {
       text-align: right;
+      white-space: nowrap;
       font-variant-numeric: tabular-nums;
     }
-    tr:nth-child(even) {
-      background-color: #fafafa;
-    }
     .totals {
-      background-color: #f1f5f9 !important;
+      margin-top: 6px;
+      width: 280px;
+      margin-left: auto;
+      font-size: 9.5pt;
     }
-    .footer {
-      margin-top: 32px;
-      padding-top: 16px;
-      border-top: 1px solid #e2e8f0;
-      font-size: 9pt;
-      color: #64748b;
+    .totals-row {
       display: flex;
       justify-content: space-between;
+      padding: 2px 0;
     }
-    .print-instructions {
-      background: #fef3c7;
-      padding: 12px 16px;
-      border-radius: 8px;
-      margin-bottom: 20px;
-      font-size: 10pt;
+    .totals-row.grand {
+      font-weight: 600;
+      border-top: 1px solid #111827;
+      margin-top: 2px;
+      padding-top: 4px;
+    }
+    .signature-wrap {
+      margin-top: 48px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 34px;
+      align-items: end;
+    }
+    .signature-block {
+      min-height: 145px;
+    }
+    .signature-company {
+      font-size: 11pt;
+      margin-bottom: 48px;
+    }
+    .signature-line {
+      border-bottom: 1px solid #111827;
+      height: 18px;
+      margin-bottom: 4px;
+    }
+    .signature-label {
+      font-size: 9pt;
+      margin-bottom: 14px;
+    }
+    .mt-2 { margin-top: 8px; }
+    .muted { color: #4b5563; }
+    .flex-grow { flex-grow: 1; }
+    .nowrap { white-space: nowrap; }
+    .w-8 { width: 8%; }
+    .w-18 { width: 18%; }
+    .w-14 { width: 14%; }
+    .w-46 { width: 46%; }
+    .w-14b { width: 14%; }
+    .empty-state {
+      border: 1px solid #9ca3af;
+      padding: 10px;
+      font-size: 9pt;
     }
   </style>
 </head>
 <body>
-  <div class="print-instructions no-print">
-    <strong>To save as PDF:</strong> Press Ctrl+P (Windows) or Cmd+P (Mac) and select "Save as PDF" as the destination.
-  </div>
-
-  <div class="header">
-    <div>
-      <h1>${escapeHTML(data.title)}</h1>
-      <p class="commitment-number">${escapeHTML(data.number)} | ${escapeHTML(data.type)}</p>
+  <div class="page">
+    <div class="top-row">
+      <div>Project: ${escapeHTML(projectLabel || data.project?.name || "N/A")} ${escapeHTML(data.number)}</div>
+      <div>Page 1 of 2</div>
     </div>
-    <span class="status-badge">${escapeHTML(data.status)}</span>
-  </div>
 
-  <div class="section">
-    <div class="info-grid">
-      <div class="info-item">
-        <label>Contractor</label>
-        <div class="value">${escapeHTML(data.contract_company?.name || "N/A")}</div>
+    <div class="company-block">
+      <div><strong>${escapeHTML(data.project_company?.name || "Alleato Group")}</strong>${contractorAddress ? ` ${escapeHTML(contractorAddress)}` : ""}</div>
+    </div>
+
+    <div class="headline">${escapeHTML(documentType)} ${escapeHTML(data.number)}</div>
+
+    <div class="meta-line"><span class="label">PROJECT:</span> ${escapeHTML(projectLabel || "N/A")}${projectAddress ? ` ${escapeHTML(projectAddress)}` : ""}</div>
+    <div class="meta-line"><span class="label">CONTRACTOR:</span> ${escapeHTML(data.project_company?.name || "Alleato Group")}${contractorAddress ? ` ${escapeHTML(contractorAddress)}` : ""}</div>
+    <div class="meta-line"><span class="label">VENDOR:</span> ${escapeHTML(data.contract_company?.name || "N/A")}${vendorAddress ? ` ${escapeHTML(vendorAddress)}` : ""} ${escapeHTML(vendorContactLine)}</div>
+    <div class="meta-line"><span class="label">BILL TO:</span> ${escapeHTML(data.bill_to || `${data.project_company?.name || "Alleato Group"} ${invoiceContactLine}`)}</div>
+    <div class="meta-line"><span class="label">SHIP TO:</span> ${escapeHTML(data.ship_to || projectAddress || "N/A")}</div>
+    <div class="meta-line"><span class="label">TITLE:</span> ${escapeHTML(data.title)} <span class="label" style="margin-left: 18px;">DATE CREATED:</span> ${escapeHTML(createdDate || "N/A")}</div>
+    <div class="meta-line"><span class="label">CREATED BY:</span> ${escapeHTML(data.created_by_name || "N/A")} <span class="label" style="margin-left: 18px;">STATUS:</span> ${escapeHTML(statusLabel)}</div>
+    <div class="meta-line"><span class="label">INVOICE CONTACT:</span> ${escapeHTML(invoiceContactLine)} <span class="label" style="margin-left: 18px;">DEFAULT WORK RETAINAGE:</span> ${escapeHTML(workRetainage)}</div>
+    <div class="meta-line"><span class="label">DEFAULT MATERIAL RETAINAGE:</span> ${escapeHTML(materialRetainage)} <span class="label" style="margin-left: 18px;">START DATE:</span> ${escapeHTML(startDate || "N/A")}</div>
+    <div class="meta-line"><span class="label">EST. COMPLETE DATE:</span> ${escapeHTML(estCompleteDate || "N/A")} <span class="label" style="margin-left: 18px;">ACTUAL COMPLETE DATE:</span> N/A</div>
+    <div class="meta-line"><span class="label">CONTRACT DATE:</span> ${escapeHTML(contractDate || "N/A")} <span class="label" style="margin-left: 18px;">PAYMENT TERMS:</span> ${escapeHTML(data.payment_terms || "N/A")}</div>
+    <div class="meta-line"><span class="label">SHIPPING INFO:</span> ${escapeHTML(data.ship_to || projectAddress || "N/A")}</div>
+    <div class="meta-line"><span class="label">DELIVERY DATE:</span> ${escapeHTML(deliveryDate || "N/A")}</div>
+
+    <div class="description-block">
+      <span class="label">DESCRIPTION:</span> ${escapeHTML(data.description || "")}
+    </div>
+
+    <div class="sov-title">SCHEDULE OF VALUES:</div>
+    ${
+      lineItemsForTable.length > 0
+        ? `
+      <table>
+        <thead>
+          <tr>
+            <th class="w-8">#</th>
+            <th class="w-18">Cost Code</th>
+            <th class="w-14">Type</th>
+            <th class="w-46">Description</th>
+            <th class="w-14b amount">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${lineItemsRows}
+        </tbody>
+      </table>
+      <div class="totals">
+        <div class="totals-row"><span>Subtotal</span><span>${formatCurrency(subtotalAmount)}</span></div>
+        <div class="totals-row grand"><span>Grand Total</span><span>${formatCurrency(subtotalAmount)}</span></div>
       </div>
-      <div class="info-item">
-        <label>Accounting Method</label>
-        <div class="value">${escapeHTML(data.accounting_method || "Amount Based")}</div>
+      `
+        : `<div class="empty-state">No line items available.</div>`
+    }
+
+    <div class="flex-grow"></div>
+  </div>
+
+  <div class="page page-break">
+    <div class="top-row">
+      <div>Project: ${escapeHTML(projectLabel || data.project?.name || "N/A")} ${escapeHTML(data.number)}</div>
+      <div>Page 2 of 2</div>
+    </div>
+    <div class="company-block">
+      <div><strong>${escapeHTML(data.project_company?.name || "Alleato Group")}</strong>${contractorAddress ? ` ${escapeHTML(contractorAddress)}` : ""}</div>
+    </div>
+
+    <div class="signature-wrap">
+      <div class="signature-block">
+        <div class="signature-company">${escapeHTML(data.contract_company?.name || "Vendor")}</div>
+        <div class="signature-line"></div>
+        <div class="signature-label">Signature <span class="muted" style="margin-left: 20px;">Date</span></div>
+        <div class="signature-line"></div>
+        <div class="signature-label">Printed Name</div>
       </div>
-      <div class="info-item">
-        <label>Start Date</label>
-        <div class="value">${data.start_date ? formatDate(data.start_date) : "Not set"}</div>
+
+      <div class="signature-block">
+        <div class="signature-company">${escapeHTML(data.project_company?.name || "Alleato Group")}</div>
+        <div class="signature-line"></div>
+        <div class="signature-label">Signature <span class="muted" style="margin-left: 20px;">Date</span></div>
+        <div class="signature-line"></div>
+        <div class="signature-label">Printed Name</div>
       </div>
-      <div class="info-item">
-        <label>Executed Date</label>
-        <div class="value">${data.executed_date ? formatDate(data.executed_date) : "Not set"}</div>
-      </div>
     </div>
   </div>
-
-  <h2>Financial Summary</h2>
-  <div class="financial-summary">
-    <div class="financial-item">
-      <label>Original Contract</label>
-      <div class="value">${formatCurrency(data.original_amount)}</div>
-    </div>
-    <div class="financial-item">
-      <label>Approved Changes</label>
-      <div class="value">${formatCurrency(data.approved_change_orders)}</div>
-    </div>
-    <div class="financial-item">
-      <label>Revised Contract</label>
-      <div class="value">${formatCurrency(data.revised_contract_amount)}</div>
-    </div>
-    <div class="financial-item">
-      <label>Billed to Date</label>
-      <div class="value">${formatCurrency(data.billed_to_date)}</div>
-    </div>
-    <div class="financial-item">
-      <label>Balance to Finish</label>
-      <div class="value">${formatCurrency(data.balance_to_finish)}</div>
-    </div>
-    <div class="financial-item">
-      <label>Retention</label>
-      <div class="value">${data.retention_percentage ? `${data.retention_percentage}%` : "N/A"}</div>
-    </div>
-  </div>
-
-  ${sovTableHTML}
-
-  ${
-    data.description
-      ? `
-  <div class="section">
-    <h2>Description</h2>
-    <p>${escapeHTML(data.description)}</p>
-  </div>
-  `
-      : ""
-  }
-
-  <div class="footer">
-    <span>Generated: ${new Date().toLocaleString()}</span>
-    <span>Alleato Project Management</span>
-  </div>
-
-  <script>
-    window.onload = function() {
-      // Auto-trigger print dialog for PDF export
-      window.print();
-    };
-  </script>
 </body>
 </html>`;
 }

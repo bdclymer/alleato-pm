@@ -123,8 +123,8 @@ export function ExportDialog({
       // Get filename from Content-Disposition or create default
       const contentDisposition = response.headers.get("Content-Disposition");
       let filename = isIndividualExport
-        ? `commitment-${commitmentNumber || commitmentId}.${format === "pdf" ? "html" : format}`
-        : `commitments-${new Date().toISOString().split("T")[0]}.${format === "pdf" ? "html" : format}`;
+        ? `commitment-${commitmentNumber || commitmentId}.${format === "pdf" ? "pdf" : format}`
+        : `commitments-${new Date().toISOString().split("T")[0]}.${format === "pdf" ? "pdf" : format}`;
 
       if (contentDisposition) {
         const filenameMatch = contentDisposition.match(/filename="?(.+)"?/i);
@@ -133,29 +133,19 @@ export function ExportDialog({
         }
       }
 
-      // For PDF/HTML, open in new tab for printing
-      if (format === "pdf") {
-        const html = await response.text();
-        const blob = new Blob([html], { type: "text/html" });
-        const url = window.URL.createObjectURL(blob);
-        window.open(url, "_blank");
-        window.URL.revokeObjectURL(url);
-      } else {
-        // Download CSV/Excel file
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
 
       toast.success(
         format === "pdf"
-          ? "PDF opened in new tab for printing"
+          ? "PDF downloaded successfully"
           : "Export downloaded successfully"
       );
 

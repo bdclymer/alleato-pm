@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Edit, Download, Check, X, FileText, Trash2, ExternalLink, Upload } from "lucide-react";
+import { ArrowLeft, Edit, Download, Check, X, FileText, Trash2, ExternalLink, Upload, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { useState, useCallback, useEffect } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
@@ -18,6 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { DocumentDeliveryDialog } from "@/components/documents/DocumentDeliveryDialog";
 import Link from "next/link";
 import {
   DropdownMenu,
@@ -143,6 +144,10 @@ export default function ChangeOrderDetailPage() {
   const [currentUserIsCreator, setCurrentUserIsCreator] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [isDocumentDialogOpen, setIsDocumentDialogOpen] = useState(false);
+  const [documentDialogTab, setDocumentDialogTab] = useState<"download" | "email">(
+    "download",
+  );
 
   // Line items state
   const [lineItems, setLineItems] = useState<ChangeOrderLineItem[]>([]);
@@ -448,7 +453,13 @@ export default function ChangeOrderDetailPage() {
   }, [changeOrder, projectId, changeOrderId, refetchData]);
 
   const handleGeneratePDF = useCallback(() => {
-    toast.info("PDF generation coming soon");
+    setDocumentDialogTab("download");
+    setIsDocumentDialogOpen(true);
+  }, []);
+
+  const handleEmailDocument = useCallback(() => {
+    setDocumentDialogTab("email");
+    setIsDocumentDialogOpen(true);
   }, []);
 
   // Handle line items changes (batch save approach)
@@ -891,11 +902,13 @@ export default function ChangeOrderDetailPage() {
                   <FileText className="mr-2 h-4 w-4" />
                   Generate PDF
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => {
-                  toast.info("Download coming soon");
-                }}>
+                <DropdownMenuItem onClick={handleGeneratePDF}>
                   <Download className="mr-2 h-4 w-4" />
-                  Download
+                  Download PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleEmailDocument}>
+                  <Mail className="mr-2 h-4 w-4" />
+                  Email PDF
                 </DropdownMenuItem>
                 {isActionAvailable(changeOrder.status || "", "delete", currentUserIsCreator, currentUserCanApprove) && (
                   <>
@@ -1371,6 +1384,17 @@ export default function ChangeOrderDetailPage() {
 
         </Tabs>
       </PageContainer>
+      {changeOrder ? (
+        <DocumentDeliveryDialog
+          open={isDocumentDialogOpen}
+          onOpenChange={setIsDocumentDialogOpen}
+          initialTab={documentDialogTab}
+          recordType="change-order"
+          recordId={String(changeOrder.id)}
+          number={changeOrder.co_number || `CO-${changeOrder.id}`}
+          title={changeOrder.title || "Change Order"}
+        />
+      ) : null}
     </>
   );
 }

@@ -1951,40 +1951,83 @@ export function createOperationalTools(
       description:
         "Get the FULL details of a specific meeting including its digest, " +
         "segments with speaker discussion topics, decisions, risks, and " +
-        "action items. Use this after finding a meeting via search to get " +
-        "the complete picture including who said what.",
+        "action items. Provide EITHER meetingId (exact DB id from a prior search) " +
+        "OR meetingTitle (the meeting name — will be looked up automatically). " +
+        "NEVER guess or construct a meetingId from a date or title string. " +
+        "If you only know the title, pass meetingTitle and the ID will be resolved.",
       inputSchema: z.object({
-        meetingId: z.string().describe("The meeting ID (document_metadata.id)"),
+        meetingId: z
+          .string()
+          .optional()
+          .describe(
+            "The exact meeting ID from document_metadata.id — only use this if you got it from a prior searchMeetingsByTopic or getMeetingsByDate call",
+          ),
+        meetingTitle: z
+          .string()
+          .optional()
+          .describe(
+            "The meeting title to search for — use this when you know the name but not the ID",
+          ),
       }),
       execute: withTrace(
         "getMeetingDetails",
         options,
-        async ({ meetingId }) => {
+        async ({ meetingId, meetingTitle }) => {
+          // Resolve ID from title if no meetingId provided (or if meetingId lookup fails)
+          let resolvedId = meetingId;
+
+          if (!resolvedId && meetingTitle) {
+            // Search by title — ilike for case-insensitive partial match
+            const { data: found } = await supabase
+              .from("document_metadata")
+              .select("id, title")
+              .or("type.eq.meeting,category.eq.meeting,type.eq.meeting_transcript")
+              .ilike("title", `%${meetingTitle}%`)
+              .order("date", { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            if (!found) {
+              return {
+                error: `No meeting found with title matching "${meetingTitle}". Try searchMeetingsByTopic with keywords from the title.`,
+              };
+            }
+            resolvedId = found.id as string;
+          }
+
+          if (!resolvedId) {
+            return { error: "Provide either meetingId or meetingTitle" };
+          }
+
           const [meetingRes, digestRes, segmentsRes, insightsRes] =
             await Promise.all([
               supabase
                 .from("document_metadata")
                 .select("*")
-                .eq("id", meetingId)
+                .eq("id", resolvedId)
                 .single(),
               supabase
                 .from("meeting_digests")
                 .select("*")
-                .eq("metadata_id", meetingId)
+                .eq("metadata_id", resolvedId)
                 .maybeSingle(),
               supabase
                 .from("meeting_segments")
                 .select("*")
-                .eq("metadata_id", meetingId)
+                .eq("metadata_id", resolvedId)
                 .order("segment_index", { ascending: true }),
               supabase
                 .from("ai_insights")
                 .select("title, description, insight_type, severity, exact_quotes_text, stakeholders_affected")
-                .eq("meeting_id", meetingId),
+                .eq("meeting_id", resolvedId),
             ]);
 
+          // If direct ID lookup failed and we have a title, the ID may have been guessed
           if (meetingRes.error || !meetingRes.data) {
-            return { error: `Meeting ${meetingId} not found` };
+            if (meetingTitle) {
+              return { error: `Meeting with title "${meetingTitle}" could not be retrieved. Try searchMeetingsByTopic first.` };
+            }
+            return { error: `Meeting ID "${resolvedId}" not found. IMPORTANT: Do not guess meeting IDs — use searchMeetingsByTopic or getMeetingsByDate to get the real ID first, then call getMeetingDetails with that exact ID.` };
           }
 
           const m = meetingRes.data as AnyRow;

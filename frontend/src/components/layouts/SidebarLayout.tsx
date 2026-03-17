@@ -25,7 +25,7 @@ export function SidebarLayout({ children }: { children: React.ReactNode }) {
       <SidebarInset>
         <div className="flex flex-col min-h-screen">
           <SiteHeader />
-          <main className="flex flex-1 flex-col gap-4 p-4 pt-0">
+          <main className="flex min-h-0 flex-1 flex-col gap-4 p-4 pt-0">
             {children}
           </main>
           <Footer />

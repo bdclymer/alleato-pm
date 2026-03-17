@@ -56,7 +56,7 @@ export function buildChangeOrderFilters(
       options: [
         { value: "general", label: "General" },
         { value: "prime", label: "Prime Contract" },
-        { value: "commitment", label: "Commitment" },
+        { value: "commitment", label: "Commitments" },
       ],
     },
     {
@@ -102,7 +102,7 @@ function contractTypeLabel(type: UnifiedChangeOrder["contractType"]): string {
     case "prime":
       return "Prime Contract";
     case "commitment":
-      return "Commitment";
+      return "Commitments";
     default:
       return type;
   }

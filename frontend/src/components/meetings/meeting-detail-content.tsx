@@ -3,7 +3,6 @@
 import {
   ExternalLink,
   Clock,
-  Tag,
   Calendar,
   ArrowLeft,
   Users,
@@ -264,12 +263,6 @@ export function MeetingDetailContent({
             {format(new Date(meeting.date), "EEEE, MMMM d, yyyy")}
           </span>
         ) : null}
-        {meeting.type ? (
-          <span className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
-            <Tag className="h-3.5 w-3.5" />
-            {meeting.type}
-          </span>
-        ) : null}
         {meeting.duration ? (
           <span className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
             <Clock className="h-3.5 w-3.5" />
@@ -287,6 +280,23 @@ export function MeetingDetailContent({
             View in Fireflies
           </a>
         ) : null}
+        {meeting.date && meeting.title ? (() => {
+          const dateStr = new Date(meeting.date).toISOString().slice(0, 10);
+          const filename = `${dateStr} - ${meeting.title}.md`;
+          const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://lgveqfnpkxvzbnnwuled.supabase.co";
+          const href = `${supabaseUrl}/storage/v1/object/public/transcripts/${encodeURIComponent(filename)}`;
+          return (
+            <a
+              href={href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <FileText className="h-3.5 w-3.5" />
+              View file
+            </a>
+          );
+        })() : null}
       </div>
 
       <div className="grid gap-20 lg:grid-cols-[minmax(0,1fr)_280px]">
@@ -341,7 +351,7 @@ export function MeetingDetailContent({
           {shorthandBullet ? (
             <section className="border-t border-border pt-6">
               <AccordionSection label="Shorthand Bullet" defaultOpen={false}>
-                <ReadableTextBlock value={shorthandBullet} />
+                <FirefliesSectionContent value={shorthandBullet} />
               </AccordionSection>
             </section>
           ) : null}
@@ -443,25 +453,39 @@ export function MeetingDetailContent({
 
           {/* Related Meetings — below Action Snapshot */}
           {relatedMeetings.length > 0 && relatedMeetingsBaseHref && (
-            <div className="space-y-3 border-t border-border pt-6">
-              <div className="text-xs font-semibold uppercase tracking-widest text-primary">
-                Related Meetings
+            <div className="space-y-4 border-t border-border pt-6">
+              <div className="space-y-1">
+                <p className="text-xs font-semibold uppercase tracking-widest text-primary">
+                  Same Project Meetings
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {relatedMeetings.length} recent meeting{relatedMeetings.length === 1 ? "" : "s"}
+                </p>
               </div>
-              <ul className="space-y-2">
+              <ul className="divide-y divide-border rounded-md border border-border/70 bg-muted/20">
                 {relatedMeetings.map((rm) => (
                   <li key={rm.id}>
                     <Link
                       href={`${relatedMeetingsBaseHref}/${rm.id}`}
-                      className="group block space-y-0.5 rounded-md p-2 -mx-2 hover:bg-muted transition-colors"
+                      className="group block space-y-2 px-3 py-3 transition-colors hover:bg-muted/50"
                     >
-                      <p className="text-sm font-medium text-foreground group-hover:text-primary transition-colors line-clamp-2">
+                      <p className="text-sm font-medium leading-snug text-foreground group-hover:text-primary transition-colors line-clamp-2">
                         {rm.title || "Untitled Meeting"}
                       </p>
-                      {rm.date && (
-                        <p className="text-xs text-muted-foreground">
-                          {format(new Date(rm.date), "MMM d, yyyy")}
-                        </p>
-                      )}
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                        {rm.date ? (
+                          <span className="inline-flex items-center gap-1.5">
+                            <Calendar className="h-3 w-3" />
+                            {format(new Date(rm.date), "MMM d, yyyy")}
+                          </span>
+                        ) : null}
+                        {rm.duration_minutes ? (
+                          <span className="inline-flex items-center gap-1.5">
+                            <Clock className="h-3 w-3" />
+                            {rm.duration_minutes} min
+                          </span>
+                        ) : null}
+                      </div>
                     </Link>
                   </li>
                 ))}

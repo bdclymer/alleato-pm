@@ -34,6 +34,11 @@ function formatDateTime(value: string | null | undefined): string {
   });
 }
 
+function extractNotesFromContent(content: string | null | undefined): string | null {
+  if (!content) return null;
+  const match = content.match(/##\s*Notes\s*([\s\S]*?)(?=\n##|$)/i);
+  return match?.[1]?.trim() || null;
+}
 
 function KeyboardTipsPopover(): ReactElement {
   return (
@@ -76,6 +81,7 @@ export function MeetingPreviewPane({
 
   const participants = parseParticipants(meeting).map(getParticipantDisplayName);
   const hasExternalLinks = Boolean(meeting.source || meeting.fireflies_link || meeting.url);
+  const firefliesNotes = meeting.notes?.trim() || extractNotesFromContent(meeting.content);
 
   return (
     <div className="p-8 space-y-6">
@@ -119,11 +125,11 @@ export function MeetingPreviewPane({
         </section>
       ) : null}
 
-      {meeting.summary ? (
+      {firefliesNotes ? (
         <section className="space-y-2 border-t pt-4">
-          <p className="text-xs font-semibold text-foreground">Summary</p>
+          <p className="text-xs font-semibold text-foreground">Fireflies Notes</p>
           <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-wrap">
-            {meeting.summary.trim()}
+            {firefliesNotes}
           </p>
         </section>
       ) : null}

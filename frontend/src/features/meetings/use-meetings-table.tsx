@@ -60,6 +60,7 @@ function sanitizeMeetingPayload(data: Partial<Meeting>): Partial<Meeting> {
     "title",
     "date",
     "project",
+    "project_id",
     "type",
     "category",
     "description",
@@ -276,10 +277,21 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
 
   // ── Projects for inline select ───────────────────────────────────────────────
   const { projects } = useProjects();
-  const projectOptions = projects.map((project) => ({
-    value: project.name || "",
-    label: project.name || "Unnamed Project",
-  }));
+  const projectOptions = projects
+    .filter((project) => Boolean(project.name?.trim()))
+    .map((project) => ({
+      value: project.name || "",
+      label: project.name || "Unnamed Project",
+    }));
+  const projectIdByName = React.useMemo(() => {
+    const map = new Map<string, number>();
+    for (const project of projects) {
+      const name = project.name?.trim();
+      if (!name) continue;
+      map.set(name, project.id);
+    }
+    return map;
+  }, [projects]);
 
   // ── Inline edit handlers ─────────────────────────────────────────────────────
   const getInitialFieldValue = React.useCallback((meeting: Meeting, field: EditableField): string => {
@@ -340,9 +352,23 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
 
     try {
       const supabase = createClient();
+      const updatePayload: Record<string, unknown> =
+        field === "project"
+          ? (() => {
+              const projectName = saveValue?.trim() || null;
+              if (!projectName) {
+                return { project: null, project_id: null };
+              }
+              return {
+                project: projectName,
+                project_id: projectIdByName.get(projectName) ?? null,
+              };
+            })()
+          : { [field]: saveValue };
+
       const { data: updatedMeeting, error } = await supabase
         .from("document_metadata")
-        .update({ [field]: saveValue })
+        .update(updatePayload)
         .eq("id", meetingId)
         .select("*")
         .single();
@@ -512,6 +538,11 @@ export function useMeetingsTable(initialMeetings: Meeting[], projectId?: string)
     const payload = sanitizeMeetingPayload(data);
     if (typeof payload.date === "string" && payload.date.length === 10) {
       payload.date = new Date(`${payload.date}T12:00:00`).toISOString();
+    }
+    if (payload.project !== undefined) {
+      const projectName = payload.project?.trim() || null;
+      payload.project = projectName;
+      payload.project_id = projectName ? (projectIdByName.get(projectName) ?? null) : null;
     }
 
     try {

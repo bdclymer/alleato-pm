@@ -1,308 +1,249 @@
 "use client";
 
-import { useState } from "react";
-import { useParams } from "next/navigation";
-import Link from "next/link";
-import { PageContainer , ProjectPageHeader } from "@/components/layout";
+import * as React from "react";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
+import { FileUp } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
+import {
+  UnifiedTablePage,
+  useUnifiedTableState,
+  type FilterValue,
+} from "@/components/tables/unified";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Download,
-  FileUp,
-  Filter,
-  Layers,
-  MoreHorizontal,
-  Plus,
-  Search,
-} from "lucide-react";
-import { DrawingLogTable } from "@/components/drawings/DrawingLogTable";
 import { DrawingUploadDialog } from "@/components/drawings/DrawingUploadDialog";
 import { useDrawings, useDeleteDrawing } from "@/hooks/use-drawings";
-import { useDrawingAreas } from "@/hooks/use-drawing-areas";
-import { DRAWING_DISCIPLINES } from "@/types/drawings.types";
 import type { DrawingLogTableRow } from "@/types/drawings.types";
-import type { DrawingFilters } from "@/services/DrawingService";
+import {
+  buildDrawingTableColumns,
+  drawingColumns,
+  drawingDefaultVisibleColumns,
+  drawingFilters,
+  renderDrawingCard,
+  renderDrawingList,
+} from "@/features/drawings/drawings-table-config";
+
+type DrawingFilterState = Record<string, FilterValue>;
+
+const EMPTY_FILTERS: DrawingFilterState = {
+  discipline: undefined,
+  drawingType: undefined,
+  status: undefined,
+  areaName: undefined,
+};
 
 export default function ProjectDrawingsPage() {
-  const params = useParams();
-  const projectId = params.projectId as string;
+  const params = useParams<{ projectId: string }>();
+  const pathname = usePathname();
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const [filters, setFilters] = useState<DrawingFilters>({
-    page: 1,
-    page_size: 50,
-  });
+  const projectId = params.projectId ?? "";
+  const activeTab = searchParams.get("tab") || "log";
 
-  // Fetch data using real hooks
-  const { data: drawingsData, isLoading } = useDrawings(projectId, filters);
-  const { data: areas = [] } = useDrawingAreas(projectId);
   const deleteDrawing = useDeleteDrawing(projectId);
 
-  const drawings: DrawingLogTableRow[] = drawingsData?.drawings || [];
+  const initialFilters: DrawingFilterState = {
+    discipline: searchParams.get("discipline") ?? undefined,
+    drawingType: searchParams.get("drawingType") ?? undefined,
+    status: searchParams.get("status") ?? undefined,
+    areaName: searchParams.get("areaName") ?? undefined,
+  };
 
-  const handleClearFilters = () => {
-    setFilters({
+  const tableState = useUnifiedTableState({
+    entityKey: "drawings",
+    searchParams,
+    pathname,
+    router,
+    defaults: {
+      view: "table",
+      allowedViews: ["table", "card", "list"],
       page: 1,
-      page_size: 50,
+      perPage: 50,
+      search: "",
+      sortBy: "drawingNumber",
+      sortDirection: "asc",
+      visibleColumns: drawingDefaultVisibleColumns,
+      filters: initialFilters,
+    },
+  });
+
+  const { data: drawingsData, isLoading } = useDrawings(projectId, {
+    page: tableState.page,
+    page_size: tableState.perPage,
+  });
+
+  const drawings: DrawingLogTableRow[] = React.useMemo(
+    () => drawingsData?.drawings ?? [],
+    [drawingsData],
+  );
+
+  const activeFilters = tableState.activeFilters as DrawingFilterState;
+
+  const filteredItems = React.useMemo(() => {
+    const search = tableState.debouncedSearch.trim().toLowerCase();
+    const disciplineFilter =
+      typeof activeFilters.discipline === "string" ? activeFilters.discipline : "";
+    const typeFilter =
+      typeof activeFilters.drawingType === "string" ? activeFilters.drawingType : "";
+    const statusFilter =
+      typeof activeFilters.status === "string" ? activeFilters.status : "";
+    const areaFilter =
+      typeof activeFilters.areaName === "string"
+        ? activeFilters.areaName.toLowerCase()
+        : "";
+
+    return drawings.filter((row) => {
+      if (disciplineFilter && row.discipline !== disciplineFilter) return false;
+      if (typeFilter && row.drawingType !== typeFilter) return false;
+      if (statusFilter && row.status !== statusFilter) return false;
+      if (areaFilter && !(row.areaName ?? "").toLowerCase().includes(areaFilter))
+        return false;
+      if (!search) return true;
+      return (
+        row.drawingNumber.toLowerCase().includes(search) ||
+        row.title.toLowerCase().includes(search) ||
+        (row.discipline ?? "").toLowerCase().includes(search) ||
+        (row.areaName ?? "").toLowerCase().includes(search) ||
+        (row.fileName ?? "").toLowerCase().includes(search)
+      );
     });
+  }, [activeFilters, drawings, tableState.debouncedSearch]);
+
+  const tableColumns = React.useMemo(() => buildDrawingTableColumns(), []);
+
+  const tabs = [
+    {
+      label: "Drawing Log",
+      href: `/${projectId}/drawings`,
+      count: activeTab === "log" ? filteredItems.length : undefined,
+      isActive: activeTab === "log",
+    },
+    {
+      label: "Board",
+      href: `/${projectId}/drawings/board`,
+      isActive: false,
+    },
+    {
+      label: "Areas",
+      href: `/${projectId}/drawings/areas`,
+      isActive: false,
+    },
+    {
+      label: "Revisions",
+      href: `/${projectId}/drawings/revisions`,
+      isActive: false,
+    },
+  ];
+
+  const handleFilterChange = (nextFilters: DrawingFilterState) => {
+    tableState.setActiveFilters(nextFilters);
+    tableState.setSearchParams({
+      discipline:
+        typeof nextFilters.discipline === "string" ? nextFilters.discipline : null,
+      drawingType:
+        typeof nextFilters.drawingType === "string" ? nextFilters.drawingType : null,
+      status:
+        typeof nextFilters.status === "string" ? nextFilters.status : null,
+      areaName:
+        typeof nextFilters.areaName === "string" ? nextFilters.areaName : null,
+      page: "1",
+    });
+    tableState.setPage(1);
   };
 
-  const handleDeleteDrawing = async (drawingId: string) => {
-    await deleteDrawing.mutateAsync(drawingId);
-  };
+  const isFiltered =
+    Boolean(tableState.searchInput) ||
+    Boolean(activeFilters.discipline) ||
+    Boolean(activeFilters.drawingType) ||
+    Boolean(activeFilters.status) ||
+    Boolean(activeFilters.areaName);
 
   return (
-    <>
-      <ProjectPageHeader
-        title="Drawings"
-        description="Manage construction drawings with revision tracking"
-        actions={
-          <div className="hidden items-center gap-2 sm:flex">
-            <DrawingUploadDialog projectId={projectId}>
-              <Button variant="outline" size="sm" className="gap-2">
-                <FileUp className="h-4 w-4" />
-                Upload Drawings
-              </Button>
-            </DrawingUploadDialog>
-            <Button asChild variant="outline" size="sm" className="gap-2">
-              <Link href={`/${projectId}/drawings/board`}>
-                <Layers className="h-4 w-4" />
-                Board View
-              </Link>
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-2">
-                  <Filter className="h-4 w-4" />
-                  Reports
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>Reports</DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem>Drawing Log</DropdownMenuItem>
-                <DropdownMenuItem>Download Log</DropdownMenuItem>
-                <DropdownMenuItem>Open Items</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="sm" className="gap-2">
-                  <Download className="h-4 w-4" />
-                  Export
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>Export PDF</DropdownMenuItem>
-                <DropdownMenuItem>Export CSV</DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        }
-      />
-      <div className="px-4 sm:hidden">
-        <div className="flex items-center justify-end gap-2">
+    <UnifiedTablePage
+      header={{
+        title: "Drawings",
+        description: "Manage construction drawings with revision tracking",
+        actions: (
           <DrawingUploadDialog projectId={projectId}>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-9 w-9 rounded-full border-brand p-0 text-brand hover:bg-brand/10"
-              aria-label="Upload drawings"
-            >
-              <Plus className="h-4 w-4" />
+            <Button size="sm">
+              <FileUp className="mr-2 h-4 w-4" />
+              Upload Drawing
             </Button>
           </DrawingUploadDialog>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="h-9 w-9 p-0" aria-label="Drawing actions">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem asChild>
-                <Link href={`/${projectId}/drawings/board`}>Board View</Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Drawing Log</DropdownMenuItem>
-              <DropdownMenuItem>Download Log</DropdownMenuItem>
-              <DropdownMenuItem>Open Items</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Export PDF</DropdownMenuItem>
-              <DropdownMenuItem>Export CSV</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      </div>
-      <PageContainer>
-        <div className="space-y-6">
-          {/* Drawing Areas Sidebar + Main Content */}
-          <div className="grid gap-4 lg:grid-cols-[220px,1fr]">
-            {/* Drawing Areas Sidebar */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between px-1 pb-1">
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Drawing Areas
-                </h3>
-              </div>
-              {areas.length === 0 && !isLoading && (
-                <div className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-                  No areas created yet
-                </div>
-              )}
-              {areas.map((area) => {
-                const isActive = filters.area_id === area.id;
-                return (
-                  <button
-                    key={area.id}
-                    type="button"
-                    onClick={() =>
-                      setFilters((prev) => ({
-                        ...prev,
-                        area_id: isActive ? undefined : area.id,
-                        page: 1,
-                      }))
-                    }
-                    className={`w-full rounded-md border px-4 py-2 text-left text-sm transition hover:border-primary ${
-                      isActive
-                        ? "border-primary bg-primary/5"
-                        : "border-border bg-background"
-                    }`}
-                    aria-pressed={isActive}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span className="font-medium truncate">{area.name}</span>
-                      <Badge
-                        variant={isActive ? "default" : "outline"}
-                        className="text-xs ml-2 shrink-0"
-                      >
-                        {area.drawing_count || 0}
-                      </Badge>
-                    </div>
-                    {area.description && (
-                      <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                        {area.description}
-                      </p>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Main Content */}
-            <div className="space-y-4">
-              {/* Filters */}
-              <div className="rounded-lg border bg-card">
-                <div className="flex flex-col gap-2 p-4 lg:flex-row lg:items-center lg:justify-between">
-                  <div className="flex flex-1 items-center gap-2">
-                    <div className="relative w-full lg:max-w-sm">
-                      <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Search drawings by number or title"
-                        value={filters.search || ""}
-                        onChange={(e) =>
-                          setFilters((prev) => ({
-                            ...prev,
-                            search: e.target.value,
-                            page: 1,
-                          }))
-                        }
-                        className="pl-9 h-9"
-                        aria-label="Search drawings"
-                      />
-                    </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleClearFilters}
-                    >
-                      Clear
-                    </Button>
-                  </div>
-                  <div className="flex gap-2">
-                    <Select
-                      value={filters.discipline || "all"}
-                      onValueChange={(value) =>
-                        setFilters((prev) => ({
-                          ...prev,
-                          discipline: value === "all" ? undefined : value,
-                          page: 1,
-                        }))
-                      }
-                    >
-                      <SelectTrigger
-                        className="w-[160px] h-9"
-                        aria-label="Discipline filter"
-                      >
-                        <SelectValue placeholder="Discipline" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All disciplines</SelectItem>
-                        {DRAWING_DISCIPLINES.map((discipline) => (
-                          <SelectItem key={discipline} value={discipline}>
-                            {discipline}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Select
-                      value={filters.status || "all"}
-                      onValueChange={(value) =>
-                        setFilters((prev) => ({
-                          ...prev,
-                          status:
-                            value === "all"
-                              ? undefined
-                              : (value as any),
-                          page: 1,
-                        }))
-                      }
-                    >
-                      <SelectTrigger
-                        className="w-[140px] h-9"
-                        aria-label="Status filter"
-                      >
-                        <SelectValue placeholder="Status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All statuses</SelectItem>
-                        <SelectItem value="draft">Draft</SelectItem>
-                        <SelectItem value="under_review">Under Review</SelectItem>
-                        <SelectItem value="approved">Approved</SelectItem>
-                        <SelectItem value="superseded">Superseded</SelectItem>
-                        <SelectItem value="void">Void</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </div>
-
-              {/* Table */}
-              <DrawingLogTable
-                data={drawings}
-                projectId={projectId}
-                isLoading={isLoading}
-                onDeleteDrawing={handleDeleteDrawing}
-              />
-            </div>
-          </div>
-        </div>
-      </PageContainer>
-    </>
+        ),
+      }}
+      tabs={tabs}
+      toolbar={{
+        totalItems: drawings.length,
+        filteredItems: filteredItems.length,
+        selectedCount: tableState.selectedIds.length,
+        searchValue: tableState.searchInput,
+        onSearchChange: tableState.setSearchInput,
+        searchPlaceholder: "Search drawings...",
+        currentView: tableState.currentView,
+        onViewChange: (view) => {
+          tableState.setCurrentView(view);
+          tableState.setSearchParams({ view });
+        },
+        enabledViews: ["table", "card", "list"],
+        filters: drawingFilters,
+        activeFilters,
+        onFilterChange: handleFilterChange,
+        onClearFilters: () => handleFilterChange(EMPTY_FILTERS),
+        columns: drawingColumns,
+        visibleColumns: tableState.visibleColumns,
+        onColumnVisibilityChange: tableState.setVisibleColumns,
+      }}
+      data={{
+        items: filteredItems,
+        isLoading,
+        isFetching: false,
+      }}
+      table={{
+        columns: tableColumns,
+        getRowId: (item) => item.id,
+        onRowClick: (item) =>
+          router.push(`/${projectId}/drawings/viewer/${item.id}`),
+        onDelete: (item) => deleteDrawing.mutate(item.id),
+      }}
+      sorting={{
+        sortBy: tableState.sortBy,
+        sortDirection: tableState.sortDirection,
+        onSortChange: (sortBy, direction) => {
+          tableState.setSortBy(sortBy);
+          tableState.setSortDirection(direction);
+          tableState.setSearchParams({ sort: sortBy, sort_dir: direction });
+        },
+      }}
+      views={{
+        card: (item) =>
+          renderDrawingCard(item, (r) =>
+            router.push(`/${projectId}/drawings/viewer/${r.id}`),
+          ),
+        list: (item) =>
+          renderDrawingList(item, (r) =>
+            router.push(`/${projectId}/drawings/viewer/${r.id}`),
+          ),
+      }}
+      emptyState={{
+        title: "No drawings found",
+        description: "Upload your first drawing to get started.",
+        filteredDescription: "Try adjusting your search or filters.",
+        isFiltered,
+        action: (
+          <DrawingUploadDialog projectId={projectId}>
+            <Button size="sm">
+              <FileUp className="mr-2 h-4 w-4" />
+              Upload your first drawing
+            </Button>
+          </DrawingUploadDialog>
+        ),
+      }}
+      features={{
+        enableExport: true,
+        enableBulkDelete: false,
+        enableRowSelection: false,
+      }}
+    />
   );
 }

@@ -198,53 +198,32 @@ export function ChangeOrdersClient({
     tableState.debouncedSearch,
   ]);
 
-  const statusCounts = React.useMemo(() => {
-    const contractTypeFilter =
-      typeof activeFilters.contractType === "string"
-        ? activeFilters.contractType.toLowerCase()
-        : "";
-    const dataset = contractTypeFilter
-      ? changeOrders.filter((order) => order.contractType === contractTypeFilter)
-      : changeOrders;
+  const contractTypeCounts = React.useMemo(
+    () =>
+      changeOrders.reduce(
+        (acc, order) => {
+          if (order.contractType === "prime") acc.prime += 1;
+          if (order.contractType === "commitment") acc.commitment += 1;
+          return acc;
+        },
+        { prime: 0, commitment: 0 },
+      ),
+    [changeOrders],
+  );
 
-    return dataset.reduce(
-      (acc, order) => {
-        const status = (order.normalizedStatus ?? "").toLowerCase();
-
-        if (status === "draft") acc.draft += 1;
-        if (status === "pending" || status === "submitted") acc.pending += 1;
-        if (status === "approved") acc.approved += 1;
-        if (status === "rejected") acc.rejected += 1;
-        if (status === "executed") acc.executed += 1;
-
-        acc.total += 1;
-        return acc;
-      },
-      {
-        total: 0,
-        draft: 0,
-        pending: 0,
-        approved: 0,
-        rejected: 0,
-        executed: 0,
-      },
-    );
-  }, [activeFilters.contractType, changeOrders]);
-
-  const currentStatusParam = searchParams.get("status") ?? "";
   const currentContractTypeParam =
     searchParams.get("contractType") ??
     (typeof activeFilters.contractType === "string" ? activeFilters.contractType : "");
 
-  const buildStatusHref = (status?: string): string => {
+  const currentStatusParam = searchParams.get("status") ?? "";
+  const currentReviewerParam = searchParams.get("reviewer") ?? "";
+
+  const buildContractTypeHref = (contractType: "prime" | "commitment"): string => {
     const params = new URLSearchParams();
 
-    if (status) {
-      params.set("status", status);
-    }
-    if (currentContractTypeParam) {
-      params.set("contractType", currentContractTypeParam);
-    }
+    params.set("contractType", contractType);
+    if (currentStatusParam) params.set("status", currentStatusParam);
+    if (currentReviewerParam) params.set("reviewer", currentReviewerParam);
 
     const query = params.toString();
     return query ? `/${projectId}/change-orders?${query}` : `/${projectId}/change-orders`;
@@ -252,40 +231,16 @@ export function ChangeOrdersClient({
 
   const tabs = [
     {
-      label: "All",
-      href: buildStatusHref(),
-      count: statusCounts.total,
-      isActive: !currentStatusParam,
+      label: "Prime Contract",
+      href: buildContractTypeHref("prime"),
+      count: contractTypeCounts.prime,
+      isActive: currentContractTypeParam === "prime",
     },
     {
-      label: "Draft",
-      href: buildStatusHref("draft"),
-      count: statusCounts.draft,
-      isActive: currentStatusParam === "draft",
-    },
-    {
-      label: "Pending",
-      href: buildStatusHref("pending"),
-      count: statusCounts.pending,
-      isActive: currentStatusParam === "pending",
-    },
-    {
-      label: "Approved",
-      href: buildStatusHref("approved"),
-      count: statusCounts.approved,
-      isActive: currentStatusParam === "approved",
-    },
-    {
-      label: "Rejected",
-      href: buildStatusHref("rejected"),
-      count: statusCounts.rejected,
-      isActive: currentStatusParam === "rejected",
-    },
-    {
-      label: "Executed",
-      href: buildStatusHref("executed"),
-      count: statusCounts.executed,
-      isActive: currentStatusParam === "executed",
+      label: "Commitments",
+      href: buildContractTypeHref("commitment"),
+      count: contractTypeCounts.commitment,
+      isActive: currentContractTypeParam === "commitment",
     },
   ];
 
