@@ -1,11 +1,13 @@
 "use client";
 
+import * as React from "react";
 import { AppSidebar } from "@/components/app-sidebar";
 import { CreateProjectDevConfigProvider } from "@/components/project/create-project-dev-config";
 import { AIChatWidgetLazy } from "@/components/chat/ai-chat-widget-lazy";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/header";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { LiveCursors } from "@/components/live-cursors/LiveCursors";
 
 /**
  * Main layout with sidebar as primary navigation.
@@ -28,6 +30,9 @@ export default function MainLayout({
             <SiteFooter />
           </main>
           <AIChatWidgetLazy />
+          <React.Suspense fallback={null}>
+            <LiveCursors />
+          </React.Suspense>
         </CreateProjectDevConfigProvider>
       </SidebarInset>
     </SidebarProvider>

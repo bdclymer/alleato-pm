@@ -1,10 +1,12 @@
+@import "@liveblocks/react-ui/styles.css";
+@import "@liveblocks/react-lexical/styles.css";
+@import "../components/issue-tracker/styles/liveblocks-issue-tracker.css";
+
 @tailwind base;
 
 @custom-variant dark (&:is(.dark *));
 @tailwind components;
 @tailwind utilities;
-
-@import "../components/issue-tracker/styles/liveblocks-issue-tracker.css";
 
 /* Streamdown markdown rendering styles (required for proper headers, code blocks, tables, lists) */
 @source "../node_modules/streamdown/dist/*.js";

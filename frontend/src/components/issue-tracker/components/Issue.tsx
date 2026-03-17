@@ -56,6 +56,15 @@ export async function Issue({ issueId }: { issueId: string }) {
   let contentHtml: string | undefined;
   let error: unknown;
 
+  // Default storage for new rooms not yet initialised in Liveblocks
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const emptyStorage: any = {
+    meta: { title: "" },
+    properties: { progress: "none", priority: "none", assignedTo: "none" },
+    labels: [],
+    links: [],
+  };
+
   try {
     // Await separately to avoid "excessively deep" TS error from Promise.all
     // combining Liveblocks recursive storage types
@@ -64,39 +73,15 @@ export async function Issue({ issueId }: { issueId: string }) {
       contentHtmlPromise,
     ]);
   } catch (err) {
-    console.log(err);
-    error = err;
+    // Room may not exist yet — the client RoomProvider will initialise it on
+    // first connect. Fall through to empty storage so the editor renders.
+    console.log("[Issue] server-side fetch failed, using empty storage:", err);
   }
 
-  // If storage is empty (new room not yet initialised by client), use defaults
-  const emptyStorage = {
-    meta: { title: "" },
-    properties: { progress: "none", priority: "none", assignedTo: "none" },
-    labels: [],
-    links: [],
-  };
-
+  // Empty or missing storage = new issue, not a deleted one
   if (!storage || Object.keys(storage).length === 0) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    storage = emptyStorage as any;
-  }
-
-  if (error) {
-    console.log(error);
-    return (
-      <div className="max-w-[840px] mx-auto pt-20">
-        <h1 className="outline-none block w-full text-2xl font-bold bg-transparent my-6">
-          Issue not found
-        </h1>
-        <div>
-          This issue has been deleted. Go back to the{" "}
-          <Link className="font-bold underline" href="/issues">
-            issue list
-          </Link>
-          .
-        </div>
-      </div>
-    );
+    storage = emptyStorage;
+    contentHtml = "";
   }
 
   return (

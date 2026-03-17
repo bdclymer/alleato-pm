@@ -48,6 +48,8 @@ export async function POST(request: NextRequest) {
 
   // Grant full access to all alleato rooms (comments, threads, notifications)
   session.allow("alleato:*", session.FULL_ACCESS);
+  // Grant full access to issue tracker rooms
+  session.allow("liveblocks:examples:*", session.FULL_ACCESS);
 
   const { status, body } = await session.authorize();
   return new Response(body, { status });

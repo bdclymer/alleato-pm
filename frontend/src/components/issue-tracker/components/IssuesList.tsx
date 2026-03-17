@@ -95,7 +95,7 @@ export async function Row({ room }: { room: RoomWithMetadata }) {
 
   return (
     <Link
-      href={`/issue-tracker-demo/${issueId}`}
+      href={`/issues/${issueId}`}
       className="flex h-10 items-center justify-between px-4 text-sm transition-colors hover:bg-neutral-100 border-b"
     >
       <div className="flex gap-2 items-center">

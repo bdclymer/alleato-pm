@@ -100,6 +100,7 @@ import type { JsonObject, LiveList, LiveObject } from "@liveblocks/client";
 declare global {
   interface Liveblocks {
     Presence: {
+      cursor: { x: number; y: number } | null;
       selectedCell?: string | null;
     };
 

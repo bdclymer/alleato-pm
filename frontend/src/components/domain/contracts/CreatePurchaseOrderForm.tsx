@@ -27,7 +27,7 @@ import {
   type CreatePurchaseOrderInput,
   type PurchaseOrderSovLineItem,
 } from "@/lib/schemas/create-purchase-order-schema";
-import { useCompanies } from "@/hooks/use-companies";
+import type { CompanyOption } from "@/hooks/use-companies";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { RichTextField } from "@/components/forms/RichTextField";
 import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
@@ -137,7 +137,30 @@ export function CreatePurchaseOrderForm({
   const [expandedDivisions, setExpandedDivisions] = React.useState<Set<string>>(new Set());
   const [isCreatingBudgetCode, setIsCreatingBudgetCode] = React.useState(false);
 
-  const { options: companyOptions, isLoading: isLoadingCompanies } = useCompanies();
+  const [vendorOptions, setVendorOptions] = React.useState<CompanyOption[]>([]);
+  const [isLoadingVendors, setIsLoadingVendors] = React.useState(true);
+
+  React.useEffect(() => {
+    const fetchVendors = async () => {
+      try {
+        setIsLoadingVendors(true);
+        const response = await fetch(`/api/projects/${projectId}/vendors`);
+        if (!response.ok) throw new Error("Failed to load vendors");
+        const data = (await response.json()) as Array<{
+          id: string;
+          vendor_name: string;
+        }>;
+        setVendorOptions(
+          (data || []).map((v) => ({ value: v.id, label: v.vendor_name })),
+        );
+      } catch {
+        setVendorOptions([]);
+      } finally {
+        setIsLoadingVendors(false);
+      }
+    };
+    fetchVendors();
+  }, [projectId]);
 
   const form = useForm<CreatePurchaseOrderInput>({
     resolver: zodResolver(CreatePurchaseOrderSchema) as any,
@@ -411,11 +434,11 @@ export function CreatePurchaseOrderForm({
             control={control}
             name="contractCompanyId"
             label="Contract Company"
-            options={companyOptions}
-            placeholder={isLoadingCompanies ? "Loading companies..." : "Search companies..."}
-            searchPlaceholder="Type company name..."
-            emptyMessage="No companies found."
-            disabled={isSubmitting || isLoadingCompanies}
+            options={vendorOptions}
+            placeholder={isLoadingVendors ? "Loading vendors..." : "Search vendors..."}
+            searchPlaceholder="Type vendor name..."
+            emptyMessage="No vendors found."
+            disabled={isSubmitting || isLoadingVendors}
           />
 
           <RHFTextField

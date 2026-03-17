@@ -1,12 +1,11 @@
-@import "@liveblocks/react-ui/styles.css";
-@import "@liveblocks/react-lexical/styles.css";
+/* @import statements moved to globals.css (must precede all other rules) */
 
 /* Adjust default styles, except for tooltips, and in-editor highlights & mentions */
 .lb-root:not(.lb-tooltip, .lb-lexical-thread-mark, .lb-lexical-mention) {
-  --lb-accent: theme("colors.accent");
-  --lb-background: theme("colors.white");
-  --lb-foreground: theme("colors.neutral[900]");
-  --lb-foreground-subtle: theme("colors.neutral[200]");
+  --lb-accent: hsl(var(--primary));
+  --lb-background: #ffffff;
+  --lb-foreground: #171717;
+  --lb-foreground-subtle: #e5e5e5;
   font-size: 14px;
 }
 
