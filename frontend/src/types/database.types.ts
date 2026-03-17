@@ -1,4 +1,4 @@
-Using workdir /Users/meganharrison/Documents/alleato-pm
+npm warn exec The following package was not found and will be installed: supabase@2.81.0
 export type Json =
   | string
   | number
@@ -5585,8 +5585,9 @@ export type Database = {
       }
       contract_line_items: {
         Row: {
+          budget_code_id: string | null
           contract_id: string
-          cost_code_id: number | null
+          cost_code_id: string | null
           created_at: string
           description: string
           id: string
@@ -5598,8 +5599,9 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          budget_code_id?: string | null
           contract_id: string
-          cost_code_id?: number | null
+          cost_code_id?: string | null
           created_at?: string
           description: string
           id?: string
@@ -5611,8 +5613,9 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          budget_code_id?: string | null
           contract_id?: string
-          cost_code_id?: number | null
+          cost_code_id?: string | null
           created_at?: string
           description?: string
           id?: string
@@ -5624,6 +5627,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "contract_line_items_budget_code_id_fkey"
+            columns: ["budget_code_id"]
+            isOneToOne: false
+            referencedRelation: "project_cost_codes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "contract_line_items_contract_id_fkey"
             columns: ["contract_id"]
@@ -11707,6 +11717,7 @@ export type Database = {
       }
       prime_contract_sovs: {
         Row: {
+          budget_code_id: string | null
           contract_id: number
           cost_code: string | null
           created_at: string
@@ -11719,6 +11730,7 @@ export type Database = {
           uom: string | null
         }
         Insert: {
+          budget_code_id?: string | null
           contract_id: number
           cost_code?: string | null
           created_at?: string
@@ -11731,6 +11743,7 @@ export type Database = {
           uom?: string | null
         }
         Update: {
+          budget_code_id?: string | null
           contract_id?: number
           cost_code?: string | null
           created_at?: string
@@ -11743,6 +11756,13 @@ export type Database = {
           uom?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "prime_contract_sovs_budget_code_id_fkey"
+            columns: ["budget_code_id"]
+            isOneToOne: false
+            referencedRelation: "project_budget_codes"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "prime_contract_sovs_contract_id_fkey"
             columns: ["contract_id"]
@@ -14781,6 +14801,7 @@ export type Database = {
           created_by_employee_id: number | null
           date_initiated: string | null
           distribution_list: string[] | null
+          drawing_number: string | null
           due_date: string | null
           id: string
           is_private: boolean
@@ -14813,6 +14834,7 @@ export type Database = {
           created_by_employee_id?: number | null
           date_initiated?: string | null
           distribution_list?: string[] | null
+          drawing_number?: string | null
           due_date?: string | null
           id?: string
           is_private?: boolean
@@ -14845,6 +14867,7 @@ export type Database = {
           created_by_employee_id?: number | null
           date_initiated?: string | null
           distribution_list?: string[] | null
+          drawing_number?: string | null
           due_date?: string | null
           id?: string
           is_private?: boolean

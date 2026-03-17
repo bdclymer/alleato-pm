@@ -4,6 +4,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import "../components/issue-tracker/styles/liveblocks-issue-tracker.css";
+
 /* Streamdown markdown rendering styles (required for proper headers, code blocks, tables, lists) */
 @source "../node_modules/streamdown/dist/*.js";
 
@@ -365,6 +367,11 @@
   form [data-slot="select-trigger"],
   form button[role="combobox"] {
     background-color: #ffffff !important;
+  }
+
+  /* Keep site-header project trigger aligned with other header controls. */
+  button[role="combobox"].project-selector-trigger {
+    background-color: hsl(var(--surface-soft)) !important;
   }
 
   body {
@@ -1862,6 +1869,69 @@
     & > *:first-child { margin-top: 0; }
     & > *:last-child { margin-bottom: 0; }
   }
+}
+
+/* ── Liveblocks design token mapping ────────────────────────────────────── */
+/*
+ * Maps Liveblocks CSS variables to our design system tokens so that all
+ * Liveblocks UI (composer, threads, inbox notifications, avatars, mentions)
+ * renders with the app's purple accent instead of the default Liveblocks blue.
+ */
+:root {
+  /* Accent / brand color — maps to our primary (#8A71BD warm purple) */
+  --lb-accent: hsl(var(--primary));
+  --lb-accent-foreground: hsl(var(--primary-foreground));
+
+  /* Surface colors */
+  --lb-background: hsl(var(--background));
+  --lb-foreground: hsl(var(--foreground));
+
+  /* Muted / secondary */
+  --lb-muted: hsl(var(--muted));
+  --lb-muted-foreground: hsl(var(--muted-foreground));
+
+  /* Borders */
+  --lb-border: hsl(var(--border));
+
+  /* Border radius — matches our --radius token */
+  --lb-radius: var(--radius);
+
+  /* Avatar */
+  --lb-avatar-background: hsl(var(--accent));
+  --lb-avatar-foreground: hsl(var(--accent-foreground));
+
+  /* Reaction chip */
+  --lb-reaction-background: hsl(var(--muted));
+  --lb-reaction-foreground: hsl(var(--muted-foreground));
+  --lb-reaction-selected-background: hsl(var(--primary) / 0.12);
+  --lb-reaction-selected-foreground: hsl(var(--primary));
+
+  /* Tooltip */
+  --lb-tooltip-background: hsl(var(--foreground));
+  --lb-tooltip-foreground: hsl(var(--background));
+
+  /* Dynamic attributes (light) */
+  --lb-dynamic-background: hsl(var(--background));
+  --lb-elevation-background: hsl(var(--card, var(--background)));
+}
+
+.dark {
+  --lb-accent: hsl(var(--primary));
+  --lb-background: hsl(var(--background));
+  --lb-foreground: hsl(var(--foreground));
+  --lb-muted: hsl(var(--muted));
+  --lb-muted-foreground: hsl(var(--muted-foreground));
+  --lb-border: hsl(var(--border));
+  --lb-avatar-background: hsl(var(--accent));
+  --lb-avatar-foreground: hsl(var(--accent-foreground));
+  --lb-reaction-background: hsl(var(--muted));
+  --lb-reaction-foreground: hsl(var(--muted-foreground));
+  --lb-reaction-selected-background: hsl(var(--primary) / 0.2);
+  --lb-reaction-selected-foreground: hsl(var(--primary));
+  --lb-tooltip-background: hsl(var(--foreground));
+  --lb-tooltip-foreground: hsl(var(--background));
+  --lb-dynamic-background: hsl(var(--background));
+  --lb-elevation-background: hsl(var(--muted));
 }
 
 /* ── Hide Safari autofill buttons in Liveblocks composer ────────────────── */

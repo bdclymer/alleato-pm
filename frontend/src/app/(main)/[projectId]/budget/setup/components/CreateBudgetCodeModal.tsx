@@ -67,7 +67,7 @@ export function CreateBudgetCodeModal({
         const { data, error: fetchError } = await supabase
           .from("cost_codes")
           .select("id, title, status, division_title")
-          .eq("status", "Active")
+          .ilike("status", "active")
           .order("id", { ascending: true });
 
         if (fetchError) {

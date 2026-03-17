@@ -136,7 +136,8 @@ This PRP includes:
 - docfile: PRPs/ai_docs/procore-rfi-tool.md
   why: Extracted Procore RFI requirements and list/create behaviors
   section: All
-```markdown
+```
+
 ### Current Codebase tree (run `tree` in the root of the project) to get an overview of the codebase
 
 ```bash
@@ -147,7 +148,8 @@ frontend/src/app/(main)/[projectId]/rfis
 └── page.tsx
 frontend/src/app/(tables)/(procore)/rfis
 └── page.tsx
-```markdown
+```
+
 ### Desired Codebase tree with files to be added and responsibility of file
 
 ```bash
@@ -161,7 +163,8 @@ frontend/src/app/(main)/[projectId]/rfis
     └── page.tsx           # create RFI form UI + submit actions
 frontend/src/types/rfi.ts  # shared RFI types + form data shape
 tests/e2e/rfis.spec.ts     # Playwright coverage for RFI list + create
-```markdown
+```
+
 ### Known Gotchas of our codebase & Library Quirks
 
 ```typescript
@@ -216,7 +219,8 @@ export type RfiFormValues = {
   isPrivate?: boolean;
   reference?: string | null;
 };
-```sql
+```
+
 ### Implementation Tasks (ordered by dependencies)
 
 ```yaml
@@ -260,7 +264,8 @@ Task 7: CREATE tests/e2e/rfis.spec.ts
   - FOLLOW pattern: tests/e2e/submittals.spec.ts but add waitForLoadState('networkidle')
   - SELECTORS: role-based and stable text selectors
   - ASSERT: table visible, status badges present, action menu works
-```sql
+```
+
 ### Implementation Patterns & Key Details
 
 ```typescript
@@ -289,7 +294,8 @@ const tableRows = useMemo<RfiTableRow[]>(() =>
     <Select label="Assignees" required />
   </div>
 </FormContainer>
-```markdown
+```
+
 ### Integration Points
 
 ```yaml
@@ -311,19 +317,22 @@ ROUTES:
 
 ```bash
 npm run quality --prefix frontend
-```markdown
+```
+
 ### Level 2: Unit Tests (Component Validation)
 
 ```bash
 # If unit tests are added for RFI components
 npm test -- rfis
-```markdown
+```
+
 ### Level 3: Integration Testing (System Validation)
 
 ```bash
 cd frontend
 npx playwright test --reporter=html
-```markdown
+```
+
 ### Level 4: Creative & Domain-Specific Validation
 
 ```bash

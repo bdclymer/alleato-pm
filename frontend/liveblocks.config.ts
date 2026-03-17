@@ -82,6 +82,17 @@ export type ApprovalRequestData = {
   url: string;
 };
 
+/** Ball in Court shift notification for RFIs */
+export type BallInCourtData = {
+  title: string;
+  rfiNumber: number;
+  rfiSubject: string;
+  previousHolder: string;
+  newHolder: string;
+  projectName: string;
+  url: string;
+};
+
 // ── Global Liveblocks type declarations ─────────────────────────────────────
 
 import type { JsonObject, LiveList, LiveObject } from "@liveblocks/client";
@@ -137,6 +148,7 @@ declare global {
       $weeklyDigest: WeeklyDigestData;
       $assignment: AssignmentData;
       $approvalRequest: ApprovalRequestData;
+      $ballInCourt: BallInCourtData;
     };
   }
 }

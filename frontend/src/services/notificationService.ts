@@ -8,6 +8,7 @@ import type {
   WeeklyDigestData,
   AssignmentData,
   ApprovalRequestData,
+  BallInCourtData,
 } from "../../liveblocks.config";
 
 // ── Liveblocks server client ────────────────────────────────────────────────
@@ -157,6 +158,25 @@ export async function notifyApprovalRequest(
   );
 }
 
+// ── Ball in Court ──────────────────────────────────────────────────────────
+
+export async function notifyBallInCourt(
+  userId: UserTarget,
+  data: BallInCourtData
+) {
+  const users = toArray(userId);
+  await Promise.all(
+    users.map((uid) =>
+      liveblocks.triggerInboxNotification({
+        userId: uid,
+        kind: "$ballInCourt",
+        subjectId: `bic-rfi-${data.rfiNumber}-${nanoid()}`,
+        activityData: data,
+      })
+    )
+  );
+}
+
 // ── Convenience: Notify all project members ─────────────────────────────────
 
 /** Valid custom notification kind names */
@@ -167,7 +187,8 @@ type NotificationKind =
   | "$budgetAlert"
   | "$weeklyDigest"
   | "$assignment"
-  | "$approvalRequest";
+  | "$approvalRequest"
+  | "$ballInCourt";
 
 /** Activity data union for all custom kinds */
 type AnyActivityData =
@@ -177,7 +198,8 @@ type AnyActivityData =
   | BudgetAlertData
   | WeeklyDigestData
   | AssignmentData
-  | ApprovalRequestData;
+  | ApprovalRequestData
+  | BallInCourtData;
 
 /**
  * Send a notification to all members of a project.

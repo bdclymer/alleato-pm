@@ -25,6 +25,7 @@ export const rfiBaseSchema = z.object({
   reference: z.string().nullable().optional(),
   is_private: z.boolean().optional().default(false),
   rfi_stage: z.string().nullable().optional(),
+  drawing_number: z.string().nullable().optional(),
 });
 
 /**
@@ -55,9 +56,8 @@ export const rfiEditSchema = rfiBaseSchema.partial();
 export const RFI_STATUS_OPTIONS = [
   { value: "draft", label: "Draft" },
   { value: "open", label: "Open" },
-  { value: "pending", label: "Pending" },
   { value: "closed", label: "Closed" },
-  { value: "void", label: "Void" },
+  { value: "closed-draft", label: "Closed (Draft)" },
 ] as const;
 
 export const RFI_STATUS_VARIANT_MAP: Record<
@@ -66,9 +66,8 @@ export const RFI_STATUS_VARIANT_MAP: Record<
 > = {
   draft: "secondary",
   open: "default",
-  pending: "outline",
   closed: "success",
-  void: "destructive",
+  "closed-draft": "secondary",
 };
 
 export const RFI_IMPACT_OPTIONS = [

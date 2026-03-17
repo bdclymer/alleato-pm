@@ -60,7 +60,7 @@ export function ProjectSelector({
           role="combobox"
           aria-expanded={open}
           className={cn(
-            "h-8 w-64 justify-between border border-border/40 bg-surface-soft px-2 hover:bg-surface-soft focus-visible:ring-0 focus-visible:ring-offset-0",
+            "project-selector-trigger h-8 w-64 justify-between border border-border/40 bg-surface-soft px-2 hover:bg-surface-soft focus-visible:ring-0 focus-visible:ring-offset-0",
             !currentProject && "text-muted-foreground"
           )}
         >

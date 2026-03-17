@@ -7,7 +7,7 @@ type BudgetCodeResponse = {
   budgetCodes: Array<{
     id: string;
     code: string;
-    legacyCostCodeId: number | null;
+    legacyCostCodeId: string | null;
     description: string;
     costType: string | null;
     costTypeId: string | null;
@@ -17,20 +17,24 @@ type BudgetCodeResponse = {
   }>;
 };
 
+type CostCodeJoin = {
+  title: string | null;
+  division_id: string | null;
+  division_title: string | null;
+};
+
+type CostCodeTypeJoin = {
+  id: string | null;
+  code: string | null;
+  description: string | null;
+};
+
 type ProjectBudgetCodeRow = {
   id: string;
   cost_code_id: string;
   cost_type_id: string | null;
-  cost_codes: {
-    title: string | null;
-    division_id: string | null;
-    division_title: string | null;
-  } | null;
-  cost_code_types: {
-    id: string | null;
-    code: string | null;
-    description: string | null;
-  } | null;
+  cost_codes: CostCodeJoin | CostCodeJoin[] | null;
+  cost_code_types: CostCodeTypeJoin | CostCodeTypeJoin[] | null;
 };
 
 const formatBudgetCode = (options: {
@@ -104,7 +108,7 @@ export async function GET(
           .in("code", uniqueCostCodeCodes)
       : { data: [] };
 
-    const legacyCostCodeIdByCode = new Map<string, number>(
+    const legacyCostCodeIdByCode = new Map<string, string>(
       (legacyCostCodes || []).map((item) => [item.code, item.id]),
     );
 
@@ -112,8 +116,11 @@ export async function GET(
       projectBudgetCodesData || []
     ).map((item: unknown) => {
       const row = item as ProjectBudgetCodeRow;
-      const costType = row.cost_code_types?.code || null;
-      const costTypeDescription = row.cost_code_types?.description || null;
+      const costCodeTypeData = Array.isArray(row.cost_code_types)
+        ? row.cost_code_types[0]
+        : row.cost_code_types;
+      const costType = costCodeTypeData?.code || null;
+      const costTypeDescription = costCodeTypeData?.description || null;
       const costTypeId = row.cost_type_id || null;
       const costCodeData = Array.isArray(row.cost_codes)
         ? row.cost_codes[0]
@@ -252,9 +259,11 @@ export async function POST(
     // Transform response to match frontend format
     const typedBudgetCode =
       newProjectBudgetCode as unknown as ProjectBudgetCodeRow;
-    const costType = typedBudgetCode.cost_code_types?.code || null;
-    const costTypeDescription =
-      typedBudgetCode.cost_code_types?.description || null;
+    const costCodeTypeData = Array.isArray(typedBudgetCode.cost_code_types)
+      ? typedBudgetCode.cost_code_types[0]
+      : typedBudgetCode.cost_code_types;
+    const costType = costCodeTypeData?.code || null;
+    const costTypeDescription = costCodeTypeData?.description || null;
     const costCodeData = Array.isArray(typedBudgetCode.cost_codes)
       ? typedBudgetCode.cost_codes[0]
       : typedBudgetCode.cost_codes;

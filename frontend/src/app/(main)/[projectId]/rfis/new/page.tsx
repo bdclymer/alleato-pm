@@ -54,6 +54,7 @@ export default function NewRfiPage() {
       reference: null,
       is_private: false,
       rfi_stage: null,
+      drawing_number: null,
     },
   });
 
@@ -259,12 +260,21 @@ export default function NewRfiPage() {
               />
             </FormGrid>
 
-            <RHFTextField
-              control={form.control}
-              name="reference"
-              label="Reference"
-              placeholder="Enter reference"
-            />
+            <FormGrid columns={2}>
+              <RHFTextField
+                control={form.control}
+                name="reference"
+                label="Reference"
+                placeholder="Enter reference"
+              />
+
+              <RHFTextField
+                control={form.control}
+                name="drawing_number"
+                label="Drawing Number"
+                placeholder="Enter drawing/sheet number"
+              />
+            </FormGrid>
 
             <FormField
               control={form.control}

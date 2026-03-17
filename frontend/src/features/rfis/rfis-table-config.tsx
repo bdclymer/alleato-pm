@@ -29,6 +29,18 @@ export const rfiColumns: ColumnConfig[] = [
   { id: "responsible_contractor", label: "Resp. Contractor", defaultVisible: false },
   { id: "received_from", label: "Received From", defaultVisible: false },
   { id: "created_at", label: "Created", defaultVisible: false },
+  // Additional columns (hidden by default)
+  { id: "date_initiated", label: "Date Initiated", defaultVisible: false },
+  { id: "distribution_list", label: "Distribution List", defaultVisible: false },
+  { id: "closed_date", label: "Closed Date", defaultVisible: false },
+  { id: "location", label: "Location", defaultVisible: false },
+  { id: "schedule_impact", label: "Schedule Impact", defaultVisible: false },
+  { id: "cost_impact", label: "Cost Impact", defaultVisible: false },
+  { id: "cost_code", label: "Cost Code", defaultVisible: false },
+  { id: "sub_job", label: "Sub Job", defaultVisible: false },
+  { id: "rfi_stage", label: "RFI Stage", defaultVisible: false },
+  { id: "is_private", label: "Private", defaultVisible: false },
+  { id: "drawing_number", label: "Drawing Number", defaultVisible: false },
 ];
 
 export const rfiDefaultVisibleColumns = rfiColumns
@@ -44,6 +56,75 @@ export const rfiFilters: FilterConfig[] = [
       value: status.value,
       label: status.label,
     })),
+  },
+  {
+    id: "responsible_contractor",
+    label: "Responsible Contractor",
+    type: "select",
+    options: [],
+  },
+  {
+    id: "received_from",
+    label: "Received From",
+    type: "select",
+    options: [],
+  },
+  {
+    id: "assignees",
+    label: "Assignees",
+    type: "select",
+    options: [],
+  },
+  {
+    id: "rfi_manager",
+    label: "RFI Manager",
+    type: "select",
+    options: [],
+  },
+  {
+    id: "ball_in_court",
+    label: "Ball In Court",
+    type: "select",
+    options: [],
+  },
+  {
+    id: "overdue",
+    label: "Overdue",
+    type: "select",
+    options: [
+      { value: "true", label: "Yes" },
+      { value: "false", label: "No" },
+    ],
+  },
+  {
+    id: "location",
+    label: "Location",
+    type: "select",
+    options: [],
+  },
+  {
+    id: "cost_code",
+    label: "Cost Code",
+    type: "select",
+    options: [],
+  },
+  {
+    id: "sub_job",
+    label: "Sub Job",
+    type: "select",
+    options: [],
+  },
+  {
+    id: "rfi_stage",
+    label: "RFI Stage",
+    type: "select",
+    options: [],
+  },
+  {
+    id: "created_by",
+    label: "Created By",
+    type: "select",
+    options: [],
   },
 ];
 
@@ -67,15 +148,19 @@ function statusVariant(
       return "secondary";
     case "open":
       return "default";
-    case "pending":
-      return "outline";
     case "closed":
       return "success";
-    case "void":
-      return "destructive";
+    case "closed-draft":
+      return "secondary";
     default:
       return "outline";
   }
+}
+
+function formatStatusLabel(status: string | null | undefined): string {
+  if (!status) return "-";
+  if (status === "closed-draft") return "Closed (Draft)";
+  return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
 function formatAssignees(assignees: string[] | null | undefined): string {
@@ -98,7 +183,7 @@ export function buildRfiTableColumns(): TableColumn<RFI>[] {
     {
       ...rfiColumns[2],
       render: (item) => (
-        <Badge variant={statusVariant(item.status)}>{formatStatus(item.status)}</Badge>
+        <Badge variant={statusVariant(item.status)}>{formatStatusLabel(item.status)}</Badge>
       ),
       sortValue: (item) => item.status || "",
     },
@@ -136,6 +221,62 @@ export function buildRfiTableColumns(): TableColumn<RFI>[] {
       ...rfiColumns[9],
       render: (item) => <span>{formatDate(item.created_at)}</span>,
       sortValue: (item) => (item.created_at ? new Date(item.created_at).getTime() : 0),
+    },
+    // Additional columns (hidden by default)
+    {
+      ...rfiColumns[10],
+      render: (item) => <span>{formatDate(item.date_initiated)}</span>,
+      sortValue: (item) => (item.date_initiated ? new Date(item.date_initiated).getTime() : 0),
+    },
+    {
+      ...rfiColumns[11],
+      render: (item) => <span>{item.distribution_list?.join(", ") || "-"}</span>,
+      sortValue: (item) => item.distribution_list?.join(", ") || "",
+    },
+    {
+      ...rfiColumns[12],
+      render: (item) => <span>{formatDate(item.closed_date)}</span>,
+      sortValue: (item) => (item.closed_date ? new Date(item.closed_date).getTime() : 0),
+    },
+    {
+      ...rfiColumns[13],
+      render: (item) => <span>{item.location || "-"}</span>,
+      sortValue: (item) => item.location || "",
+    },
+    {
+      ...rfiColumns[14],
+      render: (item) => <span>{item.schedule_impact || "-"}</span>,
+      sortValue: (item) => item.schedule_impact || "",
+    },
+    {
+      ...rfiColumns[15],
+      render: (item) => <span>{item.cost_impact || "-"}</span>,
+      sortValue: (item) => item.cost_impact || "",
+    },
+    {
+      ...rfiColumns[16],
+      render: (item) => <span>{item.cost_code || "-"}</span>,
+      sortValue: (item) => item.cost_code || "",
+    },
+    {
+      ...rfiColumns[17],
+      render: (item) => <span>{(item as Record<string, unknown>).sub_job as string || "-"}</span>,
+      sortValue: (item) => ((item as Record<string, unknown>).sub_job as string) || "",
+    },
+    {
+      ...rfiColumns[18],
+      render: (item) => <span>{item.rfi_stage || "-"}</span>,
+      sortValue: (item) => item.rfi_stage || "",
+    },
+    {
+      ...rfiColumns[19],
+      render: (item) => <span>{item.is_private ? "Yes" : "No"}</span>,
+      sortValue: (item) => (item.is_private ? "Yes" : "No"),
+    },
+    {
+      ...rfiColumns[20],
+      render: (item) => <span>{(item as Record<string, unknown>).drawing_number as string || "-"}</span>,
+      sortValue: (item) => ((item as Record<string, unknown>).drawing_number as string) || "",
     },
   ];
 }
@@ -182,7 +323,7 @@ export function renderRfiCard(item: RFI, onClick: (item: RFI) => void): ReactEle
           <p className="text-xs uppercase text-muted-foreground">RFI #{item.number}</p>
           <h3 className="font-medium">{item.subject || "Untitled RFI"}</h3>
         </div>
-        <Badge variant={statusVariant(item.status)}>{formatStatus(item.status)}</Badge>
+        <Badge variant={statusVariant(item.status)}>{formatStatusLabel(item.status)}</Badge>
       </div>
       <p className="text-sm text-muted-foreground">Assignees: {formatAssignees(item.assignees)}</p>
       <p className="mt-2 text-sm text-muted-foreground">Due: {formatDate(item.due_date)}</p>

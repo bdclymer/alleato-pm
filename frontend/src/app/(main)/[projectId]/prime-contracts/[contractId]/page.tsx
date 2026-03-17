@@ -21,6 +21,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 
+import { arrayMove } from "@dnd-kit/sortable";
 import { toast } from "sonner";
 
 import { ProjectPageHeader } from "@/components/layout";
@@ -132,8 +133,7 @@ export default function ProjectContractDetailPage() {
   const [calculationResult, setCalculationResult] = useState<MarkupCalculationResponse | null>(null);
   const [calculationLoading, setCalculationLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<ContractTab>("overview");
-  const [isSovOpen, setIsSovOpen] = useState(true);
-  const [isSovEditing, setIsSovEditing] = useState(false);
+const [isSovEditing, setIsSovEditing] = useState(false);
   const [isSavingSovChanges, setIsSavingSovChanges] = useState(false);
   const [sovDraftItems, setSovDraftItems] = useState<ContractLineItem[]>([]);
   const [sovDraftBudgetCodeIds, setSovDraftBudgetCodeIds] = useState<Record<string, string>>({});
@@ -671,11 +671,12 @@ export default function ProjectContractDetailPage() {
         ? await budgetCodesResponse.json().catch(() => ({ budgetCodes: [] }))
         : { budgetCodes: [] };
 
-      const budgetCodeIdToCostCode = new Map(
+      // Map budget code UUID → cost_code_id string (for the legacy column)
+      const budgetCodeIdToCostCode = new Map<string, string | null>(
         (budgetCodesPayload.budgetCodes || []).map(
-          (code: { id: string; legacyCostCodeId?: number | null }) => [
+          (code: { id: string; legacyCostCodeId?: string | null }) => [
             code.id,
-            typeof code.legacyCostCodeId === "number" ? code.legacyCostCodeId : null,
+            code.legacyCostCodeId ?? null,
           ],
         ),
       );
@@ -683,13 +684,9 @@ export default function ProjectContractDetailPage() {
       const sovItems = data.sovItems || [];
       const itemsToPersist = sovItems.map((item, index) => {
         const budgetCodeId = item.budgetCodeId || "";
-        const budgetCodeValue = budgetCodeIdToCostCode.get(budgetCodeId) ?? null;
-        const fallbackCostCode = existingCostCodeByLineId.get(item.id) ?? null;
-        const parsedCostCodeId = budgetCodeValue ?? fallbackCostCode;
-        const costCodeId =
-          parsedCostCodeId !== null && Number.isNaN(parsedCostCodeId)
-            ? null
-            : parsedCostCodeId;
+        const costCodeId = budgetCodeIdToCostCode.get(budgetCodeId)
+          ?? existingCostCodeByLineId.get(item.id)
+          ?? null;
 
         const quantity =
           data.accountingMethod === "unit_quantity" ? item.quantity ?? 0 : 1;
@@ -703,6 +700,7 @@ export default function ProjectContractDetailPage() {
           line_number: index + 1,
           description: item.description || `Line ${index + 1}`,
           cost_code_id: costCodeId,
+          budget_code_id: budgetCodeId || null,
           quantity,
           unit_cost: unitCost,
           unit_of_measure: item.unitOfMeasure || null,
@@ -729,6 +727,7 @@ export default function ProjectContractDetailPage() {
                 line_number: item.line_number,
                 description: item.description,
                 cost_code_id: item.cost_code_id,
+                budget_code_id: item.budget_code_id,
                 quantity: item.quantity,
                 unit_cost: item.unit_cost,
                 unit_of_measure: item.unit_of_measure,
@@ -744,6 +743,7 @@ export default function ProjectContractDetailPage() {
               line_number: item.line_number,
               description: item.description,
               cost_code_id: item.cost_code_id,
+              budget_code_id: item.budget_code_id,
               quantity: item.quantity,
               unit_cost: item.unit_cost,
               unit_of_measure: item.unit_of_measure,
@@ -885,22 +885,27 @@ export default function ProjectContractDetailPage() {
 
   const handleStartSovEdit = () => {
     setSovDraftItems(normalizeSovDraftItems(lineItems.map((item) => ({ ...item }))));
-    // Build a map from cost_code_id (number) → budget code UUID
-    // legacyCostCodeId may be number or numeric string — coerce both
-    const budgetCodeIdByCostCodeId = new Map<number, string>();
+
+    // Use budget_code_id (the real FK) directly from each line item.
+    // Fall back to reverse-mapping cost_code_id → budget code only for legacy rows.
+    const budgetCodeIdByCostCodeId = new Map<string, string>();
     budgetCodes.forEach((budgetCode) => {
-      const rawId = budgetCode.legacyCostCodeId;
-      const numericId = rawId != null ? (typeof rawId === "number" ? rawId : Number(rawId)) : null;
-      if (numericId != null && !Number.isNaN(numericId) && !budgetCodeIdByCostCodeId.has(numericId)) {
-        budgetCodeIdByCostCodeId.set(numericId, budgetCode.id);
+      const costCodeId = budgetCode.legacyCostCodeId;
+      if (costCodeId && !budgetCodeIdByCostCodeId.has(costCodeId)) {
+        budgetCodeIdByCostCodeId.set(costCodeId, budgetCode.id);
       }
     });
 
     const nextDraftBudgetCodeIds: Record<string, string> = {};
     lineItems.forEach((item) => {
+      // Primary: use the stored budget_code_id FK
+      if (item.budget_code_id) {
+        nextDraftBudgetCodeIds[item.id] = item.budget_code_id;
+        return;
+      }
+      // Fallback: reverse-map from cost_code_id (for legacy data)
       if (item.cost_code_id != null) {
-        const numericCostCodeId = typeof item.cost_code_id === "number" ? item.cost_code_id : Number(item.cost_code_id);
-        const budgetCodeId = budgetCodeIdByCostCodeId.get(numericCostCodeId);
+        const budgetCodeId = budgetCodeIdByCostCodeId.get(String(item.cost_code_id));
         if (budgetCodeId) {
           nextDraftBudgetCodeIds[item.id] = budgetCodeId;
         }
@@ -955,14 +960,11 @@ export default function ProjectContractDetailPage() {
 
   const handleUpdateSovLineBudgetCode = (lineId: string, budgetCodeId: string) => {
     const selectedCode = budgetCodes.find((code) => code.id === budgetCodeId);
-    // legacyCostCodeId may be a number OR a numeric string from DB — coerce safely
-    const rawId = selectedCode?.legacyCostCodeId;
-    const mappedCostCodeId =
-      rawId != null && rawId !== undefined
-        ? typeof rawId === "number"
-          ? rawId
-          : Number(rawId) || null
-        : null;
+    // cost_code_id is TEXT in the DB, and legacyCostCodeId is cost_codes.id (also text).
+    // Just pass the string directly — no numeric coercion needed.
+    const costCodeId = selectedCode?.legacyCostCodeId != null
+      ? String(selectedCode.legacyCostCodeId)
+      : null;
 
     setSovDraftBudgetCodeIds((prev) => ({
       ...prev,
@@ -974,11 +976,11 @@ export default function ProjectContractDetailPage() {
           item.id === lineId
             ? {
                 ...item,
-                cost_code_id: mappedCostCodeId,
+                cost_code_id: costCodeId,
                 // Preserve budget code info for read-mode display
                 cost_code: selectedCode
                   ? {
-                      id: mappedCostCodeId ?? 0,
+                      id: costCodeId ?? "",
                       code: selectedCode.code,
                       name: selectedCode.description,
                     }
@@ -1001,6 +1003,12 @@ export default function ProjectContractDetailPage() {
     );
   };
 
+  const handleReorderSovLines = (oldIndex: number, newIndex: number) => {
+    setSovDraftItems((prev) =>
+      normalizeSovDraftItems(arrayMove(prev, oldIndex, newIndex)),
+    );
+  };
+
   const handleSaveSovEdit = async () => {
     const normalizedDraftItems = normalizeSovDraftItems(sovDraftItems);
 
@@ -1009,11 +1017,15 @@ export default function ProjectContractDetailPage() {
       return;
     }
 
-    if (
-      normalizedDraftItems.some(
-        (item) => item.cost_code_id === null || item.cost_code_id === undefined,
-      )
-    ) {
+    // Validate budget codes: check the draft budget code selection map,
+    // NOT cost_code_id (which has a type mismatch — cost_codes.id is string
+    // but contract_line_items.cost_code_id is integer).
+    const missingBudgetCode = normalizedDraftItems.some((item) => {
+      const hasBudgetCodeSelected = !!sovDraftBudgetCodeIds[item.id];
+      const hasExistingCostCode = item.cost_code_id != null;
+      return !hasBudgetCodeSelected && !hasExistingCostCode;
+    });
+    if (missingBudgetCode) {
       toast.error("Each SOV line must include a budget code");
       return;
     }
@@ -1048,6 +1060,7 @@ export default function ProjectContractDetailPage() {
                 line_number: item.line_number,
                 description: item.description || `Line ${item.line_number}`,
                 cost_code_id: item.cost_code_id,
+                budget_code_id: sovDraftBudgetCodeIds[item.id] || null,
                 quantity: Number(item.quantity) || 0,
                 unit_cost: Number(item.unit_cost) || 0,
                 unit_of_measure: item.unit_of_measure || null,
@@ -1063,6 +1076,7 @@ export default function ProjectContractDetailPage() {
               line_number: item.line_number,
               description: item.description || `Line ${item.line_number}`,
               cost_code_id: item.cost_code_id,
+              budget_code_id: sovDraftBudgetCodeIds[item.id] || null,
               quantity: Number(item.quantity) || 0,
               unit_cost: Number(item.unit_cost) || 0,
               unit_of_measure: item.unit_of_measure || null,
@@ -1695,9 +1709,7 @@ export default function ProjectContractDetailPage() {
           exclusionsList={exclusionsList}
           formatStatusLabel={formatStatusLabel}
           formatCurrency={formatCurrency}
-          isSovOpen={isSovOpen}
-          setIsSovOpen={setIsSovOpen}
-          lineItemsLoading={lineItemsLoading}
+lineItemsLoading={lineItemsLoading}
           lineItems={lineItems}
           budgetCodes={budgetCodes}
           sovDraftBudgetCodeIds={sovDraftBudgetCodeIds}
@@ -1711,6 +1723,7 @@ export default function ProjectContractDetailPage() {
           onUpdateSovLine={handleUpdateSovLine}
           onUpdateSovLineBudgetCode={handleUpdateSovLineBudgetCode}
           onRemoveSovLine={handleRemoveSovLine}
+          onReorderSovLines={handleReorderSovLines}
           onRequestCreateBudgetCode={handleRequestCreateBudgetCodeForSovLine}
         />
 

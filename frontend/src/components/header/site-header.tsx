@@ -24,6 +24,7 @@ import { useHeaderNav } from "./use-header-nav";
 import { ProjectSelector } from "./project-selector";
 import { NotificationBell } from "./notification-bell";
 import { CommentsSidebar } from "./comments-sidebar";
+import { LiveAvatarStack } from "./live-avatar-stack";
 
 /**
  * Top header — breadcrumbs left, tools + project selector right.
@@ -99,6 +100,9 @@ export function SiteHeader() {
             onProjectSelect={nav.handleProjectSelect}
             onViewAll={() => router.push("/")}
           />
+          <React.Suspense fallback={null}>
+            <LiveAvatarStack />
+          </React.Suspense>
           <React.Suspense fallback={null}>
             <CommentsSidebar />
           </React.Suspense>

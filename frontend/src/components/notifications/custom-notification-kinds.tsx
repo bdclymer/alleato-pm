@@ -12,6 +12,7 @@ import {
   BarChart3,
   UserPlus,
   CheckCircle2,
+  Users,
 } from "lucide-react";
 import type {
   CriticalIssueData,
@@ -21,6 +22,7 @@ import type {
   WeeklyDigestData,
   AssignmentData,
   ApprovalRequestData,
+  BallInCourtData,
 } from "../../../liveblocks.config";
 
 // ── Critical Issue ──────────────────────────────────────────────────────────
@@ -326,6 +328,41 @@ export function ApprovalRequestNotification(
   );
 }
 
+// ── Ball in Court ──────────────────────────────────────────────────────────
+
+export function BallInCourtNotification(
+  props: InboxNotificationCustomKindProps<"$ballInCourt">
+) {
+  const { title, rfiNumber, rfiSubject, previousHolder, newHolder, projectName } =
+    props.inboxNotification.activities[0]
+      .data as unknown as BallInCourtData;
+
+  return (
+    <InboxNotification.Custom
+      {...props}
+      title={title}
+      aside={
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
+          <Users className="h-4 w-4 text-blue-600" />
+        </div>
+      }
+    >
+      <p className="text-sm text-muted-foreground">
+        RFI #{rfiNumber}: {rfiSubject}
+      </p>
+      <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground/70">
+        <span>{previousHolder} → {newHolder}</span>
+        {projectName && (
+          <>
+            <span>·</span>
+            <span>{projectName}</span>
+          </>
+        )}
+      </div>
+    </InboxNotification.Custom>
+  );
+}
+
 // ── Export kinds map for InboxNotification component ─────────────────────────
 
 export const customNotificationKinds = {
@@ -336,4 +373,5 @@ export const customNotificationKinds = {
   $weeklyDigest: WeeklyDigestNotification,
   $assignment: AssignmentNotification,
   $approvalRequest: ApprovalRequestNotification,
+  $ballInCourt: BallInCourtNotification,
 };

@@ -151,7 +151,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           contract_id: contractId,
           line_number: lineNumber,
           description: description,
-          cost_code_id: parseInt(budgetLine.cost_code_id, 10),
+          cost_code_id: budgetLine.cost_code_id,
           quantity: 1, // Default to 1
           unit_of_measure: "LS", // Default to lump sum
           unit_cost: budgetLine.original_amount, // Use budget amount as unit cost

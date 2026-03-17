@@ -108,16 +108,43 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       updateData.is_private = validatedData.is_private;
     if (validatedData.rfi_stage !== undefined)
       updateData.rfi_stage = validatedData.rfi_stage;
+    if (validatedData.drawing_number !== undefined)
+      updateData.drawing_number = validatedData.drawing_number;
 
     // Handle status changes from body (not in base schema)
     if (body.status !== undefined) {
-      updateData.status = body.status;
+      let newStatus = body.status as string;
 
-      // Clear ball_in_court on close
-      if (body.status === "closed") {
+      // Fetch current RFI status for transition logic
+      const { data: currentRfi } = await supabase
+        .from("rfis")
+        .select("status, assignees")
+        .eq("id", rfiId)
+        .single();
+
+      const currentStatus = currentRfi?.status ?? "";
+
+      // Close from Draft → closed-draft
+      if (newStatus === "closed" && currentStatus === "draft") {
+        newStatus = "closed-draft";
+      }
+
+      // Reopen logic
+      if (newStatus === "open" && currentStatus === "closed") {
+        // Reopen from closed → open
+        updateData.closed_date = null;
+        updateData.ball_in_court =
+          currentRfi?.assignees?.join(", ") ?? null;
+      } else if (newStatus === "draft" && currentStatus === "closed-draft") {
+        // Reopen from closed-draft → draft
+        updateData.closed_date = null;
+      } else if (newStatus === "closed" || newStatus === "closed-draft") {
+        // Closing — set closed_date and clear ball_in_court
         updateData.closed_date = new Date().toISOString().split("T")[0];
         updateData.ball_in_court = null;
       }
+
+      updateData.status = newStatus;
     }
 
     const { data, error } = await supabase

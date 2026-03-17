@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type ComponentPropsWithoutRef } from "react";
+import { useState, useMemo, type ComponentPropsWithoutRef } from "react";
 import {
   ClientSideSuspense,
   useThreads,
@@ -102,10 +102,16 @@ function CustomThread({ thread }: { thread: ThreadData }) {
 
   // Build a permalink for copying
   const parsed = getIssueIdFromRoom(room.id);
-  const commentLink =
-    typeof window !== "undefined" && parsed
-      ? `${window.location.origin}/${parsed.entityType}/${parsed.entityId}#${thread.id}`
-      : "";
+  const commentLink = useMemo(() => {
+    if (typeof window === "undefined" || !parsed) return "";
+    const { entityType, entityId } = parsed;
+    // Project-scoped rooms: project-67 → /67/budget
+    const projectMatch = entityId.match(/^project-(\d+)$/);
+    const path = projectMatch
+      ? `/${projectMatch[1]}/${entityType}`
+      : `/${entityType}/${entityId}`;
+    return `${window.location.origin}${path}#${thread.id}`;
+  }, [parsed, thread.id]);
 
   if (!open) {
     return (

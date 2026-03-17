@@ -1,6 +1,8 @@
 /**
  * Contract Line Items Type Definitions
- * Generated from database schema
+ *
+ * NOTE: cost_code_id is TEXT in the database (references cost_codes.id which is also text).
+ * budget_code_id is a UUID FK to project_budget_codes.
  */
 
 export interface ContractLineItem {
@@ -8,7 +10,8 @@ export interface ContractLineItem {
   contract_id: string;
   line_number: number;
   description: string;
-  cost_code_id: number | null;
+  cost_code_id: string | null;
+  budget_code_id?: string | null;
   quantity: number;
   unit_of_measure: string | null;
   unit_cost: number;
@@ -21,7 +24,8 @@ export interface CreateContractLineItemInput {
   contract_id: string;
   line_number: number;
   description: string;
-  cost_code_id?: number;
+  cost_code_id?: string | null;
+  budget_code_id?: string | null;
   quantity?: number;
   unit_of_measure?: string;
   unit_cost?: number;
@@ -30,7 +34,8 @@ export interface CreateContractLineItemInput {
 export interface UpdateContractLineItemInput {
   line_number?: number;
   description?: string;
-  cost_code_id?: number | null;
+  cost_code_id?: string | null;
+  budget_code_id?: string | null;
   quantity?: number;
   unit_of_measure?: string | null;
   unit_cost?: number;
@@ -38,7 +43,7 @@ export interface UpdateContractLineItemInput {
 
 export interface ContractLineItemWithCostCode extends ContractLineItem {
   cost_code?: {
-    id: number;
+    id: string;
     code: string;
     name: string;
   };

@@ -68,11 +68,20 @@ export async function Issue({ issueId }: { issueId: string }) {
     error = err;
   }
 
-  if (
-    error ||
-    !storage ||
-    Object.keys(storage).length === 0
-  ) {
+  // If storage is empty (new room not yet initialised by client), use defaults
+  const emptyStorage = {
+    meta: { title: "" },
+    properties: { progress: "none", priority: "none", assignedTo: "none" },
+    labels: [],
+    links: [],
+  };
+
+  if (!storage || Object.keys(storage).length === 0) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    storage = emptyStorage as any;
+  }
+
+  if (error) {
     console.log(error);
     return (
       <div className="max-w-[840px] mx-auto pt-20">
@@ -81,7 +90,7 @@ export async function Issue({ issueId }: { issueId: string }) {
         </h1>
         <div>
           This issue has been deleted. Go back to the{" "}
-          <Link className="font-bold underline" href="/issue-tracker-demo">
+          <Link className="font-bold underline" href="/issues">
             issue list
           </Link>
           .

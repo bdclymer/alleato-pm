@@ -7,20 +7,13 @@ import {
   Send,
   X,
   AlertTriangle,
-  Phone,
-  Mail,
-  Plus,
   ChevronRight,
 } from "lucide-react";
-import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { ProjectChecklistSidebar } from "@/components/project/project-checklist-sidebar";
 import { EditProjectSidebar } from "@/components/project/edit-project-sidebar";
 import { useBudgetData } from "@/hooks/use-budget-data";
-import { useProjectRoles } from "@/hooks/use-project-roles";
 import { useProjectUsers } from "@/hooks/use-project-users";
 import type { Database } from "@/types/database.types";
 import { cn } from "@/lib/utils";
@@ -146,65 +139,22 @@ function QueueItem({
   );
 }
 
-/* ─────────────────────────────────────────────────────────────
-   Role-based team section (inline, no card)
-───────────────────────────────────────────────────────────── */
-
-function TeamRoles({ projectId }: { projectId: number }) {
-  const { roles, isLoading, updateRoleMembers } = useProjectRoles(String(projectId));
-  const { users: projectUsers } = useProjectUsers(String(projectId), { type: "user", status: "active", perPage: 100 });
-  const [activeRoleId, setActiveRoleId] = React.useState<string | null>(null);
-  const [search, setSearch] = React.useState("");
-  const [busy, setBusy] = React.useState(false);
-
-  const available = React.useMemo(() => {
-    const assigned = new Set(roles.flatMap((r) => r.members.map((m) => m.person_id)));
-    let list = (projectUsers || [])
-      .map((u) => ({ id: u.id, first_name: u.first_name || "", last_name: u.last_name || "", email: u.email, job_title: u.job_title, company_name: u.company?.name || null }))
-      .filter((p) => !assigned.has(p.id));
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      list = list.filter((p) => `${p.first_name} ${p.last_name}`.toLowerCase().includes(q) || p.email?.toLowerCase().includes(q));
-    }
-    return list;
-  }, [projectUsers, roles, search]);
-
-  const handleAssign = async (roleId: string, personId: string) => {
-    setBusy(true);
-    try {
-      await updateRoleMembers(roleId, [personId]);
-      toast.success("Role assigned");
-    } catch {
-      toast.error("Failed to assign");
-    } finally {
-      setBusy(false);
-      setActiveRoleId(null);
-      setSearch("");
-    }
-  };
-
-  const handleUnassign = async (roleId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    setBusy(true);
-    try {
-      await updateRoleMembers(roleId, []);
-      toast.success("Unassigned");
-    } catch {
-      toast.error("Failed");
-    } finally {
-      setBusy(false);
-    }
-  };
+function DirectoryContactList({ projectId }: { projectId: number }) {
+  const { users, isLoading } = useProjectUsers(String(projectId), {
+    type: "user",
+    status: "active",
+    perPage: 12,
+  });
 
   if (isLoading) {
     return (
-      <div className="space-y-3">
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="flex items-center gap-2.5">
-            <div className="h-7 w-7 rounded-full bg-muted animate-pulse" />
-            <div className="flex-1 space-y-1">
-              <div className="h-3 bg-muted rounded animate-pulse w-24" />
-              <div className="h-2.5 bg-muted rounded animate-pulse w-16" />
+      <div className="space-y-2">
+        {[0, 1, 2, 3].map((i) => (
+          <div key={i} className="flex items-center gap-2.5 py-1.5">
+            <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
+            <div className="space-y-1">
+              <div className="h-3 w-24 rounded bg-muted animate-pulse" />
+              <div className="h-2.5 w-16 rounded bg-muted animate-pulse" />
             </div>
           </div>
         ))}
@@ -212,89 +162,38 @@ function TeamRoles({ projectId }: { projectId: number }) {
     );
   }
 
+  const contacts = (users || []).slice(0, 8);
+
+  if (contacts.length === 0) {
+    return <p className="text-sm text-muted-foreground">No project contacts yet.</p>;
+  }
+
   return (
-    <div className="space-y-3">
-      {roles.map((role) => {
-        const member = role.members[0]?.person;
-        const isActive = activeRoleId === role.id;
+    <div className="space-y-1">
+      {contacts.map((user) => {
+        const fullName = `${user.first_name || ""} ${user.last_name || ""}`.trim() || user.email || "Unknown";
         return (
-          <Popover
-            key={role.id}
-            open={isActive}
-            onOpenChange={(open) => {
-              setActiveRoleId(open ? role.id : null);
-              if (!open) setSearch("");
-            }}
-          >
-            <PopoverTrigger asChild>
-              <button
-                disabled={busy}
-                className="w-full relative group rounded-2xl border border-border/70 bg-card px-5 py-4 text-left hover:bg-muted/30 transition-colors"
-              >
-                <div className="space-y-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/90">
-                    {role.role_name}
-                  </p>
-                  <div className="flex items-center gap-3.5">
-                    <Avatar className="h-14 w-14 flex-shrink-0">
-                      <AvatarFallback className="text-xl font-semibold bg-status-warning/25 text-status-warning">
-                        {member ? initials(`${member.first_name} ${member.last_name}`) : "—"}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 flex-1">
-                      <p
-                        className={cn(
-                          "text-2xl font-semibold tracking-tight leading-none truncate",
-                          member ? "text-foreground" : "text-muted-foreground/50 italic",
-                        )}
-                      >
-                        {member ? `${member.first_name} ${member.last_name}`.trim() : "Unassigned"}
-                      </p>
-                      <p className="text-lg text-muted-foreground leading-tight truncate mt-1">
-                        {member?.company_name || member?.email || "Click to assign"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-                {member && (
-                  <button
-                    onClick={(e) => handleUnassign(role.id, e)}
-                    className="h-5 w-5 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 text-muted-foreground/40 hover:text-status-error transition-all absolute right-4 top-4"
-                  >
-                    <X className="h-3 w-3" />
-                  </button>
-                )}
-              </button>
-            </PopoverTrigger>
-            <PopoverContent className="w-64 p-0" align="end" sideOffset={4}>
-              <Command shouldFilter={false}>
-                <CommandInput placeholder={`Assign ${role.role_name}…`} value={search} onValueChange={setSearch} className="h-9" />
-                <CommandList>
-                  {available.length === 0 ? (
-                    <CommandEmpty>
-                      <p className="text-xs text-muted-foreground py-3 text-center">No people available</p>
-                    </CommandEmpty>
-                  ) : (
-                    <CommandGroup>
-                      {available.slice(0, 20).map((p) => (
-                        <CommandItem key={p.id} value={`${p.first_name} ${p.last_name}`} onSelect={() => handleAssign(role.id, p.id)} className="cursor-pointer">
-                          <Avatar className="h-5 w-5 mr-2 flex-shrink-0">
-                            <AvatarFallback className="text-[9px] bg-muted">{initials(`${p.first_name} ${p.last_name}`)}</AvatarFallback>
-                          </Avatar>
-                          <div className="min-w-0">
-                            <p className="text-sm truncate">{p.first_name} {p.last_name}</p>
-                            <p className="text-xs text-muted-foreground truncate">{p.job_title || p.email}</p>
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  )}
-                </CommandList>
-              </Command>
-            </PopoverContent>
-          </Popover>
+          <div key={user.id} className="flex items-center gap-3 py-1.5">
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="text-[11px] bg-muted text-muted-foreground">
+                {initials(fullName)}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <p className="text-sm text-foreground truncate">{fullName}</p>
+              <p className="text-xs text-muted-foreground truncate">{user.job_title || "Team Member"}</p>
+            </div>
+          </div>
         );
       })}
+      <div className="pt-1">
+        <Link
+          href={`/${projectId}/directory/users`}
+          className="text-xs text-muted-foreground hover:text-foreground transition-colors"
+        >
+          Open Directory →
+        </Link>
+      </div>
     </div>
   );
 }
@@ -456,13 +355,11 @@ export function ProjectHomeRedesign({
   /* ── Health / health badge ── */
   const criticalCount =
     (pendingCOs.length > 0 && pendingCOs.some((co) => differenceInDays(new Date(), new Date(String(co.created_at))) > 14) ? 1 : 0) +
-    (scheduleStats && scheduleStats.overdue > 8 ? 1 : 0) +
     (hasBudget && committedPct > 95 ? 1 : 0);
   const warningCount =
     (pendingCOs.length > 0 ? 1 : 0) +
     (openRfis.length > 5 ? 1 : 0) +
-    (hasBudget && committedPct > 80 ? 1 : 0) +
-    (scheduleStats && scheduleStats.overdue > 2 ? 1 : 0);
+    (hasBudget && committedPct > 80 ? 1 : 0);
 
   const health = criticalCount > 0 ? "critical" : warningCount > 1 ? "warning" : "healthy";
   const healthLabel = health === "critical" ? "At Risk" : health === "warning" ? "Needs Attention" : "On Track";
@@ -525,20 +422,10 @@ export function ProjectHomeRedesign({
       });
     }
 
-    if (scheduleStats && scheduleStats.overdue > 2) {
-      items.unshift({
-        id: "schedule",
-        severity: scheduleStats.overdue > 8 ? "critical" : "warning",
-        title: `${scheduleStats.overdue} schedule tasks overdue`,
-        meta: "Review and update completion dates",
-        href: `/${project.id}/schedule`,
-      });
-    }
-
     return items
       .sort((a, b) => ({ critical: 0, warning: 1, info: 2 }[a.severity] - { critical: 0, warning: 1, info: 2 }[b.severity]))
       .slice(0, 7);
-  }, [pendingCOs, openRfis, openCEs, lastLogDaysAgo, hasBudget, committedPct, revisedBudget, committedCosts, scheduleStats, project.id]);
+  }, [pendingCOs, openRfis, openCEs, lastLogDaysAgo, hasBudget, committedPct, revisedBudget, committedCosts, project.id]);
 
   const attentionItems = React.useMemo(() => {
     const pendingCoAmount = pendingCOs.reduce((sum, co) => sum + (co.amount || 0), 0);
@@ -580,17 +467,6 @@ export function ProjectHomeRedesign({
       });
     }
 
-    if (scheduleStats && scheduleStats.overdue > 0) {
-      items.push({
-        id: "schedule-overdue",
-        label: "Overdue schedule activities",
-        count: scheduleStats.overdue,
-        severity: scheduleStats.overdue > 8 ? "error" : "warning",
-        detail: `${scheduleStats.done}/${scheduleStats.total} complete`,
-        href: `/${project.id}/schedule`,
-      });
-    }
-
     if (overdueOpenTasks.length > 0) {
       items.push({
         id: "overdue-tasks",
@@ -614,13 +490,9 @@ export function ProjectHomeRedesign({
     }
 
     return items.slice(0, 6);
-  }, [pendingCOs, openRfis, scheduleStats, overdueOpenTasks.length, unassignedOpenTasks.length, lastLogDaysAgo, project.id]);
+  }, [pendingCOs, openRfis, overdueOpenTasks.length, unassignedOpenTasks.length, lastLogDaysAgo, project.id]);
 
   const latestDailyLogs = React.useMemo(() => dailyLogs.slice(0, 3), [dailyLogs]);
-
-  const scheduleBarColor = scheduleStats
-    ? scheduleStats.overdue > 5 ? "#ef4444" : scheduleStats.overdue > 2 ? "#f59e0b" : "#22c55e"
-    : "#94a3b8";
 
   /* ════════════════════════════════════════════════════════════
      RENDER
@@ -816,47 +688,6 @@ export function ProjectHomeRedesign({
               )}
             </section>
 
-          {/* ── DAILY LOG ── */}
-            <section className="space-y-5 pt-1">
-              <div className="flex items-baseline justify-between">
-                <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">Daily Log</h2>
-                <Link href={`/${project.id}/daily-log`} className="text-xs text-muted-foreground hover:text-foreground transition-colors">View all →</Link>
-              </div>
-              {latestDailyLogs.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
-                  {latestDailyLogs.map((log) => {
-                    const weatherSummary =
-                      typeof log.weather_conditions === "object" &&
-                      log.weather_conditions !== null &&
-                      !Array.isArray(log.weather_conditions) &&
-                      typeof log.weather_conditions.summary === "string"
-                        ? log.weather_conditions.summary
-                        : "No weather data";
-
-                    return (
-                      <Link
-                        key={log.id}
-                        href={`/${project.id}/daily-log`}
-                        className="rounded-lg border border-border bg-card px-4 py-3 hover:bg-muted/30 transition-colors"
-                      >
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="text-sm font-medium text-foreground">
-                            {format(new Date(log.log_date), "MMM d, yyyy")}
-                          </span>
-                          <span className="text-[11px] text-muted-foreground truncate pl-2">{weatherSummary}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">Filed daily report for field activities.</p>
-                      </Link>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="py-2">
-                  <p className="text-sm text-muted-foreground">No daily log entries yet.</p>
-                </div>
-              )}
-            </section>
-
           {/* ── MEETINGS ── */}
             <section className="space-y-5 pt-1">
               <div className="flex items-baseline justify-between">
@@ -918,66 +749,104 @@ export function ProjectHomeRedesign({
               )}
             </section>
 
-          {/* ── TASKS ── */}
+          {/* ── RFIS / SUBMITTALS / DOCUMENTS ── */}
             <section className="space-y-5 pt-1">
-              <div className="flex items-center justify-between">
+              <div className="flex items-baseline justify-between">
                 <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
-                  Tasks
+                  RFIs, Submittals, Documents
                 </h2>
-                <span className="text-xs text-muted-foreground tabular-nums">
-                  {openTasks.length} open
-                </span>
+                <span className="text-xs text-muted-foreground">Core field workflow</span>
               </div>
-              <div className="max-w-2xl text-xs text-muted-foreground">
-                <span className="tabular-nums">{overdueOpenTasks.length} overdue</span>
-                <span className="mx-2 text-border">•</span>
-                <span className="tabular-nums">{dueSoonTasks.length} due 7 days</span>
-                <span className="mx-2 text-border">•</span>
-                <span className="tabular-nums">{unassignedOpenTasks.length} unassigned</span>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <Link
+                  href={`/${project.id}/rfis`}
+                  className="rounded-lg border border-border bg-card px-4 py-3 hover:bg-muted/30 transition-colors"
+                >
+                  <p className="text-sm font-medium text-foreground">RFIs</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {openRfis.length} open
+                  </p>
+                </Link>
+                <Link
+                  href={`/${project.id}/submittals`}
+                  className="rounded-lg border border-border bg-card px-4 py-3 hover:bg-muted/30 transition-colors"
+                >
+                  <p className="text-sm font-medium text-foreground">Submittals</p>
+                  <p className="text-xs text-muted-foreground mt-1">Review and track status</p>
+                </Link>
+                <Link
+                  href={`/${project.id}/documents`}
+                  className="rounded-lg border border-border bg-card px-4 py-3 hover:bg-muted/30 transition-colors"
+                >
+                  <p className="text-sm font-medium text-foreground">Documents</p>
+                  <p className="text-xs text-muted-foreground mt-1">Central file access</p>
+                </Link>
               </div>
-              {priorityTasks.length > 0 ? (
-                <div className="max-w-2xl">
-                  {priorityTasks.map((task) => {
-                    const overdue = task.due_date && new Date(task.due_date) < new Date();
-                    const priority = (task.priority || "").toLowerCase();
-                    const showPriority = priority === "critical" || priority === "urgent" || priority === "high";
+            </section>
+
+          {/* ── COMMENTS ── */}
+            <section className="space-y-5 pt-1">
+              <div className="flex items-baseline justify-between">
+                <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
+                  Comments
+                </h2>
+                <span className="text-xs text-muted-foreground">Live discussion feed</span>
+              </div>
+              <div className="rounded-lg border border-border bg-card px-4 py-4">
+                <p className="text-sm text-muted-foreground">No comments yet.</p>
+              </div>
+            </section>
+
+          {/* ── LIVE BLOCKS ── */}
+            <section className="space-y-5 pt-1">
+              <div className="flex items-baseline justify-between">
+                <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
+                  Live Blocks
+                </h2>
+                <span className="text-xs text-muted-foreground">Real-time workspace</span>
+              </div>
+              <div className="rounded-lg border border-border bg-card px-4 py-4">
+                <p className="text-sm text-muted-foreground">Live blocks are ready for collaborative project updates.</p>
+              </div>
+            </section>
+
+          {/* ── DAILY LOG ── */}
+            <section className="space-y-5 pt-1">
+              <div className="flex items-baseline justify-between">
+                <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">Daily Log</h2>
+                <Link href={`/${project.id}/daily-log`} className="text-xs text-muted-foreground hover:text-foreground transition-colors">View all →</Link>
+              </div>
+              {latestDailyLogs.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+                  {latestDailyLogs.map((log) => {
+                    const weatherSummary =
+                      typeof log.weather_conditions === "object" &&
+                      log.weather_conditions !== null &&
+                      !Array.isArray(log.weather_conditions) &&
+                      typeof log.weather_conditions.summary === "string"
+                        ? log.weather_conditions.summary
+                        : "No weather data";
+
                     return (
-                      <div key={task.id} className="flex items-start justify-between gap-4 py-2.5 border-b border-border/40 last:border-0">
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm text-foreground leading-snug line-clamp-1">{task.description}</p>
-                          <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
-                            <span className="text-xs text-muted-foreground">
-                              {task.assignee_name || "Unassigned"}
-                            </span>
-                            {showPriority && (
-                              <>
-                                <span className="text-border">•</span>
-                                <span className={cn(
-                                  priority === "critical" || priority === "urgent" ? "text-red-600" : "text-amber-600",
-                                )}>
-                                  {priority === "urgent" ? "urgent" : priority}
-                                </span>
-                              </>
-                            )}
-                          </div>
+                      <Link
+                        key={log.id}
+                        href={`/${project.id}/daily-log`}
+                        className="rounded-lg border border-border bg-card px-4 py-3 hover:bg-muted/30 transition-colors"
+                      >
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="text-sm font-medium text-foreground">
+                            {format(new Date(log.log_date), "MMM d, yyyy")}
+                          </span>
+                          <span className="text-[11px] text-muted-foreground truncate pl-2">{weatherSummary}</span>
                         </div>
-                        <div className="flex-shrink-0 pt-0.5">
-                            {task.due_date && (
-                              <span className={cn("text-xs tabular-nums", overdue ? "text-red-500" : "text-muted-foreground")}>
-                                {format(new Date(task.due_date), "MMM d")}
-                              </span>
-                            )}
-                        </div>
-                      </div>
+                        <p className="text-xs text-muted-foreground">Filed daily report for field activities.</p>
+                      </Link>
                     );
                   })}
-                  {openTasks.length > priorityTasks.length && (
-                    <p className="text-xs text-muted-foreground/50 pt-1">+{openTasks.length - priorityTasks.length} more</p>
-                  )}
                 </div>
               ) : (
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-muted-foreground">No open tasks right now.</p>
+                <div className="py-2">
+                  <p className="text-sm text-muted-foreground">No daily log entries yet.</p>
                 </div>
               )}
             </section>
@@ -1057,35 +926,7 @@ export function ProjectHomeRedesign({
               <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
                 Project Directory
               </h2>
-              <div className="space-y-4">
-                <TeamRoles projectId={project.id} />
-
-                <div className="space-y-2 border-t border-border/40 pt-3">
-                  <p className="text-xs font-medium text-muted-foreground">Vendors</p>
-                  <div className="flex items-center gap-2 text-xs">
-                    <Link href={`/${project.id}/directory/companies`} className="text-foreground hover:text-primary transition-colors">
-                      Companies
-                    </Link>
-                    <span className="text-border">•</span>
-                    <Link href={`/${project.id}/directory/contacts`} className="text-foreground hover:text-primary transition-colors">
-                      Contacts
-                    </Link>
-                  </div>
-                </div>
-
-                <div className="space-y-2 border-t border-border/40 pt-3">
-                  <p className="text-xs font-medium text-muted-foreground">Project Members</p>
-                  <div className="flex items-center gap-2 text-xs">
-                    <Link href={`/${project.id}/directory/users`} className="text-foreground hover:text-primary transition-colors">
-                      Users
-                    </Link>
-                    <span className="text-border">•</span>
-                    <Link href={`/${project.id}/directory/groups`} className="text-foreground hover:text-primary transition-colors">
-                      Groups
-                    </Link>
-                  </div>
-                </div>
-              </div>
+              <DirectoryContactList projectId={project.id} />
             </section>
 
             <section className="space-y-4">

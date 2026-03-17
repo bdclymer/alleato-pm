@@ -47,6 +47,10 @@ const PROJECT_COLUMNS: ColumnConfig[] = [
 
 type PortfolioScope = "all" | "client" | "internal";
 
+function isInternalProjectType(type: string | null | undefined): boolean {
+  return type?.trim().toLowerCase() === "internal";
+}
+
 // Map frontend field keys to database column names
 const FIELD_TO_DB_COLUMN: Record<string, string> = {
   name: "name",
@@ -649,12 +653,11 @@ export default function PortfolioPage() {
   const projectTabs = React.useMemo(() => {
     const countByScope = projects.reduce(
       (acc, project) => {
-        const access = (project.access ?? "").toLowerCase();
-        if (access.includes("client")) {
-          acc.client += 1;
-        }
-        if (access.includes("internal")) {
+        const isInternal = isInternalProjectType(project.type);
+        if (isInternal) {
           acc.internal += 1;
+        } else {
+          acc.client += 1;
         }
         acc.all += 1;
         return acc;
@@ -678,12 +681,6 @@ export default function PortfolioPage() {
 
     return [
       {
-        label: "All",
-        href: buildScopeHref("all"),
-        count: countByScope.all,
-        isActive: activeScope === "all",
-      },
-      {
         label: "Clients",
         href: buildScopeHref("client"),
         count: countByScope.client,
@@ -695,6 +692,12 @@ export default function PortfolioPage() {
         count: countByScope.internal,
         isActive: activeScope === "internal",
       },
+      {
+        label: "All",
+        href: buildScopeHref("all"),
+        count: countByScope.all,
+        isActive: activeScope === "all",
+      },
     ];
   }, [activeScope, pathname, projects, searchParams]);
 
@@ -702,11 +705,11 @@ export default function PortfolioPage() {
     const normalizedSearch = tableState.debouncedSearch.trim().toLowerCase();
 
     return projects.filter((project) => {
-      const normalizedAccess = (project.access ?? "").toLowerCase();
+      const isInternal = isInternalProjectType(project.type);
       const scopeMatch =
         activeScope === "all" ||
-        (activeScope === "client" && normalizedAccess.includes("client")) ||
-        (activeScope === "internal" && normalizedAccess.includes("internal"));
+        (activeScope === "client" && !isInternal) ||
+        (activeScope === "internal" && isInternal);
       const clientMatch =
         !activeFilters.client ||
         (project.client ?? "").toLowerCase() ===

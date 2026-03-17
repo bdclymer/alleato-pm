@@ -156,7 +156,7 @@ function SmallInboxNotification({
   }
   return (
     <NextLink
-      href={`/issue-tracker-demo/${issueId}`}
+      href={`/issues/${issueId}`}
       onClick={() => {
         openInbox();
         markAsRead(inboxNotification.id);

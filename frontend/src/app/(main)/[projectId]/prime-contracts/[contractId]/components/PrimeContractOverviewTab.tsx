@@ -7,6 +7,22 @@ import {
   Trash2,
 } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
+import { useMemo } from "react";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 import { cn } from "@/lib/utils";
 import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
@@ -64,8 +80,6 @@ interface PrimeContractOverviewTabProps {
   exclusionsList: string[];
   formatStatusLabel: (status: Contract["status"]) => string;
   formatCurrency: (value: number | null | undefined) => string;
-  isSovOpen: boolean;
-  setIsSovOpen: Dispatch<SetStateAction<boolean>>;
   lineItemsLoading: boolean;
   lineItems: ContractLineItem[];
   budgetCodes: BudgetCode[];
@@ -83,6 +97,7 @@ interface PrimeContractOverviewTabProps {
   ) => void;
   onUpdateSovLineBudgetCode: (lineId: string, budgetCodeId: string) => void;
   onRemoveSovLine: (lineId: string) => void;
+  onReorderSovLines: (oldIndex: number, newIndex: number) => void;
   onRequestCreateBudgetCode: (lineId: string) => void;
 }
 
@@ -104,8 +119,6 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
     exclusionsList,
     formatStatusLabel,
     formatCurrency,
-    isSovOpen,
-    setIsSovOpen,
     lineItemsLoading,
     lineItems,
     budgetCodes,
@@ -120,10 +133,31 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
     onUpdateSovLine,
     onUpdateSovLineBudgetCode,
     onRemoveSovLine,
+    onReorderSovLines,
     onRequestCreateBudgetCode,
   } = props;
   const ownerName = contract.contract_company?.name || contract.client?.name;
   const displayedSovItems = isSovEditing ? sovDraftItems : lineItems;
+
+  // DnD sensors for reordering SOV lines
+  const pointerSensor = useSensor(PointerSensor, { activationConstraint: { distance: 8 } });
+  const keyboardSensor = useSensor(KeyboardSensor);
+  const sensors = useSensors(pointerSensor, keyboardSensor);
+
+  const sortableIds = useMemo(
+    () => displayedSovItems.map((item) => item.id),
+    [displayedSovItems],
+  );
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = sortableIds.indexOf(active.id as string);
+    const newIndex = sortableIds.indexOf(over.id as string);
+    if (oldIndex !== -1 && newIndex !== -1) {
+      onReorderSovLines(oldIndex, newIndex);
+    }
+  };
   const displayedSovTotal = displayedSovItems.reduce(
     (sum, item) => sum + (Number(item.quantity) || 0) * (Number(item.unit_cost) || 0),
     0,
@@ -499,18 +533,9 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
               </div>
             </section>
 
-            <section className="rounded-xl px-6 py-6">
+            <section>
               <div className="flex items-center justify-between">
-                <button
-                  type="button"
-                  onClick={() => setIsSovOpen((prev) => !prev)}
-                  className="inline-flex items-center gap-4"
-                >
-                  <ChevronRight
-                    className={cn("h-5 w-5 transition-transform", isSovOpen ? "rotate-90" : "")}
-                  />
-                  <h3 className="text-2xl font-semibold">Schedule of Values</h3>
-                </button>
+                <h3 className="text-base font-semibold">Schedule of Values</h3>
                 <div className="flex items-center gap-2">
                   {isSovEditing ? (
                     <>
@@ -525,8 +550,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                 </div>
               </div>
 
-              {isSovOpen && (
-                <div className="mt-4 space-y-4">
+              <div className="mt-4 space-y-4">
                   {isSovEditing && (
                     <div className="rounded-md border-l-4 border-amber-500 bg-amber-50 p-4 text-sm">
                       <p className="font-semibold">Any changes will only apply to future invoices</p>
@@ -547,10 +571,19 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                       </p>
                     </div>
                   ) : (
-                    <div className="overflow-x-auto overflow-hidden rounded-lg border border-border bg-background">
+                    <DndContext
+                      sensors={sensors}
+                      collisionDetection={closestCenter}
+                      onDragEnd={handleDragEnd}
+                    >
+                    <SortableContext
+                      items={sortableIds}
+                      strategy={verticalListSortingStrategy}
+                    >
+                    <div className="overflow-x-auto overflow-hidden rounded-lg border border-border/70 bg-muted/20">
                       <Table>
                         <TableHeader className="border-y-0 [&_tr]:border-b-0">
-                          <TableRow className="bg-muted/40 hover:bg-muted/40">
+                          <TableRow className="bg-muted/70 hover:bg-muted/70">
                             <TableHead className="w-10 px-1 py-1.5" />
                             <TableHead className="min-w-72 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
                               Budget Code *
@@ -577,11 +610,15 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                           {displayedSovItems.map((item) => {
                             const lineTotal =
                               (Number(item.quantity) || 0) * (Number(item.unit_cost) || 0);
-                            const selectedBudgetCode = budgetCodes.find(
-                              (code) =>
-                                code.legacyCostCodeId === item.cost_code_id ||
-                                (!!item.cost_code?.code && code.code === item.cost_code.code),
-                            );
+                            // Use budget_code_id (the real FK) as the primary lookup,
+                            // then fall back to cost_code_id string match
+                            const selectedBudgetCode = item.budget_code_id
+                              ? budgetCodes.find((code) => code.id === item.budget_code_id)
+                              : budgetCodes.find(
+                                  (code) =>
+                                    (code.legacyCostCodeId && code.legacyCostCodeId === item.cost_code_id) ||
+                                    (!!item.cost_code?.code && code.code === item.cost_code.code),
+                                );
                             const selectedBudgetCodeId =
                               (isSovEditing ? sovDraftBudgetCodeIds[item.id] : undefined) ||
                               selectedBudgetCode?.id ||
@@ -593,7 +630,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                                 className="group border-b border-border/60 bg-background transition-colors hover:bg-muted/20"
                               >
                                 <TableCell className="w-10 px-1 py-1.5 align-top">
-                                  <div className="mt-1 rounded-md p-1 text-muted-foreground">
+                                  <div className="mt-1 cursor-grab rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted active:cursor-grabbing">
                                     <GripVertical className="h-4 w-4" />
                                   </div>
                                 </TableCell>
@@ -653,7 +690,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                                     />
                                   ) : (
                                     <div className="pt-2 text-right text-sm tabular-nums">
-                                      {item.quantity ?? 0}
+                                      {item.unit_of_measure ? (item.quantity ?? 0) : ""}
                                     </div>
                                   )}
                                 </TableCell>
@@ -680,7 +717,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                                     </Select>
                                   ) : (
                                     <div className="pt-2 text-sm">
-                                      {item.unit_of_measure || "--"}
+                                      {item.unit_of_measure || ""}
                                     </div>
                                   )}
                                 </TableCell>
@@ -758,6 +795,8 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                         </TableBody>
                       </Table>
                     </div>
+                    </SortableContext>
+                    </DndContext>
                   )}
 
                   {isSovEditing ? (
@@ -774,7 +813,6 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                     </div>
                   ) : null}
                 </div>
-              )}
             </section>
           </div>
         )}

@@ -53,6 +53,7 @@ import {
   type RfiEditValues,
 } from "@/lib/schemas/rfi-schema";
 import type { RFI } from "@/types/database-extensions";
+import { RfiResponses } from "@/components/rfis/rfi-responses";
 
 function formatDate(dateStr: string | null | undefined): string {
   if (!dateStr) return "—";
@@ -69,11 +70,15 @@ function getStatusVariant(
   const map: Record<string, "default" | "secondary" | "destructive" | "outline"> = {
     draft: "secondary",
     open: "default",
-    pending: "outline",
     closed: "default",
-    void: "destructive",
+    "closed-draft": "secondary",
   };
   return map[status] ?? "outline";
+}
+
+function formatStatusLabel(status: string): string {
+  if (status === "closed-draft") return "Closed (Draft)";
+  return status.charAt(0).toUpperCase() + status.slice(1);
 }
 
 interface RfiDetailProps {
@@ -106,6 +111,7 @@ export function RfiDetail({ rfi, projectId }: RfiDetailProps) {
       reference: rfi?.reference ?? null,
       is_private: rfi?.is_private ?? false,
       rfi_stage: rfi?.rfi_stage ?? null,
+      drawing_number: rfi?.drawing_number ?? null,
     },
   });
 
@@ -443,19 +449,38 @@ export function RfiDetail({ rfi, projectId }: RfiDetailProps) {
                     )}
                   />
                 </div>
-                <FormField
-                  control={form.control}
-                  name="reference"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Reference</FormLabel>
-                      <FormControl>
-                        <Input {...field} value={field.value ?? ""} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid gap-4 md:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="reference"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Reference</FormLabel>
+                        <FormControl>
+                          <Input {...field} value={field.value ?? ""} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="drawing_number"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Drawing Number</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            value={field.value ?? ""}
+                            placeholder="Enter drawing/sheet number"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
                 <FormField
                   control={form.control}
                   name="is_private"
@@ -488,8 +513,7 @@ export function RfiDetail({ rfi, projectId }: RfiDetailProps) {
                   <CardTitle>Question</CardTitle>
                   <div className="flex items-center gap-2">
                     <Badge variant={getStatusVariant(rfi.status ?? "open")}>
-                      {(rfi.status ?? "open").charAt(0).toUpperCase() +
-                        (rfi.status ?? "open").slice(1)}
+                      {formatStatusLabel(rfi.status ?? "open")}
                     </Badge>
                     {rfi.is_private && (
                       <Badge variant="outline">Private</Badge>
@@ -510,37 +534,51 @@ export function RfiDetail({ rfi, projectId }: RfiDetailProps) {
               </CardContent>
             </Card>
 
+            {/* Responses Section (Liveblocks threads) */}
+            <RfiResponses rfiId={rfi.id} className="mt-6" />
+
             {/* Status Actions */}
-            {rfi.status !== "closed" && rfi.status !== "void" && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Actions</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex items-center gap-2">
-                    {rfi.status === "draft" && (
-                      <Button
-                        size="sm"
-                        onClick={() => handleStatusChange("open")}
-                        disabled={updateRfi.isPending}
-                      >
-                        Open RFI
-                      </Button>
-                    )}
-                    {(rfi.status === "open" || rfi.status === "pending") && (
-                      <Button
-                        size="sm"
-                        variant="secondary"
-                        onClick={() => handleStatusChange("closed")}
-                        disabled={updateRfi.isPending}
-                      >
-                        Close RFI
-                      </Button>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
+            <Card>
+              <CardHeader>
+                <CardTitle>Actions</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center gap-2">
+                  {rfi.status === "draft" && (
+                    <Button
+                      size="sm"
+                      onClick={() => handleStatusChange("open")}
+                      disabled={updateRfi.isPending}
+                    >
+                      Open RFI
+                    </Button>
+                  )}
+                  {rfi.status === "open" && (
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      onClick={() => handleStatusChange("closed")}
+                      disabled={updateRfi.isPending}
+                    >
+                      Close RFI
+                    </Button>
+                  )}
+                  {(rfi.status === "closed" || rfi.status === "closed-draft") && (
+                    <Button
+                      size="sm"
+                      onClick={() =>
+                        handleStatusChange(
+                          rfi.status === "closed-draft" ? "draft" : "open"
+                        )
+                      }
+                      disabled={updateRfi.isPending}
+                    >
+                      Reopen RFI
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
           {/* Sidebar */}
@@ -599,6 +637,10 @@ export function RfiDetail({ rfi, projectId }: RfiDetailProps) {
                   value={rfi.cost_impact ?? "—"}
                 />
                 <InfoRow label="Reference" value={rfi.reference ?? "—"} />
+                <InfoRow
+                  label="Drawing Number"
+                  value={rfi.drawing_number ?? "—"}
+                />
                 <InfoRow label="RFI Stage" value={rfi.rfi_stage ?? "—"} />
                 <InfoRow
                   label="Created By"

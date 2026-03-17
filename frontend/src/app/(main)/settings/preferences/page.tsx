@@ -62,7 +62,7 @@ function SectionCard({
 
 export default function PreferencesSettingsPage() {
   return (
-    <div className="px-8 py-8 max-w-4xl">
+    <div className="px-8 py-8 max-w-6xl">
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-xl font-semibold tracking-tight">Preferences</h1>

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Bell, CheckCheck, Trash2 } from "lucide-react";
+import { Bell, CheckCheck, Trash2, X } from "lucide-react";
 import {
   InboxNotification,
   InboxNotificationList,
@@ -13,12 +13,15 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import type { InboxNotificationData } from "@liveblocks/client";
 import {
   ClientSideSuspense,
   useInboxNotifications,
   useUnreadInboxNotificationsCount,
   useMarkAllInboxNotificationsAsRead,
   useDeleteAllInboxNotifications,
+  useMarkInboxNotificationAsRead,
+  useDeleteInboxNotification,
 } from "@liveblocks/react/suspense";
 import { customNotificationKinds } from "@/components/notifications/custom-notification-kinds";
 
@@ -114,7 +117,7 @@ export function NotificationBell() {
                 </div>
               }
             >
-              <NotificationSidebar />
+              <NotificationSidebar onClose={() => setOpen(false)} />
             </ClientSideSuspense>
           </NotificationErrorBoundary>
         </SheetContent>
@@ -137,13 +140,70 @@ function UnreadBadge() {
   );
 }
 
+// ── Individual notification row with hover actions ──────────────────────────
+
+function NotificationRow({
+  notification,
+}: {
+  notification: InboxNotificationData;
+}) {
+  const [hovered, setHovered] = React.useState(false);
+  const markAsRead = useMarkInboxNotificationAsRead();
+  const deleteNotification = useDeleteInboxNotification();
+
+  const handleClick = React.useCallback(() => {
+    if (!notification.readAt) {
+      markAsRead(notification.id);
+    }
+  }, [notification.id, notification.readAt, markAsRead]);
+
+  return (
+    <div
+      className="relative group"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onClick={handleClick}
+    >
+      <InboxNotification
+        inboxNotification={notification}
+        kinds={customNotificationKinds}
+      />
+      {/* Per-item delete button — visible on hover */}
+      {hovered && (
+        <button
+          type="button"
+          className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-md bg-background/80 text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-muted hover:text-destructive transition-all z-10"
+          onClick={(e) => {
+            e.stopPropagation();
+            deleteNotification(notification.id);
+          }}
+          title="Remove notification"
+        >
+          <X className="h-3.5 w-3.5" />
+        </button>
+      )}
+    </div>
+  );
+}
+
 // ── Sidebar content ─────────────────────────────────────────────────────────
 
-function NotificationSidebar() {
-  const { inboxNotifications } = useInboxNotifications();
+function NotificationSidebar({ onClose }: { onClose: () => void }) {
+  const { inboxNotifications, fetchMore, hasFetchedAll, isFetchingMore } =
+    useInboxNotifications();
   const { count } = useUnreadInboxNotificationsCount();
   const markAllAsRead = useMarkAllInboxNotificationsAsRead();
   const deleteAll = useDeleteAllInboxNotifications();
+
+  // Deduplicate by notification ID to prevent React key warnings
+  const uniqueNotifications = React.useMemo(() => {
+    const seen = new Set<string>();
+    return inboxNotifications.filter((n) => {
+      if (seen.has(n.id)) return false;
+      seen.add(n.id);
+      return true;
+    });
+  }, [inboxNotifications]);
 
   return (
     <div className="flex h-full flex-col">
@@ -157,7 +217,7 @@ function NotificationSidebar() {
             </span>
           )}
         </div>
-        {inboxNotifications.length > 0 && (
+        {uniqueNotifications.length > 0 && (
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
@@ -182,7 +242,7 @@ function NotificationSidebar() {
       </SheetHeader>
 
       {/* Notification list */}
-      {inboxNotifications.length === 0 ? (
+      {uniqueNotifications.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center text-center px-6">
           <Bell className="mb-3 h-10 w-10 text-muted-foreground/30" />
           <p className="text-sm font-medium text-foreground/80">
@@ -195,14 +255,35 @@ function NotificationSidebar() {
       ) : (
         <div className="flex-1 overflow-y-auto">
           <InboxNotificationList>
-            {inboxNotifications.map((notification) => (
-              <InboxNotification
+            {uniqueNotifications.map((notification) => (
+              <NotificationRow
                 key={notification.id}
-                inboxNotification={notification}
-                kinds={customNotificationKinds}
+                notification={notification}
               />
             ))}
           </InboxNotificationList>
+
+          {/* Load more */}
+          {!hasFetchedAll && (
+            <div className="px-4 py-3 border-t border-border/40">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full text-xs text-muted-foreground hover:text-foreground"
+                onClick={() => fetchMore()}
+                disabled={isFetchingMore}
+              >
+                {isFetchingMore ? (
+                  <span className="flex items-center gap-2">
+                    <span className="h-3 w-3 animate-spin rounded-full border border-muted-foreground border-t-transparent" />
+                    Loading…
+                  </span>
+                ) : (
+                  "Load more"
+                )}
+              </Button>
+            </div>
+          )}
         </div>
       )}
     </div>

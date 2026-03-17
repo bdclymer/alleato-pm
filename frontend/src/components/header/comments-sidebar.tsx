@@ -70,11 +70,22 @@ const INITIAL_STORAGE = {
  * Detail pages (e.g. /43/rfis/123) → entity-level room.
  * List pages (e.g. /43/budget) → project-tool-level room.
  */
-function useEntityContext(): EntityContext | null {
+export function useEntityContext(): EntityContext | null {
   const params = useParams();
   const pathname = usePathname();
 
   return React.useMemo(() => {
+    // ── Non-project routes (e.g. /issues/[issueId]) ──────────────────────────
+    const issueId = params.issueId as string | undefined;
+    if (issueId && pathname.startsWith("/issues/")) {
+      return {
+        entityType: "issue" as const,
+        entityId: issueId,
+        label: `Issue #${issueId}`,
+      };
+    }
+
+    // ── Project-scoped routes ────────────────────────────────────────────────
     const projectId = params.projectId as string | undefined;
     if (!projectId) return null;
 

@@ -1,21 +1,13 @@
 "use client";
 
-import * as React from "react";
+import type * as React from "react";
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { cn } from "@/lib/utils";
+import { Building2, Puzzle, SlidersHorizontal, UserCircle, Users } from "lucide-react";
+
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Building2,
-  Users,
-  Puzzle,
-  Shield,
-  Settings,
-  SlidersHorizontal,
-  ClipboardList,
-  Brain,
-  Sparkles,
-} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface NavItem {
   label: string;
@@ -30,41 +22,17 @@ interface NavGroup {
 
 const navGroups: NavGroup[] = [
   {
-    title: "Workspace",
+    title: "Personal",
     items: [
-      { label: "Account", href: "/settings/account", icon: Building2 },
+      { label: "Profile", href: "/settings/profile", icon: UserCircle },
       { label: "Preferences", href: "/settings/preferences", icon: SlidersHorizontal },
     ],
   },
   {
-    title: "AI",
+    title: "Workspace",
     items: [
-      { label: "Memory", href: "/settings/memory", icon: Brain },
-    ],
-  },
-  {
-    title: "Team",
-    items: [
+      { label: "Account", href: "/settings/account", icon: Building2 },
       { label: "Members", href: "/settings/members", icon: Users },
-    ],
-  },
-  {
-    title: "Integrations",
-    items: [
-      { label: "Integrations", href: "/settings/integrations", icon: Puzzle },
-    ],
-  },
-  {
-    title: "Security",
-    items: [
-      { label: "Security", href: "/settings/security", icon: Shield },
-      { label: "Audit Log", href: "/settings/audit", icon: ClipboardList },
-    ],
-  },
-  {
-    title: "Platform",
-    items: [
-      { label: "What's New", href: "/updates", icon: Sparkles },
     ],
   },
 ];
@@ -76,10 +44,6 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
     <div className="flex flex-1 min-h-0 h-full">
       {/* Left nav */}
       <aside className="w-56 shrink-0 border-r border-border bg-background flex flex-col">
-        <div className="px-5 py-4 border-b border-border flex items-center gap-2">
-          <Settings className="h-4 w-4 text-muted-foreground" />
-          <span className="text-sm font-semibold tracking-tight">Settings</span>
-        </div>
         <ScrollArea className="flex-1">
           <nav className="px-3 py-4 space-y-5">
             {navGroups.map((group) => (
@@ -91,7 +55,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
                   {group.items.map((item) => {
                     const isActive =
                       pathname === item.href ||
-                      pathname.startsWith(item.href + "/");
+                      pathname.startsWith(`${item.href}/`);
                     const Icon = item.icon;
                     return (
                       <Link

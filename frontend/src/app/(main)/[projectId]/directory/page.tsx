@@ -12,6 +12,9 @@ import {
   UserX,
   Package,
   Users2,
+  Search,
+  Mail,
+  Phone,
 } from "lucide-react";
 import {
   ProjectPageHeader,
@@ -51,10 +54,8 @@ import {
   PopoverContent,
   PopoverTrigger,
   Badge,
-  SectionHeader,
   StatusBadge,
   EmptyState,
-  Eyebrow,
 } from "@/components/ds";
 import { useProjectRoles, type ProjectRole } from "@/hooks/use-project-roles";
 import { useProjectUsers } from "@/hooks/use-project-users";
@@ -65,7 +66,6 @@ import { cn } from "@/lib/utils";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { ResponsiveDistributionGroupsTable } from "@/components/directory/responsive/ResponsiveDistributionGroupsTable";
-import { DistributionGroupListSkeleton } from "@/components/directory/skeletons/DistributionGroupListSkeleton";
 import type { PersonWithDetails } from "@/services/directoryService";
 
 // ─── Types ───────────────────────────────────────────────────────
@@ -108,13 +108,80 @@ interface VendorOption {
   is_active: boolean;
 }
 
-// ─── Loading skeleton ────────────────────────────────────────────
+// ─── Helpers ─────────────────────────────────────────────────────
 
-function SectionSkeleton() {
+function memberStatusLabel(
+  membership: PersonWithDetails["membership"]
+): string {
+  const status = membership?.status || "inactive";
+  const invite = membership?.invite_status;
+  if (status === "inactive") return "Inactive";
+  if (invite === "not_invited") return "Not Invited";
+  if (invite === "invited") return "Invite Sent";
+  return "Active";
+}
+
+function initials(first?: string | null, last?: string | null): string {
   return (
-    <div className="space-y-4">
-      <div className="h-6 w-32 animate-pulse rounded-md bg-muted" />
-      <div className="h-48 w-full animate-pulse rounded-md bg-muted" />
+    `${first?.[0] ?? ""}${last?.[0] ?? ""}`.toUpperCase() || "?"
+  );
+}
+
+// ─── Skeleton ────────────────────────────────────────────────────
+
+function TableSkeleton({ rows = 5 }: { rows?: number }) {
+  return (
+    <div className="space-y-0">
+      {Array.from({ length: rows }).map((_, i) => (
+        <div
+          key={i}
+          className="flex items-center gap-4 px-4 py-3 border-b border-border/50"
+        >
+          <div className="h-8 w-8 rounded-full animate-pulse bg-muted shrink-0" />
+          <div className="flex-1 space-y-1.5">
+            <div className="h-3.5 w-36 animate-pulse rounded bg-muted" />
+            <div className="h-3 w-24 animate-pulse rounded bg-muted" />
+          </div>
+          <div className="hidden md:block h-3 w-40 animate-pulse rounded bg-muted" />
+          <div className="h-5 w-16 animate-pulse rounded-full bg-muted" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ─── Tab header with search + action ─────────────────────────────
+
+function TabToolbar({
+  search,
+  onSearch,
+  searchPlaceholder,
+  count,
+  action,
+}: {
+  search: string;
+  onSearch: (v: string) => void;
+  searchPlaceholder: string;
+  count?: number;
+  action?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center gap-3 pb-4">
+      <div className="relative flex-1 max-w-sm">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+        <Input
+          value={search}
+          onChange={(e) => onSearch(e.target.value)}
+          placeholder={searchPlaceholder}
+          className="pl-9 h-8 text-sm"
+        />
+      </div>
+      {count !== undefined && (
+        <span className="text-sm text-muted-foreground tabular-nums">
+          {count} {count === 1 ? "result" : "results"}
+        </span>
+      )}
+      <div className="ml-auto">{action}</div>
     </div>
   );
 }
@@ -738,202 +805,9 @@ function AddVendorDialog({
   );
 }
 
-// ─── Helpers ─────────────────────────────────────────────────────
+// ─── Members Tab ──────────────────────────────────────────────────
 
-function memberStatusLabel(
-  membership: PersonWithDetails["membership"]
-): string {
-  const status = membership?.status || "inactive";
-  const invite = membership?.invite_status;
-  if (status === "inactive") return "Inactive";
-  if (invite === "not_invited") return "Not Invited";
-  if (invite === "invited") return "Invite Sent";
-  return "Active";
-}
-
-function initials(first?: string | null, last?: string | null): string {
-  return (
-    `${first?.[0] ?? ""}${last?.[0] ?? ""}`.toUpperCase() || "?"
-  );
-}
-
-// ─── Team Section ────────────────────────────────────────────────
-
-function TeamSection({ projectId }: { projectId: string }) {
-  const { roles, isLoading, error, updateRoleMembers, createRole } =
-    useProjectRoles(projectId);
-
-  const [assignDialog, setAssignDialog] = React.useState<{
-    open: boolean;
-    role: ProjectRole | null;
-  }>({ open: false, role: null });
-  const [createRoleOpen, setCreateRoleOpen] = React.useState(false);
-
-  const totalAssigned = roles.reduce((acc, r) => acc + r.members.length, 0);
-
-  if (isLoading) return <SectionSkeleton />;
-  if (error)
-    return (
-      <p className="text-sm text-destructive">Failed to load team roles.</p>
-    );
-
-  return (
-    <section>
-      <SectionHeader
-        title="Team"
-        count={totalAssigned}
-        action={{
-          label: "+ Add Role",
-          onClick: () => setCreateRoleOpen(true),
-        }}
-      />
-
-      {roles.length === 0 ? (
-        <EmptyState
-          icon={<Users className="h-5 w-5 text-muted-foreground" />}
-          title="No roles defined"
-          description="Create roles like Project Manager, Superintendent, or Architect to organize your team."
-          action={{
-            label: "Add Role",
-            onClick: () => setCreateRoleOpen(true),
-          }}
-        />
-      ) : (
-        <div className="space-y-6">
-          {roles.map((role) => (
-            <div key={role.id}>
-              <div className="flex items-center justify-between mb-2">
-                <Eyebrow>
-                  {role.role_name} ({role.members.length})
-                </Eyebrow>
-                <button
-                  onClick={() => setAssignDialog({ open: true, role })}
-                  className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  + Assign
-                </button>
-              </div>
-
-              {role.members.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No one assigned.{" "}
-                  <button
-                    onClick={() => setAssignDialog({ open: true, role })}
-                    className="text-primary hover:underline"
-                  >
-                    Assign someone
-                  </button>
-                </p>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead className="hidden md:table-cell">
-                        Email
-                      </TableHead>
-                      <TableHead className="hidden lg:table-cell">
-                        Company
-                      </TableHead>
-                      <TableHead className="w-10" />
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {role.members.map((member) => {
-                      const p = member.person;
-                      return (
-                        <TableRow
-                          key={member.id}
-                          className="transition-colors hover:bg-muted"
-                        >
-                          <TableCell>
-                            <div className="flex items-center gap-3">
-                              <Avatar className="h-8 w-8">
-                                <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                                  {initials(p?.first_name, p?.last_name)}
-                                </AvatarFallback>
-                              </Avatar>
-                              <span className="text-sm font-medium text-foreground">
-                                {p?.full_name ?? "Unknown"}
-                              </span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                            {p?.email ?? "—"}
-                          </TableCell>
-                          <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                            {p?.company_name ?? "—"}
-                          </TableCell>
-                          <TableCell>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                >
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  onClick={() =>
-                                    setAssignDialog({ open: true, role })
-                                  }
-                                >
-                                  <Pencil className="mr-2 h-3.5 w-3.5" />
-                                  Edit
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                  className="text-destructive"
-                                  onClick={() =>
-                                    updateRoleMembers(
-                                      role.id,
-                                      role.members
-                                        .filter((m) => m.id !== member.id)
-                                        .map((m) => m.person_id)
-                                    )
-                                  }
-                                >
-                                  <Trash2 className="mr-2 h-3.5 w-3.5" />
-                                  Remove
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      );
-                    })}
-                  </TableBody>
-                </Table>
-              )}
-            </div>
-          ))}
-        </div>
-      )}
-
-      <AssignMemberDialog
-        open={assignDialog.open}
-        onOpenChange={(open) =>
-          setAssignDialog((prev) => ({ ...prev, open }))
-        }
-        role={assignDialog.role}
-        onSave={updateRoleMembers}
-      />
-      <CreateRoleDialog
-        open={createRoleOpen}
-        onOpenChange={setCreateRoleOpen}
-        onSave={async (name) => {
-          await createRole(name);
-        }}
-      />
-    </section>
-  );
-}
-
-// ─── Members Section ─────────────────────────────────────────────
-
-function MembersSection({ projectId }: { projectId: string }) {
+function MembersTab({ projectId }: { projectId: string }) {
   const {
     users: members,
     isLoading,
@@ -941,19 +815,38 @@ function MembersSection({ projectId }: { projectId: string }) {
     refetch,
   } = useProjectUsers(projectId, { type: "all" });
   const [addOpen, setAddOpen] = React.useState(false);
+  const [search, setSearch] = React.useState("");
 
-  if (isLoading) return <SectionSkeleton />;
+  const filtered = members.filter((p) => {
+    const q = search.toLowerCase();
+    if (!q) return true;
+    return (
+      `${p.first_name} ${p.last_name}`.toLowerCase().includes(q) ||
+      (p.email ?? "").toLowerCase().includes(q) ||
+      (p.company?.name ?? "").toLowerCase().includes(q) ||
+      (p.job_title ?? "").toLowerCase().includes(q)
+    );
+  });
+
+  if (isLoading) return <TableSkeleton />;
   if (error)
     return (
-      <p className="text-sm text-destructive">Failed to load members.</p>
+      <p className="text-sm text-destructive py-6">Failed to load members.</p>
     );
 
   return (
-    <section>
-      <SectionHeader
-        title="Members"
-        count={members.length}
-        action={{ label: "+ Add", onClick: () => setAddOpen(true) }}
+    <div>
+      <TabToolbar
+        search={search}
+        onSearch={setSearch}
+        searchPlaceholder="Search members..."
+        count={search ? filtered.length : undefined}
+        action={
+          <Button size="sm" onClick={() => setAddOpen(true)}>
+            <UserPlus className="mr-1.5 h-3.5 w-3.5" />
+            Add Member
+          </Button>
+        }
       />
 
       {members.length === 0 ? (
@@ -963,6 +856,10 @@ function MembersSection({ projectId }: { projectId: string }) {
           description="Add existing people or create new contacts for this project."
           action={{ label: "Add Member", onClick: () => setAddOpen(true) }}
         />
+      ) : filtered.length === 0 ? (
+        <p className="py-8 text-center text-sm text-muted-foreground">
+          No members match &ldquo;{search}&rdquo;
+        </p>
       ) : (
         <Table>
           <TableHeader>
@@ -970,26 +867,21 @@ function MembersSection({ projectId }: { projectId: string }) {
               <TableHead>Name</TableHead>
               <TableHead className="hidden md:table-cell">Email</TableHead>
               <TableHead className="hidden lg:table-cell">Company</TableHead>
-              <TableHead className="hidden lg:table-cell">
-                Permission
-              </TableHead>
+              <TableHead className="hidden lg:table-cell">Permission</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="w-10" />
             </TableRow>
           </TableHeader>
           <TableBody>
-            {members.map((person) => {
+            {filtered.map((person) => {
               const isEmployee = person.person_type === "employee";
               const status = memberStatusLabel(person.membership);
 
               return (
-                <TableRow
-                  key={person.id}
-                  className="transition-colors hover:bg-muted"
-                >
+                <TableRow key={person.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
+                      <Avatar className="h-8 w-8 shrink-0">
                         <AvatarFallback
                           className={cn(
                             "text-xs",
@@ -1001,12 +893,12 @@ function MembersSection({ projectId }: { projectId: string }) {
                           {initials(person.first_name, person.last_name)}
                         </AvatarFallback>
                       </Avatar>
-                      <div>
-                        <p className="text-sm font-medium text-foreground">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">
                           {person.first_name} {person.last_name}
                         </p>
                         {person.job_title && (
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-muted-foreground truncate">
                             {person.job_title}
                           </p>
                         )}
@@ -1014,7 +906,17 @@ function MembersSection({ projectId }: { projectId: string }) {
                     </div>
                   </TableCell>
                   <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                    {person.email ?? "—"}
+                    {person.email ? (
+                      <a
+                        href={`mailto:${person.email}`}
+                        className="hover:text-foreground transition-colors inline-flex items-center gap-1.5"
+                      >
+                        <Mail className="h-3 w-3 shrink-0" />
+                        {person.email}
+                      </a>
+                    ) : (
+                      "—"
+                    )}
                   </TableCell>
                   <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
                     {person.company?.name ?? "—"}
@@ -1028,11 +930,7 @@ function MembersSection({ projectId }: { projectId: string }) {
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                        >
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -1057,20 +955,228 @@ function MembersSection({ projectId }: { projectId: string }) {
         projectId={projectId}
         onSuccess={refetch}
       />
-    </section>
+    </div>
   );
 }
 
-// ─── Vendors Section ─────────────────────────────────────────────
+// ─── Team Tab ─────────────────────────────────────────────────────
 
-function VendorsSection({ projectId }: { projectId: string }) {
+function RoleCard({
+  role,
+  onAssign,
+  onRemoveMember,
+}: {
+  role: ProjectRole;
+  onAssign: (role: ProjectRole) => void;
+  onRemoveMember: (roleId: string, memberIds: string[]) => void;
+}) {
+  return (
+    <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+      {/* Role header */}
+      <div className="flex items-start justify-between gap-2">
+        <div>
+          <p className="text-sm font-medium text-foreground">{role.role_name}</p>
+          <p className="text-xs text-muted-foreground mt-0.5">
+            {role.members.length === 0
+              ? "No one assigned"
+              : `${role.members.length} ${role.members.length === 1 ? "person" : "people"}`}
+          </p>
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-xs h-7 px-2 shrink-0"
+          onClick={() => onAssign(role)}
+        >
+          <Pencil className="h-3 w-3 mr-1" />
+          Edit
+        </Button>
+      </div>
+
+      {/* Members */}
+      {role.members.length === 0 ? (
+        <button
+          onClick={() => onAssign(role)}
+          className="w-full rounded-md border border-dashed border-border/70 py-3 text-xs text-muted-foreground hover:border-border hover:text-foreground transition-colors"
+        >
+          + Assign someone
+        </button>
+      ) : (
+        <div className="space-y-2">
+          {role.members.map((member) => {
+            const p = member.person;
+            return (
+              <div
+                key={member.id}
+                className="flex items-center gap-2.5 group"
+              >
+                <Avatar className="h-7 w-7 shrink-0">
+                  <AvatarFallback className="bg-primary/10 text-primary text-[10px]">
+                    {initials(p?.first_name, p?.last_name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium text-foreground leading-tight truncate">
+                    {p?.full_name ?? "Unknown"}
+                  </p>
+                  {p?.email && (
+                    <p className="text-xs text-muted-foreground truncate">
+                      {p.email}
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={() =>
+                    onRemoveMember(
+                      role.id,
+                      role.members
+                        .filter((m) => m.id !== member.id)
+                        .map((m) => m.person_id)
+                    )
+                  }
+                  className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                  title="Remove from role"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function TeamTab({ projectId }: { projectId: string }) {
+  const { roles, isLoading, error, updateRoleMembers, createRole } =
+    useProjectRoles(projectId);
+  const [search, setSearch] = React.useState("");
+  const [assignDialog, setAssignDialog] = React.useState<{
+    open: boolean;
+    role: ProjectRole | null;
+  }>({ open: false, role: null });
+  const [createRoleOpen, setCreateRoleOpen] = React.useState(false);
+
+  const filtered = roles.filter((r) => {
+    const q = search.toLowerCase();
+    if (!q) return true;
+    return (
+      r.role_name.toLowerCase().includes(q) ||
+      r.members.some((m) =>
+        `${m.person?.first_name} ${m.person?.last_name}`
+          .toLowerCase()
+          .includes(q)
+      )
+    );
+  });
+
+  if (isLoading)
+    return (
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        {[1, 2, 3].map((i) => (
+          <div
+            key={i}
+            className="rounded-lg border border-border h-32 animate-pulse bg-muted"
+          />
+        ))}
+      </div>
+    );
+
+  if (error)
+    return (
+      <p className="text-sm text-destructive py-6">Failed to load team roles.</p>
+    );
+
+  return (
+    <div>
+      <TabToolbar
+        search={search}
+        onSearch={setSearch}
+        searchPlaceholder="Search roles or people..."
+        count={search ? filtered.length : undefined}
+        action={
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setCreateRoleOpen(true)}
+          >
+            + Add Role
+          </Button>
+        }
+      />
+
+      {roles.length === 0 ? (
+        <EmptyState
+          icon={<Users className="h-5 w-5 text-muted-foreground" />}
+          title="No roles defined"
+          description="Create roles like Project Manager, Superintendent, or Architect to organize your team."
+          action={{
+            label: "Add Role",
+            onClick: () => setCreateRoleOpen(true),
+          }}
+        />
+      ) : filtered.length === 0 ? (
+        <p className="py-8 text-center text-sm text-muted-foreground">
+          No roles match &ldquo;{search}&rdquo;
+        </p>
+      ) : (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {filtered.map((role) => (
+            <RoleCard
+              key={role.id}
+              role={role}
+              onAssign={(r) => setAssignDialog({ open: true, role: r })}
+              onRemoveMember={(roleId, memberIds) =>
+                updateRoleMembers(roleId, memberIds)
+              }
+            />
+          ))}
+        </div>
+      )}
+
+      <AssignMemberDialog
+        open={assignDialog.open}
+        onOpenChange={(open) =>
+          setAssignDialog((prev) => ({ ...prev, open }))
+        }
+        role={assignDialog.role}
+        onSave={updateRoleMembers}
+      />
+      <CreateRoleDialog
+        open={createRoleOpen}
+        onOpenChange={setCreateRoleOpen}
+        onSave={async (name) => {
+          await createRole(name);
+        }}
+      />
+    </div>
+  );
+}
+
+// ─── Vendors Tab ──────────────────────────────────────────────────
+
+function VendorsTab({ projectId }: { projectId: string }) {
   const { vendors, isLoading, error, addVendor, removeVendor } =
     useProjectVendors(projectId);
   const [addOpen, setAddOpen] = React.useState(false);
+  const [search, setSearch] = React.useState("");
 
   const existingVendorIds = vendors
     .map((v) => v.vendor?.id)
     .filter(Boolean) as string[];
+
+  const filtered = vendors.filter((pv) => {
+    const q = search.toLowerCase();
+    if (!q) return true;
+    const v = pv.vendor;
+    return (
+      (v?.name ?? "").toLowerCase().includes(q) ||
+      (v?.vendor_class ?? "").toLowerCase().includes(q) ||
+      (v?.contact_name ?? "").toLowerCase().includes(q) ||
+      (v?.city ?? "").toLowerCase().includes(q)
+    );
+  });
 
   const handleAdd = async (vendorId: string) => {
     try {
@@ -1094,18 +1200,25 @@ function VendorsSection({ projectId }: { projectId: string }) {
     }
   };
 
-  if (isLoading) return <SectionSkeleton />;
+  if (isLoading) return <TableSkeleton rows={4} />;
   if (error)
     return (
-      <p className="text-sm text-destructive">Failed to load vendors.</p>
+      <p className="text-sm text-destructive py-6">Failed to load vendors.</p>
     );
 
   return (
-    <section>
-      <SectionHeader
-        title="Vendors"
-        count={vendors.length}
-        action={{ label: "+ Add", onClick: () => setAddOpen(true) }}
+    <div>
+      <TabToolbar
+        search={search}
+        onSearch={setSearch}
+        searchPlaceholder="Search vendors..."
+        count={search ? filtered.length : undefined}
+        action={
+          <Button size="sm" onClick={() => setAddOpen(true)}>
+            <Building2 className="mr-1.5 h-3.5 w-3.5" />
+            Add Vendor
+          </Button>
+        }
       />
 
       {vendors.length === 0 ? (
@@ -1115,6 +1228,10 @@ function VendorsSection({ projectId }: { projectId: string }) {
           description="Add vendors from the company directory to this project."
           action={{ label: "Add Vendor", onClick: () => setAddOpen(true) }}
         />
+      ) : filtered.length === 0 ? (
+        <p className="py-8 text-center text-sm text-muted-foreground">
+          No vendors match &ldquo;{search}&rdquo;
+        </p>
       ) : (
         <Table>
           <TableHeader>
@@ -1128,28 +1245,23 @@ function VendorsSection({ projectId }: { projectId: string }) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {vendors.map((pv) => {
+            {filtered.map((pv) => {
               const v = pv.vendor;
-              const location = [v?.city, v?.state]
-                .filter(Boolean)
-                .join(", ");
+              const location = [v?.city, v?.state].filter(Boolean).join(", ");
 
               return (
-                <TableRow
-                  key={pv.id}
-                  className="transition-colors hover:bg-muted"
-                >
+                <TableRow key={pv.id}>
                   <TableCell>
                     <div className="flex items-center gap-3">
                       <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted">
                         <Building2 className="h-4 w-4 text-muted-foreground" />
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-foreground">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">
                           {v?.name ?? "—"}
                         </p>
                         {v?.legal_name && v.legal_name !== v.name && (
-                          <p className="text-xs text-muted-foreground">
+                          <p className="text-xs text-muted-foreground truncate">
                             {v.legal_name}
                           </p>
                         )}
@@ -1173,11 +1285,7 @@ function VendorsSection({ projectId }: { projectId: string }) {
                   <TableCell>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                        >
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -1205,31 +1313,37 @@ function VendorsSection({ projectId }: { projectId: string }) {
         existingVendorIds={existingVendorIds}
         onAdd={handleAdd}
       />
-    </section>
+    </div>
   );
 }
 
-// ─── Distribution Groups Section ─────────────────────────────────
+// ─── Groups Tab ───────────────────────────────────────────────────
 
-function GroupsSection({ projectId }: { projectId: string }) {
+function GroupsTab({ projectId }: { projectId: string }) {
   const { groups, isLoading, error } = useDistributionGroups(
     projectId,
     true,
     "active"
   );
 
-  if (isLoading) return <SectionSkeleton />;
+  if (isLoading) return <TableSkeleton rows={3} />;
   if (error)
     return (
-      <p className="text-sm text-destructive">Failed to load groups.</p>
+      <p className="text-sm text-destructive py-6">Failed to load groups.</p>
     );
 
   return (
-    <section>
-      <SectionHeader
-        title="Distribution Groups"
-        count={groups.length}
-        action={{ label: "+ Create", onClick: () => {} }}
+    <div>
+      <TabToolbar
+        search=""
+        onSearch={() => {}}
+        searchPlaceholder="Search groups..."
+        action={
+          <Button size="sm" variant="outline" onClick={() => {}}>
+            <Users2 className="mr-1.5 h-3.5 w-3.5" />
+            Create Group
+          </Button>
+        }
       />
 
       {groups.length === 0 ? (
@@ -1247,26 +1361,73 @@ function GroupsSection({ projectId }: { projectId: string }) {
           onManageMembers={() => {}}
         />
       )}
-    </section>
+    </div>
   );
 }
 
-// ─── Main Page ───────────────────────────────────────────────────
+// ─── Count badge for tabs ─────────────────────────────────────────
+
+function TabCount({ n }: { n: number }) {
+  if (n === 0) return null;
+  return (
+    <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-muted px-1 text-[10px] font-medium text-muted-foreground tabular-nums">
+      {n}
+    </span>
+  );
+}
+
+// ─── Main Page ────────────────────────────────────────────────────
 
 export default function ProjectDirectoryPage() {
   const params = useParams();
   const projectId = params.projectId as string;
 
+  // Prefetch counts for tab badges
+  const { users: members } = useProjectUsers(projectId, { type: "all" });
+  const { vendors } = useProjectVendors(projectId);
+  const { roles } = useProjectRoles(projectId);
+
   return (
     <>
-      <ProjectPageHeader title="Directory" />
+      <ProjectPageHeader
+        title="Directory"
+        description="Manage the people, roles, and vendors on this project."
+        className="px-3 sm:px-5 lg:px-7"
+      />
       <PageContainer maxWidth="xl">
-        <div className="space-y-10">
-          <TeamSection projectId={projectId} />
-          <MembersSection projectId={projectId} />
-          <VendorsSection projectId={projectId} />
-          <GroupsSection projectId={projectId} />
-        </div>
+        <Tabs defaultValue="members">
+          <TabsList className="mb-6">
+            <TabsTrigger value="members">
+              Members
+              <TabCount n={members.length} />
+            </TabsTrigger>
+            <TabsTrigger value="team">
+              Team
+              <TabCount n={roles.length} />
+            </TabsTrigger>
+            <TabsTrigger value="vendors">
+              Vendors
+              <TabCount n={vendors.length} />
+            </TabsTrigger>
+            <TabsTrigger value="groups">Groups</TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="members">
+            <MembersTab projectId={projectId} />
+          </TabsContent>
+
+          <TabsContent value="team">
+            <TeamTab projectId={projectId} />
+          </TabsContent>
+
+          <TabsContent value="vendors">
+            <VendorsTab projectId={projectId} />
+          </TabsContent>
+
+          <TabsContent value="groups">
+            <GroupsTab projectId={projectId} />
+          </TabsContent>
+        </Tabs>
       </PageContainer>
     </>
   );

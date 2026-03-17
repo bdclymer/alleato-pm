@@ -1,7 +1,19 @@
-import { Liveblocks, type NotificationEvent, WebhookHandler } from "@liveblocks/node";
+import {
+  Liveblocks,
+  type NotificationEvent,
+  WebhookHandler,
+  isThreadNotificationEvent,
+  isTextMentionNotificationEvent,
+  isCustomNotificationEvent,
+} from "@liveblocks/node";
 import { NextRequest, NextResponse } from "next/server";
 
 import { sendTeamsNotification } from "@/lib/integrations/teams-notifications";
+import {
+  sendThreadNotificationEmail,
+  sendTextMentionNotificationEmail,
+  sendCustomNotificationEmail,
+} from "@/lib/integrations/email-notifications";
 
 function getRequiredEnv(name: string): string {
   const value = process.env[name];
@@ -11,14 +23,16 @@ function getRequiredEnv(name: string): string {
   return value;
 }
 
+function isEmailNotificationEvent(event: unknown): event is NotificationEvent {
+  if (!event || typeof event !== "object") return false;
+  const e = event as { type?: string; data?: { channel?: string } };
+  return e.type === "notification" && e.data?.channel === "email";
+}
+
 function isTeamsNotificationEvent(event: unknown): event is NotificationEvent {
-  if (!event || typeof event !== "object") {
-    return false;
-  }
-
-  const maybeEvent = event as { type?: string; data?: { channel?: string } };
-
-  return maybeEvent.type === "notification" && maybeEvent.data?.channel === "teams";
+  if (!event || typeof event !== "object") return false;
+  const e = event as { type?: string; data?: { channel?: string } };
+  return e.type === "notification" && e.data?.channel === "teams";
 }
 
 export async function POST(request: NextRequest) {
@@ -47,47 +61,78 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid webhook signature" }, { status: 401 });
   }
 
-  if (!isTeamsNotificationEvent(event)) {
-    return NextResponse.json({ ok: true, ignored: true });
-  }
+  // ── Email channel ──────────────────────────────────────────────────────────
 
-  const adaptiveCardUrl = process.env.LIVEBLOCKS_TEAMS_ADAPTIVE_CARD_URL;
-  const bodyUrl = process.env.LIVEBLOCKS_TEAMS_BODY_URL;
+  if (isEmailNotificationEvent(event)) {
+    const liveblocksSecret = process.env.LIVEBLOCKS_SECRET_KEY;
+    if (!liveblocksSecret) {
+      console.error("[liveblocks-webhook] LIVEBLOCKS_SECRET_KEY not set");
+      return NextResponse.json({ error: "Server misconfigured" }, { status: 500 });
+    }
 
-  if (!adaptiveCardUrl && !bodyUrl) {
-    console.error("[liveblocks-webhook] No Teams webhook URLs configured");
-    return NextResponse.json(
-      { error: "Missing Teams webhook URL" },
-      { status: 500 }
-    );
-  }
+    const liveblocks = new Liveblocks({ secret: liveblocksSecret });
 
-  let inboxNotification = null;
-  const liveblocksSecret = process.env.LIVEBLOCKS_SECRET_KEY;
-
-  if (liveblocksSecret) {
     try {
-      const liveblocks = new Liveblocks({ secret: liveblocksSecret });
-      inboxNotification = await liveblocks.getInboxNotification({
-        userId: event.data.userId,
-        inboxNotificationId: event.data.inboxNotificationId,
+      if (isThreadNotificationEvent(event)) {
+        await sendThreadNotificationEmail(liveblocks, event);
+      } else if (isTextMentionNotificationEvent(event)) {
+        await sendTextMentionNotificationEmail(liveblocks, event);
+      } else if (isCustomNotificationEvent(event)) {
+        // Handles: $criticalIssue, $deadline, $statusChange, $budgetAlert,
+        //          $weeklyDigest, $assignment, $approvalRequest, $ballInCourt
+        await sendCustomNotificationEmail(liveblocks, event);
+      }
+    } catch (error) {
+      console.error("[liveblocks-webhook] Email delivery failed", error);
+      return NextResponse.json({ error: "Email delivery failed" }, { status: 502 });
+    }
+
+    return NextResponse.json({ ok: true });
+  }
+
+  // ── Teams channel ──────────────────────────────────────────────────────────
+
+  if (isTeamsNotificationEvent(event)) {
+    const adaptiveCardUrl = process.env.LIVEBLOCKS_TEAMS_ADAPTIVE_CARD_URL;
+    const bodyUrl = process.env.LIVEBLOCKS_TEAMS_BODY_URL;
+
+    if (!adaptiveCardUrl && !bodyUrl) {
+      console.error("[liveblocks-webhook] No Teams webhook URLs configured");
+      return NextResponse.json(
+        { error: "Missing Teams webhook URL" },
+        { status: 500 }
+      );
+    }
+
+    let inboxNotification = null;
+    const liveblocksSecret = process.env.LIVEBLOCKS_SECRET_KEY;
+
+    if (liveblocksSecret) {
+      try {
+        const liveblocks = new Liveblocks({ secret: liveblocksSecret });
+        inboxNotification = await liveblocks.getInboxNotification({
+          userId: event.data.userId,
+          inboxNotificationId: event.data.inboxNotificationId,
+        });
+      } catch (error) {
+        console.warn("[liveblocks-webhook] inbox notification enrichment failed", error);
+      }
+    }
+
+    try {
+      await sendTeamsNotification({ adaptiveCardUrl, bodyUrl }, {
+        event,
+        inboxNotification,
+        appBaseUrl: process.env.LIVEBLOCKS_NOTIFICATION_BASE_URL,
       });
     } catch (error) {
-      // Continue delivery even if enrichment fails.
-      console.warn("[liveblocks-webhook] inbox notification enrichment failed", error);
+      console.error("[liveblocks-webhook] Teams delivery failed", error);
+      return NextResponse.json({ error: "Teams delivery failed" }, { status: 502 });
     }
+
+    return NextResponse.json({ ok: true });
   }
 
-  try {
-    await sendTeamsNotification({ adaptiveCardUrl, bodyUrl }, {
-      event,
-      inboxNotification,
-      appBaseUrl: process.env.LIVEBLOCKS_NOTIFICATION_BASE_URL,
-    });
-  } catch (error) {
-    console.error("[liveblocks-webhook] Teams delivery failed", error);
-    return NextResponse.json({ error: "Teams delivery failed" }, { status: 502 });
-  }
-
-  return NextResponse.json({ ok: true });
+  // Unrecognised event type — acknowledge without processing
+  return NextResponse.json({ ok: true, ignored: true });
 }

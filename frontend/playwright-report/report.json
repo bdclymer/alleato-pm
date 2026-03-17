@@ -1,7 +1,7 @@
 {
   "config": {
-    "configFile": "/Users/meganharrison/Documents/github/alleato-pm/frontend/playwright.config.ts",
-    "rootDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests",
+    "configFile": "/Users/meganharrison/Documents/alleato-pm/frontend/playwright.config.ts",
+    "rootDir": "/Users/meganharrison/Documents/alleato-pm/frontend/tests",
     "forbidOnly": false,
     "fullyParallel": true,
     "globalSetup": null,
@@ -10,21 +10,17 @@
     "grep": {},
     "grepInvert": null,
     "maxFailures": 0,
-    "metadata": {
-      "actualWorkers": 1
-    },
+    "metadata": {},
     "preserveOutput": "always",
     "projects": [
       {
-        "outputDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results",
+        "outputDir": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {
-          "actualWorkers": 1
-        },
+        "metadata": {},
         "id": "setup",
         "name": "setup",
-        "testDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests",
+        "testDir": "/Users/meganharrison/Documents/alleato-pm/frontend/tests",
         "testIgnore": [],
         "testMatch": [
           "/.*\\.setup\\.ts/"
@@ -32,15 +28,13 @@
         "timeout": 60000
       },
       {
-        "outputDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results",
+        "outputDir": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {
-          "actualWorkers": 1
-        },
+        "metadata": {},
         "id": "chromium",
         "name": "chromium",
-        "testDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests",
+        "testDir": "/Users/meganharrison/Documents/alleato-pm/frontend/tests",
         "testIgnore": [],
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
@@ -48,15 +42,13 @@
         "timeout": 60000
       },
       {
-        "outputDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results",
+        "outputDir": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {
-          "actualWorkers": 1
-        },
+        "metadata": {},
         "id": "debug",
         "name": "debug",
-        "testDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests",
+        "testDir": "/Users/meganharrison/Documents/alleato-pm/frontend/tests",
         "testIgnore": [
           "/prime-contracts-settings\\.spec\\.ts/"
         ],
@@ -66,15 +58,13 @@
         "timeout": 60000
       },
       {
-        "outputDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results",
+        "outputDir": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {
-          "actualWorkers": 1
-        },
+        "metadata": {},
         "id": "no-auth",
         "name": "no-auth",
-        "testDir": "/Users/meganharrison/Documents/github/alleato-pm/frontend/tests",
+        "testDir": "/Users/meganharrison/Documents/alleato-pm/frontend/tests",
         "testIgnore": [],
         "testMatch": [
           "/sidebar-collapse-verification\\.spec\\.ts/"
@@ -112,77 +102,24 @@
     "updateSnapshots": "missing",
     "updateSourceMethod": "patch",
     "version": "1.58.1",
-    "workers": 5,
+    "workers": 7,
     "webServer": {
       "command": "npm run dev",
       "url": "http://localhost:3000",
       "reuseExistingServer": true
     }
   },
-  "suites": [
+  "suites": [],
+  "errors": [
     {
-      "title": "auth.setup.ts",
-      "file": "auth.setup.ts",
-      "column": 0,
-      "line": 0,
-      "specs": [
-        {
-          "title": "authenticate",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 60000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "setup",
-              "projectName": "setup",
-              "results": [
-                {
-                  "workerIndex": 0,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 1061,
-                  "errors": [],
-                  "stdout": [
-                    {
-                      "text": "Auth setup complete — session saved for test1@mail.com\n"
-                    }
-                  ],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-03-11T13:59:57.065Z",
-                  "annotations": [],
-                  "attachments": [
-                    {
-                      "name": "screenshot",
-                      "contentType": "image/png",
-                      "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/auth.setup.ts-authenticate-setup/test-finished-1.png"
-                    },
-                    {
-                      "name": "video",
-                      "contentType": "video/webm",
-                      "path": "/Users/meganharrison/Documents/github/alleato-pm/frontend/test-results/auth.setup.ts-authenticate-setup/video.webm"
-                    }
-                  ]
-                }
-              ],
-              "status": "expected"
-            }
-          ],
-          "id": "17e3fe6f4d9d8bd79c6b-60f085b113a677673906",
-          "file": "auth.setup.ts",
-          "line": 55,
-          "column": 6
-        }
-      ]
+      "message": "Error: Cannot find package 'otpauth' imported from /Users/meganharrison/Documents/alleato-pm/frontend/tests/supabase-e2e/studio/scripts/login/github.ts",
+      "stack": "Error: Cannot find package 'otpauth' imported from /Users/meganharrison/Documents/alleato-pm/frontend/tests/supabase-e2e/studio/scripts/login/github.ts"
     }
   ],
-  "errors": [],
   "stats": {
-    "startTime": "2026-03-11T13:59:55.403Z",
-    "duration": 3059.775,
-    "expected": 1,
+    "startTime": "2026-03-17T13:12:05.060Z",
+    "duration": 3166.991,
+    "expected": 0,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0

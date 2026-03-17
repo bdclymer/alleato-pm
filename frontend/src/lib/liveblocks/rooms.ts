@@ -28,7 +28,8 @@ export type CommentableEntityType =
   | "direct-cost"
   | "correspondence"
   | "action-plan"
-  | "inspection";
+  | "inspection"
+  | "issue";
 
 /** Build a deterministic Liveblocks room ID for a given entity */
 export function getRoomId(

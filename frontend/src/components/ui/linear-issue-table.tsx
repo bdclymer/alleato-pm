@@ -479,6 +479,23 @@ function formatDate(dateString?: string): string {
    HELPER: Transform DB data to LinearIssue format
    ============================================================ */
 
+function normalizeStatus(raw: unknown): IssueStatus {
+  const s = String(raw ?? "").toLowerCase().replace(/\s+/g, "_");
+  const map: Record<string, IssueStatus> = {
+    open: "open",
+    in_progress: "in_progress",
+    resolved: "resolved",
+    pending_verification: "in_review",
+    in_review: "in_review",
+    closed: "closed",
+    backlog: "backlog",
+    todo: "todo",
+    done: "done",
+    cancelled: "cancelled",
+  };
+  return map[s] ?? "open";
+}
+
 export function transformToLinearIssue(
   dbIssue: Record<string, unknown>
 ): LinearIssue {
@@ -486,7 +503,7 @@ export function transformToLinearIssue(
     id: dbIssue.id as string | number,
     identifier: `ISS-${dbIssue.id}`,
     title: (dbIssue.title as string) || "Untitled",
-    status: (dbIssue.status as IssueStatus) || "open",
+    status: normalizeStatus(dbIssue.status),
     severity: dbIssue.severity as IssueSeverity | undefined,
     category: dbIssue.category as string | undefined,
     reportedBy: dbIssue.reported_by as string | undefined,

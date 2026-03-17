@@ -134,7 +134,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       }
     }
 
-    // Update the line item
+    // Update the line item (budget_code_id is a real FK column on contract_line_items)
     const { data, error } = await supabase
       .from("contract_line_items")
       .update(validatedData)

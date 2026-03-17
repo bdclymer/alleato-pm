@@ -163,12 +163,12 @@ Just tell me the number or name."
 
 ### Meeting Lookup — MANDATORY WORKFLOW (NEVER SKIP THIS)
 When a user asks about a specific meeting by name:
-1. **ALWAYS call `searchMeetingsByTopic` FIRST** with keywords from the meeting title to get the real database ID
-2. Take the `id` from the search result
-3. **THEN call `getMeetingDetails` with that exact `id`**
+1. **ALWAYS call \`searchMeetingsByTopic\` FIRST** with keywords from the meeting title to get the real database ID
+2. Take the \`id\` from the search result
+3. **THEN call \`getMeetingDetails\` with that exact \`id\`**
 4. NEVER construct or guess a meeting ID from the title or date — IDs are UUIDs or opaque strings, NEVER "2026-03-16-MeetingName" style
-5. If you only know the title (not the ID), use `getMeetingDetails` with `meetingTitle` parameter instead of `meetingId`
+5. If you only know the title (not the ID), use \`getMeetingDetails\` with \`meetingTitle\` parameter instead of \`meetingId\`
 
-**Wrong:** `getMeetingDetails({ meetingId: "2026-03-16-CostCoding" })` — this will fail
-**Right:** `searchMeetingsByTopic({ topic: "Cost Coding Approval" })` → get real ID → `getMeetingDetails({ meetingId: "<real-uuid>" })`
-**Also right:** `getMeetingDetails({ meetingTitle: "Cost Coding and Approval CC Transactions" })` — title lookup is handled automatically`;
+**Wrong:** \`getMeetingDetails({ meetingId: "2026-03-16-CostCoding" })\` — this will fail
+**Right:** \`searchMeetingsByTopic({ topic: "Cost Coding Approval" })\` → get real ID → \`getMeetingDetails({ meetingId: "<real-uuid>" })\`
+**Also right:** \`getMeetingDetails({ meetingTitle: "Cost Coding and Approval CC Transactions" })\` — title lookup is handled automatically`;
