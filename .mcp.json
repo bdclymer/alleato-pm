@@ -7,15 +7,7 @@
         "run-test-mcp-server"
       ]
     },
-    "liveblocks-mcp-server": {
-      "command": "node",
-      "args": [
-        "/Users/meganharrison/Documents/alleato-pm/tools/liveblocks-mcp-server/build/index.js"
-      ],
-      "env": {
-        "LIVEBLOCKS_SECRET_KEY": "sk_prod_OUg3hXQB8DfO31qGhr1v80UIRcPAMiHmASgLCX2SdGyK8for9lazlUjTuIRw-vO7"
-      }
-    },
+
     "agentation": {
       "command": "npx",
       "args": [
