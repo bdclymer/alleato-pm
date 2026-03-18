@@ -8,8 +8,9 @@ ROLE: Converts text queries into 1536-dimensional vectors for pgvector similarit
 CONTROLS:
 - get_query_embedding_async() → Generates embedding for a user query using OpenAI
 
-MODEL: text-embedding-3-small (1536 dimensions)
+MODEL: text-embedding-3-large (1536 dimensions, truncated from native 3072)
 - Same model used during document ingestion for consistency
+- Using full 3072 dimensions for maximum quality
 - Async implementation for non-blocking API calls
 
 FLOW:
@@ -46,8 +47,9 @@ async def get_query_embedding_async(query: str) -> List[float]:
     try:
         client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         response = await client.embeddings.create(
-            model="text-embedding-3-small",
-            input=query
+            model="text-embedding-3-large",
+            input=query,
+            dimensions=3072,
         )
         return response.data[0].embedding
     except Exception as e:

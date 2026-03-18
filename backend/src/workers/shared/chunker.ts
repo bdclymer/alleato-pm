@@ -2,7 +2,7 @@
  * Chunking Utilities
  */
 
-import type { DocumentChunk, MeetingSegment, TranscriptLine } from "./types";
+import type { DocumentChunk, MeetingContext, MeetingSegment, TranscriptLine } from "./types";
 import { hashContent } from "./parser";
 
 // -----------------------------------------------------------------------------
@@ -101,37 +101,60 @@ function splitSentences(text: string): string[] {
 export function createMeetingChunks(
   segments: MeetingSegment[],
   transcriptLines: TranscriptLine[],
-  meetingSummary: string
+  meetingSummary: string,
+  meetingContext?: MeetingContext
 ): DocumentChunk[] {
   const allChunks: DocumentChunk[] = [];
 
   // Add transcript chunks from each segment
   for (const segment of segments) {
     const segmentChunks = chunkSegment(segment, transcriptLines);
+
+    // Attach contextual prefix to each chunk for embedding quality.
+    // content stays clean (stored in DB); contextualContent is what gets embedded.
+    if (meetingContext) {
+      const attendees = meetingContext.participants.slice(0, 5).join(", ") || "Unknown";
+      const dateStr = meetingContext.date ?? "Unknown date";
+      const prefix = `[Meeting: "${meetingContext.title}" | ${dateStr} | Attendees: ${attendees}]\nSegment: "${segment.title}"\n\n`;
+      for (const chunk of segmentChunks) {
+        chunk.contextualContent = prefix + chunk.content;
+      }
+    }
+
     allChunks.push(...segmentChunks);
   }
 
   // Add meeting summary as a chunk
   if (meetingSummary) {
-    allChunks.push({
+    const summaryChunk: DocumentChunk = {
       content: meetingSummary,
       chunkIndex: 0,
       segmentIndex: -1, // -1 indicates meeting-level
       docType: "meeting_summary",
       contentHash: hashContent(meetingSummary),
-    });
+    };
+    if (meetingContext) {
+      const dateStr = meetingContext.date ?? "Unknown date";
+      summaryChunk.contextualContent = `[Meeting: "${meetingContext.title}" | ${dateStr}]\nSummary:\n\n${meetingSummary}`;
+    }
+    allChunks.push(summaryChunk);
   }
 
   // Add segment summaries as chunks
   for (const segment of segments) {
     if (segment.summary) {
-      allChunks.push({
+      const summaryChunk: DocumentChunk = {
         content: segment.summary,
         chunkIndex: 0,
         segmentIndex: segment.segmentIndex,
         docType: "segment_summary",
         contentHash: hashContent(segment.summary),
-      });
+      };
+      if (meetingContext) {
+        const dateStr = meetingContext.date ?? "Unknown date";
+        summaryChunk.contextualContent = `[Meeting: "${meetingContext.title}" | ${dateStr} | Segment: "${segment.title}"]\n\n${segment.summary}`;
+      }
+      allChunks.push(summaryChunk);
     }
   }
 

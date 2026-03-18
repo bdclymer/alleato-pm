@@ -347,7 +347,7 @@ async function fetchPeopleSuggestions(
     }
 
     for (const person of companyPeople ?? []) {
-      peopleMap.set(person.id, person);
+      peopleMap.set(person.id, person as any);
     }
   }
 
@@ -366,7 +366,7 @@ async function fetchPeopleSuggestions(
     }
 
     for (const person of directPeople ?? []) {
-      peopleMap.set(person.id, person);
+      peopleMap.set(person.id, person as any);
     }
   }
 
@@ -1454,7 +1454,7 @@ async function loadChangeOrderBundle(
   }
 
   const contract = (contractResult && "data" in contractResult ? contractResult.data : null) as ContractRow | null;
-  const lineItems = (lineItemsResult.data ?? []) as ChangeOrderLineRow[];
+  const lineItems = (lineItemsResult.data ?? []) as unknown as ChangeOrderLineRow[];
 
   const clientIds = [contract?.client_id, contract?.owner_client_id].filter(
     (value): value is number => typeof value === "number",
@@ -1462,16 +1462,16 @@ async function loadChangeOrderBundle(
 
   let clientsById = new Map<number, ClientRow>();
   if (clientIds.length > 0) {
-    const { data: clientRows, error: clientError } = await supabase
-      .from("clients")
-      .select("id, name, company_id, company_name")
-      .in("id", clientIds);
+    const { data: clientRows, error: clientError } = await (supabase
+      .from("clients" as any)
+      .select("id, name, company_id")
+      .in("id", clientIds)) as any;
 
     if (clientError) {
       throw new Error(`Failed to load owner contacts: ${clientError.message}`);
     }
 
-    clientsById = new Map((clientRows ?? []).map((client) => [client.id, client as ClientRow]));
+    clientsById = new Map(((clientRows ?? []) as any[]).map((client) => [client.id, client as ClientRow]));
   }
 
   const ownerClient = contract?.owner_client_id ? clientsById.get(contract.owner_client_id) ?? null : null;

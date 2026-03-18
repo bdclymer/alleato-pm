@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Plus, ArrowRight } from "lucide-react";
+import { Plus, ArrowRight, FolderOpen } from "lucide-react";
 import { toast } from "sonner";
 
 import { PageContainer, ProjectPageHeader } from "@/components/layout";
@@ -174,14 +174,13 @@ export default function DrawingSetsPage() {
                 <TableRow>
                   <TableCell colSpan={5} className="py-12">
                     <EmptyState
+                      icon={<FolderOpen className="h-8 w-8 text-muted-foreground" />}
                       title="No drawing sets"
                       description="Create a set to group drawings issued together."
-                      action={
-                        <Button size="sm" onClick={() => setShowCreateRow(true)}>
-                          <Plus className="h-4 w-4 mr-1.5" />
-                          New Set
-                        </Button>
-                      }
+                      action={{
+                        label: "New Set",
+                        onClick: () => setShowCreateRow(true),
+                      }}
                     />
                   </TableCell>
                 </TableRow>

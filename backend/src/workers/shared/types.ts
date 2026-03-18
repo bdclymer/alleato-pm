@@ -147,8 +147,17 @@ export interface MeetingSegment {
 // Chunk Types
 // -----------------------------------------------------------------------------
 
+export interface MeetingContext {
+  title: string;
+  date: string | null;
+  participants: string[];
+}
+
 export interface DocumentChunk {
   content: string;
+  /** Prefixed version of content used for embedding (includes meeting context header).
+   *  The original `content` is stored in the DB for human readability. */
+  contextualContent?: string;
   chunkIndex: number;
   segmentIndex: number;
   docType: "chunk" | "segment_summary" | "meeting_summary";

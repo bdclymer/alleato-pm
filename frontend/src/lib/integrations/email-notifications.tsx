@@ -323,7 +323,7 @@ export async function sendThreadNotificationEmail(
     {
       resolveUsers: async ({ userIds }) => resolveUsersFromDB(userIds),
       resolveRoomInfo: async ({ roomId: rid }) => ({
-        name: rid.replace(/^alleato:[^:]+:/, "").replace(/-/g, " "),
+        title: rid.replace(/^alleato:[^:]+:/, "").replace(/-/g, " "),
         url: buildRoomUrl(rid),
       }),
       components: commentComponents,
@@ -373,9 +373,9 @@ export async function sendThreadNotificationEmail(
               color: "#6F7075",
             }}
           >
-            {comment.author.name ?? "Someone"}
+            {comment.author.info?.name ?? "Someone"}
           </p>
-          {comment.reactBody}
+          {(comment as any).reactBody ?? (comment as any).body}
         </div>
       </div>
     );
@@ -414,9 +414,9 @@ export async function sendThreadNotificationEmail(
                   color: "#6F7075",
                 }}
               >
-                {comment.author.name ?? "Someone"}
+                {comment.author.info?.name ?? "Someone"}
               </p>
-              {comment.reactBody}
+              {(comment as any).reactBody ?? (comment as any).body}
             </div>
           ))}
         </div>
@@ -467,7 +467,7 @@ export async function sendTextMentionNotificationEmail(
     {
       resolveUsers: async ({ userIds }) => resolveUsersFromDB(userIds),
       resolveRoomInfo: async ({ roomId: rid }) => ({
-        name: rid.replace(/^alleato:[^:]+:/, "").replace(/-/g, " "),
+        title: rid.replace(/^alleato:[^:]+:/, "").replace(/-/g, " "),
         url: buildRoomUrl(rid),
       }),
     }
@@ -517,9 +517,9 @@ export async function sendTextMentionNotificationEmail(
               color: "#6F7075",
             }}
           >
-            {emailData.mention.author?.name ?? "Someone"}
+            {emailData.mention.author?.info?.name ?? "Someone"}
           </p>
-          {emailData.mention.reactContent}
+          {(emailData.mention as any).reactContent ?? (emailData.mention as any).body}
         </div>
       </div>
     </EmailTemplate>

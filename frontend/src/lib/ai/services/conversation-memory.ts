@@ -202,3 +202,83 @@ export async function generateConversationMemory(
 
   await embedAndStoreMemory(summary, userId, sessionId);
 }
+
+// ---------------------------------------------------------------------------
+// Recent Conversation Injection (fixes the "blank stare" problem)
+// ---------------------------------------------------------------------------
+
+/**
+ * Fetch the N most recent conversation summaries for a user, excluding the
+ * current session. Used to inject prior-session context at the start of a
+ * new conversation so the AI already knows what was discussed recently.
+ *
+ * @param userId - The authenticated user's ID
+ * @param currentSessionId - The current session to exclude
+ * @param limit - How many recent summaries to include (default: 3)
+ */
+export async function getRecentConversationSummaries(
+  userId: string,
+  currentSessionId: string,
+  limit = 3,
+): Promise<Array<{ content: string; createdAt: string; sessionId: string }>> {
+  const supabase = createServiceClient();
+
+  const { data, error } = await supabase
+    .from("memories")
+    .select("content, created_at, session_id")
+    .eq("user_id", userId)
+    .eq("memory_type", "conversation_summary")
+    .neq("session_id", currentSessionId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error || !data) {
+    console.error("[conversation-memory] Failed to fetch recent summaries:", error);
+    return [];
+  }
+
+  return data.map((row) => ({
+    content: row.content as string,
+    createdAt: row.created_at as string,
+    sessionId: row.session_id as string,
+  }));
+}
+
+/**
+ * Build a formatted context block from recent conversation summaries.
+ * Returns null if there are no recent summaries to inject.
+ */
+export function buildRecentConversationsBlock(
+  summaries: Array<{ content: string; createdAt: string }>,
+): string | null {
+  if (summaries.length === 0) return null;
+
+  const lines = summaries.map((s, i) => {
+    const date = new Date(s.createdAt);
+    const label = formatRelativeDate(date);
+    return `**${i + 1}. ${label}:** ${s.content}`;
+  });
+
+  return [
+    "## What You've Discussed Recently",
+    "",
+    "Use this to provide continuity — reference these naturally when relevant, not robotically.",
+    "",
+    ...lines,
+    "",
+    "---",
+  ].join("\n");
+}
+
+function formatRelativeDate(date: Date): string {
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+  if (diffDays === 0) return "Earlier today";
+  if (diffDays === 1) return "Yesterday";
+  if (diffDays < 7) return `${diffDays} days ago`;
+  if (diffDays < 14) return "Last week";
+  if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}

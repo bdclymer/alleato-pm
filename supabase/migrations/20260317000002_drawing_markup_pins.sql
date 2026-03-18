@@ -37,38 +37,25 @@ CREATE INDEX drawing_markup_pins_project_id_idx ON drawing_markup_pins(project_i
 -- RLS
 ALTER TABLE drawing_markup_pins ENABLE ROW LEVEL SECURITY;
 
-CREATE POLICY "Project members can view drawing pins"
+-- Authenticated users can view and create pins (matches drawing_sets/drawing_revisions pattern)
+CREATE POLICY "Authenticated users can view drawing pins"
   ON drawing_markup_pins FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM project_members pm
-      WHERE pm.project_id = drawing_markup_pins.project_id
-        AND pm.user_id = auth.uid()
-    )
-    OR
-    EXISTS (
-      SELECT 1 FROM projects p
-      WHERE p.id = drawing_markup_pins.project_id
-        AND (p.owner_id = auth.uid() OR p.created_by = auth.uid())
-    )
-  );
+  TO authenticated
+  USING (true);
 
-CREATE POLICY "Project members can insert drawing pins"
+CREATE POLICY "Authenticated users can insert drawing pins"
   ON drawing_markup_pins FOR INSERT
-  WITH CHECK (
-    EXISTS (
-      SELECT 1 FROM project_members pm
-      WHERE pm.project_id = drawing_markup_pins.project_id
-        AND pm.user_id = auth.uid()
-    )
-    OR
-    EXISTS (
-      SELECT 1 FROM projects p
-      WHERE p.id = drawing_markup_pins.project_id
-        AND (p.owner_id = auth.uid() OR p.created_by = auth.uid())
-    )
-  );
+  TO authenticated
+  WITH CHECK (true);
 
 CREATE POLICY "Pin creator can delete drawing pins"
   ON drawing_markup_pins FOR DELETE
+  TO authenticated
   USING (created_by = auth.uid());
+
+-- Service role full access
+CREATE POLICY "Service role full access to drawing pins"
+  ON drawing_markup_pins FOR ALL
+  TO service_role
+  USING (true)
+  WITH CHECK (true);

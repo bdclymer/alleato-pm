@@ -15,10 +15,10 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   const { pinId } = await params;
   const service = createServiceClient();
 
-  const { error } = await service
-    .from("drawing_markup_pins")
+  const { error } = await (service
+    .from("drawing_markup_pins" as any)
     .delete()
-    .eq("id", pinId);
+    .eq("id", pinId)) as any;
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ success: true });

@@ -16,7 +16,8 @@ from .models import DecisionItem, MeetingSegment, OpportunityItem, RiskItem, Str
 
 logger = logging.getLogger(__name__)
 
-EMBEDDING_MODEL = "text-embedding-3-small"
+EMBEDDING_MODEL = "text-embedding-3-large"
+EMBEDDING_DIMENSIONS = 3072  # text-embedding-3-large native dimensions
 CHAT_MODEL = "gpt-4o-mini"
 SEGMENT_TRANSCRIPT_MAX_CHARS = int(os.getenv("SEGMENT_TRANSCRIPT_MAX_CHARS", "0"))
 
@@ -34,8 +35,8 @@ def batch_embed(texts: List[str], model: str = EMBEDDING_MODEL) -> List[List[flo
     if not texts:
         return []
     truncated = [t[:8000] for t in texts]
-    logger.info("[LLM] Embedding %d texts with %s", len(texts), model)
-    response = _client().embeddings.create(model=model, input=truncated)
+    logger.info("[LLM] Embedding %d texts with %s (dimensions=%d)", len(texts), model, EMBEDDING_DIMENSIONS)
+    response = _client().embeddings.create(model=model, input=truncated, dimensions=EMBEDDING_DIMENSIONS)
     return [item.embedding for item in response.data]
 
 

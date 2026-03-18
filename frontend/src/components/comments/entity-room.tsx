@@ -48,7 +48,7 @@ export function EntityRoom({
   const roomId = getRoomId(entityType, entityId);
 
   return (
-    <RoomProvider id={roomId} initialStorage={INITIAL_STORAGE}>
+    <RoomProvider id={roomId} initialPresence={{ cursor: null }} initialStorage={INITIAL_STORAGE}>
       {children}
     </RoomProvider>
   );

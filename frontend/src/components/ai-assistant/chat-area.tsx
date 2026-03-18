@@ -3,6 +3,20 @@
 import { useCallback, useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import type { UIMessage } from "ai";
+import { useProjects } from "@/hooks/use-projects";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import {
   Conversation,
   ConversationContent,
@@ -53,7 +67,13 @@ import {
   ThumbsDownIcon,
   DatabaseIcon,
   SparklesIcon,
+  FileTextIcon,
+  Building2Icon,
+  ChevronDownIcon,
+  CheckIcon,
+  XIcon,
 } from "lucide-react";
+import type { DynamicToolUIPart } from "ai";
 import { toast } from "sonner";
 import { WelcomeScreen } from "./welcome-screen";
 import { TracePanel, type ToolTraceItem } from "./trace-panel";
@@ -103,6 +123,64 @@ function getToolNameFromType(type: string): string {
 }
 
 // ─── Formatting helpers ────────────────────────────────────────────
+
+/**
+ * Parse an ISO date string into "Mar 16, 2026" format.
+ * Returns null if unparseable.
+ */
+function formatSourceDate(str: string): string | null {
+  try {
+    const d = new Date(str);
+    if (isNaN(d.getTime())) return null;
+    return d.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Turn a raw [Source: ...] body into a human-readable label.
+ * Handles:
+ *   Meeting - "Title" - ISO-DATE
+ *   Meeting - Title - ISO-DATE
+ *   Project Directory - Name
+ *   Action Items & Insights
+ *   anything else → returned as-is
+ */
+function formatSourceLabel(raw: string): string {
+  const meetingMatch = raw.match(
+    /^Meeting\s*[-–]\s*"?([^"-]+?)"?\s*[-–]\s*(.+)$/,
+  );
+  if (meetingMatch) {
+    const title = meetingMatch[1].trim();
+    const dateStr = meetingMatch[2].trim();
+    const date = formatSourceDate(dateStr);
+    return date ? `${title} · ${date}` : title;
+  }
+  return raw;
+}
+
+/**
+ * Extract all [Source: ...] patterns from text, returning the cleaned text
+ * (with citations removed) and a deduplicated array of formatted source labels.
+ */
+function extractSources(text: string): { cleanText: string; sources: string[] } {
+  const seen = new Set<string>();
+  const sources: string[] = [];
+  const cleanText = text.replace(/\[Source:\s*([^\]]+)\]/g, (_, content) => {
+    const label = formatSourceLabel(content.trim());
+    if (!seen.has(label)) {
+      seen.add(label);
+      sources.push(label);
+    }
+    return "";
+  });
+  return { cleanText: cleanText.replace(/\n{3,}/g, "\n\n").trim(), sources };
+}
 
 function formatToolName(name: string): string {
   return name
@@ -165,8 +243,9 @@ function ToolCallItem({ part }: { part: ToolPart }) {
   return (
     <ToolDisplay className="mb-1.5">
       <ToolHeader
-        type={part.type as "tool-invocation"}
-        state={part.state as "input-available"}
+        type={part.type as DynamicToolUIPart["type"]}
+        state={part.state as DynamicToolUIPart["state"]}
+        toolName={getToolNameFromType(part.type)}
         title={formatToolName(getToolNameFromType(part.type))}
       />
       <ToolContent>
@@ -382,6 +461,8 @@ interface ChatAreaProps {
   sessionId?: string;
   councilMode?: boolean;
   onCouncilModeChange?: (val: boolean) => void;
+  selectedProjectId?: number | null;
+  onProjectChange?: (id: number | null) => void;
   onInputChange: (value: string) => void;
   onSubmit: (message: string) => void;
   onStop: () => void;
@@ -397,12 +478,19 @@ export function ChatArea({
   sessionId,
   councilMode: councilModeProp,
   onCouncilModeChange,
+  selectedProjectId: selectedProjectIdProp,
+  onProjectChange,
   onInputChange,
   onSubmit,
   onStop,
 }: ChatAreaProps) {
   // Council mode can be controlled externally (via prop) or internally
   const [councilModeInternal, setCouncilModeInternal] = useState(false);
+
+  // Project selector
+  const [projectOpen, setProjectOpen] = useState(false);
+  const { projects, isLoading: projectsLoading } = useProjects({ limit: 50 });
+  const selectedProject = projects.find((p) => p.id === selectedProjectIdProp) ?? null;
   const councilMode = councilModeProp ?? councilModeInternal;
   const handleCouncilToggle = useCallback(() => {
     const next = !councilMode;
@@ -481,8 +569,75 @@ export function ChatArea({
     >
       <PromptInputTextarea placeholder={councilMode ? "Ask the C-Suite anything…" : "Ask anything about your projects..."} />
       <PromptInputActions className="justify-between px-2 pb-2">
-        {/* Council Mode toggle */}
+        {/* Left controls: project selector + council mode */}
         <div className="flex items-center gap-2">
+          {/* Project selector — optional context pin */}
+          <Popover open={projectOpen} onOpenChange={setProjectOpen}>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className={cn(
+                  "flex items-center gap-1 rounded-full px-2.5 py-1 text-xs transition-colors",
+                  selectedProject
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                )}
+                aria-label="Select project context"
+              >
+                <Building2Icon className="h-3 w-3 shrink-0" />
+                <span className="max-w-[120px] truncate">
+                  {selectedProject ? (selectedProject.name ?? "Project") : "All projects"}
+                </span>
+                {selectedProject ? (
+                  <XIcon
+                    className="h-3 w-3 shrink-0 opacity-60 hover:opacity-100"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onProjectChange?.(null);
+                    }}
+                  />
+                ) : (
+                  <ChevronDownIcon className="h-3 w-3 shrink-0 opacity-50" />
+                )}
+              </button>
+            </PopoverTrigger>
+            <PopoverContent className="w-64 p-0" align="start" side="top">
+              <Command>
+                <CommandInput placeholder="Search projects…" className="h-9" />
+                <CommandList>
+                  <CommandEmpty>
+                    {projectsLoading ? "Loading…" : "No projects found"}
+                  </CommandEmpty>
+                  <CommandGroup>
+                    {projects.map((project) => (
+                      <CommandItem
+                        key={project.id}
+                        value={`${project.name ?? ""} ${project.project_number ?? ""}`}
+                        onSelect={() => {
+                          onProjectChange?.(project.id === selectedProjectIdProp ? null : project.id);
+                          setProjectOpen(false);
+                        }}
+                      >
+                        <span className="flex-1 truncate">{project.name}</span>
+                        {project.project_number && (
+                          <span className="ml-2 shrink-0 text-xs text-muted-foreground">
+                            #{project.project_number}
+                          </span>
+                        )}
+                        {project.id === selectedProjectIdProp && (
+                          <CheckIcon className="ml-2 h-3.5 w-3.5 shrink-0 text-primary" />
+                        )}
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+
+          {/* Divider */}
+          <span className="h-4 w-px bg-border/50" />
+
           <span className="text-xs text-muted-foreground">Council Mode</span>
           <button
             type="button"
@@ -542,8 +697,11 @@ export function ChatArea({
               {messages.map((msg, msgIndex) => {
                 const text = getMessageText(msg);
                 const isAssistant = msg.role === "assistant";
+                const { cleanText: textWithoutSources, sources: inlineSources } = isAssistant
+                  ? extractSources(text)
+                  : { cleanText: text, sources: [] };
                 const formattedAssistantText = isAssistant
-                  ? formatStructuredMeetingList(text)
+                  ? formatStructuredMeetingList(textWithoutSources)
                   : text;
                 const reasoningText = isAssistant ? getReasoningText(msg) : "";
                 const toolParts = isAssistant
@@ -647,6 +805,21 @@ export function ChatArea({
 
                           {/* Main text response */}
                           <MessageResponse>{formattedAssistantText}</MessageResponse>
+
+                          {/* Source citations — rendered as subtle chips */}
+                          {inlineSources.length > 0 && (
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                              {inlineSources.map((src) => (
+                                <span
+                                  key={src}
+                                  className="inline-flex items-center gap-1 rounded-md bg-muted px-2 py-1 text-xs text-muted-foreground"
+                                >
+                                  <FileTextIcon className="h-3 w-3 shrink-0 opacity-60" />
+                                  {src}
+                                </span>
+                              ))}
+                            </div>
+                          )}
 
                           {/* Persisted tool traces (historical messages) */}
                           {toolParts.length === 0 &&

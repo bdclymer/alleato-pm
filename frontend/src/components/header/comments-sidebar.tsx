@@ -232,6 +232,7 @@ export function CommentsSidebar() {
               >
                 <RoomProvider
                   id={getRoomId(entityContext.entityType, entityContext.entityId)}
+                  initialPresence={{ cursor: null }}
                   initialStorage={INITIAL_STORAGE}
                 >
                   <CommentsSidebarContent label={entityContext.label} />

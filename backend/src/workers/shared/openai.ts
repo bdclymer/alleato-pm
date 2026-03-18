@@ -11,7 +11,7 @@ import type { Env } from "./types";
 export async function batchEmbed(
   env: Env,
   texts: string[],
-  model: string = "text-embedding-3-small"
+  model: string = "text-embedding-3-large"
 ): Promise<number[][]> {
   if (texts.length === 0) return [];
 
@@ -29,6 +29,9 @@ export async function batchEmbed(
     body: JSON.stringify({
       model,
       input: truncatedTexts,
+      // Use Matryoshka truncation to keep 1536 dims (compatible with existing DB columns)
+      // while benefiting from text-embedding-3-large's superior semantic understanding.
+      dimensions: 1536,
     }),
   });
 

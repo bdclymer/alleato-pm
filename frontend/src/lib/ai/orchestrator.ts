@@ -84,7 +84,7 @@ export const agentRegistry: Record<string, AgentConfig> = {
     name: "CFO",
     icon: "💰",
     systemPrompt: cfoSystemPrompt,
-    modelId: "anthropic/claude-sonnet-4.5",
+    modelId: "openai/gpt-5.4-mini",
     description:
       "Financial analysis, budgets, cash flow, margins, contracts, change orders, invoicing, retention",
     triggerKeywords: [
@@ -186,7 +186,7 @@ export const agentRegistry: Record<string, AgentConfig> = {
     name: "COO",
     icon: "🏗️",
     systemPrompt: cooSystemPrompt,
-    modelId: "anthropic/claude-sonnet-4.5",
+    modelId: "openai/gpt-5.4-mini",
     description:
       "Operations, scheduling, procurement velocity, RFIs, submittals, subcontractor performance, action item accountability, field execution",
     triggerKeywords: [
@@ -263,7 +263,7 @@ export const agentRegistry: Record<string, AgentConfig> = {
     name: "CRO",
     icon: "🛡️",
     systemPrompt: croSystemPrompt,
-    modelId: "anthropic/claude-sonnet-4.5",
+    modelId: "openai/gpt-5.4-mini",
     description:
       "Risk identification, financial exposure, contract risk, claim signals, procurement risk, and portfolio-level risk patterns",
     triggerKeywords: [
@@ -334,7 +334,7 @@ export const agentRegistry: Record<string, AgentConfig> = {
     name: "CHRO",
     icon: "👥",
     systemPrompt: chroSystemPrompt,
-    modelId: "anthropic/claude-sonnet-4.5",
+    modelId: "openai/gpt-5.4-mini",
     description:
       "People and capacity: team composition, staffing gaps, action item accountability, subcontractor relationships, institutional knowledge, and lessons learned",
     triggerKeywords: [
@@ -406,6 +406,21 @@ export const agentRegistry: Record<string, AgentConfig> = {
       "departure",
       "new hire",
       "transition",
+      // Person-specific sentiment / concerns
+      "stress",
+      "stresses",
+      "stressed",
+      "worried",
+      "worries",
+      "concern",
+      "concerns",
+      "frustrated",
+      "frustration",
+      "thinks about",
+      "feels about",
+      "what does",
+      "how does",
+      "opinion",
     ],
     createTools: (userId: string, options?) => {
       // CHRO gets the full project tools which include:
@@ -420,7 +435,7 @@ export const agentRegistry: Record<string, AgentConfig> = {
     name: "VP of Business Development",
     icon: "🤝",
     systemPrompt: vpbdSystemPrompt,
-    modelId: "anthropic/claude-sonnet-4.5",
+    modelId: "openai/gpt-5.4-mini",
     description:
       "Pipeline, client relationships, revenue trajectory, competitive positioning, company differentiators, past project references, and proposal preparation",
     triggerKeywords: [
@@ -1062,7 +1077,7 @@ The financial exposure and schedule slippage on Cedar Park are compounding — t
 }
 
 /** Model used for the Strategist agent. */
-export const STRATEGIST_MODEL = "anthropic/claude-sonnet-4.5";
+export const STRATEGIST_MODEL = "openai/gpt-5.4";
 
 /**
  * Returns the full Strategist system prompt.

@@ -9,12 +9,26 @@
       "Bash(npm run lint*)",
       "Bash(npm run typecheck*)",
       "Bash(npm run db:types)",
+      "Bash(npm run db:push)",
       "Bash(npx tsc --noEmit*)",
       "Bash(npx playwright test*)",
       "Bash(npx supabase gen types*)",
       "Bash(agent-browser *)",
       "Bash(pkill -f \"next dev\")",
       "Bash(rm -rf .next)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if echo \"$TOOL_INPUT\" | grep -q 'supabase/migrations'; then echo '⚠️ Migration file changed — run `npm run db:types` to regenerate database types'; fi"
+          }
+        ]
+      }
     ]
   },
   "model": "sonnet"

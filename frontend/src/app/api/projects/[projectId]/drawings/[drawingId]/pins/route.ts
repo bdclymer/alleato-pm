@@ -16,11 +16,11 @@ export async function GET(_req: NextRequest, { params }: Params) {
   const { drawingId } = await params;
   const service = createServiceClient();
 
-  const { data, error } = await service
-    .from("drawing_markup_pins")
+  const { data, error } = await (service
+    .from("drawing_markup_pins" as any)
     .select("*")
     .eq("drawing_id", drawingId)
-    .order("created_at", { ascending: true });
+    .order("created_at", { ascending: true }) as any);
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ pins: data });
@@ -40,8 +40,8 @@ export async function POST(req: NextRequest, { params }: Params) {
   const body = await req.json();
   const service = createServiceClient();
 
-  const { data, error } = await service
-    .from("drawing_markup_pins")
+  const { data, error } = await (service
+    .from("drawing_markup_pins" as any)
     .insert({
       drawing_id: drawingId,
       project_id: Number(projectId),
@@ -57,7 +57,7 @@ export async function POST(req: NextRequest, { params }: Params) {
       created_by: user.id,
     })
     .select()
-    .single();
+    .single()) as any;
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ pin: data }, { status: 201 });

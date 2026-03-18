@@ -26,6 +26,11 @@ import { cn } from "@/lib/utils";
 import type { DrawingMarkupPin, CreatePinInput } from "@/hooks/use-drawing-pins";
 import { FileText, Wrench, AlertTriangle, CheckSquare, Link2 } from "lucide-react";
 
+/** Map {x,y,page} position to CreatePinInput fields */
+function posToPin(pos: { x: number; y: number; page: number }): Pick<CreatePinInput, "x_pct" | "y_pct" | "page"> {
+  return { x_pct: pos.x, y_pct: pos.y, page: pos.page };
+}
+
 // ── Pin type config ─────────────────────────────────────────────────────────
 
 export const PIN_TYPE_CONFIG: Record<
@@ -176,7 +181,7 @@ function RfiContent({
   const handleLink = () => {
     if (!position || !selectedRfiId) return;
     onConfirm({
-      ...position,
+      ...posToPin(position),
       pin_type: "rfi",
       entity_id: selectedRfiId,
       entity_label: selectedRfiLabel ?? undefined,
@@ -190,10 +195,13 @@ function RfiContent({
     const rfi = await createRfi.mutateAsync({
       subject: subject.trim(),
       question: question.trim(),
+      assignees: [],
+      distribution_list: [],
+      is_private: false,
       status: "draft",
     });
     onConfirm({
-      ...position,
+      ...posToPin(position),
       pin_type: "rfi",
       entity_id: rfi.id,
       entity_label: rfi.subject,
@@ -319,7 +327,7 @@ function PunchItemContent({
   const handleLink = () => {
     if (!position || !selectedId) return;
     onConfirm({
-      ...position,
+      ...posToPin(position),
       pin_type: "punch_item",
       entity_id: selectedId,
       entity_label: selectedLabel ?? undefined,
@@ -332,7 +340,7 @@ function PunchItemContent({
     if (!position || !title.trim()) return;
     const item = await createItem.mutateAsync({ title: title.trim(), status: "open" });
     onConfirm({
-      ...position,
+      ...posToPin(position),
       pin_type: "punch_item",
       entity_id: item.id,
       entity_label: item.title,
@@ -358,7 +366,7 @@ function PunchItemContent({
                 <CommandEmpty>Loading…</CommandEmpty>
               ) : (
                 <CommandGroup>
-                  {(items ?? []).map((item) => (
+                  {(items ?? []).map((item: { id: string; number?: number | string; title: string }) => (
                     <CommandItem
                       key={item.id}
                       value={`${item.number} ${item.title}`}
@@ -432,7 +440,7 @@ function CoordinationIssueContent({
     if (!position || !title.trim()) return;
     // Coordination issues are stored as pins with draft_data until a dedicated table exists
     onConfirm({
-      ...position,
+      ...posToPin(position),
       pin_type: "coordination_issue",
       entity_label: title.trim(),
       entity_status: "open",
@@ -491,7 +499,7 @@ function TaskContent({
   const handleCreate = () => {
     if (!position || !title.trim()) return;
     onConfirm({
-      ...position,
+      ...posToPin(position),
       pin_type: "task",
       entity_label: title.trim(),
       entity_status: "open",

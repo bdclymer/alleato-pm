@@ -52,19 +52,25 @@ CREATE TABLE IF NOT EXISTS ai_memories (
 ALTER TABLE ai_memories ENABLE ROW LEVEL SECURITY;
 
 -- Users can read/write their own memories
-CREATE POLICY "Users can manage their own memories"
-  ON ai_memories
-  FOR ALL
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Users can manage their own memories' AND tablename = 'ai_memories') THEN
+    CREATE POLICY "Users can manage their own memories"
+      ON ai_memories FOR ALL
+      USING (auth.uid() = user_id)
+      WITH CHECK (auth.uid() = user_id);
+  END IF;
+END $$;
 
 -- Service role (used by API routes) has full access
-CREATE POLICY "Service role has full access to ai_memories"
-  ON ai_memories
-  FOR ALL
-  TO service_role
-  USING (true)
-  WITH CHECK (true);
+DO $$ BEGIN
+  IF NOT EXISTS (SELECT 1 FROM pg_policies WHERE policyname = 'Service role has full access to ai_memories' AND tablename = 'ai_memories') THEN
+    CREATE POLICY "Service role has full access to ai_memories"
+      ON ai_memories FOR ALL
+      TO service_role
+      USING (true)
+      WITH CHECK (true);
+  END IF;
+END $$;
 
 -- ---------------------------------------------------------------------------
 -- Indexes

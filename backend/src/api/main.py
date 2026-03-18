@@ -817,8 +817,9 @@ def _get_query_embedding(message: str) -> Optional[List[float]]:
         return None
     try:
         response = _openai_client.embeddings.create(
-            model="text-embedding-3-small",
+            model="text-embedding-3-large",
             input=[message],
+            dimensions=3072,
         )
         return response.data[0].embedding
     except Exception:
@@ -1139,6 +1140,47 @@ def ingest_recent_fireflies_endpoint(
         dry_run=payload.dry_run,
         write_markdown_dir=payload.write_markdown_dir,
     )
+
+
+@app.post("/api/graph/sync", tags=["Ingestion"], summary="Trigger Microsoft Graph sync (Outlook / Teams / OneDrive)")
+async def graph_sync_endpoint(
+    background_tasks: BackgroundTasks,
+) -> Dict[str, Any]:
+    """Manually trigger a Microsoft Graph incremental sync.
+
+    Syncs Outlook emails, Teams channel messages, and OneDrive files for all
+    configured users. Uses delta tokens for incremental sync — only new/changed
+    items since the last run are fetched.
+
+    Requires GRAPH_SYNC_ENABLED=true and MICROSOFT_CLIENT_ID/SECRET/TENANT_ID
+    environment variables to be set.
+
+    Returns:
+        Dict with status and counts per source.
+    """
+    from src.services.supabase_helpers import get_supabase_client
+    from src.services.integrations.microsoft_graph.sync import run_graph_sync
+    from src.services.integrations.microsoft_graph.client import get_graph_client
+
+    graph = get_graph_client()
+    if not graph.is_configured():
+        raise HTTPException(
+            status_code=503,
+            detail=(
+                "Microsoft Graph credentials not configured. "
+                "Set MICROSOFT_CLIENT_ID, MICROSOFT_CLIENT_SECRET, and MICROSOFT_TENANT_ID."
+            ),
+        )
+
+    client = get_supabase_client()
+
+    def _run():
+        return run_graph_sync(client)
+
+    import asyncio
+    loop = asyncio.get_event_loop()
+    result = await loop.run_in_executor(None, _run)
+    return result
 
 
 class PipelineProcessRequest(BaseModel):

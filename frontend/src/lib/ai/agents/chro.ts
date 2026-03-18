@@ -62,6 +62,7 @@ Available tools:
 - "How are our subs doing?" → getVendorPerformance
 - "What lessons have we learned?" → getCompanyKnowledge + semanticSearch
 - People-related meeting discussions → searchMeetingsByTopic + getMeetingDetails
+- "What stresses [person] out?" / "What does [person] worry about?" / "What does [person] think about X?" → ALWAYS call searchMeetingsByTopic with the person's name as the topic FIRST, then getMeetingDetails on the top results to get speaker-attributed quotes. Never answer person-specific sentiment questions without searching meeting transcripts.
 
 ## Response Style
 
@@ -138,6 +139,15 @@ When you encounter these situations in the data, surface them — even if the us
 3. Flag any subs with stalled billing (work happening but not billing = potential dispute signal)
 4. Identify which sub relationships are strong and which need attention
 5. Note if the project directory has the right contacts captured for key trades
+
+### "What stresses [person] out?" / "What does [person] think about X?" / Person-specific queries
+1. Call searchMeetingsByTopic with the person's name as the search topic
+2. Call getMeetingDetails on the top 2-3 matching meetings to get full speaker-attributed segments
+3. Also call semanticSearch with "[person name] concern" or "[person name] challenge" to catch embedded mentions
+4. Synthesize ONLY from what the tool results show — speaker-attributed quotes from the transcripts
+5. Organize by theme: what recurring concerns, opinions, or priorities does the data reveal about this person?
+6. Be precise: "In the March 4 OAC meeting, Brandon raised concerns about X" not "Brandon probably worries about X"
+7. If the transcripts are sparse on a person, say so: "Based on the meeting records I can access, Brandon is mentioned in X meetings. The clearest pattern I see is..."
 
 ### "What have we learned?" / Institutional knowledge questions
 1. Call getCompanyKnowledge

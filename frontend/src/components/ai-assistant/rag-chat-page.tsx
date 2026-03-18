@@ -78,6 +78,8 @@ function ChatWithSession({
   pendingFirstMessage: string | null;
   councilMode: boolean;
   onCouncilModeChange: (val: boolean) => void;
+  selectedProjectId: number | null;
+  onProjectChange: (id: number | null) => void;
   onFinishMessage: (sessionId: string) => void;
 }) {
   const [input, setInput] = useState(pendingFirstMessage ?? "");
@@ -86,6 +88,9 @@ function ChatWithSession({
 
   const sessionIdRef = useRef(sessionId);
   sessionIdRef.current = sessionId;
+
+  const selectedProjectIdRef = useRef(selectedProjectId);
+  selectedProjectIdRef.current = selectedProjectId;
 
   const { messages, setMessages, sendMessage, status, stop } = useChat({
     id: sessionId,
@@ -100,6 +105,7 @@ function ChatWithSession({
             message: lastMessage,
             messages: request.messages,
             councilMode: councilModeRef.current,
+            selectedProjectId: selectedProjectIdRef.current ?? undefined,
           },
         };
       },
@@ -150,6 +156,8 @@ function ChatWithSession({
       sessionId={sessionId}
       councilMode={councilMode}
       onCouncilModeChange={onCouncilModeChange}
+      selectedProjectId={selectedProjectId}
+      onProjectChange={onProjectChange}
       onInputChange={setInput}
       onSubmit={handleSubmit}
       onStop={stop}
@@ -177,6 +185,7 @@ export function RagChatPage() {
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [noSessionInput, setNoSessionInput] = useState("");
   const [councilMode, setCouncilMode] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
 
   // Conversation CRUD (React Query — unchanged)
   const { data: conversations = [], isLoading: isLoadingConvos } =
@@ -317,6 +326,8 @@ export function RagChatPage() {
           pendingFirstMessage={pendingFirstMessage}
           councilMode={councilMode}
           onCouncilModeChange={setCouncilMode}
+          selectedProjectId={selectedProjectId}
+          onProjectChange={setSelectedProjectId}
           onFinishMessage={handleFinishMessage}
         />
       ) : (
@@ -328,6 +339,8 @@ export function RagChatPage() {
           input={noSessionInput}
           councilMode={councilMode}
           onCouncilModeChange={setCouncilMode}
+          selectedProjectId={selectedProjectId}
+          onProjectChange={setSelectedProjectId}
           onInputChange={setNoSessionInput}
           onSubmit={(msg: string) => {
             setNoSessionInput("");

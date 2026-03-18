@@ -229,11 +229,17 @@ async function embedMeeting(
 
   console.log(`[Embed] Found ${segments.length} segments`);
 
-  // Create all chunks
+  // Create all chunks — pass meeting context so each chunk gets a contextual
+  // prefix baked into contextualContent (used for embedding, not DB storage).
   const allChunks = createMeetingChunks(
     segments,
     parsed.transcriptLines,
-    meetingSummary
+    meetingSummary,
+    {
+      title: (metadata.title as string) || "Untitled Meeting",
+      date: parsed.startedAt ?? null,
+      participants: parsed.participants ?? [],
+    }
   );
 
   console.log(`[Embed] Created ${allChunks.length} chunks`);
@@ -241,8 +247,10 @@ async function embedMeeting(
   // Mark job as chunked
   await updateJobStage(env, firefliesId, "chunked");
 
-  // Batch embed all chunk content
-  const chunkTexts = allChunks.map((c) => c.content);
+  // Batch embed all chunk content — use contextualContent when available,
+  // which includes the meeting/segment header prefix for better semantic retrieval.
+  // The raw content field is stored in the DB unchanged for human readability.
+  const chunkTexts = allChunks.map((c) => c.contextualContent ?? c.content);
   const chunkEmbeddings = await batchEmbed(env, chunkTexts);
 
   // Assign embeddings to chunks
@@ -250,8 +258,12 @@ async function embedMeeting(
     allChunks[i].embedding = chunkEmbeddings[i];
   }
 
-  // Embed segment summaries
-  const segmentSummaries = segments.map((s) => s.summary || s.title);
+  // Embed segment summaries — prefix with meeting context for better retrieval
+  const meetingTitle = (metadata.title as string) || "Untitled Meeting";
+  const meetingDate = parsed.startedAt ?? "Unknown date";
+  const segmentSummaries = segments.map(
+    (s) => `[Meeting: "${meetingTitle}" | ${meetingDate}]\nSegment: "${s.title}"\n\n${s.summary || s.title}`
+  );
   const segmentEmbeddings = await batchEmbed(env, segmentSummaries);
 
   // Assign embeddings to segments

@@ -44,7 +44,7 @@ export function CanvasComments() {
 
   return (
     <ClientSideSuspense fallback={null}>
-      <RoomProvider id={CANVAS_ROOM_ID} initialPresence={{ cursor: null }}>
+      <RoomProvider id={CANVAS_ROOM_ID} initialPresence={{ cursor: null }} initialStorage={{} as any}>
         <CanvasCommentsInner
           isActive={isActive}
           onToggle={() => setIsActive((v) => !v)}

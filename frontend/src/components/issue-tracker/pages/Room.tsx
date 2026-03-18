@@ -18,6 +18,7 @@ export function Room({
   return (
     <RoomProvider
       id={roomId}
+      initialPresence={{ cursor: null }}
       initialStorage={{
         meta: new LiveObject({ title: "Untitled issue" }),
         properties: new LiveObject({

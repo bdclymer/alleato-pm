@@ -48,7 +48,7 @@ export async function GET(request: Request, { params }: RouteParams) {
     const html = renderDocumentHtml(bundle);
     const pdfBuffer = await renderPdfFromHtml(html);
 
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(new Uint8Array(pdfBuffer), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",

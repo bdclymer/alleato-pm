@@ -35,6 +35,7 @@ interface PageHeaderProps {
 
   // Navigation
   breadcrumbs?: BreadcrumbItem[];
+  tabs?: { label: string; href: string; isActive: boolean }[];
 
   // Project context
   showProjectName?: boolean;

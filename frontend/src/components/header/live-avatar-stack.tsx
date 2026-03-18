@@ -193,7 +193,7 @@ export function LiveAvatarStack() {
 
   return (
     <ClientSideSuspense fallback={null}>
-      <RoomProvider id={roomId} initialStorage={INITIAL_STORAGE}>
+      <RoomProvider id={roomId} initialPresence={{ cursor: null }} initialStorage={INITIAL_STORAGE}>
         <AvatarsInner />
       </RoomProvider>
     </ClientSideSuspense>

@@ -433,7 +433,7 @@ export function createOperationalTools(
             companyIds.length > 0
               ? supabase
                   .from("companies")
-                  .select("id, name, contact_name, contact_email")
+                  .select("id, name")
                   .in("id", companyIds)
                   .then((r) => r)
               : Promise.resolve({ data: [] }),
@@ -1334,7 +1334,8 @@ export function createOperationalTools(
             // Generate embedding
             const openai = getOpenAI();
             const embeddingResponse = await openai.embeddings.create({
-              model: "text-embedding-3-small",
+              model: "text-embedding-3-large",
+              dimensions: 1536,
               input: query,
             });
 
@@ -1344,10 +1345,11 @@ export function createOperationalTools(
             const targetThreshold = threshold ?? 0.3;
 
             // Blended retrieval:
-            // 1) search_all_knowledge for structured entities
-            // 2) match_documents_full for chunk-level document evidence
-            // 3) search_knowledge_base for company knowledge base entries
-            const [knowledgeRes, documentRes, knowledgeBaseRes] = await Promise.all([
+            // 1) search_all_knowledge — meeting_segments, decisions, risks, opportunities
+            // 2) match_documents_full — documents table (Fireflies transcripts, processed files)
+            // 3) search_knowledge_base — company_knowledge table (curated intel)
+            // 4) search_document_chunks_by_category (NULL = all) — email, Teams, OneDrive
+            const [knowledgeRes, documentRes, knowledgeBaseRes, chunksRes] = await Promise.all([
               supabase.rpc("search_all_knowledge", {
                 query_embedding: embeddingArg,
                 match_count: targetCount,
@@ -1363,6 +1365,13 @@ export function createOperationalTools(
                 match_count: targetCount,
                 match_threshold: targetThreshold,
                 ...(resolvedProjectId ? { filter_project_id: resolvedProjectId } : {}),
+              }),
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (supabase as any).rpc("search_document_chunks_by_category", {
+                query_embedding: embeddingArg,
+                filter_category: null, // null = search all categories (email, teams_message, document)
+                match_count: targetCount,
+                match_threshold: targetThreshold,
               }),
             ]);
 
@@ -1395,6 +1404,14 @@ export function createOperationalTools(
                   )
                 : [];
               return primaryProjectId === resolvedProjectId || projectIds.includes(resolvedProjectId);
+            });
+            // Email / Teams / OneDrive chunks from document_chunks table
+            const rawChunkRows = ((chunksRes as { data?: unknown[] }).data ?? []) as AnyRow[];
+            const chunkRows = rawChunkRows.filter((row) => {
+              if (!resolvedProjectId) return true;
+              return typeof row.doc_project_id === "number"
+                ? row.doc_project_id === resolvedProjectId
+                : true;
             });
 
             const merged: Array<{
@@ -1488,6 +1505,35 @@ export function createOperationalTools(
               });
             }
 
+            // 4) External document chunks (email, Teams, OneDrive via Microsoft Graph)
+            for (const row of chunkRows) {
+              const similarity = Math.round(asNumber(row.similarity) * 1000) / 1000;
+              const category = String(row.doc_category ?? "document");
+              const sourceLabel =
+                category === "email" ? "email" :
+                category === "teams_message" ? "Teams" :
+                "document";
+              merged.push({
+                key: `doc_chunk:${String(row.chunk_id ?? row.document_id ?? "")}`,
+                sourceTable: `external_${sourceLabel}`,
+                recordId: String(row.document_id ?? ""),
+                content: String(row.chunk_text ?? ""),
+                similarity,
+                projectIds: typeof row.doc_project_id === "number" ? [row.doc_project_id] : [],
+                metadata: {
+                  title: row.doc_title,
+                  category: row.doc_category,
+                  source: row.doc_source,
+                  type: row.doc_type,
+                  date: row.doc_date,
+                  participants: row.doc_participants,
+                },
+                createdAt:
+                  typeof row.doc_date === "string" ? row.doc_date :
+                  typeof row.doc_created_at === "string" ? row.doc_created_at : null,
+              });
+            }
+
             const dedupedMap = new Map<string, (typeof merged)[number]>();
             for (const item of merged) {
               const existing = dedupedMap.get(item.key);
@@ -1495,8 +1541,22 @@ export function createOperationalTools(
                 dedupedMap.set(item.key, item);
               }
             }
-            const results = Array.from(dedupedMap.values())
-              .sort((a, b) => b.similarity - a.similarity)
+            // Time-decay: blend semantic similarity (90%) with recency (10%).
+            // Recency decays exponentially: full weight today, ~50% at 6 months, floor 0.1 at 2+ years.
+            const nowMs = Date.now();
+            const recencyScore = (createdAt: string | null): number => {
+              if (!createdAt) return 0.5;
+              const ageMs = nowMs - new Date(createdAt).getTime();
+              const ageDays = ageMs / (1000 * 60 * 60 * 24);
+              return Math.max(0.1, Math.exp(-ageDays / 180));
+            };
+
+            const results = (Array.from(dedupedMap.values()) as (typeof merged)[number][])
+              .map((item) => ({
+                ...item,
+                finalScore: item.similarity * 0.9 + recencyScore(item.createdAt) * 0.1,
+              }))
+              .sort((a, b) => b.finalScore - a.finalScore)
               .slice(0, targetCount);
 
             if (results.length === 0) {
@@ -1510,10 +1570,11 @@ export function createOperationalTools(
               query,
               resultCount: results.length,
               results: results.map((r) => ({
-                content: r.content.substring(0, 700),
+                content: r.content.substring(0, 2500),
                 sourceTable: r.sourceTable,
                 recordId: r.recordId,
                 similarity: r.similarity,
+                finalScore: Math.round(r.finalScore * 1000) / 1000,
                 projectIds: r.projectIds,
                 metadata: r.metadata,
                 createdAt: r.createdAt,
@@ -1521,6 +1582,7 @@ export function createOperationalTools(
               retrievalBreakdown: {
                 knowledgeMatches: knowledgeRows.length,
                 documentChunkMatches: documentRows.length,
+                externalChunkMatches: chunkRows.length,
                 usedProjectFilter: Boolean(resolvedProjectId),
               },
             };
@@ -2475,5 +2537,261 @@ export function createOperationalTools(
         },
       ),
     }),
+
+    // -----------------------------------------------------------------
+    // 16. searchEmails — Outlook emails via Microsoft Graph
+    // -----------------------------------------------------------------
+
+    searchEmails: tool({
+      description:
+        "Search Outlook email threads synced from Microsoft 365. " +
+        "Use this when the user asks about emails, email conversations, " +
+        "messages sent or received about a topic, or when they want to " +
+        "know what was communicated via email (e.g. 'any emails about the permit delay?', " +
+        "'what did we send to the GC about change orders?'). " +
+        "Returns email subject, sender/recipients, date, and relevant content. " +
+        "Always cite results as 'email from [participants] on [date]'.",
+      inputSchema: z.object({
+        query: z
+          .string()
+          .describe(
+            "What to search for in emails — e.g. 'permit delay notification' or 'invoice dispute with Turner'",
+          ),
+        matchCount: z
+          .number()
+          .optional()
+          .default(8)
+          .describe("Number of email chunks to return"),
+      }),
+      execute: withTrace(
+        "searchEmails",
+        options,
+        async ({ query, matchCount }) => {
+          return searchDocumentChunksByCategory({
+            supabase,
+            query,
+            category: "email",
+            matchCount: matchCount ?? 8,
+            sourceLabel: "email",
+          });
+        },
+      ),
+    }),
+
+    // -----------------------------------------------------------------
+    // 17. searchTeamsMessages — Microsoft Teams channel messages
+    // -----------------------------------------------------------------
+
+    searchTeamsMessages: tool({
+      description:
+        "Search Microsoft Teams channel message threads. " +
+        "Use this when the user asks about Teams conversations, " +
+        "channel discussions, or anything communicated in Teams " +
+        "(e.g. 'what did the team say about the schedule in Teams?', " +
+        "'find Teams messages about the subcontractor issue'). " +
+        "Returns channel name, participants, date, and message content. " +
+        "Always cite results as 'Teams message in [channel] on [date]'.",
+      inputSchema: z.object({
+        query: z
+          .string()
+          .describe(
+            "What to search for in Teams messages — e.g. 'schedule delay discussion' or 'RFI response from Hensel'",
+          ),
+        matchCount: z
+          .number()
+          .optional()
+          .default(8)
+          .describe("Number of Teams message chunks to return"),
+      }),
+      execute: withTrace(
+        "searchTeamsMessages",
+        options,
+        async ({ query, matchCount }) => {
+          return searchDocumentChunksByCategory({
+            supabase,
+            query,
+            category: "teams_message",
+            matchCount: matchCount ?? 8,
+            sourceLabel: "Teams message",
+          });
+        },
+      ),
+    }),
+
+    // -----------------------------------------------------------------
+    // 18. searchExternalDocuments — OneDrive files and uploaded documents
+    // -----------------------------------------------------------------
+
+    searchExternalDocuments: tool({
+      description:
+        "Search OneDrive files and uploaded project documents (PDFs, Word docs, spreadsheets, etc.). " +
+        "Use this when the user asks about specific documents, reports, specs, or files " +
+        "(e.g. 'find the geotechnical report', 'what does the contract say about liquidated damages?', " +
+        "'search the RFP document for insurance requirements'). " +
+        "Distinct from meeting transcripts — this searches files and documents. " +
+        "Always cite results as 'document: [title] ([date if available])'.",
+      inputSchema: z.object({
+        query: z
+          .string()
+          .describe(
+            "What to search for in documents — e.g. 'liquidated damages clause' or 'geotechnical boring results'",
+          ),
+        matchCount: z
+          .number()
+          .optional()
+          .default(8)
+          .describe("Number of document chunks to return"),
+      }),
+      execute: withTrace(
+        "searchExternalDocuments",
+        options,
+        async ({ query, matchCount }) => {
+          return searchDocumentChunksByCategory({
+            supabase,
+            query,
+            category: "document",
+            matchCount: matchCount ?? 8,
+            sourceLabel: "document",
+          });
+        },
+      ),
+    }),
   };
+}
+
+// ---------------------------------------------------------------------------
+// Shared helper: embed query → search document_chunks filtered by category
+// ---------------------------------------------------------------------------
+async function searchDocumentChunksByCategory({
+  supabase,
+  query,
+  category,
+  matchCount,
+  sourceLabel,
+}: {
+  supabase: ReturnType<typeof createServiceClient>;
+  query: string;
+  category: string;
+  matchCount: number;
+  sourceLabel: string;
+}) {
+  try {
+    const openaiClient = getOpenAI();
+
+    const embeddingResponse = await openaiClient.embeddings.create({
+      model: "text-embedding-3-small",
+      input: query,
+    });
+    const queryEmbedding = embeddingResponse.data[0].embedding;
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await (supabase as any).rpc(
+      "search_document_chunks_by_category",
+      {
+        query_embedding: JSON.stringify(queryEmbedding),
+        filter_category: category,
+        match_count: matchCount,
+        match_threshold: 0.25,
+      },
+    );
+
+    if (error) return { error: (error as { message: string }).message };
+
+    type ChunkRow = {
+      chunk_id: string;
+      document_id: string;
+      chunk_index: number;
+      chunk_text: string;
+      similarity: number;
+      doc_title: string | null;
+      doc_category: string | null;
+      doc_source: string | null;
+      doc_type: string | null;
+      doc_date: string | null;
+      doc_participants: string | null;
+      doc_tags: string | null;
+      doc_project_id: number | null;
+      doc_metadata: Record<string, unknown> | null;
+      doc_created_at: string | null;
+    };
+
+    const rows = (data ?? []) as ChunkRow[];
+
+    if (rows.length === 0) {
+      return {
+        results: [],
+        message: `No ${sourceLabel}s found for "${query}". The sync may not have run yet, or no matching content exists.`,
+      };
+    }
+
+    // Deduplicate by document_id — take best-scoring chunk per document
+    const bestByDoc = new Map<string, ChunkRow>();
+    for (const row of rows) {
+      const existing = bestByDoc.get(row.document_id);
+      if (!existing || row.similarity > existing.similarity) {
+        bestByDoc.set(row.document_id, row);
+      }
+    }
+
+    const results = Array.from(bestByDoc.values())
+      .sort((a, b) => b.similarity - a.similarity)
+      .slice(0, matchCount);
+
+    return {
+      query,
+      sourceType: sourceLabel,
+      resultCount: results.length,
+      results: results.map((r) => ({
+        title: r.doc_title ?? "(untitled)",
+        content: r.chunk_text.substring(0, 2000),
+        similarity: Math.round(r.similarity * 1000) / 1000,
+        date: r.doc_date ?? r.doc_created_at,
+        participants: r.doc_participants,
+        source: r.doc_source,
+        type: r.doc_type,
+        projectId: r.doc_project_id,
+        documentId: r.document_id,
+        chunkIndex: r.chunk_index,
+        // Pre-formatted citation for the model to use directly
+        citation: formatCitation(sourceLabel, r),
+      })),
+    };
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "Unknown error";
+    return {
+      error: `${sourceLabel} search failed: ${msg}`,
+    };
+  }
+}
+
+type ChunkResultRow = {
+  doc_title: string | null;
+  doc_date: string | null;
+  doc_created_at: string | null;
+  doc_participants: string | null;
+  doc_source: string | null;
+};
+
+function formatCitation(sourceLabel: string, r: ChunkResultRow): string {
+  const date = r.doc_date ?? r.doc_created_at;
+  const dateStr = date
+    ? new Date(date).toLocaleDateString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      })
+    : null;
+
+  if (sourceLabel === "email") {
+    const parts = [r.doc_participants ? `from ${r.doc_participants}` : null, dateStr].filter(Boolean);
+    return `Email${parts.length ? " " + parts.join(", ") : ""}: "${r.doc_title ?? "untitled"}"`;
+  }
+
+  if (sourceLabel === "Teams message") {
+    const parts = [r.doc_source ? `in ${r.doc_source}` : null, dateStr].filter(Boolean);
+    return `Teams message${parts.length ? " " + parts.join(", ") : ""}: "${r.doc_title ?? "untitled"}"`;
+  }
+
+  // document
+  return `Document: "${r.doc_title ?? "untitled"}"${dateStr ? ` (${dateStr})` : ""}`;
 }

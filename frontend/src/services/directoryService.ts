@@ -45,7 +45,7 @@ export interface DirectoryFilters {
   perPage?: number;
 }
 
-export interface PersonWithDetails extends Person {
+export interface PersonWithDetails extends Omit<Person, "company"> {
   company?: Company;
   membership?: ProjectDirectoryMembership;
   permission_template?: PermissionTemplate;

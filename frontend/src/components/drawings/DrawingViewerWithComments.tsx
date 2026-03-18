@@ -42,7 +42,7 @@ export function DrawingViewerWithComments(props: DrawingViewerWithCommentsProps)
   const roomId = `alleato:drawing:${props.drawingId}`;
 
   return (
-    <RoomProvider id={roomId}>
+    <RoomProvider id={roomId} initialPresence={{ cursor: null }} initialStorage={{} as any}>
       <ClientSideSuspense
         fallback={
           <DrawingViewer
@@ -124,7 +124,7 @@ function ViewerWithCommentState({
       {/* Existing pins — only show for the current page */}
       {pinnedThreads
         .filter(
-          (t) => !t.resolved && (t.metadata.page ?? 1) === currentPage
+          (t) => !t.resolved && ((t.metadata as Record<string, unknown>).page ?? 1) === currentPage
         )
         .map((thread) => (
           <FloatingThread key={thread.id} thread={thread}>

@@ -17,7 +17,11 @@ import {
   getStrategistSystemPrompt,
   STRATEGIST_MODEL,
 } from "@/lib/ai/orchestrator";
-import { generateConversationMemory } from "@/lib/ai/services/conversation-memory";
+import {
+  generateConversationMemory,
+  getRecentConversationSummaries,
+  buildRecentConversationsBlock,
+} from "@/lib/ai/services/conversation-memory";
 import {
   getMemoriesForSession,
   buildMemoryContextBlock,
@@ -57,10 +61,11 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json();
-  const { id: sessionId, messages, councilMode } = body as {
+  const { id: sessionId, messages, councilMode, selectedProjectId } = body as {
     id: string;
     messages: UIMessage[];
     councilMode?: boolean;
+    selectedProjectId?: number;
   };
 
   if (!sessionId || !messages?.length) {
@@ -113,16 +118,67 @@ export async function POST(request: Request) {
   let systemPrompt = getStrategistSystemPrompt();
   if (lastUserContent) {
     try {
-      const { preferences, relevant, team } = await getMemoriesForSession({
-        userId: user.id,
-        firstMessage: lastUserContent,
-      });
+      // Run memory fetches in parallel — typed memories + recent session summaries.
+      // Recent summaries are only injected on the FIRST turn of a session
+      // (messages.length === 1) so they don't bloat every subsequent turn.
+      const isFirstTurn = messages.length === 1;
+
+      const [{ preferences, relevant, team }, recentSummaries] =
+        await Promise.all([
+          getMemoriesForSession({
+            userId: user.id,
+            firstMessage: lastUserContent,
+          }),
+          isFirstTurn
+            ? getRecentConversationSummaries(user.id, sessionId, 3)
+            : Promise.resolve([]),
+        ]);
+
       const memoryBlock = buildMemoryContextBlock(preferences, relevant, team);
-      if (memoryBlock) {
-        systemPrompt = memoryBlock + "\n\n---\n\n" + systemPrompt;
+      const recentBlock = buildRecentConversationsBlock(recentSummaries);
+
+      // Layer the context blocks before the main system prompt:
+      // [Recent conversations] → [Typed memories] → [System prompt]
+      // This order ensures the AI reads the most personal/recent context first.
+      const contextParts = [recentBlock, memoryBlock].filter(Boolean);
+      if (contextParts.length > 0) {
+        systemPrompt = contextParts.join("\n\n") + "\n\n---\n\n" + systemPrompt;
       }
     } catch {
       // Memory injection failure is non-fatal — continue without it
+    }
+  }
+
+  // Selected project context — injected when user pins a project in the UI.
+  // Tells the AI to default all project-specific questions to this project
+  // without requiring explicit disambiguation.
+  if (selectedProjectId) {
+    try {
+      const { data: project } = await supabase
+        .from("projects")
+        .select("name, project_number, phase, client, health_status")
+        .eq("id", selectedProjectId)
+        .single();
+
+      if (project) {
+        const projectLine = [
+          project.name,
+          project.project_number ? `#${project.project_number}` : null,
+          project.phase ? `Phase: ${project.phase}` : null,
+          project.client ? `Client: ${project.client}` : null,
+          project.health_status ? `Status: ${project.health_status}` : null,
+        ]
+          .filter(Boolean)
+          .join(" · ");
+
+        systemPrompt +=
+          `\n\n## Active Project Context\n` +
+          `The user has pinned: **${projectLine}**\n` +
+          `Assume all project-specific questions refer to this project unless the user explicitly mentions a different one. ` +
+          `Skip disambiguation steps and go straight to retrieving data for this project.`;
+      }
+    } catch {
+      // Non-fatal — continue without project context
     }
   }
 

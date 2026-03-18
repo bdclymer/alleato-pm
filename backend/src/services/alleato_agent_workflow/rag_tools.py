@@ -60,11 +60,11 @@ def _get_segment_classifier() -> SegmentProjectClassifier:
     return _segment_classifier
 
 
-def _get_embedding(text: str, model: str = "text-embedding-3-small") -> List[float]:
+def _get_embedding(text: str, model: str = "text-embedding-3-large") -> List[float]:
     """Generate embedding for text using OpenAI."""
     if _openai_client is None:
         return []
-    response = _openai_client.embeddings.create(model=model, input=[text])
+    response = _openai_client.embeddings.create(model=model, input=[text], dimensions=3072)
     return response.data[0].embedding
 
 

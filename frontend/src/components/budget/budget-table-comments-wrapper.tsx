@@ -33,6 +33,7 @@ export function BudgetTableCommentsWrapper({
   return (
     <RoomProvider
       id={getRoomId("budget", `project-${projectId}`)}
+      initialPresence={{ cursor: null }}
       initialStorage={INITIAL_STORAGE}
     >
       <ClientSideSuspense fallback={children}>

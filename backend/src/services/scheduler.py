@@ -5,6 +5,7 @@ Currently registered jobs:
   - Fireflies sync: every 15 min, fetches new transcripts and ingests via pipeline
   - Daily digest: 6 PM daily, aggregates meetings into executive briefing
   - Acumatica financial sync: periodic incremental ERP import into Supabase
+  - Microsoft Graph sync: periodic incremental sync of Outlook/Teams/OneDrive
 
 Future jobs (Phase 2+):
   - Project health scoring
@@ -76,6 +77,22 @@ def init_scheduler() -> None:
             name="Acumatica Financial Sync",
             replace_existing=True,
             max_instances=1,
+        )
+
+    # Microsoft Graph sync (Outlook + Teams + OneDrive) — hourly by default
+    if os.getenv("GRAPH_SYNC_ENABLED", "false").lower() in ("1", "true", "yes"):
+        graph_interval_minutes = max(5, int(os.getenv("GRAPH_SYNC_INTERVAL_MINUTES", "60")))
+        scheduler.add_job(
+            run_graph_sync_job,
+            IntervalTrigger(minutes=graph_interval_minutes),
+            id="graph_sync",
+            name="Microsoft Graph Sync (Outlook / Teams / OneDrive)",
+            replace_existing=True,
+            max_instances=1,
+        )
+        logger.info(
+            "[Scheduler] Microsoft Graph sync every %d min",
+            graph_interval_minutes,
         )
 
     scheduler.start()
@@ -174,6 +191,36 @@ def _run_acumatica_financial_sync():
     from .acumatica_sync import run_acumatica_financial_sync
 
     return run_acumatica_financial_sync()
+
+
+async def run_graph_sync_job() -> None:
+    """Scheduled job: incrementally sync Outlook, Teams, and OneDrive via Microsoft Graph."""
+    import asyncio
+
+    logger.info("[Scheduler] Running Microsoft Graph sync job")
+    try:
+        loop = asyncio.get_event_loop()
+        result = await loop.run_in_executor(None, _run_graph_sync)
+        logger.info(
+            "[Scheduler] Microsoft Graph sync complete: %d total synced (outlook=%d, teams=%d, onedrive=%d)",
+            result.get("total_synced", 0),
+            result.get("outlook", 0),
+            result.get("teams", 0),
+            result.get("onedrive", 0),
+        )
+        if result.get("errors"):
+            logger.warning("[Scheduler] Graph sync reported errors: %s", result["errors"])
+    except Exception as e:
+        logger.error("[Scheduler] Microsoft Graph sync failed: %s", e, exc_info=True)
+
+
+def _run_graph_sync():
+    """Synchronous wrapper for Microsoft Graph sync."""
+    from .supabase_helpers import get_supabase_client
+    from .integrations.microsoft_graph.sync import run_graph_sync
+
+    client = get_supabase_client()
+    return run_graph_sync(client)
 
 
 def _get_daily_recipients() -> list[str]:

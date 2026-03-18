@@ -88,7 +88,7 @@ class IngestionResult:
 class EmbeddingGenerator:
     """Produces embeddings using OpenAI when available, otherwise hashed vectors."""
 
-    def __init__(self, model: str = "text-embedding-3-small") -> None:
+    def __init__(self, model: str = "text-embedding-3-large") -> None:
         self.model = model
         self._client = None
         if os.getenv("OPENAI_API_KEY") and OpenAI is not None:
@@ -99,7 +99,7 @@ class EmbeddingGenerator:
             return []
         if self._client is None:
             return [self._hash_embedding(text) for text in texts]
-        response = self._client.embeddings.create(model=self.model, input=texts)
+        response = self._client.embeddings.create(model=self.model, input=texts, dimensions=3072)
         return [item.embedding for item in response.data]
 
     @staticmethod
@@ -115,7 +115,7 @@ class EmbeddingGenerator:
 class FirefliesIngestionPipeline:
     """Convert Fireflies markdown exports into Supabase rows."""
 
-    def __init__(self, store: SupabaseRagStore, embedding_model: str = "text-embedding-3-small") -> None:
+    def __init__(self, store: SupabaseRagStore, embedding_model: str = "text-embedding-3-large") -> None:
         self.store = store
         self.embedder = EmbeddingGenerator(model=embedding_model)
         self._fireflies_api_url = "https://api.fireflies.ai/graphql"
@@ -1513,8 +1513,9 @@ class FirefliesIngestionPipeline:
 
         texts = [m["content"][:500] for m in valid]
         embeddings_resp = client.embeddings.create(
-            model="text-embedding-3-small",
+            model="text-embedding-3-large",
             input=texts,
+            dimensions=3072,
         )
         embeddings = [e.embedding for e in embeddings_resp.data]
 

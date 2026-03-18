@@ -1,0 +1,304 @@
+"""
+OneDrive / SharePoint File Ingestion
+Fetches and extracts text from project documents.
+"""
+import io
+import logging
+import os
+from datetime import datetime, timezone
+from typing import Optional
+
+from .client import get_graph_client
+
+logger = logging.getLogger(__name__)
+
+# File types we can extract text from
+SUPPORTED_EXTENSIONS = {".pdf", ".docx", ".doc", ".txt", ".md", ".csv"}
+MAX_FILE_SIZE_BYTES = 50 * 1024 * 1024  # 50 MB
+
+
+def _extract_text_from_pdf(content: bytes) -> str:
+    """Extract text from PDF bytes using pypdf."""
+    try:
+        import pypdf
+        reader = pypdf.PdfReader(io.BytesIO(content))
+        pages = []
+        for page in reader.pages[:50]:  # Cap at 50 pages
+            text = page.extract_text() or ""
+            if text.strip():
+                pages.append(text)
+        return "\n\n".join(pages)
+    except ImportError:
+        logger.warning("[OneDrive] pypdf not installed — skipping PDF extraction")
+        return ""
+    except Exception as e:
+        logger.warning(f"[OneDrive] PDF extraction failed: {e}")
+        return ""
+
+
+def _extract_text_from_docx(content: bytes) -> str:
+    """Extract text from DOCX bytes using python-docx."""
+    try:
+        import docx
+        doc = docx.Document(io.BytesIO(content))
+        return "\n".join(p.text for p in doc.paragraphs if p.text.strip())
+    except ImportError:
+        logger.warning("[OneDrive] python-docx not installed — skipping DOCX extraction")
+        return ""
+    except Exception as e:
+        logger.warning(f"[OneDrive] DOCX extraction failed: {e}")
+        return ""
+
+
+def _extract_text(content: bytes, extension: str) -> str:
+    """Route to the right text extractor based on file extension."""
+    ext = extension.lower()
+    if ext == ".pdf":
+        return _extract_text_from_pdf(content)
+    elif ext in (".docx", ".doc"):
+        return _extract_text_from_docx(content)
+    elif ext in (".txt", ".md", ".csv"):
+        return content.decode("utf-8", errors="replace")
+    return ""
+
+
+def sync_onedrive_folder(
+    supabase_client,
+    user_email: str,
+    folder_path: str = "/",
+    delta_token: Optional[str] = None,
+) -> tuple[int, str]:
+    """
+    Sync files from a user's OneDrive folder. Returns (count_synced, new_delta_token).
+
+    Args:
+        supabase_client: Supabase service client
+        user_email: The user whose OneDrive to sync
+        folder_path: Folder path within OneDrive (default: root)
+        delta_token: Previous delta token for incremental sync
+    """
+    graph = get_graph_client()
+    if not graph.is_configured():
+        logger.warning("[OneDrive] Microsoft Graph not configured — skipping")
+        return 0, delta_token or ""
+
+    user_id = user_email
+    if folder_path == "/" or not folder_path:
+        delta_path = f"/users/{user_id}/drive/root/delta"
+    else:
+        # Graph path format: /drive/root:/full/path/here:/delta
+        # Do NOT replace inner slashes — only wrap the whole path with colons
+        clean_path = folder_path.strip("/")
+        delta_path = f"/users/{user_id}/drive/root:/{clean_path}:/delta"
+
+    try:
+        items, new_delta_token = graph.get_delta(delta_path, delta_token)
+    except Exception as e:
+        logger.error(f"[OneDrive] Delta query failed for {user_email}{folder_path}: {e}")
+        return 0, delta_token or ""
+
+    synced = 0
+    for item in items:
+        if "@removed" in item:
+            continue
+
+        # Skip folders
+        if "folder" in item:
+            continue
+
+        name = item.get("name", "")
+        size = item.get("size", 0)
+
+        # Check extension
+        _, ext = os.path.splitext(name)
+        if ext.lower() not in SUPPORTED_EXTENSIONS:
+            continue
+
+        if size > MAX_FILE_SIZE_BYTES:
+            logger.info(f"[OneDrive] Skipping large file: {name} ({size} bytes)")
+            continue
+
+        item_id = item.get("id", "")
+        doc_id = f"onedrive_{item_id}"
+
+        # Check if already ingested
+        existing = supabase_client.from_("document_metadata").select("id").eq("id", doc_id).execute()
+        if existing.data:
+            continue
+
+        # Download file content
+        download_url = item.get("@microsoft.graph.downloadUrl", "")
+        if not download_url:
+            try:
+                file_data = graph.get(f"/users/{user_id}/drive/items/{item_id}")
+                download_url = file_data.get("@microsoft.graph.downloadUrl", "")
+            except Exception:
+                continue
+
+        if not download_url:
+            continue
+
+        try:
+            raw_bytes = graph.download_bytes(download_url)
+        except Exception as e:
+            logger.warning(f"[OneDrive] Download failed for {name}: {e}")
+            continue
+
+        # Extract text (strip null bytes — postgres rejects \u0000 in text columns)
+        text_content = _extract_text(raw_bytes, ext).replace("\x00", "")
+        if len(text_content.strip()) < 50:
+            logger.debug(f"[OneDrive] Too little text extracted from {name}, skipping")
+            continue
+
+        # Get file metadata
+        modified = item.get("lastModifiedDateTime", datetime.now(timezone.utc).isoformat())
+        web_url = item.get("webUrl", "")
+        created_by = item.get("createdBy", {}).get("user", {}).get("displayName", user_email)
+
+        # Upload raw text to Supabase Storage
+        storage_path = f"onedrive/{user_email}/{item_id}{ext}.txt"
+        try:
+            supabase_client.storage.from_("documents").upload(
+                storage_path,
+                text_content.encode("utf-8"),
+                {"content-type": "text/plain", "upsert": "true"},
+            )
+        except Exception as e:
+            logger.warning(f"[OneDrive] Storage upload failed for {name}: {e}")
+            continue
+
+        try:
+            # Strip null bytes — PostgreSQL text columns reject \u0000
+            clean_content = text_content[:50000].replace("\x00", "")
+            supabase_client.from_("document_metadata").insert({
+                "id": doc_id,
+                "title": name,
+                "source": "microsoft_graph",
+                "category": "document",
+                "type": "document",
+                "content": clean_content,  # Cap stored content
+                "date": modified[:10] if modified else None,
+                "url": web_url,
+                "participants": [created_by],
+                "status": "raw_ingested",
+                "tags": ["onedrive", ext.lstrip(".")],
+            }).execute()
+            synced += 1
+        except Exception as e:
+            logger.warning(f"[OneDrive] Failed to insert metadata for {name}: {e}")
+
+    logger.info(f"[OneDrive] Synced {synced} files for {user_email}{folder_path}")
+    return synced, new_delta_token
+
+
+def sync_sharepoint_folder(
+    supabase_client,
+    site_hostname: str,
+    site_name: str,
+    folder_path: str = "/",
+    delta_token: Optional[str] = None,
+) -> tuple[int, str]:
+    """
+    Sync files from a SharePoint site folder. Returns (count_synced, new_delta_token).
+
+    Args:
+        site_hostname: e.g. "alleato.sharepoint.com"
+        site_name: e.g. "AlleatoGroup"
+        folder_path: Folder path within the site drive (e.g. "/SOP" or "/")
+        delta_token: Previous delta token for incremental sync
+    """
+    graph = get_graph_client()
+    if not graph.is_configured():
+        logger.warning("[SharePoint] Microsoft Graph not configured — skipping")
+        return 0, delta_token or ""
+
+    site_ref = f"{site_hostname}:/sites/{site_name}"
+
+    if folder_path == "/" or not folder_path:
+        delta_path = f"/sites/{site_ref}/drive/root/delta"
+    else:
+        clean_path = folder_path.strip("/")
+        delta_path = f"/sites/{site_ref}/drive/root:/{clean_path}:/delta"
+
+    try:
+        items, new_delta_token = graph.get_delta(delta_path, delta_token)
+    except Exception as e:
+        logger.error(f"[SharePoint] Delta query failed for {site_name}{folder_path}: {e}")
+        return 0, delta_token or ""
+
+    synced = 0
+    for item in items:
+        if "@removed" in item or "folder" in item:
+            continue
+
+        name = item.get("name", "")
+        size = item.get("size", 0)
+        _, ext = os.path.splitext(name)
+        if ext.lower() not in SUPPORTED_EXTENSIONS:
+            continue
+        if size > MAX_FILE_SIZE_BYTES:
+            continue
+
+        item_id = item.get("id", "")
+        doc_id = f"sharepoint_{item_id}"
+
+        existing = supabase_client.from_("document_metadata").select("id").eq("id", doc_id).execute()
+        if existing.data:
+            continue
+
+        download_url = item.get("@microsoft.graph.downloadUrl", "")
+        if not download_url:
+            try:
+                file_data = graph.get(f"/sites/{site_ref}/drive/items/{item_id}")
+                download_url = file_data.get("@microsoft.graph.downloadUrl", "")
+            except Exception:
+                continue
+
+        if not download_url:
+            continue
+
+        try:
+            raw_bytes = graph.download_bytes(download_url)
+        except Exception as e:
+            logger.warning(f"[SharePoint] Download failed for {name}: {e}")
+            continue
+
+        text_content = _extract_text(raw_bytes, ext)
+        if len(text_content.strip()) < 50:
+            continue
+
+        modified = item.get("lastModifiedDateTime", datetime.now(timezone.utc).isoformat())
+        web_url = item.get("webUrl", "")
+        created_by = item.get("createdBy", {}).get("user", {}).get("displayName", site_name)
+
+        storage_path = f"sharepoint/{site_name}/{item_id}{ext}.txt"
+        try:
+            supabase_client.storage.from_("documents").upload(
+                storage_path,
+                text_content.encode("utf-8"),
+                {"content-type": "text/plain", "upsert": "true"},
+            )
+        except Exception as e:
+            logger.warning(f"[SharePoint] Storage upload failed for {name}: {e}")
+            continue
+
+        try:
+            supabase_client.from_("document_metadata").insert({
+                "id": doc_id,
+                "title": name,
+                "source": "microsoft_graph",
+                "category": "document",
+                "type": "document",
+                "content": text_content[:50000],
+                "date": modified[:10] if modified else None,
+                "url": web_url,
+                "participants": [created_by],
+                "status": "raw_ingested",
+                "tags": ["sharepoint", site_name.lower(), ext.lstrip(".")],
+            }).execute()
+            synced += 1
+        except Exception as e:
+            logger.warning(f"[SharePoint] Failed to insert metadata for {name}: {e}")
+
+    logger.info(f"[SharePoint] Synced {synced} files from {site_name}{folder_path}")
+    return synced, new_delta_token

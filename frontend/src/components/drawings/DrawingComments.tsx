@@ -17,7 +17,7 @@ export function DrawingComments({ drawingId }: DrawingCommentsProps) {
   const roomId = `alleato:drawing:${drawingId}`;
 
   return (
-    <RoomProvider id={roomId}>
+    <RoomProvider id={roomId} initialPresence={{ cursor: null }} initialStorage={{} as any}>
       <ClientSideSuspense
         fallback={
           <div className="space-y-3 py-2">

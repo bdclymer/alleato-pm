@@ -200,7 +200,7 @@ export default function SpreadsheetDemoPage() {
         <div className="spreadsheet-scope">
           <RoomProvider
             id={ROOM_ID}
-            initialPresence={{ selectedCell: null }}
+            initialPresence={{ cursor: null, selectedCell: null }}
             initialStorage={initialStorage as any}
           >
             <TooltipProvider>

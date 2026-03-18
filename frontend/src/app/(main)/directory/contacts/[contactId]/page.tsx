@@ -21,7 +21,7 @@ type Membership = Database["public"]["Tables"]["project_directory_memberships"][
 type PermissionTemplate = Database["public"]["Tables"]["permission_templates"]["Row"];
 type Project = Database["public"]["Tables"]["projects"]["Row"];
 
-interface ContactWithRelations extends Contact {
+interface ContactWithRelations extends Omit<Contact, "company"> {
   company?: Company | null;
   memberships?: (Membership & {
     project?: Project | null;

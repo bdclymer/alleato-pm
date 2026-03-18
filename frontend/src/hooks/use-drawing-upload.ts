@@ -175,7 +175,7 @@ export function useDrawingUpload(projectId: string) {
             revision_number: metadata.revision_number || "A",
             drawing_date: metadata.drawing_date,
             received_date: metadata.received_date || new Date().toISOString(),
-            drawing_set_id: metadata.drawing_set_id,
+            drawing_set_id: metadata.drawing_set_id ?? "",
             description: metadata.description,
             area_id: metadata.area_id,
           };

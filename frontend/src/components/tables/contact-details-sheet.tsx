@@ -23,7 +23,7 @@ import type { Database } from "@/types/database.types";
 type Contact = Database["public"]["Tables"]["people"]["Row"];
 type Company = Database["public"]["Tables"]["companies"]["Row"];
 
-interface ContactWithCompany extends Contact {
+interface ContactWithCompany extends Omit<Contact, "company"> {
   company?: Company | null;
 }
 

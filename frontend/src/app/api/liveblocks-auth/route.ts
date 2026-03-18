@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let fullName = user.user_metadata?.full_name ?? user.email ?? "Unknown";
+  let fullName = (user as Record<string, any>).user_metadata?.full_name ?? user.email ?? "Unknown";
   let email = user.email ?? "";
   try {
     const supabase = createServiceClient();

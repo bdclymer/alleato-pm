@@ -182,7 +182,7 @@ export async function POST(
     } else if (exportParams.format === "pdf") {
       const html = generatePDFHTML(commitmentData, exportParams);
       const pdfBuffer = await renderPdfFromHtml(html);
-      return new NextResponse(pdfBuffer, {
+      return new NextResponse(new Uint8Array(pdfBuffer), {
         status: 200,
         headers: {
           "Content-Type": "application/pdf",
