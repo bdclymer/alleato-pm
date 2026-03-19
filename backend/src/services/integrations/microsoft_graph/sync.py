@@ -11,7 +11,7 @@ from typing import Optional
 from supabase import Client
 
 from .outlook import sync_outlook_emails
-from .teams import sync_teams_channel, get_all_teams_and_channels
+from .teams import sync_teams_channel, get_all_teams_and_channels, get_user_chats, sync_teams_chat
 from .onedrive import sync_onedrive_folder, sync_sharepoint_folder
 from .client import get_graph_client
 from .embed import embed_pending_graph_documents
@@ -89,7 +89,7 @@ def run_graph_sync(supabase: Client) -> dict:
         logger.info("[GraphSync] Microsoft Graph credentials not set — skipping")
         return {"status": "skipped", "reason": "not_configured"}
 
-    summary: dict = {"outlook": 0, "teams": 0, "onedrive": 0, "errors": []}
+    summary: dict = {"outlook": 0, "teams": 0, "teams_dm": 0, "onedrive": 0, "errors": []}
 
     # ── Outlook ──────────────────────────────────────────────────────────────
     sync_emails = os.environ.get("GRAPH_SYNC_OUTLOOK", "true").lower() == "true"
@@ -144,6 +144,45 @@ def run_graph_sync(supabase: Client) -> dict:
             logger.error(f"[GraphSync] {err}")
             summary["errors"].append(err)
 
+    # ── Teams Direct Messages ─────────────────────────────────────────────────
+    sync_teams_dm = os.environ.get("GRAPH_SYNC_TEAMS_DM", "true").lower() == "true"
+    if sync_teams_dm:
+        dm_users = [
+            e.strip()
+            for e in os.environ.get("MICROSOFT_SYNC_USERS", "").split(",")
+            if e.strip()
+        ]
+        seen_chat_ids: set[str] = set()  # deduplicate chats shared by multiple users
+        for user_email in dm_users:
+            try:
+                chats = get_user_chats(user_email)
+                for chat in chats:
+                    chat_id = chat["id"]
+                    if chat_id in seen_chat_ids:
+                        continue
+                    seen_chat_ids.add(chat_id)
+                    resource_id = f"chat:{chat_id}"
+                    resource_name = f"Teams DM: {chat['display_name']}"
+                    try:
+                        token = _get_delta_token(supabase, "teams_chat", resource_id)
+                        count, new_token = sync_teams_chat(
+                            supabase,
+                            chat_id,
+                            chat["display_name"],
+                            chat["member_names"],
+                            token,
+                        )
+                        _save_sync_state(supabase, "teams_chat", resource_id, resource_name, new_token, count)
+                        summary["teams_dm"] += count
+                    except Exception as e:
+                        err = f"Teams DM sync failed for {resource_name}: {e}"
+                        logger.error(f"[GraphSync] {err}", exc_info=True)
+                        summary["errors"].append(err)
+            except Exception as e:
+                err = f"Teams DM chat listing failed for {user_email}: {e}"
+                logger.error(f"[GraphSync] {err}")
+                summary["errors"].append(err)
+
     # ── OneDrive ─────────────────────────────────────────────────────────────
     sync_onedrive = os.environ.get("GRAPH_SYNC_ONEDRIVE", "true").lower() == "true"
     if sync_onedrive:
@@ -195,10 +234,10 @@ def run_graph_sync(supabase: Client) -> dict:
         except Exception as e:
             logger.error(f"[GraphSync] Bad SHAREPOINT_SYNC_FOLDERS entry '{entry}': {e}")
 
-    total = summary["outlook"] + summary["teams"] + summary["onedrive"]
+    total = summary["outlook"] + summary["teams"] + summary["teams_dm"] + summary["onedrive"]
     logger.info(
-        "[GraphSync] Complete — Outlook: %d, Teams: %d, OneDrive: %d",
-        summary["outlook"], summary["teams"], summary["onedrive"],
+        "[GraphSync] Complete — Outlook: %d, Teams channels: %d, Teams DMs: %d, OneDrive: %d",
+        summary["outlook"], summary["teams"], summary["teams_dm"], summary["onedrive"],
     )
 
     # ── Embed any newly ingested documents ───────────────────────────────────
