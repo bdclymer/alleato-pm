@@ -3,7 +3,6 @@ Microsoft Teams Message Ingestion
 Fetches channel messages/threads and direct messages (chats) from Teams via Microsoft Graph API.
 """
 import logging
-import os
 import re
 from datetime import datetime, timezone
 from typing import Optional
@@ -243,7 +242,7 @@ def get_user_chats(user_email: str) -> list[dict]:
                 logger.warning(f"[Teams DM] Member expansion not supported — retrying without it")
                 continue
             logger.error(f"[Teams DM] Failed to list chats for {user_email}: {e}")
-            return []
+            raise
 
     return chats
 
@@ -328,7 +327,9 @@ def sync_teams_chat(
         items, new_delta_token = graph.get_delta(delta_path, delta_token)
     except Exception as e:
         logger.error(f"[Teams DM] Delta query failed for chat {chat_display_name}: {e}")
-        return 0, ""
+        # Re-raise so the caller retains the existing delta token and can record
+        # the failure — returning "" would silently overwrite valid sync state.
+        raise
 
     synced = 0
     for msg in items:
