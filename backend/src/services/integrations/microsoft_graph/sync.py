@@ -152,11 +152,15 @@ def run_graph_sync(supabase: Client) -> dict:
             for e in os.environ.get("MICROSOFT_SYNC_USERS", "").split(",")
             if e.strip()
         ]
+        seen_chat_ids: set[str] = set()  # deduplicate chats shared by multiple users
         for user_email in dm_users:
             try:
                 chats = get_user_chats(user_email)
                 for chat in chats:
                     chat_id = chat["id"]
+                    if chat_id in seen_chat_ids:
+                        continue
+                    seen_chat_ids.add(chat_id)
                     resource_id = f"chat:{chat_id}"
                     resource_name = f"Teams DM: {chat['display_name']}"
                     try:

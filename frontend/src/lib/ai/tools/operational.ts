@@ -1376,9 +1376,17 @@ export function createOperationalTools(
 
             const knowledgeError = knowledgeRes.error;
             const documentError = documentRes.error;
-            if (knowledgeError && documentError) {
+            const knowledgeBaseError = knowledgeBaseRes.error;
+            const chunksError = (chunksRes as { error?: { message: string } }).error;
+            // Surface any source failures; only abort if all primary structured sources failed
+            const errorParts: string[] = [];
+            if (knowledgeError) errorParts.push(`knowledge=${knowledgeError.message}`);
+            if (documentError) errorParts.push(`documents=${documentError.message}`);
+            if (knowledgeBaseError) errorParts.push(`knowledgeBase=${knowledgeBaseError.message}`);
+            if (chunksError) errorParts.push(`chunks=${chunksError.message}`);
+            if (knowledgeError && documentError && knowledgeBaseError && chunksError) {
               return {
-                error: `Semantic search failed: knowledge=${knowledgeError.message}; documents=${documentError.message}`,
+                error: `Semantic search failed: ${errorParts.join("; ")}`,
               };
             }
 
@@ -2507,43 +2515,52 @@ export function createOperationalTools(
             return { error: "Provide a projectName to search for, or set listAll: true" };
           }
 
-          // Run project DB lookup + communication searches IN PARALLEL so the
-          // LLM always has email/Teams/OneDrive context regardless of whether
-          // it explicitly calls searchEmails or searchTeamsMessages.
-          const [dbResult, emailResult, teamsResult, docsResult] = await Promise.all([
-            supabase
-              .from("projects")
-              .select("id, name, phase")
-              .eq("archived", false)
-              .ilike("name", `%${projectName}%`)
-              .order("name", { ascending: true })
-              .limit(5),
+          // Step 1: Resolve the project name from the database first so that
+          // the communication searches use the canonical project name (bestMatch.name)
+          // rather than the raw user-supplied query — this scopes email/Teams/doc
+          // results to the specific resolved project and avoids cross-project leakage.
+          const dbResult = await supabase
+            .from("projects")
+            .select("id, name, phase")
+            .eq("archived", false)
+            .ilike("name", `%${projectName}%`)
+            .order("name", { ascending: true })
+            .limit(5);
+
+          const { data, error } = dbResult;
+          if (error) return { error: error.message };
+          const matches = (data ?? []) as unknown as AnyRow[];
+
+          // Use the resolved project name for comms search when possible; fall back
+          // to the original query when no DB match is found (project may exist only
+          // in emails/Teams but not yet in the database).
+          const resolvedQuery =
+            matches.length > 0 ? String(matches[0].name ?? projectName) : projectName;
+
+          // Step 2: Run all communication searches in parallel using the resolved name.
+          const [emailResult, teamsResult, docsResult] = await Promise.all([
             searchDocumentChunksByCategory({
               supabase,
-              query: projectName,
+              query: resolvedQuery,
               category: "email",
               matchCount: 6,
               sourceLabel: "email",
             }),
             searchDocumentChunksByCategory({
               supabase,
-              query: projectName,
+              query: resolvedQuery,
               category: "teams_message",
               matchCount: 6,
               sourceLabel: "Teams message",
             }),
             searchDocumentChunksByCategory({
               supabase,
-              query: projectName,
+              query: resolvedQuery,
               category: "document",
               matchCount: 4,
               sourceLabel: "document",
             }),
           ]);
-
-          const { data, error } = dbResult;
-          if (error) return { error: error.message };
-          const matches = (data ?? []) as unknown as AnyRow[];
 
           const communicationsNote =
             "IMPORTANT: The following emails, Teams messages, and documents were retrieved automatically. " +
