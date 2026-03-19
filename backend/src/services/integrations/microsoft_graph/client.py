@@ -8,6 +8,9 @@ import logging
 import httpx
 from typing import Any, Optional
 
+# Transient OS/network errors that are safe to retry
+_RETRY_ERRNO = {35, 11, 110, 104}  # EAGAIN, EWOULDBLOCK, ETIMEDOUT, ECONNRESET
+
 logger = logging.getLogger(__name__)
 
 GRAPH_BASE = "https://graph.microsoft.com/v1.0"
@@ -45,13 +48,45 @@ class GraphClient:
         self._token_expiry = time.time() + int(data.get("expires_in", 3600))
         return self._token
 
+    def _get_with_retry(
+        self,
+        url: str,
+        params: Optional[dict] = None,
+        max_retries: int = 4,
+        base_delay: float = 2.0,
+    ) -> dict:
+        """GET with exponential-backoff retry for transient network errors."""
+        last_exc: Optional[Exception] = None
+        for attempt in range(max_retries):
+            try:
+                headers = {"Authorization": f"Bearer {self._get_token()}"}
+                resp = httpx.get(url, headers=headers, params=params, timeout=90)
+                # Retry on 429 (throttle) or 503 (service unavailable)
+                if resp.status_code in (429, 503):
+                    retry_after = int(resp.headers.get("Retry-After", base_delay * (2 ** attempt)))
+                    logger.warning("[Graph] %d response — retrying in %ds (attempt %d/%d)",
+                                   resp.status_code, retry_after, attempt + 1, max_retries)
+                    time.sleep(min(retry_after, 60))
+                    continue
+                resp.raise_for_status()
+                return resp.json()
+            except httpx.ConnectError as exc:
+                last_exc = exc
+            except OSError as exc:
+                if getattr(exc, "errno", None) in _RETRY_ERRNO:
+                    last_exc = exc
+                else:
+                    raise
+            delay = base_delay * (2 ** attempt)
+            logger.warning("[Graph] Transient error on attempt %d/%d (%s) — retrying in %.1fs",
+                           attempt + 1, max_retries, last_exc, delay)
+            time.sleep(delay)
+        raise last_exc  # type: ignore[misc]
+
     def get(self, path: str, params: Optional[dict] = None) -> dict:
         """GET request to Graph API. `path` can be full URL or relative path."""
         url = path if path.startswith("https://") else f"{GRAPH_BASE}{path}"
-        headers = {"Authorization": f"Bearer {self._get_token()}"}
-        resp = httpx.get(url, headers=headers, params=params, timeout=60)
-        resp.raise_for_status()
-        return resp.json()
+        return self._get_with_retry(url, params)
 
     def get_all_pages(self, path: str, params: Optional[dict] = None) -> list[dict]:
         """Fetch all pages following @odata.nextLink."""

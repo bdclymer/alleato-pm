@@ -175,8 +175,10 @@ def embed_graph_document(supabase_client, metadata_id: str) -> int:
 
 def embed_pending_graph_documents(supabase_client, limit: int = 100) -> Dict[str, Any]:
     """
-    Find all document_metadata rows with status='raw_ingested' and
-    source='microsoft_graph', then chunk+embed each one.
+    Find all document_metadata rows with source='microsoft_graph' that still need
+    embedding. Picks up both 'raw_ingested' (fresh syncs) and 'segmented' (items
+    that were accidentally routed through the Fireflies segmenter instead of the
+    graph embed path).
 
     Returns summary dict.
     """
@@ -185,7 +187,7 @@ def embed_pending_graph_documents(supabase_client, limit: int = 100) -> Dict[str
             supabase_client.from_("document_metadata")
             .select("id, category")
             .eq("source", "microsoft_graph")
-            .eq("status", "raw_ingested")
+            .in_("status", ["raw_ingested", "segmented"])
             .limit(limit)
             .execute()
         )
