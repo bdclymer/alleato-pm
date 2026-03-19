@@ -308,27 +308,39 @@ export function createFinancialTools(
           const resolved = await resolveProject(supabase, projectId, projectName);
           if ("error" in resolved) return resolved;
 
-          // Fetch COs, CO lines, change events, and contracts in parallel
-          let coQuery = supabase
-            .from("change_orders")
+          // Fetch COs from both tables, CO lines, change events, and contracts in parallel
+          let primeCoQuery = supabase
+            .from("prime_contract_change_orders")
             .select(
-              "id, co_number, title, status, amount, description, " +
-              "due_date, submitted_at, submitted_by, approved_at, approved_by, " +
-              "rejection_reason, contract_id, change_event_id, project_id, created_at",
+              "id, pcco_number, title, status, total_amount, description, " +
+              "due_date, submitted_at, created_by, approved_at, approved_by, " +
+              "contract_id, change_event_id, project_id, created_at",
             )
             .eq("project_id", resolved.id)
             .order("created_at", { ascending: false })
             .limit(100);
 
+          let commitCoQuery = supabase
+            .from("contract_change_orders")
+            .select(
+              "id, change_order_number, description, status, amount, " +
+              "requested_date, contract_id, change_event_id, created_at",
+            )
+            .order("created_at", { ascending: false })
+            .limit(100);
+
           if (status) {
-            coQuery = coQuery.ilike("status", `%${status}%`);
+            primeCoQuery = primeCoQuery.ilike("status", `%${status}%`);
+            commitCoQuery = commitCoQuery.ilike("status", `%${status}%`);
           }
           if (contractId) {
-            coQuery = coQuery.eq("contract_id", contractId);
+            primeCoQuery = primeCoQuery.eq("contract_id", contractId);
+            commitCoQuery = commitCoQuery.eq("contract_id", contractId);
           }
 
-          const [coRes, ceRes, contractRes, coLinesRes] = await Promise.all([
-            coQuery,
+          const [primeCoRes, commitCoRes, ceRes, contractRes, coLinesRes] = await Promise.all([
+            primeCoQuery,
+            commitCoQuery,
             supabase
               .from("change_events")
               .select(
@@ -351,7 +363,17 @@ export function createFinancialTools(
               .eq("project_id", resolved.id),
           ]);
 
-          const changeOrders = (coRes.data ?? []) as unknown as AnyRow[];
+          // Normalize both CO types into a unified shape
+          const primeCOs = (primeCoRes.data ?? []).map((co: Record<string, unknown>) => ({
+            ...co,
+            co_number: co.pcco_number,
+            amount: co.total_amount,
+          }));
+          const commitCOs = (commitCoRes.data ?? []).map((co: Record<string, unknown>) => ({
+            ...co,
+            co_number: co.change_order_number,
+          }));
+          const changeOrders = [...primeCOs, ...commitCOs] as unknown as AnyRow[];
           const changeEvents = (ceRes.data ?? []) as unknown as AnyRow[];
           const contracts = (contractRes.data ?? []) as unknown as AnyRow[];
           const coLines = (coLinesRes.data ?? []) as unknown as AnyRow[];
@@ -908,8 +930,8 @@ export function createFinancialTools(
               .eq("project_id", resolved.id)
               .order("created_at", { ascending: true }),
             supabase
-              .from("change_orders")
-              .select("id, amount, status, created_at, approved_at")
+              .from("prime_contract_change_orders")
+              .select("id, total_amount, status, created_at, approved_at")
               .eq("project_id", resolved.id)
               .gte("created_at", cutoffStr)
               .order("created_at", { ascending: true }),
@@ -918,7 +940,10 @@ export function createFinancialTools(
           const directCosts = (dcRes.data ?? []) as unknown as AnyRow[];
           const invoices = (invoiceRes.data ?? []) as unknown as AnyRow[];
           const snapshots = (snapshotRes.data ?? []) as unknown as AnyRow[];
-          const changeOrders = (coRes.data ?? []) as unknown as AnyRow[];
+          const changeOrders = ((coRes.data ?? []) as unknown as AnyRow[]).map(co => ({
+            ...co,
+            amount: co.total_amount,
+          }));
 
           // Filter invoices to contracts in this project
           // (owner_invoices link through contract_id to contracts table)
@@ -1127,8 +1152,8 @@ export function createFinancialTools(
               .order("forecast_date", { ascending: false }),
             // Change orders for scope change tracking
             supabase
-              .from("change_orders")
-              .select("id, amount, status, contract_id")
+              .from("prime_contract_change_orders")
+              .select("id, total_amount, status, contract_id")
               .eq("project_id", resolved.id),
           ]);
 
@@ -1137,7 +1162,10 @@ export function createFinancialTools(
           const directCosts = (directCostRes.data ?? []) as unknown as AnyRow[];
           const sovs = (sovRes.data ?? []) as unknown as AnyRow[];
           const forecasts = (forecastRes.data ?? []) as unknown as AnyRow[];
-          const changeOrders = (coRes.data ?? []) as unknown as AnyRow[];
+          const changeOrders = ((coRes.data ?? []) as unknown as AnyRow[]).map(co => ({
+            ...co,
+            amount: co.total_amount,
+          }));
 
           // ---- Revenue side ----
           const totalOriginalRevenue = primeContracts.reduce(

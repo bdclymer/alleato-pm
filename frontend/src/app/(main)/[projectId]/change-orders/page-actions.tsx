@@ -1,62 +1,60 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Plus, MoreHorizontal } from "lucide-react";
+import { Download, Plus } from "lucide-react";
+import { toast } from "sonner";
+
 import { Button } from "@/components/ui/button";
-import { ExportDropdown } from "@/components/domain/change-orders/ExportDropdown";
-import {
-  ReportsDropdown,
-  type ReportFilter,
-} from "@/components/domain/change-orders/ReportsDropdown";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { ReviewerSettingsDialog } from "./reviewer-settings-dialog";
 
 interface PageActionsProps {
   projectId: string;
+  tab?: "prime" | "commitment";
 }
 
-export function PageActions({ projectId }: PageActionsProps) {
-  const router = useRouter();
+export function PageActions({ projectId, tab = "prime" }: PageActionsProps) {
+  const createHref =
+    tab === "prime"
+      ? `/${projectId}/change-orders/prime/new`
+      : `/${projectId}/change-orders/commitment/new`;
 
-  const handleApplyFilter = (filter: ReportFilter) => {
-    const today = new Date().toISOString().split("T")[0];
+  const label =
+    tab === "prime" ? "New Prime Contract CO" : "New Commitment CO";
 
-    switch (filter.type) {
-      case "unexecuted":
-        // Filter: approved but not executed
-        router.push(
-          `/${projectId}/change-orders?status=approved&report=unexecuted`,
-        );
-        break;
+  const handleExport = async () => {
+    try {
+      const exportPath =
+        tab === "prime"
+          ? `/api/projects/${projectId}/prime-contract-change-orders/export`
+          : `/api/projects/${projectId}/commitment-change-orders/export`;
 
-      case "overdue":
-        // Filter: due_date < today and status not approved/executed
-        router.push(
-          `/${projectId}/change-orders?dueDateTo=${today}&report=overdue`,
-        );
-        break;
+      const res = await fetch(exportPath);
+      if (!res.ok) throw new Error("Export failed");
 
-      case "clear":
-        // Clear all filters
-        router.push(`/${projectId}/change-orders`);
-        break;
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download =
+        tab === "prime"
+          ? "prime-contract-change-orders.csv"
+          : "commitment-change-orders.csv";
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("Export downloaded");
+    } catch {
+      toast.error("Failed to export");
     }
   };
 
   return (
     <>
       <div className="hidden items-center gap-2 sm:flex">
-        <ReviewerSettingsDialog projectId={projectId} />
-        <ReportsDropdown onApplyFilter={handleApplyFilter} />
-        <ExportDropdown projectId={projectId} />
+        <Button variant="outline" size="sm" onClick={handleExport}>
+          <Download className="mr-2 h-4 w-4" />
+          Export CSV
+        </Button>
         <Button asChild size="sm" data-testid="change-orders-create-button">
-          <Link href={`/${projectId}/change-orders/new`}>Create Change Order</Link>
+          <Link href={createHref}>{label}</Link>
         </Button>
       </div>
 
@@ -68,29 +66,10 @@ export function PageActions({ projectId }: PageActionsProps) {
           className="h-9 w-9 rounded-full border-brand p-0 text-brand hover:bg-brand/10"
           aria-label="Create change order"
         >
-          <Link href={`/${projectId}/change-orders/new`}>
+          <Link href={createHref}>
             <Plus className="h-4 w-4" />
           </Link>
         </Button>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="h-9 w-9 p-0" aria-label="More actions">
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={() => handleApplyFilter({ type: "unexecuted" })}>
-              Unexecuted report
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleApplyFilter({ type: "overdue" })}>
-              Overdue report
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => handleApplyFilter({ type: "clear" })}>
-              Clear report filters
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
     </>
   );

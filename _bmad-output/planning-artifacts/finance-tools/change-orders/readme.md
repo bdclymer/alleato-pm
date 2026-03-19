@@ -18,35 +18,11 @@ This directory contains the complete documentation for the Change Orders feature
 5. **API_ENDPOINTS-ChangeOrders.md** - Complete API documentation with 25+ endpoints
 6. **UI-ChangeOrders.md** - Component specifications with responsive design and accessibility
 
-### 📁 Archive
+### 📁 Crawl
 
-- **`.archive/`** - Contains original files:
-  - `specs-change-orders.mdx` (original comprehensive specs)
-  - `crawl-change-orders/` (Procore analysis data with 46 pages of reference material)
-
-## Current Implementation Status: 15% Complete
-
-### ✅ Completed
-
-- System analysis and documentation
-- Basic list view implementation at `/[projectId]/change-orders/page.tsx`
-- Empty state and loading states
-- Status badge components
-- Tab navigation structure
-
-### ⚠️ In Progress
-
-- Database schema design (ready for implementation)
-- API endpoint specifications (ready for development)
-
-### ❌ Not Started
-
-- Change order creation form (stub only)
-- Detail view and editing capabilities
-- Multi-tier approval workflow
-- Package-based organization
-- PDF generation system
-- Reports and analytics
+- **`.crawl/`** - Contains files:
+  - `pages/` (original comprehensive specs)
+  - `reports/` (Procore analysis data with 46 pages of reference material)
 
 ## Key Features from Procore Analysis
 
@@ -59,30 +35,3 @@ Based on comprehensive analysis of Procore's 46-page change orders system:
 5. **Rich Line Items** - Detailed financial breakdown with budget code integration
 6. **Document Management** - File attachments with categorization
 7. **Comprehensive Reporting** - Unexecuted, overdue, and analytics reports
-
-## Implementation Phases (12 weeks total)
-
-1. **Phase 1-2: Foundation** (Weeks 1-4) - Database + APIs
-2. **Phase 3-4: Core Functionality** (Weeks 3-5) - Forms + Enhanced Lists
-3. **Phase 5: Workflow** (Weeks 5-7) - Approval system
-4. **Phase 6-7: Advanced Features** (Weeks 6-9) - Packages + PDFs
-5. **Phase 8: Reports** (Weeks 8-10) - Analytics and reporting
-6. **Phase 9: Polish** (Weeks 9-12) - Testing and production readiness
-
-## Quick Navigation
-
-- **For Development**: Start with SCHEMA and API_ENDPOINTS
-- **For UI/UX Work**: Reference FORMS and UI specifications
-- **For Project Management**: Track progress via TASKS checklist
-- **For Architecture**: See PLANS for complete overview
-
-## Next Actions
-
-1. Implement database migrations from SCHEMA-ChangeOrders.md
-2. Create API endpoints from API_ENDPOINTS-ChangeOrders.md
-3. Build change order creation form from FORMS-ChangeOrders.md
-4. Enhance existing list view per UI-ChangeOrders.md specifications
-
----
-
-*This documentation follows the standardized structure to ensure Claude Code can efficiently work with any tool documentation without confusion or redundancy.*

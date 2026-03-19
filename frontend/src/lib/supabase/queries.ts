@@ -225,11 +225,22 @@ export async function getProjectChangeOrders(
   supabase: SupabaseClient<Database>,
   projectId: number,
 ) {
-  return supabase
-    .from("change_orders")
-    .select("*")
-    .eq("project_id", projectId)
-    .order("created_at", { ascending: false });
+  const [primeRes, contractRes] = await Promise.all([
+    supabase
+      .from("prime_contract_change_orders")
+      .select("*")
+      .eq("project_id", projectId)
+      .order("created_at", { ascending: false }),
+    supabase
+      .from("contract_change_orders")
+      .select("*, prime_contracts!inner(project_id)")
+      .eq("prime_contracts.project_id", projectId)
+      .order("created_at", { ascending: false }),
+  ]);
+  return {
+    data: [...(primeRes.data ?? []), ...(contractRes.data ?? [])],
+    error: primeRes.error || contractRes.error,
+  };
 }
 
 // =============================================================================

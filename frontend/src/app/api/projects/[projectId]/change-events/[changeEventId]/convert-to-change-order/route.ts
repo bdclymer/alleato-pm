@@ -70,19 +70,28 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // 2. Check if already converted (prevent double conversion)
-    const { data: existingCO, error: checkError } = await supabase
-      .from("change_orders")
-      .select("id")
-      .eq("change_event_id", changeEventId)
-      .maybeSingle();
+    // Check both tables since the CO could be either type
+    const [primeCheck, commitmentCheck] = await Promise.all([
+      supabase
+        .from("prime_contract_change_orders")
+        .select("id")
+        .eq("change_event_id", changeEventId)
+        .maybeSingle(),
+      supabase
+        .from("contract_change_orders")
+        .select("id")
+        .eq("change_event_id", changeEventId)
+        .maybeSingle(),
+    ]);
 
-    if (checkError) {
+    if (primeCheck.error || commitmentCheck.error) {
       return NextResponse.json(
-        { error: "Failed to check conversion status", details: checkError.message },
+        { error: "Failed to check conversion status", details: (primeCheck.error || commitmentCheck.error)?.message },
         { status: 500 },
       );
     }
 
+    const existingCO = primeCheck.data || commitmentCheck.data;
     if (existingCO) {
       return NextResponse.json(
         {
@@ -137,82 +146,89 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return sum + (item.revenue_rom || item.cost_rom || 0);
     }, 0);
 
-    // 5. Generate CO number
-    // Get the next available CO number for this contract
-    const { data: existingCOs, error: countError } = await supabase
-      .from("change_orders")
-      .select("co_number")
-      .eq("project_id", numericProjectId)
-      .eq("contract_id", validatedData.target_contract_id)
-      .order("created_at", { ascending: false })
-      .limit(1);
+    // 5-7. Create the change order in the appropriate table
+    let newChangeOrderId: string | number;
+    let coNumber: string;
 
-    if (countError) {
-      return NextResponse.json(
-        { error: "Failed to generate CO number", details: countError.message },
-        { status: 500 },
-      );
-    }
+    if (validatedData.type === "prime") {
+      // Get next PCCO number
+      const { data: existingCOs } = await supabase
+        .from("prime_contract_change_orders")
+        .select("pcco_number")
+        .eq("project_id", numericProjectId)
+        .eq("contract_id", validatedData.target_contract_id)
+        .order("created_at", { ascending: false })
+        .limit(1);
 
-    // Parse existing CO numbers and increment
-    const lastNumber = existingCOs?.[0]?.co_number;
-    let nextNumber = 1;
-    if (lastNumber) {
-      const match = lastNumber.match(/(\d+)$/);
-      if (match) {
-        nextNumber = parseInt(match[1], 10) + 1;
+      let nextNumber = 1;
+      const lastNumber = existingCOs?.[0]?.pcco_number;
+      if (lastNumber) {
+        const match = String(lastNumber).match(/(\d+)$/);
+        if (match) nextNumber = parseInt(match[1], 10) + 1;
       }
-    }
-    const coNumber = `CO-${contract.contract_number}-${String(nextNumber).padStart(3, "0")}`;
+      coNumber = `PCCO-${contract.contract_number}-${String(nextNumber).padStart(3, "0")}`;
 
-    // 6. Create the change order
-    const { data: newChangeOrder, error: createError } = await supabase
-      .from("change_orders")
-      .insert({
-        project_id: numericProjectId,
-        contract_id: validatedData.target_contract_id,
-        change_event_id: changeEventId,
-        co_number: coNumber,
-        title: changeEvent.title,
-        description: changeEvent.description,
-        amount: totalAmount,
-        status: "draft",
-        is_private: false,
-        submitted_by: user.id,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .select()
-      .single();
+      const { data: newCO, error: createError } = await supabase
+        .from("prime_contract_change_orders")
+        .insert({
+          project_id: numericProjectId,
+          contract_id: validatedData.target_contract_id,
+          change_event_id: changeEventId,
+          pcco_number: coNumber,
+          title: changeEvent.title,
+          description: changeEvent.description,
+          total_amount: totalAmount,
+          status: "draft",
+          created_by: user.id,
+        })
+        .select()
+        .single();
 
-    if (createError || !newChangeOrder) {
-      return NextResponse.json(
-        { error: "Failed to create change order", details: createError?.message },
-        { status: 500 },
-      );
-    }
-
-    // 7. Copy line items to change order lines (if they exist)
-    if (lineItems.length > 0) {
-      const changeOrderLines = lineItems.map((item: any) => ({
-        change_order_id: newChangeOrder.id,
-        project_id: numericProjectId,
-        cost_code_id: item.budget_code_id || "UNKNOWN",
-        cost_type_id: "LABOR", // Default, adjust as needed
-        description: item.description,
-        amount: item.revenue_rom || item.cost_rom || 0,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      }));
-
-      const { error: lineItemsError } = await supabase
-        .from("change_order_lines")
-        .insert(changeOrderLines);
-
-      if (lineItemsError) {
-        // Log the error but don't fail the conversion
-        console.error("Failed to copy line items:", lineItemsError);
+      if (createError || !newCO) {
+        return NextResponse.json(
+          { error: "Failed to create prime contract change order", details: createError?.message },
+          { status: 500 },
+        );
       }
+      newChangeOrderId = newCO.id;
+    } else {
+      // Commitment change order
+      const { data: existingCOs } = await supabase
+        .from("contract_change_orders")
+        .select("change_order_number")
+        .eq("contract_id", validatedData.target_contract_id)
+        .order("created_at", { ascending: false })
+        .limit(1);
+
+      let nextNumber = 1;
+      const lastNumber = existingCOs?.[0]?.change_order_number;
+      if (lastNumber) {
+        const match = String(lastNumber).match(/(\d+)$/);
+        if (match) nextNumber = parseInt(match[1], 10) + 1;
+      }
+      coNumber = `CCO-${contract.contract_number}-${String(nextNumber).padStart(3, "0")}`;
+
+      const { data: newCO, error: createError } = await supabase
+        .from("contract_change_orders")
+        .insert({
+          contract_id: validatedData.target_contract_id,
+          change_event_id: changeEventId,
+          change_order_number: coNumber,
+          description: changeEvent.title,
+          amount: totalAmount,
+          status: "draft",
+          created_by: user.id,
+        })
+        .select()
+        .single();
+
+      if (createError || !newCO) {
+        return NextResponse.json(
+          { error: "Failed to create contract change order", details: createError?.message },
+          { status: 500 },
+        );
+      }
+      newChangeOrderId = newCO.id;
     }
 
     // 8. Update the change event status to indicate conversion
@@ -244,8 +260,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json(
       {
         success: true,
-        change_order_id: newChangeOrder.id, // Frontend expects change_order_id
-        co_number: newChangeOrder.co_number,
+        change_order_id: newChangeOrderId,
+        co_number: coNumber,
         message: "Change event successfully converted to change order",
       },
       { status: 201 },

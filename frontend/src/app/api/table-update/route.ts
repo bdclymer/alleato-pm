@@ -22,9 +22,9 @@ export async function POST(request: NextRequest) {
     // Remove fields that shouldn't be updated
     const { id: _, created_at, updated_at, ...updateData } = data;
 
-    if (table === "change_orders" && updateData.status) {
+    if ((table === "prime_contract_change_orders" || table === "contract_change_orders") && updateData.status) {
       const { data: existing, error: fetchError } = await supabase
-        .from("change_orders")
+        .from(table)
         .select("status, submitted_at, approved_at")
         .eq("id", id)
         .single();

@@ -125,7 +125,8 @@ The Change Orders tool should:
 - docfile: PRPs/ai_docs/procore-change-orders.md
   why: Consolidated summary of Procore change order workflows and fields.
   section: All sections
-```markdown
+```
+
 ### Current Codebase tree (run `tree` in the root of the project) to get an overview of the codebase
 
 ```bash
@@ -148,7 +149,8 @@ The Change Orders tool should:
 │   │   └── types
 │   └── tests
 └── scripts
-```markdown
+```
+
 ### Desired Codebase tree with files to be added and responsibility of file
 
 ```bash
@@ -168,7 +170,8 @@ frontend/src/hooks/use-contract-change-orders.ts
   # Hook tailored to contract_change_orders (avoid legacy change_orders)
 frontend/tests/e2e/change-orders/change-order-ui.spec.ts
   # UI flow tests (list → detail → approve/reject)
-```markdown
+```
+
 ### Known Gotchas of our codebase & Library Quirks
 
 ```typescript
@@ -207,10 +210,10 @@ export interface ContractChangeOrder {
   created_at: string;
   updated_at: string;
 }
-```sql
+```
+
 ### Implementation Tasks (ordered by dependencies)
 
-```yaml
 Task 1: ALIGN DATA ACCESS TO contract_change_orders
   - UPDATE: frontend/src/hooks/use-change-orders.ts OR create new hook in frontend/src/hooks/use-contract-change-orders.ts
   - IMPLEMENT: supabase queries against contract_change_orders table
@@ -255,7 +258,7 @@ Task 7: TESTS
   - ADD: Playwright UI tests for list → detail → approve/reject
   - UPDATE: API tests if contractId resolution changes
   - FOLLOW pattern: frontend/tests/e2e/prime-contracts/api-change-orders.spec.ts
-```typescript
+
 ### Implementation Patterns & Key Details
 
 ```typescript
@@ -277,21 +280,22 @@ export function ChangeOrderReviewerResponse({ changeOrderId, contractId, project
   // use client: uses state + fetch
   // must send rejection_reason on reject; approved_by/approved_date handled server-side
 }
-```markdown
+```
+
 ### Integration Points
 
-```yaml
 DATABASE:
   - table: contract_change_orders (frontend/drizzle/schema.ts)
   - constraint: valid_approval_date check for approved/rejected status
   - policy: Users can view change orders in their projects; editors can create/update
+
 ROUTES:
   - ui: app/(main)/[projectId]/change-orders/page.tsx
   - ui: app/(main)/[projectId]/change-orders/[changeOrderId]/page.tsx
   - api: app/api/projects/[projectId]/contracts/[contractId]/change-orders/*
+
 CONFIG:
   - no new env vars expected
-```
 
 ## Validation Loop
 
@@ -299,19 +303,22 @@ CONFIG:
 
 ```bash
 npm run quality --prefix frontend
-```markdown
+```
+
 ### Level 2: Unit Tests (Component Validation)
 
 ```bash
 cd frontend
 npx playwright test tests/e2e/prime-contracts/api-change-orders.spec.ts
-```markdown
+```
+
 ### Level 3: Integration Testing (System Validation)
 
 ```bash
 cd frontend
 npx playwright test tests/e2e/change-orders/change-order-ui.spec.ts
-```markdown
+```
+
 ### Level 4: Creative & Domain-Specific Validation
 
 ```bash

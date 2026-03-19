@@ -62,7 +62,7 @@ export interface Commitment {
   billed_to_date: number;
   balance_to_finish: number;
 }
-export type ChangeOrder = Database["public"]["Tables"]["change_orders"]["Row"];
+export type ChangeOrder = Database["public"]["Tables"]["prime_contract_change_orders"]["Row"];
 export type DailyLog = Database["public"]["Tables"]["daily_logs"]["Row"];
 export type BudgetLine = Database["public"]["Tables"]["budget_lines"]["Row"];
 

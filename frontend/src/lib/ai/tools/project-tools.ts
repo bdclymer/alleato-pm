@@ -584,8 +584,8 @@ export function createProjectTools(
             .order("severity", { ascending: true })
             .limit(20),
           supabase
-            .from("change_orders")
-            .select("id, title, amount, status, due_date, description")
+            .from("prime_contract_change_orders")
+            .select("id, title, total_amount, status, due_date, description")
             .eq("project_id", resolvedId)
             .order("created_at", { ascending: false })
             .limit(20),
@@ -650,10 +650,10 @@ export function createProjectTools(
           .filter(
             (co) => co.status !== "approved" && co.status !== "rejected",
           )
-          .reduce((s, co) => s + (co.amount ?? 0), 0);
+          .reduce((s, co) => s + (co.total_amount ?? 0), 0);
         const approvedCOAmount = changeOrders
           .filter((co) => co.status === "approved")
-          .reduce((s, co) => s + (co.amount ?? 0), 0);
+          .reduce((s, co) => s + (co.total_amount ?? 0), 0);
 
         const totalOriginalBudget = budgetLines.reduce(
           (s, b) => s + (b.original_amount ?? 0),

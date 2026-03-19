@@ -57,7 +57,7 @@ import { buildToolUrl, isActivePath, sidebarNavGroups } from "@/lib/navigation-c
 type Project = Database["public"]["Tables"]["projects"]["Row"];
 type Task = Database["public"]["Tables"]["tasks"]["Row"];
 type Meeting = Database["public"]["Tables"]["document_metadata"]["Row"];
-type ChangeOrder = Database["public"]["Tables"]["change_orders"]["Row"];
+type ChangeOrder = Database["public"]["Tables"]["prime_contract_change_orders"]["Row"];
 type RFI = Database["public"]["Tables"]["rfis"]["Row"];
 type DailyLog = Database["public"]["Tables"]["daily_logs"]["Row"];
 type Contract = Database["public"]["Tables"]["prime_contracts"]["Row"];

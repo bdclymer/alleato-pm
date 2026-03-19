@@ -1,13 +1,12 @@
-import * as React from "react";
 import type { ReactElement } from "react";
-import { Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Check, Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
 import type {
   ColumnConfig,
   FilterConfig,
   TableColumn,
 } from "@/components/tables/unified";
-import { Badge, StatusBadge } from "@/components/ds";
+import { StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -16,69 +15,42 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export interface UnifiedChangeOrder {
-  id: string | number;
-  contractType: "general" | "prime" | "commitment";
-  normalizedNumber: string | null;
-  normalizedTitle: string | null;
-  normalizedDescription: string | null;
-  normalizedStatus: string | null;
-  normalizedAmount: number | null;
-  normalizedCreatedAt: string | null;
-  normalizedDueDate: string | null;
-  designated_reviewer_id?: string | null;
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+export interface PrimeContractCO {
+  id: number;
+  pcco_number: string | null;
+  title: string | null;
+  status: string | null;
+  total_amount: number | null;
+  contract_id: number | null;
+  executed: boolean;
+  submitted_at: string | null;
+  approved_at: string | null;
+  created_at: string | null;
+  project_id: number | null;
 }
 
-export const changeOrderColumns: ColumnConfig[] = [
-  { id: "number", label: "Number", alwaysVisible: true },
-  { id: "title", label: "Title", defaultVisible: true },
-  { id: "description", label: "Description", defaultVisible: true },
-  { id: "contract_type", label: "Contract Type", defaultVisible: true },
-  { id: "status", label: "Status", defaultVisible: true },
-  { id: "amount", label: "Amount", defaultVisible: true },
-  { id: "reviewer", label: "Reviewer", defaultVisible: true },
-  { id: "due_date", label: "Due Date", defaultVisible: false },
-  { id: "created_at", label: "Created", defaultVisible: true },
-];
-
-export const changeOrderDefaultVisibleColumns = changeOrderColumns
-  .filter((column) => column.defaultVisible !== false)
-  .map((column) => column.id);
-
-export function buildChangeOrderFilters(
-  reviewerOptions: { value: string; label: string }[],
-): FilterConfig[] {
-  return [
-    {
-      id: "contractType",
-      label: "Contract Type",
-      type: "select",
-      options: [
-        { value: "general", label: "General" },
-        { value: "prime", label: "Prime Contract" },
-        { value: "commitment", label: "Commitments" },
-      ],
-    },
-    {
-      id: "status",
-      label: "Status",
-      type: "select",
-      options: [
-        { value: "draft", label: "Draft" },
-        { value: "pending", label: "Pending" },
-        { value: "approved", label: "Approved" },
-        { value: "rejected", label: "Rejected" },
-        { value: "executed", label: "Executed" },
-      ],
-    },
-    {
-      id: "reviewer",
-      label: "Reviewer",
-      type: "select",
-      options: reviewerOptions,
-    },
-  ];
+export interface CommitmentCO {
+  id: string;
+  change_order_number: string | null;
+  description: string | null;
+  status: string | null;
+  amount: number | null;
+  contract_id: string | null;
+  requested_by: string | null;
+  requested_date: string | null;
+  approved_by: string | null;
+  approved_date: string | null;
+  rejection_reason: string | null;
+  created_at: string | null;
 }
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 function formatCurrency(value: number | null | undefined): string {
   if (value === null || value === undefined) return "-";
@@ -95,89 +67,182 @@ function formatDate(value: string | null | undefined): string {
   return parsed.toLocaleDateString();
 }
 
-function contractTypeLabel(type: UnifiedChangeOrder["contractType"]): string {
-  switch (type) {
-    case "general":
-      return "General";
-    case "prime":
-      return "Prime Contract";
-    case "commitment":
-      return "Commitments";
-    default:
-      return type;
-  }
-}
-
 function statusLabel(status: string | null | undefined): string {
   if (!status) return "-";
   if (status === "submitted") return "Pending";
   return status.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-function getReviewer(order: UnifiedChangeOrder): string {
-  if (order.contractType !== "general") return "-";
-  return order.designated_reviewer_id || "-";
-}
+// ---------------------------------------------------------------------------
+// Prime Contract CO — columns & config
+// ---------------------------------------------------------------------------
 
-export function buildChangeOrderTableColumns(): TableColumn<UnifiedChangeOrder>[] {
+export const primeColumns: ColumnConfig[] = [
+  { id: "pcco_number", label: "Number", alwaysVisible: true },
+  { id: "title", label: "Title", defaultVisible: true },
+  { id: "status", label: "Status", defaultVisible: true },
+  { id: "amount", label: "Amount", defaultVisible: true },
+  { id: "executed", label: "Executed", defaultVisible: true },
+  { id: "created_at", label: "Created", defaultVisible: true },
+];
+
+export const primeDefaultVisibleColumns = primeColumns
+  .filter((c) => c.defaultVisible !== false)
+  .map((c) => c.id);
+
+export function buildPrimeTableColumns(): TableColumn<PrimeContractCO>[] {
   return [
     {
-      ...changeOrderColumns[0],
-      render: (item) => <span className="font-medium">{item.normalizedNumber || "-"}</span>,
-      sortValue: (item) => item.normalizedNumber ?? "",
+      ...primeColumns[0],
+      render: (item) => <span className="font-medium">{item.pcco_number || "-"}</span>,
+      sortValue: (item) => item.pcco_number ?? "",
     },
     {
-      ...changeOrderColumns[1],
-      render: (item) => <span>{item.normalizedTitle || "-"}</span>,
-      sortValue: (item) => item.normalizedTitle ?? "",
+      ...primeColumns[1],
+      render: (item) => <span className="line-clamp-2">{item.title || "-"}</span>,
+      sortValue: (item) => item.title ?? "",
     },
     {
-      ...changeOrderColumns[2],
+      ...primeColumns[2],
+      render: (item) => <StatusBadge status={statusLabel(item.status)} />,
+      sortValue: (item) => item.status ?? "",
+    },
+    {
+      ...primeColumns[3],
+      render: (item) => <span>{formatCurrency(item.total_amount)}</span>,
+      sortValue: (item) => item.total_amount ?? 0,
+    },
+    {
+      ...primeColumns[4],
       render: (item) => (
-        <span className="line-clamp-1">{item.normalizedDescription || "-"}</span>
+        item.executed ? (
+          <span className="inline-flex items-center gap-1 text-green-600">
+            <Check className="h-3.5 w-3.5" /> Yes
+          </span>
+        ) : (
+          <span className="text-muted-foreground">No</span>
+        )
       ),
-      sortValue: (item) => item.normalizedDescription ?? "",
+      sortValue: (item) => (item.executed ? 1 : 0),
     },
     {
-      ...changeOrderColumns[3],
-      render: (item) => <Badge variant="outline">{contractTypeLabel(item.contractType)}</Badge>,
-      sortValue: (item) => item.contractType,
-    },
-    {
-      ...changeOrderColumns[4],
-      render: (item) => <StatusBadge status={statusLabel(item.normalizedStatus)} />,
-      sortValue: (item) => item.normalizedStatus ?? "",
-    },
-    {
-      ...changeOrderColumns[5],
-      render: (item) => <span>{formatCurrency(item.normalizedAmount)}</span>,
-      sortValue: (item) => item.normalizedAmount ?? 0,
-    },
-    {
-      ...changeOrderColumns[6],
-      render: (item) => <span>{getReviewer(item)}</span>,
-      sortValue: (item) => getReviewer(item),
-    },
-    {
-      ...changeOrderColumns[7],
-      render: (item) => <span>{formatDate(item.normalizedDueDate)}</span>,
-      sortValue: (item) =>
-        item.normalizedDueDate ? new Date(item.normalizedDueDate).getTime() : 0,
-    },
-    {
-      ...changeOrderColumns[8],
-      render: (item) => <span>{formatDate(item.normalizedCreatedAt)}</span>,
-      sortValue: (item) =>
-        item.normalizedCreatedAt ? new Date(item.normalizedCreatedAt).getTime() : 0,
+      ...primeColumns[5],
+      render: (item) => <span>{formatDate(item.created_at)}</span>,
+      sortValue: (item) => (item.created_at ? new Date(item.created_at).getTime() : 0),
     },
   ];
 }
 
-export function renderChangeOrderRowActions(
-  item: UnifiedChangeOrder,
-  onView: (item: UnifiedChangeOrder) => void,
-  onEdit: (item: UnifiedChangeOrder) => void,
-  onDelete: (item: UnifiedChangeOrder) => void,
+export function buildPrimeFilters(): FilterConfig[] {
+  return [
+    {
+      id: "status",
+      label: "Status",
+      type: "select",
+      options: [
+        { value: "proposed", label: "Proposed" },
+        { value: "approved", label: "Approved" },
+        { value: "rejected", label: "Rejected" },
+      ],
+    },
+    {
+      id: "executed",
+      label: "Executed",
+      type: "select",
+      options: [
+        { value: "yes", label: "Executed" },
+        { value: "no", label: "Not Executed" },
+      ],
+    },
+  ];
+}
+
+// ---------------------------------------------------------------------------
+// Commitment CO — columns & config
+// ---------------------------------------------------------------------------
+
+export const commitmentColumns: ColumnConfig[] = [
+  { id: "change_order_number", label: "Number", alwaysVisible: true },
+  { id: "description", label: "Description", defaultVisible: true },
+  { id: "status", label: "Status", defaultVisible: true },
+  { id: "amount", label: "Amount", defaultVisible: true },
+  { id: "requested_date", label: "Requested Date", defaultVisible: true },
+  { id: "approved_date", label: "Approved Date", defaultVisible: false },
+  { id: "created_at", label: "Created", defaultVisible: true },
+];
+
+export const commitmentDefaultVisibleColumns = commitmentColumns
+  .filter((c) => c.defaultVisible !== false)
+  .map((c) => c.id);
+
+export function buildCommitmentTableColumns(): TableColumn<CommitmentCO>[] {
+  return [
+    {
+      ...commitmentColumns[0],
+      render: (item) => (
+        <span className="font-medium">{item.change_order_number || "-"}</span>
+      ),
+      sortValue: (item) => item.change_order_number ?? "",
+    },
+    {
+      ...commitmentColumns[1],
+      render: (item) => <span className="line-clamp-2">{item.description || "-"}</span>,
+      sortValue: (item) => item.description ?? "",
+    },
+    {
+      ...commitmentColumns[2],
+      render: (item) => <StatusBadge status={statusLabel(item.status)} />,
+      sortValue: (item) => item.status ?? "",
+    },
+    {
+      ...commitmentColumns[3],
+      render: (item) => <span>{formatCurrency(item.amount)}</span>,
+      sortValue: (item) => item.amount ?? 0,
+    },
+    {
+      ...commitmentColumns[4],
+      render: (item) => <span>{formatDate(item.requested_date)}</span>,
+      sortValue: (item) =>
+        item.requested_date ? new Date(item.requested_date).getTime() : 0,
+    },
+    {
+      ...commitmentColumns[5],
+      render: (item) => <span>{formatDate(item.approved_date)}</span>,
+      sortValue: (item) =>
+        item.approved_date ? new Date(item.approved_date).getTime() : 0,
+    },
+    {
+      ...commitmentColumns[6],
+      render: (item) => <span>{formatDate(item.created_at)}</span>,
+      sortValue: (item) => (item.created_at ? new Date(item.created_at).getTime() : 0),
+    },
+  ];
+}
+
+export function buildCommitmentFilters(): FilterConfig[] {
+  return [
+    {
+      id: "status",
+      label: "Status",
+      type: "select",
+      options: [
+        { value: "pending", label: "Pending" },
+        { value: "approved", label: "Approved" },
+        { value: "rejected", label: "Rejected" },
+      ],
+    },
+  ];
+}
+
+// ---------------------------------------------------------------------------
+// Shared row actions
+// ---------------------------------------------------------------------------
+
+export function renderRowActions<T>(
+  item: T,
+  onView: (item: T) => void,
+  onEdit: (item: T) => void,
+  onDelete: (item: T) => void,
 ): ReactElement {
   return (
     <DropdownMenu>
@@ -204,9 +269,13 @@ export function renderChangeOrderRowActions(
   );
 }
 
-export function renderChangeOrderCard(
-  item: UnifiedChangeOrder,
-  onClick: (item: UnifiedChangeOrder) => void,
+// ---------------------------------------------------------------------------
+// Card & list renderers
+// ---------------------------------------------------------------------------
+
+export function renderPrimeCard(
+  item: PrimeContractCO,
+  onClick: (item: PrimeContractCO) => void,
 ): ReactElement {
   return (
     <div
@@ -215,33 +284,81 @@ export function renderChangeOrderCard(
     >
       <div className="mb-2 flex items-start justify-between gap-4">
         <div>
-          <p className="text-xs uppercase text-muted-foreground">{item.normalizedNumber || "-"}</p>
-          <h3 className="font-medium">{item.normalizedTitle || "Untitled Change Order"}</h3>
+          <p className="text-xs uppercase text-muted-foreground">{item.pcco_number || "-"}</p>
+          <h3 className="font-medium line-clamp-2">{item.title || "Untitled"}</h3>
         </div>
-        <StatusBadge status={statusLabel(item.normalizedStatus)} />
+        <StatusBadge status={statusLabel(item.status)} />
       </div>
-      <p className="text-sm text-muted-foreground">{contractTypeLabel(item.contractType)}</p>
       <p className="mt-2 text-sm text-muted-foreground">
-        Amount: {formatCurrency(item.normalizedAmount)}
+        {formatCurrency(item.total_amount)}
       </p>
     </div>
   );
 }
 
-export function renderChangeOrderList(
-  item: UnifiedChangeOrder,
-  onClick: (item: UnifiedChangeOrder) => void,
+export function renderPrimeList(
+  item: PrimeContractCO,
+  onClick: (item: PrimeContractCO) => void,
 ): ReactElement {
   return (
     <div
       className="flex cursor-pointer items-center justify-between rounded-md px-4 py-2 transition-colors hover:bg-muted/50"
       onClick={() => onClick(item)}
     >
-      <div>
-        <p className="text-sm font-medium">{item.normalizedNumber || "-"}</p>
-        <p className="text-xs text-muted-foreground">{item.normalizedTitle || "Untitled"}</p>
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium">{item.pcco_number || "-"}</p>
+        <p className="truncate text-xs text-muted-foreground">{item.title || "Untitled"}</p>
       </div>
-      <StatusBadge status={statusLabel(item.normalizedStatus)} />
+      <div className="ml-4 flex items-center gap-3">
+        <span className="text-sm text-muted-foreground">{formatCurrency(item.total_amount)}</span>
+        <StatusBadge status={statusLabel(item.status)} />
+      </div>
+    </div>
+  );
+}
+
+export function renderCommitmentCard(
+  item: CommitmentCO,
+  onClick: (item: CommitmentCO) => void,
+): ReactElement {
+  return (
+    <div
+      className="cursor-pointer rounded-lg border p-4 transition-colors hover:bg-muted/50"
+      onClick={() => onClick(item)}
+    >
+      <div className="mb-2 flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs uppercase text-muted-foreground">
+            {item.change_order_number || "-"}
+          </p>
+          <h3 className="font-medium line-clamp-2">{item.description || "Untitled"}</h3>
+        </div>
+        <StatusBadge status={statusLabel(item.status)} />
+      </div>
+      <p className="mt-2 text-sm text-muted-foreground">{formatCurrency(item.amount)}</p>
+    </div>
+  );
+}
+
+export function renderCommitmentList(
+  item: CommitmentCO,
+  onClick: (item: CommitmentCO) => void,
+): ReactElement {
+  return (
+    <div
+      className="flex cursor-pointer items-center justify-between rounded-md px-4 py-2 transition-colors hover:bg-muted/50"
+      onClick={() => onClick(item)}
+    >
+      <div className="min-w-0 flex-1">
+        <p className="text-sm font-medium">{item.change_order_number || "-"}</p>
+        <p className="truncate text-xs text-muted-foreground">
+          {item.description || "Untitled"}
+        </p>
+      </div>
+      <div className="ml-4 flex items-center gap-3">
+        <span className="text-sm text-muted-foreground">{formatCurrency(item.amount)}</span>
+        <StatusBadge status={statusLabel(item.status)} />
+      </div>
     </div>
   );
 }

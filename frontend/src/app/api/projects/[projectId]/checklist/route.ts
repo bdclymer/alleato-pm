@@ -17,7 +17,8 @@ export async function GET(
       { count: scheduleCount },
       { count: drawingsCount },
       { count: rfisCount },
-      { count: changeOrdersCount },
+      { count: primeChangeOrdersCount },
+      { count: contractChangeOrdersCount },
       { count: submittalsCount },
     ] = await Promise.all([
       supabase
@@ -45,9 +46,12 @@ export async function GET(
         .select("id", { count: "exact", head: true })
         .eq("project_id", projectId),
       supabase
-        .from("change_orders")
+        .from("prime_contract_change_orders")
         .select("id", { count: "exact", head: true })
         .eq("project_id", projectId),
+      supabase
+        .from("contract_change_orders")
+        .select("id", { count: "exact", head: true }),
       supabase
         .from("submittals")
         .select("id", { count: "exact", head: true })
@@ -61,7 +65,7 @@ export async function GET(
       "create-schedule": (scheduleCount || 0) > 0,
       "upload-drawings": (drawingsCount || 0) > 0,
       "setup-rfis": (rfisCount || 0) > 0,
-      "setup-change-orders": (changeOrdersCount || 0) > 0,
+      "setup-change-orders": (primeChangeOrdersCount || 0) + (contractChangeOrdersCount || 0) > 0,
       "setup-submittals": (submittalsCount || 0) > 0,
     };
 

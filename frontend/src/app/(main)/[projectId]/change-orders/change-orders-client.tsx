@@ -11,62 +11,76 @@ import {
   type FilterValue,
 } from "@/components/tables/unified";
 import {
-  buildChangeOrderFilters,
-  buildChangeOrderTableColumns,
-  changeOrderColumns,
-  changeOrderDefaultVisibleColumns,
-  renderChangeOrderCard,
-  renderChangeOrderList,
-  renderChangeOrderRowActions,
-  type UnifiedChangeOrder,
+  buildCommitmentFilters,
+  buildCommitmentTableColumns,
+  buildPrimeFilters,
+  buildPrimeTableColumns,
+  commitmentColumns,
+  commitmentDefaultVisibleColumns,
+  primeColumns,
+  primeDefaultVisibleColumns,
+  renderCommitmentCard,
+  renderCommitmentList,
+  renderPrimeCard,
+  renderPrimeList,
+  renderRowActions,
+  type CommitmentCO,
+  type PrimeContractCO,
 } from "@/features/change-orders/change-orders-table-config";
 
 import { PageActions } from "./page-actions";
 
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+type ActiveTab = "prime" | "commitment";
+
 interface ChangeOrdersClientProps {
   projectId: string;
-  changeOrders: UnifiedChangeOrder[];
+  primeCOs: PrimeContractCO[];
+  commitmentCOs: CommitmentCO[];
 }
 
-type ChangeOrderFilterState = Record<string, FilterValue>;
+type COFilterState = Record<string, FilterValue>;
 
-const EMPTY_FILTERS: ChangeOrderFilterState = {
-  status: undefined,
-  contractType: undefined,
-  reviewer: undefined,
-};
+const EMPTY_FILTERS: COFilterState = { status: undefined };
 
-function matchesStatusFilter(order: UnifiedChangeOrder, status: string): boolean {
-  const normalized = (order.normalizedStatus ?? "").toLowerCase();
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
-  if (status === "pending") {
-    return normalized === "pending" || normalized === "submitted";
-  }
-  if (status === "approved") {
-    return normalized === "approved";
-  }
-  return normalized === status;
+function formatCurrency(value: number): string {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(
+    value,
+  );
 }
+
+function matchesStatus(itemStatus: string | null, filter: string): boolean {
+  const normalized = (itemStatus ?? "").toLowerCase();
+  if (filter === "pending") return normalized === "pending" || normalized === "submitted";
+  return normalized === filter;
+}
+
+// ---------------------------------------------------------------------------
+// Component
+// ---------------------------------------------------------------------------
 
 export function ChangeOrdersClient({
   projectId,
-  changeOrders,
+  primeCOs,
+  commitmentCOs,
 }: ChangeOrdersClientProps): ReactElement {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const initialStatus = searchParams.get("status") ?? "";
-  const initialContractType = searchParams.get("contractType") ?? "";
-  const initialReviewer = searchParams.get("reviewer") ?? "";
-  const initialFilters: ChangeOrderFilterState = {
-    status: initialStatus || undefined,
-    contractType: initialContractType || undefined,
-    reviewer: initialReviewer || undefined,
-  };
+  const activeTab: ActiveTab =
+    searchParams.get("tab") === "commitment" ? "commitment" : "prime";
 
-  const tableState = useUnifiedTableState({
-    entityKey: "change-orders",
+  // --- Prime tab state -------------------------------------------------------
+  const primeTableState = useUnifiedTableState({
+    entityKey: "prime-cos",
     searchParams,
     pathname,
     router,
@@ -78,328 +92,386 @@ export function ChangeOrdersClient({
       search: "",
       sortBy: "created_at",
       sortDirection: "desc",
-      visibleColumns: changeOrderDefaultVisibleColumns,
-      filters: initialFilters,
+      visibleColumns: primeDefaultVisibleColumns,
+      filters: EMPTY_FILTERS,
     },
   });
-  const [isMobileViewport, setIsMobileViewport] = React.useState(false);
 
+  // --- Commitment tab state --------------------------------------------------
+  const commitmentTableState = useUnifiedTableState({
+    entityKey: "commitment-cos",
+    searchParams,
+    pathname,
+    router,
+    defaults: {
+      view: "table",
+      allowedViews: ["table", "card", "list"],
+      page: 1,
+      perPage: 25,
+      search: "",
+      sortBy: "created_at",
+      sortDirection: "desc",
+      visibleColumns: commitmentDefaultVisibleColumns,
+      filters: EMPTY_FILTERS,
+    },
+  });
+
+  // Mobile viewport detection
+  const [isMobileViewport, setIsMobileViewport] = React.useState(false);
   React.useEffect(() => {
     if (typeof window === "undefined") return;
-    const mediaQuery = window.matchMedia("(max-width: 767px)");
-    const applyViewport = () => setIsMobileViewport(mediaQuery.matches);
-    applyViewport();
-    mediaQuery.addEventListener("change", applyViewport);
-    return () => mediaQuery.removeEventListener("change", applyViewport);
+    const mq = window.matchMedia("(max-width: 767px)");
+    const apply = () => setIsMobileViewport(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
   }, []);
 
+  // Force list view on mobile
+  const ts = activeTab === "prime" ? primeTableState : commitmentTableState;
   React.useEffect(() => {
-    if (!isMobileViewport) return;
-    if (tableState.currentView !== "table") return;
-    tableState.setCurrentView("list");
-    tableState.setSearchParams({ view: "list" });
-  }, [
-    isMobileViewport,
-    tableState.currentView,
-    tableState.setCurrentView,
-    tableState.setSearchParams,
-  ]);
+    if (!isMobileViewport || ts.currentView !== "table") return;
+    ts.setCurrentView("list");
+    ts.setSearchParams({ view: "list" });
+  }, [isMobileViewport, ts]);
 
-  React.useEffect(() => {
-    const nextStatus = searchParams.get("status") ?? "";
-    const nextContractType = searchParams.get("contractType") ?? "";
-    const nextReviewer = searchParams.get("reviewer") ?? "";
-
-    tableState.setActiveFilters((prev) => {
-      const normalizedStatus = nextStatus || undefined;
-      const normalizedContractType = nextContractType || undefined;
-      const normalizedReviewer = nextReviewer || undefined;
-
-      if (
-        prev.status === normalizedStatus &&
-        prev.contractType === normalizedContractType &&
-        prev.reviewer === normalizedReviewer
-      ) {
-        return prev;
-      }
-
-      return {
-        status: normalizedStatus,
-        contractType: normalizedContractType,
-        reviewer: normalizedReviewer,
-      };
-    });
-  }, [searchParams, tableState.setActiveFilters]);
-
-  const activeFilters = tableState.activeFilters as ChangeOrderFilterState;
-
-  const reviewerOptions = React.useMemo(() => {
-    const reviewers = changeOrders
-      .filter((order) => order.contractType === "general")
-      .map((order) =>
-        order.contractType === "general" ? order.designated_reviewer_id : null,
-      )
-      .filter((reviewer): reviewer is string => Boolean(reviewer));
-
-    return Array.from(new Set(reviewers)).map((reviewer) => ({
-      value: reviewer,
-      label: reviewer,
-    }));
-  }, [changeOrders]);
-
-  const filters = React.useMemo(
-    () => buildChangeOrderFilters(reviewerOptions),
-    [reviewerOptions],
-  );
-
-  const filteredItems = React.useMemo(() => {
-    const statusFilter =
-      typeof activeFilters.status === "string" ? activeFilters.status.toLowerCase() : "";
-    const contractTypeFilter =
-      typeof activeFilters.contractType === "string"
-        ? activeFilters.contractType.toLowerCase()
-        : "";
-    const reviewerFilter =
-      typeof activeFilters.reviewer === "string" ? activeFilters.reviewer : "";
-    const searchValue = tableState.debouncedSearch.trim().toLowerCase();
-
-    return changeOrders.filter((order) => {
-      if (contractTypeFilter && order.contractType !== contractTypeFilter) {
-        return false;
-      }
-
-      if (statusFilter && !matchesStatusFilter(order, statusFilter)) {
-        return false;
-      }
-
-      if (reviewerFilter) {
-        const orderReviewer =
-          order.contractType === "general" ? order.designated_reviewer_id : null;
-        if (orderReviewer !== reviewerFilter) {
-          return false;
-        }
-      }
-
-      if (!searchValue) {
-        return true;
-      }
-
-      return (
-        (order.normalizedNumber ?? "").toLowerCase().includes(searchValue) ||
-        (order.normalizedTitle ?? "").toLowerCase().includes(searchValue) ||
-        (order.normalizedDescription ?? "").toLowerCase().includes(searchValue)
-      );
-    });
-  }, [
-    activeFilters.contractType,
-    activeFilters.reviewer,
-    activeFilters.status,
-    changeOrders,
-    tableState.debouncedSearch,
-  ]);
-
-  const contractTypeCounts = React.useMemo(
-    () =>
-      changeOrders.reduce(
-        (acc, order) => {
-          if (order.contractType === "prime") acc.prime += 1;
-          if (order.contractType === "commitment") acc.commitment += 1;
-          return acc;
-        },
-        { prime: 0, commitment: 0 },
-      ),
-    [changeOrders],
-  );
-
-  const currentContractTypeParam =
-    searchParams.get("contractType") ??
-    (typeof activeFilters.contractType === "string" ? activeFilters.contractType : "");
-
-  const currentStatusParam = searchParams.get("status") ?? "";
-  const currentReviewerParam = searchParams.get("reviewer") ?? "";
-
-  const buildContractTypeHref = (contractType: "prime" | "commitment"): string => {
+  // --- Tabs ------------------------------------------------------------------
+  const buildTabHref = (tab: ActiveTab): string => {
     const params = new URLSearchParams();
-
-    params.set("contractType", contractType);
-    if (currentStatusParam) params.set("status", currentStatusParam);
-    if (currentReviewerParam) params.set("reviewer", currentReviewerParam);
-
-    const query = params.toString();
-    return query ? `/${projectId}/change-orders?${query}` : `/${projectId}/change-orders`;
+    params.set("tab", tab);
+    return `/${projectId}/change-orders?${params.toString()}`;
   };
 
   const tabs = [
     {
       label: "Prime Contract",
-      href: buildContractTypeHref("prime"),
-      count: contractTypeCounts.prime,
-      isActive: currentContractTypeParam === "prime",
+      href: buildTabHref("prime"),
+      count: primeCOs.length,
+      isActive: activeTab === "prime",
     },
     {
       label: "Commitments",
-      href: buildContractTypeHref("commitment"),
-      count: contractTypeCounts.commitment,
-      isActive: currentContractTypeParam === "commitment",
+      href: buildTabHref("commitment"),
+      count: commitmentCOs.length,
+      isActive: activeTab === "commitment",
     },
   ];
 
-  const tableColumns = React.useMemo(() => buildChangeOrderTableColumns(), []);
+  // --- Table columns (memoized) ----------------------------------------------
+  const primeTableColumns = React.useMemo(() => buildPrimeTableColumns(), []);
+  const commitmentTableColumns = React.useMemo(() => buildCommitmentTableColumns(), []);
+  const primeFilters = React.useMemo(() => buildPrimeFilters(), []);
+  const commitmentFilters = React.useMemo(() => buildCommitmentFilters(), []);
 
-  const totalAmount = React.useMemo(
-    () => filteredItems.reduce((sum, item) => sum + (item.normalizedAmount ?? 0), 0),
-    [filteredItems],
+  // --- Filtering: Prime ------------------------------------------------------
+  const primeActiveFilters = primeTableState.activeFilters as COFilterState;
+
+  const filteredPrime = React.useMemo(() => {
+    const statusFilter =
+      typeof primeActiveFilters.status === "string"
+        ? primeActiveFilters.status.toLowerCase()
+        : "";
+    const executedFilter =
+      typeof primeActiveFilters.executed === "string" ? primeActiveFilters.executed : "";
+    const search = primeTableState.debouncedSearch.trim().toLowerCase();
+
+    return primeCOs.filter((co) => {
+      if (statusFilter && !matchesStatus(co.status, statusFilter)) return false;
+      if (executedFilter === "yes" && !co.executed) return false;
+      if (executedFilter === "no" && co.executed) return false;
+      if (
+        search &&
+        !(co.pcco_number ?? "").toLowerCase().includes(search) &&
+        !(co.title ?? "").toLowerCase().includes(search)
+      )
+        return false;
+      return true;
+    });
+  }, [primeCOs, primeActiveFilters, primeTableState.debouncedSearch]);
+
+  // --- Filtering: Commitment -------------------------------------------------
+  const commitmentActiveFilters = commitmentTableState.activeFilters as COFilterState;
+
+  const filteredCommitment = React.useMemo(() => {
+    const statusFilter =
+      typeof commitmentActiveFilters.status === "string"
+        ? commitmentActiveFilters.status.toLowerCase()
+        : "";
+    const search = commitmentTableState.debouncedSearch.trim().toLowerCase();
+
+    return commitmentCOs.filter((co) => {
+      if (statusFilter && !matchesStatus(co.status, statusFilter)) return false;
+      if (
+        search &&
+        !(co.change_order_number ?? "").toLowerCase().includes(search) &&
+        !(co.description ?? "").toLowerCase().includes(search)
+      )
+        return false;
+      return true;
+    });
+  }, [commitmentCOs, commitmentActiveFilters, commitmentTableState.debouncedSearch]);
+
+  // --- Totals ----------------------------------------------------------------
+  const primeTotalAmount = React.useMemo(
+    () => filteredPrime.reduce((sum, co) => sum + (co.total_amount ?? 0), 0),
+    [filteredPrime],
+  );
+  const commitmentTotalAmount = React.useMemo(
+    () => filteredCommitment.reduce((sum, co) => sum + (co.amount ?? 0), 0),
+    [filteredCommitment],
   );
 
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
+  // --- Navigation handlers ---------------------------------------------------
+  const handleViewPrime = (co: PrimeContractCO) => {
+    router.push(`/${projectId}/change-orders/prime/${co.id}`);
+  };
+  const handleEditPrime = (co: PrimeContractCO) => {
+    router.push(`/${projectId}/change-orders/prime/${co.id}?edit=1`);
+  };
+  const handleDeletePrime = async (co: PrimeContractCO) => {
+    try {
+      const res = await fetch(
+        `/api/projects/${projectId}/prime-contract-change-orders/${co.id}`,
+        { method: "DELETE" },
+      );
+      if (!res.ok) {
+        const err = await res.json();
+        toast.error(err.error || "Failed to delete");
+        return;
+      }
+      toast.success("Change order deleted");
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Unknown error");
+    }
+  };
 
-  const handleFilterChange = (nextFilters: ChangeOrderFilterState) => {
+  const handleViewCommitment = (co: CommitmentCO) => {
+    router.push(`/${projectId}/change-orders/commitment/${co.id}`);
+  };
+  const handleEditCommitment = (co: CommitmentCO) => {
+    router.push(`/${projectId}/change-orders/commitment/${co.id}?edit=1`);
+  };
+  const handleDeleteCommitment = async (co: CommitmentCO) => {
+    if (!co.contract_id) {
+      toast.error("Missing contract reference");
+      return;
+    }
+    try {
+      const res = await fetch(
+        `/api/projects/${projectId}/contracts/${co.contract_id}/change-orders/${co.id}`,
+        { method: "DELETE" },
+      );
+      if (!res.ok) {
+        const err = await res.json();
+        toast.error(err.error || "Failed to delete");
+        return;
+      }
+      toast.success("Change order deleted");
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Unknown error");
+    }
+  };
+
+  // --- Selection handlers (shared pattern) -----------------------------------
+  const handleSelectAll = (
+    items: { id: string | number }[],
+    tableState: ReturnType<typeof useUnifiedTableState>,
+  ) => {
+    return (checked: boolean) => {
+      if (checked) {
+        tableState.setSelectedIds(items.map((item) => String(item.id)));
+      } else {
+        tableState.setSelectedIds([]);
+      }
+    };
+  };
+
+  const handleSelectRow = (tableState: ReturnType<typeof useUnifiedTableState>) => {
+    return (id: string, checked: boolean) => {
+      if (checked) {
+        tableState.setSelectedIds((prev) => [...prev, id]);
+      } else {
+        tableState.setSelectedIds((prev) => prev.filter((x) => x !== id));
+      }
+    };
+  };
+
+  // --- Filter change handler -------------------------------------------------
+  const handleFilterChange = (
+    tableState: ReturnType<typeof useUnifiedTableState>,
+    nextFilters: COFilterState,
+  ) => {
     tableState.setActiveFilters(nextFilters);
     tableState.setSearchParams({
       status: typeof nextFilters.status === "string" ? nextFilters.status : null,
-      contractType:
-        typeof nextFilters.contractType === "string" ? nextFilters.contractType : null,
-      reviewer: typeof nextFilters.reviewer === "string" ? nextFilters.reviewer : null,
+      executed: typeof nextFilters.executed === "string" ? nextFilters.executed : null,
       page: "1",
     });
     tableState.setPage(1);
   };
 
-  const handleView = (order: UnifiedChangeOrder) => {
-    router.push(`/${projectId}/change-orders/${order.id}`);
-  };
+  // --- Render ----------------------------------------------------------------
 
-  const handleEdit = (order: UnifiedChangeOrder) => {
-    router.push(`/${projectId}/change-orders/${order.id}?edit=1`);
-  };
+  if (activeTab === "prime") {
+    const isPrimeFiltered =
+      Boolean(primeTableState.searchInput) || Boolean(primeActiveFilters.status) || Boolean(primeActiveFilters.executed);
 
-  const handleDelete = async (order: UnifiedChangeOrder) => {
-    try {
-      const response = await fetch(`/api/projects/${projectId}/change-orders/${order.id}`, {
-        method: "DELETE",
-      });
+    return (
+      <UnifiedTablePage
+        header={{
+          title: "Change Orders",
+          description: "Track and manage contract change orders",
+          actions: <PageActions projectId={projectId} tab={activeTab} />,
+        }}
+        tabs={tabs}
+        toolbar={{
+          totalItems: primeCOs.length,
+          filteredItems: filteredPrime.length,
+          selectedCount: primeTableState.selectedIds.length,
+          searchValue: primeTableState.searchInput,
+          onSearchChange: primeTableState.setSearchInput,
+          searchPlaceholder: "Search prime contract COs...",
+          currentView: isMobileViewport ? "list" : primeTableState.currentView,
+          onViewChange: (view) => {
+            if (isMobileViewport) return;
+            primeTableState.setCurrentView(view);
+            primeTableState.setSearchParams({ view });
+          },
+          enabledViews: ["table", "card", "list"],
+          filters: primeFilters,
+          activeFilters: primeActiveFilters,
+          onFilterChange: (f) => handleFilterChange(primeTableState, f as COFilterState),
+          onClearFilters: () => handleFilterChange(primeTableState, EMPTY_FILTERS),
+          columns: primeColumns,
+          visibleColumns: primeTableState.visibleColumns,
+          onColumnVisibilityChange: primeTableState.setVisibleColumns,
+        }}
+        data={{ items: filteredPrime, isLoading: false, isFetching: false }}
+        table={{
+          columns: primeTableColumns,
+          getRowId: (item) => String(item.id),
+          onRowClick: handleViewPrime,
+          rowActions: (item) =>
+            renderRowActions(item, handleViewPrime, handleEditPrime, handleDeletePrime),
+        }}
+        sorting={{
+          sortBy: primeTableState.sortBy,
+          sortDirection: primeTableState.sortDirection,
+          onSortChange: (sortBy, direction) => {
+            primeTableState.setSortBy(sortBy);
+            primeTableState.setSortDirection(direction);
+            primeTableState.setSearchParams({ sort: sortBy, sort_dir: direction });
+          },
+        }}
+        selection={{
+          selectedIds: primeTableState.selectedIds,
+          onSelectAll: handleSelectAll(filteredPrime, primeTableState),
+          onSelectRow: handleSelectRow(primeTableState),
+        }}
+        views={{
+          card: (item) => renderPrimeCard(item, handleViewPrime),
+          list: (item) => renderPrimeList(item, handleViewPrime),
+        }}
+        footerTotals={{
+          label: "Totals",
+          values: {
+            amount: <span className="font-semibold">{formatCurrency(primeTotalAmount)}</span>,
+          },
+        }}
+        emptyState={{
+          title: "No prime contract change orders",
+          description: "No prime contract change orders found for this project.",
+          filteredDescription: "Try adjusting your search or filters.",
+          isFiltered: isPrimeFiltered,
+        }}
+        features={{ enableExport: false, enableBulkDelete: false }}
+      />
+    );
+  }
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        toast.error(errorData.error || "Failed to delete change order");
-        return;
-      }
-
-      toast.success("Change order deleted");
-      router.refresh();
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown error";
-      toast.error(message);
-    }
-  };
-
-  const handleSelectAll = (checked: boolean) => {
-    if (checked) {
-      tableState.setSelectedIds(filteredItems.map((item) => String(item.id)));
-      return;
-    }
-    tableState.setSelectedIds([]);
-  };
-
-  const handleSelectRow = (id: string, checked: boolean) => {
-    if (checked) {
-      tableState.setSelectedIds((prev) => [...prev, id]);
-      return;
-    }
-    tableState.setSelectedIds((prev) => prev.filter((itemId) => itemId !== id));
-  };
-
-  const isFiltered =
-    Boolean(tableState.searchInput) ||
-    Boolean(activeFilters.status) ||
-    Boolean(activeFilters.contractType) ||
-    Boolean(activeFilters.reviewer);
+  // Commitment tab
+  const isCommitmentFiltered =
+    Boolean(commitmentTableState.searchInput) || Boolean(commitmentActiveFilters.status);
 
   return (
     <UnifiedTablePage
       header={{
         title: "Change Orders",
         description: "Track and manage contract change orders",
-        actions: <PageActions projectId={projectId} />,
+        actions: <PageActions projectId={projectId} tab={activeTab} />,
       }}
       tabs={tabs}
       toolbar={{
-        totalItems: changeOrders.length,
-        filteredItems: filteredItems.length,
-        selectedCount: tableState.selectedIds.length,
-        searchValue: tableState.searchInput,
-        onSearchChange: tableState.setSearchInput,
-        searchPlaceholder: "Search change orders...",
-        currentView: isMobileViewport ? "list" : tableState.currentView,
+        totalItems: commitmentCOs.length,
+        filteredItems: filteredCommitment.length,
+        selectedCount: commitmentTableState.selectedIds.length,
+        searchValue: commitmentTableState.searchInput,
+        onSearchChange: commitmentTableState.setSearchInput,
+        searchPlaceholder: "Search commitment COs...",
+        currentView: isMobileViewport ? "list" : commitmentTableState.currentView,
         onViewChange: (view) => {
-          if (isMobileViewport) {
-            tableState.setCurrentView("list");
-            tableState.setSearchParams({ view: "list" });
-            return;
-          }
-
-          tableState.setCurrentView(view);
-          tableState.setSearchParams({ view });
+          if (isMobileViewport) return;
+          commitmentTableState.setCurrentView(view);
+          commitmentTableState.setSearchParams({ view });
         },
         enabledViews: ["table", "card", "list"],
-        filters,
-        activeFilters,
-        onFilterChange: handleFilterChange,
-        onClearFilters: () => handleFilterChange(EMPTY_FILTERS),
-        columns: changeOrderColumns,
-        visibleColumns: tableState.visibleColumns,
-        onColumnVisibilityChange: tableState.setVisibleColumns,
+        filters: commitmentFilters,
+        activeFilters: commitmentActiveFilters,
+        onFilterChange: (f) =>
+          handleFilterChange(commitmentTableState, f as COFilterState),
+        onClearFilters: () => handleFilterChange(commitmentTableState, EMPTY_FILTERS),
+        columns: commitmentColumns,
+        visibleColumns: commitmentTableState.visibleColumns,
+        onColumnVisibilityChange: commitmentTableState.setVisibleColumns,
       }}
-      data={{
-        items: filteredItems,
-        isLoading: false,
-        isFetching: false,
-      }}
+      data={{ items: filteredCommitment, isLoading: false, isFetching: false }}
       table={{
-        columns: tableColumns,
+        columns: commitmentTableColumns,
         getRowId: (item) => String(item.id),
-        onRowClick: handleView,
+        onRowClick: handleViewCommitment,
         rowActions: (item) =>
-          renderChangeOrderRowActions(item, handleView, handleEdit, handleDelete),
+          renderRowActions(
+            item,
+            handleViewCommitment,
+            handleEditCommitment,
+            handleDeleteCommitment,
+          ),
       }}
       sorting={{
-        sortBy: tableState.sortBy,
-        sortDirection: tableState.sortDirection,
+        sortBy: commitmentTableState.sortBy,
+        sortDirection: commitmentTableState.sortDirection,
         onSortChange: (sortBy, direction) => {
-          tableState.setSortBy(sortBy);
-          tableState.setSortDirection(direction);
-          tableState.setSearchParams({
-            sort: sortBy,
-            sort_dir: direction,
-          });
+          commitmentTableState.setSortBy(sortBy);
+          commitmentTableState.setSortDirection(direction);
+          commitmentTableState.setSearchParams({ sort: sortBy, sort_dir: direction });
         },
       }}
       selection={{
-        selectedIds: tableState.selectedIds,
-        onSelectAll: handleSelectAll,
-        onSelectRow: handleSelectRow,
+        selectedIds: commitmentTableState.selectedIds,
+        onSelectAll: handleSelectAll(filteredCommitment, commitmentTableState),
+        onSelectRow: handleSelectRow(commitmentTableState),
       }}
       views={{
-        card: (item) => renderChangeOrderCard(item, handleView),
-        list: (item) => renderChangeOrderList(item, handleView),
+        card: (item) => renderCommitmentCard(item, handleViewCommitment),
+        list: (item) => renderCommitmentList(item, handleViewCommitment),
       }}
       footerTotals={{
         label: "Totals",
         values: {
-          amount: <span className="font-semibold">{formatCurrency(totalAmount)}</span>,
+          amount: (
+            <span className="font-semibold">{formatCurrency(commitmentTotalAmount)}</span>
+          ),
         },
       }}
       emptyState={{
-        title: "No change orders found",
-        description: "No change orders are available for this project yet.",
+        title: "No commitment change orders",
+        description: "No commitment change orders found for this project.",
         filteredDescription: "Try adjusting your search or filters.",
-        isFiltered,
+        isFiltered: isCommitmentFiltered,
       }}
-      features={{
-        enableExport: false,
-        enableBulkDelete: false,
-      }}
+      features={{ enableExport: false, enableBulkDelete: false }}
     />
   );
 }

@@ -124,18 +124,32 @@ export const TABLE_REGISTRY = {
       subtitleColumns: ["number", "status"],
     },
   },
-  change_orders: {
-    label: "Change Orders",
-    description: "Project change orders",
+  prime_contract_change_orders: {
+    label: "Prime Contract Change Orders",
+    description: "Prime contract change orders (PCCOs)",
     primaryKey: "id",
     defaultSort: { column: "created_at", direction: "desc" },
     hiddenColumns: ["updated_at"],
-    searchColumns: ["title", "number", "description"],
+    searchColumns: ["title", "pcco_number", "description"],
     viewsEnabled: ["table", "list"],
     permissions: { read: true, create: true, update: true, delete: true },
     display: {
       titleColumn: "title",
-      subtitleColumns: ["number", "status"],
+      subtitleColumns: ["pcco_number", "status"],
+    },
+  },
+  contract_change_orders: {
+    label: "Contract Change Orders",
+    description: "Commitment/contract change orders (CCOs)",
+    primaryKey: "id",
+    defaultSort: { column: "created_at", direction: "desc" },
+    hiddenColumns: ["updated_at"],
+    searchColumns: ["change_order_number", "description"],
+    viewsEnabled: ["table", "list"],
+    permissions: { read: true, create: true, update: true, delete: true },
+    display: {
+      titleColumn: "description",
+      subtitleColumns: ["change_order_number", "status"],
     },
   },
   rfis: {

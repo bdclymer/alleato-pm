@@ -18,7 +18,7 @@ export type Project = Database["public"]["Tables"]["projects"]["Row"];
 export type Subcontract = Database["public"]["Tables"]["subcontracts"]["Row"];
 export type PurchaseOrder =
   Database["public"]["Tables"]["purchase_orders"]["Row"];
-export type ChangeOrder = Database["public"]["Tables"]["change_orders"]["Row"];
+export type ChangeOrder = Database["public"]["Tables"]["prime_contract_change_orders"]["Row"];
 export type BudgetLine = Database["public"]["Tables"]["budget_lines"]["Row"];
 export type Document = Database["public"]["Tables"]["documents"]["Row"];
 // TODO: These tables don't exist in current schema - need to create or update references
@@ -63,7 +63,7 @@ export type SubcontractInsert =
 export type PurchaseOrderInsert =
   Database["public"]["Tables"]["purchase_orders"]["Insert"];
 export type ChangeOrderInsert =
-  Database["public"]["Tables"]["change_orders"]["Insert"];
+  Database["public"]["Tables"]["prime_contract_change_orders"]["Insert"];
 export type DocumentInsert =
   Database["public"]["Tables"]["documents"]["Insert"];
 

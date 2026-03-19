@@ -1406,7 +1406,7 @@ async function loadChangeOrderBundle(
   }
 
   const { data: changeOrderData, error: changeOrderError } = await supabase
-    .from("change_orders")
+    .from("prime_contract_change_orders")
     .select("*")
     .eq("id", numericId)
     .single();

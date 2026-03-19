@@ -26,7 +26,8 @@ export default async function ProjectHomePage({
     tasksByProjectIdResult,
     tasksViaDocsResult,
     meetingsResult,
-    changeOrdersResult,
+    primeChangeOrdersResult,
+    contractChangeOrdersResult,
     rfisResult,
     dailyLogsResult,
     commitmentsResult,
@@ -73,11 +74,19 @@ export default async function ProjectHomePage({
       .eq("project_id", numericProjectId)
       .order("date", { ascending: false }),
 
-    // Fetch change orders
+    // Fetch prime contract change orders
     supabase
-      .from("change_orders")
+      .from("prime_contract_change_orders")
       .select("*")
       .eq("project_id", numericProjectId)
+      .order("created_at", { ascending: false })
+      .limit(5),
+
+    // Fetch contract (commitment) change orders via prime_contracts join
+    supabase
+      .from("contract_change_orders")
+      .select("*, prime_contracts!inner(project_id)")
+      .eq("prime_contracts.project_id", numericProjectId)
       .order("created_at", { ascending: false })
       .limit(5),
 
@@ -159,7 +168,10 @@ export default async function ProjectHomePage({
   );
 
   const meetings = meetingsResult.data || [];
-  const changeOrders = changeOrdersResult.data || [];
+  const changeOrders = [
+    ...(primeChangeOrdersResult.data || []),
+    ...(contractChangeOrdersResult.data || []),
+  ];
   const rfis = rfisResult.data || [];
   const dailyLogs = dailyLogsResult.data || [];
   // Cast to expected format since commitments_unified is a view

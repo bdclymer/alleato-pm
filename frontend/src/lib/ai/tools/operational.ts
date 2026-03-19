@@ -1039,8 +1039,8 @@ export function createOperationalTools(
               .order("created_at", { ascending: true })
               .limit(500),
             supabase
-              .from("change_orders")
-              .select("id, status, amount, created_at")
+              .from("prime_contract_change_orders")
+              .select("id, status, total_amount, created_at")
               .eq("project_id", resolved.id)
               .gte("created_at", lookbackStr)
               .order("created_at", { ascending: true })
@@ -1090,7 +1090,7 @@ export function createOperationalTools(
               const key = monthKey(co.created_at as string);
               const existing = coByMonth.get(key) ?? { count: 0, value: 0 };
               existing.count += 1;
-              existing.value += asNumber(co.amount);
+              existing.value += asNumber(co.total_amount);
               coByMonth.set(key, existing);
             }
           });
