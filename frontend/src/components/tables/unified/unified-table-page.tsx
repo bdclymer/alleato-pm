@@ -53,6 +53,8 @@ export interface TableColumn<T> extends ColumnConfig {
   editable?: boolean;
   editValue?: (item: T) => string;
   onEdit?: (item: T, value: string) => void | Promise<void>;
+  /** Preferred column width in pixels. Applied as default when the user has not manually resized. */
+  width?: number;
   /** Custom editor widget (e.g. dropdown select). Receives current value, onChange, onCommit, and onCancel. */
   renderEditor?: (props: {
     item: T;
@@ -129,6 +131,8 @@ export interface UnifiedTablePageProps<T> {
     autoFocusOnLoad?: boolean;
     stickyHeader?: boolean;
     onRowOrderChange?: (orderedRowIds: string[]) => void;
+    /** Render an expandable sub-row below a table row. Return null to skip. */
+    renderExpandedRow?: (item: T, colSpan: number) => ReactNode | null;
   };
   sorting?: {
     sortBy: string | null;
@@ -968,12 +972,12 @@ export function UnifiedTablePage<T>({
                   {orderedVisibleColumns.map((column) => {
                       const isSortable = column.sortable !== false && Boolean(sorting);
                       const isHideable = !column.alwaysVisible;
-                      const width = columnWidths[column.id];
+                      const width = columnWidths[column.id] ?? column.width;
                       const isPinnedLeft = columnPinning.left.includes(column.id);
                       const pinnedStyle = getPinnedStyle(column.id);
                       const columnStyle =
                         width || pinnedStyle
-                          ? ({ width, minWidth: width, ...pinnedStyle } as React.CSSProperties)
+                          ? ({ width, minWidth: columnWidths[column.id] ?? undefined, maxWidth: column.width && !columnWidths[column.id] ? column.width : undefined, ...pinnedStyle } as React.CSSProperties)
                           : undefined;
                       const hasContextActions =
                         isSortable || isHideable || resolvedFeatures.enableColumnPinning;
@@ -1137,8 +1141,8 @@ export function UnifiedTablePage<T>({
                       key: table.getRowId(item),
                       style: undefined,
                     }))).map(({ item, key, style }) => (
+                  <React.Fragment key={key}>
                   <TableRow
-                    key={key}
                     ref={(element) => {
                       rowRefs.current[key] = element;
                     }}
@@ -1181,10 +1185,11 @@ export function UnifiedTablePage<T>({
                         <TableCell
                           key={column.id}
                           style={
-                            columnWidths[column.id] || getPinnedStyle(column.id)
+                            columnWidths[column.id] || column.width || getPinnedStyle(column.id)
                               ? ({
-                                  width: columnWidths[column.id],
-                                  minWidth: columnWidths[column.id],
+                                  width: columnWidths[column.id] ?? column.width,
+                                  minWidth: columnWidths[column.id] ?? undefined,
+                                  maxWidth: column.width && !columnWidths[column.id] ? column.width : undefined,
                                   ...getPinnedStyle(column.id),
                                 } as React.CSSProperties)
                               : undefined
@@ -1295,6 +1300,11 @@ export function UnifiedTablePage<T>({
                       </TableCell>
                     )}
                   </TableRow>
+                  {table.renderExpandedRow?.(
+                    item,
+                    orderedVisibleColumns.length + (hasRowSelection ? 1 : 0) + (hasRowActions ? 1 : 0),
+                  )}
+                  </React.Fragment>
                 ))}
               </TableBody>
               {footerTotals && (

@@ -14,6 +14,7 @@ export {
   CellBadge,
   CellLink,
   CellEmail,
+  TruncatedCell,
   formatParticipantDisplayName,
   type TableBadgeVariant,
   type TableRowActionItem,

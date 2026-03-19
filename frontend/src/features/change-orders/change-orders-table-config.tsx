@@ -1,11 +1,12 @@
 import type { ReactElement } from "react";
-import { Check, Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
 import type {
   ColumnConfig,
   FilterConfig,
   TableColumn,
 } from "@/components/tables/unified";
+import { TruncatedCell } from "@/components/tables/unified";
 import { StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import {
@@ -82,7 +83,7 @@ export const primeColumns: ColumnConfig[] = [
   { id: "title", label: "Title", defaultVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
   { id: "amount", label: "Amount", defaultVisible: true },
-  { id: "executed", label: "Executed", defaultVisible: true },
+  { id: "executed", label: "Executed" },
   { id: "created_at", label: "Created", defaultVisible: true },
 ];
 
@@ -94,40 +95,47 @@ export function buildPrimeTableColumns(): TableColumn<PrimeContractCO>[] {
   return [
     {
       ...primeColumns[0],
+      width: 100,
       render: (item) => <span className="font-medium">{item.pcco_number || "-"}</span>,
       sortValue: (item) => item.pcco_number ?? "",
     },
     {
       ...primeColumns[1],
-      render: (item) => <span className="line-clamp-2">{item.title || "-"}</span>,
+      width: 360,
+      render: (item) => <TruncatedCell value={item.title} maxWidth={360} />,
       sortValue: (item) => item.title ?? "",
     },
     {
       ...primeColumns[2],
+      width: 120,
       render: (item) => <StatusBadge status={statusLabel(item.status)} />,
       sortValue: (item) => item.status ?? "",
     },
     {
       ...primeColumns[3],
-      render: (item) => <span>{formatCurrency(item.total_amount)}</span>,
+      width: 130,
+      render: (item) => (
+        <span className="tabular-nums">{formatCurrency(item.total_amount)}</span>
+      ),
       sortValue: (item) => item.total_amount ?? 0,
     },
     {
       ...primeColumns[4],
-      render: (item) => (
+      width: 100,
+      render: (item) =>
         item.executed ? (
-          <span className="inline-flex items-center gap-1 text-green-600">
-            <Check className="h-3.5 w-3.5" /> Yes
-          </span>
+          <span className="text-[hsl(var(--status-success))]">Yes</span>
         ) : (
           <span className="text-muted-foreground">No</span>
-        )
-      ),
+        ),
       sortValue: (item) => (item.executed ? 1 : 0),
     },
     {
       ...primeColumns[5],
-      render: (item) => <span>{formatDate(item.created_at)}</span>,
+      width: 120,
+      render: (item) => (
+        <span className="text-muted-foreground">{formatDate(item.created_at)}</span>
+      ),
       sortValue: (item) => (item.created_at ? new Date(item.created_at).getTime() : 0),
     },
   ];
@@ -179,6 +187,7 @@ export function buildCommitmentTableColumns(): TableColumn<CommitmentCO>[] {
   return [
     {
       ...commitmentColumns[0],
+      width: 100,
       render: (item) => (
         <span className="font-medium">{item.change_order_number || "-"}</span>
       ),
@@ -186,34 +195,48 @@ export function buildCommitmentTableColumns(): TableColumn<CommitmentCO>[] {
     },
     {
       ...commitmentColumns[1],
-      render: (item) => <span className="line-clamp-2">{item.description || "-"}</span>,
+      width: 360,
+      render: (item) => <TruncatedCell value={item.description} maxWidth={360} />,
       sortValue: (item) => item.description ?? "",
     },
     {
       ...commitmentColumns[2],
+      width: 120,
       render: (item) => <StatusBadge status={statusLabel(item.status)} />,
       sortValue: (item) => item.status ?? "",
     },
     {
       ...commitmentColumns[3],
-      render: (item) => <span>{formatCurrency(item.amount)}</span>,
+      width: 130,
+      render: (item) => (
+        <span className="tabular-nums">{formatCurrency(item.amount)}</span>
+      ),
       sortValue: (item) => item.amount ?? 0,
     },
     {
       ...commitmentColumns[4],
-      render: (item) => <span>{formatDate(item.requested_date)}</span>,
+      width: 130,
+      render: (item) => (
+        <span className="text-muted-foreground">{formatDate(item.requested_date)}</span>
+      ),
       sortValue: (item) =>
         item.requested_date ? new Date(item.requested_date).getTime() : 0,
     },
     {
       ...commitmentColumns[5],
-      render: (item) => <span>{formatDate(item.approved_date)}</span>,
+      width: 130,
+      render: (item) => (
+        <span className="text-muted-foreground">{formatDate(item.approved_date)}</span>
+      ),
       sortValue: (item) =>
         item.approved_date ? new Date(item.approved_date).getTime() : 0,
     },
     {
       ...commitmentColumns[6],
-      render: (item) => <span>{formatDate(item.created_at)}</span>,
+      width: 120,
+      render: (item) => (
+        <span className="text-muted-foreground">{formatDate(item.created_at)}</span>
+      ),
       sortValue: (item) => (item.created_at ? new Date(item.created_at).getTime() : 0),
     },
   ];

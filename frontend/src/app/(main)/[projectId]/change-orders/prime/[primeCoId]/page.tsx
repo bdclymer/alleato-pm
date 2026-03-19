@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Check, Edit, MoreHorizontal, Trash2, X } from "lucide-react";
+import { ArrowLeft, Check, Edit, FileUp, MoreHorizontal, Paperclip, Trash2, X } from "lucide-react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
@@ -99,11 +99,83 @@ export default function PrimeContractCODetailPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
 
+  // Attachments
+  interface Attachment {
+    id: string;
+    fileName: string;
+    filePath: string;
+    fileSize: number;
+    mimeType: string;
+    uploadedAt: string;
+  }
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [attachmentsLoading, setAttachmentsLoading] = useState(true);
+
   const form = useForm<FormData>({
     resolver: zodResolver(editSchema),
   });
 
   const apiBase = `/api/projects/${projectId}/prime-contract-change-orders/${primeCoId}`;
+
+  // Fetch attachments
+  const fetchAttachments = useCallback(async () => {
+    setAttachmentsLoading(true);
+    try {
+      const res = await fetch(`${apiBase}/attachments`);
+      if (!res.ok) throw new Error("Failed to fetch attachments");
+      const json = await res.json();
+      setAttachments(json.data ?? []);
+    } catch {
+      setAttachments([]);
+    } finally {
+      setAttachmentsLoading(false);
+    }
+  }, [apiBase]);
+
+  const handleFileUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      try {
+        const fd = new FormData();
+        fd.append("file", file);
+        const res = await fetch(`${apiBase}/attachments`, {
+          method: "POST",
+          body: fd,
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: "Upload failed" }));
+          throw new Error(err.error || "Upload failed");
+        }
+        toast.success("File uploaded");
+        fetchAttachments();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Upload failed");
+      }
+      // Reset the input so the same file can be re-uploaded
+      e.target.value = "";
+    },
+    [apiBase, fetchAttachments],
+  );
+
+  const handleDeleteAttachment = useCallback(
+    async (attachmentId: string) => {
+      try {
+        const res = await fetch(`${apiBase}/attachments/${attachmentId}`, {
+          method: "DELETE",
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: "Delete failed" }));
+          throw new Error(err.error || "Delete failed");
+        }
+        toast.success("Attachment deleted");
+        fetchAttachments();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Delete failed");
+      }
+    },
+    [apiBase, fetchAttachments],
+  );
 
   // Fetch data
   useEffect(() => {
@@ -121,7 +193,8 @@ export default function PrimeContractCODetailPage() {
       }
     };
     fetchData();
-  }, [apiBase]);
+    fetchAttachments();
+  }, [apiBase, fetchAttachments]);
 
   useEffect(() => {
     if (searchParams.get("edit") === "1") setIsEditing(true);
@@ -494,6 +567,66 @@ export default function PrimeContractCODetailPage() {
               <div className="flex justify-between">
                 <span className="text-sm text-muted-foreground">Approved</span>
                 <span className="text-sm">{formatDate(co.approved_at)}</span>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Attachments */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between">
+            <CardTitle className="text-base">
+              <span className="flex items-center gap-2">
+                <Paperclip className="h-4 w-4" />
+                Attachments
+              </span>
+            </CardTitle>
+            <Button variant="outline" size="sm" asChild>
+              <label className="cursor-pointer">
+                <FileUp className="mr-2 h-4 w-4" />
+                Upload File
+                <input
+                  type="file"
+                  className="hidden"
+                  onChange={handleFileUpload}
+                  aria-label="Upload attachment"
+                />
+              </label>
+            </Button>
+          </CardHeader>
+          <CardContent>
+            {attachmentsLoading ? (
+              <Skeleton className="h-16 w-full" />
+            ) : attachments.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No attachments</p>
+            ) : (
+              <div className="space-y-2">
+                {attachments.map((att) => (
+                  <div
+                    key={att.id}
+                    className="flex items-center justify-between rounded-md border px-4 py-2"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{att.fileName}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {att.fileSize < 1024
+                          ? `${att.fileSize} B`
+                          : att.fileSize < 1024 * 1024
+                            ? `${(att.fileSize / 1024).toFixed(1)} KB`
+                            : `${(att.fileSize / (1024 * 1024)).toFixed(1)} MB`}
+                        {" \u00b7 "}
+                        {formatDate(att.uploadedAt)}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => handleDeleteAttachment(att.id)}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                ))}
               </div>
             )}
           </CardContent>
