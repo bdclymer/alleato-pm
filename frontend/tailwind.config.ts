@@ -16,6 +16,9 @@ export default {
   darkMode: ["class"],
   content: [
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
+    // Streamdown markdown renderer uses Tailwind classes ([&>p]:inline, [li_&]:pl-6)
+    // that must be scanned so they are included in the generated CSS.
+    "./node_modules/streamdown/dist/*.js",
   ],
   theme: {
     extend: {

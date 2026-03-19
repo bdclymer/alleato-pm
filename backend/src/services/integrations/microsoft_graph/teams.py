@@ -1,8 +1,9 @@
 """
-Microsoft Teams Channel Message Ingestion
-Fetches channel messages and threads from Teams via Microsoft Graph API.
+Microsoft Teams Message Ingestion
+Fetches channel messages/threads and direct messages (chats) from Teams via Microsoft Graph API.
 """
 import logging
+import os
 import re
 from datetime import datetime, timezone
 from typing import Optional
@@ -171,3 +172,174 @@ def get_all_teams_and_channels(supabase_client) -> list[dict]:
     except Exception as e:
         logger.error(f"[Teams] Failed to enumerate teams: {e}")
     return channels
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Direct Messages (Chats)
+# Uses /users/{user}/chats and /chats/{chatId}/messages/delta
+# Requires: Chat.Read.All (application permission)
+# Optional: ChatMember.Read.All for member names (graceful fallback if absent)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _chat_display_name(chat: dict) -> tuple[str, list[str]]:
+    """
+    Build a human-readable label for a chat and return (display_name, [member_names]).
+    Falls back gracefully if members weren't expanded.
+    """
+    members_raw = chat.get("members") or []
+    member_names = [
+        m.get("displayName", "").strip()
+        for m in members_raw
+        if isinstance(m, dict) and m.get("displayName")
+    ]
+
+    topic = (chat.get("topic") or "").strip()
+    chat_type = chat.get("chatType", "")
+
+    if topic:
+        display = topic
+    elif chat_type == "oneOnOne" and len(member_names) >= 2:
+        display = " ↔ ".join(member_names[:2])
+    elif member_names:
+        display = ", ".join(member_names[:4])
+        if len(member_names) > 4:
+            display += f" +{len(member_names) - 4}"
+    else:
+        display = chat.get("id", "Unknown")[:12]
+
+    return display, member_names
+
+
+def get_user_chats(user_email: str) -> list[dict]:
+    """
+    List all oneOnOne and group chats for a user.
+    Returns list of dicts with keys: id, chatType, display_name, member_names.
+    Requires Chat.Read.All. Member names require ChatMember.Read.All (optional).
+    """
+    graph = get_graph_client()
+    chats = []
+
+    # Try with member expansion first; fall back without it if forbidden
+    for params in [
+        {"$select": "id,chatType,topic", "$expand": "members($select=displayName,email)"},
+        {"$select": "id,chatType,topic"},
+    ]:
+        try:
+            raw = graph.get_all_pages(f"/users/{user_email}/chats", params=params)
+            for c in raw:
+                if c.get("chatType") not in ("oneOnOne", "group"):
+                    continue
+                display, members = _chat_display_name(c)
+                chats.append({
+                    "id": c["id"],
+                    "chatType": c.get("chatType"),
+                    "display_name": display,
+                    "member_names": members,
+                })
+            logger.info(f"[Teams DM] Found {len(chats)} chats for {user_email}")
+            return chats
+        except Exception as e:
+            if "members" in params.get("$expand", "") and any(code in str(e) for code in ("400", "403", "Forbidden", "Bad Request")):
+                logger.warning(f"[Teams DM] Member expansion not supported — retrying without it")
+                continue
+            logger.error(f"[Teams DM] Failed to list chats for {user_email}: {e}")
+            return []
+
+    return chats
+
+
+def _process_chat_message(
+    supabase_client,
+    msg: dict,
+    chat_id: str,
+    chat_display_name: str,
+    chat_members: list[str],
+) -> None:
+    """Store a single Teams DM message. Raises _AlreadyIngested to skip."""
+    if not msg or "@removed" in msg:
+        raise _AlreadyIngested()
+    if msg.get("messageType") != "message":
+        raise _AlreadyIngested()
+
+    msg_id = msg.get("id", "")
+    if not msg_id:
+        raise _AlreadyIngested()
+
+    body = _strip_html((msg.get("body") or {}).get("content", ""))
+    if len(body) < MIN_MESSAGE_CHARS:
+        raise _AlreadyIngested()
+
+    doc_id = f"teamsdm_{msg_id}"
+
+    existing = supabase_client.from_("document_metadata").select("id").eq("id", doc_id).execute()
+    if existing and existing.data:
+        raise _AlreadyIngested()
+
+    sender_field = msg.get("from") or {}
+    user_field = sender_field.get("user") or {}
+    sender_name = user_field.get("displayName", "Unknown") if isinstance(user_field, dict) else "Unknown"
+    created = msg.get("createdDateTime", datetime.now(timezone.utc).isoformat())
+
+    text = f"[Teams Direct Message: {chat_display_name}]\n\n[{created[:10]}] {sender_name}: {body}"
+
+    storage_path = f"teams/chats/{chat_id}/{msg_id}.txt"
+    try:
+        supabase_client.storage.from_("documents").upload(
+            storage_path,
+            text.encode("utf-8"),
+            {"content-type": "text/plain", "upsert": "true"},
+        )
+    except Exception as e:
+        logger.warning(f"[Teams DM] Storage upload failed for {msg_id}: {e}")
+        raise
+
+    supabase_client.from_("document_metadata").insert({
+        "id": doc_id,
+        "title": f"Teams DM: {chat_display_name}",
+        "source": "microsoft_graph",
+        "category": "teams_message",  # same category → picked up by searchTeamsMessages tool
+        "type": "teams_dm",
+        "content": text,
+        "date": created[:10] if created else None,
+        "participants": chat_members or [sender_name],
+        "status": "raw_ingested",
+        "tags": ["teams", "direct_message", chat_display_name.lower()],
+    }).execute()
+
+
+def sync_teams_chat(
+    supabase_client,
+    chat_id: str,
+    chat_display_name: str,
+    chat_members: list[str],
+    delta_token: Optional[str] = None,
+) -> tuple[int, str]:
+    """
+    Sync messages from a Teams chat (DM or group chat).
+    Uses /chats/{chatId}/messages/delta for incremental sync.
+    Returns (count_synced, new_delta_token).
+    """
+    graph = get_graph_client()
+    if not graph.is_configured():
+        return 0, delta_token or ""
+
+    delta_path = f"/chats/{chat_id}/messages/delta"
+    try:
+        items, new_delta_token = graph.get_delta(delta_path, delta_token)
+    except Exception as e:
+        logger.error(f"[Teams DM] Delta query failed for chat {chat_display_name}: {e}")
+        return 0, ""
+
+    synced = 0
+    for msg in items:
+        try:
+            _process_chat_message(supabase_client, msg, chat_id, chat_display_name, chat_members)
+            synced += 1
+        except _AlreadyIngested:
+            pass
+        except Exception as e:
+            logger.warning(f"[Teams DM] Skipping message {msg.get('id')}: {e}")
+
+    if synced:
+        logger.info(f"[Teams DM] Synced {synced} messages from '{chat_display_name}'")
+    return synced, new_delta_token

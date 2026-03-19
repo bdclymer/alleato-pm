@@ -1331,45 +1331,44 @@ export function createOperationalTools(
             // If project name doesn't resolve, still search across all projects
           }
           try {
-            // Generate embedding
+            // Generate embeddings:
+            // - 1536-dim for meeting/knowledge tables (search_all_knowledge, match_documents_full, search_knowledge_base)
+            // - 3072-dim for document_chunks table (email, Teams, OneDrive via microsoft_graph)
             const openai = getOpenAI();
-            const embeddingResponse = await openai.embeddings.create({
-              model: "text-embedding-3-large",
-              dimensions: 1536,
-              input: query,
-            });
+            const [embResp1536, embResp3072] = await Promise.all([
+              openai.embeddings.create({ model: "text-embedding-3-large", dimensions: 1536, input: query }),
+              openai.embeddings.create({ model: "text-embedding-3-large", dimensions: 3072, input: query }),
+            ]);
 
-            const queryEmbedding = embeddingResponse.data[0].embedding;
-            const embeddingArg = JSON.stringify(queryEmbedding);
+            const embeddingArg = JSON.stringify(embResp1536.data[0].embedding);
+            const embeddingArg3072 = JSON.stringify(embResp3072.data[0].embedding);
             const targetCount = matchCount ?? 10;
             const targetThreshold = threshold ?? 0.3;
 
-            // Blended retrieval:
-            // 1) search_all_knowledge — meeting_segments, decisions, risks, opportunities
-            // 2) match_documents_full — documents table (Fireflies transcripts, processed files)
-            // 3) search_knowledge_base — company_knowledge table (curated intel)
-            // 4) search_document_chunks_by_category (NULL = all) — email, Teams, OneDrive
+            // Blended retrieval — dimension routing:
+            // halfvec(3072): search_all_knowledge (decisions/risks/opportunities/meeting_segments) + search_document_chunks_by_category (email/Teams/OneDrive)
+            // vector(1536):  match_documents_full (Fireflies documents) + search_knowledge_base (company_knowledge)
             const [knowledgeRes, documentRes, knowledgeBaseRes, chunksRes] = await Promise.all([
               supabase.rpc("search_all_knowledge", {
-                query_embedding: embeddingArg,
+                query_embedding: embeddingArg3072, // halfvec(3072) — decisions, risks, opportunities, meeting_segments
                 match_count: targetCount,
                 match_threshold: targetThreshold,
               }),
               supabase.rpc("match_documents_full", {
-                query_embedding: embeddingArg,
+                query_embedding: embeddingArg, // vector(1536) — documents table (legacy Fireflies)
                 match_count: Math.max(targetCount * 2, 20),
                 match_threshold: targetThreshold,
               }),
               supabase.rpc("search_knowledge_base", {
-                query_embedding: embeddingArg,
+                query_embedding: embeddingArg, // vector(1536) — company_knowledge
                 match_count: targetCount,
                 match_threshold: targetThreshold,
                 ...(resolvedProjectId ? { filter_project_id: resolvedProjectId } : {}),
               }),
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               (supabase as any).rpc("search_document_chunks_by_category", {
-                query_embedding: embeddingArg,
-                filter_category: null, // null = search all categories (email, teams_message, document)
+                query_embedding: embeddingArg3072, // halfvec(3072) — email, Teams, OneDrive
+                filter_category: null,
                 match_count: targetCount,
                 match_threshold: targetThreshold,
               }),
@@ -2508,21 +2507,57 @@ export function createOperationalTools(
             return { error: "Provide a projectName to search for, or set listAll: true" };
           }
 
-          const { data, error } = await supabase
-            .from("projects")
-            .select("id, name, phase")
-            .eq("archived", false)
-            .ilike("name", `%${projectName}%`)
-            .order("name", { ascending: true })
-            .limit(5);
+          // Run project DB lookup + communication searches IN PARALLEL so the
+          // LLM always has email/Teams/OneDrive context regardless of whether
+          // it explicitly calls searchEmails or searchTeamsMessages.
+          const [dbResult, emailResult, teamsResult, docsResult] = await Promise.all([
+            supabase
+              .from("projects")
+              .select("id, name, phase")
+              .eq("archived", false)
+              .ilike("name", `%${projectName}%`)
+              .order("name", { ascending: true })
+              .limit(5),
+            searchDocumentChunksByCategory({
+              supabase,
+              query: projectName,
+              category: "email",
+              matchCount: 6,
+              sourceLabel: "email",
+            }),
+            searchDocumentChunksByCategory({
+              supabase,
+              query: projectName,
+              category: "teams_message",
+              matchCount: 6,
+              sourceLabel: "Teams message",
+            }),
+            searchDocumentChunksByCategory({
+              supabase,
+              query: projectName,
+              category: "document",
+              matchCount: 4,
+              sourceLabel: "document",
+            }),
+          ]);
 
+          const { data, error } = dbResult;
           if (error) return { error: error.message };
           const matches = (data ?? []) as unknown as AnyRow[];
+
+          const communicationsNote =
+            "IMPORTANT: The following emails, Teams messages, and documents were retrieved automatically. " +
+            "Use this communication intelligence to answer questions about recent activity, even if the project is not found in the database. " +
+            "Lead with the most recent and actionable signals from emails and Teams before diving into project data.";
 
           if (matches.length === 0) {
             return {
               matches: [],
-              message: `No projects found matching "${projectName}". Try a different name or use listAll to see all projects.`,
+              message: `No projects found matching "${projectName}" in the database. However, communications data was searched — use the emails, Teams messages, and documents below to answer questions about this project.`,
+              communicationsNote,
+              emails: emailResult,
+              teamsMessages: teamsResult,
+              documents: docsResult,
             };
           }
 
@@ -2533,6 +2568,10 @@ export function createOperationalTools(
               phase: p.phase,
             })),
             bestMatch: { id: matches[0].id, name: matches[0].name },
+            communicationsNote,
+            emails: emailResult,
+            teamsMessages: teamsResult,
+            documents: docsResult,
           };
         },
       ),
@@ -2679,7 +2718,8 @@ async function searchDocumentChunksByCategory({
     const openaiClient = getOpenAI();
 
     const embeddingResponse = await openaiClient.embeddings.create({
-      model: "text-embedding-3-small",
+      model: "text-embedding-3-large",
+      dimensions: 3072,
       input: query,
     });
     const queryEmbedding = embeddingResponse.data[0].embedding;
