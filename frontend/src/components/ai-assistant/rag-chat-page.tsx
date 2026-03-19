@@ -68,6 +68,8 @@ function ChatWithSession({
   pendingFirstMessage,
   councilMode,
   onCouncilModeChange,
+  selectedProjectId,
+  onProjectChange,
   onFinishMessage,
 }: {
   sessionId: string;

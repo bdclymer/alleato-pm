@@ -21,6 +21,7 @@ import { generateText, stepCountIs, tool, type ToolSet } from "ai";
 import { z } from "zod";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createProjectTools } from "@/lib/ai/tools/project-tools";
+import { createWebSearchTools } from "@/lib/ai/tools/web-search";
 import { strategistSystemPrompt } from "@/lib/ai/agents/strategist";
 import { cfoSystemPrompt } from "@/lib/ai/agents/cfo";
 import { cooSystemPrompt } from "@/lib/ai/agents/coo";
@@ -518,7 +519,11 @@ export const agentRegistry: Record<string, AgentConfig> = {
       // getCompanyKnowledge, semanticSearch, searchMeetingsByTopic,
       // getMeetingDetails, getProjectDetails, getProjectRiskAnalysis,
       // getHistoricalTrends, and getCrossProjectComparison.
-      return createProjectTools(userId, options as any);
+      // Plus web search for competitive/market intelligence.
+      return {
+        ...createProjectTools(userId, options as any),
+        ...createWebSearchTools(options as any),
+      };
     },
   },
 };
@@ -751,6 +756,9 @@ export function createStrategistTools(
   // Include the base project tools so the Strategist can answer
   // general questions without routing to a specialist
   const baseTools = createProjectTools(userId, options as any);
+  // Web search tools — available to Strategist for external research
+  // (competitive questions, market intel, industry trends)
+  const webSearchTools = createWebSearchTools(options as any);
   // Do not expose risk-dedicated tools directly to the Strategist.
   // This forces portfolio/project risk questions through consultCFO,
   // where the specialist prompt requires risk-specific workflows.
@@ -762,6 +770,8 @@ export function createStrategistTools(
   } = baseTools;
 
   return {
+    // Web search — available directly to the Strategist for external research
+    ...webSearchTools,
     // The Strategist's specialist consultation tools
     consultCFO: tool({
       description:
