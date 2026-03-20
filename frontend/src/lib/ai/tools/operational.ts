@@ -1538,7 +1538,6 @@ export function createOperationalTools(
               })),
               retrievalBreakdown: {
                 knowledgeMatches: knowledgeRows.length,
-                documentChunkMatches: documentRows.length,
                 externalChunkMatches: chunkRows.length,
                 usedProjectFilter: Boolean(resolvedProjectId),
               },
