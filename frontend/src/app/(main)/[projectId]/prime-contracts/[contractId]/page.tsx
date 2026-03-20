@@ -294,34 +294,39 @@ const [isSovEditing, setIsSovEditing] = useState(false);
           ? await ccoResponse.json()
           : [];
 
-        // Normalize PCCOs to fit PrimeContractCO interface
+        // Normalize PCCOs to fit PrimeContractCO interface — filter to this contract only
         const pccoRaw = pccoResponse.ok ? await pccoResponse.json() : [];
-        const pccos: PrimeContractCO[] = (pccoRaw || []).map(
-          (p: {
-            id: number;
-            pcco_number: string | null;
-            title: string | null;
-            total_amount: number | null;
-            status: string | null;
-            submitted_at: string | null;
-            approved_at: string | null;
-            created_at: string | null;
-          }) => ({
-            id: String(p.id),
-            contract_id: contractId,
-            change_order_number: p.pcco_number || "",
-            description: p.title || "",
-            amount: p.total_amount ?? 0,
-            status: (p.status || "proposed").toLowerCase(),
-            requested_by: null,
-            requested_date: p.submitted_at || p.created_at || "",
-            approved_by: null,
-            approved_date: p.approved_at || null,
-            rejection_reason: null,
-            created_at: p.created_at || "",
-            updated_at: p.created_at || "",
-          }),
-        );
+        const pccos: PrimeContractCO[] = (pccoRaw || [])
+          .filter((p: { id: number; contract_id: number | null }) =>
+            String(p.contract_id) === String(contractId),
+          )
+          .map(
+            (p: {
+              id: number;
+              contract_id: number | null;
+              pcco_number: string | null;
+              title: string | null;
+              total_amount: number | null;
+              status: string | null;
+              submitted_at: string | null;
+              approved_at: string | null;
+              created_at: string | null;
+            }) => ({
+              id: String(p.id),
+              contract_id: String(p.contract_id ?? contractId),
+              change_order_number: p.pcco_number || "",
+              description: p.title || "",
+              amount: p.total_amount ?? 0,
+              status: (p.status || "proposed").toLowerCase(),
+              requested_by: null,
+              requested_date: p.submitted_at || p.created_at || "",
+              approved_by: null,
+              approved_date: p.approved_at || null,
+              rejection_reason: null,
+              created_at: p.created_at || "",
+              updated_at: p.created_at || "",
+            }),
+          );
 
         setChangeOrders([...ccos, ...pccos]);
       } catch (err) {

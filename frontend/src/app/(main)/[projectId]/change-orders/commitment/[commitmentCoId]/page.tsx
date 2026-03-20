@@ -133,6 +133,7 @@ export default function CommitmentCODetailPage() {
   }
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [attachmentsLoading, setAttachmentsLoading] = useState(true);
+  const [attachmentsError, setAttachmentsError] = useState<string | null>(null);
 
   // Fetch data — we use a direct Supabase query via a lightweight API
   useEffect(() => {
@@ -192,16 +193,20 @@ export default function CommitmentCODetailPage() {
   // Fetch attachments
   const fetchAttachmentsFn = useCallback(async () => {
     setAttachmentsLoading(true);
+    setAttachmentsError(null);
     try {
       const res = await fetch(`/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}/attachments`);
       if (res.ok) {
         const json = await res.json();
         setAttachments(json.data ?? []);
       } else {
-        setAttachments([]);
+        const errJson = await res.json().catch(() => null);
+        throw new Error((errJson as { error?: string } | null)?.error ?? "Failed to fetch attachments");
       }
-    } catch {
-      setAttachments([]);
+    } catch (err) {
+      console.error("Failed to fetch attachments:", err);
+      setAttachmentsError(err instanceof Error ? err.message : "Failed to fetch attachments");
+      // Keep existing attachments; don't reset to [] on transient failures
     } finally {
       setAttachmentsLoading(false);
     }
@@ -703,6 +708,8 @@ export default function CommitmentCODetailPage() {
             </div>
             {attachmentsLoading ? (
               <Skeleton className="h-20 w-full" />
+            ) : attachmentsError ? (
+              <p className="text-sm text-destructive">{attachmentsError}</p>
             ) : attachments.length === 0 ? (
               <p className="text-sm text-muted-foreground">No attachments yet.</p>
             ) : (
@@ -723,6 +730,7 @@ export default function CommitmentCODetailPage() {
                       variant="ghost"
                       size="sm"
                       className="text-destructive"
+                      aria-label={`Delete attachment ${att.fileName}`}
                       onClick={() => handleDeleteAttachment(att.id)}
                     >
                       <Trash2 className="h-4 w-4" />

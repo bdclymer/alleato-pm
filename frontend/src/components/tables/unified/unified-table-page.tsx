@@ -581,7 +581,7 @@ export function UnifiedTablePage<T>({
     for (const column of orderedVisibleColumns) {
       if (!columnPinning.left.includes(column.id)) continue;
       result[column.id] = offset;
-      offset += columnWidths[column.id] ?? 180;
+      offset += columnWidths[column.id] ?? column.width ?? 180;
     }
     return result;
   }, [columnPinning.left, columnWidths, hasRowSelection, orderedVisibleColumns]);
@@ -593,7 +593,7 @@ export function UnifiedTablePage<T>({
       const column = orderedVisibleColumns[index];
       if (!columnPinning.right.includes(column.id)) continue;
       result[column.id] = offset;
-      offset += columnWidths[column.id] ?? 180;
+      offset += columnWidths[column.id] ?? column.width ?? 180;
     }
     return result;
   }, [columnPinning.right, columnWidths, hasRowActions, orderedVisibleColumns]);
@@ -1300,10 +1300,11 @@ export function UnifiedTablePage<T>({
                       </TableCell>
                     )}
                   </TableRow>
-                  {table.renderExpandedRow?.(
-                    item,
-                    orderedVisibleColumns.length + (hasRowSelection ? 1 : 0) + (hasRowActions ? 1 : 0),
-                  )}
+                  {!resolvedFeatures.enableVirtualization &&
+                    table.renderExpandedRow?.(
+                      item,
+                      orderedVisibleColumns.length + (hasRowSelection ? 1 : 0) + (hasRowActions ? 1 : 0),
+                    )}
                   </React.Fragment>
                 ))}
               </TableBody>

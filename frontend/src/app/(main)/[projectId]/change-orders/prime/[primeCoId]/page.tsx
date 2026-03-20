@@ -110,6 +110,7 @@ export default function PrimeContractCODetailPage() {
   }
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [attachmentsLoading, setAttachmentsLoading] = useState(true);
+  const [attachmentsError, setAttachmentsError] = useState<string | null>(null);
 
   const form = useForm<FormData>({
     resolver: zodResolver(editSchema),
@@ -120,13 +121,16 @@ export default function PrimeContractCODetailPage() {
   // Fetch attachments
   const fetchAttachments = useCallback(async () => {
     setAttachmentsLoading(true);
+    setAttachmentsError(null);
     try {
       const res = await fetch(`${apiBase}/attachments`);
       if (!res.ok) throw new Error("Failed to fetch attachments");
       const json = await res.json();
       setAttachments(json.data ?? []);
-    } catch {
-      setAttachments([]);
+    } catch (err) {
+      console.error("Failed to fetch attachments:", err);
+      setAttachmentsError(err instanceof Error ? err.message : "Failed to fetch attachments");
+      // Keep existing attachments; don't reset to [] on transient failures
     } finally {
       setAttachmentsLoading(false);
     }
@@ -597,6 +601,8 @@ export default function PrimeContractCODetailPage() {
           <CardContent>
             {attachmentsLoading ? (
               <Skeleton className="h-16 w-full" />
+            ) : attachmentsError ? (
+              <p className="text-sm text-destructive">{attachmentsError}</p>
             ) : attachments.length === 0 ? (
               <p className="text-sm text-muted-foreground">No attachments</p>
             ) : (
@@ -621,6 +627,7 @@ export default function PrimeContractCODetailPage() {
                     <Button
                       variant="ghost"
                       size="sm"
+                      aria-label={`Delete attachment ${att.fileName}`}
                       onClick={() => handleDeleteAttachment(att.id)}
                     >
                       <Trash2 className="h-4 w-4 text-destructive" />

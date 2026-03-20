@@ -14,6 +14,12 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     const { commitmentCoId } = await params;
     const supabase = await createClient();
 
+    // Authenticate caller
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const { data: attachments, error } = await supabase
       .from("cco_attachments")
       .select("*")
@@ -61,6 +67,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Verify the parent CCO exists and belongs to this project (via its contract)
+    const { data: cco, error: ccoError } = await supabase
+      .from("contract_change_orders")
+      .select("id, contract_id")
+      .eq("id", commitmentCoId)
+      .single();
+
+    if (ccoError || !cco) {
+      return NextResponse.json({ error: "Change order not found" }, { status: 404 });
     }
 
     const formData = await request.formData();

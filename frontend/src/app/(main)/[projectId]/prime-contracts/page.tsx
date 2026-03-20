@@ -109,9 +109,10 @@ export default function ProjectContractsPage(): ReactElement {
         setPccoCache((prev) => ({ ...prev, [contractId]: { loading: true, data: [] } }));
         try {
           const res = await fetch(`/api/projects/${projectId}/prime-contract-change-orders`);
-          const all = res.ok ? await res.json() : [];
-          // PCCOs don't have a direct FK to prime_contracts, so show all project PCCOs
-          setPccoCache((prev) => ({ ...prev, [contractId]: { loading: false, data: all } }));
+          const all: Array<{ id: number; contract_id: number | null; pcco_number: string | null; title: string | null; status: string | null; total_amount: number | null }> = res.ok ? await res.json() : [];
+          // Filter to only PCCOs belonging to this specific contract
+          const filtered = all.filter((p) => String(p.contract_id) === String(contractId));
+          setPccoCache((prev) => ({ ...prev, [contractId]: { loading: false, data: filtered } }));
         } catch {
           setPccoCache((prev) => ({ ...prev, [contractId]: { loading: false, data: [] } }));
         }

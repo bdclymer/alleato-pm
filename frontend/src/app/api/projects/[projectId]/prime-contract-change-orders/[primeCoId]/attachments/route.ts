@@ -11,8 +11,26 @@ interface RouteParams {
  */
 export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
-    const { primeCoId } = await params;
+    const { projectId, primeCoId } = await params;
     const supabase = await createClient();
+
+    // Authenticate caller
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Verify the PCCO belongs to the requested project
+    const { data: pcco, error: pccoError } = await supabase
+      .from("prime_contract_change_orders")
+      .select("id")
+      .eq("id", Number(primeCoId))
+      .eq("project_id", Number(projectId))
+      .single();
+
+    if (pccoError || !pcco) {
+      return NextResponse.json({ error: "Change order not found" }, { status: 404 });
+    }
 
     const { data: attachments, error } = await supabase
       .from("pcco_attachments")
@@ -61,6 +79,18 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Verify the PCCO belongs to the requested project before accepting the upload
+    const { data: pcco, error: pccoError } = await supabase
+      .from("prime_contract_change_orders")
+      .select("id")
+      .eq("id", Number(primeCoId))
+      .eq("project_id", Number(projectId))
+      .single();
+
+    if (pccoError || !pcco) {
+      return NextResponse.json({ error: "Change order not found" }, { status: 404 });
     }
 
     const formData = await request.formData();
