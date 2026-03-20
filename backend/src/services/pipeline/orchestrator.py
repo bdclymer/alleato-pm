@@ -17,7 +17,6 @@ from .document_parser import run_document_parser
 from .financial_parser import run_financial_parser
 from .embedder import run_embedder
 from .extractor import run_extractor
-from .digest import run_digest
 from ..supabase_helpers import get_supabase_client
 
 logger = logging.getLogger(__name__)
@@ -116,9 +115,12 @@ def run_full_pipeline(metadata_id: str) -> Dict[str, Any]:
     Run all 3 pipeline stages in sequence for a document_metadata row.
 
     Stages:
-      1. Parser   — parse markdown, LLM segmentation → meeting_segments
-      2. Embedder — chunk + embed → documents
-      3. Extractor — structured extraction → decisions/risks/tasks/opportunities
+      1. Parser    — parse markdown, LLM segmentation → meeting_segments
+      2. Embedder  — chunk + embed → document_chunks, document_metadata.summary_embedding
+      3. Extractor — structured extraction → insights (decisions/risks/opportunities), tasks
+
+    The digest stage (formerly Stage 4) was removed. Fireflies provides a high-quality
+    summary natively in document_metadata.summary; the LLM digest was redundant.
 
     On failure the job is marked as 'error' in fireflies_ingestion_jobs and
     the exception is re-raised so FastAPI BackgroundTasks can log it.
@@ -148,21 +150,9 @@ def run_full_pipeline(metadata_id: str) -> Dict[str, Any]:
             results["embedder"] = run_embedder(metadata_id)
             logger.info("[Pipeline] Embedder done: %s", results["embedder"])
 
-            logger.info("[Pipeline] Stage 3/4: Extractor → %s", metadata_id)
+            logger.info("[Pipeline] Stage 3/3: Extractor → %s", metadata_id)
             results["extractor"] = run_extractor(metadata_id)
             logger.info("[Pipeline] Extractor done: %s", results["extractor"])
-
-            # Stage 4: Digest — non-critical, failures don't block pipeline
-            try:
-                logger.info("[Pipeline] Stage 4/4: Digest → %s", metadata_id)
-                results["digest"] = run_digest(metadata_id)
-                logger.info("[Pipeline] Digest done: %s", results["digest"])
-            except Exception as digest_exc:
-                logger.warning(
-                    "[Pipeline] Digest failed for %s (non-critical): %s",
-                    metadata_id, digest_exc,
-                )
-                results["digest"] = {"status": "error", "error": str(digest_exc)}
 
             results["status"] = "done"
             return results

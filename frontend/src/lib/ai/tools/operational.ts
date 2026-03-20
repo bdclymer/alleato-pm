@@ -1346,9 +1346,9 @@ export function createOperationalTools(
             const targetThreshold = threshold ?? 0.3;
 
             // Blended retrieval — all halfvec(3072):
-            // search_all_knowledge  → decisions, risks, opportunities, meeting_segments
-            // search_knowledge_base → company_knowledge
-            // search_document_chunks_by_category → email, Teams, OneDrive
+            // search_all_knowledge              → insights (decisions/risks/opportunities)
+            // search_knowledge_base             → company_knowledge
+            // search_document_chunks_by_category → email, Teams, OneDrive chunks
             const [knowledgeRes, knowledgeBaseRes, chunksRes] = await Promise.all([
               supabase.rpc("search_all_knowledge", {
                 query_embedding: embeddingArg3072,
@@ -1830,15 +1830,16 @@ export function createOperationalTools(
           const targetCount = maxResults ?? 10;
 
           // Strategy: run keyword search + semantic search in parallel.
-          // Semantic search uses match_meeting_segments (halfvec(3072)) — NOT match_documents_full,
-          // which queries the documents table whose embeddings were NULLed out in migration 20260318000004.
+          // Semantic search targets document_metadata.summary_embedding (real Fireflies summaries,
+          // halfvec(3072)). The old match_meeting_segments RPC was removed when meeting_segments
+          // lost its summary_embedding column in migration 20260320100000 (summaries were fake).
           const [keywordRes, semanticRes] = await Promise.all([
-            // 1. Full-text keyword search on document_metadata content/title
+            // 1. Full-text keyword search on document_metadata summary/title
             supabase.rpc("full_text_search_meetings", {
               search_query: topic,
               match_count: targetCount,
             }),
-            // 2. Semantic search via meeting_segments.summary_embedding (halfvec(3072))
+            // 2. Semantic search on real meeting summaries via document_metadata.summary_embedding
             (async () => {
               try {
                 const openai = getOpenAI();
@@ -1848,7 +1849,7 @@ export function createOperationalTools(
                   input: topic,
                 });
                 const emb = JSON.stringify(embResp.data[0].embedding);
-                return supabase.rpc("match_meeting_segments", {
+                return supabase.rpc("match_document_metadata_by_summary", {
                   query_embedding: emb,
                   match_count: targetCount * 2,
                   match_threshold: 0.3,
@@ -1866,11 +1867,10 @@ export function createOperationalTools(
           for (const m of keywordMeetings) {
             if (m.id) meetingIds.add(String(m.id));
           }
-          // match_meeting_segments returns metadata_id (the document_metadata.id FK)
-          const semanticSegments = (semanticRes.data ?? []) as AnyRow[];
-          for (const s of semanticSegments) {
-            const metadataId = s.metadata_id ?? s.meeting_id;
-            if (metadataId) meetingIds.add(String(metadataId));
+          // match_document_metadata_by_summary returns id directly
+          const semanticMeetings = (semanticRes.data ?? []) as AnyRow[];
+          for (const m of semanticMeetings) {
+            if (m.id) meetingIds.add(String(m.id));
           }
 
           if (meetingIds.size === 0) {
@@ -1880,7 +1880,7 @@ export function createOperationalTools(
             };
           }
 
-          // Fetch full meeting metadata + digests + segments for matched meetings
+          // Fetch meeting metadata for matched IDs
           const ids = Array.from(meetingIds).slice(0, targetCount);
           let meetingQuery = supabase
             .from("document_metadata")
@@ -1891,78 +1891,24 @@ export function createOperationalTools(
             meetingQuery = meetingQuery.eq("project_id", resolvedProjectId);
           }
 
-          const [meetingsRes, digestsRes, segmentsRes] = await Promise.all([
-            meetingQuery,
-            supabase
-              .from("meeting_digests")
-              .select("metadata_id, key_takeaways, decisions_summary, risks_summary, action_items_summary")
-              .in("metadata_id", ids),
-            supabase
-              .from("meeting_segments")
-              .select("metadata_id, title, summary, decisions, risks, tasks, segment_index")
-              .in("metadata_id", ids)
-              .order("segment_index", { ascending: true }),
-          ]);
-
+          const meetingsRes = await meetingQuery;
           const meetings = (meetingsRes.data ?? []) as AnyRow[];
-          const digests = (digestsRes.data ?? []) as AnyRow[];
-          const segments = (segmentsRes.data ?? []) as AnyRow[];
-
-          // Index digests and segments by meeting ID
-          const digestMap = new Map<string, AnyRow>();
-          for (const d of digests) {
-            digestMap.set(String(d.metadata_id), d);
-          }
-          const segmentMap = new Map<string, AnyRow[]>();
-          for (const s of segments) {
-            const key = String(s.metadata_id);
-            const existing = segmentMap.get(key) ?? [];
-            existing.push(s);
-            segmentMap.set(key, existing);
-          }
 
           return {
             searchScope: resolvedProjectId ? `Filtered to project ${resolvedProjectId}` : "All projects",
             topic,
             totalResults: meetings.length,
-            results: meetings.map((m) => {
-              const mId = String(m.id);
-              const digest = digestMap.get(mId);
-              const segs = segmentMap.get(mId) ?? [];
-              // Find segments most relevant to the topic
-              const topicLower = topic.toLowerCase();
-              const relevantSegs = segs.filter((s) => {
-                const text = `${s.title ?? ""} ${s.summary ?? ""}`.toLowerCase();
-                return topicLower.split(/\s+/).some((word) => text.includes(word));
-              }).slice(0, 3);
-
-              return {
-                sourceRef: `[Source: Meeting - "${m.title}" - ${m.date}]`,
-                id: m.id,
-                title: m.title,
-                date: m.date,
-                project: m.project,
-                projectId: m.project_id,
-                participants: m.participants,
-                summary: String(m.summary || m.overview || "").substring(0, 800),
-                actionItems: m.action_items,
-                digest: digest
-                  ? {
-                      keyTakeaways: digest.key_takeaways,
-                      decisions: digest.decisions_summary,
-                      risks: digest.risks_summary,
-                      actionItems: digest.action_items_summary,
-                    }
-                  : null,
-                relevantSegments: relevantSegs.map((s) => ({
-                  topic: s.title,
-                  summary: String(s.summary ?? "").substring(0, 500),
-                  decisions: s.decisions,
-                  risks: s.risks,
-                  tasks: s.tasks,
-                })),
-              };
-            }),
+            results: meetings.map((m) => ({
+              sourceRef: `[Source: Meeting - "${m.title}" - ${m.date}]`,
+              id: m.id,
+              title: m.title,
+              date: m.date,
+              project: m.project,
+              projectId: m.project_id,
+              participants: m.participants,
+              summary: String(m.summary || m.overview || "").substring(0, 800),
+              actionItems: m.action_items,
+            })),
           };
         },
       ),
@@ -2024,28 +1970,19 @@ export function createOperationalTools(
             return { error: "Provide either meetingId or meetingTitle" };
           }
 
-          const [meetingRes, digestRes, segmentsRes, insightsRes] =
-            await Promise.all([
-              supabase
-                .from("document_metadata")
-                .select("*")
-                .eq("id", resolvedId)
-                .single(),
-              supabase
-                .from("meeting_digests")
-                .select("*")
-                .eq("metadata_id", resolvedId)
-                .maybeSingle(),
-              supabase
-                .from("meeting_segments")
-                .select("*")
-                .eq("metadata_id", resolvedId)
-                .order("segment_index", { ascending: true }),
-              supabase
-                .from("ai_insights")
-                .select("title, description, insight_type, severity, exact_quotes_text, stakeholders_affected")
-                .eq("meeting_id", resolvedId),
-            ]);
+          const [meetingRes, insightsRes] = await Promise.all([
+            supabase
+              .from("document_metadata")
+              .select("*")
+              .eq("id", resolvedId)
+              .single(),
+            // Structured insights extracted from this meeting (decisions/risks/opportunities)
+            supabase
+              .from("insights")
+              .select("type, description, owner_name, status, details, created_at")
+              .eq("metadata_id", resolvedId)
+              .order("type"),
+          ]);
 
           // If direct ID lookup failed and we have a title, the ID may have been guessed
           if (meetingRes.error || !meetingRes.data) {
@@ -2056,9 +1993,12 @@ export function createOperationalTools(
           }
 
           const m = meetingRes.data as AnyRow;
-          const digest = digestRes.data as AnyRow | null;
-          const segments = (segmentsRes.data ?? []) as AnyRow[];
-          const insights = (insightsRes.data ?? []) as AnyRow[];
+          const allInsights = (insightsRes.data ?? []) as AnyRow[];
+
+          // Group insights by type for easy consumption
+          const decisions = allInsights.filter((i) => i.type === "decision");
+          const risks = allInsights.filter((i) => i.type === "risk");
+          const opportunities = allInsights.filter((i) => i.type === "opportunity");
 
           return {
             sourceRef: `[Source: Meeting - "${m.title}" - ${m.date}]`,
@@ -2076,32 +2016,24 @@ export function createOperationalTools(
               actionItems: m.action_items,
               bulletPoints: m.bullet_points,
             },
-            digest: digest
-              ? {
-                  digestText: (digest.digest_text as string)?.substring(0, 2000),
-                  keyTakeaways: digest.key_takeaways,
-                  decisions: digest.decisions_summary,
-                  risks: digest.risks_summary,
-                  actionItems: digest.action_items_summary,
-                  opportunities: digest.opportunities_summary,
-                  followUps: digest.follow_ups,
-                }
-              : null,
-            segments: segments.map((s) => ({
-              index: s.segment_index,
-              topic: s.title,
-              summary: String(s.summary ?? "").substring(0, 600),
-              decisions: s.decisions,
-              risks: s.risks,
-              tasks: s.tasks,
-            })),
-            insights: insights.map((i) => ({
-              title: i.title,
+            decisions: decisions.map((i) => ({
               description: i.description,
-              type: i.insight_type,
-              severity: i.severity,
-              quotes: i.exact_quotes_text,
-              stakeholders: i.stakeholders_affected,
+              owner: i.owner_name,
+              rationale: (i.details as AnyRow)?.rationale,
+            })),
+            risks: risks.map((i) => ({
+              description: i.description,
+              owner: i.owner_name,
+              category: (i.details as AnyRow)?.category,
+              likelihood: (i.details as AnyRow)?.likelihood,
+              impact: (i.details as AnyRow)?.impact,
+              mitigationPlan: (i.details as AnyRow)?.mitigation_plan,
+            })),
+            opportunities: opportunities.map((i) => ({
+              description: i.description,
+              owner: i.owner_name,
+              type: (i.details as AnyRow)?.opportunity_type,
+              nextStep: (i.details as AnyRow)?.next_step,
             })),
           };
         },

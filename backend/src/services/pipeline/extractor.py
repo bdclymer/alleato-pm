@@ -4,8 +4,9 @@ Stage 3 – Structured data extraction.
 Reads segments from ``meeting_segments``, collects raw decisions/risks/tasks,
 then calls the LLM to normalize, deduplicate, and identify opportunities.
 
-Stores the enriched, embedded results in the ``decisions``, ``risks``,
-``tasks``, and ``opportunities`` tables, then marks the job as ``done``.
+Stores the enriched, embedded results in the ``insights`` table (type column
+distinguishes 'decision' / 'risk' / 'opportunity') and the ``tasks`` table,
+then marks the job as ``done``.
 """
 from __future__ import annotations
 
@@ -305,9 +306,12 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
     project_ids = [doc_project_id] if doc_project_id else []
 
     for decision in structured.decisions:
-        _upsert_decision(client, decision, metadata_id)
+        _upsert_insight(client, "decision", decision, metadata_id,
+                        details={"rationale": decision.rationale, "impact": getattr(decision, "impact", None)})
     for risk in structured.risks:
-        _upsert_risk(client, risk, metadata_id)
+        _upsert_insight(client, "risk", risk, metadata_id,
+                        details={"category": risk.category, "likelihood": risk.likelihood,
+                                 "impact": risk.impact, "mitigation_plan": getattr(risk, "mitigation_plan", None)})
     tasks_to_persist = structured.tasks if is_meeting else []
     # Replace task set for this meeting to avoid stale rows from prior runs
     # (for example tasks created before project assignment existed).
@@ -324,7 +328,9 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
             metadata.get("client_id"),
         )
     for opportunity in structured.opportunities:
-        _upsert_opportunity(client, opportunity, metadata_id)
+        _upsert_insight(client, "opportunity", opportunity, metadata_id,
+                        details={"opportunity_type": opportunity.type,
+                                 "next_step": getattr(opportunity, "next_step", None)})
 
     # 6. Mark job done and metadata complete
     client.table("fireflies_ingestion_jobs").update(
@@ -337,10 +343,11 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
 
     return {
         "metadataId": metadata_id,
+        "insights": len(structured.decisions) + len(structured.risks) + len(structured.opportunities),
         "decisions": len(structured.decisions),
         "risks": len(structured.risks),
-        "tasks": len(tasks_to_persist),
         "opportunities": len(structured.opportunities),
+        "tasks": len(tasks_to_persist),
     }
 
 
@@ -348,33 +355,26 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
 # Upsert helpers
 # ---------------------------------------------------------------------------
 
-def _upsert_decision(client, decision: DecisionItem, metadata_id: str) -> None:
-    client.table("decisions").upsert(
+def _upsert_insight(
+    client,
+    insight_type: str,
+    item: "DecisionItem | RiskItem | OpportunityItem",
+    metadata_id: str,
+    details: Dict[str, Any] | None = None,
+) -> None:
+    """Upsert a single insight row into the unified insights table."""
+    import json
+    client.table("insights").upsert(
         {
             "metadata_id": metadata_id,
-            "description": decision.description,
-            "rationale": decision.rationale,
-            "owner_name": decision.owner,
-            "embedding": decision.embedding,
-            "status": "active",
+            "type": insight_type,
+            "description": item.description,
+            "owner_name": getattr(item, "owner", None),
+            "embedding": item.embedding,
+            "status": "active" if insight_type == "decision" else "open",
+            "details": details or {},
         },
-        on_conflict="metadata_id,description",
-    ).execute()
-
-
-def _upsert_risk(client, risk: RiskItem, metadata_id: str) -> None:
-    client.table("risks").upsert(
-        {
-            "metadata_id": metadata_id,
-            "description": risk.description,
-            "category": risk.category,
-            "likelihood": risk.likelihood,
-            "impact": risk.impact,
-            "owner_name": risk.owner,
-            "embedding": risk.embedding,
-            "status": "open",
-        },
-        on_conflict="metadata_id,description",
+        on_conflict="metadata_id,type,description",
     ).execute()
 
 
@@ -414,15 +414,3 @@ def _upsert_task(
     ).execute()
 
 
-def _upsert_opportunity(client, opportunity: OpportunityItem, metadata_id: str) -> None:
-    client.table("opportunities").upsert(
-        {
-            "metadata_id": metadata_id,
-            "description": opportunity.description,
-            "type": opportunity.type,
-            "owner_name": opportunity.owner,
-            "embedding": opportunity.embedding,
-            "status": "open",
-        },
-        on_conflict="metadata_id,description",
-    ).execute()
