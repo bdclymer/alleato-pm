@@ -1,5 +1,5 @@
-// All models route directly to OpenAI (no Vercel AI Gateway)
-export const DEFAULT_CHAT_MODEL = "openai/gpt-4.1-nano";
+// Models route through AI Gateway (BYOK — billing stays with OpenAI)
+export const DEFAULT_CHAT_MODEL = "openai/gpt-5.4-mini";
 
 export type ChatModel = {
   id: string;
@@ -10,22 +10,28 @@ export type ChatModel = {
 
 export const chatModels: ChatModel[] = [
   {
-    id: "openai/gpt-4.1-nano",
-    name: "GPT-4.1 Nano",
+    id: "openai/gpt-5.4",
+    name: "GPT-5.4",
     provider: "openai",
-    description: "Ultra fast and affordable for everyday tasks",
+    description: "Most capable — complex analysis and reasoning",
   },
   {
-    id: "openai/gpt-4.1-mini",
-    name: "GPT-4.1 Mini",
+    id: "openai/gpt-5.4-mini",
+    name: "GPT-5.4 Mini",
     provider: "openai",
-    description: "Fast and cost-effective, great balance",
+    description: "Best balance of quality and speed",
   },
   {
     id: "openai/gpt-4.1",
     name: "GPT-4.1",
     provider: "openai",
-    description: "Most capable model for complex tasks",
+    description: "Fast and reliable for everyday tasks",
+  },
+  {
+    id: "openai/gpt-4.1-mini",
+    name: "GPT-4.1 Mini",
+    provider: "openai",
+    description: "Lightweight and cost-effective",
   },
   {
     id: "openai/o4-mini",

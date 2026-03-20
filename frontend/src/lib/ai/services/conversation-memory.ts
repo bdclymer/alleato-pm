@@ -16,9 +16,9 @@
  */
 
 import { generateText } from "ai";
-import { openai } from "@ai-sdk/openai";
 import OpenAI from "openai";
 import { createServiceClient } from "@/lib/supabase/service";
+import { getLanguageModel } from "../providers";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -34,15 +34,23 @@ const MAX_MESSAGES_FOR_SUMMARY = 40;
 const MAX_CHARS_PER_MESSAGE = 1500;
 
 // ---------------------------------------------------------------------------
-// Lazy OpenAI client for embeddings (same pattern as operational.ts)
+// Lazy OpenAI client for embeddings (routed through AI Gateway when available)
 // ---------------------------------------------------------------------------
 
 let _openai: OpenAI | null = null;
 function getOpenAIClient(): OpenAI {
   if (!_openai) {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) throw new Error("OPENAI_API_KEY not set");
-    _openai = new OpenAI({ apiKey });
+    const gatewayKey = process.env.AI_GATEWAY_API_KEY;
+    if (gatewayKey) {
+      _openai = new OpenAI({
+        apiKey: gatewayKey,
+        baseURL: "https://ai-gateway.vercel.sh/v1",
+      });
+    } else {
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey) throw new Error("AI_GATEWAY_API_KEY or OPENAI_API_KEY not set");
+      _openai = new OpenAI({ apiKey });
+    }
   }
   return _openai;
 }
@@ -66,7 +74,7 @@ async function summarizeConversation(
     .join("\n\n");
 
   const result = await generateText({
-    model: openai("gpt-4.1-nano"),
+    model: getLanguageModel("openai/gpt-4.1-nano"),
     system: `You are a conversation summarizer for a construction project management AI assistant.
 Produce a concise 2-4 sentence summary that captures:
 - The main topics discussed (e.g., "budget for Cedar Park project", "cash flow concerns")

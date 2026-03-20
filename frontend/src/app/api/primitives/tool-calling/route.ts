@@ -1,4 +1,3 @@
-import { openai } from "@ai-sdk/openai";
 import {
   convertToModelMessages,
   stepCountIs,
@@ -9,6 +8,7 @@ import {
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { getLanguageModel } from "@/lib/ai/providers";
 
 export const maxDuration = 30;
 
@@ -22,7 +22,7 @@ export async function POST(req: Request) {
   const { messages }: { messages: UIMessage[] } = await req.json();
 
   const result = streamText({
-    model: openai("gpt-4.1-nano"),
+    model: getLanguageModel("openai/gpt-4.1-nano"),
     system:
       "You are a helpful assistant with access to tools. Use the getCurrentDate tool when users ask about dates, time, or current information. You are also able to use the getTime tool to get the current time in a specific timezone.",
     messages: await convertToModelMessages(messages),

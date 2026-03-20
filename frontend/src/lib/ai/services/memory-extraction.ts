@@ -10,9 +10,9 @@
  */
 
 import { generateText } from "ai";
-import { openai } from "@ai-sdk/openai";
 import { createServiceClient } from "@/lib/supabase/service";
 import { writeMemory, type MemoryType } from "./ai-memory-service";
+import { getLanguageModel } from "../providers";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -38,7 +38,7 @@ async function extractMemoriesFromTranscript(
   transcript: string,
 ): Promise<ExtractedMemory[]> {
   const result = await generateText({
-    model: openai("gpt-4.1-nano"),
+    model: getLanguageModel("openai/gpt-4.1-nano"),
     system: `You extract durable memories from AI assistant conversations in a construction project management platform.
 
 Return a JSON array of memory objects. Each has:

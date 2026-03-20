@@ -45,9 +45,17 @@ export interface AiMemory {
 let _openai: OpenAI | null = null;
 function getOpenAI(): OpenAI {
   if (!_openai) {
-    const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) throw new Error("OPENAI_API_KEY not set");
-    _openai = new OpenAI({ apiKey });
+    const gatewayKey = process.env.AI_GATEWAY_API_KEY;
+    if (gatewayKey) {
+      _openai = new OpenAI({
+        apiKey: gatewayKey,
+        baseURL: "https://ai-gateway.vercel.sh/v1",
+      });
+    } else {
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey) throw new Error("AI_GATEWAY_API_KEY or OPENAI_API_KEY not set");
+      _openai = new OpenAI({ apiKey });
+    }
   }
   return _openai;
 }

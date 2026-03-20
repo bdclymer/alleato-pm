@@ -1,42 +1,66 @@
-import { openai } from "@ai-sdk/openai";
+import { createOpenAI } from "@ai-sdk/openai";
 import {
   customProvider,
   extractReasoningMiddleware,
   wrapLanguageModel,
+  type LanguageModelV1Middleware,
 } from "ai";
 import { isTestEnvironment } from "../constants";
 
 const THINKING_SUFFIX_REGEX = /-thinking$/;
 
-/**
- * Maps any model ID (including gateway-style "provider/model") to an OpenAI model.
- * All requests go directly to OpenAI — no Vercel AI Gateway needed.
- */
-function resolveOpenAIModel(modelId: string): string {
-  // Already a plain OpenAI model name
-  if (!modelId.includes("/")) return modelId;
+// ---------------------------------------------------------------------------
+// AI Gateway provider (BYOK — billing stays with OpenAI, observability via Vercel)
+// Falls back to direct OpenAI if AI_GATEWAY_API_KEY is not set.
+// ---------------------------------------------------------------------------
 
-  // Strip "openai/" prefix
-  if (modelId.startsWith("openai/")) {
-    return modelId.replace(/^openai\//, "");
+const useGateway = !!process.env.AI_GATEWAY_API_KEY;
+
+const openai = createOpenAI(
+  useGateway
+    ? {
+        apiKey: process.env.AI_GATEWAY_API_KEY,
+        baseURL: "https://ai-gateway.vercel.sh/v1",
+      }
+    : {
+        // Direct to OpenAI (local dev fallback)
+        apiKey: process.env.OPENAI_API_KEY,
+      },
+);
+
+// ---------------------------------------------------------------------------
+// DevTools middleware (local dev only — shows every step, tool call, prompt)
+// Run `npx @ai-sdk/devtools` then open http://localhost:4983
+// ---------------------------------------------------------------------------
+
+let devToolsMiddlewareFn: (() => LanguageModelV1Middleware) | null = null;
+if (process.env.NODE_ENV === "development") {
+  try {
+    // Dynamic import so it's never bundled for production
+    devToolsMiddlewareFn = require("@ai-sdk/devtools").devToolsMiddleware;
+  } catch {
+    // Package not installed — skip silently
   }
+}
 
-  // Map Anthropic models → OpenAI equivalents
-  if (modelId.startsWith("anthropic/claude-opus")) return "gpt-4.1";
-  if (modelId.startsWith("anthropic/claude-sonnet")) return "gpt-4.1-mini";
-  if (modelId.startsWith("anthropic/claude-haiku")) return "gpt-4.1-nano";
-  if (modelId.startsWith("anthropic/claude-3.7-sonnet")) return "gpt-4.1-mini";
+/**
+ * Wraps a model with DevTools middleware in development.
+ * In production, returns the model as-is (zero overhead).
+ */
+function withDevTools(model: ReturnType<typeof openai>) {
+  if (devToolsMiddlewareFn) {
+    return wrapLanguageModel({ model, middleware: devToolsMiddlewareFn() });
+  }
+  return model;
+}
 
-  // Map Google models → OpenAI equivalents
-  if (modelId.includes("gemini-2.5-flash-lite")) return "gpt-4.1-nano";
-  if (modelId.includes("gemini-3-pro")) return "gpt-4.1";
-  if (modelId.includes("gemini")) return "gpt-4.1-nano";
-
-  // Map xAI models → OpenAI equivalents
-  if (modelId.includes("grok")) return "gpt-4.1-mini";
-
-  // Fallback
-  return "gpt-4.1-nano";
+/**
+ * Ensures a model ID has the "openai/" prefix required by AI Gateway.
+ * Direct OpenAI calls also accept this format (it's ignored).
+ */
+function ensureProviderPrefix(modelId: string): string {
+  if (modelId.includes("/")) return modelId;
+  return `openai/${modelId}`;
 }
 
 export const myProvider = isTestEnvironment
@@ -68,27 +92,33 @@ export function getLanguageModel(modelId: string) {
 
   if (isReasoningModel) {
     const baseModelId = modelId.replace(THINKING_SUFFIX_REGEX, "");
-    const resolved = resolveOpenAIModel(baseModelId);
 
     return wrapLanguageModel({
-      model: openai(resolved),
+      model: openai(ensureProviderPrefix(baseModelId)),
       middleware: extractReasoningMiddleware({ tagName: "thinking" }),
     });
   }
 
-  return openai(resolveOpenAIModel(modelId));
+  return withDevTools(openai(ensureProviderPrefix(modelId)));
 }
 
 export function getTitleModel() {
   if (isTestEnvironment && myProvider) {
     return myProvider.languageModel("title-model");
   }
-  return openai("gpt-4.1-nano");
+  return withDevTools(openai("openai/gpt-4.1-nano"));
 }
 
 export function getArtifactModel() {
   if (isTestEnvironment && myProvider) {
     return myProvider.languageModel("artifact-model");
   }
-  return openai("gpt-4.1-nano");
+  return withDevTools(openai("openai/gpt-4.1-nano"));
 }
+
+/**
+ * Shared OpenAI-compatible client for embeddings via AI Gateway.
+ * Re-exported so services that use the raw OpenAI SDK for embeddings
+ * can also route through the gateway for observability.
+ */
+export { openai as gatewayProvider };

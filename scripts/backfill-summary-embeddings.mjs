@@ -12,9 +12,9 @@
  *   node scripts/backfill-summary-embeddings.mjs --batch 50  # override batch size
  */
 
-import { createClient } from "@supabase/supabase-js";
-import OpenAI from "openai";
-import { config } from "dotenv";
+import { createClient } from "../frontend/node_modules/@supabase/supabase-js/dist/index.mjs";
+import OpenAI from "../frontend/node_modules/openai/index.mjs";
+import { config } from "../frontend/node_modules/dotenv/lib/main.js";
 import { join, dirname } from "path";
 import { fileURLToPath } from "url";
 
@@ -66,19 +66,25 @@ async function main() {
   console.log(`Batch size: ${BATCH_SIZE}`);
   console.log(`Dry run: ${DRY_RUN}\n`);
 
-  // Count how many rows need embedding
+  // Only embed meeting records — emails/Teams/OneDrive are already chunked in
+  // document_chunks. Embedding their document_metadata row adds no value.
+  // Meeting filter: source = 'fireflies' OR category/type is meeting-related.
+  const MEETING_FILTER = "source.eq.fireflies,category.eq.meeting,category.eq.transcript,category.eq.meeting_transcript,type.eq.meeting,type.eq.meeting_transcript";
+
   const { count: totalNeeding } = await supabase
     .from("document_metadata")
     .select("id", { count: "exact", head: true })
     .is("summary_embedding", null)
-    .not("summary", "is", null);
+    .not("summary", "is", null)
+    .or(MEETING_FILTER);
 
   const { count: totalNoSummary } = await supabase
     .from("document_metadata")
     .select("id", { count: "exact", head: true })
     .is("summary_embedding", null)
     .is("summary", null)
-    .not("overview", "is", null);
+    .not("overview", "is", null)
+    .or(MEETING_FILTER);
 
   const total = (totalNeeding ?? 0) + (totalNoSummary ?? 0);
   console.log(`Rows needing embedding: ${total}`);
@@ -98,16 +104,18 @@ async function main() {
   let processed = 0;
   let skipped = 0;
   let errors = 0;
-  let offset = 0;
 
   while (true) {
-    // Fetch a batch of rows that still need embedding
+    // Always read from offset 0 — as we embed rows, they drop out of the
+    // IS NULL filter, so the result set shrinks. Offset pagination would
+    // skip rows that shift into lower positions after each batch.
     const { data: rows, error } = await supabase
       .from("document_metadata")
       .select("id, summary, overview")
       .is("summary_embedding", null)
       .or("summary.not.is.null,overview.not.is.null")
-      .range(offset, offset + BATCH_SIZE - 1);
+      .or(MEETING_FILTER)
+      .limit(BATCH_SIZE);
 
     if (error) {
       console.error("Error fetching batch:", error.message);

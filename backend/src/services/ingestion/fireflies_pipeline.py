@@ -181,6 +181,7 @@ class FirefliesIngestionPipeline:
         project_id: Optional[int] = None,
         dry_run: bool = False,
         storage_url: Optional[str] = None,
+        extra_metadata: Optional[Dict[str, Any]] = None,
     ) -> IngestionResult:
         parsed = self.parse_markdown(content)
 
@@ -231,6 +232,7 @@ class FirefliesIngestionPipeline:
             "id": document_id,
             "title": parsed.title,
             "captured_at": parsed.captured_at.isoformat() if parsed.captured_at else None,
+            "date": parsed.captured_at.isoformat() if parsed.captured_at else None,
             "fireflies_id": parsed.fireflies_id,
             "summary": parsed.summary or parsed.overview,
             "overview": parsed.overview or parsed.summary,
@@ -242,7 +244,16 @@ class FirefliesIngestionPipeline:
             "raw_text": parsed.raw_text,
             "project_id": effective_project_id,
             "url": storage_url,
+            "source": "fireflies",
+            "type": "meeting",
+            "phase": "construction",
+            "status": "processed",
         }
+        # Merge in any extra structured metadata from the raw Fireflies transcript
+        if extra_metadata:
+            for key, value in extra_metadata.items():
+                if value is not None:
+                    metadata[key] = value
 
         segments = parsed.transcript_segments
         chunks = list(self._chunk_segments(document_id, segments, effective_project_id))
@@ -351,6 +362,99 @@ class FirefliesIngestionPipeline:
         )
         return not any(marker in text for marker in rich_markers)
 
+    def _extract_fireflies_rich_metadata(self, transcript: Dict[str, Any]) -> Dict[str, Any]:
+        """Extract all structured fields from a raw Fireflies transcript dict.
+
+        These fields are passed as extra_metadata to ingest_markdown_text so they
+        are stored directly from the structured API response rather than being lost
+        through the markdown→parse roundtrip.
+        """
+        summary = transcript.get("summary") or {}
+        meeting_info = transcript.get("meeting_info") or {}
+        analytics = transcript.get("analytics") or {}
+        sentiments = analytics.get("sentiments") or {}
+
+        # Duration: Fireflies returns duration already in minutes (integer column)
+        duration_raw = transcript.get("duration")
+        duration_minutes = None
+        if isinstance(duration_raw, (int, float)) and duration_raw > 0:
+            duration_minutes = int(round(duration_raw))
+
+        # Keywords: may be a list or newline-separated string
+        keywords_raw = summary.get("keywords") or []
+        if isinstance(keywords_raw, str):
+            keywords = [k.strip() for k in keywords_raw.splitlines() if k.strip()]
+        elif isinstance(keywords_raw, list):
+            keywords = [str(k).strip() for k in keywords_raw if k]
+        else:
+            keywords = []
+
+        # Topics discussed
+        topics_raw = summary.get("topics_discussed") or []
+        if isinstance(topics_raw, str):
+            topics = [t.strip() for t in topics_raw.splitlines() if t.strip()]
+        elif isinstance(topics_raw, list):
+            topics = [str(t).strip() for t in topics_raw if t]
+        else:
+            topics = []
+
+        # Sentiment scores from analytics
+        sentiment = None
+        if sentiments:
+            sentiment = {
+                "positive_pct": sentiments.get("positive_pct"),
+                "negative_pct": sentiments.get("negative_pct"),
+                "neutral_pct": sentiments.get("neutral_pct"),
+            }
+
+        # Transcript chapters / outline
+        chapters_raw = summary.get("transcript_chapters") or []
+        if isinstance(chapters_raw, list):
+            transcript_chapters = "\n".join(str(c) for c in chapters_raw if c)
+        else:
+            transcript_chapters = str(chapters_raw) if chapters_raw else None
+
+        # Extended sections as structured JSON
+        extended_sections = summary.get("extended_sections") or None
+
+        # Speakers: combine transcript speakers with analytics speaker stats
+        speakers_raw = transcript.get("speakers") or []
+        speakers = speakers_raw if speakers_raw else None
+
+        # Full analytics (minus the sentiments we already extracted to top-level)
+        analytics_payload = analytics if analytics else None
+
+        # Status from meeting_info
+        summary_status = meeting_info.get("summary_status") or "processed"
+
+        return {
+            "duration_minutes": duration_minutes,
+            "fireflies_link": transcript.get("transcript_url"),
+            "audio": transcript.get("audio_url"),
+            "video": transcript.get("video_url"),
+            "meeting_link": transcript.get("meeting_link"),
+            "organizer_email": transcript.get("organizer_email") or transcript.get("host_email"),
+            "host_email": transcript.get("host_email"),
+            "calendar_type": transcript.get("calendar_type"),
+            "privacy": transcript.get("privacy"),
+            "bullet_points": summary.get("bullet_gist") or summary.get("shorthand_bullet"),
+            "notes": summary.get("notes"),
+            "outline": summary.get("outline"),
+            "meeting_type": summary.get("meeting_type"),
+            "keywords": keywords if keywords else None,
+            "topics_discussed": topics if topics else None,
+            "transcript_chapters": transcript_chapters,
+            "extended_sections": extended_sections if extended_sections else None,
+            "sentiment": sentiment,
+            "speakers": speakers,
+            "analytics": analytics_payload,
+            "meeting_attendees": transcript.get("meeting_attendees") or None,
+            "meeting_attendance": transcript.get("meeting_attendance") or None,
+            "channels": transcript.get("channels") or None,
+            "is_silent_meeting": bool(meeting_info.get("silent_meeting")) if meeting_info.get("silent_meeting") is not None else None,
+            "status": summary_status,
+        }
+
     def sync_recent_transcripts(
         self,
         limit: int = 5,
@@ -424,11 +528,13 @@ class FirefliesIngestionPipeline:
                     markdown_file = output_dir / f"{transcript_id}.md"
                     markdown_file.write_text(markdown, encoding="utf-8")
 
+                rich_metadata = self._extract_fireflies_rich_metadata(transcript)
                 ingestion = self.ingest_markdown_text(
                     markdown,
                     project_id=project_id,
                     dry_run=dry_run,
                     storage_url=storage_url,
+                    extra_metadata=rich_metadata,
                 )
                 results.append(
                     {

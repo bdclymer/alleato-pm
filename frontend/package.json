@@ -54,6 +54,7 @@
     "audit:table-layouts": "node scripts/audit-table-layouts.mjs"
   },
   "dependencies": {
+    "@ai-sdk/devtools": "^0.0.15",
     "@ai-sdk/openai": "^3.0.25",
     "@ai-sdk/react": "^3.0.71",
     "@codemirror/lang-python": "^6.2.1",
