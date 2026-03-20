@@ -126,10 +126,10 @@ export default function CommitmentCODetailPage() {
   // Attachments
   interface Attachment {
     id: string;
-    file_name: string;
-    file_size: number;
-    mime_type: string;
-    uploaded_at: string;
+    fileName: string;
+    fileSize: number;
+    mimeType: string;
+    uploadedAt: string;
   }
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [attachmentsLoading, setAttachmentsLoading] = useState(true);
@@ -196,7 +196,7 @@ export default function CommitmentCODetailPage() {
       const res = await fetch(`/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}/attachments`);
       if (res.ok) {
         const json = await res.json();
-        setAttachments(json.data ?? json ?? []);
+        setAttachments(json.data ?? []);
       } else {
         setAttachments([]);
       }
@@ -713,10 +713,10 @@ export default function CommitmentCODetailPage() {
                     className="flex items-center justify-between rounded-md border px-3 py-2"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{att.file_name}</p>
+                      <p className="truncate text-sm font-medium">{att.fileName}</p>
                       <p className="text-xs text-muted-foreground">
-                        {(att.file_size / 1024).toFixed(0)} KB
-                        {att.uploaded_at && ` — ${new Date(att.uploaded_at).toLocaleDateString()}`}
+                        {(att.fileSize / 1024).toFixed(0)} KB
+                        {att.uploadedAt && ` — ${new Date(att.uploadedAt).toLocaleDateString()}`}
                       </p>
                     </div>
                     <Button
