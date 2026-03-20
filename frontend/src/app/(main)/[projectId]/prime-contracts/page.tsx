@@ -3,7 +3,9 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Plus, Settings } from "lucide-react";
+import { ChevronDown, ChevronRight, Plus, Settings } from "lucide-react";
+import { StatusBadge } from "@/components/ds";
+import { TableCell, TableRow } from "@/components/ui/table";
 import { toast } from "sonner";
 
 import {
@@ -83,6 +85,41 @@ export default function ProjectContractsPage(): ReactElement {
   const [isDeleting, setIsDeleting] = React.useState(false);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = React.useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = React.useState(false);
+
+  // Expandable PCCO sub-rows
+  const [expandedIds, setExpandedIds] = React.useState<Set<string>>(new Set());
+  const [pccoCache, setPccoCache] = React.useState<
+    Record<string, { loading: boolean; data: Array<{ id: number; pcco_number: string | null; title: string | null; status: string | null; total_amount: number | null }> }>
+  >({});
+
+  const toggleExpand = React.useCallback(
+    async (contractId: string) => {
+      setExpandedIds((prev) => {
+        const next = new Set(prev);
+        if (next.has(contractId)) {
+          next.delete(contractId);
+        } else {
+          next.add(contractId);
+        }
+        return next;
+      });
+
+      // Fetch PCCOs if not cached
+      if (!pccoCache[contractId]) {
+        setPccoCache((prev) => ({ ...prev, [contractId]: { loading: true, data: [] } }));
+        try {
+          const res = await fetch(`/api/projects/${projectId}/prime-contract-change-orders`);
+          const all: Array<{ id: number; contract_id: number | null; pcco_number: string | null; title: string | null; status: string | null; total_amount: number | null }> = res.ok ? await res.json() : [];
+          // Filter to only PCCOs belonging to this specific contract
+          const filtered = all.filter((p) => String(p.contract_id) === String(contractId));
+          setPccoCache((prev) => ({ ...prev, [contractId]: { loading: false, data: filtered } }));
+        } catch {
+          setPccoCache((prev) => ({ ...prev, [contractId]: { loading: false, data: [] } }));
+        }
+      }
+    },
+    [pccoCache, projectId],
+  );
 
   React.useEffect(() => {
     const nextStatus = searchParams.get("status") ?? "";
@@ -405,7 +442,7 @@ export default function ProjectContractsPage(): ReactElement {
           activeFilters,
           onFilterChange: handleFilterChange,
           onClearFilters: () => handleFilterChange(EMPTY_FILTERS),
-          columns: primeContractColumns,
+          columns: [{ id: "expand", label: "", alwaysVisible: true }, ...primeContractColumns],
           visibleColumns: tableState.visibleColumns,
           onColumnVisibilityChange: tableState.setVisibleColumns,
           onExport: handleExport,
@@ -430,11 +467,92 @@ export default function ProjectContractsPage(): ReactElement {
           error: error ?? undefined,
         }}
         table={{
-          columns: tableColumns,
+          columns: [
+            {
+              id: "expand",
+              label: "",
+              alwaysVisible: true,
+              width: 40,
+              render: (item: PrimeContract) => (
+                <button
+                  type="button"
+                  className="flex h-6 w-6 items-center justify-center rounded hover:bg-muted"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleExpand(item.id);
+                  }}
+                  aria-label={expandedIds.has(item.id) ? "Collapse" : "Expand"}
+                >
+                  {expandedIds.has(item.id) ? (
+                    <ChevronDown className="h-4 w-4" />
+                  ) : (
+                    <ChevronRight className="h-4 w-4" />
+                  )}
+                </button>
+              ),
+              sortValue: () => 0,
+            },
+            ...tableColumns,
+          ],
           getRowId: (item) => item.id,
           onRowClick: handleRowClick,
           rowActions: (item) =>
             renderPrimeContractRowActions(item, handleEdit, handleDeleteIntent),
+          renderExpandedRow: (item, colSpan) => {
+            if (!expandedIds.has(item.id)) return null;
+            const cached = pccoCache[item.id];
+            const formatCurrency = (v: number | null) =>
+              v == null
+                ? "—"
+                : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(v);
+
+            return (
+              <TableRow className="bg-muted/30 hover:bg-muted/30">
+                <TableCell colSpan={colSpan} className="px-8 py-3">
+                  {!cached || cached.loading ? (
+                    <p className="text-sm text-muted-foreground">Loading change orders...</p>
+                  ) : cached.data.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No change orders</p>
+                  ) : (
+                    <div className="space-y-1">
+                      <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                        Prime Contract Change Orders ({cached.data.length})
+                      </p>
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="text-left text-xs text-muted-foreground">
+                            <th className="pb-1 pr-4 font-medium">Number</th>
+                            <th className="pb-1 pr-4 font-medium">Title</th>
+                            <th className="pb-1 pr-4 font-medium">Status</th>
+                            <th className="pb-1 text-right font-medium">Amount</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {cached.data.map((co) => (
+                            <tr
+                              key={co.id}
+                              className="cursor-pointer border-t border-border/50 hover:bg-muted/50"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                router.push(`/${projectId}/change-orders/prime/${co.id}`);
+                              }}
+                            >
+                              <td className="py-1.5 pr-4 font-medium">{co.pcco_number || "—"}</td>
+                              <td className="max-w-md truncate py-1.5 pr-4">{co.title || "—"}</td>
+                              <td className="py-1.5 pr-4">
+                                <StatusBadge status={co.status || "Unknown"} />
+                              </td>
+                              <td className="py-1.5 text-right">{formatCurrency(co.total_amount)}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </TableCell>
+              </TableRow>
+            );
+          },
         }}
         sorting={{
           sortBy: tableState.sortBy,

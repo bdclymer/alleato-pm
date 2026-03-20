@@ -439,6 +439,61 @@ export function CellEmail({
   );
 }
 
+// ── TruncatedCell ────────────────────────────────────────────────────────────
+
+interface TruncatedCellProps {
+  /** The text to display (truncated to one line with ellipsis). */
+  value: string | null | undefined;
+  /** Max width in pixels. Defaults to 320. */
+  maxWidth?: number;
+  emptyLabel?: string;
+  className?: string;
+}
+
+/**
+ * A table cell that truncates long text to a single line and shows a
+ * styled tooltip with the full content on hover.
+ *
+ * Usage:
+ *   render: (item) => <TruncatedCell value={item.title} maxWidth={360} />
+ */
+export function TruncatedCell({
+  value,
+  maxWidth = 320,
+  emptyLabel = "—",
+  className,
+}: TruncatedCellProps): React.ReactElement {
+  const display = value?.trim();
+
+  if (!display) {
+    return <span className="text-muted-foreground">{emptyLabel}</span>;
+  }
+
+  return (
+    <TooltipProvider delayDuration={300}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span
+            className={cn("block truncate", className)}
+            style={{ maxWidth }}
+          >
+            {display}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent
+          side="top"
+          align="start"
+          className="max-w-[480px] border bg-popover px-3 py-2 text-popover-foreground shadow-sm"
+        >
+          <p className="text-xs leading-relaxed whitespace-pre-wrap">
+            {display}
+          </p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
+  );
+}
+
 // ── Legacy exports below ────────────────────────────────────────────────────
 
 export interface TableRowActionItem {

@@ -123,6 +123,18 @@ export default function CommitmentCODetailPage() {
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [lineItemsLoading, setLineItemsLoading] = useState(true);
 
+  // Attachments
+  interface Attachment {
+    id: string;
+    fileName: string;
+    fileSize: number;
+    mimeType: string;
+    uploadedAt: string;
+  }
+  const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const [attachmentsLoading, setAttachmentsLoading] = useState(true);
+  const [attachmentsError, setAttachmentsError] = useState<string | null>(null);
+
   // Fetch data — we use a direct Supabase query via a lightweight API
   useEffect(() => {
     const fetchData = async () => {
@@ -177,6 +189,72 @@ export default function CommitmentCODetailPage() {
     };
     fetchLineItems();
   }, [co, commitmentCoId]);
+
+  // Fetch attachments
+  const fetchAttachmentsFn = useCallback(async () => {
+    setAttachmentsLoading(true);
+    setAttachmentsError(null);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}/attachments`);
+      if (res.ok) {
+        const json = await res.json();
+        setAttachments(json.data ?? []);
+      } else {
+        const errJson = await res.json().catch(() => null);
+        throw new Error((errJson as { error?: string } | null)?.error ?? "Failed to fetch attachments");
+      }
+    } catch (err) {
+      console.error("Failed to fetch attachments:", err);
+      setAttachmentsError(err instanceof Error ? err.message : "Failed to fetch attachments");
+      // Keep existing attachments; don't reset to [] on transient failures
+    } finally {
+      setAttachmentsLoading(false);
+    }
+  }, [projectId, commitmentCoId]);
+
+  useEffect(() => {
+    if (co) fetchAttachmentsFn();
+  }, [co, fetchAttachmentsFn]);
+
+  const handleFileUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const formData = new FormData();
+      formData.append("file", file);
+      try {
+        const res = await fetch(
+          `/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}/attachments`,
+          { method: "POST", body: formData },
+        );
+        if (!res.ok) throw new Error("Upload failed");
+        toast.success(`${file.name} uploaded`);
+        fetchAttachmentsFn();
+      } catch {
+        toast.error("Failed to upload file");
+      }
+      e.target.value = "";
+    },
+    [projectId, commitmentCoId, fetchAttachmentsFn],
+  );
+
+  const handleDeleteAttachment = useCallback(
+    async (attachmentId: string) => {
+      if (!confirm("Delete this attachment?")) return;
+      try {
+        const res = await fetch(
+          `/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}/attachments/${attachmentId}`,
+          { method: "DELETE" },
+        );
+        if (!res.ok) throw new Error("Delete failed");
+        toast.success("Attachment deleted");
+        setAttachments((prev) => prev.filter((a) => a.id !== attachmentId));
+      } catch {
+        toast.error("Failed to delete attachment");
+      }
+    },
+    [projectId, commitmentCoId],
+  );
 
   useEffect(() => {
     if (searchParams.get("edit") === "1") setIsEditing(true);
@@ -600,6 +678,65 @@ export default function CommitmentCODetailPage() {
                     </tr>
                   </tfoot>
                 </table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Attachments */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Attachments</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="mb-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => document.getElementById("cco-attachment-upload")?.click()}
+              >
+                Upload File
+              </Button>
+              <input
+                id="cco-attachment-upload"
+                type="file"
+                className="hidden"
+                accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png"
+                onChange={handleFileUpload}
+                aria-label="Upload attachment"
+              />
+            </div>
+            {attachmentsLoading ? (
+              <Skeleton className="h-20 w-full" />
+            ) : attachmentsError ? (
+              <p className="text-sm text-destructive">{attachmentsError}</p>
+            ) : attachments.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No attachments yet.</p>
+            ) : (
+              <div className="space-y-2">
+                {attachments.map((att) => (
+                  <div
+                    key={att.id}
+                    className="flex items-center justify-between rounded-md border px-3 py-2"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{att.fileName}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {(att.fileSize / 1024).toFixed(0)} KB
+                        {att.uploadedAt && ` — ${new Date(att.uploadedAt).toLocaleDateString()}`}
+                      </p>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-destructive"
+                      aria-label={`Delete attachment ${att.fileName}`}
+                      onClick={() => handleDeleteAttachment(att.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ))}
               </div>
             )}
           </CardContent>
