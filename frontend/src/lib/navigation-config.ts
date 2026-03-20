@@ -7,6 +7,7 @@ import {
   Bot,
   Brain,
   Briefcase,
+  Bug,
   Building2,
   Calendar,
   Camera,
@@ -120,6 +121,10 @@ export const adminTools: NavigationTool[] = [
   { name: "Documentation", path: "/docs", icon: MessageCircle, requiresProject: false },
   { name: "Document Pipeline", path: "/admin/documents/pipeline", icon: FolderOpen, requiresProject: false, adminOnly: true },
   { name: "Company Knowledge", path: "/admin/company-knowledge", icon: BookOpen, requiresProject: false, adminOnly: true },
+  // AI SDK DevTools — only visible in development (http://localhost:4983)
+  ...(process.env.NODE_ENV === "development"
+    ? [{ name: "AI DevTools", path: "http://localhost:4983", icon: Bug, requiresProject: false } as NavigationTool]
+    : []),
 ];
 
 // Helper function to build project-scoped URLs

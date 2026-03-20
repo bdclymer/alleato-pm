@@ -80,24 +80,38 @@ function SidebarFlyout({
         </div>
         <div className="flex flex-col gap-0.5 px-1.5">
           {tools.map((tool) => {
-            const href = tool.path.startsWith("/")
+            const isExternal = tool.path.startsWith("http")
+            const href = isExternal
               ? tool.path
-              : buildToolUrl(tool.path, projectId, tool.requiresProject)
-            const isActive = tool.path.startsWith("/")
+              : tool.path.startsWith("/")
+                ? tool.path
+                : buildToolUrl(tool.path, projectId, tool.requiresProject)
+            const isActive = !isExternal && (tool.path.startsWith("/")
               ? pathname === tool.path || pathname.startsWith(tool.path + "/")
-              : isActivePath(pathname, tool.path)
+              : isActivePath(pathname, tool.path))
             const Icon = tool.icon
+            const linkClass = cn(
+              "flex items-center rounded-md px-2.5 py-1.5 text-[13px] transition-colors",
+              isActive
+                ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
+                : "text-foreground/80 hover:bg-sidebar-accent/60 hover:text-foreground"
+            )
 
-            return (
+            return isExternal ? (
+              <a
+                key={tool.name}
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={linkClass}
+              >
+                <span className="truncate">{tool.name}</span>
+              </a>
+            ) : (
               <Link
                 key={tool.name}
                 href={href}
-                className={cn(
-                  "flex items-center rounded-md px-2.5 py-1.5 text-[13px] transition-colors",
-                  isActive
-                    ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
-                    : "text-foreground/80 hover:bg-sidebar-accent/60 hover:text-foreground"
-                )}
+                className={linkClass}
               >
                 <span className="truncate">{tool.name}</span>
               </Link>
@@ -209,24 +223,38 @@ function ExpandedNavGroup({
         </span>
       </div>
       {tools.map((tool) => {
-        const href = tool.path.startsWith("/")
+        const isExternal = tool.path.startsWith("http")
+        const href = isExternal
           ? tool.path
-          : buildToolUrl(tool.path, projectId, tool.requiresProject)
-        const isActive = tool.path.startsWith("/")
+          : tool.path.startsWith("/")
+            ? tool.path
+            : buildToolUrl(tool.path, projectId, tool.requiresProject)
+        const isActive = !isExternal && (tool.path.startsWith("/")
           ? pathname === tool.path || pathname.startsWith(tool.path + "/")
-          : isActivePath(pathname, tool.path)
+          : isActivePath(pathname, tool.path))
         const Icon = tool.icon
+        const linkClass = cn(
+          "mx-2 flex items-center rounded-md px-2.5 py-[7px] text-[13px] transition-colors duration-150",
+          isActive
+            ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
+            : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
+        )
 
-        return (
+        return isExternal ? (
+          <a
+            key={tool.name}
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={linkClass}
+          >
+            <span className="truncate">{tool.name}</span>
+          </a>
+        ) : (
           <Link
             key={tool.name}
             href={href}
-            className={cn(
-              "mx-2 flex items-center rounded-md px-2.5 py-[7px] text-[13px] transition-colors duration-150",
-              isActive
-                ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
-                : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
-            )}
+            className={linkClass}
           >
             <span className="truncate">{tool.name}</span>
           </Link>

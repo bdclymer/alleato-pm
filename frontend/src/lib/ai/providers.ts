@@ -47,7 +47,7 @@ if (process.env.NODE_ENV === "development") {
  * Wraps a model with DevTools middleware in development.
  * In production, returns the model as-is (zero overhead).
  */
-function withDevTools(model: ReturnType<typeof openai>) {
+function withDevTools(model: ReturnType<typeof openai.chat>) {
   if (devToolsMiddlewareFn) {
     return wrapLanguageModel({ model, middleware: devToolsMiddlewareFn() });
   }
@@ -94,26 +94,29 @@ export function getLanguageModel(modelId: string) {
     const baseModelId = modelId.replace(THINKING_SUFFIX_REGEX, "");
 
     return wrapLanguageModel({
-      model: openai(ensureProviderPrefix(baseModelId)),
+      model: openai.chat(ensureProviderPrefix(baseModelId)),
       middleware: extractReasoningMiddleware({ tagName: "thinking" }),
     });
   }
 
-  return withDevTools(openai(ensureProviderPrefix(modelId)));
+  // Use openai.chat() to route through /v1/chat/completions.
+  // The default openai() uses /v1/responses which has known validation
+  // bugs in the AI Gateway for multi-step tool calling.
+  return withDevTools(openai.chat(ensureProviderPrefix(modelId)));
 }
 
 export function getTitleModel() {
   if (isTestEnvironment && myProvider) {
     return myProvider.languageModel("title-model");
   }
-  return withDevTools(openai("openai/gpt-4.1-nano"));
+  return withDevTools(openai.chat("openai/gpt-4.1-nano"));
 }
 
 export function getArtifactModel() {
   if (isTestEnvironment && myProvider) {
     return myProvider.languageModel("artifact-model");
   }
-  return withDevTools(openai("openai/gpt-4.1-nano"));
+  return withDevTools(openai.chat("openai/gpt-4.1-nano"));
 }
 
 /**
