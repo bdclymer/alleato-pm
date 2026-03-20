@@ -1331,43 +1331,39 @@ export function createOperationalTools(
             // If project name doesn't resolve, still search across all projects
           }
           try {
-            // Generate embeddings:
-            // - 1536-dim for meeting/knowledge tables (search_all_knowledge, match_documents_full, search_knowledge_base)
-            // - 3072-dim for document_chunks table (email, Teams, OneDrive via microsoft_graph)
+            // All active RAG tables use halfvec(3072) — single embedding generation.
+            // (documents.embedding was NULLed out during 20260318000004 migration;
+            //  meeting content is now served by meeting_segments via search_all_knowledge)
             const openai = getOpenAI();
-            const [embResp1536, embResp3072] = await Promise.all([
-              openai.embeddings.create({ model: "text-embedding-3-large", dimensions: 1536, input: query }),
-              openai.embeddings.create({ model: "text-embedding-3-large", dimensions: 3072, input: query }),
-            ]);
+            const embResp3072 = await openai.embeddings.create({
+              model: "text-embedding-3-large",
+              dimensions: 3072,
+              input: query,
+            });
 
-            const embeddingArg = JSON.stringify(embResp1536.data[0].embedding);
             const embeddingArg3072 = JSON.stringify(embResp3072.data[0].embedding);
             const targetCount = matchCount ?? 10;
             const targetThreshold = threshold ?? 0.3;
 
-            // Blended retrieval — dimension routing:
-            // halfvec(3072): search_all_knowledge (decisions/risks/opportunities/meeting_segments) + search_document_chunks_by_category (email/Teams/OneDrive)
-            // vector(1536):  match_documents_full (Fireflies documents) + search_knowledge_base (company_knowledge)
-            const [knowledgeRes, documentRes, knowledgeBaseRes, chunksRes] = await Promise.all([
+            // Blended retrieval — all halfvec(3072):
+            // search_all_knowledge  → decisions, risks, opportunities, meeting_segments
+            // search_knowledge_base → company_knowledge
+            // search_document_chunks_by_category → email, Teams, OneDrive
+            const [knowledgeRes, knowledgeBaseRes, chunksRes] = await Promise.all([
               supabase.rpc("search_all_knowledge", {
-                query_embedding: embeddingArg3072, // halfvec(3072) — decisions, risks, opportunities, meeting_segments
+                query_embedding: embeddingArg3072,
                 match_count: targetCount,
                 match_threshold: targetThreshold,
               }),
-              supabase.rpc("match_documents_full", {
-                query_embedding: embeddingArg, // vector(1536) — documents table (legacy Fireflies)
-                match_count: Math.max(targetCount * 2, 20),
-                match_threshold: targetThreshold,
-              }),
               supabase.rpc("search_knowledge_base", {
-                query_embedding: embeddingArg, // vector(1536) — company_knowledge
+                query_embedding: embeddingArg3072,
                 match_count: targetCount,
                 match_threshold: targetThreshold,
                 ...(resolvedProjectId ? { filter_project_id: resolvedProjectId } : {}),
               }),
               // eslint-disable-next-line @typescript-eslint/no-explicit-any
               (supabase as any).rpc("search_document_chunks_by_category", {
-                query_embedding: embeddingArg3072, // halfvec(3072) — email, Teams, OneDrive
+                query_embedding: embeddingArg3072,
                 filter_category: null,
                 match_count: targetCount,
                 match_threshold: targetThreshold,
@@ -1375,16 +1371,14 @@ export function createOperationalTools(
             ]);
 
             const knowledgeError = knowledgeRes.error;
-            const documentError = documentRes.error;
             const knowledgeBaseError = knowledgeBaseRes.error;
             const chunksError = (chunksRes as { error?: { message: string } }).error;
-            // Surface any source failures; only abort if all primary structured sources failed
+            // Surface any source failures; only abort if all sources failed
             const errorParts: string[] = [];
             if (knowledgeError) errorParts.push(`knowledge=${knowledgeError.message}`);
-            if (documentError) errorParts.push(`documents=${documentError.message}`);
             if (knowledgeBaseError) errorParts.push(`knowledgeBase=${knowledgeBaseError.message}`);
             if (chunksError) errorParts.push(`chunks=${chunksError.message}`);
-            if (knowledgeError && documentError && knowledgeBaseError && chunksError) {
+            if (knowledgeError && knowledgeBaseError && chunksError) {
               return {
                 error: `Semantic search failed: ${errorParts.join("; ")}`,
               };
@@ -1399,18 +1393,6 @@ export function createOperationalTools(
                   )
                 : [];
               return projectIds.includes(resolvedProjectId);
-            });
-            const rawDocumentRows = (documentRes.data ?? []) as AnyRow[];
-            const documentRows = rawDocumentRows.filter((row) => {
-              if (!resolvedProjectId) return true;
-              const primaryProjectId =
-                typeof row.project_id === "number" ? row.project_id : null;
-              const projectIds = Array.isArray(row.project_ids)
-                ? (row.project_ids as unknown[]).filter(
-                    (v): v is number => typeof v === "number",
-                  )
-                : [];
-              return primaryProjectId === resolvedProjectId || projectIds.includes(resolvedProjectId);
             });
             // Email / Teams / OneDrive chunks from document_chunks table
             const rawChunkRows = ((chunksRes as { data?: unknown[] }).data ?? []) as AnyRow[];
@@ -1451,38 +1433,6 @@ export function createOperationalTools(
                   row.metadata && typeof row.metadata === "object"
                     ? (row.metadata as AnyRow)
                     : null,
-                createdAt:
-                  typeof row.created_at === "string" ? row.created_at : null,
-              });
-            }
-
-            for (const row of documentRows) {
-              const docId = String(row.id ?? row.file_id ?? "");
-              const similarity = Math.round(asNumber(row.similarity) * 1000) / 1000;
-              const metadata =
-                row.metadata && typeof row.metadata === "object"
-                  ? (row.metadata as AnyRow)
-                  : null;
-              merged.push({
-                key: `documents:${docId}`,
-                sourceTable: "documents",
-                recordId: docId,
-                content: String(row.content ?? ""),
-                similarity,
-                projectIds: Array.isArray(row.project_ids)
-                  ? (row.project_ids as unknown[]).filter(
-                      (v): v is number => typeof v === "number",
-                    )
-                  : typeof row.project_id === "number"
-                    ? [row.project_id]
-                    : [],
-                metadata: {
-                  ...(metadata ?? {}),
-                  title: row.title ?? metadata?.title ?? null,
-                  source: row.source ?? metadata?.source ?? null,
-                  file_id: row.file_id ?? metadata?.file_id ?? null,
-                  file_date: row.file_date ?? metadata?.file_date ?? null,
-                },
                 createdAt:
                   typeof row.created_at === "string" ? row.created_at : null,
               });
@@ -1774,8 +1724,10 @@ export function createOperationalTools(
         async ({ query, matchCount }) => {
           try {
             const openaiClient = getOpenAI();
+            // memories.embedding is halfvec(3072) — must use text-embedding-3-large at 3072 dims
             const embeddingResponse = await openaiClient.embeddings.create({
-              model: "text-embedding-3-small",
+              model: "text-embedding-3-large",
+              dimensions: 3072,
               input: query,
             });
 
@@ -1878,26 +1830,30 @@ export function createOperationalTools(
 
           const targetCount = maxResults ?? 10;
 
-          // Strategy: run keyword search + semantic search in parallel
+          // Strategy: run keyword search + semantic search in parallel.
+          // Semantic search uses match_meeting_segments (halfvec(3072)) — NOT match_documents_full,
+          // which queries the documents table whose embeddings were NULLed out in migration 20260318000004.
           const [keywordRes, semanticRes] = await Promise.all([
-            // 1. Full-text search
+            // 1. Full-text keyword search on document_metadata content/title
             supabase.rpc("full_text_search_meetings", {
               search_query: topic,
               match_count: targetCount,
             }),
-            // 2. Semantic search via embeddings
+            // 2. Semantic search via meeting_segments.summary_embedding (halfvec(3072))
             (async () => {
               try {
                 const openai = getOpenAI();
                 const embResp = await openai.embeddings.create({
-                  model: "text-embedding-3-small",
+                  model: "text-embedding-3-large",
+                  dimensions: 3072,
                   input: topic,
                 });
                 const emb = JSON.stringify(embResp.data[0].embedding);
-                return supabase.rpc("match_documents_full", {
+                return supabase.rpc("match_meeting_segments", {
                   query_embedding: emb,
                   match_count: targetCount * 2,
                   match_threshold: 0.3,
+                  ...(resolvedProjectId ? { p_project_id: resolvedProjectId } : {}),
                 });
               } catch {
                 return { data: [], error: null };
@@ -1911,10 +1867,11 @@ export function createOperationalTools(
           for (const m of keywordMeetings) {
             if (m.id) meetingIds.add(String(m.id));
           }
-          const semanticDocs = (semanticRes.data ?? []) as AnyRow[];
-          for (const d of semanticDocs) {
-            const fileId = d.file_id ?? (d.metadata as AnyRow)?.file_id;
-            if (fileId) meetingIds.add(String(fileId));
+          // match_meeting_segments returns metadata_id (the document_metadata.id FK)
+          const semanticSegments = (semanticRes.data ?? []) as AnyRow[];
+          for (const s of semanticSegments) {
+            const metadataId = s.metadata_id ?? s.meeting_id;
+            if (metadataId) meetingIds.add(String(metadataId));
           }
 
           if (meetingIds.size === 0) {
@@ -2198,6 +2155,16 @@ export function createOperationalTools(
         options,
         async ({ title, content, category, tags, source }) => {
           try {
+            // Generate embedding so the entry is searchable via semantic search.
+            // company_knowledge.embedding is halfvec(3072) — use text-embedding-3-large at 3072 dims.
+            const openaiClient = getOpenAI();
+            const embResp = await openaiClient.embeddings.create({
+              model: "text-embedding-3-large",
+              dimensions: 3072,
+              input: `${title}\n\n${content}`.substring(0, 8000),
+            });
+            const embedding = JSON.stringify(embResp.data[0].embedding);
+
             const { data, error } = await supabase
               .from("company_knowledge")
               .insert({
@@ -2208,6 +2175,7 @@ export function createOperationalTools(
                 source: source ?? "AI Assistant",
                 author_id: userId,
                 is_active: true,
+                embedding,
               })
               .select("id, title, category, tags")
               .single();

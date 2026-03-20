@@ -53,8 +53,10 @@ function getOpenAI(): OpenAI {
 }
 
 export async function embed(text: string): Promise<number[]> {
+  // ai_memories.embedding is halfvec(3072) — must use text-embedding-3-large at 3072 dims
   const response = await getOpenAI().embeddings.create({
-    model: "text-embedding-3-small",
+    model: "text-embedding-3-large",
+    dimensions: 3072,
     input: text.substring(0, 8000),
   });
   return response.data[0].embedding;
