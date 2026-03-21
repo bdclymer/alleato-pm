@@ -1,12 +1,10 @@
 @import "@liveblocks/react-ui/styles.css";
 @import "@liveblocks/react-lexical/styles.css";
 @import "../components/issue-tracker/styles/liveblocks-issue-tracker.css";
+@import "tailwindcss";
 
-@tailwind base;
-
+@config "../../tailwind.config.ts";
 @custom-variant dark (&:is(.dark *));
-@tailwind components;
-@tailwind utilities;
 
 /* Streamdown markdown rendering styles (required for proper headers, code blocks, tables, lists) */
 @source "../node_modules/streamdown/dist/*.js";
@@ -722,7 +720,11 @@
 
   /* Editable field trigger */
   .btn-editable {
-    @apply group w-full cursor-pointer hover:opacity-70 transition-opacity duration-150 border-0 bg-transparent text-left p-0;
+    @apply w-full cursor-pointer transition-opacity duration-150 border-0 bg-transparent text-left p-0;
+  }
+
+  .btn-editable:hover {
+    opacity: 0.7;
   }
 
   /* Menu link button */
@@ -920,12 +922,12 @@
 @layer components {
   /* List item - hoverable */
   .list-item-hover {
-    @apply block group;
+    @apply block;
   }
 
   /* List item text with hover — uses primary instead of brand */
   .list-item-text {
-    @apply text-sm font-medium text-foreground group-hover:text-primary truncate transition-colors duration-150;
+    @apply text-sm font-medium text-foreground truncate transition-colors duration-150;
   }
 
   /* Metadata row */
@@ -960,7 +962,15 @@
 
   /* Edit pencil icon */
   .edit-icon {
-    @apply h-3 w-3 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity duration-150;
+    @apply h-3 w-3 text-muted-foreground opacity-0 transition-opacity duration-150;
+  }
+
+  .list-item-hover:hover .list-item-text {
+    color: hsl(var(--primary));
+  }
+
+  .list-item-hover:hover .edit-icon {
+    opacity: 1;
   }
 
   /* Brand icon — uses primary (indigo) */
