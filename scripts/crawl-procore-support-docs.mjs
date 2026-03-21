@@ -77,6 +77,7 @@ const DRY_RUN = args.includes("--dry-run");
 const SKIP_CRAWL = args.includes("--skip-crawl");
 const SKIP_EMBED = args.includes("--skip-embed");
 const FORCE = args.includes("--force");
+const WEB_ONLY = args.includes("--web-only");
 const LIMIT = parseInt(args[args.indexOf("--limit") + 1]) || 0;
 const BATCH_SIZE = parseInt(args[args.indexOf("--batch-size") + 1]) || 20;
 const CONCURRENCY = parseInt(args[args.indexOf("--concurrency") + 1]) || 3;
@@ -86,6 +87,7 @@ const CHUNK_OVERLAP =
 
 const SITEMAP_URL = "https://v2.support.procore.com/sitemap.xml";
 const CACHE_DIR = join(__dirname, "../.cache/procore-docs");
+const PYTHON_BIN = join(__dirname, "../.venv-crawl/bin/python3");
 
 // ---------------------------------------------------------------------------
 // Supabase REST helper (same pattern as backfill scripts)
@@ -199,11 +201,17 @@ function ensureCacheDir() {
   }
 }
 
+const JSON_DELIMITER = "---CRAWL4AI_JSON---";
+
 const CRAWL_PYTHON_SCRIPT = `
-import sys, json, asyncio
+import sys, json, asyncio, os, warnings
+warnings.filterwarnings("ignore")
+os.environ["CRAWL4AI_LOG_LEVEL"] = "ERROR"
 
 async def crawl_url(url):
     from crawl4ai import AsyncWebCrawler, BrowserConfig, CrawlerRunConfig, CacheMode
+    import logging
+    logging.getLogger("crawl4ai").setLevel(logging.ERROR)
 
     browser_config = BrowserConfig(headless=True, verbose=False)
     run_config = CrawlerRunConfig(
@@ -212,6 +220,7 @@ async def crawl_url(url):
         page_timeout=30000,
         excluded_tags=["nav", "footer", "header", "script", "style", "noscript"],
         remove_overlay_elements=True,
+        verbose=False,
     )
 
     async with AsyncWebCrawler(config=browser_config) as crawler:
@@ -228,6 +237,7 @@ async def crawl_url(url):
 
 url = sys.argv[1]
 result = asyncio.run(crawl_url(url))
+print("${JSON_DELIMITER}")
 print(json.dumps(result))
 `;
 
@@ -249,20 +259,23 @@ async function crawlPage(url) {
     }
   }
 
-  // Write the Python script to a temp file
+  // Write the Python script to a temp file (always overwrite to pick up changes)
   const scriptPath = join(CACHE_DIR, "_crawl_single.py");
-  if (!existsSync(scriptPath)) {
-    writeFileSync(scriptPath, CRAWL_PYTHON_SCRIPT);
-  }
+  writeFileSync(scriptPath, CRAWL_PYTHON_SCRIPT);
 
   try {
-    const output = execSync(`python3 "${scriptPath}" "${url}"`, {
+    const output = execSync(`"${PYTHON_BIN}" "${scriptPath}" "${url}"`, {
       encoding: "utf-8",
       timeout: 60000,
       maxBuffer: 10 * 1024 * 1024, // 10MB for large pages
     });
 
-    const result = JSON.parse(output.trim());
+    // Extract JSON after the delimiter (crawl4ai prints logs to stdout)
+    const delimIdx = output.indexOf(JSON_DELIMITER);
+    const jsonStr = delimIdx >= 0
+      ? output.slice(delimIdx + JSON_DELIMITER.length).trim()
+      : output.trim();
+    const result = JSON.parse(jsonStr);
 
     if (result.success && result.markdown) {
       // Cache the result
@@ -479,6 +492,7 @@ async function main() {
   if (SKIP_CRAWL) console.log(`Mode:         SKIP CRAWL (embed only)`);
   if (SKIP_EMBED) console.log(`Mode:         SKIP EMBED (crawl only)`);
   if (FORCE) console.log(`Mode:         FORCE (ignore cache + content_hash)`);
+  if (WEB_ONLY) console.log(`Filter:       WEB ONLY (excluding mobile/device pages)`);
   console.log("=".repeat(70));
   console.log();
 
@@ -495,6 +509,21 @@ async function main() {
     sitemapEntries = sitemapEntries.filter(
       (e) => e.url !== "https://v2.support.procore.com/"
     );
+
+    // --web-only: exclude mobile/device-specific pages
+    if (WEB_ONLY) {
+      const mobileKeywords = [
+        "/faq-android-", "/faq-ios-", "/faq-procore-for-android",
+        "/faq-procore-for-ios", "(android)", "(ios)",
+        "-mobile-device", "-mobile-app",
+      ];
+      const before = sitemapEntries.length;
+      sitemapEntries = sitemapEntries.filter((e) => {
+        const lower = e.url.toLowerCase();
+        return !mobileKeywords.some((kw) => lower.includes(kw));
+      });
+      console.log(`--web-only: filtered ${before - sitemapEntries.length} mobile/device pages`);
+    }
 
     if (LIMIT) sitemapEntries = sitemapEntries.slice(0, LIMIT);
 
@@ -534,6 +563,14 @@ async function main() {
         const markdown = cleanMarkdown(result.markdown);
         if (!markdown || countWords(markdown) < 20) {
           console.log(`${progress} SKIP: ${url} — too short (${countWords(markdown)} words)`);
+          skipped++;
+          return;
+        }
+
+        // Skip 404 / error pages
+        const titleLower = (result.title || "").toLowerCase();
+        if (titleLower.includes("page not found") || titleLower.includes("404")) {
+          console.log(`${progress} SKIP: ${url} — 404 page`);
           skipped++;
           return;
         }
