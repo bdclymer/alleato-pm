@@ -3,7 +3,10 @@ export const ChangeEventType = z.enum([
   "Owner Change",
   "Design Change",
   "Allowance",
+  "Contingency",
   "Scope Gap",
+  "TBD",
+  "Transfer",
   "Unforeseen Condition",
   "Value Engineering",
   "Owner Requested",
@@ -24,11 +27,11 @@ export const ChangeEventStatus = z.enum([
   "Void",
   "Converted",
 ]);
-export const ChangeEventOrigin = z.enum(["Internal", "RFI", "Field"]);
+export const ChangeEventOrigin = z.enum(["Internal", "RFI", "Field", "Emails", "Meetings", "RFI's"]);
 export const LineItemRevenueSource = z.enum([
-  "Match Latest Cost",
-  "Latest Cost",
-  "Latest Price",
+  "Match Revenue to Latest Cost",
+  "Enter manually",
+  "Quantity x Unit Cost",
 ]); // Create Change Event Schema
 export const createChangeEventSchema = z.object({
   title: z.string().min(1).max(255, "Title must be less than 255 characters"),

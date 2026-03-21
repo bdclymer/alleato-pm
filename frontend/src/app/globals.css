@@ -1991,3 +1991,175 @@
     display: none !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * Alleato Comments — Clean Timeline Design
+ * Targets .lb-thread-alleato and .lb-composer-alleato for entity comments.
+ * Does not affect issue-tracker or canvas comments.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Thread container: remove all default chrome ──────────────────────────── */
+.lb-thread-alleato {
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  gap: 0 !important;
+}
+
+/* ── Individual comment: timeline layout ──────────────────────────────────── */
+.lb-thread-alleato .lb-comment {
+  position: relative;
+  padding: 0 0 0 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  background: transparent !important;
+}
+
+.lb-thread-alleato .lb-comment + .lb-comment {
+  margin-top: 4px !important;
+}
+
+/* ── Avatar styling: larger, ring border ──────────────────────────────────── */
+.lb-thread-alleato .lb-avatar {
+  width: 40px !important;
+  height: 40px !important;
+  min-width: 40px !important;
+  min-height: 40px !important;
+  border-radius: 50% !important;
+  outline: 2px solid hsl(var(--primary) / 0.15) !important;
+  outline-offset: 1px !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  z-index: 2;
+  position: relative;
+}
+
+/* ── Comment header: clean name + date ────────────────────────────────────── */
+.lb-thread-alleato .lb-comment-header {
+  gap: 8px !important;
+  align-items: center !important;
+}
+
+.lb-thread-alleato .lb-comment-author {
+  font-weight: 600 !important;
+  font-size: 13px !important;
+  color: hsl(var(--foreground)) !important;
+  letter-spacing: -0.01em;
+}
+
+.lb-thread-alleato .lb-comment-date {
+  font-size: 11px !important;
+  color: hsl(var(--muted-foreground) / 0.7) !important;
+  font-weight: 400 !important;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+/* ── Comment body: clean readable text ────────────────────────────────────── */
+.lb-thread-alleato .lb-comment-body {
+  font-size: 13.5px !important;
+  line-height: 1.6 !important;
+  color: hsl(var(--foreground) / 0.85) !important;
+  margin-top: 4px !important;
+}
+
+.lb-thread-alleato .lb-comment-body p {
+  margin: 0 !important;
+}
+
+/* ── Comment content wrapper: card-like feel ───────────────────────────────── */
+.lb-thread-alleato .lb-comment-content {
+  background: hsl(var(--muted) / 0.3) !important;
+  border-radius: 12px !important;
+  padding: 12px 16px !important;
+  border: 1px solid hsl(var(--border) / 0.4) !important;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.lb-thread-alleato .lb-comment:hover .lb-comment-content {
+  background: hsl(var(--muted) / 0.5) !important;
+  border-color: hsl(var(--border) / 0.6) !important;
+}
+
+/* ── Actions: subtle, appear on hover ─────────────────────────────────────── */
+.lb-thread-alleato .lb-comment-actions {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.lb-thread-alleato .lb-comment:hover .lb-comment-actions {
+  opacity: 1;
+}
+
+/* ── Reactions: clean pill style ──────────────────────────────────────────── */
+.lb-thread-alleato .lb-comment-reaction {
+  border-radius: 999px !important;
+  padding: 2px 8px !important;
+  font-size: 12px !important;
+  border: 1px solid hsl(var(--border) / 0.5) !important;
+  background: hsl(var(--background)) !important;
+}
+
+/* ── Inline composer (reply): cleaner ─────────────────────────────────────── */
+.lb-thread-alleato .lb-composer {
+  border: 1px solid hsl(var(--border) / 0.5) !important;
+  border-radius: 12px !important;
+  background: hsl(var(--background)) !important;
+  box-shadow: none !important;
+  margin-top: 8px !important;
+}
+
+.lb-thread-alleato .lb-composer:focus-within {
+  border-color: hsl(var(--primary) / 0.4) !important;
+  box-shadow: 0 0 0 3px hsl(var(--primary) / 0.08) !important;
+}
+
+/* ── Standalone composer: modern input feel ────────────────────────────────── */
+.lb-composer-alleato {
+  border: 1px solid hsl(var(--border) / 0.6) !important;
+  border-radius: 14px !important;
+  background: hsl(var(--background)) !important;
+  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04) !important;
+  padding: 4px !important;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.lb-composer-alleato:focus-within {
+  border-color: hsl(var(--primary) / 0.5) !important;
+  box-shadow:
+    0 0 0 3px hsl(var(--primary) / 0.1),
+    0 1px 3px 0 rgb(0 0 0 / 0.04) !important;
+}
+
+.lb-composer-alleato [contenteditable="true"]::before {
+  color: hsl(var(--muted-foreground) / 0.6) !important;
+  font-size: 13.5px !important;
+}
+
+/* ── Thread resolve button: subtle ────────────────────────────────────────── */
+.lb-thread-alleato [data-resolve] {
+  border-radius: 999px !important;
+  font-size: 11px !important;
+  padding: 4px 12px !important;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 500 !important;
+}
+
+/* ── Thread list container: timeline line ─────────────────────────────────── */
+.alleato-thread-list .lb-thread-alleato {
+  position: relative;
+  padding-left: 0 !important;
+}
+
+/* ── Empty state within alleato-comments ──────────────────────────────────── */
+.alleato-comments {
+  position: relative;
+}
+
+/* ── Powered by badge: always hidden in our comments ──────────────────────── */
+.alleato-comments .lb-powered-by,
+.alleato-comments [class*="lb-powered-by"] {
+  display: none !important;
+}

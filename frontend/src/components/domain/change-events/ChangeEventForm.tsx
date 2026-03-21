@@ -25,7 +25,6 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 import {
-  CheckboxField,
   FileUploadField,
   Form,
   FormGrid,
@@ -1008,7 +1007,7 @@ export function ChangeEventForm({
 
   const statusOptions = React.useMemo(
     () => [
-      { value: "close", label: "Close" },
+      { value: "close", label: "Closed" },
       { value: "open", label: "Open" },
       { value: "pending", label: "Pending" },
       { value: "void", label: "Void" },
@@ -1051,16 +1050,16 @@ export function ChangeEventForm({
     () => [
       { value: "In Scope", label: "In Scope" },
       { value: "Out of Scope", label: "Out of Scope" },
-      { value: "To Be Determined", label: "To Be Determined" },
+      { value: "TBD", label: "TBD" },
     ],
     [],
   );
 
   const revenueSourceOptions = React.useMemo(
     () => [
-      { value: "match_latest_cost", label: "Match Latest Cost" },
-      { value: "latest_cost", label: "Latest Cost" },
-      { value: "latest_price", label: "Latest Price" },
+      { value: "Match Revenue to Latest Cost", label: "Match Revenue to Latest Cost" },
+      { value: "Enter manually", label: "Enter manually" },
+      { value: "Quantity x Unit Cost", label: "Quantity x Unit Cost" },
     ],
     [],
   );
@@ -1172,14 +1171,31 @@ export function ChangeEventForm({
                 />
               </div>
               <div className="md:col-span-3">
-                <CheckboxField
-                  label="Expecting Revenue"
-                  checked={!!formData.expectingRevenue}
-                  onCheckedChange={(checked) =>
-                    updateFormData({ expectingRevenue: checked === true })
-                  }
-                  hint="Enable revenue fields"
-                />
+                <div className="space-y-2">
+                  <label className="text-sm font-medium leading-none">Expecting Revenue</label>
+                  <div className="flex items-center gap-6">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="expectingRevenue"
+                        checked={formData.expectingRevenue === true}
+                        onChange={() => updateFormData({ expectingRevenue: true })}
+                        className="h-4 w-4 accent-primary"
+                      />
+                      <span className="text-sm">Yes</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="expectingRevenue"
+                        checked={formData.expectingRevenue === false}
+                        onChange={() => updateFormData({ expectingRevenue: false })}
+                        className="h-4 w-4 accent-primary"
+                      />
+                      <span className="text-sm">No</span>
+                    </label>
+                  </div>
+                </div>
               </div>
             </FormGrid>
           </FormSection>

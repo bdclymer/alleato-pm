@@ -29,6 +29,7 @@ import {
   Table,
   TrendingUp,
   Users,
+  Wrench,
 } from "lucide-react";
 import { hasModulePermission } from "@/hooks/use-project-permissions";
 
@@ -547,6 +548,14 @@ export const adminSettingsTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: FolderOpen,
     description: "Document workflows",
+    adminOnly: true,
+  },
+  {
+    name: "Procore Tools",
+    path: "procore-tools",
+    requiresProject: false,
+    icon: Wrench,
+    description: "Procore tool modules and implementation status",
     adminOnly: true,
   },
 ];

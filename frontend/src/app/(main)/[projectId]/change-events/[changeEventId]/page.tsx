@@ -192,15 +192,19 @@ export default function ChangeEventDetailPage() {
   }, [searchParams, canEdit]);
 
   const mapFormStatusToApiStatus = useCallback((status: string) => {
-    if (status === "close") return "closed";
-    if (status === "pending") return "pending_approval";
+    if (status === "close") return "Closed";
+    if (status === "pending") return "Pending Approval";
+    if (status === "open") return "Open";
+    if (status === "void") return "Void";
     return status;
   }, []);
 
   const mapApiStatusToFormStatus = useCallback((status?: string | null) => {
     if (!status) return "open";
-    if (status === "closed") return "close";
-    if (status === "pending_approval") return "pending";
+    if (status.toLowerCase() === "closed") return "close";
+    if (status.toLowerCase() === "pending approval" || status.toLowerCase() === "pending_approval") return "pending";
+    if (status.toLowerCase() === "open") return "open";
+    if (status.toLowerCase() === "void") return "void";
     return status;
   }, []);
 
@@ -220,7 +224,7 @@ export default function ChangeEventDetailPage() {
         const response = await fetch(
           `/api/projects/${projectId}/change-events/${changeEventId}`,
           {
-            method: "PUT",
+            method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               project_id: projectId,
@@ -316,7 +320,7 @@ export default function ChangeEventDetailPage() {
         const response = await fetch(
           `/api/projects/${projectId}/change-events/${changeEventId}`,
           {
-            method: "PUT",
+            method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               ...changeEvent,
@@ -905,17 +909,17 @@ export default function ChangeEventDetailPage() {
               {showRfqForm && changeEvent && (
                 <div className="mb-6 border rounded-md p-4">
                   <ChangeEventRfqForm
-                    changeEvents={[changeEvent]}
+                    changeEvent={changeEvent}
                     isSubmitting={isCreatingRfq}
                     onSubmit={async (values) => {
                       setIsCreatingRfq(true);
                       try {
                         await createRfq({
-                          changeEventId: values.changeEventId,
+                          changeEventId: changeEvent.id.toString(),
                           title: values.title,
                           dueDate: values.dueDate,
                           includeAttachments: values.includeAttachments,
-                          notes: values.notes,
+                          notes: values.requestDetails,
                         });
                         setShowRfqForm(false);
                         toast.success("RFQ created successfully");

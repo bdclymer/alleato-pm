@@ -85,7 +85,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
       className={cn(
         // Table baseline: keep data dense and scannable with single-line cells.
         // Avoid stacking multiple lines in table cells; use dedicated columns instead.
-        "px-2 py-1.5 align-middle text-sm text-foreground/80 whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        "px-2 py-1.5 align-middle text-sm text-foreground/80 whitespace-nowrap max-w-[280px] overflow-hidden text-ellipsis [&:has([role=checkbox])]:max-w-none [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
         className,
       )}
       {...props}

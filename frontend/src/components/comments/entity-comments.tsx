@@ -9,7 +9,7 @@ import {
 import { useOthers, useSelf } from "@liveblocks/react";
 import { Composer, Thread, Comment } from "@liveblocks/react-ui";
 import type { ThreadData } from "@liveblocks/client";
-import { Check, MessageSquare } from "lucide-react";
+import { Check, MessageSquarePlus } from "lucide-react";
 import { getIssueIdFromRoom } from "./utils";
 
 // ── Public component ─────────────────────────────────────────────────────────
@@ -41,22 +41,31 @@ export function EntityComments({
   const hasTitle = Boolean(title?.trim());
 
   return (
-    <div className={className}>
+    <div className={`alleato-comments ${className ?? ""}`}>
       {hasTitle ? (
-        <div className="mb-4 flex items-center gap-2">
-          <MessageSquare className="h-4 w-4 text-muted-foreground" />
-          <h3 className="text-sm font-medium text-foreground">{title}</h3>
+        <div className="mb-6 flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+            <MessageSquarePlus className="h-4 w-4 text-primary" />
+          </div>
+          <div>
+            <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+            <p className="text-xs text-muted-foreground">Discussion thread</p>
+          </div>
         </div>
       ) : null}
       <ClientSideSuspense
         fallback={
-          <div className="space-y-3">
-            {[1, 2].map((i) => (
-              <div key={i} className="flex items-start gap-3">
-                <div className="h-8 w-8 animate-pulse rounded-full bg-muted" />
-                <div className="flex-1 space-y-2">
-                  <div className="h-3 w-1/3 animate-pulse rounded bg-muted" />
-                  <div className="h-3 w-2/3 animate-pulse rounded bg-muted" />
+          <div className="space-y-6">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex items-start gap-4">
+                <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-muted" />
+                <div className="flex-1 space-y-2 pt-1">
+                  <div className="flex items-center gap-2">
+                    <div className="h-3 w-20 animate-pulse rounded-md bg-muted" />
+                    <div className="h-2.5 w-16 animate-pulse rounded-md bg-muted/60" />
+                  </div>
+                  <div className="h-3 w-4/5 animate-pulse rounded-md bg-muted/80" />
+                  <div className="h-3 w-3/5 animate-pulse rounded-md bg-muted/60" />
                 </div>
               </div>
             ))}
@@ -64,7 +73,7 @@ export function EntityComments({
         }
       >
         <ThreadList />
-        <div className="mt-4">
+        <div className="mt-6">
           <Composer className="lb-composer-alleato" />
         </div>
       </ClientSideSuspense>
@@ -79,14 +88,24 @@ function ThreadList() {
 
   if (threads.length === 0) {
     return (
-      <p className="text-sm text-muted-foreground py-4">
-        No comments yet. Start the conversation below.
-      </p>
+      <div className="flex flex-col items-center py-8 text-center">
+        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted/50 mb-3">
+          <MessageSquarePlus className="h-5 w-5 text-muted-foreground/50" />
+        </div>
+        <p className="text-sm font-medium text-muted-foreground">
+          No comments yet
+        </p>
+        <p className="text-xs text-muted-foreground/70 mt-1">
+          Start the conversation below
+        </p>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-3">
+    <div className="alleato-thread-list relative">
+      {/* Timeline vertical line */}
+      <div className="absolute left-5 top-5 bottom-0 w-px bg-border/60" />
       {threads.map((thread) => (
         <CustomThread key={thread.id} thread={thread} />
       ))}
@@ -105,7 +124,6 @@ function CustomThread({ thread }: { thread: ThreadData }) {
   const commentLink = useMemo(() => {
     if (typeof window === "undefined" || !parsed) return "";
     const { entityType, entityId } = parsed;
-    // Project-scoped rooms: project-67 → /67/budget
     const projectMatch = entityId.match(/^project-(\d+)$/);
     const path = projectMatch
       ? `/${projectMatch[1]}/${entityType}`
@@ -117,11 +135,15 @@ function CustomThread({ thread }: { thread: ThreadData }) {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="flex w-full items-center gap-2 rounded-md border border-border/40 bg-muted/30 px-3 py-2 text-xs text-muted-foreground hover:bg-muted/50 transition-colors"
+        className="relative z-10 flex w-full items-center gap-3 rounded-lg py-3 pl-12 pr-3 text-xs text-muted-foreground hover:bg-muted/30 transition-colors"
       >
-        <Check className="h-3.5 w-3.5 text-green-600" />
-        <span>Thread resolved</span>
-        <span className="ml-auto text-muted-foreground/60">Click to expand</span>
+        <div className="absolute left-2.5 flex h-5 w-5 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30">
+          <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
+        </div>
+        <span className="font-medium">Thread resolved</span>
+        <span className="ml-auto text-muted-foreground/50 text-[11px]">
+          Click to expand
+        </span>
       </button>
     );
   }

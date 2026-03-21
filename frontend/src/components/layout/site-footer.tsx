@@ -6,6 +6,7 @@ const footerLinks = [
   { label: "Projects", href: "/" },
   { label: "Settings", href: "/settings/plugins" },
   { label: "Docs", href: "/docs" },
+  { label: "Procore Tools", href: "/procore-tools" },
   { label: "Sitemap", href: "/site-map" },
 ];
 

@@ -3,11 +3,19 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Plus } from "lucide-react";
+import { ChevronDown, Plus, Send } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { useConfirmationDialog } from "@/components/common/ConfirmationDialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   UnifiedTablePage,
   useUnifiedTableState,
@@ -24,6 +32,8 @@ import {
   renderChangeEventList,
   renderChangeEventRowActions,
 } from "@/features/change-events/change-events-table-config";
+import { ChangeEventRfqForm } from "@/components/domain/change-events/ChangeEventRfqForm";
+import type { ChangeEventRfqFormValues } from "@/components/domain/change-events/ChangeEventRfqForm";
 import { PageContainer, ProjectPageHeader } from "@/components/layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
@@ -122,6 +132,9 @@ export default function ProjectChangeEventsPage(): ReactElement {
     variant: "destructive",
   });
 
+  const [showRfqSheet, setShowRfqSheet] = React.useState(false);
+  const [isCreatingRfq, setIsCreatingRfq] = React.useState(false);
+
   const handleView = React.useCallback(
     (item: ChangeEvent) => {
       router.push(`/${projectId}/change-events/${item.id}`);
@@ -205,6 +218,23 @@ export default function ProjectChangeEventsPage(): ReactElement {
       }
     });
   }, [projectId, refetchChangeEvents, tableState, bulkDeleteDialog]);
+
+  const handleSendRfq = React.useCallback(
+    async (_values: ChangeEventRfqFormValues) => {
+      setIsCreatingRfq(true);
+      try {
+        // TODO: implement actual RFQ creation
+        toast.success("RFQ sent successfully");
+        setShowRfqSheet(false);
+        tableState.setSelectedIds([]);
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to send RFQ");
+      } finally {
+        setIsCreatingRfq(false);
+      }
+    },
+    [tableState],
+  );
 
   const handleFilterChange = React.useCallback(
     (nextFilters: ChangeEventFilterState) => {
@@ -416,8 +446,70 @@ export default function ProjectChangeEventsPage(): ReactElement {
     );
   }
 
+  const selectedChangeEvents = filteredEvents.filter((e) =>
+    tableState.selectedIds.includes(String(e.id)),
+  );
+
   return (
     <>
+    {tableState.selectedIds.length > 0 && (
+      <div className="flex items-center gap-1.5 px-4 py-2 bg-muted/40 border-b border-border">
+        <span className="text-sm text-muted-foreground mr-2">
+          {tableState.selectedIds.length} selected
+        </span>
+        <TooltipProvider>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="gap-1.5">
+                Add to
+                <ChevronDown className="h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuItem
+                    className="opacity-50 cursor-not-allowed"
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    Commitment
+                  </DropdownMenuItem>
+                </TooltipTrigger>
+                <TooltipContent>Coming soon — link change event to a commitment</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <DropdownMenuItem
+                    className="opacity-50 cursor-not-allowed"
+                    onSelect={(e) => e.preventDefault()}
+                  >
+                    Commitment CO
+                  </DropdownMenuItem>
+                </TooltipTrigger>
+                <TooltipContent>Coming soon — create commitment change order</TooltipContent>
+              </Tooltip>
+              <DropdownMenuItem
+                onSelect={() =>
+                  toast.info("Add to Prime Contract PCO — select a prime contract first")
+                }
+              >
+                Prime Contract PCO
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </TooltipProvider>
+
+        <Button
+          variant="outline"
+          size="sm"
+          className="gap-1.5"
+          onClick={() => setShowRfqSheet(true)}
+        >
+          <Send className="h-3.5 w-3.5" />
+          Send Requests for Quote
+        </Button>
+      </div>
+    )}
     <UnifiedTablePage
       header={{
         title: "Change Events",
@@ -518,6 +610,21 @@ export default function ProjectChangeEventsPage(): ReactElement {
     />
     {deleteDialog.dialog}
     {bulkDeleteDialog.dialog}
+    <Sheet open={showRfqSheet} onOpenChange={setShowRfqSheet}>
+      <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
+        <SheetHeader className="mb-6">
+          <SheetTitle>Send Requests for Quote</SheetTitle>
+        </SheetHeader>
+        {selectedChangeEvents.length > 0 && selectedChangeEvents[0] !== undefined && (
+          <ChangeEventRfqForm
+            changeEvent={selectedChangeEvents[0]}
+            isSubmitting={isCreatingRfq}
+            onSubmit={handleSendRfq}
+            onCancel={() => setShowRfqSheet(false)}
+          />
+        )}
+      </SheetContent>
+    </Sheet>
     </>
   );
 }

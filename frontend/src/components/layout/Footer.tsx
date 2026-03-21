@@ -16,16 +16,8 @@ const footerLinks = [
     href: "/crawled-pages",
   },
   {
-    title: "Careers",
-    href: "#",
-  },
-  {
-    title: "Help",
-    href: "#",
-  },
-  {
-    title: "Privacy",
-    href: "#",
+    title: "Procore Tools",
+    href: "/procore-tools",
   },
 ];
 
@@ -39,7 +31,7 @@ const Footer = () => {
                 <li
                   key={title}
                   className={
-                    title === "Playwright Crawl" || title === "Careers"
+                    title === "Playwright Crawl"
                       ? "hidden sm:list-item"
                       : ""
                   }

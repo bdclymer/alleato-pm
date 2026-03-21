@@ -46,14 +46,9 @@ export default function NewChangeEventPage() {
         existing_condition: "Existing Condition",
       };
 
-      const normalizedScope =
-        data.scope?.trim().toLowerCase() === "in scope"
-          ? "In Scope"
-          : data.scope?.trim().toLowerCase() === "out of scope"
-            ? "Out of Scope"
-            : data.scope?.trim().toLowerCase() === "allowance"
-              ? "Allowance"
-              : "TBD";
+      const normalizedScope = data.scope && ["In Scope", "Out of Scope", "TBD", "Allowance"].includes(data.scope)
+        ? data.scope
+        : "TBD";
 
       const mergedDescription = [
         data.contractNumber ? `Contract Number: ${data.contractNumber}` : "",
@@ -75,14 +70,7 @@ export default function NewChangeEventPage() {
           reason: REASON_MAP[data.changeReason || ""] || data.changeReason || undefined,
           origin: ORIGIN_MAP[data.origin || ""] || "Internal",
           expectingRevenue: data.expectingRevenue ?? true,
-          lineItemRevenueSource:
-            data.lineItemRevenueSource === "match_latest_cost"
-              ? "Match Latest Cost"
-              : data.lineItemRevenueSource === "latest_cost"
-                ? "Latest Cost"
-                : data.lineItemRevenueSource === "latest_price"
-                  ? "Latest Price"
-                  : undefined,
+          lineItemRevenueSource: data.lineItemRevenueSource || undefined,
           primeContractId: data.primeContractId
             ? Number(data.primeContractId)
             : undefined,

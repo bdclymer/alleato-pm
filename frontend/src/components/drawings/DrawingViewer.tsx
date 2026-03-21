@@ -253,6 +253,7 @@ export function DrawingViewer({
   const containerRef = useRef<HTMLDivElement>(null);
   const annotationCanvasRef = useRef<HTMLCanvasElement>(null);
   const pdfPageRef = useRef<HTMLDivElement>(null);
+  const textInputRef = useRef<HTMLInputElement>(null);
   const [pageSize, setPageSize] = useState({ width: 0, height: 0 });
   const normalizedRotation = normalizeRotation(rotation);
   const isQuarterTurn = normalizedRotation === 90 || normalizedRotation === 270;
@@ -314,6 +315,14 @@ export function DrawingViewer({
     if (!canvas) return;
     renderAnnotations(canvas, annotations, pageAnnotations, visibleInProgress);
   }, [annotations, pageAnnotations, visibleInProgress, pageSize]);
+
+  useEffect(() => {
+    if (!textInput) return;
+    const input = textInputRef.current;
+    if (!input) return;
+    input.focus();
+    input.select();
+  }, [textInput]);
 
   // ── PDF load callbacks ──
   const onDocumentLoadSuccess = useCallback(
@@ -829,15 +838,25 @@ export function DrawingViewer({
                   style={{ left: textInput.pos.x, top: textInput.pos.y - 28 }}
                 >
                   <input
-                    autoFocus
+                    ref={textInputRef}
                     type="text"
                     value={textInput.value}
                     onChange={(e) => setTextInput((t) => t ? { ...t, value: e.target.value } : t)}
                     onBlur={commitText}
-                    onKeyDown={(e) => { if (e.key === "Enter") commitText(); if (e.key === "Escape") setTextInput(null); }}
+                    onMouseDown={(e) => e.stopPropagation()}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        commitText();
+                      }
+                      if (e.key === "Escape") {
+                        e.preventDefault();
+                        setTextInput(null);
+                      }
+                    }}
                     className="border border-border bg-background/90 px-1.5 py-0.5 text-sm rounded shadow-sm outline-none min-w-24"
                     placeholder="Type text…"
-                    style={{ color: annotationColor }}
+                    style={{ color: resolvedColor }}
                   />
                 </div>
               )}
