@@ -7,6 +7,7 @@ import {
   ArrowLeft,
   Users,
   FileText,
+  FolderOpen,
   ChevronDown,
 } from "lucide-react";
 import { format } from "date-fns";
@@ -19,6 +20,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { DateAvatar } from "@/components/ds";
 import { PageContainer } from "@/components/layout";
 import { AttendeeAvatarStack } from "@/components/meetings/attendee-avatar-stack";
 import type { Database } from "@/types/database.types";
@@ -146,6 +148,38 @@ function SidebarList({
   );
 }
 
+/**
+ * Pre-process Fireflies content so ReactMarkdown can parse it properly.
+ * Handles emoji-prefixed sections (🏭 **Title** ...) by adding blank lines before them.
+ */
+function preprocessMarkdown(text: string): string {
+  const lines = text.split("\n");
+  const result: string[] = [];
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    // Detect lines starting with emoji (surrogate pairs or common emoji ranges)
+    const firstChar = line.codePointAt(0) ?? 0;
+    const startsWithEmoji =
+      firstChar > 0x1F000 ||
+      (firstChar >= 0x2600 && firstChar <= 0x27BF) ||
+      (firstChar >= 0x2700 && firstChar <= 0x27BF) ||
+      (firstChar >= 0xFE00 && firstChar <= 0xFE0F) ||
+      // Also catch emoji modifiers and common patterns
+      /^[\u{1F300}-\u{1FAD6}\u{2600}-\u{27BF}\u{2700}-\u{27BF}]/u.test(line);
+
+    if (startsWithEmoji && i > 0) {
+      // Add blank line before emoji-prefixed lines to create paragraph breaks
+      result.push("");
+      result.push(line);
+    } else {
+      result.push(line);
+    }
+  }
+
+  return result.join("\n");
+}
+
 function FirefliesSectionContent({ value }: { value: string }) {
   const trimmed = value.trim();
   const looksJson =
@@ -165,22 +199,33 @@ function FirefliesSectionContent({ value }: { value: string }) {
     }
   }
 
+  const processed = preprocessMarkdown(trimmed);
+
   return (
-    <div className="rounded-md bg-muted/30 p-3">
+    <div className="space-y-1">
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         components={{
+          h1: ({ children }) => (
+            <h3 className="text-sm font-semibold text-foreground pt-4 first:pt-0">{children}</h3>
+          ),
+          h2: ({ children }) => (
+            <h3 className="text-sm font-semibold text-foreground pt-4 first:pt-0">{children}</h3>
+          ),
+          h3: ({ children }) => (
+            <h4 className="text-xs font-semibold text-foreground pt-3 first:pt-0">{children}</h4>
+          ),
           p: ({ children }) => (
-            <p className="text-xs text-muted-foreground leading-relaxed mb-2 last:mb-0">
+            <p className="text-sm text-muted-foreground leading-relaxed pb-1">
               {children}
             </p>
           ),
-          ul: ({ children }) => <ul className="space-y-1.5">{children}</ul>,
+          ul: ({ children }) => <ul className="space-y-1 pl-4 list-disc">{children}</ul>,
           ol: ({ children }) => (
-            <ol className="list-decimal ml-4 space-y-1.5">{children}</ol>
+            <ol className="list-decimal pl-4 space-y-1">{children}</ol>
           ),
           li: ({ children }) => (
-            <li className="text-xs text-muted-foreground leading-relaxed list-disc ml-4">
+            <li className="text-sm text-muted-foreground leading-relaxed">
               {children}
             </li>
           ),
@@ -189,7 +234,7 @@ function FirefliesSectionContent({ value }: { value: string }) {
           ),
         }}
       >
-        {trimmed}
+        {processed}
       </ReactMarkdown>
     </div>
   );
@@ -280,6 +325,20 @@ export function MeetingDetailContent({
             View in Fireflies
           </a>
         ) : null}
+        {meeting.project ? (
+          <span className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
+            <FolderOpen className="h-3.5 w-3.5" />
+            {meeting.project}
+          </span>
+        ) : (
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+          >
+            <FolderOpen className="h-3.5 w-3.5" />
+            Assign to project
+          </button>
+        )}
         {meeting.date && meeting.title ? (() => {
           const dateStr = new Date(meeting.date).toISOString().slice(0, 10);
           const filename = `${dateStr} - ${meeting.title}.md`;
@@ -302,18 +361,22 @@ export function MeetingDetailContent({
       <div className="grid gap-20 lg:grid-cols-[minmax(0,1fr)_280px]">
         {/* Main content */}
         <div className="space-y-8">
-          {/* Meeting Overview — accordion */}
-          {overviewContent ? (
+          {/* Meeting Overview — accordion (shows structured bullets when available) */}
+          {(shorthandBullet || overviewContent) ? (
             <section className="space-y-4">
               <AccordionSection label="Meeting Overview">
-                <p className="text-sm leading-relaxed text-muted-foreground">
-                  {overviewContent}
-                </p>
+                {shorthandBullet ? (
+                  <FirefliesSectionContent value={shorthandBullet} />
+                ) : (
+                  <p className="text-sm leading-relaxed text-muted-foreground">
+                    {overviewContent}
+                  </p>
+                )}
               </AccordionSection>
             </section>
           ) : null}
 
-          {/* Summary — accordion */}
+          {/* Summary — accordion (collapsed by default) */}
           {parsedSections?.summary && summarySlot ? (
             <section className="border-t border-border pt-6">
               <AccordionSection label="Summary" defaultOpen={false}>
@@ -332,7 +395,7 @@ export function MeetingDetailContent({
           {/* Notes */}
           {notesContent ? (
             <section className="border-t border-border pt-6">
-              <AccordionSection label="Notes">
+              <AccordionSection label="Notes" defaultOpen={false}>
                 <FirefliesSectionContent value={notesContent} />
               </AccordionSection>
             </section>
@@ -341,17 +404,19 @@ export function MeetingDetailContent({
           {/* Action Items */}
           {actionItemsContent ? (
             <section className="border-t border-border pt-6">
-              <AccordionSection label="Action Items">
+              <AccordionSection label="Action Items" defaultOpen={false}>
                 <FirefliesSectionContent value={actionItemsContent} />
               </AccordionSection>
             </section>
           ) : null}
 
-          {/* Shorthand Bullet */}
-          {shorthandBullet ? (
+          {/* Summary Overview (paragraph form) */}
+          {overviewContent && shorthandBullet ? (
             <section className="border-t border-border pt-6">
-              <AccordionSection label="Shorthand Bullet" defaultOpen={false}>
-                <FirefliesSectionContent value={shorthandBullet} />
+              <AccordionSection label="Summary Overview" defaultOpen={false}>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {overviewContent}
+                </p>
               </AccordionSection>
             </section>
           ) : null}
@@ -456,58 +521,55 @@ export function MeetingDetailContent({
             <div className="space-y-4 border-t border-border pt-6">
               <div className="space-y-1">
                 <p className="text-xs font-semibold uppercase tracking-widest text-primary">
-                  Same Project Meetings
+                  Related Meetings
                 </p>
                 <p className="text-xs text-muted-foreground">
                   {relatedMeetings.length} recent meeting{relatedMeetings.length === 1 ? "" : "s"}
                 </p>
               </div>
-              <ul className="divide-y divide-border rounded-md border border-border/70 bg-muted/20">
+              <div className="space-y-2">
                 {relatedMeetings.map((rm) => (
-                  <li key={rm.id}>
-                    <Link
-                      href={`${relatedMeetingsBaseHref}/${rm.id}`}
-                      className="group block space-y-2 px-3 py-3 transition-colors hover:bg-muted/50"
-                    >
+                  <Link
+                    key={rm.id}
+                    href={`${relatedMeetingsBaseHref}/${rm.id}`}
+                    className="group flex items-center gap-3 py-1.5 transition-colors"
+                  >
+                    {rm.date ? (
+                      <DateAvatar date={rm.date} size="sm" />
+                    ) : (
+                      <div className="w-9 h-9 shrink-0 rounded-full border border-border bg-muted/50 flex items-center justify-center text-xs text-muted-foreground">
+                        ?
+                      </div>
+                    )}
+                    <div className="min-w-0">
                       <p className="text-sm font-medium leading-snug text-foreground group-hover:text-primary transition-colors line-clamp-2">
                         {rm.title || "Untitled Meeting"}
                       </p>
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                        {rm.date ? (
-                          <span className="inline-flex items-center gap-1.5">
-                            <Calendar className="h-3 w-3" />
-                            {format(new Date(rm.date), "MMM d, yyyy")}
-                          </span>
-                        ) : null}
-                        {rm.duration_minutes ? (
-                          <span className="inline-flex items-center gap-1.5">
-                            <Clock className="h-3 w-3" />
-                            {rm.duration_minutes} min
-                          </span>
-                        ) : null}
-                      </div>
-                    </Link>
-                  </li>
+                      {rm.duration_minutes ? (
+                        <p className="text-xs text-muted-foreground">{rm.duration_minutes} min</p>
+                      ) : null}
+                    </div>
+                  </Link>
                 ))}
-              </ul>
+              </div>
             </div>
           )}
 
           {/* Topics */}
           {parsedSections?.keywords && (
-            <div className="space-y-2 border-t border-border pt-6">
+            <div className="space-y-3 border-t border-border pt-6">
               <div className="text-xs font-semibold uppercase tracking-widest text-primary">
-                Topics
+                Keywords
               </div>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-1.5">
                 {parsedSections.keywords
-                  .split(",")
-                  .map((k) => k.trim())
+                  .split(/[,\n]/)
+                  .map((k) => k.replace(/^[-*•]\s*/, "").trim())
                   .filter(Boolean)
-                  .map((keyword, idx) => (
+                  .map((keyword) => (
                     <span
-                      key={`${keyword}-${idx}`}
-                      className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+                      key={keyword}
+                      className="inline-flex items-center rounded-full border border-border/60 bg-muted/50 px-2.5 py-1 text-xs font-medium text-muted-foreground"
                     >
                       {keyword}
                     </span>

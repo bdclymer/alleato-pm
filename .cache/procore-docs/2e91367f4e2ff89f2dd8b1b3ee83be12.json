@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  Export a Submittal Package \n##  Things to Consider \n  * **Required User Permissions:**\n    * 'Read Only' level permisisons or higher on the project's Submittals tool.\n\n\n##  Steps \n  1. Navigate to the project's **Submittals** tool.\n  2. Click the **Packages** tab.\n  3. Click **View** next to the submittal package you want to export.\n  4. Click **Export** and select **PDF**.  \nA PDF with a summary of the submittal package and its submittals is downloaded to your computer.\n\n\n## See Also\n  * [Best Practices: Submittal Packages - Submittal Itemization](https://v2.support.procore.com/reference-best-practices-submittal-packages-submittal-itemization)\n  * [Best Practices: Submittal Packages - Creation and Review](https://v2.support.procore.com/reference-best-practices-submittal-packages-creation-and-review)\n  * [Resend the Submittals in a Package for Review](https://v2.support.procore.com/product-manuals/submittals-project/tutorials/resend-the-submittals-in-a-package-for-review)\n\n\n",
+  "title": "Export a Submittal Package",
+  "description": "How to export a submittal package."
+}

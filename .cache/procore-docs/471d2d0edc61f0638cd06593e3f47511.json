@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  About Budget Changes \nTable of Contents \n##  Prerequisites \n#####  Important\n  * The Budget Changes feature requires any existing Budget Modifications data to be migrated to a new format. It also requires API endpoint updates for any companies using custom integrations. For important information about the migration process and API endpoint update requirements, see [Common Questions](https://v2.support.procore.com/product-manuals/budget-project/tutorials/budget-common_questions).\n\n\n[ ](https://v2.support.procore.com/process-guides/about-budget-changes/)\n[ Details ](https://v2.support.procore.com/process-guides/about-budget-changes/details/)\n",
+  "title": "About Budget Changes - Prerequisites",
+  "description": "| Prerequisites"
+}

@@ -1979,6 +1979,17 @@
 .lb-composer [contenteditable="true"],
 .lb-thread [contenteditable="true"] {
   color: hsl(var(--foreground)) !important;
+  -webkit-text-fill-color: hsl(var(--foreground)) !important;
+  caret-color: hsl(var(--foreground)) !important;
+}
+
+.lb-composer [contenteditable="true"] *,
+.lb-thread [contenteditable="true"] *,
+.lb-composer-alleato [contenteditable="true"],
+.lb-composer-alleato [contenteditable="true"] * {
+  color: hsl(var(--foreground)) !important;
+  -webkit-text-fill-color: hsl(var(--foreground)) !important;
+  caret-color: hsl(var(--foreground)) !important;
 }
 
 .lb-composer [contenteditable="true"]::before,

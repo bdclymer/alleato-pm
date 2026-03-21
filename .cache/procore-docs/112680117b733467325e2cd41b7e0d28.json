@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  Delete Drawing Markups (Android) \n##  Things to Consider \n  * **Required User Permissions:**\n    * 'Standard' level permissions or higher on the project's Drawings tool.  \n_Notes:_\n    * 'Standard' users can only delete markups on their Personal layer unless otherwise configured.\n    * 'Admin' users can delete markups on the Published and Personal layer.\n\n\n##  Steps \n  1. Navigate to the project's **Drawings** tool on your Android device.\n  2. Search and filter for the drawing you would like to add an item to.\n  3. Tap the drawing.\n  4. Tap the drawing markup you would like to delete.\n  5. Tap **Delete**.\n  6. Changes are automatically saved, so you can exit the drawing when you're done.\n\n\n## See Also\n  * [Drawings (Android) - Permissions](https://v2.support.procore.com/product-manuals/drawings-android/permissions)\n  * [Publish Personal Drawing Markups (Android)](https://v2.support.procore.com/product-manuals/drawings-android/tutorials/publish-personal-drawing-markups-android)\n  * [Edit Drawing Markups (Android)](https://v2.support.procore.com/product-manuals/drawings-android/tutorials/edit-drawing-markups-android)\n\n\n",
+  "title": "Delete Drawing Markups (Android)",
+  "description": "How to delete drawing markups in the Drawings tool on an Android mobile device."
+}

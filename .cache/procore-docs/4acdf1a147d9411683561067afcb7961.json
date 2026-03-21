@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  Resource Tracking And Unit Quantity Based Budget Setup Guide \nTable of Contents \n##  Permissions \nTo take the steps in this guide, users need the following permissions:\n**Company Level**\n  * 'Admin' level permissions in the company's Admin tool.\n\n\n**Project Level**\n  * 'Admin' level permissions in the project's Admin tool.\n  * 'Admin' level permissions in the project's Directory tool.\n  * 'Standard' level permissions or higher in the project's Timesheets tool.\n\n\nSome of these tasks can be performed with lower level or granular permissions. \n[ ](https://v2.support.procore.com/process-guides/resource-tracking-and-unit-quantity-based-budget-setup-guide/)\n[ Configure Company Level WBS ](https://v2.support.procore.com/process-guides/resource-tracking-and-unit-quantity-based-budget-setup-guide/configure-company-level-wbs/)\n",
+  "title": "Resource Tracking And Unit Quantity Based Budget Setup Guide - Permissions",
+  "description": "| Permissions"
+}

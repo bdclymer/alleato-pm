@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  View the Distribution History of a Custom RFI Report \n##  Things to Consider \n  * [Required User Permissions](https://v2.support.procore.com/product-manuals/rfi-project/permissions)\n\n\n##  Demo \n![Rfi Report Distribution History](https://images.ctfassets.net/plvbd9i6qkpm/ab3b470a0b631eea099ecad841451cbe/8f573c6c3c1705360cbd31e3a31e3c50/rfi-report-distribution-history.gif?fm=webp)\n##  Steps \n  1. Navigate to your project's **RFIs** tool.\n  2. In the right pane, click the desired report\n  3. Under **General Report Links** , click **Distribution History**. \n\n\n## See Also\n  * [RFIs - Permissions](https://v2.support.procore.com/product-manuals/rfi-project/permissions)\n  * [Share a Custom RFI Report](https://v2.support.procore.com/product-manuals/rfi-project/tutorials/share-a-custom-rfi-report)\n  * [Configure Advanced Settings: RFIs](https://v2.support.procore.com/product-manuals/rfi-project/tutorials/configure-advanced-settings-rfis)\n\n\n",
+  "title": "View the Distribution History of a Custom RFI Report",
+  "description": "How to view the report distribution history for a report listed in the RFIs tool."
+}

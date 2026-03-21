@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  View Paid Invoices (Draft) \n##  Things to Consider \n##  Prerequisites \n  * [Create a Subcontractor Invoice](https://v2.support.procore.com/process-guides/invoice-administrator-guide/create-subcontractor-invoices)\n\n\n##  Steps \n  1. Navigate to the Company level **Payments** tool.\n  2. Click the **Payments** tab.\n\n\n## See Also\n  * [About the Subcontractor Invoices Tab in the Payments Tool](https://v2.support.procore.com/product-manuals/procore-pay/tutorials/about-the-subcontractor-invoices-tab-in-the-payments-tool)\n  * [Sign Lien Waivers on Project Invoices](https://v2.support.procore.com/product-manuals/procore-pay/tutorials/sign-lien-waivers-on-project-invoices)\n  * [Create Disbursements](https://v2.support.procore.com/product-manuals/procore-pay/tutorials/create-disbursements)\n\n\n",
+  "title": "View Paid Invoices (Draft)",
+  "description": "How to view a list of paid invoices."
+}

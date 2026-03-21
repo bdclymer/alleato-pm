@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  View Download Log for Specifications \n##  Things to Consider \n  * [Required User Permissions](https://v2.support.procore.com/product-manuals/specifications-project/permissions)\n\n\n##  Steps \n  1. Navigate to the project's **Specifications** tool.\n  2. Click the desired specification area you want to view the info for.   \nOR  \nClick **Info**![Icon Info3](https://images.ctfassets.net/plvbd9i6qkpm/8daa3c2524fc6852f143ae85122ba667/6cc6417d2c59aeda0bd76d801eb8e870/icon-info3.png?fm=webp&h=16) icon next to a specification.\n  3. Click **Download Log** tab.  \nThis displays the list for all the download logs.\n\n\n## See Also\n  * [View Specifications](https://v2.support.procore.com/product-manuals/specifications-project/tutorials/view-specifications)\n  * [What actions are available in Agent Builder?](https://v2.support.procore.com/faq-what-actions-are-available-in-agent-builder)\n  * [Specifications - Permissions](https://v2.support.procore.com/product-manuals/specifications-project/permissions)\n\n\n",
+  "title": "View Download Log for Specifications",
+  "description": "How to view the download log for specifications"
+}

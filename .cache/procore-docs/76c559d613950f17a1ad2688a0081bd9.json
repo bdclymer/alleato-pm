@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  Edit an RFI (Android) \n##  Things to Consider \n  * [Required User Permissions](https://v2.support.procore.com/product-manuals/rfi-project/permissions)\n  * **Additional Information:**\n    * This action can be performed in offline mode if the asset/item was previously viewed and cached on your mobile device. Tasks performed in offline mode will sync with Procore once a network connection is reestablished.\n\n\n##  Steps \n  1. Navigate to the **RFIs** tool on your Android device.\n  2. Tap the RFI you want to edit.\n  3. Tap **Edit**. \n  4. Tap a field to edit the information you want to change.\n  5. Tap **Save**.\n\n\n## See Also\n  * [Change the Status of an RFI (Android)](https://v2.support.procore.com/product-manuals/rfis-android/tutorials/change-the-status-of-an-rfi-android)\n  * [Create a Change Event from an RFI (Android)](https://v2.support.procore.com/product-manuals/rfis-android/tutorials/create-a-change-event-from-an-rfi-android)\n  * [Mark an RFI Response as Official (Android)](https://v2.support.procore.com/product-manuals/rfis-android/tutorials/mark-an-rfi-response-as-official-android)\n\n\n",
+  "title": "Edit an RFI (Android)",
+  "description": "How to edit an RFI from your Android mobile device."
+}

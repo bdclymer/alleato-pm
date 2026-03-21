@@ -11,11 +11,12 @@ export default async function MeetingsPage() {
 
   const { data: meetings, error } = await supabase
     .from("document_metadata")
-    .select("*")
+    .select("id,title,date,project,project_id,description,type,category,status,source,fireflies_link,url,participants,participants_array,notes,summary,created_at")
     .eq("type", "meeting")
     .order("date", { ascending: false });
 
   if (error) {
+    console.error("[MeetingsPage] Supabase query error:", error.message);
     return (
       <TablePageWrapper title={PAGE_TITLE} description={PAGE_DESCRIPTION}>
         <div className="text-center text-destructive p-6">
@@ -27,6 +28,7 @@ export default async function MeetingsPage() {
 
   const parsed = meetingsSchema.safeParse(meetings ?? []);
   if (!parsed.success) {
+    console.error("[MeetingsPage] Zod parse error:", parsed.error.issues.slice(0, 3));
     return (
       <TablePageWrapper title={PAGE_TITLE} description={PAGE_DESCRIPTION}>
         <div className="text-center text-destructive p-6">

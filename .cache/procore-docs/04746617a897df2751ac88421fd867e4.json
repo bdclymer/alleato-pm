@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  User Guide Procore Connect For RFIs \nTable of Contents \n##  Set Connection Approval Preferences \n  1. Navigate to the Company level **Admin** tool.\n  2. Under 'Tool Settings,' click **Connection Manager**.\n  3. Do one of the following:\n    1. To automatically approve connections, mark the checkbox to 'Allow users with existing access to the RFIs tool to connect their project without Admin approval. (Recommended)'.\n    2. Clear the checkmark to require a connection request be sent for review before manually accepting or rejecting a project's request to connect.\n  4. Click **Save**.\n\n\n[ ](https://v2.support.procore.com/process-guides/user-guide-procore-connect-for-RFIs/permissions/)\n[ Approve or Reject Connections (if review is required) ](https://v2.support.procore.com/process-guides/user-guide-procore-connect-for-RFIs/approve-or-reject-connections-if-review-is-required/)\n",
+  "title": "User Guide Procore Connect For RFIs - Set Connection Approval Preferences",
+  "description": "| Set Connection Approval Preferences"
+}

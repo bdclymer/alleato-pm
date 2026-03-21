@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  Budget Snapshots Over Time \n#### Sample Report Page\n![Procore Analytics Owner Budget Snapshots Over Time](https://images.ctfassets.net/plvbd9i6qkpm/aa6544bb2e989c6cd6efa6f7306efcb4/44900159be26191736edb33f204463c5/procore-analytics-owner-budget-snapshots-over-time.png?fm=webp)\n_This sample report page was created using mock data for demonstration purposes only._\n## See Also\n  * [Financials Budget Report](https://v2.support.procore.com/reference-financials-budget-report)\n  * [Financials Budget Report (Custom)](https://v2.support.procore.com/reference-financials-budget-report-custom)\n  * [What are best practices for using multiple (phased) budget uploads?](https://v2.support.procore.com/faq-what-are-best-practices-for-using-multiple-phased-budget-uploads)\n\n\n",
+  "title": "Budget Snapshots Over Time",
+  "description": "View sample Budget Snapshots Over Time data from the Owner Report available with Procore Analytics."
+}

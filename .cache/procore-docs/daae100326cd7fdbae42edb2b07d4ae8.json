@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  Change Events \n#### Sample Report Page\n![Procore Analytics Financials Budget Change Events](https://images.ctfassets.net/plvbd9i6qkpm/bb95ab802d26af41b1366a030e5fcb8b/fa9ab89b4bf226b42c633ab25b475445/procore-analytics-financials-budget-change-events.png?fm=webp)\n_This sample report page was created using mock data for demonstration purposes only._\n## See Also\n  * [How do the Change Events tool's column display settings work?](https://v2.support.procore.com/faq-how-do-the-change-event-tools-column-display-settings-work)\n  * [Can I create a change order for a contract or funding before a downstream collaborator responds to an RFQ for a change event?](https://v2.support.procore.com/faq-can-i-create-a-change-order-for-a-contract-or-funding-before-a-downstream-collaborator-responds-to-an-rfq-for-a-change-event)\n  * [What are Procore's default change types and change reasons?](https://v2.support.procore.com/faq-what-are-procores-default-change-types-and-change-reasons)\n\n\n",
+  "title": "Change Events",
+  "description": "View sample Change Events data from the Financials Budget Report available with Procore Analytics."
+}

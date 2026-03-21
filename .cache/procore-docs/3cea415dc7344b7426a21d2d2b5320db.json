@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  Budget And Forecast Snapshots User Guide \nTable of Contents \n##  Configure Columns \n  1. Navigate to the Company level **Project Status Snapshots** tool.\n  2. Click **Configure Columns**. This opens the **Table Settings** panel. \n![Pss Tool Configure Columns](https://images.ctfassets.net/plvbd9i6qkpm/8babde8bc15e7c4e01c261a162b180c5/090c578779fa56718190329899137380/pss-tool-configure-columns.png?fm=webp)\n  3. Under **Configure Columns** , you have these choices for each available column:\n     * **Show** columns. Move the toggle switch to the right. The system's default setting is to show all available columns.\n     * **Hide** columns. Move the toggle switch to the left.\n  4. When finished, click the **Close** (x) icon on the panel.\n\n\n[ ](https://v2.support.procore.com/process-guides/budget-and-forecast-snapshots-user-guide/view-snapshots/)\n[ Change Snapshot Status ](https://v2.support.procore.com/process-guides/budget-and-forecast-snapshots-user-guide/change-snapshot-status/)\n",
+  "title": "Budget And Forecast Snapshots User Guide - Configure Columns",
+  "description": "This guide introduces Budget & Forecast Snapshots, powerful features for tracking, analyzing, and reporting budgeting and forecasting changes in Procore Financial Management. | Configure Columns"
+}

@@ -321,6 +321,34 @@ Importing from `@/components/ui/` (base shadcn primitives) or `@/components/ds/`
 - `@/components/layout/` = Page structure (also re-exported from ds/).
 - `@/components/domain/` = Domain-specific components (forms, detail views).
 
+### 14. Browser Verification Gate (MANDATORY)
+
+**NEVER claim a UI task is complete without verifying in `agent-browser` first.**
+
+After ANY change to a page, component, or layout:
+
+1. Open the affected page with `agent-browser open <url>`
+2. Take a screenshot with `agent-browser screenshot /tmp/<name>.png`
+3. Read and visually inspect the screenshot
+4. If the page requires scrolling, scroll and screenshot each section
+5. Only THEN report completion to the user
+
+**NEVER:**
+
+- Say "all fixes confirmed" based on code changes alone
+- Assume ReactMarkdown, Tailwind classes, or data formatting will render correctly without checking
+- Skip verification because "the code looks right"
+- Report success after only checking a snapshot (text DOM) — always take a visual screenshot
+
+**ALWAYS:**
+
+- Verify the actual rendered output in the browser
+- Check that text content is properly formatted (not jumbled, not one big block)
+- Confirm layout, spacing, and visual hierarchy look correct
+- If login is required, use test credentials from `.env` (`test1@mail.com` / `test12026!!!`)
+
+**Why:** Code changes do NOT equal visual correctness. Markdown rendering, CSS layout, and data formatting frequently produce unexpected results that are only visible in the browser.
+
 ---
 
 ## Scaffolding System

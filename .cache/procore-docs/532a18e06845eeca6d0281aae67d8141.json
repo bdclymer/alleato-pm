@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  Budget And Forecast Snapshots User Guide \nTable of Contents \n##  Change Snapshot Status \n  1. Navigate to the Company level **Project Status Snapshots** tool.\n  2. Locate the project status snapshot in the table.\n  3. Click the snapshot's **Status** cell and choose the desired status. This updates the snapshot status at both the company and project levels. \n![Project Status Snapshots](https://images.ctfassets.net/plvbd9i6qkpm/793796c059f404957877352cc335e5ce/0f601c11558bf85b4249fff67fb5d8f6/project-status-snapshots.png?fm=webp)\n\n\n[ ](https://v2.support.procore.com/process-guides/budget-and-forecast-snapshots-user-guide/configure-columns-company/)\n[ Analyze Variance ](https://v2.support.procore.com/process-guides/budget-and-forecast-snapshots-user-guide/analyze-variance-company/)\n",
+  "title": "Budget And Forecast Snapshots User Guide - Change Snapshot Status",
+  "description": "This guide introduces Budget & Forecast Snapshots, powerful features for tracking, analyzing, and reporting budgeting and forecasting changes in Procore Financial Management. | Change Snapshot Status"
+}

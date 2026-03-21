@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  Invoice Administrator Guide \nTable of Contents \n##  Lien Waiver Types \nWith Procore Pay, payors can create four (4) different types of lien waiver templates to use on their construction projects: _Progress Conditional_ , _Progress Unconditional_ , _Final Conditional_ , and _Final Unconditional_.\n#####  Tip\n**How do you create a lien waiver template?** See [Create Lien Waiver Templates](https://v2.support.procore.com/process-guides/payor-setup-guide/create-lien-waiver-templates).\n[ ](https://v2.support.procore.com/process-guides/invoice-administrator-guide/about-lien-waivers/)\n[ Enable Waivers & Set Default Templates ](https://v2.support.procore.com/process-guides/invoice-administrator-guide/enable-waivers--set-default-templates/)\n",
+  "title": "Invoice Administrator Guide - Lien Waiver Types",
+  "description": "This guide shows users with invoice administrators how to manage Procore Pay features with the Invoice Management tools in Procore. | Lien Waiver Types"
+}

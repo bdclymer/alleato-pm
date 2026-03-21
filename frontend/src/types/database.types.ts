@@ -1,3 +1,4 @@
+Using workdir /Users/meganharrison/Documents/alleato-pm
 export type Json =
   | string
   | number
@@ -11709,6 +11710,7 @@ export type Database = {
           slug: string
           status: string | null
           table_column_count: number | null
+          tool_id: number | null
           updated_at: string | null
         }
         Insert: {
@@ -11730,6 +11732,7 @@ export type Database = {
           slug: string
           status?: string | null
           table_column_count?: number | null
+          tool_id?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -11751,6 +11754,7 @@ export type Database = {
           slug?: string
           status?: string | null
           table_column_count?: number | null
+          tool_id?: number | null
           updated_at?: string | null
         }
         Relationships: [
@@ -11759,6 +11763,13 @@ export type Database = {
             columns: ["feature_id"]
             isOneToOne: false
             referencedRelation: "procore_features"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "procore_pages_tool_id_fkey"
+            columns: ["tool_id"]
+            isOneToOne: false
+            referencedRelation: "procore_tools"
             referencedColumns: ["id"]
           },
         ]
@@ -16606,6 +16617,107 @@ export type Database = {
           },
         ]
       }
+      support_article_chunks: {
+        Row: {
+          article_id: number
+          chunk_index: number
+          chunk_text: string
+          created_at: string | null
+          embedding: unknown
+          heading: string | null
+          id: number
+          token_count: number | null
+        }
+        Insert: {
+          article_id: number
+          chunk_index: number
+          chunk_text: string
+          created_at?: string | null
+          embedding?: unknown
+          heading?: string | null
+          id?: never
+          token_count?: number | null
+        }
+        Update: {
+          article_id?: number
+          chunk_index?: number
+          chunk_text?: string
+          created_at?: string | null
+          embedding?: unknown
+          heading?: string | null
+          id?: never
+          token_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "support_article_chunks_article_id_fkey"
+            columns: ["article_id"]
+            isOneToOne: false
+            referencedRelation: "support_articles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      support_articles: {
+        Row: {
+          breadcrumb: string[] | null
+          category: string | null
+          content_hash: string
+          created_at: string | null
+          description: string | null
+          fts: unknown
+          id: number
+          last_crawled_at: string | null
+          markdown_content: string
+          slug: string | null
+          source_updated_at: string | null
+          subcategory: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string | null
+          url: string
+          word_count: number | null
+        }
+        Insert: {
+          breadcrumb?: string[] | null
+          category?: string | null
+          content_hash: string
+          created_at?: string | null
+          description?: string | null
+          fts?: unknown
+          id?: never
+          last_crawled_at?: string | null
+          markdown_content: string
+          slug?: string | null
+          source_updated_at?: string | null
+          subcategory?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string | null
+          url: string
+          word_count?: number | null
+        }
+        Update: {
+          breadcrumb?: string[] | null
+          category?: string | null
+          content_hash?: string
+          created_at?: string | null
+          description?: string | null
+          fts?: unknown
+          id?: never
+          last_crawled_at?: string | null
+          markdown_content?: string
+          slug?: string | null
+          source_updated_at?: string | null
+          subcategory?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string | null
+          url?: string
+          word_count?: number | null
+        }
+        Relationships: []
+      }
       sync_status: {
         Row: {
           created_at: string | null
@@ -19351,6 +19463,20 @@ export type Database = {
           title: string
         }[]
       }
+      fulltext_search_support_articles: {
+        Args: { result_limit?: number; search_query: string }
+        Returns: {
+          breadcrumb: string[]
+          category: string
+          description: string
+          id: number
+          rank: number
+          slug: string
+          subcategory: string
+          title: string
+          url: string
+        }[]
+      }
       generate_optimization_recommendations: {
         Args: { project_data: Json }
         Returns: {
@@ -20451,6 +20577,26 @@ export type Database = {
           meeting_id: string
           metadata: Json
           similarity: number
+        }[]
+      }
+      search_support_articles: {
+        Args: {
+          match_count?: number
+          match_threshold?: number
+          query_embedding: unknown
+        }
+        Returns: {
+          article_id: number
+          breadcrumb: string[]
+          category: string
+          chunk_id: number
+          chunk_text: string
+          heading: string
+          similarity: number
+          slug: string
+          subcategory: string
+          title: string
+          url: string
         }[]
       }
       search_team_memories: {

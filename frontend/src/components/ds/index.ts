@@ -26,6 +26,7 @@ export type { KpiBlockProps } from "./kpi";
 
 export { SectionHeader } from "./section-header";
 export { AvatarStack } from "./avatar-stack";
+export { DateAvatar } from "./date-avatar";
 export { DataTable } from "./data-table";
 export type { TableColumn, DataTableProps } from "./data-table";
 export { EmptyState } from "./empty-state";

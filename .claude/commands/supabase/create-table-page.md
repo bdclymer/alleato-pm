@@ -1,19 +1,20 @@
 ---
-description: "Generate a (tables) page for a Supabase table using GenericDataTable"
+description: "Generate a (tables) or (admin) page for a Supabase table using UnifiedTablePage"
 allowed-tools: "Read, Write, Bash, Glob, Grep, Edit"
 ---
 
 # Create Table Page
 
-Generate a complete `(tables)` route page for a Supabase table using the `GenericDataTable` factory component.
+Generate a complete route page for a Supabase table using `UnifiedTablePage` with ALL standard features: selection checkboxes, row actions (vertical dots dropdown), delete, bulk delete, sorting, filtering, pagination, column visibility, and export.
 
 ## Input
 
 The user provides: `$ARGUMENTS`
 
 This should be either:
-1. A table name (e.g., `procore_tools`)
+1. A table name (e.g., `support_articles`)
 2. A table name + SQL schema (CREATE TABLE statement)
+3. Optionally: route group `(admin)` or `(tables)` — defaults to `(admin)`
 
 ## Instructions
 
@@ -23,145 +24,389 @@ This should be either:
 
 If the user provided a CREATE TABLE statement, parse columns from it directly. Skip to Step 2.
 
-If only a table name was given, query Supabase for the schema:
-
-```bash
-cd /Users/meganharrison/Documents/github/alleato-procore/frontend
-node -e '
-const { createClient } = require("@supabase/supabase-js");
-require("dotenv").config({ path: ".env.local" });
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
-(async () => {
-  const { data, error } = await supabase.from("TABLE_NAME").select("*").limit(1);
-  if (error) { console.error("ERROR:", JSON.stringify(error)); process.exit(1); }
-  if (data && data[0]) { console.log("COLUMNS:", Object.keys(data[0]).join(", ")); console.log("SAMPLE:", JSON.stringify(data[0], null, 2)); }
-  else { console.log("TABLE EXISTS BUT EMPTY - need schema from user"); }
-})();
-'
-```
-
-Replace `TABLE_NAME` with the actual table name. Use the sample row to determine column types and values.
+If only a table name was given:
+1. First check `frontend/src/types/database.types.ts` for the table definition
+2. If not found, regenerate types: `npm run db:types` (from frontend dir)
+3. Read the Row type from `database.types.ts` for that table
 
 ### Step 2: Derive Names
 
-From the table name (e.g., `procore_tools`):
-- **Route slug**: `procore-tools` (replace underscores with hyphens)
-- **Page title**: `Procore Tools` (title case, spaces)
-- **Variable name**: `tools` (last word, plural)
-- **Function name**: `ProcoreToolsPage` (PascalCase + Page)
-- **Export filename**: `procore-tools-export.csv`
+From the table name (e.g., `support_articles`):
+- **Route slug**: `support-articles` (replace underscores with hyphens)
+- **Page title**: `Support Articles` (title case, spaces)
+- **Client component name**: `SupportArticlesClient`
+- **Function name**: `SupportArticlesPage` (PascalCase + Page)
+- **Route group**: `(admin)` by default
 
-### Step 3: Generate the Page
+### Step 3: Generate the Server Page
 
-Create the file at: `frontend/src/app/(tables)/{route-slug}/page.tsx`
-
-Use this exact template structure:
+Create: `frontend/src/app/{route-group}/{route-slug}/page.tsx`
 
 ```tsx
 import { createClient } from "@/lib/supabase/server";
-import {
-  GenericDataTable,
-  type GenericTableConfig,
-} from "@/components/tables/generic-table-factory";
+import { __CLIENT_COMPONENT__ } from "./__route-slug__-client";
 
-const config: GenericTableConfig = {
-  title: "__TITLE__",
-  description: "__DESCRIPTION__",
-  searchFields: [/* text columns good for search: name, description, slug, etc. */],
-  exportFilename: "__EXPORT_FILENAME__",
-  editConfig: {
-    tableName: "__TABLE_NAME__",
-    editableFields: [/* all columns EXCEPT id, created_at, updated_at */],
-  },
-  columns: [
-    // RULES:
-    // - First column: isPrimary: true, defaultVisible: true (the "name" field)
-    // - Status/category columns: use renderConfig type "badge" with variantMap
-    // - Long text columns: use renderConfig type "truncate" with maxLength 80
-    // - URL columns: use renderConfig type "truncate" with maxLength 40
-    // - Date columns: type "date"
-    // - Number columns: type "number"
-    // - Boolean columns: use renderConfig type "boolean"
-    // - id column: SKIP (never show)
-    // - created_at, updated_at: defaultVisible false, type "date"
-    // - Show 3-5 most useful columns by default (defaultVisible: true)
-    // - Hide the rest (defaultVisible: false)
-  ],
-  filters: [
-    // Add filter for each column that has a known set of distinct values
-    // (status, category, type, priority, etc.)
-    // Format: { id: "field", label: "Label", field: "field", options: [{ value: "x", label: "X" }] }
-  ],
-  enableSorting: true,
-  enableRowSelection: true,
-  enableViewSwitcher: true,
-};
-
-export default async function __FUNCTION_NAME__() {
+export default async function __PAGE_FUNCTION__() {
   const supabase = await createClient();
 
-  const { data: __VARIABLE__, error } = await supabase
+  const { data, error } = await supabase
     .from("__TABLE_NAME__")
-    .select("*")
+    .select("__COLUMNS__")  // explicit column list, no "*"
     .order("__SORT_COLUMN__", { ascending: true });
 
-  if (error) {
-    return (
-      <div className="text-center text-destructive">
-        Error loading __TITLE_LOWER__. Please try again later.
-      </div>
-    );
-  }
-
-  return <GenericDataTable data={__VARIABLE__ || []} config={config} />;
+  return (
+    <__CLIENT_COMPONENT__
+      items={data ?? []}
+      errorMessage={error?.message ?? null}
+    />
+  );
 }
 ```
 
-### Step 4: Badge Variant Map Reference
+### Step 4: Generate the Client Component
 
-When creating badge columns, use these variant assignments:
+Create: `frontend/src/app/{route-group}/{route-slug}/{route-slug}-client.tsx`
 
-**Status-like columns:**
-- Not started / inactive / draft → `"outline"`
-- In progress / active / implementation → `"default"`
-- Testing / review / pending → `"secondary"`
-- Complete / done / approved → `"success"`
-- Critical / error / blocked → `"destructive"`
+**MANDATORY features — every single one of these MUST be present:**
 
-**Category-like columns (cycle through):**
-- Category 1 → `"secondary"`
-- Category 2 → `"default"`
-- Category 3 → `"destructive"`
-- Category 4 → `"outline"`
+1. `selection` prop — checkboxes on every row
+2. `table.rowActions` — vertical dots dropdown with View/Edit/Delete
+3. `toolbar.onBulkDelete` — bulk delete when rows are selected
+4. `toolbar.selectedCount` — wired to `tableState.selectedIds.length`
+5. `sorting` prop — column header sorting
+6. `pagination` prop — page/perPage controls
+7. `toolbar.filters` — at least category/status if applicable
+8. `toolbar.columns` + `visibleColumns` — column visibility toggle
+9. `emptyState` — both default and filtered variants
+10. `handleDelete` — Supabase delete + optimistic local state removal
+
+Use this exact template:
+
+```tsx
+"use client";
+
+import * as React from "react";
+import { useMemo } from "react";
+
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+
+import { ExternalLink, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+
+import { StatusBadge } from "@/components/ds";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  UnifiedTablePage,
+  useUnifiedTableState,
+  type ColumnConfig,
+  type FilterConfig,
+  type FilterValue,
+  type TableColumn,
+} from "@/components/tables/unified";
+import { createClient } from "@/lib/supabase/client";
+
+// ── Types ───────────────────────────────────────────────────────────────────
+
+interface __ITEM_TYPE__ {
+  // All columns from the table Row type
+}
+
+interface __CLIENT_PROPS__ {
+  items: __ITEM_TYPE__[];
+  errorMessage: string | null;
+}
+
+// ── Column metadata ─────────────────────────────────────────────────────────
+// RULES:
+// - First column: alwaysVisible: true (the "name" / primary field)
+// - id, created_at, updated_at: defaultVisible: false
+// - Show 4-6 most useful columns by default
+// - Status/category columns: use StatusBadge in render
+
+const columns: ColumnConfig[] = [
+  { id: "__primary__", label: "__Primary__", alwaysVisible: true },
+  // ... more columns
+];
+
+const defaultVisibleColumns = columns
+  .filter((c) => c.defaultVisible !== false)
+  .map((c) => c.id);
+
+// ── Table columns ───────────────────────────────────────────────────────────
+
+function buildTableColumns(): TableColumn<__ITEM_TYPE__>[] {
+  return [
+    // Each column: { ...columns[N], render, csvValue, sortValue, sortable }
+  ];
+}
+
+// ── Row actions (MANDATORY) ─────────────────────────────────────────────────
+
+function renderRowActions(
+  item: __ITEM_TYPE__,
+  onDelete: (item: __ITEM_TYPE__) => void,
+) {
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8">
+          <MoreHorizontal className="h-4 w-4" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        {/* Add View/Edit items as appropriate */}
+        <DropdownMenuItem
+          className="text-destructive"
+          onClick={() => onDelete(item)}
+        >
+          <Trash2 className="mr-2 h-4 w-4" />
+          Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+// ── Filters ─────────────────────────────────────────────────────────────────
+// Derive filter options from data using useMemo inside the component
+
+// ── Filter / sort helpers ───────────────────────────────────────────────────
+
+const EMPTY_FILTERS: Record<string, FilterValue> = {};
+
+function applyFilters(
+  items: __ITEM_TYPE__[],
+  search: string,
+  filters: Record<string, FilterValue>,
+): __ITEM_TYPE__[] {
+  // Search across text fields, apply each filter
+}
+
+function sortItems(
+  items: __ITEM_TYPE__[],
+  sortBy: string,
+  direction: "asc" | "desc",
+): __ITEM_TYPE__[] {
+  // Sort by the given column
+}
+
+// ── Page component ──────────────────────────────────────────────────────────
+
+export function __CLIENT_COMPONENT__({
+  items: initialItems,
+  errorMessage,
+}: __CLIENT_PROPS__) {
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const router = useRouter();
+
+  // Local state for optimistic deletes
+  const [items, setItems] = React.useState(initialItems);
+
+  // Derive filter options from data
+  // const categories = useMemo(() => ..., [items]);
+
+  const tableState = useUnifiedTableState({
+    entityKey: "__route-slug__",
+    searchParams,
+    pathname,
+    router,
+    defaults: {
+      view: "table",
+      allowedViews: ["table"],
+      page: 1,
+      perPage: 50,
+      search: "",
+      sortBy: "__primary_column__",
+      sortDirection: "asc",
+      visibleColumns: defaultVisibleColumns,
+      filters: EMPTY_FILTERS,
+    },
+  });
+
+  const tableColumns = useMemo(() => buildTableColumns(), []);
+
+  // ... activeFilters, isFiltered, filteredItems, sortedItems, paginatedItems
+  // ... (same pattern as site-map and commitments pages)
+
+  // ── Selection handlers (MANDATORY) ──────────────────────────────────────
+
+  const handleSelectAll = React.useCallback(
+    (checked: boolean) => {
+      if (checked) {
+        const allIds = paginatedItems.map((item) => String(item.id));
+        tableState.setSelectedIds(allIds);
+      } else {
+        tableState.setSelectedIds([]);
+      }
+    },
+    [paginatedItems, tableState],
+  );
+
+  const handleSelectRow = React.useCallback(
+    (id: string, checked: boolean) => {
+      if (checked) {
+        tableState.setSelectedIds([...tableState.selectedIds, id]);
+      } else {
+        tableState.setSelectedIds(
+          tableState.selectedIds.filter((sid) => sid !== id),
+        );
+      }
+    },
+    [tableState],
+  );
+
+  // ── Delete handler (MANDATORY) ────────────────────────────────────────
+
+  const handleDelete = React.useCallback(
+    async (item: __ITEM_TYPE__) => {
+      const supabase = createClient();
+      const { error } = await supabase
+        .from("__TABLE_NAME__")
+        .delete()
+        .eq("id", item.id);
+
+      if (error) {
+        toast.error("Failed to delete", { description: error.message });
+        return;
+      }
+
+      setItems((prev) => prev.filter((i) => i.id !== item.id));
+      tableState.setSelectedIds(
+        tableState.selectedIds.filter((sid) => sid !== String(item.id)),
+      );
+      toast.success("Deleted successfully");
+    },
+    [tableState],
+  );
+
+  // ── Bulk delete (MANDATORY) ───────────────────────────────────────────
+
+  const handleBulkDelete = React.useCallback(async () => {
+    const ids = tableState.selectedIds.map(Number);
+    const supabase = createClient();
+    const { error } = await supabase
+      .from("__TABLE_NAME__")
+      .delete()
+      .in("id", ids);
+
+    if (error) {
+      toast.error("Failed to delete", { description: error.message });
+      return;
+    }
+
+    const idSet = new Set(ids);
+    setItems((prev) => prev.filter((i) => !idSet.has(i.id)));
+    tableState.setSelectedIds([]);
+    toast.success(`Deleted ${ids.length} item${ids.length === 1 ? "" : "s"}`);
+  }, [tableState]);
+
+  return (
+    <UnifiedTablePage<__ITEM_TYPE__>
+      header={{
+        title: "__PAGE_TITLE__",
+        description: `${items.length.toLocaleString()} items`,
+      }}
+      layout={{ fullBleedTable: false }}
+      toolbar={{
+        totalItems: items.length,
+        filteredItems: filteredItems.length,
+        selectedCount: tableState.selectedIds.length,  // NEVER hardcode 0
+        searchValue: tableState.searchInput,
+        onSearchChange: tableState.setSearchInput,
+        searchPlaceholder: "Search...",
+        currentView: tableState.currentView,
+        onViewChange: tableState.setCurrentView,
+        filters: tableFilters,
+        activeFilters,
+        onFilterChange: handleFilterChange,
+        onClearFilters: () => handleFilterChange(EMPTY_FILTERS),
+        columns,
+        visibleColumns: tableState.visibleColumns,
+        onColumnVisibilityChange: tableState.setVisibleColumns,
+        onBulkDelete: handleBulkDelete,  // MANDATORY
+      }}
+      data={{
+        items: paginatedItems,
+        isLoading: false,
+        isFetching: false,
+        error: errorMessage ? new Error(errorMessage) : null,
+      }}
+      table={{
+        columns: tableColumns,
+        getRowId: (item) => String(item.id),
+        rowActions: (item) => renderRowActions(item, handleDelete),  // MANDATORY
+      }}
+      sorting={{
+        sortBy: tableState.sortBy,
+        sortDirection: tableState.sortDirection,
+        onSortChange: (sortBy, direction) => {
+          tableState.setSortBy(sortBy);
+          tableState.setSortDirection(direction);
+          tableState.setPage(1);
+        },
+      }}
+      selection={{  // MANDATORY — this gives you checkboxes
+        selectedIds: tableState.selectedIds,
+        onSelectAll: handleSelectAll,
+        onSelectRow: handleSelectRow,
+      }}
+      emptyState={{
+        title: "No __items__ found",
+        description: "No data available.",
+        filteredDescription: "Try adjusting your search or filters.",
+        isFiltered,
+      }}
+      pagination={{
+        page: tableState.page,
+        totalPages,
+        perPage: tableState.perPage,
+        onPageChange: (p) => {
+          tableState.setPage(p);
+          tableState.setSearchParams({ page: String(p) });
+        },
+        onPerPageChange: (pp) => {
+          tableState.setPerPage(pp);
+          tableState.setPage(1);
+        },
+      }}
+    />
+  );
+}
+```
 
 ### Step 5: Verify
 
-After creating the file, run a quick TypeScript check:
-
 ```bash
-cd /Users/meganharrison/Documents/github/alleato-procore/frontend
-npx tsc --noEmit src/app/\(tables\)/{route-slug}/page.tsx 2>&1 | head -20
+cd frontend && npx tsc --noEmit --pretty 2>&1 | grep -E "{route-slug}" | head -10
 ```
 
-If there are errors, fix them. If `tsc` can't resolve the file alone, just verify the imports are correct by checking the factory component exists:
+### MANDATORY CHECKLIST — Verify before finishing
 
-```bash
-ls src/components/tables/generic-table-factory.tsx
-```
+- [ ] `selection` prop present with `selectedIds`, `onSelectAll`, `onSelectRow`
+- [ ] `table.rowActions` present with `MoreHorizontal` dropdown
+- [ ] `toolbar.selectedCount` = `tableState.selectedIds.length` (NOT hardcoded 0)
+- [ ] `toolbar.onBulkDelete` present
+- [ ] `handleDelete` removes from Supabase AND local state
+- [ ] `handleBulkDelete` removes from Supabase AND local state
+- [ ] `sorting` prop present
+- [ ] `pagination` prop present
+- [ ] `toolbar.columns` + `visibleColumns` present
+- [ ] No TypeScript errors
 
 ### What NOT To Do
 
-- DO NOT read other table pages for "patterns" — the template above IS the pattern
-- DO NOT attempt to generate Supabase types (`supabase gen types` often fails on auth)
-- DO NOT import `Database` type — `GenericDataTable` accepts `Record<string, unknown>[]`
-- DO NOT explore the `GenericDataTable` component — the config interface is documented above
-- DO NOT add navigation/sidebar entries — `(tables)` pages are standalone
-- DO NOT create hooks or services — this is a server component that queries directly
-
-### Output
-
-Tell the user:
-1. File path created
-2. Route URL (e.g., `/procore-tools`)
-3. Columns visible by default
-4. Available filters
+- DO NOT use `GenericDataTable` — it's deprecated, use `UnifiedTablePage`
+- DO NOT hardcode `selectedCount: 0` — wire it to `tableState.selectedIds.length`
+- DO NOT skip `selection` prop — every table needs checkboxes
+- DO NOT skip `rowActions` — every table needs the vertical dots dropdown
+- DO NOT skip `onBulkDelete` — every table needs bulk delete
+- DO NOT use `*` in Supabase select — list columns explicitly
+- DO NOT import `Database` type — define the interface inline from the types file
+- DO NOT create hooks or services — server component queries directly, client uses `createClient` for mutations

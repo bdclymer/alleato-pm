@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  View Emails for Specifications \n##  Things to Consider \n  * [Required User Permissions](https://v2.support.procore.com/product-manuals/specifications-project/permissions)\n\n\n##  Steps \n  1. Navigate to the project's **Specifications** tool.\n  2. Click the desired specification area you want to view the info for.   \nOR  \nClick **Info**![Icon Info3](https://images.ctfassets.net/plvbd9i6qkpm/8daa3c2524fc6852f143ae85122ba667/6cc6417d2c59aeda0bd76d801eb8e870/icon-info3.png?fm=webp&h=16) icon next to a specification.\n  3. Click the **Emails** tab.  \nThis displays all the emails. \n  4. Click **Compose Email** to draft a new email. See [Email Specifications](https://v2.support.procore.com/product-manuals/specifications-project/tutorials/email-specifications/).\n\n\n## See Also\n  * [View Specifications](https://v2.support.procore.com/product-manuals/specifications-project/tutorials/view-specifications)\n  * [Specifications - Permissions](https://v2.support.procore.com/product-manuals/specifications-project/permissions)\n  * [Email Specifications](https://v2.support.procore.com/product-manuals/specifications-project/tutorials/email-specifications)\n\n\n",
+  "title": "View Emails for Specifications",
+  "description": "How to view emails for specifications"
+}
