@@ -1,4 +1,6 @@
 import type { Config } from "tailwindcss";
+import tailwindcssAnimate from "tailwindcss-animate";
+import tailwindScrollbarHide from "tailwind-scrollbar-hide";
 
 /**
  * Tailwind CSS Configuration — Superhuman-inspired v2
@@ -223,7 +225,7 @@ export default {
     },
   },
   plugins: [
-    require("tailwindcss-animate"),
-    require("tailwind-scrollbar-hide"),
+    tailwindcssAnimate,
+    tailwindScrollbarHide,
   ],
 } satisfies Config;
