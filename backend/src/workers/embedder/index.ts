@@ -258,19 +258,6 @@ async function embedMeeting(
     allChunks[i].embedding = chunkEmbeddings[i];
   }
 
-  // Embed segment summaries — prefix with meeting context for better retrieval
-  const meetingTitle = (metadata.title as string) || "Untitled Meeting";
-  const meetingDate = parsed.startedAt ?? "Unknown date";
-  const segmentSummaries = segments.map(
-    (s) => `[Meeting: "${meetingTitle}" | ${meetingDate}]\nSegment: "${s.title}"\n\n${s.summary || s.title}`
-  );
-  const segmentEmbeddings = await batchEmbed(env, segmentSummaries);
-
-  // Assign embeddings to segments
-  for (let i = 0; i < segments.length; i++) {
-    segments[i].summaryEmbedding = segmentEmbeddings[i];
-  }
-
   // Embed meeting summary
   let meetingSummaryEmbedding: number[] | null = null;
   if (meetingSummary) {
@@ -282,19 +269,6 @@ async function embedMeeting(
   const segmentIdMap: Record<number, string> = {};
   for (const row of segmentRows) {
     segmentIdMap[row.segment_index as number] = row.id as string;
-  }
-
-  // Update segment embeddings
-  for (const segment of segments) {
-    if (segment.summaryEmbedding) {
-      const segmentId = segmentIdMap[segment.segmentIndex];
-      await supabaseRequest(
-        env,
-        `meeting_segments?id=eq.${segmentId}`,
-        "PATCH",
-        { summary_embedding: segment.summaryEmbedding }
-      );
-    }
   }
 
   // Store chunks in documents table
@@ -310,9 +284,10 @@ async function embedMeeting(
     });
   }
 
-  // Update metadata status (schema doesn't have meeting_summary_embedding column)
+  // Update metadata status and store meeting summary embedding
   await supabaseRequest(env, `document_metadata?id=eq.${metadataId}`, "PATCH", {
     status: "embedded",
+    ...(meetingSummaryEmbedding ? { summary_embedding: meetingSummaryEmbedding } : {}),
   });
 
   // Update job status
