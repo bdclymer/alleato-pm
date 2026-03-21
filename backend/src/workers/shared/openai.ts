@@ -11,14 +11,15 @@ import type { Env } from "./types";
 export async function batchEmbed(
   env: Env,
   texts: string[],
-  model: string = "text-embedding-3-large"
+  model: string = "text-embedding-3-large",
+  dimensions: number = 1536
 ): Promise<number[][]> {
   if (texts.length === 0) return [];
 
   // Truncate texts to avoid token limits
   const truncatedTexts = texts.map((t) => t.slice(0, 8000));
 
-  console.log(`[OpenAI] Embedding ${texts.length} texts with ${model}`);
+  console.log(`[OpenAI] Embedding ${texts.length} texts with ${model} (${dimensions} dims)`);
 
   const response = await fetch("https://api.openai.com/v1/embeddings", {
     method: "POST",
@@ -29,9 +30,7 @@ export async function batchEmbed(
     body: JSON.stringify({
       model,
       input: truncatedTexts,
-      // Use Matryoshka truncation to keep 1536 dims (compatible with existing DB columns)
-      // while benefiting from text-embedding-3-large's superior semantic understanding.
-      dimensions: 1536,
+      dimensions,
     }),
   });
 

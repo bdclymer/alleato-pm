@@ -197,7 +197,7 @@ async function embedMeeting(
   // Fall back to metadataId so pipeline stage updates remain addressable.
   const firefliesId = (metadata.fireflies_id as string) || metadataId;
   const content = metadata.content as string;
-  const meetingSummary = (metadata.overview as string) || "";
+  const meetingSummary = (metadata.summary as string) || (metadata.overview as string) || "";
 
   if (!content) {
     throw new Error(`No content in metadata: ${metadataId}`);
@@ -258,10 +258,19 @@ async function embedMeeting(
     allChunks[i].embedding = chunkEmbeddings[i];
   }
 
-  // Embed meeting summary
+  // Embed meeting summary using the same canonical text format as backfill scripts:
+  // "Meeting: {title}\nDate: {date}\n{summary}" — ensures consistent vector space.
+  // Uses 3072 dimensions to match the halfvec(3072) column in document_metadata.
   let meetingSummaryEmbedding: number[] | null = null;
   if (meetingSummary) {
-    const [embedding] = await batchEmbed(env, [meetingSummary]);
+    const titleStr = (metadata.title as string) || "";
+    const dateStr = parsed.startedAt ?? "";
+    const embeddingParts: string[] = [];
+    if (titleStr) embeddingParts.push(`Meeting: ${titleStr}`);
+    if (dateStr) embeddingParts.push(`Date: ${dateStr}`);
+    embeddingParts.push(meetingSummary);
+    const summaryEmbeddingText = embeddingParts.join("\n");
+    const [embedding] = await batchEmbed(env, [summaryEmbeddingText], "text-embedding-3-large", 3072);
     meetingSummaryEmbedding = embedding;
   }
 

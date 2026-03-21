@@ -55,40 +55,12 @@ def get_openai_client() -> OpenAI:
     return OpenAI(api_key=api_key)
 
 
-def fetch_meetings_without_embeddings(
-    supabase: Client,
-    limit: int = 20,
-    offset: int = 0,
-) -> List[Dict[str, Any]]:
-    """Fetch document_metadata rows missing summary_embedding."""
-    result = (
-        supabase.table('document_metadata')
-        .select('id, title, date, summary, overview')
-        .is_('summary_embedding', 'null')
-        .order('date', desc=True)
-        .range(offset, offset + limit - 1)
-        .execute()
-    )
-    # Filter to rows that actually have text to embed
-    return [
-        r for r in (result.data or [])
-        if (r.get('summary') or r.get('overview') or '').strip()
-    ]
-
-
-def count_meetings_without_embeddings(supabase: Client) -> int:
-    result = (
-        supabase.table('document_metadata')
-        .select('id', count='exact')
-        .is_('summary_embedding', 'null')
-        .limit(0)
-        .execute()
-    )
-    return result.count or 0
-
-
 def get_embedding_text(meeting: Dict[str, Any]) -> str:
-    """Build text to embed from summary/overview."""
+    """Build canonical text to embed from meeting fields.
+
+    Uses the same format as the embedder worker and Node.js backfill:
+    'Meeting: {title}\\nDate: {date}\\n{summary || overview}'
+    """
     title = meeting.get('title') or ''
     date = meeting.get('date') or ''
     summary = meeting.get('summary') or meeting.get('overview') or ''
@@ -102,6 +74,44 @@ def get_embedding_text(meeting: Dict[str, Any]) -> str:
         parts.append(summary)
 
     return "\n".join(parts)
+
+
+def fetch_all_candidates(
+    supabase: Client,
+    limit: Optional[int] = None,
+) -> List[Dict[str, Any]]:
+    """Fetch all candidate meetings upfront as a stable snapshot.
+
+    Fetches all meetings with NULL summary_embedding that have embeddable text.
+    Processing a stable ID list (rather than re-querying each batch) ensures no
+    meetings are skipped and failed rows are not double-counted.
+    """
+    PAGE_SIZE = 1000
+    all_candidates = []
+    offset = 0
+
+    while True:
+        result = (
+            supabase.table('document_metadata')
+            .select('id, title, date, summary, overview')
+            .is_('summary_embedding', 'null')
+            .order('date', desc=True)
+            .range(offset, offset + PAGE_SIZE - 1)
+            .execute()
+        )
+        rows = result.data or []
+        # Keep only rows that have text to embed
+        embeddable = [r for r in rows if get_embedding_text(r).strip()]
+        all_candidates.extend(embeddable)
+
+        if limit and len(all_candidates) >= limit:
+            all_candidates = all_candidates[:limit]
+            break
+        if len(rows) < PAGE_SIZE:
+            break
+        offset += PAGE_SIZE
+
+    return all_candidates
 
 
 def generate_embeddings(
@@ -133,53 +143,50 @@ def backfill(
     supabase = get_supabase_client()
     openai_client = get_openai_client()
 
-    total_missing = count_meetings_without_embeddings(supabase)
-    total_to_process = min(limit, total_missing) if limit else total_missing
-
     print(f"\n{'='*60}")
     print(f"Meeting Summary Embedding Backfill")
     print(f"{'='*60}")
-    print(f"Total meetings missing summary_embedding: {total_missing}")
-    print(f"Meetings to process this run: {total_to_process}")
     print(f"Batch size: {batch_size}")
     print(f"Model: {EMBEDDING_MODEL} ({EMBEDDING_DIMENSIONS} dimensions)")
+    if limit:
+        print(f"Limit: {limit}")
     if dry_run:
         print(f"MODE: DRY RUN (no changes will be made)")
+    print()
+
+    # Materialize all candidates upfront for a stable processing set.
+    # This prevents skipping rows that fail (they stay NULL and would be re-fetched
+    # indefinitely with offset=0), and avoids double-counting across batches.
+    print("Fetching candidate meetings...")
+    candidates = fetch_all_candidates(supabase, limit=limit)
+
+    print(f"Total meetings to process: {len(candidates)}")
     print(f"{'='*60}\n")
 
-    if total_to_process == 0:
+    if not candidates:
         print("No meetings need summary_embedding backfill!")
         return {'processed': 0, 'success': 0, 'failed': 0}
 
     stats = {'processed': 0, 'success': 0, 'failed': 0}
+    total = len(candidates)
     batch_num = 0
 
-    while stats['processed'] < total_to_process:
+    for batch_start in range(0, total, batch_size):
         batch_num += 1
-        current_batch_size = min(batch_size, total_to_process - stats['processed'])
+        batch = candidates[batch_start:batch_start + batch_size]
 
-        print(f"Batch {batch_num}: Fetching up to {current_batch_size} meetings...")
-        meetings = fetch_meetings_without_embeddings(
-            supabase,
-            limit=current_batch_size,
-            offset=0,  # Always 0 since we update as we go
-        )
-
-        if not meetings:
-            print("  No more meetings to process.")
-            break
-
-        texts = [get_embedding_text(m) for m in meetings]
+        print(f"Batch {batch_num}: {len(batch)} meetings")
+        texts = [get_embedding_text(m) for m in batch]
 
         if dry_run:
             print(f"  [DRY RUN] Would generate {len(texts)} embeddings")
-            for m, text in zip(meetings[:3], texts[:3]):
+            for m, text in zip(batch[:3], texts[:3]):
                 preview = text[:100] + "..." if len(text) > 100 else text
                 print(f"    - {m['id']}: {preview}")
-            if len(meetings) > 3:
-                print(f"    ... and {len(meetings) - 3} more")
-            stats['processed'] += len(meetings)
-            stats['success'] += len(meetings)
+            if len(batch) > 3:
+                print(f"    ... and {len(batch) - 3} more")
+            stats['processed'] += len(batch)
+            stats['success'] += len(batch)
             continue
 
         # Generate embeddings
@@ -191,14 +198,17 @@ def backfill(
             print(f"  Embeddings generated in {elapsed:.2f}s")
         except Exception as e:
             print(f"  ERROR generating embeddings: {e}")
-            stats['failed'] += len(meetings)
-            stats['processed'] += len(meetings)
+            stats['failed'] += len(batch)
+            stats['processed'] += len(batch)
+            # Pause before retrying next batch on API errors
+            time.sleep(2.0)
             continue
 
-        # Update database
-        for meeting, embedding in zip(meetings, embeddings):
+        # Update database for each meeting in batch
+        for meeting, embedding in zip(batch, embeddings):
             if not embedding:
                 stats['failed'] += 1
+                stats['processed'] += 1
                 continue
             try:
                 supabase.table('document_metadata').update({
@@ -208,13 +218,13 @@ def backfill(
             except Exception as e:
                 print(f"  Error updating {meeting['id']}: {e}")
                 stats['failed'] += 1
+            stats['processed'] += 1
 
-        stats['processed'] += len(meetings)
-        pct = 100 * stats['processed'] / total_to_process
-        print(f"  Batch {batch_num} complete: {stats['success']} total successes so far")
-        print(f"  Progress: {stats['processed']}/{total_to_process} ({pct:.1f}%)")
+        pct = 100 * stats['processed'] / total
+        print(f"  Batch {batch_num} complete: {stats['success']} success, {stats['failed']} failed")
+        print(f"  Progress: {stats['processed']}/{total} ({pct:.1f}%)")
 
-        if stats['processed'] < total_to_process:
+        if batch_start + batch_size < total:
             time.sleep(0.5)
 
     print(f"\n{'='*60}")

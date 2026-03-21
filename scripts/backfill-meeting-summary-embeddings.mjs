@@ -9,6 +9,32 @@
  *   node scripts/backfill-meeting-summary-embeddings.mjs [--dry-run] [--limit N] [--batch-size N]
  */
 
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+// Auto-load credentials from .env (compliance: non-interactive auth, no hardcoded secrets)
+try {
+  const envFile = readFileSync(join(__dirname, '../.env'), 'utf-8');
+  for (const line of envFile.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eqIdx = trimmed.indexOf('=');
+    if (eqIdx < 1) continue;
+    const key = trimmed.slice(0, eqIdx).trim();
+    let val = trimmed.slice(eqIdx + 1).trim();
+    if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
+      val = val.slice(1, -1);
+    }
+    if (!(key in process.env)) process.env[key] = val;
+  }
+} catch {
+  // .env not found; rely on environment variables already set
+}
+
 const SUPABASE_URL = process.env.SUPABASE_URL;
 const SUPABASE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_KEY;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
@@ -73,6 +99,24 @@ function buildEmbeddingText(meeting) {
   return parts.join("\n");
 }
 
+async function fetchAllCandidates() {
+  const PAGE_SIZE = 1000;
+  let all = [];
+  let offset = 0;
+
+  while (true) {
+    const page = await supabaseQuery(
+      `document_metadata?summary_embedding=is.null&or=(summary.neq.,overview.neq.)&select=id,title,date,summary,overview&order=date.desc&limit=${PAGE_SIZE}&offset=${offset}`
+    );
+    if (!page || page.length === 0) break;
+    all.push(...page.filter((m) => buildEmbeddingText(m).trim()));
+    if (page.length < PAGE_SIZE) break;
+    offset += PAGE_SIZE;
+  }
+
+  return all;
+}
+
 async function main() {
   console.log("=".repeat(60));
   console.log("Meeting Summary Embedding Backfill");
@@ -81,6 +125,22 @@ async function main() {
   console.log(`Batch size: ${BATCH_SIZE}`);
   if (LIMIT) console.log(`Limit: ${LIMIT}`);
   if (DRY_RUN) console.log("MODE: DRY RUN");
+  console.log();
+
+  // Materialize all candidate meetings upfront so we iterate a stable set.
+  // This prevents infinite loops when persistent failures leave rows NULL
+  // and avoids double-counting rows that fail across batches.
+  console.log("Fetching candidate meetings...");
+  let candidates = await fetchAllCandidates();
+
+  if (candidates.length === 0) {
+    console.log("No meetings need summary_embedding backfill!");
+    return;
+  }
+
+  if (LIMIT) candidates = candidates.slice(0, LIMIT);
+
+  console.log(`Found ${candidates.length} meetings to process`);
   console.log("=".repeat(60));
   console.log();
 
@@ -89,42 +149,26 @@ async function main() {
   let failed = 0;
   let batchNum = 0;
 
-  while (true) {
-    if (LIMIT && processed >= LIMIT) break;
-
+  for (let batchStart = 0; batchStart < candidates.length; batchStart += BATCH_SIZE) {
     batchNum++;
-    const currentBatch = LIMIT ? Math.min(BATCH_SIZE, LIMIT - processed) : BATCH_SIZE;
+    const batch = candidates.slice(batchStart, batchStart + BATCH_SIZE);
 
-    // Fetch meetings with NULL summary_embedding that have a summary or overview
-    const meetings = await supabaseQuery(
-      `document_metadata?summary_embedding=is.null&or=(summary.neq.,overview.neq.)&select=id,title,date,summary,overview&order=date.desc&limit=${currentBatch}`
-    );
+    console.log(`Batch ${batchNum}: ${batch.length} meetings`);
 
-    // Filter to those with actual text
-    const valid = meetings.filter((m) => buildEmbeddingText(m).trim());
-
-    if (valid.length === 0) {
-      if (batchNum === 1) console.log("No meetings need summary_embedding backfill!");
-      else console.log("No more meetings to process.");
-      break;
-    }
-
-    console.log(`Batch ${batchNum}: ${valid.length} meetings`);
-
-    const texts = valid.map(buildEmbeddingText);
+    const texts = batch.map(buildEmbeddingText);
 
     if (DRY_RUN) {
-      for (const m of valid.slice(0, 3)) {
+      for (const m of batch.slice(0, 3)) {
         const preview = buildEmbeddingText(m).substring(0, 100);
         console.log(`  [DRY RUN] ${m.id}: ${preview}...`);
       }
-      if (valid.length > 3) console.log(`  ... and ${valid.length - 3} more`);
-      processed += valid.length;
-      success += valid.length;
+      if (batch.length > 3) console.log(`  ... and ${batch.length - 3} more`);
+      processed += batch.length;
+      success += batch.length;
       continue;
     }
 
-    // Generate embeddings
+    // Generate embeddings for batch
     console.log(`  Generating ${texts.length} embeddings...`);
     const start = Date.now();
     let embeddings;
@@ -132,32 +176,34 @@ async function main() {
       embeddings = await embedTexts(texts);
       console.log(`  Done in ${((Date.now() - start) / 1000).toFixed(2)}s`);
     } catch (err) {
-      console.error(`  ERROR: ${err.message}`);
-      failed += valid.length;
-      processed += valid.length;
+      console.error(`  ERROR generating embeddings: ${err.message}`);
+      // Pause before next batch on OpenAI errors to avoid hot-looping
+      failed += batch.length;
+      processed += batch.length;
+      await new Promise((r) => setTimeout(r, 2000));
       continue;
     }
 
     // Update each meeting
-    for (let i = 0; i < valid.length; i++) {
+    for (let i = 0; i < batch.length; i++) {
       try {
         await supabaseQuery(
-          `document_metadata?id=eq.${valid[i].id}`,
+          `document_metadata?id=eq.${batch[i].id}`,
           "PATCH",
           { summary_embedding: embeddings[i] }
         );
         success++;
       } catch (err) {
-        console.error(`  Failed ${valid[i].id}: ${err.message}`);
+        console.error(`  Failed ${batch[i].id}: ${err.message}`);
         failed++;
       }
+      processed++;
     }
 
-    processed += valid.length;
-    console.log(`  Progress: ${processed} processed, ${success} success, ${failed} failed`);
+    console.log(`  Progress: ${processed}/${candidates.length} processed, ${success} success, ${failed} failed`);
 
     // Brief pause between batches
-    if (valid.length === currentBatch) {
+    if (batchStart + BATCH_SIZE < candidates.length) {
       await new Promise((r) => setTimeout(r, 500));
     }
   }
