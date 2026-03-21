@@ -112,7 +112,7 @@ cd frontend
 npx playwright test tests/e2e/<feature>*.spec.ts --reporter=html
 ```typescript
 **Required Evidence:**
-- [ ] HTML report generated at `frontend/playwright-report/index.html`
+- [ ] HTML report generated under `frontend/tests/playwright-report/`
 - [ ] Test count summary (e.g., "24 passed, 1 failed, 14 skipped")
 - [ ] Screenshot of test results or report file path
 - [ ] All critical tests passing (100% or documented exceptions)
@@ -124,7 +124,7 @@ Create `<feature>/TEST-RESULTS.md` with:
 
 **Date:** YYYY-MM-DD
 **Test Suite:** tests/e2e/<feature>*.spec.ts
-**Report:** [HTML Report](../../frontend/playwright-report/index.html)
+**Report Folder:** `frontend/tests/playwright-report/`
 
 ## Summary
 - **Total Tests:** X
@@ -133,7 +133,7 @@ Create `<feature>/TEST-RESULTS.md` with:
 - **Skipped:** X (with reasons)
 
 ## Evidence
-- HTML Report: `frontend/playwright-report/index.html`
+- HTML Report Folder: `frontend/tests/playwright-report/`
 - Screenshots: Attached or described
 - Test run duration: Xms
 
@@ -171,7 +171,7 @@ Update `<feature>/STATUS.md` with test results:
 - Browser Tests: 15/15 passing
 - Total: 39/39 passing
 
-**Evidence:** [HTML Report](../../frontend/playwright-report/index.html)
+**Evidence:** `frontend/tests/playwright-report/`
 ```javascript
 ---
 
@@ -335,7 +335,7 @@ A task is COMPLETE only when ALL apply:
 **Last Test Run:** 2026-01-XX HH:MM
 **Test Results:** [Report Link](./TEST-RESULTS.md)
 **Pass Rate:** XX/XX (100%)
-**HTML Report:** [View](../../frontend/playwright-report/index.html)
+**HTML Report Folder:** `frontend/tests/playwright-report/`
 
 ### Test Coverage
 - API Tests: ✅ XX/XX passing

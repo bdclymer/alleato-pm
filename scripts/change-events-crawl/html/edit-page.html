@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html>
+<head><title>Edit Change Event #004 - Procore Crawl 2026-03-21</title></head>
+<body>
+<!--
+  URL: https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214671/tools/change-events/events/562949957178970/edit
+  Also applies to CREATE: /tools/change-events/events/new
+  Captured: 2026-03-21
+-->
+
+<nav>Change Events &gt; #004 New opening</nav>
+
+<!-- Create page shows: "Create New Change Event" / breadcrumb: "Change Events > New Change Event" -->
+<h1>Edit Change Event</h1>
+
+<form>
+  <section id="general-information">
+    <h2>General Information</h2>
+
+    <div class="field-row">
+      <!-- Number: auto-incremented, editable text input -->
+      <div>
+        <label>Number *</label>
+        <input type="text" value="004" placeholder="004" />
+      </div>
+
+      <!-- Title: required free text -->
+      <div>
+        <label>Title *</label>
+        <input type="text" value="New opening" placeholder="Enter Title" />
+      </div>
+
+      <!-- Status: dropdown -->
+      <div>
+        <label>Status *</label>
+        <select>
+          <option>Closed</option>
+          <option selected>Open</option>  <!-- default on new -->
+          <option>Pending</option>
+          <option>Void</option>
+        </select>
+      </div>
+
+      <!-- Origin: searchable dropdown with sub-categories -->
+      <div>
+        <label>Origin</label>
+        <select>
+          <!-- Search box at top -->
+          <optgroup label="Emails"><!-- sub-list of project emails --></optgroup>
+          <optgroup label="Meetings"><!-- sub-list of project meetings --></optgroup>
+          <optgroup label="RFIs"><!-- sub-list of project RFIs --></optgroup>
+        </select>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <!-- Type: searchable dropdown -->
+      <div>
+        <label>Type</label>
+        <select>
+          <option>Allowance</option>  <!-- default on new -->
+          <option>Contingency</option>
+          <option selected>Owner Change</option>
+          <option>TBD</option>
+          <option>Transfer</option>
+        </select>
+      </div>
+
+      <!-- Change Reason: searchable, clearable dropdown -->
+      <div>
+        <label>Change Reason</label>
+        <select>
+          <!-- Has X clear button -->
+          <option value="">Select Reason</option>
+          <option>Allowance</option>
+          <option>Backcharge</option>
+          <option selected>Client Request</option>
+          <option>Design Development</option>
+          <option>Existing Condition</option>
+        </select>
+      </div>
+
+      <!-- Scope: dropdown -->
+      <div>
+        <label>Scope</label>
+        <select>
+          <option>In Scope</option>
+          <option selected>Out of Scope</option>
+          <option>TBD</option>  <!-- default on new -->
+        </select>
+      </div>
+    </div>
+
+    <div class="field-row">
+      <!-- Expecting Revenue: radio buttons -->
+      <div>
+        <label>Expecting Revenue</label>
+        <label><input type="radio" name="expecting_revenue" value="yes" checked /> Yes</label>
+        <label><input type="radio" name="expecting_revenue" value="no" /> No</label>
+      </div>
+
+      <!-- Line Item Revenue Source: dropdown -->
+      <div>
+        <label>Line Item Revenue Source</label>
+        <select>
+          <option selected>Match Revenue to Latest Cost</option>
+          <option>Enter manually</option>
+          <option>Quantity x Unit Cost</option>
+        </select>
+      </div>
+
+      <!-- Prime Contract for Markup Estimates: searchable, clearable dropdown -->
+      <div>
+        <label>Prime Contract for Markup Estimates</label>
+        <select>
+          <!-- Has X clear button and search -->
+          <option selected>1001 - Prime</option>
+          <!-- other prime contracts listed -->
+        </select>
+      </div>
+    </div>
+
+    <!-- Description: WYSIWYG rich text editor -->
+    <div>
+      <label>Description</label>
+      <div class="rich-text-editor">
+        <!-- Toolbar: B I U S | Align | Lists | Indent | Cut/Copy/Paste | FontSize | Color | Link | Undo/Redo -->
+        <textarea>Add new 3070 HM opening.</textarea>
+      </div>
+    </div>
+
+    <!-- Attachments: file upload -->
+    <div>
+      <label>Attachments</label>
+      <div class="upload-zone">
+        <button>Attach Files</button>
+        <span>or Drag &amp; Drop</span>
+      </div>
+    </div>
+  </section>
+
+  <section id="line-items">
+    <h2>Line Items</h2>
+
+    <table>
+      <thead>
+        <tr>
+          <!-- Detail group -->
+          <th>Budget Code ⋮</th>
+          <th>Description ⋮</th>
+          <th>Vendor ⋮</th>
+          <th>Contract ⋮</th>
+          <th>Unit of Measure ⋮</th>
+          <!-- Revenue group -->
+          <th>Quantity ⋮</th>
+          <th>Unit Cost ⋮</th>
+          <th>Revenue ROM ⋮</th>
+          <!-- Cost group -->
+          <th>Quantity ⋮</th>
+          <th>Unit Cost ⋮</th>
+          <th>Cost ROM ⋮</th>
+          <th>Non-Committed Cost ⋮</th>
+          <!-- actions -->
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Existing line item (locked - has commitment) -->
+        <tr>
+          <td>26-1000.S Med-Volt Elect Distributi</td>
+          <td>F&amp;I 3070 HM Exterior Door with Storefront Hardware an...</td>
+          <td>Deem, LLC ↗</td>
+          <td>SC-002 - Electrical ↗</td>
+          <td>ea</td>
+          <td>1</td>
+          <td>$1,200.00</td>
+          <td>🖩 $1,200.00</td>
+          <td>1</td>
+          <td>$1,000.00</td>
+          <td>🖩 $1,000.00</td>
+          <td></td>
+          <td>🔒</td>  <!-- lock = associated with commitment -->
+        </tr>
+        <!-- New empty row (shown after "Add Line" click) -->
+        <!--
+        <tr>
+          <td><input type="text" placeholder="Budget Code" /></td>
+          <td><input type="text" placeholder="--" /></td>
+          <td><input type="text" placeholder="--" /></td>
+          <td><input type="text" placeholder="--" /></td>
+          <td><input type="text" /></td>
+          <td><input type="number" placeholder="Enter number" /></td>
+          <td><input type="text" placeholder="Enter currency" /></td>
+          <td>⚡ $0.00</td>
+          <td><input type="number" placeholder="Enter number" /></td>
+          <td><input type="text" placeholder="Enter currency" /></td>
+          <td>⚠ $0.00</td>
+          <td>$0.00</td>
+          <td><button>✗</button><button>🗑</button></td>
+        </tr>
+        -->
+      </tbody>
+      <tfoot>
+        <tr>
+          <td colspan="7">--</td>
+          <td>$1,200.00</td>
+          <td colspan="2"></td>
+          <td>$1,000.00</td>
+          <td>$0.00</td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <!-- Line item action buttons -->
+    <div>
+      <button>Add Line</button>
+      <button>Add Lines for All Commitments</button>
+      <button>Import Line Items from CSV</button>
+    </div>
+  </section>
+
+  <div class="form-actions">
+    <span>* Required fields</span>
+    <button type="button">Cancel</button>
+    <button type="submit" class="primary">Save</button>
+    <!-- On Create page: button text is "Create" instead of "Save" -->
+  </div>
+</form>
+
+<!--
+  COLUMN HEADER CONTEXT MENU (three-dot ••• on any column):
+  - Group by [Column Name]
+  - Pin Column →
+  - Autosize This Column
+  - Autosize All Columns
+  - Hide Column
+  - Sort By This Column →
+  - Reset Columns
+-->
+
+</body>
+</html>

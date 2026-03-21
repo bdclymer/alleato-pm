@@ -27,6 +27,7 @@ export interface PrimeContractCO {
   status: string | null;
   total_amount: number | null;
   contract_id: number | null;
+  prime_contract_id: string | null;
   executed: boolean;
   submitted_at: string | null;
   approved_at: string | null;

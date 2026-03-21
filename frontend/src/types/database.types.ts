@@ -4759,7 +4759,7 @@ export type Database = {
           category: string
           content: string
           created_at: string | null
-          embedding: string | null
+          embedding: unknown
           id: string
           is_active: boolean | null
           meeting_id: string | null
@@ -4775,7 +4775,7 @@ export type Database = {
           category: string
           content: string
           created_at?: string | null
-          embedding?: string | null
+          embedding?: unknown
           id?: string
           is_active?: boolean | null
           meeting_id?: string | null
@@ -4791,7 +4791,7 @@ export type Database = {
           category?: string
           content?: string
           created_at?: string | null
-          embedding?: string | null
+          embedding?: unknown
           id?: string
           is_active?: boolean | null
           meeting_id?: string | null
@@ -6078,102 +6078,6 @@ export type Database = {
         }
         Relationships: []
       }
-      decisions: {
-        Row: {
-          client_id: number | null
-          created_at: string
-          description: string
-          effective_date: string | null
-          embedding: unknown
-          id: string
-          impact: string | null
-          metadata_id: string
-          owner_email: string | null
-          owner_name: string | null
-          project_id: number | null
-          project_ids: number[] | null
-          rationale: string | null
-          segment_id: string | null
-          source_chunk_id: string | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          client_id?: number | null
-          created_at?: string
-          description: string
-          effective_date?: string | null
-          embedding?: unknown
-          id?: string
-          impact?: string | null
-          metadata_id: string
-          owner_email?: string | null
-          owner_name?: string | null
-          project_id?: number | null
-          project_ids?: number[] | null
-          rationale?: string | null
-          segment_id?: string | null
-          source_chunk_id?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          client_id?: number | null
-          created_at?: string
-          description?: string
-          effective_date?: string | null
-          embedding?: unknown
-          id?: string
-          impact?: string | null
-          metadata_id?: string
-          owner_email?: string | null
-          owner_name?: string | null
-          project_id?: number | null
-          project_ids?: number[] | null
-          rationale?: string | null
-          segment_id?: string | null
-          source_chunk_id?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "decisions_metadata_id_fkey"
-            columns: ["metadata_id"]
-            isOneToOne: false
-            referencedRelation: "document_metadata"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "decisions_metadata_id_fkey"
-            columns: ["metadata_id"]
-            isOneToOne: false
-            referencedRelation: "document_metadata_manual_only"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "decisions_segment_id_fkey"
-            columns: ["segment_id"]
-            isOneToOne: false
-            referencedRelation: "meeting_segments"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "decisions_source_chunk_id_fkey"
-            columns: ["source_chunk_id"]
-            isOneToOne: false
-            referencedRelation: "documents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "decisions_source_chunk_id_fkey"
-            columns: ["source_chunk_id"]
-            isOneToOne: false
-            referencedRelation: "documents_ordered_view"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       design_recommendations: {
         Row: {
           created_at: string | null
@@ -6878,35 +6782,55 @@ export type Database = {
         Row: {
           access_level: string | null
           action_items: string | null
+          analytics: Json | null
           audio: string | null
           bullet_points: string | null
+          calendar_type: string | null
           captured_at: string | null
           category: string | null
+          channels: Json | null
           content: string | null
           content_hash: string | null
           created_at: string | null
           date: string | null
           description: string | null
           duration_minutes: number | null
+          extended_sections: Json | null
           file_id: number | null
           file_name: string | null
           file_path: string | null
           fireflies_id: string | null
           fireflies_link: string | null
+          host_email: string | null
           id: string
+          is_silent_meeting: boolean | null
+          keywords: string[] | null
+          meeting_attendance: Json | null
+          meeting_attendees: Json | null
+          meeting_link: string | null
+          meeting_type: string | null
+          notes: string | null
+          organizer_email: string | null
+          outline: string | null
           overview: string | null
           participants: string | null
           participants_array: string[] | null
           phase: string
+          privacy: string | null
           project: string | null
           project_id: number | null
           raw_text: string | null
+          sentiment: Json | null
           source: string | null
+          speakers: Json | null
           status: string | null
           storage_bucket: string | null
           summary: string | null
+          summary_embedding: unknown
           tags: string | null
           title: string | null
+          topics_discussed: string[] | null
+          transcript_chapters: string | null
           type: string | null
           url: string | null
           video: string | null
@@ -6914,35 +6838,55 @@ export type Database = {
         Insert: {
           access_level?: string | null
           action_items?: string | null
+          analytics?: Json | null
           audio?: string | null
           bullet_points?: string | null
+          calendar_type?: string | null
           captured_at?: string | null
           category?: string | null
+          channels?: Json | null
           content?: string | null
           content_hash?: string | null
           created_at?: string | null
           date?: string | null
           description?: string | null
           duration_minutes?: number | null
+          extended_sections?: Json | null
           file_id?: number | null
           file_name?: string | null
           file_path?: string | null
           fireflies_id?: string | null
           fireflies_link?: string | null
+          host_email?: string | null
           id: string
+          is_silent_meeting?: boolean | null
+          keywords?: string[] | null
+          meeting_attendance?: Json | null
+          meeting_attendees?: Json | null
+          meeting_link?: string | null
+          meeting_type?: string | null
+          notes?: string | null
+          organizer_email?: string | null
+          outline?: string | null
           overview?: string | null
           participants?: string | null
           participants_array?: string[] | null
           phase?: string
+          privacy?: string | null
           project?: string | null
           project_id?: number | null
           raw_text?: string | null
+          sentiment?: Json | null
           source?: string | null
+          speakers?: Json | null
           status?: string | null
           storage_bucket?: string | null
           summary?: string | null
+          summary_embedding?: unknown
           tags?: string | null
           title?: string | null
+          topics_discussed?: string[] | null
+          transcript_chapters?: string | null
           type?: string | null
           url?: string | null
           video?: string | null
@@ -6950,35 +6894,55 @@ export type Database = {
         Update: {
           access_level?: string | null
           action_items?: string | null
+          analytics?: Json | null
           audio?: string | null
           bullet_points?: string | null
+          calendar_type?: string | null
           captured_at?: string | null
           category?: string | null
+          channels?: Json | null
           content?: string | null
           content_hash?: string | null
           created_at?: string | null
           date?: string | null
           description?: string | null
           duration_minutes?: number | null
+          extended_sections?: Json | null
           file_id?: number | null
           file_name?: string | null
           file_path?: string | null
           fireflies_id?: string | null
           fireflies_link?: string | null
+          host_email?: string | null
           id?: string
+          is_silent_meeting?: boolean | null
+          keywords?: string[] | null
+          meeting_attendance?: Json | null
+          meeting_attendees?: Json | null
+          meeting_link?: string | null
+          meeting_type?: string | null
+          notes?: string | null
+          organizer_email?: string | null
+          outline?: string | null
           overview?: string | null
           participants?: string | null
           participants_array?: string[] | null
           phase?: string
+          privacy?: string | null
           project?: string | null
           project_id?: number | null
           raw_text?: string | null
+          sentiment?: Json | null
           source?: string | null
+          speakers?: Json | null
           status?: string | null
           storage_bucket?: string | null
           summary?: string | null
+          summary_embedding?: unknown
           tags?: string | null
           title?: string | null
+          topics_discussed?: string[] | null
+          transcript_chapters?: string | null
           type?: string | null
           url?: string | null
           video?: string | null
@@ -9547,6 +9511,115 @@ export type Database = {
         }
         Relationships: []
       }
+      insights: {
+        Row: {
+          created_at: string
+          description: string
+          details: Json | null
+          embedding: unknown
+          id: string
+          metadata_id: string | null
+          owner_name: string | null
+          project_id: number | null
+          project_ids: number[] | null
+          status: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          details?: Json | null
+          embedding?: unknown
+          id?: string
+          metadata_id?: string | null
+          owner_name?: string | null
+          project_id?: number | null
+          project_ids?: number[] | null
+          status?: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          details?: Json | null
+          embedding?: unknown
+          id?: string
+          metadata_id?: string | null
+          owner_name?: string | null
+          project_id?: number | null
+          project_ids?: number[] | null
+          status?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "insights_metadata_id_fkey"
+            columns: ["metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "insights_metadata_id_fkey"
+            columns: ["metadata_id"]
+            isOneToOne: false
+            referencedRelation: "document_metadata_manual_only"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "insights_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "insights_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "insights_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "insights_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "insights_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "insights_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "insights_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       issues: {
         Row: {
           category: Database["public"]["Enums"]["issue_category"]
@@ -9644,121 +9717,6 @@ export type Database = {
           },
           {
             foreignKeyName: "issues_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "submittal_project_dashboard"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      meeting_digests: {
-        Row: {
-          action_items_summary: Json | null
-          created_at: string | null
-          decisions_summary: Json | null
-          digest_html: string | null
-          digest_text: string
-          follow_ups: Json | null
-          generation_time_seconds: number | null
-          id: string
-          key_takeaways: string[] | null
-          metadata_id: string
-          model_used: string | null
-          opportunities_summary: Json | null
-          project_id: number | null
-          risks_summary: Json | null
-        }
-        Insert: {
-          action_items_summary?: Json | null
-          created_at?: string | null
-          decisions_summary?: Json | null
-          digest_html?: string | null
-          digest_text: string
-          follow_ups?: Json | null
-          generation_time_seconds?: number | null
-          id?: string
-          key_takeaways?: string[] | null
-          metadata_id: string
-          model_used?: string | null
-          opportunities_summary?: Json | null
-          project_id?: number | null
-          risks_summary?: Json | null
-        }
-        Update: {
-          action_items_summary?: Json | null
-          created_at?: string | null
-          decisions_summary?: Json | null
-          digest_html?: string | null
-          digest_text?: string
-          follow_ups?: Json | null
-          generation_time_seconds?: number | null
-          id?: string
-          key_takeaways?: string[] | null
-          metadata_id?: string
-          model_used?: string | null
-          opportunities_summary?: Json | null
-          project_id?: number | null
-          risks_summary?: Json | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "meeting_digests_metadata_id_fkey"
-            columns: ["metadata_id"]
-            isOneToOne: true
-            referencedRelation: "document_metadata"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "meeting_digests_metadata_id_fkey"
-            columns: ["metadata_id"]
-            isOneToOne: true
-            referencedRelation: "document_metadata_manual_only"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "meeting_digests_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_activity_view"
-            referencedColumns: ["project_id"]
-          },
-          {
-            foreignKeyName: "meeting_digests_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_health_dashboard"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "meeting_digests_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_health_dashboard_no_summary"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "meeting_digests_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_issue_summary"
-            referencedColumns: ["project_id"]
-          },
-          {
-            foreignKeyName: "meeting_digests_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "meeting_digests_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects_with_counts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "meeting_digests_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
@@ -9887,7 +9845,6 @@ export type Database = {
           sentiment: string | null
           start_index: number
           summary: string | null
-          summary_embedding: unknown
           tasks: Json
           title: string | null
           updated_at: string
@@ -9909,7 +9866,6 @@ export type Database = {
           sentiment?: string | null
           start_index: number
           summary?: string | null
-          summary_embedding?: unknown
           tasks?: Json
           title?: string | null
           updated_at?: string
@@ -9931,7 +9887,6 @@ export type Database = {
           sentiment?: string | null
           start_index?: number
           summary?: string | null
-          summary_embedding?: unknown
           tasks?: Json
           title?: string | null
           updated_at?: string
@@ -9957,7 +9912,7 @@ export type Database = {
         Row: {
           content: string | null
           created_at: string | null
-          embedding: string | null
+          embedding: unknown
           id: number
           memory_type: string | null
           metadata: Json | null
@@ -9967,7 +9922,7 @@ export type Database = {
         Insert: {
           content?: string | null
           created_at?: string | null
-          embedding?: string | null
+          embedding?: unknown
           id?: number
           memory_type?: string | null
           metadata?: Json | null
@@ -9977,7 +9932,7 @@ export type Database = {
         Update: {
           content?: string | null
           created_at?: string | null
-          embedding?: string | null
+          embedding?: unknown
           id?: number
           memory_type?: string | null
           metadata?: Json | null
@@ -10176,99 +10131,6 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      opportunities: {
-        Row: {
-          client_id: number | null
-          created_at: string
-          description: string
-          embedding: unknown
-          id: string
-          metadata_id: string
-          next_step: string | null
-          owner_email: string | null
-          owner_name: string | null
-          project_id: number | null
-          project_ids: number[] | null
-          segment_id: string | null
-          source_chunk_id: string | null
-          status: string
-          type: string | null
-          updated_at: string
-        }
-        Insert: {
-          client_id?: number | null
-          created_at?: string
-          description: string
-          embedding?: unknown
-          id?: string
-          metadata_id: string
-          next_step?: string | null
-          owner_email?: string | null
-          owner_name?: string | null
-          project_id?: number | null
-          project_ids?: number[] | null
-          segment_id?: string | null
-          source_chunk_id?: string | null
-          status?: string
-          type?: string | null
-          updated_at?: string
-        }
-        Update: {
-          client_id?: number | null
-          created_at?: string
-          description?: string
-          embedding?: unknown
-          id?: string
-          metadata_id?: string
-          next_step?: string | null
-          owner_email?: string | null
-          owner_name?: string | null
-          project_id?: number | null
-          project_ids?: number[] | null
-          segment_id?: string | null
-          source_chunk_id?: string | null
-          status?: string
-          type?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "opportunities_metadata_id_fkey"
-            columns: ["metadata_id"]
-            isOneToOne: false
-            referencedRelation: "document_metadata"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "opportunities_metadata_id_fkey"
-            columns: ["metadata_id"]
-            isOneToOne: false
-            referencedRelation: "document_metadata_manual_only"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "opportunities_segment_id_fkey"
-            columns: ["segment_id"]
-            isOneToOne: false
-            referencedRelation: "meeting_segments"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "opportunities_source_chunk_id_fkey"
-            columns: ["source_chunk_id"]
-            isOneToOne: false
-            referencedRelation: "documents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "opportunities_source_chunk_id_fkey"
-            columns: ["source_chunk_id"]
-            isOneToOne: false
-            referencedRelation: "documents_ordered_view"
             referencedColumns: ["id"]
           },
         ]
@@ -10844,6 +10706,7 @@ export type Database = {
           executed: boolean | null
           id: number
           pcco_number: string | null
+          prime_contract_id: string | null
           project_id: number | null
           status: string | null
           submitted_at: string | null
@@ -10858,6 +10721,7 @@ export type Database = {
           executed?: boolean | null
           id?: number
           pcco_number?: string | null
+          prime_contract_id?: string | null
           project_id?: number | null
           status?: string | null
           submitted_at?: string | null
@@ -10872,6 +10736,7 @@ export type Database = {
           executed?: boolean | null
           id?: number
           pcco_number?: string | null
+          prime_contract_id?: string | null
           project_id?: number | null
           status?: string | null
           submitted_at?: string | null
@@ -10884,6 +10749,20 @@ export type Database = {
             columns: ["contract_id"]
             isOneToOne: false
             referencedRelation: "contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contract_change_orders_prime_contract_id_fkey"
+            columns: ["prime_contract_id"]
+            isOneToOne: false
+            referencedRelation: "prime_contract_financial_summary"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "prime_contract_change_orders_prime_contract_id_fkey"
+            columns: ["prime_contract_id"]
+            isOneToOne: false
+            referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
           {
@@ -14372,105 +14251,6 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      risks: {
-        Row: {
-          category: string | null
-          client_id: number | null
-          created_at: string
-          description: string
-          embedding: unknown
-          id: string
-          impact: string | null
-          likelihood: string | null
-          metadata_id: string
-          mitigation_plan: string | null
-          owner_email: string | null
-          owner_name: string | null
-          project_id: number | null
-          project_ids: number[] | null
-          segment_id: string | null
-          source_chunk_id: string | null
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          category?: string | null
-          client_id?: number | null
-          created_at?: string
-          description: string
-          embedding?: unknown
-          id?: string
-          impact?: string | null
-          likelihood?: string | null
-          metadata_id: string
-          mitigation_plan?: string | null
-          owner_email?: string | null
-          owner_name?: string | null
-          project_id?: number | null
-          project_ids?: number[] | null
-          segment_id?: string | null
-          source_chunk_id?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          category?: string | null
-          client_id?: number | null
-          created_at?: string
-          description?: string
-          embedding?: unknown
-          id?: string
-          impact?: string | null
-          likelihood?: string | null
-          metadata_id?: string
-          mitigation_plan?: string | null
-          owner_email?: string | null
-          owner_name?: string | null
-          project_id?: number | null
-          project_ids?: number[] | null
-          segment_id?: string | null
-          source_chunk_id?: string | null
-          status?: string
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "risks_metadata_id_fkey"
-            columns: ["metadata_id"]
-            isOneToOne: false
-            referencedRelation: "document_metadata"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "risks_metadata_id_fkey"
-            columns: ["metadata_id"]
-            isOneToOne: false
-            referencedRelation: "document_metadata_manual_only"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "risks_segment_id_fkey"
-            columns: ["segment_id"]
-            isOneToOne: false
-            referencedRelation: "meeting_segments"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "risks_source_chunk_id_fkey"
-            columns: ["source_chunk_id"]
-            isOneToOne: false
-            referencedRelation: "documents"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "risks_source_chunk_id_fkey"
-            columns: ["source_chunk_id"]
-            isOneToOne: false
-            referencedRelation: "documents_ordered_view"
             referencedColumns: ["id"]
           },
         ]
@@ -20073,51 +19853,6 @@ export type Database = {
           url: string
         }[]
       }
-      match_decisions: {
-        Args: {
-          match_count?: number
-          match_threshold?: number
-          query_embedding: string
-        }
-        Returns: {
-          created_at: string
-          description: string
-          effective_date: string
-          id: string
-          impact: string
-          metadata_id: string
-          owner_name: string
-          project_id: number
-          project_ids: number[]
-          rationale: string
-          segment_id: string
-          similarity: number
-          status: string
-        }[]
-      }
-      match_decisions_by_project: {
-        Args: {
-          filter_project_ids: number[]
-          match_count?: number
-          match_threshold?: number
-          query_embedding: string
-        }
-        Returns: {
-          created_at: string
-          description: string
-          effective_date: string
-          id: string
-          impact: string
-          metadata_id: string
-          owner_name: string
-          project_id: number
-          project_ids: number[]
-          rationale: string
-          segment_id: string
-          similarity: number
-          status: string
-        }[]
-      }
       match_document_chunks: {
         Args: {
           filter_document_ids?: string[]
@@ -20133,6 +19868,23 @@ export type Database = {
           metadata: Json
           similarity: number
           text: string
+        }[]
+      }
+      match_document_metadata_by_summary: {
+        Args: {
+          match_count?: number
+          match_threshold?: number
+          p_project_id?: number
+          query_embedding: unknown
+        }
+        Returns: {
+          date: string
+          id: string
+          project_id: number
+          similarity: number
+          source: string
+          summary: string
+          title: string
         }[]
       }
       match_documents:
@@ -20320,47 +20072,6 @@ export type Database = {
           start_timestamp: number
         }[]
       }
-      match_meeting_segments: {
-        Args: {
-          match_count?: number
-          match_threshold?: number
-          query_embedding: string
-        }
-        Returns: {
-          created_at: string
-          decisions: Json
-          id: string
-          metadata_id: string
-          project_ids: number[]
-          risks: Json
-          segment_index: number
-          similarity: number
-          summary: string
-          tasks: Json
-          title: string
-        }[]
-      }
-      match_meeting_segments_by_project: {
-        Args: {
-          filter_project_ids: number[]
-          match_count?: number
-          match_threshold?: number
-          query_embedding: string
-        }
-        Returns: {
-          created_at: string
-          decisions: Json
-          id: string
-          metadata_id: string
-          project_ids: number[]
-          risks: Json
-          segment_index: number
-          similarity: number
-          summary: string
-          tasks: Json
-          title: string
-        }[]
-      }
       match_meetings: {
         Args: {
           after_date?: string
@@ -20386,27 +20097,6 @@ export type Database = {
           id: number
           metadata: Json
           similarity: number
-        }[]
-      }
-      match_opportunities: {
-        Args: {
-          match_count?: number
-          match_threshold?: number
-          query_embedding: string
-        }
-        Returns: {
-          created_at: string
-          description: string
-          id: string
-          metadata_id: string
-          next_step: string
-          owner_name: string
-          project_id: number
-          project_ids: number[]
-          segment_id: string
-          similarity: number
-          status: string
-          type: string
         }[]
       }
       match_page_sections: {
@@ -20437,53 +20127,6 @@ export type Database = {
           id: string
           metadata: Json
           similarity: number
-        }[]
-      }
-      match_risks: {
-        Args: {
-          match_count?: number
-          match_threshold?: number
-          query_embedding: string
-        }
-        Returns: {
-          category: string
-          created_at: string
-          description: string
-          id: string
-          impact: string
-          likelihood: string
-          metadata_id: string
-          mitigation_plan: string
-          owner_name: string
-          project_id: number
-          project_ids: number[]
-          segment_id: string
-          similarity: number
-          status: string
-        }[]
-      }
-      match_risks_by_project: {
-        Args: {
-          filter_project_ids: number[]
-          match_count?: number
-          match_threshold?: number
-          query_embedding: string
-        }
-        Returns: {
-          category: string
-          created_at: string
-          description: string
-          id: string
-          impact: string
-          likelihood: string
-          metadata_id: string
-          mitigation_plan: string
-          owner_name: string
-          project_id: number
-          project_ids: number[]
-          segment_id: string
-          similarity: number
-          status: string
         }[]
       }
       match_segments: {
@@ -20573,13 +20216,18 @@ export type Database = {
           query_embedding: unknown
         }
         Returns: {
-          content: string
           created_at: string
-          metadata: Json
+          description: string
+          details: Json
+          id: string
+          metadata_id: string
+          owner_name: string
+          project_id: number
           project_ids: number[]
-          record_id: string
           similarity: number
           source_table: string
+          status: string
+          type: string
         }[]
       }
       search_asrs_figures: {
@@ -20636,7 +20284,7 @@ export type Database = {
         Args: {
           filter_user_id?: string
           match_count?: number
-          query_embedding: string
+          query_embedding: unknown
         }
         Returns: {
           content: string
@@ -20707,7 +20355,7 @@ export type Database = {
           filter_project_id?: number
           match_count?: number
           match_threshold?: number
-          query_embedding: string
+          query_embedding: unknown
         }
         Returns: {
           category: string

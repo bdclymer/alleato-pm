@@ -649,7 +649,8 @@ npm run test:report       # View report
 - `--reporter=list` — Inline pass/fail in terminal (best for CI and watching progress)
 - `--reporter=html` — Full HTML report with screenshots, videos, traces (default)
 - Videos saved at: `tests/test-results/<test-name>/video.webm`
-- Screenshots saved at: `tests/test-results/<test-name>/*.png`
+- Failure screenshots saved at: `tests/test-results/<test-name>/*.png`
+- Manually captured screenshots should be treated as generated artifacts under `tests/screenshots/`
 
 ### Filtering Tips
 

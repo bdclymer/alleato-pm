@@ -104,26 +104,29 @@ export function ConversationListItem({
         }
       }}
       className={cn(
-        "group relative flex w-full min-w-0 cursor-pointer items-center overflow-hidden rounded-lg px-3 py-2 text-left text-sm transition-colors",
-        "hover:bg-muted/80",
-        isActive && "bg-muted",
+        "group relative flex w-full min-w-0 cursor-pointer items-center overflow-hidden rounded-xl px-3 py-2 text-left text-sm transition-colors",
+        "hover:bg-muted/40",
+        isActive && "bg-muted/60",
       )}
     >
-      <span className="block min-w-0 flex-1 truncate text-foreground/80">
-        {conversation.title || "New conversation"}
-      </span>
+      <div className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-medium text-foreground">
+          {conversation.title || "New conversation"}
+        </span>
+        {!isActive && (
+          <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+            {formatRelativeTime(conversation.updated_at)}
+          </span>
+        )}
+      </div>
 
-      {/* Action buttons — overlay on right with gradient fade */}
       <div className={cn(
-        "absolute inset-y-0 right-0 flex items-center gap-0.5 rounded-r-lg pl-6 pr-1 opacity-0 transition-opacity group-hover:opacity-100",
-        isActive
-          ? "bg-gradient-to-l from-muted via-muted to-transparent"
-          : "bg-gradient-to-l from-background via-background to-transparent group-hover:from-muted/80 group-hover:via-muted/80",
+        "absolute inset-y-0 right-0 flex items-center gap-0.5 bg-inherit pl-4 pr-1 opacity-100 transition-opacity md:opacity-0 md:group-hover:opacity-100",
       )}>
         <Button
           size="icon"
           variant="ghost"
-          className="h-6 w-6"
+          className="h-7 w-7 rounded-full"
           onClick={(e) => {
             e.stopPropagation();
             setIsEditing(true);
@@ -134,7 +137,7 @@ export function ConversationListItem({
         <Button
           size="icon"
           variant="ghost"
-          className="h-6 w-6 text-destructive hover:text-destructive"
+          className="h-7 w-7 rounded-full text-destructive hover:text-destructive"
           onClick={(e) => {
             e.stopPropagation();
             onDelete();

@@ -75,8 +75,8 @@
     --destructive-foreground: 0 0% 100%;
 
     /* Structural */
-    --border: 240 5% 91%;           /* #E6E6EC — use sparingly */
-    --input: 240 5% 91%;            /* matches border */
+    --border: 0 0% 90%;             /* #E5E5E5 — neutral light border */
+    --input: 0 0% 90%;              /* matches border inputs */
     --ring: 260 37% 59%;            /* matches primary for focus rings */
     --schedule-view-active: 260 37% 59%; /* #8A71BD */
 
@@ -1759,30 +1759,30 @@
     /* ─── Paragraphs ──────────────────────────────── */
     & p {
       margin-top: 0.375rem;
-      margin-bottom: 0.375rem;
-      line-height: 1.7;
+      margin-bottom: 0.75rem;
+      line-height: 1.55;
     }
 
     /* ─── Lists (critical fix: numbers/bullets rendering) ── */
     & ol {
       list-style-type: decimal;
-      list-style-position: inside;
+      list-style-position: outside;
       padding-left: 1.5rem;
       margin-top: 0.5rem;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.875rem;
     }
     & ul {
       list-style-type: disc;
-      list-style-position: inside;
+      list-style-position: outside;
       padding-left: 1.5rem;
       margin-top: 0.5rem;
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.875rem;
     }
     & li {
       display: list-item;
-      margin-top: 0.125rem;
-      margin-bottom: 0.125rem;
-      line-height: 1.7;
+      margin-top: 0.2rem;
+      margin-bottom: 0.45rem;
+      line-height: 1.55;
     }
     & li::marker {
       color: hsl(var(--muted-foreground));
@@ -1790,7 +1790,7 @@
     }
     & li > p {
       margin-top: 0.125rem;
-      margin-bottom: 0.125rem;
+      margin-bottom: 0.35rem;
     }
     & li > ol, & li > ul {
       margin-top: 0.25rem;
@@ -1870,6 +1870,13 @@
     /* ─── First/last margin reset ─────────────────── */
     & > *:first-child { margin-top: 0; }
     & > *:last-child { margin-bottom: 0; }
+  }
+
+  @media (max-width: 768px) {
+    .chat-markdown {
+      font-size: 0.9375rem;
+      line-height: 1.5;
+    }
   }
 }
 
@@ -1976,4 +1983,11 @@
   box-shadow:
     0 0 0 3px hsl(var(--ring) / 0.2),
     0 10px 30px -16px rgb(0 0 0 / 0.25) !important;
+}
+
+@media (max-width: 768px) {
+  .lb-powered-by,
+  [class*="lb-powered-by"] {
+    display: none !important;
+  }
 }

@@ -3,13 +3,13 @@
 import type { ReactNode } from "react";
 import {
   CalendarCheckIcon,
-  TrendingUpIcon,
-  UsersIcon,
   AlertTriangleIcon,
   FileTextIcon,
   HardHatIcon,
   ClipboardListIcon,
   MessagesSquareIcon,
+  TrendingUpIcon,
+  UsersIcon,
 } from "lucide-react";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 
@@ -67,41 +67,46 @@ const SUGGESTIONS = [
 interface WelcomeScreenProps {
   onSelectPrompt: (prompt: string) => void;
   children?: ReactNode;
+  conversationCount?: number;
 }
 
 export function WelcomeScreen({
   onSelectPrompt,
   children,
+  conversationCount,
 }: WelcomeScreenProps) {
   return (
-    <div className="flex size-full flex-col items-center justify-center px-4">
-      <Shimmer as="p" className="text-lg font-normal text-foreground" duration={3} spread={1}>
-        Where should we begin?
-      </Shimmer>
-
-      {/* Input slot — rendered between title and suggestions */}
-      {children && (
-        <div className="mt-5 w-full max-w-2xl">{children}</div>
-      )}
-
-      {/* Suggestion cards — 4 columns, 2 rows */}
-      <div className="mt-4 grid w-full max-w-2xl grid-cols-2 gap-2 sm:grid-cols-4">
-        {SUGGESTIONS.map((s) => (
-          <button
-            key={s.prompt}
-            type="button"
-            onClick={() => onSelectPrompt(s.prompt)}
-            className="flex flex-col gap-2 rounded-xl bg-background/80 p-4 text-left transition-all hover:bg-background hover:shadow-xs"
+    <div className="flex size-full items-center justify-center overflow-y-auto px-4 py-8 sm:px-6 lg:px-10">
+      <div className="w-full max-w-3xl">
+        <div className="space-y-6 text-center">
+          <Shimmer
+            as="h1"
+            className="text-balance font-serif text-4xl font-normal tracking-tight text-foreground sm:text-5xl"
+            duration={3}
+            spread={1}
           >
-            <s.icon className="h-5 w-5 text-primary/60" />
-            <span className="text-sm font-medium text-foreground">
-              {s.title}
-            </span>
-            <span className="text-xs leading-relaxed text-muted-foreground">
-              {s.description}
-            </span>
-          </button>
-        ))}
+            Good morning{conversationCount ? "," : ""} Megan
+          </Shimmer>
+          <p className="mx-auto max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
+            Ask about projects, meetings, budgets, vendors, and the next decisions that need attention.
+          </p>
+        </div>
+
+        {children && <div className="mt-8">{children}</div>}
+
+        <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+          {SUGGESTIONS.slice(0, 5).map((suggestion) => (
+            <button
+              key={suggestion.prompt}
+              type="button"
+              onClick={() => onSelectPrompt(suggestion.prompt)}
+              className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background px-4 py-2 text-sm text-foreground transition-colors hover:bg-muted/40"
+            >
+              <suggestion.icon className="h-4 w-4 text-muted-foreground" />
+              {suggestion.title}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

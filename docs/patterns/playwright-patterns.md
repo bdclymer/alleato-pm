@@ -248,13 +248,13 @@ await page.context().addCookies(authData.cookies);
 ```typescript
 // Full page screenshot
 await page.screenshot({
-  path: 'frontend/tests/screenshots/feature/name.png',
+  path: 'tests/screenshots/feature/name.png',
   fullPage: true,
 });
 
 // Element screenshot
 await page.locator('.budget-table').screenshot({
-  path: 'frontend/tests/screenshots/table.png',
+  path: 'tests/screenshots/table.png',
 });
 
 // Auto-screenshot on failure (configured in playwright.config.ts)
@@ -291,7 +291,7 @@ test('should match Procore reference layout', async ({ page }) => {
   await page.waitForLoadState('networkidle');
 
   await page.screenshot({
-    path: 'frontend/tests/screenshots/budget-e2e/implementation.png',
+    path: 'tests/screenshots/budget-e2e/implementation.png',
     fullPage: true,
   });
 
@@ -322,13 +322,13 @@ test('should match Procore reference layout', async ({ page }) => {
 
 ### Output Required
 
-Create `frontend/tests/screenshots/[feature]-e2e/COMPARISON-REPORT.md`:
+Create `tests/screenshots/[feature]-e2e/COMPARISON-REPORT.md`:
 
 ```markdown
 # Visual Comparison: [Feature]
 
 **Reference:** scripts/screenshot-capture/procore-budget-crawl/pages/budget-main/screenshot.png
-**Implementation:** frontend/tests/screenshots/budget-e2e/implementation.png
+**Implementation:** tests/screenshots/budget-e2e/implementation.png
 
 ## Results
 
@@ -386,7 +386,7 @@ async function navigateToBudget(page: Page, projectId: string = TEST_PROJECT_ID)
 // Screenshot helper
 async function takeScreenshot(page: Page, name: string) {
   await page.screenshot({
-    path: `frontend/tests/screenshots/budget-e2e/${name}.png`,
+    path: `tests/screenshots/budget-e2e/${name}.png`,
     fullPage: true,
   });
 }
@@ -553,7 +553,7 @@ npx playwright show-trace trace.zip
 
 ```bash
 # Generate and open HTML report
-npx playwright show-report frontend/playwright-report
+npx playwright show-report tests/playwright-report
 ```markdown
 ### Console Output
 

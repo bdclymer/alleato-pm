@@ -33,8 +33,6 @@ Consolidated view of documented API surfaces and implemented routes across the c
 
 | Path | Methods | Source |
 | --- | --- | --- |
-| /api/_archived/contracts | GET, POST | frontend/src/app/api/_archived/contracts/route.ts |
-| /api/_archived/contracts/[id] | DELETE, GET, PUT | frontend/src/app/api/_archived/contracts/[id]/route.ts |
 | /api/auth/signup | POST | frontend/src/app/api/auth/signup/route.ts |
 | /api/change-orders | GET, POST | frontend/src/app/api/change-orders/route.ts |
 | /api/change-orders/[id] | DELETE, GET, PUT | frontend/src/app/api/change-orders/[id]/route.ts |

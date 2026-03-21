@@ -33,6 +33,7 @@ import {
   renderPrimeContractCard,
   renderPrimeContractList,
   renderPrimeContractRowActions,
+  type PccoSummary,
 } from "@/features/prime-contracts/prime-contracts-table-config";
 import {
   primeContractsSchema,
@@ -89,7 +90,7 @@ export default function ProjectContractsPage(): ReactElement {
   // Expandable PCCO sub-rows
   const [expandedIds, setExpandedIds] = React.useState<Set<string>>(new Set());
   const [pccoCache, setPccoCache] = React.useState<
-    Record<string, { loading: boolean; data: Array<{ id: number; pcco_number: string | null; title: string | null; status: string | null; total_amount: number | null }> }>
+    Record<string, { loading: boolean; data: PccoSummary[] }>
   >({});
 
   const toggleExpand = React.useCallback(
@@ -109,9 +110,9 @@ export default function ProjectContractsPage(): ReactElement {
         setPccoCache((prev) => ({ ...prev, [contractId]: { loading: true, data: [] } }));
         try {
           const res = await fetch(`/api/projects/${projectId}/prime-contract-change-orders`);
-          const all: Array<{ id: number; contract_id: number | null; pcco_number: string | null; title: string | null; status: string | null; total_amount: number | null }> = res.ok ? await res.json() : [];
+          const all: Array<{ id: number; contract_id: number | null; prime_contract_id: string | null; pcco_number: string | null; title: string | null; status: string | null; total_amount: number | null }> = res.ok ? await res.json() : [];
           // Filter to only PCCOs belonging to this specific contract
-          const filtered = all.filter((p) => String(p.contract_id) === String(contractId));
+          const filtered = all.filter((p) => p.prime_contract_id == null || String(p.prime_contract_id) === String(contractId));
           setPccoCache((prev) => ({ ...prev, [contractId]: { loading: false, data: filtered } }));
         } catch {
           setPccoCache((prev) => ({ ...prev, [contractId]: { loading: false, data: [] } }));
@@ -575,7 +576,13 @@ export default function ProjectContractsPage(): ReactElement {
         }}
         views={{
           card: (item) => renderPrimeContractCard(item, handleRowClick),
-          list: (item) => renderPrimeContractList(item, handleRowClick),
+          list: (item) =>
+            renderPrimeContractList(item, handleRowClick, {
+              isExpanded: expandedIds.has(item.id),
+              onToggle: toggleExpand,
+              loading: pccoCache[item.id]?.loading ?? false,
+              data: pccoCache[item.id]?.data ?? [],
+            }),
         }}
         emptyState={{
           title: "No contracts found",

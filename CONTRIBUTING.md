@@ -2,10 +2,18 @@
 
 ## Development Setup
 
-1. Clone the repo
-2. Install dependencies: `pnpm install`
-3. Copy `.env.example` to `.env.local`
-4. Run dev server: `pnpm dev`
+1. Clone the repo.
+2. Run `npm run install:all`.
+3. Copy `frontend/.env.example` to `frontend/.env.local`.
+4. Configure backend environment variables required by `backend/start.sh`.
+5. Start the app with `npm run dev`.
+
+Useful checks:
+
+- `npm run db:types`
+- `npm run check:routes`
+- `cd frontend && npm run quality`
+- `npm run verify:browser`
 
 ## Code Review
 

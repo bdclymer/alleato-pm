@@ -71,6 +71,8 @@ function ChatWithSession({
   selectedProjectId,
   onProjectChange,
   onFinishMessage,
+  conversationCount,
+  activeConversationTitle,
 }: {
   sessionId: string;
   initialMessages: UIMessage[];
@@ -83,6 +85,8 @@ function ChatWithSession({
   selectedProjectId: number | null;
   onProjectChange: (id: number | null) => void;
   onFinishMessage: (sessionId: string) => void;
+  conversationCount: number;
+  activeConversationTitle: string | null;
 }) {
   const [input, setInput] = useState(pendingFirstMessage ?? "");
   const councilModeRef = useRef(councilMode);
@@ -163,6 +167,8 @@ function ChatWithSession({
       onInputChange={setInput}
       onSubmit={handleSubmit}
       onStop={stop}
+      conversationCount={conversationCount}
+      activeConversationTitle={activeConversationTitle}
     />
   );
 }
@@ -228,6 +234,9 @@ export function RagChatPage() {
   }, [activeSessionId, loadSessionMessages]);
 
   const effectiveSessionId = activeSessionId || pendingSessionId;
+  const activeConversation = conversations.find(
+    (conversation) => conversation.session_id === effectiveSessionId,
+  );
 
   const handleFinishMessage = useCallback((sessionId: string) => {
     queryClient.invalidateQueries({ queryKey: ["rag-conversations"] });
@@ -307,7 +316,7 @@ export function RagChatPage() {
   );
 
   return (
-    <div className="flex h-full min-h-0 w-full min-w-0 bg-[hsl(var(--surface-alt))]">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-col bg-background xl:flex-row">
       <ConversationSidebar
         conversations={conversations}
         activeSessionId={effectiveSessionId}
@@ -331,6 +340,8 @@ export function RagChatPage() {
           selectedProjectId={selectedProjectId}
           onProjectChange={setSelectedProjectId}
           onFinishMessage={handleFinishMessage}
+          conversationCount={conversations.length}
+          activeConversationTitle={activeConversation?.title ?? null}
         />
       ) : (
         <ChatArea
@@ -349,6 +360,8 @@ export function RagChatPage() {
             handleFirstMessage(msg);
           }}
           onStop={() => {}}
+          conversationCount={conversations.length}
+          activeConversationTitle={null}
         />
       )}
     </div>

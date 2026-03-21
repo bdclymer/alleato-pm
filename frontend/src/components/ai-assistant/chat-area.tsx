@@ -72,6 +72,7 @@ import {
   ChevronDownIcon,
   CheckIcon,
   XIcon,
+  SparkleIcon,
 } from "lucide-react";
 import type { DynamicToolUIPart } from "ai";
 import { toast } from "sonner";
@@ -227,11 +228,11 @@ function formatStructuredMeetingList(text: string): string {
 
 function AssistantAvatar({ councilMode }: { councilMode?: boolean }) {
   return (
-    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10">
+    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted/60">
       {councilMode ? (
-        <span className="text-[13px] leading-none">⚡</span>
+        <SparkleIcon className="h-4 w-4 text-primary" />
       ) : (
-        <SparklesIcon className="h-3.5 w-3.5 text-primary" />
+        <SparklesIcon className="h-4 w-4 text-muted-foreground" />
       )}
     </div>
   );
@@ -466,6 +467,8 @@ interface ChatAreaProps {
   onInputChange: (value: string) => void;
   onSubmit: (message: string) => void;
   onStop: () => void;
+  conversationCount?: number;
+  activeConversationTitle?: string | null;
 }
 
 export function ChatArea({
@@ -483,6 +486,8 @@ export function ChatArea({
   onInputChange,
   onSubmit,
   onStop,
+  conversationCount = 0,
+  activeConversationTitle = null,
 }: ChatAreaProps) {
   // Council mode can be controlled externally (via prop) or internally
   const [councilModeInternal, setCouncilModeInternal] = useState(false);
@@ -559,6 +564,10 @@ export function ChatArea({
     [messages, isStreaming],
   );
 
+  const headerTitle = hasMessages
+    ? activeConversationTitle || "AI Strategist"
+    : "AI Strategist";
+
   // Shared prompt input element
   const promptInputEl = (
     <PromptInput
@@ -566,38 +575,47 @@ export function ChatArea({
       onValueChange={onInputChange}
       isLoading={isStreaming}
       onSubmit={handleSubmit}
+      className={cn(
+        "rounded-[1.75rem] border-border/70 bg-background p-3 shadow-sm",
+        hasMessages && "rounded-[1.5rem]",
+      )}
     >
-      <PromptInputTextarea placeholder={councilMode ? "Ask the C-Suite anything…" : "Ask anything about your projects..."} />
-      <PromptInputActions className="justify-between px-2 pb-2">
-        {/* Left controls: project selector + council mode */}
-        <div className="flex items-center gap-2">
-          {/* Project selector — optional context pin */}
+      <PromptInputTextarea
+        placeholder={
+          councilMode
+            ? "Ask the council for a recommendation..."
+            : "How can I help with your projects today?"
+        }
+        className="min-h-20 px-2 pb-3 pt-2 text-[15px] leading-6 placeholder:text-muted-foreground/80"
+      />
+      <PromptInputActions className="flex-col items-stretch gap-3 px-1 pb-1 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
           <Popover open={projectOpen} onOpenChange={setProjectOpen}>
             <PopoverTrigger asChild>
               <button
                 type="button"
                 className={cn(
-                  "flex items-center gap-1 rounded-full px-2.5 py-1 text-xs transition-colors",
+                  "flex min-h-11 items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-medium transition-colors",
                   selectedProject
-                    ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground",
+                    ? "border-border bg-muted/60 text-foreground"
+                    : "border-border/70 text-muted-foreground hover:bg-muted/40 hover:text-foreground",
                 )}
                 aria-label="Select project context"
               >
-                <Building2Icon className="h-3 w-3 shrink-0" />
-                <span className="max-w-[120px] truncate">
+                <Building2Icon className="h-3.5 w-3.5 shrink-0" />
+                <span className="max-w-36 truncate">
                   {selectedProject ? (selectedProject.name ?? "Project") : "All projects"}
                 </span>
                 {selectedProject ? (
                   <XIcon
-                    className="h-3 w-3 shrink-0 opacity-60 hover:opacity-100"
+                    className="h-3.5 w-3.5 shrink-0 opacity-60 hover:opacity-100"
                     onClick={(e) => {
                       e.stopPropagation();
                       onProjectChange?.(null);
                     }}
                   />
                 ) : (
-                  <ChevronDownIcon className="h-3 w-3 shrink-0 opacity-50" />
+                  <ChevronDownIcon className="h-3.5 w-3.5 shrink-0 opacity-50" />
                 )}
               </button>
             </PopoverTrigger>
@@ -635,65 +653,76 @@ export function ChatArea({
             </PopoverContent>
           </Popover>
 
-          {/* Divider */}
-          <span className="h-4 w-px bg-border/50" />
-
-          <span className="text-xs text-muted-foreground">Council Mode</span>
           <button
             type="button"
             role="switch"
             aria-checked={councilMode}
             onClick={handleCouncilToggle}
             className={cn(
-              "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors duration-200 focus-visible:outline-none",
-              councilMode ? "bg-primary" : "bg-muted-foreground/30",
+              "flex min-h-11 items-center gap-2 rounded-full border px-3 py-2 text-xs font-medium transition-colors",
+              councilMode
+                ? "border-border bg-muted/60 text-foreground"
+                : "border-border/70 text-muted-foreground hover:bg-muted/40 hover:text-foreground",
             )}
           >
-            <span
-              className={cn(
-                "pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-sm transform transition-transform duration-200 mt-0.5",
-                councilMode ? "translate-x-4" : "translate-x-0.5",
-              )}
-            />
+            <span className="inline-flex h-5 w-9 shrink-0 items-center rounded-full bg-muted p-0.5">
+              <span
+                className={cn(
+                  "h-4 w-4 rounded-full bg-foreground/25 transition-transform duration-200",
+                  councilMode && "translate-x-4 bg-primary",
+                )}
+              />
+            </span>
+            Council Mode
           </button>
         </div>
-        <PromptInputAction tooltip={isStreaming ? "Stop" : "Send"}>
-          <Button
-            size="icon"
-            variant={input.trim() ? "default" : "ghost"}
-            className="h-8 w-8 rounded-full"
-            disabled={!input.trim() && !isStreaming}
-            onClick={isStreaming ? onStop : handleSubmit}
-          >
-            {isStreaming ? (
-              <SquareIcon className="h-4 w-4" />
-            ) : (
-              <SendIcon className="h-4 w-4" />
-            )}
-          </Button>
-        </PromptInputAction>
+        <div className="flex items-center justify-between gap-3 sm:justify-end">
+          <PromptInputAction tooltip={isStreaming ? "Stop" : "Send"}>
+            <Button
+              size="icon"
+              variant={input.trim() ? "default" : "ghost"}
+              className="h-11 w-11 rounded-full border-border/70"
+              disabled={!input.trim() && !isStreaming}
+              onClick={isStreaming ? onStop : handleSubmit}
+            >
+              {isStreaming ? (
+                <SquareIcon className="h-4 w-4" />
+              ) : (
+                <SendIcon className="h-4 w-4" />
+              )}
+            </Button>
+          </PromptInputAction>
+        </div>
       </PromptInputActions>
     </PromptInput>
   );
 
   const poweredByEl = (
-    <p className="mt-2 text-center text-xs text-muted-foreground/50">
+    <p className="mt-3 text-center text-xs text-muted-foreground/50">
       Powered by live project data
     </p>
   );
 
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-[hsl(var(--surface-alt))]">
+    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
       {!hasMessages && !isLoadingMessages ? (
-        /* Welcome state — input centered with title & suggestions */
-        <WelcomeScreen onSelectPrompt={(prompt) => onSubmit(prompt)}>
+        <WelcomeScreen
+          onSelectPrompt={(prompt) => onSubmit(prompt)}
+          conversationCount={conversationCount}
+        >
           {promptInputEl}
           {poweredByEl}
         </WelcomeScreen>
       ) : (
         <>
-          <Conversation>
-            <ConversationContent className="mx-auto w-full max-w-3xl px-4">
+          <Conversation className="min-h-0">
+            <ConversationContent className="mx-auto w-full max-w-3xl px-4 pb-36 pt-6 md:px-6 md:pb-40 md:pt-8">
+              <section className="mb-4 text-center">
+                <h1 className="font-serif text-3xl font-normal tracking-tight text-foreground sm:text-4xl">
+                  {headerTitle}
+                </h1>
+              </section>
+
               {messages.map((msg, msgIndex) => {
                 const text = getMessageText(msg);
                 const isAssistant = msg.role === "assistant";
@@ -755,7 +784,7 @@ export function ChatArea({
                       key={msg.id}
                       from="user"
                     >
-                      <MessageContent>
+                      <MessageContent className="rounded-[1.4rem] px-4 py-3 shadow-sm sm:px-5">
                         <MessageResponse>{text}</MessageResponse>
                       </MessageContent>
                     </Message>
@@ -768,7 +797,7 @@ export function ChatArea({
                     <AssistantAvatar councilMode={councilMode} />
                     <div className="flex min-w-0 flex-1 flex-col gap-2">
                       <Message from="assistant">
-                        <MessageContent>
+                        <MessageContent className="px-1 py-1 sm:px-2">
                           {/* Reasoning / Thinking display */}
                           {reasoningText && (
                             <Reasoning
@@ -804,7 +833,9 @@ export function ChatArea({
                           ) : null}
 
                           {/* Main text response */}
-                          <MessageResponse>{formattedAssistantText}</MessageResponse>
+                          <MessageResponse className="text-[15px] leading-6 md:text-sm">
+                            {formattedAssistantText}
+                          </MessageResponse>
 
                           {/* Source citations — rendered as subtle chips */}
                           {inlineSources.length > 0 && (
@@ -872,7 +903,7 @@ export function ChatArea({
 
               {/* Follow-up suggestions */}
               {!isStreaming && suggestions.length > 0 && (
-                <div className="py-2 pl-10">
+                <div className="py-2 pl-11">
                   <Suggestions>
                     {suggestions.map((suggestion) => (
                       <Suggestion
@@ -885,13 +916,14 @@ export function ChatArea({
                 </div>
               )}
             </ConversationContent>
-            <ConversationScrollButton />
+            <ConversationScrollButton className="bottom-32 md:bottom-28" />
           </Conversation>
 
-          {/* Prompt input — pinned to bottom in conversation mode */}
-          <div className="mx-auto w-full max-w-3xl shrink-0 px-4 pb-6 pt-2">
-            {promptInputEl}
-            {poweredByEl}
+          <div className="sticky bottom-0 z-20 shrink-0 bg-gradient-to-t from-background via-background to-transparent px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 md:px-4">
+            <div className="mx-auto w-full max-w-3xl">
+              {promptInputEl}
+              {poweredByEl}
+            </div>
           </div>
         </>
       )}

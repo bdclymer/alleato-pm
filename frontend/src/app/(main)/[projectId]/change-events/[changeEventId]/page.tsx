@@ -294,6 +294,7 @@ export default function ChangeEventDetailPage() {
               description: item.description || "",
               vendor: item.vendor || item.vendor_id || "",
               contract: item.contract || item.contract_id || "",
+              commitmentLineItemId: item.commitmentLineItemId || "",
               revenueUnitOfMeasure: item.revenueUnitOfMeasure || item.unitOfMeasure || "",
               revenueQuantity: Number(item.revenueQuantity || item.quantity || 1) || 1,
               revenueUnitCost: Number(item.revenueUnitCost || item.unitCost || 0) || 0,

@@ -1,6 +1,7 @@
 import * as React from "react";
 import type { ReactElement } from "react";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ChevronDown, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 import { StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
@@ -243,23 +244,93 @@ export function renderPrimeContractCard(
   );
 }
 
+export interface PccoSummary {
+  id: number;
+  pcco_number: string | null;
+  title: string | null;
+  status: string | null;
+  total_amount: number | null;
+}
+
+export interface ListChangeOrderData {
+  isExpanded: boolean;
+  onToggle: (id: string) => void;
+  loading: boolean;
+  data: PccoSummary[];
+}
+
 export function renderPrimeContractList(
   item: PrimeContract,
   onClick: (contract: PrimeContract) => void,
+  changeOrderData?: ListChangeOrderData,
 ): ReactElement {
+  const formatCur = (v: number | null) =>
+    v == null
+      ? "—"
+      : new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(v);
+
   return (
-    <div
-      className="flex items-center justify-between py-2 px-4 rounded-md cursor-pointer hover:bg-muted/50 transition-colors"
-      onClick={() => onClick(item)}
-    >
-      <div>
-        <p className="text-sm font-medium">{item.contract_number ?? "-"}</p>
-        <p className="text-xs text-muted-foreground">{item.title ?? "Untitled Contract"}</p>
+    <div className="rounded-md">
+      <div
+        className="flex cursor-pointer items-center justify-between px-4 py-2 transition-colors hover:bg-muted/50"
+        onClick={() => onClick(item)}
+      >
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium">{item.contract_number ?? "-"}</p>
+          <p className="truncate text-xs text-muted-foreground">{item.title ?? "Untitled Contract"}</p>
+        </div>
+        <div className="ml-3 flex shrink-0 items-center gap-2">
+          {item.status ? (
+            <StatusBadge status={STATUS_LABELS[item.status]} />
+          ) : (
+            <span className="text-muted-foreground">-</span>
+          )}
+          {changeOrderData && (
+            <button
+              type="button"
+              className="flex h-6 w-6 items-center justify-center rounded text-muted-foreground hover:bg-muted hover:text-foreground"
+              onClick={(e) => {
+                e.stopPropagation();
+                changeOrderData.onToggle(item.id);
+              }}
+              aria-label={changeOrderData.isExpanded ? "Collapse change orders" : "Expand change orders"}
+            >
+              <ChevronDown
+                className={cn("h-3.5 w-3.5 transition-transform duration-150", changeOrderData.isExpanded && "rotate-180")}
+              />
+            </button>
+          )}
+        </div>
       </div>
-      {item.status ? (
-        <StatusBadge status={STATUS_LABELS[item.status]} />
-      ) : (
-        <span className="text-muted-foreground">-</span>
+      {changeOrderData?.isExpanded && (
+        <div className="px-4 pb-3 pt-1">
+          {changeOrderData.loading ? (
+            <p className="text-xs text-muted-foreground">Loading change orders...</p>
+          ) : changeOrderData.data.length === 0 ? (
+            <p className="text-xs text-muted-foreground">No change orders</p>
+          ) : (
+            <div className="space-y-1">
+              <p className="mb-1.5 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                Change Orders ({changeOrderData.data.length})
+              </p>
+              {changeOrderData.data.map((co) => (
+                <div
+                  key={co.id}
+                  className="flex items-center justify-between rounded-md bg-muted/40 px-3 py-1.5"
+                >
+                  <div className="min-w-0 flex-1">
+                    <span className="text-xs font-medium">{co.pcco_number || "—"}</span>
+                    <span className="ml-2 text-xs text-muted-foreground line-clamp-1">{co.title || "—"}</span>
+                  </div>
+                  <div className="ml-2 flex shrink-0 items-center gap-2">
+                    <StatusBadge status={co.status || "Unknown"} />
+                    <span className="text-xs tabular-nums text-muted-foreground">{formatCur(co.total_amount)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       )}
     </div>
   );

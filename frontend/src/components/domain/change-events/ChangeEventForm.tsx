@@ -8,6 +8,7 @@ import {
   GripVertical,
   Plus,
   Trash2,
+  Upload,
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -91,6 +92,7 @@ export interface ChangeEventLineItem {
   description: string;
   vendor: string;
   contract: string;
+  commitmentLineItemId: string;
   revenueUnitOfMeasure: string;
   revenueQuantity: number;
   revenueUnitCost: number;
@@ -144,6 +146,15 @@ interface ContractOption {
   id: string;
   label: string;
   type: "purchase_order" | "subcontract";
+  vendorId?: string | null;
+  vendorName?: string | null;
+}
+
+interface CommitmentSovLineItem {
+  id: string;
+  budget_code: string | null;
+  description: string | null;
+  line_number: number | null;
 }
 
 interface BudgetCodeOption {
@@ -159,6 +170,7 @@ const createEmptyLineItem = (): ChangeEventLineItem => ({
   description: "",
   vendor: "",
   contract: "",
+  commitmentLineItemId: "",
   revenueUnitOfMeasure: "",
   revenueQuantity: 1,
   revenueUnitCost: 0,
@@ -331,13 +343,13 @@ function ContractCombobox({
           aria-controls={contractListId}
           aria-label="Select contract"
           className={cn(
-            "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-colors",
+            "flex h-9 w-full min-w-0 items-center justify-between overflow-hidden rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-colors",
             "focus-visible:border-neutral-400 focus-visible:outline-none",
             !selected && "text-muted-foreground",
           )}
         >
-          <span className="truncate text-left">
-            {selected ? selected.label : "Select contract..."}
+          <span className="min-w-0 truncate text-left">
+            {selected ? selected.label : "Select commitment..."}
           </span>
           <ChevronDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
         </button>
@@ -345,7 +357,7 @@ function ContractCombobox({
       <PopoverContent className="w-[350px] p-0" align="start" sideOffset={0}>
         <Command shouldFilter={false}>
           <CommandInput
-            placeholder="Search POs & subcontracts..."
+            placeholder="Search commitments..."
             value={search}
             onValueChange={setSearch}
           />
@@ -536,6 +548,10 @@ export function ChangeEventForm({
     React.useState(false);
   const [targetBudgetCodeRowIndex, setTargetBudgetCodeRowIndex] =
     React.useState<number | null>(null);
+  // Maps commitmentId → its SOV line items (fetched lazily on commitment select)
+  const [commitmentLineItemsMap, setCommitmentLineItemsMap] = React.useState<
+    Record<string, CommitmentSovLineItem[]>
+  >({});
 
   // Fetch dropdown options
   const fetchVendors = React.useCallback(async () => {
@@ -631,6 +647,8 @@ export function ChangeEventForm({
               id: `po-${po.id}`,
               label: `${po.contract_number || po.number || "PO"} - ${po.title || "Untitled"}`,
               type: "purchase_order",
+              vendorId: po.contract_company_id || null,
+              vendorName: po.company_name || null,
             });
           }
         }
@@ -643,6 +661,8 @@ export function ChangeEventForm({
               id: `sub-${sub.id}`,
               label: `${sub.contract_number || sub.number || "SC"} - ${sub.title || "Untitled"}`,
               type: "subcontract",
+              vendorId: sub.contract_company_id || null,
+              vendorName: sub.company_name || null,
             });
           }
         }
@@ -702,12 +722,225 @@ export function ChangeEventForm({
         current.costRom =
           Number(current.costQuantity || 0) *
           Number(current.costUnitCost || 0);
+        // Auto-populate non-committed cost when no commitment is selected
+        if (!current.contract) {
+          current.nonCommittedCost = current.costRom;
+        }
       }
 
       nextItems[index] = current;
       return { ...prev, lineItems: nextItems };
     });
   };
+
+  // Called when a commitment is selected in a line item row.
+  // Auto-populates vendor and fetches SOV line items for budget code auto-fill.
+  const handleCommitmentChange = React.useCallback(
+    async (rowIndex: number, commitmentId: string) => {
+      const commitment = contracts.find((c) => c.id === commitmentId);
+
+      // Batch-update contract + vendor together
+      setFormData((prev) => {
+        const nextItems = [...prev.lineItems];
+        const current = { ...nextItems[rowIndex], contract: commitmentId, commitmentLineItemId: "" };
+        // Auto-populate vendor if the commitment has one
+        if (commitment?.vendorId) {
+          current.vendor = commitment.vendorId;
+        }
+        nextItems[rowIndex] = current;
+        return { ...prev, lineItems: nextItems };
+      });
+
+      if (!commitmentId) return;
+
+      // Already fetched line items for this commitment → skip
+      if (commitmentLineItemsMap[commitmentId] !== undefined) {
+        const items = commitmentLineItemsMap[commitmentId];
+        if (items.length === 1 && items[0].budget_code) {
+          const bc = budgetCodes.find((b) => b.code === items[0].budget_code);
+          if (bc) {
+            setFormData((prev) => {
+              const nextItems = [...prev.lineItems];
+              nextItems[rowIndex] = { ...nextItems[rowIndex], budgetCode: bc.id };
+              return { ...prev, lineItems: nextItems };
+            });
+          }
+        }
+        return;
+      }
+
+      // Strip the "po-" / "sub-" prefix to get the raw UUID for the API
+      const rawId = commitmentId.replace(/^(po|sub)-/, "");
+      try {
+        const res = await fetch(
+          `/api/projects/${projectId}/commitments/${rawId}/line-items`,
+        );
+        if (!res.ok) {
+          setCommitmentLineItemsMap((prev) => ({ ...prev, [commitmentId]: [] }));
+          return;
+        }
+        const data = await res.json();
+        const items: CommitmentSovLineItem[] = data.data || [];
+        setCommitmentLineItemsMap((prev) => ({ ...prev, [commitmentId]: items }));
+
+        // If only one line item, auto-populate the budget code
+        if (items.length === 1 && items[0].budget_code) {
+          const bc = budgetCodes.find((b) => b.code === items[0].budget_code);
+          if (bc) {
+            setFormData((prev) => {
+              const nextItems = [...prev.lineItems];
+              nextItems[rowIndex] = { ...nextItems[rowIndex], budgetCode: bc.id };
+              return { ...prev, lineItems: nextItems };
+            });
+          }
+        }
+      } catch {
+        setCommitmentLineItemsMap((prev) => ({ ...prev, [commitmentId]: [] }));
+      }
+    },
+    [contracts, commitmentLineItemsMap, budgetCodes, projectId],
+  );
+
+  // Called when a specific SOV line item is selected from the dropdown.
+  const handleCommitmentLineItemChange = React.useCallback(
+    (rowIndex: number, commitmentId: string, sovLineItemId: string) => {
+      const items = commitmentLineItemsMap[commitmentId] || [];
+      const selectedItem = items.find((i) => i.id === sovLineItemId);
+      setFormData((prev) => {
+        const nextItems = [...prev.lineItems];
+        const current = { ...nextItems[rowIndex], commitmentLineItemId: sovLineItemId };
+        if (selectedItem?.budget_code) {
+          const bc = budgetCodes.find((b) => b.code === selectedItem.budget_code);
+          if (bc) current.budgetCode = bc.id;
+        }
+        nextItems[rowIndex] = current;
+        return { ...prev, lineItems: nextItems };
+      });
+    },
+    [commitmentLineItemsMap, budgetCodes],
+  );
+
+  // ---------------------------------------------------------------------------
+  // CSV import
+  // ---------------------------------------------------------------------------
+  const csvInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleCsvImport = React.useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const text = (ev.target?.result as string) || "";
+        const rows = text.split(/\r?\n/).filter((r) => r.trim());
+        if (rows.length < 2) return; // need at least header + 1 data row
+        const headers = rows[0].split(",").map((h) => h.trim().toLowerCase());
+        const newItems: ChangeEventLineItem[] = [];
+        for (let i = 1; i < rows.length; i++) {
+          const cols = rows[i].split(",").map((c) => c.trim().replace(/^"|"$/g, ""));
+          const get = (aliases: string[]) => {
+            for (const a of aliases) {
+              const idx = headers.indexOf(a);
+              if (idx !== -1) return cols[idx] || "";
+            }
+            return "";
+          };
+          const costQty = Number(get(["cost qty", "cost quantity", "qty", "quantity"])) || 1;
+          const costUnit = Number(get(["cost unit cost", "unit cost", "unit_cost", "cost"])) || 0;
+          const costRom = costQty * costUnit;
+          const revenueQty = Number(get(["revenue qty", "revenue quantity"])) || costQty;
+          const revenueUnit = Number(get(["revenue unit cost"])) || costUnit;
+          newItems.push({
+            ...createEmptyLineItem(),
+            budgetCode: get(["budget code", "budget_code", "code"]),
+            description: get(["description", "desc"]),
+            costQuantity: costQty,
+            costUnitCost: costUnit,
+            costRom,
+            nonCommittedCost: costRom,
+            revenueQuantity: revenueQty,
+            revenueUnitCost: revenueUnit,
+            revenueRom: revenueQty * revenueUnit,
+            revenueUnitOfMeasure: get(["uom", "unit of measure", "unit"]),
+          });
+        }
+        if (newItems.length > 0) {
+          setFormData((prev) => ({
+            ...prev,
+            lineItems:
+              prev.lineItems.length === 1 &&
+              !prev.lineItems[0].description &&
+              !prev.lineItems[0].budgetCode
+                ? newItems
+                : [...prev.lineItems, ...newItems],
+          }));
+          toast.success(`Imported ${newItems.length} line item${newItems.length !== 1 ? "s" : ""} from CSV`);
+        }
+      };
+      reader.readAsText(file);
+      // Reset so the same file can be re-imported
+      e.target.value = "";
+    },
+    [],
+  );
+
+  // ---------------------------------------------------------------------------
+  // Add all SOV line items from a commitment
+  // ---------------------------------------------------------------------------
+  const [addFromCommitmentId, setAddFromCommitmentId] = React.useState("");
+
+  const handleAddAllCommitmentLineItems = React.useCallback(
+    async (commitmentId: string) => {
+      if (!commitmentId) return;
+      const rawId = commitmentId.replace(/^(po|sub)-/, "");
+      let items: CommitmentSovLineItem[] = commitmentLineItemsMap[commitmentId] || [];
+      if (items.length === 0) {
+        try {
+          const res = await fetch(
+            `/api/projects/${projectId}/commitments/${rawId}/line-items`,
+          );
+          if (res.ok) {
+            const data = await res.json();
+            items = data.data || [];
+            setCommitmentLineItemsMap((prev) => ({ ...prev, [commitmentId]: items }));
+          }
+        } catch {
+          toast.error("Failed to load commitment line items");
+          return;
+        }
+      }
+      if (items.length === 0) {
+        toast.error("No line items found for this commitment");
+        return;
+      }
+      const commitment = contracts.find((c) => c.id === commitmentId);
+      const newRows: ChangeEventLineItem[] = items.map((li) => {
+        const bc = budgetCodes.find((b) => b.code === li.budget_code);
+        return {
+          ...createEmptyLineItem(),
+          budgetCode: bc?.id || "",
+          description: li.description || "",
+          vendor: commitment?.vendorId || "",
+          contract: commitmentId,
+          commitmentLineItemId: li.id,
+        };
+      });
+      setFormData((prev) => ({
+        ...prev,
+        lineItems:
+          prev.lineItems.length === 1 &&
+          !prev.lineItems[0].description &&
+          !prev.lineItems[0].budgetCode
+            ? newRows
+            : [...prev.lineItems, ...newRows],
+      }));
+      setAddFromCommitmentId("");
+      toast.success(
+        `Added ${newRows.length} line item${newRows.length !== 1 ? "s" : ""} from commitment`,
+      );
+    },
+    [commitmentLineItemsMap, contracts, budgetCodes, projectId],
+  );
 
   const addLineItem = () => {
     setFormData((prev) => ({
@@ -954,23 +1187,33 @@ export function ChangeEventForm({
           {/* ── Line Items ── */}
           <FormSection title="Line Items">
 
+            {/* Hidden CSV file input */}
+            <input
+              ref={csvInputRef}
+              type="file"
+              accept=".csv,text/csv"
+              className="hidden"
+              onChange={handleCsvImport}
+            />
+
             <TooltipProvider>
             <div className="overflow-x-auto overflow-hidden rounded-lg border border-border/70 bg-muted/20">
               <Table>
                 <TableHeader className="border-y-0 [&_tr]:border-b-0">
-                  {/* Group headers */}
+                  {/* Group headers: Detail | Cost | Revenue | Non-committed | Total */}
                   <TableRow className="border-b-0 bg-muted/70 hover:bg-muted/70">
                     <TableHead className="w-[40px] px-1.5 py-1.5" />
                     <TableHead colSpan={4} className="px-1 py-1 text-xs font-semibold normal-case tracking-normal text-muted-foreground">
                       Detail
                     </TableHead>
-                    <TableHead colSpan={4} className="px-1 py-1 text-xs font-semibold normal-case tracking-normal text-muted-foreground">
-                      Revenue
-                    </TableHead>
                     <TableHead colSpan={3} className="px-1 py-1 text-xs font-semibold normal-case tracking-normal text-muted-foreground">
                       Cost
                     </TableHead>
-                    <TableHead className="px-1 py-1" />
+                    <TableHead colSpan={4} className="px-1 py-1 text-xs font-semibold normal-case tracking-normal text-muted-foreground">
+                      Revenue
+                    </TableHead>
+                    <TableHead className="px-1 py-1 text-xs font-semibold normal-case tracking-normal text-muted-foreground">Non-committed $</TableHead>
+                    <TableHead className="px-1 py-1 text-xs font-semibold normal-case tracking-normal text-muted-foreground">Total</TableHead>
                     <TableHead className="w-12 px-1 py-1" />
                   </TableRow>
                   {/* Column headers */}
@@ -979,7 +1222,17 @@ export function ChangeEventForm({
                     <TableHead className="min-w-52 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Budget Code</TableHead>
                     <TableHead className="min-w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Description</TableHead>
                     <TableHead className="min-w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Vendor</TableHead>
-                    <TableHead className="min-w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Contract</TableHead>
+                    <TableHead className="min-w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Commitment</TableHead>
+                    <TableHead className="w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help border-b border-dotted border-muted-foreground">Qty</span>
+                        </TooltipTrigger>
+                        <TooltipContent>Cost quantity for this line item</TooltipContent>
+                      </Tooltip>
+                    </TableHead>
+                    <TableHead className="w-56 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Unit Cost</TableHead>
+                    <TableHead className="w-36 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Cost ROM</TableHead>
                     <TableHead className="w-28 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -998,22 +1251,15 @@ export function ChangeEventForm({
                     </TableHead>
                     <TableHead className="w-56 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Unit Cost</TableHead>
                     <TableHead className="w-36 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Revenue ROM</TableHead>
-                    <TableHead className="w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="cursor-help border-b border-dotted border-muted-foreground">Qty</span>
-                        </TooltipTrigger>
-                        <TooltipContent>Cost quantity for this line item</TooltipContent>
-                      </Tooltip>
-                    </TableHead>
-                    <TableHead className="w-56 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Unit Cost</TableHead>
-                    <TableHead className="w-36 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Cost ROM</TableHead>
-                    <TableHead className="w-44 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Non-committed $</TableHead>
+                    <TableHead className="w-44 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Non-committed $</TableHead>
+                    <TableHead className="w-36 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">Total</TableHead>
                     <TableHead className="w-12 px-1 py-1.5" />
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {formData.lineItems.map((item, index) => (
+                  {formData.lineItems.map((item, index) => {
+                    const lineTotal = (item.costRom || 0) + (item.nonCommittedCost || 0);
+                    return (
                     <TableRow
                       key={`line-item-${index}`}
                       className="group border-b border-border/60 bg-background transition-colors hover:bg-muted/20"
@@ -1064,15 +1310,93 @@ export function ChangeEventForm({
                         />
                       </TableCell>
 
-                      {/* Contract */}
+                      {/* Commitment */}
                       <TableCell className="min-w-40 px-1 py-1.5 align-top">
                         <ContractCombobox
                           value={item.contract}
-                          onChange={(value) =>
-                            updateLineItem(index, "contract", value)
-                          }
+                          onChange={(value) => handleCommitmentChange(index, value)}
                           contracts={contracts}
                         />
+                        {/* Line item sub-selector: shown when commitment has >1 SOV line items */}
+                        {item.contract &&
+                          (commitmentLineItemsMap[item.contract]?.length ?? 0) > 1 && (
+                            <Select
+                              value={item.commitmentLineItemId || ""}
+                              onValueChange={(value) =>
+                                handleCommitmentLineItemChange(index, item.contract, value)
+                              }
+                            >
+                              <SelectTrigger className="mt-1 h-8 w-full text-xs">
+                                <SelectValue placeholder="Select line item…" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {(commitmentLineItemsMap[item.contract] || []).map((li) => (
+                                  <SelectItem key={li.id} value={li.id} className="text-xs">
+                                    {li.line_number != null ? `#${li.line_number} ` : ""}
+                                    {li.budget_code ? `${li.budget_code} – ` : ""}
+                                    {li.description || "No description"}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                      </TableCell>
+
+                      {/* Cost: Quantity */}
+                      <TableCell className="w-40 px-1 py-1.5 align-top">
+                        <Input
+                          type="number"
+                          inputMode="numeric"
+                          step="1"
+                          min="0"
+                          className="min-w-[96px] text-right"
+                          value={Number.isFinite(item.costQuantity) ? Math.trunc(item.costQuantity) : 1}
+                          onChange={(e) =>
+                            updateLineItem(
+                              index,
+                              "costQuantity",
+                              e.target.value === "" ? 1 : Math.max(0, parseInt(e.target.value, 10) || 1),
+                            )
+                          }
+                          onFocus={(e) => e.target.select()}
+                          placeholder="1"
+                        />
+                      </TableCell>
+
+                      {/* Cost: Unit Cost */}
+                      <TableCell className="w-56 px-1 py-1.5 align-top">
+                        <InputGroup>
+                          <InputGroupAddon>$</InputGroupAddon>
+                          <InputGroupInput
+                            type="number"
+                            step="0.01"
+                            className="h-9 min-w-[120px] text-right"
+                            value={item.costUnitCost ?? ""}
+                            onChange={(e) =>
+                              updateLineItem(
+                                index,
+                                "costUnitCost",
+                                Number(e.target.value) || 0,
+                              )
+                            }
+                            onFocus={(e) => e.target.select()}
+                            placeholder="0.00"
+                          />
+                        </InputGroup>
+                      </TableCell>
+
+                      {/* Cost ROM (computed) */}
+                      <TableCell className="w-36 px-1 py-1.5 align-top">
+                        <div
+                          className={cn(
+                            "pt-2 text-right text-sm font-semibold",
+                            item.costRom > 0
+                              ? "text-foreground"
+                              : "text-muted-foreground",
+                          )}
+                        >
+                          {formatCurrency(item.costRom)}
+                        </div>
                       </TableCell>
 
                       {/* Revenue: UOM */}
@@ -1153,63 +1477,6 @@ export function ChangeEventForm({
                         </div>
                       </TableCell>
 
-                      {/* Cost: Quantity */}
-                      <TableCell className="w-40 px-1 py-1.5 align-top">
-                        <Input
-                          type="number"
-                          inputMode="numeric"
-                          step="1"
-                          min="0"
-                          className="min-w-[96px] text-right"
-                          value={Number.isFinite(item.costQuantity) ? Math.trunc(item.costQuantity) : 1}
-                          onChange={(e) =>
-                            updateLineItem(
-                              index,
-                              "costQuantity",
-                              e.target.value === "" ? 1 : Math.max(0, parseInt(e.target.value, 10) || 1),
-                            )
-                          }
-                          onFocus={(e) => e.target.select()}
-                          placeholder="1"
-                        />
-                      </TableCell>
-
-                      {/* Cost: Unit Cost */}
-                      <TableCell className="w-56 px-1 py-1.5 align-top">
-                        <InputGroup>
-                          <InputGroupAddon>$</InputGroupAddon>
-                          <InputGroupInput
-                            type="number"
-                            step="0.01"
-                            className="h-9 min-w-[120px] text-right"
-                            value={item.costUnitCost ?? ""}
-                            onChange={(e) =>
-                              updateLineItem(
-                                index,
-                                "costUnitCost",
-                                Number(e.target.value) || 0,
-                              )
-                            }
-                            onFocus={(e) => e.target.select()}
-                            placeholder="0.00"
-                          />
-                        </InputGroup>
-                      </TableCell>
-
-                      {/* Cost ROM (computed) */}
-                      <TableCell className="w-36 px-1 py-1.5 align-top">
-                        <div
-                          className={cn(
-                            "pt-2 text-right text-sm font-semibold",
-                            item.costRom > 0
-                              ? "text-foreground"
-                              : "text-muted-foreground",
-                          )}
-                        >
-                          {formatCurrency(item.costRom)}
-                        </div>
-                      </TableCell>
-
                       {/* Non-committed cost */}
                       <TableCell className="w-44 px-1 py-1.5 align-top">
                         <InputGroup>
@@ -1232,6 +1499,18 @@ export function ChangeEventForm({
                         </InputGroup>
                       </TableCell>
 
+                      {/* Total (costRom + nonCommittedCost) */}
+                      <TableCell className="w-36 px-1 py-1.5 align-top">
+                        <div
+                          className={cn(
+                            "pt-2 text-right text-sm font-semibold",
+                            lineTotal > 0 ? "text-foreground" : "text-muted-foreground",
+                          )}
+                        >
+                          {formatCurrency(lineTotal)}
+                        </div>
+                      </TableCell>
+
                       {/* Actions */}
                       <TableCell className="w-12 px-1 py-1.5 align-top">
                         <Button
@@ -1246,23 +1525,31 @@ export function ChangeEventForm({
                         </Button>
                       </TableCell>
                     </TableRow>
-                  ))}
+                    );
+                  })}
                   {/* Totals row */}
                   <TableRow className="hover:bg-muted">
                     <TableCell className="px-1.5 py-2" />
                     <TableCell colSpan={4} className="px-1.5 py-3 text-xs font-semibold text-foreground">
                       Totals
                     </TableCell>
+                    {/* Cost cols: Qty, Unit Cost blank; Cost ROM total */}
+                    <TableCell colSpan={2} className="px-1.5 py-2" />
+                    <TableCell className="px-1.5 py-2 text-right text-sm font-semibold text-foreground">
+                      {formatCurrency(formData.lineItems.reduce((sum, i) => sum + (i.costRom || 0), 0))}
+                    </TableCell>
+                    {/* Revenue cols: UOM, Qty, Unit Cost blank; Revenue ROM total */}
                     <TableCell colSpan={3} className="px-1.5 py-2" />
                     <TableCell className="px-1.5 py-2 text-right text-sm font-semibold text-foreground">
                       {formatCurrency(formData.lineItems.reduce((sum, i) => sum + (i.revenueRom || 0), 0))}
                     </TableCell>
-                    <TableCell colSpan={2} className="px-1.5 py-3" />
+                    {/* Non-committed total */}
                     <TableCell className="px-1.5 py-2 text-right text-sm font-semibold text-foreground">
-                      {formatCurrency(formData.lineItems.reduce((sum, i) => sum + (i.costRom || 0), 0))}
-                    </TableCell>
-                    <TableCell className="px-1.5 py-3 text-right text-sm font-semibold text-foreground">
                       {formatCurrency(formData.lineItems.reduce((sum, i) => sum + (i.nonCommittedCost || 0), 0))}
+                    </TableCell>
+                    {/* Grand total */}
+                    <TableCell className="px-1.5 py-2 text-right text-sm font-semibold text-foreground">
+                      {formatCurrency(formData.lineItems.reduce((sum, i) => sum + (i.costRom || 0) + (i.nonCommittedCost || 0), 0))}
                     </TableCell>
                     <TableCell className="px-1.5 py-2" />
                   </TableRow>
@@ -1271,17 +1558,93 @@ export function ChangeEventForm({
             </div>
             </TooltipProvider>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-1">
+              {/* Primary action */}
               <Button
                 type="button"
+                size="sm"
                 onClick={addLineItem}
-                className="h-10 gap-2 bg-primary px-4 text-primary-foreground hover:bg-primary/90"
+                className="gap-1.5"
               >
-                <Plus className="h-4 w-4" />
+                <Plus className="h-3.5 w-3.5" />
                 Add Line Item
               </Button>
+
+              {/* Divider */}
+              <div className="mx-1.5 h-4 w-px bg-border" />
+
+              {/* Secondary actions — ghost, minimal weight */}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="gap-1.5 text-muted-foreground hover:text-foreground"
+                onClick={() => csvInputRef.current?.click()}
+              >
+                <Upload className="h-3.5 w-3.5" />
+                Import CSV
+              </Button>
+
+              {/* Add from commitment — only shown when commitments exist */}
+              {contracts.length > 0 && (
+                <>
+                  <div className="mx-1.5 h-4 w-px bg-border" />
+                  <Select
+                    value={addFromCommitmentId}
+                    onValueChange={setAddFromCommitmentId}
+                  >
+                    <SelectTrigger className="h-8 w-52 border-0 bg-transparent text-xs text-muted-foreground shadow-none hover:text-foreground focus:ring-0">
+                      <SelectValue placeholder="Add from commitment…" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {contracts.filter((c) => c.type === "purchase_order").length > 0 && (
+                        <>
+                          <div className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            Purchase Orders
+                          </div>
+                          {contracts
+                            .filter((c) => c.type === "purchase_order")
+                            .map((c) => (
+                              <SelectItem key={c.id} value={c.id} className="text-sm">
+                                {c.label}
+                              </SelectItem>
+                            ))}
+                        </>
+                      )}
+                      {contracts.filter((c) => c.type === "subcontract").length > 0 && (
+                        <>
+                          <div className="px-2 py-1 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                            Subcontracts
+                          </div>
+                          {contracts
+                            .filter((c) => c.type === "subcontract")
+                            .map((c) => (
+                              <SelectItem key={c.id} value={c.id} className="text-sm">
+                                {c.label}
+                              </SelectItem>
+                            ))}
+                        </>
+                      )}
+                    </SelectContent>
+                  </Select>
+                  {/* Only shown when a commitment is selected */}
+                  {addFromCommitmentId && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="gap-1.5 text-muted-foreground hover:text-foreground"
+                      onClick={() => handleAddAllCommitmentLineItems(addFromCommitmentId)}
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      Add All Lines
+                    </Button>
+                  )}
+                </>
+              )}
+
               {formData.lineItems.length > 1 && (
-                <span className="text-sm text-muted-foreground">
+                <span className="ml-auto text-xs text-muted-foreground">
                   {formData.lineItems.length} line items
                 </span>
               )}

@@ -11,6 +11,7 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCw,
+  RotateCcw,
   ChevronLeft,
   ChevronRight,
   Maximize2,
@@ -117,6 +118,8 @@ interface DrawingViewerProps {
   controlledRotation?: number;
   /** Called when rotation changes. */
   onRotationChange?: (rotation: number) => void;
+  /** Visible annotation types for the local drawing canvas. */
+  visibleAnnotationTypes?: Annotation["type"][];
 }
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -152,6 +155,10 @@ function drawArrow(ctx: CanvasRenderingContext2D, from: Point, to: Point) {
     to.y - headLen * Math.sin(angle + Math.PI / 6)
   );
   ctx.stroke();
+}
+
+function normalizeRotation(rotation: number) {
+  return ((rotation % 360) + 360) % 360;
 }
 
 function renderAnnotations(
@@ -220,6 +227,7 @@ export function DrawingViewer({
   onScaleChange,
   controlledRotation,
   onRotationChange,
+  visibleAnnotationTypes,
 }: DrawingViewerProps) {
   // ── viewport state ──
   const [scale, setScale] = useState(1);
@@ -246,6 +254,10 @@ export function DrawingViewer({
   const annotationCanvasRef = useRef<HTMLCanvasElement>(null);
   const pdfPageRef = useRef<HTMLDivElement>(null);
   const [pageSize, setPageSize] = useState({ width: 0, height: 0 });
+  const normalizedRotation = normalizeRotation(rotation);
+  const isQuarterTurn = normalizedRotation === 90 || normalizedRotation === 270;
+  const stageWidth = isQuarterTurn ? pageSize.height : pageSize.width;
+  const stageHeight = isQuarterTurn ? pageSize.width : pageSize.height;
 
   // ── container width ──
   useEffect(() => {
@@ -280,14 +292,28 @@ export function DrawingViewer({
   }, [pageNumber, numPages, onPageChange, onPageNumberChange]);
 
   // ── current page annotations ──
-  const pageAnnotations = annotations.filter((a) => a.page === pageNumber);
+  const visibleAnnotationTypeSet = visibleAnnotationTypes
+    ? new Set(visibleAnnotationTypes)
+    : null;
+
+  const pageAnnotations = annotations.filter(
+    (a) =>
+      a.page === pageNumber &&
+      (!visibleAnnotationTypeSet || visibleAnnotationTypeSet.has(a.type))
+  );
+
+  const visibleInProgress =
+    inProgress &&
+    (!visibleAnnotationTypeSet || visibleAnnotationTypeSet.has(inProgress.type))
+      ? inProgress
+      : null;
 
   // ── re-render annotations on canvas whenever state changes ──
   useEffect(() => {
     const canvas = annotationCanvasRef.current;
     if (!canvas) return;
-    renderAnnotations(canvas, annotations, pageAnnotations, inProgress);
-  }, [annotations, pageAnnotations, inProgress, pageSize]);
+    renderAnnotations(canvas, annotations, pageAnnotations, visibleInProgress);
+  }, [annotations, pageAnnotations, visibleInProgress, pageSize]);
 
   // ── PDF load callbacks ──
   const onDocumentLoadSuccess = useCallback(
@@ -349,6 +375,11 @@ export function DrawingViewer({
   };
   const rotateRight = () => {
     const next = (rotation + 90) % 360;
+    setRotation(next);
+    onRotationChange?.(next);
+  };
+  const rotateLeft = () => {
+    const next = normalizeRotation(rotation - 90);
     setRotation(next);
     onRotationChange?.(next);
   };
@@ -609,11 +640,19 @@ export function DrawingViewer({
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
+                <Button variant="ghost" size="sm" onClick={rotateLeft}>
+                  <RotateCcw className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Rotate left</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
                 <Button variant="ghost" size="sm" onClick={rotateRight}>
                   <RotateCw className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Rotate</TooltipContent>
+              <TooltipContent>Rotate right</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -738,61 +777,77 @@ export function DrawingViewer({
             </div>
           )}
 
-          <div ref={pdfPageRef} className="relative shadow-sm" style={{ display: "inline-block" }}>
-            <Document
-              file={fileUrl}
-              onLoadSuccess={onDocumentLoadSuccess}
-              onLoadError={onDocumentLoadError}
-              loading=""
-              error=""
+          <div
+            ref={pdfPageRef}
+            className="relative shadow-sm"
+            style={{
+              display: "inline-block",
+              width: stageWidth || undefined,
+              height: stageHeight || undefined,
+            }}
+          >
+            <div
+              className="absolute left-1/2 top-1/2 origin-center relative"
+              style={{
+                width: pageSize.width || undefined,
+                height: pageSize.height || undefined,
+                transform: `translate(-50%, -50%) rotate(${normalizedRotation}deg)`,
+              }}
             >
-              <Page
-                pageNumber={pageNumber}
-                scale={scale}
-                rotate={rotation}
-                onLoadSuccess={onPageLoadSuccess}
-                renderMode="canvas"
-              />
-            </Document>
-
-            {/* Annotation canvas overlay */}
-            <canvas
-              ref={annotationCanvasRef}
-              width={pageSize.width}
-              height={pageSize.height}
-              className="absolute inset-0 w-full h-full"
-              style={{ cursor: canvasCursor, touchAction: "none" }}
-              onMouseDown={handleCanvasMouseDown}
-              onMouseMove={handleCanvasMouseMove}
-              onMouseUp={handleCanvasMouseUp}
-              onMouseLeave={handleCanvasMouseUp}
-            />
-
-            {/* Floating text input */}
-            {textInput && (
-              <div
-                className="absolute z-20"
-                style={{ left: textInput.pos.x, top: textInput.pos.y - 28 }}
+              <Document
+                file={fileUrl}
+                onLoadSuccess={onDocumentLoadSuccess}
+                onLoadError={onDocumentLoadError}
+                loading=""
+                error=""
               >
-                <input
-                  autoFocus
-                  type="text"
-                  value={textInput.value}
-                  onChange={(e) => setTextInput((t) => t ? { ...t, value: e.target.value } : t)}
-                  onBlur={commitText}
-                  onKeyDown={(e) => { if (e.key === "Enter") commitText(); if (e.key === "Escape") setTextInput(null); }}
-                  className="border border-border bg-background/90 px-1.5 py-0.5 text-sm rounded shadow-sm outline-none min-w-24"
-                  placeholder="Type text…"
-                  style={{ color: annotationColor }}
+                <Page
+                  pageNumber={pageNumber}
+                  scale={scale}
+                  onLoadSuccess={onPageLoadSuccess}
+                  renderMode="canvas"
                 />
-              </div>
-            )}
+              </Document>
 
-            {/* Liveblocks comment pins overlay */}
-            {commentOverlay}
+              {/* Annotation canvas overlay */}
+              <canvas
+                ref={annotationCanvasRef}
+                width={pageSize.width}
+                height={pageSize.height}
+                className="absolute inset-0 z-10 w-full h-full"
+                style={{ cursor: canvasCursor, touchAction: "none" }}
+                onMouseDown={handleCanvasMouseDown}
+                onMouseMove={handleCanvasMouseMove}
+                onMouseUp={handleCanvasMouseUp}
+                onMouseLeave={handleCanvasMouseUp}
+              />
 
-            {/* Link/markup pins overlay */}
-            {linkPinsOverlay}
+              {/* Floating text input */}
+              {textInput && (
+                <div
+                  className="absolute z-20"
+                  style={{ left: textInput.pos.x, top: textInput.pos.y - 28 }}
+                >
+                  <input
+                    autoFocus
+                    type="text"
+                    value={textInput.value}
+                    onChange={(e) => setTextInput((t) => t ? { ...t, value: e.target.value } : t)}
+                    onBlur={commitText}
+                    onKeyDown={(e) => { if (e.key === "Enter") commitText(); if (e.key === "Escape") setTextInput(null); }}
+                    className="border border-border bg-background/90 px-1.5 py-0.5 text-sm rounded shadow-sm outline-none min-w-24"
+                    placeholder="Type text…"
+                    style={{ color: annotationColor }}
+                  />
+                </div>
+              )}
+
+              {/* Liveblocks comment pins overlay */}
+              {commentOverlay}
+
+              {/* Link/markup pins overlay */}
+              {linkPinsOverlay}
+            </div>
           </div>
         </div>
       </div>

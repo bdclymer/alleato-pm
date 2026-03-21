@@ -3,8 +3,7 @@
 ## Prerequisites
 - Node.js 20+, npm 9+
 - Python 3.11+
-- Supabase CLI (for type generation)
-- Docker (for backend)
+- Supabase CLI
 - Git
 
 ## Getting Started
@@ -12,16 +11,8 @@
 ### Initial Setup
 ```bash
 git clone <repo-url>
-cd alleato-procore
-npm install                    # Root dependencies
-
-# Frontend
-cd frontend && npm install
-cd ..
-
-# Backend
-cd backend && pip install -r requirements.txt
-cd ..
+cd alleato-pm
+npm run install:all
 ```
 
 ### Environment Variables
@@ -30,10 +21,7 @@ Frontend requires `.env.local` in `frontend/`:
 - NEXT_PUBLIC_SUPABASE_ANON_KEY
 - SUPABASE_SERVICE_ROLE_KEY
 
-Backend requires `.env` at project root:
-- SUPABASE_URL, SUPABASE_SERVICE_KEY, SUPABASE_ANON_KEY
-- OPENAI_API_KEY
-- PROCORE_USER, PROCORE_PASSWORD (for crawlers/tests)
+Backend configuration depends on the local backend startup path. Use the variables expected by `backend/start.sh` and the backend service configuration before running `npm run dev:backend`.
 
 ## Development Commands
 
@@ -46,37 +34,37 @@ npm run dev:backend            # Backend only
 
 ### Build & Quality
 ```bash
-npm run build                  # Production build
-npm run quality                # TypeScript check + ESLint
-npm run quality:fix            # Auto-fix lint issues
+npm run build                  # Frontend production build
+cd frontend && npm run quality
+cd frontend && npm run quality:fix
 ```
 
 ### Database
 ```bash
 npm run db:types               # Regenerate Supabase types (MANDATORY before DB work)
-npm run db:generate            # Generate Drizzle migrations
-npm run db:migrate             # Run migrations
 npm run db:push                # Push schema changes
-npm run db:studio              # Open Drizzle Studio
 npm run seed:db                # Seed database
 npm run seed:financial         # Seed financial data
 ```
 
 ### Testing
 ```bash
-# E2E (Playwright) - from frontend/
-npm run test                   # Headless
-npm run test:headed            # With browser
-npm run test:ui                # Playwright UI mode (best for debugging)
-npm run test:report            # View report
+# Preferred interactive verification
+npm run verify:browser
 
-# Unit (Jest) - from frontend/
-npm run test:unit
-npm run test:unit:watch
-npm run test:unit:coverage
+# Repo-level tests
+npm run test
+npm run test:backend
+
+# Frontend tests
+cd frontend && npm run test
+cd frontend && npm run test:headed
+cd frontend && npm run test:ui
+cd frontend && npm run test:unit
+cd frontend && npm run test:unit:coverage
 
 # Single test file
-npx playwright test tests/e2e/specific-test.spec.ts --headed
+cd frontend && npx playwright test tests/e2e/specific-test.spec.ts --config=config/playwright/playwright.config.ts --headed
 ```
 
 Auth is AUTOMATIC - saved in tests/.auth/user.json. Never manually log in.
@@ -90,7 +78,16 @@ Before ANY database code: run `npm run db:types`, read database.types.ts, verify
 Use [projectId], [companyId], [contractId], [userId], [recordId] - NEVER generic [id]. Run `npm run check:routes` after creating routes.
 
 ### 3. Next.js Cache Gate
-Before debugging ANY 404: `cd frontend && rm -rf .next && pkill -f "next dev" && npm run dev`
+Before debugging any 404 or routing issue on new files:
+
+```bash
+cd frontend
+rm -rf .next
+pkill -f "next dev"
+npm run dev > /tmp/nextjs-dev.log 2>&1 &
+sleep 10
+tail -20 /tmp/nextjs-dev.log
+```
 
 ### 4. Root Cause Gate
 Before modifying code: gather runtime evidence, state root cause with evidence, THEN fix.
@@ -100,14 +97,6 @@ All project pages MUST use ProjectPageHeader + PageContainer from @/components/l
 
 ### 6. Authentication Gate
 Never ask for manual login. Credentials in .env. Playwright uses saved auth state.
-
-## Scaffolding System
-```bash
-/create-feature <EntityName>               # Full CRUD with all gates enforced
-/create-feature Entity --fields 'f1:type'  # Custom fields
-/api-endpoint GET contracts export-csv     # Add endpoint to existing entity
-/supabase-migration add column X to Y      # Schema change only
-```
 
 ## Architecture Patterns
 
@@ -136,18 +125,10 @@ QueryProvider -> ThemeProvider -> ProjectProvider -> FavoritesProvider -> Header
 - Tables use DataTable components with responsive variants
 - Project pages: ProjectPageHeader + PageContainer
 
-## CI/CD Pipeline
-- **ci.yml**: Quality (lint+typecheck) -> Unit Tests -> Build (on PRs and main)
-- **deploy-frontend.yml**: Vercel preview on PR, production on main
-- **deploy-backend.yml**: Backend tests -> Render deploy on main
-- **e2e.yml**: Smoke on PR, full suite on main + nightly
-- 10 total GitHub Actions workflows
-
 ## Deployment
 - Frontend: Vercel (automatic from GitHub)
 - Backend: Render (Docker container, port 8000)
 - Database: Supabase hosted
-- CORS configured in render.yaml
 
 ## Common Pitfalls
 1. Never install @supabase/auth-helpers-nextjs (deprecated, use @supabase/ssr)
@@ -155,6 +136,6 @@ QueryProvider -> ThemeProvider -> ProjectProvider -> FavoritesProvider -> Header
 3. FK types must match PK types (projects.id = INTEGER)
 4. Don't use generic [id] in dynamic routes
 5. Run db:types before any database work
-6. Use /create-feature instead of writing CRUD from scratch
+6. Prefer `npm run verify:browser` for evidence-based end-to-end verification
 
-_Generated using BMAD Method document-project workflow_
+_Originally generated via BMAD and updated to match current repo commands and gates._

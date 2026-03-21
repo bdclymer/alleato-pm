@@ -31,8 +31,8 @@ import { Textarea } from "@/components/ui/textarea";
 const schema = z.object({
   pcco_number: z.string().min(1, "PCCO number is required"),
   title: z.string().min(1, "Title is required"),
-  status: z.string().default("Proposed"),
-  total_amount: z.number().default(0),
+  status: z.string().min(1),
+  total_amount: z.number(),
 });
 
 type FormData = z.infer<typeof schema>;

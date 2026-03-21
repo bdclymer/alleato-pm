@@ -75,8 +75,6 @@ route,kind,dynamic,refCount,file,refSample
 /admin/company-knowledge,page,false,3,frontend/src/app/(main)/admin/company-knowledge/page.tsx,frontend/src/app/api/admin/company-knowledge/route.ts; frontend/src/hooks/use-company-knowledge.ts; frontend/src/lib/navigation-config.ts
 /ai-assistant,page,false,11,frontend/src/app/(chat)/ai-assistant/page.tsx,frontend/src/app/(main)/admin/ai-observability/page.tsx; frontend/src/app/api/ai-assistant/conversations/[sessionId]/route.ts; frontend/src/app/api/ai-assistant/conversations/route.ts; frontend/src/app/api/ai-assistant/feedback/route.ts; frontend/src/app/api/ai-assistant/messages/[sessionId]/route.ts
 /api-docs,page,false,1,frontend/src/app/api-docs/page.tsx,frontend/src/app/redoc/page.tsx
-/api/_archived/contracts,api,false,0,frontend/src/app/api/_archived/contracts/route.ts,
-/api/_archived/contracts/[id],api,true,0,frontend/src/app/api/_archived/contracts/[id]/route.ts,
 /api/admin/company-context,api,false,1,frontend/src/app/api/admin/company-context/route.ts,frontend/src/hooks/use-company-knowledge.ts
 /api/admin/company-knowledge,api,false,1,frontend/src/app/api/admin/company-knowledge/route.ts,frontend/src/hooks/use-company-knowledge.ts
 /api/admin/set-admin-status,api,false,0,frontend/src/app/api/admin/set-admin-status/route.ts,

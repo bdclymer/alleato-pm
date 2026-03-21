@@ -48,6 +48,7 @@ interface PrimeCO {
   status: string | null;
   total_amount: number | null;
   contract_id: number | null;
+  prime_contract_id: string | null;
   executed: boolean;
   submitted_at: string | null;
   approved_at: string | null;
@@ -55,11 +56,18 @@ interface PrimeCO {
   project_id: number | null;
 }
 
+interface PrimeContractOption {
+  id: string;
+  contract_number: string;
+  title: string | null;
+}
+
 const editSchema = z.object({
   pcco_number: z.string().min(1, "Number is required"),
   title: z.string().min(1, "Title is required"),
   status: z.string().min(1, "Status is required"),
   total_amount: z.number(),
+  prime_contract_id: z.string().nullable().optional(),
 });
 
 type FormData = z.infer<typeof editSchema>;
@@ -98,6 +106,7 @@ export default function PrimeContractCODetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [primeContracts, setPrimeContracts] = useState<PrimeContractOption[]>([]);
 
   // Attachments
   interface Attachment {
@@ -186,10 +195,23 @@ export default function PrimeContractCODetailPage() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const res = await fetch(apiBase);
-        if (!res.ok) throw new Error("Failed to fetch change order");
-        const data = await res.json();
+        const [coRes, contractsRes] = await Promise.all([
+          fetch(apiBase),
+          fetch(`/api/projects/${projectId}/contracts`),
+        ]);
+        if (!coRes.ok) throw new Error("Failed to fetch change order");
+        const data = await coRes.json();
         setCo(data);
+        if (contractsRes.ok) {
+          const contractsData = await contractsRes.json();
+          setPrimeContracts(
+            (contractsData as PrimeContractOption[]).map((c) => ({
+              id: c.id,
+              contract_number: c.contract_number,
+              title: c.title,
+            })),
+          );
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load");
       } finally {
@@ -198,7 +220,7 @@ export default function PrimeContractCODetailPage() {
     };
     fetchData();
     fetchAttachments();
-  }, [apiBase, fetchAttachments]);
+  }, [apiBase, projectId, fetchAttachments]);
 
   useEffect(() => {
     if (searchParams.get("edit") === "1") setIsEditing(true);
@@ -211,6 +233,7 @@ export default function PrimeContractCODetailPage() {
       title: co.title || "",
       status: co.status || "Proposed",
       total_amount: co.total_amount ?? 0,
+      prime_contract_id: co.prime_contract_id ?? null,
     });
   }, [co, form]);
 
@@ -404,6 +427,34 @@ export default function PrimeContractCODetailPage() {
                             <SelectItem value="Proposed">Proposed</SelectItem>
                             <SelectItem value="Approved">Approved</SelectItem>
                             <SelectItem value="Rejected">Rejected</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="prime_contract_id"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Prime Contract</FormLabel>
+                        <Select
+                          onValueChange={(val) => field.onChange(val === "__none__" ? null : val)}
+                          value={field.value ?? "__none__"}
+                        >
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Not assigned" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="__none__">Not assigned</SelectItem>
+                            {primeContracts.map((c) => (
+                              <SelectItem key={c.id} value={c.id}>
+                                {c.contract_number} — {c.title || "Untitled"}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                         <FormMessage />

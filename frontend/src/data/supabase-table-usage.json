@@ -21,12 +21,6 @@
       ]
     },
     {
-      "file": "frontend/src/app/api/_archived/contracts/[id]/route.ts",
-      "tables": [
-        "contracts"
-      ]
-    },
-    {
       "file": "frontend/src/app/api/commitments/[id]/route.ts",
       "tables": [
         "commitments"
@@ -146,12 +140,6 @@
       "table": "commitments",
       "files": [
         "frontend/src/app/api/commitments/[id]/route.ts"
-      ]
-    },
-    {
-      "table": "contracts",
-      "files": [
-        "frontend/src/app/api/_archived/contracts/[id]/route.ts"
       ]
     },
     {

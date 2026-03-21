@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   ChevronLeft,
@@ -10,6 +10,8 @@ import {
   Search,
   Activity,
   X,
+  Eye,
+  EyeOff,
   Pencil,
   MousePointer2,
   Square,
@@ -21,9 +23,14 @@ import {
   ZoomIn,
   ZoomOut,
   RotateCw,
+  RotateCcw,
   Link2,
   Link,
   Plus,
+  Maximize2,
+  Minimize2,
+  GripVertical,
+  SlidersHorizontal,
 } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
@@ -73,7 +80,9 @@ const DrawingViewerWithComments = dynamic(
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 type AnnotationTool = "select" | "pen" | "rectangle" | "arrow" | "text" | "eraser" | "comment" | "link";
-type RightPanel = "info" | "search" | "activity" | "links" | null;
+type RightPanel = "info" | "search" | "activity" | "links" | "filter" | null;
+type LocalAnnotationType = "pen" | "rectangle" | "arrow" | "text";
+type PinFilterType = DrawingMarkupPin["pin_type"];
 
 // Annotation tools (excludes "link" which is handled separately)
 const ANNOTATION_TOOLS: { tool: AnnotationTool; icon: React.ReactNode; label: string }[] = [
@@ -90,6 +99,23 @@ const ANNOTATION_TOOLS: { tool: AnnotationTool; icon: React.ReactNode; label: st
 const PRESET_COLORS = [
   "#ef4444", "#f97316", "#eab308", "#22c55e",
   "#3b82f6", "#8b5cf6", "#000000", "#ffffff",
+];
+
+const LOCAL_ANNOTATION_FILTERS: { key: LocalAnnotationType; label: string }[] = [
+  { key: "pen", label: "Freehand" },
+  { key: "rectangle", label: "Rectangles" },
+  { key: "arrow", label: "Arrows" },
+  { key: "text", label: "Text" },
+];
+
+const PIN_FILTERS: { key: PinFilterType; label: string }[] = [
+  { key: "rfi", label: "RFIs" },
+  { key: "punch_item", label: "Punch Items" },
+  { key: "coordination_issue", label: "Coordination Issues" },
+  { key: "task", label: "Tasks" },
+  { key: "drawing", label: "Drawing Links" },
+  { key: "document", label: "Documents" },
+  { key: "photo", label: "Photos" },
 ];
 
 function formatDateSafe(dateStr: string | null | undefined) {
@@ -193,11 +219,36 @@ export default function DrawingViewerPage() {
     const cur = s ?? 1;
     return Math.max([...ZOOM_LEVELS].reverse().find((l) => l < cur) ?? cur * 0.8, 0.1);
   });
+  const rotateLeft = () => setViewRotation((r) => ((r - 90) % 360 + 360) % 360);
   const rotateRight = () => setViewRotation((r) => (r + 90) % 360);
 
   // Right panel
   const [activePanel, setActivePanel] = useState<RightPanel>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [visibleLayers, setVisibleLayers] = useState({
+    comments: true,
+    links: true,
+    localMarkup: true,
+  });
+  const [visibleLocalAnnotations, setVisibleLocalAnnotations] = useState<Record<LocalAnnotationType, boolean>>({
+    pen: true,
+    rectangle: true,
+    arrow: true,
+    text: true,
+  });
+  const [visiblePinTypes, setVisiblePinTypes] = useState<Record<PinFilterType, boolean>>({
+    rfi: true,
+    punch_item: true,
+    coordination_issue: true,
+    task: true,
+    drawing: true,
+    document: true,
+    photo: true,
+  });
+  const [rightPanelWidth, setRightPanelWidth] = useState(360);
+  const [isRightPanelExpanded, setIsRightPanelExpanded] = useState(false);
+  const [isResizingRightPanel, setIsResizingRightPanel] = useState(false);
+  const bodyRef = useRef<HTMLDivElement>(null);
 
   // Page info
   const [pageInfo, setPageInfo] = useState({ current: 1, total: 0 });
@@ -250,6 +301,58 @@ export default function DrawingViewerPage() {
     setActivePanel((prev) => (prev === panel ? null : panel));
   };
 
+  const clampPanelWidth = useCallback((width: number) => {
+    const containerWidth = bodyRef.current?.clientWidth ?? 0;
+    const maxWidth = Math.max(360, containerWidth - 56);
+    return Math.min(Math.max(width, 320), maxWidth);
+  }, []);
+
+  const handleRightPanelExpandToggle = useCallback(() => {
+    setIsRightPanelExpanded((prev) => !prev);
+  }, []);
+
+  useEffect(() => {
+    if (!activePanel) {
+      setIsResizingRightPanel(false);
+    }
+  }, [activePanel]);
+
+  useEffect(() => {
+    if (!isRightPanelExpanded || !activePanel) return;
+    const resizeObserver = new ResizeObserver(() => {
+      const containerWidth = bodyRef.current?.clientWidth ?? 0;
+      setRightPanelWidth(Math.max(360, containerWidth - 56));
+    });
+    if (bodyRef.current) {
+      resizeObserver.observe(bodyRef.current);
+      setRightPanelWidth(Math.max(360, bodyRef.current.clientWidth - 56));
+    }
+    return () => resizeObserver.disconnect();
+  }, [activePanel, isRightPanelExpanded]);
+
+  useEffect(() => {
+    if (!isResizingRightPanel) return;
+
+    const handlePointerMove = (event: MouseEvent) => {
+      const containerRect = bodyRef.current?.getBoundingClientRect();
+      if (!containerRect) return;
+      const nextWidth = containerRect.right - event.clientX;
+      setRightPanelWidth(clampPanelWidth(nextWidth));
+    };
+
+    const handlePointerUp = () => {
+      setIsResizingRightPanel(false);
+    };
+
+    window.addEventListener("mousemove", handlePointerMove);
+    window.addEventListener("mouseup", handlePointerUp);
+
+    return () => {
+      window.removeEventListener("mousemove", handlePointerMove);
+      window.removeEventListener("mouseup", handlePointerUp);
+    };
+  }, [clampPanelWidth, isResizingRightPanel]);
+
   // Handle link tool click on canvas
   const handleCommentClick = useCallback((x: number, y: number, page: number) => {
     if (activeTool === "link") {
@@ -275,23 +378,69 @@ export default function DrawingViewerPage() {
     : drawings;
 
   // Link pins overlay (rendered inside the PDF page container)
+  const filteredPins = pins.filter(
+    (pin) =>
+      visibleLayers.links &&
+      visiblePinTypes[pin.pin_type] &&
+      (pin.page === pageInfo.current || pageInfo.total === 0)
+  );
+
+  const visibleLocalAnnotationTypes = visibleLayers.localMarkup
+    ? (Object.entries(visibleLocalAnnotations)
+        .filter(([, visible]) => visible)
+        .map(([key]) => key) as LocalAnnotationType[])
+    : [];
+
   const linkPinsOverlay = (
     <>
-      {pins
-        .filter((p) => p.page === pageInfo.current || pageInfo.total === 0)
-        .map((pin) => (
-          <LinkPin
-            key={pin.id}
-            pin={pin}
-            highlighted={highlightedPinId === pin.id}
-          />
-        ))}
+      {filteredPins.map((pin) => (
+        <LinkPin
+          key={pin.id}
+          pin={pin}
+          highlighted={highlightedPinId === pin.id}
+        />
+      ))}
     </>
   );
 
   // The tool passed to DrawingViewer — "link" maps to "comment" in the canvas
   // (both use the canvas click handler, but we intercept "link" clicks above)
   const viewerTool = activeTool === "link" ? "comment" : activeTool;
+
+  const toggleLayer = (key: keyof typeof visibleLayers) => {
+    setVisibleLayers((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const toggleLocalAnnotation = (key: LocalAnnotationType) => {
+    setVisibleLocalAnnotations((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const togglePinType = (key: PinFilterType) => {
+    setVisiblePinTypes((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const setAllFilters = (visible: boolean) => {
+    setVisibleLayers({
+      comments: visible,
+      links: visible,
+      localMarkup: visible,
+    });
+    setVisibleLocalAnnotations({
+      pen: visible,
+      rectangle: visible,
+      arrow: visible,
+      text: visible,
+    });
+    setVisiblePinTypes({
+      rfi: visible,
+      punch_item: visible,
+      coordination_issue: visible,
+      task: visible,
+      drawing: visible,
+      document: visible,
+      photo: visible,
+    });
+  };
 
   if (error) {
     return (
@@ -413,6 +562,7 @@ export default function DrawingViewerPage() {
             {(
               [
                 { panel: "links" as RightPanel, icon: <Link className="h-4 w-4" />, label: `Links${pins.length > 0 ? ` (${pins.length})` : ""}` },
+                { panel: "filter" as RightPanel, icon: <SlidersHorizontal className="h-4 w-4" />, label: "Filter annotations" },
                 { panel: "info" as RightPanel, icon: <Info className="h-4 w-4" />, label: "Info" },
                 { panel: "search" as RightPanel, icon: <Search className="h-4 w-4" />, label: "Search drawings" },
                 { panel: "activity" as RightPanel, icon: <Activity className="h-4 w-4" />, label: "Activity & Comments" },
@@ -460,7 +610,13 @@ export default function DrawingViewerPage() {
         </div>
 
         {/* ── Body ─────────────────────────────────────────────────────────── */}
-        <div className="flex-1 flex overflow-hidden">
+        <div
+          ref={bodyRef}
+          className={cn(
+            "flex-1 flex overflow-hidden",
+            isResizingRightPanel && "cursor-col-resize select-none"
+          )}
+        >
 
           {/* ── Left sidebar ─────────────────────────────────────────────── */}
           <div className="w-14 shrink-0 flex flex-col items-center py-3 gap-1 bg-zinc-800 border-r border-zinc-700">
@@ -525,6 +681,7 @@ export default function DrawingViewerPage() {
               {[
                 { action: zoomIn, icon: <ZoomIn className="h-4 w-4" />, label: "Zoom in" },
                 { action: zoomOut, icon: <ZoomOut className="h-4 w-4" />, label: "Zoom out" },
+                { action: rotateLeft, icon: <RotateCcw className="h-4 w-4" />, label: "Rotate left" },
                 { action: rotateRight, icon: <RotateCw className="h-4 w-4" />, label: "Rotate 90°" },
               ].map(({ action, icon, label }) => (
                 <Tooltip key={label}>
@@ -568,6 +725,8 @@ export default function DrawingViewerPage() {
                 onPageNumberChange={handlePageNumberChange}
                 onCommentClick={handleCommentClick}
                 linkPinsOverlay={linkPinsOverlay}
+                showCommentPins={visibleLayers.comments}
+                visibleAnnotationTypes={visibleLocalAnnotationTypes}
                 className="h-full border-none rounded-none bg-zinc-900"
               />
             )}
@@ -580,23 +739,61 @@ export default function DrawingViewerPage() {
 
           {/* ── Right sidebar ────────────────────────────────────────────── */}
           {activePanel && (
-            <div className="w-72 shrink-0 flex flex-col bg-zinc-800 border-l border-zinc-700 overflow-hidden">
+            <div
+              className="relative shrink-0 flex flex-col bg-zinc-800 border-l border-zinc-700 overflow-hidden"
+              style={{
+                width: isRightPanelExpanded
+                  ? "calc(100% - 3.5rem)"
+                  : `${rightPanelWidth}px`,
+              }}
+            >
+              <button
+                type="button"
+                aria-label="Resize sidebar"
+                onMouseDown={() => {
+                  setIsRightPanelExpanded(false);
+                  setIsResizingRightPanel(true);
+                }}
+                className={cn(
+                  "absolute inset-y-0 left-0 z-20 flex w-3 -translate-x-1/2 items-center justify-center",
+                  "text-zinc-500 hover:text-zinc-300",
+                  isResizingRightPanel && "text-zinc-200"
+                )}
+              >
+                <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-zinc-700/80" />
+                <GripVertical className="relative h-4 w-4 rounded bg-zinc-800" />
+              </button>
 
               {/* Panel header */}
               <div className="h-10 shrink-0 flex items-center justify-between px-3 border-b border-zinc-700">
                 <span className="text-sm font-medium text-white capitalize">
                   {activePanel === "activity" ? "Activity"
+                    : activePanel === "filter" ? "Filter"
                     : activePanel === "info" ? "Info"
                     : activePanel === "links" ? "Links"
                     : "Search"}
                 </span>
-                <button
-                  type="button"
-                  onClick={() => setActivePanel(null)}
-                  className="h-6 w-6 flex items-center justify-center rounded text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={handleRightPanelExpandToggle}
+                    className="h-6 w-6 flex items-center justify-center rounded text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors"
+                    aria-label={isRightPanelExpanded ? "Restore sidebar width" : "Expand sidebar"}
+                  >
+                    {isRightPanelExpanded ? (
+                      <Minimize2 className="h-3.5 w-3.5" />
+                    ) : (
+                      <Maximize2 className="h-3.5 w-3.5" />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActivePanel(null)}
+                    className="h-6 w-6 flex items-center justify-center rounded text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
 
               {/* ── Links panel ─────────────────────────────────────────── */}
@@ -626,6 +823,92 @@ export default function DrawingViewerPage() {
                     currentPage={pageInfo.current}
                     onPinHover={setHighlightedPinId}
                   />
+                </div>
+              )}
+
+              {/* ── Filter panel ────────────────────────────────────────── */}
+              {activePanel === "filter" && (
+                <div className="flex-1 overflow-y-auto px-3 py-3 space-y-5">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs uppercase tracking-wider text-zinc-500">Visibility</span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => setAllFilters(true)}
+                        className="rounded px-2 py-1 text-[11px] text-zinc-300 hover:bg-zinc-700"
+                      >
+                        Show all
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setAllFilters(false)}
+                        className="rounded px-2 py-1 text-[11px] text-zinc-300 hover:bg-zinc-700"
+                      >
+                        Hide all
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-xs uppercase tracking-wider text-zinc-500">Layers</p>
+                    {[
+                      { key: "comments" as const, label: "Comments" },
+                      { key: "links" as const, label: "Linked items" },
+                      { key: "localMarkup" as const, label: "Drawn markup" },
+                    ].map((item) => (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => toggleLayer(item.key)}
+                        className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left hover:bg-zinc-700/60"
+                      >
+                        <span className="text-sm text-zinc-200">{item.label}</span>
+                        {visibleLayers[item.key] ? (
+                          <Eye className="h-4 w-4 text-zinc-400" />
+                        ) : (
+                          <EyeOff className="h-4 w-4 text-zinc-500" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-xs uppercase tracking-wider text-zinc-500">Drawn markup</p>
+                    {LOCAL_ANNOTATION_FILTERS.map((item) => (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => toggleLocalAnnotation(item.key)}
+                        className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left hover:bg-zinc-700/60"
+                      >
+                        <span className="text-sm text-zinc-200">{item.label}</span>
+                        {visibleLocalAnnotations[item.key] ? (
+                          <Eye className="h-4 w-4 text-zinc-400" />
+                        ) : (
+                          <EyeOff className="h-4 w-4 text-zinc-500" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="space-y-2">
+                    <p className="text-xs uppercase tracking-wider text-zinc-500">Linked item types</p>
+                    {PIN_FILTERS.map((item) => (
+                      <button
+                        key={item.key}
+                        type="button"
+                        onClick={() => togglePinType(item.key)}
+                        className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left hover:bg-zinc-700/60"
+                      >
+                        <span className="text-sm text-zinc-200">{item.label}</span>
+                        {visiblePinTypes[item.key] ? (
+                          <Eye className="h-4 w-4 text-zinc-400" />
+                        ) : (
+                          <EyeOff className="h-4 w-4 text-zinc-500" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
 

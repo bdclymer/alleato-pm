@@ -1,12 +1,12 @@
 "use client";
 
 import {
-  Sources,
-  SourcesTrigger,
-  SourcesContent,
-  Source,
-} from "@/components/ai-elements/sources";
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { FileTextIcon, FileSpreadsheetIcon, FileIcon } from "lucide-react";
+import { useState } from "react";
 
 interface SourceItem {
   document_id?: string;
@@ -92,6 +92,8 @@ function getSourceHref(source: SourceItem): string {
 }
 
 export function SourceCitations({ sources }: SourceCitationsProps) {
+  const [open, setOpen] = useState(false);
+
   if (!sources || sources.length === 0) return null;
 
   const items = sources as SourceItem[];
@@ -101,16 +103,18 @@ export function SourceCitations({ sources }: SourceCitationsProps) {
 
   if (validSources.length === 0) return null;
 
-  // Auto-expand when 3 or fewer sources for better visibility
-  const autoExpand = validSources.length <= 3;
-
   return (
-    <Sources defaultOpen={autoExpand}>
-      <SourcesTrigger count={validSources.length} />
-      <SourcesContent>
+    <Collapsible
+      open={open}
+      onOpenChange={setOpen}
+      className="mt-3 border-t border-border/60 pt-2"
+    >
+      <CollapsibleTrigger className="text-xs font-medium text-muted-foreground hover:text-foreground">
+        Sources ({validSources.length})
+      </CollapsibleTrigger>
+      <CollapsibleContent className="mt-2 grid gap-2">
         {validSources.map((source, i) => {
-          const title =
-            source.metadata?.title || `Source ${i + 1}`;
+          const title = source.metadata?.title || `Source ${i + 1}`;
           const snippet = source.snippet
             ? source.snippet.substring(0, 120) + "..."
             : null;
@@ -119,26 +123,28 @@ export function SourceCitations({ sources }: SourceCitationsProps) {
           const href = getSourceHref(source);
 
           return (
-            <div key={source.document_id || i} className="flex flex-col gap-1">
-              <Source href={href} title={title}>
-                <IconComponent className="h-4 w-4 shrink-0 text-muted-foreground" />
-                <div className="flex min-w-0 flex-col">
-                  <span className="block truncate font-medium text-sm">
-                    {title}
+            <a
+              key={source.document_id || i}
+              href={href}
+              className="flex min-w-0 items-start gap-2 rounded-xl border border-border/70 bg-muted/30 px-3 py-2 no-underline transition-colors hover:bg-muted/60"
+            >
+              <IconComponent className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
+              <div className="min-w-0">
+                <span className="block truncate text-sm font-medium text-foreground">
+                  {title}
+                </span>
+                {(snippet || docType) && (
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {docType && <span className="capitalize">{docType}</span>}
+                    {docType && snippet && " · "}
+                    {snippet}
                   </span>
-                  {(snippet || docType) && (
-                    <span className="block truncate text-muted-foreground text-xs">
-                      {docType && <span className="capitalize">{docType}</span>}
-                      {docType && snippet && " · "}
-                      {snippet}
-                    </span>
-                  )}
-                </div>
-              </Source>
-            </div>
+                )}
+              </div>
+            </a>
           );
         })}
-      </SourcesContent>
-    </Sources>
+      </CollapsibleContent>
+    </Collapsible>
   );
 }

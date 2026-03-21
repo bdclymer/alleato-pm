@@ -40,6 +40,7 @@ export default async function ProjectChangeOrdersPage({
     status: co.status,
     total_amount: co.total_amount,
     contract_id: co.contract_id,
+    prime_contract_id: co.prime_contract_id ?? null,
     executed: co.executed ?? false,
     submitted_at: co.submitted_at,
     approved_at: co.approved_at,
