@@ -197,6 +197,38 @@ export {
 } from "@/components/ui/accordion";
 
 // ---------------------------------------------------------------------------
+// Table Cell Primitives (use ONLY these in column render functions)
+// ---------------------------------------------------------------------------
+
+export {
+  // Text
+  CellText,
+  TruncatedCell,
+  // Links
+  CellLink,
+  CellEmail,
+  // Numeric
+  CellCurrency,
+  CellNumber,
+  CellPercent,
+  // Date
+  CellDate,
+  TableDateValue,
+  // Status
+  CellStatus,
+  TableStatusDot,
+  // Tags / Categories
+  TableTagBadge,
+  CellBadge,
+  // People
+  TableAvatarUsers,
+  // Misc
+  TableCountIndicator,
+  TableRowActionsMenu,
+} from "@/components/tables/unified/table-primitives";
+export type { CellColorMap, TableBadgeVariant, TableRowActionItem } from "@/components/tables/unified/table-primitives";
+
+// ---------------------------------------------------------------------------
 // Layout Components (re-exported for convenience)
 // ---------------------------------------------------------------------------
 

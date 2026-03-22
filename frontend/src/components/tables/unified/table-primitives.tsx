@@ -21,6 +21,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { StatusBadge } from "@/components/ds/status-badge";
 
 export type TableBadgeVariant = "default" | "secondary" | "outline";
 
@@ -492,6 +493,155 @@ export function TruncatedCell({
       </Tooltip>
     </TooltipProvider>
   );
+}
+
+// ── CellCurrency ─────────────────────────────────────────────────────────────
+
+interface CellCurrencyProps {
+  value: number | string | null | undefined;
+  emptyLabel?: string;
+  muted?: boolean;
+  className?: string;
+}
+
+/** Currency cell. Formats as USD with commas. Always uses tabular-nums. */
+export function CellCurrency({
+  value,
+  emptyLabel = "—",
+  muted = false,
+  className,
+}: CellCurrencyProps): React.ReactElement {
+  if (value === null || value === undefined || value === "") {
+    return <span className="text-muted-foreground">{emptyLabel}</span>;
+  }
+  const num = typeof value === "string" ? parseFloat(value) : value;
+  if (isNaN(num)) {
+    return <span className="text-muted-foreground">{emptyLabel}</span>;
+  }
+  const formatted = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(num);
+  return (
+    <span className={cn("tabular-nums", muted ? "text-muted-foreground" : undefined, className)}>
+      {formatted}
+    </span>
+  );
+}
+
+// ── CellNumber ────────────────────────────────────────────────────────────────
+
+interface CellNumberProps {
+  value: number | string | null | undefined;
+  decimals?: number;
+  emptyLabel?: string;
+  muted?: boolean;
+  className?: string;
+}
+
+/** Plain number cell with optional decimal places and tabular-nums font. */
+export function CellNumber({
+  value,
+  decimals = 0,
+  emptyLabel = "—",
+  muted = false,
+  className,
+}: CellNumberProps): React.ReactElement {
+  if (value === null || value === undefined || value === "") {
+    return <span className="text-muted-foreground">{emptyLabel}</span>;
+  }
+  const num = typeof value === "string" ? parseFloat(value) : value;
+  if (isNaN(num)) {
+    return <span className="text-muted-foreground">{emptyLabel}</span>;
+  }
+  const formatted = new Intl.NumberFormat("en-US", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  }).format(num);
+  return (
+    <span className={cn("tabular-nums", muted ? "text-muted-foreground" : undefined, className)}>
+      {formatted}
+    </span>
+  );
+}
+
+// ── CellPercent ───────────────────────────────────────────────────────────────
+
+interface CellPercentProps {
+  value: number | string | null | undefined;
+  decimals?: number;
+  emptyLabel?: string;
+  muted?: boolean;
+  className?: string;
+}
+
+/** Percentage cell. Appends % symbol with tabular-nums. */
+export function CellPercent({
+  value,
+  decimals = 1,
+  emptyLabel = "—",
+  muted = false,
+  className,
+}: CellPercentProps): React.ReactElement {
+  if (value === null || value === undefined || value === "") {
+    return <span className="text-muted-foreground">{emptyLabel}</span>;
+  }
+  const num = typeof value === "string" ? parseFloat(value) : value;
+  if (isNaN(num)) {
+    return <span className="text-muted-foreground">{emptyLabel}</span>;
+  }
+  return (
+    <span className={cn("tabular-nums", muted ? "text-muted-foreground" : undefined, className)}>
+      {num.toFixed(decimals)}%
+    </span>
+  );
+}
+
+// ── CellDate ──────────────────────────────────────────────────────────────────
+
+interface CellDateProps {
+  value: string | Date | null | undefined;
+  showTime?: boolean;
+  emptyLabel?: string;
+  className?: string;
+}
+
+/** Date cell. Wraps TableDateValue for consistent formatting across all tables. */
+export function CellDate({
+  value,
+  showTime = false,
+  emptyLabel = "—",
+  className,
+}: CellDateProps): React.ReactElement {
+  const strValue = value instanceof Date ? value.toISOString() : value;
+  return (
+    <TableDateValue
+      value={strValue}
+      showTime={showTime}
+      emptyLabel={emptyLabel}
+      className={className}
+    />
+  );
+}
+
+// ── CellStatus ────────────────────────────────────────────────────────────────
+
+interface CellStatusProps {
+  value: string | null | undefined;
+  emptyLabel?: string;
+  className?: string;
+}
+
+/** Status badge cell. Uses StatusBadge with automatic color mapping from STATUS_TO_VARIANT. */
+export function CellStatus({
+  value,
+  emptyLabel = "—",
+  className,
+}: CellStatusProps): React.ReactElement {
+  if (!value?.trim()) {
+    return <span className="text-muted-foreground">{emptyLabel}</span>;
+  }
+  return <StatusBadge status={value} className={className} />;
 }
 
 // ── Legacy exports below ────────────────────────────────────────────────────
