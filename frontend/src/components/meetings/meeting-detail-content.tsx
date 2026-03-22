@@ -1,20 +1,21 @@
 "use client";
 
 import {
-  ExternalLink,
-  Clock,
-  Calendar,
   ArrowLeft,
-  Users,
+  Calendar,
+  ChevronDown,
+  Clock,
+  ExternalLink,
   FileText,
   FolderOpen,
-  ChevronDown,
+  Users,
 } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
 import * as React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+
 import {
   Collapsible,
   CollapsibleContent,
@@ -148,9 +149,11 @@ function SidebarList({
   );
 }
 
+// ─── Markdown preprocessing ─────────────────────────────────────────────────
+
 /**
  * Pre-process Fireflies content so ReactMarkdown can parse it properly.
- * Handles emoji-prefixed sections (🏭 **Title** ...) by adding blank lines before them.
+ * Adds blank lines before emoji-prefixed sections (🏭 **Title** ...).
  */
 function preprocessMarkdown(text: string): string {
   const lines = text.split("\n");
@@ -158,18 +161,14 @@ function preprocessMarkdown(text: string): string {
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
-    // Detect lines starting with emoji (surrogate pairs or common emoji ranges)
-    const firstChar = line.codePointAt(0) ?? 0;
+    // Detect lines starting with emoji (Unicode emoji ranges)
+    const cp = line.codePointAt(0) ?? 0;
     const startsWithEmoji =
-      firstChar > 0x1F000 ||
-      (firstChar >= 0x2600 && firstChar <= 0x27BF) ||
-      (firstChar >= 0x2700 && firstChar <= 0x27BF) ||
-      (firstChar >= 0xFE00 && firstChar <= 0xFE0F) ||
-      // Also catch emoji modifiers and common patterns
-      /^[\u{1F300}-\u{1FAD6}\u{2600}-\u{27BF}\u{2700}-\u{27BF}]/u.test(line);
+      (cp >= 0x1F300 && cp <= 0x1FAD6) ||
+      (cp >= 0x2600 && cp <= 0x27BF) ||
+      (cp >= 0x2700 && cp <= 0x27BF);
 
     if (startsWithEmoji && i > 0) {
-      // Add blank line before emoji-prefixed lines to create paragraph breaks
       result.push("");
       result.push(line);
     } else {
@@ -240,16 +239,6 @@ function FirefliesSectionContent({ value }: { value: string }) {
   );
 }
 
-function ReadableTextBlock({ value }: { value: string }) {
-  return (
-    <div className="rounded-md border border-border/60 bg-muted/20 p-4">
-      <pre className="whitespace-pre-wrap text-sm leading-6 text-foreground font-sans">
-        {value.trim()}
-      </pre>
-    </div>
-  );
-}
-
 // ─── Main Component ─────────────────────────────────────────────────────────
 
 export function MeetingDetailContent({
@@ -314,17 +303,6 @@ export function MeetingDetailContent({
             {meeting.duration} min
           </span>
         ) : null}
-        {meeting.fireflies_link ? (
-          <a
-            href={meeting.fireflies_link}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
-          >
-            <ExternalLink className="h-3.5 w-3.5" />
-            View in Fireflies
-          </a>
-        ) : null}
         {meeting.project ? (
           <span className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground">
             <FolderOpen className="h-3.5 w-3.5" />
@@ -339,6 +317,17 @@ export function MeetingDetailContent({
             Assign to project
           </button>
         )}
+        {meeting.fireflies_link ? (
+          <a
+            href={meeting.fireflies_link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            View in Fireflies
+          </a>
+        ) : null}
         {meeting.date && meeting.title ? (() => {
           const dateStr = new Date(meeting.date).toISOString().slice(0, 10);
           const filename = `${dateStr} - ${meeting.title}.md`;
@@ -361,7 +350,7 @@ export function MeetingDetailContent({
       <div className="grid gap-20 lg:grid-cols-[minmax(0,1fr)_280px]">
         {/* Main content */}
         <div className="space-y-8">
-          {/* Meeting Overview — accordion (shows structured bullets when available) */}
+          {/* Meeting Overview — shows structured bullets when available */}
           {(shorthandBullet || overviewContent) ? (
             <section className="space-y-4">
               <AccordionSection label="Meeting Overview">
@@ -376,7 +365,7 @@ export function MeetingDetailContent({
             </section>
           ) : null}
 
-          {/* Summary — accordion (collapsed by default) */}
+          {/* Summary — collapsed by default */}
           {parsedSections?.summary && summarySlot ? (
             <section className="border-t border-border pt-6">
               <AccordionSection label="Summary" defaultOpen={false}>
@@ -392,7 +381,7 @@ export function MeetingDetailContent({
             </section>
           ) : null}
 
-          {/* Notes */}
+          {/* Notes — collapsed by default */}
           {notesContent ? (
             <section className="border-t border-border pt-6">
               <AccordionSection label="Notes" defaultOpen={false}>
@@ -401,7 +390,7 @@ export function MeetingDetailContent({
             </section>
           ) : null}
 
-          {/* Action Items */}
+          {/* Action Items — collapsed by default */}
           {actionItemsContent ? (
             <section className="border-t border-border pt-6">
               <AccordionSection label="Action Items" defaultOpen={false}>
@@ -410,7 +399,7 @@ export function MeetingDetailContent({
             </section>
           ) : null}
 
-          {/* Summary Overview (paragraph form) */}
+          {/* Summary Overview (paragraph form — only shown when bullets are in overview) */}
           {overviewContent && shorthandBullet ? (
             <section className="border-t border-border pt-6">
               <AccordionSection label="Summary Overview" defaultOpen={false}>
@@ -421,7 +410,7 @@ export function MeetingDetailContent({
             </section>
           ) : null}
 
-          {/* Discussion Topics — accordion */}
+          {/* Discussion Topics — collapsed by default */}
           {segments.length > 0 && (
             <section className="border-t border-border pt-6">
               <AccordionSection
@@ -516,7 +505,7 @@ export function MeetingDetailContent({
             </div>
           )}
 
-          {/* Related Meetings — below Action Snapshot */}
+          {/* Related Meetings */}
           {relatedMeetings.length > 0 && relatedMeetingsBaseHref && (
             <div className="space-y-4 border-t border-border pt-6">
               <div className="space-y-1">
@@ -555,7 +544,7 @@ export function MeetingDetailContent({
             </div>
           )}
 
-          {/* Topics */}
+          {/* Keywords */}
           {parsedSections?.keywords && (
             <div className="space-y-3 border-t border-border pt-6">
               <div className="text-xs font-semibold uppercase tracking-widest text-primary">
