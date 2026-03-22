@@ -93,6 +93,13 @@ export interface ChangeEventFormData {
   [key: string]: unknown
 }
 
+export interface MarkupRow {
+  markup_type: string
+  percentage: number
+  calculation_order: number
+  compound: boolean
+}
+
 interface ChangeEventLineItemsGridProps {
   items: ChangeEventLineItem[]
   budgetCodes: BudgetCode[]
@@ -103,6 +110,7 @@ interface ChangeEventLineItemsGridProps {
   onUpdate: (index: number, item: ChangeEventLineItem) => void
   form: UseFormReturn<ChangeEventFormData>
   expectingRevenue?: boolean
+  markupRows?: MarkupRow[]
 }
 
 // =============================================================================
@@ -516,6 +524,7 @@ export function ChangeEventLineItemsGrid({
   onRemove,
   form,
   expectingRevenue = false,
+  markupRows = [],
 }: ChangeEventLineItemsGridProps) {
   // Calculate totals
   const calculateTotals = () => {
@@ -531,6 +540,21 @@ export function ChangeEventLineItemsGrid({
   }
 
   const totals = calculateTotals()
+
+  // Calculate markup amounts from Revenue ROM total
+  const markupAmounts = markupRows
+    .sort((a, b) => a.calculation_order - b.calculation_order)
+    .map((markup) => {
+      const base = markup.compound
+        ? totals.revenueRom // compound would use running total, simplified here
+        : totals.revenueRom
+      const amount = base * (markup.percentage / 100)
+      return {
+        ...markup,
+        amount,
+        label: markup.markup_type.charAt(0).toUpperCase() + markup.markup_type.slice(1),
+      }
+    })
 
   return (
     <div className="space-y-4">
@@ -624,6 +648,56 @@ export function ChangeEventLineItemsGrid({
                   </TableCell>
                   <TableCell></TableCell>
                 </TableRow>
+              )}
+
+              {/* Auto-Calculated Markup Rows (Insurance, Fee, etc.) */}
+              {items.length > 0 && markupAmounts.length > 0 && expectingRevenue && (
+                <>
+                  {markupAmounts.map((markup) => (
+                    <TableRow
+                      key={markup.markup_type}
+                      className="bg-amber-50/50 dark:bg-amber-950/20 text-sm italic"
+                    >
+                      <TableCell colSpan={7} className="text-right pr-4">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Calculator className="h-3 w-3 text-amber-600" />
+                          <span className="text-amber-700 dark:text-amber-400">
+                            {markup.label} ({markup.percentage}%)
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <span className="text-amber-700 dark:text-amber-400">
+                          {formatCurrency(markup.amount)}
+                        </span>
+                      </TableCell>
+                      {expectingRevenue && (
+                        <TableCell className="text-right">
+                          <span className="text-amber-700 dark:text-amber-400">
+                            {formatCurrency(markup.amount)}
+                          </span>
+                        </TableCell>
+                      )}
+                      <TableCell></TableCell>
+                      <TableCell></TableCell>
+                    </TableRow>
+                  ))}
+                  <TableRow className="bg-muted/50 font-semibold border-t">
+                    <TableCell colSpan={7} className="text-right pr-4">
+                      Grand Total (with markup):
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatCurrency(totals.costRom + markupAmounts.reduce((s, m) => s + m.amount, 0))}
+                    </TableCell>
+                    {expectingRevenue && (
+                      <TableCell className="text-right">
+                        {formatCurrency(totals.revenueRom + markupAmounts.reduce((s, m) => s + m.amount, 0))}
+                      </TableCell>
+                    )}
+                    <TableCell></TableCell>
+                    <TableCell></TableCell>
+                  </TableRow>
+                </>
               )}
             </TableBody>
           </Table>

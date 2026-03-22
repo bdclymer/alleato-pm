@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Copy, Download, Edit, FileCheck2, MoreHorizontal, Trash2, X, ArrowRight, Clock, Loader2 } from "lucide-react";
+import { ArrowLeft, Calculator, Copy, Download, Edit, FileCheck2, MoreHorizontal, Trash2, X, ArrowRight, Clock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -39,6 +39,7 @@ import { ChangeEventForm, type ChangeEventFormData } from "@/components/domain/c
 import { ChangeEventLineItemsGrid } from "@/components/domain/change-events/ChangeEventLineItemsGrid";
 import { ChangeEventRfqForm } from "@/components/domain/change-events/ChangeEventRfqForm";
 import { useProjectChangeEventRfqs } from "@/hooks/use-change-event-rfqs";
+import { useVerticalMarkup } from "@/hooks/use-vertical-markup";
 
 interface LineItem {
   id: string;
@@ -102,6 +103,7 @@ export default function ChangeEventDetailPage() {
   const [isEditing, setIsEditing] = useState(false);
 
   const { rfqs, createRfq } = useProjectChangeEventRfqs(projectId);
+  const { markupRows } = useVerticalMarkup(projectId);
 
   useProjectTitle(
     changeEvent
@@ -872,6 +874,41 @@ export default function ChangeEventDetailPage() {
                       {formatCurrency(totals.nonCommittedCost)}
                     </div>
                   </div>
+                  {markupRows.length > 0 && changeEvent?.expecting_revenue && (
+                    <>
+                      {markupRows
+                        .sort((a, b) => a.calculation_order - b.calculation_order)
+                        .map((markup) => {
+                          const markupAmount = totals.revenueRom * (Number(markup.percentage) / 100);
+                          return (
+                            <div key={markup.id} className="grid grid-cols-6 gap-4 text-sm italic text-amber-700 dark:text-amber-400">
+                              <div className="flex items-center gap-1">
+                                <Calculator className="h-3 w-3" />
+                                {markup.markup_type.charAt(0).toUpperCase() + markup.markup_type.slice(1)} ({Number(markup.percentage)}%)
+                              </div>
+                              <div></div>
+                              <div></div>
+                              <div>{formatCurrency(markupAmount)}</div>
+                              <div>{formatCurrency(markupAmount)}</div>
+                              <div></div>
+                            </div>
+                          );
+                        })}
+                      <Separator />
+                      <div className="grid grid-cols-6 gap-4 text-sm font-semibold">
+                        <div>Grand Total (with markup):</div>
+                        <div></div>
+                        <div></div>
+                        <div>
+                          {formatCurrency(totals.costRom + markupRows.reduce((s, m) => s + totals.revenueRom * (Number(m.percentage) / 100), 0))}
+                        </div>
+                        <div>
+                          {formatCurrency(totals.revenueRom + markupRows.reduce((s, m) => s + totals.revenueRom * (Number(m.percentage) / 100), 0))}
+                        </div>
+                        <div></div>
+                      </div>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-8">
