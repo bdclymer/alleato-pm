@@ -164,17 +164,17 @@ Fields/columns found on live Procore page but missing from manifest:
 - [ ] Implement column groups in list table: Change Event, Revenue, Cost (DEFERRED — requires UnifiedTablePage enhancement, affects all tools)
 
 ### MEDIUM Impact
-- [ ] Add Commitments tab to detail page
-- [ ] Add Events tab to detail page
-- [ ] Add Advanced Settings tab to detail page
+- [x] Add Commitments tab to detail page (placeholder — no linked commitments data yet)
+- [x] Add Events tab to detail page (placeholder — no related events data yet)
+- [x] Add Advanced Settings tab to detail page (shows Expecting Revenue, Revenue Source, Prime Contract)
 - [x] Fix attachments tab — implement fetch on page load
 - [x] Add Export button to detail page
 - [x] Add More Options dropdown to detail page (Copy ID, Delete)
-- [ ] Enable "Add to" dropdown (currently disabled "coming soon")
-- [ ] Add Classic Summary view option
-- [ ] Add Column Group By functionality
-- [ ] Add Configure columns functionality
-- [ ] Add Recycle Bin access
+- [ ] Enable "Add to" dropdown (DEFERRED — requires Commitment CO and Prime Contract PCO API integration)
+- [ ] Add Classic Summary view option (DEFERRED — requires new summary component with financial aggregation)
+- [ ] Add Column Group By functionality (DEFERRED — requires UnifiedTablePage enhancement)
+- [ ] Add Configure columns functionality (DEFERRED — requires UnifiedTablePage column visibility UI)
+- [ ] Add Recycle Bin access (DEFERRED — requires soft-delete list view with restore)
 
 ### LOW Impact
 - [ ] Match Procore's combined "CE Number - Title" spanning column format

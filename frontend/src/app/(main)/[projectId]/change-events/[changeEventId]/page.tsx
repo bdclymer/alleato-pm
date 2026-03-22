@@ -731,6 +731,15 @@ export default function ChangeEventDetailPage() {
           <TabsTrigger value="rfqs" data-testid="change-event-tab-rfqs">
             RFQs ({rfqs.filter((r) => r.change_event_id === changeEventId).length})
           </TabsTrigger>
+          <TabsTrigger value="commitments" data-testid="change-event-tab-commitments">
+            Commitments
+          </TabsTrigger>
+          <TabsTrigger value="events" data-testid="change-event-tab-events">
+            Events
+          </TabsTrigger>
+          <TabsTrigger value="settings" data-testid="change-event-tab-settings">
+            Advanced Settings
+          </TabsTrigger>
         </TabsList>
 
         {/* General Tab */}
@@ -1061,6 +1070,68 @@ export default function ChangeEventDetailPage() {
                   </div>
                 )
               )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Commitments Tab */}
+        <TabsContent value="commitments">
+          <Card>
+            <CardHeader>
+              <CardTitle>Linked Commitments</CardTitle>
+              <CardDescription>
+                Commitments and commitment change orders linked to this change event.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8">
+                <Text tone="muted">No commitments linked yet</Text>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Events Tab */}
+        <TabsContent value="events">
+          <Card>
+            <CardHeader>
+              <CardTitle>Related Events</CardTitle>
+              <CardDescription>
+                Other change events and related events on this project.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="text-center py-8">
+                <Text tone="muted">No related events</Text>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Advanced Settings Tab */}
+        <TabsContent value="settings">
+          <Card>
+            <CardHeader>
+              <CardTitle>Advanced Settings</CardTitle>
+              <CardDescription>
+                Configuration settings for this change event.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Stack gap="md">
+                <div>
+                  <Text size="sm" weight="medium">Expecting Revenue</Text>
+                  <Text size="sm" tone="muted">{changeEvent.expecting_revenue ? "Yes" : "No"}</Text>
+                </div>
+                <div>
+                  <Text size="sm" weight="medium">Line Item Revenue Source</Text>
+                  <Text size="sm" tone="muted">{changeEvent.line_item_revenue_source || "Not set"}</Text>
+                </div>
+                <div>
+                  <Text size="sm" weight="medium">Prime Contract for Markup Estimates</Text>
+                  <Text size="sm" tone="muted">{changeEvent.prime_contract_id ? `Contract #${changeEvent.prime_contract_id}` : "Not set"}</Text>
+                </div>
+              </Stack>
             </CardContent>
           </Card>
         </TabsContent>
