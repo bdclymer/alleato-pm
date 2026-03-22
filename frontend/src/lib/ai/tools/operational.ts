@@ -2611,6 +2611,392 @@ export function createOperationalTools(
         },
       ),
     }),
+
+    // -----------------------------------------------------------------
+    // SQL Query Tools — direct structured data access
+    // -----------------------------------------------------------------
+
+    queryBudgetData: tool({
+      description:
+        "Query budget line items for a project. Returns cost codes, original budget, " +
+        "changes, revised budget, committed costs, and projected costs. Use for ANY " +
+        "budget or cost question.",
+      inputSchema: z.object({
+        projectId: z.number().optional().describe("Project ID if known"),
+        projectName: z.string().optional().describe("Project name to search for"),
+        costCodeFilter: z
+          .string()
+          .optional()
+          .describe("Filter by cost code (partial match, e.g. '03-100')"),
+      }),
+      execute: withTrace(
+        "queryBudgetData",
+        options,
+        async ({ projectId, projectName, costCodeFilter }) => {
+          const resolved = await resolveProject(supabase, projectId, projectName);
+          if ("error" in resolved) return resolved;
+
+          let query = supabase
+            .from("budget_lines")
+            .select("*, cost_codes:cost_code_id(id, title), cost_types:cost_type_id(id, title)")
+            .eq("project_id", resolved.id)
+            .order("cost_code_id", { ascending: true });
+
+          if (costCodeFilter) {
+            query = query.ilike("cost_code_id", `%${costCodeFilter}%`);
+          }
+
+          const { data, error } = await query.limit(500);
+          if (error) return { error: `Budget query failed: ${error.message}` };
+
+          const rows = (data ?? []) as AnyRow[];
+
+          const totalOriginal = rows.reduce((sum, r) => sum + asNumber(r.original_amount), 0);
+          const totalQuantity = rows.reduce((sum, r) => sum + asNumber(r.quantity), 0);
+
+          return {
+            project: { id: resolved.id, name: resolved.name },
+            totalLineItems: rows.length,
+            totals: {
+              originalBudget: totalOriginal,
+              totalQuantity,
+            },
+            lineItems: rows.map((r) => ({
+              id: r.id,
+              costCode: r.cost_codes,
+              costType: r.cost_types,
+              description: r.description,
+              originalAmount: r.original_amount,
+              quantity: r.quantity,
+              unitCost: r.unit_cost,
+              unitOfMeasure: r.unit_of_measure,
+              forecastingEnabled: r.forecasting_enabled,
+            })),
+          };
+        },
+      ),
+    }),
+
+    queryChangeOrders: tool({
+      description:
+        "Query change orders for a project. Returns CO number, title, status, amount, " +
+        "and related details. Searches both commitment change orders (subcontractor) " +
+        "and prime contract change orders (owner). Use when asked about change orders, " +
+        "COs, PCCOs, or cost changes.",
+      inputSchema: z.object({
+        projectId: z.number().optional().describe("Project ID if known"),
+        projectName: z.string().optional().describe("Project name to search for"),
+        status: z
+          .string()
+          .optional()
+          .describe("Filter by status (e.g. 'draft', 'pending', 'approved', 'void')"),
+      }),
+      execute: withTrace(
+        "queryChangeOrders",
+        options,
+        async ({ projectId, projectName, status }) => {
+          const resolved = await resolveProject(supabase, projectId, projectName);
+          if ("error" in resolved) return resolved;
+
+          // Fetch prime contract change orders (PCCOs)
+          let pccoQuery = supabase
+            .from("prime_contract_change_orders")
+            .select("*")
+            .eq("project_id", resolved.id)
+            .order("created_at", { ascending: false });
+
+          if (status) {
+            pccoQuery = pccoQuery.ilike("status", `%${status}%`);
+          }
+
+          const pccoResult = await pccoQuery.limit(200);
+          const pccos = (pccoResult.data ?? []) as AnyRow[];
+
+          // Fetch commitment (subcontractor) change orders via contract_change_orders
+          // These are linked via contract_id → contracts → project_id
+          let ccoQuery = supabase
+            .from("contract_change_orders")
+            .select("*, contracts:contract_id(id, title, project_id)")
+            .order("created_at", { ascending: false });
+
+          if (status) {
+            ccoQuery = ccoQuery.ilike("status", `%${status}%`);
+          }
+
+          const ccoResult = await ccoQuery.limit(500);
+          // Filter to this project (contract_change_orders don't have project_id directly)
+          const allCcos = (ccoResult.data ?? []) as AnyRow[];
+          const ccos = allCcos.filter((co) => {
+            const contract = co.contracts as AnyRow | null;
+            return contract && asNumber(contract.project_id) === resolved.id;
+          });
+
+          const totalPccoAmount = pccos.reduce((sum, r) => sum + asNumber(r.total_amount), 0);
+          const totalCcoAmount = ccos.reduce((sum, r) => sum + asNumber(r.amount), 0);
+
+          return {
+            project: { id: resolved.id, name: resolved.name },
+            summary: {
+              totalPrimeContractCOs: pccos.length,
+              totalCommitmentCOs: ccos.length,
+              totalPccoAmount,
+              totalCcoAmount,
+              grandTotal: totalPccoAmount + totalCcoAmount,
+            },
+            primeContractChangeOrders: pccos.map((r) => ({
+              id: r.id,
+              pccoNumber: r.pcco_number,
+              title: r.title,
+              status: r.status,
+              totalAmount: r.total_amount,
+              executed: r.executed,
+              createdAt: r.created_at,
+              approvedAt: r.approved_at,
+            })),
+            commitmentChangeOrders: ccos.map((r) => ({
+              id: r.id,
+              changeOrderNumber: r.change_order_number,
+              description: r.description,
+              status: r.status,
+              amount: r.amount,
+              requestedDate: r.requested_date,
+              approvedDate: r.approved_date,
+              contractTitle: (r.contracts as AnyRow | null)?.title,
+            })),
+          };
+        },
+      ),
+    }),
+
+    queryCommitments: tool({
+      description:
+        "Query commitments (subcontracts, purchase orders) for a project. Returns " +
+        "commitment type, title, status, contract number, and financial details. " +
+        "Use when asked about subcontracts, POs, commitments, or vendor contracts.",
+      inputSchema: z.object({
+        projectId: z.number().optional().describe("Project ID if known"),
+        projectName: z.string().optional().describe("Project name to search for"),
+        status: z
+          .string()
+          .optional()
+          .describe("Filter by status (e.g. 'draft', 'approved', 'complete')"),
+      }),
+      execute: withTrace(
+        "queryCommitments",
+        options,
+        async ({ projectId, projectName, status }) => {
+          const resolved = await resolveProject(supabase, projectId, projectName);
+          if ("error" in resolved) return resolved;
+
+          let query = supabase
+            .from("commitments_unified")
+            .select("*")
+            .eq("project_id", resolved.id)
+            .is("deleted_at", null)
+            .order("created_at", { ascending: false });
+
+          if (status) {
+            query = query.ilike("status", `%${status}%`);
+          }
+
+          const { data, error } = await query.limit(300);
+          if (error) return { error: `Commitments query failed: ${error.message}` };
+
+          const rows = (data ?? []) as AnyRow[];
+
+          return {
+            project: { id: resolved.id, name: resolved.name },
+            totalCommitments: rows.length,
+            commitments: rows.map((r) => ({
+              id: r.id,
+              title: r.title,
+              commitmentType: r.commitment_type,
+              contractNumber: r.contract_number,
+              status: r.status,
+              executed: r.executed,
+              contractDate: r.contract_date,
+              defaultRetainagePercent: r.default_retainage_percent,
+              description: r.description,
+              createdAt: r.created_at,
+            })),
+          };
+        },
+      ),
+    }),
+
+    queryDirectCosts: tool({
+      description:
+        "Query direct costs for a project. Returns cost type, amount, invoice number, " +
+        "vendor, date, and status. Use when asked about direct costs, expenses, " +
+        "invoices, or project spend.",
+      inputSchema: z.object({
+        projectId: z.number().optional().describe("Project ID if known"),
+        projectName: z.string().optional().describe("Project name to search for"),
+      }),
+      execute: withTrace(
+        "queryDirectCosts",
+        options,
+        async ({ projectId, projectName }) => {
+          const resolved = await resolveProject(supabase, projectId, projectName);
+          if ("error" in resolved) return resolved;
+
+          const { data, error } = await supabase
+            .from("direct_costs")
+            .select("*")
+            .eq("project_id", resolved.id)
+            .neq("is_deleted", true)
+            .order("date", { ascending: false })
+            .limit(300);
+
+          if (error) return { error: `Direct costs query failed: ${error.message}` };
+
+          const rows = (data ?? []) as AnyRow[];
+          const totalAmount = rows.reduce((sum, r) => sum + asNumber(r.total_amount), 0);
+
+          // Group by cost_type
+          const byCostType: Record<string, { count: number; total: number }> = {};
+          rows.forEach((r) => {
+            const ct = (r.cost_type as string) || "unknown";
+            if (!byCostType[ct]) byCostType[ct] = { count: 0, total: 0 };
+            byCostType[ct].count++;
+            byCostType[ct].total += asNumber(r.total_amount);
+          });
+
+          return {
+            project: { id: resolved.id, name: resolved.name },
+            totalDirectCosts: rows.length,
+            totalAmount,
+            byCostType,
+            directCosts: rows.map((r) => ({
+              id: r.id,
+              costType: r.cost_type,
+              date: r.date,
+              description: r.description,
+              invoiceNumber: r.invoice_number,
+              totalAmount: r.total_amount,
+              status: r.status,
+              paidDate: r.paid_date,
+              receivedDate: r.received_date,
+              terms: r.terms,
+            })),
+          };
+        },
+      ),
+    }),
+
+    queryScheduleTasks: tool({
+      description:
+        "Query schedule tasks for a project. Returns task name, start/end dates, " +
+        "percent complete, status, and WBS code. Use when asked about schedule, " +
+        "tasks, timelines, or project progress.",
+      inputSchema: z.object({
+        projectId: z.number().optional().describe("Project ID if known"),
+        projectName: z.string().optional().describe("Project name to search for"),
+        status: z
+          .string()
+          .optional()
+          .describe("Filter by status (e.g. 'active', 'completed', 'not_started')"),
+      }),
+      execute: withTrace(
+        "queryScheduleTasks",
+        options,
+        async ({ projectId, projectName, status }) => {
+          const resolved = await resolveProject(supabase, projectId, projectName);
+          if ("error" in resolved) return resolved;
+
+          let query = supabase
+            .from("schedule_tasks")
+            .select("*")
+            .eq("project_id", resolved.id)
+            .order("start_date", { ascending: true });
+
+          if (status) {
+            query = query.ilike("status", `%${status}%`);
+          }
+
+          const { data, error } = await query.limit(500);
+          if (error) return { error: `Schedule tasks query failed: ${error.message}` };
+
+          const rows = (data ?? []) as AnyRow[];
+
+          const totalTasks = rows.length;
+          const completedCount = rows.filter(
+            (t) => t.status === "completed" || asNumber(t.percent_complete) >= 100,
+          ).length;
+          const avgCompletion =
+            totalTasks > 0
+              ? Math.round(
+                  rows.reduce((sum, t) => sum + asNumber(t.percent_complete), 0) / totalTasks,
+                )
+              : 0;
+
+          return {
+            project: { id: resolved.id, name: resolved.name },
+            summary: {
+              totalTasks,
+              completedTasks: completedCount,
+              avgCompletionPct: avgCompletion,
+            },
+            tasks: rows.map((t) => ({
+              id: t.id,
+              name: t.name,
+              status: t.status,
+              startDate: t.start_date,
+              finishDate: t.finish_date,
+              percentComplete: t.percent_complete,
+              isMilestone: t.is_milestone,
+              wbsCode: t.wbs_code,
+            })),
+          };
+        },
+      ),
+    }),
+
+    queryDocumentRows: tool({
+      description:
+        "Query structured tabular data extracted from uploaded spreadsheets and " +
+        "financial documents. Each row contains column-value pairs from the original " +
+        "Excel/CSV. Use when asked about data from uploaded spreadsheets or when you " +
+        "need to analyze structured document data.",
+      inputSchema: z.object({
+        datasetId: z
+          .string()
+          .describe("The document_metadata ID (dataset) to query rows from"),
+        sheetFilter: z
+          .string()
+          .optional()
+          .describe("Filter to a specific sheet name within the spreadsheet"),
+      }),
+      execute: withTrace(
+        "queryDocumentRows",
+        options,
+        async ({ datasetId, sheetFilter }) => {
+          let query = supabase
+            .from("document_rows")
+            .select("*")
+            .eq("dataset_id", datasetId)
+            .order("id", { ascending: true });
+
+          if (sheetFilter) {
+            query = query.eq("row_data->>sheet", sheetFilter);
+          }
+
+          const { data, error } = await query.limit(1000);
+          if (error) return { error: `Document rows query failed: ${error.message}` };
+
+          const rows = (data ?? []) as AnyRow[];
+
+          return {
+            datasetId,
+            totalRows: rows.length,
+            rows: rows.map((r) => ({
+              id: r.id,
+              rowData: r.row_data,
+            })),
+          };
+        },
+      ),
+    }),
   };
 }
 

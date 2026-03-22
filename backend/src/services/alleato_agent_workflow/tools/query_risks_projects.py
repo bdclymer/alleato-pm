@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """
-Query risks, opportunities, and tasks for specific projects from Supabase
+Query risks, opportunities, and tasks for specific projects from Supabase.
+Uses the unified 'insights' table (type column: decision, risk, opportunity).
 """
 import os
 from supabase import create_client, Client
@@ -23,61 +24,62 @@ def query_project_intelligence(project_id: int):
         print(f"Project: {project.data[0]['name']}")
         print(f"{'='*80}\n")
 
-    # Query risks linked to this project via project_ids array
-    # Use 'cs' (contains) operator with proper formatting for integer arrays
+    # Query risks from the unified insights table
     print("RISKS:")
     print("-" * 80)
-    risks = supabase.table('risks').select('''
+    risks = supabase.table('insights').select('''
         id,
         description,
-        category,
-        likelihood,
-        impact,
+        details,
         status,
+        owner_name,
         metadata_id,
-        segment_id,
+        project_id,
         project_ids,
         document_metadata(title)
-    ''').filter('project_ids', 'cs', f'{{{project_id}}}').execute()
+    ''').eq('type', 'risk').eq('project_id', project_id).execute()
 
     if risks.data:
         for risk in risks.data:
-            print(f"• {risk['description']}")
-            print(f"  Category: {risk.get('category', 'N/A')} | Likelihood: {risk.get('likelihood', 'N/A')} | Impact: {risk.get('impact', 'N/A')}")
+            details = risk.get('details', {}) or {}
+            print(f"  {risk['description']}")
+            print(f"  Category: {details.get('category', 'N/A')} | Likelihood: {details.get('likelihood', 'N/A')} | Impact: {details.get('impact', 'N/A')}")
             print(f"  Status: {risk['status']}")
             if risk.get('document_metadata'):
                 print(f"  Meeting: {risk['document_metadata']['title']}")
-            print(f"  Segment ID: {risk.get('segment_id', 'None')} | Metadata ID: {risk['metadata_id']}")
+            print(f"  Metadata ID: {risk['metadata_id']}")
             print()
     else:
         print("No risks found for this project.\n")
 
-    # Query opportunities
+    # Query opportunities from the unified insights table
     print("\nOPPORTUNITIES:")
     print("-" * 80)
-    opportunities = supabase.table('opportunities').select('''
+    opportunities = supabase.table('insights').select('''
         id,
         description,
-        type,
+        details,
         status,
+        owner_name,
         metadata_id,
-        segment_id,
+        project_id,
         project_ids,
         document_metadata(title)
-    ''').filter('project_ids', 'cs', f'{{{project_id}}}').execute()
+    ''').eq('type', 'opportunity').eq('project_id', project_id).execute()
 
     if opportunities.data:
         for opp in opportunities.data:
-            print(f"• {opp['description']}")
-            print(f"  Type: {opp.get('type', 'N/A')} | Status: {opp['status']}")
+            details = opp.get('details', {}) or {}
+            print(f"  {opp['description']}")
+            print(f"  Type: {details.get('opportunity_type', 'N/A')} | Status: {opp['status']}")
             if opp.get('document_metadata'):
                 print(f"  Meeting: {opp['document_metadata']['title']}")
-            print(f"  Segment ID: {opp.get('segment_id', 'None')} | Metadata ID: {opp['metadata_id']}")
+            print(f"  Metadata ID: {opp['metadata_id']}")
             print()
     else:
         print("No opportunities found for this project.\n")
 
-    # Query tasks
+    # Query tasks (tasks table is unchanged)
     print("\nTASKS:")
     print("-" * 80)
     tasks = supabase.table('tasks').select('''
@@ -95,7 +97,7 @@ def query_project_intelligence(project_id: int):
 
     if tasks.data:
         for task in tasks.data:
-            print(f"• {task['description']}")
+            print(f"  {task['description']}")
             print(f"  Assignee: {task.get('assignee_name', 'Unassigned')} | Due: {task.get('due_date', 'N/A')} | Priority: {task.get('priority', 'N/A')}")
             print(f"  Status: {task['status']}")
             if task.get('document_metadata'):
@@ -114,25 +116,21 @@ def show_data_relationships():
 
     print("The data hierarchy is:")
     print("  document_metadata (meetings)")
-    print("    ↓ has foreign key")
+    print("    -> has foreign key")
     print("  meeting_segments (semantic sections within meetings)")
-    print("    ↓ has foreign keys")
-    print("  documents (chunks with embeddings)")
-    print("  risks (extracted insights)")
-    print("  opportunities (extracted insights)")
-    print("  tasks (extracted insights)")
+    print("    -> has foreign keys")
+    print("  document_chunks (chunks with embeddings)")
+    print("  insights (decisions, risks, opportunities - unified table)")
+    print("  tasks (extracted action items)")
     print("\n")
 
-    print("CURRENT ISSUE:")
-    print("• Risks have 'metadata_id' (link to meeting) but segment_id is NULL")
-    print("• You can't tell which segment a risk came from by looking at the risks table alone")
-    print("• The 'project_ids' array field maps risks to projects")
-    print("\n")
-
-    print("SOLUTION FOR PROJECT PAGES:")
-    print("• Query risks WHERE project_ids contains your project_id")
-    print("• Join with document_metadata to show which meeting it came from")
-    print("• Optionally join with meeting_segments if segment_id is populated")
+    print("QUERY PATTERN:")
+    print("  Insights have 'metadata_id' (link to meeting) and 'project_id'")
+    print("  The 'type' column distinguishes: decision, risk, opportunity")
+    print("  The 'details' jsonb column holds type-specific fields:")
+    print("    decision: { rationale, impact, effective_date }")
+    print("    risk:     { category, likelihood, impact, mitigation_plan }")
+    print("    opportunity: { opportunity_type, next_step }")
     print("\n")
 
 
@@ -148,11 +146,11 @@ def list_all_projects_with_counts():
         project_id = project['id']
         name = project['name']
 
-        # Count risks - use filter instead of contains for integer arrays
-        risks_count = supabase.table('risks').select('id', count='exact').filter('project_ids', 'cs', f'{{{project_id}}}').execute()
+        # Count risks from insights table
+        risks_count = supabase.table('insights').select('id', count='exact').eq('type', 'risk').eq('project_id', project_id).execute()
 
-        # Count opportunities
-        opps_count = supabase.table('opportunities').select('id', count='exact').filter('project_ids', 'cs', f'{{{project_id}}}').execute()
+        # Count opportunities from insights table
+        opps_count = supabase.table('insights').select('id', count='exact').eq('type', 'opportunity').eq('project_id', project_id).execute()
 
         # Count tasks
         tasks_count = supabase.table('tasks').select('id', count='exact').filter('project_ids', 'cs', f'{{{project_id}}}').execute()
@@ -161,7 +159,7 @@ def list_all_projects_with_counts():
 
         if total > 0:
             print(f"Project {project_id}: {name}")
-            print(f"  → Risks: {risks_count.count or 0} | Opportunities: {opps_count.count or 0} | Tasks: {tasks_count.count or 0}")
+            print(f"  -> Risks: {risks_count.count or 0} | Opportunities: {opps_count.count or 0} | Tasks: {tasks_count.count or 0}")
             print()
 
 

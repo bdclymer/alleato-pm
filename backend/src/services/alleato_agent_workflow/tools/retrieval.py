@@ -1,16 +1,16 @@
 """
-═══════════════════════════════════════════════════════════════════════════
+===============================================================================
 STANDARD RETRIEVAL TOOLS - Direct Database Queries (Non-Vector)
-═══════════════════════════════════════════════════════════════════════════
+===============================================================================
 
 ROLE: Provides direct database access for structured data (no semantic search)
 
 CONTROLS:
-- get_recent_meetings() → Fetch latest meetings chronologically from document_metadata
-- get_tasks_and_decisions() → List tasks table with status/project filters
-- get_project_insights() → Aggregate view of risks/decisions/opportunities per project
-- list_all_projects() → Full project list with basic stats
-- get_project_details() → Detailed single project view with counts
+- get_recent_meetings() -> Fetch latest meetings chronologically from document_metadata
+- get_tasks_and_decisions() -> List tasks table with status/project filters
+- get_project_insights() -> Aggregate view of risks/decisions/opportunities per project
+- list_all_projects() -> Full project list with basic stats
+- get_project_details() -> Detailed single project view with counts
 
 QUERY STRATEGY: Simple SQL queries ordered by date/name, no embeddings
 
@@ -29,11 +29,9 @@ DATABASE TABLES QUERIED:
 - document_metadata (meetings)
 - tasks
 - projects
-- risks
-- decisions
-- opportunities
+- insights (decisions, risks, opportunities — unified table with type column)
 
-═══════════════════════════════════════════════════════════════════════════
+===============================================================================
 """
 
 import os
@@ -193,43 +191,46 @@ async def get_project_insights(project_id: int, limit: int = 10) -> str:
                 output.append(f"Status: {project['state']}")
             output.append("")
 
-        # Get recent risks
-        risks_result = supabase.table('risks').select(
-            'description, category, likelihood, impact, status'
-        ).contains('project_ids', [project_id]).limit(limit).execute()
+        # Get recent risks from insights table
+        risks_result = supabase.table('insights').select(
+            'description, details, status, owner_name'
+        ).eq('type', 'risk').eq('project_id', project_id).limit(limit).execute()
 
         if risks_result.data:
             output.append(f"## Risks ({len(risks_result.data)})")
             for risk in risks_result.data:
+                details = risk.get('details', {}) or {}
                 output.append(f"- [{risk.get('status', 'unknown')}] {risk.get('description', 'N/A')}")
-                if risk.get('likelihood') and risk.get('impact'):
-                    output.append(f"  Likelihood: {risk['likelihood']}, Impact: {risk['impact']}")
+                if details.get('likelihood') and details.get('impact'):
+                    output.append(f"  Likelihood: {details['likelihood']}, Impact: {details['impact']}")
             output.append("")
 
-        # Get recent decisions
-        decisions_result = supabase.table('decisions').select(
-            'description, rationale, owner_name, status'
-        ).contains('project_ids', [project_id]).limit(limit).execute()
+        # Get recent decisions from insights table
+        decisions_result = supabase.table('insights').select(
+            'description, details, status, owner_name'
+        ).eq('type', 'decision').eq('project_id', project_id).limit(limit).execute()
 
         if decisions_result.data:
             output.append(f"## Decisions ({len(decisions_result.data)})")
             for decision in decisions_result.data:
+                details = decision.get('details', {}) or {}
                 output.append(f"- [{decision.get('status', 'unknown')}] {decision.get('description', 'N/A')}")
                 if decision.get('owner_name'):
                     output.append(f"  Owner: {decision['owner_name']}")
             output.append("")
 
-        # Get opportunities
-        opps_result = supabase.table('opportunities').select(
-            'description, type, owner_name, next_step, status'
-        ).contains('project_ids', [project_id]).limit(limit).execute()
+        # Get opportunities from insights table
+        opps_result = supabase.table('insights').select(
+            'description, details, status, owner_name'
+        ).eq('type', 'opportunity').eq('project_id', project_id).limit(limit).execute()
 
         if opps_result.data:
             output.append(f"## Opportunities ({len(opps_result.data)})")
             for opp in opps_result.data:
+                details = opp.get('details', {}) or {}
                 output.append(f"- [{opp.get('status', 'unknown')}] {opp.get('description', 'N/A')}")
-                if opp.get('next_step'):
-                    output.append(f"  Next step: {opp['next_step']}")
+                if details.get('next_step'):
+                    output.append(f"  Next step: {details['next_step']}")
             output.append("")
 
         if not output:
@@ -311,15 +312,17 @@ async def get_project_details(project_id: int) -> str:
 
         # Count related items
         tasks_count = supabase.table('tasks').select('id', count='exact').contains('project_ids', [project_id]).execute()
-        risks_count = supabase.table('risks').select('id', count='exact').contains('project_ids', [project_id]).execute()
-        decisions_count = supabase.table('decisions').select('id', count='exact').contains('project_ids', [project_id]).execute()
-        meetings_count = supabase.table('meeting_segments').select('id', count='exact').contains('project_ids', [project_id]).execute()
+
+        # Count insights by type using the unified insights table
+        risks_count = supabase.table('insights').select('id', count='exact').eq('type', 'risk').eq('project_id', project_id).execute()
+        decisions_count = supabase.table('insights').select('id', count='exact').eq('type', 'decision').eq('project_id', project_id).execute()
+        meetings_count = supabase.table('document_metadata').select('id', count='exact').eq('project_id', project_id).execute()
 
         output.append("\n## Statistics")
         output.append(f"- Tasks: {tasks_count.count or 0}")
         output.append(f"- Risks: {risks_count.count or 0}")
         output.append(f"- Decisions: {decisions_count.count or 0}")
-        output.append(f"- Meeting Segments: {meetings_count.count or 0}")
+        output.append(f"- Meetings: {meetings_count.count or 0}")
 
         return "\n".join(output)
     except Exception as e:

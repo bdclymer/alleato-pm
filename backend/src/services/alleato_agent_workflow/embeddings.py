@@ -17,7 +17,7 @@ FLOW:
 1. Receives text query from vector_search tools
 2. Calls OpenAI embeddings API asynchronously
 3. Returns float array of 1536 dimensions
-4. Vector used in Supabase RPC functions (match_meetings, match_decisions, etc.)
+4. Vector used in Supabase RPC functions (search_document_chunks, search_all_knowledge)
 
 USED BY:
 - vector_search.py (all search functions call this before RPC queries)
