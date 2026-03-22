@@ -235,8 +235,6 @@ export default function ChangeEventDetailPage() {
                 REASON_MAP[data.changeReason || ""] || data.changeReason || null,
               scope: data.scope || null,
               description: data.description || null,
-              notes: data.notes || null,
-              estimated_impact: data.estimatedImpact || null,
             }),
           },
         );
@@ -284,8 +282,6 @@ export default function ChangeEventDetailPage() {
       lineItemRevenueSource: (changeEvent as any).line_item_revenue_source || "",
       primeContractId: (changeEvent as any).prime_contract_id || "",
       description: changeEvent.description || undefined,
-      notes: (changeEvent as any).notes || undefined,
-      estimatedImpact: changeEvent.estimated_impact || undefined,
       attachments: [],
       lineItems:
         lineItems.length > 0
@@ -676,16 +672,6 @@ export default function ChangeEventDetailPage() {
                       }
                       return changeEvent.created_by || "-";
                     })()}
-                  </p>
-                </div>
-                <div>
-                  <label className="text-sm font-medium">
-                    Estimated Impact
-                  </label>
-                  <p className="text-sm text-muted-foreground">
-                    {changeEvent.estimated_impact
-                      ? formatCurrency(changeEvent.estimated_impact)
-                      : "-"}
                   </p>
                 </div>
                 <div>

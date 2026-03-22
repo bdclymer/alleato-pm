@@ -22,8 +22,6 @@ export interface ChangeEvent {
   expecting_revenue: boolean;
   line_item_revenue_source: string | null;
   prime_contract_id: number | null;
-  notes?: string | null;
-  estimated_impact?: number | null;
   created_at: string | null;
   created_by?: string | null;
   updated_at?: string | null;

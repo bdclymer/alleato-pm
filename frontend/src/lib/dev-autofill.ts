@@ -405,8 +405,6 @@ export const autoFillPresets = {
       ]),
     description: () =>
       copycat.paragraph(Math.random().toString(), { min: 2, max: 3 }),
-    estimatedImpact: () => fakeData.amount(5000, 250000),
-    notes: () => copycat.paragraph(Math.random().toString()),
   },
 
   commitment: {

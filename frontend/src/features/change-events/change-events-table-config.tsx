@@ -38,7 +38,6 @@ export const changeEventColumns: ColumnConfig[] = [
   { id: "status", label: "Status", defaultVisible: true },
   { id: "scope", label: "Scope", defaultVisible: true },
   { id: "reason", label: "Change Reason", defaultVisible: true },
-  { id: "estimated_impact", label: "Estimated Impact", defaultVisible: true },
   { id: "created_at", label: "Created", defaultVisible: true },
 ];
 
@@ -98,14 +97,6 @@ function formatDate(dateValue: string | null | undefined): string {
   return parsed.toLocaleDateString();
 }
 
-function formatCurrency(value: number | null | undefined): string {
-  if (value === null || value === undefined) return "-";
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(value);
-}
-
 export function buildChangeEventTableColumns(): TableColumn<ChangeEvent>[] {
   return [
     {
@@ -135,11 +126,6 @@ export function buildChangeEventTableColumns(): TableColumn<ChangeEvent>[] {
     },
     {
       ...changeEventColumns[5],
-      render: (item) => <span>{formatCurrency(item.estimated_impact)}</span>,
-      sortValue: (item) => item.estimated_impact ?? 0,
-    },
-    {
-      ...changeEventColumns[6],
       render: (item) => <span>{formatDate(item.created_at)}</span>,
       sortValue: (item) => (item.created_at ? new Date(item.created_at).getTime() : 0),
     },
@@ -194,9 +180,6 @@ export function renderChangeEventCard(
         <StatusBadge status={statusLabel(item.status)} />
       </div>
       <p className="text-sm text-muted-foreground">{scopeLabel(item.scope)}</p>
-      <p className="mt-2 text-sm text-muted-foreground">
-        Estimated Impact: {formatCurrency(item.estimated_impact)}
-      </p>
     </div>
   );
 }

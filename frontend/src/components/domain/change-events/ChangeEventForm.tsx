@@ -115,8 +115,6 @@ export interface ChangeEventFormData {
   lineItemRevenueSource?: string;
   primeContractId?: string;
   description?: string;
-  notes?: string;
-  estimatedImpact?: number;
   attachments: File[];
   lineItems: ChangeEventLineItem[];
 }

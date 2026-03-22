@@ -267,21 +267,12 @@ export default function ProjectChangeEventsPage(): ReactElement {
       return (
         eventNumber.toLowerCase().includes(searchTerm) ||
         event.title?.toLowerCase().includes(searchTerm) ||
-        (event.reason ?? "").toLowerCase().includes(searchTerm) ||
-        (event.notes ?? "").toLowerCase().includes(searchTerm)
+        (event.reason ?? "").toLowerCase().includes(searchTerm)
       );
     });
   }, [activeFilters.scope, changeEvents, tableState.debouncedSearch]);
 
   const handleExport = React.useCallback(() => {
-    const formatCurrencyValue = (value: number | null | undefined): string => {
-      if (value === null || value === undefined) return "";
-      return new Intl.NumberFormat("en-US", {
-        style: "currency",
-        currency: "USD",
-      }).format(value);
-    };
-
     const formatDateValue = (dateValue: string | null | undefined): string => {
       if (!dateValue) return "";
       const parsed = new Date(dateValue);
@@ -296,7 +287,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
       return field;
     };
 
-    const headers = ["#", "Title", "Status", "Scope", "Change Reason", "Estimated Impact", "Created", "Notes"];
+    const headers = ["#", "Title", "Status", "Scope", "Change Reason", "Created"];
 
     const scopeDisplayMap: Record<string, string> = {
       tbd: "TBD",
@@ -318,11 +309,9 @@ export default function ProjectChangeEventsPage(): ReactElement {
       const status = statusDisplayMap[(event.status ?? "").toLowerCase()] ?? (event.status ?? "");
       const scope = scopeDisplayMap[(event.scope ?? "").toLowerCase()] ?? (event.scope ?? "");
       const reason = event.reason ?? "";
-      const estimatedImpact = formatCurrencyValue(event.estimated_impact);
       const createdAt = formatDateValue(event.created_at);
-      const notes = event.notes ?? "";
 
-      return [number, title, status, scope, reason, estimatedImpact, createdAt, notes]
+      return [number, title, status, scope, reason, createdAt]
         .map(escapeCsvField)
         .join(",");
     });
@@ -348,15 +337,6 @@ export default function ProjectChangeEventsPage(): ReactElement {
 
   const totalItems = changeEvents.length;
   const filteredItems = filteredEvents.length;
-
-  const totalEstimatedImpact = React.useMemo(
-    () =>
-      filteredEvents.reduce((sum, event) => sum + (event.estimated_impact ?? 0), 0),
-    [filteredEvents],
-  );
-
-  const formatCurrency = (value: number): string =>
-    new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(value);
 
   const statusCounts = React.useMemo(() => {
     const counts: Record<string, number> = {};
@@ -594,14 +574,6 @@ export default function ProjectChangeEventsPage(): ReactElement {
             Add change event
           </Button>
         ),
-      }}
-      footerTotals={{
-        label: "Totals",
-        values: {
-          estimated_impact: (
-            <span className="font-semibold">{formatCurrency(totalEstimatedImpact)}</span>
-          ),
-        },
       }}
       features={{
         enableExport: true,

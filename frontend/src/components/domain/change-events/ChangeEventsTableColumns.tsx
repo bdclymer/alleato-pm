@@ -11,7 +11,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { formatCurrency, formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/utils";
 import { ChangeEvent } from "@/hooks/use-change-events";
 interface ChangeEventsTableColumnsProps {
   onView?: (id: number) => void;
@@ -115,19 +115,6 @@ export const ChangeEventsTableColumns = ({
     cell: ({ row }) => {
       const reason = row.getValue("reason") as string;
       return <div className="max-w-xs truncate text-sm"> {reason || "-"} </div>;
-    },
-  },
-  {
-    accessorKey: "estimated_impact",
-    header: "Estimated Impact",
-    cell: ({ row }) => {
-      const impact = row.getValue("estimated_impact") as number;
-      return (
-        <div className="text-sm font-mono">
-          {" "}
-          {impact ? formatCurrency(impact) : "-"}{" "}
-        </div>
-      );
     },
   },
   {

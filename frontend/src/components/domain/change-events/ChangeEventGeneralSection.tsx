@@ -1,7 +1,6 @@
 "use client";
 
 import { FormSection } from "@/components/forms/FormSection";
-import { NumberField } from "@/components/forms/NumberField";
 import { SelectField } from "@/components/forms/SelectField";
 import { TextField } from "@/components/forms/TextField";
 import { TextareaField } from "@/components/forms/TextareaField";
@@ -151,7 +150,7 @@ export function ChangeEventGeneralSection({
 
       <FormSection
         title="Details"
-        description="Add supporting narrative and optional cost impact details."
+        description="Add supporting narrative for this change event."
       >
         <TextareaField
           label="Description"
@@ -160,25 +159,6 @@ export function ChangeEventGeneralSection({
           onChange={(e) => onChange({ description: e.target.value })}
           placeholder="Detailed description of the change event..."
           rows={4}
-          fullWidth
-        />
-
-        <NumberField
-          label="Estimated Impact"
-          name="estimated_impact"
-          value={data.estimatedImpact}
-          onChange={(value) => onChange({ estimatedImpact: value })}
-          prefix="$"
-          placeholder="0.00"
-        />
-
-        <TextareaField
-          label="Notes"
-          name="notes"
-          value={data.notes || ""}
-          onChange={(e) => onChange({ notes: e.target.value })}
-          placeholder="Additional notes or comments..."
-          rows={3}
           fullWidth
         />
       </FormSection>
