@@ -246,56 +246,9 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Check for related records before deletion
-    const { data: relatedLineItems } = await supabase
-      .from("contract_line_items")
-      .select("id")
-      .eq("contract_id", contractId)
-      .limit(1);
-
-    if (relatedLineItems && relatedLineItems.length > 0) {
-      return NextResponse.json(
-        {
-          error:
-            "Cannot delete contract with existing line items. Please delete related line items first.",
-        },
-        { status: 400 },
-      );
-    }
-
-    const { data: relatedChangeOrders } = await supabase
-      .from("contract_change_orders")
-      .select("id")
-      .eq("contract_id", contractId)
-      .limit(1);
-
-    if (relatedChangeOrders && relatedChangeOrders.length > 0) {
-      return NextResponse.json(
-        {
-          error:
-            "Cannot delete contract with existing change orders. Please delete related change orders first.",
-        },
-        { status: 400 },
-      );
-    }
-
-    const { data: relatedBillingPeriods } = await supabase
-      .from("contract_billing_periods")
-      .select("id")
-      .eq("contract_id", contractId)
-      .limit(1);
-
-    if (relatedBillingPeriods && relatedBillingPeriods.length > 0) {
-      return NextResponse.json(
-        {
-          error:
-            "Cannot delete contract with existing billing periods. Please delete related billing periods first.",
-        },
-        { status: 400 },
-      );
-    }
-
     // Check if contract exists before deleting
+    // Note: contract_line_items, contract_change_orders, and contract_billing_periods
+    // all have ON DELETE CASCADE FKs to prime_contracts, so the DB handles cleanup automatically.
     const { data: existingContract } = await supabase
       .from("prime_contracts")
       .select("id")

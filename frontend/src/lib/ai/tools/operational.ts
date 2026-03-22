@@ -1289,17 +1289,18 @@ export function createOperationalTools(
     }),
 
     // -----------------------------------------------------------------------
-    // 9. Semantic Search (wraps search_all_knowledge RPC)
+    // 9. Semantic Search (unified document_chunks + insights + knowledge base)
     // -----------------------------------------------------------------------
     semanticSearch: tool({
       description:
         "Search across ALL project knowledge using semantic similarity: " +
-        "meeting transcripts, chunked document content, RFIs, submittals, " +
-        "change orders, insights, company knowledge base entries (lessons learned, " +
-        "pricing intel, system design notes, vendor intel), and other indexed content. " +
-        "Uses blended retrieval from unified knowledge + document chunks + knowledge base. " +
+        "meeting transcripts (full chunked transcripts, segment summaries, meeting summaries), " +
+        "emails, Teams messages, OneDrive documents, insights (decisions/risks/opportunities), " +
+        "company knowledge base entries (lessons learned, pricing intel, vendor intel), " +
+        "and other indexed content. " +
+        "Uses unified document_chunks table (24K+ chunks) + insights + knowledge base. " +
         "Works CROSS-PROJECT by default — no project filter needed. " +
-        "Optionally filter by project name or ID. Use when " +
+        "Optionally filter by project name or ID, or by source type. Use when " +
         "the user asks a broad question that could span multiple data types, " +
         "or when keyword search isn't finding results.",
       inputSchema: z.object({
@@ -1340,8 +1341,6 @@ export function createOperationalTools(
           }
           try {
             // All active RAG tables use halfvec(3072) — single embedding generation.
-            // (documents.embedding was NULLed out during 20260318000004 migration;
-            //  meeting content is now served by meeting_segments via search_all_knowledge)
             const openai = getOpenAI();
             const embResp3072 = await openai.embeddings.create({
               model: "text-embedding-3-large",
@@ -1354,10 +1353,18 @@ export function createOperationalTools(
             const targetThreshold = threshold ?? 0.3;
 
             // Blended retrieval — all halfvec(3072):
-            // search_all_knowledge              → insights (decisions/risks/opportunities)
-            // search_knowledge_base             → company_knowledge
-            // search_document_chunks_by_category → email, Teams, OneDrive chunks
-            const [knowledgeRes, knowledgeBaseRes, chunksRes] = await Promise.all([
+            // search_document_chunks   → unified: meetings, emails, Teams, OneDrive, transcripts
+            // search_all_knowledge     → insights (decisions/risks/opportunities)
+            // search_knowledge_base    → company_knowledge
+            const [chunksRes, knowledgeRes, knowledgeBaseRes] = await Promise.all([
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              (supabase as any).rpc("search_document_chunks", {
+                query_embedding: embeddingArg3072,
+                filter_source_types: null,
+                filter_project_id: resolvedProjectId ?? null,
+                match_count: targetCount,
+                match_threshold: targetThreshold,
+              }),
               supabase.rpc("search_all_knowledge", {
                 query_embedding: embeddingArg3072,
                 match_count: targetCount,
@@ -1368,13 +1375,6 @@ export function createOperationalTools(
                 match_count: targetCount,
                 match_threshold: targetThreshold,
                 ...(resolvedProjectId ? { filter_project_id: resolvedProjectId } : {}),
-              }),
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              (supabase as any).rpc("search_document_chunks_by_category", {
-                query_embedding: embeddingArg3072,
-                filter_category: null,
-                match_count: targetCount,
-                match_threshold: targetThreshold,
               }),
             ]);
 
@@ -1402,14 +1402,10 @@ export function createOperationalTools(
                 : [];
               return projectIds.includes(resolvedProjectId);
             });
-            // Email / Teams / OneDrive chunks from document_chunks table
+            // Unified document_chunks: meetings, emails, Teams, OneDrive, transcripts
             const rawChunkRows = ((chunksRes as { data?: unknown[] }).data ?? []) as AnyRow[];
-            const chunkRows = rawChunkRows.filter((row) => {
-              if (!resolvedProjectId) return true;
-              return typeof row.doc_project_id === "number"
-                ? row.doc_project_id === resolvedProjectId
-                : true;
-            });
+            // Project filtering is done in the RPC now, no need to filter client-side
+            const chunkRows = rawChunkRows;
 
             const merged: Array<{
               key: string;
@@ -1470,17 +1466,13 @@ export function createOperationalTools(
               });
             }
 
-            // 4) External document chunks (email, Teams, OneDrive via Microsoft Graph)
+            // 4) Unified document chunks (meetings, emails, Teams, OneDrive, transcripts)
             for (const row of chunkRows) {
               const similarity = Math.round(asNumber(row.similarity) * 1000) / 1000;
-              const category = String(row.doc_category ?? "document");
-              const sourceLabel =
-                category === "email" ? "email" :
-                category === "teams_message" ? "Teams" :
-                "document";
+              const srcType = String(row.source_type ?? "document");
               merged.push({
                 key: `doc_chunk:${String(row.chunk_id ?? row.document_id ?? "")}`,
-                sourceTable: `external_${sourceLabel}`,
+                sourceTable: srcType,
                 recordId: String(row.document_id ?? ""),
                 content: String(row.chunk_text ?? ""),
                 similarity,
@@ -1489,9 +1481,9 @@ export function createOperationalTools(
                   title: row.doc_title,
                   category: row.doc_category,
                   source: row.doc_source,
-                  type: row.doc_type,
+                  source_type: srcType,
                   date: row.doc_date,
-                  participants: row.doc_participants,
+                  ...(row.doc_metadata && typeof row.doc_metadata === "object" ? row.doc_metadata as Record<string, unknown> : {}),
                 },
                 createdAt:
                   typeof row.doc_date === "string" ? row.doc_date :

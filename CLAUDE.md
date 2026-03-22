@@ -59,6 +59,17 @@ These rules are NON-NEGOTIABLE. Violating them wastes significant time.
 
 **Full rules in:** `.claude/rules/`
 
+### 0. Design System Gate (MUST DO BEFORE ANY UI WORK)
+
+**BEFORE writing any page or component:**
+
+1. New page? → Use `PageShell`. See section below for variants.
+2. Need a component? → Import from `@/components/ds` first. Do not build one-off custom components.
+3. Colors? → Semantic tokens only (`bg-background`, `text-muted-foreground`, `border-border`). Zero hex codes. Zero `gray-*`/`blue-*` classes.
+4. Full reference → `docs/design/DESIGN.md` ← **Single source of truth**
+
+**The #1 failure mode:** Agent looks at existing pages, sees `PageContainer` + manual `h1`, copies the pattern. This is wrong — use `PageShell` instead.
+
 ### 🧠 CLAUDE CODE LEARNING SYSTEM (MANDATORY)
 
 **BEFORE ANY ACTION:** Check documented error patterns to prevent repeating mistakes.
@@ -271,8 +282,8 @@ See `.claude/rules/FILE-ORGANIZATION-GATE.md` for the full checklist.
 
 **BEFORE** building ANY UI component, page, or modifying styles:
 
-1. Read `frontend/src/design-system/tokens.md` for allowed colors, spacing, shadows
-2. Read `frontend/src/design-system/CLAUDE_CODE_UI_GUIDE.md` for copy-paste patterns
+1. Read `docs/design/DESIGN.md` — single source of truth for all design system rules
+2. Read `docs/design/tokens.md` for the full token tables (colors, spacing, shadows, animations)
 3. Import components from `@/components/ds` or `@/components/ui` (both are valid)
 
 **COMPONENT IMPORT RULES:**
@@ -652,18 +663,34 @@ Before claiming tests pass:
 
 ## UI/UX Design Standards
 
+### 🏗️ BUILDING A NEW PAGE? START HERE
+
+```tsx
+import { PageShell } from "@/components/layout";
+
+<PageShell variant="dashboard" title="...">  // home/overview pages
+<PageShell variant="table"     title="...">  // data table pages
+<PageShell variant="form"      title="..." onBack={...}>  // create/edit forms
+<PageShell variant="detail"    title="..." statusBadge={...}>  // record detail
+<PageShell variant="content"   title="...">  // settings/docs pages
+```
+
+**Do NOT** write `<PageContainer>` + `<ProjectPageHeader>` manually on new pages. Use `PageShell`.
+**Full reference:** `docs/design/DESIGN.md` ← **Single source of truth**
+
+---
+
 **Import from `@/components/ui/` (base primitives) or `@/components/ds/` (design system components) — both are valid.**
 
-**Design system docs** (read before building UI): `frontend/src/design-system/`
+**Design system docs** (read before building UI): `docs/design/DESIGN.md`
 
 | File | What |
 |------|------|
-| `CLAUDE_CODE_UI_GUIDE.md` | **READ FIRST** — Exact Tailwind classes, copy-paste patterns |
-| `tokens.md` | Colors, spacing, typography, shadows, interactive states |
-| `page-archetypes.md` | The 4 page types with copy-paste templates |
-| `components.md` | Which component to use for what |
-| `patterns.md` | Loading, errors, empty states, forms, modals |
-| `principles.md` | Philosophy, hard constraints, card policy |
+| `docs/design/DESIGN.md` | **READ FIRST** — PageShell API, all tokens, patterns, anti-patterns |
+| `docs/design/tokens.md` | Full token tables with light/dark hex values, CSS spacing variables |
+| `docs/design/tables/table-system.md` | UnifiedTablePage API, cell types, toolbar, density, accessibility |
+| `docs/design/forms/form-page-archetype.md` | Three-tier form system, page templates, 13 anti-patterns |
+| `docs/design/forms/FORM-SYSTEM.md` | RHF + Zod 4-layer system, field components, barrel exports |
 
 **Production components** (import these, don't recreate): `frontend/src/components/ds/`
 

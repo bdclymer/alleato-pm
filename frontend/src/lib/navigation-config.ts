@@ -120,6 +120,7 @@ export const adminTools: NavigationTool[] = [
   { name: "Settings", path: "/settings", icon: Settings, requiresProject: false },
   { name: "What's New", path: "/updates", icon: TrendingUp, requiresProject: false },
   { name: "Documentation", path: "/docs", icon: MessageCircle, requiresProject: false },
+  { name: "Procore Docs", path: "/procore-docs", icon: BookOpen, requiresProject: false },
   { name: "Document Pipeline", path: "/admin/documents/pipeline", icon: FolderOpen, requiresProject: false, adminOnly: true },
   { name: "Company Knowledge", path: "/admin/company-knowledge", icon: BookOpen, requiresProject: false, adminOnly: true },
   // AI SDK DevTools — only visible in development (http://localhost:4983)

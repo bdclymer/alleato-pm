@@ -77,52 +77,15 @@ const DRY_RUN = args.includes("--dry-run");
 const SKIP_CRAWL = args.includes("--skip-crawl");
 const SKIP_EMBED = args.includes("--skip-embed");
 const FORCE = args.includes("--force");
-const WEB_ONLY = args.includes("--web-only");
+// --include-mobile: opt-in to include Android/iOS pages (excluded by default)
+const INCLUDE_MOBILE = args.includes("--include-mobile");
+const WEB_ONLY = !INCLUDE_MOBILE; // default: always exclude mobile/device pages
 const LIMIT = parseInt(args[args.indexOf("--limit") + 1]) || 0;
 const BATCH_SIZE = parseInt(args[args.indexOf("--batch-size") + 1]) || 20;
 const CONCURRENCY = parseInt(args[args.indexOf("--concurrency") + 1]) || 3;
 const CHUNK_SIZE = parseInt(args[args.indexOf("--chunk-size") + 1]) || 600;
 const CHUNK_OVERLAP =
   parseInt(args[args.indexOf("--chunk-overlap") + 1]) || 80;
-
-// --topics "budget,change-order,invoice" — only crawl URLs matching these slug keywords
-const TOPICS_RAW = args.includes("--topics")
-  ? args[args.indexOf("--topics") + 1]
-  : "";
-const TOPICS = TOPICS_RAW
-  ? TOPICS_RAW.split(",").map((t) => t.trim().toLowerCase())
-  : [];
-
-// Topic keyword mapping: friendly name → URL slug patterns to match
-const TOPIC_KEYWORDS = {
-  budget: ["budget", "cost-code", "cost-type", "financial-markup", "financial-management"],
-  "change-order": ["change-order", "potential-change-order", "pco", "cco", "sco"],
-  "change-event": ["change-event"],
-  commitment: ["commitment", "subcontract", "purchase-order"],
-  invoice: ["invoice", "invoicing", "billing", "payment-application", "requisition"],
-  rfi: ["rfi", "request-for-information"],
-  submittal: ["submittal"],
-  drawing: ["drawing", "ocr"],
-  schedule: ["schedule", "gantt", "look-ahead", "lookahead"],
-  "daily-log": ["daily-log"],
-  "punch-list": ["punch-list", "punch-item"],
-  observation: ["observation", "safety"],
-  correspondence: ["correspondence"],
-  directory: ["directory", "vendor", "contact"],
-  permission: ["permission"],
-  workflow: ["workflow"],
-  document: ["document-management", "document-tool"],
-  specification: ["specification"],
-  meeting: ["meeting"],
-  form: ["form-tool", "forms-tool"],
-  inspection: ["inspection"],
-  bidding: ["bid", "bidding", "bid-room"],
-  estimating: ["estimat", "takeoff"],
-  "lien-waiver": ["lien-waiver", "lien_waiver"],
-  wbs: ["work-breakdown", "wbs", "cost-code-segment"],
-  "prime-contract": ["prime-contract"],
-  "direct-cost": ["direct-cost"],
-};
 
 const SITEMAP_URL = "https://v2.support.procore.com/sitemap.xml";
 const CACHE_DIR = join(__dirname, "../.cache/procore-docs");
@@ -531,8 +494,7 @@ async function main() {
   if (SKIP_CRAWL) console.log(`Mode:         SKIP CRAWL (embed only)`);
   if (SKIP_EMBED) console.log(`Mode:         SKIP EMBED (crawl only)`);
   if (FORCE) console.log(`Mode:         FORCE (ignore cache + content_hash)`);
-  if (WEB_ONLY) console.log(`Filter:       WEB ONLY (excluding mobile/device pages)`);
-  if (TOPICS.length) console.log(`Topics:       ${TOPICS.join(", ")}`);
+  if (WEB_ONLY) console.log(`Filter:       Excluding Android/iOS pages (default — use --include-mobile to override)`);
   console.log("=".repeat(70));
   console.log();
 
@@ -550,41 +512,82 @@ async function main() {
       (e) => e.url !== "https://v2.support.procore.com/"
     );
 
-    // --topics: only include URLs matching specified topic keywords
-    if (TOPICS.length > 0) {
-      // Resolve topic names to slug keywords
-      const slugKeywords = [];
-      for (const topic of TOPICS) {
-        if (TOPIC_KEYWORDS[topic]) {
-          slugKeywords.push(...TOPIC_KEYWORDS[topic]);
-        } else {
-          // Use the topic directly as a keyword
-          slugKeywords.push(topic);
-        }
-      }
-      const before = sitemapEntries.length;
+    // Exclude FAQ pages (short Q&A articles, not product manual content)
+    // Use --include-faq to override
+    if (!args.includes("--include-faq")) {
+      const beforeFaq = sitemapEntries.length;
       sitemapEntries = sitemapEntries.filter((e) => {
-        const lower = e.url.toLowerCase();
-        return slugKeywords.some((kw) => lower.includes(kw));
+        const path = e.url.replace("https://v2.support.procore.com", "");
+        return !path.startsWith("/faq-");
       });
-      console.log(
-        `--topics [${TOPICS.join(", ")}]: matched ${sitemapEntries.length} of ${before} URLs (keywords: ${slugKeywords.join(", ")})`
-      );
+      console.log(`FAQ filter: excluded ${beforeFaq - sitemapEntries.length} FAQ pages (${sitemapEntries.length} remaining)`);
     }
 
-    // --web-only: exclude mobile/device-specific pages
+    // Exclude mobile/device-specific pages by default (use --include-mobile to override)
     if (WEB_ONLY) {
-      const mobileKeywords = [
-        "/faq-android-", "/faq-ios-", "/faq-procore-for-android",
-        "/faq-procore-for-ios", "(android)", "(ios)",
-        "-mobile-device", "-mobile-app",
+      const mobilePatterns = [
+        // Product manuals for Android/iOS (e.g. /product-manuals/submittals-android/)
+        "-android", "-ios",
+        // Generic mobile keywords
+        "(android)", "(ios)", "-mobile-device", "-mobile-app",
       ];
       const before = sitemapEntries.length;
       sitemapEntries = sitemapEntries.filter((e) => {
         const lower = e.url.toLowerCase();
-        return !mobileKeywords.some((kw) => lower.includes(kw));
+        return !mobilePatterns.some((kw) => lower.includes(kw));
       });
-      console.log(`--web-only: filtered ${before - sitemapEntries.length} mobile/device pages`);
+      console.log(`Mobile filter: excluded ${before - sitemapEntries.length} Android/iOS pages (${sitemapEntries.length} remaining)`);
+    }
+
+    // Allowlist filter: only crawl relevant project/company tool sections
+    // Use --all-sections to bypass (e.g. for a full re-crawl)
+    if (!args.includes("--all-sections")) {
+      const ALLOWED_SECTIONS = [
+        // Core project tools
+        "daily-log-project",
+        "photos-project",
+        "punch-list-project",
+        "schedule-project",
+        "observations-project",
+        "meetings-project",
+        "emails-project",
+        "direct-costs-project",
+        "forms-project",
+        "tasks-project",
+        "incidents-project",
+        "inspections-project",
+        "coordination-issues-project",
+        "correspondence-project",
+        "transmittals-project",
+        "directory-project",
+        "directory-company",
+        "reports-project",
+        "prime-contracts-project",
+        "document-management-project",
+        // Already-crawled tools (keep them in the skip-if-existing logic)
+        "budget-project",
+        "commitments-project",
+        "change-events-project",
+        "change-orders-project",
+        "invoicing-project",
+        "drawings-project",
+        "specifications-project",
+        "submittals-project",
+        "rfis-project",
+        // Process guides (high value how-to content)
+        "process-guides",
+        // Core support sections that aren't tool-specific
+        "getting-started",
+      ];
+
+      const before = sitemapEntries.length;
+      sitemapEntries = sitemapEntries.filter((e) => {
+        const path = e.url.replace("https://v2.support.procore.com", "");
+        // Allow if the path contains any of the allowed section slugs
+        return ALLOWED_SECTIONS.some((section) => path.includes(`/${section}/`) || path.includes(`/${section}-`));
+      });
+      console.log(`Section allowlist: filtered to ${sitemapEntries.length} pages (excluded ${before - sitemapEntries.length} irrelevant sections)`);
+      console.log(`  Excluded: procore-pay, resource-planning, admin, ERP integrations, SSO, analytics, timesheets, bidding, etc.`);
     }
 
     if (LIMIT) sitemapEntries = sitemapEntries.slice(0, LIMIT);
@@ -778,43 +781,7 @@ async function main() {
             continue;
           }
 
-          let embeddings;
-          try {
-            embeddings = await embedTexts(texts);
-          } catch (batchErr) {
-            // Batch too large — fall back to one-at-a-time with truncation
-            if (batchErr.message.includes("maximum context length")) {
-              console.log(
-                `[Batch ${batchNum}/${totalBatches}] Batch too large, falling back to one-at-a-time...`
-              );
-              for (let j = 0; j < batch.length; j++) {
-                try {
-                  // Truncate to ~7500 tokens (~30000 chars) to stay under 8192 limit
-                  const truncated = texts[j].slice(0, 30000);
-                  const [emb] = await embedTexts([truncated]);
-                  await fetch(
-                    `${SUPABASE_URL}/rest/v1/support_article_chunks?id=eq.${batch[j].id}`,
-                    {
-                      method: "PATCH",
-                      headers: {
-                        apikey: SUPABASE_KEY,
-                        Authorization: `Bearer ${SUPABASE_KEY}`,
-                        "Content-Type": "application/json",
-                        Prefer: "return=minimal",
-                      },
-                      body: JSON.stringify({ embedding: JSON.stringify(emb) }),
-                    }
-                  );
-                  embedded++;
-                } catch (singleErr) {
-                  console.log(`  SKIP chunk ${batch[j].id}: ${singleErr.message.slice(0, 80)}`);
-                  embedFailed++;
-                }
-              }
-              continue;
-            }
-            throw batchErr;
-          }
+          const embeddings = await embedTexts(texts);
 
           // Update each chunk with its embedding
           for (let j = 0; j < batch.length; j++) {

@@ -9,9 +9,13 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
+import { generateText } from "ai";
 import { createClient as createAuthClient } from "@/lib/supabase/server";
 import { createClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
+import { getLanguageModel } from "@/lib/ai/providers";
+
+const PROCORE_DOCS_MODEL = "gpt-4o-mini";
 
 function getServiceSupabase() {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -24,120 +28,129 @@ function getServiceSupabase() {
   return createClient(supabaseUrl, serviceRoleKey);
 }
 
+// Gateway-aware OpenAI client for embeddings — matches ai-memory-service.ts pattern
+let _openai: OpenAI | null = null;
 function getOpenAIClient(): OpenAI {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) {
-    throw new Error('OPENAI_API_KEY environment variable is not set');
+  if (!_openai) {
+    const gatewayKey = process.env.AI_GATEWAY_API_KEY;
+    if (gatewayKey) {
+      _openai = new OpenAI({
+        apiKey: gatewayKey,
+        baseURL: "https://ai-gateway.vercel.sh/v1",
+      });
+    } else {
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey) throw new Error("AI_GATEWAY_API_KEY or OPENAI_API_KEY not set");
+      _openai = new OpenAI({ apiKey });
+    }
   }
-  return new OpenAI({ apiKey });
+  return _openai;
 }
 
 interface SearchResult {
-  id: number;
+  chunk_id: number;
+  article_id: number;
+  title: string;
   url: string;
-  content: string;
+  slug: string;
+  heading: string | null;
+  chunk_text: string;
+  category: string | null;
+  subcategory: string | null;
+  breadcrumb: string[];
   similarity: number;
-  metadata?: Record<string, unknown>;
-  source_id?: string;
+}
+
+interface SourceResult {
+  chunk_id: number;
+  article_id: number;
+  title: string;
+  url: string;
+  heading: string | null;
+  chunk_text: string;
+  category: string | null;
+  similarity: number;
 }
 
 interface RAGResponse {
   answer: string;
-  sources: SearchResult[];
+  sources: SourceResult[];
   query: string;
   expandedQueries?: string[];
   reasoning?: string;
 }
 
 /**
- * Expand query to find more relevant results
- * Generates paraphrases and related terms
+ * Expand query using the AI Gateway — matches chat/route.ts pattern
  */
-async function expandQuery(
-  openai: OpenAI,
-  originalQuery: string,
-): Promise<string[]> {
+async function expandQuery(originalQuery: string): Promise<string[]> {
   try {
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "system",
-          content: `You are a query expansion assistant for Procore construction software documentation.
+    const { text } = await generateText({
+      model: getLanguageModel(PROCORE_DOCS_MODEL),
+      system: `You are a query expansion assistant for Procore construction software documentation.
 Generate 2-3 alternative phrasings of the user's question that might match different wordings in the docs.
-Include:
-- Paraphrases using different terminology
-- Technical terms that might appear in documentation
-- Related concepts
-
-Return a JSON array of strings: ["query1", "query2", "query3"]`,
-        },
-        {
-          role: "user",
-          content: originalQuery,
-        },
-      ],
-      temperature: 0.7,
-      response_format: { type: "json_object" },
+Include paraphrases using different terminology, technical terms, and related concepts.
+Respond with ONLY valid JSON: { "queries": ["phrasing1", "phrasing2"] }`,
+      prompt: originalQuery,
     });
-
-    const content = response.choices[0].message.content || '{"queries":[]}';
-    const parsed = JSON.parse(content);
-    const expanded = parsed.queries || parsed.items || [];
-
-    // Always include original query first
+    const parsed = JSON.parse(text) as { queries?: string[]; items?: string[] };
+    const expanded = parsed.queries ?? parsed.items ?? [];
     return [originalQuery, ...expanded].slice(0, 4);
-  } catch (error) {
-    // Fallback to original query if expansion fails
+  } catch {
     return [originalQuery];
   }
 }
 
 /**
- * Search with multiple query variants and aggregate results
+ * Search with multiple query variants — embeddings and searches run in parallel
  */
 async function searchWithExpansion(
   supabase: ReturnType<typeof getServiceSupabase>,
-  openai: OpenAI,
   queries: string[],
   topK: number,
 ): Promise<SearchResult[]> {
-  const allResults: SearchResult[] = [];
-  const seenUrls = new Set<string>();
+  const openai = getOpenAIClient();
 
-  for (const query of queries) {
-    // Generate embedding
-    const embeddingResponse = await openai.embeddings.create({
-      model: "text-embedding-3-small",
-      input: query,
-    });
+  // Generate all embeddings in parallel
+  const embeddingResults = await Promise.all(
+    queries.map((q) =>
+      openai.embeddings.create({
+        model: "text-embedding-3-large",
+        dimensions: 3072,
+        input: q.substring(0, 8000),
+      }),
+    ),
+  );
 
-    const queryEmbedding = embeddingResponse.data[0].embedding;
-
-    // Search
-    const { data: searchResults, error } = await supabase.rpc(
-      "match_crawled_pages",
-      {
-        query_embedding: queryEmbedding,
+  // Run all vector searches in parallel
+  const searchResponses = await Promise.all(
+    embeddingResults.map((embRes) =>
+      supabase.rpc("search_support_articles", {
+        query_embedding: embRes.data[0].embedding,
         match_count: topK,
-      },
-    );
+        match_threshold: 0.3,
+      }),
+    ),
+  );
 
-    if (!error && searchResults) {
-      for (const result of searchResults) {
-        // Deduplicate by URL
-        if (!seenUrls.has(result.url)) {
-          seenUrls.add(result.url);
-          allResults.push(result);
+  const allResults: SearchResult[] = [];
+  const seen = new Set<string>();
+
+  for (const { data: rows, error } of searchResponses) {
+    if (!error && rows) {
+      for (const r of rows) {
+        const key = String(r.chunk_id);
+        if (!seen.has(key)) {
+          seen.add(key);
+          allResults.push(r as SearchResult);
         }
       }
     }
   }
 
-  // Sort by similarity score and take top results
   return allResults
     .sort((a, b) => b.similarity - a.similarity)
-    .slice(0, topK * 2); // Get more results for better context
+    .slice(0, topK * 2);
 }
 
 /**
@@ -180,7 +193,6 @@ Remember: You're an intelligent assistant with construction expertise, not just 
  */
 export async function POST(request: NextRequest) {
   try {
-    const openai = getOpenAIClient();
     const supabase = getServiceSupabase();
     const authSupabase = await createAuthClient();
     const { data: { user }, error: authError } = await authSupabase.auth.getUser();
@@ -197,12 +209,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Step 1: Expand the query to find more relevant results
-    const expandedQueries = await expandQuery(openai, query);
-    // Step 2: Search with all query variants
+    // Step 1: Expand + convert history in parallel (both are independent)
+    const expandedQueries = await expandQuery(query);
+    // Step 2: Search with all query variants (embeddings + searches parallelized internally)
     const searchResults = await searchWithExpansion(
       supabase,
-      openai,
       expandedQueries,
       topK,
     );
@@ -217,51 +228,33 @@ export async function POST(request: NextRequest) {
 
     if (searchResults.length > 0) {
       context = searchResults
-        .slice(0, 10) // Use more context for better reasoning
+        .slice(0, 10)
         .map((result: SearchResult, idx: number) => {
-          return `[Source ${idx + 1}] (Relevance: ${(result.similarity * 100).toFixed(1)}%)\nURL: ${result.url}\nContent: ${result.content}`;
+          const heading = result.heading ? ` › ${result.heading}` : "";
+          return `[Source ${idx + 1}] (Relevance: ${(result.similarity * 100).toFixed(1)}%)\nTitle: ${result.title}${heading}\nURL: ${result.url}\nContent: ${result.chunk_text}`;
         })
         .join("\n\n---\n\n");
 
-      // Extract topics from results
+      // Extract topics from category field (now available directly)
       availableTopics = [
         ...new Set(
           searchResults
-            .map((r) => {
-              const url = r.url || "";
-              // Extract topic from URL like /budget/ or /commitments/
-              const match = url.match(
-                /\/(budget|commitments|change-orders|invoicing|estimating|drawings|materials|meetings|photos|contracts|equipment|directory|documents)/i,
-              );
-              return match ? match[1].replace(/-/g, " ") : null;
-            })
+            .map((r) => r.category)
             .filter(Boolean) as string[],
         ),
       ];
     }
 
-    // Step 4: Build conversation messages
-    const messages: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
-      {
-        role: "system",
-        content: SYSTEM_PROMPT,
-      },
-    ];
+    // Step 4: Build conversation history (last 6 exchanges)
+    type HistoryMsg = { role: "user" | "assistant"; content: string };
+    const history: HistoryMsg[] = conversationHistory
+      .slice(-6)
+      .filter(
+        (m: HistoryMsg) => m.role === "user" || m.role === "assistant",
+      )
+      .map((m: HistoryMsg) => ({ role: m.role, content: m.content }));
 
-    // Add conversation history if provided
-    if (conversationHistory && conversationHistory.length > 0) {
-      for (const msg of conversationHistory.slice(-6)) {
-        // Keep last 6 messages for context
-        if (msg.role === "user" || msg.role === "assistant") {
-          messages.push({
-            role: msg.role,
-            content: msg.content,
-          });
-        }
-      }
-    }
-
-    // Add current query with context
+    // Add current query with injected RAG context
     let userMessage = `Question: ${query}`;
 
     if (searchResults.length > 0) {
@@ -290,32 +283,25 @@ Please use your expertise to:
 3. Provide general best practices if applicable`;
     }
 
-    messages.push({
-      role: "user",
-      content: userMessage,
+    // Step 5: Generate response via AI Gateway
+    const { text: answer } = await generateText({
+      model: getLanguageModel(PROCORE_DOCS_MODEL),
+      system: SYSTEM_PROMPT,
+      messages: [...history, { role: "user" as const, content: userMessage }],
     });
-
-    // Step 5: Generate intelligent response
-    const completionResponse = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
-      messages,
-      temperature: 0.5, // Higher temp for more creative problem-solving
-      max_tokens: 1500, // More tokens for detailed explanations
-    });
-
-    const answer =
-      completionResponse.choices[0].message.content ||
-      "I apologize, but I encountered an error generating a response.";
 
     // Step 6: Return enhanced response
     const response: RAGResponse = {
       answer,
       sources: searchResults.slice(0, 5).map((result: SearchResult) => ({
-        id: result.id,
+        chunk_id: result.chunk_id,
+        article_id: result.article_id,
+        title: result.title,
         url: result.url,
-        content: result.content.substring(0, 300) + "...", // Show more context
+        heading: result.heading,
+        chunk_text: result.chunk_text.substring(0, 300) + "...",
+        category: result.category,
         similarity: result.similarity,
-        source_id: result.source_id,
       })),
       query,
       expandedQueries: expandedQueries.slice(1), // Don't include original query

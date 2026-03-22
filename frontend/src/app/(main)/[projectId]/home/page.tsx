@@ -1,6 +1,6 @@
 import { createServiceClient } from "@/lib/supabase/service";
 import { notFound } from "next/navigation";
-import { ProjectHomeRedesign as ProjectHomeClient } from "./project-home-redesign";
+import { ProjectCommandCenter as ProjectHomeClient } from "./project-command-center";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;

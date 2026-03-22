@@ -16,7 +16,7 @@ interface UseBudgetDataReturn {
  * Custom hook for fetching and managing budget data from SQL views
  * Uses pre-calculated values from mv_budget_rollup and v_budget_grand_totals
  */
-export function useBudgetData(projectId: string): UseBudgetDataReturn {
+export function useBudgetData(projectId: string, options?: { silent?: boolean }): UseBudgetDataReturn {
   const [budgetData, setBudgetData] = useState<BudgetLineItem[]>([]);
   const [grandTotals, setGrandTotals] = useState<BudgetGrandTotals>({
     originalBudgetAmount: 0,
@@ -74,9 +74,11 @@ export function useBudgetData(projectId: string): UseBudgetDataReturn {
       const errorMessage = err instanceof Error ? err.message : "Failed to fetch budget data";
       setError(errorMessage);
       console.error("Budget data fetch error:", err);
-      toast.error("Failed to load budget", {
-        description: "Please try again."
-      });
+      if (!options?.silent) {
+        toast.error("Failed to load budget", {
+          description: "Please try again."
+        });
+      }
     } finally {
       setLoading(false);
     }

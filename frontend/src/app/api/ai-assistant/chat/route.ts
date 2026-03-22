@@ -7,7 +7,6 @@ import {
   type UIMessage,
 } from "ai";
 import { after } from "next/server";
-import { context, trace } from "@opentelemetry/api";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { getLanguageModel } from "@/lib/ai/providers";
@@ -196,47 +195,17 @@ export async function POST(request: Request) {
   if (councilMode) {
     systemPrompt += buildCouncilModePromptInjection();
   }
-  const tracer = trace.getTracer("ai-assistant");
-  const requestSpan = tracer.startSpan("ai-assistant.chat.request");
-  let requestSpanEnded = false;
-  const endRequestSpan = () => {
-    if (requestSpanEnded) return;
-    requestSpanEnded = true;
-    requestSpan.end();
-  };
-  requestSpan.setAttribute("user.id", user.id);
-  requestSpan.setAttribute("session.id", sessionId);
-  // Compatibility keys used by some Langfuse views/indexers.
-  requestSpan.setAttribute("langfuse.user.id", user.id);
-  requestSpan.setAttribute("langfuse.session.id", sessionId);
-  requestSpan.setAttribute("langfuse.trace.metadata.route", "ai-assistant.chat");
-
   const stream = createUIMessageStream({
     execute: async ({ writer }) => {
-      const result = context.with(
-        trace.setSpan(context.active(), requestSpan),
-        () =>
-          streamText({
-            model: getLanguageModel(STRATEGIST_MODEL),
-            system: systemPrompt,
-            messages: modelMessages,
-            tools,
-            // Strategist gets 7 steps to route, consult specialists, and synthesize.
-            // Each specialist gets up to 5 internal tool-call steps.
-            stopWhen: stepCountIs(7),
-            // LangFuse AI Observability — traces appear at https://us.cloud.langfuse.com
-            experimental_telemetry: {
-              isEnabled: true,
-              functionId: "strategist-chat",
-              metadata: {
-                userId: user.id,
-                sessionId,
-                agent: "strategist",
-                architecture: "csuite",
-              },
-            },
-          }),
-      );
+      const result = streamText({
+        model: getLanguageModel(STRATEGIST_MODEL),
+        system: systemPrompt,
+        messages: modelMessages,
+        tools,
+        // Strategist gets 7 steps to route, consult specialists, and synthesize.
+        // Each specialist gets up to 5 internal tool-call steps.
+        stopWhen: stepCountIs(7),
+      });
 
       writer.merge(result.toUIMessageStream());
 
@@ -244,12 +213,6 @@ export async function POST(request: Request) {
       // totalUsage accumulates across ALL agent steps (not just the last),
       // which is correct for multi-step agents using stopWhen.
       totalUsage = await result.totalUsage;
-      requestSpan.setAttribute(
-        "langfuse.trace.metadata.token_total",
-        totalUsage?.totalTokens ?? 0,
-      );
-      requestSpan.setAttribute("langfuse.trace.metadata.status", "ok");
-      endRequestSpan();
     },
     onFinish: async ({ messages: finishedMessages }) => {
       // Persist assistant messages
@@ -282,15 +245,14 @@ export async function POST(request: Request) {
         }
       }
 
-      // Update conversation timestamp
+      // Update conversation timestamp — scope to user to prevent cross-user update
       await supabase
         .from("conversations")
         .update({ last_message_at: new Date().toISOString() })
-        .eq("session_id", sessionId);
+        .eq("session_id", sessionId)
+        .eq("user_id", user.id);
     },
     onError: () => {
-      requestSpan.setAttribute("langfuse.trace.metadata.status", "error");
-      endRequestSpan();
       return "An error occurred while generating a response. Please try again.";
     },
   });
@@ -298,21 +260,7 @@ export async function POST(request: Request) {
   // Post-response tasks — run AFTER the streaming response is sent.
   // Zero impact on user-facing latency.
   after(async () => {
-    // Ensure the request span is always closed before flushing telemetry,
-    // including client disconnect/abort paths.
-    endRequestSpan();
-
-    // 1. Flush Langfuse span processor so streamText spans aren't dropped
-    //    when the serverless function shuts down.
-    const processor = (globalThis as Record<string, unknown>)
-      .__langfuseSpanProcessor as
-      | { forceFlush: () => Promise<void> }
-      | undefined;
-    if (processor) {
-      await processor.forceFlush();
-    }
-
-    // 2. Generate conversation memory — summarize + embed this conversation
+    // Generate conversation memory — summarize + embed this conversation
     //    so the AI can recall it in future sessions.
     try {
       await generateConversationMemory(sessionId, user.id);

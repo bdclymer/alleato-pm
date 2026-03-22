@@ -1,3 +1,4 @@
+import { useCurrentUserName } from "@/hooks/use-current-user-name";
 import { createClient } from "@/lib/supabase/client";
 import {
   RealtimeChannel,
@@ -45,34 +46,36 @@ const supabase = createClient();
 const generateRandomColor = () =>
   `hsl(${Math.floor(Math.random() * 360)}, 100%, 70%)`;
 
-const generateRandomNumber = () => Math.floor(Math.random() * 100);
-
 const EVENT_NAME = "realtime-cursor-move";
+
+type RealtimeCursorUser = {
+  id: string;
+  name: string;
+};
 
 type CursorEventPayload = {
   position: {
     x: number;
     y: number;
   };
-  user: {
-    id: number;
-    name: string;
-  };
+  user: RealtimeCursorUser;
   color: string;
   timestamp: number;
 };
 
 export const useRealtimeCursors = ({
   roomName,
-  username,
+  username: usernameProp,
   throttleMs,
 }: {
   roomName: string;
   username: string;
   throttleMs: number;
 }) => {
+  const fallbackUsername = useCurrentUserName();
+  const username = usernameProp || fallbackUsername;
   const [color] = useState(generateRandomColor());
-  const [userId] = useState(generateRandomNumber());
+  const [userId] = useState(() => crypto.randomUUID());
   const [cursors, setCursors] = useState<Record<string, CursorEventPayload>>(
     {},
   );
@@ -94,7 +97,7 @@ export const useRealtimeCursors = ({
           name: username,
         },
         color: color,
-        timestamp: new Date().getTime(),
+        timestamp: Date.now(),
       };
 
       cursorPayload.current = payload;
@@ -116,10 +119,15 @@ export const useRealtimeCursors = ({
     channel
       .on("presence", { event: "leave" }, ({ leftPresences }) => {
         leftPresences.forEach(function (element) {
+          const cursorUserId = (element as { user_id?: string }).user_id;
+          if (!cursorUserId) {
+            return;
+          }
+
           // Remove cursor when user leaves
           setCursors((prev) => {
-            if (prev[element.key]) {
-              delete prev[element.key];
+            if (prev[cursorUserId]) {
+              delete prev[cursorUserId];
             }
 
             return { ...prev };
@@ -145,10 +153,6 @@ export const useRealtimeCursors = ({
           if (user.id === userId) return;
 
           setCursors((prev) => {
-            if (prev[userId]) {
-              delete prev[userId];
-            }
-
             return {
               ...prev,
               [user.id]: data.payload,
@@ -158,7 +162,10 @@ export const useRealtimeCursors = ({
       )
       .subscribe(async (status) => {
         if (status === REALTIME_SUBSCRIBE_STATES.SUBSCRIBED) {
-          await channel.track({ key: userId });
+          await channel.track({
+            user_id: userId,
+            user_name: username,
+          });
           channelRef.current = channel;
         } else {
           setCursors({});
@@ -170,7 +177,7 @@ export const useRealtimeCursors = ({
       channel.unsubscribe();
       channelRef.current = null;
     };
-  }, []);
+  }, [roomName, userId, username]);
 
   useEffect(() => {
     // Add event listener for mousemove

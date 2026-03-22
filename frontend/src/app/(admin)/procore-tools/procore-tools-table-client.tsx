@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import type { ReactElement } from "react";
-import { MoreHorizontal } from "lucide-react";
+import { AppWindow, Building2, GraduationCap, MoreHorizontal } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 import { Badge } from "@/components/ui/badge";
@@ -43,10 +43,8 @@ const TOOL_COLUMNS: ColumnConfig[] = [
   { id: "status", label: "Status", defaultVisible: true },
   { id: "slug", label: "Slug", defaultVisible: true },
   { id: "description", label: "Description", defaultVisible: false },
-  { id: "new_link", label: "App Link", defaultVisible: false },
-  { id: "procore_link", label: "Procore Link", defaultVisible: false },
+  { id: "links", label: "Links", defaultVisible: true },
   { id: "prp_path", label: "PRP Path", defaultVisible: false },
-  { id: "tutorials", label: "Tutorials", defaultVisible: false },
   { id: "action_buttons", label: "Actions", defaultVisible: false },
   { id: "test_results", label: "Test Results", defaultVisible: false },
   { id: "created_at", label: "Created", defaultVisible: false },
@@ -98,6 +96,32 @@ function formatDate(value: string | null | undefined): string {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "-";
   return date.toLocaleDateString();
+}
+
+function renderLinkIcon(
+  value: string | null | undefined,
+  label: string,
+  icon: React.ComponentType<{ className?: string }>,
+): ReactElement {
+  if (!value?.trim()) {
+    return <span className="text-muted-foreground">-</span>;
+  }
+
+  const Icon = icon;
+
+  return (
+    <a
+      href={value}
+      target="_blank"
+      rel="noreferrer"
+      title={label}
+      aria-label={label}
+      className="inline-flex items-center justify-center rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+      onClick={(event) => event.stopPropagation()}
+    >
+      <Icon className="h-3.5 w-3.5" />
+    </a>
+  );
 }
 
 function categoryVariant(
@@ -169,41 +193,58 @@ function buildToolColumns(): TableColumn<ProcoreToolRow>[] {
     },
     {
       ...TOOL_COLUMNS[5],
-      render: (item) => <span>{toDisplayValue(item.new_link)}</span>,
-      sortValue: (item) => toDisplayValue(item.new_link),
+      render: (item) => {
+        const hasAppLink = Boolean(item.new_link?.trim());
+        const hasProcoreLink = Boolean(item.procore_link?.trim());
+        const hasTutorialLink = Boolean(item.tutorials?.trim());
+
+        if (!hasAppLink && !hasProcoreLink && !hasTutorialLink) {
+          return <span className="text-muted-foreground">-</span>;
+        }
+
+        return (
+          <div className="flex items-center gap-1">
+            {hasAppLink
+              ? renderLinkIcon(item.new_link, "Open Alleato page", AppWindow)
+              : null}
+            {hasProcoreLink
+              ? renderLinkIcon(item.procore_link, "Open Procore page", Building2)
+              : null}
+            {hasTutorialLink
+              ? renderLinkIcon(item.tutorials, "Open tutorial", GraduationCap)
+              : null}
+          </div>
+        );
+      },
+      sortValue: (item) =>
+        [
+          toDisplayValue(item.new_link),
+          toDisplayValue(item.procore_link),
+          toDisplayValue(item.tutorials),
+        ].join(" "),
     },
     {
       ...TOOL_COLUMNS[6],
-      render: (item) => <span>{toDisplayValue(item.procore_link)}</span>,
-      sortValue: (item) => toDisplayValue(item.procore_link),
-    },
-    {
-      ...TOOL_COLUMNS[7],
       render: (item) => <span>{toDisplayValue(item.prp_path)}</span>,
       sortValue: (item) => toDisplayValue(item.prp_path),
     },
     {
-      ...TOOL_COLUMNS[8],
-      render: (item) => <span>{toDisplayValue(item.tutorials)}</span>,
-      sortValue: (item) => toDisplayValue(item.tutorials),
-    },
-    {
-      ...TOOL_COLUMNS[9],
+      ...TOOL_COLUMNS[7],
       render: (item) => <span>{toDisplayValue(item.action_buttons)}</span>,
       sortValue: (item) => toDisplayValue(item.action_buttons),
     },
     {
-      ...TOOL_COLUMNS[10],
+      ...TOOL_COLUMNS[8],
       render: (item) => <span>{toDisplayValue(item.test_results)}</span>,
       sortValue: (item) => toDisplayValue(item.test_results),
     },
     {
-      ...TOOL_COLUMNS[11],
+      ...TOOL_COLUMNS[9],
       render: (item) => <span>{formatDate(item.created_at)}</span>,
       sortValue: (item) => (item.created_at ? new Date(item.created_at).getTime() : 0),
     },
     {
-      ...TOOL_COLUMNS[12],
+      ...TOOL_COLUMNS[10],
       render: (item) => <span>{formatDate(item.updated_at)}</span>,
       sortValue: (item) => (item.updated_at ? new Date(item.updated_at).getTime() : 0),
     },

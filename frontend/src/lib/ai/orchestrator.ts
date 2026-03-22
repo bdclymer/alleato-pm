@@ -660,17 +660,6 @@ export async function consultAgent(
       messages: [{ role: "user", content: userMessage }],
       tools: agentTools,
       stopWhen: stepCountIs(5),
-      // LangFuse AI Observability — child span under the strategist trace
-      experimental_telemetry: {
-        isEnabled: true,
-        functionId: `agent-${agentId}`,
-        metadata: {
-          userId,
-          agent: agentId,
-          agentName: config.name,
-          architecture: "csuite",
-        },
-      },
     });
 
     // Extract which tools were called from the steps

@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
-import { ProjectFormPageLayout } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { ContractForm } from "@/components/domain/contracts";
 import type { ContractFormData } from "@/components/domain/contracts/ContractForm";
 
@@ -32,14 +32,10 @@ export default function NewContractPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        // API expects client_id (numeric) or contract_company_id (UUID). ownerCompanyId comes from companies.
         body: JSON.stringify({
           contract_number: data.number,
           title: data.title,
-          client_id:
-            data.ownerCompanyId && /^\d+$/.test(data.ownerCompanyId)
-              ? Number.parseInt(data.ownerCompanyId, 10)
-              : null,
+          client_id: data.ownerCompanyId || null,
           contract_company_id: data.ownerCompanyId || data.contractCompanyId || null,
           contractor_id: data.contractorId || null,
           architect_engineer_id: data.architectEngineerId || null,
@@ -49,16 +45,16 @@ export default function NewContractPage() {
           executed_at: data.executed ? new Date().toISOString() : null,
           original_contract_value: sovTotal,
           revised_contract_value: sovTotal,
-          start_date: data.startDate?.toISOString() || null,
-          end_date: data.estimatedCompletionDate?.toISOString() || null,
+          start_date: data.startDate?.toISOString().split("T")[0] || null,
+          end_date: data.estimatedCompletionDate?.toISOString().split("T")[0] || null,
           substantial_completion_date:
-            data.substantialCompletionDate?.toISOString() || null,
+            data.substantialCompletionDate?.toISOString().split("T")[0] || null,
           actual_completion_date:
-            data.actualCompletionDate?.toISOString() || null,
+            data.actualCompletionDate?.toISOString().split("T")[0] || null,
           signed_contract_received_date:
-            data.signedContractReceivedDate?.toISOString() || null,
+            data.signedContractReceivedDate?.toISOString().split("T")[0] || null,
           contract_termination_date:
-            data.contractTerminationDate?.toISOString() || null,
+            data.contractTerminationDate?.toISOString().split("T")[0] || null,
           retention_percentage: data.defaultRetainage || 0,
           payment_terms: data.paymentTerms || null,
           billing_schedule: data.billingSchedule || null,
@@ -71,6 +67,12 @@ export default function NewContractPage() {
       if (!response.ok) {
         const errorData = await response.json();
         console.error("Contract creation failed:", errorData);
+        if (errorData.details?.length > 0) {
+          const fieldErrors = errorData.details
+            .map((d: { field: string; message: string }) => `${d.field}: ${d.message}`)
+            .join("; ");
+          throw new Error(`Validation failed — ${fieldErrors}`);
+        }
         throw new Error(errorData.error || "Failed to create contract");
       }
 
@@ -91,13 +93,11 @@ export default function NewContractPage() {
               `/api/projects/${projectId}/contracts/${newContract.id}/line-items`,
               {
                 method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                },
+                headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                   line_number: index + 1,
                   description: item.description || `Line ${index + 1}`,
-                  cost_code_id: null,
+                  budget_code_id: item.budgetCodeId || null,
                   quantity,
                   unit_cost: unitCost,
                   unit_of_measure: item.unitOfMeasure || null,
@@ -110,9 +110,7 @@ export default function NewContractPage() {
         for (const lineItemResponse of lineItemResponses) {
           if (!lineItemResponse.ok) {
             const errorData = await lineItemResponse.json().catch(() => ({}));
-            throw new Error(
-              errorData.error || "Failed to create SOV line items",
-            );
+            throw new Error(errorData.error || "Failed to create SOV line items");
           }
         }
       }
@@ -123,10 +121,7 @@ export default function NewContractPage() {
           formData.append("file", file);
           const attachmentResponse = await fetch(
             `/api/projects/${projectId}/contracts/${newContract.id}/attachments`,
-            {
-              method: "POST",
-              body: formData,
-            },
+            { method: "POST", body: formData },
           );
 
           if (!attachmentResponse.ok) {
@@ -159,21 +154,20 @@ export default function NewContractPage() {
   };
 
   return (
-      <ProjectFormPageLayout
-        title="New Prime Contract"
-        description="Create a new owner agreement"
-        maxWidth="xl"
-        onBack={() => router.push(`/${projectId}/prime-contracts`)}
-        backLabel="Back to Prime Contracts"
-      >
-          <ContractForm
-            initialData={initialData}
-            onSubmit={handleSubmit}
-            onCancel={handleCancel}
-            isSubmitting={isSaving}
-            mode="create"
-            projectId={projectId}
-          />
-    </ProjectFormPageLayout>
+    <PageShell
+      variant="form"
+      title="New Prime Contract"
+      onBack={() => router.push(`/${projectId}/prime-contracts`)}
+      backLabel="Back to Prime Contracts"
+    >
+      <ContractForm
+        initialData={initialData}
+        onSubmit={handleSubmit}
+        onCancel={handleCancel}
+        isSubmitting={isSaving}
+        mode="create"
+        projectId={projectId}
+      />
+    </PageShell>
   );
 }

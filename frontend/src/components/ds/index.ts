@@ -202,9 +202,10 @@ export {
 // ---------------------------------------------------------------------------
 
 export {
+  PageShell,
   PageContainer,
   ProjectPageHeader,
   FormContainer,
-  PageToolbar,
   PageTabs,
 } from "@/components/layout";
+export type { PageShellVariant } from "@/components/layout";

@@ -45,6 +45,12 @@ export function RichTextField({
     }
   };
 
+  const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const text = e.clipboardData.getData("text/plain");
+    document.execCommand("insertText", false, text);
+  };
+
   React.useEffect(() => {
     if (editorRef.current && editorRef.current.innerHTML !== value) {
       editorRef.current.innerHTML = value;
@@ -124,6 +130,7 @@ export function RichTextField({
           ref={editorRef}
           contentEditable={!disabled}
           onInput={handleInput}
+          onPaste={handlePaste}
           className="min-h-[120px] px-3 py-2.5 focus:outline-none"
           data-placeholder={placeholder}
           suppressContentEditableWarning={true}

@@ -26,6 +26,7 @@ import { ProjectSelector } from "./project-selector";
 import { NotificationBell } from "./notification-bell";
 import { CommentsSidebar } from "./comments-sidebar";
 import { LiveAvatarStack } from "./live-avatar-stack";
+import { feedbackTargetProps } from "@/lib/admin-feedback/constants";
 
 /**
  * Top header — breadcrumbs left, tools + project selector right.
@@ -39,7 +40,10 @@ export function SiteHeader() {
   );
 
   return (
-    <header className="relative z-40 flex h-12 shrink-0 items-center bg-background text-foreground">
+    <header
+      className="relative z-40 flex h-12 shrink-0 items-center text-foreground"
+      {...feedbackTargetProps("app.site-header")}
+    >
       <div className="flex w-full items-center justify-between px-3 sm:px-5 lg:px-7 min-w-0">
         {/* ── Left: Mobile hamburger + Breadcrumbs ── */}
         <div className="flex items-center gap-2 min-w-0 flex-1">

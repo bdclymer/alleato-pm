@@ -691,6 +691,12 @@ const [isSovEditing, setIsSovEditing] = useState(false);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
+        if (errorData.details?.length > 0) {
+          const fieldErrors = errorData.details
+            .map((d: { field: string; message: string }) => `${d.field}: ${d.message}`)
+            .join("; ");
+          throw new Error(`Validation failed — ${fieldErrors}`);
+        }
         throw new Error(errorData.error || "Failed to update contract");
       }
 
@@ -817,14 +823,14 @@ const [isSovEditing, setIsSovEditing] = useState(false);
     const selectedBudgetCode = budgetCodes.find(
       (code) => code.id === lineItemForm.budgetCodeId,
     );
-    const parsedCostCodeId =
-      typeof selectedBudgetCode?.legacyCostCodeId === "number"
-        ? selectedBudgetCode.legacyCostCodeId
-        : null;
+    // legacyCostCodeId is a string (cost_codes.id), not a number.
+    const costCodeId = selectedBudgetCode?.legacyCostCodeId
+      ? String(selectedBudgetCode.legacyCostCodeId)
+      : null;
 
-    if (!selectedBudgetCode || parsedCostCodeId === null) {
+    if (!selectedBudgetCode) {
       toast.error(
-        "Selected budget code could not be applied. Please choose a valid budget code.",
+        "Please select a budget code before adding a line item.",
       );
       return;
     }
@@ -842,7 +848,8 @@ const [isSovEditing, setIsSovEditing] = useState(false);
             quantity: parseFloat(lineItemForm.quantity) || 0,
             unit_cost: parseFloat(lineItemForm.unitCost) || 0,
             unit_of_measure: lineItemForm.unitOfMeasure || null,
-            cost_code_id: parsedCostCodeId,
+            cost_code_id: costCodeId,
+            budget_code_id: selectedBudgetCode.id,
           }),
         }
       );

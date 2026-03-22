@@ -1,9 +1,8 @@
 # Alleato-Procore Documentation Index
 
-**Type:** Multi-part monorepo with 2 parts
-**Primary Language:** TypeScript (frontend), Python (backend)
-**Architecture:** Client-server with shared database (Supabase)
-**Last Updated:** 2026-03-21
+- **Primary Language:** TypeScript (frontend), Python (backend)
+- **Architecture:** Client-server with shared database (Supabase)
+- **Last Updated:** 2026-03-21
 
 ## Project Overview
 

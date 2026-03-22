@@ -1,4 +1,3 @@
-Using workdir /Users/meganharrison/Documents/alleato-pm
 export type Json =
   | string
   | number
@@ -29,6 +28,140 @@ export type Database = {
           hash?: string
         }
         Relationships: []
+      }
+      admin_feedback_items: {
+        Row: {
+          comment: string
+          created_at: string
+          created_by: string
+          dom_path: string | null
+          github_issue_number: number | null
+          github_issue_state: string | null
+          github_issue_url: string | null
+          id: string
+          metadata: Json
+          page_path: string
+          page_title: string | null
+          page_url: string
+          project_id: number | null
+          request_type: string
+          screenshot_path: string | null
+          screenshot_url: string | null
+          severity: string | null
+          status: string
+          target_id: string | null
+          target_rect: Json | null
+          target_selector: string
+          target_tag: string | null
+          target_text: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          created_by: string
+          dom_path?: string | null
+          github_issue_number?: number | null
+          github_issue_state?: string | null
+          github_issue_url?: string | null
+          id?: string
+          metadata?: Json
+          page_path: string
+          page_title?: string | null
+          page_url: string
+          project_id?: number | null
+          request_type?: string
+          screenshot_path?: string | null
+          screenshot_url?: string | null
+          severity?: string | null
+          status?: string
+          target_id?: string | null
+          target_rect?: Json | null
+          target_selector: string
+          target_tag?: string | null
+          target_text?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          created_by?: string
+          dom_path?: string | null
+          github_issue_number?: number | null
+          github_issue_state?: string | null
+          github_issue_url?: string | null
+          id?: string
+          metadata?: Json
+          page_path?: string
+          page_title?: string | null
+          page_url?: string
+          project_id?: number | null
+          request_type?: string
+          screenshot_path?: string | null
+          screenshot_url?: string | null
+          severity?: string | null
+          status?: string
+          target_id?: string | null
+          target_rect?: Json | null
+          target_selector?: string
+          target_tag?: string | null
+          target_text?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_feedback_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_feedback_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "admin_feedback_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_feedback_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_feedback_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "admin_feedback_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_feedback_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       acumatica_ap_bill_lines: {
         Row: {
@@ -5729,50 +5862,6 @@ export type Database = {
         }
         Relationships: []
       }
-      crawled_pages: {
-        Row: {
-          category: string | null
-          chunk_number: number
-          content: string
-          created_at: string
-          embedding: string | null
-          id: number
-          metadata: Json
-          source_id: string
-          url: string
-        }
-        Insert: {
-          category?: string | null
-          chunk_number: number
-          content: string
-          created_at?: string
-          embedding?: string | null
-          id?: number
-          metadata?: Json
-          source_id: string
-          url: string
-        }
-        Update: {
-          category?: string | null
-          chunk_number?: number
-          content?: string
-          created_at?: string
-          embedding?: string | null
-          id?: number
-          metadata?: Json
-          source_id?: string
-          url?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "crawled_pages_source_id_fkey"
-            columns: ["source_id"]
-            isOneToOne: false
-            referencedRelation: "sources"
-            referencedColumns: ["source_id"]
-          },
-        ]
-      }
       daily_log_equipment: {
         Row: {
           created_at: string | null
@@ -6532,6 +6621,7 @@ export type Database = {
           document_id: string
           embedding: unknown
           metadata: Json | null
+          source_type: string | null
           text: string
           updated_at: string | null
         }
@@ -6543,6 +6633,7 @@ export type Database = {
           document_id: string
           embedding?: unknown
           metadata?: Json | null
+          source_type?: string | null
           text: string
           updated_at?: string | null
         }
@@ -6554,6 +6645,7 @@ export type Database = {
           document_id?: string
           embedding?: unknown
           metadata?: Json | null
+          source_type?: string | null
           text?: string
           updated_at?: string | null
         }
@@ -9846,6 +9938,7 @@ export type Database = {
           sentiment: string | null
           start_index: number
           summary: string | null
+          summary_embedding: unknown
           tasks: Json
           title: string | null
           updated_at: string
@@ -9867,6 +9960,7 @@ export type Database = {
           sentiment?: string | null
           start_index: number
           summary?: string | null
+          summary_embedding?: unknown
           tasks?: Json
           title?: string | null
           updated_at?: string
@@ -9888,6 +9982,7 @@ export type Database = {
           sentiment?: string | null
           start_index?: number
           summary?: string | null
+          summary_embedding?: unknown
           tasks?: Json
           title?: string | null
           updated_at?: string

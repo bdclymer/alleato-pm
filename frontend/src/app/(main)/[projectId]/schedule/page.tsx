@@ -21,7 +21,7 @@
 
 import { useState, useCallback, useMemo, useEffect } from "react";
 import { useParams } from "next/navigation";
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { GanttChart } from "@/components/scheduling/gantt-chart";
 import { TaskEditModal } from "@/components/scheduling/task-edit-modal";
 import { ImportExportModal } from "@/components/scheduling/import-export-modal";
@@ -751,18 +751,29 @@ export default function ProjectSchedulePage() {
     </div>
   );
 
-  // Loading state
-  if (isLoading) {
-    return (
-      <>
-        <ProjectPageHeader
-          variant="compact"
-          title="Schedule"
-          description=""
-          actions={headerActions}
-          className="px-4 sm:px-6 lg:px-8"
-        />
-        <PageContainer>
+  // Shared view props
+  const viewProps = {
+    tasks: data?.tasks || [],
+    selectedIds,
+    onSelectionChange: setSelectedIds,
+    visibleColumns,
+    onTaskClick: handleTaskClick,
+    onAddTask: handleAddTask,
+    onQuickAddTask: handleQuickAddTask,
+    onEditTask: handleEditTask,
+    onDeleteTask: handleDeleteTask,
+    onUpdateTask: handleUpdateTask,
+    isLoading,
+  };
+
+  const isAuthError = error ? error.message.includes("session") || error.message.includes("log in") : false;
+  const isPermissionError = error ? error.message.includes("access") || error.message.includes("permission") : false;
+
+  return (
+    <PageShell variant="table" title="Schedule" actions={headerActions}>
+      {/* Loading skeleton */}
+      {isLoading && (
+        <>
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <ViewModeTabs mode={viewMode} onChange={setViewMode} />
             <div className="flex items-center gap-2 pb-2 animate-pulse">
@@ -773,42 +784,25 @@ export default function ProjectSchedulePage() {
               <div className="h-4 w-16 rounded bg-muted" />
             </div>
           </div>
-          {/* Skeleton table rows */}
           <div className="mt-4 overflow-hidden">
             <div className="h-10 bg-muted/50 border-b" />
             {["s1","s2","s3","s4","s5","s6","s7","s8"].map((key) => (
               <div key={key} className="flex items-center gap-4 px-4 py-4 border-b last:border-0 animate-pulse">
                 <div className="h-4 w-4 rounded bg-muted" />
-                <div className="h-4 flex-1 rounded bg-muted" style={{ maxWidth: `${60 + Math.random() * 30}%` }} />
+                <div className="h-4 flex-1 rounded bg-muted" />
                 <div className="h-4 w-20 rounded bg-muted" />
                 <div className="h-4 w-20 rounded bg-muted" />
                 <div className="h-2 w-24 rounded-full bg-muted" />
               </div>
             ))}
           </div>
-        </PageContainer>
-      </>
-    );
-  }
+        </>
+      )}
 
-  // Error state
-  if (error) {
-    const isAuthError = error.message.includes("session") || error.message.includes("log in");
-    const isPermissionError = error.message.includes("access") || error.message.includes("permission");
-
-    return (
-      <>
-        <ProjectPageHeader
-          variant="compact"
-          title="Schedule"
-          description=""
-          actions={headerActions}
-          className="px-4 sm:px-6 lg:px-8"
-        />
-        <PageContainer>
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <ViewModeTabs mode={viewMode} onChange={setViewMode} />
-          </div>
+      {/* Error state */}
+      {!isLoading && error && (
+        <>
+          <ViewModeTabs mode={viewMode} onChange={setViewMode} />
           <div
             data-testid="error-state"
             className="flex flex-col items-center justify-center py-16 px-4 animate-reveal"
@@ -848,157 +842,127 @@ export default function ProjectSchedulePage() {
               )}
             </div>
           </div>
-        </PageContainer>
-      </>
-    );
-  }
+        </>
+      )}
 
-  // Shared view props
-  const viewProps = {
-    tasks: data?.tasks || [],
-    selectedIds,
-    onSelectionChange: setSelectedIds,
-    visibleColumns,
-    onTaskClick: handleTaskClick,
-    onAddTask: handleAddTask,
-    onQuickAddTask: handleQuickAddTask,
-    onEditTask: handleEditTask,
-    onDeleteTask: handleDeleteTask,
-    onUpdateTask: handleUpdateTask,
-    isLoading,
-  };
-
-  return (
-    <>
-      <ProjectPageHeader
-        title="Schedule"
-        description=""
-        actions={headerActions}
-        className="px-4 sm:px-6 lg:px-8"
-      />
-      <PageContainer padding={false}>
-        <div className="px-4 sm:px-6 lg:px-8 py-2 sm:py-3">
-        <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
-          <ViewModeTabs mode={viewMode} onChange={setViewMode} />
-          <TableToolbar
-            className="w-full lg:w-auto"
-            totalItems={totalTaskCount}
-            filteredItems={totalTaskCount}
-            selectedCount={selectedIds.size}
-            searchValue={searchValue}
-            onSearchChange={setSearchValue}
-            searchPlaceholder="Search tasks..."
-            currentView="table"
-            onViewChange={() => {}}
-            enableViews={false}
-            filters={SCHEDULE_FILTERS}
-            activeFilters={activeFilters}
-            onFilterChange={setActiveFilters}
-            onClearFilters={() => setActiveFilters({})}
-            columns={SCHEDULE_COLUMNS}
-            visibleColumns={visibleColumns}
-            onColumnVisibilityChange={setVisibleColumns}
-            onExport={() => setIsImportExportModalOpen(true)}
-            enableBulkDelete={false}
-          />
-        </div>
-
-        {/* Bulk Action Bar */}
-        {selectedIds.size > 0 && (
-          <BulkActionBar
-            selectedCount={selectedIds.size}
-            onUpdateStatus={handleBulkStatusUpdate}
-            onDelete={handleBulkDelete}
-            onClear={() => setSelectedIds(new Set())}
-          />
-        )}
-
-        {/* Empty State */}
-        {data && (!data.tasks || data.tasks.length === 0) && (
-          <div className="mt-4 flex flex-col items-center justify-center py-20 px-4 animate-reveal">
-            <div className="rounded-full bg-primary/10 p-4 mb-4">
-              <Calendar className="h-7 w-7 text-primary" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">No tasks scheduled</h3>
-            <p className="text-sm text-muted-foreground mb-6 max-w-sm text-center leading-relaxed">
-              Create tasks, set milestones, and track dependencies with Gantt charts and multiple view modes.
-            </p>
-            <div className="flex gap-4">
-              <Button size="sm" onClick={() => handleAddTask()}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Task
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => setIsImportExportModalOpen(true)}>
-                <Upload className="h-4 w-4 mr-2" />
-                Import Schedule
-              </Button>
-            </div>
-          </div>
-        )}
-        </div>{/* end padded wrapper */}
-
-        {/* Main Content */}
-        {data?.tasks && data.tasks.length > 0 && (
-        <div key={viewMode} className="mt-2 flex-1 min-h-[600px] animate-reveal">
-          {viewMode === "grid" && (
-            <GanttChart
-              data={data?.ganttData || []}
+      {/* Main content */}
+      {!isLoading && !error && (
+        <>
+          <div className="flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+            <ViewModeTabs mode={viewMode} onChange={setViewMode} />
+            <TableToolbar
+              className="w-full lg:w-auto"
+              totalItems={totalTaskCount}
+              filteredItems={totalTaskCount}
+              selectedCount={selectedIds.size}
+              searchValue={searchValue}
+              onSearchChange={setSearchValue}
+              searchPlaceholder="Search tasks..."
+              currentView="table"
+              onViewChange={() => {}}
+              enableViews={false}
+              filters={SCHEDULE_FILTERS}
+              activeFilters={activeFilters}
+              onFilterChange={setActiveFilters}
+              onClearFilters={() => setActiveFilters({})}
+              columns={SCHEDULE_COLUMNS}
               visibleColumns={visibleColumns}
-              onQuickAddTask={(name) => handleQuickAddTask({ name })}
-              onUpdateTask={handleUpdateTask}
-              onTaskClick={(taskId) => {
-                const fullTask = data?.tasks
-                  ? findTaskById(data.tasks, taskId)
-                  : null;
-                if (fullTask) {
-                  handleEditTask(fullTask);
-                }
-              }}
+              onColumnVisibilityChange={setVisibleColumns}
+              onExport={() => setIsImportExportModalOpen(true)}
+              enableBulkDelete={false}
+            />
+          </div>
+
+          {selectedIds.size > 0 && (
+            <BulkActionBar
+              selectedCount={selectedIds.size}
+              onUpdateStatus={handleBulkStatusUpdate}
+              onDelete={handleBulkDelete}
+              onClear={() => setSelectedIds(new Set())}
             />
           )}
 
-          {viewMode !== "grid" && (
-            <div className="px-4 sm:px-6 lg:px-8">
-              {viewMode === "board" && <ScheduleBoardView {...viewProps} />}
-              {viewMode === "calendar" && <ScheduleCalendarView {...viewProps} />}
-              {viewMode === "timeline" && <ScheduleTimelineView {...viewProps} />}
-              {viewMode === "schedule" && <ScheduleGridView {...viewProps} />}
+          {data && (!data.tasks || data.tasks.length === 0) && (
+            <div className="mt-4 flex flex-col items-center justify-center py-20 px-4 animate-reveal">
+              <div className="rounded-full bg-primary/10 p-4 mb-4">
+                <Calendar className="h-7 w-7 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">No tasks scheduled</h3>
+              <p className="text-sm text-muted-foreground mb-6 max-w-sm text-center leading-relaxed">
+                Create tasks, set milestones, and track dependencies with Gantt charts and multiple view modes.
+              </p>
+              <div className="flex gap-4">
+                <Button size="sm" onClick={() => handleAddTask()}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Task
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setIsImportExportModalOpen(true)}>
+                  <Upload className="h-4 w-4 mr-2" />
+                  Import Schedule
+                </Button>
+              </div>
             </div>
           )}
-        </div>
-        )}
 
-        {/* Task Edit Modal */}
-        <TaskEditModal
-          open={isModalOpen}
-          onOpenChange={setIsModalOpen}
-          task={editingTask}
-          parentTaskId={parentTaskIdForNew}
-          projectId={projectId}
-          availableTasks={flatTasks}
-          onSave={handleSaveTask}
-        />
+          {data?.tasks && data.tasks.length > 0 && (
+            <div key={viewMode} className="flex-1 min-h-[600px] animate-reveal">
+              {viewMode === "grid" && (
+                <div className="-mx-4 sm:-mx-6 lg:-mx-8">
+                  <GanttChart
+                    data={data?.ganttData || []}
+                    visibleColumns={visibleColumns}
+                    onQuickAddTask={(name) => handleQuickAddTask({ name })}
+                    onUpdateTask={handleUpdateTask}
+                    onTaskClick={(taskId) => {
+                      const fullTask = data?.tasks
+                        ? findTaskById(data.tasks, taskId)
+                        : null;
+                      if (fullTask) {
+                        handleEditTask(fullTask);
+                      }
+                    }}
+                  />
+                </div>
+              )}
 
-        {/* Context Menu */}
-        <TaskContextMenu
-          task={contextMenu.task}
-          position={contextMenu.position}
-          onClose={closeContextMenu}
-          onAction={handleContextMenuAction}
-          hasCopiedTask={!!copiedTask}
-        />
+              {viewMode !== "grid" && (
+                <>
+                  {viewMode === "board" && <ScheduleBoardView {...viewProps} />}
+                  {viewMode === "calendar" && <ScheduleCalendarView {...viewProps} />}
+                  {viewMode === "timeline" && <ScheduleTimelineView {...viewProps} />}
+                  {viewMode === "schedule" && <ScheduleGridView {...viewProps} />}
+                </>
+              )}
+            </div>
+          )}
+        </>
+      )}
 
-        {/* Import/Export Modal */}
-        <ImportExportModal
-          open={isImportExportModalOpen}
-          onOpenChange={setIsImportExportModalOpen}
-          projectId={projectId}
-          tasks={allFlatTasks}
-          onImport={handleImportTasks}
-        />
-
-      </PageContainer>
-    </>
+      {/* Modals */}
+      <TaskEditModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        task={editingTask}
+        parentTaskId={parentTaskIdForNew}
+        projectId={projectId}
+        availableTasks={flatTasks}
+        onSave={handleSaveTask}
+      />
+      <TaskContextMenu
+        task={contextMenu.task}
+        position={contextMenu.position}
+        onClose={closeContextMenu}
+        onAction={handleContextMenuAction}
+        hasCopiedTask={!!copiedTask}
+      />
+      <ImportExportModal
+        open={isImportExportModalOpen}
+        onOpenChange={setIsImportExportModalOpen}
+        projectId={projectId}
+        tasks={allFlatTasks}
+        onImport={handleImportTasks}
+      />
+    </PageShell>
   );
 }
 

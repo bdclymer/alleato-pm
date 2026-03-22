@@ -39,6 +39,8 @@ export type Subcontract = Database["public"]["Tables"]["subcontracts"]["Row"];
 export type PurchaseOrder =
   Database["public"]["Tables"]["purchase_orders"]["Row"];
 export type RFI = Database["public"]["Tables"]["rfis"]["Row"];
+export type AdminFeedbackItem =
+  Database["public"]["Tables"]["admin_feedback_items"]["Row"];
 
 // Commitment is now a derived interface from the commitments_unified view
 export interface Commitment {

@@ -348,20 +348,16 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
         row["segment_index"]: row["id"] for row in segment_rows
     }
 
-    # 10. Write segment embeddings back to DB
-    for seg in segments:
-        seg_id = segment_id_map.get(seg.segment_index)
-        if seg_id and seg.summary_embedding:
-            client.table("meeting_segments").update(
-                {"summary_embedding": seg.summary_embedding}
-            ).eq("id", seg_id).execute()
+    # 10. (Segment summary_embedding column was dropped in migration 20260320100000.
+    #      Segment summary embeddings are now stored as document_chunks rows with
+    #      source_type='meeting_segment_summary' — written in step 11 below.)
 
-    # 11. Store chunks in documents table
+    # 11. Store chunks in document_chunks table (unified RAG table)
     # Build existing content-hash map once to avoid per-chunk SELECT load.
-    existing_docs_by_hash = _get_existing_docs_by_hash(client, metadata_id)
+    existing_chunks_by_hash = _get_existing_chunks_by_hash(client, metadata_id)
     for chunk in all_chunks:
         seg_id = segment_id_map.get(chunk.segment_index) if chunk.segment_index >= 0 else None
-        _upsert_document(
+        _upsert_chunk(
             client,
             chunk=chunk,
             metadata_id=metadata_id,
@@ -369,7 +365,8 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
             started_at=started_at,
             participants=participants,
             project_id=project_id,
-            existing_doc_id=existing_docs_by_hash.get(chunk.content_hash or ""),
+            title=title,
+            existing_chunk_id=existing_chunks_by_hash.get(chunk.content_hash or ""),
         )
 
     # 12. Update metadata status
@@ -389,7 +386,22 @@ def run_embedder(metadata_id: str) -> Dict[str, Any]:
     }
 
 
-def _upsert_document(
+def _doc_type_to_source_type(doc_type: str) -> str:
+    """Map pipeline doc_type to document_chunks.source_type."""
+    mapping = {
+        "chunk": "meeting_transcript",
+        "meeting_summary": "meeting_summary",
+        "segment_summary": "meeting_segment_summary",
+        "notes_topic": "meeting_notes",
+    }
+    if doc_type in mapping:
+        return mapping[doc_type]
+    if doc_type.startswith("section_"):
+        return "meeting_section"
+    return "meeting_transcript"
+
+
+def _upsert_chunk(
     client,
     chunk: DocumentChunk,
     metadata_id: str,
@@ -397,23 +409,26 @@ def _upsert_document(
     started_at: Optional[str],
     participants: List[str],
     project_id: Optional[int],
-    existing_doc_id: Optional[str],
+    title: str,
+    existing_chunk_id: Optional[str],
 ) -> None:
-    file_date: Optional[str] = None
-    if started_at:
-        try:
-            file_date = datetime.datetime.fromisoformat(started_at).isoformat()
-        except Exception:
-            pass
+    source_type = _doc_type_to_source_type(chunk.doc_type)
+    seg_idx = str(chunk.segment_index) if chunk.segment_index is not None else "0"
+    chunk_idx = str(chunk.chunk_index) if chunk.chunk_index is not None else "0"
 
-    doc_data: Dict[str, Any] = {
-        "file_id": metadata_id,
-        "content": chunk.content,
+    chunk_id = (
+        existing_chunk_id
+        or f"{metadata_id}__ff_{chunk.doc_type}_{seg_idx}_{chunk_idx}"
+    )
+
+    chunk_data: Dict[str, Any] = {
+        "chunk_id": chunk_id,
+        "document_id": metadata_id,
+        "chunk_index": chunk.chunk_index,
+        "text": chunk.content,
         "embedding": chunk.embedding,
-        "source": "fireflies",
-        "file_date": file_date,
-        "project_id": project_id,
-        "processing_status": "complete",
+        "source_type": source_type,
+        "content_hash": chunk.content_hash,
         "metadata": {
             "doc_type": chunk.doc_type,
             "chunk_index": chunk.chunk_index,
@@ -421,29 +436,33 @@ def _upsert_document(
             "segment_id": segment_id,
             "content_hash": chunk.content_hash,
             "participants": participants,
+            "project_id": project_id,
+            "title": title,
+            "file_date": started_at,
         },
     }
 
-    if existing_doc_id:
-        client.table("documents").update(doc_data).eq("id", existing_doc_id).execute()
-    else:
-        client.table("documents").insert(doc_data).execute()
+    try:
+        client.table("document_chunks").upsert(
+            chunk_data, on_conflict="chunk_id"
+        ).execute()
+    except Exception as exc:
+        logger.warning("[Embedder] Failed to upsert chunk %s: %s", chunk_id, exc)
 
 
-def _get_existing_docs_by_hash(client, metadata_id: str) -> Dict[str, str]:
-    """Fetch all existing docs for a file once and map content_hash -> doc id."""
+def _get_existing_chunks_by_hash(client, metadata_id: str) -> Dict[str, str]:
+    """Fetch all existing chunks for a document and map content_hash -> chunk_id."""
     existing_resp = (
-        client.table("documents")
-        .select("id,metadata")
-        .eq("file_id", metadata_id)
+        client.table("document_chunks")
+        .select("chunk_id,content_hash")
+        .eq("document_id", metadata_id)
         .execute()
     )
     existing = existing_resp.data or []
     by_hash: Dict[str, str] = {}
     for row in existing:
-        metadata = row.get("metadata") or {}
-        content_hash = metadata.get("content_hash")
-        row_id = row.get("id")
-        if content_hash and row_id:
-            by_hash[content_hash] = row_id
+        content_hash = row.get("content_hash")
+        cid = row.get("chunk_id")
+        if content_hash and cid:
+            by_hash[content_hash] = cid
     return by_hash
