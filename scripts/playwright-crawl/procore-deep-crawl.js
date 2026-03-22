@@ -149,13 +149,20 @@ async function captureState(page, state, detailPage = null) {
           result._capture_note = `waitFor selector not found: ${state.waitFor}`;
         });
       }
-      await page.waitForTimeout(1500);
+      // Wait for AG Grid rows OR table rows to appear (indicates data loaded)
+      await page.waitForSelector(
+        '.ag-row, .ag-header-cell, tr[role="row"], tbody tr',
+        { timeout: 10000 }
+      ).catch(() => {});
+      await page.waitForTimeout(2000); // Extra time for all columns to render
 
     } else if (state.type === 'create-form') {
       // Navigate to list first, then click create button
       await navigateToUrl(page, state.url);
+      await page.waitForSelector('.ag-row, tr[role="row"], tbody tr', { timeout: 10000 }).catch(() => {});
       await page.waitForTimeout(2000);
 
+      // Try registry selectors first
       const selectors = state.selector.split(', ');
       let clicked = false;
       for (const sel of selectors) {
@@ -167,6 +174,21 @@ async function captureState(page, state, detailPage = null) {
             break;
           }
         } catch {}
+      }
+
+      // Fallback: find any primary "Create" button by text
+      if (!clicked) {
+        clicked = await page.evaluate(() => {
+          const buttons = document.querySelectorAll('button, [role="button"], a[href*="new"]');
+          for (const btn of buttons) {
+            const text = btn.textContent.trim();
+            if (/^create\b/i.test(text) || /^new\b/i.test(text) || /^add\b/i.test(text)) {
+              btn.click();
+              return true;
+            }
+          }
+          return false;
+        });
       }
 
       if (!clicked) {
@@ -218,21 +240,59 @@ async function captureState(page, state, detailPage = null) {
         }
       }
 
-      const selectors = state.selector.split(', ');
-      let clicked = false;
-      for (const sel of selectors) {
-        try {
-          const tab = page.locator(sel).first();
-          if (await tab.count() > 0) {
-            await tab.click();
-            clicked = true;
-            break;
+      // Find the tab by text content — try multiple selector approaches
+      const tabText = state.description.split('— ').pop().trim(); // e.g. "Line Items tab" → "Line Items"
+      const tabLabel = tabText.replace(' tab', '');
+
+      // Debug: list all tab-like elements to help tune selectors
+      const foundTabs = await page.evaluate((label) => {
+        const candidates = document.querySelectorAll(
+          '[role="tab"], [role="tablist"] *, nav a, nav button, ' +
+          '[class*="tab"] a, [class*="tab"] button, [class*="Tab"] a, [class*="Tab"] button'
+        );
+        return Array.from(candidates)
+          .map(el => el.textContent.trim())
+          .filter(t => t.length > 0 && t.length < 50);
+      }, tabLabel);
+
+      if (foundTabs.length > 0) {
+        console.log(`  📑 Found tab candidates: ${foundTabs.slice(0, 10).join(', ')}`);
+      }
+
+      // Try clicking by exact tab label text
+      const tabClicked = await page.evaluate((label) => {
+        const candidates = document.querySelectorAll(
+          '[role="tab"], [role="tablist"] *, nav a, nav button, ' +
+          '[class*="tab"] a, [class*="tab"] button, [class*="Tab"] a, [class*="Tab"] button'
+        );
+        for (const el of candidates) {
+          if (el.textContent.trim() === label || el.textContent.trim().startsWith(label)) {
+            el.click();
+            return true;
           }
-        } catch {}
+        }
+        return false;
+      }, tabLabel);
+
+      let clicked = tabClicked;
+
+      // Fallback: try playwright selectors
+      if (!clicked) {
+        const selectors = state.selector.split(', ');
+        for (const sel of selectors) {
+          try {
+            const tab = page.locator(sel).first();
+            if (await tab.count() > 0) {
+              await tab.click();
+              clicked = true;
+              break;
+            }
+          } catch {}
+        }
       }
 
       if (!clicked) {
-        result._capture_note = `Tab not found: ${state.selector}`;
+        result._capture_note = `Tab "${tabLabel}" not found. Available tabs: ${foundTabs.slice(0,8).join(', ')}`;
         console.warn(`  ⚠️  ${result._capture_note}`);
       } else {
         if (state.waitFor) {
@@ -282,7 +342,15 @@ async function main() {
   console.log(`   Output: ${OUTPUT_DIR}`);
   console.log(`   States to capture: ${feature.states.length}\n`);
 
-  const browser = await chromium.launch({ headless: true });
+  // Try default playwright chromium first, fall back to the locally installed Chrome for Testing
+  const CHROME_FOR_TESTING = '/Users/meganharrison/Library/Caches/ms-playwright/chromium-1208/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing';
+  const { existsSync: _existsSync } = await import('fs');
+  const browser = await chromium.launch({ headless: true }).catch(() =>
+    chromium.launch({
+      headless: true,
+      executablePath: _existsSync(CHROME_FOR_TESTING) ? CHROME_FOR_TESTING : undefined,
+    })
+  );
   const context = await browser.newContext({
     viewport: { width: 1440, height: 900 },
     userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
