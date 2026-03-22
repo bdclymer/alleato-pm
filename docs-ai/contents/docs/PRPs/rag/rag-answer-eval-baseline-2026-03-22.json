@@ -1,0 +1,664 @@
+{
+  "timestamp": "2026-03-22T19:01:50Z",
+  "eval_type": "level_2_answer_quality",
+  "num_questions": 20,
+  "summary": {
+    "specificity": 3.7,
+    "accuracy": 4.65,
+    "completeness": 3.95,
+    "actionability": 3.25,
+    "overall": 4.0
+  },
+  "category_averages": {
+    "cross_source": {
+      "count": 4,
+      "specificity": 4.25,
+      "accuracy": 4.75,
+      "completeness": 4.5,
+      "actionability": 3.75,
+      "overall": 4.75
+    },
+    "financial": {
+      "count": 3,
+      "specificity": 1.67,
+      "accuracy": 4.67,
+      "completeness": 2.33,
+      "actionability": 2.0,
+      "overall": 2.33
+    },
+    "insight": {
+      "count": 3,
+      "specificity": 4.67,
+      "accuracy": 5.0,
+      "completeness": 4.67,
+      "actionability": 3.67,
+      "overall": 4.67
+    },
+    "meeting_detail": {
+      "count": 5,
+      "specificity": 3.6,
+      "accuracy": 4.4,
+      "completeness": 3.8,
+      "actionability": 3.2,
+      "overall": 3.8
+    },
+    "simple": {
+      "count": 2,
+      "specificity": 2.5,
+      "accuracy": 4.0,
+      "completeness": 3.0,
+      "actionability": 2.0,
+      "overall": 3.0
+    },
+    "strategic": {
+      "count": 3,
+      "specificity": 5.0,
+      "accuracy": 5.0,
+      "completeness": 5.0,
+      "actionability": 4.33,
+      "overall": 5.0
+    }
+  },
+  "questions": [
+    {
+      "id": 1,
+      "question": "What was discussed about drywall procurement timelines?",
+      "category": "meeting_detail",
+      "good_answer_criteria": "Should reference specific meetings, mention dates or timelines, include speaker names or project context",
+      "num_chunks_retrieved": 10,
+      "top_similarity": 0.5797,
+      "chunk_sources": [
+        "meeting_summary_embed",
+        "meeting_section",
+        "meeting_segment_summary",
+        "meeting_summary_embed",
+        "meeting_summary_embed"
+      ],
+      "generated_answer": "The context provided does not contain specific information about drywall procurement timelines. It mentions drywall completion and painting are on track for early March in the Goodwill Tremont project, but it does not detail the procurement timelines for drywall. If you need more detailed information, it might be helpful to consult additional project documents or meeting notes that specifically address procurement schedules.",
+      "scores": {
+        "specificity": 2,
+        "accuracy": 4,
+        "completeness": 3,
+        "actionability": 2,
+        "overall": 3,
+        "explanation": "The answer provides some specific context regarding the Goodwill Tremont project and mentions a timeline for completion, but it lacks detailed information about procurement timelines. While it accurately reflects the limitations of the context, it does not offer actionable steps beyond suggesting to consult additional documents."
+      },
+      "latency_ms": {
+        "retrieval": 1435.8,
+        "generation": 1120.5,
+        "judging": 2174.2
+      },
+      "error": null
+    },
+    {
+      "id": 2,
+      "question": "What did the team decide about subcontractor pricing?",
+      "category": "meeting_detail",
+      "good_answer_criteria": "Should mention specific pricing decisions, vendor names, dollar amounts if available",
+      "num_chunks_retrieved": 10,
+      "top_similarity": 0.5602,
+      "chunk_sources": [
+        "onedrive_document",
+        "insight",
+        "insight",
+        "onedrive_document",
+        "onedrive_document"
+      ],
+      "generated_answer": "The context provided does not contain specific information about a decision made by the team regarding subcontractor pricing. If you have more details or another document that might contain this information, please provide it for further assistance.",
+      "scores": {
+        "specificity": 1,
+        "accuracy": 3,
+        "completeness": 1,
+        "actionability": 1,
+        "overall": 1,
+        "explanation": "The answer is entirely generic and lacks any specific details about subcontractor pricing decisions. While it accurately states that the context does not contain the needed information, it fails to address the question directly and provides no actionable insights for the user."
+      },
+      "latency_ms": {
+        "retrieval": 1365.1,
+        "generation": 1083.9,
+        "judging": 1606.5
+      },
+      "error": null
+    },
+    {
+      "id": 3,
+      "question": "What action items came out of the last OAC meeting?",
+      "category": "meeting_detail",
+      "good_answer_criteria": "Should list specific action items with assignees and due dates where available",
+      "num_chunks_retrieved": 10,
+      "top_similarity": 0.6312,
+      "chunk_sources": [
+        "meeting_segment_summary",
+        "meeting_segment_summary",
+        "meeting_segment_summary",
+        "meeting_segment_summary",
+        "meeting_segment_summary"
+      ],
+      "generated_answer": "From the Goodwill Bart Weekly OAC Meeting held on October 10, 2023, the following action items were assigned:\n\n1. **Sarah Johnson** is responsible for drafting a proposal for the enhanced job training budget by October 15, 2023.\n2. **John Smith** is tasked with conducting a thorough review of operational expenses and identifying potential areas for cost reduction by October 20, 2023.\n3. The team agreed to prepare a community feedback survey to gauge the effectiveness of current programs, with the results expected to be discussed in the next meeting scheduled for November 7, 2023.",
+      "scores": {
+        "specificity": 5,
+        "accuracy": 5,
+        "completeness": 5,
+        "actionability": 5,
+        "overall": 5,
+        "explanation": "The answer provides specific action items with clear assignees and due dates, directly addressing the question. It is fully grounded in the context of the OAC meeting and offers actionable information that can be immediately utilized by the team."
+      },
+      "latency_ms": {
+        "retrieval": 1009.8,
+        "generation": 2341.7,
+        "judging": 2108.0
+      },
+      "error": null
+    },
+    {
+      "id": 4,
+      "question": "What safety concerns were raised in recent meetings?",
+      "category": "meeting_detail",
+      "good_answer_criteria": "Should identify specific safety issues, not generic safety advice",
+      "num_chunks_retrieved": 10,
+      "top_similarity": 0.6133,
+      "chunk_sources": [
+        "meeting_segment_summary",
+        "meeting_segment_summary",
+        "meeting_segment_summary",
+        "insight",
+        "meeting_segment_summary"
+      ],
+      "generated_answer": "Recent meetings have raised several safety concerns:\n\n1. **Fire Alarm Issues**: At the 8032 Route 183 location, there were discussions about specific fire alarm issues, including false alarms and system malfunctions, which have raised concerns about safety and compliance (Source 1).\n\n2. **Safety Protocols and Compliance**: In the Ulta Beauty Fresno Subcontractor Coordination Meetings, safety protocols were reviewed with an emphasis on compliance with local regulations. Concerns were raised about recent safety incidents on site, highlighting the need for additional training to prevent future occurrences (Sources 2, 3, 7, 8).\n\n3. **Rough Ground at Crate Escapes**: Concerns about safety due to rough ground at the Crate Escapes site were noted, with Meg being the owner responsible for addressing these issues (Source 4).\n\n4. **General Safety Protocols**: At the GW Allisonville Loading Dock and CEVA Bernville Review meetings, safety protocols and compliance measures were discussed, emphasizing the importance of adhering to safety guidelines and maintaining safety standards following recent audits and non-compliance issues (Sources 5, 6).",
+      "scores": {
+        "specificity": 5,
+        "accuracy": 5,
+        "completeness": 5,
+        "actionability": 4,
+        "overall": 5,
+        "explanation": "The answer provides specific details about safety concerns raised in recent meetings, including locations and specific issues like fire alarm problems and rough ground conditions. It is fully grounded in the context, addressing all aspects of the question thoroughly. While it offers actionable insights, some points could benefit from clearer next steps for addressing the concerns."
+      },
+      "latency_ms": {
+        "retrieval": 728.8,
+        "generation": 3807.0,
+        "judging": 2522.5
+      },
+      "error": null
+    },
+    {
+      "id": 5,
+      "question": "What was discussed about the foundation pour schedule?",
+      "category": "meeting_detail",
+      "good_answer_criteria": "Should reference specific dates, concrete work details, project context",
+      "num_chunks_retrieved": 10,
+      "top_similarity": 0.5812,
+      "chunk_sources": [
+        "insight",
+        "meeting_segment_summary",
+        "insight",
+        "insight",
+        "meeting_segment_summary"
+      ],
+      "generated_answer": "The foundation pour schedule was discussed in the context of the Vermilion Rise project. The foundation work has been rescheduled to early February, with precast installation planned from mid-March to early April following the Critical Design Review (CDR). This rescheduling compresses the schedule and may reduce float, as noted by AJ Taylor.",
+      "scores": {
+        "specificity": 5,
+        "accuracy": 5,
+        "completeness": 5,
+        "actionability": 4,
+        "overall": 5,
+        "explanation": "The answer provides specific details about the Vermilion Rise project, including exact dates for the foundation work and precast installation. It accurately reflects the context of the discussion and addresses all aspects of the question. While it offers actionable information, it could include more direct next steps for the user."
+      },
+      "latency_ms": {
+        "retrieval": 913.1,
+        "generation": 1102.1,
+        "judging": 2344.2
+      },
+      "error": null
+    },
+    {
+      "id": 6,
+      "question": "What decisions have been made about vendor selection?",
+      "category": "insight",
+      "good_answer_criteria": "Should list specific decisions with owners and rationale, not generic advice",
+      "num_chunks_retrieved": 10,
+      "top_similarity": 0.5904,
+      "chunk_sources": [
+        "insight",
+        "insight",
+        "insight",
+        "insight",
+        "insight"
+      ],
+      "generated_answer": "Based on the provided context, the following decisions have been made regarding vendor selection:\n\n1. A new vendor evaluation process is being implemented to improve supplier performance. (Source 1 and Source 8)\n\n2. The company has decided to proceed with the selected software vendor for upgrades, with Sarah Johnson as the owner of this decision. (Source 2)\n\n3. A new equipment supplier has been adopted to mitigate delays, also under the ownership of Sarah Johnson. (Source 4)\n\n4. There is a decision to conduct a cost-benefit analysis of potential suppliers, with Sarah Johnson overseeing this process. (Source 7)\n\n5. Approval has been given to explore alternative suppliers for cost reduction, with Sarah Johnson as the owner of this decision. (Source 10)\n\nThese decisions indicate a focus on evaluating and selecting vendors to improve performance, mitigate delays, and reduce costs.",
+      "scores": {
+        "specificity": 5,
+        "accuracy": 5,
+        "completeness": 5,
+        "actionability": 4,
+        "overall": 5,
+        "explanation": "The answer provides specific decisions regarding vendor selection, including the names of decision owners and the rationale behind each choice. It is fully grounded in the context and addresses all aspects of the question thoroughly. While it offers actionable insights, the user may need to follow up on the implementation details for immediate action."
+      },
+      "latency_ms": {
+        "retrieval": 669.8,
+        "generation": 2649.2,
+        "judging": 1852.6
+      },
+      "error": null
+    },
+    {
+      "id": 7,
+      "question": "What are the biggest risks across our projects?",
+      "category": "insight",
+      "good_answer_criteria": "Should identify specific risks by project with severity assessment",
+      "num_chunks_retrieved": 10,
+      "top_similarity": 0.5687,
+      "chunk_sources": [
+        "insight",
+        "insight",
+        "meeting_segment_summary",
+        "insight",
+        "insight"
+      ],
+      "generated_answer": "Based on the provided context, the biggest risks across your projects include:\n\n1. **Unforeseen Risks Impacting Project Success**: As noted in the Apex Glass Goodwill Noblesville Scope of Work Review, there are potential unforeseen risks that could impact the success of projects.\n\n2. **Market Volatility**: The Development Opportunity insight highlights that market volatility may impact the feasibility of new projects.\n\n3. **Changing Market Trends**: The Uniqlo+Alleato Group insight mentions that changing market trends could affect project outcomes.\n\n4. **Resource Allocation Concerns**: The Superior Beverage Group introduction raises concerns about resource allocation for joint projects.\n\n5. **Overspending**: The OAC- Westfield Collective insight warns of the risk of overspending if projects exceed initial estimates.\n\n6. **Falling Behind Schedule**: Another Development Opportunity insight points out concerns about falling behind schedule on certain projects.\n\n7. **Neglecting Smaller Projects**: The GW Allisonville Road Budget Review notes the risk of neglecting smaller projects that may have significant community impact.\n\n8. **Potential Misalignment on Project Goals**: The Uniqlo+Alleato Group insight also mentions the risk of potential misalignment on project goals.\n\nThese risks span financial, operational, and strategic areas, indicating a need for careful planning and resource management across your projects.",
+      "scores": {
+        "specificity": 4,
+        "accuracy": 5,
+        "completeness": 4,
+        "actionability": 3,
+        "overall": 4,
+        "explanation": "The answer identifies specific risks associated with various projects, providing a good level of detail. It is fully grounded in the context provided, ensuring accuracy. However, while it covers many risks, it could benefit from a more detailed severity assessment and clearer actionable steps for mitigation."
+      },
+      "latency_ms": {
+        "retrieval": 1178.2,
+        "generation": 3703.6,
+        "judging": 1941.5
+      },
+      "error": null
+    },
+    {
+      "id": 8,
+      "question": "What opportunities have we identified for cost savings?",
+      "category": "insight",
+      "good_answer_criteria": "Should mention specific opportunities from actual meetings/data, not generic suggestions",
+      "num_chunks_retrieved": 10,
+      "top_similarity": 0.6451,
+      "chunk_sources": [
+        "meeting_segment_summary",
+        "insight",
+        "insight",
+        "insight",
+        "insight"
+      ],
+      "generated_answer": "Based on the context provided, several opportunities for cost savings have been identified across different projects and meetings:\n\n1. **Radial Miami Project**: Potential cost reductions through renegotiating contracts and reducing discretionary spending.\n\n2. **Goodwill Projects**: Opportunities for cost savings through revised budget allocations and implementing cost-saving measures to enhance financial efficiency.\n\n3. **Ulta Beauty Project**: Cost savings can be achieved by addressing structural issues early in the project.\n\n4. **UB Vargo Project**: Identifying cost-saving opportunities during project execution.\n\n5. **Danville Project**: Potential cost-saving measures in subcontractor expenses.\n\n6. **Port Collective Hotel Project**: Exploring cost-saving measures in construction divisions, managed by Brandon Clymer.\n\n7. **Galesburg Project**: Potential for cost savings through bulk purchasing of materials.\n\n8. **General Budgeting Review**: Identifying areas for cost savings in the budget, overseen by Mark Johnson.\n\nThese opportunities suggest a focus on strategic contract management, efficient project execution, early issue resolution, and smart purchasing strategies to achieve cost savings.",
+      "scores": {
+        "specificity": 5,
+        "accuracy": 5,
+        "completeness": 5,
+        "actionability": 4,
+        "overall": 5,
+        "explanation": "The answer provides specific project names and detailed opportunities for cost savings, demonstrating a high level of specificity. It is fully grounded in the context, accurately reflecting identified opportunities without hallucination. The response thoroughly addresses the question, though it could enhance actionability by suggesting specific steps for implementation."
+      },
+      "latency_ms": {
+        "retrieval": 755.2,
+        "generation": 2872.2,
+        "judging": 2005.1
+      },
+      "error": null
+    },
+    {
+      "id": 9,
+      "question": "What's the latest on the Vermillion Rise project?",
+      "category": "cross_source",
+      "good_answer_criteria": "Should synthesize recent activity from meetings, emails, tasks — not just one source",
+      "num_chunks_retrieved": 10,
+      "top_similarity": 0.6958,
+      "chunk_sources": [
+        "meeting_segment_summary",
+        "meeting_segment_summary",
+        "meeting_section",
+        "meeting_summary_embed",
+        "meeting_section"
+      ],
+      "generated_answer": "The latest updates on the Vermillion Rise project indicate that the project is currently on hold pending an ownership decision regarding its direction. This pause is causing a bottleneck in development and execution, as noted in the weekly design meetings. Key tasks such as permit submissions are on hold, awaiting approvals from the board and client, which are critical for construction timelines.\n\nIn terms of design and planning, the team is preparing for CDR applications and CER forms, with the civil and structural teams aligned on minor clarifications. There is also a focus on maintaining communication channels to ensure prompt follow-up on pending issues once approvals are granted.\n\nAdditionally, the project has undergone a facility downsizing, reducing the plant layout by 60,000 square feet while maintaining key operational areas for future expansion. This downsizing may delay the project start by 1 to 1.5 months, with a recommended six-week buffer for redesign and scheduling.\n\nOverall, the project is in a state of readiness to move forward once the ownership decision is made and necessary approvals are obtained.",
+      "scores": {
+        "specificity": 5,
+        "accuracy": 5,
+        "completeness": 5,
+        "actionability": 4,
+        "overall": 5,
+        "explanation": "The answer provides specific details about the Vermillion Rise project, including the current status, key tasks, and implications of recent decisions. It accurately reflects the situation and addresses all aspects of the question, though it could offer more direct next steps for the user. Overall, it presents a comprehensive and actionable overview of the project's status."
+      },
+      "latency_ms": {
+        "retrieval": 814.4,
+        "generation": 2617.4,
+        "judging": 2755.1
+      },
+      "error": null
+    },
+    {
+      "id": 10,
+      "question": "What should I focus on this week as the owner?",
+      "category": "cross_source",
+      "good_answer_criteria": "Should give specific, actionable priorities based on actual project data, not generic PM advice",
+      "num_chunks_retrieved": 10,
+      "top_similarity": 0.5301,
+      "chunk_sources": [
+        "meeting_segment_summary",
+        "insight",
+        "insight",
+        "meeting_segment_summary",
+        "insight"
+      ],
+      "generated_answer": "Based on the context provided, as the owner, you should focus on prioritizing training for the support team this week. This decision was specifically highlighted in the Weekly OPS meeting between Nick and Andrew. Additionally, ensure that the training aligns with the overall goal of streamlining operations and improving response times.",
+      "scores": {
+        "specificity": 4,
+        "accuracy": 5,
+        "completeness": 4,
+        "actionability": 5,
+        "overall": 5,
+        "explanation": "The answer provides specific details about the focus on training for the support team, referencing a particular meeting and individuals involved, which enhances its specificity. It is fully grounded in the context, accurately reflecting the priorities discussed. The response addresses the main point effectively and offers clear, actionable steps for the owner to take this week."
+      },
+      "latency_ms": {
+        "retrieval": 916.4,
+        "generation": 1390.2,
+        "judging": 2349.4
+      },
+      "error": null
+    },
+    {
+      "id": 11,
+      "question": "What stresses Brandon out the most based on meeting discussions?",
+      "category": "cross_source",
+      "good_answer_criteria": "Should reference specific issues Brandon has raised in meetings, with context",
+      "num_chunks_retrieved": 10,
+      "top_similarity": 0.5093,
+      "chunk_sources": [
+        "meeting_segment_summary",
+        "insight",
+        "meeting_summary",
+        "meeting_segment_summary",
+        "meeting_segment_summary"
+      ],
+      "generated_answer": "Based on the meeting discussions, several factors seem to stress Brandon out:\n\n1. **Communication Gaps and Delayed Responses**: There is a risk that communication gaps and delayed responses from Brandon could jeopardize timely decisions regarding Acumatica license renewal and integration (Source 2).\n\n2. **Operational and Administrative Overload**: Brandon, along with Jesse, is overloaded with operational and administrative tasks, which limits their ability to focus on selling work and big-picture growth (Source 6).\n\n3. **Complexity of Financial Strategies**: During a meeting with Chateau Private Wealth Advisors, Brandon expressed concerns about the complexity of managing multiple trusts and ensuring compliance with IRS regulations. He also showed uncertainty about the implications of moving funds from his business to a trust and the potential tax consequences (Source 3).\n\n4. **Travel and Attendance Issues**: Brandon's attendance at meetings is uncertain due to travel issues, which could add stress regarding his ability to participate in important discussions (Source 7).\n\nThese factors indicate that Brandon is stressed by communication issues, administrative overload, complex financial strategies, and logistical challenges related to travel and meeting attendance.",
+      "scores": {
+        "specificity": 5,
+        "accuracy": 5,
+        "completeness": 5,
+        "actionability": 3,
+        "overall": 5,
+        "explanation": "The answer provides specific details about the factors stressing Brandon, referencing particular issues raised in meetings, which enhances its specificity. It is fully grounded in the context provided, accurately reflecting Brandon's concerns. The answer thoroughly addresses the question, though it could offer more actionable steps for alleviating the stressors mentioned."
+      },
+      "latency_ms": {
+        "retrieval": 914.4,
+        "generation": 3222.0,
+        "judging": 2160.6
+      },
+      "error": null
+    },
+    {
+      "id": 12,
+      "question": "How are our client relationships across projects?",
+      "category": "cross_source",
+      "good_answer_criteria": "Should reference specific client interactions from meetings, not generic relationship advice",
+      "num_chunks_retrieved": 10,
+      "top_similarity": 0.5628,
+      "chunk_sources": [
+        "insight",
+        "insight",
+        "insight",
+        "insight",
+        "insight"
+      ],
+      "generated_answer": "Based on the context provided, there are several opportunities identified to enhance client relationships across various projects at Alleato Group. The recurring themes for improving these relationships include:\n\n1. **Timely Project Completion and Updates**: Ensuring projects are completed on time and providing regular updates are seen as key opportunities to enhance client relationships. This is noted in the \"Applied Engineering- Template\" and \"RADIAL.pdf\" documents.\n\n2. **Incorporating Client Feedback**: Actively incorporating client feedback into project updates is emphasized as a way to strengthen relationships, as highlighted in the \"Scopes of work\" and \"ArcEdge weekly call\" documents.\n\n3. **Improved Communication and Collaboration**: Enhancing communication with clients, particularly regarding design updates and throughout the project lifecycle, is noted as an opportunity in several documents, including the \"2025.04.04 Kimmich Volleyball Court Complex Fee Proposal Package\" and \"Email: Re: McLane Fire Suppression.\"\n\n4. **Structured Feedback Mechanisms**: Implementing structured feedback loops is suggested to strengthen client relationships, as mentioned in the \"Alleato//Radial MTV Weekly Status Call.\"\n\nOverall, the insights suggest that while there are opportunities to improve client relationships, the focus should be on timely communication, incorporating feedback, and ensuring projects are completed as expected.",
+      "scores": {
+        "specificity": 3,
+        "accuracy": 4,
+        "completeness": 4,
+        "actionability": 3,
+        "overall": 4,
+        "explanation": "The answer provides some specific references to documents and themes related to client relationships, but lacks detailed examples of actual client interactions. It is mostly grounded in the context but could benefit from more precise data. The suggestions for improvement are actionable, though they could be more directly applicable to specific client situations."
+      },
+      "latency_ms": {
+        "retrieval": 876.3,
+        "generation": 3446.9,
+        "judging": 2386.5
+      },
+      "error": null
+    },
+    {
+      "id": 13,
+      "question": "What is the total budget for Vermillion Rise Warehouse?",
+      "category": "financial",
+      "good_answer_criteria": "Should return a specific dollar amount from the budget table, not a vague estimate",
+      "num_chunks_retrieved": 10,
+      "top_similarity": 0.4745,
+      "chunk_sources": [
+        "meeting_summary_embed",
+        "onedrive_document",
+        "onedrive_document",
+        "onedrive_document",
+        "onedrive_document"
+      ],
+      "generated_answer": "The context provided does not specify the total budget for the Vermillion Rise Warehouse. The documents and meeting summaries mention various budget items and modifications, but they do not consolidate these into a single total budget for the Vermillion Rise Warehouse project.",
+      "scores": {
+        "specificity": 1,
+        "accuracy": 5,
+        "completeness": 2,
+        "actionability": 1,
+        "overall": 2,
+        "explanation": "The answer lacks specificity as it does not provide any specific dollar amount or details related to the budget. However, it accurately reflects the absence of a total budget in the provided context. It partially addresses the question but fails to provide actionable information or a complete answer."
+      },
+      "latency_ms": {
+        "retrieval": 791.5,
+        "generation": 1840.1,
+        "judging": 1976.3
+      },
+      "error": null
+    },
+    {
+      "id": 14,
+      "question": "Show me the change orders for Vermillion Rise",
+      "category": "financial",
+      "good_answer_criteria": "Should list specific change orders with numbers, amounts, and statuses",
+      "num_chunks_retrieved": 10,
+      "top_similarity": 0.5309,
+      "chunk_sources": [
+        "meeting_summary_embed",
+        "meeting_summary",
+        "meeting_summary",
+        "meeting_summary_embed",
+        "meeting_summary_embed"
+      ],
+      "generated_answer": "The provided context does not contain specific information about change orders for a project named \"Vermillion Rise.\" If you have more details or another source that might contain this information, please provide it, or you may need to consult the project management system or documents directly related to \"Vermillion Rise\" for the change orders.",
+      "scores": {
+        "specificity": 1,
+        "accuracy": 5,
+        "completeness": 2,
+        "actionability": 2,
+        "overall": 2,
+        "explanation": "The answer lacks specificity as it does not provide any details about change orders, making it entirely generic. It is accurate in stating that the context does not contain the requested information, but it only partially addresses the question by not providing any relevant details. The answer offers limited actionable advice, suggesting the user consult other sources, but does not guide them effectively."
+      },
+      "latency_ms": {
+        "retrieval": 586.1,
+        "generation": 1033.1,
+        "judging": 2366.3
+      },
+      "error": null
+    },
+    {
+      "id": 15,
+      "question": "What commitments do we have on the Vermillion Rise project?",
+      "category": "financial",
+      "good_answer_criteria": "Should list specific subcontracts/POs with vendor names and amounts",
+      "num_chunks_retrieved": 10,
+      "top_similarity": 0.5999,
+      "chunk_sources": [
+        "meeting_segment_summary",
+        "meeting_segment_summary",
+        "insight",
+        "meeting_summary_embed",
+        "meeting_summary_embed"
+      ],
+      "generated_answer": "Based on the context provided, the commitments on the Vermillion Rise project include:\n\n1. **Project Timeline and Milestones**: The project timeline has been established with earthwork starting in February and precast production by mid-March. There is a commitment to send check set plans by the end of the week and a final permitting set the following week to secure required approvals, including an IDEM erosion control permit (Source 5).\n\n2. **Budget and Financial Management**: An additional $50,000 has been allocated to the budget to address unforeseen costs, ensuring the project remains on track. Emily Chen is tasked with revising the budget forecast to reflect these new allocations (Source 6).\n\n3. **Design and Structural Adjustments**: The architectural plans have been revised to incorporate additional green spaces and other modifications based on community feedback. David Lee will finalize these architectural revisions by October 30, 2023 (Source 6).\n\n4. **Marketing Strategy**: A marketing strategy has been approved, focusing on digital outreach and local partnerships, with preparations for the campaign to begin by November 15, 2023 (Source 6).\n\n5. **Permit and Approval Processes**: Permit submissions are on hold pending approvals from the board and client, which are critical for construction timelines. AJ Taylor is managing the receipt of comments on final drawings and preparing for CDR applications and CER forms (Source 10).\n\n6. **Communication and Coordination**: Improved communication and coordination have been emphasized, with new roles established to facilitate timely feedback and project oversight (Source 5).\n\nThese commitments reflect the project's focus on maintaining timelines, managing financial resources, and ensuring effective communication and coordination among team members.",
+      "scores": {
+        "specificity": 3,
+        "accuracy": 4,
+        "completeness": 3,
+        "actionability": 3,
+        "overall": 3,
+        "explanation": "The answer provides some specific details about the project commitments, such as budget allocations and key personnel, but lacks specific subcontracts or purchase orders with vendor names and amounts, which are critical for full specificity. While the information is mostly accurate and actionable, it does not comprehensively address all aspects of the question regarding commitments, particularly in terms of financial specifics."
+      },
+      "latency_ms": {
+        "retrieval": 875.6,
+        "generation": 3683.9,
+        "judging": 2312.3
+      },
+      "error": null
+    },
+    {
+      "id": 16,
+      "question": "Give me the state of the business right now",
+      "category": "strategic",
+      "good_answer_criteria": "Should cover multiple dimensions: financial health, project status, risks, opportunities",
+      "num_chunks_retrieved": 10,
+      "top_similarity": 0.4098,
+      "chunk_sources": [
+        "meeting_segment_summary",
+        "meeting_summary_embed",
+        "meeting_segment_summary",
+        "meeting_segment_summary",
+        "meeting_segment_summary"
+      ],
+      "generated_answer": "Based on the provided context, here is the current state of the business:\n\n1. **Financial Performance**: The company has a year-to-date gross profit of about 10%, which adjusts to 18-19% after allocations. This is slightly below the industry norms of 20-25%. The net income margin is around 6%, which is marginally above the CFMA average. Despite discretionary expenses like $150,000 spent on Tony Robbins events, the company's cash flow remains healthy with $2.3 million available. However, there are challenges with accounts receivable, with over $1.1 million overdue.\n\n2. **Investments and Strategic Moves**: There is a planned strategic investment of $250,000 in an oil deal aimed at fostering relationships for larger projects. Additionally, there is a real estate investment being considered, with a property being purchased at $22 million, appraised at just under $25 million. The company is seeking soft commitments for this real estate investment, aiming to close by early December.\n\n3. **Operational Challenges**: The company is facing operational challenges, particularly with the Dallas project, where they are waiting on fire alarm permits to obtain a certificate of occupancy. There are also concerns about closing out other projects, such as the Danville Theater, and managing costs effectively without dipping into fees.\n\n4. **Sales Performance**: Sales have seen a 15% increase compared to the previous quarter, attributed to new marketing strategies and customer feedback.\n\n5. **Organizational Changes**: The company has terminated its relationship with its CPA due to dissatisfaction, highlighting a need for better tax strategy coordination. There are ongoing operational improvements focusing on financial accuracy and cash flow management, including restructured finance roles and the introduction of an accounts receivable aging report.\n\nOverall, while the company is experiencing some financial and operational challenges, it is also making strategic investments and improvements to address these issues.",
+      "scores": {
+        "specificity": 5,
+        "accuracy": 5,
+        "completeness": 5,
+        "actionability": 4,
+        "overall": 5,
+        "explanation": "The answer provides a detailed and specific overview of the business's financial performance, operational challenges, and strategic investments, referencing exact figures and projects. It is fully grounded in the context and addresses all aspects of the question, although it could offer more direct actionable steps for improvement. Overall, it presents a comprehensive and trustworthy assessment of the business's current state."
+      },
+      "latency_ms": {
+        "retrieval": 1092.7,
+        "generation": 3557.7,
+        "judging": 2905.8
+      },
+      "error": null
+    },
+    {
+      "id": 17,
+      "question": "What HR problems might I not be aware of?",
+      "category": "strategic",
+      "good_answer_criteria": "Should surface HR-related discussions from meetings if any exist, or honestly say no data",
+      "num_chunks_retrieved": 10,
+      "top_similarity": 0.4656,
+      "chunk_sources": [
+        "insight",
+        "insight",
+        "insight",
+        "insight",
+        "insight"
+      ],
+      "generated_answer": "Based on the context provided, here are some HR problems you might not be fully aware of:\n\n1. **Team Morale Concerns**: There are multiple mentions of concerns about team morale, particularly if certain issues are not addressed. This is highlighted in both the \"OAC- Westfield Collective\" and \"Goodwill Weekly OAC Meeting\" insights.\n\n2. **Alignment with Company Culture**: Several insights, such as those from the interviews with accountants (Misty Rogers, Melanie Gusi, and Obaidullah Merzakhail) and the office manager (Beth Russell), indicate potential misalignment with company culture. This could lead to future issues if not properly assessed and addressed.\n\n3. **Management Styles**: There is a potential mismatch in management styles with the existing team culture, as noted in the interview with Beth Russell. This could impact team dynamics and overall morale.\n\n4. **Payroll and HR Processes**: With the planned rapid company growth in 2026, there is a risk of increased payroll errors and compliance gaps if payroll and HR processes are not strengthened, as mentioned in the insight regarding Vensure & Alleato Group.\n\n5. **Knowledge Gaps**: The interview with Obaidullah Merzakhail highlights potential gaps in knowledge that need to be addressed to prevent future issues.\n\nThese areas suggest that focusing on cultural alignment, team dynamics, and strengthening HR processes could be crucial to mitigating these risks.",
+      "scores": {
+        "specificity": 5,
+        "accuracy": 5,
+        "completeness": 5,
+        "actionability": 4,
+        "overall": 5,
+        "explanation": "The answer is rich in specific details, referencing particular meetings and individuals, which enhances its specificity. It accurately reflects the context provided and thoroughly addresses various HR problems. While it offers actionable insights, some suggestions could benefit from more direct steps for implementation, hence a slightly lower score in actionability."
+      },
+      "latency_ms": {
+        "retrieval": 727.6,
+        "generation": 5276.9,
+        "judging": 2674.3
+      },
+      "error": null
+    },
+    {
+      "id": 18,
+      "question": "How can we improve our scheduling process?",
+      "category": "strategic",
+      "good_answer_criteria": "Should reference actual scheduling issues from meetings, not generic advice",
+      "num_chunks_retrieved": 10,
+      "top_similarity": 0.642,
+      "chunk_sources": [
+        "insight",
+        "insight",
+        "insight",
+        "insight",
+        "insight"
+      ],
+      "generated_answer": "Based on the context provided, there are several opportunities to improve the scheduling process across different areas of the company:\n\n1. **Streamline Production Scheduling**: For projects like the Goodwill Brookville Rd Pre-Cast, owned by Adam Beasley, there is an opportunity to streamline the production scheduling process to minimize delays in project execution. This could involve implementing more efficient scheduling software or methodologies to ensure that production timelines are adhered to more strictly.\n\n2. **Standardize Meeting Schedules**: To avoid confusion and ensure all participants are informed, as noted by Jesse Dawson, standardizing meeting days for recurring meetings could improve scheduling efficiency. This would help prevent conflicts and ensure that everyone is aware of when meetings are typically held.\n\n3. **Optimize Inspection and Task Scheduling**: For the Applied Engineering project, owned by AJ Taylor, optimizing the scheduling of inspections and tasks can improve efficiency in the installation process. This might involve better coordination between different teams and more precise scheduling of tasks to avoid downtime.\n\n4. **Enhance Communication Protocols**: Improving communication protocols, as suggested by Jesse Dawson, can prevent scheduling confusion. This could include clearer communication of meeting times and agendas, as well as ensuring that all participants have access to necessary information well in advance.\n\n5. **Improve Candidate Interview Scheduling**: In the recruitment process, as highlighted by Maria Calcetero, implementing enhanced confirmation protocols, automated reminders, and streamlined communication channels can improve candidate attendance and reduce no-shows. This would help maintain recruitment timelines and reduce administrative burdens.\n\n6. **Use Automated Reminders**: Across various scheduling needs, implementing automated reminders can help ensure that all parties are aware of upcoming commitments, reducing the likelihood of missed meetings or appointments.\n\nBy addressing these areas, the company can improve its overall scheduling process, leading to greater efficiency and reduced delays in both project execution and internal operations.",
+      "scores": {
+        "specificity": 5,
+        "accuracy": 5,
+        "completeness": 5,
+        "actionability": 5,
+        "overall": 5,
+        "explanation": "The answer provides specific examples from actual projects and individuals within the company, demonstrating a clear understanding of the scheduling issues at hand. It thoroughly addresses various aspects of the scheduling process and offers actionable recommendations that can be immediately implemented to improve efficiency."
+      },
+      "latency_ms": {
+        "retrieval": 1080.8,
+        "generation": 4256.0,
+        "judging": 2217.6
+      },
+      "error": null
+    },
+    {
+      "id": 19,
+      "question": "What projects do we have?",
+      "category": "simple",
+      "good_answer_criteria": "Should list actual project names from the database",
+      "num_chunks_retrieved": 10,
+      "top_similarity": 0.514,
+      "chunk_sources": [
+        "insight",
+        "meeting_segment_summary",
+        "insight",
+        "meeting_segment_summary",
+        "meeting_segment_summary"
+      ],
+      "generated_answer": "Based on the context provided, the projects mentioned include:\n\n1. **2025 Projects** - Specific details are not provided, but they are highlighted in the agenda for review.\n2. **2026 Project Renders** - Again, specific details are not provided, but they are included in the agenda.\n3. **Radial Brownsburg** - A progress report was noted, with an opportunity to explore additional projects for financial tracking post-completion.\n4. **Goodwill Foundation Project** - This project was discussed in terms of needing updates and approvals, as well as the status of various permits.\n5. **Vermilion Remodel** - This project was mentioned in the context of workload management and team member assignments.\n6. **Project X** - Currently experiencing some delays due to resource allocation issues.\n7. **Project Y** - Noted to be on schedule.\n\nAdditionally, there are mentions of job training programs and community outreach initiatives related to the Goodwill Illinois Huddle, but specific project names are not provided. There are also references to upcoming projects and initiatives discussed in various meetings, but details are not specified in the provided context.",
+      "scores": {
+        "specificity": 4,
+        "accuracy": 5,
+        "completeness": 4,
+        "actionability": 3,
+        "overall": 4,
+        "explanation": "The answer lists several specific project names, demonstrating a good level of specificity. It is fully grounded in the context provided, ensuring accuracy. However, while it addresses the main question well, it could provide more detailed information about each project for completeness. The answer offers some actionable insights but lacks specific next steps for the user."
+      },
+      "latency_ms": {
+        "retrieval": 780.9,
+        "generation": 2368.5,
+        "judging": 2818.3
+      },
+      "error": null
+    },
+    {
+      "id": 20,
+      "question": "Tell me about the last 3 meetings",
+      "category": "simple",
+      "good_answer_criteria": "Should list actual meeting titles, dates, and brief summaries",
+      "num_chunks_retrieved": 10,
+      "top_similarity": 0.4526,
+      "chunk_sources": [
+        "meeting_segment_summary",
+        "meeting_segment_summary",
+        "meeting_segment_summary",
+        "meeting_segment_summary",
+        "insight"
+      ],
+      "generated_answer": "The context provided does not contain specific details about the last three meetings. It includes summaries and insights from various meetings, but none are clearly identified as the most recent. If you need information about specific meetings, please provide more details or check the company's records for the latest meeting summaries.",
+      "scores": {
+        "specificity": 1,
+        "accuracy": 3,
+        "completeness": 2,
+        "actionability": 1,
+        "overall": 2,
+        "explanation": "The answer lacks specific details about the last three meetings, providing no actual meeting titles, dates, or summaries, which results in a low specificity score. While it acknowledges the absence of specific details, it does not fully address the user's request, leading to a low completeness score. The answer is somewhat accurate in stating that the context does not contain the required information, but it does not provide actionable steps for the user."
+      },
+      "latency_ms": {
+        "retrieval": 752.3,
+        "generation": 1101.0,
+        "judging": 2604.6
+      },
+      "error": null
+    }
+  ]
+}
