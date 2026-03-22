@@ -44,8 +44,7 @@ const TYPE_FILTER_OPTIONS = [
 ];
 
 export const changeEventColumns: ColumnConfig[] = [
-  { id: "number", label: "#", alwaysVisible: true },
-  { id: "title", label: "Title", defaultVisible: true },
+  { id: "number_title", label: "CE Number - Title", alwaysVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
   { id: "scope", label: "Scope", defaultVisible: true },
   { id: "type", label: "Type", defaultVisible: true },
@@ -150,41 +149,42 @@ export function buildChangeEventTableColumns(): TableColumn<ChangeEvent>[] {
   return [
     {
       ...changeEventColumns[0],
-      render: (item) => <span className="font-mono text-sm">{item.number || `CE-${item.id}`}</span>,
-      sortValue: (item) => item.number ?? `CE-${item.id}`,
+      render: (item) => (
+        <div>
+          <span className="font-mono text-xs text-muted-foreground">{item.number || `CE-${item.id}`}</span>
+          {" "}
+          <span className="font-medium">{item.title}</span>
+        </div>
+      ),
+      sortValue: (item) => `${item.number ?? ""} ${item.title}`,
     },
     {
       ...changeEventColumns[1],
-      render: (item) => <span className="font-medium">{item.title}</span>,
-      sortValue: (item) => item.title,
-    },
-    {
-      ...changeEventColumns[2],
       render: (item) => <StatusBadge status={statusLabel(item.status)} />,
       sortValue: (item) => item.status ?? "",
     },
     {
-      ...changeEventColumns[3],
+      ...changeEventColumns[2],
       render: (item) => <span>{scopeLabel(item.scope)}</span>,
       sortValue: (item) => scopeLabel(item.scope),
     },
     {
-      ...changeEventColumns[4],
+      ...changeEventColumns[3],
       render: (item) => <span>{typeLabel(item.type)}</span>,
       sortValue: (item) => typeLabel(item.type),
     },
     {
-      ...changeEventColumns[5],
+      ...changeEventColumns[4],
       render: (item) => <span className="line-clamp-1">{item.reason || "-"}</span>,
       sortValue: (item) => item.reason ?? "",
     },
     {
-      ...changeEventColumns[6],
+      ...changeEventColumns[5],
       render: (item) => <span>{item.origin || "-"}</span>,
       sortValue: (item) => item.origin ?? "",
     },
     {
-      ...changeEventColumns[7],
+      ...changeEventColumns[6],
       render: (item) => <span>{formatDate(item.created_at)}</span>,
       sortValue: (item) => (item.created_at ? new Date(item.created_at).getTime() : 0),
     },

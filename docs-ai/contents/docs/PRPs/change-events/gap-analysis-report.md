@@ -177,7 +177,7 @@ Fields/columns found on live Procore page but missing from manifest:
 - [ ] Add Recycle Bin access (DEFERRED — requires soft-delete list view with restore)
 
 ### LOW Impact
-- [ ] Match Procore's combined "CE Number - Title" spanning column format
+- [x] Match Procore's combined "CE Number - Title" column format
 - [ ] Add Description column to line items grid (currently text-only, Procore shows rich text)
 - [ ] Match Procore's detail page layout (General Info + Line Items on same page, not separate tabs)
 - [ ] Add Conversations integration to detail page
