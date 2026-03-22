@@ -202,21 +202,54 @@ async function captureState(page, state, detailPage = null) {
       }
 
     } else if (state.type === 'detail') {
-      // Navigate to list, click first row to open detail
+      // Navigate to list, then click first record's link to open detail
       await navigateToUrl(page, state.url);
-      await page.waitForTimeout(2000);
+      await page.waitForSelector('.ag-row, tr[role="row"], tbody tr', { timeout: 10000 }).catch(() => {});
+      await page.waitForTimeout(3000);
 
-      const selectors = state.selector.split(', ');
+      // Strategy: find a clickable link or title cell in the first data row
       let clicked = false;
-      for (const sel of selectors) {
-        try {
-          const row = page.locator(sel).first();
-          if (await row.count() > 0) {
-            await row.click();
-            clicked = true;
-            break;
+
+      // Try clicking a link inside the first AG Grid row
+      const linkInRow = page.locator('.ag-row:first-child a[href]').first();
+      if (await linkInRow.count() > 0) {
+        await linkInRow.click();
+        clicked = true;
+      }
+
+      // Fallback: try the first cell with a link-like behavior
+      if (!clicked) {
+        clicked = await page.evaluate(() => {
+          // Find links in AG Grid rows
+          var links = document.querySelectorAll('.ag-row a[href], .ag-row [class*="link"], .ag-row [data-clickable]');
+          if (links.length > 0) { links[0].click(); return true; }
+          // Try clicking the title/name cell (usually second cell, first is checkbox)
+          var cells = document.querySelectorAll('.ag-row:first-child .ag-cell');
+          for (var i = 0; i < cells.length; i++) {
+            var text = cells[i].textContent.trim();
+            // Skip cells that look like checkboxes or numbers
+            if (text.length > 3 && !/^\d+$/.test(text) && !/^[$]/.test(text)) {
+              cells[i].click();
+              return true;
+            }
           }
-        } catch {}
+          return false;
+        });
+      }
+
+      // Fallback: try registry selectors
+      if (!clicked) {
+        const selectors = state.selector.split(', ');
+        for (const sel of selectors) {
+          try {
+            const row = page.locator(sel).first();
+            if (await row.count() > 0) {
+              await row.click();
+              clicked = true;
+              break;
+            }
+          } catch {}
+        }
       }
 
       if (!clicked) {
@@ -302,6 +335,13 @@ async function captureState(page, state, detailPage = null) {
       }
     }
 
+    // ── SAVE RAW DOM HTML (always, before extraction) ────────────────────────
+    const domDir = join(OUTPUT_DIR, 'dom');
+    mkdirSync(domDir, { recursive: true });
+    const rawHtml = await page.content();
+    writeFileSync(join(domDir, `${state.id}.html`), rawHtml);
+    console.log(`  💾 Saved DOM: dom/${state.id}.html (${Math.round(rawHtml.length / 1024)}KB)`);
+
     // Extract structured data from DOM
     const extracted = await page.evaluate(extractPageData, {
       id: state.id,
@@ -310,7 +350,8 @@ async function captureState(page, state, detailPage = null) {
 
     // Merge extracted data into result
     Object.assign(result, extracted);
-    result.screenshot = `screenshots/${state.id}.png`; // restore screenshot path
+    result.screenshot = `screenshots/${state.id}.png`;
+    result.domFile = `dom/${state.id}.html`;
 
     // Take screenshot
     await page.screenshot({
