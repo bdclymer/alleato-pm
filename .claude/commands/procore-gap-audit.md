@@ -1,12 +1,12 @@
 ---
 name: procore-gap-audit
-description: Read the manifest.json from procore-deep-crawl and cross-reference against actual Alleato implementation code (NOT old spec docs) to produce a binary PRESENT/MISSING/WRONG checklist.
+description: Read the manifest.json from procore-deep-crawl, verify it against the LIVE Procore page using agent-browser, then cross-reference against actual Alleato implementation code to produce a binary PRESENT/MISSING/WRONG checklist.
 ---
 
 # /procore-gap-audit <feature>
 
 Cross-reference the Procore manifest against the actual Alleato implementation code.
-**Read the code, not old spec docs.** Old docs may be wrong — the manifest is the source of truth.
+**Read the code, not old spec docs.** The manifest + live Procore page are the source of truth.
 
 ## Step 1: Read the manifest
 
@@ -23,7 +23,69 @@ Extract from the manifest:
 - Auto-rows (all `states.*.autoRows[].label`)
 - Statuses/options from select fields
 
-## Step 2: Map the Alleato implementation
+## Step 2: Verify manifest against LIVE Procore page
+
+**MANDATORY: Use agent-browser to open the actual Procore pages and verify the manifest is accurate.**
+
+The manifest is automated extraction — it WILL miss things. Agent-browser is the verification layer.
+
+### 2a. Verify the list page
+
+```
+agent-browser open <list-url-from-manifest>
+agent-browser snapshot -i
+```
+
+Compare what you see to the manifest's `states.list.columns` and `states.list.columnGroups`:
+- **Count** the visible columns in the table header. Does the count match the manifest?
+- **Check column groups** — are they labeled correctly? Does each group contain the right columns?
+- **Check toolbar actions** — what buttons/dropdowns are visible above the table?
+- If anything is missing from the manifest, ADD it to your working notes. Note: "Manifest says X columns but live page shows Y"
+
+### 2b. Verify the create form
+
+Click the Create button (or navigate to the create form URL), then:
+
+```
+agent-browser snapshot -i
+```
+
+Compare what you see to the manifest's `states.create-form.formSections[].fields`:
+- **Count** every visible field label on the form
+- **Check field types** — is it a text input, dropdown, radio, checkbox, date picker, rich text editor?
+- **Check required markers** — does the field have a * or (required) indicator?
+- **Check section groupings** — are fields grouped under section headers?
+- If the manifest says 11 fields but you count 12, identify the missing one
+
+### 2c. Verify the detail page
+
+Click into a record to open the detail view:
+
+```
+agent-browser snapshot -i
+```
+
+- **Check tabs** — what tabs are visible at the top? (Overview, Commitments, Line Items, etc.)
+- **Check detail form fields** — what key-value pairs are shown?
+- **Scroll down** to see the full page:
+
+```
+agent-browser scroll down
+agent-browser snapshot -i
+```
+
+- **Check the line items table** — what columns does it have? Are there column groups?
+- **Check for auto-calculated rows** — are there Insurance/Fee rows with special icons?
+
+### 2d. Record corrections
+
+After verifying all pages, create a corrected field list that combines:
+- What the manifest extracted automatically
+- What you observed on the live page that the manifest missed
+
+**Use the corrected list (not just the manifest) for the rest of the gap audit.**
+
+## Step 3: Map the Alleato implementation
 
 Read ACTUAL CODE FILES — not spec docs, not memory, not assumptions.
 
@@ -59,16 +121,22 @@ ls frontend/src/lib/schemas/ | grep -i "$ARGUMENTS"
 
 **For each file found, READ it** to understand what fields/columns/routes/actions are actually implemented.
 
-## Step 3: Generate the gap report
+## Step 4: Generate the gap report
 
-Produce the report in this exact format. **Do NOT fill in statuses from memory or guessing — only from reading the files.**
+Produce the report in this exact format. **Do NOT fill in statuses from memory or guessing — only from reading files and live verification.**
 
 ```markdown
 # <Feature Name> — Procore vs. Alleato Gap Analysis
 
 **Generated:** <date>
 **Manifest:** `.claude/procore-manifests/<feature>/manifest.json`
+**Verified against live Procore:** Yes (agent-browser)
 **Alleato path:** `frontend/src/app/(main)/[projectId]/<feature>/`
+
+## Manifest Corrections
+
+Fields/columns found on live Procore page but missing from manifest:
+- <field name> (<type>) — found on <page>, not in manifest
 
 ## Executive Summary
 
@@ -90,9 +158,9 @@ Produce the report in this exact format. **Do NOT fill in statuses from memory o
 
 | Procore Column | Column Group | Alleato Status | File | Notes |
 |---------------|-------------|----------------|------|-------|
-| # | — | ✅ | ... | |
-| Title | — | ✅ | ... | |
-| Amount | Financial Impact | ❌ | — | Not in DataTable columns def |
+| CE Number - Title | (spanning) | ✅ | ... | |
+| Status | Change Event | ✅ | ... | |
+| Amount | Cost | ❌ | — | Not in DataTable columns def |
 
 ## Create Form Fields
 
@@ -100,19 +168,20 @@ Produce the report in this exact format. **Do NOT fill in statuses from memory o
 |--------------|------|----------|----------------|-------|
 | Title | text | Yes | ✅ | |
 | Status | select | No | ⚠️ | Wrong options list |
+| Expecting Revenue | radio | No | ❌ | Yes/No — controls revenue fields |
 
 ## Detail Tabs
 
 | Procore Tab | Alleato Equivalent | Status |
 |------------|-------------------|--------|
-| Overview | /detail page header | ✅ |
+| Overview | /detail page | ✅ |
 | Line Items | — | ❌ |
 
 ## Toolbar Actions
 
 | Procore Action | Type | Alleato Status | Notes |
 |---------------|------|----------------|-------|
-| Create Change Event | primary button | ✅ | |
+| Create | primary button | ✅ | |
 | Export | dropdown | ❌ | |
 
 ## Auto-Calculated Rows
@@ -159,7 +228,7 @@ Produce the report in this exact format. **Do NOT fill in statuses from memory o
 - ⚠️ = Partial (wrong type, incomplete options, different label)
 - ❌ = Not implemented
 
-## Step 4: Save the report
+## Step 5: Save the report
 
 ```bash
 mkdir -p docs-ai/contents/docs/PRPs/$ARGUMENTS
