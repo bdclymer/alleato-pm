@@ -157,6 +157,23 @@ export default function ChangeEventDetailPage() {
         }));
         setHistoryEntries(mapped);
       }
+
+      // Use attachments from main response or fetch separately
+      if (event.attachments && Array.isArray(event.attachments)) {
+        setAttachments(event.attachments);
+      } else {
+        try {
+          const attachmentsResponse = await fetch(
+            `/api/projects/${projectId}/change-events/${changeEventId}/attachments`,
+          );
+          if (attachmentsResponse.ok) {
+            const attachmentsData = await attachmentsResponse.json();
+            setAttachments(attachmentsData.data || attachmentsData || []);
+          }
+        } catch {
+          // Attachments fetch failed, leave empty
+        }
+      }
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Failed to load change event",

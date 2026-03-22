@@ -157,17 +157,17 @@ Fields/columns found on live Procore page but missing from manifest:
 ## Missing Functionality (Prioritized)
 
 ### HIGH Impact
-- [ ] Add Insurance and Fee auto-calculated rows to line items (from Prime Contract markup %)
+- [ ] Add Insurance and Fee auto-calculated rows to line items (COMPLEX — requires Prime Contract markup config, Revenue ROM × markup %, separate implementation plan needed)
 - [x] Fix `primeContractId` type mismatch between create and update schemas
 - [x] Verify `estimated_impact` and `notes` columns exist in DB — confirmed NOT in DB, removed ghost references from 8 files
 - [x] Add missing list columns: Type, Origin added with renderers + filter; Prime PCO/Cost ROM/Commitment deferred (need line item aggregation)
-- [ ] Implement column groups in list table: Change Event, Revenue, Cost
+- [ ] Implement column groups in list table: Change Event, Revenue, Cost (DEFERRED — requires UnifiedTablePage enhancement, affects all tools)
 
 ### MEDIUM Impact
 - [ ] Add Commitments tab to detail page
 - [ ] Add Events tab to detail page
 - [ ] Add Advanced Settings tab to detail page
-- [ ] Fix attachments tab — implement fetch on page load
+- [x] Fix attachments tab — implement fetch on page load
 - [ ] Add Export button to detail page
 - [ ] Add More Options dropdown to detail page
 - [ ] Enable "Add to" dropdown (currently disabled "coming soon")
