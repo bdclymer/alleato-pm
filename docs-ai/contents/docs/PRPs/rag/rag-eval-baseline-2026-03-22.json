@@ -1,0 +1,355 @@
+{
+  "timestamp": "2026-03-22T14:02:14Z",
+  "threshold": 0.25,
+  "summary": {
+    "total": 20,
+    "pass_rate": 0.7,
+    "source_match_rate": 0.7,
+    "keyword_match_rate": 1.0,
+    "mrr": 0.975,
+    "avg_top_similarity": 0.59351,
+    "avg_latency_ms": 1937.02
+  },
+  "per_question": [
+    {
+      "id": 1,
+      "question": "What was discussed about drywall procurement timelines?",
+      "category": "meeting_detail",
+      "passed": true,
+      "num_results": 10,
+      "top_similarity": 0.5797,
+      "mrr": 1.0,
+      "source_types_found": [
+        "meeting_summary_embed",
+        "meeting_section",
+        "meeting_segment_summary",
+        "meeting_summary_embed",
+        "meeting_summary_embed"
+      ],
+      "latency_ms": 3035.1
+    },
+    {
+      "id": 2,
+      "question": "What did the team decide about subcontractor pricing?",
+      "category": "meeting_detail",
+      "passed": true,
+      "num_results": 10,
+      "top_similarity": 0.5725,
+      "mrr": 0.5,
+      "source_types_found": [
+        "meeting_segment_summary",
+        "meeting_segment_summary",
+        "onedrive_document",
+        "insight",
+        "meeting_segment_summary"
+      ],
+      "latency_ms": 1797.3
+    },
+    {
+      "id": 3,
+      "question": "What action items came out of the last OAC meeting?",
+      "category": "meeting_detail",
+      "passed": true,
+      "num_results": 10,
+      "top_similarity": 0.6312,
+      "mrr": 1.0,
+      "source_types_found": [
+        "meeting_segment_summary",
+        "meeting_segment_summary",
+        "meeting_segment_summary",
+        "meeting_segment_summary",
+        "meeting_segment_summary"
+      ],
+      "latency_ms": 1478.0
+    },
+    {
+      "id": 4,
+      "question": "What safety concerns were raised in recent meetings?",
+      "category": "meeting_detail",
+      "passed": true,
+      "num_results": 10,
+      "top_similarity": 0.6133,
+      "mrr": 1.0,
+      "source_types_found": [
+        "meeting_segment_summary",
+        "meeting_segment_summary",
+        "meeting_segment_summary",
+        "insight",
+        "meeting_segment_summary"
+      ],
+      "latency_ms": 3746.5
+    },
+    {
+      "id": 5,
+      "question": "What was discussed about the foundation pour schedule?",
+      "category": "meeting_detail",
+      "passed": true,
+      "num_results": 10,
+      "top_similarity": 0.5812,
+      "mrr": 1.0,
+      "source_types_found": [
+        "insight",
+        "meeting_segment_summary",
+        "insight",
+        "meeting_transcript",
+        "meeting_transcript"
+      ],
+      "latency_ms": 2690.5
+    },
+    {
+      "id": 6,
+      "question": "What decisions have been made about vendor selection?",
+      "category": "insight",
+      "passed": true,
+      "num_results": 10,
+      "top_similarity": 0.5904,
+      "mrr": 1.0,
+      "source_types_found": [
+        "insight",
+        "insight",
+        "meeting_segment_summary",
+        "insight",
+        "insight"
+      ],
+      "latency_ms": 2720.7
+    },
+    {
+      "id": 7,
+      "question": "What are the biggest risks across our projects?",
+      "category": "insight",
+      "passed": true,
+      "num_results": 10,
+      "top_similarity": 0.5687,
+      "mrr": 1.0,
+      "source_types_found": [
+        "insight",
+        "insight",
+        "meeting_segment_summary",
+        "insight",
+        "insight"
+      ],
+      "latency_ms": 1700.1
+    },
+    {
+      "id": 8,
+      "question": "What opportunities have we identified for cost savings?",
+      "category": "insight",
+      "passed": true,
+      "num_results": 10,
+      "top_similarity": 0.6451,
+      "mrr": 1.0,
+      "source_types_found": [
+        "meeting_segment_summary",
+        "insight",
+        "insight",
+        "insight",
+        "insight"
+      ],
+      "latency_ms": 1511.7
+    },
+    {
+      "id": 9,
+      "question": "Any emails about permit delays?",
+      "category": "email",
+      "passed": false,
+      "num_results": 10,
+      "top_similarity": 0.6437,
+      "mrr": 1.0,
+      "source_types_found": [
+        "insight",
+        "insight",
+        "insight",
+        "insight",
+        "insight"
+      ],
+      "latency_ms": 1723.5
+    },
+    {
+      "id": 10,
+      "question": "What has been discussed in Teams about project updates?",
+      "category": "teams",
+      "passed": false,
+      "num_results": 10,
+      "top_similarity": 0.6644,
+      "mrr": 1.0,
+      "source_types_found": [
+        "meeting_segment_summary",
+        "meeting_segment_summary",
+        "meeting_segment_summary",
+        "meeting_segment_summary",
+        "meeting_segment_summary"
+      ],
+      "latency_ms": 946.2
+    },
+    {
+      "id": 11,
+      "question": "What do the specification documents say about waterproofing?",
+      "category": "document",
+      "passed": true,
+      "num_results": 10,
+      "top_similarity": 0.6088,
+      "mrr": 1.0,
+      "source_types_found": [
+        "onedrive_document",
+        "onedrive_document",
+        "meeting_summary_embed",
+        "meeting_summary",
+        "meeting_summary_embed"
+      ],
+      "latency_ms": 1789.7
+    },
+    {
+      "id": 12,
+      "question": "Find documents related to HVAC installation requirements",
+      "category": "document",
+      "passed": true,
+      "num_results": 10,
+      "top_similarity": 0.6377,
+      "mrr": 1.0,
+      "source_types_found": [
+        "onedrive_document",
+        "meeting_summary_embed",
+        "meeting_segment_summary",
+        "insight",
+        "meeting_summary"
+      ],
+      "latency_ms": 1381.8
+    },
+    {
+      "id": 13,
+      "question": "What's the latest on the Vermillion Rise project?",
+      "category": "cross_source",
+      "passed": false,
+      "num_results": 10,
+      "top_similarity": 0.6958,
+      "mrr": 1.0,
+      "source_types_found": [
+        "meeting_segment_summary",
+        "meeting_segment_summary",
+        "meeting_section",
+        "meeting_summary_embed",
+        "meeting_section"
+      ],
+      "latency_ms": 1545.5
+    },
+    {
+      "id": 14,
+      "question": "What should I focus on this week as a project manager?",
+      "category": "cross_source",
+      "passed": true,
+      "num_results": 10,
+      "top_similarity": 0.6233,
+      "mrr": 1.0,
+      "source_types_found": [
+        "insight",
+        "meeting_segment_summary",
+        "meeting_segment_summary",
+        "meeting_segment_summary",
+        "meeting_segment_summary"
+      ],
+      "latency_ms": 2910.7
+    },
+    {
+      "id": 15,
+      "question": "What stresses Brandon out the most based on meeting discussions?",
+      "category": "cross_source",
+      "passed": true,
+      "num_results": 10,
+      "top_similarity": 0.5093,
+      "mrr": 1.0,
+      "source_types_found": [
+        "meeting_segment_summary",
+        "insight",
+        "meeting_summary",
+        "meeting_transcript",
+        "meeting_segment_summary"
+      ],
+      "latency_ms": 2498.0
+    },
+    {
+      "id": 16,
+      "question": "How are our client relationships across projects?",
+      "category": "cross_source",
+      "passed": true,
+      "num_results": 10,
+      "top_similarity": 0.5628,
+      "mrr": 1.0,
+      "source_types_found": [
+        "insight",
+        "insight",
+        "insight",
+        "insight",
+        "meeting_segment_summary"
+      ],
+      "latency_ms": 2007.6
+    },
+    {
+      "id": 17,
+      "question": "What do you remember about my preferences for reports?",
+      "category": "memory",
+      "passed": false,
+      "num_results": 10,
+      "top_similarity": 0.401,
+      "mrr": 1.0,
+      "source_types_found": [
+        "meeting_transcript",
+        "meeting_transcript",
+        "meeting_transcript",
+        "meeting_transcript",
+        "meeting_transcript"
+      ],
+      "latency_ms": 1261.8
+    },
+    {
+      "id": 18,
+      "question": "Summarize the most recent project meetings",
+      "category": "summary",
+      "passed": false,
+      "num_results": 10,
+      "top_similarity": 0.6664,
+      "mrr": 1.0,
+      "source_types_found": [
+        "meeting_segment_summary",
+        "meeting_segment_summary",
+        "meeting_segment_summary",
+        "meeting_segment_summary",
+        "meeting_segment_summary"
+      ],
+      "latency_ms": 1494.0
+    },
+    {
+      "id": 19,
+      "question": "What topics have been discussed most frequently in meetings?",
+      "category": "summary",
+      "passed": true,
+      "num_results": 10,
+      "top_similarity": 0.5255,
+      "mrr": 1.0,
+      "source_types_found": [
+        "meeting_segment_summary",
+        "meeting_segment_summary",
+        "meeting_summary_embed",
+        "meeting_segment_summary",
+        "meeting_segment_summary"
+      ],
+      "latency_ms": 933.8
+    },
+    {
+      "id": 20,
+      "question": "What lessons learned do we have about concrete work?",
+      "category": "knowledge",
+      "passed": false,
+      "num_results": 10,
+      "top_similarity": 0.5494,
+      "mrr": 1.0,
+      "source_types_found": [
+        "onedrive_document",
+        "onedrive_document",
+        "onedrive_document",
+        "onedrive_document",
+        "onedrive_document"
+      ],
+      "latency_ms": 1567.9
+    }
+  ]
+}
