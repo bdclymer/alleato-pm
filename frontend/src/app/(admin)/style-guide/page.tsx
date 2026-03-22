@@ -27,8 +27,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { StatusBadge, StatusDot, StatusText } from "@/components/ds/status-badge";
 import {
+  StatusBadge,
+  StatusDot,
+  StatusText,
   CellText,
   TruncatedCell,
   CellLink,
@@ -43,7 +45,7 @@ import {
   TableAvatarUsers,
   TableCountIndicator,
   TableRowActionsMenu,
-} from "@/components/tables/unified/table-primitives";
+} from "@/components/ds";
 
 export default function StyleGuidePage() {
   return (

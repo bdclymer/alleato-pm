@@ -46,10 +46,20 @@ export function TableCountIndicator({ count, className }: TableCountIndicatorPro
 }
 
 interface TableDateValueProps {
-  value: string | null | undefined;
+  value: string | Date | null | undefined;
   showTime?: boolean;
   emptyLabel?: string;
   className?: string;
+}
+
+/** Parse a date value treating date-only strings as local time (not UTC). */
+function parseDateValue(value: string | Date): Date {
+  if (value instanceof Date) return value;
+  // "YYYY-MM-DD" — treat as local midnight to avoid UTC-shift
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return new Date(`${value}T00:00:00`);
+  }
+  return new Date(value);
 }
 
 export function TableDateValue({
@@ -62,7 +72,7 @@ export function TableDateValue({
     return <span className={cn("text-xs text-muted-foreground", className)}>{emptyLabel}</span>;
   }
 
-  const parsed = new Date(value);
+  const parsed = parseDateValue(value);
   if (Number.isNaN(parsed.getTime())) {
     return <span className={cn("text-xs text-muted-foreground", className)}>{emptyLabel}</span>;
   }
@@ -515,7 +525,7 @@ export function CellCurrency({
     return <span className="text-muted-foreground">{emptyLabel}</span>;
   }
   const num = typeof value === "string" ? parseFloat(value) : value;
-  if (isNaN(num)) {
+  if (Number.isNaN(num)) {
     return <span className="text-muted-foreground">{emptyLabel}</span>;
   }
   const formatted = new Intl.NumberFormat("en-US", {
@@ -551,7 +561,7 @@ export function CellNumber({
     return <span className="text-muted-foreground">{emptyLabel}</span>;
   }
   const num = typeof value === "string" ? parseFloat(value) : value;
-  if (isNaN(num)) {
+  if (Number.isNaN(num)) {
     return <span className="text-muted-foreground">{emptyLabel}</span>;
   }
   const formatted = new Intl.NumberFormat("en-US", {
@@ -587,12 +597,13 @@ export function CellPercent({
     return <span className="text-muted-foreground">{emptyLabel}</span>;
   }
   const num = typeof value === "string" ? parseFloat(value) : value;
-  if (isNaN(num)) {
+  if (Number.isNaN(num) || !Number.isFinite(num)) {
     return <span className="text-muted-foreground">{emptyLabel}</span>;
   }
+  const safeDec = Math.min(100, Math.max(0, Math.floor(decimals)));
   return (
     <span className={cn("tabular-nums", muted ? "text-muted-foreground" : undefined, className)}>
-      {num.toFixed(decimals)}%
+      {num.toFixed(safeDec)}%
     </span>
   );
 }
@@ -613,10 +624,9 @@ export function CellDate({
   emptyLabel = "—",
   className,
 }: CellDateProps): React.ReactElement {
-  const strValue = value instanceof Date ? value.toISOString() : value;
   return (
     <TableDateValue
-      value={strValue}
+      value={value}
       showTime={showTime}
       emptyLabel={emptyLabel}
       className={className}
@@ -638,10 +648,11 @@ export function CellStatus({
   emptyLabel = "—",
   className,
 }: CellStatusProps): React.ReactElement {
-  if (!value?.trim()) {
+  const normalized = value?.trim();
+  if (!normalized) {
     return <span className="text-muted-foreground">{emptyLabel}</span>;
   }
-  return <StatusBadge status={value} className={className} />;
+  return <StatusBadge status={normalized} className={className} />;
 }
 
 // ── Legacy exports below ────────────────────────────────────────────────────
