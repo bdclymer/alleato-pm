@@ -257,10 +257,14 @@ export function createAcumaticaTools(
           const client = createAcumaticaClient();
           await client.login();
 
-          const bills = await client.getBills({
+          const allBills = await client.getBills({
             $top: limit,
-            ...(status ? { $filter: `Status eq '${status}'` } : {}),
           });
+
+          // Filter in-memory to avoid Acumatica OData $filter HTTP 500
+          const bills = status
+            ? allBills.filter((b) => b.Status?.value === status)
+            : allBills;
 
           const totalAmount = bills.reduce((s, b) => s + (b.Amount ?? 0), 0);
           const totalBalance = bills.reduce((s, b) => s + (b.Balance ?? 0), 0);
@@ -314,10 +318,14 @@ export function createAcumaticaTools(
           const client = createAcumaticaClient();
           await client.login();
 
-          const invoices = await client.getInvoices({
+          const allInvoices = await client.getInvoices({
             $top: limit,
-            ...(status ? { $filter: `Status eq '${status}'` } : {}),
           });
+
+          // Filter in-memory to avoid Acumatica OData $filter HTTP 500
+          const invoices = status
+            ? allInvoices.filter((i) => i.Status?.value === status)
+            : allInvoices;
 
           const totalAmount = invoices.reduce(
             (s, i) => s + (i.Amount ?? 0),
@@ -532,10 +540,14 @@ export function createAcumaticaTools(
           const client = createAcumaticaClient();
           await client.login();
 
-          const pos = await client.getPurchaseOrders({
+          const allPos = await client.getPurchaseOrders({
             $top: limit,
-            ...(status ? { $filter: `Status eq '${status}'` } : {}),
           });
+
+          // Filter in-memory to avoid Acumatica OData $filter HTTP 500
+          const pos = status
+            ? allPos.filter((po) => po.Status?.value === status)
+            : allPos;
 
           const totalOrderValue = pos.reduce(
             (s, po) => s + (po.OrderTotal ?? 0),

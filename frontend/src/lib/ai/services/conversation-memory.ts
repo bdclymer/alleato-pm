@@ -109,7 +109,8 @@ async function embedAndStoreMemory(
 
   // Generate embedding
   const embeddingResponse = await client.embeddings.create({
-    model: "text-embedding-3-small",
+    model: "text-embedding-3-large",
+    dimensions: 3072,
     input: summary.substring(0, 8000), // Same truncation as backend pipeline
   });
 
