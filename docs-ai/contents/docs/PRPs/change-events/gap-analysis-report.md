@@ -178,8 +178,8 @@ Fields/columns found on live Procore page but missing from manifest:
 
 ### LOW Impact
 - [x] Match Procore's combined "CE Number - Title" column format
-- [ ] Add Description column to line items grid (currently text-only, Procore shows rich text)
-- [ ] Match Procore's detail page layout (General Info + Line Items on same page, not separate tabs)
-- [ ] Add Conversations integration to detail page
+- [ ] Add Description column to line items grid (DEFERRED — Procore shows rich text)
+- [ ] Match Procore's detail page layout (DEFERRED — combine General Info + Line Items on same page)
+- [ ] Add Conversations integration to detail page (DEFERRED — requires messaging system)
 - [x] Remove non-Procore fields: `estimated_impact`, `notes` — removed in HIGH #3
-- [ ] Add all 29 configurable line item columns (Line Aging, Revenue Stage, Cost Stage, etc.)
+- [ ] Add all 29 configurable line item columns (DEFERRED — Line Aging, Revenue Stage, Cost Stage, etc.)
