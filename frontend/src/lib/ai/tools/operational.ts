@@ -95,6 +95,50 @@ async function resolveProject(
   return { error: "Provide either projectId or projectName" };
 }
 
+/** Rerank candidates using LLM as cross-encoder. Returns indices sorted by relevance. */
+async function rerankWithLLM(
+  query: string,
+  candidates: Array<{ content: string; sourceTable: string }>,
+  topK: number = 10,
+): Promise<number[]> {
+  try {
+    const openai = getOpenAI();
+    const candidateList = candidates
+      .slice(0, 20)
+      .map((c, i) => `[${i}] (${c.sourceTable}) ${c.content.substring(0, 300)}`)
+      .join("\n\n");
+
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini", // lightweight model for reranking — cost-efficient for scoring
+      temperature: 0,
+      max_tokens: 200,
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a relevance judge. Given a query and numbered text passages, " +
+            "return ONLY a JSON array of passage indices sorted by relevance to the query, " +
+            "most relevant first. Include only passages that are actually relevant. " +
+            "Example output: [3, 0, 7, 1]",
+        },
+        {
+          role: "user",
+          content: `Query: ${query}\n\nPassages:\n${candidateList}`,
+        },
+      ],
+    });
+
+    const text = response.choices[0]?.message?.content?.trim() || "[]";
+    const indices = JSON.parse(text) as number[];
+    return indices
+      .filter((i) => typeof i === "number" && i >= 0 && i < candidates.length)
+      .slice(0, topK);
+  } catch {
+    // Fallback: return original order
+    return candidates.slice(0, topK).map((_, i) => i);
+  }
+}
+
 /** Lazy OpenAI client for embedding generation (routed through AI Gateway when available). */
 let _openai: OpenAI | null = null;
 function getOpenAI(): OpenAI {
@@ -1508,13 +1552,31 @@ export function createOperationalTools(
               return Math.max(0.1, Math.exp(-ageDays / 180));
             };
 
-            const results = (Array.from(dedupedMap.values()) as (typeof merged)[number][])
+            // Pre-sort by blended score, take top 20 candidates for reranking
+            const candidates = (Array.from(dedupedMap.values()) as (typeof merged)[number][])
               .map((item) => ({
                 ...item,
                 finalScore: item.similarity * 0.9 + recencyScore(item.createdAt) * 0.1,
               }))
               .sort((a, b) => b.finalScore - a.finalScore)
-              .slice(0, targetCount);
+              .slice(0, 20);
+
+            // LLM reranker: re-score top 20 by actual relevance to the query
+            let results: typeof candidates;
+            if (candidates.length > 3) {
+              const rerankedIndices = await rerankWithLLM(query, candidates, targetCount);
+              results = rerankedIndices.map((i) => candidates[i]).filter(Boolean);
+              // Fill remaining slots if reranker returned fewer than targetCount
+              if (results.length < targetCount) {
+                const usedIndices = new Set(rerankedIndices);
+                for (const c of candidates) {
+                  if (results.length >= targetCount) break;
+                  if (!usedIndices.has(candidates.indexOf(c))) results.push(c);
+                }
+              }
+            } else {
+              results = candidates.slice(0, targetCount);
+            }
 
             if (results.length === 0) {
               return {
