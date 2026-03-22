@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  Budget And Forecast Snapshots User Guide \nTable of Contents \n##  Apply Filters \n  1. Navigate to the Company level **Project Status Snapshots** tool.\n  2. Select a budget view from the **View** list.\n  3. Click **Filters**. This opens the Filters panel. \n  4. Set the available filters to focus on the snapshots you want to view. Options are:\n     * **Created By**. Choose one or more snapshot creators.\n     * **Created On**. Set a time frame using the calendar.\n     * **Project**. Select specific projects to view their snapshots.\n     * **Region**. Pick a project region.\n     * **Stage**. Choose a project stage.\n     * **Status.** Choose a status.\n     * **Office**. Select an office.\n     * **Department**. Pick a department.\n     * **Program**. Select a program.\n\n\n[ Overview ](https://v2.support.procore.com/process-guides/budget-and-forecast-snapshots-user-guide/)\n",
+  "title": "Budget And Forecast Snapshots User Guide - Apply Filters",
+  "description": "This guide introduces Budget & Forecast Snapshots, powerful features for tracking, analyzing, and reporting budgeting and forecasting changes in Procore Financial Management. | Apply Filters"
+}

@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  Payee Setup Guide \nTable of Contents \n##  Free Accounts - Accept Employee Request \n  1. Log in to your free Procore account.\n  2. Navigate to the **Team** tool.\n  3. Click the **In Review** tab.\n     * To accept the request, select a **role** , **permission level** , and if the user is a bid contact for your company. Then, click **Accept**.\n     * To deny the request, click **Decline**.\n\n\n#####  Note\nFor companies setting up **Procore Pay** :\n  * If accepted, only users with 'System Administrators' permissions can see the Payments tool. They can [add a bank account](https://v2.support.procore.com/product-manuals/procore-pay/tutorials/add-a-bank-account-as-a-payee) continue setting up Procore Pay.\n  * If denied, the Payments tool will not be enabled.\n\n\n[ ](https://v2.support.procore.com/process-guides/payee-setup-guide/paid-accounts---accept-employee-request/)\n[ Manage Pay Permissions ](https://v2.support.procore.com/process-guides/payee-setup-guide/manage-pay-permissions/)\n",
+  "title": "Payee Setup Guide - Free Accounts - Accept Employee Request",
+  "description": "| Free Accounts - Accept Employee Request"
+}

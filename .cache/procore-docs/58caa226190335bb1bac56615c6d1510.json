@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  Retrieve an RFI from the Recycle Bin \n##  Background \nAfter you send an RFI to the Recycle Bin, you can retrieve it at a later time using the steps below.\n##  Things to Consider \n  * [Required User Permissions](https://v2.support.procore.com/product-manuals/rfi-project/permissions)\n  * **Prerequisites:**\n    * The RFI that you want to retrieve must be in the Recycle Bin. See [Delete an RFI](https://v2.support.procore.com/product-manuals/rfi-project/tutorials/delete-an-rfi).\n  * **Limitations:**\n    * To give project teams the ability to restore any deleted item, the Recycle Bin cannot be emptied.\n\n\n##  Steps \n  1. Navigate to the project's **RFIs** tool.\n  2. Click **Recycle Bin** at the top of the RFIs page.\n  3. Locate the desired RFI and click **View**.\n  4. Click **Retrieve**.\n\n\n## See Also\n  * [What is the RFI Manager role?](https://v2.support.procore.com/faq-what-is-the-rfi-manager-role)\n  * [What is Procore's Recycle Bin?](https://v2.support.procore.com/faq-what-is-procores-recycle-bin)\n  * [Delete an RFI](https://v2.support.procore.com/product-manuals/rfi-project/tutorials/delete-an-rfi)\n\n\n",
+  "title": "Retrieve an RFI from the Recycle Bin",
+  "description": "How to retrieve an RFI from the RFI recycle bin."
+}

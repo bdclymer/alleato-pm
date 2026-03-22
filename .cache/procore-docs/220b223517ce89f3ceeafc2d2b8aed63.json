@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  Budget Risk \n#### Summary\nThis page uses a scatterplot with the Projected Over/Under on the X-axis and the 'Revised Budget' on the Y-axis. The size of the bubble indicates the risk count.\n#### Sample Report Page\n![Budget Risk](https://images.ctfassets.net/plvbd9i6qkpm/34bd9049e307877ca2b1d284e9040eac/683f6fd32ab49a1a0fce3702ac56ae72/budget-risk.png?fm=webp)\n_This sample report page was created using mock data for demonstration purposes only._\n## See Also\n  * [Project Risk Matrix](https://v2.support.procore.com/reference-project-risk-matrix)\n  * [What is the Procore Analytics Risk Report?](https://v2.support.procore.com/faq-what-is-the-procore-analytics-risk-report)\n  * [Risk Report](https://v2.support.procore.com/reference-risk-report)\n\n\n",
+  "title": "Budget Risk",
+  "description": "View sample Budget Risk data from the Risk Report in Procore Analytics."
+}

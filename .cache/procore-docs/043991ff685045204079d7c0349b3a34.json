@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  Resource Tracking And Project Financials Setup Guide \nTable of Contents \n##  Record Changes on an Internal Budget Change \n  1. Navigate to the project's **Budget** tool.\n  2. Click the **Budget Changes** tab.\n  3. Click **Create.**\n  4. Under the 'Production Quantity Adjustment section, click **Add Adjustment.**\n  5. Enter the line item data.\n  6. Click **Save**. \n\n\n[ ](https://v2.support.procore.com/process-guides/resource-tracking-and-project-financials-setup-guide/record-changes-on-a-change-event/)\n[ Record Changes for a Prime Contract ](https://v2.support.procore.com/process-guides/resource-tracking-and-project-financials-setup-guide/record-changes-for-a-prime-contract/)\n",
+  "title": "Resource Tracking And Project Financials Setup Guide - Record Changes on an Internal Budget Change",
+  "description": "How to set up your project and budget to leverage Procore's unit-based columns and Resource Tracking tools to track real-time labor costs on a project's budget line items. | Record Changes on an Internal Budget Change"
+}

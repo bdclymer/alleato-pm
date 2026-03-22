@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  Payments Admin Guide \nTable of Contents \n##  Export a List of Invoices \n  1. Navigate to the Company level **Payments** tool.\n  2. Click the **Subcontractor Invoices** tab.\n  3. Click the **Export** drop-down menu and choose one (1) of these options from the drop-down menu:\n     * **CSV**. Downloads a CSV copy of the table data and sends it to you in an email with the subject line: \"Your CSV export of Subcontractor Invoices is ready.\"\n     * **PDF**. Generates a PDF copy of the table data and sends it to you in an email with the subject line: \"Your PDF export of Subcontractor Invoices is ready.\" \n#####  Notes\n       * Click the **Download** link in the email to view the file on your computer.\n       * Any grouping, filtering, and search filters applied to the table data are reflected in the exported file.\n\n\n[ ](https://v2.support.procore.com/process-guides/payments-admin-guide/manage-rows--columns/)\n[ Create Disbursements ](https://v2.support.procore.com/process-guides/payments-admin-guide/create-disbursements/)\n",
+  "title": "Payments Admin Guide - Export a List of Invoices",
+  "description": "This guide provides the payor's Payments Admins with a summary of the actions they can perform with Procore Pay. | Export a List of Invoices"
+}

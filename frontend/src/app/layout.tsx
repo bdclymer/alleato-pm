@@ -7,6 +7,7 @@ import { ProjectProvider } from "@/contexts/project-context";
 import { FavoritesProvider } from "@/contexts/favorites-context";
 import { Toaster } from "@/components/ui/sonner";
 import { DevAutoFillForms } from "@/components/dev/DevAutoFillForms";
+import { AgentationThemeSync } from "@/components/dev/AgentationThemeSync";
 import { Providers } from "./Providers";
 import { Agentation } from "agentation";
 import "./globals.css";
@@ -67,7 +68,12 @@ export default function RootLayout({
           </ThemeProvider>
         </QueryProvider>
         <Toaster />
-        {process.env.NODE_ENV === "development" && <Agentation />}
+        {process.env.NODE_ENV === "development" && (
+          <>
+            <AgentationThemeSync />
+            <Agentation />
+          </>
+        )}
       </body>
     </html>
   );

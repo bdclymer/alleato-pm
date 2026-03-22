@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  Add a comment to a Change Event \n##  Things to Consider \n  * **Required User Permissions** :\n  * **Additional Information** :\n\n\n##  Steps \n  1. Navigate to the project's **Change Events** tool.\n  2. Click view next to the change event that you want to add the comment to.\n  3. Click the **Comments** tab.  \nNote: any existing comments are shown.   \n\n![Change Events Web Comments](https://images.ctfassets.net/plvbd9i6qkpm/3Qy7K8WYctr9fTjTIKVKAT/5b6865a87981ae02722813664be21bc8/change-events_web_comments-tab_sui.png?fm=webp)\n  4. Add information to the text field and attach files as needed. \n  5. Click **Send.**  \nA GREEN banner indicates the action is complete. \n  \n\n\n\n## See Also\n  * [Which fields in the Change Events tool can be configured as required, optional, or hidden?](https://v2.support.procore.com/faq-which-fields-in-the-change-events-tool-can-be-configured-as-required-optional-or-hidden)\n  * [Submit a Quote as a Collaborator](https://v2.support.procore.com/product-manuals/change-events-project/tutorials/submit-a-quote-as-a-collaborator)\n  * [Respond to an RFQ on Behalf of a Collaborator](https://v2.support.procore.com/product-manuals/change-events-project/tutorials/respond-to-an-rfq-on-behalf-of-a-collaborator)\n\n\n",
+  "title": "Add a comment to a Change Event",
+  "description": ""
+}

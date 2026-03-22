@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  Access Recently Viewed Drawings (iOS) \n##  Things to Consider \n  * **Required User Permissions:**\n    * 'Standard' or 'Admin' level permissions on the project's Drawings tool.\n  * **Additional Information:**\n    * **_Tip!_** You can swipe up to view older revisions of the drawing.\n\n\n##  Steps \n  1. Open the **Procore** app on your iOS mobile device.\n  2. Tap the project's **Drawings** tool.\n  3. Find and tap drawing you want to view.\n  4. Tap the **Recent** icon to access a list of recently viewed drawings.  \n  \n![Drawings Ios Access Recently Viewed Drawings](https://images.ctfassets.net/plvbd9i6qkpm/4cadc0ddc4e5ff8d3894b4e6d74fd1f8/26d8609756c3e6e409157e258ad28034/drawings-ios-access-recently-viewed-drawings.png?fm=webp)  \n\n  5. _Optional_ _:_ Tap a drawing from that list to view the selected drawing.\n\n\n## See Also\n  * [Drawings (iOS) - Permissions](https://v2.support.procore.com/product-manuals/drawings-ios/permissions)\n  * [View Drawings (iOS)](https://v2.support.procore.com/product-manuals/drawings-ios/tutorials/view-drawings-ios)\n  * [Email Drawings (iOS)](https://v2.support.procore.com/product-manuals/drawings-ios/tutorials/email-drawings-ios)\n\n\n",
+  "title": "Access Recently Viewed Drawings (iOS)",
+  "description": "How to access recently viewed drawings on the Procore iOS app."
+}

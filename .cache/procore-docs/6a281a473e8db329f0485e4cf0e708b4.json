@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  View Commitments \n###### Which type of commitment contract do you want to view?\n[Purchase Order](https://v2.support.procore.com/product-manuals/commitments-project/tutorials/view-a-purchase-order)\n[Subcontract](https://v2.support.procore.com/product-manuals/commitments-project/tutorials/view-a-subcontract)\n## See Also\n  * [View a Purchase Order](https://v2.support.procore.com/product-manuals/commitments-project/tutorials/view-a-purchase-order)\n  * [View Inclusions/Exclusions on a Subcontract](https://v2.support.procore.com/product-manuals/commitments-project/tutorials/view-inclusions-exclusions-on-a-subcontract)\n  * [View a Subcontract](https://v2.support.procore.com/product-manuals/commitments-project/tutorials/view-a-subcontract)\n\n\n",
+  "title": "View Commitments",
+  "description": "How to view purchase orders and subcontracts for a Procore project using the Commitments tool."
+}

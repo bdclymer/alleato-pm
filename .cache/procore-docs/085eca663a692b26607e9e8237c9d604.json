@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  Procore Imports \nTable of Contents \n##  Permissions \n### Submittals (Procore Imports)\nThe following table highlights which user permissions are required to perform the described user action._Note:_ Granular Permissions are not supported in the Procore Imports application.  \n| [Import Submittals into your Project Level Submittals Tool (Procore Imports)](https://v2.support.procore.com/product-manuals/procore-imports/tutorials/import-submittals-into-your-project-level-submittals-tool-procore-imports)  |   |   |   | ![Icon Mindtouch Table Check](https://images.ctfassets.net/plvbd9i6qkpm/4c853aba888369fe8ea04edccf599a8c/6f08b1d930626d13737f5882b8366dcf/icon-mindtouch-table-check.png?fm=webp&h=18)  |  \n| --- | --- | --- | --- | --- |  \n| [Prepare Submittals for Import to the Procore Imports App](https://v2.support.procore.com/product-manuals/procore-imports/tutorials/prepare-submittals-for-import-to-the-procore-imports-app)  |   |   |   | ![Icon Mindtouch Table Check](https://images.ctfassets.net/plvbd9i6qkpm/4c853aba888369fe8ea04edccf599a8c/6f08b1d930626d13737f5882b8366dcf/icon-mindtouch-table-check.png?fm=webp&h=18)  |\n",
+  "title": "Permissions",
+  "description": "This page lists the user permissions that are required to perform actions in or related to the project's Submittals tool in Procore Imports."
+}

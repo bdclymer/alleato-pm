@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  Submittals \n#### Summary\nAs part of the Procore Analytics Project Management Report, the Submittals report page includes basic information about all submittals for every project.\n#### Sample Report Page\n![Procore Analytics Submittals](https://images.ctfassets.net/plvbd9i6qkpm/d4a40375629453a6401d551e6dc21fba/c732b199decf3694ce1cc80c85afbcc5/procore-analytics-submittals.png?fm=webp)\n_This sample report page was created using mock data for demonstration purposes only._\n## See Also\n  * [Submittal Approvers](https://v2.support.procore.com/reference-submittal-approvers)\n  * [Submittal Insights](https://v2.support.procore.com/reference-submittal-insights)\n  * [What is the Procore Analytics Risk Report?](https://v2.support.procore.com/faq-what-is-the-procore-analytics-risk-report)\n\n\n",
+  "title": "Submittals",
+  "description": "View sample Submittals data from the Project Management Report available with Procore Analytics."
+}

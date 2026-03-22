@@ -85,6 +85,45 @@ const CHUNK_SIZE = parseInt(args[args.indexOf("--chunk-size") + 1]) || 600;
 const CHUNK_OVERLAP =
   parseInt(args[args.indexOf("--chunk-overlap") + 1]) || 80;
 
+// --topics "budget,change-order,invoice" — only crawl URLs matching these slug keywords
+const TOPICS_RAW = args.includes("--topics")
+  ? args[args.indexOf("--topics") + 1]
+  : "";
+const TOPICS = TOPICS_RAW
+  ? TOPICS_RAW.split(",").map((t) => t.trim().toLowerCase())
+  : [];
+
+// Topic keyword mapping: friendly name → URL slug patterns to match
+const TOPIC_KEYWORDS = {
+  budget: ["budget", "cost-code", "cost-type", "financial-markup", "financial-management"],
+  "change-order": ["change-order", "potential-change-order", "pco", "cco", "sco"],
+  "change-event": ["change-event"],
+  commitment: ["commitment", "subcontract", "purchase-order"],
+  invoice: ["invoice", "invoicing", "billing", "payment-application", "requisition"],
+  rfi: ["rfi", "request-for-information"],
+  submittal: ["submittal"],
+  drawing: ["drawing", "ocr"],
+  schedule: ["schedule", "gantt", "look-ahead", "lookahead"],
+  "daily-log": ["daily-log"],
+  "punch-list": ["punch-list", "punch-item"],
+  observation: ["observation", "safety"],
+  correspondence: ["correspondence"],
+  directory: ["directory", "vendor", "contact"],
+  permission: ["permission"],
+  workflow: ["workflow"],
+  document: ["document-management", "document-tool"],
+  specification: ["specification"],
+  meeting: ["meeting"],
+  form: ["form-tool", "forms-tool"],
+  inspection: ["inspection"],
+  bidding: ["bid", "bidding", "bid-room"],
+  estimating: ["estimat", "takeoff"],
+  "lien-waiver": ["lien-waiver", "lien_waiver"],
+  wbs: ["work-breakdown", "wbs", "cost-code-segment"],
+  "prime-contract": ["prime-contract"],
+  "direct-cost": ["direct-cost"],
+};
+
 const SITEMAP_URL = "https://v2.support.procore.com/sitemap.xml";
 const CACHE_DIR = join(__dirname, "../.cache/procore-docs");
 const PYTHON_BIN = join(__dirname, "../.venv-crawl/bin/python3");
@@ -493,6 +532,7 @@ async function main() {
   if (SKIP_EMBED) console.log(`Mode:         SKIP EMBED (crawl only)`);
   if (FORCE) console.log(`Mode:         FORCE (ignore cache + content_hash)`);
   if (WEB_ONLY) console.log(`Filter:       WEB ONLY (excluding mobile/device pages)`);
+  if (TOPICS.length) console.log(`Topics:       ${TOPICS.join(", ")}`);
   console.log("=".repeat(70));
   console.log();
 
@@ -509,6 +549,28 @@ async function main() {
     sitemapEntries = sitemapEntries.filter(
       (e) => e.url !== "https://v2.support.procore.com/"
     );
+
+    // --topics: only include URLs matching specified topic keywords
+    if (TOPICS.length > 0) {
+      // Resolve topic names to slug keywords
+      const slugKeywords = [];
+      for (const topic of TOPICS) {
+        if (TOPIC_KEYWORDS[topic]) {
+          slugKeywords.push(...TOPIC_KEYWORDS[topic]);
+        } else {
+          // Use the topic directly as a keyword
+          slugKeywords.push(topic);
+        }
+      }
+      const before = sitemapEntries.length;
+      sitemapEntries = sitemapEntries.filter((e) => {
+        const lower = e.url.toLowerCase();
+        return slugKeywords.some((kw) => lower.includes(kw));
+      });
+      console.log(
+        `--topics [${TOPICS.join(", ")}]: matched ${sitemapEntries.length} of ${before} URLs (keywords: ${slugKeywords.join(", ")})`
+      );
+    }
 
     // --web-only: exclude mobile/device-specific pages
     if (WEB_ONLY) {
@@ -716,7 +778,43 @@ async function main() {
             continue;
           }
 
-          const embeddings = await embedTexts(texts);
+          let embeddings;
+          try {
+            embeddings = await embedTexts(texts);
+          } catch (batchErr) {
+            // Batch too large — fall back to one-at-a-time with truncation
+            if (batchErr.message.includes("maximum context length")) {
+              console.log(
+                `[Batch ${batchNum}/${totalBatches}] Batch too large, falling back to one-at-a-time...`
+              );
+              for (let j = 0; j < batch.length; j++) {
+                try {
+                  // Truncate to ~7500 tokens (~30000 chars) to stay under 8192 limit
+                  const truncated = texts[j].slice(0, 30000);
+                  const [emb] = await embedTexts([truncated]);
+                  await fetch(
+                    `${SUPABASE_URL}/rest/v1/support_article_chunks?id=eq.${batch[j].id}`,
+                    {
+                      method: "PATCH",
+                      headers: {
+                        apikey: SUPABASE_KEY,
+                        Authorization: `Bearer ${SUPABASE_KEY}`,
+                        "Content-Type": "application/json",
+                        Prefer: "return=minimal",
+                      },
+                      body: JSON.stringify({ embedding: JSON.stringify(emb) }),
+                    }
+                  );
+                  embedded++;
+                } catch (singleErr) {
+                  console.log(`  SKIP chunk ${batch[j].id}: ${singleErr.message.slice(0, 80)}`);
+                  embedFailed++;
+                }
+              }
+              continue;
+            }
+            throw batchErr;
+          }
 
           // Update each chunk with its embedding
           for (let j = 0; j < batch.length; j++) {

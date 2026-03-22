@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  Resource Tracking And Unit Quantity Based Budget Setup Guide \nTable of Contents \n##  Enable Task Codes \n###  Steps \n  1. Navigate to the Company level Admin tool.\n  2. Under 'Tool Settings', select **Timesheets** or **My Time.**\n  3. Click the **Task Codes** tab.\n  4. Take one of the following actions:\n     * Move the toggle to the **ON** ![Icon Toggle On](https://images.ctfassets.net/plvbd9i6qkpm/5432baecee81bc2745e77688cd124644/7b30429a4c1524f8ad61245b0caddc16/icon-toggle-on.png?fm=webp&h=16) position to enable task codes.\n     * Move the toggle to the **OFF** ![Icon Toggle Off](https://images.ctfassets.net/plvbd9i6qkpm/0a9e48ba0a19424d1d9dc8949193b38c/8d8bf12f505a1561d3c9d37ac95a6a30/icon-toggle-off.png?fm=webp&h=18) position to disable task codes.\n\n\n[ ](https://v2.support.procore.com/process-guides/resource-tracking-and-unit-quantity-based-budget-setup-guide/create-your-projects-wbs/)\n[ Assign Default Cost Type ](https://v2.support.procore.com/process-guides/resource-tracking-and-unit-quantity-based-budget-setup-guide/assign-default-cost-type/)\n",
+  "title": "Resource Tracking And Unit Quantity Based Budget Setup Guide - Enable Task Codes",
+  "description": "| Enable Task Codes"
+}

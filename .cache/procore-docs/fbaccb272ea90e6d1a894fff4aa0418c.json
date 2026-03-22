@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  Enable the Submittals Tool \n##  Things to Consider \n  * **Required User Permissions:** 'Admin' level permissions on the Project level Admin tool.\n\n\n##  Steps \n  1. Navigate to the Project level **Admin** tool.\n  2. Under 'Project Settings' in the sidebar, click **Active Tools**.\n  3. Mark the **Submittals** checkbox.  \n_Note:_ If you want to reorder the display order of the selected tools, dragging the tools by the icon. Tools listed at the top appear on the right side of the Procore web application. Tools at the bottom of the list appear on the left side. The first tool will always be Home. The last tool will always be Admin.\n  4. Click **Update**.\n\n\n## See Also\n  * [Configure Settings: Submittals Tool](https://v2.support.procore.com/product-manuals/submittals-project/tutorials/configure-settings-submittals-tool)\n  * [Enable Submittal Schedule Calculations](https://v2.support.procore.com/product-manuals/submittals-project/tutorials/enable-submittal-schedule-calculations)\n  * [Submittals - Permissions](https://v2.support.procore.com/product-manuals/submittals-project/permissions)\n\n\n",
+  "title": "Enable the Submittals Tool",
+  "description": ""
+}

@@ -959,7 +959,7 @@ export function UnifiedTablePage<T>({
             style={resolvedFeatures.enableVirtualization ? { maxHeight: 640, overflowY: "auto" } : undefined}
           >
             <Table>
-              <TableHeader className={cn(table.stickyHeader && "sticky top-0 z-20")}>
+              <TableHeader className={cn((table.stickyHeader !== false) && "sticky top-0 z-20 bg-background")}>
                 <TableRow>
                   {hasRowSelection && (
                     <TableHead className="w-[40px]">

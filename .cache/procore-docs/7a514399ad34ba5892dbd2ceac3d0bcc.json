@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  Does a user need to log in to Procore to respond to an RFI? \n##  Answer \nNo. When a user creates a [Request for Information (RFI)](https://v2.support.procore.com/glossary-of-terms) on a project (see [Create an RFI](https://v2.support.procore.com/product-manuals/rfi-project/tutorials/create-an-rfi)), the person designated as the 'Assignee' on that RFI becomes the person with [Ball In Court (BIC)](https://v2.support.procore.com/glossary-of-terms) responsibility for submitting a response to that RFI. In addition, if the system is configured to send the assignee a 'New RFI' notification message, the assignee can simply respond to the 'New RFI' message. See [Respond to an RFI](https://v2.support.procore.com/product-manuals/rfi-project/tutorials/respond-to-an-rfi).\n## See Also\n  * [What can I ask Assist?](https://v2.support.procore.com/faq-what-can-i-ask-assist)\n  * [What's the difference between adding an assignee to a RFI and forwarding an RFI for review?](https://v2.support.procore.com/faq-whats-the-difference-between-adding-an-assignee-to-an-rfi-and-forwarding-an-rfi-for-review)\n  * [Why can't I log in to Procore?](https://v2.support.procore.com/faq-trouble-logging-in-to-procore)\n\n\n",
+  "title": "Does a user need to log in to Procore to respond to an RFI?",
+  "description": ""
+}

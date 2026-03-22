@@ -312,9 +312,26 @@ export default function ChangeEventDetailPage() {
     };
   }, [changeEvent, lineItems, mapApiStatusToFormStatus]);
 
+  // Normalise any status string to the title-case values the API expects.
+  const normaliseStatus = useCallback((status: string): string => {
+    const map: Record<string, string> = {
+      open: "Open",
+      closed: "Closed",
+      void: "Void",
+      pending: "Pending",
+      pending_approval: "Pending Approval",
+      approved: "Approved",
+      rejected: "Rejected",
+      converted: "Converted",
+    };
+    return map[status.toLowerCase()] ?? status;
+  }, []);
+
   const handleStatusChange = useCallback(
     async (newStatus: string) => {
       if (!changeEvent) return;
+
+      const normalisedStatus = normaliseStatus(newStatus);
 
       try {
         const response = await fetch(
@@ -323,8 +340,9 @@ export default function ChangeEventDetailPage() {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
-              ...changeEvent,
-              status: newStatus,
+              project_id: projectId,
+              title: changeEvent.title,
+              status: normalisedStatus,
             }),
           },
         );
@@ -335,14 +353,14 @@ export default function ChangeEventDetailPage() {
 
         const updatedEvent = await response.json();
         setChangeEvent(updatedEvent.data || updatedEvent);
-        toast.success(`Status updated to ${getStatusDisplayName(newStatus)}`);
+        toast.success(`Status updated to ${getStatusDisplayName(normalisedStatus)}`);
       } catch (err) {
         toast.error(
           err instanceof Error ? err.message : "Failed to update status",
         );
       }
     },
-    [changeEvent, projectId, changeEventId],
+    [changeEvent, projectId, changeEventId, normaliseStatus],
   );
 
   const handleClose = useCallback(() => {

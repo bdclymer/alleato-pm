@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  Rename Drawing Disciplines \n##  Things to Consider \n  * **Required User Permissions:**\n    * 'Admin' on the project's Drawings tool.\n\n\n##  Steps \n  1. Navigate to your project's**Drawings tool**.\n  2. Click**Gear**![Icon Settings Gear Grey](https://images.ctfassets.net/plvbd9i6qkpm/d651ae1e759a4006d989865fe93a0703/c5de24f60e608c6628a50f5ac5356031/icon-settings-gear-grey.png?fm=webp&h=18)**icon.**\n  3. Scroll down to **Edit Drawing Disciplines.**\n  4. Edit the name in the field.\n  5. Click out of the field to save.\n\n\n## See Also\n  * [Configure Advanced Settings: Drawings](https://v2.support.procore.com/product-manuals/drawings-project/tutorials/configure-advanced-settings-drawings)\n  * [Configure Default Drawing Disciplines](https://v2.support.procore.com/product-manuals/drawings-project/tutorials/configure-default-drawing-disciplines)\n  * [Move Drawing Disciplines](https://v2.support.procore.com/product-manuals/drawings-project/tutorials/move-drawing-disciplines)\n\n\n",
+  "title": "Rename Drawing Disciplines",
+  "description": "How to rename drawing disciplines in your project's Drawings log."
+}

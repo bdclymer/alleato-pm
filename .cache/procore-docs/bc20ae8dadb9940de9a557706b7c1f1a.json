@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  Budget And Forecast Snapshots User Guide \nTable of Contents \n##  Export a Snapshots List \n  1. Navigate to the Company level **Project Status Snapshots** tool. \n  2. Click the **Export** menu and choose **CSV**. This downloads a CSV file to the configured location for your web browser.\n\n![Project Status Snapshots](https://images.ctfassets.net/plvbd9i6qkpm/793796c059f404957877352cc335e5ce/0f601c11558bf85b4249fff67fb5d8f6/project-status-snapshots.png?fm=webp)\n[ ](https://v2.support.procore.com/process-guides/budget-and-forecast-snapshots-user-guide/analyze-variance-company/)\n[ More ](https://v2.support.procore.com/process-guides/budget-and-forecast-snapshots-user-guide/more/)\n",
+  "title": "Budget And Forecast Snapshots User Guide - Export a Snapshots List",
+  "description": "This guide introduces Budget & Forecast Snapshots, powerful features for tracking, analyzing, and reporting budgeting and forecasting changes in Procore Financial Management. | Export a Snapshots List"
+}

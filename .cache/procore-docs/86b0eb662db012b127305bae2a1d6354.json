@@ -1,0 +1,6 @@
+{
+  "success": true,
+  "markdown": "#  Budget Insights \n#### Sample Report Page\n![Procore Analytics Financials Budget Budget Insights](https://images.ctfassets.net/plvbd9i6qkpm/6ad74d00e025b00d6315ed385e0e6e45/f6d849c9b066fc012c49e53034fef0d6/procore-analytics-financials-budget-budget-insights.png?fm=webp)\n_This sample report page was created using mock data for demonstration purposes only._\n## See Also\n  * [Financials Budget Report](https://v2.support.procore.com/reference-financials-budget-report)\n  * [Financials Budget Report (Custom)](https://v2.support.procore.com/reference-financials-budget-report-custom)\n  * [Budget Snapshot Insights](https://v2.support.procore.com/reference-budget-snapshot-insights)\n\n\n",
+  "title": "Budget Insights",
+  "description": "View sample Budget Insights data from the Financials Budget Report available with Procore Analytics."
+}
