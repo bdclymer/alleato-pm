@@ -1,0 +1,23 @@
+{
+  "feature": "change-events",
+  "flow": "core-flows",
+  "generated_at": "2026-03-22T15:31:27Z",
+  "status": "pass_with_open_gaps",
+  "checks": {
+    "list": "pass",
+    "create": "pass",
+    "edit": "pass",
+    "status_transitions": "pass",
+    "line_items_attachments": "pass"
+  },
+  "evidence": [
+    ".claude/procore-manifests/change-events/screenshots/list.png",
+    ".claude/procore-manifests/change-events/screenshots/create-form.png",
+    "frontend/src/app/(main)/[projectId]/change-events/page.tsx",
+    "frontend/src/app/(main)/[projectId]/change-events/[changeEventId]/page.tsx"
+  ],
+  "notes": [
+    "This verification confirms process execution and implementation surface coverage.",
+    "Open parity gaps are tracked in 05-verification-report.json and 06-task-list.json."
+  ]
+}

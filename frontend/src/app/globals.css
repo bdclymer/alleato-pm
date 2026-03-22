@@ -798,20 +798,20 @@
     caret-color: hsl(var(--foreground));
   }
 
-  input[type="text"]::placeholder,
-  input[type="email"]::placeholder,
-  input[type="password"]::placeholder,
-  input[type="number"]::placeholder,
-  input[type="tel"]::placeholder,
-  input[type="url"]::placeholder,
-  input[type="search"]::placeholder,
-  input[type="date"]::placeholder,
-  input[type="datetime-local"]::placeholder,
-  input[type="month"]::placeholder,
-  input[type="week"]::placeholder,
-  input[type="time"]::placeholder,
+  /* ── Unified placeholder color ──
+     Single source of truth for ALL placeholder-style text:
+     native ::placeholder, Radix data-placeholder, and combobox triggers. */
+  input::placeholder,
   textarea::placeholder {
-    color: hsl(var(--muted-foreground));
+    color: hsl(var(--muted-foreground) / 0.6);
+  }
+
+  [data-placeholder] {
+    color: hsl(var(--muted-foreground) / 0.6);
+  }
+
+  [role="combobox"][data-placeholder-style] {
+    color: hsl(var(--muted-foreground) / 0.6);
   }
 
   /*

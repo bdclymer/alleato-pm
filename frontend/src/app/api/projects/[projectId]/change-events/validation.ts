@@ -1,5 +1,32 @@
 import { z } from "zod"; // Enums matching database CHECK constraints
-export const ChangeEventType = z.enum([
+const normalizeEnumKey = (value: string): string =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/['’]/g, "")
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+function createNormalizedEnum<const T extends readonly [string, ...string[]]>(
+  values: T,
+  aliases: Record<string, T[number]> = {},
+) {
+  const normalizedValueMap = new Map<string, T[number]>();
+  values.forEach((value) => {
+    normalizedValueMap.set(normalizeEnumKey(value), value);
+  });
+  Object.entries(aliases).forEach(([alias, value]) => {
+    normalizedValueMap.set(normalizeEnumKey(alias), value);
+  });
+
+  return z.preprocess((input) => {
+    if (typeof input !== "string") return input;
+    const normalized = normalizeEnumKey(input);
+    return normalizedValueMap.get(normalized) ?? input.trim();
+  }, z.enum(values));
+}
+
+export const ChangeEventType = createNormalizedEnum([
   "Owner Change",
   "Design Change",
   "Allowance",
@@ -12,13 +39,20 @@ export const ChangeEventType = z.enum([
   "Owner Requested",
   "Constructability Issue",
 ]);
-export const ChangeEventScope = z.enum([
+export const ChangeEventScope = createNormalizedEnum(
+  [
   "TBD",
   "In Scope",
   "Out of Scope",
   "Allowance",
-]);
-export const ChangeEventStatus = z.enum([
+  ],
+  {
+    in_scope: "In Scope",
+    out_of_scope: "Out of Scope",
+  },
+);
+export const ChangeEventStatus = createNormalizedEnum(
+  [
   "Open",
   "Pending Approval",
   "Approved",
@@ -26,9 +60,19 @@ export const ChangeEventStatus = z.enum([
   "Closed",
   "Void",
   "Converted",
-]);
-export const ChangeEventOrigin = z.enum(["Internal", "RFI", "Field", "Emails", "Meetings", "RFI's"]);
-export const LineItemRevenueSource = z.enum([
+  ],
+  {
+    pending: "Pending Approval",
+    pending_approval: "Pending Approval",
+  },
+);
+export const ChangeEventOrigin = createNormalizedEnum(
+  ["Internal", "RFI", "Field", "Emails", "Meetings", "RFI's"],
+  {
+    rfis: "RFI's",
+  },
+);
+export const LineItemRevenueSource = createNormalizedEnum([
   "Match Revenue to Latest Cost",
   "Enter manually",
   "Quantity x Unit Cost",
@@ -74,7 +118,7 @@ export const createLineItemSchema = z.object({
 export const updateLineItemSchema = createLineItemSchema.partial(); // Query params schema
 export const changeEventQuerySchema = z.object({
   page: z.coerce.number().int().positive().default(1),
-  limit: z.coerce.number().int().positive().max(100).default(25),
+  limit: z.coerce.number().int().positive().max(500).default(25),
   status: ChangeEventStatus.optional(),
   type: ChangeEventType.optional(),
   scope: ChangeEventScope.optional(),

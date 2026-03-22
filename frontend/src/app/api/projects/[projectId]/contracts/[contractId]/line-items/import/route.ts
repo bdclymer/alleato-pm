@@ -56,14 +56,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Build query for budget lines
+    // Fetch budget lines with cost code info in a single query
     let budgetQuery = supabase
       .from("budget_lines")
-      .select("id, cost_code_id, cost_type_id, description, original_amount")
+      .select(
+        `id, cost_code_id, cost_type_id, description, original_amount,
+         cost_codes ( title ),
+         cost_code_types ( code, description )`,
+      )
       .eq("project_id", numericProjectId)
       .order("cost_code_id", { ascending: true });
 
-    // If specific line items requested, filter by IDs
     if (body.lineItemIds && body.lineItemIds.length > 0) {
       budgetQuery = budgetQuery.in("id", body.lineItemIds);
     }
@@ -84,7 +87,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Validate line item limit
     if (budgetLines.length > 500) {
       return NextResponse.json(
         { error: "Maximum 500 line items allowed per import" },
@@ -92,104 +94,106 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Get existing line items to determine next line_number
+    // Get existing line items — used for dedup and next line number
     const { data: existingLineItems } = await supabase
       .from("contract_line_items")
-      .select("line_number")
+      .select("cost_code_id, line_number")
       .eq("contract_id", contractId)
-      .order("line_number", { ascending: false })
-      .limit(1);
+      .order("line_number", { ascending: false });
 
-    let nextLineNumber = 1;
-    if (
-      existingLineItems &&
-      existingLineItems.length > 0 &&
-      existingLineItems[0]?.line_number
-    ) {
-      nextLineNumber = existingLineItems[0].line_number + 1;
+    const existingCostCodeIds = new Set(
+      (existingLineItems || [])
+        .map((item) => item.cost_code_id)
+        .filter((id): id is string => id != null),
+    );
+
+    const maxLineNumber =
+      existingLineItems && existingLineItems.length > 0
+        ? (existingLineItems[0]?.line_number ?? 0)
+        : 0;
+
+    // Smart merge: skip items already in the contract
+    const newBudgetLines = budgetLines.filter(
+      (line) => !existingCostCodeIds.has((line as { cost_code_id: string }).cost_code_id),
+    );
+    const skippedCount = budgetLines.length - newBudgetLines.length;
+
+    if (newBudgetLines.length === 0) {
+      return NextResponse.json({
+        success: true,
+        importedCount: 0,
+        skippedCount,
+        totalRows: budgetLines.length,
+        message: "All selected items are already in the schedule of values.",
+      });
     }
 
-    // Track imported items and errors
     const importedItems: unknown[] = [];
     const errors: string[] = [];
-    const skipped: string[] = [];
 
-    // Process each budget line
-    for (let i = 0; i < budgetLines.length; i++) {
-      const budgetLine = budgetLines[i];
-      const lineNumber = nextLineNumber + i;
+    for (let i = 0; i < newBudgetLines.length; i++) {
+      const budgetLine = newBudgetLines[i] as {
+        id: string;
+        cost_code_id: string;
+        description: string | null;
+        original_amount: number;
+        cost_codes: { title: string | null } | { title: string | null }[] | null;
+        cost_code_types:
+          | { code: string | null; description: string | null }
+          | { code: string | null; description: string | null }[]
+          | null;
+      };
 
-      try {
-        // Get cost code details for description
-        const { data: costCode } = await supabase
-          .from("cost_codes")
-          .select("title, id")
-          .eq("id", budgetLine.cost_code_id)
-          .single();
+      const costCode = Array.isArray(budgetLine.cost_codes)
+        ? budgetLine.cost_codes[0]
+        : budgetLine.cost_codes;
+      const costType = Array.isArray(budgetLine.cost_code_types)
+        ? budgetLine.cost_code_types[0]
+        : budgetLine.cost_code_types;
 
-        const { data: costType } = await supabase
-          .from("cost_code_types")
-          .select("code, description")
-          .eq("id", budgetLine.cost_type_id)
-          .single();
+      const description =
+        budgetLine.description ||
+        costCode?.title ||
+        `Imported – ${budgetLine.cost_code_id}`;
 
-        // Build description from cost code info and budget description
-        let description = "";
-        if (costCode && costType) {
-          description = `${costCode.id} ${costType.code} - ${costCode.title}`;
-          if (budgetLine.description) {
-            description += ` - ${budgetLine.description}`;
-          }
-        } else {
-          description = budgetLine.description || "Imported from budget";
-        }
+      const lineNumber = maxLineNumber + i + 1;
 
-        // Prepare contract line item data
-        // Since budget doesn't have quantity/unit cost, we'll use the original_amount
-        // User can update these values after import
-        const lineItemData = {
+      const { data: insertedItem, error: insertError } = await supabase
+        .from("contract_line_items")
+        .insert({
           contract_id: contractId,
           line_number: lineNumber,
-          description: description,
+          description,
           cost_code_id: budgetLine.cost_code_id,
-          quantity: 1, // Default to 1
-          unit_of_measure: "LS", // Default to lump sum
-          unit_cost: budgetLine.original_amount, // Use budget amount as unit cost
-        };
+          quantity: 1,
+          unit_of_measure: "LS",
+          unit_cost: budgetLine.original_amount,
+          total_cost: budgetLine.original_amount,
+        })
+        .select("*")
+        .single();
 
-        // Insert contract line item
-        const { data: insertedItem, error: insertError } = await supabase
-          .from("contract_line_items")
-          .insert(lineItemData)
-          .select()
-          .single();
-
-        if (insertError) {
-          if (insertError.code === "23505") {
-            // Unique constraint violation
-            skipped.push(`Line ${lineNumber}: Duplicate line number`);
-          } else {
-            errors.push(`Line ${lineNumber}: ${insertError.message}`);
-          }
-          continue;
-        }
-
-        importedItems.push(insertedItem);
-      } catch (lineError) {
-        errors.push(
-          `Budget line ${budgetLine.id}: ${lineError instanceof Error ? lineError.message : "Unknown error"}`,
-        );
+      if (insertError) {
+        errors.push(`Line ${lineNumber}: ${insertError.message}`);
+        continue;
       }
+
+      importedItems.push({
+        ...insertedItem,
+        cost_code: costCode
+          ? { id: budgetLine.cost_code_id, code: budgetLine.cost_code_id, name: costCode.title || "" }
+          : undefined,
+      });
     }
 
-    // Return results
     return NextResponse.json({
       success: true,
       importedCount: importedItems.length,
+      skippedCount,
       totalRows: budgetLines.length,
-      skipped: skipped.length > 0 ? skipped : undefined,
+      items: importedItems,
       errors: errors.length > 0 ? errors : undefined,
-      message: `Successfully imported ${importedItems.length} of ${budgetLines.length} line items from budget`,
+      message: `Imported ${importedItems.length} item${importedItems.length !== 1 ? "s" : ""}${skippedCount > 0 ? `, skipped ${skippedCount} already present` : ""}.`,
     });
   } catch (error) {
     return NextResponse.json(

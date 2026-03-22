@@ -1,4 +1,5 @@
 import { createServiceClient } from "@/lib/supabase/service";
+import { PageShell } from "@/components/layout";
 import { notFound } from "next/navigation";
 import { ProjectCommandCenter as ProjectHomeClient } from "./project-command-center";
 
@@ -199,18 +200,26 @@ export default async function ProjectHomePage({
   const schedule = scheduleResult.data || [];
 
   return (
-    <ProjectHomeClient
-      project={project}
-      tasks={tasks}
-      meetings={meetings}
-      changeOrders={changeOrders}
-      rfis={rfis}
-      dailyLogs={dailyLogs}
-      commitments={commitments}
-      contracts={contracts}
-      budget={budget}
-      changeEvents={changeEvents}
-      schedule={schedule}
-    />
+    <PageShell
+      variant="dashboard"
+      title="Home"
+      showHeader={false}
+      className="pb-0 px-4 sm:px-6 lg:px-8"
+      contentClassName="space-y-0"
+    >
+      <ProjectHomeClient
+        project={project}
+        tasks={tasks}
+        meetings={meetings}
+        changeOrders={changeOrders}
+        rfis={rfis}
+        dailyLogs={dailyLogs}
+        commitments={commitments}
+        contracts={contracts}
+        budget={budget}
+        changeEvents={changeEvents}
+        schedule={schedule}
+      />
+    </PageShell>
   );
 }

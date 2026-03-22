@@ -1,108 +1,78 @@
 ---
 name: procore-fix
-description: Implement one missing item from the gap analysis report for a Procore feature, verify in agent-browser, and commit.
+description: Phase-5 worker for the Procore finalization orchestrator. Resolves prioritized gaps from the normalized task list with verification and status updates.
 ---
 
-# /procore-fix <feature>
+# /procore-fix <feature> [--task-id <id>] [--max-items <n>]
 
-Read the gap analysis report, pick the next unresolved HIGH priority item, implement it, verify in the browser, and commit.
+Worker command for `REMEDIATE` in:
+`$PROJECT_ROOT/.claude/commands/workflow/procore-finalization-orchestrator.md`
 
-**Before implementing:** Query the Procore support articles database for the feature being fixed to understand business rules, field definitions, and expected behavior:
-
-```sql
--- Via Supabase MCP: mcp__claude_ai_Supabase__execute_sql (project_id: lgveqfnpkxvzbnnwuled)
-SELECT id, title, url FROM support_articles WHERE category = '<Feature Category>' AND title ILIKE '%<topic>%';
-
--- Or full-text search
-SELECT * FROM fulltext_search_support_articles(search_query := '<topic>', result_limit := 5);
-```
-
-Categories: Budget (53), Change Events (60), Change Orders (29), Commitments (72), Drawings (76), Invoices (48), Prime Contracts (36), RFI (70), Specifications (40), Submittals (94). Read the `markdown_content` of relevant articles for detailed field specs and workflow rules.
-
-## Step 1: Read the gap report
+## Runtime Root
 
 ```bash
-cat docs-ai/contents/docs/PRPs/$ARGUMENTS/gap-analysis-report.md
+PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel)}"
 ```
 
-Find the first unchecked `- [ ]` item under HIGH Impact. If all HIGH items are done, move to MEDIUM.
+## Role in Canonical Workflow
 
-## Step 2: Implement the fix
+- Phase owner: `REMEDIATE`
+- Upstream dependency: `GAP_ANALYZE`
+- Downstream dependency: `VERIFY_IMPLEMENTATION`
 
-Follow these rules depending on fix type:
+## Required Inputs
 
-### Database column missing
-1. Write a migration in `supabase/migrations/YYYYMMDDHHMMSS_add_<column>_to_<table>.sql`
-2. Run `npm run db:types` from `frontend/` to regenerate types
-3. Verify the column appears in `frontend/src/types/database.types.ts`
+- Task list:
+  - run-scoped `06-task-list.json`
+- Verification report:
+  - run-scoped `05-verification-report.json`
 
-### API route missing
-Follow the pattern in `frontend/src/app/api/projects/[projectId]/`:
-- `route.ts` with GET + POST handlers
-- Use `createClient` from `@/lib/supabase/server`
-- Return typed responses
+Optional:
+- `--task-id` for targeted remediation
+- `--max-items` to cap work in one run
 
-### Form field missing
-1. Read the existing form component
-2. Add the field to the Zod schema in `frontend/src/lib/schemas/`
-3. Add the field to the React Hook Form in the component
-4. Match Procore's field type and required status exactly
+## Selection Policy
 
-### Table column missing
-1. Read the existing DataTable / UnifiedTablePage columns definition
-2. Add the column with correct `accessor` and `header` matching Procore's label
+Default priority order:
+1. `critical`
+2. `high`
+3. `medium`
+4. `low`
 
-### Status/enum missing
-1. Add to Supabase migration (ALTER TYPE ... ADD VALUE)
-2. Add to Zod schema enum
-3. Add to StatusBadge handling if needed
-4. Run `npm run db:types`
+Within same severity, resolve dependency-safe tasks first.
 
-### Tab missing
-1. Create the tab content component
-2. Add to the detail page tab list
+## Concurrency and Locks
 
-## Step 3: Quality check
+Before work starts, claim lock:
+- `.claude/locks/<feature>/<run_id>/<task_id>.lock`
 
-```bash
-cd frontend && npm run quality
-```
+Lock payload must include:
+- session id
+- owner
+- started timestamp
+- heartbeat timestamp
 
-Fix any TypeScript or lint errors before proceeding.
+Do not process tasks with active locks owned by other sessions.
 
-## Step 4: Verify in agent-browser
+## Required Outputs
 
-```bash
-agent-browser open http://localhost:3000
-agent-browser snapshot -i
-```
+- Update task status in `06-task-list.json`
+- Keep finding status synchronized in `05-verification-report.json`
+- Append remediation details to `07-remediation-log.md`
+- Add evidence pointers (tests, screenshots, notes) to run manifest
 
-Navigate to the affected page and confirm:
-- The fix is visible and working
-- No broken UI, no console errors
-- The fixed item matches Procore's behavior
+## Execution Steps
 
-## Step 5: Mark the item done and commit
+1. Select next runnable task(s).
+2. Implement fix with minimal safe scope.
+3. Run quality checks.
+4. Run focused verification for changed behavior.
+5. Mark task `resolved`, `blocked`, or `waived` (with required waiver metadata).
+6. Release lock.
 
-In the gap report, change `- [ ]` to `- [x]` for the completed item.
+## Success Criteria
 
-Then commit:
-```bash
-git add -p
-git commit -m "fix(<feature>): implement <description of fix>
-
-Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>"
-```
-
-## Step 6: Report to user
-
-```
-## Fixed: <item description>
-
-**Change:** <what was added/changed>
-**Files modified:** <list of files>
-**Verified:** Screenshot shows <description>
-
-Next fix available: `/procore-fix $ARGUMENTS`
-All HIGH items done? Run `/procore-fix $ARGUMENTS` for MEDIUM items.
-```
+This worker succeeds only when:
+- all processed tasks have updated status + evidence
+- no silent task mutation outside the normalized task schema
+- unresolved `critical/high` items are explicitly blocked with root cause

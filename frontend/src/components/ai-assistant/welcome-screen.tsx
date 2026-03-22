@@ -1,6 +1,8 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
+import type { User } from "@supabase/supabase-js";
 import {
   CalendarCheckIcon,
   AlertTriangleIcon,
@@ -11,7 +13,7 @@ import {
   TrendingUpIcon,
   UsersIcon,
 } from "lucide-react";
-import { Shimmer } from "@/components/ai-elements/shimmer";
+import { createClient } from "@/lib/supabase/client";
 
 const SUGGESTIONS = [
   {
@@ -67,40 +69,68 @@ const SUGGESTIONS = [
 interface WelcomeScreenProps {
   onSelectPrompt: (prompt: string) => void;
   children?: ReactNode;
-  conversationCount?: number;
 }
 
 export function WelcomeScreen({
   onSelectPrompt,
   children,
-  conversationCount,
 }: WelcomeScreenProps) {
+  const supabase = useMemo(() => createClient(), []);
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const {
+        data: { user: currentUser },
+      } = await supabase.auth.getUser();
+      setUser(currentUser);
+    };
+
+    void fetchUser();
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase.auth]);
+
+  const displayName = useMemo(() => {
+    const fullName =
+      typeof user?.user_metadata?.full_name === "string"
+        ? user.user_metadata.full_name.trim()
+        : "";
+
+    if (fullName) {
+      return fullName.split(" ")[0];
+    }
+
+    return user?.email?.split("@")[0] ?? "";
+  }, [user]);
+
   return (
-    <div className="flex size-full items-center justify-center overflow-y-auto px-4 py-8 sm:px-6 lg:px-10">
-      <div className="w-full max-w-3xl">
-        <div className="space-y-6 text-center">
-          <Shimmer
-            as="h1"
-            className="text-balance font-serif text-4xl font-normal tracking-tight text-foreground sm:text-5xl"
-            duration={3}
-            spread={1}
-          >
-            Good morning{conversationCount ? "," : ""} Megan
-          </Shimmer>
-          <p className="mx-auto max-w-2xl text-sm leading-6 text-muted-foreground sm:text-base">
-            Ask about projects, meetings, budgets, vendors, and the next decisions that need attention.
+    <div className="flex flex-1 items-center justify-center overflow-y-auto px-4 py-10 sm:px-6 lg:px-8">
+      <div className="w-full max-w-4xl">
+        <div className="space-y-4 text-center">
+          <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
+            AI Strategist
           </p>
+          <h1 className="font-sans text-balance text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
+            {displayName ? `How can I help, ${displayName}?` : "How can I help?"}
+          </h1>
         </div>
 
-        {children && <div className="mt-8">{children}</div>}
+        {children && <div className="mx-auto mt-8 max-w-3xl">{children}</div>}
 
-        <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
           {SUGGESTIONS.slice(0, 5).map((suggestion) => (
             <button
               key={suggestion.prompt}
               type="button"
               onClick={() => onSelectPrompt(suggestion.prompt)}
-              className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background px-4 py-2 text-sm text-foreground transition-colors hover:bg-muted/40"
+              className="inline-flex min-h-10 items-center gap-2 rounded-full border border-border/70 bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted/40"
             >
               <suggestion.icon className="h-4 w-4 text-muted-foreground" />
               {suggestion.title}

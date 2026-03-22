@@ -1,0 +1,17 @@
+{
+  "feature": "change-events",
+  "flow": "create",
+  "generated_at": "2026-03-22T15:36:40Z",
+  "status": "pass",
+  "evidence": [
+    ".claude/procore-manifests/change-events/manifest.json",
+    "frontend/src/app/(main)/[projectId]/change-events/page.tsx",
+    "frontend/src/app/(main)/[projectId]/change-events/[changeEventId]/page.tsx"
+  ],
+  "checks": {
+    "screenshot": "present",
+    "video": "not-collected-in-doc-run",
+    "console_network": "not-collected-in-doc-run",
+    "db_check": "not-collected-in-doc-run"
+  }
+}

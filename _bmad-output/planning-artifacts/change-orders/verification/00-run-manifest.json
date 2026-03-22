@@ -1,0 +1,47 @@
+{
+  "run_id": "co-finalization-20260322T143302Z",
+  "feature": "change-orders",
+  "project_id": "562949954728542",
+  "mode": "full",
+  "git_sha": "a7ed70d8",
+  "started_at": "2026-03-22T14:33:02Z",
+  "phases": [
+    {
+      "name": "INIT_COMMAND",
+      "result": "passed"
+    },
+    {
+      "name": "DISCOVER",
+      "result": "passed"
+    },
+    {
+      "name": "CAPTURE_SOURCE_OF_TRUTH",
+      "result": "passed"
+    },
+    {
+      "name": "RECONCILE_MANIFEST",
+      "result": "passed"
+    },
+    {
+      "name": "GAP_ANALYZE",
+      "result": "passed"
+    },
+    {
+      "name": "REMEDIATE",
+      "result": "passed"
+    },
+    {
+      "name": "VERIFY_IMPLEMENTATION",
+      "result": "passed"
+    },
+    {
+      "name": "FINALIZE_AND_REPORT",
+      "result": "passed"
+    }
+  ],
+  "evidence": [
+    ".claude/procore-manifests/change-orders/manifest.json",
+    "dogfood-output/change-orders/report.md"
+  ],
+  "completed_at": "2026-03-22T14:47:32Z"
+}

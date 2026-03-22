@@ -18,6 +18,9 @@ export interface ContractLineItem {
   total_cost: number; // Auto-calculated: quantity * unit_cost
   created_at: string;
   updated_at: string;
+  // UI-only fields for SOV grouping (not persisted to DB)
+  is_group_header?: boolean;
+  group_name?: string;
 }
 
 export interface CreateContractLineItemInput {

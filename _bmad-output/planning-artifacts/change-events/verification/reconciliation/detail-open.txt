@@ -1,0 +1,1 @@
+Used previously captured states: detail, detail-add-to-dropdown, detail-send-rfqs

@@ -80,11 +80,11 @@ export function MultiSelectField({
             aria-expanded={open}
             className={cn(
               "w-full justify-between",
-              !value.length && "text-muted-foreground",
               error && "border-red-300",
               className,
             )}
             disabled={disabled}
+            {...(!value.length && { "data-placeholder-style": "" })}
           >
             <div className="flex flex-wrap gap-1">
               {value.length > 0

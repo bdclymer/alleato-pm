@@ -44,6 +44,18 @@ Articles, links, list items, chat messages — these are plain elements with div
 Use `<Card>` for: form sections, KPI blocks, summary panels that have a title + content.
 Do NOT use `<Card>` for: individual list items, articles, chat bubbles, navigation elements.
 
+## Step 5: Do not box the page content
+
+The page canvas should stay open by default.
+
+- Do not wrap the main page content in a bordered, rounded, or filled container
+- Do not add decorative `border`, `rounded-*`, or `bg-*` shells around `PageShell`, `PageContainer`, or the primary content column
+- Use whitespace, spacing, headings, dividers, and internal component structure instead of framing the whole page
+- Borders are only for bounded UI pieces that actually need containment: tables, inputs, modals, tiles, drawers, and similar subcomponents
+- For histories, nav menus, and chat lists: default to plain rows in a sidebar/list, not boxed items or card grids
+- If an action can be communicated clearly with a standard icon, prefer that over a labeled button row
+
 ## Full reference
 
 `frontend/src/design-system/DESIGN.md`
+`docs/design/DESIGN.md`

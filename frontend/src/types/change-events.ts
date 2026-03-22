@@ -27,6 +27,13 @@ export interface ChangeEvent {
   updated_at?: string | null;
   updated_by?: string | null;
   deleted_at?: string | null;
+  // List parity fields used by the Change Events table view
+  prime_pco?: string | null;
+  prime_pco_title?: string | null;
+  cost_rom?: number | null;
+  rfq_title?: string | null;
+  commitment?: string | null;
+  commitment_title?: string | null;
 }
 
 export interface ChangeEventLineItem {

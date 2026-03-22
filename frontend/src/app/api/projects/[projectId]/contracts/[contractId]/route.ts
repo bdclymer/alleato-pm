@@ -17,6 +17,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const supabase = await createClient();
 
     // Fetch contract with vendor and client relations
+    // Note: look up by UUID only (no project_id filter) so direct navigation
+    // from bookmarks or cross-project links still resolves the contract.
     const { data: contract, error } = await supabase
       .from("prime_contracts")
       .select(
@@ -29,7 +31,6 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       `,
       )
       .eq("id", contractId)
-      .eq("project_id", parseInt(projectId, 10))
       .single();
 
     if (error) {

@@ -154,22 +154,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Check for unique line_number within contract
-    const { data: existingLineItem } = await supabase
-      .from("contract_line_items")
-      .select("id")
-      .eq("contract_id", contractId)
-      .eq("line_number", validatedData.line_number)
-      .single();
-
-    if (existingLineItem) {
-      return NextResponse.json(
-        { error: "Line number already exists for this contract" },
-        { status: 400 },
-      );
-    }
-
     // Create the line item (budget_code_id is a real FK column on contract_line_items)
+    // NOTE: Uniqueness of (contract_id, line_number) is enforced by the DB constraint.
+    // We do NOT do an app-level pre-check here because it creates a race condition
+    // when multiple line items are inserted sequentially from the same request.
     const { data, error } = await supabase
       .from("contract_line_items")
       .insert(validatedData)
@@ -177,6 +165,20 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       .single();
 
     if (error) {
+      // Unique constraint violation on (contract_id, line_number)
+      if (error.code === "23505") {
+        return NextResponse.json(
+          { error: `Line number ${validatedData.line_number} already exists for this contract` },
+          { status: 409 },
+        );
+      }
+      // FK violation — budget_code_id not found in project_cost_codes
+      if (error.code === "23503") {
+        return NextResponse.json(
+          { error: "Invalid budget code: the selected code does not exist for this project" },
+          { status: 400 },
+        );
+      }
       return NextResponse.json(
         { error: "Failed to create line item", details: error.message },
         { status: 400 },

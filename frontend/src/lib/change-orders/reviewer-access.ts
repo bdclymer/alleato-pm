@@ -30,17 +30,28 @@ export async function getReviewerAccessForProject(
 
   const serviceClient = createServiceClient();
 
-  // Look up user's role on this project (if any)
-  const { data: membership } = await serviceClient
-    .from("project_members")
-    .select("role")
-    .eq("project_id", _projectId)
-    .eq("user_id", user.id)
+  // Look up user's role on this project via the correct tables:
+  // auth user → people (via auth_user_id) → project_directory_memberships (via person_id + project_id)
+  const { data: person } = await serviceClient
+    .from("people")
+    .select("id")
+    .eq("auth_user_id", user.id)
     .maybeSingle();
+
+  let role: string | null = null;
+  if (person) {
+    const { data: membership } = await serviceClient
+      .from("project_directory_memberships")
+      .select("role")
+      .eq("project_id", _projectId)
+      .eq("person_id", person.id)
+      .maybeSingle();
+    role = membership?.role ?? null;
+  }
 
   return {
     userId: user.id,
-    role: membership?.role ?? null,
+    role,
     serviceClient,
   };
 }

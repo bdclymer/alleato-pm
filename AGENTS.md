@@ -197,6 +197,8 @@ When asked to design/build a page, default to **Linear/Supabase-style minimal UI
 
 - No nested cards (`Card` inside `Card` is forbidden)
 - No decorative wrapper cards around whole sections
+- No bordered or boxed page-level wrappers around the main content area
+- Do not frame page content with `border`, `rounded-*`, or `bg-*` shells unless the element is a true localized component (table shell, input, modal, KPI tile, attachment module, etc.)
 - Max 2 visual container levels: page shell + section content
 - No heavy shadows (`shadow-lg`, `shadow-xl`, glow effects)
 - No mixed accent palette (pick one accent and stay consistent)
@@ -223,6 +225,15 @@ When asked to design/build a page, default to **Linear/Supabase-style minimal UI
 - KPI/metric tiles
 - Distinct records in mobile list view
 - Isolated modules like activity feed or attachments
+
+**Important clarification:**
+
+- `PageContainer` is a spacing/layout wrapper, not a visual frame
+- Default page sections should be open on the canvas, not enclosed in bordered boxes
+- If a section is primarily text, chat, lists, or general page content, prefer whitespace, alignment, and dividers over borders
+- Borders are for controls and bounded subcomponents, not for wrapping the page itself
+- For chat history, navigation, and side lists: use plain list rows, not tiles, pills, or boxed cards
+- Prefer the quietest control that works: icon actions over labeled toolbars when the action is obvious
 
 **Spacing/typography baseline:**
 
@@ -255,6 +266,7 @@ Not allowed for line-items sections:
 - Per-page reinvention of spacing/typography for line-item grids
 
 Reference: `docs/design/AI-UI-BASELINE.md`
+Primary design reference: `docs/design/DESIGN.md`
 
 ---
 

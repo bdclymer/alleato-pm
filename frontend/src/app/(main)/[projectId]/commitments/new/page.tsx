@@ -141,7 +141,6 @@ export default function NewCommitmentPage() {
       }
       onBack={() => router.back()}
       backLabel="Back"
-      maxWidth="3xl"
     >
       {type === "purchase_order" ? (
         <CreatePurchaseOrderForm

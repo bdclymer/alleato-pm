@@ -95,8 +95,6 @@ export default function ProjectContractDetailPage() {
   const [contract, setContract] = useState<Contract | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [generalInfoOpen, setGeneralInfoOpen] = useState(true);
-  const [contractSummaryOpen, setContractSummaryOpen] = useState(true);
   const [lineItems, setLineItems] = useState<ContractLineItem[]>([]);
   const [lineItemsLoading, setLineItemsLoading] = useState(false);
   const [changeOrders, setChangeOrders] = useState<PrimeContractCO[]>([]);
@@ -169,7 +167,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
     change_order_number: "",
     description: "",
     amount: "",
-    status: "draft" as "draft" | "pending",
+    status: "pending" as "pending",
   });
   const [isSubmittingCo, setIsSubmittingCo] = useState(false);
   const [showRejectCoDialog, setShowRejectCoDialog] = useState(false);
@@ -754,27 +752,77 @@ const [isSovEditing, setIsSovEditing] = useState(false);
         .filter((item) => !incomingIds.has(item.id))
         .map((item) => item.id);
 
-      const updateResponses = await Promise.all([
-        ...updates.map((item) =>
-          fetch(
-            `/api/projects/${projectId}/contracts/${contractId}/line-items/${item.id}`,
-            {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                line_number: item.line_number,
-                description: item.description,
-                cost_code_id: item.cost_code_id,
-                budget_code_id: item.budget_code_id,
-                quantity: item.quantity,
-                unit_cost: item.unit_cost,
-                unit_of_measure: item.unit_of_measure,
-              }),
-            },
+      // Helper: format error details from API response into a readable string
+      const formatSovError = (errorData: {
+        error?: string;
+        details?: string | Array<{ field: string; message: string }>;
+      }): string => {
+        const base = errorData.error || "Unknown error";
+        if (!errorData.details) return base;
+        const detail =
+          typeof errorData.details === "string"
+            ? errorData.details
+            : Array.isArray(errorData.details)
+              ? errorData.details.map((d) => `${d.field}: ${d.message}`).join("; ")
+              : "";
+        return detail ? `${base} — ${detail}` : base;
+      };
+
+      // Updates and deletions are independent — run them concurrently.
+      // Creates are sequential to avoid the UNIQUE(contract_id, line_number) race condition.
+      const [updateResults, deleteResponses] = await Promise.all([
+        Promise.all(
+          updates.map(async (item) => {
+            const res = await fetch(
+              `/api/projects/${projectId}/contracts/${contractId}/line-items/${item.id}`,
+              {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  line_number: item.line_number,
+                  description: item.description,
+                  cost_code_id: item.cost_code_id,
+                  budget_code_id: item.budget_code_id,
+                  quantity: item.quantity,
+                  unit_cost: item.unit_cost,
+                  unit_of_measure: item.unit_of_measure,
+                }),
+              },
+            );
+            return { item, res };
+          }),
+        ),
+        Promise.all(
+          deletions.map((lineItemId) =>
+            fetch(
+              `/api/projects/${projectId}/contracts/${contractId}/line-items/${lineItemId}`,
+              { method: "DELETE" },
+            ),
           ),
         ),
-        ...creates.map((item) =>
-          fetch(`/api/projects/${projectId}/contracts/${contractId}/line-items`, {
+      ]);
+
+      const failedUpdate = updateResults.find((r) => !r.res.ok);
+      if (failedUpdate) {
+        const errorData = await failedUpdate.res.json().catch(() => ({}));
+        const lineLabel =
+          failedUpdate.item.description || `Line ${failedUpdate.item.line_number}`;
+        console.error("[SOV] Update failed", { item: failedUpdate.item, errorData });
+        throw new Error(`Could not save "${lineLabel}": ${formatSovError(errorData)}`);
+      }
+
+      const failedDelete = deleteResponses.find((res) => !res.ok);
+      if (failedDelete) {
+        const errorData = await failedDelete.json().catch(() => ({}));
+        console.error("[SOV] Delete failed", errorData);
+        throw new Error(`Could not remove line item: ${formatSovError(errorData)}`);
+      }
+
+      // Sequential creates to avoid the UNIQUE(contract_id, line_number) constraint race
+      for (const item of creates) {
+        const createRes = await fetch(
+          `/api/projects/${projectId}/contracts/${contractId}/line-items`,
+          {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -786,22 +834,14 @@ const [isSovEditing, setIsSovEditing] = useState(false);
               unit_cost: item.unit_cost,
               unit_of_measure: item.unit_of_measure,
             }),
-          }),
-        ),
-        ...deletions.map((lineItemId) =>
-          fetch(
-            `/api/projects/${projectId}/contracts/${contractId}/line-items/${lineItemId}`,
-            {
-              method: "DELETE",
-            },
-          ),
-        ),
-      ]);
-
-      const firstFailure = updateResponses.find((res) => !res.ok);
-      if (firstFailure) {
-        const errorData = await firstFailure.json().catch(() => ({}));
-        throw new Error(errorData.error || "Failed to update SOV line items");
+          },
+        );
+        if (!createRes.ok) {
+          const errorData = await createRes.json().catch(() => ({}));
+          const lineLabel = item.description || `Line ${item.line_number}`;
+          console.error("[SOV] Create failed", { item, errorData });
+          throw new Error(`Could not add "${lineLabel}": ${formatSovError(errorData)}`);
+        }
       }
 
       toast.success("Contract updated successfully");
@@ -961,6 +1001,12 @@ const [isSovEditing, setIsSovEditing] = useState(false);
   };
 
   const handleAddSovLine = () => {
+    // Ensure edit mode is active before adding a line — without this,
+    // displayedSovItems points to lineItems (persisted), not sovDraftItems,
+    // so the new draft row would be silently invisible.
+    if (!isSovEditing) {
+      handleStartSovEdit();
+    }
     setSovDraftItems((prev) =>
       normalizeSovDraftItems([
         ...prev,
@@ -976,6 +1022,53 @@ const [isSovEditing, setIsSovEditing] = useState(false);
           total_cost: 0,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
+        },
+      ]),
+    );
+  };
+
+  const handleDeleteSovLine = async (lineId: string) => {
+    // Optimistically remove from local state
+    setLineItems((prev) => prev.filter((li) => li.id !== lineId));
+    try {
+      const response = await fetch(
+        `/api/projects/${projectId}/contracts/${contractId}/line-items/${lineId}`,
+        { method: "DELETE" },
+      );
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        toast.error(data.error || "Failed to delete line item");
+        // Re-fetch to restore state
+        const restored = await fetch(`/api/projects/${projectId}/contracts/${contractId}/line-items`);
+        if (restored.ok) setLineItems(await restored.json());
+        return;
+      }
+      toast.success("Line item deleted");
+    } catch {
+      toast.error("Failed to delete line item");
+      const restored = await fetch(`/api/projects/${projectId}/contracts/${contractId}/line-items`);
+      if (restored.ok) setLineItems(await restored.json());
+    }
+  };
+
+  const handleAddSovGroup = () => {
+    setSovDraftItems((prev) =>
+      normalizeSovDraftItems([
+        ...prev,
+        {
+          id: `group-${crypto.randomUUID()}`,
+          contract_id: contractId,
+          line_number: prev.length + 1,
+          description: "",
+          cost_code_id: null,
+          quantity: 0,
+          unit_of_measure: null,
+          unit_cost: 0,
+          total_cost: 0,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          is_group_header: true,
+          group_name: "New Group",
         },
       ]),
     );
@@ -1056,16 +1149,15 @@ const [isSovEditing, setIsSovEditing] = useState(false);
       return;
     }
 
-    // Validate budget codes: check the draft budget code selection map,
-    // NOT cost_code_id (which has a type mismatch — cost_codes.id is string
-    // but contract_line_items.cost_code_id is integer).
-    const missingBudgetCode = normalizedDraftItems.some((item) => {
-      const hasBudgetCodeSelected = !!sovDraftBudgetCodeIds[item.id];
-      const hasExistingCostCode = item.cost_code_id != null;
-      return !hasBudgetCodeSelected && !hasExistingCostCode;
-    });
-    if (missingBudgetCode) {
-      toast.error("Each SOV line must include a budget code");
+    // Each SOV line must have a budget code selected (either existing or newly created).
+    const missingBudgetCodeItem = normalizedDraftItems.find(
+      (item) => !sovDraftBudgetCodeIds[item.id] && item.cost_code_id == null,
+    );
+    if (missingBudgetCodeItem) {
+      const label = missingBudgetCodeItem.description || `Line ${missingBudgetCodeItem.line_number}`;
+      toast.error(
+        `"${label}" needs a budget code — use the budget code selector to assign or create one`,
+      );
       return;
     }
 
@@ -1088,7 +1180,9 @@ const [isSovEditing, setIsSovEditing] = useState(false);
         .filter((item) => !incomingIds.has(item.id))
         .map((item) => item.id);
 
-      const responses = await Promise.all([
+      // Updates and deletions are independent — run them concurrently.
+      // Creates are sequential to avoid the UNIQUE(contract_id, line_number) race condition.
+      const updateDeleteResponses = await Promise.all([
         ...updatePayload.map((item) =>
           fetch(
             `/api/projects/${projectId}/contracts/${contractId}/line-items/${item.id}`,
@@ -1107,8 +1201,32 @@ const [isSovEditing, setIsSovEditing] = useState(false);
             },
           ),
         ),
-        ...createPayload.map((item) =>
-          fetch(`/api/projects/${projectId}/contracts/${contractId}/line-items`, {
+        ...deletionIds.map((lineItemId) =>
+          fetch(
+            `/api/projects/${projectId}/contracts/${contractId}/line-items/${lineItemId}`,
+            { method: "DELETE" },
+          ),
+        ),
+      ]);
+
+      const failedIndex = updateDeleteResponses.findIndex((response) => !response.ok);
+      if (failedIndex !== -1) {
+        const failedResponse = updateDeleteResponses[failedIndex];
+        const errorData = await failedResponse.json().catch(() => ({}));
+        const failedItem = failedIndex < updatePayload.length ? updatePayload[failedIndex] : null;
+        const label = failedItem
+          ? `"${failedItem.description || `Line ${failedItem.line_number}`}"`
+          : "a line item";
+        throw new Error(
+          `Could not save ${label}: ${errorData.error || errorData.details || "unknown error"}`,
+        );
+      }
+
+      // Sequential creates to avoid the UNIQUE(contract_id, line_number) constraint race
+      for (const item of createPayload) {
+        const createRes = await fetch(
+          `/api/projects/${projectId}/contracts/${contractId}/line-items`,
+          {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -1120,20 +1238,15 @@ const [isSovEditing, setIsSovEditing] = useState(false);
               unit_cost: Number(item.unit_cost) || 0,
               unit_of_measure: item.unit_of_measure || null,
             }),
-          }),
-        ),
-        ...deletionIds.map((lineItemId) =>
-          fetch(
-            `/api/projects/${projectId}/contracts/${contractId}/line-items/${lineItemId}`,
-            { method: "DELETE" },
-          ),
-        ),
-      ]);
-
-      const failedResponse = responses.find((response) => !response.ok);
-      if (failedResponse) {
-        const errorData = await failedResponse.json().catch(() => ({}));
-        throw new Error(errorData.error || "Failed to save SOV line items");
+          },
+        );
+        if (!createRes.ok) {
+          const errorData = await createRes.json().catch(() => ({}));
+          const label = `"${item.description || `Line ${item.line_number}`}"`;
+          throw new Error(
+            `Could not save ${label}: ${errorData.error || errorData.details || "unknown error"}`,
+          );
+        }
       }
 
       const refreshedLineItemsResponse = await fetch(
@@ -1212,6 +1325,24 @@ const [isSovEditing, setIsSovEditing] = useState(false);
     }
   };
 
+  const handleDeleteAttachment = async (attachmentId: string) => {
+    try {
+      const response = await fetch(
+        `/api/projects/${projectId}/contracts/${contractId}/attachments/${attachmentId}`,
+        { method: "DELETE" },
+      );
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        toast.error(err.error || "Failed to delete attachment");
+        return;
+      }
+      setAttachments((prev) => prev.filter((a) => a.id !== attachmentId));
+      toast.success("Attachment deleted");
+    } catch {
+      toast.error("Failed to delete attachment");
+    }
+  };
+
   const handleCreateCo = async () => {
     if (!coForm.change_order_number || !coForm.description || !coForm.amount) {
       toast.error("CO number, description, and amount are required");
@@ -1241,7 +1372,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
       const newCo = await response.json();
       setChangeOrders((prev) => [...prev, newCo]);
       setShowNewCoDialog(false);
-      setCoForm({ change_order_number: "", description: "", amount: "", status: "draft" });
+      setCoForm({ change_order_number: "", description: "", amount: "", status: "pending" });
       toast.success("Change order created successfully");
       void downloadPrimeContractChangeOrderPdf(newCo);
     } catch {
@@ -1357,21 +1488,16 @@ const [isSovEditing, setIsSovEditing] = useState(false);
       setBudgetCodes(codes || []);
 
       const createdBudgetCode = (codes || []).find((code) => code.id === budgetCodeId);
-      const parsedCostCodeId =
-        typeof createdBudgetCode?.legacyCostCodeId === "number"
-          ? createdBudgetCode.legacyCostCodeId
-          : null;
+      // legacyCostCodeId is a string (cost_codes.id is TEXT), not a number.
+      const costCodeId = createdBudgetCode?.legacyCostCodeId ?? null;
 
-      if (
-        budgetCodeCreateTarget?.type === "sov-line" &&
-        parsedCostCodeId !== null &&
-        !Number.isNaN(parsedCostCodeId)
-      ) {
+      if (budgetCodeCreateTarget?.type === "sov-line") {
+        // Assign the newly created budget code to the target SOV line
         setSovDraftItems((prev) =>
           normalizeSovDraftItems(
             prev.map((item) =>
               item.id === budgetCodeCreateTarget.lineId
-                ? { ...item, cost_code_id: parsedCostCodeId }
+                ? { ...item, cost_code_id: costCodeId }
                 : item,
             ),
           ),
@@ -1527,12 +1653,15 @@ const [isSovEditing, setIsSovEditing] = useState(false);
   }
 
   if (isEditing) {
-    const sovItems = lineItems.map((item) => ({
+    const sovItems = lineItems.map((item) => {
+      const matchingBudgetCode = item.budget_code_id
+        ? budgetCodes.find((c) => c.id === item.budget_code_id)
+        : undefined;
+      return {
       id: item.id,
-      budgetCodeId: "",
-      budgetCodeLabel: item.cost_code
-        ? `${item.cost_code.code} ${item.cost_code.name}`
-        : undefined,
+      budgetCodeId: item.budget_code_id || "",
+      budgetCodeLabel: matchingBudgetCode?.fullLabel
+        ?? (item.cost_code ? `${item.cost_code.code} ${item.cost_code.name}` : undefined),
       description: item.description,
       amount: item.total_cost,
       quantity: item.quantity,
@@ -1540,7 +1669,8 @@ const [isSovEditing, setIsSovEditing] = useState(false);
       unitOfMeasure: item.unit_of_measure ?? undefined,
       billedToDate: 0,
       amountRemaining: item.total_cost,
-    }));
+      };
+    });
 
     const initialData: Partial<ContractFormData> = {
       number: contract.contract_number || "",
@@ -1734,14 +1864,11 @@ const [isSovEditing, setIsSovEditing] = useState(false);
         <PrimeContractOverviewTab
           activeTab={activeTab}
           contract={contract}
-          generalInfoOpen={generalInfoOpen}
-          setGeneralInfoOpen={setGeneralInfoOpen}
-          contractSummaryOpen={contractSummaryOpen}
-          setContractSummaryOpen={setContractSummaryOpen}
           attachments={attachments}
           attachmentsLoading={attachmentsLoading}
           isUploadingAttachment={isUploadingAttachment}
           handleUploadAttachment={handleUploadAttachment}
+          handleDeleteAttachment={handleDeleteAttachment}
           formatDate={formatDate}
           getTextValue={getTextValue}
           inclusionsList={inclusionsList}
@@ -1759,11 +1886,13 @@ lineItemsLoading={lineItemsLoading}
           onCancelSovEdit={handleCancelSovEdit}
           onSaveSovEdit={handleSaveSovEdit}
           onAddSovLine={handleAddSovLine}
+          onAddSovGroup={handleAddSovGroup}
           onUpdateSovLine={handleUpdateSovLine}
           onUpdateSovLineBudgetCode={handleUpdateSovLineBudgetCode}
           onRemoveSovLine={handleRemoveSovLine}
           onReorderSovLines={handleReorderSovLines}
           onRequestCreateBudgetCode={handleRequestCreateBudgetCodeForSovLine}
+          onDeleteSovLine={handleDeleteSovLine}
         />
 
         

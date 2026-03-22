@@ -1,0 +1,11 @@
+{
+  "feature": "change-events",
+  "generated_at": "2026-03-22T15:36:40Z",
+  "findings": [
+    {"gap_id":"CE-001","layer":"ui","severity":"high","status":"open","spec_ref":"_bmad-output/planning-artifacts/change-events/verification/runs/ce-finalization-20260322T153640Z/03-corrected-manifest.json#normalized.list.columns","code_ref":"frontend/src/features/change-events/change-events-table-config.tsx","evidence":[".claude/procore-manifests/change-events/screenshots/list.png","frontend/src/features/change-events/change-events-table-config.tsx"]},
+    {"gap_id":"CE-002","layer":"workflow","severity":"high","status":"resolved","spec_ref":".claude/commands/workflow/procore-finalization-orchestrator.md","code_ref":".claude/commands/procore-fix.md","evidence":[".claude/commands/workflow/procore-finalization-orchestrator.md",".claude/commands/procore-fix.md"]},
+    {"gap_id":"CE-003","layer":"tests","severity":"medium","status":"resolved","spec_ref":".claude/commands/workflow/procore-finalization-orchestrator.md","code_ref":".claude/commands/procore-complete.md","evidence":[".claude/commands/workflow/procore-finalization-orchestrator.md"]},
+    {"gap_id":"CE-004","layer":"workflow","severity":"medium","status":"resolved","spec_ref":".claude/commands/workflow/procore-finalization-orchestrator.md","code_ref":".claude/commands/procore-complete.md","evidence":[".claude/commands/workflow/procore-finalization-orchestrator.md",".claude/commands/procore-complete.md"]},
+    {"gap_id":"CE-005","layer":"api","severity":"low","status":"open","spec_ref":"_bmad-output/planning-artifacts/change-events/verification/runs/ce-finalization-20260322T153640Z/03-corrected-manifest.json#normalized.detail.tabs","code_ref":"frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/convert-to-change-order/route.ts","evidence":["frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/convert-to-change-order/route.ts"]}
+  ]
+}

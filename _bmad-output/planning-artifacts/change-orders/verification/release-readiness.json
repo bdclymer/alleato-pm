@@ -1,0 +1,33 @@
+{
+  "feature": "change-orders",
+  "generated_at": "2026-03-22T14:33:02Z",
+  "ready": false,
+  "blocking_gaps": [],
+  "resolved_gaps": [],
+  "waived_gaps": [
+    {
+      "gap_id": "CO-001",
+      "owner": "codex",
+      "date": "2026-03-22T14:47:32Z",
+      "rationale": "Reference-system issue captured in Procore itself."
+    },
+    {
+      "gap_id": "CO-002",
+      "owner": "codex",
+      "date": "2026-03-22T14:47:32Z",
+      "rationale": "Reference-system validation behavior in Procore; not an Alleato regression in this run."
+    },
+    {
+      "gap_id": "CO-003",
+      "owner": "codex",
+      "date": "2026-03-22T14:47:32Z",
+      "rationale": "Reference-system UX behavior in Procore; no Alleato code target identified in this run."
+    }
+  ],
+  "nonblocking_open_gaps": [],
+  "evidence_index": [
+    ".claude/procore-manifests/change-orders/manifest.json",
+    "dogfood-output/change-orders/report.md",
+    "_bmad-output/planning-artifacts/change-orders/verification/05-verification-report.json"
+  ]
+}

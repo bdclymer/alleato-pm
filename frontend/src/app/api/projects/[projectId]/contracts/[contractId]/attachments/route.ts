@@ -131,18 +131,16 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const storagePath = `prime-contracts/${contract.project_id}/${contractId}/${fileName}`;
 
     const bucket = serviceClient.storage.from("project-files");
-    let { error: uploadError } = await bucket.upload(storagePath, file, {
+    const fileBuffer = await file.arrayBuffer();
+
+    // Try with the real content type first; if the bucket rejects it (MIME
+    // allow-list), fall back to application/octet-stream so any file type uploads.
+    let { error: uploadError } = await bucket.upload(storagePath, fileBuffer, {
       contentType: file.type || "application/octet-stream",
       upsert: false,
     });
 
-    if (
-      uploadError &&
-      /mime type .* is not supported/i.test(uploadError.message)
-    ) {
-      // Some environments lock `project-files` to a narrow MIME allow-list.
-      // Retry with a generic binary content type so supported extensions still upload.
-      const fileBuffer = await file.arrayBuffer();
+    if (uploadError) {
       const retry = await bucket.upload(storagePath, fileBuffer, {
         contentType: "application/octet-stream",
         upsert: false,

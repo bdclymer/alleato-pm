@@ -1,0 +1,11 @@
+{
+  "feature": "change-events",
+  "generated_at": "2026-03-22T15:36:40Z",
+  "tasks": [
+    {"task_id":"TASK-CE-001","gap_id":"CE-001","layer":"ui","severity":"high","acceptance_criteria":"Change Events list supports revenue and cost parity columns/grouping or approved waiver metadata.","depends_on":[],"status":"open"},
+    {"task_id":"TASK-CE-002","gap_id":"CE-002","layer":"workflow","severity":"high","acceptance_criteria":"Orchestrator defines phase-level contracts for locks, states, artifacts, and exit semantics.","depends_on":[],"status":"resolved"},
+    {"task_id":"TASK-CE-003","gap_id":"CE-003","layer":"tests","severity":"medium","acceptance_criteria":"VERIFY_IMPLEMENTATION defines deterministic per-flow outputs and evidence requirements.","depends_on":["TASK-CE-002"],"status":"resolved"},
+    {"task_id":"TASK-CE-004","gap_id":"CE-004","layer":"workflow","severity":"medium","acceptance_criteria":"Release-readiness and summary contracts enforce blocker/waiver metadata.","depends_on":["TASK-CE-002"],"status":"resolved"},
+    {"task_id":"TASK-CE-005","gap_id":"CE-005","layer":"api","severity":"low","acceptance_criteria":"Conversion endpoint naming is consistent across comments/docs/path labels.","depends_on":[],"status":"open"}
+  ]
+}

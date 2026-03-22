@@ -79,61 +79,90 @@ export default function NewContractPage() {
       const newContract = await response.json();
 
       if (sovItems.length > 0) {
-        const lineItemResponses = await Promise.all(
-          sovItems.map((item, index) => {
-            const quantity =
-              data.accountingMethod === "unit_quantity"
-                ? item.quantity ?? 0
-                : 1;
-            const unitCost =
-              data.accountingMethod === "unit_quantity"
-                ? item.unitCost ?? 0
-                : item.amount || 0;
-            return fetch(
-              `/api/projects/${projectId}/contracts/${newContract.id}/line-items`,
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  line_number: index + 1,
-                  description: item.description || `Line ${index + 1}`,
-                  budget_code_id: item.budgetCodeId || null,
-                  quantity,
-                  unit_cost: unitCost,
-                  unit_of_measure: item.unitOfMeasure || null,
-                }),
-              },
-            );
-          }),
-        );
-
-        for (const lineItemResponse of lineItemResponses) {
+        // Sequential inserts to avoid the UNIQUE(contract_id, line_number) constraint
+        // race condition that occurs when Promise.all fires all POSTs simultaneously.
+        for (let index = 0; index < sovItems.length; index++) {
+          const item = sovItems[index];
+          const quantity =
+            data.accountingMethod === "unit_quantity"
+              ? item.quantity ?? 0
+              : 1;
+          const unitCost =
+            data.accountingMethod === "unit_quantity"
+              ? item.unitCost ?? 0
+              : item.amount || 0;
+          const lineItemResponse = await fetch(
+            `/api/projects/${projectId}/contracts/${newContract.id}/line-items`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                line_number: index + 1,
+                description: item.description || `Line ${index + 1}`,
+                budget_code_id: item.budgetCodeId || null,
+                quantity,
+                unit_cost: unitCost,
+                unit_of_measure: item.unitOfMeasure || null,
+              }),
+            },
+          );
           if (!lineItemResponse.ok) {
             const errorData = await lineItemResponse.json().catch(() => ({}));
-            throw new Error(errorData.error || "Failed to create SOV line items");
+            throw new Error(errorData.error || `Failed to create SOV line item ${index + 1}`);
           }
         }
       }
 
+      // Attachment uploads are non-fatal — navigate even if they fail
       if (data.attachmentFiles && data.attachmentFiles.length > 0) {
         for (const file of data.attachmentFiles) {
           const formData = new FormData();
           formData.append("file", file);
-          const attachmentResponse = await fetch(
-            `/api/projects/${projectId}/contracts/${newContract.id}/attachments`,
-            { method: "POST", body: formData },
-          );
-
-          if (!attachmentResponse.ok) {
-            const errorData = await attachmentResponse.json().catch(() => ({}));
-            console.error("Attachment upload failed:", errorData);
-            throw new Error(errorData.error || "Failed to upload attachment");
+          try {
+            const attachmentResponse = await fetch(
+              `/api/projects/${projectId}/contracts/${newContract.id}/attachments`,
+              { method: "POST", body: formData },
+            );
+            if (!attachmentResponse.ok) {
+              const errorData = await attachmentResponse.json().catch(() => ({}));
+              console.error("Attachment upload failed:", errorData);
+              toast.warning(`Attachment "${file.name}" failed to upload — you can add it from the contract page.`);
+            }
+          } catch (attachErr) {
+            console.error("Attachment upload error:", attachErr);
+            toast.warning(`Attachment "${file.name}" failed to upload — you can add it from the contract page.`);
           }
         }
       }
 
+      toast.success("Prime contract created");
       router.push(`/${projectId}/prime-contracts/${newContract.id}`);
     } catch (err) {
+      // "Failed to fetch" means the HTTP connection dropped (e.g. dev server hot-reload)
+      // even though the INSERT may have already committed. Check if it was actually saved.
+      if (err instanceof TypeError && err.message.toLowerCase().includes("failed to fetch")) {
+        try {
+          const checkRes = await fetch(
+            `/api/projects/${projectId}/contracts?search=${encodeURIComponent(data.number)}`,
+          );
+          if (checkRes.ok) {
+            const contracts = await checkRes.json();
+            const saved = Array.isArray(contracts)
+              ? contracts.find(
+                  (c: { contract_number: string; id: string }) =>
+                    c.contract_number === data.number,
+                )
+              : null;
+            if (saved) {
+              toast.success("Prime contract created");
+              router.push(`/${projectId}/prime-contracts/${saved.id}`);
+              return;
+            }
+          }
+        } catch {
+          // recovery failed — fall through to the error toast
+        }
+      }
       toast.error(err instanceof Error ? err.message : "Failed to create contract");
     } finally {
       setIsSaving(false);

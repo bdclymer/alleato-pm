@@ -220,11 +220,53 @@ export default function ProjectChangeEventsPage(): ReactElement {
   }, [projectId, refetchChangeEvents, tableState, bulkDeleteDialog]);
 
   const handleSendRfq = React.useCallback(
-    async (_values: ChangeEventRfqFormValues) => {
+    async (values: ChangeEventRfqFormValues) => {
       setIsCreatingRfq(true);
       try {
-        // TODO: implement actual RFQ creation
-        toast.success("RFQ sent successfully");
+        const selectedId = tableState.selectedIds[0];
+        if (!selectedId) {
+          throw new Error("Select a change event before sending an RFQ.");
+        }
+
+        const selectedChangeEvent = changeEvents.find((event) => String(event.id) === selectedId);
+        if (!selectedChangeEvent) {
+          throw new Error("Selected change event could not be found.");
+        }
+
+        const response = await fetch(`/api/projects/${projectId}/change-events/rfqs`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            changeEventId: String(selectedChangeEvent.id),
+            title: values.title.trim() || undefined,
+            dueDate: values.dueDate || undefined,
+            includeAttachments: values.includeAttachments,
+            notes: values.requestDetails.trim() || undefined,
+          }),
+        });
+
+        const payload = await response.json().catch(() => null);
+        if (!response.ok) {
+          const apiMessage =
+            payload && typeof payload === "object" && "error" in payload
+              ? String(payload.error)
+              : "Failed to create RFQ";
+          throw new Error(apiMessage);
+        }
+
+        const rfqNumber =
+          payload &&
+          typeof payload === "object" &&
+          "data" in payload &&
+          payload.data &&
+          typeof payload.data === "object" &&
+          "rfq_number" in payload.data
+            ? String(payload.data.rfq_number)
+            : null;
+
+        toast.success(rfqNumber ? `RFQ ${rfqNumber} sent successfully` : "RFQ sent successfully");
         setShowRfqSheet(false);
         tableState.setSelectedIds([]);
       } catch (err) {
@@ -233,7 +275,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
         setIsCreatingRfq(false);
       }
     },
-    [tableState],
+    [changeEvents, projectId, tableState],
   );
 
   const handleFilterChange = React.useCallback(

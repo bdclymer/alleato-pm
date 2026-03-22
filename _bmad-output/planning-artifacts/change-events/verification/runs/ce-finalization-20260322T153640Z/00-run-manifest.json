@@ -1,0 +1,26 @@
+{
+  "run_id": "ce-finalization-20260322T153640Z",
+  "feature": "change-events",
+  "project_id": "562949954728542",
+  "mode": "full",
+  "git_sha": "f023290c",
+  "started_at": "2026-03-22T15:36:40Z",
+  "completed_at": "2026-03-22T15:36:40Z",
+  "phases": [
+    {"phase":"INIT_COMMAND","state":"passed","started_at":"2026-03-22T15:36:40Z","completed_at":"2026-03-22T15:36:40Z","owner":"codex","result":"passed","evidence":["_bmad-output/planning-artifacts/change-events/verification/runs/ce-finalization-20260322T153640Z/00-run-manifest.json"],"errors":[]},
+    {"phase":"DISCOVER","state":"passed","started_at":"2026-03-22T15:36:40Z","completed_at":"2026-03-22T15:36:40Z","owner":"codex","result":"passed","evidence":["_bmad-output/planning-artifacts/change-events/verification/runs/ce-finalization-20260322T153640Z/01-codebase-inventory.md","_bmad-output/planning-artifacts/change-events/verification/runs/ce-finalization-20260322T153640Z/02-procore-reference.md"],"errors":[]},
+    {"phase":"CAPTURE_SOURCE_OF_TRUTH","state":"passed","started_at":"2026-03-22T15:36:40Z","completed_at":"2026-03-22T15:36:40Z","owner":"codex","result":"passed","evidence":[".claude/procore-manifests/change-events/manifest.json"],"errors":[]},
+    {"phase":"RECONCILE_MANIFEST","state":"passed","started_at":"2026-03-22T15:36:40Z","completed_at":"2026-03-22T15:36:40Z","owner":"codex","result":"passed","evidence":["_bmad-output/planning-artifacts/change-events/verification/runs/ce-finalization-20260322T153640Z/03-corrected-manifest.json"],"errors":[]},
+    {"phase":"GAP_ANALYZE","state":"passed","started_at":"2026-03-22T15:36:40Z","completed_at":"2026-03-22T15:36:40Z","owner":"codex","result":"passed","evidence":["_bmad-output/planning-artifacts/change-events/verification/runs/ce-finalization-20260322T153640Z/04-gap-analysis-report.md","_bmad-output/planning-artifacts/change-events/verification/runs/ce-finalization-20260322T153640Z/05-verification-report.json","_bmad-output/planning-artifacts/change-events/verification/runs/ce-finalization-20260322T153640Z/06-task-list.json"],"errors":[]},
+    {"phase":"REMEDIATE","state":"passed","started_at":"2026-03-22T15:36:40Z","completed_at":"2026-03-22T15:36:40Z","owner":"codex","result":"passed","evidence":["_bmad-output/planning-artifacts/change-events/verification/runs/ce-finalization-20260322T153640Z/07-remediation-log.md"],"errors":[]},
+    {"phase":"VERIFY_IMPLEMENTATION","state":"passed","started_at":"2026-03-22T15:36:40Z","completed_at":"2026-03-22T15:36:40Z","owner":"codex","result":"passed","evidence":["_bmad-output/planning-artifacts/change-events/verification/runs/ce-finalization-20260322T153640Z/feature-verifications/list/result.json","_bmad-output/planning-artifacts/change-events/verification/runs/ce-finalization-20260322T153640Z/feature-verifications/create/result.json"],"errors":[]},
+    {"phase":"FINALIZE_AND_REPORT","state":"passed","started_at":"2026-03-22T15:36:40Z","completed_at":"2026-03-22T15:36:40Z","owner":"codex","result":"passed","evidence":["_bmad-output/planning-artifacts/change-events/verification/runs/ce-finalization-20260322T153640Z/release-readiness.json","_bmad-output/planning-artifacts/change-events/verification/runs/ce-finalization-20260322T153640Z/08-final-summary.md"],"errors":[]}
+  ],
+  "evidence": [
+    ".claude/procore-manifests/change-events/manifest.json",
+    "frontend/src/app/(main)/[projectId]/change-events/page.tsx",
+    "frontend/src/app/(main)/[projectId]/change-events/[changeEventId]/page.tsx",
+    "frontend/src/app/api/projects/[projectId]/change-events/route.ts",
+    "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/route.ts"
+  ]
+}

@@ -77,6 +77,76 @@ interface CommitmentChangeOrderLineItem {
   amount: number | null;
 }
 
+type BudgetRowSource = "view" | "table";
+
+async function fetchBudgetRows(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  projectIdNum: number,
+): Promise<{
+  data: Record<string, unknown>[] | null;
+  error: unknown;
+  source: BudgetRowSource;
+}> {
+  const viewResult = await supabase
+    .from("v_budget_lines")
+    .select(
+      `
+      *,
+      cost_code:cost_codes(id, title, division_id),
+      cost_type:cost_code_types(code, description),
+      sub_job:sub_jobs(code, name)
+    `,
+    )
+    .eq("project_id", projectIdNum)
+    .order("cost_code_id", { ascending: true });
+
+  if (!viewResult.error) {
+    return {
+      data: (viewResult.data as Record<string, unknown>[] | null) ?? [],
+      error: null,
+      source: "view",
+    };
+  }
+
+  const serializedError = JSON.stringify(viewResult.error);
+  const isMissingView =
+    serializedError.includes("v_budget_lines") ||
+    serializedError.includes("PGRST205") ||
+    serializedError.includes("schema cache");
+
+  if (!isMissingView) {
+    return {
+      data: null,
+      error: viewResult.error,
+      source: "view",
+    };
+  }
+
+  console.warn(
+    "[budget] Falling back to budget_lines because v_budget_lines is unavailable",
+    viewResult.error,
+  );
+
+  const tableResult = await supabase
+    .from("budget_lines")
+    .select(
+      `
+      *,
+      cost_code:cost_codes(id, title, division_id),
+      cost_type:cost_code_types(code, description),
+      sub_job:sub_jobs(code, name)
+    `,
+    )
+    .eq("project_id", projectIdNum)
+    .order("cost_code_id", { ascending: true });
+
+  return {
+    data: (tableResult.data as Record<string, unknown>[] | null) ?? [],
+    error: tableResult.error,
+    source: "table",
+  };
+}
+
 // GET /api/projects/[id]/budget - Fetch budget data for a project
 export async function GET(
   request: NextRequest,
@@ -97,32 +167,28 @@ export async function GET(
 
     // Fetch all data sources in parallel for performance
     const [
-      budgetLinesRes,
+      budgetRowsResult,
+      // Direct costs for JTD and Direct Cost calculations
       directCostsRes,
+      // project_cost_codes: maps project_cost_codes.id -> cost_codes.id
+      // needed to translate direct_cost_line_items.budget_code_id to cost_code_id
       projectCostCodesRes,
+      // Subcontract SOV items with pending status for Pending Cost Changes
       subcontractSovRes,
+      // PO SOV items with pending statuses for Pending Cost Changes
       poSovRes,
+      // Pending change orders for Pending Cost Changes
       pendingPrimeChangeOrdersRes,
+      // Executed/Approved Subcontract SOV items for Committed Costs
       executedSubcontractSovRes,
+      // Executed/Approved PO SOV items for Committed Costs
       executedPoSovRes,
+      // Pending commitment change orders for Pending Cost Changes
       pendingCommitmentCOsRes,
+      // Approved commitment change orders for Committed Costs
       approvedCommitmentCOsRes,
     ] = await Promise.all([
-      // Budget lines from materialized view
-      supabase
-        .from("v_budget_lines")
-        .select(
-          `
-          *,
-          cost_code:cost_codes(id, title, division_id),
-          cost_type:cost_code_types(code, description),
-          sub_job:sub_jobs(code, name)
-        `,
-        )
-        .eq("project_id", projectIdNum)
-        .order("cost_code_id", { ascending: true }),
-
-      // Direct costs for JTD and Direct Cost calculations
+      fetchBudgetRows(supabase, projectIdNum),
       supabase
         .from("direct_cost_line_items")
         .select(
@@ -141,21 +207,17 @@ export async function GET(
         .eq("direct_costs.project_id", projectIdNum)
         .in("direct_costs.status", APPROVED_DIRECT_COST_STATUSES),
 
-      // project_cost_codes: maps project_cost_codes.id -> cost_codes.id
-      // needed to translate direct_cost_line_items.budget_code_id to cost_code_id
       supabase
         .from("project_cost_codes")
         .select("id, cost_code_id")
         .eq("project_id", projectIdNum),
 
-      // Subcontract SOV items with pending status for Pending Cost Changes
       supabase
         .from("subcontract_sov_items")
         .select("budget_code, amount, subcontracts!inner(status, project_id)")
         .eq("subcontracts.project_id", projectIdNum)
         .in("subcontracts.status", PENDING_SUBCONTRACT_STATUSES),
 
-      // PO SOV items with pending statuses for Pending Cost Changes
       supabase
         .from("purchase_order_sov_items")
         .select(
@@ -164,21 +226,18 @@ export async function GET(
         .eq("purchase_orders.project_id", projectIdNum)
         .in("purchase_orders.status", PENDING_PO_STATUSES),
 
-      // Pending change orders for Pending Cost Changes
       supabase
         .from("change_order_lines")
         .select("cost_code_id, amount, change_orders!inner(status, project_id)")
         .eq("change_orders.project_id", projectIdNum)
         .like("change_orders.status", "Pending%"),
 
-      // Executed/Approved Subcontract SOV items for Committed Costs
       supabase
         .from("subcontract_sov_items")
         .select("budget_code, amount, subcontracts!inner(status, project_id)")
         .eq("subcontracts.project_id", projectIdNum)
         .in("subcontracts.status", EXECUTED_SUBCONTRACT_STATUSES),
 
-      // Executed/Approved PO SOV items for Committed Costs
       supabase
         .from("purchase_order_sov_items")
         .select(
@@ -187,7 +246,6 @@ export async function GET(
         .eq("purchase_orders.project_id", projectIdNum)
         .in("purchase_orders.status", EXECUTED_PO_STATUSES),
 
-      // Pending commitment change orders for Pending Cost Changes
       supabase
         .from("commitment_change_order_lines")
         .select(
@@ -203,7 +261,6 @@ export async function GET(
         .eq("commitment_change_orders.commitments.project_id", projectIdNum)
         .like("commitment_change_orders.status", "Pending%"),
 
-      // Approved commitment change orders for Committed Costs
       supabase
         .from("commitment_change_order_lines")
         .select(
@@ -220,8 +277,8 @@ export async function GET(
         .eq("commitment_change_orders.status", "approved"),
     ]);
 
-    if (budgetLinesRes.error) {
-      return apiErrorResponse(budgetLinesRes.error);
+    if (budgetRowsResult.error) {
+      return apiErrorResponse(budgetRowsResult.error);
     }
 
     // Build cost aggregation by cost_code_id
@@ -337,7 +394,9 @@ export async function GET(
     }
 
     // Transform to frontend format with real cost data
-    const lineItems = (budgetLinesRes.data || []).map(
+    const usingBudgetTableFallback = budgetRowsResult.source === "table";
+
+    const lineItems = (budgetRowsResult.data || []).map(
       (item: Record<string, unknown>) => {
         const costCode = item.cost_code as
           | { id?: string; title?: string; division_id?: string }
@@ -362,10 +421,15 @@ export async function GET(
         // Core budget values
         const originalBudgetAmount =
           parseFloat(item.original_amount as string) || 0;
-        const budgetModifications =
-          parseFloat(item.budget_mod_total as string) || 0;
-        const approvedCOs = parseFloat(item.approved_co_total as string) || 0;
-        const revisedBudget = parseFloat(item.revised_budget as string) || 0;
+        const budgetModifications = usingBudgetTableFallback
+          ? 0
+          : parseFloat(item.budget_mod_total as string) || 0;
+        const approvedCOs = usingBudgetTableFallback
+          ? 0
+          : parseFloat(item.approved_co_total as string) || 0;
+        const revisedBudget = usingBudgetTableFallback
+          ? originalBudgetAmount + budgetModifications + approvedCOs
+          : parseFloat(item.revised_budget as string) || 0;
 
         // Calculated fields
         const projectedBudget = revisedBudget + costData.pendingBudgetChanges;

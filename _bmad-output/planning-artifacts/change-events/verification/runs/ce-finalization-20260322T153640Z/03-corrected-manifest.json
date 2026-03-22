@@ -1,0 +1,37 @@
+{
+  "feature": "change-events",
+  "generated_at": "2026-03-22T15:36:40Z",
+  "source_manifest": ".claude/procore-manifests/change-events/manifest.json",
+  "reconciliation_evidence": {
+    "list_open": "_bmad-output/planning-artifacts/change-events/verification/runs/ce-finalization-20260322T153640Z/reconciliation/list-open.txt",
+    "list_snapshot": "_bmad-output/planning-artifacts/change-events/verification/runs/ce-finalization-20260322T153640Z/reconciliation/list-snapshot.txt",
+    "create_open": "_bmad-output/planning-artifacts/change-events/verification/runs/ce-finalization-20260322T153640Z/reconciliation/create-open.txt",
+    "create_snapshot": "_bmad-output/planning-artifacts/change-events/verification/runs/ce-finalization-20260322T153640Z/reconciliation/create-snapshot.txt",
+    "detail_open": "_bmad-output/planning-artifacts/change-events/verification/runs/ce-finalization-20260322T153640Z/reconciliation/detail-open.txt",
+    "detail_snapshot": "_bmad-output/planning-artifacts/change-events/verification/runs/ce-finalization-20260322T153640Z/reconciliation/detail-snapshot.txt"
+  },
+  "normalized": {
+    "list": {
+      "columns": ["Status", "Scope", "Type", "Change Reason", "Origin", "Prime PCO", "Prime PCO Title", "Cost ROM", "RFQ Title", "Commitment", "Commitment Title"],
+      "column_groups": ["Change Event", "Revenue", "Cost"]
+    },
+    "create_form": {
+      "fields": [
+        {"name":"status","label":"Status","type":"select","required":true},
+        {"name":"scope","label":"Scope","type":"select","required":true},
+        {"name":"type","label":"Type","type":"select","required":true},
+        {"name":"change_reason","label":"Change Reason","type":"select","required":false},
+        {"name":"origin","label":"Origin","type":"select","required":false},
+        {"name":"title","label":"Title","type":"text","required":true},
+        {"name":"description","label":"Description","type":"textarea","required":false},
+        {"name":"line_items","label":"Line Items","type":"table","required":false}
+      ]
+    },
+    "detail": {
+      "tabs": ["General", "Prime Contract Change Orders", "Commitments", "Events", "Line Items", "Advanced Settings", "Attachments", "History"]
+    },
+    "workflow": {
+      "statuses": ["Open", "Pending Approval", "Approved", "Rejected", "Closed", "Void", "Converted"]
+    }
+  }
+}

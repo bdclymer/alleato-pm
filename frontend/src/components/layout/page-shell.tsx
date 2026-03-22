@@ -32,6 +32,7 @@ export interface PageShellProps {
 
   // Header
   title: string;
+  showHeader?: boolean;
   titleContent?: React.ReactNode;
   actions?: React.ReactNode;
   statusBadge?: React.ReactNode;
@@ -63,6 +64,7 @@ const variantConfig: Record<
 export function PageShell({
   variant,
   title,
+  showHeader = true,
   titleContent,
   actions,
   statusBadge,
@@ -88,7 +90,7 @@ export function PageShell({
   // For form/detail/content, resolve the actions: prefer explicit actions, fall back to back button
   const resolvedActions = actions ?? (variant === "form" ? backButton : undefined);
 
-  const header = (
+  const header = showHeader ? (
     <PageHeader
       title={title}
       titleContent={titleContent}
@@ -98,7 +100,7 @@ export function PageShell({
       onExportCSV={onExportCSV}
       onExportPDF={onExportPDF}
     />
-  );
+  ) : null;
 
   // Table variant: no extra bottom padding, tight layout
   if (variant === "table") {

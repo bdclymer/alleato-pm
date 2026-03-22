@@ -558,24 +558,28 @@ export function ContractForm({
     const mapped: SOVLineItem[] = importedItems.map((raw, index) => {
       const item = raw as {
         id?: string;
-        cost_code_id?: string;
+        // camelCase from budget API (new contract flow)
+        costCode?: string;
+        costCodeDescription?: string;
         description?: string;
-        original_amount?: number;
-        cost_code?: { title?: string };
+        originalBudgetAmount?: number;
+        costType?: string;
       };
 
-      const budgetCodeLabel = item.cost_code?.title
-        ? `${item.cost_code_id || "Budget"} - ${item.cost_code.title}`
-        : item.cost_code_id || "";
+      const label = item.costCode
+        ? item.costCodeDescription
+          ? `${item.costCode} - ${item.costCodeDescription}`
+          : item.costCode
+        : "";
 
       return {
         id: `sov-import-${Date.now()}-${index}`,
-        budgetCodeId: item.id || item.cost_code_id || "",
-        budgetCodeLabel,
-        description: item.description || item.cost_code?.title || "",
-        amount: item.original_amount || 0,
+        budgetCodeId: item.id || item.costCode || "",
+        budgetCodeLabel: label,
+        description: item.costCodeDescription || item.description || item.costCode || "",
+        amount: item.originalBudgetAmount || 0,
         billedToDate: 0,
-        amountRemaining: item.original_amount || 0,
+        amountRemaining: item.originalBudgetAmount || 0,
       };
     });
 
@@ -904,8 +908,7 @@ export function ContractForm({
                 variant="minimal"
                 multiple
                 maxFiles={20}
-                maxSize={10 * 1024 * 1024}
-                accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.txt"
+                maxSize={50 * 1024 * 1024}
                 hint="Attach contract documents and supporting files."
                 dropzoneTestId="prime-contract-attachments-dropzone"
                 inputTestId="prime-contract-attachments-input"
@@ -1082,7 +1085,9 @@ export function ContractForm({
                               data-testid="sov-line-budget-code"
                             >
                               <span className="truncate">
-                                {item.budgetCodeLabel || "Select budget code..."}
+                                {item.budgetCodeLabel
+                                  || budgetCodes.find((c) => c.id === item.budgetCodeId)?.fullLabel
+                                  || "Select budget code..."}
                               </span>
                               <Search className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
                             </Button>
@@ -1244,6 +1249,9 @@ export function ContractForm({
         open={showImportFromBudget}
         onOpenChange={setShowImportFromBudget}
         projectId={projectId}
+        existingCostCodeIds={new Set(
+          (formData.sovItems || []).map((item) => item.budgetCodeId).filter((id): id is string => !!id)
+        )}
         onImportSuccess={(items) => handleImportFromBudgetSuccess(items as unknown[])}
       />
 

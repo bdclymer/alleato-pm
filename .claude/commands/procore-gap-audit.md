@@ -1,265 +1,78 @@
 ---
 name: procore-gap-audit
-description: Read the manifest.json from procore-deep-crawl, verify it against the LIVE Procore page using agent-browser, then cross-reference against actual Alleato implementation code to produce a binary PRESENT/MISSING/WRONG checklist.
+description: Phase-4 worker for the Procore finalization orchestrator. Reconciles corrected Procore manifest against Alleato implementation and emits normalized gap/task artifacts.
 ---
 
 # /procore-gap-audit <feature>
 
-Cross-reference the Procore manifest against the actual Alleato implementation code.
-**Read the code, not old spec docs.** The manifest + live Procore page are the source of truth.
+Worker command for `GAP_ANALYZE` in:
+`$PROJECT_ROOT/.claude/commands/workflow/procore-finalization-orchestrator.md`
 
-**Also read official Procore support documentation** from our crawled database. The `support_articles` table has 2,300+ articles categorized by tool. Query by category to get field definitions, workflows, and business rules that aren't visible in the UI.
-
-### Procore Support Articles Database
-
-```sql
--- Search articles for the feature being audited
-SELECT id, title, category, description, url
-FROM support_articles
-WHERE category = '<Feature Category>'
-ORDER BY title;
-
--- Full-text search for specific topics
-SELECT * FROM fulltext_search_support_articles(
-  search_query := '<search terms>',
-  result_limit := 10
-);
-```
-
-**Available categories:** Admin Company, Admin Project, Bidding, Budget (53), Change Events (60), Change Orders (29), Commitments (72), Drawings (76), Equipment, ERP Integration (63), Estimating, Forecasting (19), General (1512), Invoices (48), Payments (27), Prime Contracts (36), Procore Pay (78), Project Directory, RFI (70), Specifications (40), Submittals (94)
-
-**Use the Supabase MCP tool** (`mcp__claude_ai_Supabase__execute_sql`) to query these articles. Read relevant articles to understand:
-- What fields Procore expects and their business rules
-- Workflow states and transitions
-- Validation rules and required permissions
-- Relationships between tools (e.g., Change Events → Prime Contract COs)
-
-## Step 1: Read the manifest
+## Runtime Root
 
 ```bash
-cat /Users/meganharrison/Documents/alleato-pm/.claude/procore-manifests/$ARGUMENTS/manifest.json
+PROJECT_ROOT="${PROJECT_ROOT:-$(git rev-parse --show-toplevel)}"
 ```
 
-Extract from the manifest:
-- List columns (all `states.list.columns[].label`)
-- Column groups (all `states.list.columnGroups[].label`)
-- Create form fields (all `states.create-form.formSections[].fields[].{label, type, required}`)
-- Detail tabs (all `states.detail.tabs`)
-- Toolbar actions (all `states.list.toolbarActions[].label`)
-- Auto-rows (all `states.*.autoRows[].label`)
-- Statuses/options from select fields
+## Role in Canonical Workflow
 
-## Step 2: Verify manifest against LIVE Procore page
+- Phase owner: `GAP_ANALYZE`
+- Upstream dependency: `RECONCILE_MANIFEST`
+- Downstream dependency: `REMEDIATE`
 
-**MANDATORY: Use agent-browser to open the actual Procore pages and verify the manifest is accurate.**
+## Source of Truth Order
 
-The manifest is automated extraction — it WILL miss things. Agent-browser is the verification layer.
+1. `03-corrected-manifest.json` (primary)
+2. Live Procore verification evidence
+3. Alleato implementation code
 
-### 2a. Verify the list page
+Never audit from stale specs alone.
 
-```
-agent-browser open <list-url-from-manifest>
-agent-browser snapshot -i
-```
+## Required Inputs
 
-Compare what you see to the manifest's `states.list.columns` and `states.list.columnGroups`:
-- **Count** the visible columns in the table header. Does the count match the manifest?
-- **Check column groups** — are they labeled correctly? Does each group contain the right columns?
-- **Check toolbar actions** — what buttons/dropdowns are visible above the table?
-- If anything is missing from the manifest, ADD it to your working notes. Note: "Manifest says X columns but live page shows Y"
+- Feature slug (`<feature>`)
+- Corrected manifest:
+  - run-scoped `_bmad-output/planning-artifacts/<feature>/verification/runs/<run_id>/03-corrected-manifest.json`
+- Implementation code paths:
+  - `frontend/src/app/(main)/[projectId]/<feature>/`
+  - `frontend/src/app/api/projects/[projectId]/<feature>/`
+  - `frontend/src/hooks/use-<feature>*`
+  - `frontend/src/types/database.types.ts`
 
-### 2b. Verify the create form
+## Required Outputs
 
-Click the Create button (or navigate to the create form URL), then:
+Human-readable report:
+- `04-gap-analysis-report.md`
 
-```
-agent-browser snapshot -i
-```
+Machine-readable reports:
+- `05-verification-report.json`
+- `06-task-list.json`
 
-Compare what you see to the manifest's `states.create-form.formSections[].fields`:
-- **Count** every visible field label on the form
-- **Check field types** — is it a text input, dropdown, radio, checkbox, date picker, rich text editor?
-- **Check required markers** — does the field have a * or (required) indicator?
-- **Check section groupings** — are fields grouped under section headers?
-- If the manifest says 11 fields but you count 12, identify the missing one
+## Normalized Finding Schema Requirements
 
-### 2c. Verify the detail page
+Every non-passing finding must include:
+- `gap_id`
+- `layer` (`db|api|ui|workflow|tests`)
+- `severity` (`critical|high|medium|low`)
+- `status` (`open|resolved|blocked|waived`)
+- `spec_ref`
+- `code_ref`
+- `evidence`
 
-Click into a record to open the detail view:
+Every task must map to `gap_id`.
 
-```
-agent-browser snapshot -i
-```
+## Execution Pattern
 
-- **Check tabs** — what tabs are visible at the top? (Overview, Commitments, Line Items, etc.)
-- **Check detail form fields** — what key-value pairs are shown?
-- **Scroll down** to see the full page:
+1. Read corrected manifest.
+2. Compare DB/API/UI/workflow parity against implementation.
+3. Produce strict `present|partial|missing` outcomes with evidence.
+4. Build prioritized remediation tasks (critical/high first).
+5. Write both markdown and JSON outputs.
+6. Validate cross-artifact invariants before phase pass.
 
-```
-agent-browser scroll down
-agent-browser snapshot -i
-```
+## Success Criteria
 
-- **Check the line items table** — what columns does it have? Are there column groups?
-- **Check for auto-calculated rows** — are there Insurance/Fee rows with special icons?
-
-### 2d. Record corrections
-
-After verifying all pages, create a corrected field list that combines:
-- What the manifest extracted automatically
-- What you observed on the live page that the manifest missed
-
-**Use the corrected list (not just the manifest) for the rest of the gap audit.**
-
-## Step 3: Map the Alleato implementation
-
-Read ACTUAL CODE FILES — not spec docs, not memory, not assumptions.
-
-### Frontend pages
-```bash
-ls frontend/src/app/(main)/[projectId]/$ARGUMENTS/ 2>/dev/null || echo "No pages directory"
-```
-
-### Components
-```bash
-ls frontend/src/components/domain/$ARGUMENTS/ 2>/dev/null || echo "No domain components"
-```
-
-### API routes
-```bash
-ls frontend/src/app/api/projects/\\[projectId\\]/$ARGUMENTS/ 2>/dev/null || echo "No API routes"
-```
-
-### Hooks
-```bash
-ls frontend/src/hooks/use-${ARGUMENTS}* 2>/dev/null || ls frontend/src/hooks/ | grep -i "$ARGUMENTS"
-```
-
-### Database schema — read the ACTUAL types file
-```bash
-grep -A 80 '"$ARGUMENTS"' frontend/src/types/database.types.ts | head -80
-```
-
-### Zod schemas
-```bash
-ls frontend/src/lib/schemas/ | grep -i "$ARGUMENTS"
-```
-
-**For each file found, READ it** to understand what fields/columns/routes/actions are actually implemented.
-
-## Step 4: Generate the gap report
-
-Produce the report in this exact format. **Do NOT fill in statuses from memory or guessing — only from reading files and live verification.**
-
-```markdown
-# <Feature Name> — Procore vs. Alleato Gap Analysis
-
-**Generated:** <date>
-**Manifest:** `.claude/procore-manifests/<feature>/manifest.json`
-**Verified against live Procore:** Yes (agent-browser)
-**Alleato path:** `frontend/src/app/(main)/[projectId]/<feature>/`
-
-## Manifest Corrections
-
-Fields/columns found on live Procore page but missing from manifest:
-- <field name> (<type>) — found on <page>, not in manifest
-
-## Executive Summary
-
-| Category | Status | Details |
-|----------|--------|---------|
-| **List Table Columns** | ✅/⚠️/❌ | X/Y columns (Z%) |
-| **Column Groups** | ✅/⚠️/❌ | X/Y groups |
-| **Create Form Fields** | ✅/⚠️/❌ | X/Y fields (Z%) |
-| **Detail Tabs** | ✅/⚠️/❌ | X/Y tabs |
-| **Toolbar Actions** | ✅/⚠️/❌ | X/Y actions |
-| **Statuses/Workflow** | ✅/⚠️/❌ | X/Y statuses |
-| **Auto-Calculated Rows** | ✅/⚠️/❌ | X/Y auto-rows |
-| **API Routes** | ✅/⚠️/❌ | GET/POST/PATCH/DELETE |
-| **Database Schema** | ✅/⚠️/❌ | Missing columns |
-
-**Overall: <COMPLETE / NEEDS MINOR WORK / NEEDS SIGNIFICANT WORK / NOT STARTED> (~X% complete)**
-
-## List Table Columns
-
-| Procore Column | Column Group | Alleato Status | File | Notes |
-|---------------|-------------|----------------|------|-------|
-| CE Number - Title | (spanning) | ✅ | ... | |
-| Status | Change Event | ✅ | ... | |
-| Amount | Cost | ❌ | — | Not in DataTable columns def |
-
-## Create Form Fields
-
-| Procore Field | Type | Required | Alleato Status | Notes |
-|--------------|------|----------|----------------|-------|
-| Title | text | Yes | ✅ | |
-| Status | select | No | ⚠️ | Wrong options list |
-| Expecting Revenue | radio | No | ❌ | Yes/No — controls revenue fields |
-
-## Detail Tabs
-
-| Procore Tab | Alleato Equivalent | Status |
-|------------|-------------------|--------|
-| Overview | /detail page | ✅ |
-| Line Items | — | ❌ |
-
-## Toolbar Actions
-
-| Procore Action | Type | Alleato Status | Notes |
-|---------------|------|----------------|-------|
-| Create | primary button | ✅ | |
-| Export | dropdown | ❌ | |
-
-## Auto-Calculated Rows
-
-| Procore Auto-Row | Logic | Alleato Status | Notes |
-|-----------------|-------|----------------|-------|
-| Insurance | From Prime Contract markup % | ❌ | |
-| Fee | From Prime Contract markup % | ❌ | |
-
-## Statuses / Workflow
-
-| Procore Status | Alleato Status | In DB Enum | In UI |
-|---------------|---------------|------------|-------|
-| Draft | Draft | ✅ | ✅ |
-| Open | — | ❌ | ❌ |
-
-## API Routes
-
-| Method | Route | Exists | Notes |
-|--------|-------|--------|-------|
-| GET | /api/projects/[projectId]/<feature> | ✅ | |
-| POST | /api/projects/[projectId]/<feature> | ❌ | |
-
-## Database Schema Gaps
-
-| Required Column | Type | Exists | Notes |
-|----------------|------|--------|-------|
-| amount | decimal | ❌ | Need migration |
-
-## Missing Functionality (Prioritized)
-
-### HIGH Impact
-- [ ] <description>
-
-### MEDIUM Impact
-- [ ] <description>
-
-### LOW Impact
-- [ ] <description>
-```
-
-**Status legend:**
-- ✅ = Fully implemented, matches Procore
-- ⚠️ = Partial (wrong type, incomplete options, different label)
-- ❌ = Not implemented
-
-## Step 5: Save the report
-
-```bash
-mkdir -p docs-ai/contents/docs/PRPs/$ARGUMENTS
-```
-
-Save to: `docs-ai/contents/docs/PRPs/$ARGUMENTS/gap-analysis-report.md`
-
-Then tell the user: "Gap analysis complete. Run `/procore-fix $ARGUMENTS` to start implementing missing items."
+This worker succeeds only when:
+- all non-passing findings have `gap_id`
+- `06-task-list.json` covers every unresolved finding
+- outputs are sufficient for autonomous remediation without ambiguity

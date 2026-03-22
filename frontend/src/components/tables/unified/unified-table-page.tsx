@@ -1278,7 +1278,7 @@ export function UnifiedTablePage<T>({
                         </TableCell>
                       ))}
                     {hasRowActions && (
-                      <TableCell onClick={(event) => event.stopPropagation()} className="opacity-0 group-hover/row:opacity-100 transition-opacity">
+                      <TableCell onClick={(event) => event.stopPropagation()}>
                         {table.rowActions ? table.rowActions(item) : table.onDelete ? (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>

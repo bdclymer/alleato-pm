@@ -1,0 +1,72 @@
+{
+  "feature": "change-events",
+  "generated_at": "2026-03-22T15:31:27Z",
+  "source_manifest": ".claude/procore-manifests/change-events/manifest.json",
+  "reconciliation_evidence": {
+    "list_open": "_bmad-output/planning-artifacts/change-events/verification/reconciliation/list-open.txt",
+    "list_snapshot": "_bmad-output/planning-artifacts/change-events/verification/reconciliation/list-snapshot.txt",
+    "create_open": "_bmad-output/planning-artifacts/change-events/verification/reconciliation/create-open.txt",
+    "create_snapshot": "_bmad-output/planning-artifacts/change-events/verification/reconciliation/create-snapshot.txt",
+    "detail_open": "_bmad-output/planning-artifacts/change-events/verification/reconciliation/detail-open.txt",
+    "detail_snapshot": "_bmad-output/planning-artifacts/change-events/verification/reconciliation/detail-snapshot.txt"
+  },
+  "normalized": {
+    "list": {
+      "columns": [
+        "Status",
+        "Scope",
+        "Type",
+        "Change Reason",
+        "Origin",
+        "Prime PCO",
+        "Prime PCO Title",
+        "Cost ROM",
+        "RFQ Title",
+        "Commitment",
+        "Commitment Title"
+      ],
+      "column_groups": ["Change Event", "Revenue", "Cost"],
+      "toolbar_actions": ["Add Filter", "New", "Export"]
+    },
+    "create_form": {
+      "fields": [
+        "Status",
+        "Scope",
+        "Type",
+        "Change Reason",
+        "Origin",
+        "Title",
+        "Description",
+        "Line Items"
+      ],
+      "line_item_columns": [
+        "Budget Code",
+        "Description",
+        "Vendor",
+        "Contract",
+        "Unit of Measure",
+        "Quantity",
+        "Unit Cost",
+        "Revenue ROM",
+        "Cost ROM",
+        "Non-Committed Cost"
+      ]
+    },
+    "detail": {
+      "tabs": [
+        "General",
+        "Prime Contract Change Orders",
+        "Commitments",
+        "Events",
+        "Line Items",
+        "Advanced Settings",
+        "Attachments",
+        "History"
+      ],
+      "actions": ["Edit", "Delete", "Send RFQ", "Add to", "Convert to Change Order"]
+    },
+    "workflow": {
+      "statuses": ["Open", "Pending Approval", "Approved", "Rejected", "Closed", "Void", "Converted"]
+    }
+  }
+}

@@ -184,7 +184,7 @@ export interface ChangeOrderFormState {
   change_order_number: string;
   description: string;
   amount: string;
-  status: "draft" | "pending";
+  status: "pending";
 }
 
 export type ContractTab =

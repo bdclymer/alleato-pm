@@ -95,11 +95,11 @@ export function SearchableSelect({
               aria-expanded={open}
               className={cn(
                 "flex-1 justify-between font-normal min-w-0",
-                !value && "text-muted-foreground",
                 triggerClassName,
               )}
               disabled={disabled}
               data-testid={triggerTestId}
+              {...(!value && { "data-placeholder-style": "" })}
             >
               <span className="truncate">
                 {selectedOption?.label || placeholder}

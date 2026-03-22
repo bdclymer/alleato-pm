@@ -1,8 +1,31 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
-import { commitmentSchema } from "@/lib/schemas/financial-schemas";
 import type { ZodError } from "@/app/api/types";
 import { z } from "zod";
+
+/**
+ * Schema that matches what the commitment detail edit form actually sends.
+ * Both subcontract and purchase order forms send contract_number (not number),
+ * status as Title Case strings, contract_company_id as nullable string,
+ * and do NOT send original_amount or accounting_method (required in the old
+ * commitmentSchema).
+ */
+const commitmentEditSchema = z
+  .object({
+    contract_number: z.string().optional(),
+    title: z.string().optional(),
+    contract_company_id: z.string().nullable().optional(),
+    status: z.string().optional(),
+    description: z.string().nullable().optional(),
+    start_date: z.string().nullable().optional(),
+    estimated_completion_date: z.string().nullable().optional(),
+    contract_date: z.string().nullable().optional(),
+    delivery_date: z.string().nullable().optional(),
+    is_private: z.boolean().optional(),
+    allow_non_admin_view_sov_items: z.boolean().optional(),
+    accounting_method: z.string().nullable().optional(),
+  })
+  .passthrough();
 
 const commitmentInlinePatchSchema = z
   .object({
@@ -280,8 +303,15 @@ export async function PUT(
     const supabase = await createClient();
     const body = await request.json();
 
-    // Validate request body
-    const validatedData = commitmentSchema.parse(body);
+    // Validate request body against the form's actual payload shape
+    const parsed = commitmentEditSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Validation error", issues: parsed.error.issues },
+        { status: 400 },
+      );
+    }
+    const validatedData = parsed.data;
 
     // Get the current user
     const {
@@ -311,28 +341,54 @@ export async function PUT(
         ? "subcontracts"
         : "purchase_orders";
 
+    // Build a safe update payload containing only columns that exist in both
+    // subcontracts and purchase_orders. Undefined values are omitted so Supabase
+    // does not overwrite existing data with NULL unintentionally.
+    const updatePayload: Record<string, unknown> = {
+      updated_at: new Date().toISOString(),
+    };
+
+    const def = <T>(val: T | undefined | null, key: string) => {
+      if (val !== undefined) updatePayload[key] = val;
+    };
+
+    def(validatedData.contract_number, "contract_number");
+    def(validatedData.title, "title");
+    def(validatedData.contract_company_id, "contract_company_id");
+    def(validatedData.status, "status");
+    def(validatedData.description, "description");
+    def(validatedData.is_private, "is_private");
+    def(validatedData.allow_non_admin_view_sov_items, "allow_non_admin_view_sov_items");
+    def(validatedData.contract_date, "contract_date");
+
+    // Subcontract-only columns
+    if (unifiedData.commitment_type === "subcontract") {
+      def(validatedData.start_date, "start_date");
+      def(validatedData.estimated_completion_date, "estimated_completion_date");
+    }
+
+    // Purchase-order-only columns
+    if (unifiedData.commitment_type === "purchase_order") {
+      def(validatedData.delivery_date, "delivery_date");
+      def(validatedData.accounting_method, "accounting_method");
+    }
+
     // Update commitment
+    // Note: avoid PostgREST join syntax (companies!contract_company_id) — schema cache
+    // doesn't have that relationship configured. The client re-fetches full details
+    // via GET after a successful PUT, so a simple select(*) is sufficient here.
     const { data, error } = await supabase
       .from(tableName)
-      .update({
-        ...validatedData,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updatePayload)
       .eq("id", id)
-      .select(
-        `
-        *,
-        contract_company:companies!contract_company_id(*),
-        assignee:users!assignee_id(*)
-      `,
-      )
+      .select("*")
       .single();
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
 
-    return NextResponse.json(data);
+    return NextResponse.json({ data });
   } catch (error) {
     if (error instanceof Error && error.name === "ZodError") {
       const zodError = error as ZodError;

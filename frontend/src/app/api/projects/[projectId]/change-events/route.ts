@@ -62,7 +62,13 @@ type ChangeEvent = Database['public']['Tables']['change_events']['Row']
 interface ChangeEventWithTotals extends ChangeEvent {
   rom: string
   total: string
+  cost_rom: string
   lineItemsCount: number
+  prime_pco: string | null
+  prime_pco_title: string | null
+  rfq_title: string | null
+  commitment: string | null
+  commitment_title: string | null
 }
 
 /**
@@ -186,31 +192,110 @@ export async function GET(
       )
     }
 
-    // Calculate totals for each change event
-    const changeEventsWithTotals: ChangeEventWithTotals[] = await Promise.all(
-      (data || []).map(async (event: ChangeEvent & { change_event_line_items?: { count: number }[] }) => {
-        // Get line items to calculate totals
-        const { data: lineItems } = await (supabase as any)
-          .from('change_event_line_items')
-          .select('revenue_rom, cost_rom, non_committed_cost')
-          .eq('change_event_id', event.id)
+    const events = data || []
+    const eventIds = events.map((event: ChangeEvent) => event.id)
 
-        const rom = (lineItems || []).reduce(
-          (sum: number, item: { revenue_rom: number | null; cost_rom: number | null; non_committed_cost: number | null }) => sum + (item.revenue_rom || 0),
-          0
-        )
-        const total = (lineItems || []).reduce(
-          (sum: number, item: { revenue_rom: number | null; cost_rom: number | null; non_committed_cost: number | null }) => sum + (item.cost_rom || 0) + (item.non_committed_cost || 0),
-          0
-        )
+    // Batch fetch line-item level parity data for all rows on page.
+    const { data: allLineItems } = eventIds.length
+      ? await (supabase as any)
+          .from('change_event_line_items')
+          .select('change_event_id, revenue_rom, cost_rom, non_committed_cost, contract_id')
+          .in('change_event_id', eventIds)
+      : { data: [] as any[] }
+
+    const lineItemMap = new Map<
+      string,
+      {
+        rom: number
+        total: number
+        costRom: number
+        count: number
+        contractId: number | null
+      }
+    >()
+
+    for (const item of allLineItems || []) {
+      const key = String(item.change_event_id)
+      const existing = lineItemMap.get(key) || {
+        rom: 0,
+        total: 0,
+        costRom: 0,
+        count: 0,
+        contractId: null,
+      }
+      existing.rom += item.revenue_rom || 0
+      existing.costRom += item.cost_rom || 0
+      existing.total += (item.cost_rom || 0) + (item.non_committed_cost || 0)
+      existing.count += 1
+      if (!existing.contractId && item.contract_id) {
+        existing.contractId = item.contract_id
+      }
+      lineItemMap.set(key, existing)
+    }
+
+    const contractIds = Array.from(
+      new Set(
+        Array.from(lineItemMap.values())
+          .map((entry) => entry.contractId)
+          .filter((id): id is number => id !== null)
+      )
+    )
+
+    const { data: contracts } = contractIds.length
+      ? await (supabase as any)
+          .from('contracts')
+          .select('id, contract_number, title')
+          .in('id', contractIds)
+      : { data: [] as any[] }
+
+    const contractMap = new Map<
+      number,
+      { contractNumber: string | null; title: string | null }
+    >()
+    for (const contract of contracts || []) {
+      contractMap.set(contract.id, {
+        contractNumber: contract.contract_number || null,
+        title: contract.title || null,
+      })
+    }
+
+    const { data: rfqs } = eventIds.length
+      ? await (supabase as any)
+          .from('change_event_rfqs')
+          .select('change_event_id, title, created_at')
+          .in('change_event_id', eventIds)
+          .order('created_at', { ascending: false })
+      : { data: [] as any[] }
+
+    const rfqMap = new Map<string, string>()
+    for (const rfq of rfqs || []) {
+      const key = String(rfq.change_event_id)
+      if (!rfqMap.has(key)) {
+        rfqMap.set(key, rfq.title || '')
+      }
+    }
+
+    const changeEventsWithTotals: ChangeEventWithTotals[] = events.map(
+      (event: ChangeEvent & { change_event_line_items?: { count: number }[] }) => {
+        const lineItemAgg = lineItemMap.get(String(event.id))
+        const contractInfo =
+          lineItemAgg?.contractId ? contractMap.get(lineItemAgg.contractId) : undefined
 
         return {
           ...event,
-          rom: rom.toFixed(2),
-          total: total.toFixed(2),
-          lineItemsCount: event.change_event_line_items?.[0]?.count || 0,
+          rom: (lineItemAgg?.rom || 0).toFixed(2),
+          total: (lineItemAgg?.total || 0).toFixed(2),
+          cost_rom: (lineItemAgg?.costRom || 0).toFixed(2),
+          lineItemsCount: lineItemAgg?.count ?? event.change_event_line_items?.[0]?.count ?? 0,
+          // Procore parity placeholders for Prime PCO fields remain null
+          // until a canonical CE -> PCO table is implemented.
+          prime_pco: null,
+          prime_pco_title: null,
+          rfq_title: rfqMap.get(String(event.id)) || null,
+          commitment: contractInfo?.contractNumber || null,
+          commitment_title: contractInfo?.title || null,
         }
-      })
+      }
     )
 
     // Format response with pagination

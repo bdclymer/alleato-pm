@@ -467,8 +467,6 @@ interface ChatAreaProps {
   onInputChange: (value: string) => void;
   onSubmit: (message: string) => void;
   onStop: () => void;
-  conversationCount?: number;
-  activeConversationTitle?: string | null;
 }
 
 export function ChatArea({
@@ -486,8 +484,6 @@ export function ChatArea({
   onInputChange,
   onSubmit,
   onStop,
-  conversationCount = 0,
-  activeConversationTitle = null,
 }: ChatAreaProps) {
   // Council mode can be controlled externally (via prop) or internally
   const [councilModeInternal, setCouncilModeInternal] = useState(false);
@@ -564,10 +560,6 @@ export function ChatArea({
     [messages, isStreaming],
   );
 
-  const headerTitle = hasMessages
-    ? activeConversationTitle || "AI Strategist"
-    : "AI Strategist";
-
   // Shared prompt input element
   const promptInputEl = (
     <PromptInput
@@ -576,8 +568,8 @@ export function ChatArea({
       isLoading={isStreaming}
       onSubmit={handleSubmit}
       className={cn(
-        "rounded-[1.75rem] border-border/70 bg-background p-3 shadow-sm",
-        hasMessages && "rounded-[1.5rem]",
+        "rounded-[1.75rem] border-0 bg-card px-3 py-2 shadow-sm",
+        hasMessages && "rounded-[1.75rem]",
       )}
     >
       <PromptInputTextarea
@@ -586,19 +578,19 @@ export function ChatArea({
             ? "Ask the council for a recommendation..."
             : "How can I help with your projects today?"
         }
-        className="min-h-20 px-2 pb-3 pt-2 text-[15px] leading-6 placeholder:text-muted-foreground/80"
+        className="min-h-14 px-2 pb-2 pt-2 text-[15px] leading-6 placeholder:text-muted-foreground/80"
       />
-      <PromptInputActions className="flex-col items-stretch gap-3 px-1 pb-1 sm:flex-row sm:items-center sm:justify-between">
+      <PromptInputActions className="flex-col items-stretch gap-2 px-1 pb-1 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 flex-wrap items-center gap-2">
           <Popover open={projectOpen} onOpenChange={setProjectOpen}>
             <PopoverTrigger asChild>
               <button
                 type="button"
                 className={cn(
-                  "flex min-h-11 items-center gap-1.5 rounded-full border px-3 py-2 text-xs font-medium transition-colors",
+                  "flex min-h-10 items-center gap-1.5 rounded-full bg-muted px-3 py-2 text-xs font-medium transition-colors",
                   selectedProject
-                    ? "border-border bg-muted/60 text-foreground"
-                    : "border-border/70 text-muted-foreground hover:bg-muted/40 hover:text-foreground",
+                    ? "text-foreground"
+                    : "text-muted-foreground hover:bg-accent hover:text-foreground",
                 )}
                 aria-label="Select project context"
               >
@@ -659,17 +651,24 @@ export function ChatArea({
             aria-checked={councilMode}
             onClick={handleCouncilToggle}
             className={cn(
-              "flex min-h-11 items-center gap-2 rounded-full border px-3 py-2 text-xs font-medium transition-colors",
+              "flex min-h-10 items-center gap-2 rounded-full px-3 py-2 text-xs font-medium transition-colors",
               councilMode
-                ? "border-border bg-muted/60 text-foreground"
-                : "border-border/70 text-muted-foreground hover:bg-muted/40 hover:text-foreground",
+                ? "bg-accent text-foreground"
+                : "bg-muted text-foreground hover:bg-accent",
             )}
           >
-            <span className="inline-flex h-5 w-9 shrink-0 items-center rounded-full bg-muted p-0.5">
+            <span
+              className={cn(
+                "inline-flex h-5 w-9 shrink-0 items-center rounded-full p-0.5 transition-colors",
+                councilMode ? "bg-primary/20" : "bg-background/80",
+              )}
+            >
               <span
                 className={cn(
-                  "h-4 w-4 rounded-full bg-foreground/25 transition-transform duration-200",
-                  councilMode && "translate-x-4 bg-primary",
+                  "h-4 w-4 rounded-full transition-transform duration-200",
+                  councilMode
+                    ? "translate-x-4 bg-primary shadow-sm"
+                    : "bg-muted-foreground/70",
                 )}
               />
             </span>
@@ -681,7 +680,7 @@ export function ChatArea({
             <Button
               size="icon"
               variant={input.trim() ? "default" : "ghost"}
-              className="h-11 w-11 rounded-full border-border/70"
+              className="h-10 w-10 rounded-full"
               disabled={!input.trim() && !isStreaming}
               onClick={isStreaming ? onStop : handleSubmit}
             >
@@ -697,32 +696,20 @@ export function ChatArea({
     </PromptInput>
   );
 
-  const poweredByEl = (
-    <p className="mt-3 text-center text-xs text-muted-foreground/50">
-      Powered by live project data
-    </p>
-  );
-
   return (
-    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
+    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
       {!hasMessages && !isLoadingMessages ? (
-        <WelcomeScreen
-          onSelectPrompt={(prompt) => onSubmit(prompt)}
-          conversationCount={conversationCount}
-        >
-          {promptInputEl}
-          {poweredByEl}
-        </WelcomeScreen>
+        <div className="flex min-h-0 flex-1">
+          <WelcomeScreen
+            onSelectPrompt={(prompt) => onSubmit(prompt)}
+          >
+            {promptInputEl}
+          </WelcomeScreen>
+        </div>
       ) : (
         <>
           <Conversation className="min-h-0">
-            <ConversationContent className="mx-auto w-full max-w-3xl px-4 pb-36 pt-6 md:px-6 md:pb-40 md:pt-8">
-              <section className="mb-4 text-center">
-                <h1 className="font-serif text-3xl font-normal tracking-tight text-foreground sm:text-4xl">
-                  {headerTitle}
-                </h1>
-              </section>
-
+            <ConversationContent className="mx-auto w-full max-w-4xl px-4 pb-10 pt-6 md:px-6 md:pb-12 md:pt-8">
               {messages.map((msg, msgIndex) => {
                 const text = getMessageText(msg);
                 const isAssistant = msg.role === "assistant";
@@ -784,7 +771,7 @@ export function ChatArea({
                       key={msg.id}
                       from="user"
                     >
-                      <MessageContent className="rounded-[1.4rem] px-4 py-3 shadow-sm sm:px-5">
+                      <MessageContent className="rounded-[1.4rem] border border-border/60 bg-muted/40 px-4 py-3 shadow-none sm:px-5">
                         <MessageResponse>{text}</MessageResponse>
                       </MessageContent>
                     </Message>
@@ -833,7 +820,7 @@ export function ChatArea({
                           ) : null}
 
                           {/* Main text response */}
-                          <MessageResponse className="text-[15px] leading-6 md:text-sm">
+                          <MessageResponse className="text-sm leading-6">
                             {formattedAssistantText}
                           </MessageResponse>
 
@@ -866,7 +853,7 @@ export function ChatArea({
 
                         {/* Message actions: copy, thumbs up/down (hover-only) */}
                         {text && (
-                          <MessageActions className="opacity-0 transition-opacity group-hover:opacity-100">
+                          <MessageActions className="opacity-100">
                             <MessageAction
                               tooltip="Copy"
                               onClick={() => handleCopy(text)}
@@ -916,13 +903,12 @@ export function ChatArea({
                 </div>
               )}
             </ConversationContent>
-            <ConversationScrollButton className="bottom-32 md:bottom-28" />
+            <ConversationScrollButton className="bottom-20 md:bottom-20" />
           </Conversation>
 
-          <div className="sticky bottom-0 z-20 shrink-0 bg-gradient-to-t from-background via-background to-transparent px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-3 md:px-4">
+          <div className="sticky bottom-0 z-20 shrink-0 bg-background/95 px-3 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur md:px-4">
             <div className="mx-auto w-full max-w-3xl">
               {promptInputEl}
-              {poweredByEl}
             </div>
           </div>
         </>

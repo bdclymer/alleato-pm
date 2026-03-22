@@ -50,6 +50,12 @@ export const changeEventColumns: ColumnConfig[] = [
   { id: "type", label: "Type", defaultVisible: true },
   { id: "reason", label: "Change Reason", defaultVisible: true },
   { id: "origin", label: "Origin", defaultVisible: true },
+  { id: "prime_pco", label: "Prime PCO", defaultVisible: true },
+  { id: "prime_pco_title", label: "Prime PCO Title", defaultVisible: true },
+  { id: "cost_rom", label: "Cost ROM", defaultVisible: true },
+  { id: "rfq_title", label: "RFQ Title", defaultVisible: true },
+  { id: "commitment", label: "Commitment", defaultVisible: true },
+  { id: "commitment_title", label: "Commitment Title", defaultVisible: true },
   { id: "created_at", label: "Created", defaultVisible: false },
 ];
 
@@ -145,6 +151,21 @@ function formatDate(dateValue: string | null | undefined): string {
   return parsed.toLocaleDateString();
 }
 
+function formatMoney(value: number | string | null | undefined): string {
+  const numeric =
+    typeof value === "number"
+      ? value
+      : typeof value === "string"
+        ? Number(value)
+        : NaN;
+  if (!Number.isFinite(numeric)) return "-";
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 2,
+  }).format(numeric);
+}
+
 export function buildChangeEventTableColumns(): TableColumn<ChangeEvent>[] {
   return [
     {
@@ -185,6 +206,40 @@ export function buildChangeEventTableColumns(): TableColumn<ChangeEvent>[] {
     },
     {
       ...changeEventColumns[6],
+      render: (item) => <span>{item.prime_pco || "-"}</span>,
+      sortValue: (item) => item.prime_pco ?? "",
+    },
+    {
+      ...changeEventColumns[7],
+      render: (item) => (
+        <span className="line-clamp-1">{item.prime_pco_title || "-"}</span>
+      ),
+      sortValue: (item) => item.prime_pco_title ?? "",
+    },
+    {
+      ...changeEventColumns[8],
+      render: (item) => <span>{formatMoney(item.cost_rom)}</span>,
+      sortValue: (item) => Number(item.cost_rom ?? 0),
+    },
+    {
+      ...changeEventColumns[9],
+      render: (item) => <span className="line-clamp-1">{item.rfq_title || "-"}</span>,
+      sortValue: (item) => item.rfq_title ?? "",
+    },
+    {
+      ...changeEventColumns[10],
+      render: (item) => <span>{item.commitment || "-"}</span>,
+      sortValue: (item) => item.commitment ?? "",
+    },
+    {
+      ...changeEventColumns[11],
+      render: (item) => (
+        <span className="line-clamp-1">{item.commitment_title || "-"}</span>
+      ),
+      sortValue: (item) => item.commitment_title ?? "",
+    },
+    {
+      ...changeEventColumns[12],
       render: (item) => <span>{formatDate(item.created_at)}</span>,
       sortValue: (item) => (item.created_at ? new Date(item.created_at).getTime() : 0),
     },

@@ -9,7 +9,6 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { LiveCursors } from "@/components/live-cursors/LiveCursors";
-import { CanvasComments } from "@/components/canvas-comments/CanvasComments";
 import { AdminFeedbackWidget } from "@/components/admin-feedback/AdminFeedbackWidget";
 import { feedbackTargetProps } from "@/lib/admin-feedback/constants";
 
@@ -42,9 +41,6 @@ export default function MainLayout({
           {showAlleatoAIWidget ? <AIChatWidgetLazy /> : null}
           <React.Suspense fallback={null}>
             <LiveCursors />
-          </React.Suspense>
-          <React.Suspense fallback={null}>
-            <CanvasComments />
           </React.Suspense>
           <React.Suspense fallback={null}>
             <AdminFeedbackWidget />

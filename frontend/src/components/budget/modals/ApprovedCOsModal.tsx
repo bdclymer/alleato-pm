@@ -125,7 +125,7 @@ export function ApprovedCOsModal({
         {activeTab === "approved" ? (
           <div className="p-6 space-y-4">
             {/* Total Summary */}
-            <div className="rounded-xl border border-slate-200 shadow-sm p-4 bg-gradient-to-br from-green-50 via-white to-white">
+            <div className="rounded-lg border border-border shadow-xs p-4 bg-card">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-foreground">
@@ -145,12 +145,12 @@ export function ApprovedCOsModal({
             </div>
 
             {/* Description Box */}
-            <div className="rounded-lg bg-blue-50 border border-blue-200 p-4">
+            <div className="rounded-lg bg-muted border border-border p-4">
               <div className="flex items-start gap-4">
-                <FileText className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-blue-900">
+                <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-foreground">
                   <p className="font-semibold">About Approved COs</p>
-                  <p className="mt-1">
+                  <p className="mt-1 text-muted-foreground">
                     These are change orders from your prime contract that have
                     been approved and impact this budget line. Only approved
                     change orders are included in the budget calculations.
@@ -160,31 +160,31 @@ export function ApprovedCOsModal({
             </div>
 
             {/* Change Orders Table */}
-            <div className="overflow-x-auto scrollbar-hide rounded-xl border border-slate-200 shadow-sm bg-background">
+            <div className="overflow-x-auto scrollbar-hide rounded-lg border border-border shadow-xs bg-background">
               <table className="w-full text-sm">
-                <thead className="bg-slate-50 border-b border-slate-200">
+                <thead className="bg-muted border-b border-border">
                   <tr>
-                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-foreground">
                       CO Number
                     </th>
-                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-foreground">
                       Description
                     </th>
-                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-foreground">
                       Contract
                     </th>
-                    <th className="text-right px-4 py-4 font-semibold text-slate-800">
+                    <th className="text-right px-4 py-4 font-semibold text-foreground">
                       Amount
                     </th>
-                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-foreground">
                       Approved Date
                     </th>
-                    <th className="text-left px-4 py-4 font-semibold text-slate-800">
+                    <th className="text-left px-4 py-4 font-semibold text-foreground">
                       Approved By
                     </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-border">
                   {loading ? (
                     <tr>
                       <td
@@ -207,9 +207,9 @@ export function ApprovedCOsModal({
                     changeOrders.map((co) => (
                       <tr
                         key={co.id}
-                        className="hover:bg-green-50/40 transition-colors"
+                        className="hover:bg-muted/50 transition-colors"
                       >
-                        <td className="px-4 py-4 font-medium text-blue-600">
+                        <td className="px-4 py-4 font-medium text-primary">
                           {co.changeOrderNumber}
                         </td>
                         <td
@@ -249,7 +249,7 @@ export function ApprovedCOsModal({
               rejected, and voided) for this cost code.
             </p>
 
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-center">
+            <div className="rounded-lg border border-border bg-muted p-6 text-center">
               <p className="text-muted-foreground">History view coming soon</p>
             </div>
           </div>

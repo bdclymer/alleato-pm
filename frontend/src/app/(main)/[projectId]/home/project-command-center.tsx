@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { format, isPast, differenceInDays } from "date-fns";
+import { format, isPast } from "date-fns";
 import {
   AlertTriangle,
   ArrowRight,
@@ -14,14 +14,18 @@ import {
   Clock,
   FileText,
   Layers,
+  MapPin,
   TrendingDown,
   TrendingUp,
+  UserRound,
   Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBudgetData } from "@/hooks/use-budget-data";
 import { useCurrentUserName } from "@/hooks/use-current-user-name";
 import { StatusBadge, Skeleton } from "@/components/ds";
+import { Button } from "@/components/ui/button";
+import { EditProjectSidebar } from "@/components/project/edit-project-sidebar";
 import { RealtimeAvatarStack } from "@/components/realtime-avatar-stack";
 import { RealtimeCursors } from "@/components/realtime-cursors";
 import type { Database } from "@/types/database.types";
@@ -102,6 +106,12 @@ function pct(numerator: number, denominator: number): number {
   return Math.min(100, Math.round((numerator / denominator) * 100));
 }
 
+function truncateSentence(value: string, max = 110): string {
+  const normalized = value.replace(/\s+/g, " ").trim();
+  if (normalized.length <= max) return normalized;
+  return `${normalized.slice(0, max - 1).trimEnd()}…`;
+}
+
 /* ─────────────────────────────────────────────────────────────
    Sub-components
 ───────────────────────────────────────────────────────────── */
@@ -155,7 +165,7 @@ interface ProgressBarProps {
 }
 function ProgressBar({ value, tone = "neutral" }: ProgressBarProps) {
   return (
-    <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
+    <div className="h-1.5 w-full rounded-full bg-border overflow-hidden">
       <div
         className={cn(
           "h-full rounded-full transition-all",
@@ -211,7 +221,9 @@ export function ProjectCommandCenter({
   contracts,
   changeEvents = [],
   schedule = [],
+  budget = [],
 }: ProjectCommandCenterProps) {
+  const [isEditSidebarOpen, setIsEditSidebarOpen] = React.useState(false);
   const projectId = String(project.id);
   const roomName = `project-home:${projectId}`;
   const currentUserName = useCurrentUserName();
@@ -223,6 +235,10 @@ export function ProjectCommandCenter({
     (primaryContract?.revised_contract_value as number | null) ??
     (primaryContract?.original_contract_value as number | null) ??
     null;
+  const primeContractHref = primaryContract
+    ? `/${projectId}/prime-contracts/${primaryContract.id}`
+    : `/${projectId}/prime-contracts/new`;
+  const primeContractActionLabel = primaryContract ? "View" : "Create";
 
   /* ── Derived: Budget ───────────────────────────────── */
   const revisedBudget = grandTotals.revisedBudget || grandTotals.originalBudgetAmount;
@@ -233,6 +249,13 @@ export function ProjectCommandCenter({
   const spendPct = pct(costToDate, revisedBudget);
   const varianceTone: "success" | "danger" | "warning" =
     variance > 0 ? "success" : variance < 0 ? "danger" : "warning";
+  const budgetHref = `/${projectId}/budget`;
+  const budgetActionLabel = "View";
+  const hasCommitments = commitments.length > 0;
+  const commitmentsHref = hasCommitments
+    ? `/${projectId}/commitments`
+    : `/${projectId}/commitments/new?type=subcontract`;
+  const commitmentsActionLabel = hasCommitments ? "View" : "Create";
 
   /* ── Derived: Approved change orders total ─────────── */
   const approvedCOTotal = changeOrders
@@ -251,6 +274,11 @@ export function ProjectCommandCenter({
   const ceApproved = ceByStatus["approved"] ?? 0;
   const ceRejected = ceByStatus["rejected"] ?? 0;
   const ceDraft = ceByStatus["draft"] ?? 0;
+  const hasChangeEvents = changeEvents.length > 0;
+  const changeEventsHref = hasChangeEvents
+    ? `/${projectId}/change-events`
+    : `/${projectId}/change-events/new`;
+  const changeEventsActionLabel = hasChangeEvents ? "View All" : "Create Change Event";
 
   /* ── Derived: RFIs ──────────────────────────────────── */
   const rfisOpen = rfis.filter((r) => r.status.toLowerCase() !== "closed");
@@ -293,9 +321,9 @@ export function ProjectCommandCenter({
     (primaryContract?.substantial_completion_date as string | null) ??
     project["est completion"] ??
     null;
-  const daysRemaining = completionDate
-    ? differenceInDays(new Date(completionDate), new Date())
-    : null;
+  const infoDate = project["start date"] ?? completionDate;
+  const jobNumber = project["job number"] ?? project.project_number;
+  const projectLocation = project.state ?? project.address;
 
   /* ── Recent meetings ────────────────────────────────── */
   const recentMeetings = [...meetings]
@@ -332,80 +360,80 @@ export function ProjectCommandCenter({
       <div className="border-b border-border bg-card px-5 lg:px-7 py-4">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="min-w-0">
-            <div className="flex items-center gap-2 mb-1 flex-wrap">
-              {project.current_phase && (
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  {project.current_phase}
-                </span>
-              )}
-              {project.health_status && (
-                <StatusBadge status={project.health_status} />
-              )}
-            </div>
+            {jobNumber && (
+              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground mb-1.5">
+                Job # {jobNumber}
+              </div>
+            )}
             <h1 className="text-xl font-semibold text-foreground leading-snug">
               {project.name ?? "Untitled Project"}
             </h1>
-            <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground flex-wrap">
-              {project.project_number && (
-                <span>#{project.project_number}</span>
-              )}
+
+            <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground flex-wrap">
               {project.client && (
-                <>
-                  <span className="opacity-30">·</span>
-                  <span>{project.client}</span>
-                </>
+                <span className="inline-flex items-center gap-1.5">
+                  <UserRound className="h-4 w-4" />
+                  {project.client}
+                </span>
               )}
-              {completionDate && (
-                <>
-                  <span className="opacity-30">·</span>
-                  <span>
-                    Completion {format(new Date(completionDate), "MMM d, yyyy")}
-                    {daysRemaining != null && (
-                      <span
-                        className={cn(
-                          "ml-1",
-                          daysRemaining < 0
-                            ? "text-red-600"
-                            : daysRemaining < 30
-                            ? "text-amber-600"
-                            : ""
-                        )}
-                      >
-                        ({daysRemaining < 0
-                          ? `${Math.abs(daysRemaining)}d overdue`
-                          : `${daysRemaining}d`})
-                      </span>
-                    )}
-                  </span>
-                </>
+
+              {infoDate && (
+                <span className="inline-flex items-center gap-1.5">
+                  <Calendar className="h-4 w-4" />
+                  {format(new Date(infoDate), "MMMM d, yyyy")}
+                </span>
+              )}
+
+              {projectLocation && (
+                <span className="inline-flex items-center gap-1.5">
+                  <MapPin className="h-4 w-4" />
+                  {projectLocation}
+                </span>
               )}
             </div>
           </div>
 
-          <div className="flex items-start gap-6 shrink-0">
-            <div className="min-w-40 text-right">
-              <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-                Collaborators
-              </div>
-              <div className="flex justify-end">
-                <RealtimeAvatarStack roomName={roomName} />
-              </div>
+          <div className="flex flex-col items-end gap-3 shrink-0">
+            <div className="flex items-center gap-2">
+              <Button asChild variant="secondary" size="sm">
+                <Link href={`/${projectId}/setup`}>Edit</Link>
+              </Button>
+              <Button size="sm" onClick={() => setIsEditSidebarOpen(true)}>
+                Project Checklist
+              </Button>
             </div>
 
-            {project.health_score != null && (
-              <div className="text-right shrink-0">
-                <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">
-                  Health
+            <div className="flex items-start gap-6">
+              <div className="min-w-40 text-right">
+                <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                  Collaborators
                 </div>
-                <div className="text-2xl font-semibold tabular-nums tracking-tight">
-                  {project.health_score}
-                  <span className="text-sm font-normal text-muted-foreground">/100</span>
+                <div className="flex justify-end">
+                  <RealtimeAvatarStack roomName={roomName} />
                 </div>
               </div>
-            )}
+
+              {project.health_score != null && (
+                <div className="text-right shrink-0">
+                  <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">
+                    Health
+                  </div>
+                  <div className="text-2xl font-semibold tabular-nums tracking-tight">
+                    {project.health_score}
+                    <span className="text-sm font-normal text-muted-foreground">/100</span>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
+
+      <EditProjectSidebar
+        project={project}
+        open={isEditSidebarOpen}
+        onOpenChange={setIsEditSidebarOpen}
+      />
 
       {/* ────────────────────────────────────────────────────
           KPI RAIL
@@ -413,7 +441,7 @@ export function ProjectCommandCenter({
       <div className="border-b border-border bg-background">
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-x divide-border">
           {/* Contract Value */}
-          <div className="px-5 py-4">
+          <div className="relative px-5 py-4">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
               Contract Value
             </span>
@@ -425,10 +453,16 @@ export function ProjectCommandCenter({
                 +{fmtCompact(approvedCOTotal)} in COs
               </p>
             )}
+            <Link
+              href={primeContractHref}
+              className="absolute right-5 top-4 inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+            >
+              {primeContractActionLabel} <ChevronRight className="h-3 w-3" />
+            </Link>
           </div>
 
           {/* Budget */}
-          <div className="px-5 py-4">
+          <div className="relative px-5 py-4">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
               Budget
             </span>
@@ -444,6 +478,12 @@ export function ProjectCommandCenter({
                 </p>
               </>
             )}
+            <Link
+              href={budgetHref}
+              className="absolute right-5 top-4 inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+            >
+              {budgetActionLabel} <ChevronRight className="h-3 w-3" />
+            </Link>
           </div>
 
           {/* Cost to Date */}
@@ -466,7 +506,7 @@ export function ProjectCommandCenter({
           </div>
 
           {/* Committed */}
-          <div className="px-5 py-4">
+          <div className="relative px-5 py-4">
             <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
               Committed
             </span>
@@ -482,6 +522,12 @@ export function ProjectCommandCenter({
                 </p>
               </>
             )}
+            <Link
+              href={commitmentsHref}
+              className="absolute right-5 top-4 inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+            >
+              {commitmentsActionLabel} <ChevronRight className="h-3 w-3" />
+            </Link>
           </div>
 
           {/* Forecast Variance */}
@@ -659,10 +705,10 @@ export function ProjectCommandCenter({
             <SectionHeading
               action={
                 <Link
-                  href={`/${projectId}/change-events`}
+                  href={changeEventsHref}
                   className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  View All <ChevronRight className="h-3 w-3" />
+                  {changeEventsActionLabel} <ChevronRight className="h-3 w-3" />
                 </Link>
               }
             >
@@ -793,7 +839,19 @@ export function ProjectCommandCenter({
               <p className="text-sm text-muted-foreground">No meetings recorded</p>
             ) : (
               <div>
-                {recentMeetings.map((m) => (
+                {recentMeetings.map((m) => {
+                  const meetingDescriptionSource =
+                    m.summary ??
+                    m.overview ??
+                    m.description ??
+                    m.notes ??
+                    m.action_items ??
+                    null;
+                  const meetingDescription = meetingDescriptionSource
+                    ? truncateSentence(meetingDescriptionSource)
+                    : "Review agenda, decisions, and action items.";
+
+                  return (
                   <Link
                     key={m.id}
                     href={`/${projectId}/meetings/${m.id}`}
@@ -802,6 +860,9 @@ export function ProjectCommandCenter({
                     <span className="mt-[5px] h-1.5 w-1.5 rounded-full bg-muted-foreground/30 shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm truncate">{m.title ?? "Meeting"}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                        {meetingDescription}
+                      </p>
                       {m.date && (
                         <p className="text-xs text-muted-foreground mt-0.5">
                           {format(new Date(m.date), "MMM d, yyyy")}
@@ -810,7 +871,8 @@ export function ProjectCommandCenter({
                     </div>
                     <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0 mt-0.5" />
                   </Link>
-                ))}
+                  );
+                })}
               </div>
             )}
           </section>

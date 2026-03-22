@@ -1,0 +1,17 @@
+{
+  "feature": "change-events",
+  "generated_at": "2026-03-22T15:36:40Z",
+  "ready": false,
+  "blocking_gaps": ["CE-001"],
+  "resolved_gaps": ["CE-002", "CE-003", "CE-004"],
+  "waived_gaps": [],
+  "gate_failures": [],
+  "nonblocking_open_gaps": ["CE-005"],
+  "evidence_index": [
+    ".claude/procore-manifests/change-events/manifest.json",
+    "_bmad-output/planning-artifacts/change-events/verification/runs/ce-finalization-20260322T153640Z/03-corrected-manifest.json",
+    "_bmad-output/planning-artifacts/change-events/verification/runs/ce-finalization-20260322T153640Z/05-verification-report.json",
+    "_bmad-output/planning-artifacts/change-events/verification/runs/ce-finalization-20260322T153640Z/feature-verifications/list/result.json",
+    "_bmad-output/planning-artifacts/change-events/verification/runs/ce-finalization-20260322T153640Z/feature-verifications/create/result.json"
+  ]
+}

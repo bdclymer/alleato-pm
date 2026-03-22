@@ -35,7 +35,7 @@ interface UseCompaniesReturn {
 export function useCompanies(
   options: UseCompaniesOptions = {},
 ): UseCompaniesReturn {
-  const { search, limit = 100, enabled = true } = options;
+  const { search, limit = 1000, enabled = true } = options;
   const [companies, setCompanies] = useState<Company[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);

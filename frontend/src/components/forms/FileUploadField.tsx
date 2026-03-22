@@ -216,12 +216,12 @@ export function FileUploadField({
               <li
                 key={index}
                 className={cn(
-                  "flex items-center justify-between rounded-md border",
-                  isMinimal ? "px-3 py-2" : "p-4",
+                  "flex items-center justify-between",
+                  isMinimal ? "px-3 py-1.5" : "p-4",
                 )}
               >
                 <div className={cn("flex items-center", isMinimal ? "gap-2" : "gap-4")}>
-                  <FileText className={cn("text-muted-foreground", isMinimal ? "h-4 w-4" : "h-8 w-8")} />
+                  <FileText className={cn("text-primary", isMinimal ? "h-4 w-4" : "h-8 w-8")} />
                   <div>
                     <p className="text-sm font-medium">{file.name}</p>
                     <p className="text-xs text-muted-foreground">

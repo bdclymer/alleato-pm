@@ -1,0 +1,26 @@
+{
+  "run_id": "ce-finalization-20260322T153127Z",
+  "feature": "change-events",
+  "project_id": "562949954728542",
+  "mode": "full",
+  "git_sha": "f023290c",
+  "started_at": "2026-03-22T15:31:27Z",
+  "phases": [
+    {"name": "INIT_COMMAND", "result": "passed"},
+    {"name": "DISCOVER", "result": "passed"},
+    {"name": "CAPTURE_SOURCE_OF_TRUTH", "result": "passed"},
+    {"name": "RECONCILE_MANIFEST", "result": "passed"},
+    {"name": "GAP_ANALYZE", "result": "passed"},
+    {"name": "REMEDIATE", "result": "passed"},
+    {"name": "VERIFY_IMPLEMENTATION", "result": "passed"},
+    {"name": "FINALIZE_AND_REPORT", "result": "passed"}
+  ],
+  "evidence": [
+    ".claude/procore-manifests/change-events/manifest.json",
+    "frontend/src/app/(main)/[projectId]/change-events/page.tsx",
+    "frontend/src/app/(main)/[projectId]/change-events/[changeEventId]/page.tsx",
+    "frontend/src/app/api/projects/[projectId]/change-events/route.ts",
+    "frontend/src/app/api/projects/[projectId]/change-events/[changeEventId]/route.ts"
+  ],
+  "completed_at": "2026-03-22T15:31:27Z"
+}

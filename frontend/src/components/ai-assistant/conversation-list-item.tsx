@@ -115,7 +115,9 @@ export function ConversationListItem({
         </span>
         {!isActive && (
           <span className="mt-0.5 block truncate text-xs text-muted-foreground">
-            {formatRelativeTime(conversation.updated_at)}
+            {formatRelativeTime(
+              conversation.last_message_at || conversation.created_at,
+            )}
           </span>
         )}
       </div>

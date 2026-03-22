@@ -1,0 +1,8 @@
+{
+  "run_id": "ce-finalization-20260322T153640Z",
+  "feature": "change-events",
+  "project_id": "562949954728542",
+  "git_sha": "f023290c",
+  "started_at": "2026-03-22T15:36:40Z",
+  "artifact_root": "_bmad-output/planning-artifacts/change-events/verification/runs/ce-finalization-20260322T153640Z"
+}

@@ -19,7 +19,7 @@ export function FormSection({
   return (
     <section
       className={cn(
-        "space-y-3 border-b border-border/70 pb-8 last:border-b-0 last:pb-0",
+        "space-y-6 border-t border-border/70 pt-8 pb-8 first:border-t-0 first:pt-0",
         className,
       )}
     >

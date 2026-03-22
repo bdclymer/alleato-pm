@@ -1,12 +1,12 @@
 import {
-  ChevronRight,
+  ChevronDown,
   FileText,
   GripVertical,
   MoreVertical,
   Plus,
+  Rows3,
   Trash2,
 } from "lucide-react";
-import type { Dispatch, SetStateAction } from "react";
 import { useMemo } from "react";
 import {
   DndContext,
@@ -28,6 +28,12 @@ import { cn } from "@/lib/utils";
 import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
 import { Button } from "@/components/ui/button";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   InputGroup,
   InputGroupAddon,
   InputGroupInput,
@@ -40,10 +46,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Collapsible,
-  CollapsibleContent,
-} from "@/components/ui/collapsible";
 import {
   Table,
   TableBody,
@@ -64,14 +66,11 @@ import type {
 interface PrimeContractOverviewTabProps {
   activeTab: ContractTab;
   contract: Contract;
-  generalInfoOpen: boolean;
-  setGeneralInfoOpen: Dispatch<SetStateAction<boolean>>;
-  contractSummaryOpen: boolean;
-  setContractSummaryOpen: Dispatch<SetStateAction<boolean>>;
   attachments: ContractAttachment[];
   attachmentsLoading: boolean;
   isUploadingAttachment: boolean;
   handleUploadAttachment: (file: File) => Promise<void>;
+  handleDeleteAttachment: (attachmentId: string) => Promise<void>;
   formatDate: (value: string | null | undefined) => string;
   getTextValue: (
     value: string | null | undefined,
@@ -91,6 +90,7 @@ interface PrimeContractOverviewTabProps {
   onCancelSovEdit: () => void;
   onSaveSovEdit: () => Promise<void>;
   onAddSovLine: () => void;
+  onAddSovGroup: () => void;
   onUpdateSovLine: (
     lineId: string,
     updates: Partial<Pick<ContractLineItem, "description" | "quantity" | "unit_of_measure" | "unit_cost" | "cost_code_id">>,
@@ -99,20 +99,18 @@ interface PrimeContractOverviewTabProps {
   onRemoveSovLine: (lineId: string) => void;
   onReorderSovLines: (oldIndex: number, newIndex: number) => void;
   onRequestCreateBudgetCode: (lineId: string) => void;
+  onDeleteSovLine?: (lineId: string) => Promise<void>;
 }
 
 export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
   const {
     activeTab,
     contract,
-    generalInfoOpen,
-    setGeneralInfoOpen,
-    contractSummaryOpen,
-    setContractSummaryOpen,
     attachments,
     attachmentsLoading,
     isUploadingAttachment,
     handleUploadAttachment,
+    handleDeleteAttachment,
     formatDate,
     getTextValue,
     inclusionsList,
@@ -130,11 +128,13 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
     onCancelSovEdit,
     onSaveSovEdit,
     onAddSovLine,
+    onAddSovGroup,
     onUpdateSovLine,
     onUpdateSovLineBudgetCode,
     onRemoveSovLine,
     onReorderSovLines,
     onRequestCreateBudgetCode,
+    onDeleteSovLine,
   } = props;
   const ownerName = contract.contract_company?.name || contract.client?.name;
   const displayedSovItems = isSovEditing ? sovDraftItems : lineItems;
@@ -172,27 +172,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                 <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
                   <div className="space-y-6">
                     <div className="rounded-xl border border-border/60 p-4">
-                      <div className="flex flex-wrap items-center justify-between gap-4">
-                        <div>
-                          <h3 className="text-base font-semibold">Parties & Terms</h3>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="flex items-center gap-2"
-                          onClick={() => setGeneralInfoOpen((prev) => !prev)}
-                        >
-                          {generalInfoOpen ? "Hide" : "Show"}
-                          <ChevronRight
-                            className={cn(
-                              "h-4 w-4 transition-transform",
-                              generalInfoOpen ? "rotate-90" : "rotate-0",
-                            )}
-                          />
-                        </Button>
-                      </div>
-                      <Collapsible open={generalInfoOpen}>
-                        <CollapsibleContent>
+                      <h3 className="text-base font-semibold">General Information</h3>
                           <dl className="mt-4 grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
                             <div>
                               <dt className="text-xs font-medium text-muted-foreground">
@@ -280,14 +260,10 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                               </dd>
                             </div>
                           </dl>
-                        </CollapsibleContent>
-                      </Collapsible>
-                    </div>
 
-                    <div className="rounded-xl border border-border/60 p-4">
-                      <h3 className="text-base font-semibold">Description</h3>
-                      <div className="mt-4 grid gap-6">
+                          <div className="mt-6 border-t border-border/60 pt-6 grid gap-6">
                         <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-2">Description</p>
                           <p
                             className={cn(
                               "mt-2 text-[15px] leading-7",
@@ -299,8 +275,8 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                             {getTextValue(contract.description).text}
                           </p>
                         </div>
-                        <div className="rounded-lg border border-border/60 p-4">
-                          <div className="flex items-center justify-between mb-4">
+                        <div>
+                          <div className="flex items-center justify-between mb-3">
                             <p className="text-xs font-medium text-muted-foreground">
                               Attachments {attachments.length > 0 && `(${attachments.length})`}
                             </p>
@@ -335,24 +311,31 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                           ) : (
                             <ul className="space-y-2">
                               {attachments.map((att) => (
-                                <li key={att.id} className="flex items-center justify-between text-sm">
+                                <li key={att.id} className="flex items-center justify-between gap-2 text-sm">
                                   {att.downloadUrl || att.url ? (
                                     <a
                                       href={att.downloadUrl || att.url || "#"}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="truncate max-w-[60%] text-foreground hover:underline"
+                                      className="truncate flex-1 text-foreground hover:underline"
                                     >
                                       {att.fileName}
                                     </a>
                                   ) : (
-                                    <span className="truncate max-w-[60%] text-muted-foreground">
+                                    <span className="truncate flex-1 text-muted-foreground">
                                       {att.fileName}
                                     </span>
                                   )}
-                                  <span className="text-xs text-muted-foreground">
+                                  <span className="text-xs text-muted-foreground shrink-0">
                                     {formatDate(att.uploadedAt)}
                                   </span>
+                                  <button
+                                    onClick={() => handleDeleteAttachment(att.id)}
+                                    className="shrink-0 text-muted-foreground hover:text-destructive transition-colors"
+                                    aria-label={`Delete ${att.fileName}`}
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </button>
                                 </li>
                               ))}
                             </ul>
@@ -394,27 +377,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
 
                   <div className="space-y-6">
                     <div className="rounded-xl border border-border/60 p-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <h3 className="text-base font-semibold">Financial Snapshot</h3>
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="flex items-center gap-2"
-                          onClick={() => setContractSummaryOpen((prev) => !prev)}
-                        >
-                          {contractSummaryOpen ? "Hide" : "Show"}
-                          <ChevronRight
-                            className={cn(
-                              "h-4 w-4 transition-transform",
-                              contractSummaryOpen ? "rotate-90" : "rotate-0",
-                            )}
-                          />
-                        </Button>
-                      </div>
-                      <Collapsible open={contractSummaryOpen}>
-                        <CollapsibleContent>
+                      <h3 className="text-base font-semibold">Contract Summary</h3>
                           <dl className="mt-4 space-y-4 text-sm">
                             <div className="flex items-center justify-between">
                               <dt className="text-muted-foreground">Original Contract Amount</dt>
@@ -475,8 +438,6 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                               <dd className="text-right text-base font-semibold tabular-nums">{contract.percent_paid}%</dd>
                             </div>
                           </dl>
-                        </CollapsibleContent>
-                      </Collapsible>
                     </div>
 
                     <div className="rounded-xl border border-border/60 p-4">
@@ -547,6 +508,25 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                       </Button>
                     </>
                   ) : null}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="outline" size="sm" className="gap-1.5">
+                        <Plus className="h-4 w-4" />
+                        Add
+                        <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={onAddSovLine}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Line Item
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={onAddSovGroup}>
+                        <Rows3 className="mr-2 h-4 w-4" />
+                        Group
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </div>
               </div>
 
@@ -569,6 +549,18 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                       <p className="text-xs mt-2">
                         Add SOV lines with budget codes to track the contract value
                       </p>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="mt-4"
+                        onClick={() => {
+                          onStartSovEdit();
+                          onAddSovLine();
+                        }}
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add SOV Line
+                      </Button>
                     </div>
                   ) : (
                     <DndContext
@@ -608,6 +600,54 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                         </TableHeader>
                         <TableBody>
                           {displayedSovItems.map((item) => {
+                            // Render group header rows
+                            if (item.is_group_header) {
+                              return (
+                                <TableRow
+                                  key={item.id}
+                                  className="border-b border-border/60 bg-muted/40 hover:bg-muted/50"
+                                >
+                                  <TableCell className="w-10 px-1 py-1.5">
+                                    {isSovEditing && (
+                                      <div className="mt-1 cursor-grab rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted active:cursor-grabbing">
+                                        <GripVertical className="h-4 w-4" />
+                                      </div>
+                                    )}
+                                  </TableCell>
+                                  <TableCell colSpan={6} className="px-1 py-1.5">
+                                    {isSovEditing ? (
+                                      <Input
+                                        value={item.group_name || item.description || ""}
+                                        onChange={(e) =>
+                                          onUpdateSovLine(item.id, { description: e.target.value })
+                                        }
+                                        placeholder="Group name..."
+                                        className="h-8 font-semibold"
+                                      />
+                                    ) : (
+                                      <span className="text-sm font-semibold text-foreground">
+                                        {item.group_name || item.description || "Unnamed Group"}
+                                      </span>
+                                    )}
+                                  </TableCell>
+                                  <TableCell className="w-24 px-1 py-1.5">
+                                    {isSovEditing && (
+                                      <div className="flex justify-end">
+                                        <Button
+                                          variant="ghost"
+                                          size="sm"
+                                          className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                                          onClick={() => onRemoveSovLine(item.id)}
+                                        >
+                                          <Trash2 className="h-4 w-4" />
+                                        </Button>
+                                      </div>
+                                    )}
+                                  </TableCell>
+                                </TableRow>
+                              );
+                            }
+
                             const lineTotal =
                               (Number(item.quantity) || 0) * (Number(item.unit_cost) || 0);
                             // Use budget_code_id (the real FK) as the primary lookup,
@@ -767,15 +807,31 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                                     </div>
                                   ) : (
                                     <div className="flex justify-end">
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-8 w-8 p-0 text-muted-foreground"
-                                        onClick={onStartSovEdit}
-                                        aria-label={`Edit line item ${item.line_number}`}
-                                      >
-                                        <MoreVertical className="h-4 w-4" />
-                                      </Button>
+                                      <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="h-8 w-8 p-0 text-muted-foreground"
+                                            aria-label={`Actions for line item ${item.line_number}`}
+                                          >
+                                            <MoreVertical className="h-4 w-4" />
+                                          </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                          <DropdownMenuItem onClick={onStartSovEdit}>
+                                            Edit
+                                          </DropdownMenuItem>
+                                          {onDeleteSovLine && (
+                                            <DropdownMenuItem
+                                              className="text-destructive focus:text-destructive"
+                                              onClick={() => onDeleteSovLine(item.id)}
+                                            >
+                                              Delete
+                                            </DropdownMenuItem>
+                                          )}
+                                        </DropdownMenuContent>
+                                      </DropdownMenu>
                                     </div>
                                   )}
                                 </TableCell>

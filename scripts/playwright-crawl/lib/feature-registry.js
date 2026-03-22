@@ -20,6 +20,35 @@ const BASE = `https://us02.procore.com/webclients/host/companies/${COMPANY}/proj
  */
 
 export const FEATURES = {
+  'change-orders': {
+    name: 'Change Orders',
+    states: [
+      {
+        id: 'list',
+        type: 'list',
+        url: `https://us02.procore.com/${PROJECT}/project/change_orders/list`,
+        waitFor: '.ag-root, table, [class*="change-order"], .sortable.item_list',
+        description: 'Change Orders list view',
+      },
+      {
+        id: 'create-form',
+        type: 'create-form',
+        url: `https://us02.procore.com/${PROJECT}/project/change_orders/list`,
+        selector: 'button:has-text("Create"), [data-cy*="create"], a:has-text("Create")',
+        waitFor: 'form, [role="dialog"], [class*="modal"]',
+        description: 'Change Orders create flow',
+      },
+      {
+        id: 'detail',
+        type: 'detail',
+        url: `https://us02.procore.com/${PROJECT}/project/change_orders/list`,
+        selector: '.ag-row:first-child, tr[class*="row"]:first-child a, .item_list tbody tr:first-child a',
+        waitFor: '[class*="detail"], [class*="show"], form, .ag-root, table',
+        description: 'Change Orders detail page',
+      },
+    ],
+  },
+
   'change-events': {
     name: 'Change Events',
     states: [

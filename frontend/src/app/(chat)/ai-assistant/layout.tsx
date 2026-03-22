@@ -26,7 +26,7 @@ export default function AIAssistantLayout({
   }, []);
 
   return (
-    <div className="-mx-4 -mb-4 flex min-h-0 flex-1 overflow-hidden">
+    <div className="flex min-h-0 flex-1 overflow-hidden bg-background">
       {children}
     </div>
   );

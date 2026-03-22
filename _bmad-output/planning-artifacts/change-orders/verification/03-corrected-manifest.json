@@ -1,0 +1,63 @@
+{
+  "feature": "change-orders",
+  "generated_at": "2026-03-22T14:47:32Z",
+  "source_manifest": ".claude/procore-manifests/change-orders/manifest.json",
+  "reconciliation_evidence": {
+    "list_open": "_bmad-output/planning-artifacts/change-orders/verification/reconciliation/list-open.txt",
+    "list_snapshot": "_bmad-output/planning-artifacts/change-orders/verification/reconciliation/list-snapshot.txt",
+    "create_open": "_bmad-output/planning-artifacts/change-orders/verification/reconciliation/create-open.txt",
+    "create_snapshot": "_bmad-output/planning-artifacts/change-orders/verification/reconciliation/create-snapshot.txt",
+    "detail_open": "_bmad-output/planning-artifacts/change-orders/verification/reconciliation/detail-open.txt",
+    "detail_snapshot": "_bmad-output/planning-artifacts/change-orders/verification/reconciliation/detail-snapshot.txt"
+  },
+  "normalized": {
+    "list": {
+      "columns": [
+        "Contract",
+        "#",
+        "Revision",
+        "Title",
+        "Date Initiated",
+        "Contract Company",
+        "Designated Reviewer",
+        "Due Date",
+        "Review Date",
+        "Status",
+        "Amount"
+      ],
+      "toolbar_actions": ["Export", "Reports", "Add Filter"],
+      "row_actions": ["View", "PDF"]
+    },
+    "create_form": {
+      "required_controls_observed": [
+        "Status",
+        "Designated Reviewer",
+        "Description",
+        "Executed",
+        "Attach File(s)",
+        "Create",
+        "Create & Email"
+      ],
+      "notes": "Live snapshot confirms rich form controls and status options beyond the raw DOM extractor output."
+    },
+    "detail": {
+      "tabs": ["General", "Related Items (0)", "Emails (0)", "Change History (2)"],
+      "actions": ["Edit", "Create Change Event", "Create Prime Contract CO", "Email"]
+    },
+    "workflow": {
+      "statuses_observed": [
+        "Approved",
+        "Draft",
+        "No Charge",
+        "Pending - In Review",
+        "Pending - Not Pricing",
+        "Pending - Not Proceeding",
+        "Pending - Pricing",
+        "Pending - Proceeding",
+        "Pending - Revised",
+        "Rejected",
+        "Void"
+      ]
+    }
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "feature": "change-events",
+  "generated_at": "2026-03-22T15:31:27Z",
+  "tasks": [
+    {
+      "task_id": "TASK-CE-001",
+      "gap_id": "CE-001",
+      "layer": "ui",
+      "severity": "high",
+      "acceptance_criteria": "Change Events list supports Procore parity columns/groups for revenue and cost fields or documented product decision with owner/date.",
+      "depends_on": [],
+      "status": "open"
+    },
+    {
+      "task_id": "TASK-CE-002",
+      "gap_id": "CE-002",
+      "layer": "workflow",
+      "severity": "high",
+      "acceptance_criteria": "Orchestrator defines canonical phase-level verification command defaults and required output capture for each phase.",
+      "depends_on": [],
+      "status": "resolved"
+    },
+    {
+      "task_id": "TASK-CE-003",
+      "gap_id": "CE-003",
+      "layer": "tests",
+      "severity": "medium",
+      "acceptance_criteria": "VERIFY_IMPLEMENTATION references deterministic command path for screenshot/video/DB checks in one place.",
+      "depends_on": ["TASK-CE-002"],
+      "status": "resolved"
+    },
+    {
+      "task_id": "TASK-CE-004",
+      "gap_id": "CE-004",
+      "layer": "workflow",
+      "severity": "medium",
+      "acceptance_criteria": "Waiver metadata requires owner, approver, rationale, and expiry/review date.",
+      "depends_on": ["TASK-CE-002"],
+      "status": "resolved"
+    },
+    {
+      "task_id": "TASK-CE-005",
+      "gap_id": "CE-005",
+      "layer": "api",
+      "severity": "low",
+      "acceptance_criteria": "Change-event conversion endpoint naming is consistent in comments/docs/routes.",
+      "depends_on": [],
+      "status": "open"
+    }
+  ]
+}

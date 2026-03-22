@@ -360,6 +360,29 @@ After ANY change to a page, component, or layout:
 
 **Why:** Code changes do NOT equal visual correctness. Markdown rendering, CSS layout, and data formatting frequently produce unexpected results that are only visible in the browser.
 
+### 15. Review Your Own Output Gate (MANDATORY — SAVES USER TIME)
+
+**NEVER hand output back to the user without reviewing it yourself first.**
+
+This applies to ALL generated outputs — not just UI changes:
+- Scripts that produce screenshots → READ every screenshot with the Read tool before reporting findings
+- Scripts that produce reports → OPEN and READ the report output
+- Audit results, crawl results, analysis outputs → review them, summarize findings, identify issues
+- Any tool that writes files → read the output files before saying "done"
+
+**NEVER:**
+- Run a script and say "the output is at X, go look at it"
+- Generate 114 screenshots and tell the user to review them without reviewing yourself first
+- Claim a task is complete because the tool exited with code 0
+
+**ALWAYS:**
+- Read the outputs with the Read tool (images, files, reports)
+- Identify what's broken, wrong, or noteworthy
+- Present a summary of findings with specific issues called out
+- Only THEN ask the user what they want to do next
+
+**Why:** The user's time is wasted when they have to review raw output that Claude could have reviewed itself. The whole point of running a visual audit is to get a diagnosis — not just a pile of screenshots.
+
 ---
 
 ## Scaffolding System

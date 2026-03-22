@@ -10,14 +10,18 @@
     "grep": {},
     "grepInvert": null,
     "maxFailures": 0,
-    "metadata": {},
+    "metadata": {
+      "actualWorkers": 2
+    },
     "preserveOutput": "always",
     "projects": [
       {
         "outputDir": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 2
+        },
         "id": "setup",
         "name": "setup",
         "testDir": "/Users/meganharrison/Documents/alleato-pm/frontend/tests",
@@ -25,13 +29,15 @@
         "testMatch": [
           "/.*\\.setup\\.ts/"
         ],
-        "timeout": 60000
+        "timeout": 30000
       },
       {
         "outputDir": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 2
+        },
         "id": "chromium",
         "name": "chromium",
         "testDir": "/Users/meganharrison/Documents/alleato-pm/frontend/tests",
@@ -39,13 +45,15 @@
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
         ],
-        "timeout": 60000
+        "timeout": 30000
       },
       {
         "outputDir": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 2
+        },
         "id": "debug",
         "name": "debug",
         "testDir": "/Users/meganharrison/Documents/alleato-pm/frontend/tests",
@@ -55,13 +63,15 @@
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
         ],
-        "timeout": 60000
+        "timeout": 30000
       },
       {
         "outputDir": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
-        "metadata": {},
+        "metadata": {
+          "actualWorkers": 2
+        },
         "id": "no-auth",
         "name": "no-auth",
         "testDir": "/Users/meganharrison/Documents/alleato-pm/frontend/tests",
@@ -69,7 +79,7 @@
         "testMatch": [
           "/sidebar-collapse-verification\\.spec\\.ts/"
         ],
-        "timeout": 60000
+        "timeout": 30000
       }
     ],
     "quiet": false,
@@ -109,19 +119,210 @@
       "reuseExistingServer": true
     }
   },
-  "suites": [],
-  "errors": [
+  "suites": [
     {
-      "message": "Error: Cannot find package 'otpauth' imported from /Users/meganharrison/Documents/alleato-pm/frontend/tests/supabase-e2e/studio/scripts/login/github.ts",
-      "stack": "Error: Cannot find package 'otpauth' imported from /Users/meganharrison/Documents/alleato-pm/frontend/tests/supabase-e2e/studio/scripts/login/github.ts"
+      "title": "auth.setup.ts",
+      "file": "auth.setup.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "authenticate",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "setup",
+              "projectName": "setup",
+              "results": [
+                {
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 1626,
+                  "errors": [],
+                  "stdout": [
+                    {
+                      "text": "Existing auth session is still valid — skipping re-authentication\n"
+                    }
+                  ],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-03-22T18:50:17.549Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/auth.setup.ts-authenticate-setup/test-finished-1.png"
+                    },
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/auth.setup.ts-authenticate-setup/video.webm"
+                    }
+                  ]
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "17e3fe6f4d9d8bd79c6b-60f085b113a677673906",
+          "file": "auth.setup.ts",
+          "line": 55,
+          "column": 6
+        }
+      ]
+    },
+    {
+      "title": "supabase-e2e/studio/features/_global.setup.ts",
+      "file": "supabase-e2e/studio/features/_global.setup.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "Global Setup",
+          "ok": false,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "setup",
+              "projectName": "setup",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 1,
+                  "status": "failed",
+                  "duration": 1729,
+                  "error": {
+                    "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8082/\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8082/\", waiting until \"load\"\u001b[22m\n",
+                    "stack": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8082/\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8082/\", waiting until \"load\"\u001b[22m\n\n    at /Users/meganharrison/Documents/alleato-pm/frontend/tests/supabase-e2e/studio/features/_global.setup.ts:37:14",
+                    "location": {
+                      "file": "/Users/meganharrison/Documents/alleato-pm/frontend/tests/supabase-e2e/studio/features/_global.setup.ts",
+                      "column": 14,
+                      "line": 37
+                    },
+                    "snippet": "  35 |   const apiUrl = env.API_URL\n  36 |\n> 37 |   await page.goto(studioUrl).catch((err) => {\n     |              ^\n  38 |     console.error(\n  39 |       `\\n 🚨 Setup Error \n  40 | Studio is not available at: ${studioUrl}"
+                  },
+                  "errors": [
+                    {
+                      "location": {
+                        "file": "/Users/meganharrison/Documents/alleato-pm/frontend/tests/supabase-e2e/studio/features/_global.setup.ts",
+                        "column": 14,
+                        "line": 37
+                      },
+                      "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8082/\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8082/\", waiting until \"load\"\u001b[22m\n\n\n  35 |   const apiUrl = env.API_URL\n  36 |\n> 37 |   await page.goto(studioUrl).catch((err) => {\n     |              ^\n  38 |     console.error(\n  39 |       `\\n 🚨 Setup Error \n  40 | Studio is not available at: ${studioUrl}\n    at /Users/meganharrison/Documents/alleato-pm/frontend/tests/supabase-e2e/studio/features/_global.setup.ts:37:14"
+                    }
+                  ],
+                  "stdout": [
+                    {
+                      "text": "\n 🧪 Setting up test environment.\n    - Studio URL: http://localhost:8082\n    - API URL: https://localhost:8080\n    - Auth: disabled\n    - Is Platform: undefined\n    \n"
+                    }
+                  ],
+                  "stderr": [
+                    {
+                      "text": "\n 🚨 Setup Error \nStudio is not available at: http://localhost:8082\n\nPlease ensure:\n  1. Studio is running in the expected URL\n  2. You have proper network access\n\n"
+                    }
+                  ],
+                  "retry": 0,
+                  "startTime": "2026-03-22T18:50:17.646Z",
+                  "annotations": [],
+                  "attachments": [
+                    {
+                      "name": "screenshot",
+                      "contentType": "image/png",
+                      "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/supabase-e2e-studio-features-_global.setup.ts-Global-Setup-setup/test-failed-1.png"
+                    },
+                    {
+                      "name": "video",
+                      "contentType": "video/webm",
+                      "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/supabase-e2e-studio-features-_global.setup.ts-Global-Setup-setup/video.webm"
+                    },
+                    {
+                      "name": "error-context",
+                      "contentType": "text/markdown",
+                      "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/supabase-e2e-studio-features-_global.setup.ts-Global-Setup-setup/error-context.md"
+                    }
+                  ],
+                  "errorLocation": {
+                    "file": "/Users/meganharrison/Documents/alleato-pm/frontend/tests/supabase-e2e/studio/features/_global.setup.ts",
+                    "column": 14,
+                    "line": 37
+                  }
+                }
+              ],
+              "status": "unexpected"
+            }
+          ],
+          "id": "35a4828c96b1a2fe5cab-ed2cb4a27969102ec80d",
+          "file": "supabase-e2e/studio/features/_global.setup.ts",
+          "line": 22,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "e2e/verify-delete-contract.spec.ts",
+      "file": "e2e/verify-delete-contract.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "verify contract deletion",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "chromium",
+              "projectName": "chromium",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "ba8fb7a14b798624856b-f5e1214fdd94189dcb27",
+          "file": "e2e/verify-delete-contract.spec.ts",
+          "line": 3,
+          "column": 5
+        },
+        {
+          "title": "verify contract deletion",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 30000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "debug",
+              "projectName": "debug",
+              "results": [],
+              "status": "skipped"
+            }
+          ],
+          "id": "ba8fb7a14b798624856b-dfc18a6fbffc0d50dace",
+          "file": "e2e/verify-delete-contract.spec.ts",
+          "line": 3,
+          "column": 5
+        }
+      ]
     }
   ],
+  "errors": [],
   "stats": {
-    "startTime": "2026-03-17T13:12:05.060Z",
-    "duration": 3166.991,
-    "expected": 0,
-    "skipped": 0,
-    "unexpected": 0,
+    "startTime": "2026-03-22T18:50:16.363Z",
+    "duration": 3681.688,
+    "expected": 1,
+    "skipped": 2,
+    "unexpected": 1,
     "flaky": 0
   }
 }

@@ -1,0 +1,42 @@
+{
+  "feature": "change-orders",
+  "generated_at": "2026-03-22T14:33:02Z",
+  "tasks": [
+    {
+      "task_id": "TASK-CO-001",
+      "gap_id": "CO-001",
+      "layer": "ui",
+      "severity": "medium",
+      "acceptance_criteria": "Loading placeholder section resolves correctly or is removed when no data exists.",
+      "depends_on": [],
+      "status": "waived",
+      "waiver_reason": "Finding originates from Procore reference behavior and is not directly remediable in Alleato codebase in this cycle.",
+      "waived_at": "2026-03-22T14:47:32Z",
+      "waived_by": "codex"
+    },
+    {
+      "task_id": "TASK-CO-002",
+      "gap_id": "CO-002",
+      "layer": "workflow",
+      "severity": "medium",
+      "acceptance_criteria": "Create PCCO rejects empty required inputs and surfaces clear validation errors.",
+      "depends_on": [],
+      "status": "waived",
+      "waiver_reason": "Finding originates from Procore reference behavior and is not directly remediable in Alleato codebase in this cycle.",
+      "waived_at": "2026-03-22T14:47:32Z",
+      "waived_by": "codex"
+    },
+    {
+      "task_id": "TASK-CO-003",
+      "gap_id": "CO-003",
+      "layer": "ui",
+      "severity": "low",
+      "acceptance_criteria": "Draft PCCOs expose a user-visible delete/recycle path.",
+      "depends_on": [],
+      "status": "waived",
+      "waiver_reason": "Finding originates from Procore reference behavior and is not directly remediable in Alleato codebase in this cycle.",
+      "waived_at": "2026-03-22T14:47:32Z",
+      "waived_by": "codex"
+    }
+  ]
+}

@@ -26,6 +26,7 @@ function NumberInput({
   formatOnBlur = true,
   currency = false,
   onBlur,
+  onChange,
   value,
   placeholder = "Enter amount",
   step = "0.01",
@@ -99,8 +100,7 @@ function NumberInput({
         setDisplayValue(raw);
         e.target.value = raw;
       }
-    }
-    if (formatOnBlur && value) {
+    } else if (formatOnBlur && value) {
       const numValue = parseFloat(String(value));
       if (!isNaN(numValue)) {
         // Format to 2 decimal places if it's a valid number
@@ -114,7 +114,7 @@ function NumberInput({
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!currency) {
-      props.onChange?.(e);
+      onChange?.(e);
       return;
     }
 
@@ -125,7 +125,7 @@ function NumberInput({
       target: { ...e.target, value: raw },
       currentTarget: { ...e.currentTarget, value: raw },
     } as React.ChangeEvent<HTMLInputElement>;
-    props.onChange?.(nextEvent);
+    onChange?.(nextEvent);
   };
 
   return (

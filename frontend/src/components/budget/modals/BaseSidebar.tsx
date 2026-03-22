@@ -44,17 +44,17 @@ export function BaseSidebar({
         className={cn("w-full p-0 flex flex-col", sizeClasses[size])}
       >
         {/* Header */}
-        <div className="bg-slate-900 text-white px-6 py-4 flex-shrink-0">
+        <div className="bg-card border-b border-border px-6 py-4 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-semibold">{title}</h2>
+              <h2 className="text-lg font-semibold text-foreground">{title}</h2>
               {subtitle && (
-                <p className="text-sm text-slate-300 mt-0.5">{subtitle}</p>
+                <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
               )}
             </div>
             <button
               onClick={onClose}
-              className="rounded-full p-2 hover:bg-background/10 transition-colors"
+              className="rounded-md p-2 hover:bg-accent hover:text-accent-foreground transition-colors text-muted-foreground"
               aria-label="Close"
             >
               <X className="h-5 w-5" />
@@ -97,7 +97,7 @@ export function SidebarFooter({
   return (
     <div
       className={cn(
-        "border-t border-slate-200 bg-slate-50 px-6 py-4 flex-shrink-0",
+        "border-t border-border bg-muted px-6 py-4 flex-shrink-0",
         className,
       )}
     >
@@ -128,8 +128,8 @@ export function SidebarTabs({
             className={cn(
               "px-4 py-2 text-sm font-medium rounded-md transition-all",
               activeTab === tab.id
-                ? "bg-background text-orange-600 shadow-sm border border-border"
-                : "text-foreground hover:text-foreground hover:bg-background/50",
+                ? "bg-background text-primary shadow-xs border border-border"
+                : "text-muted-foreground hover:text-foreground hover:bg-background/50",
             )}
           >
             {tab.label}

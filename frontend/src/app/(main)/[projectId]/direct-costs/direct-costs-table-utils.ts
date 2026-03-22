@@ -50,11 +50,10 @@ export const SUMMARY_COLUMNS = [
   { id: "date", label: "Date", defaultVisible: true },
   { id: "vendor", label: "Vendor", defaultVisible: true },
   { id: "cost_type", label: "Type", defaultVisible: true },
-  { id: "invoice_number", label: "Invoice #", defaultVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
-  { id: "erp_status", label: "ERP Status", defaultVisible: true },
   { id: "total_amount", label: "Amount", defaultVisible: true },
-  { id: "received_date", label: "Received", defaultVisible: true },
+  { id: "erp_status", label: "ERP Status", defaultVisible: false },
+  { id: "received_date", label: "Received", defaultVisible: false },
   { id: "paid_date", label: "Paid", defaultVisible: false },
   { id: "description", label: "Description", defaultVisible: false },
 ];

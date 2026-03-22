@@ -71,6 +71,33 @@ export function useChangeEvents(
     setError(null);
 
     try {
+      // Project-scoped pages should use API enrichment so table parity fields
+      // (RFQ title, commitment info, cost rollups) are consistently available.
+      if (projectId) {
+        const searchParams = new URLSearchParams();
+        searchParams.set("limit", String(limit));
+        if (status) searchParams.set("status", status);
+        if (includeDeleted) searchParams.set("includeDeleted", "true");
+
+        const response = await fetch(
+          `/api/projects/${projectId}/change-events?${searchParams.toString()}`,
+          { cache: "no-store" },
+        );
+
+        if (!response.ok) {
+          const errorPayload = await response
+            .json()
+            .catch(() => ({ error: "Failed to fetch change events" }));
+          throw new Error(
+            errorPayload.error || "Failed to fetch change events",
+          );
+        }
+
+        const payload = await response.json();
+        setChangeEvents(payload.data || []);
+        return;
+      }
+
       const supabase = createClient();
       let query = supabase
         .from("change_events")
@@ -78,12 +105,6 @@ export function useChangeEvents(
         .order("number", { ascending: true })
         .limit(limit);
 
-      // Filter by project_id
-      if (projectId) {
-        query = query.eq("project_id", projectId);
-      }
-
-      // Filter by status if provided
       if (status) {
         query = query.eq("status", status);
       }
@@ -106,7 +127,7 @@ export function useChangeEvents(
     } finally {
       setIsLoading(false);
     }
-  }, [projectId, status, limit, enabled]);
+  }, [projectId, status, limit, enabled, includeDeleted]);
 
   useEffect(() => {
     fetchChangeEvents();

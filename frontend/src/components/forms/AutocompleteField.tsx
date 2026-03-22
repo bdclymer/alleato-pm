@@ -101,10 +101,10 @@ export function AutocompleteField({
             disabled={disabled}
             className={cn(
               "w-full justify-between",
-              !value && "text-muted-foreground",
               error && "border-red-300",
               className,
             )}
+            {...(!value && { "data-placeholder-style": "" })}
           >
             <span className="truncate">
               {selectedOption ? selectedOption.label : placeholder}

@@ -47,7 +47,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { budgetSnapshots, budgetGroups, budgetGrandTotals } from "@/config/budget";
+import { budgetSnapshots, budgetGroups } from "@/config/budget";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import {
   applyQuickFilter,
@@ -57,6 +57,23 @@ import {
 import type { QuickFilterType } from "@/components/budget/budget-filters";
 import { applyGrouping, type GroupingType } from "@/lib/budget-grouping";
 import { BudgetTableCommentsWrapper } from "@/components/budget/budget-table-comments-wrapper";
+
+const EMPTY_GRAND_TOTALS = {
+  originalBudgetAmount: 0,
+  budgetModifications: 0,
+  approvedCOs: 0,
+  revisedBudget: 0,
+  jobToDateCostDetail: 0,
+  directCosts: 0,
+  pendingChanges: 0,
+  projectedBudget: 0,
+  committedCosts: 0,
+  pendingCostChanges: 0,
+  projectedCosts: 0,
+  forecastToComplete: 0,
+  estimatedCostAtCompletion: 0,
+  projectedOverUnder: 0,
+};
 
 function BudgetTableSkeleton() {
   return (
@@ -110,7 +127,7 @@ function BudgetPageContent() {
     BudgetDetailLineItem[]
   >([]);
   const [quickFilter, setQuickFilter] = React.useState<QuickFilterType>("all");
-  const [grandTotals, setGrandTotals] = React.useState(budgetGrandTotals);
+  const [grandTotals, setGrandTotals] = React.useState(EMPTY_GRAND_TOTALS);
   const [loading, setLoading] = React.useState(true);
   const [detailsLoading, setDetailsLoading] = React.useState(false);
   const [detailsRequested, setDetailsRequested] = React.useState(false);
@@ -182,10 +199,15 @@ function BudgetPageContent() {
         if (budgetResponse.ok) {
           const budgetDataResponse = await budgetResponse.json();
           setBudgetData(budgetDataResponse.lineItems || []);
-          setGrandTotals(budgetDataResponse.grandTotals || budgetGrandTotals);
+          setGrandTotals(budgetDataResponse.grandTotals || EMPTY_GRAND_TOTALS);
+        } else {
+          setBudgetData([]);
+          setGrandTotals(EMPTY_GRAND_TOTALS);
         }
       } catch (error) {
         console.error("Failed to fetch budget data:", error);
+        setBudgetData([]);
+        setGrandTotals(EMPTY_GRAND_TOTALS);
         toast.error("Failed to load budget", { description: "Please try again." });
       } finally {
         setLoading(false);
@@ -296,7 +318,7 @@ function BudgetPageContent() {
       if (budgetResponse.ok) {
         const budgetDataResponse = await budgetResponse.json();
         setBudgetData(budgetDataResponse.lineItems || []);
-        setGrandTotals(budgetDataResponse.grandTotals || budgetGrandTotals);
+        setGrandTotals(budgetDataResponse.grandTotals || EMPTY_GRAND_TOTALS);
       }
     } catch (fetchError) {
       console.error("Failed to refetch budget data after unlock:", fetchError);
@@ -571,7 +593,7 @@ function BudgetPageContent() {
         if (budgetResponse.ok) {
           const budgetDataResponse = await budgetResponse.json();
           setBudgetData(budgetDataResponse.lineItems || []);
-          setGrandTotals(budgetDataResponse.grandTotals || budgetGrandTotals);
+          setGrandTotals(budgetDataResponse.grandTotals || EMPTY_GRAND_TOTALS);
         }
 
         // Also refresh budget details if that tab has been loaded
