@@ -339,17 +339,23 @@ export function extractPageData(state) {
       seen[text] = true;
       var forAttr = label.getAttribute('for') || '';
 
-      // Find the form field container — walk up from the label to find it
-      var formField = label.closest('[class*="FormField"], [class*="formField"]');
+      // Find the form field container — Procore structure:
+      //   FormField > FormFieldHeader (contains Label)
+      //             > FormFieldMain (contains Input or SelectButton)
+      // So we go: label → FormFieldHeader → FormField parent
+      var formField = null;
+      var headerEl = label.closest('[class*="FormFieldHeader"]');
+      if (headerEl && headerEl.parentElement) {
+        formField = headerEl.parentElement;
+      }
       if (!formField) {
-        // Try parent then grandparent
-        formField = label.parentElement;
-        if (formField && formField.parentElement) {
-          // Check if grandparent is the actual field container
-          var gp = formField.parentElement;
-          if (gp.querySelector('input, select, textarea, [class*="SelectButton"], [role="combobox"]')) {
-            formField = gp;
-          }
+        formField = label.closest('[class*="FormField"], [class*="formField"]');
+      }
+      if (!formField) {
+        // Fallback: go up 2-3 levels from the label
+        var p = label.parentElement;
+        if (p) {
+          formField = p.parentElement || p;
         }
       }
 

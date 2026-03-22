@@ -1,7 +1,7 @@
 {
   "feature": "change-events",
   "featureName": "Change Events",
-  "capturedAt": "2026-03-22T09:59:59.221Z",
+  "capturedAt": "2026-03-22T10:03:16.499Z",
   "states": {
     "list": {
       "id": "list",
@@ -93,6 +93,11 @@
         {
           "label": "Project ToolsChange Events",
           "type": "dropdown",
+          "variant": "default"
+        },
+        {
+          "label": "What RFIs are due in the next 7 days?CmdK",
+          "type": "button",
           "variant": "default"
         },
         {
@@ -355,77 +360,77 @@
             {
               "name": "status",
               "label": "Status",
-              "type": "text",
+              "type": "select",
               "required": false,
               "placeholder": "",
               "options": [],
-              "currentValue": "",
+              "currentValue": "Open",
               "helpText": ""
             },
             {
               "name": "eventOrigin",
               "label": "Origin",
-              "type": "text",
+              "type": "select",
               "required": false,
               "placeholder": "",
               "options": [],
-              "currentValue": "",
+              "currentValue": "Select Origin",
               "helpText": ""
             },
             {
               "name": "changeType",
               "label": "Type",
-              "type": "text",
+              "type": "select",
               "required": false,
               "placeholder": "",
               "options": [],
-              "currentValue": "",
+              "currentValue": "Allowance",
               "helpText": ""
             },
             {
               "name": "changeReason",
               "label": "Change Reason",
-              "type": "text",
+              "type": "select",
               "required": false,
               "placeholder": "",
               "options": [],
-              "currentValue": "",
+              "currentValue": "Select Reason",
               "helpText": ""
             },
             {
               "name": "scope",
               "label": "Scope",
-              "type": "text",
+              "type": "select",
               "required": false,
               "placeholder": "",
               "options": [],
-              "currentValue": "",
+              "currentValue": "TBD",
               "helpText": ""
             },
             {
               "name": "sourceOfRevenueRom",
               "label": "Line Item Revenue Source",
-              "type": "text",
+              "type": "select",
               "required": false,
               "placeholder": "",
               "options": [],
-              "currentValue": "",
+              "currentValue": "Match Revenue to Latest Cost",
               "helpText": ""
             },
             {
               "name": "primeContractForEstimates",
               "label": "Prime Contract for Markup Estimates",
-              "type": "text",
+              "type": "select",
               "required": false,
               "placeholder": "",
               "options": [],
-              "currentValue": "",
+              "currentValue": "1 - Goodwill Bart",
               "helpText": ""
             },
             {
               "name": "description",
               "label": "Description",
-              "type": "text",
+              "type": "richtext",
               "required": false,
               "placeholder": "",
               "options": [],
@@ -435,7 +440,7 @@
             {
               "name": "attachments",
               "label": "Attachments",
-              "type": "text",
+              "type": "file",
               "required": false,
               "placeholder": "",
               "options": [],
@@ -680,7 +685,7 @@
             {
               "name": "description",
               "label": "Description",
-              "type": "text",
+              "type": "richtext",
               "required": false,
               "placeholder": "",
               "options": [],
@@ -796,11 +801,6 @@
         {
           "label": "Project ToolsChange Events",
           "type": "dropdown",
-          "variant": "default"
-        },
-        {
-          "label": "Which RFI Manager has the most open RFIs?CmdK",
-          "type": "button",
           "variant": "default"
         },
         {
@@ -924,7 +924,7 @@
             {
               "name": "description",
               "label": "Description",
-              "type": "text",
+              "type": "richtext",
               "required": false,
               "placeholder": "",
               "options": [],
