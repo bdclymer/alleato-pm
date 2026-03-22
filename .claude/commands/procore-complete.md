@@ -7,6 +7,12 @@ description: Full pipeline orchestrator — crawl Procore, generate gap analysis
 
 Run the complete pipeline for a feature: crawl → gap audit → fix all items → verify.
 
+**Data sources available:**
+1. **Live Procore app** — crawled via Playwright, verified via agent-browser
+2. **Procore support articles** — 2,300+ articles in `support_articles` table, searchable by category and full-text. Query via Supabase MCP (`mcp__claude_ai_Supabase__execute_sql`, project_id: `lgveqfnpkxvzbnnwuled`)
+3. **DOM HTML** — saved in `.claude/procore-manifests/<feature>/dom/` for offline re-analysis
+4. **Alleato codebase** — actual implementation files
+
 ## Phase 1: Deep Crawl
 
 Run:

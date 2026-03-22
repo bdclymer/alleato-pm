@@ -8,6 +8,32 @@ description: Read the manifest.json from procore-deep-crawl, verify it against t
 Cross-reference the Procore manifest against the actual Alleato implementation code.
 **Read the code, not old spec docs.** The manifest + live Procore page are the source of truth.
 
+**Also read official Procore support documentation** from our crawled database. The `support_articles` table has 2,300+ articles categorized by tool. Query by category to get field definitions, workflows, and business rules that aren't visible in the UI.
+
+### Procore Support Articles Database
+
+```sql
+-- Search articles for the feature being audited
+SELECT id, title, category, description, url
+FROM support_articles
+WHERE category = '<Feature Category>'
+ORDER BY title;
+
+-- Full-text search for specific topics
+SELECT * FROM fulltext_search_support_articles(
+  search_query := '<search terms>',
+  result_limit := 10
+);
+```
+
+**Available categories:** Admin Company, Admin Project, Bidding, Budget (53), Change Events (60), Change Orders (29), Commitments (72), Drawings (76), Equipment, ERP Integration (63), Estimating, Forecasting (19), General (1512), Invoices (48), Payments (27), Prime Contracts (36), Procore Pay (78), Project Directory, RFI (70), Specifications (40), Submittals (94)
+
+**Use the Supabase MCP tool** (`mcp__claude_ai_Supabase__execute_sql`) to query these articles. Read relevant articles to understand:
+- What fields Procore expects and their business rules
+- Workflow states and transitions
+- Validation rules and required permissions
+- Relationships between tools (e.g., Change Events → Prime Contract COs)
+
 ## Step 1: Read the manifest
 
 ```bash

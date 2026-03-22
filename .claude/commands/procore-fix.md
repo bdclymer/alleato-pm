@@ -7,6 +7,18 @@ description: Implement one missing item from the gap analysis report for a Proco
 
 Read the gap analysis report, pick the next unresolved HIGH priority item, implement it, verify in the browser, and commit.
 
+**Before implementing:** Query the Procore support articles database for the feature being fixed to understand business rules, field definitions, and expected behavior:
+
+```sql
+-- Via Supabase MCP: mcp__claude_ai_Supabase__execute_sql (project_id: lgveqfnpkxvzbnnwuled)
+SELECT id, title, url FROM support_articles WHERE category = '<Feature Category>' AND title ILIKE '%<topic>%';
+
+-- Or full-text search
+SELECT * FROM fulltext_search_support_articles(search_query := '<topic>', result_limit := 5);
+```
+
+Categories: Budget (53), Change Events (60), Change Orders (29), Commitments (72), Drawings (76), Invoices (48), Prime Contracts (36), RFI (70), Specifications (40), Submittals (94). Read the `markdown_content` of relevant articles for detailed field specs and workflow rules.
+
 ## Step 1: Read the gap report
 
 ```bash

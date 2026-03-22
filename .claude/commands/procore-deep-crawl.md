@@ -7,6 +7,18 @@ description: Crawl a live Procore feature and produce a structured manifest.json
 
 Crawl the live Procore app for the given feature, navigate every page state (list, create form, detail, detail tabs), extract structured DOM data, and write `manifest.json` + screenshots.
 
+**Before crawling**, read the Procore support documentation for context on what to expect:
+
+```sql
+-- Query via Supabase MCP: mcp__claude_ai_Supabase__execute_sql (project_id: lgveqfnpkxvzbnnwuled)
+SELECT id, title, description, url FROM support_articles
+WHERE category = '<Feature Category>' ORDER BY title LIMIT 20;
+```
+
+Categories: Budget (53), Change Events (60), Change Orders (29), Commitments (72), Drawings (76), Invoices (48), Prime Contracts (36), RFI (70), Specifications (40), Submittals (94), and more.
+
+This tells you what fields, workflows, and tabs to expect before you even open the browser.
+
 ## Steps
 
 1. Run the deep crawl script:
