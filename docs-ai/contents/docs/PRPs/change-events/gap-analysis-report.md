@@ -169,7 +169,7 @@ Fields/columns found on live Procore page but missing from manifest:
 - [ ] Add Advanced Settings tab to detail page
 - [x] Fix attachments tab — implement fetch on page load
 - [x] Add Export button to detail page
-- [ ] Add More Options dropdown to detail page
+- [x] Add More Options dropdown to detail page (Copy ID, Delete)
 - [ ] Enable "Add to" dropdown (currently disabled "coming soon")
 - [ ] Add Classic Summary view option
 - [ ] Add Column Group By functionality

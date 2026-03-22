@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Download, Edit, FileCheck2, X, ArrowRight, Clock, Loader2 } from "lucide-react";
+import { ArrowLeft, Copy, Download, Edit, FileCheck2, MoreHorizontal, Trash2, X, ArrowRight, Clock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -221,6 +228,26 @@ export default function ChangeEventDetailPage() {
     URL.revokeObjectURL(url);
     toast.success("Exported change event");
   }, [changeEvent]);
+
+  const handleCopyId = useCallback(() => {
+    navigator.clipboard.writeText(changeEventId);
+    toast.success("Change event ID copied");
+  }, [changeEventId]);
+
+  const handleDelete = useCallback(async () => {
+    if (!confirm("Are you sure you want to delete this change event?")) return;
+    try {
+      const res = await fetch(
+        `/api/projects/${projectId}/change-events/${changeEventId}`,
+        { method: "DELETE" },
+      );
+      if (!res.ok) throw new Error("Failed to delete");
+      toast.success("Change event deleted");
+      router.push(`/${projectId}/change-events`);
+    } catch {
+      toast.error("Failed to delete change event");
+    }
+  }, [projectId, changeEventId, router]);
 
   const canEdit = ["open", "rejected"].includes(
     (changeEvent?.status || "").toLowerCase(),
@@ -599,6 +626,24 @@ export default function ChangeEventDetailPage() {
             <Edit className="mr-2 h-4 w-4" />
             Edit
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={handleCopyId}>
+                <Copy className="mr-2 h-4 w-4" />
+                Copy ID
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="text-destructive" onClick={handleDelete}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </Inline>
       </div>
 
