@@ -32,13 +32,26 @@ const SCOPE_FILTER_OPTIONS = [
   { value: "out_of_scope", label: "Out of Scope" },
 ];
 
+const TYPE_FILTER_OPTIONS = [
+  { value: "Owner Change", label: "Owner Change" },
+  { value: "Design Change", label: "Design Change" },
+  { value: "Allowance", label: "Allowance" },
+  { value: "Contingency", label: "Contingency" },
+  { value: "TBD", label: "TBD" },
+  { value: "Transfer", label: "Transfer" },
+  { value: "Unforeseen Condition", label: "Unforeseen Condition" },
+  { value: "Value Engineering", label: "Value Engineering" },
+];
+
 export const changeEventColumns: ColumnConfig[] = [
   { id: "number", label: "#", alwaysVisible: true },
   { id: "title", label: "Title", defaultVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
   { id: "scope", label: "Scope", defaultVisible: true },
+  { id: "type", label: "Type", defaultVisible: true },
   { id: "reason", label: "Change Reason", defaultVisible: true },
-  { id: "created_at", label: "Created", defaultVisible: true },
+  { id: "origin", label: "Origin", defaultVisible: true },
+  { id: "created_at", label: "Created", defaultVisible: false },
 ];
 
 export const changeEventFilters: FilterConfig[] = [
@@ -53,6 +66,12 @@ export const changeEventFilters: FilterConfig[] = [
     label: "Scope",
     type: "select",
     options: SCOPE_FILTER_OPTIONS,
+  },
+  {
+    id: "type",
+    label: "Type",
+    type: "select",
+    options: TYPE_FILTER_OPTIONS,
   },
 ];
 
@@ -90,6 +109,36 @@ function scopeLabel(scope: string | null | undefined): string {
   }
 }
 
+function typeLabel(type: string | null | undefined): string {
+  switch ((type ?? "").toLowerCase()) {
+    case "owner_change":
+    case "owner change":
+      return "Owner Change";
+    case "design_change":
+    case "design change":
+      return "Design Change";
+    case "allowance":
+      return "Allowance";
+    case "contingency":
+      return "Contingency";
+    case "scope_gap":
+    case "scope gap":
+      return "Scope Gap";
+    case "tbd":
+      return "TBD";
+    case "transfer":
+      return "Transfer";
+    case "unforeseen_condition":
+    case "unforeseen condition":
+      return "Unforeseen Condition";
+    case "value_engineering":
+    case "value engineering":
+      return "Value Engineering";
+    default:
+      return type || "-";
+  }
+}
+
 function formatDate(dateValue: string | null | undefined): string {
   if (!dateValue) return "-";
   const parsed = new Date(dateValue);
@@ -121,11 +170,21 @@ export function buildChangeEventTableColumns(): TableColumn<ChangeEvent>[] {
     },
     {
       ...changeEventColumns[4],
+      render: (item) => <span>{typeLabel(item.type)}</span>,
+      sortValue: (item) => typeLabel(item.type),
+    },
+    {
+      ...changeEventColumns[5],
       render: (item) => <span className="line-clamp-1">{item.reason || "-"}</span>,
       sortValue: (item) => item.reason ?? "",
     },
     {
-      ...changeEventColumns[5],
+      ...changeEventColumns[6],
+      render: (item) => <span>{item.origin || "-"}</span>,
+      sortValue: (item) => item.origin ?? "",
+    },
+    {
+      ...changeEventColumns[7],
       render: (item) => <span>{formatDate(item.created_at)}</span>,
       sortValue: (item) => (item.created_at ? new Date(item.created_at).getTime() : 0),
     },
@@ -179,7 +238,7 @@ export function renderChangeEventCard(
         </div>
         <StatusBadge status={statusLabel(item.status)} />
       </div>
-      <p className="text-sm text-muted-foreground">{scopeLabel(item.scope)}</p>
+      <p className="text-sm text-muted-foreground">{scopeLabel(item.scope)} · {typeLabel(item.type)}</p>
     </div>
   );
 }

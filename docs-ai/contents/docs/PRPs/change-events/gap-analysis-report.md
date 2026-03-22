@@ -160,7 +160,7 @@ Fields/columns found on live Procore page but missing from manifest:
 - [ ] Add Insurance and Fee auto-calculated rows to line items (from Prime Contract markup %)
 - [x] Fix `primeContractId` type mismatch between create and update schemas
 - [x] Verify `estimated_impact` and `notes` columns exist in DB — confirmed NOT in DB, removed ghost references from 8 files
-- [ ] Add missing list columns: Type, Origin, Prime PCO, Cost ROM, Commitment (core Procore columns)
+- [x] Add missing list columns: Type, Origin added with renderers + filter; Prime PCO/Cost ROM/Commitment deferred (need line item aggregation)
 - [ ] Implement column groups in list table: Change Event, Revenue, Cost
 
 ### MEDIUM Impact
