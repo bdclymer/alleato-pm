@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Edit, FileCheck2, X, ArrowRight, Clock, Loader2 } from "lucide-react";
+import { ArrowLeft, Download, Edit, FileCheck2, X, ArrowRight, Clock, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -196,6 +196,31 @@ export default function ChangeEventDetailPage() {
     setActiveTab("general");
     setIsEditing(true);
   }, []);
+
+  const handleExport = useCallback(() => {
+    if (!changeEvent) return;
+    const rows = [
+      ["Field", "Value"],
+      ["Number", changeEvent.number || ""],
+      ["Title", changeEvent.title || ""],
+      ["Status", changeEvent.status || ""],
+      ["Type", changeEvent.type || ""],
+      ["Scope", changeEvent.scope || ""],
+      ["Origin", changeEvent.origin || ""],
+      ["Change Reason", changeEvent.reason || ""],
+      ["Description", (changeEvent.description || "").replace(/\n/g, " ")],
+      ["Created", changeEvent.created_at || ""],
+    ];
+    const csv = rows.map((r) => r.map((c) => `"${c}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `change-event-${changeEvent.number || changeEvent.id}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Exported change event");
+  }, [changeEvent]);
 
   const canEdit = ["open", "rejected"].includes(
     (changeEvent?.status || "").toLowerCase(),
@@ -556,6 +581,14 @@ export default function ChangeEventDetailPage() {
           <Button variant="ghost" size="sm" onClick={handleBack}>
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExport}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Export
           </Button>
           <Button
             variant="outline"

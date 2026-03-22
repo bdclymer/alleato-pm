@@ -168,7 +168,7 @@ Fields/columns found on live Procore page but missing from manifest:
 - [ ] Add Events tab to detail page
 - [ ] Add Advanced Settings tab to detail page
 - [x] Fix attachments tab — implement fetch on page load
-- [ ] Add Export button to detail page
+- [x] Add Export button to detail page
 - [ ] Add More Options dropdown to detail page
 - [ ] Enable "Add to" dropdown (currently disabled "coming soon")
 - [ ] Add Classic Summary view option
@@ -181,5 +181,5 @@ Fields/columns found on live Procore page but missing from manifest:
 - [ ] Add Description column to line items grid (currently text-only, Procore shows rich text)
 - [ ] Match Procore's detail page layout (General Info + Line Items on same page, not separate tabs)
 - [ ] Add Conversations integration to detail page
-- [ ] Remove non-Procore fields: `estimated_impact`, `notes` (or keep as Alleato-specific enhancement)
+- [x] Remove non-Procore fields: `estimated_impact`, `notes` — removed in HIGH #3
 - [ ] Add all 29 configurable line item columns (Line Aging, Revenue Stage, Cost Stage, etc.)
