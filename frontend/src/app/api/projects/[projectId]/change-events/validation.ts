@@ -54,7 +54,7 @@ export const updateChangeEventSchema = z.object({
   scope: ChangeEventScope.optional(),
   expectingRevenue: z.boolean().optional(),
   lineItemRevenueSource: LineItemRevenueSource.optional(),
-  primeContractId: z.string().uuid().optional(),
+  primeContractId: z.coerce.number().int().positive().optional(),
   description: z.string().optional(),
   status: ChangeEventStatus.optional(), // Only admin can change status
 }); // Create Line Item Schema
