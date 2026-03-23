@@ -92,7 +92,7 @@ export function ProjectSelector({
           variant="ghost"
           role="combobox"
           aria-expanded={open}
-          className="project-selector-trigger h-8 w-56 justify-between gap-1.5 border border-border/60 bg-surface-soft px-2.5 hover:bg-surface-soft focus-visible:ring-0 focus-visible:ring-offset-0"
+          className="project-selector-trigger h-8 w-56 justify-between gap-1.5 border border-border/60 bg-transparent px-2.5 hover:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
         >
           <span className="flex min-w-0 items-center gap-1.5">
             {currentProject ? (

@@ -1,95 +1,71 @@
-# Form Execution Report: Create Subcontract
+# Form Gauntlet Execution Report: Create Subcontract
+
 **Date:** 2026-03-22
-**Attempt:** 1
-
----
-
-## Status: SUBMITTED_SUCCESSFULLY
+**URL:** http://localhost:3000/760/commitments/new?type=subcontract
+**Auth:** test1@mail.com / test12026!!!
+**Status:** SUBMITTED_SUCCESSFULLY
 
 ---
 
 ## Test Data Used
 
-| Field | Value | Notes |
-|-------|-------|-------|
-| title | Test Subcontract SC-GAUNTLET-001 | Filled via accessibility ref |
-| contractNumber | SC-GAUNTLET-001 | Filled via React-compatible JS (native input value setter + input/change events) — field not visible in accessibility tree |
-| status | Draft | Already pre-selected; not changed |
-| vendor | 3 Quarterdeck LLC | First option in vendor dropdown |
-| executed | unchecked | Left unchecked (default state) |
-| defaultRetainagePercent | 10 | Filled via spinbutton ref |
-| accountingMethod | amount_based | Already default ("Change to Unit/Quantity" button present, indicating amount-based is active) |
-| description | Created by form gauntlet | Filled via textarea ref |
+| Field | Selector | Value Entered |
+|-------|----------|---------------|
+| Title | `#title` (text input) | `Test Subcontract - Electrical FG` |
+| Contract # | `#contractNumber` (text input) | `SC-FG-001` |
+| Vendor | `#contractCompanyId` (combobox button) | `A Brannan Builders LLC` (first available vendor from 395 options) |
+| Status | Select (default) | `Draft` (left as default) |
+| Default Retainage | `#defaultRetainagePercent` (number input) | `10` |
+| Description | `#description` (textarea) | `Form gauntlet test subcontract` |
+| Executed | checkbox | Not checked (left as default) |
 
----
-
-## Vendor Selected
-
-**3 Quarterdeck LLC** — First option in the vendor combobox dropdown. The dropdown lists vendors alphabetically; this was the first entry when opened.
+**Skipped fields (as specified):** dates, privacy, SOV line items, attachments, inclusions/exclusions, invoice contacts.
 
 ---
 
 ## Submit Method
 
-Clicked the **"Create Subcontract"** primary button (ref `@e86`) at the bottom of the form.
+Clicked the **"Create Subcontract"** button (purple button at bottom-right of form) via `page.getByRole('button', { name: 'Create Subcontract' })`.
 
 ---
 
 ## Immediate Response
 
-- **Redirect:** After clicking "Create Subcontract", the browser immediately navigated from `/67/commitments/new?type=subcontract` to `/67/commitments`
-- **Toast:** None observed (no error or success toast appeared)
-- **URL after submit:** `http://localhost:3000/67/commitments`
-- **List page visible:** Yes — the Commitments list page loaded showing 2 items
-
----
-
-## New Record Confirmed in List
-
-The new subcontract was visible in the Commitments list immediately after redirect:
-
-| NUMBER | TITLE | TYPE | STATUS | ORIGINAL AMOUNT |
-|--------|-------|------|--------|-----------------|
-| SC-GAUNTLET-001 | Test Subcontract SC-GAUNTLET-001 | subcontract | draft | $0.00 |
-
-The list also showed 2 items total (the pre-existing "PO-1773770778757 Test PO Debug" purchase order plus the new subcontract).
+- **Toast notification:** No Sonner toast was detected. The page redirected directly to the commitments list.
+- **URL change:** Changed from `/760/commitments/new?type=subcontract` to `/760/commitments` (commitments list page).
+- **Dialog behavior:** No dialog appeared. Form submitted and redirected seamlessly.
+- **New record visible:** The commitments list now shows 2 rows:
+  1. `SC-7487-0001` | Fire Alarm | subcontract | approved | $306,000.00
+  2. `SC-FG-001` | Test Subcontract - Electrical FG | subcontract | draft | $0.00
 
 ---
 
 ## Screenshot Paths
 
-- **Before submit:** `/tmp/form-gauntlet-create_subcontract-before.png`
-- **After submit:** `/tmp/form-gauntlet-create_subcontract-after.png`
+| Screenshot | Path |
+|-----------|------|
+| Initial page load | `/tmp/form-gauntlet-create_subcontract-initial.png` |
+| Form loaded after login | `/tmp/form-gauntlet-create_subcontract-loaded.png` |
+| Vendor dropdown open | `/tmp/form-gauntlet-vendor-dropdown.png` |
+| Before submit (full page) | `/tmp/form-gauntlet-create_subcontract-before.png` |
+| After submit (full page) | `/tmp/form-gauntlet-create_subcontract-after.png` |
 
 ---
 
-## Issues Encountered
+## Errors Encountered
 
-### Critical: Agentation Widget "Block Page Interactions" Setting
-
-**Root cause:** The agentation feedback widget stored `blockInteractions: true` in localStorage (`feedback-toolbar-settings`). This caused a MCP webhook to intercept and redirect the browser away from the commitments/new form immediately after loading (~2 seconds), navigating to various prime-contract pages.
-
-**Evidence:** Every navigation to `/67/commitments/new?type=subcontract` redirected to pages like `/67/prime-contracts/20c40a53-...`, `/67/schedule`, `/67/change-events`, etc. The redirect did NOT show in pushState history patching, indicating it was driven externally via the webhook mechanism.
-
-**Fix applied:** Set `blockInteractions: false` and `webhooksEnabled: false` in localStorage `feedback-toolbar-settings`, and used a named isolated browser session (`--session form-gauntlet`) to prevent the agentation widget from loading with the cached "block interactions" state.
-
-### Minor: Contract # Field Not in Accessibility Tree
-
-The `contractNumber` input (id="contractNumber") was not visible in the `agent-browser snapshot -i` output. It was filled via JavaScript using the native input value setter (`Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set`) followed by dispatching `input` and `change` events to trigger React state updates. The field correctly accepted and displayed the value "SC-GAUNTLET-001".
-
-### No Console Errors Observed
-
-No API errors or form validation messages appeared during or after submission.
+- **Validation errors:** None. The form submitted without any validation issues.
+- **Console errors:** None observed.
+- **API errors:** None observed.
 
 ---
 
-## Field-by-Field Verification (Before Screenshot)
+## Observations
 
-From the before-submit screenshot (`/tmp/form-gauntlet-create_subcontract-before.png`):
-- Title field shows: "Test Subcontract SC-GAUNTLET-001" ✓
-- Contract # field shows: "SC-GAUNTLET-001" ✓
-- Vendor field shows: "3 Quarterdeck LLC" ✓
-- Status dropdown shows: "Draft" ✓
-- Default Retainage shows: "10 %" ✓
-- Executed checkbox: unchecked ✓
-- Description textarea shows: "Created by form gauntlet" ✓
+1. **Vendor combobox:** Uses a command palette pattern (cmdk). Clicking the combobox opens a popover with a search input and 395 vendor options. Typing filters the list. Selecting an option closes the popover and displays the vendor name.
+2. **Contract # field:** Accepts manual entry. The spec mentioned auto-generation, but the field was empty by default and accepted the manually entered value `SC-FG-001` without issue.
+3. **Retainage field:** Number input with placeholder `0.00`. Accepted `10` without issue.
+4. **No toast on success:** The form redirected to the commitments list without showing a toast/notification. The successful creation is confirmed by the new row in the commitments table.
+5. **SOV line items:** A default empty line item row was present but not filled (as specified to skip). This did not block submission.
+6. **Form layout:** Full-page form with sections: General Information, Attachments, Schedule of Values, Inclusions & Exclusions, Contract Dates, Contract Privacy, Invoice Contacts.
+7. **Login required:** Initial navigation redirected to login page. After authentication, the form loaded correctly.

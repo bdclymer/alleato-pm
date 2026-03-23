@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useProject } from "@/contexts/project-context";
@@ -16,6 +17,14 @@ import { Stack } from "@/components/ui/stack";
 import { Inline } from "@/components/ui/inline";
 import { Heading } from "@/components/ui/heading";
 import { Text } from "@/components/ui/text";
+import {
+  Breadcrumb,
+  BreadcrumbItem as UiBreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb";
 
 interface BreadcrumbItem {
   label: string;
@@ -102,10 +111,6 @@ export function PageHeader({
   // Subheadings are intentionally suppressed globally to keep page headers tighter.
   void description;
 
-  // Note: breadcrumbs are accepted for API compatibility but not yet rendered
-  // in the unified component. Pages using breadcrumbs should use the layout's
-  // breadcrumb component separately or this can be enhanced later.
-  void breadcrumbs;
   const { selectedProject, isLoading } = useProject();
 
   // Only show project name when explicitly requested
@@ -162,6 +167,30 @@ export function PageHeader({
   return (
     <div className={cn(className)}>
       <div>
+        {breadcrumbs && breadcrumbs.length > 0 ? (
+          <Breadcrumb className="pb-2">
+            <BreadcrumbList>
+              {breadcrumbs.map((crumb, index) => {
+                const isLast = index === breadcrumbs.length - 1;
+                return (
+                  <React.Fragment key={`${crumb.label}-${index}`}>
+                    <UiBreadcrumbItem>
+                      {isLast || !crumb.href ? (
+                        <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                      ) : (
+                        <BreadcrumbLink asChild>
+                          <Link href={crumb.href}>{crumb.label}</Link>
+                        </BreadcrumbLink>
+                      )}
+                    </UiBreadcrumbItem>
+                    {!isLast ? <BreadcrumbSeparator /> : null}
+                  </React.Fragment>
+                );
+              })}
+            </BreadcrumbList>
+          </Breadcrumb>
+        ) : null}
+
         {/* Title and Actions */}
         <div className="flex items-center justify-between gap-2 pt-3 pb-4 min-w-0">
           <div className="min-w-0 flex-1 overflow-hidden">
@@ -186,7 +215,7 @@ export function PageHeader({
               titleContent
             ) : (
               <Inline gap="md" align="center">
-                <h1 className="text-lg sm:text-2xl lg:text-3xl font-semibold truncate">
+                <h1 className="text-3xl sm:text-3xl lg:text-4xl font-semibold truncate">
                   {title}
                 </h1>
                 {statusBadge}

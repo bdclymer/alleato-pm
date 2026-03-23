@@ -145,6 +145,9 @@ def run_graph_sync(supabase: Client) -> dict:
             summary["errors"].append(err)
 
     # ── Teams Direct Messages ─────────────────────────────────────────────────
+    # NOTE: Graph API does NOT support delta queries on chat messages with app-only
+    # (client credentials) auth. We use timestamp-based incremental sync instead:
+    # store last_sync_at in graph_sync_state and fetch messages newer than that.
     sync_teams_dm = os.environ.get("GRAPH_SYNC_TEAMS_DM", "true").lower() == "true"
     if sync_teams_dm:
         dm_users = [
@@ -164,20 +167,22 @@ def run_graph_sync(supabase: Client) -> dict:
                     resource_id = f"chat:{chat_id}"
                     resource_name = f"Teams DM: {chat['display_name']}"
                     try:
-                        token = _get_delta_token(supabase, "teams_chat", resource_id)
-                        count, new_token = sync_teams_chat(
+                        # Use last_sync_at as cutoff timestamp (stored in delta_token field)
+                        since_iso = _get_delta_token(supabase, "teams_chat", resource_id)
+                        count, new_ts = sync_teams_chat(
                             supabase,
                             chat_id,
                             chat["display_name"],
                             chat["member_names"],
-                            token,
+                            since_iso,
                         )
-                        _save_sync_state(supabase, "teams_chat", resource_id, resource_name, new_token, count)
+                        _save_sync_state(supabase, "teams_chat", resource_id, resource_name, new_ts, count)
                         summary["teams_dm"] += count
                     except Exception as e:
                         err = f"Teams DM sync failed for {resource_name}: {e}"
                         logger.error(f"[GraphSync] {err}", exc_info=True)
                         summary["errors"].append(err)
+                        _save_sync_state(supabase, "teams_chat", resource_id, resource_name, "", 0, "error", str(e))
             except Exception as e:
                 err = f"Teams DM chat listing failed for {user_email}: {e}"
                 logger.error(f"[GraphSync] {err}")

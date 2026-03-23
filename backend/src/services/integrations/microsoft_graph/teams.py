@@ -311,31 +311,61 @@ def sync_teams_chat(
     chat_id: str,
     chat_display_name: str,
     chat_members: list[str],
-    delta_token: Optional[str] = None,
+    since_iso: Optional[str] = None,
 ) -> tuple[int, str]:
     """
     Sync messages from a Teams chat (DM or group chat).
-    Uses /chats/{chatId}/messages/delta for incremental sync.
-    Returns (count_synced, new_delta_token).
+
+    Uses /chats/{chatId}/messages with $orderby=createdDateTime desc and stops
+    paginating once messages older than `since_iso` are reached.
+
+    NOTE: Graph API does NOT support delta queries on chat messages with app-only
+    (client credentials) auth — /chats/.../messages/delta returns 400.
+    We use timestamp-based incremental sync instead.
+
+    Returns (count_synced, new_latest_timestamp_iso).
     """
     graph = get_graph_client()
     if not graph.is_configured():
-        return 0, delta_token or ""
+        return 0, since_iso or ""
 
-    delta_path = f"/chats/{chat_id}/messages/delta"
-    try:
-        items, new_delta_token = graph.get_delta(delta_path, delta_token)
-    except Exception as e:
-        logger.error(f"[Teams DM] Delta query failed for chat {chat_display_name}: {e}")
-        # Re-raise so the caller retains the existing delta token and can record
-        # the failure — returning "" would silently overwrite valid sync state.
-        raise
+    # Fetch messages newest-first; stop when we reach messages older than last sync.
+    # Page size 50 balances API calls vs overfetch.
+    PAGE_SIZE = 50
+    url: Optional[str] = f"{graph.GRAPH_BASE}/chats/{chat_id}/messages"
+    params: Optional[dict] = {"$top": str(PAGE_SIZE), "$orderby": "createdDateTime desc"}
+
+    items: list[dict] = []
+    pages_fetched = 0
+
+    while url and pages_fetched < 20:  # hard cap at 1000 messages per run
+        data = graph.get(url, params if pages_fetched == 0 else None)
+        page_msgs = data.get("value", [])
+        pages_fetched += 1
+
+        # Stop early once we've passed the last-sync cutoff
+        stop_early = False
+        for msg in page_msgs:
+            created = msg.get("createdDateTime", "")
+            if since_iso and created and created <= since_iso:
+                stop_early = True
+                break
+            items.append(msg)
+
+        if stop_early or "@odata.nextLink" not in data:
+            break
+        url = data["@odata.nextLink"]
 
     synced = 0
+    latest_ts = since_iso or ""
     for msg in items:
         try:
             _process_chat_message(supabase_client, msg, chat_id, chat_display_name, chat_members)
             synced += 1
+            # Track the most recent timestamp for next run's cutoff
+            created = msg.get("createdDateTime", "")
+            if created and (not latest_ts or created > latest_ts):
+                latest_ts = created
         except _AlreadyIngested:
             pass
         except Exception as e:
@@ -343,4 +373,4 @@ def sync_teams_chat(
 
     if synced:
         logger.info(f"[Teams DM] Synced {synced} messages from '{chat_display_name}'")
-    return synced, new_delta_token
+    return synced, latest_ts

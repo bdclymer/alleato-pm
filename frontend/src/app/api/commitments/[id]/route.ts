@@ -214,16 +214,22 @@ export async function GET(
       }
     }
 
-    // Fetch company separately (avoids PostgREST schema cache join issues)
+    // Fetch vendor separately — contract_company_id FK references vendors(id)
     const record = data as Record<string, unknown>;
     let contractCompany: { id: string; name: string; type: string | null } | null = null;
     if (record?.contract_company_id) {
-      const { data: companyData } = await supabase
-        .from("companies")
-        .select("id, name, type")
+      const { data: vendorData } = await supabase
+        .from("vendors")
+        .select("id, vendor_name")
         .eq("id", record.contract_company_id as string)
         .single();
-      contractCompany = companyData ?? null;
+      if (vendorData) {
+        contractCompany = {
+          id: vendorData.id,
+          name: vendorData.vendor_name,
+          type: "vendor",
+        };
+      }
     }
 
     const originalAmount = Number(totalsData?.total_sov_amount) || 0;

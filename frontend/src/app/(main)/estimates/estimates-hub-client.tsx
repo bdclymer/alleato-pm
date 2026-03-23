@@ -36,11 +36,11 @@ export function EstimatesHubClient({ stats }: Props) {
 
   return (
     <>
-      <ProjectPageHeader
+      <PageContainer>
+        <ProjectPageHeader
         title="Estimates"
         description="Company-wide estimate hub — ASRS sprinkler design and construction projects"
       />
-      <PageContainer>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {EstimateTypes.map((type) => {
             const stat = getStatForType(type);

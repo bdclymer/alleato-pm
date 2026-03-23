@@ -77,7 +77,7 @@ export default function Ai01() {
 
         <div
           className={cn(
-            "w-full max-w-2xl mx-auto bg-transparent dark:bg-muted/50 cursor-text overflow-clip bg-clip-padding p-2.5 shadow-lg border border-border transition-all duration-200",
+            "w-full max-w-2xl mx-auto bg-transparent dark:bg-muted/50 cursor-text overflow-clip bg-clip-padding p-2.5 shadow-sm border border-border transition-all duration-200",
             {
               "rounded-3xl grid grid-cols-1 grid-rows-[auto_1fr_auto]":
                 isExpanded,

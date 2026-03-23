@@ -215,7 +215,7 @@ export function EditMeetingModal({
                   autoComplete="off"
                 />
                 {showProjectDropdown && projectOptions.length > 0 && (
-                  <div className="absolute z-50 w-full mt-1 bg-background border border-neutral-200 rounded-md shadow-lg max-h-60 overflow-auto">
+                  <div className="absolute z-50 w-full mt-1 bg-background border border-border rounded-md shadow-sm max-h-60 overflow-auto">
                     {projectOptions.map((project) => (
                       <button
                         key={project.id}

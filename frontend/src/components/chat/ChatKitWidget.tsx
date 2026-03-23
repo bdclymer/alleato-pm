@@ -89,7 +89,7 @@ export function ChatKitWidget() {
       </button>
 
       {isOpen && (
-        <div className="fixed bottom-24 right-6 z-50 shadow-2xl rounded-lg overflow-hidden border border-slate-200">
+        <div className="fixed bottom-24 right-6 z-50 shadow-sm rounded-lg overflow-hidden border border-border">
           <ChatKit
             control={chatkit.control}
             className="h-[600px] w-[400px] max-w-[calc(100vw-3rem)]"

@@ -218,7 +218,7 @@ function RoleRow({ role, personOptions, onUpdateMembers }: RoleRowProps) {
 
           {/* Dropdown */}
           {isOpen && (
-            <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-background border border-border rounded-md shadow-lg max-h-60 overflow-auto">
+            <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-background border border-border rounded-md shadow-sm max-h-60 overflow-auto">
               <div className="p-2 border-b border-border">
                 <input
                   type="text"

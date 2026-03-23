@@ -20,6 +20,8 @@ TOKEN_URL = "https://login.microsoftonline.com/{tenant_id}/oauth2/v2.0/token"
 class GraphClient:
     """Microsoft Graph API client with automatic token refresh."""
 
+    GRAPH_BASE = GRAPH_BASE  # expose as instance attribute for callers
+
     def __init__(self):
         self.client_id = os.environ.get("MICROSOFT_CLIENT_ID", "")
         self.client_secret = os.environ.get("MICROSOFT_CLIENT_SECRET", "")

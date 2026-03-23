@@ -12,9 +12,6 @@
 /* ============================================================================
    DESIGN SYSTEM - GLOBAL STYLES
    ============================================================================
-   This file contains all global design system styles for the Alleato-PM platform.
-   These styles follow best practices for maintainability and consistency.
-
    Table of Contents:
    1. CSS Variables (Theme)
    2. Base Styles
@@ -25,7 +22,12 @@
    7. Form Components
    8. Badge & Status Components
    9. Interactive Components
-   10. Utility Components
+   10. Table Components
+   11. Dropdown & Menu Components
+   12. Utility Components
+   13. Premium Design System
+   14. AI Chat Markdown Styles
+   15. Liveblocks Styles
    ============================================================================ */
 
 /* ============================================================================
@@ -36,54 +38,52 @@
   :root {
     /* ================================================================
        SNOW THEME (Light) — Superhuman-inspired v2
-       Background is warm off-white (#F6F6F8), cards are true white.
-       The tonal shift between bg and card replaces most borders.
        ================================================================ */
 
     /* Core Surface Colors */
-    --background: 0 0% 100%;        /* #FFFFFF — clean white page bg */
-    --foreground: 240 6% 12%;       /* #1D1D22 — warm near-black text */
-    --card: 0 0% 100%;              /* #FFFFFF — true white for elevated surfaces */
-    --card-foreground: 240 6% 12%;  /* #1D1D22 — matches foreground */
-    --popover: 0 0% 100%;           /* #FFFFFF — floating surfaces */
+    --background: 0 0% 100%;
+    --foreground: 240 6% 12%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 6% 12%;
+    --popover: 0 0% 100%;
     --popover-foreground: 240 6% 12%;
-    --surface-alt: 216 100% 99%;    /* #FAFCFF — subtle blue-white tint for sidebars & sections */
-    --surface-soft: 230 43% 97%;    /* #F3F4FA — soft chip background for header controls */
-    --right-sidebar-bg: 210 100% 99%; /* #FAFCFF */
+    --surface-alt: 216 100% 99%;
+    --surface-soft: 230 43% 97%;
+    --right-sidebar-bg: 210 100% 99%;
 
     /* Primary Accent — Soft purple */
-    --primary: 260 37% 59%;         /* #8A71BD — soft warm purple */
+    --primary: 260 37% 59%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary — subtle background surface */
-    --secondary: 240 5% 95%;        /* #F1F1F4 */
+    /* Secondary */
+    --secondary: 240 5% 95%;
     --secondary-foreground: 240 6% 12%;
 
-    /* Muted — hover states, subtle backgrounds */
-    --muted: 216 100% 99%;          /* #FAFCFF — subtle hover/deemphasis */
-    --muted-subtle: 240 5% 97%;     /* matches background */
-    --muted-foreground: 240 4% 46%; /* #6F7075 — secondary text (~60% opacity) */
+    /* Muted */
+    --muted: 216 100% 99%;
+    --muted-subtle: 240 5% 97%;
+    --muted-foreground: 240 4% 46%;
 
-    /* Accent — interactive hover tints */
-    --accent: 260 30% 95%;          /* subtle purple tint */
-    --accent-foreground: 260 37% 45%; /* accent text */
+    /* Accent */
+    --accent: 260 30% 95%;
+    --accent-foreground: 260 37% 45%;
 
     /* Destructive */
-    --destructive: 0 72% 51%;       /* #DC2626 */
+    --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
     /* Structural */
-    --border: 0 0% 90%;             /* #E5E5E5 — neutral light border */
-    --input: 0 0% 90%;              /* matches border inputs */
-    --ring: 260 37% 59%;            /* matches primary for focus rings */
-    --schedule-view-active: 260 37% 59%; /* #8A71BD */
+    --border: 0 0% 90%;
+    --input: 0 0% 90%;
+    --ring: 260 37% 59%;
+    --schedule-view-active: 260 37% 59%;
 
-    /* Chart Colors — harmonized with purple palette */
-    --chart-1: 260 37% 59%;         /* primary purple */
-    --chart-2: 173 58% 39%;         /* teal */
-    --chart-3: 197 37% 24%;         /* slate */
-    --chart-4: 38 92% 50%;          /* amber */
-    --chart-5: 152 69% 37%;         /* green */
+    /* Chart Colors */
+    --chart-1: 260 37% 59%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 38 92% 50%;
+    --chart-5: 152 69% 37%;
 
     /* Border Radius */
     --radius: 0.5rem;
@@ -93,12 +93,12 @@
     --radius-xl: 1rem;
 
     /* Spacing System (8px grid) */
-    --space-1: 0.25rem;  /* 4px */
-    --space-2: 0.5rem;   /* 8px */
-    --space-3: 0.75rem;  /* 12px */
-    --space-4: 1rem;     /* 16px */
-    --space-6: 1.5rem;   /* 24px */
-    --space-8: 2rem;     /* 32px */
+    --space-1: 0.25rem;
+    --space-2: 0.5rem;
+    --space-3: 0.75rem;
+    --space-4: 1rem;
+    --space-6: 1.5rem;
+    --space-8: 2rem;
     /* Legacy aliases */
     --space-xs: 0.5rem;
     --space-sm: 1rem;
@@ -120,7 +120,7 @@
     --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
     --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
-    /* Procore Brand Colors (retained for integration badges) */
+    /* Procore Brand Colors */
     --procore-orange: 29 71% 52%;
     --procore-orange-hover: 29 71% 45%;
     --procore-header: 180 1% 38%;
@@ -129,7 +129,7 @@
     --procore-info-text: 214 80% 40%;
     --procore-negative: 0 84% 60%;
 
-    /* Brand color — demoted from primary, used for Procore badges only */
+    /* Brand — used for Procore integration badges only */
     --brand: 29 71% 52%;
     --brand-hover: 29 71% 45%;
     --brand-light: 29 71% 95%;
@@ -139,110 +139,120 @@
     --surface-elevated: 0 0% 100%;
 
     /* Semantic Status Colors */
-    --status-success: 152 69% 37%;   /* #1DB954 — approved, on-track */
-    --status-warning: 38 92% 50%;    /* #F59E0B — pending, at-risk */
-    --status-error: 0 72% 51%;       /* #DC2626 — rejected, overdue */
-    --status-info: 217 91% 60%;      /* #3B82F6 — informational, synced */
+    --status-success: 152 69% 37%;
+    --status-warning: 38 92% 50%;
+    --status-error: 0 72% 51%;
+    --status-info: 217 91% 60%;
 
-    /* Chat UI - Dark Luxury Theme */
+    /* Sidebar */
+    --sidebar: hsl(0 0% 100%);
+    --sidebar-foreground: hsl(240 6% 25%);
+    --sidebar-primary: hsl(260 37% 59%);
+    --sidebar-primary-foreground: hsl(0 0% 100%);
+    --sidebar-accent: hsl(260 30% 95%);
+    --sidebar-accent-foreground: hsl(260 37% 45%);
+    --sidebar-border: hsl(240 5% 91%);
+    --sidebar-ring: hsl(260 37% 59%);
+
+    /* Chat UI */
     --chat-bg: 240 6% 7%;
     --chat-panel: 240 5% 10%;
     --chat-panel-2: 240 5% 13%;
     --chat-border: 240 5% 20%;
     --chat-text: 0 0% 95%;
     --chat-muted: 0 0% 60%;
-    --chat-accent: 245 58% 52%;      /* matches primary */
-    --chat-accent-2: 245 58% 62%;    /* lighter primary variant */
+    --chat-accent: 245 58% 52%;
+    --chat-accent-2: 245 58% 62%;
     --chat-hover: 240 5% 15%;
+
+    /* Premium Shadows */
+    --shadow-subtle: 0 1px 2px 0 rgb(0 0 0 / 0.03);
+    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
+    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05);
+    --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.03);
+
+    /* Premium Animation Timing */
+    --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
+    --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+    --duration-fast: 150ms;
+    --duration-normal: 250ms;
+    --duration-slow: 400ms;
   }
 
   .dark {
     /* ================================================================
        CARBON THEME (Dark) — Superhuman five-shades-of-gray
-       Closer surfaces = lighter. Distant surfaces = darker.
-       No pure black (#000) or pure white (#FFF).
        ================================================================ */
 
-    --background: 240 6% 9%;        /* #151518 — deepest, page bg */
-    --foreground: 0 0% 92%;         /* #EBEBEB — primary text (not pure white) */
-    --card: 240 5% 13%;             /* #1F1F24 — mid-level surfaces */
+    --background: 240 6% 9%;
+    --foreground: 0 0% 92%;
+    --card: 240 5% 13%;
     --card-foreground: 0 0% 92%;
-    --popover: 240 5% 18%;          /* #2C2C35 — closest/floating */
+    --popover: 240 5% 18%;
     --popover-foreground: 0 0% 92%;
-    --surface-soft: 240 5% 18%;     /* dark-mode equivalent chip surface */
-    --right-sidebar-bg: 210 100% 99%; /* Keep right sidebar bright in dark mode too */
-    --primary: 245 58% 62%;         /* #7B79E5 — slightly lighter for dark bg */
+    --surface-soft: 240 5% 18%;
+    --right-sidebar-bg: 210 100% 99%;
+    --primary: 245 58% 62%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 5% 16%;        /* #272730 */
+    --secondary: 240 5% 16%;
     --secondary-foreground: 0 0% 92%;
-    --muted: 240 5% 16%;            /* #272730 — hover, active states */
+    --muted: 240 5% 16%;
     --muted-subtle: 240 5% 12%;
-    --muted-foreground: 0 0% 65%;   /* #A6A6A6 — secondary text (65% opacity equivalent) */
-    --accent: 245 30% 20%;          /* dark indigo tint */
+    --muted-foreground: 0 0% 65%;
+    --accent: 245 30% 20%;
     --accent-foreground: 245 58% 75%;
     --destructive: 0 62% 40%;
     --destructive-foreground: 0 0% 98%;
-    --border: 240 5% 19%;           /* #2E2E38 — subtle structural borders */
+    --border: 240 5% 19%;
     --input: 240 5% 19%;
-    --ring: 245 58% 62%;            /* matches dark primary */
-    --schedule-view-active: 260 37% 59%; /* #8A71BD */
+    --ring: 245 58% 62%;
+    --schedule-view-active: 260 37% 59%;
 
-    /* Chart Colors — adjusted for dark backgrounds */
     --chart-1: 245 58% 62%;
     --chart-2: 160 60% 45%;
     --chart-3: 38 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 152 60% 50%;
 
-    /* Brand color — slightly brighter for dark mode */
     --brand: 29 71% 58%;
     --brand-hover: 29 71% 65%;
     --brand-light: 29 71% 15%;
 
-    /* Surface Colors */
     --surface-inverse: 0 0% 92%;
     --surface-elevated: 240 5% 18%;
 
-    /* Status colors — increased brightness + saturation for dark bg */
     --status-success: 152 69% 45%;
     --status-warning: 38 92% 55%;
     --status-error: 0 72% 55%;
     --status-info: 217 91% 65%;
+
+    --sidebar: hsl(240 6% 9%);
+    --sidebar-foreground: hsl(0 0% 85%);
+    --sidebar-primary: hsl(260 37% 65%);
+    --sidebar-primary-foreground: hsl(0 0% 100%);
+    --sidebar-accent: hsl(260 30% 20%);
+    --sidebar-accent-foreground: hsl(0 0% 92%);
+    --sidebar-border: hsl(240 5% 19%);
+    --sidebar-ring: hsl(245 58% 62%);
   }
 }
 
-@layer utilities {
-  .bg-surface-soft {
-    background-color: hsl(var(--surface-soft));
-  }
-}
-
-:root {
-  /* Sidebar — blends with page background, no border needed */
-  --sidebar: hsl(0 0% 100%);            /* matches --background (white) */
-  --sidebar-foreground: hsl(240 6% 25%);
-  --sidebar-primary: hsl(260 37% 59%);  /* matches --primary (#8A71BD) */
-  --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(260 30% 95%);   /* matches --accent */
-  --sidebar-accent-foreground: hsl(260 37% 45%);
-  --sidebar-border: hsl(240 5% 91%);    /* matches --border */
-  --sidebar-ring: hsl(260 37% 59%);     /* matches --primary */
-}
-
-.dark {
-  --sidebar: hsl(240 6% 9%);            /* matches dark --background */
-  --sidebar-foreground: hsl(0 0% 85%);
-  --sidebar-primary: hsl(260 37% 65%);  /* matches dark --primary */
-  --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(260 30% 20%);   /* matches dark --accent */
-  --sidebar-accent-foreground: hsl(0 0% 92%);
-  --sidebar-border: hsl(240 5% 19%);    /* matches dark --border */
-  --sidebar-ring: hsl(245 58% 62%);
+@theme inline {
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-surface-alt: hsl(var(--surface-alt));
 }
 
 /* ============================================================================
-   ANIMATIONS — Superhuman-inspired motion system
-   Performance targets: fast (100ms), normal (150ms), spring (200ms)
+   ANIMATIONS
    ============================================================================ */
 
 @keyframes fadeIn {
@@ -251,72 +261,33 @@
 }
 
 @keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes slideDown {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes scaleIn {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
-/* Spring entrance — command palette, modals */
 @keyframes springIn {
-  from {
-    opacity: 0;
-    transform: translateY(-8px) scale(0.96);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* Slide out right — archive/done actions */
 @keyframes slideOutRight {
-  from {
-    opacity: 1;
-    transform: translateX(0);
-  }
-  to {
-    opacity: 0;
-    transform: translateX(100px);
-  }
+  from { opacity: 1; transform: translateX(0); }
+  to { opacity: 0; transform: translateX(100px); }
 }
 
-/* Row reflow — list items filling gap after removal */
 @keyframes slideUpFill {
-  from {
-    opacity: 0.8;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0.8; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes pulse {
@@ -329,49 +300,39 @@
   100% { background-position: 200% 0; }
 }
 
-/* Keyframe animations */
 @keyframes marquee {
-  from {
-    transform: translateX(0);
-  }
-  to {
-    transform: translateX(calc(-100% - var(--gap)));
-  }
+  from { transform: translateX(0); }
+  to { transform: translateX(calc(-100% - var(--gap))); }
 }
 
 @keyframes marquee-vertical {
-  from {
-    transform: translateY(0);
-  }
-  to {
-    transform: translateY(calc(-100% - var(--gap)));
-  }
+  from { transform: translateY(0); }
+  to { transform: translateY(calc(-100% - var(--gap))); }
 }
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-20px) rotate(5deg); }
+}
+
+@keyframes ping-slow {
+  0% { transform: scale(1); opacity: 0.3; }
+  50% { transform: scale(1.5); opacity: 0; }
+  100% { transform: scale(1); opacity: 0; }
+}
+
+@keyframes reveal {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================================================
+   2. BASE STYLES
+   ============================================================================ */
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
-  }
-
-  /* Enforce white form field backgrounds across the app, including custom combobox triggers. */
-  input[data-slot="input"],
-  textarea[data-slot="textarea"],
-  [data-slot="select-trigger"],
-  [data-slot="input-group"],
-  button[role="combobox"] {
-    background-color: #ffffff !important;
-  }
-
-  form input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
-  form textarea,
-  form [data-slot="select-trigger"],
-  form button[role="combobox"] {
-    background-color: #ffffff !important;
-  }
-
-  /* Keep site-header project trigger aligned with other header controls. */
-  button[role="combobox"].project-selector-trigger {
-    background-color: hsl(var(--surface-soft)) !important;
   }
 
   body {
@@ -383,18 +344,503 @@
     text-rendering: optimizeLegibility;
   }
 
-  /* Tighter headings — Superhuman-style typographic precision */
   h1, h2, h3, h4, h5, h6 {
     letter-spacing: -0.01em;
+  }
+
+  /* Responsive media */
+  img, video, iframe {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Prevent code blocks from overflowing */
+  pre, code {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+
+  /* Input field backgrounds — semantic tokens for dark mode compatibility */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="search"],
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="month"],
+  input[type="week"],
+  input[type="time"],
+  textarea,
+  select {
+    @apply bg-card;
+    color: hsl(var(--foreground));
+    -webkit-text-fill-color: hsl(var(--foreground));
+    caret-color: hsl(var(--foreground));
+  }
+
+  /* Placeholder color — single source of truth */
+  input::placeholder,
+  textarea::placeholder {
+    color: hsl(var(--muted-foreground) / 0.6);
+  }
+
+  [data-placeholder] {
+    color: hsl(var(--muted-foreground) / 0.6);
+  }
+
+  [role="combobox"][data-placeholder-style] {
+    color: hsl(var(--muted-foreground) / 0.6);
+  }
+
+  /* Contenteditable readability */
+  [contenteditable="true"] {
+    color: hsl(var(--foreground));
+    -webkit-text-fill-color: hsl(var(--foreground));
+    caret-color: hsl(var(--foreground));
+  }
+
+  /* Focus state */
+  input[type="text"]:focus,
+  input[type="email"]:focus,
+  input[type="password"]:focus,
+  input[type="number"]:focus,
+  input[type="tel"]:focus,
+  input[type="url"]:focus,
+  input[type="search"]:focus,
+  input[type="date"]:focus,
+  input[type="datetime-local"]:focus,
+  input[type="month"]:focus,
+  input[type="week"]:focus,
+  input[type="time"]:focus,
+  textarea:focus,
+  select:focus {
+    @apply bg-card;
+  }
+
+  /* Disabled state */
+  input[type="text"]:disabled,
+  input[type="email"]:disabled,
+  input[type="password"]:disabled,
+  input[type="number"]:disabled,
+  input[type="tel"]:disabled,
+  input[type="url"]:disabled,
+  input[type="search"]:disabled,
+  input[type="date"]:disabled,
+  input[type="datetime-local"]:disabled,
+  input[type="month"]:disabled,
+  input[type="week"]:disabled,
+  input[type="time"]:disabled,
+  textarea:disabled,
+  select:disabled {
+    @apply bg-muted;
+  }
+}
+
+/* ============================================================================
+   3. TYPOGRAPHY COMPONENTS
+   ============================================================================ */
+
+@layer components {
+  .text-page-title {
+    @apply text-xl font-semibold tracking-tight text-foreground;
+  }
+
+  .text-section-title {
+    @apply text-lg font-semibold tracking-tight text-foreground;
+  }
+
+  .text-card-title {
+    @apply text-sm font-semibold text-foreground tracking-tight;
+  }
+
+  .text-label-uppercase {
+    @apply text-[11px] font-semibold tracking-[0.2em] uppercase text-muted-foreground;
+  }
+
+  .text-section-label {
+    @apply text-2xs font-semibold tracking-[0.15em] uppercase text-muted-foreground;
+  }
+
+  .text-body {
+    @apply text-sm text-muted-foreground leading-relaxed;
+  }
+
+  .text-body-sm {
+    @apply text-sm text-muted-foreground leading-relaxed;
+  }
+
+  .text-muted-custom {
+    @apply text-xs text-muted-foreground;
+  }
+
+  .text-metric-lg {
+    @apply text-4xl md:text-5xl font-light tabular-nums tracking-tight text-foreground;
+  }
+
+  .text-metric-md {
+    @apply text-3xl md:text-4xl font-light tabular-nums tracking-tight text-foreground;
+  }
+
+  .text-metric-sm {
+    @apply text-2xl font-light tabular-nums tracking-tight text-foreground;
+  }
+
+  .text-link {
+    @apply text-sm font-medium text-foreground hover:text-primary transition-colors duration-150;
+  }
+}
+
+/* ============================================================================
+   4. LAYOUT COMPONENTS
+   ============================================================================ */
+
+@layer components {
+  .page-container {
+    @apply min-h-screen px-4 sm:px-6 md:px-8 lg:px-12 py-2 sm:py-6 max-w-[1800px] mx-auto;
+  }
+
+  .page-header {
+    @apply mb-4 pb-4 sm:mb-8 sm:pb-8;
+  }
+
+  .section-spacing {
+    @apply mb-10;
+  }
+
+  .section-spacing-lg {
+    @apply mb-20;
+  }
+
+  .content-grid {
+    @apply grid grid-cols-1 lg:grid-cols-3 gap-6;
+  }
+
+  .metrics-row {
+    @apply flex flex-col gap-4 md:flex-row md:gap-6;
+  }
+
+  .status-row {
+    @apply grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4;
+  }
+
+  .dropdown-grid {
+    @apply grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-12;
+  }
+}
+
+/* ============================================================================
+   5. CARD COMPONENTS
+   ============================================================================ */
+
+@layer components {
+  .card-base {
+    @apply bg-card rounded-lg;
+  }
+
+  .card-padded {
+    @apply bg-card rounded-lg p-6 md:p-8;
+  }
+
+  .card-padded-sm {
+    @apply bg-card rounded-lg p-4 md:p-6;
+  }
+
+  .card-interactive {
+    @apply bg-card rounded-lg p-4 md:p-6 transition-colors duration-150 hover:bg-muted/50;
+  }
+
+  .card-metric {
+    @apply w-full bg-card rounded-lg p-4 md:w-1/3 md:p-6;
+  }
+
+  .card-sidebar {
+    @apply bg-card rounded-lg p-8 mb-6;
+  }
+
+  .card-header {
+    @apply flex items-center justify-between mb-6 pb-4 border-b border-border;
+  }
+
+  .card-header-clean {
+    @apply flex items-start justify-between mb-6;
+  }
+
+  .card-content {
+    @apply space-y-4;
+  }
+
+  .card-footer {
+    @apply pt-3 border-t border-border;
+  }
+}
+
+/* ============================================================================
+   6. BUTTON COMPONENTS
+   ============================================================================ */
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 transition-colors duration-150 px-4 py-2 text-sm font-medium rounded-md;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-foreground hover:bg-muted transition-colors duration-150 px-4 py-2 text-sm font-medium rounded-md;
+  }
+
+  .btn-ghost {
+    @apply text-muted-foreground hover:text-foreground transition-colors duration-150 px-4 py-2 text-sm font-medium;
+  }
+
+  .btn-icon {
+    @apply p-2 rounded-full hover:bg-muted transition-colors duration-150;
+  }
+
+  .btn-add-inline {
+    @apply inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-primary transition-colors duration-150;
+  }
+
+  .btn-editable {
+    @apply w-full cursor-pointer transition-opacity duration-150 border-0 bg-transparent text-left p-0;
+  }
+
+  .btn-editable:hover {
+    opacity: 0.7;
+  }
+
+  .btn-menu-link {
+    @apply flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm hover:bg-muted transition-colors duration-150;
+  }
+
+  .btn-dropdown-icon {
+    @apply ml-1 h-4 w-4 rounded-full bg-primary p-0.5 text-primary-foreground;
+  }
+}
+
+/* ============================================================================
+   7. FORM COMPONENTS
+   ============================================================================ */
+
+@layer components {
+  .input-base {
+    @apply border-border focus:border-ring focus:ring-ring/20;
+  }
+
+  .input-compact {
+    @apply h-9 border-border focus:border-ring focus:ring-ring/20;
+  }
+
+  .label-base {
+    @apply text-xs font-semibold text-muted-foreground;
+  }
+
+  .field-group {
+    @apply space-y-2;
+  }
+
+  .form-dialog {
+    @apply space-y-5 py-4;
+  }
+
+  .dialog-footer {
+    @apply flex justify-end gap-3 pt-4 border-t border-border;
+  }
+}
+
+/* ============================================================================
+   8. BADGE & STATUS COMPONENTS
+   ============================================================================ */
+
+@layer components {
+  .badge-base {
+    @apply px-2 py-0.5 text-xs font-medium rounded;
+  }
+
+  .badge-success {
+    @apply rounded bg-success/10 px-2 py-0.5 text-xs font-medium text-success;
+  }
+
+  .badge-warning {
+    @apply rounded bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning;
+  }
+
+  .badge-error {
+    @apply rounded bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive;
+  }
+
+  .badge-info {
+    @apply rounded bg-info/10 px-2 py-0.5 text-xs font-medium text-info;
+  }
+
+  .badge-neutral {
+    @apply flex-shrink-0 px-3 py-1 text-2xs font-semibold tracking-[0.1em] uppercase bg-muted text-muted-foreground border border-border;
+  }
+
+  .status-positive {
+    @apply text-success;
+  }
+
+  .status-negative {
+    @apply text-destructive;
+  }
+
+  .status-icon-sm {
+    @apply h-3.5 w-3.5;
+  }
+}
+
+/* ============================================================================
+   9. INTERACTIVE COMPONENTS
+   ============================================================================ */
+
+@layer components {
+  .list-item-hover {
+    @apply block;
+  }
+
+  .list-item-text {
+    @apply text-sm font-medium text-foreground truncate transition-colors duration-150;
+  }
+
+  .metadata-row {
+    @apply flex flex-wrap items-center gap-4 pt-3 border-t border-border;
+  }
+
+  .metadata-item {
+    @apply flex items-center gap-2 text-xs text-muted-foreground;
+  }
+
+  .team-member-row {
+    @apply flex items-center gap-4 pb-4 border-b border-border last:border-0 last:pb-0;
+  }
+
+  .avatar-container {
+    @apply h-10 w-10 border border-border;
+  }
+
+  .avatar-fallback {
+    @apply bg-muted text-muted-foreground text-xs font-medium;
+  }
+
+  .editable-field {
+    @apply flex items-center gap-2;
+  }
+
+  .edit-icon {
+    @apply h-3 w-3 text-muted-foreground opacity-0 transition-opacity duration-150;
+  }
+
+  .list-item-hover:hover .list-item-text {
+    color: hsl(var(--primary));
+  }
+
+  .list-item-hover:hover .edit-icon {
+    opacity: 1;
+  }
+
+  .icon-brand {
+    @apply h-4 w-4 text-primary flex-shrink-0;
+  }
+
+  .icon-container {
+    @apply h-5 w-5 text-primary;
+  }
+}
+
+/* ============================================================================
+   10. TABLE COMPONENTS
+   ============================================================================ */
+
+@layer components {
+  .table-container {
+    @apply bg-card rounded-lg;
+  }
+
+  .table-header-row {
+    @apply px-6 py-4 border-b border-border flex items-center justify-between;
+  }
+
+  .table-heading {
+    @apply text-base font-semibold text-foreground;
+  }
+
+  .table-empty {
+    @apply text-center text-muted-foreground py-8;
+  }
+}
+
+/* ============================================================================
+   11. DROPDOWN & MENU COMPONENTS
+   ============================================================================ */
+
+@layer components {
+  .dropdown-content {
+    @apply w-[calc(100vw-2rem)] sm:w-screen sm:max-w-4xl rounded-lg border-border p-4 sm:p-8 shadow-sm max-h-[80vh] overflow-y-auto;
+  }
+
+  .dropdown-section-heading {
+    @apply mb-4 text-xs font-semibold tracking-[0.15em] uppercase text-muted-foreground;
+  }
+
+  .dropdown-section {
+    @apply space-y-1;
+  }
+
+  .link-view-all {
+    @apply text-xs text-muted-foreground font-medium hover:underline;
+  }
+}
+
+/* ============================================================================
+   12. UTILITY COMPONENTS & ANIMATIONS
+   ============================================================================ */
+
+@layer components {
+  .text-truncate {
+    @apply truncate;
+  }
+
+  .line-clamp-2-custom {
+    @apply line-clamp-2;
+  }
+
+  .separator-dot {
+    @apply text-muted-foreground/50;
+  }
+
+  .loading-state {
+    @apply flex items-center justify-center h-full;
+  }
+
+  .loading-text {
+    @apply text-muted-foreground;
+  }
+
+  .empty-state {
+    @apply text-center py-12;
+  }
+
+  .empty-state-text {
+    @apply text-sm text-muted-foreground mb-2;
+  }
+
+  .empty-state-helper {
+    @apply text-xs text-muted-foreground/70;
   }
 }
 
 @layer utilities {
+  .bg-surface-soft {
+    background-color: hsl(var(--surface-soft));
+  }
+
   .font-serif {
     font-family: var(--font-serif);
   }
 
-  /* Smooth Transition Utilities */
+  /* Transition Utilities */
   .transition-smooth {
     @apply transition-all duration-150 ease-out;
   }
@@ -407,7 +853,7 @@
     @apply transition-transform duration-150 ease-out;
   }
 
-  /* Consistent Hover States */
+  /* Hover States */
   .hover-lift {
     @apply transition-transform duration-150 ease-out hover:-translate-y-0.5;
   }
@@ -425,7 +871,7 @@
     @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand/20 focus-visible:ring-offset-2;
   }
 
-  /* Animation Utilities — tuned to Superhuman timing */
+  /* Animation Utilities */
   .animate-in {
     animation: fadeIn var(--transition-fast, 100ms) ease-out;
   }
@@ -454,7 +900,6 @@
     animation: slideUpFill var(--transition-normal, 150ms) ease-out;
   }
 
-  /* Skeleton Loading Animation — uses semantic muted tokens */
   .skeleton {
     @apply relative overflow-hidden bg-muted;
     background: linear-gradient(
@@ -467,7 +912,6 @@
     animation: shimmer 1.5s infinite;
   }
 
-  /* Coming Soon Component Animations */
   .animate-float {
     animation: float 6s ease-in-out infinite;
   }
@@ -485,918 +929,7 @@
     animation: ping-slow 3s cubic-bezier(0, 0, 0.2, 1) infinite;
   }
 
-  @keyframes float {
-    0%, 100% {
-      transform: translateY(0) rotate(0deg);
-    }
-    50% {
-      transform: translateY(-20px) rotate(5deg);
-    }
-  }
-
-  @keyframes ping-slow {
-    0% {
-      transform: scale(1);
-      opacity: 0.3;
-    }
-    50% {
-      transform: scale(1.5);
-      opacity: 0;
-    }
-    100% {
-      transform: scale(1);
-      opacity: 0;
-    }
-  }
-}
-
-/* ============================================================================
-   2. TYPOGRAPHY COMPONENTS
-   ============================================================================
-   Consistent typography patterns used across the application.
-   Based on the executive/editorial design language.
-   ============================================================================ */
-
-@layer components {
-  /* Page Title — Superhuman-style: clean, tight, authoritative */
-  .text-page-title {
-    @apply text-xl font-semibold tracking-tight text-foreground;
-  }
-
-  /* Section Title — medium prominence */
-  .text-section-title {
-    @apply text-lg font-semibold tracking-tight text-foreground;
-  }
-
-  /* Card Title — compact header */
-  .text-card-title {
-    @apply text-sm font-semibold text-foreground tracking-tight;
-  }
-
-  /* Pre-heading/Eyebrow — 11px uppercase tracking label */
-  .text-label-uppercase {
-    @apply text-[11px] font-semibold tracking-[0.2em] uppercase text-muted-foreground;
-  }
-
-  /* Section Label — Smaller uppercase tracking */
-  .text-section-label {
-    @apply text-2xs font-semibold tracking-[0.15em] uppercase text-muted-foreground;
-  }
-
-  /* Body text — Standard readable text */
-  .text-body {
-    @apply text-sm text-muted-foreground leading-relaxed;
-  }
-
-  /* Body small — Smaller body text */
-  .text-body-sm {
-    @apply text-sm text-muted-foreground leading-relaxed;
-  }
-
-  /* Muted text — Secondary/helper text */
-  .text-muted-custom {
-    @apply text-xs text-muted-foreground;
-  }
-
-  /* Metric/Number display — Large tabular numbers */
-  .text-metric-lg {
-    @apply text-4xl md:text-5xl font-light tabular-nums tracking-tight text-foreground;
-  }
-
-  /* Metric medium — Medium tabular numbers */
-  .text-metric-md {
-    @apply text-3xl md:text-4xl font-light tabular-nums tracking-tight text-foreground;
-  }
-
-  /* Metric small — Small tabular numbers */
-  .text-metric-sm {
-    @apply text-2xl font-light tabular-nums tracking-tight text-foreground;
-  }
-
-  /* Link text — Clickable text style (now uses primary instead of brand) */
-  .text-link {
-    @apply text-sm font-medium text-foreground hover:text-primary transition-colors duration-150;
-  }
-}
-
-/* ============================================================================
-   3. LAYOUT COMPONENTS
-   ============================================================================
-   Page layouts, containers, and structural components.
-   ============================================================================ */
-
-@layer components {
-  /* Main page container with responsive padding */
-  .page-container {
-    @apply min-h-screen px-4 sm:px-6 md:px-8 lg:px-12 py-2 sm:py-6 max-w-[1800px] mx-auto;
-  }
-
-  /* Page header section */
-  .page-header {
-    @apply mb-4 pb-4 sm:mb-8 sm:pb-8;
-  }
-
-  /* Section with bottom margin */
-  .section-spacing {
-    @apply mb-10;
-  }
-
-  /* Section with large bottom margin */
-  .section-spacing-lg {
-    @apply mb-20;
-  }
-
-  /* Standard content grid - 2 columns on large */
-  .content-grid {
-    @apply grid grid-cols-1 lg:grid-cols-3 gap-6;
-  }
-
-  /* Metrics row - horizontal on desktop */
-  .metrics-row {
-    @apply flex flex-col gap-4 md:flex-row md:gap-6;
-  }
-
-  /* Status row - responsive grid */
-  .status-row {
-    @apply grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4;
-  }
-
-  /* Dropdown menu grid layout */
-  .dropdown-grid {
-    @apply grid grid-cols-1 gap-8 md:grid-cols-3 md:gap-12;
-  }
-}
-
-/* ============================================================================
-   4. CARD COMPONENTS
-   ============================================================================
-   Card styles for content containers, metrics, and interactive elements.
-   ============================================================================ */
-
-@layer components {
-  /* Base card — tonal elevation replaces borders (Superhuman v2)
-     Cards use bg-card on bg-background. The 3% lightness shift IS the border. */
-  .card-base {
-    @apply bg-card rounded-lg;
-  }
-
-  /* Card with padding */
-  .card-padded {
-    @apply bg-card rounded-lg p-6 md:p-8;
-  }
-
-  /* Card with smaller padding */
-  .card-padded-sm {
-    @apply bg-card rounded-lg p-4 md:p-6;
-  }
-
-  /* Interactive card — subtle hover, no border, no heavy shadow */
-  .card-interactive {
-    @apply bg-card rounded-lg p-4 md:p-6 transition-colors duration-150 hover:bg-muted/50;
-  }
-
-  /* Metric card — no border, bg elevation only */
-  .card-metric {
-    @apply w-full bg-card rounded-lg p-4 md:w-1/3 md:p-6;
-  }
-
-  /* Sidebar card — for right column widgets */
-  .card-sidebar {
-    @apply bg-card rounded-lg p-8 mb-6;
-  }
-
-  /* Card header with subtle bottom border (structural — retained) */
-  .card-header {
-    @apply flex items-center justify-between mb-6 pb-4 border-b border-border;
-  }
-
-  /* Card header without border */
-  .card-header-clean {
-    @apply flex items-start justify-between mb-6;
-  }
-
-  /* Card content spacing */
-  .card-content {
-    @apply space-y-4;
-  }
-
-  /* Card footer with subtle top border (structural — retained) */
-  .card-footer {
-    @apply pt-3 border-t border-border;
-  }
-}
-
-/* ============================================================================
-   5. BUTTON COMPONENTS
-   ============================================================================
-   Button styles for various actions and interactions.
-   ============================================================================ */
-
-@layer components {
-  /* Primary action button — uses primary token (indigo-purple) */
-  .btn-primary {
-    @apply bg-primary text-primary-foreground hover:bg-primary/90 transition-colors duration-150 px-4 py-2 text-sm font-medium rounded-md;
-  }
-
-  /* Secondary button — subtle background */
-  .btn-secondary {
-    @apply bg-secondary text-foreground hover:bg-muted transition-colors duration-150 px-4 py-2 text-sm font-medium rounded-md;
-  }
-
-  /* Ghost button — minimal styling */
-  .btn-ghost {
-    @apply text-muted-foreground hover:text-foreground transition-colors duration-150 px-4 py-2 text-sm font-medium;
-  }
-
-  /* Icon button — small circular button */
-  .btn-icon {
-    @apply p-2 rounded-full hover:bg-muted transition-colors duration-150;
-  }
-
-  /* Inline add button */
-  .btn-add-inline {
-    @apply inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-primary transition-colors duration-150;
-  }
-
-  /* Editable field trigger */
-  .btn-editable {
-    @apply w-full cursor-pointer transition-opacity duration-150 border-0 bg-transparent text-left p-0;
-  }
-
-  .btn-editable:hover {
-    opacity: 0.7;
-  }
-
-  /* Menu link button */
-  .btn-menu-link {
-    @apply flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm hover:bg-muted transition-colors duration-150;
-  }
-
-  /* Dropdown action icon */
-  .btn-dropdown-icon {
-    @apply ml-1 h-4 w-4 rounded-full bg-primary p-0.5 text-primary-foreground;
-  }
-}
-
-/* ============================================================================
-   6. FORM COMPONENTS
-   ============================================================================
-   Form input styles for consistent form elements.
-   ============================================================================ */
-
-@layer components {
-  /* Standard input field — keeps border (interactive elements need them) */
-  .input-base {
-    @apply border-border focus:border-ring focus:ring-ring/20;
-  }
-
-  /* Compact input field */
-  .input-compact {
-    @apply h-9 border-border focus:border-ring focus:ring-ring/20;
-  }
-
-  /* Form label */
-  .label-base {
-    @apply text-xs font-semibold text-muted-foreground;
-  }
-
-  /* Form field group spacing */
-  .field-group {
-    @apply space-y-2;
-  }
-
-  /* Dialog form spacing */
-  .form-dialog {
-    @apply space-y-5 py-4;
-  }
-
-  /* Dialog footer with actions */
-  .dialog-footer {
-    @apply flex justify-end gap-3 pt-4 border-t border-border;
-  }
-}
-
-/* Global input field backgrounds — semantic tokens for dark mode compat */
-@layer base {
-  input[type="text"],
-  input[type="email"],
-  input[type="password"],
-  input[type="number"],
-  input[type="tel"],
-  input[type="url"],
-  input[type="search"],
-  input[type="date"],
-  input[type="datetime-local"],
-  input[type="month"],
-  input[type="week"],
-  input[type="time"],
-  textarea,
-  select {
-    @apply bg-card;
-    color: hsl(var(--foreground));
-    -webkit-text-fill-color: hsl(var(--foreground));
-    caret-color: hsl(var(--foreground));
-  }
-
-  /* ── Unified placeholder color ──
-     Single source of truth for ALL placeholder-style text:
-     native ::placeholder, Radix data-placeholder, and combobox triggers. */
-  input::placeholder,
-  textarea::placeholder {
-    color: hsl(var(--muted-foreground) / 0.6);
-  }
-
-  [data-placeholder] {
-    color: hsl(var(--muted-foreground) / 0.6);
-  }
-
-  [role="combobox"][data-placeholder-style] {
-    color: hsl(var(--muted-foreground) / 0.6);
-  }
-
-  /*
-   Ensure third-party overlays/extension editors (often contenteditable divs)
-   don't inherit unreadable text colors from surrounding UI.
-  */
-  [contenteditable="true"] {
-    color: hsl(var(--foreground));
-    -webkit-text-fill-color: hsl(var(--foreground));
-    caret-color: hsl(var(--foreground));
-  }
-
-  /* Ensure card background persists on focus and disabled states */
-  input[type="text"]:focus,
-  input[type="email"]:focus,
-  input[type="password"]:focus,
-  input[type="number"]:focus,
-  input[type="tel"]:focus,
-  input[type="url"]:focus,
-  input[type="search"]:focus,
-  input[type="date"]:focus,
-  input[type="datetime-local"]:focus,
-  input[type="month"]:focus,
-  input[type="week"]:focus,
-  input[type="time"]:focus,
-  textarea:focus,
-  select:focus {
-    @apply bg-card;
-  }
-
-  input[type="text"]:disabled,
-  input[type="email"]:disabled,
-  input[type="password"]:disabled,
-  input[type="number"]:disabled,
-  input[type="tel"]:disabled,
-  input[type="url"]:disabled,
-  input[type="search"]:disabled,
-  input[type="date"]:disabled,
-  input[type="datetime-local"]:disabled,
-  input[type="month"]:disabled,
-  input[type="week"]:disabled,
-  input[type="time"]:disabled,
-  textarea:disabled,
-  select:disabled {
-    @apply bg-muted;
-  }
-}
-
-/* ============================================================================
-   7. BADGE & STATUS COMPONENTS
-   ============================================================================
-   Badges, tags, and status indicators.
-   ============================================================================ */
-
-@layer components {
-  /* Base badge style */
-  .badge-base {
-    @apply px-2 py-0.5 text-xs font-medium rounded;
-  }
-
-  /* Success/Green badge */
-  .badge-success {
-    @apply rounded bg-success/10 px-2 py-0.5 text-xs font-medium text-success;
-  }
-
-  /* Warning/Yellow badge */
-  .badge-warning {
-    @apply rounded bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning;
-  }
-
-  /* Error/Red badge */
-  .badge-error {
-    @apply rounded bg-destructive/10 px-2 py-0.5 text-xs font-medium text-destructive;
-  }
-
-  /* Info/Blue badge */
-  .badge-info {
-    @apply rounded bg-info/10 px-2 py-0.5 text-xs font-medium text-info;
-  }
-
-  /* Neutral badge */
-  .badge-neutral {
-    @apply flex-shrink-0 px-3 py-1 text-2xs font-semibold tracking-[0.1em] uppercase bg-muted text-muted-foreground border border-border;
-  }
-
-  /* Status indicator - positive */
-  .status-positive {
-    @apply text-success;
-  }
-
-  /* Status indicator - negative */
-  .status-negative {
-    @apply text-destructive;
-  }
-
-  /* Status icon small */
-  .status-icon-sm {
-    @apply h-3.5 w-3.5;
-  }
-}
-
-/* ============================================================================
-   8. INTERACTIVE COMPONENTS
-   ============================================================================
-   Interactive elements, hover states, and clickable items.
-   ============================================================================ */
-
-@layer components {
-  /* List item - hoverable */
-  .list-item-hover {
-    @apply block;
-  }
-
-  /* List item text with hover — uses primary instead of brand */
-  .list-item-text {
-    @apply text-sm font-medium text-foreground truncate transition-colors duration-150;
-  }
-
-  /* Metadata row */
-  .metadata-row {
-    @apply flex flex-wrap items-center gap-4 pt-3 border-t border-border;
-  }
-
-  /* Metadata item */
-  .metadata-item {
-    @apply flex items-center gap-2 text-xs text-muted-foreground;
-  }
-
-  /* Team member row */
-  .team-member-row {
-    @apply flex items-center gap-4 pb-4 border-b border-border last:border-0 last:pb-0;
-  }
-
-  /* Avatar container */
-  .avatar-container {
-    @apply h-10 w-10 border border-border;
-  }
-
-  /* Avatar fallback */
-  .avatar-fallback {
-    @apply bg-muted text-muted-foreground text-xs font-medium;
-  }
-
-  /* Editable field with icon */
-  .editable-field {
-    @apply flex items-center gap-2;
-  }
-
-  /* Edit pencil icon */
-  .edit-icon {
-    @apply h-3 w-3 text-muted-foreground opacity-0 transition-opacity duration-150;
-  }
-
-  .list-item-hover:hover .list-item-text {
-    color: hsl(var(--primary));
-  }
-
-  .list-item-hover:hover .edit-icon {
-    opacity: 1;
-  }
-
-  /* Brand icon — uses primary (indigo) */
-  .icon-brand {
-    @apply h-4 w-4 text-primary flex-shrink-0;
-  }
-
-  /* Icon container */
-  .icon-container {
-    @apply h-5 w-5 text-primary;
-  }
-}
-
-/* ============================================================================
-   9. TABLE COMPONENTS
-   ============================================================================
-   Table styles for data display.
-   ============================================================================ */
-
-@layer components {
-  /* Table container — bg-card for tonal elevation, no heavy border */
-  .table-container {
-    @apply bg-card rounded-lg;
-  }
-
-  /* Table header row — structural border kept */
-  .table-header-row {
-    @apply px-6 py-4 border-b border-border flex items-center justify-between;
-  }
-
-  /* Table heading */
-  .table-heading {
-    @apply text-base font-semibold text-foreground;
-  }
-
-  /* Empty state */
-  .table-empty {
-    @apply text-center text-muted-foreground py-8;
-  }
-}
-
-/* ============================================================================
-   10. DROPDOWN & MENU COMPONENTS
-   ============================================================================
-   Dropdown menus and navigation components.
-   ============================================================================ */
-
-@layer components {
-  /* Dropdown content container — shadow-sm not shadow-lg (Superhuman policy) */
-  .dropdown-content {
-    @apply w-[calc(100vw-2rem)] sm:w-screen sm:max-w-4xl rounded-lg border-border p-4 sm:p-8 shadow-sm max-h-[80vh] overflow-y-auto;
-  }
-
-  /* Dropdown section heading */
-  .dropdown-section-heading {
-    @apply mb-4 text-xs font-semibold tracking-[0.15em] uppercase text-muted-foreground;
-  }
-
-  /* Dropdown section */
-  .dropdown-section {
-    @apply space-y-1;
-  }
-
-  /* View all link */
-  .link-view-all {
-    @apply text-xs text-muted-foreground font-medium hover:underline;
-  }
-}
-
-/* ============================================================================
-   11. UTILITY COMPONENTS
-   ============================================================================
-   Miscellaneous utility classes.
-   ============================================================================ */
-
-@layer components {
-  /* Truncated text */
-  .text-truncate {
-    @apply truncate;
-  }
-
-  /* Content with line clamp */
-  .line-clamp-2-custom {
-    @apply line-clamp-2;
-  }
-
-  /* Separator dot */
-  .separator-dot {
-    @apply text-muted-foreground/50;
-  }
-
-  /* Loading state */
-  .loading-state {
-    @apply flex items-center justify-center h-full;
-  }
-
-  /* Loading text */
-  .loading-text {
-    @apply text-muted-foreground;
-  }
-
-  /* Empty state container */
-  .empty-state {
-    @apply text-center py-12;
-  }
-
-  /* Empty state text */
-  .empty-state-text {
-    @apply text-sm text-muted-foreground mb-2;
-  }
-
-  /* Empty state helper */
-  .empty-state-helper {
-    @apply text-xs text-muted-foreground/70;
-  }
-}
-
-/* ChatGPT-like Chat Interface Styling */
-@layer components {
-  /* Hide ChatKit header and make it cleaner */
-  [data-testid="rag-chatkit-panel"] [data-chatkit-header] {
-    display: none;
-  }
-
-  /* Style the chat container */
-  [data-chatkit-container] {
-    background: hsl(var(--card));
-  }
-
-  /* Style the history sidebar */
-  [data-chatkit-history] {
-    background: hsl(var(--background));
-    border-right: 1px solid hsl(var(--border));
-  }
-
-  /* Style chat messages with more spacing */
-  [data-chatkit-thread-item] {
-    padding: 1.5rem 0;
-  }
-
-  /* User messages styling */
-  [data-chatkit-thread-item][data-role="user"] {
-    background: transparent;
-  }
-
-  /* Assistant messages styling */
-  [data-chatkit-thread-item][data-role="assistant"] {
-    background: transparent;
-  }
-
-  /* Input composer styling - more like ChatGPT */
-  [data-chatkit-composer] {
-    border-top: 1px solid hsl(var(--border));
-    padding: 1rem;
-    background: hsl(var(--card));
-  }
-
-  [data-chatkit-composer] textarea {
-    border: 1px solid hsl(var(--border));
-    border-radius: 0.75rem;
-    padding: 0.75rem 1rem;
-    font-size: 0.9375rem;
-    line-height: 1.5;
-    resize: none;
-    max-height: 200px;
-  }
-
-  [data-chatkit-composer] textarea:focus {
-    border-color: hsl(var(--muted-foreground));
-    outline: none;
-    box-shadow: 0 0 0 1px hsl(var(--ring));
-  }
-
-  /* Prompt cards styling */
-  [data-chatkit-start-prompts] {
-    gap: 0.75rem;
-    padding: 1rem;
-  }
-
-  [data-chatkit-start-prompt] {
-    border: 1px solid hsl(var(--border));
-    border-radius: 0.75rem;
-    padding: 0.875rem 1rem;
-    background: hsl(var(--card));
-    transition: all 0.2s;
-    cursor: pointer;
-  }
-
-  [data-chatkit-start-prompt]:hover {
-    background: hsl(var(--muted));
-    border-color: hsl(var(--muted-foreground) / 0.3);
-  }
-
-  /* Center the start screen content */
-  [data-chatkit-start-screen] {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-    max-width: 48rem;
-    margin: 0 auto;
-  }
-
-  /* Thread list in sidebar */
-  [data-chatkit-thread-list-item] {
-    padding: 0.75rem;
-    border-radius: 0.5rem;
-    margin: 0.25rem 0.5rem;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-
-  [data-chatkit-thread-list-item]:hover {
-    background: hsl(var(--muted));
-  }
-
-  [data-chatkit-thread-list-item][data-active="true"] {
-    background: hsl(var(--accent));
-  }
-
-  /* Message content styling */
-  [data-chatkit-message-content] {
-    font-size: 0.9375rem;
-    line-height: 1.75;
-  }
-
-  [data-chatkit-message-content] p {
-    margin: 0.75rem 0;
-  }
-
-  [data-chatkit-message-content] code {
-    background: hsl(var(--muted));
-    padding: 0.125rem 0.375rem;
-    border-radius: 0.25rem;
-    font-size: 0.875rem;
-  }
-
-  [data-chatkit-message-content] pre {
-    background: hsl(240 6% 12%);
-    color: hsl(0 0% 96%);
-    padding: 1rem;
-    border-radius: 0.5rem;
-    overflow-x: auto;
-    margin: 1rem 0;
-  }
-
-  [data-chatkit-message-content] pre code {
-    background: transparent;
-    padding: 0;
-    color: inherit;
-  }
-
-  /* Action buttons styling */
-  [data-chatkit-thread-item-actions] {
-    gap: 0.5rem;
-  }
-
-  [data-chatkit-thread-item-actions] button {
-    padding: 0.375rem;
-    border-radius: 0.375rem;
-    transition: background 0.2s;
-  }
-
-  [data-chatkit-thread-item-actions] button:hover {
-    background: hsl(var(--muted));
-  }
-}
-
-/* GLOBAL MOBILE RESPONSIVENESS FIX */
-@layer base {
-  /* Prevent horizontal overflow on all elements */
-  html,
-  body {
-    overflow-x: hidden;
-    max-width: 100vw;
-  }
-
-  /* Ensure all direct children respect viewport width */
-  body > * {
-    max-width: 100vw;
-    overflow-x: hidden;
-  }
-
-  /* Fix for elements with fixed/absolute positioning */
-  [class*="fixed"],
-  [class*="absolute"] {
-    max-width: 100vw;
-  }
-
-  /* Ensure images and media are responsive by default */
-  img,
-  video,
-  iframe {
-    max-width: 100%;
-    height: auto;
-  }
-
-  /* Prevent pre and code blocks from overflowing */
-  pre,
-  code {
-    max-width: 100%;
-    overflow-x: auto;
-  }
-}
-
-@layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-}
-
-/* ============================================================================
-   RESPONSIVE TYPOGRAPHY & COMPONENTS (2025 BEST PRACTICES) - COMMENTED OUT
-   ============================================================================
-   DISABLED: These global HTML element overrides conflict with shadcn/ui components
-   Use component-specific classes instead of global element styling
-   ============================================================================ */
-
-/* COMMENTED OUT - These global overrides conflict with shadcn/ui
-@layer components {
-  // Headings with responsive sizing
-  h1 {
-    @apply text-xl sm:text-2xl md:text-3xl font-semibold tracking-tight text-gray-800;
-  }
-
-  h2 {
-    @apply text-xl sm:text-2xl md:text-3xl lg:text-4xl font-semibold tracking-tight text-gray-800;
-  }
-
-  h3 {
-    @apply text-lg sm:text-xl md:text-2xl font-semibold text-gray-800;
-  }
-
-  h4 {
-    @apply text-base sm:text-lg md:text-xl font-semibold text-gray-800;
-  }
-
-  // Page subtitle/description text
-  .text-subtitle {
-    @apply text-sm sm:text-base text-gray-600;
-  }
-
-  // Standard paragraph
-  p {
-    @apply text-sm sm:text-base text-gray-700 leading-relaxed;
-  }
-
-  // Table styling
-  table {
-    @apply w-full border-collapse;
-  }
-
-  thead {
-    @apply bg-gray-100 border-b-2 border-gray-200;
-  }
-
-  th {
-    @apply px-3 py-2 sm:px-4 sm:py-3 md:px-6 md:py-4 text-left text-xs sm:text-sm font-semibold text-gray-700;
-  }
-
-  tbody tr {
-    @apply border-b border-gray-200 hover:bg-gray-50 transition-colors;
-  }
-
-  td {
-    @apply px-3 py-2 sm:px-4 sm:py-3 md:px-6 md:py-4 text-xs sm:text-sm text-gray-600;
-  }
-
-  // Primary button
-  .btn-primary {
-    @apply px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 bg-brand text-white rounded-lg hover:bg-blue-700 active:bg-blue-800;
-  }
-
-  // Secondary button
-  .btn-secondary {
-    @apply px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 bg-gray-200 text-gray-800 rounded-lg hover:bg-gray-300 active:bg-gray-400;
-  }
-
-  // Danger button
-  .btn-danger {
-    @apply px-4 py-2 sm:px-5 sm:py-2.5 md:px-6 md:py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 active:bg-red-800;
-  }
-
-  // Button group with responsive gaps
-  .button-group {
-    @apply flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4;
-  }
-
-  // Responsive container
-  .responsive-container {
-    @apply max-w-7xl mx-auto;
-  }
-
-  // Back button styling
-  .btn-back {
-    @apply inline-flex items-center gap-2 px-3 py-2 sm:px-4 sm:py-2 text-sm sm:text-base text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors;
-  }
-
-  // Form inputs - THESE WERE OVERRIDING SHADCN
-  input[type="text"],
-  input[type="number"],
-  input[type="email"],
-  select,
-  textarea {
-    @apply w-full px-3 py-2 sm:px-4 sm:py-2.5 md:px-4 md:py-3 text-sm sm:text-base border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent;
-  }
-
-  // Card styling
-  .card {
-    @apply bg-white rounded-lg border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-4 sm:p-6 md:p-8;
-  }
-
-  // Section spacing
-  .section {
-    @apply my-6 sm:my-8 md:my-10 lg:my-12;
-  }
-}
-*/
-
-/* Responsive text utilities */
-@layer utilities {
-  /* Text sizing utilities */
+  /* Responsive utilities */
   .text-responsive {
     @apply text-sm sm:text-base md:text-lg;
   }
@@ -1405,7 +938,6 @@
     @apply text-base sm:text-lg md:text-xl;
   }
 
-  /* Padding utilities for consistent spacing */
   .px-responsive {
     @apply px-4 sm:px-6 md:px-8 lg:px-10;
   }
@@ -1418,110 +950,48 @@
     @apply gap-2 sm:gap-3 md:gap-4 lg:gap-6;
   }
 
-  /* Touch target utilities */
   .touch-target {
     @apply min-h-[44px] min-w-[44px];
   }
 }
 
-@theme inline {
-  --color-sidebar: var(--sidebar);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-surface-alt: hsl(var(--surface-alt));
-}
-
 /* ============================================================================
-   10. PREMIUM DESIGN SYSTEM
-   ============================================================================
-   High-end, luxury design components for a refined user experience.
-   These classes establish the "source of truth" for consistent styling.
+   13. PREMIUM DESIGN SYSTEM
    ============================================================================ */
 
-@layer base {
-  :root {
-    /* Premium Font Stack - Serif for headlines */
-    --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
-    --font-heading: "DM Serif Display", Georgia, serif;
-
-    /* Premium Shadows - Refined elevation system */
-    --shadow-subtle: 0 1px 2px 0 rgb(0 0 0 / 0.03);
-    --shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.04), 0 1px 2px -1px rgb(0 0 0 / 0.04);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.05), 0 4px 6px -4px rgb(0 0 0 / 0.05);
-    --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.05), 0 8px 10px -6px rgb(0 0 0 / 0.05);
-    --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.03);
-
-    /* Premium Animation Timing */
-    --ease-premium: cubic-bezier(0.16, 1, 0.3, 1);
-    --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
-    --duration-fast: 150ms;
-    --duration-normal: 250ms;
-    --duration-slow: 400ms;
-
-    /* Premium Neutral Palette - Warmer tones */
-    --neutral-warm-50: 50 20% 98%;
-    --neutral-warm-100: 45 15% 95%;
-    --neutral-warm-200: 40 12% 90%;
-    --neutral-warm-300: 38 10% 80%;
-    --neutral-warm-400: 35 8% 60%;
-    --neutral-warm-500: 30 6% 45%;
-    --neutral-warm-600: 25 8% 35%;
-    --neutral-warm-700: 20 10% 25%;
-    --neutral-warm-800: 15 12% 18%;
-    --neutral-warm-900: 10 15% 10%;
-  }
-}
-
-/* Premium Typography Components */
 @layer components {
-  /* Display Title - Hero headlines with serif */
+  /* Typography */
   .text-display {
     @apply text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-light tracking-tight leading-[1.05];
-    font-family: var(--font-display);
   }
 
-  /* Premium Headline - Elegant serif headlines */
   .text-headline {
     @apply text-2xl sm:text-3xl md:text-4xl font-light tracking-tight leading-tight;
-    font-family: var(--font-display);
     color: hsl(var(--foreground));
   }
 
-  /* Subheadline - Secondary serif */
   .text-subheadline {
     @apply text-xl sm:text-2xl font-light tracking-tight;
-    font-family: var(--font-display);
     color: hsl(var(--muted-foreground));
   }
 
-  /* Premium Overline - Refined uppercase label */
   .text-overline {
     @apply text-2xs sm:text-[11px] font-semibold tracking-[0.2em] uppercase;
     color: hsl(var(--brand));
   }
 
-  /* Premium Body - Refined reading experience */
+  /* Uses design token — dark mode compatible */
   .text-body-premium {
     @apply text-[15px] sm:text-base leading-relaxed;
-    color: hsl(20 6% 40%);
+    color: hsl(var(--muted-foreground));
   }
 
-  /* Metric Display - Large numbers */
   .text-metric-display {
     @apply text-3xl sm:text-4xl md:text-5xl font-light tabular-nums tracking-tight;
     color: hsl(var(--foreground));
   }
-}
 
-/* Premium Card Components */
-@layer components {
-  /* Premium Card - Tonal elevation, no border (Superhuman) */
+  /* Cards */
   .card-premium {
     @apply bg-card rounded-lg transition-all;
     box-shadow: var(--shadow-subtle);
@@ -1531,7 +1001,6 @@
     box-shadow: var(--shadow-sm);
   }
 
-  /* Premium Card Elevated - For important content */
   .card-premium-elevated {
     @apply bg-card rounded-lg transition-all;
     box-shadow: var(--shadow-sm);
@@ -1542,7 +1011,6 @@
     transform: translateY(-1px);
   }
 
-  /* Premium Section Card - Collapsible sections */
   .section-card {
     @apply bg-card rounded-lg overflow-hidden;
     box-shadow: var(--shadow-subtle);
@@ -1556,7 +1024,6 @@
     @apply px-5 py-4 sm:px-6 sm:py-5;
   }
 
-  /* Premium List Item */
   .list-item-premium {
     @apply flex items-center gap-4 py-3 border-b border-border/50 last:border-0 transition-colors;
   }
@@ -1564,11 +1031,8 @@
   .list-item-premium:hover {
     background: hsl(var(--muted));
   }
-}
 
-/* Premium Button Components */
-@layer components {
-  /* Premium Primary Button */
+  /* Buttons */
   .btn-premium-primary {
     @apply px-5 py-2.5 text-sm font-medium text-primary-foreground bg-primary
            hover:bg-primary/90 active:bg-primary/95
@@ -1581,97 +1045,50 @@
     transform: translateY(-0.5px);
   }
 
-  /* Premium Secondary Button */
   .btn-premium-secondary {
     @apply px-5 py-2.5 text-sm font-medium text-foreground bg-card border border-border
            hover:bg-muted hover:border-border active:bg-accent
            transition-all rounded-md;
   }
 
-  /* Premium Ghost Button */
   .btn-premium-ghost {
     @apply px-4 py-2 text-sm font-medium text-muted-foreground
            hover:text-foreground hover:bg-muted
            transition-all rounded-md;
   }
 
-  /* Premium Brand Button (Procore integration only) */
+  /* Procore integration badge button — uses --brand token */
   .btn-premium-brand {
     @apply px-5 py-2.5 text-sm font-medium text-white
-           bg-primary hover:bg-primary/90 active:bg-primary/95
            transition-all rounded-md;
-    box-shadow: 0 2px 4px hsl(var(--primary) / 0.2);
+    background-color: hsl(var(--brand));
+    box-shadow: 0 2px 4px hsl(var(--brand) / 0.2);
   }
 
   .btn-premium-brand:hover {
-    box-shadow: 0 4px 8px hsl(var(--primary) / 0.25);
+    background-color: hsl(var(--brand-hover));
+    box-shadow: 0 4px 8px hsl(var(--brand) / 0.25);
     transform: translateY(-0.5px);
   }
-}
 
-/* Premium Form Components */
-@layer components {
-  /* Premium Input */
+  /* Forms */
   .input-premium {
     @apply w-full px-4 py-3 text-sm bg-card border border-border
            focus:border-primary/50 focus:ring-2 focus:ring-primary/20
            placeholder:text-muted-foreground transition-all rounded-md;
   }
 
-  /* Premium Select */
   .select-premium {
     @apply w-full px-4 py-3 text-sm bg-card border border-border
            focus:border-primary/50 focus:ring-2 focus:ring-primary/20
            transition-all rounded-md appearance-none cursor-pointer;
   }
 
-  /* Premium Label */
   .label-premium {
     @apply block text-[11px] font-semibold tracking-wider uppercase text-muted-foreground mb-2;
   }
-}
 
-/* Premium Animation Utilities */
-@layer utilities {
-  /* Smooth reveal animation */
-  .animate-reveal {
-    animation: reveal 0.5s var(--ease-premium) forwards;
-  }
-
-  @keyframes reveal {
-    from {
-      opacity: 0;
-      transform: translateY(8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  /* Staggered animation delays */
-  .delay-100 { animation-delay: 100ms; }
-  .delay-200 { animation-delay: 200ms; }
-  .delay-300 { animation-delay: 300ms; }
-  .delay-400 { animation-delay: 400ms; }
-  .delay-500 { animation-delay: 500ms; }
-
-  /* Premium transitions */
-  .transition-premium {
-    transition-property: all;
-    transition-duration: var(--duration-normal);
-    transition-timing-function: var(--ease-premium);
-  }
-
-  .transition-premium-fast {
-    transition-property: all;
-    transition-duration: var(--duration-fast);
-    transition-timing-function: var(--ease-premium);
-  }
-}
-
-/* Premium Empty State */
-@layer components {
+  /* Empty States */
   .empty-state-premium {
     @apply flex flex-col items-center justify-center py-12 sm:py-16 text-center;
   }
@@ -1687,11 +1104,8 @@
   .empty-state-premium-description {
     @apply text-xs text-muted-foreground/70;
   }
-}
 
-/* Premium Data Display */
-@layer components {
-  /* Metric Card for KPIs */
+  /* Metric Cards */
   .metric-card-premium {
     @apply bg-card rounded-lg p-5 sm:p-6 transition-all;
     box-shadow: var(--shadow-subtle);
@@ -1722,17 +1136,36 @@
   }
 }
 
+@layer utilities {
+  .animate-reveal {
+    animation: reveal 0.5s var(--ease-premium) forwards;
+  }
+
+  .delay-100 { animation-delay: 100ms; }
+  .delay-200 { animation-delay: 200ms; }
+  .delay-300 { animation-delay: 300ms; }
+  .delay-400 { animation-delay: 400ms; }
+  .delay-500 { animation-delay: 500ms; }
+
+  .transition-premium {
+    transition-property: all;
+    transition-duration: var(--duration-normal);
+    transition-timing-function: var(--ease-premium);
+  }
+
+  .transition-premium-fast {
+    transition-property: all;
+    transition-duration: var(--duration-fast);
+    transition-timing-function: var(--ease-premium);
+  }
+}
+
 /* ============================================================================
-   11. AI CHAT MARKDOWN STYLES
-   ============================================================================
-   Prose-like typography for AI assistant responses rendered via Streamdown.
-   Tailwind's base reset strips list-style, margins, and padding from HTML
-   elements — these rules restore them within chat message content.
+   14. AI CHAT MARKDOWN STYLES
    ============================================================================ */
 
 @layer components {
   .chat-markdown {
-    /* ─── Headers ──────────────────────────────────── */
     & h1 {
       font-size: 1.25rem;
       font-weight: 600;
@@ -1766,14 +1199,12 @@
       color: hsl(var(--foreground));
     }
 
-    /* ─── Paragraphs ──────────────────────────────── */
     & p {
       margin-top: 0.375rem;
       margin-bottom: 0.75rem;
       line-height: 1.55;
     }
 
-    /* ─── Lists (critical fix: numbers/bullets rendering) ── */
     & ol {
       list-style-type: decimal;
       list-style-position: outside;
@@ -1809,10 +1240,8 @@
     & ol ol { list-style-type: lower-alpha; }
     & ol ol ol { list-style-type: lower-roman; }
 
-    /* ─── Strong / Emphasis ───────────────────────── */
     & strong { font-weight: 600; }
 
-    /* ─── Blockquotes ─────────────────────────────── */
     & blockquote {
       border-left: 3px solid hsl(var(--border));
       padding-left: 1rem;
@@ -1821,7 +1250,6 @@
       font-style: italic;
     }
 
-    /* ─── Code ────────────────────────────────────── */
     & code {
       white-space: pre-wrap;
       word-break: break-word;
@@ -1843,7 +1271,6 @@
       font-size: 0.85rem;
     }
 
-    /* ─── Tables ──────────────────────────────────── */
     & table {
       width: 100%;
       border-collapse: collapse;
@@ -1862,14 +1289,12 @@
       padding: 0.5rem 0.75rem;
     }
 
-    /* ─── Horizontal Rule ─────────────────────────── */
     & hr {
       border: none;
       border-top: 1px solid hsl(var(--border));
       margin: 1.5rem 0;
     }
 
-    /* ─── Links ───────────────────────────────────── */
     & a {
       color: hsl(var(--primary));
       text-decoration: underline;
@@ -1877,7 +1302,6 @@
     }
     & a:hover { opacity: 0.8; }
 
-    /* ─── First/last margin reset ─────────────────── */
     & > *:first-child { margin-top: 0; }
     & > *:last-child { margin-bottom: 0; }
   }
@@ -1888,48 +1312,159 @@
       line-height: 1.5;
     }
   }
+
+  /* ChatKit UI overrides */
+  [data-testid="rag-chatkit-panel"] [data-chatkit-header] {
+    display: none;
+  }
+
+  [data-chatkit-container] {
+    background: hsl(var(--card));
+  }
+
+  [data-chatkit-history] {
+    background: hsl(var(--background));
+    border-right: 1px solid hsl(var(--border));
+  }
+
+  [data-chatkit-thread-item] {
+    padding: 1.5rem 0;
+  }
+
+  [data-chatkit-composer] {
+    border-top: 1px solid hsl(var(--border));
+    padding: 1rem;
+    background: hsl(var(--card));
+  }
+
+  [data-chatkit-composer] textarea {
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.9375rem;
+    line-height: 1.5;
+    resize: none;
+    max-height: 200px;
+  }
+
+  [data-chatkit-composer] textarea:focus {
+    border-color: hsl(var(--muted-foreground));
+    outline: none;
+    box-shadow: 0 0 0 1px hsl(var(--ring));
+  }
+
+  [data-chatkit-start-prompts] {
+    gap: 0.75rem;
+    padding: 1rem;
+  }
+
+  [data-chatkit-start-prompt] {
+    border: 1px solid hsl(var(--border));
+    border-radius: 0.75rem;
+    padding: 0.875rem 1rem;
+    background: hsl(var(--card));
+    transition: all 0.2s;
+    cursor: pointer;
+  }
+
+  [data-chatkit-start-prompt]:hover {
+    background: hsl(var(--muted));
+    border-color: hsl(var(--muted-foreground) / 0.3);
+  }
+
+  [data-chatkit-start-screen] {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    max-width: 48rem;
+    margin: 0 auto;
+  }
+
+  [data-chatkit-thread-list-item] {
+    padding: 0.75rem;
+    border-radius: 0.5rem;
+    margin: 0.25rem 0.5rem;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  [data-chatkit-thread-list-item]:hover {
+    background: hsl(var(--muted));
+  }
+
+  [data-chatkit-thread-list-item][data-active="true"] {
+    background: hsl(var(--accent));
+  }
+
+  [data-chatkit-message-content] {
+    font-size: 0.9375rem;
+    line-height: 1.75;
+  }
+
+  [data-chatkit-message-content] p {
+    margin: 0.75rem 0;
+  }
+
+  [data-chatkit-message-content] code {
+    background: hsl(var(--muted));
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+  }
+
+  [data-chatkit-message-content] pre {
+    background: hsl(240 6% 12%);
+    color: hsl(0 0% 96%);
+    padding: 1rem;
+    border-radius: 0.5rem;
+    overflow-x: auto;
+    margin: 1rem 0;
+  }
+
+  [data-chatkit-message-content] pre code {
+    background: transparent;
+    padding: 0;
+    color: inherit;
+  }
+
+  [data-chatkit-thread-item-actions] {
+    gap: 0.5rem;
+  }
+
+  [data-chatkit-thread-item-actions] button {
+    padding: 0.375rem;
+    border-radius: 0.375rem;
+    transition: background 0.2s;
+  }
+
+  [data-chatkit-thread-item-actions] button:hover {
+    background: hsl(var(--muted));
+  }
 }
 
-/* ── Liveblocks design token mapping ────────────────────────────────────── */
-/*
- * Maps Liveblocks CSS variables to our design system tokens so that all
- * Liveblocks UI (composer, threads, inbox notifications, avatars, mentions)
- * renders with the app's purple accent instead of the default Liveblocks blue.
- */
+/* ============================================================================
+   15. LIVEBLOCKS STYLES
+   ============================================================================ */
+
 :root {
-  /* Accent / brand color — maps to our primary (#8A71BD warm purple) */
   --lb-accent: hsl(var(--primary));
   --lb-accent-foreground: hsl(var(--primary-foreground));
-
-  /* Surface colors */
   --lb-background: hsl(var(--background));
   --lb-foreground: hsl(var(--foreground));
-
-  /* Muted / secondary */
   --lb-muted: hsl(var(--muted));
   --lb-muted-foreground: hsl(var(--muted-foreground));
-
-  /* Borders */
   --lb-border: hsl(var(--border));
-
-  /* Border radius — matches our --radius token */
   --lb-radius: var(--radius);
-
-  /* Avatar */
   --lb-avatar-background: hsl(var(--accent));
   --lb-avatar-foreground: hsl(var(--accent-foreground));
-
-  /* Reaction chip */
   --lb-reaction-background: hsl(var(--muted));
   --lb-reaction-foreground: hsl(var(--muted-foreground));
   --lb-reaction-selected-background: hsl(var(--primary) / 0.12);
   --lb-reaction-selected-foreground: hsl(var(--primary));
-
-  /* Tooltip */
   --lb-tooltip-background: hsl(var(--foreground));
   --lb-tooltip-foreground: hsl(var(--background));
-
-  /* Dynamic attributes (light) */
   --lb-dynamic-background: hsl(var(--background));
   --lb-elevation-background: hsl(var(--card, var(--background)));
 }
@@ -1953,7 +1488,7 @@
   --lb-elevation-background: hsl(var(--muted));
 }
 
-/* ── Hide Safari autofill buttons in Liveblocks composer ────────────────── */
+/* Hide Safari autofill buttons in Liveblocks composer */
 .lb-composer [contenteditable]::-webkit-contacts-auto-fill-button,
 .lb-composer [contenteditable]::-webkit-credentials-auto-fill-button,
 .lb-thread [contenteditable]::-webkit-contacts-auto-fill-button,
@@ -1967,7 +1502,7 @@
   height: 0 !important;
 }
 
-/* ── Liveblocks composer readability improvements ────────────────────────── */
+/* Liveblocks composer readability */
 .lb-composer,
 .lb-floating .lb-composer {
   border: 1px solid hsl(var(--border)) !important;
@@ -2013,13 +1548,8 @@
   }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
- * Alleato Comments — Clean Timeline Design
- * Targets .lb-thread-alleato and .lb-composer-alleato for entity comments.
- * Does not affect issue-tracker or canvas comments.
- * ═══════════════════════════════════════════════════════════════════════════ */
+/* ── Alleato Comments — Clean Timeline Design ─────────────────────────────── */
 
-/* ── Thread container: remove all default chrome ──────────────────────────── */
 .lb-thread-alleato {
   border: none !important;
   box-shadow: none !important;
@@ -2028,10 +1558,9 @@
   gap: 0 !important;
 }
 
-/* ── Individual comment: timeline layout ──────────────────────────────────── */
 .lb-thread-alleato .lb-comment {
   position: relative;
-  padding: 0 0 0 0 !important;
+  padding: 0 !important;
   margin: 0 !important;
   border: none !important;
   background: transparent !important;
@@ -2041,7 +1570,6 @@
   margin-top: 4px !important;
 }
 
-/* ── Avatar styling: larger, ring border ──────────────────────────────────── */
 .lb-thread-alleato .lb-avatar {
   width: 40px !important;
   height: 40px !important;
@@ -2056,7 +1584,6 @@
   position: relative;
 }
 
-/* ── Comment header: clean name + date ────────────────────────────────────── */
 .lb-thread-alleato .lb-comment-header {
   gap: 8px !important;
   align-items: center !important;
@@ -2077,7 +1604,6 @@
   letter-spacing: 0.03em;
 }
 
-/* ── Comment body: clean readable text ────────────────────────────────────── */
 .lb-thread-alleato .lb-comment-body {
   font-size: 13.5px !important;
   line-height: 1.6 !important;
@@ -2089,7 +1615,6 @@
   margin: 0 !important;
 }
 
-/* ── Comment content wrapper: card-like feel ───────────────────────────────── */
 .lb-thread-alleato .lb-comment-content {
   background: hsl(var(--muted) / 0.3) !important;
   border-radius: 12px !important;
@@ -2103,7 +1628,6 @@
   border-color: hsl(var(--border) / 0.6) !important;
 }
 
-/* ── Actions: subtle, appear on hover ─────────────────────────────────────── */
 .lb-thread-alleato .lb-comment-actions {
   opacity: 0;
   transition: opacity 0.15s ease;
@@ -2113,7 +1637,6 @@
   opacity: 1;
 }
 
-/* ── Reactions: clean pill style ──────────────────────────────────────────── */
 .lb-thread-alleato .lb-comment-reaction {
   border-radius: 999px !important;
   padding: 2px 8px !important;
@@ -2122,7 +1645,6 @@
   background: hsl(var(--background)) !important;
 }
 
-/* ── Inline composer (reply): cleaner ─────────────────────────────────────── */
 .lb-thread-alleato .lb-composer {
   border: 1px solid hsl(var(--border) / 0.5) !important;
   border-radius: 12px !important;
@@ -2136,7 +1658,6 @@
   box-shadow: 0 0 0 3px hsl(var(--primary) / 0.08) !important;
 }
 
-/* ── Standalone composer: modern input feel ────────────────────────────────── */
 .lb-composer-alleato {
   border: 1px solid hsl(var(--border) / 0.6) !important;
   border-radius: 14px !important;
@@ -2158,7 +1679,6 @@
   font-size: 13.5px !important;
 }
 
-/* ── Thread resolve button: subtle ────────────────────────────────────────── */
 .lb-thread-alleato [data-resolve] {
   border-radius: 999px !important;
   font-size: 11px !important;
@@ -2168,18 +1688,15 @@
   font-weight: 500 !important;
 }
 
-/* ── Thread list container: timeline line ─────────────────────────────────── */
 .alleato-thread-list .lb-thread-alleato {
   position: relative;
   padding-left: 0 !important;
 }
 
-/* ── Empty state within alleato-comments ──────────────────────────────────── */
 .alleato-comments {
   position: relative;
 }
 
-/* ── Powered by badge: always hidden in our comments ──────────────────────── */
 .alleato-comments .lb-powered-by,
 .alleato-comments [class*="lb-powered-by"] {
   display: none !important;

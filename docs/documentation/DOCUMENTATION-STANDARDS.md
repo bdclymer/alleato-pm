@@ -37,24 +37,21 @@ Claude Code has access to several specialized agents for documentation work:
 ### Core Documentation Locations
 
 ```text
-documentation/
-├── DOCUMENTATION-STANDARDS.md         # This file (meta-documentation)
-├── RULE-VIOLATION-LOG.md             # Global rule violations
-├── SPACING-QUICK-REFERENCE.md        # Design system spacing reference
-├── SPACING-SYSTEM-IMPLEMENTATION.md  # Design system implementation guide
-├── CLAUDE-CODE-PERMISSIONS-GUIDE.md  # Claude Code usage guide
-├── SUBAGENTS-INDEX.md                # Agent catalog and usage guide
+docs/
+├── documentation/                  # PRIMARY DOCUMENTATION LOCATION
+│   ├── DOCUMENTATION-STANDARDS.md  # This file (meta-documentation)
+│   ├── DOT-FOLDERS.md  # This file (meta-documentation)       
+│   └── PROJECT-CONTEXT-PROCESS-DOCUMENTATION.md  # This file (meta-documentation)
 │
-├── docs/                             # PRIMARY DOCUMENTATION LOCATION
-│   ├── database/                     # Database schema & architecture
-│   │   ├── DATABASE_ARCHITECTURE.md
-│   │   ├── RELATIONSHIPS.md
-│   │   ├── db-schema.md
-│   │   ├── database_tables.md
-│   │   └── tables/                   # Individual table documentation
-│   │       ├── qto_items.md
-│   │       ├── rfis.md
-│   │       └── ...
+├── database/                           # Database schema & architecture
+│   ├── DATABASE_ARCHITECTURE.md
+│   ├── RELATIONSHIPS.md
+│   ├── db-schema.md
+    ├── database_tables.md
+│   └── tables/                   # Individual table documentation
+│   │  ├── qto_items.md
+│   │  ├── rfis.md
+│   │  └── ...
 │   │
 │   ├── development/                  # Development guides
 │   │   ├── specs-change-events.md
@@ -94,8 +91,7 @@ documentation/
 └── need to review/                   # Temporary staging area
     ├── commitments/
     └── budget/
-```bash
----
+```
 
 ## Documentation Standards by Type
 
@@ -135,7 +131,8 @@ Any known limitations or issues.
 
 ## Related Documentation
 Links to related docs.
-```bash
+```
+
 **When to Create:**
 - After implementing a significant feature
 - When documenting external API integration (e.g., Procore)
@@ -252,7 +249,8 @@ Any remaining issues.
 
 ## Next Steps
 Follow-up work needed.
-```sql
+```
+
 **When to Create:**
 - After completing a major feature
 - Before marking a task as done
@@ -373,7 +371,7 @@ find documentation/need\ to\ review/ -type f -mtime +7
 
 # Move to final location or delete
 # (Don't let this directory grow unbounded)
-```yaml
+```
 ---
 
 ## Documentation Quality Checklist
@@ -427,7 +425,8 @@ Before marking documentation as complete, ensure:
 # Use api-documenter agent
 Task: "Document the Procore Commitments API integration. Include authentication, endpoints, request/response formats, and error handling. Store in documentation/docs/procore/commitments/"
 Agent: api-documenter
-```yaml
+```
+
 ### Example 2: Create Architecture Guide
 
 ```bash
@@ -442,14 +441,16 @@ Agents: docs-architect, mermaid-expert
 # Use tutorial-engineer
 Task: "Create a step-by-step tutorial for implementing a new table page using our GenericDataTable pattern. Include code examples and common pitfalls. Store in documentation/docs/development/"
 Agent: tutorial-engineer
-```yaml
+```
+
 ### Example 4: Generate Reference Documentation
 
 ```bash
 # Use reference-builder
 Task: "Generate exhaustive reference documentation for all database functions and triggers. Include parameter descriptions, return types, and usage examples. Store in documentation/docs/database/"
 Agent: reference-builder
-```diff
+```
+
 ---
 
 ## Enforcement

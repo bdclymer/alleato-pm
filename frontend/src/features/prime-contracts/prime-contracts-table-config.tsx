@@ -103,7 +103,11 @@ export function buildPrimeContractTableColumns(): TableColumn<PrimeContract>[] {
     },
     {
       ...primeContractColumns[2],
-      render: (item) => <span>{item.title ?? "-"}</span>,
+      render: (item) => (
+        <span className="font-medium text-primary underline decoration-primary/40 underline-offset-4">
+          {item.title ?? "-"}
+        </span>
+      ),
       csvValue: (item) => item.title ?? "",
       sortValue: (item) => item.title ?? "",
     },

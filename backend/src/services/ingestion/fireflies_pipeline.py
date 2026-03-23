@@ -1250,6 +1250,7 @@ class FirefliesIngestionPipeline:
             text=text,
             metadata=metadata,
             content_hash=hashlib.sha256(text.encode("utf-8")).hexdigest(),
+            source_type="meeting_transcript",
         )
 
     @staticmethod
@@ -1451,6 +1452,27 @@ class FirefliesIngestionPipeline:
             return "medium"
         return "medium"
 
+    # Patterns for low-value scheduling/admin noise that should not become tasks
+    _LOW_VALUE_TASK_RE: re.Pattern = re.compile(
+        r"""
+        schedule\s+(a\s+)?(follow.?up|meeting|call|sync|standup|check.in)|
+        send\s+(a\s+)?(meeting|calendar)\s+(invite|request|link|notification)|
+        set\s+up\s+(a\s+)?(meeting|call|sync|zoom|teams\s+meeting)|
+        find\s+a\s+time\s+(to\s+(meet|talk|connect|discuss))?|
+        book\s+(a\s+)?(meeting|call|room|conference)|
+        create\s+(a\s+)?calendar\s+(event|invite|block)|
+        send\s+meeting\s+(request|invite|link)|
+        add\s+(it\s+)?to\s+(the\s+)?(calendar|agenda)|
+        block\s+(time|calendar)\s+for
+        """,
+        re.IGNORECASE | re.VERBOSE,
+    )
+
+    @classmethod
+    def _is_low_value_task(cls, description: str) -> bool:
+        """Return True for scheduling noise that shouldn't become tracked tasks."""
+        return bool(cls._LOW_VALUE_TASK_RE.search(description or ""))
+
     @classmethod
     def _build_task_rows_from_action_items(
         cls,
@@ -1467,6 +1489,9 @@ class FirefliesIngestionPipeline:
             description = cls._strip_action_item_timestamp(item)
             if not description:
                 continue
+            # Skip low-value scheduling/admin noise
+            if cls._is_low_value_task(description):
+                continue
             dedupe_key = description.lower()
             if dedupe_key in seen_descriptions:
                 continue
@@ -1477,6 +1502,9 @@ class FirefliesIngestionPipeline:
                 speakers_json=speakers_json,
                 attendees_json=attendees_json,
             )
+            # Don't persist placeholder @example.com emails — store None instead
+            if assignee_email and "example.com" in assignee_email:
+                assignee_email = None
             row: Dict[str, Any] = {
                 "metadata_id": metadata_id,
                 "description": description,

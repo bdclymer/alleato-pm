@@ -1,44 +1,39 @@
----
 ## Verification Report: Create Subcontract
-**Verdict: PASS**
+**Verdict: FAIL**
 
 ### Criterion-by-Criterion
 
 | Criterion | Result | Evidence |
 |-----------|--------|----------|
-| Record appears in list | MET | "SC-GAUNTLET-001" with title "Test Subcontract SC-GAUNTLET-001", type "subcontract", status "draft" clearly visible in the commitments list at /67/commitments. See evidence-1.png and evidence-6.png. |
-| Detail page loads | MET | Navigating to /67/commitments/20ab813b-80bb-4c95-b679-c1e1ad30a7ee loads the detail page with correct title, status Draft, and description "Created by form gauntlet". See evidence-9.png. |
-| No errors | MET | No error toast or error alert observed on list page or detail page. |
+| After submission, user is redirected to /760/commitments | MET | Record found at detail URL `http://localhost:3000/760/commitments/2bc312b4-c299-4fb4-bd41-f7d9ac808d0f`, and record appears in list at `/760/commitments` |
+| Toast success message appears (or record exists proving success) | MET | Record exists in the commitments table — the subcontract was persisted to the database |
+| New subcontract appears in commitments list | MET | Row visible in Subcontracts tab: `SC-FG-001 | Test Subcontract - Electrical FG | subcontract | draft` |
+| Commitment has correct title | MET | Title "Test Subcontract - Electrical FG" confirmed on both list and detail page |
+| Commitment has correct status | MET | Status "Draft" confirmed on detail page |
+| Commitment has correct vendor | NOT MET | Detail page shows Subcontractor field as "—" (empty). "A Brannan Builders LLC" was NOT saved. Text search for "Brannan" returned zero matches on the detail page. |
+| Commitment has correct contract number | PARTIAL | Contract number "SC-FG-001" appears in the list table's Number column, but the detail page "Contract #" field shows "—" (empty). This suggests the number was stored in a different field than what the detail view reads. |
+| Default retainage saved correctly | NOT MET | No retainage value visible on the detail page. Text search for "Retainage" and "10" (as a field value) returned no matches in the detail page content. |
 
 ### What I Found
 
-1. **List page** (`/67/commitments`): The commitments list shows 2 records. The second record is **SC-GAUNTLET-001**, with title "Test Subcontract SC-GAUNTLET-001", type badge "subcontract", and status "draft". This is exactly the record that was submitted via the form.
+The subcontract record **was successfully created** and appears in the commitments list at `/760/commitments` under the Subcontracts tab. The list view shows the correct number (SC-FG-001), title, type (subcontract), and status (draft).
 
-2. **Database record** (confirmed via Supabase SQL): The record exists in the `subcontracts` table with:
-   - `id`: `20ab813b-80bb-4c95-b679-c1e1ad30a7ee`
-   - `contract_number`: `SC-GAUNTLET-001`
-   - `title`: `Test Subcontract SC-GAUNTLET-001`
-   - `status`: `Draft`
-   - `description`: `Created by form gauntlet`
-   - `default_retainage_percent`: `10.00`
-   - `project_id`: `67`
-   - `created_at`: `2026-03-22 18:07:42`
+However, when clicking into the detail page, several fields are missing or empty:
 
-3. **Detail page** (`/67/commitments/20ab813b-80bb-4c95-b679-c1e1ad30a7ee`): The page loads correctly showing the subcontract header "Test Subcontract SC-GAUNTLET-001", breadcrumb, KPI summary row ($0.00 across all financial fields — expected for a new contract with no line items), General tab with title, status "Draft", and description "Created by form gauntlet".
+1. **Subcontractor (vendor):** Shows "—" instead of "A Brannan Builders LLC". The vendor was either not saved during form submission or the detail page is not reading the correct field.
+2. **Contract #:** Shows "—" on the detail page, despite "SC-FG-001" appearing in the list view's Number column. This indicates a field mapping discrepancy between the list view and detail view.
+3. **Default Retainage:** Not displayed anywhere on the detail page. Either the field was not saved, or the detail page does not render it.
+4. **Description:** "Form gauntlet test subcontract" IS correctly displayed.
+5. **Status:** "Draft" IS correctly displayed.
+6. **Visibility:** Shows "Private" (not part of test criteria but noted).
 
-4. **Vendor field caveat**: The vendor "3 Quarterdeck LLC" does not appear in the `companies` or `subcontractors` tables — the stored `contract_company_id` (`a37e6a61-1456-4c34-8068-a76222191170`) resolves to no matching company record. The vendor field appears blank on the detail page. This is a data/UI issue (the vendor dropdown likely references a company table that does not contain "3 Quarterdeck LLC"), but it does NOT affect the PASS verdict since the form successfully saved and the record is present in the list. The vendor mismatch is a pre-existing data gap, not a form submission failure.
+### Issues Found
 
-5. **Retainage**: Confirmed as `10.00%` in database — matches the test data input.
-
-6. **No error toast/alert**: None observed at any point.
-
-### Issues Found (non-blocking)
-
-- **Vendor not persisted correctly**: The `contract_company_id` stored (`a37e6a61-1456-4c34-8068-a76222191170`) does not match any row in the `companies` or `subcontractors` tables, so the vendor displays as blank on the detail page. "3 Quarterdeck LLC" may have been selected from a dropdown backed by a different data source than the FK target, or it was deleted. This is a data integrity issue worth investigating but does not constitute a form submission failure.
+1. **Vendor not persisted:** The form's vendor/subcontractor selection did not save to the commitment record. The detail page Subcontractor field is blank.
+2. **Contract number field mapping mismatch:** The number "SC-FG-001" is stored (visible in list) but the detail page's "Contract #" field reads from a different column or is not populated.
+3. **Retainage not saved or not displayed:** The 10% default retainage value is absent from the detail page entirely.
 
 ### Evidence Screenshots
 
-- `/tmp/verify-create_subcontract-evidence-1.png`: First view of commitments list (before auth), clearly shows SC-GAUNTLET-001 record with type "subcontract" and status "draft"
-- `/tmp/verify-create_subcontract-evidence-6.png`: Authenticated view of commitments list — same record visible with all correct fields
-- `/tmp/verify-create_subcontract-evidence-9.png`: Detail page for the subcontract, showing title "Test Subcontract SC-GAUNTLET-001", status Draft, description "Created by form gauntlet"
----
+- `/tmp/verify-create_subcontract-evidence-1.png`: Commitments list page showing the Subcontracts tab with "SC-FG-001 | Test Subcontract - Electrical FG" row visible with status "draft"
+- `/tmp/verify-create_subcontract-evidence-2.png`: Detail page for the subcontract showing title, status (Draft), description, but missing Subcontractor ("—"), Contract # ("—"), and no retainage field

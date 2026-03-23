@@ -587,10 +587,10 @@ export function ChatArea({
               <button
                 type="button"
                 className={cn(
-                  "flex min-h-10 items-center gap-1.5 rounded-full bg-muted px-3 py-2 text-xs font-medium transition-colors",
+                  "flex min-h-10 items-center gap-1.5 rounded-full bg-transparent px-3 py-2 text-xs font-medium transition-colors",
                   selectedProject
                     ? "text-foreground"
-                    : "text-muted-foreground hover:bg-accent hover:text-foreground",
+                    : "text-muted-foreground hover:text-foreground",
                 )}
                 aria-label="Select project context"
               >
@@ -651,10 +651,10 @@ export function ChatArea({
             aria-checked={councilMode}
             onClick={handleCouncilToggle}
             className={cn(
-              "flex min-h-10 items-center gap-2 rounded-full px-3 py-2 text-xs font-medium transition-colors",
+              "flex min-h-10 items-center gap-2 rounded-full bg-transparent px-3 py-2 text-xs font-medium transition-colors",
               councilMode
-                ? "bg-accent text-foreground"
-                : "bg-muted text-foreground hover:bg-accent",
+                ? "text-foreground"
+                : "text-foreground",
             )}
           >
             <span
@@ -697,7 +697,7 @@ export function ChatArea({
   );
 
   return (
-    <div className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
+    <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
       {!hasMessages && !isLoadingMessages ? (
         <div className="flex min-h-0 flex-1">
           <WelcomeScreen
@@ -709,7 +709,7 @@ export function ChatArea({
       ) : (
         <>
           <Conversation className="min-h-0">
-            <ConversationContent className="mx-auto w-full max-w-4xl px-4 pb-10 pt-6 md:px-6 md:pb-12 md:pt-8">
+            <ConversationContent className="mx-auto w-full max-w-4xl px-4 pb-36 pt-6 md:px-6 md:pb-40 md:pt-8">
               {messages.map((msg, msgIndex) => {
                 const text = getMessageText(msg);
                 const isAssistant = msg.role === "assistant";
@@ -903,10 +903,10 @@ export function ChatArea({
                 </div>
               )}
             </ConversationContent>
-            <ConversationScrollButton className="bottom-20 md:bottom-20" />
+            <ConversationScrollButton className="bottom-28 md:bottom-28" />
           </Conversation>
 
-          <div className="sticky bottom-0 z-20 shrink-0 bg-background/95 px-3 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur md:px-4">
+          <div className="absolute inset-x-0 bottom-0 z-20 shrink-0 bg-background/95 px-3 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur md:px-4">
             <div className="mx-auto w-full max-w-3xl">
               {promptInputEl}
             </div>

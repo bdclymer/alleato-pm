@@ -171,7 +171,7 @@ const normalizeCommitment = (raw: unknown): CommitmentDetail | null => {
 
   return {
     id: String(record.id ?? ""),
-    number: typeof record.number === "string" ? record.number : "",
+    number: typeof record.contract_number === "string" ? record.contract_number : (typeof record.number === "string" ? record.number : ""),
     contract_company_id: String(record.contract_company_id ?? ""),
     contract_company: contractCompany,
     title: typeof record.title === "string" ? record.title : "",
@@ -194,7 +194,7 @@ const normalizeCommitment = (raw: unknown): CommitmentDetail | null => {
         ? record.substantial_completion_date
         : undefined,
     accounting_method: accountingMethod,
-    retention_percentage: Number(record.retention_percentage ?? 0),
+    retention_percentage: Number(record.default_retainage_percent ?? record.retention_percentage ?? 0),
     vendor_invoice_number:
       typeof record.vendor_invoice_number === "string"
         ? record.vendor_invoice_number

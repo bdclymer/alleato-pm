@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 import { cva, type VariantProps } from "class-variance-authority"
 
 const modalVariants = cva(
-  "fixed z-50 grid w-full gap-4 border bg-background p-6 shadow-lg sm:rounded-lg",
+  "fixed z-50 grid w-full gap-4 border bg-background p-6 shadow-sm sm:rounded-lg",
   {
     variants: {
       size: {

@@ -1090,11 +1090,11 @@ export function ChangeEventForm({
           <FormSection title="General Information">
             <FormGrid columns={3}>
               <TextField
-                label="Contract Number"
+                label="Number"
                 required
                 value={formData.contractNumber}
                 onChange={(e) => updateFormData({ contractNumber: e.target.value })}
-                placeholder="Enter contract number"
+                placeholder="Enter number"
                 error={errors.contractNumber}
               />
               <TextField
@@ -1533,7 +1533,7 @@ export function ChangeEventForm({
                           size="sm"
                           onClick={() => removeLineItem(index)}
                           disabled={formData.lineItems.length === 1}
-                          className="h-7 w-7 p-0 text-destructive opacity-0 transition-opacity hover:text-destructive group-hover:opacity-100"
+                          className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
                         >
                           <Trash2 className="h-3 w-3" />
                         </Button>

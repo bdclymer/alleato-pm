@@ -12,6 +12,7 @@ interface ProjectFormPageLayoutProps {
   title: string;
   description: string;
   children: React.ReactNode;
+  breadcrumbs?: { label: string; href?: string }[];
   onBack?: () => void;
   backLabel?: string;
   maxWidth?: "sm" | "md" | "lg" | "xl" | "2xl" | "3xl" | "full";
@@ -35,6 +36,7 @@ export function ProjectFormPageLayout({
   title,
   description,
   children,
+  breadcrumbs,
   onBack,
   backLabel = "Back",
   maxWidth = "lg",
@@ -52,11 +54,12 @@ export function ProjectFormPageLayout({
 
   return (
     <div className={cn("mx-auto w-full", formWidthClassMap[maxWidth], className)}>
-      <PageContainer className="space-y-8 pb-14 pt-3 sm:pt-4 md:pb-16">
+      <PageContainer className="space-y-8 px-4 pb-8 pt-3 sm:px-5 sm:pb-10 sm:pt-3 md:pb-12">
         <div className={cn("space-y-8", innerClassName)}>
           <ProjectPageHeader
             title={title}
             description={description}
+            breadcrumbs={breadcrumbs}
             actions={headerActions ?? defaultBackAction}
           />
           <div className={cn("space-y-8", contentClassName)}>{children}</div>

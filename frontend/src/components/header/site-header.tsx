@@ -52,10 +52,10 @@ export function SiteHeader() {
             variant="ghost"
             size="sm"
             onClick={toggleSidebar}
-            className="-ml-2 h-11 w-11 p-2 text-muted-foreground hover:text-foreground md:hidden"
+            className="-ml-2 h-12 w-12 p-2 text-muted-foreground hover:text-foreground md:hidden"
             aria-label="Toggle menu"
           >
-            <Menu className="h-5 w-5" />
+            <Menu className="h-6 w-6" />
           </Button>
 
           {/* Breadcrumbs — Desktop */}
@@ -157,9 +157,12 @@ function ToolsDropdown({
           type="button"
           variant="ghost"
           size="sm"
-          className="h-8 w-52 justify-between gap-1.5 border border-border/60 bg-surface-soft px-2.5 hover:bg-surface-soft focus-visible:ring-0 focus-visible:ring-offset-0"
+          className="h-8 w-52 justify-between gap-1.5 border border-border/60 bg-transparent px-2.5 hover:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
         >
-          <span className="truncate text-sm text-foreground/80">
+          <span className={cn(
+            "truncate text-sm",
+            activeToolName === "Projects" ? "text-muted-foreground" : "text-foreground/80"
+          )}>
             {activeToolName === "Projects" ? "Switch Tool" : activeToolName}
           </span>
           <ChevronsUpDown

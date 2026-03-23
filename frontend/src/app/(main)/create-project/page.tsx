@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CircleHelp } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -60,11 +59,10 @@ export default function CreateProjectPage() {
       title="Create Project"
       description="Set up core project details, location, and delivery defaults."
       maxWidth="xl"
-      headerActions={
-        <Button type="button" variant="ghost" asChild>
-          <Link href="/">Back to Portfolio</Link>
-        </Button>
-      }
+      breadcrumbs={[
+        { label: "Portfolio", href: "/" },
+        { label: "Create Project" },
+      ]}
     >
       <CreateProjectForm />
     </ProjectFormPageLayout>
@@ -441,15 +439,18 @@ function CreateProjectForm() {
       : activeTemplateConfig.layout
     : "sections";
 
-  const renderSection = (section: FormSection) => {
+  const renderSection = (section: FormSection, sectionIndex: number) => {
     const sectionColumns =
       section.id === "project-status" ? 3 : activeLayout === "single-column" ? 1 : 2;
+    const hideSectionDescription = section.id === "logo" || section.id === "dates";
+    const isLastSection = sectionIndex === effectiveFormSections.length - 1;
 
     return (
       <StandardFormSection
         key={section.id}
         title={section.title}
-        description={section.description}
+        description={hideSectionDescription ? undefined : section.description}
+        showDivider={isLastSection}
       >
         <FormGrid columns={sectionColumns}>{section.fields.map(renderField)}</FormGrid>
       </StandardFormSection>

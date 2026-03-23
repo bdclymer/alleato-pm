@@ -88,6 +88,7 @@ class DocumentChunk:
     metadata: Dict[str, Any]
     embedding: Optional[List[float]] = None
     content_hash: Optional[str] = None
+    source_type: str = "document"
 
 
 class SupabaseRagStore:
@@ -222,6 +223,7 @@ class SupabaseRagStore:
                     "text": chunk.text,
                     "metadata": chunk.metadata,
                     "content_hash": chunk.content_hash,
+                    "source_type": chunk.source_type,
                     **({"embedding": chunk.embedding} if chunk.embedding is not None else {}),
                 }
             )

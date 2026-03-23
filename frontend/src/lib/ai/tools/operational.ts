@@ -109,7 +109,7 @@ async function rerankWithLLM(
       .join("\n\n");
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4o-mini", // lightweight model for reranking — cost-efficient for scoring
+      model: "openai/gpt-5.4", // fast model for reranking — routes through AI Gateway
       temperature: 0,
       max_tokens: 200,
       messages: [
@@ -1395,6 +1395,9 @@ export function createOperationalTools(
             const embeddingArg3072 = JSON.stringify(embResp3072.data[0].embedding);
             const targetCount = matchCount ?? 10;
             const targetThreshold = threshold ?? 0.3;
+            // Transcripts use broader recall: lower threshold + 2x candidates before reranking
+            const chunkCount = targetCount * 2;
+            const chunkThreshold = Math.min(targetThreshold, 0.25);
 
             // Blended retrieval — all halfvec(3072):
             // search_document_chunks   → unified: meetings, emails, Teams, OneDrive, transcripts
@@ -1406,8 +1409,8 @@ export function createOperationalTools(
                 query_embedding: embeddingArg3072,
                 filter_source_types: null,
                 filter_project_id: resolvedProjectId ?? null,
-                match_count: targetCount,
-                match_threshold: targetThreshold,
+                match_count: chunkCount,
+                match_threshold: chunkThreshold,
               }),
               supabase.rpc("search_all_knowledge", {
                 query_embedding: embeddingArg3072,
@@ -1542,6 +1545,66 @@ export function createOperationalTools(
                 dedupedMap.set(item.key, item);
               }
             }
+
+            // Stitch adjacent transcript chunks from the same meeting into single context blocks.
+            // When chunk N and chunk N+1 both match, returning them separately loses the conversational
+            // thread. Merge consecutive chunks (gap ≤ 1) so the LLM sees coherent dialogue.
+            const stitchTranscriptChunks = (
+              items: (typeof merged)[number][],
+            ): (typeof merged)[number][] => {
+              const transcripts: (typeof merged)[number][] = [];
+              const others: (typeof merged)[number][] = [];
+              for (const item of items) {
+                if (item.sourceTable === "meeting_transcript") {
+                  transcripts.push(item);
+                } else {
+                  others.push(item);
+                }
+              }
+              if (transcripts.length === 0) return items;
+
+              // Group by document_id, sort by chunk_index within each group
+              const byDoc = new Map<string, (typeof merged)[number][]>();
+              for (const t of transcripts) {
+                const group = byDoc.get(t.recordId) ?? [];
+                group.push(t);
+                byDoc.set(t.recordId, group);
+              }
+
+              const stitched: (typeof merged)[number][] = [];
+              for (const [, chunks] of byDoc) {
+                chunks.sort(
+                  (a, b) =>
+                    ((a.metadata?.chunk_index as number) ?? 0) -
+                    ((b.metadata?.chunk_index as number) ?? 0),
+                );
+                let group = [chunks[0]];
+                for (let i = 1; i < chunks.length; i++) {
+                  const prevIdx = (group[group.length - 1].metadata?.chunk_index as number) ?? 0;
+                  const currIdx = (chunks[i].metadata?.chunk_index as number) ?? 0;
+                  if (currIdx <= prevIdx + 2) {
+                    group.push(chunks[i]);
+                  } else {
+                    stitched.push(mergeGroup(group));
+                    group = [chunks[i]];
+                  }
+                }
+                stitched.push(mergeGroup(group));
+              }
+              return [...others, ...stitched];
+            };
+
+            const mergeGroup = (group: (typeof merged)[number][]): (typeof merged)[number] => {
+              if (group.length === 1) return group[0];
+              return {
+                ...group[0],
+                key: `doc_chunk_stitched:${group[0].recordId}:${(group[0].metadata?.chunk_index as number) ?? 0}`,
+                content: group.map((c) => c.content).join("\n"),
+                similarity: Math.max(...group.map((c) => c.similarity)),
+              };
+            };
+
+            const stitchedItems = stitchTranscriptChunks(Array.from(dedupedMap.values()));
             // Time-decay: blend semantic similarity (90%) with recency (10%).
             // Recency decays exponentially: full weight today, ~50% at 6 months, floor 0.1 at 2+ years.
             const nowMs = Date.now();
@@ -1553,7 +1616,7 @@ export function createOperationalTools(
             };
 
             // Pre-sort by blended score, take top 20 candidates for reranking
-            const candidates = (Array.from(dedupedMap.values()) as (typeof merged)[number][])
+            const candidates = (stitchedItems as (typeof merged)[number][])
               .map((item) => ({
                 ...item,
                 finalScore: item.similarity * 0.9 + recencyScore(item.createdAt) * 0.1,
@@ -1561,9 +1624,9 @@ export function createOperationalTools(
               .sort((a, b) => b.finalScore - a.finalScore)
               .slice(0, 20);
 
-            // LLM reranker: re-score top 20 by actual relevance to the query
+            // LLM reranker: always re-score candidates by actual relevance to the query
             let results: typeof candidates;
-            if (candidates.length > 3) {
+            if (candidates.length > 0) {
               const rerankedIndices = await rerankWithLLM(query, candidates, targetCount);
               results = rerankedIndices.map((i) => candidates[i]).filter(Boolean);
               // Fill remaining slots if reranker returned fewer than targetCount
@@ -1589,7 +1652,7 @@ export function createOperationalTools(
               query,
               resultCount: results.length,
               results: results.map((r) => ({
-                content: r.content.substring(0, 2500),
+                content: r.content.substring(0, r.sourceTable === "meeting_transcript" ? 5000 : 2500),
                 sourceTable: r.sourceTable,
                 recordId: r.recordId,
                 similarity: r.similarity,

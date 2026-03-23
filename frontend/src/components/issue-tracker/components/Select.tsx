@@ -38,7 +38,7 @@ export function Select({
       </RadixSelect.Trigger>
       <RadixSelect.Portal>
         <RadixSelect.Content
-          className="overflow-hidden bg-white dark:bg-neutral-900 rounded-lg border border-neutral-200 dark:border-neutral-700 shadow-md z-[200] min-w-[160px]"
+          className="overflow-hidden bg-popover dark:bg-popover rounded-lg border border-border dark:border-border shadow-sm z-[200] min-w-[160px]"
           position="popper"
           sideOffset={4}
           align="start"

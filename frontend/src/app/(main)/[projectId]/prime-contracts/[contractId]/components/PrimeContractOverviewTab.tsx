@@ -770,7 +770,8 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                                         min="0"
                                         step="0.01"
                                         className="h-10 text-right"
-                                        value={item.unit_cost ?? 0}
+                                        placeholder="0.00"
+                                        value={item.unit_cost === 0 ? "" : (item.unit_cost ?? "")}
                                         onChange={(event) =>
                                           onUpdateSovLine(item.id, {
                                             unit_cost:

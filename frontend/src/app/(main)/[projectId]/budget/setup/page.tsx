@@ -5,11 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Plus } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Container } from "@/components/ui/container";
-import { Heading } from "@/components/ui/heading";
-import { Inline } from "@/components/ui/inline";
-import { Stack } from "@/components/ui/stack";
-import { Text } from "@/components/ui/text";
+import { PageShell } from "@/components/layout";
 import { BudgetLineItemTable } from "@/components/budget/BudgetLineItemTable";
 import { createClient } from "@/lib/supabase/client";
 import { CreateBudgetCodeModal } from "./components";
@@ -255,50 +251,40 @@ export default function BudgetSetupPage() {
   };
 
   return (
-    <Container size="lg" as="main" className="min-h-screen">
-      <Stack gap="lg">
-        {/* Header */}
-        <div className="border-b bg-background">
-          <Container>
-            <Stack gap="md" className="py-4">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => router.push(`/${projectId}/budget`)}
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Budget
-              </Button>
-
-              <Inline justify="between" align="start" wrap className="gap-4">
-                <Stack gap="xs" className="min-w-0 flex-1">
-                  <Heading level={3}>Add Budget Line Items</Heading>
-                  <Text size="sm" tone="muted">
-                    Add new line items to your project budget
-                  </Text>
-                </Stack>
-
-                {/* Action Buttons - Hidden on mobile */}
-                <Inline gap="sm" className="hidden sm:flex">
-                  <Button variant="outline" onClick={handleAddRow}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Row
-                  </Button>
-                  <Button
-                    onClick={handleSubmit}
-                    disabled={loading || lineItems.length === 0}
-                  >
-                    {loading
-                      ? "Creating..."
-                      : `Create ${lineItems.length} Line Item${lineItems.length !== 1 ? "s" : ""}`}
-                  </Button>
-                </Inline>
-              </Inline>
-            </Stack>
-          </Container>
+    <PageShell
+      variant="form"
+      title="Add Budget Line Items"
+      onBack={() => router.push(`/${projectId}/budget`)}
+      backLabel="Back to Budget"
+      actions={
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => router.push(`/${projectId}/budget`)}
+            className="gap-2 sm:hidden"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </Button>
+          <div className="hidden sm:flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={handleAddRow}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Row
+            </Button>
+            <Button
+              size="sm"
+              onClick={handleSubmit}
+              disabled={loading || lineItems.length === 0}
+            >
+              {loading
+                ? "Creating..."
+                : `Create ${lineItems.length} Line Item${lineItems.length !== 1 ? "s" : ""}`}
+            </Button>
+          </div>
         </div>
-
-        {/* Main Content */}
+      }
+    >
         <BudgetLineItemTable
           lineItems={lineItems}
           projectCostCodes={projectCostCodes}
@@ -325,7 +311,6 @@ export default function BudgetSetupPage() {
           projectId={projectId}
           onSuccess={handleCreateBudgetCodeSuccess}
         />
-      </Stack>
-    </Container>
+    </PageShell>
   );
 }

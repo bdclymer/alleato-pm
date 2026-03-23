@@ -4,7 +4,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/header";
 import { AIChatWidgetLazy } from "@/components/chat/ai-chat-widget-lazy";
-import Footer from "@/components/layout/Footer";
+import { SiteFooter } from "@/components/layout/site-footer";
 
 /**
  * Layout for all table pages.
@@ -23,7 +23,7 @@ export default function TablesLayout({
         <main className="flex flex-1 flex-col gap-4 px-4 pt-4 pb-4 overflow-auto min-w-0">
           {children}
         </main>
-        <Footer />
+        <SiteFooter />
         <AIChatWidgetLazy />
       </SidebarInset>
     </SidebarProvider>

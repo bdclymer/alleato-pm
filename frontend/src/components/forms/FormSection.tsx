@@ -7,6 +7,7 @@ interface FormSectionProps {
   children: React.ReactNode;
   actions?: React.ReactNode;
   className?: string;
+  showDivider?: boolean;
 }
 
 export function FormSection({
@@ -15,11 +16,15 @@ export function FormSection({
   children,
   actions,
   className,
+  showDivider = true,
 }: FormSectionProps) {
   return (
     <section
       className={cn(
-        "space-y-6 border-t border-border/70 pt-8 pb-8 first:border-t-0 first:pt-0",
+        "space-y-6 pb-8",
+        showDivider
+          ? "border-t border-border/70 pt-8 first:border-t-0 first:pt-0"
+          : "pt-8 first:pt-0",
         className,
       )}
     >

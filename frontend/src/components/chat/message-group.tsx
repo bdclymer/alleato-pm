@@ -86,7 +86,7 @@ export function MessageGroup({
 
         {/* Hover Actions */}
         {isHovered && (
-          <div className="absolute top-0 right-4 -translate-y-1/2 flex items-center gap-1 bg-[hsl(var(--chat-panel-2))] border border-[hsl(var(--chat-border))] rounded-lg shadow-lg px-1 py-1">
+          <div className="absolute top-0 right-4 -translate-y-1/2 flex items-center gap-1 bg-[hsl(var(--chat-panel-2))] border border-[hsl(var(--chat-border))] rounded-lg shadow-sm px-1 py-1">
             <Button
               variant="ghost"
               size="icon"

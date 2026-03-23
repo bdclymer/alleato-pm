@@ -572,7 +572,7 @@ export function BudgetLineItemCreatorModal({
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 10 }}
               transition={{ type: "spring", stiffness: 300, damping: 25 }}
-              className="relative z-50 w-full max-w-6xl mx-4 bg-background rounded-xl shadow-2xl border border-border overflow-hidden"
+              className="relative z-50 w-full max-w-6xl mx-4 bg-background rounded-xl shadow-sm border border-border overflow-hidden"
             >
               {/* Header — padding only, no divider */}
               <div className="flex items-center justify-between px-6 pt-5 pb-4">

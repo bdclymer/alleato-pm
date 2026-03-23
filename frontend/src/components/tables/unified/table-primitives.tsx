@@ -219,7 +219,7 @@ export function TableAvatarUsers({
             </AvatarGroup>
           </div>
         </TooltipTrigger>
-        <TooltipContent className="max-w-[320px] border bg-popover p-3 text-popover-foreground shadow-md">
+        <TooltipContent className="max-w-[320px] border bg-popover p-3 text-popover-foreground shadow-sm">
           <div className="space-y-1">
             <p className="text-xs font-semibold text-foreground">Participants ({users.length})</p>
             <ul className="space-y-1">

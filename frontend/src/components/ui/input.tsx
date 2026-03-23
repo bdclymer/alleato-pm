@@ -13,7 +13,7 @@ function Input({ className, type, variant = "default", ...props }: InputProps) {
       data-slot="input"
       data-variant={variant}
       className={cn(
-        "file:text-foreground selection:bg-primary selection:text-primary-foreground h-9 w-full min-w-0 rounded-md px-4 py-1 text-base transition-colors outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
+        "file:text-foreground selection:bg-primary selection:text-primary-foreground h-11 sm:h-9 w-full min-w-0 rounded-md px-4 py-1 text-base transition-colors outline-none file:inline-flex file:h-7 file:border-0 file:bg-transparent file:text-sm file:font-medium disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50 md:text-sm",
         // Variant-specific styles
         variant === "inline"
           ? "border-0 !bg-transparent shadow-none focus-visible:ring-1 focus-visible:ring-ring"

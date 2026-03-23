@@ -15,9 +15,33 @@
       "Bash(npx supabase gen types*)",
       "Bash(agent-browser *)",
       "Bash(pkill -f \"next dev\")",
-      "Bash(rm -rf .next)"
+      "Bash(rm -rf .next)",
+      "Bash(/Users/meganharrison/Documents/alleato-pm/.claude/form-gauntlet/commitments/STATUS.md:*)",
+      "Bash(mkdir -p /Users/meganharrison/Documents/alleato-pm/.claude/form-gauntlet/commitments/forms/create_subcontract/attempt-1)",
+      "Bash(cp /Users/meganharrison/Documents/alleato-pm/.claude/form-gauntlet/commitments/DISCOVERY.md /Users/meganharrison/Documents/alleato-pm/.claude/form-gauntlet/commitments/forms/create_subcontract/spec.md)",
+      "mcp__playwright-test__generator_setup_page",
+      "Read(//tmp/**)",
+      "Read(//private/tmp/**)",
+      "Bash(node -e \":*)",
+      "Bash(find /Users/meganharrison/Documents/alleato-pm/frontend/src/components/budget -name *.tsx)",
+      "Bash(find /Users/meganharrison/Documents/alleato-pm/frontend/src/components/tables -name *.tsx)",
+      "Bash(find /Users/meganharrison/Documents/alleato-pm/frontend/src/components/layout -name *.tsx)",
+      "Bash(grep -r \"bg-white\\\\|bg-black\\\\|bg-gray\\\\|text-gray\\\\|border-gray\\\\|text-neutral\\\\|bg-neutral\\\\|bg-orange\\\\|text-orange\\\\|bg-slate\\\\|text-slate\" /Users/meganharrison/Documents/alleato-pm/frontend/src/components --include=*.tsx --include=*.ts)",
+      "Bash(grep -r \"p-\\\\[.*px\\\\]\\\\|m-\\\\[.*px\\\\]\\\\|gap-\\\\[.*px\\\\]\\\\|w-\\\\[.*px\\\\]\\\\|h-\\\\[.*px\\\\]\" /Users/meganharrison/Documents/alleato-pm/frontend/src/components --include=*.tsx --include=*.ts)",
+      "Bash(grep -r \"shadow-md\\\\|shadow-lg\\\\|shadow-xl\\\\|shadow-2xl\" /Users/meganharrison/Documents/alleato-pm/frontend/src/components --include=*.tsx --include=*.ts)",
+      "Bash(node -e \"console.log\\(require.resolve\\(''playwright''\\)\\)\")",
+      "Bash(node /tmp/form-gauntlet-subcontract.js)",
+      "Bash(NODE_PATH=./node_modules node /tmp/form-gauntlet-subcontract.js)",
+      "Bash(NODE_PATH=./node_modules node -e ':*)",
+      "mcp__claude_ai_Supabase__execute_sql",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__navigate_page"
+    ],
+    "additionalDirectories": [
+      "/Users/meganharrison/Documents/alleato-pm/.claude/form-gauntlet/commitments/forms/create_subcontract",
+      "/Users/meganharrison/Documents/alleato-pm/.claude/form-gauntlet/commitments/forms/create_subcontract/attempt-3"
     ]
   },
+  "model": "sonnet",
   "hooks": {
     "PreToolUse": [
       {
@@ -41,6 +65,5 @@
         ]
       }
     ]
-  },
-  "model": "sonnet"
+  }
 }

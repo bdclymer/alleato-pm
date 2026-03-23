@@ -303,8 +303,10 @@ export function CreateSubcontractForm({
   const accountingMethod = useWatch({ control, name: "accountingMethod" });
   const statusValue = useWatch({ control, name: "status" });
   const executedValue = useWatch({ control, name: "executed" });
+  // contractCompanyId holds the vendor ID (option.value) — FK references vendors(id)
   const selectedVendor = React.useMemo(
-    () => vendorOptions.find((option) => option.value === contractCompanyId),
+    () =>
+      vendorOptions.find((option) => option.value === contractCompanyId),
     [vendorOptions, contractCompanyId],
   );
   const selectedVendorCompanyId = React.useMemo(
@@ -872,6 +874,7 @@ export function CreateSubcontractForm({
                             key={option.value}
                             value={option.label}
                             onSelect={() => {
+                              // Store the vendor ID — subcontracts.contract_company_id FK references vendors(id)
                               setValue("contractCompanyId", option.value, {
                                 shouldDirty: true,
                                 shouldValidate: true,

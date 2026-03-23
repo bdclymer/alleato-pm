@@ -3,9 +3,6 @@ import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Stack } from "@/components/ui/stack";
-import { Inline } from "@/components/ui/inline";
-import { Text } from "@/components/ui/text";
 import { UomSelect } from "./UomSelect";
 import { BudgetItemDeleteDialog } from "./BudgetItemDeleteDialog";
 import { BudgetCodeSelector } from "@/app/(main)/[projectId]/budget/setup/components";
@@ -15,22 +12,22 @@ import type {
 } from "@/app/(main)/[projectId]/budget/setup/types";
 
 interface BudgetLineItemCardProps {
-  item: BudgetLineItem;
-  index: number;
-  projectCostCodes: ProjectCostCode[];
-  isPopoverOpen: boolean;
-  onPopoverOpenChange: (open: boolean) => void;
-  onBudgetCodeSelect: (costCode: ProjectCostCode) => void;
-  onFieldChange: (field: keyof BudgetLineItem, value: string) => void;
-  onRemove: () => void;
-  onCreateNew: () => void;
-  canRemove: boolean;
-  onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
+  readonly item: BudgetLineItem;
+  readonly index: number;
+  readonly projectCostCodes: ProjectCostCode[];
+  readonly isPopoverOpen: boolean;
+  readonly onPopoverOpenChange: (open: boolean) => void;
+  readonly onBudgetCodeSelect: (costCode: ProjectCostCode) => void;
+  readonly onFieldChange: (field: keyof BudgetLineItem, value: string) => void;
+  readonly onRemove: () => void;
+  readonly onCreateNew: () => void;
+  readonly canRemove: boolean;
+  readonly onKeyDown?: (e: React.KeyboardEvent<HTMLInputElement>) => void;
 }
 
 /**
- * BudgetLineItemCard - Mobile card view for budget line item
- * Displays a single line item in a card format for mobile devices
+ * BudgetLineItemCard - Mobile card view for a single budget line item.
+ * Uses semantic tokens and design system spacing.
  */
 export function BudgetLineItemCard({
   item,
@@ -57,101 +54,111 @@ export function BudgetLineItemCard({
     setShowDeleteDialog(false);
   };
 
-  // Create description for the item being deleted
   const itemDescription = item.costCodeLabel
     ? `"${item.costCodeLabel}" (Line ${index + 1})`
     : `Line ${index + 1}`;
-  return (
-    <div className="p-4 bg-background">
-      <Stack gap="sm">
-        {/* Card Header */}
-        <Inline justify="between" align="start">
-          <Text weight="medium">Line {index + 1}</Text>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleDeleteClick}
-            disabled={!canRemove}
-            className="touch-target -mr-2 -mt-2"
-          >
-            <Trash2 className="h-5 w-5 text-muted-foreground hover:text-destructive" />
-          </Button>
-        </Inline>
 
-        {/* Budget Code Selector */}
-        <div>
-          <Label>
-            Budget Code <span className="text-destructive">*</span>
-          </Label>
-          <BudgetCodeSelector
-            projectCostCodes={projectCostCodes}
-            selectedLabel={item.costCodeLabel}
-            onSelect={onBudgetCodeSelect}
-            onCreateNew={onCreateNew}
-            open={isPopoverOpen}
-            onOpenChange={onPopoverOpenChange}
-            className="w-full touch-target"
+  const formattedAmount = parseFloat(item.amount || "0").toLocaleString(
+    "en-US",
+    { style: "currency", currency: "USD" },
+  );
+
+  return (
+    <div className="rounded-md border border-border bg-card p-4 space-y-4">
+      {/* Card Header — line number + amount + delete */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-baseline gap-2">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Line {index + 1}
+          </span>
+          <span className="text-sm font-semibold tabular-nums text-foreground">
+            {formattedAmount}
+          </span>
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={handleDeleteClick}
+          disabled={!canRemove}
+          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
+      </div>
+
+      {/* Budget Code Selector — full width */}
+      <div className="space-y-1.5">
+        <Label className="text-xs text-muted-foreground">
+          Budget Code <span className="text-destructive">*</span>
+        </Label>
+        <BudgetCodeSelector
+          projectCostCodes={projectCostCodes}
+          selectedLabel={item.costCodeLabel}
+          onSelect={onBudgetCodeSelect}
+          onCreateNew={onCreateNew}
+          open={isPopoverOpen}
+          onOpenChange={onPopoverOpenChange}
+          className="w-full"
+        />
+      </div>
+
+      {/* 2-Column Grid: Qty + UOM */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Qty</Label>
+          <Input
+            type="number"
+            value={item.qty}
+            onChange={(e) => onFieldChange("qty", e.target.value)}
+            onKeyDown={onKeyDown}
+            className="h-10"
           />
         </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">UOM</Label>
+          <UomSelect
+            value={item.uom}
+            onValueChange={(value) => onFieldChange("uom", value)}
+            className="h-10"
+          />
+        </div>
+      </div>
 
-        {/* 2-Column Grid: Qty + UOM */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label>Qty</Label>
+      {/* 2-Column Grid: Unit Cost + Amount */}
+      <div className="grid grid-cols-2 gap-3">
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Unit Cost</Label>
+          <div className="relative">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+              $
+            </span>
             <Input
               type="number"
-              value={item.qty}
-              onChange={(e) => onFieldChange("qty", e.target.value)}
+              value={item.unitCost}
+              onChange={(e) => onFieldChange("unitCost", e.target.value)}
               onKeyDown={onKeyDown}
-              className="w-full touch-target"
-            />
-          </div>
-          <div>
-            <Label>UOM</Label>
-            <UomSelect
-              value={item.uom}
-              onValueChange={(value) => onFieldChange("uom", value)}
-              className="w-full touch-target"
+              className="h-10 pl-7"
             />
           </div>
         </div>
-
-        {/* 2-Column Grid: Unit Cost + Amount */}
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <Label>Unit Cost</Label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
-                $
-              </span>
-              <Input
-                type="number"
-                value={item.unitCost}
-                onChange={(e) => onFieldChange("unitCost", e.target.value)}
-                onKeyDown={onKeyDown}
-                className="w-full touch-target pl-7"
-              />
-            </div>
-          </div>
-          <div>
-            <Label>Amount</Label>
-            <Input
-              type="number"
-              value={item.amount}
-              className="w-full touch-target bg-muted"
-              disabled
-            />
-          </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs text-muted-foreground">Amount</Label>
+          <Input
+            type="number"
+            value={item.amount}
+            className="h-10 bg-muted text-muted-foreground"
+            disabled
+          />
         </div>
+      </div>
 
-        {/* Delete Confirmation Dialog */}
-        <BudgetItemDeleteDialog
-          open={showDeleteDialog}
-          onOpenChange={setShowDeleteDialog}
-          onConfirm={handleDeleteConfirm}
-          itemDescription={itemDescription}
-        />
-      </Stack>
+      {/* Delete Confirmation Dialog */}
+      <BudgetItemDeleteDialog
+        open={showDeleteDialog}
+        onOpenChange={setShowDeleteDialog}
+        onConfirm={handleDeleteConfirm}
+        itemDescription={itemDescription}
+      />
     </div>
   );
 }

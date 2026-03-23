@@ -103,7 +103,7 @@ export default function Ai02() {
 
   return (
     <div className="flex flex-col gap-4 w-[calc(42rem-5rem)]">
-      <div className="flex min-h-[120px] flex-col rounded-2xl cursor-text bg-card border border-border shadow-lg">
+      <div className="flex min-h-[120px] flex-col rounded-2xl cursor-text bg-card border border-border shadow-sm">
         <div className="flex-1 relative overflow-y-auto max-h-[258px]">
           <Textarea
             ref={inputRef}

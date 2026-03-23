@@ -111,7 +111,7 @@ export function ProgressReports({ projectId }: ProgressReportsProps) {
       {/* Reports List */}
       <div className="space-y-4">
         {mockReports.map((report) => (
-          <Card key={report.id} className="hover:shadow-md transition-shadow">
+          <Card key={report.id} className="hover:shadow-xs transition-shadow">
             <CardContent className="p-4">
               <div className="flex items-start justify-between">
                 <div className="flex-1">
