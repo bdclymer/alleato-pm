@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   ArrowLeft,
   ArrowUpRight,
@@ -8,7 +14,9 @@ import {
   Circle,
   Clock,
   ExternalLink,
+  GitBranch,
   MessageSquare,
+  Send,
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -47,6 +55,23 @@ type FeedbackItem = {
   github_issue_url: string | null;
   github_issue_state: string | null;
   metadata: Record<string, unknown>;
+};
+
+type UserProfile = {
+  id: string;
+  email: string;
+  full_name: string | null;
+};
+
+type FeedbackComment = {
+  id: string;
+  feedback_item_id: string;
+  author_id: string;
+  body: string;
+  mentions: string[] | null;
+  created_at: string;
+  updated_at: string;
+  author: UserProfile;
 };
 
 type StatusFilter = "open" | "submitted" | "closed" | "all";
@@ -120,6 +145,348 @@ function relativeTime(dateStr: string) {
   return new Date(dateStr).toLocaleDateString();
 }
 
+function getInitials(profile: UserProfile): string {
+  if (profile.full_name) {
+    return profile.full_name
+      .split(" ")
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  }
+  return profile.email[0].toUpperCase();
+}
+
+function displayName(profile: UserProfile): string {
+  return profile.full_name || profile.email.split("@")[0];
+}
+
+/** Extract @mentioned user IDs from text like "@userId" */
+function extractMentionIds(text: string, users: UserProfile[]): string[] {
+  const ids: string[] = [];
+  for (const user of users) {
+    // Match @firstName, @fullName, or @email prefix (case insensitive)
+    const name = displayName(user).toLowerCase();
+    const pattern = new RegExp(`@${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
+    if (pattern.test(text)) {
+      ids.push(user.id);
+    }
+  }
+  return ids;
+}
+
+// ---------------------------------------------------------------------------
+// Comment Input with @mention autocomplete
+// ---------------------------------------------------------------------------
+
+function CommentInput({
+  onSubmit,
+  users,
+  submitting,
+}: {
+  onSubmit: (body: string, mentions: string[]) => void;
+  users: UserProfile[];
+  submitting: boolean;
+}) {
+  const [value, setValue] = useState("");
+  const [showMentions, setShowMentions] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState("");
+  const [mentionIndex, setMentionIndex] = useState(0);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
+
+  const filteredUsers = useMemo(() => {
+    if (!mentionQuery) return users;
+    const q = mentionQuery.toLowerCase();
+    return users.filter(
+      (u) =>
+        (u.full_name?.toLowerCase().includes(q)) ||
+        u.email.toLowerCase().includes(q),
+    );
+  }, [users, mentionQuery]);
+
+  function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
+    const text = e.target.value;
+    setValue(text);
+
+    // Check if user is typing @mention
+    const cursorPos = e.target.selectionStart;
+    const textBeforeCursor = text.slice(0, cursorPos);
+    const atMatch = textBeforeCursor.match(/@(\w*)$/);
+
+    if (atMatch) {
+      setShowMentions(true);
+      setMentionQuery(atMatch[1]);
+      setMentionIndex(0);
+    } else {
+      setShowMentions(false);
+      setMentionQuery("");
+    }
+  }
+
+  function insertMention(user: UserProfile) {
+    const textarea = inputRef.current;
+    if (!textarea) return;
+
+    const cursorPos = textarea.selectionStart;
+    const textBeforeCursor = value.slice(0, cursorPos);
+    const atIndex = textBeforeCursor.lastIndexOf("@");
+    const textAfterCursor = value.slice(cursorPos);
+    const mentionText = `@${displayName(user)} `;
+
+    const newValue = value.slice(0, atIndex) + mentionText + textAfterCursor;
+    setValue(newValue);
+    setShowMentions(false);
+    setMentionQuery("");
+
+    // Refocus after state update
+    requestAnimationFrame(() => {
+      textarea.focus();
+      const newPos = atIndex + mentionText.length;
+      textarea.setSelectionRange(newPos, newPos);
+    });
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (showMentions && filteredUsers.length > 0) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setMentionIndex((i) => Math.min(i + 1, filteredUsers.length - 1));
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setMentionIndex((i) => Math.max(i - 1, 0));
+      } else if (e.key === "Enter" || e.key === "Tab") {
+        e.preventDefault();
+        insertMention(filteredUsers[mentionIndex]);
+      } else if (e.key === "Escape") {
+        setShowMentions(false);
+      }
+      return;
+    }
+
+    // Submit on Cmd/Ctrl+Enter
+    if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  }
+
+  function handleSubmit() {
+    const trimmed = value.trim();
+    if (!trimmed || submitting) return;
+    const mentions = extractMentionIds(trimmed, users);
+    onSubmit(trimmed, mentions);
+    setValue("");
+    setShowMentions(false);
+  }
+
+  return (
+    <div className="relative">
+      {/* Mention dropdown */}
+      {showMentions && filteredUsers.length > 0 && (
+        <div className="absolute bottom-full left-0 right-0 mb-1 max-h-40 overflow-y-auto rounded-lg border border-border bg-popover shadow-sm z-10">
+          {filteredUsers.map((user, i) => (
+            <button
+              key={user.id}
+              type="button"
+              className={cn(
+                "flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors",
+                i === mentionIndex ? "bg-muted" : "hover:bg-muted/50",
+              )}
+              onMouseDown={(e) => {
+                e.preventDefault(); // prevent blur
+                insertMention(user);
+              }}
+              onMouseEnter={() => setMentionIndex(i)}
+            >
+              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-medium text-primary">
+                {getInitials(user)}
+              </span>
+              <span className="truncate font-medium text-foreground">
+                {displayName(user)}
+              </span>
+              <span className="truncate text-xs text-muted-foreground">
+                {user.email}
+              </span>
+            </button>
+          ))}
+        </div>
+      )}
+
+      <div className="flex items-end gap-2">
+        <textarea
+          ref={inputRef}
+          value={value}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          placeholder="Add a comment... Use @ to mention someone"
+          rows={2}
+          className="flex-1 resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+        />
+        <Button
+          size="sm"
+          onClick={handleSubmit}
+          disabled={!value.trim() || submitting}
+          className="h-8 w-8 p-0 shrink-0"
+          aria-label="Send comment"
+        >
+          <Send className="h-3.5 w-3.5" />
+        </Button>
+      </div>
+      <p className="mt-1 text-[10px] text-muted-foreground">
+        Press <kbd className="rounded border border-border px-1 py-0.5 text-[9px]">Cmd+Enter</kbd> to send
+      </p>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Comments Section
+// ---------------------------------------------------------------------------
+
+function CommentsSection({ feedbackItemId }: { feedbackItemId: string }) {
+  const [comments, setComments] = useState<FeedbackComment[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const fetchComments = useCallback(async () => {
+    try {
+      const res = await fetch(
+        `/api/admin/feedback/comments?feedbackItemId=${feedbackItemId}`,
+      );
+      if (!res.ok) throw new Error("Fetch failed");
+      const data = await res.json();
+      setComments(data.comments ?? []);
+    } catch {
+      // silent — comments are secondary
+    } finally {
+      setLoading(false);
+    }
+  }, [feedbackItemId]);
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      const res = await fetch("/api/users");
+      if (!res.ok) return;
+      const data = await res.json();
+      // Handle various response shapes
+      const userList = Array.isArray(data) ? data : data.users ?? data.data ?? [];
+      setUsers(userList);
+    } catch {
+      // silent
+    }
+  }, []);
+
+  useEffect(() => {
+    setLoading(true);
+    setComments([]);
+    fetchComments();
+    fetchUsers();
+  }, [fetchComments, fetchUsers]);
+
+  function scrollToBottom() {
+    requestAnimationFrame(() => {
+      if (scrollRef.current) {
+        scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+      }
+    });
+  }
+
+  async function handleSubmit(body: string, mentions: string[]) {
+    setSubmitting(true);
+    try {
+      const res = await fetch("/api/admin/feedback/comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          feedbackItemId,
+          body,
+          mentions,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to add comment");
+      const data = await res.json();
+      setComments((prev) => [...prev, data.comment]);
+      scrollToBottom();
+      if (mentions.length > 0) {
+        toast.success(`Comment added and ${mentions.length} user${mentions.length > 1 ? "s" : ""} notified`);
+      }
+    } catch {
+      toast.error("Failed to add comment");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  /** Render comment body with @mentions highlighted */
+  function renderBody(body: string) {
+    // Match @Name patterns and highlight them
+    const parts = body.split(/(@\w+(?:\s\w+)?)/g);
+    return parts.map((part) => {
+      if (part.startsWith("@")) {
+        return (
+          <span key={part} className="font-medium text-primary">
+            {part}
+          </span>
+        );
+      }
+      return part;
+    });
+  }
+
+  return (
+    <div>
+      <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-3">
+        Comments
+      </p>
+
+      {/* Comment list */}
+      <div ref={scrollRef} className="space-y-3 mb-4 max-h-64 overflow-y-auto">
+        {loading && (
+          <div className="flex items-center justify-center py-4">
+            <div className="h-3 w-3 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+          </div>
+        )}
+
+        {!loading && comments.length === 0 && (
+          <p className="text-xs text-muted-foreground py-2">
+            No comments yet. Be the first to comment.
+          </p>
+        )}
+
+        {comments.map((comment) => (
+          <div key={comment.id} className="flex gap-2.5">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[10px] font-medium text-primary mt-0.5">
+              {getInitials(comment.author)}
+            </span>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-baseline gap-2">
+                <span className="text-xs font-medium text-foreground">
+                  {displayName(comment.author)}
+                </span>
+                <span className="text-[10px] text-muted-foreground">
+                  {relativeTime(comment.created_at)}
+                </span>
+              </div>
+              <p className="mt-0.5 text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                {renderBody(comment.body)}
+              </p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Comment input */}
+      <CommentInput
+        onSubmit={handleSubmit}
+        users={users}
+        submitting={submitting}
+      />
+    </div>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Detail Panel (shared between desktop and mobile)
 // ---------------------------------------------------------------------------
@@ -127,12 +494,16 @@ function relativeTime(dateStr: string) {
 function FeedbackDetail({
   item,
   updatingId,
+  sendingToGitHub,
   onUpdateStatus,
+  onSendToGitHub,
   onBack,
 }: {
   item: FeedbackItem;
   updatingId: string | null;
+  sendingToGitHub: boolean;
   onUpdateStatus: (id: string, status: string) => void;
+  onSendToGitHub: (id: string) => void;
   onBack?: () => void;
 }) {
   return (
@@ -201,7 +572,7 @@ function FeedbackDetail({
         </div>
       </div>
 
-      {/* Comment */}
+      {/* Description */}
       <div>
         <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
           Description
@@ -278,9 +649,40 @@ function FeedbackDetail({
 
       {/* Actions */}
       <div className="flex items-center gap-2 border-t border-border pt-4">
+        {/* Send to Claude Code — only if no issue exists yet */}
+        {!item.github_issue_number && (
+          <Button
+            size="sm"
+            onClick={() => onSendToGitHub(item.id)}
+            disabled={sendingToGitHub}
+          >
+            <GitBranch className="mr-2 h-3.5 w-3.5" />
+            {sendingToGitHub ? "Sending..." : "Send to Claude Code"}
+          </Button>
+        )}
+
+        {/* View Issue in GitHub — when issue already exists */}
+        {item.github_issue_url && (
+          <Button
+            size="sm"
+            variant="outline"
+            asChild
+          >
+            <a
+              href={item.github_issue_url}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <ExternalLink className="mr-2 h-3.5 w-3.5" />
+              View Issue in GitHub
+            </a>
+          </Button>
+        )}
+
         {(item.status === "open" || item.status === "github_failed" || item.status === "submitted") && (
           <Button
             size="sm"
+            variant="outline"
             onClick={() => onUpdateStatus(item.id, "closed")}
             disabled={updatingId === item.id}
           >
@@ -298,6 +700,11 @@ function FeedbackDetail({
           </Button>
         )}
       </div>
+
+      {/* Comments */}
+      <div className="border-t border-border pt-6">
+        <CommentsSection feedbackItemId={item.id} />
+      </div>
     </div>
   );
 }
@@ -313,7 +720,7 @@ export default function FeedbackInboxPage() {
   const [filter, setFilter] = useState<StatusFilter>("open");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-  // On mobile, track whether the detail view is showing
+  const [sendingToGitHub, setSendingToGitHub] = useState(false);
   const [mobileShowDetail, setMobileShowDetail] = useState(false);
 
   const selected = useMemo(
@@ -348,7 +755,7 @@ export default function FeedbackInboxPage() {
     fetchItems();
   }, [fetchItems]);
 
-  // Auto-select the most recent item when items load (desktop only)
+  // Auto-select the most recent item when items load
   useEffect(() => {
     if (!loading && items.length > 0 && !selectedId) {
       setSelectedId(items[0].id);
@@ -374,7 +781,34 @@ export default function FeedbackInboxPage() {
     }
   }
 
-  // ---- Select item (handles mobile transition) ----
+  // ---- Send to GitHub ----
+  async function sendToGitHub(id: string) {
+    setSendingToGitHub(true);
+    try {
+      const res = await fetch("/api/admin/feedback", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? "Failed to create GitHub issue");
+      }
+      const data = await res.json();
+      toast.success(
+        `Created GitHub issue #${data.githubIssue?.number ?? ""}`,
+      );
+      fetchItems();
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to send to GitHub",
+      );
+    } finally {
+      setSendingToGitHub(false);
+    }
+  }
+
+  // ---- Select item ----
   function selectItem(id: string) {
     setSelectedId(id);
     setMobileShowDetail(true);
@@ -399,7 +833,6 @@ export default function FeedbackInboxPage() {
 
       <div className="flex flex-1 min-h-0">
         {/* ---- Left: list panel ---- */}
-        {/* On mobile: hidden when detail is showing */}
         <div
           className={cn(
             "flex w-full flex-col border-r border-border lg:w-120 lg:max-w-lg",
@@ -531,7 +964,9 @@ export default function FeedbackInboxPage() {
             <FeedbackDetail
               item={selected}
               updatingId={updatingId}
+              sendingToGitHub={sendingToGitHub}
               onUpdateStatus={updateStatus}
+              onSendToGitHub={sendToGitHub}
             />
           )}
         </div>
@@ -542,7 +977,9 @@ export default function FeedbackInboxPage() {
             <FeedbackDetail
               item={selected}
               updatingId={updatingId}
+              sendingToGitHub={sendingToGitHub}
               onUpdateStatus={updateStatus}
+              onSendToGitHub={sendToGitHub}
               onBack={handleMobileBack}
             />
           </div>

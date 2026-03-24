@@ -1,3 +1,4 @@
+npm warn exec The following package was not found and will be installed: supabase@2.84.0
 export type Json =
   | string
   | number
@@ -1324,6 +1325,51 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      admin_feedback_comments: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          feedback_item_id: string
+          id: string
+          mentions: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          feedback_item_id: string
+          id?: string
+          mentions?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          feedback_item_id?: string
+          id?: string
+          mentions?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_feedback_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_feedback_comments_feedback_item_id_fkey"
+            columns: ["feedback_item_id"]
+            isOneToOne: false
+            referencedRelation: "admin_feedback_items"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       admin_feedback_items: {
         Row: {
@@ -2827,6 +2873,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      bot_user_mappings: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: number
+          platform: string
+          platform_user_id: string
+          supabase_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id?: never
+          platform: string
+          platform_user_id: string
+          supabase_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: never
+          platform?: string
+          platform_user_id?: string
+          supabase_user_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       briefing_runs: {
         Row: {
