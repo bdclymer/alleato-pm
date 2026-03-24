@@ -538,7 +538,7 @@ function CommentsSection({
 
   return (
     <div>
-      <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-3">
+      <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-3">
         Comments
       </p>
 
@@ -636,7 +636,7 @@ function GitHubActivitySection({ issueNumber }: { issueNumber: number }) {
   return (
     <div>
       <div className="flex items-center gap-2 mb-3">
-        <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+        <p className="text-xs font-semibold uppercase tracking-wider text-primary">
           GitHub Activity
         </p>
         <span className="text-[10px] text-muted-foreground">
@@ -808,7 +808,7 @@ function ListItemContextMenu({
               onClick={() => handleAction("send_to_github")}
             >
               <GitBranch className="h-3.5 w-3.5" />
-              Send to Claude Code
+              Create Issue
             </button>
           )}
 
@@ -918,7 +918,7 @@ function FeedbackDetail({
   commentInputRef?: React.RefObject<HTMLTextAreaElement | null>;
 }) {
   return (
-    <div className="space-y-6 px-6 py-6 lg:px-12 lg:py-8">
+    <div className="mx-auto max-w-4xl space-y-8 px-6 py-6 lg:px-10 lg:py-8">
       {/* Mobile back button */}
       {onBack && (
         <button
@@ -943,7 +943,7 @@ function FeedbackDetail({
                 href={item.github_issue_url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted transition-colors"
+                className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted/80 transition-colors"
               >
                 <ExternalLink className="h-3 w-3" />
                 #{item.github_issue_number}
@@ -952,61 +952,56 @@ function FeedbackDetail({
           </div>
         </div>
 
-        {/* Meta badges */}
-        <div className="mt-3 flex flex-wrap items-center gap-2">
-          <Badge
-            variant="outline"
-            className={cn(
-              "text-[11px]",
-              STATUS_META[item.status]?.className,
-            )}
-          >
+        {/* Meta — clean inline layout */}
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
+          <span className={cn("font-medium", STATUS_META[item.status]?.className)}>
             {STATUS_META[item.status]?.label ?? item.status}
-          </Badge>
-          <Badge variant="outline" className="text-[11px]">
-            {REQUEST_TYPE_LABELS[item.request_type] ?? item.request_type}
-          </Badge>
+          </span>
+          <span className="text-border">·</span>
+          <span>{REQUEST_TYPE_LABELS[item.request_type] ?? item.request_type}</span>
           {item.severity && (
-            <span
-              className={cn(
-                "text-[11px] font-medium",
-                SEVERITY_COLORS[item.severity],
-              )}
-            >
-              {item.severity.charAt(0).toUpperCase() + item.severity.slice(1)} severity
-            </span>
+            <>
+              <span className="text-border">·</span>
+              <span className={cn("font-medium", SEVERITY_COLORS[item.severity])}>
+                {item.severity.charAt(0).toUpperCase() + item.severity.slice(1)}
+              </span>
+            </>
           )}
-          <span className="text-[11px] text-muted-foreground">
-            <Clock className="mr-1 inline h-3 w-3" />
-            {new Date(item.created_at).toLocaleString()}
+          <span className="text-border">·</span>
+          <span>
+            {new Date(item.created_at).toLocaleDateString("en-US", {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+            })}
           </span>
         </div>
       </div>
 
       {/* Description */}
       <div>
-        <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
+        <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-3">
           Description
         </p>
-        <div className="rounded-lg border border-border bg-muted/20 px-4 py-3">
-          <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
-            {item.comment}
-          </p>
-        </div>
+        <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+          {item.comment}
+        </p>
       </div>
 
       {/* Screenshot */}
       {item.screenshot_url && (
         <div>
-          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
+          <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-3">
             Screenshot
           </p>
-          <div className="overflow-hidden rounded-lg border border-border">
+          <div className="overflow-hidden rounded-lg">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={item.screenshot_url}
               alt="Feedback screenshot"
-              className="w-full max-h-75 object-cover object-top"
+              className="w-full max-h-75 object-cover object-top rounded-lg"
             />
           </div>
         </div>
@@ -1014,7 +1009,7 @@ function FeedbackDetail({
 
       {/* Location */}
       <div>
-        <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
+        <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-3">
           Location
         </p>
         <div className="space-y-1.5">
@@ -1059,16 +1054,16 @@ function FeedbackDetail({
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-2 border-t border-border pt-4">
-        {/* Send to Claude Code */}
+      <div className="flex items-center gap-2 pt-2">
+        {/* Create Issue */}
         {!item.github_issue_number && (
           <Button
             size="sm"
             onClick={() => onSendToGitHub(item.id)}
             disabled={sendingToGitHub}
           >
-            <GitBranch className="mr-2 h-3.5 w-3.5" />
-            {sendingToGitHub ? "Sending..." : "Send to Claude Code"}
+            <GitBranch className="h-3.5 w-3.5" />
+            {sendingToGitHub ? "Sending..." : "Create Issue"}
           </Button>
         )}
 
@@ -1084,7 +1079,7 @@ function FeedbackDetail({
               target="_blank"
               rel="noopener noreferrer"
             >
-              <ExternalLink className="mr-2 h-3.5 w-3.5" />
+              <ExternalLink className="h-3.5 w-3.5" />
               View Issue in GitHub
             </a>
           </Button>
@@ -1113,13 +1108,13 @@ function FeedbackDetail({
       </div>
 
       {/* Comments */}
-      <div className="border-t border-border pt-6">
+      <div className="pt-2">
         <CommentsSection feedbackItemId={item.id} commentInputRef={commentInputRef} />
       </div>
 
       {/* GitHub Activity */}
       {item.github_issue_number && (
-        <div className="border-t border-border pt-6">
+        <div className="pt-2">
           <GitHubActivitySection issueNumber={item.github_issue_number} />
         </div>
       )}
@@ -1180,9 +1175,11 @@ export default function FeedbackInboxPage() {
     fetchItems();
   }, [fetchItems]);
 
-  // Auto-select the most recent item when items load
+  // Auto-select the most recent item when items load or current selection is invalid
   useEffect(() => {
-    if (!loading && items.length > 0 && !selectedId) {
+    if (loading || items.length === 0) return;
+    const currentExists = selectedId && items.some((i) => i.id === selectedId);
+    if (!currentExists) {
       setSelectedId(items[0].id);
       setFocusedIndex(0);
     }
@@ -1415,9 +1412,9 @@ export default function FeedbackInboxPage() {
                       className={cn(
                         "group flex w-full cursor-pointer items-start gap-3 border-b border-border px-4 py-3 text-left transition-colors",
                         isSelected
-                          ? "bg-muted/60"
-                          : "hover:bg-muted/30",
-                        isFocused && !isSelected && "ring-1 ring-inset ring-ring/30",
+                          ? "bg-primary/8 border-l-2 border-l-primary"
+                          : "hover:bg-muted border-l-2 border-l-transparent",
+                        isFocused && !isSelected && "bg-muted/60",
                       )}
                     >
                       {/* Status dot */}
