@@ -5,7 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "@/components/tables/DataTable";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ds";
+import { ProjectPageHeader, PageContainer } from "@/components/layout";
 import {
   Plus,
   MoreHorizontal,
@@ -15,7 +16,6 @@ import {
   FileText,
   Lock,
   Unlock,
-  ArrowLeft,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -38,44 +38,92 @@ interface BillingPeriod {
   closedDate: string | null;
 }
 
-const mockBillingPeriods: BillingPeriod[] = [];
+const mockBillingPeriods: BillingPeriod[] = [
+  {
+    id: "1",
+    number: "BP-2025-01",
+    name: "January 2025 Billing",
+    startDate: "2025-01-01",
+    endDate: "2025-01-31",
+    status: "open",
+    invoiceCount: 8,
+    totalInvoiced: 287500,
+    totalPaid: 145000,
+    dueDate: "2025-02-15",
+    closedDate: null,
+  },
+  {
+    id: "2",
+    number: "BP-2024-12",
+    name: "December 2024 Billing",
+    startDate: "2024-12-01",
+    endDate: "2024-12-31",
+    status: "closed",
+    invoiceCount: 12,
+    totalInvoiced: 425000,
+    totalPaid: 425000,
+    dueDate: "2025-01-15",
+    closedDate: "2025-01-20",
+  },
+  {
+    id: "3",
+    number: "BP-2024-11",
+    name: "November 2024 Billing",
+    startDate: "2024-11-01",
+    endDate: "2024-11-30",
+    status: "closed",
+    invoiceCount: 10,
+    totalInvoiced: 356000,
+    totalPaid: 356000,
+    dueDate: "2024-12-15",
+    closedDate: "2024-12-18",
+  },
+  {
+    id: "4",
+    number: "BP-2025-02",
+    name: "February 2025 Billing",
+    startDate: "2025-02-01",
+    endDate: "2025-02-28",
+    status: "draft",
+    invoiceCount: 0,
+    totalInvoiced: 0,
+    totalPaid: 0,
+    dueDate: "2025-03-15",
+    closedDate: null,
+  },
+];
+
+const getPaymentStatus = (
+  invoiced: number,
+  paid: number,
+): { percentage: number; color: string } => {
+  if (invoiced === 0) return { percentage: 0, color: "bg-muted" };
+  const raw = (paid / invoiced) * 100;
+  const percentage = Math.max(0, Math.min(100, raw));
+  if (percentage >= 100) return { percentage, color: "bg-primary" };
+  if (percentage >= 50) return { percentage, color: "bg-warning" };
+  return { percentage, color: "bg-destructive" };
+};
 
 export default function ProjectBillingPeriodsPage() {
   const params = useParams<{ projectId: string }>();
   const router = useRouter();
   const projectId = params.projectId ?? "";
 
-  const [data, setData] = React.useState<BillingPeriod[]>(mockBillingPeriods);
-
-  const statusColors: Record<string, string> = {
-    draft: "bg-muted text-foreground",
-    open: "bg-blue-100 text-blue-700",
-    locked: "bg-orange-100 text-orange-700",
-    closed: "bg-green-100 text-green-700",
-  };
-
-  const getPaymentStatus = (
-    invoiced: number,
-    paid: number,
-  ): { percentage: number; color: string } => {
-    if (invoiced === 0) return { percentage: 0, color: "bg-muted" };
-    const percentage = (paid / invoiced) * 100;
-    if (percentage === 100) return { percentage, color: "bg-green-500" };
-    if (percentage >= 50) return { percentage, color: "bg-yellow-500" };
-    return { percentage, color: "bg-red-500" };
-  };
+  const [data] = React.useState<BillingPeriod[]>(mockBillingPeriods);
 
   const columns: ColumnDef<BillingPeriod>[] = [
     {
       accessorKey: "number",
       header: "Period Number",
       cell: ({ row }) => (
-        <button
-          type="button"
-          className="font-medium text-primary hover:underline"
+        <Button
+          variant="link"
+          className="p-0 h-auto font-medium"
+          onClick={() => router.push(`/${projectId}/billing-periods/${row.original.id}`)}
         >
           {row.getValue("number")}
-        </button>
+        </Button>
       ),
     },
     {
@@ -102,7 +150,7 @@ export default function ProjectBillingPeriodsPage() {
       header: "Status",
       cell: ({ row }) => {
         const status = row.getValue("status") as string;
-        return <Badge className={statusColors[status]}>{status}</Badge>;
+        return <StatusBadge status={status} />;
       },
     },
     {
@@ -155,6 +203,7 @@ export default function ProjectBillingPeriodsPage() {
       id: "actions",
       cell: ({ row }) => {
         const status = row.original.status;
+        const id = row.original.id;
 
         return (
           <DropdownMenu>
@@ -164,36 +213,42 @@ export default function ProjectBillingPeriodsPage() {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => router.push(`/${projectId}/billing-periods/${id}`)}
+              >
                 <Eye className="mr-2 h-4 w-4" />
                 View
               </DropdownMenuItem>
               {status === "draft" && (
-                <DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => router.push(`/${projectId}/billing-periods/${id}/edit`)}
+                >
                   <Edit className="mr-2 h-4 w-4" />
                   Edit
                 </DropdownMenuItem>
               )}
               {status === "open" && (
                 <>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => router.push(`/${projectId}/invoices/new?billingPeriodId=${id}`)}
+                  >
                     <FileText className="mr-2 h-4 w-4" />
                     Create Invoice
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push(`/${projectId}/billing-periods/${id}/lock`)}>
                     <Lock className="mr-2 h-4 w-4" />
                     Lock Period
                   </DropdownMenuItem>
                 </>
               )}
               {status === "locked" && (
-                <DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push(`/${projectId}/billing-periods/${id}/unlock`)}>
                   <Unlock className="mr-2 h-4 w-4" />
                   Unlock Period
                 </DropdownMenuItem>
               )}
               {status === "draft" && (
-                <DropdownMenuItem className="text-red-600">
+                <DropdownMenuItem className="text-destructive">
                   <Trash2 className="mr-2 h-4 w-4" />
                   Delete
                 </DropdownMenuItem>
@@ -211,71 +266,64 @@ export default function ProjectBillingPeriodsPage() {
   const outstanding = totalInvoiced - totalPaid;
 
   return (
-    <div className="flex flex-col h-full p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => router.push(`/${projectId}/invoices?tab=billing-periods`)}
-            className="gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Back to Invoices
+    <>
+      <ProjectPageHeader
+        title="Billing Periods"
+        description="Manage invoice billing periods and cycles"
+        breadcrumbs={[
+          { label: "Invoices", href: `/${projectId}/invoices?tab=billing-periods` },
+          { label: "Billing Periods" },
+        ]}
+        actions={
+          <Button>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Billing Period
           </Button>
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Billing Periods</h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Manage invoice billing periods and cycles
-            </p>
+        }
+      />
+      <PageContainer>
+        <div className="space-y-6">
+          {/* Summary Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-card rounded-lg border border-border p-4">
+              <div className="text-sm font-medium text-muted-foreground">Total Periods</div>
+              <div className="text-2xl font-bold text-foreground mt-1">
+                {data.length}
+              </div>
+            </div>
+            <div className="bg-card rounded-lg border border-border p-4">
+              <div className="text-sm font-medium text-muted-foreground">Open Periods</div>
+              <div className="text-2xl font-bold text-foreground mt-1">
+                {openPeriods.length}
+              </div>
+            </div>
+            <div className="bg-card rounded-lg border border-border p-4">
+              <div className="text-sm font-medium text-muted-foreground">
+                Total Invoiced
+              </div>
+              <div className="text-2xl font-bold text-foreground mt-1">
+                ${totalInvoiced.toLocaleString()}
+              </div>
+            </div>
+            <div className="bg-card rounded-lg border border-border p-4">
+              <div className="text-sm font-medium text-muted-foreground">Outstanding</div>
+              <div className="text-2xl font-bold text-foreground mt-1">
+                ${outstanding.toLocaleString()}
+              </div>
+            </div>
           </div>
-        </div>
-        <Button className="bg-primary hover:bg-primary/90">
-          <Plus className="h-4 w-4 mr-2" />
-          Create Billing Period
-        </Button>
-      </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-background rounded-lg border p-4">
-          <div className="text-sm font-medium text-muted-foreground">Total Periods</div>
-          <div className="text-2xl font-bold text-foreground mt-1">
-            {data.length}
+          {/* Table */}
+          <div className="bg-card rounded-lg border border-border overflow-hidden">
+            <DataTable
+              columns={columns}
+              data={data}
+              searchKey="name"
+              searchPlaceholder="Search billing periods..."
+            />
           </div>
         </div>
-        <div className="bg-background rounded-lg border p-4">
-          <div className="text-sm font-medium text-muted-foreground">Open Periods</div>
-          <div className="text-2xl font-bold text-foreground mt-1">
-            {openPeriods.length}
-          </div>
-        </div>
-        <div className="bg-background rounded-lg border p-4">
-          <div className="text-sm font-medium text-muted-foreground">
-            Total Invoiced
-          </div>
-          <div className="text-2xl font-bold text-foreground mt-1">
-            ${totalInvoiced.toLocaleString()}
-          </div>
-        </div>
-        <div className="bg-background rounded-lg border p-4">
-          <div className="text-sm font-medium text-muted-foreground">Outstanding</div>
-          <div className="text-2xl font-bold text-foreground mt-1">
-            ${outstanding.toLocaleString()}
-          </div>
-        </div>
-      </div>
-
-      {/* Table */}
-      <div className="flex-1 bg-background rounded-lg border overflow-hidden">
-        <DataTable
-          columns={columns}
-          data={data}
-          searchKey="name"
-          searchPlaceholder="Search billing periods..."
-        />
-      </div>
-    </div>
+      </PageContainer>
+    </>
   );
 }
