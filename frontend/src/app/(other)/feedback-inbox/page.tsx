@@ -7,7 +7,6 @@ import {
   Circle,
   Clock,
   ExternalLink,
-  Image as ImageIcon,
   MessageSquare,
   XCircle,
 } from "lucide-react";
@@ -207,25 +206,25 @@ export default function FeedbackInboxPage() {
 
       <div className="flex flex-1 min-h-0">
         {/* ---- Left: list panel ---- */}
-        <div className="flex w-full flex-col border-r border-border lg:w-[420px] lg:min-w-[360px]">
+        <div className="flex w-full flex-col border-r border-border lg:w-96 lg:max-w-md">
           {/* Filter tabs */}
           <div className="flex items-center gap-1 border-b border-border px-4 py-2">
             {STATUS_FILTERS.map((f) => (
-              <button
+              <Button
                 key={f.value}
+                variant={filter === f.value ? "secondary" : "ghost"}
+                size="sm"
                 onClick={() => {
                   setFilter(f.value);
                   setSelectedId(null);
                 }}
                 className={cn(
-                  "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
-                  filter === f.value
-                    ? "bg-muted text-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50",
+                  "h-7 px-2.5 text-xs",
+                  filter !== f.value && "text-muted-foreground",
                 )}
               >
                 {f.label}
-              </button>
+              </Button>
             ))}
           </div>
 
@@ -257,14 +256,21 @@ export default function FeedbackInboxPage() {
                 const isSelected = selectedId === item.id;
 
                 return (
-                  <button
+                  <div
                     key={item.id}
-                    type="button"
+                    role="button"
+                    tabIndex={0}
                     onClick={() =>
                       setSelectedId(isSelected ? null : item.id)
                     }
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        setSelectedId(isSelected ? null : item.id);
+                      }
+                    }}
                     className={cn(
-                      "group flex w-full items-start gap-3 border-b border-border px-4 py-3 text-left transition-colors",
+                      "group flex w-full cursor-pointer items-start gap-3 border-b border-border px-4 py-3 text-left transition-colors",
                       isSelected
                         ? "bg-muted/60"
                         : "hover:bg-muted/30",
@@ -314,7 +320,7 @@ export default function FeedbackInboxPage() {
                     <span className="flex-shrink-0 pt-0.5 text-[10px] text-muted-foreground">
                       {relativeTime(item.created_at)}
                     </span>
-                  </button>
+                  </div>
                 );
               })}
           </div>

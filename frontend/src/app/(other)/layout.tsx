@@ -17,7 +17,7 @@ export default function MainLayout({
   children: ReactNode;
 }): ReactElement {
   const pathname = usePathname();
-  const isFullBleed = pathname === "/team-chat" || pathname === "/command-center";
+  const isFullBleed = pathname === "/team-chat" || pathname === "/command-center" || pathname === "/feedback-inbox";
 
   return (
     <SidebarProvider defaultOpen={false}>

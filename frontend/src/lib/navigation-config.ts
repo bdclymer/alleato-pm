@@ -208,6 +208,7 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
     icon: LayoutDashboard,
     tools: [
       { name: "Command Center", path: "/command-center", icon: LayoutDashboard, requiresProject: false },
+      { name: "Feedback Inbox", path: "/feedback-inbox", icon: MessageCircle, requiresProject: false, adminOnly: true },
     ],
   },
   {
