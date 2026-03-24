@@ -19,6 +19,7 @@ import {
   Tag,
   Pencil,
   Trash2,
+  ExternalLink,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -866,14 +867,23 @@ export default function PortfolioPage() {
     },
     {
       ...PROJECT_COLUMNS[8],
-      render: (item) => (
-        <EditableCell
-          value={item.onedrive || ""}
-          projectId={item.id}
-          field="onedrive"
-          onSave={handleInlineSave}
-        />
-      ),
+      render: (item) => {
+        const url = item.onedrive;
+        if (!url) return <span className="text-muted-foreground">-</span>;
+        return (
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center justify-center p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            aria-label="Open OneDrive folder"
+            title="Open OneDrive folder"
+          >
+            <ExternalLink className="w-4 h-4" />
+          </a>
+        );
+      },
       sortValue: (item) => item.onedrive ?? "",
     },
     {
