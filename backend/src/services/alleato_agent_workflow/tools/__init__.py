@@ -11,6 +11,9 @@ This package contains tool definitions:
 from .mcp import mcp, mcp1, linear_mcp, web_search_preview
 from .vector_search import (
     search_meetings,
+    search_emails,
+    search_teams_messages,
+    search_documents,
     search_decisions,
     search_risks,
     search_opportunities,
@@ -34,6 +37,9 @@ __all__ = [
 
     # Vector Search Tools
     'search_meetings',
+    'search_emails',
+    'search_teams_messages',
+    'search_documents',
     'search_decisions',
     'search_risks',
     'search_opportunities',
