@@ -93,5 +93,5 @@ frontend/tests/agent-browser-runs/
 frontend/tests/screenshots/
 backend/output/
 docs/BMAD/e2e-screenshots/
-docs-ai/contents/docs/PRPs/**/screenshots/
+docs/PRPs/**/screenshots/
 logs/

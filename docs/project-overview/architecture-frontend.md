@@ -6,6 +6,16 @@ Alleato-Procore is a construction project management platform built as a Next.js
 
 ---
 
+## Architectural Principles
+
+1. **Server Components by default** -- Add `'use client'` only for interactivity
+2. **Layered data access** -- `app/` pages -> `hooks/` (React Query) -> `lib/supabase/` -> Supabase
+3. **Design system enforced** -- ESLint errors block builds on design violations
+4. **Typed from the database** -- `database.types.ts` (20,790 lines) is the source of truth
+5. **Proxy handles auth** -- Every request passes through `proxy.ts` for session refresh
+
+---
+
 ## Technology Stack
 
 | Category | Technology | Version |
@@ -19,6 +29,8 @@ Alleato-Procore is a construction project management platform built as a Next.js
 | Client State | Zustand | 5.0 |
 | Forms | React Hook Form + Zod | 7.71 / 4.3.6 |
 | Database Client | Supabase SSR | 0.8.0 |
+| AI SDK | Vercel AI SDK | v6 |
+| Real-time | Liveblocks | v3.15.2 |
 | Animations | Framer Motion | 12.15 |
 | E2E Testing | Playwright | 1.58.1 |
 | Unit Testing | Jest | 30.2 |
@@ -26,50 +38,101 @@ Alleato-Procore is a construction project management platform built as a Next.js
 
 ---
 
+## Layer Architecture
+
+```
++-------------------------------------------------------------+
+|                   Browser / Client                          |
++---------------------------+---------------------------------+
+                            | HTTP
++---------------------------v---------------------------------+
+|              proxy.ts (Supabase session refresh)            |
++---------------------------+---------------------------------+
+                            |
++---------------------------v---------------------------------+
+|                   app/ (Next.js App Router)                  |
+|  +-- (admin)/   Admin pages                                 |
+|  +-- (auth)/    Authentication                              |
+|  +-- (chat)/    AI chat pages                               |
+|  +-- (main)/    Main app + [projectId]/* tool pages         |
+|  +-- (other)/   Miscellaneous                               |
+|  +-- api/       Route handlers (196 files, 326+ handlers)   |
++---------------------------+---------------------------------+
+                            |
++---------------------------v---------------------------------+
+|          components/ (React component library)              |
+|  +-- ui/       shadcn/ui primitives (95+)                   |
+|  +-- ds/       Design system components (8)                 |
+|  +-- layout/   Page structure                               |
+|  +-- tables/   Data table infrastructure                    |
+|  +-- domain/   Feature-specific components                  |
++---------------------------+---------------------------------+
+                            |
++---------------------------v---------------------------------+
+|          hooks/ (React Query data layer ~80 hooks)          |
+|  use-{resource}.ts -> wraps Supabase calls with caching     |
++---------------------------+---------------------------------+
+                            |
++---------------------------v---------------------------------+
+|          services/ (Business logic layer, 15 files)         |
++---------------------------+---------------------------------+
+                            |
++---------------------------v---------------------------------+
+|    lib/supabase/ (Data access - createClient client/server) |
+|    lib/ai/ (AI orchestration, tools, system prompt)         |
++---------------------------+---------------------------------+
+                            |
+                      Supabase / External APIs
+```
+
+---
+
 ## Directory Structure
 
 ```
 frontend/
-├── src/
-│   ├── app/                          # Next.js App Router
-│   │   ├── (main)/                   # Main app routes (sidebar layout)
-│   │   │   └── [projectId]/          # Project-scoped pages (31 tools)
-│   │   ├── (tables)/                 # Table view pages
-│   │   ├── (other)/                  # Miscellaneous pages
-│   │   ├── api/                      # API route handlers (196 files, 326+ handlers)
-│   │   │   └── projects/[projectId]/ # Project-scoped API endpoints
-│   │   └── auth/                     # Authentication pages
-│   ├── components/                   # 470+ components across 78 directories
-│   │   ├── ui/                       # shadcn/ui primitives (95 files)
-│   │   ├── domain/                   # Business logic components (40 files)
-│   │   ├── budget/                   # Budget management (51 files)
-│   │   ├── chat/                     # AI chat interface (29 files)
-│   │   ├── tables/                   # Data tables (33 files)
-│   │   ├── forms/                    # Form field components (18 files)
-│   │   ├── layout/                   # Layout components (14 files)
-│   │   ├── ai-elements/             # AI UI elements (30 files)
-│   │   ├── directory/               # Directory components (13 files)
-│   │   ├── direct-costs/            # Direct costs (10 files)
-│   │   ├── scheduling/              # Scheduling (7 files)
-│   │   ├── drawings/                # Drawings (5 files)
-│   │   ├── specifications/          # Specifications (5 files)
-│   │   ├── project-home/            # Project home (20 files)
-│   │   ├── misc/                    # Miscellaneous (58 files)
-│   │   ├── motion/                  # Animation components (17 files)
-│   │   ├── nav/                     # Navigation (11 files)
-│   │   └── header/                  # Header components (10 files)
-│   ├── hooks/                       # 74+ React Query hooks (use-*.ts)
-│   ├── lib/
-│   │   ├── supabase/                # Supabase client setup (client, server, middleware)
-│   │   └── schemas/                 # 18 Zod validation schemas
-│   ├── services/                    # 15 service classes
-│   ├── types/                       # TypeScript types + generated database types
-│   └── stores/                      # Zustand stores
-├── tests/                           # Playwright E2E tests
-│   └── .auth/                       # Pre-saved authentication state
-├── config/
-│   └── playwright/                  # Playwright configuration
-└── public/                          # Static assets
++-- src/
+|   +-- app/                          # Next.js App Router
+|   |   +-- (main)/                   # Main app routes (sidebar layout)
+|   |   |   +-- [projectId]/          # Project-scoped pages (31 tools)
+|   |   +-- (tables)/                 # Table view pages
+|   |   +-- (other)/                  # Miscellaneous pages
+|   |   +-- api/                      # API route handlers (196 files, 326+ handlers)
+|   |   |   +-- projects/[projectId]/ # Project-scoped API endpoints
+|   |   +-- auth/                     # Authentication pages
+|   +-- components/                   # 470+ components across 78 directories
+|   |   +-- ui/                       # shadcn/ui primitives (95 files)
+|   |   +-- ds/                       # Design system components
+|   |   +-- domain/                   # Business logic components (40 files)
+|   |   +-- budget/                   # Budget management (51 files)
+|   |   +-- chat/                     # AI chat interface (29 files)
+|   |   +-- tables/                   # Data tables (33 files)
+|   |   +-- forms/                    # Form field components (18 files)
+|   |   +-- layout/                   # Layout components (14 files)
+|   |   +-- ai-elements/             # AI UI elements (30 files)
+|   |   +-- directory/               # Directory components (13 files)
+|   |   +-- direct-costs/            # Direct costs (10 files)
+|   |   +-- scheduling/              # Scheduling (7 files)
+|   |   +-- drawings/                # Drawings (5 files)
+|   |   +-- specifications/          # Specifications (5 files)
+|   |   +-- project-home/            # Project home (20 files)
+|   |   +-- misc/                    # Miscellaneous (58 files)
+|   |   +-- motion/                  # Animation components (17 files)
+|   |   +-- nav/                     # Navigation (11 files)
+|   |   +-- header/                  # Header components (10 files)
+|   +-- hooks/                       # 74+ React Query hooks (use-*.ts)
+|   +-- lib/
+|   |   +-- supabase/                # Supabase client setup (client, server, middleware)
+|   |   +-- ai/                      # AI orchestration, tools, system prompt
+|   |   +-- schemas/                 # 18 Zod validation schemas
+|   +-- services/                    # 15 service classes
+|   +-- types/                       # TypeScript types + generated database types
+|   +-- stores/                      # Zustand stores
++-- tests/                           # Playwright E2E tests
+|   +-- .auth/                       # Pre-saved authentication state
++-- config/
+|   +-- playwright/                  # Playwright configuration
++-- public/                          # Static assets
 ```
 
 ---
@@ -80,11 +143,14 @@ frontend/
 
 The application uses Next.js route groups to apply different layouts based on page context:
 
-| Route Group | Purpose | Layout |
-|-------------|---------|--------|
-| `(main)` | Primary app pages | Sidebar navigation + header |
-| `(tables)` | Full-width table views | Minimal chrome, maximized table area |
-| `(other)` | Miscellaneous pages | Varies by page |
+| Route Group | Path | Purpose | Layout |
+|-------------|------|---------|--------|
+| `(admin)` | `/design-system`, `/style-guide`, etc. | Admin-only internal tools | Minimal |
+| `(auth)` | `/login`, `/signup` | Public auth pages | Public |
+| `(chat)` | `/ai-assistant`, `/rag`, etc. | AI chat interfaces | Chat layout |
+| `(main)` | `/`, `/[projectId]/*`, `/directory/*` | Primary app pages (requires auth) | Sidebar navigation + header |
+| `(tables)` | Various | Full-width table views | Minimal chrome, maximized table area |
+| `(other)` | `/access-denied` | Miscellaneous pages | Varies by page |
 
 ### Dynamic Route Conventions
 
@@ -105,6 +171,35 @@ This convention is enforced to prevent Next.js slug name conflicts, which cause 
 
 Each tool lives under `(main)/[projectId]/` and represents a construction management domain:
 
+```
+/[projectId]/home          -> Project dashboard
+/[projectId]/budget        -> Budget management (SOV)
+/[projectId]/prime-contracts -> Prime contracts
+/[projectId]/commitments   -> Subcontracts + POs
+/[projectId]/change-events -> Change events
+/[projectId]/change-orders -> Change orders
+/[projectId]/direct-costs  -> Direct cost records
+/[projectId]/invoicing     -> Owner invoicing
+/[projectId]/sov           -> Schedule of values
+/[projectId]/drawings      -> Drawing management
+/[projectId]/specifications -> Specification sections
+/[projectId]/submittals    -> Submittals
+/[projectId]/rfis          -> RFIs
+/[projectId]/schedule      -> Schedule tasks
+/[projectId]/punch-list    -> Punch items
+/[projectId]/meetings      -> Meeting records
+/[projectId]/daily-log     -> Daily logs
+/[projectId]/photos        -> Photos
+/[projectId]/tasks         -> Tasks
+/[projectId]/emails        -> Emails
+/[projectId]/transmittals  -> Transmittals
+/[projectId]/documents     -> Document center
+/[projectId]/directory     -> Project directory
+/[projectId]/reporting     -> 360 reporting
+/[projectId]/setup         -> Project setup
+```
+
+**Categories:**
 - **Financial**: budget, change-events, change-orders, commitments, direct-costs, invoicing, prime-contracts, sov
 - **Field**: daily-log, drawings, meetings, photos, punch-list, tasks
 - **Communication**: emails, rfis, submittals, transmittals
@@ -258,6 +353,10 @@ Manages sidebar UI state with localStorage persistence:
 - Hover state
 - User preference persistence across sessions
 
+### URL State
+
+Filters, active tabs, and pagination are stored in URL search params where possible (bookmarkable state).
+
 ### React Contexts (3 Total)
 
 | Context | Purpose |
@@ -273,7 +372,7 @@ Manages sidebar UI state with localStorage persistence:
 ### Component Hierarchy
 
 ```
-Layout Components (PageContainer, ProjectPageHeader)
+Layout Components (PageShell, PageContainer, ProjectPageHeader)
     |
     v
 Domain Components (BudgetOverview, ContractList, DirectoryTable)
@@ -293,6 +392,19 @@ UI Primitives (Button, Dialog, Input, Select, etc.)
 **UI Primitives (95 files)**
 
 shadcn/ui components built on Radix UI. These are the atomic building blocks: Button, Input, Dialog, Select, Popover, Sheet, Table, Tabs, Toast, Tooltip, and more. They are unstyled by default and themed via CSS variables and Tailwind.
+
+**Design System Components (`@/components/ds/`)**
+
+Custom design system components that enforce consistent patterns:
+- `StatusBadge` -- pass status string, correct colors automatically
+- `StatusDot` -- minimal inline dot + label for tables
+- `StatusText` -- plain muted text for non-emphasized statuses
+- `KpiBlock` / `KpiRow` -- metric display with 3-tier text hierarchy
+- `DataTable` -- premium table with correct header/row/hover styling
+- `SectionHeader` -- title + count + action link
+- `AvatarStack` -- overlapping avatar initials
+- `EmptyState` -- icon + title + description + action
+- `Eyebrow` -- 11px uppercase tracking-wider label
 
 **Domain Components (40 files)**
 
@@ -321,6 +433,7 @@ Reusable form fields that integrate with React Hook Form:
 **Layout Components (14 files)**
 
 Structural components that enforce consistent page layout:
+- `PageShell`: Standard page wrapper with variant-based rendering (dashboard, table, form, detail, content)
 - `PageContainer`: Standard page wrapper with padding and max-width
 - `ProjectPageHeader`: Consistent header with title, description, and action buttons
 - Sidebar navigation container
@@ -393,6 +506,8 @@ import { createClient } from "@/lib/supabase/server";
 
 export async function GET(request: Request, { params }: { params: { projectId: string } }) {
   const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return new Response('Unauthorized', { status: 401 });
   // Queries execute with the user's RLS context
 }
 ```
@@ -418,6 +533,58 @@ AI and RAG features are served by a Python FastAPI backend running on port 8051.
 
 ---
 
+## AI Architecture (Frontend)
+
+### Vercel AI SDK v6 Integration
+
+```typescript
+// Route handler (app/api/ai-assistant/chat/route.ts)
+import { streamText } from 'ai';
+import { createGateway } from '@ai-sdk/gateway';
+
+export async function POST(req: Request) {
+  const { messages } = await req.json();
+  const result = streamText({
+    model: 'openai/gpt-5.4',  // Routes through AI Gateway
+    system: ragSystemPrompt,
+    messages: convertToModelMessages(messages),
+    tools: { ... }
+  });
+  return result.toUIMessageStreamResponse();
+}
+```
+
+```typescript
+// Chat UI (Client Component)
+import { useChat } from '@ai-sdk/react';
+import { DefaultChatTransport } from 'ai';
+
+const { messages, sendMessage, status } = useChat({
+  transport: new DefaultChatTransport({ api: '/api/ai-assistant/chat' })
+});
+```
+
+### AI Context Sources (Orchestrator)
+
+`lib/ai/orchestrator.ts` routes queries to:
+- `match_meeting_chunks_with_project` -- Meeting transcript RAG
+- `match_documents` -- Document content RAG
+- `full_text_search_meetings` -- Meeting full-text search
+- `match_crawled_pages` -- Procore docs RAG
+- `match_memories` -- AI memory retrieval
+- `get_project_matching_context` -- Project-specific context
+
+### AI Tools (Frontend)
+
+Located in `lib/ai/tools/`:
+- Financial data queries
+- Acumatica ERP queries
+- Meeting insights
+- Document lookup
+- Web search (Tavily)
+
+---
+
 ## Authentication Architecture
 
 ### Supabase Auth with SSR
@@ -440,6 +607,28 @@ Authentication is handled by Supabase Auth using the `@supabase/ssr` package (no
 ### Testing Authentication
 
 Playwright tests use pre-saved authentication state stored in `tests/.auth/user.json`. Tests do not log in individually; the saved session is loaded automatically via the Playwright configuration.
+
+---
+
+## Security Architecture
+
+### Middleware (`proxy.ts`)
+
+Runs on every request. Calls `updateSession()` to refresh Supabase JWT. Excludes:
+- `/_next/*` -- Next.js static files
+- `/images/*`, `/favicon.ico` -- Static assets
+
+### Permission System
+
+1. **Database RLS** -- Enforced at Postgres level (cannot be bypassed)
+2. **API route checks** -- `supabase.auth.getUser()` per request
+3. **Client guards** -- `PermissionGuard`, `ProjectAccessGuard` components hide UI
+
+### Security Headers (next.config.ts)
+
+- `Strict-Transport-Security` (HSTS)
+- `X-Frame-Options: SAMEORIGIN`
+- `X-Content-Type-Options: nosniff`
 
 ---
 
@@ -496,6 +685,18 @@ The design system is built on shadcn/ui with Procore-aligned brand colors. It us
 - **Typography**: Tailwind's default type scale with project-specific overrides.
 - **Border Radius**: Configurable via CSS variable `--radius`.
 
+### Design System Enforcement (ESLint)
+
+Three ESLint rules **fail the build** on violations:
+
+| Rule | Violation | Example |
+|------|-----------|---------|
+| `no-hardcoded-colors` | Raw color classes | `bg-gray-200`, `text-gray-600` |
+| `no-arbitrary-spacing` | Arbitrary CSS | `p-[10px]`, `gap-[14px]` |
+| `require-semantic-colors` | Non-token colors | `bg-blue-500` (use `bg-primary`) |
+
+**Allowed shadows:** `shadow-xs`, `shadow-sm` only.
+
 ### Responsive Design
 
 - Tables use `DataTableResponsive` for mobile-adaptive layouts with card-based views on small screens.
@@ -509,6 +710,21 @@ Framer Motion provides consistent animation patterns through wrapper components 
 - List stagger effects
 - Dialog/sheet enter/exit animations
 - Loading skeleton animations
+
+---
+
+## Performance Patterns
+
+| Pattern | Implementation |
+|---------|---------------|
+| Virtual scrolling | TanStack Virtual for large tables/lists |
+| Image optimization | `next/image` (auto WebP + responsive) |
+| Font optimization | `next/font` (zero layout shift) |
+| Code splitting | Automatic via Next.js App Router |
+| Lazy loading | `React.lazy()` + Suspense for heavy components |
+| Query caching | React Query stale-while-revalidate (5 min default) |
+| Memo | `useMemo`, `useCallback` for expensive computations |
+| Streaming | `streamText` + Suspense boundaries for AI responses |
 
 ---
 
@@ -620,4 +836,4 @@ The frontend is deployed on Vercel. Production builds are triggered via Git push
 
 ---
 
-_Generated using BMAD Method document-project workflow_
+_Generated using BMAD Method document-project workflow. Last merged: 2026-03-24._

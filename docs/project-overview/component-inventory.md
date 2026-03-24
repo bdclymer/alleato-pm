@@ -1,225 +1,204 @@
-# Alleato-Procore Frontend Component Inventory
+# Component Inventory — Alleato-PM
 
-## Overview
-
-The Alleato-Procore frontend comprises **470+ component files** spread across **78 directories**, forming a comprehensive construction project management UI. The component architecture is built on top of:
-
-- **shadcn/ui** -- 95 primitive components
-- **Radix UI** -- Accessible, unstyled primitives underlying shadcn/ui
-- **Tailwind CSS** -- Utility-first styling
-- **74+ React Query hooks** for server state management
-- **2 Zustand stores** for client-side state
-- **3 React contexts** (project, favorites, sheet navigation)
-- **18 Zod validation schemas** for form and data validation
-- **15 service classes** for business logic encapsulation
+> Generated: 2026-03-22 (merged with earlier inventory) | Source: `frontend/src/components/`, `frontend/src/hooks/`, `frontend/src/services/`, `frontend/src/lib/stores/`
 
 ---
 
-## UI Primitives (`frontend/src/components/ui/`) -- 95 files
+## Overview
 
-The foundational layer of reusable, unstyled or lightly styled components. These are the building blocks consumed by all higher-level components.
+| Category | Count |
+|----------|-------|
+| Component directories | 100+ |
+| React Query hooks | ~80 |
+| Service files | 14 |
+| Zustand stores | 1 (`financial-store.ts`) |
+| Design system (ds/) components | 8 |
+| UI primitives (ui/) | 55+ |
+| React contexts | 3 (project, favorites, sheet navigation) |
+| Zod validation schemas | 18 |
 
-### Form Elements
-- `input` -- Text input fields
-- `button` -- Action buttons with variants
-- `select` -- Single-value selection dropdowns
-- `checkbox` -- Boolean toggle checkboxes
-- `textarea` -- Multi-line text input
-- `radio-group` -- Radio button groups
-- `switch` -- Toggle switches
+**Tech stack:**
+- **shadcn/ui** -- base primitive components
+- **Radix UI** -- Accessible, unstyled primitives underlying shadcn/ui
+- **Tailwind CSS** -- Utility-first styling
+- **React Query v5** -- Server state management
+- **Zustand** -- Client-side state (financial store)
+- **Zod** -- Form and data validation
 
-### Layout
-- `card` -- Content container cards
-- `dialog` -- Modal dialog windows
-- `sheet` -- Slide-out panel overlays
-- `drawer` -- Bottom/side drawer panels
-- `modal` -- Generic modal wrapper
-- `accordion` -- Collapsible content sections
-- `tabs` -- Tabbed content panels
+---
 
-### Data Display
-- `table` -- Data table primitives
-- `badge` -- Status and label badges
-- `avatar` -- User/entity avatars
-- `skeleton` -- Loading placeholder skeletons
-- `separator` -- Visual dividers
+## UI Primitives (`@/components/ui/`)
 
-### Feedback
-- `alert` -- Inline alert messages
-- `alert-dialog` -- Confirmation dialog with actions
-- `toast` (sonner) -- Transient notification toasts
-- `progress` -- Progress bars and indicators
+Base shadcn/ui components -- source-copied Radix UI primitives styled with Tailwind CSS. **Only shadcn primitives live here; do not add custom components.**
 
-### Navigation
-- `breadcrumb` -- Breadcrumb trail navigation
-- `dropdown-menu` -- Context and action menus
-- `pagination` -- Page navigation controls
-- `sidebar` -- Collapsible sidebar navigation
+| Component | File | Description |
+|-----------|------|-------------|
+| `Accordion` | `accordion.tsx` | Collapsible panel |
+| `AlertDialog` | `alert-dialog.tsx` | Destructive action confirmation modal |
+| `Alert` | `alert.tsx` | Contextual notification |
+| `Avatar` | `avatar.tsx` | User avatar with fallback initials |
+| `Badge` | `badge.tsx` | Status pill / label |
+| `Breadcrumb` | `breadcrumb.tsx` | Navigation trail |
+| `ButtonGroup` | `button-group.tsx` | Grouped action buttons |
+| `Button` | `button.tsx` | Primary action button with variants |
+| `Calendar` | `calendar.tsx` | Date picker calendar |
+| `Card` | `card.tsx` | Content container |
+| `Carousel` | `carousel.tsx` | Scrolling item carousel |
+| `Chart` | `chart.tsx` | Chart wrapper (Recharts) |
+| `Checkbox` | `checkbox.tsx` | Boolean input |
+| `Collapsible` | `collapsible.tsx` | Toggle show/hide |
+| `Command` | `command.tsx` | Command palette / combobox |
+| `Container` | `container.tsx` | Max-width content wrapper |
+| `Dialog` | `dialog.tsx` | Modal overlay |
+| `Drawer` | `drawer.tsx` | Bottom/side drawer (Vaul) |
+| `DropdownMenu` | `dropdown-menu.tsx` | Context / action menu |
+| `EmptyState` | `empty-state.tsx` | Zero-result placeholder |
+| `Form` | `form.tsx` | React Hook Form wrapper with validation |
+| `Heading` | `heading.tsx` | Semantic heading levels |
+| `HoverCard` | `hover-card.tsx` | Floating hover tooltip |
+| `InlineEdit` | `inline.tsx` | Inline editable cell |
+| `InputGroup` | `input-group.tsx` | Input with prefix/suffix |
+| `Input` | `input.tsx` | Text input |
+| `Label` | `label.tsx` | Form field label |
+| `MetricCard` | `metric-card.tsx` | Single KPI card |
+| `Modal` | `modal.tsx` / `modal/` | Generic modal |
+| `NumberInput` | `number-input.tsx` | Numeric input with constraints |
+| `Pagination` | `pagination.tsx` | Page navigation |
+| `Popover` | `popover.tsx` | Floating content panel |
+| `Progress` | `progress.tsx` | Progress bar |
+| `RadioGroup` | `radio-group.tsx` | Radio button group |
+| `ScrollArea` | `scroll-area.tsx` | Custom scrollbar wrapper |
+| `SectionCard` | `section-card.tsx` | Section with card border |
+| `SectionHeader` | `section-header.tsx` | Title + count + action row |
+| `Select` | `select.tsx` | Select dropdown |
+| `Separator` | `separator.tsx` | Horizontal/vertical divider |
+| `Sheet` | `sheet.tsx` | Side panel |
+| `Sidebar` | `sidebar.tsx` | App sidebar shell |
+| `Skeleton` | `skeleton.tsx` | Loading placeholder shimmer |
+| `Slider` | `slider.tsx` | Range input |
+| `Sonner` | `sonner.tsx` | Toast notifications |
+| `Spinner` | `spinner.tsx` | Loading spinner |
+| `Stack` | `stack.tsx` | Flex stack layout helper |
+| `SummaryCardGrid` | `summary-card-grid.tsx` | Grid of summary cards |
+| `Switch` | `switch.tsx` | Toggle switch |
+| `Table` | `table.tsx` | HTML table primitives |
+| `Tabs` | `tabs.tsx` | Tab navigation |
+| `Text` | `text.tsx` | Semantic text with variants |
+| `Textarea` | `textarea.tsx` | Multi-line text input |
+| `ToggleGroup` | `toggle-group.tsx` | Button toggle group |
+| `Toggle` | `toggle.tsx` | Single toggle button |
+| `Tool` | `tool.tsx` | AI tool call display |
+| `Tooltip` | `tooltip.tsx` | Hover tooltip |
+| `TransitionPanel` | `transition-panel.tsx` | Animated panel switch |
+| `UnifiedModal` | `unified-modal.tsx` | Standardized modal dialog |
+| `UnifiedSlideover` | `unified-slideover.tsx` | Standardized side panel |
 
-### Advanced
-- `calendar` -- Date picker calendar
-- `carousel` -- Content carousel/slider
-- `chart` -- Data visualization charts
-- `file-upload` -- File upload dropzone and controls
-- `popover` -- Popover content panels
-- `hover-card` -- Hover-activated detail cards
-
-### AI-Specific
+**AI-Specific UI Primitives:**
 - `chain-of-thought` -- AI reasoning chain display
 - `reasoning` -- AI reasoning step visualization
 - `response-stream` -- Streaming AI response renderer
 - `prompt-input` -- AI prompt input field
 - `code-block` -- Syntax-highlighted code display
 
-### Animation
+**Animation Primitives:**
 - `animated-modal` -- Motion-enhanced modal
 - `animated-tooltip` -- Animated tooltip overlay
 - `hero-parallax` -- Parallax scrolling hero section
 - `sparkles` -- Sparkle animation effect
 - `dock` -- macOS-style dock component
 
-### Custom
-- `unified-modal` -- Standardized modal wrapper
-- `unified-slideover` -- Standardized slide-over panel
-- `transition-panel` -- Animated panel transitions
-- `scroll-area` -- Custom scrollable container
+---
+
+## Design System Components (`@/components/ds/`)
+
+Custom design system components. Import these for consistent status display, metrics, tables, and empty states.
+
+| Component | File | Usage |
+|-----------|------|-------|
+| `AvatarStack` | `avatar-stack.tsx` | Overlapping avatar initials group |
+| `DataTable` | `data-table.tsx` | Premium data table with correct header/row/hover styling |
+| `EmptyState` | `empty-state.tsx` | Icon + title + description + action button |
+| `Eyebrow` | `eyebrow.tsx` | 11px uppercase tracking-wider label |
+| `KpiBlock` / `KpiRow` | `kpi.tsx` | 3-tier metric display (value, label, delta) |
+| `SectionHeader` | `section-header.tsx` | Section title + count + action link |
+| `StatusBadge` | `status-badge.tsx` | Pass status string -> correct pill color automatically |
+| `StatusDot` | `status-badge.tsx` | Minimal inline dot for table rows |
+| `StatusText` | `status-badge.tsx` | Plain muted status text |
 
 ---
 
-## Domain Components (`frontend/src/components/domain/`) -- 40 files
+## Layout Components (`@/components/layout/`)
 
-Business-domain-specific components organized by entity type. These encapsulate the UI logic for core construction management entities.
+Page structure components. Every page must use an archetype from here.
 
-### change-events/ (11 files)
-- Forms for creating and editing change events
-- RFQ (Request for Quotation) management components
-- Line item editors for change event cost breakdowns
-- Approval workflow UI with status transitions
+| Component | File | Description |
+|-----------|------|-------------|
+| `AppHeader` | `AppHeader.tsx` | Top navigation bar |
+| `Footer` | `Footer.tsx` | Page footer |
+| `FormContainer` | `FormContainer.tsx` | Padded form content area |
+| `PageContainer` | `PageContainer.tsx` | Standard page content wrapper |
+| `PageLayout` | `PageLayout.tsx` | Full-page layout shell |
+| `PageTabs` | `PageTabs.tsx` | Tabbed page navigation |
+| `PageTabsV2` | `PageTabsV2.tsx` | Improved tab navigation |
+| `ProjectFormPageLayout` | `ProjectFormPageLayout.tsx` | Layout for project-scoped forms |
+| `ProjectPageHeader` | `page-header-unified.tsx` | Standard project page header (title, description, actions) |
+| `PageShell` | `page-shell.tsx` | Full-height page shell |
 
-### change-orders/ (9 files)
-- Change order detail views and summary panels
-- Approval chain management and status display
-- Export functionality (PDF, CSV)
-- File upload components for supporting documents
-- Line item tables with cost code association
-
-### contracts/ (9 files)
-- Contract creation and editing forms
-- Purchase order (PO) forms
-- Subcontract management forms
-- Schedule of Values (SOV) grid editors
-- Cost code selector components for line item categorization
-
-### users/ (4 files)
-- User creation and editing forms
-- User detail slide-over sheets
-- Bulk user add functionality
-- Permissions manager for role-based access control
-
-### contacts/ (2 files)
-- Contact creation and editing forms
-- Project contact assignment forms
-
-### companies/ (2 files)
-- Company creation and editing forms
-- Company detail views with associated data
-
-### punch-items/ (2 files)
-- Punch item creation and editing forms
-- Status badge components for punch item lifecycle
-
-### clients/ (1 file)
-- Client form dialog for client entity management
-
-### distribution-groups/ (1 file)
-- Distribution group creation and management forms
+**MANDATORY pattern for project pages:**
+```tsx
+import { PageContainer, ProjectPageHeader } from "@/components/layout";
+<>
+  <ProjectPageHeader title="..." description="..." actions={...} />
+  <PageContainer>{/* content */}</PageContainer>
+</>
+```
 
 ---
 
-## Budget Components (`frontend/src/components/budget/`) -- 51 files
+## Table System (`@/components/tables/`)
 
-The largest single-feature component directory, reflecting the complexity of construction budget management.
-
-### Tables
-- `BudgetLineItemTable` -- Primary budget line item data table
-- `budget-table` -- Base budget table component
-- `enhanced-budget-table` -- Extended budget table with advanced features
-- `budget-details-table` -- Detailed budget breakdown view
-
-### Forms
-- `budget-line-item-form` -- Budget line item creation/editing form
-- `BudgetLineItemCreatorModal` -- Modal-based line item creation
-- `InlineBudgetLineItemCreator` -- Inline row-based line item creation
-
-### Modals (14 files in `modals/`)
-- `ApprovedCOsModal` -- Approved change orders detail modal
-- `BudgetModificationsModal` -- Budget modification history modal
-- `CommittedCostsModal` -- Committed costs breakdown modal
-- `DirectCostsModal` -- Direct costs detail modal
-- `ForecastToCompleteModal` -- Forecast to complete analysis modal
-- `ImportBudgetModal` -- Budget import from external sources
-- `UnlockBudgetModal` -- Budget unlock confirmation modal
-
-### Row and Card Views
-- `BudgetLineItemRow` -- Individual budget line item row component
-- `BudgetLineItemCard` -- Card-based budget line item display
-
-### Tabs
-- `cost-codes-tab` -- Cost code management tab
-- `change-history-tab` -- Budget change history timeline
-- `forecasting-tab` -- Budget forecasting analysis
-- `snapshots-tab` -- Budget snapshot comparison
-- `budget-modifications-tab` -- Budget modification tracking
-
-### Selectors
-- `budget-code-selector` -- Budget code lookup and selection
-- `UomSelect` -- Unit of measure selection dropdown
-
-### UI
-- `budget-page-header` -- Budget page header with actions
-- `budget-status-banner` -- Budget lock/unlock status banner
-- `budget-filters` -- Budget filtering controls
-- `BudgetViewsManager` -- Budget view configuration manager
-
-### Settings
-- `vertical-markup-settings` -- Vertical markup configuration panel
-
----
-
-## Table Components (`frontend/src/components/tables/`) -- 33 files
-
-A comprehensive data table system providing reusable table infrastructure across all features.
+Shared data table infrastructure used by all financial tool pages.
 
 ### Core
-- `DataTable` -- Primary data table component with sorting, filtering, pagination
-- `DataTableResponsive` -- Mobile-responsive data table variant
-- `DataTableGroupable` -- Data table with row grouping support
+| Component | Description |
+|-----------|-------------|
+| `DataTable` | Core headless table (TanStack Table) with sorting, filtering, pagination |
+| `DataTableResponsive` | Mobile-responsive data table variant |
+| `DataTableGroupable` | Data table with row grouping support |
 
 ### Toolbar
-- `DataTableToolbar` -- Table toolbar with search, filters, and actions
-- `DataTableToolbarResponsive` -- Mobile-responsive toolbar variant
+| Component | Description |
+|-----------|-------------|
+| `DataTableToolbar` | Search + filters + export toolbar |
+| `DataTableToolbarResponsive` | Mobile-responsive toolbar variant |
 
 ### Features
-- `DataTablePagination` -- Pagination controls for data tables
-- `DataTableFilters` -- Advanced filtering panel
-- `DataTableColumnToggle` -- Column visibility toggle
-- `DataTableBulkActions` -- Multi-row bulk action toolbar
+| Component | Description |
+|-----------|-------------|
+| `DataTableBulkActions` | Multi-row selection action bar |
+| `DataTableColumnToggle` | Column visibility dropdown |
+| `DataTableFilters` | Advanced filter panel |
+| `DataTablePagination` | Page controls |
 
 ### States
-- `DataTableEmptyState` -- Empty state display for tables with no data
-- `DataTableSkeleton` -- Loading skeleton for table content
+| Component | Description |
+|-----------|-------------|
+| `DataTableEmptyState` | No results placeholder |
+| `DataTableSkeleton` | Loading shimmer |
+
+### Unified Table System
+| Component | Description |
+|-----------|-------------|
+| `unified/` | `UnifiedTablePage` -- standard full-page table used by Budget, Prime Contracts, Commitments, Change Events, Direct Costs (5 of 7 financial tools) |
+| `table-toolbar` | Unified toolbar component |
+| `detail-panel` | Slide-out detail panel for row inspection |
+| `use-unified-table-state` | Shared table state management hook |
 
 ### Domain-Specific Tables
 - `companies-data-table` -- Pre-configured table for company listings
 - `contacts-data-table` -- Pre-configured table for contact listings
 - `documents-data-table` -- Pre-configured table for document listings
 - `employees-data-table` -- Pre-configured table for employee listings
-
-### Unified Table System
-- `unified-table-page` -- Standardized table page layout
-- `table-toolbar` -- Unified toolbar component
-- `detail-panel` -- Slide-out detail panel for row inspection
-- `use-unified-table-state` -- Shared table state management hook
 
 ### Generic/Reusable
 - `GenericTableWithDelete` -- Table with built-in delete functionality
@@ -232,170 +211,288 @@ A comprehensive data table system providing reusable table infrastructure across
 
 ---
 
-## Chat/AI Components (`frontend/src/components/chat/`) -- 29 files
+## Domain Components
 
-AI-powered chat interface components for the integrated AI assistant.
+### Budget (`@/components/budget/`) -- 51 files
 
-### Core
-- `ChatKit` -- Full-featured chat kit component
-- `ChatKitWidget` -- Embeddable chat widget
-- `ai-chat-widget` -- AI-specific chat widget wrapper
+The largest single-feature component directory, reflecting the complexity of construction budget management.
 
-### Layout
-- `chat-layout` -- Overall chat interface layout
-- `chat-header` -- Chat panel header with controls
-- `chat-sidebar` -- Conversation list sidebar
-- `chat-main` -- Main chat message area
-- `chat-right-panel` -- Context and details right panel
+**Tables:**
+- `BudgetLineItemTable` -- Primary budget line item data table
+- `budget-table` -- Base budget table component
+- `enhanced-budget-table` -- Extended budget table with advanced features
+- `budget-details-table` -- Detailed budget breakdown view
 
-### Messages
-- `message` -- Individual message component
-- `chat-message` -- Chat-specific message with metadata
-- `message-group` -- Grouped messages by sender/time
-- `message-list` -- Scrollable message list container
+**Forms:**
+- `budget-line-item-form` -- Budget line item creation/editing form
+- `BudgetLineItemCreatorModal` -- Modal-based line item creation
+- `InlineBudgetLineItemCreator` -- Inline row-based line item creation
 
-### Input
-- `composer` -- Message composition input area
-- `prompt-input` -- AI prompt input with suggestions
-- `prompt-suggestion` -- Suggested prompt chips
+**Modals (14 files in `modals/`):**
+- `ApprovedCOsModal` -- Approved change orders detail modal
+- `BudgetModificationsModal` -- Budget modification history modal
+- `CommittedCostsModal` -- Committed costs breakdown modal
+- `DirectCostsModal` -- Direct costs detail modal
+- `ForecastToCompleteModal` -- Forecast to complete analysis modal
+- `ImportBudgetModal` -- Budget import from external sources
+- `UnlockBudgetModal` -- Budget unlock confirmation modal
 
-### Agents
-- `agent-panel` -- AI agent selection and control panel
-- `agent-panel-rag` -- RAG-enabled agent panel
-- `agents-list` -- Available agents listing
-- `agents-list-alleato` -- Alleato-specific agent listing
+**Row and Card Views:**
+- `BudgetLineItemRow` -- Individual budget line item row component
+- `BudgetLineItemCard` -- Card-based budget line item display
 
-### RAG (Retrieval-Augmented Generation)
-- `rag-chatkit-panel` -- RAG-integrated chat panel
-- `simple-rag-chat` -- Simplified RAG chat interface
+**Tabs:**
+- `cost-codes-tab` -- Cost code management tab
+- `change-history-tab` -- Budget change history timeline
+- `forecasting-tab` -- Budget forecasting analysis
+- `snapshots-tab` -- Budget snapshot comparison
+- `budget-modifications-tab` -- Budget modification tracking
 
-### Rendering
-- `markdown` -- Markdown content renderer
-- `code-block` -- Syntax-highlighted code block
-- `reasoning` -- AI reasoning step display
-- `response-stream` -- Streaming response renderer
+**Selectors:**
+- `budget-code-selector` -- Budget code lookup and selection
+- `UomSelect` -- Unit of measure selection dropdown
+
+**UI:**
+- `budget-page-header` -- Budget page header with actions
+- `budget-status-banner` -- Budget lock/unlock status banner
+- `budget-filters` -- Budget filtering controls
+- `BudgetViewsManager` -- Budget view configuration manager
+
+**Settings:**
+- `vertical-markup-settings` -- Vertical markup configuration panel
+
+### Commitments (`@/components/commitments/`)
+Subcontract / PO forms, commitment change orders, invoice management, line item tables.
+
+### Change Events (`@/components/change-events/` or `@/components/domain/change-events/`) -- 11 files
+- Forms for creating and editing change events
+- RFQ (Request for Quotation) management components
+- Line item editors for change event cost breakdowns
+- Approval workflow UI with status transitions
+
+### Change Orders (`@/components/domain/change-orders/`) -- 9 files
+- Change order detail views and summary panels
+- Approval chain management and status display
+- Export functionality (PDF, CSV)
+- File upload components for supporting documents
+- Line item tables with cost code association
+
+### Contracts (`@/components/domain/contracts/`) -- 9 files
+- Contract creation and editing forms
+- Purchase order (PO) forms
+- Subcontract management forms
+- Schedule of Values (SOV) grid editors
+- Cost code selector components for line item categorization
+
+### Direct Costs (`@/components/direct-costs/`) -- 10 files
+`DirectCostForm.tsx` -- creation/edit form (known issue: hangs on submission as of last audit).
+
+### Drawings (`@/components/drawings/`) -- 5 files
+Drawing viewer, drawing set management, revision tracking, annotation pins.
+
+### Invoicing (`@/components/invoicing/`) -- 3 files
+Owner SOV-based invoice creation, billing period management. Uses legacy `DataTablePage` (needs migration to `UnifiedTablePage`).
+
+### Meetings (`@/components/meetings/`) -- 3 files
+Meeting list, transcript viewer, AI digest display, meeting prep.
+
+### Scheduling (`@/components/scheduling/`) -- 7 files
+Gantt/list view for schedule tasks, bulk operations, dependency management.
+
+### Specifications (`@/components/specifications/`) -- 5 files
+Specification sections, revisions, file downloads.
+
+### RFIs (`@/components/rfis/`)
+RFI list and detail views.
+
+### Directory (`@/components/directory/`) -- 13 files
+Company and contact directory views, people management, company assignments.
+
+### Users (`@/components/domain/users/`) -- 4 files
+- User creation and editing forms
+- User detail slide-over sheets
+- Bulk user add functionality
+- Permissions manager for role-based access control
+
+### Contacts (`@/components/domain/contacts/`) -- 2 files
+- Contact creation and editing forms
+- Project contact assignment forms
+
+### Companies (`@/components/domain/companies/`) -- 2 files
+- Company creation and editing forms
+- Company detail views with associated data
+
+### Punch Items (`@/components/domain/punch-items/`) -- 2 files
+- Punch item creation and editing forms
+- Status badge components for punch item lifecycle
+
+### Clients (`@/components/domain/clients/`) -- 1 file
+- Client form dialog for client entity management
+
+### Distribution Groups (`@/components/domain/distribution-groups/`) -- 1 file
+- Distribution group creation and management forms
+
+### Project (`@/components/project/`)
+Project home, project setup wizard, project-level configuration.
 
 ---
 
-## AI Elements (`frontend/src/components/ai-elements/`) -- 30 files
+## AI & Chat Components
 
-Visual components for AI workflow visualization and interaction.
+### AI Assistant (`@/components/ai-assistant/`)
+Project-scoped AI chat interface using Vercel AI SDK v6 + `useChat` hook.
 
-### Core
+### AI Elements (`@/components/ai-elements/`) -- 30 files
+
+Production chat UI components:
+
+**Core:**
+- `Message` -- Full chat message with UIMessage parts (text, tool calls, reasoning)
+- `MessageResponse` -- Universal AI markdown renderer (Streamdown + code/math/mermaid plugins)
+- `Conversation` -- Full conversation thread display
+- `Tool` -- AI tool call result display
 - `artifact` -- AI-generated artifact display
 - `canvas` -- Freeform AI workspace canvas
-- `message` -- AI message component
-- `conversation` -- Conversation thread display
 
-### Workflow
+**Workflow:**
 - `chain-of-thought` -- Step-by-step reasoning chain
 - `checkpoint` -- Workflow checkpoint marker
 - `plan` -- AI plan visualization
 - `task` -- Individual task card
 - `queue` -- Task queue display
 
-### Connections
+**Connections:**
 - `edge` -- Connection edge between nodes
 - `node` -- Workflow node component
 - `connection` -- Node connection manager
 
-### UI
+**UI:**
 - `panel` -- AI element panel container
 - `toolbar` -- AI workspace toolbar
 - `controls` -- AI interaction controls
 - `loader` -- AI processing loader
 - `shimmer` -- Loading shimmer effect
 
-### Input
+**Input:**
 - `prompt-input` -- AI prompt input field
 - `suggestion` -- AI suggestion chip
 - `model-selector` -- AI model selection dropdown
 
-### Output
+**Output:**
 - `reasoning` -- AI reasoning display
 - `code-block` -- Generated code display
 - `image` -- AI-generated image display
 - `web-preview` -- Web content preview
 
+### Chat (`@/components/chat/`) -- 29 files
+
+General-purpose chat container components:
+
+**Layout:**
+- `chat-layout` -- Overall chat interface layout
+- `chat-header` -- Chat panel header with controls
+- `chat-sidebar` -- Conversation list sidebar
+- `chat-main` -- Main chat message area
+- `chat-right-panel` -- Context and details right panel
+
+**Messages:**
+- `message` -- Individual message component
+- `chat-message` -- Chat-specific message with metadata
+- `message-group` -- Grouped messages by sender/time
+- `message-list` -- Scrollable message list container
+
+**Input:**
+- `composer` -- Message composition input area
+- `prompt-input` -- AI prompt input with suggestions
+- `prompt-suggestion` -- Suggested prompt chips
+
+**Agents:**
+- `agent-panel` -- AI agent selection and control panel
+- `agent-panel-rag` -- RAG-enabled agent panel
+- `agents-list` -- Available agents listing
+- `agents-list-alleato` -- Alleato-specific agent listing
+
+**RAG:**
+- `rag-chatkit-panel` -- RAG-integrated chat panel
+- `simple-rag-chat` -- Simplified RAG chat interface
+
+**Rendering:**
+- `markdown` -- Markdown content renderer
+- `code-block` -- Syntax-highlighted code block
+- `reasoning` -- AI reasoning step display
+- `response-stream` -- Streaming response renderer
+
+### RAG (`@/components/rag/`)
+RAG-enhanced chat components, procore-docs search interface.
+
+### Procore Docs (`@/components/procore-docs/`)
+Procore documentation search UI using RAG.
+
 ---
 
-## Forms Components (`frontend/src/components/forms/`) -- 18 files
+## Collaboration & Real-time Components
+
+### Liveblocks (`@/components/liveblock/`)
+Real-time collaboration infrastructure using Liveblocks v3.
+
+### Live Cursors (`@/components/live-cursors/`)
+Multi-user cursor presence display.
+
+### Canvas Comments (`@/components/canvas-comments/`)
+Annotation/comment layer for collaborative canvases.
+
+### Realtime (`@/components/realtime/`)
+Shared real-time state utilities.
+
+---
+
+## Auth & Guards (`@/components/auth/`, `@/components/guards/`)
+
+| Component | Description |
+|-----------|-------------|
+| `AuthForm` | Login / signup form |
+| `PermissionGuard` | Wraps content requiring specific permissions |
+| `ProjectAccessGuard` | Ensures user has access to current project |
+| `AdminGuard` | Restricts to admin users |
+
+---
+
+## Notifications & Monitoring
+
+### Notifications (`@/components/notifications/`)
+User notification bell, notification list.
+
+### Monitoring (`@/components/monitoring/`)
+Dev/ops monitoring dashboard components.
+
+### Financial Insights (`@/components/financial-insights/`)
+AI-generated financial alerts and cross-reference displays.
+
+---
+
+## Forms Components (`@/components/forms/`) -- 18 files
 
 A standardized form field library providing consistent form UX across the application.
 
-### Core
-- `Form` -- Form wrapper with validation context
-- `FormField` -- Individual form field with label and error display
-- `FormSection` -- Grouped form section with heading
-
-### Text
-- `TextField` -- Standard text input field
-- `TextareaField` -- Multi-line text field
-- `RichTextField` -- Rich text editor field
-
-### Numbers
-- `NumberField` -- Numeric input field
-- `MoneyField` -- Currency-formatted input field
-
-### Dates
-- `DateField` -- Date picker field
-
-### Selection
-- `SelectField` -- Dropdown select field
-- `MultiSelectField` -- Multi-value select field
-- `SearchableSelect` -- Select with search/filter capability
-- `EntitySelect` -- Entity lookup and selection field
-- `AutocompleteField` -- Autocomplete input with suggestions
-
-### Boolean
-- `CheckboxField` -- Checkbox toggle field
-- `ToggleField` -- Switch toggle field
-
-### Files
-- `FileUploadField` -- File upload with drag-and-drop
-
----
-
-## Layout Components (`frontend/src/components/layout/`) -- 14 files
-
-Application-wide layout and structural components.
-
-### Headers
-- `AppHeader` -- Top-level application header
-- `global-header` -- Global navigation header
-- `company-header` -- Company-scoped page header
-- `page-header-unified` -- Unified page header component
-
-### Containers
-- `PageContainer` -- Standard page content container
-- `FormContainer` -- Form-specific content container
-
-### Navigation
-- `PageTabs` -- Page-level tab navigation
-- `PageTabsV2` -- Updated tab navigation variant
-- `PageToolbar` -- Page-level action toolbar
-
-### Context
-- `header-context` -- Header state context provider
-
-### Mandatory Pattern
-
-All project pages MUST use the standard `ProjectPageHeader` + `PageContainer` pattern:
-
-```tsx
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
-
-<>
-  <ProjectPageHeader
-    title="Feature Name"
-    description="Feature description"
-    actions={<div>...</div>}
-  />
-  <PageContainer>
-    {/* page content */}
-  </PageContainer>
-</>
-```
+| Component | Description |
+|-----------|-------------|
+| `Form` | Form wrapper with validation context |
+| `FormField` | Individual form field with label and error display |
+| `FormSection` | Grouped form section with heading |
+| `TextField` | Standard text input field |
+| `TextareaField` | Multi-line text field |
+| `RichTextField` | Rich text editor field |
+| `NumberField` | Numeric input field |
+| `MoneyField` | Currency-formatted input field |
+| `DateField` | Date picker field |
+| `SelectField` | Dropdown select field |
+| `MultiSelectField` | Multi-value select field |
+| `SearchableSelect` | Select with search/filter capability |
+| `EntitySelect` | Entity lookup and selection field |
+| `AutocompleteField` | Autocomplete input with suggestions |
+| `CheckboxField` | Checkbox toggle field |
+| `ToggleField` | Switch toggle field |
+| `FileUploadField` | File upload with drag-and-drop |
 
 ---
 
@@ -406,18 +503,8 @@ Components scoped to individual application features, organized by feature direc
 | Directory | Files | Description |
 |-----------|-------|-------------|
 | `admin-panel/` | 11 | Admin dashboard, user management, system settings |
-| `directory/` | 13 | Project directory, people management, company assignments |
-| `direct-costs/` | 10 | Direct cost entry, invoices, cost tracking |
 | `project-home/` | 20 | Project dashboard, widgets, activity feeds, quick actions |
 | `project-setup-wizard/` | 9 | Multi-step project creation wizard |
-| `project/` | 4 | Project-level shared components |
-| `scheduling/` | 7 | Gantt chart, task management, dependencies |
-| `specifications/` | 5 | Specification sections, revisions, uploads |
-| `drawings/` | 5 | Drawing sets, revisions, area management |
-| `commitments/` | 4 | Commitment tracking, SOV management |
-| `invoicing/` | 3 | Invoice creation, approval, payment tracking |
-| `meetings/` | 3 | Meeting minutes, attendees, action items |
-| `daily-log/` | 1 | Daily log entries |
 | `portfolio/` | 7 | Multi-project portfolio views and analytics |
 | `prompt-kit/` | 8 | AI prompt templates and management |
 | `misc/` | 58 | Shared utility components, icons, helpers |
@@ -425,114 +512,161 @@ Components scoped to individual application features, organized by feature direc
 | `nav/` | 11 | Navigation menus, breadcrumbs, sidebar items |
 | `header/` | 10 | Header variants and sub-components |
 | `layouts/` | 9 | Page layout templates and wrappers |
+| `tutorial/` | 5 | Tutorial/onboarding components |
+| `daily-log/` | 1 | Daily log entries |
 
 ---
 
-## React Hooks (`frontend/src/hooks/`) -- 74+ files
+## React Query Hooks (`@/hooks/`)
 
-Custom React hooks organized by domain, primarily wrapping React Query for server state management.
+All hooks follow the pattern `use-{resource}.ts` and wrap Supabase/API calls with React Query.
 
-### Auth
-- `use-auth-users` -- Authenticated user list queries
-- `use-users` -- User CRUD operations
-- `use-current-user-profile` -- Current user profile data
-- `use-current-user-name` -- Current user display name
-- `use-current-user-image` -- Current user avatar image
+### Auth & User
+| Hook | Description |
+|------|-------------|
+| `use-auth-users` | Supabase auth users list |
+| `use-current-user-profile` | Authenticated user profile |
+| `use-current-user-name` | User display name |
+| `use-current-user-image` | User avatar URL |
+| `use-user-mutations` | Create/update/delete users |
+| `use-user-permissions` | Current user permission level |
+| `use-permissions` | Permission management |
+| `use-project-permissions` | Project-level permissions |
+| `use-project-roles` | Role definitions |
+| `use-directory-permissions` | Directory access control |
+| `use-permission-templates` | Permission template CRUD |
 
 ### Projects
-- `use-projects` -- Project CRUD and listing
-- `use-companies` -- Company CRUD and listing
-- `use-all-companies` -- All companies (unscoped)
-- `use-project-companies` -- Companies assigned to a project
-- `use-clients` -- Client entity management
+| Hook | Description |
+|------|-------------|
+| `use-projects` | Project list + mutations |
+| `use-project-companies` | Companies on a project |
+| `use-project-users` | Users on a project |
+| `use-project-vendors` | Vendors on a project |
+| `use-project-checklist` | Project setup checklist |
+| `use-global-project-companies` | Cross-project company lookup |
 
-### Directory
-- `useDirectory` -- Directory listing and search
-- `useDirectoryPreferences` -- User directory display preferences
-- `useDirectoryRealtime` -- Realtime directory updates via Supabase
-- `use-directory-permissions` -- Directory-level permission checks
+### Financial Tools
+| Hook | Description |
+|------|-------------|
+| `use-budget-data` | Budget line items + summary |
+| `use-prime-contracts` | Prime contract CRUD |
+| `use-contracts` | Contract CRUD |
+| `use-contract-change-orders` | Contract change order CRUD |
+| `use-commitments` | Commitment list + mutations |
+| `use-commitments-query` | Filtered commitment queries |
+| `use-create-subcontract` | Create subcontract shorthand |
+| `use-commitment-change-orders` | CCO CRUD |
+| `use-change-events` | Change event CRUD |
+| `use-change-event-rfqs` | RFQ management |
+| `use-direct-costs` | Direct cost CRUD |
+| `use-invoicing` | Invoice management |
+| `use-cost-codes` | Cost code hierarchy |
+| `use-financial-insights` | AI financial alert data |
 
-### Financial
-- `use-budget-data` -- Budget line items and summaries
-- `use-commitments` -- Commitment tracking
-- `use-contracts` -- Contract CRUD operations
-- `use-change-events` -- Change event management
-- `use-change-orders` -- Change order CRUD
-- `use-contract-change-orders` -- Change orders scoped to a contract
-- `use-commitment-change-orders` -- Change orders scoped to commitments
-- `use-change-event-rfqs` -- RFQs associated with change events
-- `use-create-subcontract` -- Subcontract creation mutation
-- `use-cost-codes` -- Cost code listing and lookup
+### Drawings & Documents
+| Hook | Description |
+|------|-------------|
+| `use-drawings` | Drawing CRUD |
+| `use-drawing-sets` | Drawing set management |
+| `use-drawing-areas` | Drawing area management |
+| `use-drawing-revisions` | Revision tracking |
+| `use-drawing-pins` | Annotation pin CRUD |
+| `use-drawing-upload` | File upload for drawings |
+| `use-supabase-upload` | Generic Supabase Storage upload |
 
-### Documents
-- `use-drawings` -- Drawing CRUD operations
-- `use-drawing-areas` -- Drawing area management
-- `use-drawing-sets` -- Drawing set management
-- `use-drawing-revisions` -- Drawing revision tracking
-- `use-drawing-upload` -- Drawing file upload handling
-- `use-specifications` -- Specification CRUD operations
-- `use-specification-areas` -- Specification area management
-- `use-specification-revisions` -- Specification revision tracking
+### Specifications, RFIs, Submittals
+| Hook | Description |
+|------|-------------|
+| `use-specifications` | Specification CRUD |
+| `use-specification-revisions` | Revision tracking |
+| `use-specification-areas` | Area grouping |
+| `use-rfis` | RFI CRUD |
+| `use-submittals` | Submittal CRUD |
+| `use-punch-items` | Punch list CRUD |
 
-### Field
-- `use-schedule-tasks` -- Schedule task CRUD and dependencies
-- `use-rfis` -- RFI (Request for Information) management
-- `use-punch-items` -- Punch item CRUD and status tracking
-- `use-meetings` -- Meeting CRUD and minutes
+### Scheduling
+| Hook | Description |
+|------|-------------|
+| `use-schedule-tasks` | Schedule task CRUD |
 
-### Permissions
-- `use-permissions` -- Base permission queries
-- `use-permission-templates` -- Permission template management
-- `use-project-permissions` -- Project-scoped permission checks
-- `use-user-permissions` -- User-scoped permission queries
-- `use-project-roles` -- Project role definitions and assignments
+### Meetings
+| Hook | Description |
+|------|-------------|
+| `use-meetings` | Meeting list + CRUD |
+| `use-meeting-digest` | AI-generated meeting summaries |
+| `use-meeting-prep` | Meeting prep documents |
 
-### Chat/AI
-- `useChatKit` -- Chat kit state and operations
-- `use-chat-scroll` -- Auto-scroll behavior for chat
-- `use-realtime-chat` -- Realtime chat message subscriptions
-- `useThreadCitations` -- Citation tracking in AI threads
-- `useKnowledgeDocuments` -- Knowledge base document queries
+### Directory & Companies
+| Hook | Description |
+|------|-------------|
+| `use-companies` | Company CRUD |
+| `use-all-companies` | Global company list |
+| `use-company-contacts` | Contacts per company |
+| `use-contacts` | Contact CRUD |
+| `use-clients` | Client company list |
+| `use-distribution-groups` | Email distribution groups |
 
-### Realtime
-- `use-realtime-cursors` -- Multi-user cursor position tracking
-- `use-realtime-presence-room` -- Presence room for collaborative features
+### AI & Chat
+| Hook | Description |
+|------|-------------|
+| `use-rag-conversations` | RAG chat conversation history |
+| `use-messages` | Chat message management |
+| `use-company-knowledge` | Company knowledge base |
+| `use-realtime-chat` | Liveblocks real-time chat |
+| `use-realtime-cursors` | Multi-user cursor presence |
+| `use-realtime-presence-room` | Presence room management |
+| `useChatKit` | OpenAI ChatKit integration |
+| `useThreadCitations` | Citation tracking in AI threads |
+| `useKnowledgeDocuments` | Knowledge base document queries |
 
-### Utility
-- `use-format-currency` -- Currency formatting hook
-- `use-infinite-query` -- Infinite scroll query wrapper
-- `use-supabase-upload` -- Supabase storage file upload
-- `use-toast` -- Toast notification trigger
-- `use-mobile` -- Mobile viewport detection
-- `use-is-client` -- Client-side rendering check
-- `useResponsiveTable` -- Responsive table breakpoint management
+### Utilities
+| Hook | Description |
+|------|-------------|
+| `use-estimates` | Estimate data |
+| `use-format-currency` | Currency formatting helper |
+| `use-infinite-query` | Generic infinite scroll helper |
+| `use-mobile` | Mobile viewport detection |
+| `use-outside-click` | Click outside detection |
+| `use-chat-scroll` | Chat auto-scroll |
+| `use-scroll-to-bottom` | Scroll-to-bottom helper |
+| `use-sidebar` | Sidebar open/close state |
+| `use-is-client` | Client-side rendering guard |
+| `use-auto-resume` | Auto-resume incomplete ops |
+| `use-store` | Zustand store access |
+| `use-toast` | Toast notification trigger |
+| `useResponsiveTable` | Responsive table breakpoint management |
+
+### Data subdirectory (`@/hooks/data/`)
+Additional data-fetching hooks organized by domain.
 
 ---
 
-## Services (`frontend/src/services/`) -- 15 files
+## Services (`@/services/`)
 
-Service classes encapsulating business logic and Supabase query patterns.
+Business logic layer between hooks and data access.
 
-| Service | Description |
-|---------|-------------|
-| `DrawingService` | Drawing CRUD, search, and filtering |
-| `DrawingSetService` | Drawing set management and ordering |
-| `DrawingAreaService` | Drawing area CRUD and assignment |
-| `SpecificationService` | Specification CRUD and versioning |
-| `SpecificationAreaService` | Specification area management |
-| `SpecificationRevisionService` | Specification revision tracking |
-| `PunchItemService` | Punch item lifecycle management |
-| `directoryService` | Directory listing, search, and filtering |
-| `directoryAdminService` | Admin-level directory operations |
-| `directoryPreferencesService` | User directory preference persistence |
-| `companyService` | Company CRUD and project association |
-| `inviteService` | User invitation management |
-| `permissionService` | Permission checking and assignment |
-| `distributionGroupService` | Distribution group CRUD |
+| Service | File | Responsibility |
+|---------|------|----------------|
+| `CompanyService` | `companyService.ts` | Company CRUD + business rules |
+| `DirectoryAdminService` | `directoryAdminService.ts` | Admin directory operations |
+| `DirectoryPreferencesService` | `directoryPreferencesService.ts` | Directory view preferences |
+| `DirectoryService` | `directoryService.ts` | Main directory operations |
+| `DistributionGroupService` | `distributionGroupService.ts` | Email distribution group management |
+| `DrawingAreaService` | `DrawingAreaService.ts` | Drawing area CRUD |
+| `DrawingService` | `DrawingService.ts` | Drawing CRUD + file ops |
+| `DrawingSetService` | `DrawingSetService.ts` | Drawing set management |
+| `InviteService` | `inviteService.ts` | User invitation workflow |
+| `NotificationService` | `notificationService.ts` | User notification delivery |
+| `PermissionService` | `permissionService.ts` | Permission evaluation + assignment |
+| `PunchItemService` | `PunchItemService.ts` | Punch list CRUD |
+| `SpecificationAreaService` | `SpecificationAreaService.ts` | Spec area management |
+| `SpecificationRevisionService` | `SpecificationRevisionService.ts` | Spec revision tracking |
+| `SpecificationService` | `SpecificationService.ts` | Specification CRUD |
 
 ---
 
-## Zod Schemas (`frontend/src/lib/schemas/`) -- 18 files
+## Zod Schemas (`@/lib/schemas/`) -- 18 files
 
 Validation schemas used with React Hook Form for type-safe form validation.
 
@@ -558,30 +692,26 @@ Validation schemas used with React Hook Form for type-safe form validation.
 
 ---
 
-## Zustand Stores
+## State Management
 
-### 1. Financial Store (`lib/stores/financial-store.ts`)
+### Zustand Stores (`@/lib/stores/`)
 
-Manages global financial state across the application:
+| Store | File | State |
+|-------|------|-------|
+| `financialStore` | `financial-store.ts` | Financial UI state: active filters, selected rows, grouping config for financial tool pages. Uses `devtools` middleware for debugging. |
 
-- **Commitments** -- Active commitment tracking
-- **Change events** -- Change event state and transitions
-- **Prime contracts** -- Prime contract data
-- **Invoices** -- Invoice tracking and status
-- **Budget items** -- Budget line item state
-- **Companies** -- Company reference data
-- Loading and error states for each domain
-- CRUD operation dispatchers
-- Uses `devtools` middleware for debugging
+### React Query Cache
+The primary server state manager. All hooks use React Query v5 with:
+- `queryClient` for cache management
+- `useQuery` for reads
+- `useMutation` for writes with optimistic updates
+- Automatic stale-while-revalidate caching
 
-### 2. Sidebar Store (`hooks/use-sidebar.ts`)
+### Auth State
+Managed by Supabase SSR via `proxy.ts` -> `updateSession()`. Session tokens refreshed on every request. No client-side auth store needed.
 
-Manages sidebar UI state:
-
-- Open/close toggle state
-- Hover state for auto-expand behavior
-- User settings and preferences
-- Uses `persist` middleware with `localStorage` for state persistence across sessions
+### Sidebar Store (`hooks/use-sidebar.ts`)
+Manages sidebar UI state: open/close toggle, hover state for auto-expand, user settings. Uses `persist` middleware with `localStorage`.
 
 ---
 
@@ -598,4 +728,39 @@ Coordinates slide-over sheet navigation state, enabling deep-linking into detail
 
 ---
 
-_Generated using BMAD Method document-project workflow_
+## Security Patterns
+
+### `proxy.ts` (`frontend/src/proxy.ts`)
+Runs on every request via Next.js middleware. Calls `updateSession()` from `@/lib/supabase/proxy` to refresh Supabase JWT tokens. Excludes static assets, `_next`, images, and favicon.
+
+### Permission Guards (`@/components/guards/`)
+Client-side route protection for admin and project-scoped pages. Wraps page content; redirects or hides if user lacks required permission.
+
+### RLS (Row Level Security)
+All Supabase tables have RLS enabled. Policies enforce project membership and role-based access at the database level. Client code does not need to manually filter by user -- Supabase JWT is validated per-request.
+
+---
+
+## Component Import Rules (Summary)
+
+```typescript
+// Base shadcn primitives
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Dialog } from "@/components/ui/dialog"
+
+// Design system components (custom)
+import { StatusBadge, KpiRow, DataTable, EmptyState } from "@/components/ds"
+
+// Layout
+import { ProjectPageHeader, PageContainer } from "@/components/layout"
+
+// Tables
+import { UnifiedTablePage } from "@/components/tables/unified"
+```
+
+**Never:**
+- Create one-off components that duplicate `ui/` or `ds/` primitives
+- Import from `@/components/ui/` as a barrel (import specific files)
+- Add custom components to `@/components/ui/` (shadcn-only)
+- Use hardcoded colors, arbitrary spacing, or shadow levels beyond `shadow-sm`

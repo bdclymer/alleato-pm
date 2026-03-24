@@ -1,6 +1,6 @@
 # Prompt Caching Quick Reference
 
-**For full details, see:** [docs-ai/contents/docs/CLAUDE-CACHING-STRATEGY.md](../docs-ai/contents/docs/CLAUDE-CACHING-STRATEGY.md)
+**For full details, see:** [docs/CLAUDE-CACHING-STRATEGY.md](../docs/CLAUDE-CACHING-STRATEGY.md)
 
 ---
 

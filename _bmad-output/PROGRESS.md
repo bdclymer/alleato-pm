@@ -92,10 +92,10 @@ Copy this template and paste at the top of the log (below the divider):
 - Created `_bmad-output/planning-artifacts/INDEX.md` — master index of all PRP files across all features
 - Created `_bmad-output/planning-artifacts/prime-contracts/index.md` — per-feature file map with critical issues table
 - Created `_bmad-output/PROGRESS.md` — this file
-- Copied all PRPs from `docs-ai/contents/docs/PRPs/` → `_bmad-output/planning-artifacts/` (PRPs now live in this repo, not the docs site)
-- Added stub `README.md` in `docs-ai/contents/docs/PRPs/` pointing to new location
+- Copied all PRPs from `docs/PRPs/` → `_bmad-output/planning-artifacts/` (PRPs now live in this repo, not the docs site)
+- Added stub `README.md` in `docs/PRPs/` pointing to new location
 - Updated `docs/index.md` — added `project-context.md` and `agent-systems-analysis.md` entries
-- Updated `.claude/rules/FILE-ORGANIZATION-GATE.md` — added Folder Ownership decision tree, clarified `docs-ai/` is a symlink to a separate repo, updated PRP location to `_bmad-output/planning-artifacts/`
+- Updated `.claude/rules/FILE-ORGANIZATION-GATE.md` — added Folder Ownership decision tree, clarified `docs/` is a symlink to a separate repo, updated PRP location to `_bmad-output/planning-artifacts/`
 - Moved `_bmad-output/project-context.md` → `docs/project-context.md`
 - Created `docs/agent-systems-analysis.md` — saved previously unsaved BMAD structure analysis
 
@@ -107,7 +107,7 @@ Copy this template and paste at the top of the log (below the divider):
 - `docs/project-context.md` — moved here from `_bmad-output/`
 - `docs/agent-systems-analysis.md` — created
 - `.claude/rules/FILE-ORGANIZATION-GATE.md` — updated
-- `docs-ai/contents/docs/PRPs/README.md` — stub created
+- `docs/PRPs/README.md` — stub created
 
 ---
 

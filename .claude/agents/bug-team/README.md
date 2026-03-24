@@ -113,7 +113,7 @@ Spawn the e2e-tester to re-test [TOOL NAME] only.
 Read: .claude/agents/bug-team/e2e-tester.md
 Test: http://localhost:3000/67/[tool-path]
 Project: 67
-Save results: docs-ai/contents/docs/financial-tools/e2e-results-[tool].md
+Save results: docs/financial-tools/e2e-results-[tool].md
 ```
 
 ---
@@ -177,7 +177,7 @@ Save results: docs-ai/contents/docs/financial-tools/e2e-results-[tool].md
 │   ├── implementation-report.md      ← What was fixed (from implementors)
 │   └── dod-01-load.png, dod-10-mobile.png  ← Evidence screenshots (from dod-verifier)
 
-docs-ai/contents/docs/financial-tools/
+docs/financial-tools/
 ├── e2e-results-budget.md             ← E2E test results (from e2e-tester)
 ├── e2e-results-prime-contracts.md
 ├── e2e-results-commitments.md

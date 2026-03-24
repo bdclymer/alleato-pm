@@ -11,7 +11,7 @@ This manual is the maintained entrypoint for contributors working in the Alleato
 - `supabase/`: migrations and SQL helpers
 - `scripts/`: repo-level automation and verification utilities
 - `docs/`: maintained documentation
-- `docs-ai/`: generated reports, PRPs, and research artifacts
+- `docs/`: generated reports, PRPs, and research artifacts
 - `_bmad/`: BMAD agents and workflows used by the project
 
 ## Read These First
@@ -99,7 +99,7 @@ npm run test:unit
 ## Documentation Rules
 
 - Keep canonical docs in `docs/`
-- Treat `docs-ai/` as generated or workflow output unless a file is intentionally curated
+- Treat `docs/` as generated or workflow output unless a file is intentionally curated
 - Do not commit generated reports, screenshots, or local OS artifacts as permanent documentation unless they are part of a specific maintained reference
 - Update this manual and the root `README.md` when onboarding steps or core commands change
 

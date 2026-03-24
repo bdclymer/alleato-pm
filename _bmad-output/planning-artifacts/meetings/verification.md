@@ -1,6 +1,6 @@
 # PRP Validation Report
 
-**PRP File**: `docs-ai/contents/docs/PRPs/meetings/prp-meetings-fix.md`
+**PRP File**: `docs/PRPs/meetings/prp-meetings-fix.md`
 **Feature**: meetings
 **Validation Date**: 2026-02-03
 **Overall Status**: PASS
@@ -100,11 +100,11 @@
 ---
 
 ## Evidence Artifacts
-- TASKS.md: `docs-ai/contents/docs/PRPs/meetings/TASKS.md` — All 8 tasks checked off
-- PRP: `docs-ai/contents/docs/PRPs/meetings/prp-meetings-fix.md` — 8/10 confidence score
+- TASKS.md: `docs/PRPs/meetings/TASKS.md` — All 8 tasks checked off
+- PRP: `docs/PRPs/meetings/prp-meetings-fix.md` — 8/10 confidence score
 - E2E tests: `frontend/tests/e2e/meetings-crud.spec.ts` — 6/6 passing
 - Test helpers: `frontend/tests/helpers/db.ts` — Meeting CRUD helpers added
-- Verification report: `docs-ai/contents/docs/PRPs/meetings/verification/report.md`
+- Verification report: `docs/PRPs/meetings/verification/report.md`
 
 ## Summary
 - **Critical Issues**: None

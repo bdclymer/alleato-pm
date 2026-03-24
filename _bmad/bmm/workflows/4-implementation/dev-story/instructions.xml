@@ -145,18 +145,18 @@
 
     <!-- PRP integration: load implementation guidance if a PRP exists for this feature -->
     <action>Determine feature domain from story metadata, epic name, or story filename (e.g., "scheduling", "direct-costs", "directory")</action>
-    <action>Check if PRP TASKS.md exists at: docs-ai/contents/docs/PRPs/{feature}/TASKS.md</action>
+    <action>Check if PRP TASKS.md exists at: docs/PRPs/{feature}/TASKS.md</action>
 
     <check if="PRP TASKS.md exists for this feature domain">
       <action>Load TASKS.md and extract implementation task ordering and phase structure</action>
-      <action>Load the corresponding PRP: docs-ai/contents/docs/PRPs/{feature}/prp-{feature}.md</action>
+      <action>Load the corresponding PRP: docs/PRPs/{feature}/prp-{feature}.md</action>
       <action>Extract from PRP: Known Pitfalls and Prevention rules, Database Schema context, Implementation Patterns</action>
       <action>Cross-reference story acceptance criteria with PRP implementation tasks to align sequence</action>
       <critical>Use PRP task ordering as implementation guidance. Use story AC as validation criteria.
         Testing is NOT part of PRP — test authoring is handled by BMAD QA workflows (Quinn/Murat).</critical>
       <output>✅ **Context Loaded** (with PRP)
         Story context + PRP implementation guidance available
-        PRP: docs-ai/contents/docs/PRPs/{{feature}}/TASKS.md
+        PRP: docs/PRPs/{{feature}}/TASKS.md
         Using PRP task ordering for implementation sequence
         Using story acceptance criteria for validation
       </output>

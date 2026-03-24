@@ -17,7 +17,7 @@ description: TASKS documentation
 ## Codebase Inventory & Status Audit
 
 - Before marking any of the above checklist entries as done, inspect the relevant directories/files (list/detail pages, hooks, API routes, schema migrations, services, etc.) to confirm whether the implementation already exists or remains outstanding.
-- Note the audited files and their current state either in the PROGRESS.md within `docs-ai/contents/docs/PRPs/submittals/`. Use checkboxes (`✅`/`⬜`) that match the actual codebase status so future agents start from a truthful baseline.
+- Note the audited files and their current state either in the PROGRESS.md within `docs/PRPs/submittals/`. Use checkboxes (`✅`/`⬜`) that match the actual codebase status so future agents start from a truthful baseline.
 
 - [x] Supabase types regenerated (`frontend/src/types/database.types.ts`) and FK expectations confirmed for `projects.id`, `users.id`, and `people.id`.
 - [x] Incident log plus `database-issues.md` and `api-routing-errors.md` reviewed for prevention rules (documented in the PRP).

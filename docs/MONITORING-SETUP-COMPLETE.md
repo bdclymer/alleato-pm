@@ -34,10 +34,10 @@ npm run cache:reset    # Reset all statistics
 
 ### 3. ✅ Documentation
 
-- `docs-ai/contents/docs/CACHE-MONITORING-GUIDE.md` - Complete monitoring guide
+- `docs/CACHE-MONITORING-GUIDE.md` - Complete monitoring guide
 - `.claude/CACHING-QUICK-REFERENCE.md` - Quick lookup
 - `.claude/CACHING-README.md` - Getting started
-- `docs-ai/contents/docs/CLAUDE-CACHING-STRATEGY.md` - Full strategy
+- `docs/CLAUDE-CACHING-STRATEGY.md` - Full strategy
 
 ### 4. ✅ .gitignore
 
@@ -315,7 +315,7 @@ npm run cache:stats
 2. Are requests >5 minutes apart?
 3. Is schema changing (migrations)?
 
-**Solution:** Review [CACHE-MONITORING-GUIDE.md](../docs-ai/contents/docs/CACHE-MONITORING-GUIDE.md)
+**Solution:** Review [CACHE-MONITORING-GUIDE.md](../docs/CACHE-MONITORING-GUIDE.md)
 
 ### "High costs"
 
@@ -376,15 +376,15 @@ Based on your codebase analysis:
 | `scripts/cache-example.ts` | Working example |
 | `.cache-monitor/cache-stats.jsonl` | Event log (gitignored) |
 | `.cache-monitor/cache-summary.json` | Aggregated stats (gitignored) |
-| `docs-ai/contents/docs/CACHE-MONITORING-GUIDE.md` | Full guide |
+| `docs/CACHE-MONITORING-GUIDE.md` | Full guide |
 
 ---
 
 ## Support
 
 **Questions?** Check the documentation:
-- [Monitoring Guide](../docs-ai/contents/docs/CACHE-MONITORING-GUIDE.md)
-- [Caching Strategy](../docs-ai/contents/docs/CLAUDE-CACHING-STRATEGY.md)
+- [Monitoring Guide](../docs/CACHE-MONITORING-GUIDE.md)
+- [Caching Strategy](../docs/CLAUDE-CACHING-STRATEGY.md)
 - [Quick Reference](.claude/CACHING-QUICK-REFERENCE.md)
 
 **Issues?** Review troubleshooting sections or check `.cache-monitor/` files directly.

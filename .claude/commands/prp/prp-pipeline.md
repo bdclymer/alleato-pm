@@ -55,9 +55,9 @@ Step 5    /prp-validate <path/to/prp.md>
 
 - Generates fresh Supabase types and reviews the database schema
 - Reads the incident log for past mistakes related to this feature type
-- Checks for Procore crawl data in `docs-ai/contents/docs/PRPs/<feature>/crawl/`
+- Checks for Procore crawl data in `docs/PRPs/<feature>/crawl/`
 - Explores the codebase for similar features to use as patterns
-- Produces three files in `docs-ai/contents/docs/PRPs/<feature>/`:
+- Produces three files in `docs/PRPs/<feature>/`:
   - `prp-<feature>.md` — the full PRP document
   - `TASKS.md` — implementation checklist (live tracker)
   - `prp-<feature>.html` — browser-viewable version
@@ -182,15 +182,15 @@ Step 4    /prp-validate <path/to/fix-prp.md>
 
 | File | Location |
 |------|----------|
-| PRP documents | `docs-ai/contents/docs/PRPs/<feature>/` |
-| TASKS.md | `docs-ai/contents/docs/PRPs/<feature>/TASKS.md` |
-| Crawl data | `docs-ai/contents/docs/PRPs/<feature>/crawl/` |
-| Fix PRPs | `docs-ai/contents/docs/PRPs/<feature>/prp-<feature>-fix.md` |
+| PRP documents | `docs/PRPs/<feature>/` |
+| TASKS.md | `docs/PRPs/<feature>/TASKS.md` |
+| Crawl data | `docs/PRPs/<feature>/crawl/` |
+| Fix PRPs | `docs/PRPs/<feature>/prp-<feature>-fix.md` |
 | Scaffolds | `.claude/scaffolds/crud-resource/` |
 | PRP template | `.claude/templates/TEMPLATE-PRP.md` |
 | Tasks template | `.claude/templates/tasks_template.md` |
-| Incident log | `docs-ai/contents/docs/patterns/INCIDENT-LOG.md` |
-| Pattern files | `docs-ai/contents/docs/patterns/` |
+| Incident log | `docs/patterns/INCIDENT-LOG.md` |
+| Pattern files | `docs/patterns/` |
 | Project rules | `.claude/rules/` |
 | E2E tests | `frontend/tests/e2e/` |
 | Playwright auth | `frontend/tests/.auth/user.json` |

@@ -116,7 +116,7 @@
   why: Microsoft Authentication Library for Node.js — handles OAuth2 auth code flow with PKCE
   critical: Use ConfidentialClientApplication for server-side auth code exchange
 
-- docfile: docs-ai/contents/docs/PRPs/integrations/ms-project/docs/msal-dataverse-reference.md
+- docfile: docs/PRPs/integrations/ms-project/docs/msal-dataverse-reference.md
   why: Practical implementation reference with encryption, discovery, batching patterns
   section: All sections — token management, AES-256-GCM encryption, OperationSet batching, retry
 

@@ -75,7 +75,7 @@ agent-browser snapshot
 ### Criterion 3: Create Works End-to-End
 
 **Check:** Open the e2e results file:
-`docs-ai/contents/docs/financial-tools/e2e-results-{tool}.md`
+`docs/financial-tools/e2e-results-{tool}.md`
 
 Verify Test 3 (Create) shows PASS with a screenshot showing:
 - The new record appeared in the list
@@ -228,7 +228,7 @@ agent-browser resize --width 1280 --height 800
 
 Before starting, read:
 - All 7 investigation reports in `.claude/investigations/{tool}/investigation-report.md`
-- All 7 E2E results in `docs-ai/contents/docs/financial-tools/e2e-results-{tool}.md`
+- All 7 E2E results in `docs/financial-tools/e2e-results-{tool}.md`
 - TypeScript output: `cd frontend && npx tsc --noEmit 2>&1`
 
 ### Step 2: Verify Each Tool
@@ -240,7 +240,7 @@ Work through all 7 tools. For each tool, check all 10 criteria. Document results
 ### Step 3: Produce Final Report
 
 Write the final DoD report to:
-`docs-ai/contents/docs/financial-tools/DOD-final-report.md`
+`docs/financial-tools/DOD-final-report.md`
 
 ---
 
@@ -364,7 +364,7 @@ After producing the report:
 **If all certified:**
 ```
 Message: "DoD verification COMPLETE. All 7 tools certified.
-Report: docs-ai/contents/docs/financial-tools/DOD-final-report.md
+Report: docs/financial-tools/DOD-final-report.md
 TypeScript: clean. E2E: all passing.
 Ready to shut down team."
 ```
@@ -374,7 +374,7 @@ Ready to shut down team."
 Message: "DoD verification COMPLETE with failures.
 BLOCKED: {list tools with failures}
 CERTIFIED: {list clean tools}
-Report: docs-ai/contents/docs/financial-tools/DOD-final-report.md
+Report: docs/financial-tools/DOD-final-report.md
 Failures:
 - {Tool}: Criterion {N} — {one-line description}
 Please assign fixes to implementors and re-verify when resolved."

@@ -199,7 +199,7 @@ Remove or convert `frontend/tests/e2e/debug-meeting-transcript.spec.ts` — it's
 | `frontend/src/hooks/use-commitments.ts` | Pattern reference for React Query hooks |
 | `frontend/src/app/api/projects/[projectId]/commitments/route.ts` | Pattern reference for API routes |
 | `frontend/src/components/commitments/create-commitment-dialog.tsx` | Pattern reference for create dialogs |
-| `docs-ai/contents/docs/PRPs/meetings/prp-meetings.md` | Full feature PRP (aspirational) |
+| `docs/PRPs/meetings/prp-meetings.md` | Full feature PRP (aspirational) |
 | `.claude/rules/SUPABASE-GATE.md` | Database types gate |
 | `.claude/rules/CRITICAL-NEXTJS-ROUTING-RULES.md` | Route naming rules |
 | `.claude/rules/E2E-TESTING-STANDARDS.md` | E2E test requirements |

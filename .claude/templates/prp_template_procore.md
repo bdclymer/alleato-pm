@@ -342,7 +342,7 @@ This section contains all crawl data files, sitemap, and screenshots from the Pr
 | Pages | DOM | `pages/{page}/dom.html` | Full DOM snapshot |
 | Pages | Metadata | `pages/{page}/metadata.json` | Links, dropdowns, system actions |
 
-**Base Path**: `docs-ai/contents/docs/PRPs/{feature}/crawl/`
+**Base Path**: `docs/PRPs/{feature}/crawl/`
 
 ### Screenshots
 
@@ -350,7 +350,7 @@ This section contains all crawl data files, sitemap, and screenshots from the Pr
 
 _{Description of what the screenshot shows}_
 
-![Procore {Feature} Screenshot](../../docs-ai/contents/docs/PRPs/{feature}/crawl/pages/{page}/screenshot.png)
+![Procore {Feature} Screenshot](../../docs/PRPs/{feature}/crawl/pages/{page}/screenshot.png)
 
 **Key UI Elements to Replicate:**
 

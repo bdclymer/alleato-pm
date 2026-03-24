@@ -252,9 +252,9 @@ Based on pain points not yet addressed:
 
 ## Related Documentation
 
-- Main incident log: `docs-ai/contents/docs/patterns/INCIDENT-LOG.md`
-- Database issues: `docs-ai/contents/docs/patterns/database-issues.md`
-- API routing errors: `docs-ai/contents/docs/patterns/api-routing-errors.md`
+- Main incident log: `docs/patterns/INCIDENT-LOG.md`
+- Database issues: `docs/patterns/database-issues.md`
+- API routing errors: `docs/patterns/api-routing-errors.md`
 - Next.js debug protocol: `.claude/rules/NEXTJS-DEBUG-PROTOCOL.md`
 - Supabase gate: `.claude/rules/SUPABASE-GATE.md`
 

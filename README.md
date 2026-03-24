@@ -57,7 +57,7 @@ npm run test:unit
 - `supabase/` - migrations and DB helper scripts
 - `scripts/` - repo-level automation, validation, and crawl utilities
 - `docs/` - maintained project documentation
-- `docs-ai/` - AI-generated reports and PRP outputs
+- `docs/` - AI-generated reports and PRP outputs
 - `_bmad/` - BMAD method agents and workflows
 
 ## Documentation

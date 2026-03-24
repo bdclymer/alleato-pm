@@ -1,133 +1,132 @@
-# Alleato-Procore Documentation Index
+# Alleato-PM — Documentation Index
 
-- **Primary Language:** TypeScript (frontend), Python (backend)
-- **Architecture:** Client-server with shared database (Supabase)
-- **Last Updated:** 2026-03-21
+> Last updated: 2026-03-24 | Full deep scan | Multi-part monorepo
 
-## Project Overview
+Alleato-PM (alleato-procore) is a construction project management platform built as a Next.js 15 frontend with a Python FastAPI AI/agent backend and Supabase PostgreSQL database. It mirrors Procore's functionality with tools for budgets, contracts, change orders, drawings, scheduling, and more — augmented by an AI assistant with RAG capabilities.
 
-Alleato-Procore is a construction project management platform with a Next.js 15 frontend, a Python backend, Supabase as the primary data store, and AI-assisted workflows for chat, retrieval, and operational analysis. Use this index as the entry point for curated project documentation rather than generated crawl output.
-
-## Project Structure
-
-This project consists of 2 parts:
-
-### Frontend (frontend)
-
-- **Type:** Web application
-- **Location:** `frontend/`
-- **Tech Stack:** Next.js 15, React 19, TypeScript, Tailwind CSS, shadcn/ui, React Query, Zustand
-- **Entry Point:** `frontend/src/app/layout.tsx`
-
-### Backend (backend)
-
-- **Type:** Backend API + AI services
-- **Location:** `backend/`
-- **Tech Stack:** Python, FastAPI, OpenAI (GPT + Agents SDK), LangChain, Supabase Python, Claude Agent SDK
-- **Entry Point:** `backend/entrypoint.py`
-
-## Cross-Part Integration
-
-The frontend communicates with the backend via HTTP proxy rewrites configured in `next.config.ts`. `/rag-chatkit/*` and `/chatkit/*` requests are proxied to the backend's AI endpoints (SSE streaming). Both parts share the same Supabase database - the frontend handles all CRUD operations directly via Supabase client SDK, while the backend reads/writes AI-related data (embeddings, chunks, insights).
+---
 
 ## Quick Reference
 
-### Frontend Quick Ref
+| Need | Document |
+|------|----------|
+| What tech is used? | [Technology Stack](technology-stack.md) |
+| How do I run the app? | [Development Guide](development-guide.md) |
+| How is it deployed? | [Deployment Guide](deployment-guide.md) |
+| What API routes exist? | [API Contracts](api-contracts.md) |
+| What's in the database? | [Data Models](data-models.md) |
+| What components exist? | [Component Inventory](component-inventory.md) |
+| How do the parts connect? | [Integration Architecture](integration-architecture.md) |
+| Frontend architecture? | [Frontend Architecture](architecture-frontend.md) |
+| Backend architecture? | [Backend Architecture](architecture-backend.md) |
+| RAG pipeline & AI tools? | [RAG & AI Tools](rag-and-ai-tools.md) |
+| Where are files? | [Source Tree Analysis](source-tree-analysis.md) |
 
-- **Stack:** Next.js 15, React 19, TypeScript, Tailwind CSS 4, shadcn/ui, React Query 5, Zustand 5
-- **Entry:** `frontend/src/app/layout.tsx` (root layout with provider stack)
-- **Pattern:** App Router with route groups `(main)`, `(tables)`, `(other)`
-- **Database:** Supabase via direct client/server SDK usage
-- **Deployment:** Vercel (auto-deploy from GitHub)
+---
 
-### Backend Quick Ref
+## Core Documentation
 
-- **Stack:** Python 3.11, FastAPI, OpenAI SDK, LangChain, Claude Agent SDK
-- **Entry:** `backend/entrypoint.py` (uvicorn startup)
-- **Pattern:** Service-oriented with multi-agent AI pipeline
-- **Database:** Supabase Python client (read/write AI data)
-- **Deployment:** Render (Docker container)
+### Architecture
 
-## Generated Documentation
+| Document | Description |
+|----------|-------------|
+| [Technology Stack](technology-stack.md) | Full stack inventory: Next.js 15, Python FastAPI, Supabase, Vercel AI SDK v6, Liveblocks, Drizzle ORM |
+| [Frontend Architecture](architecture-frontend.md) | App Router layers, data access patterns, AI integration, design system, security |
+| [Backend Architecture](architecture-backend.md) | FastAPI services, multi-agent AI, RAG pipeline, Acumatica sync, APScheduler |
+| [RAG & AI Tools](rag-and-ai-tools.md) | Complete RAG pipeline (3 stages, all tables), AI chat architecture, 49 tools across 6 categories, memory system |
+| [Integration Architecture](integration-architecture.md) | How frontend, backend, Supabase, and external services connect |
+| [Source Tree Analysis](source-tree-analysis.md) | Full directory structure with annotations |
 
-### Core Documentation
+### API & Data
 
-- [Project Overview](./project-overview.md) - Executive summary, tech stack, key features, and architecture highlights
-- [Source Tree Analysis](./source-tree-analysis.md) - Annotated directory structure with file organization patterns
-- [Development Guide](./development-guide.md) - Current setup, commands, gates, and verification flow
+| Document | Description |
+|----------|-------------|
+| [API Contracts](api-contracts.md) | ~150+ Next.js route handlers across 30+ domains |
+| [Data Models](data-models.md) | 287 Supabase tables/views/functions, 17 enums, 30+ pgvector search functions, full column details |
 
-### Part-Specific Documentation
+### Components & Development
 
-#### Frontend (frontend)
-
-- [Frontend Architecture](./architecture-frontend.md) - App Router, provider stack, data flow, state management, component patterns, API routes, auth, design system
-- [Component Inventory](./component-inventory.md) - Component, hook, service, and schema inventory
-- [API Contracts](./api-contracts.md) - Documented HTTP handlers and request/response surfaces
-- [Data Models](./data-models.md) - Database model reference and schema notes
-
-#### Backend (backend)
-
-- [Backend Architecture](./architecture-backend.md) - FastAPI endpoints, 6 service classes, multi-agent AI pipeline, RAG system, deployment config
-
-### Cross-Cutting Documentation
-
-- [Integration Architecture](./integration-architecture.md) - How frontend and backend communicate, shared resources, data consistency patterns
-- [Development Guide](./development-guide.md) - Prerequisites, setup, commands, mandatory gates, scaffolding system, testing, CI/CD
-- [Deployment Guide](./deployment-guide.md) - Vercel/Render/Supabase infrastructure, CI/CD pipelines, environment variables, monitoring, rollback procedures
+| Document | Description |
+|----------|-------------|
+| [Component Inventory](component-inventory.md) | 100+ component dirs, 55+ UI primitives, design system components, ~80 hooks, 14 services |
+| [Development Guide](development-guide.md) | Setup, dev commands, testing, mandatory gates, design system rules |
+| [Deployment Guide](deployment-guide.md) | Vercel (frontend), Render (backend), Supabase migrations, GitHub Actions |
 
 ### AI Agent Configuration
 
-- [Project Context](./project-context.md) - AI-optimized project context: 85 development rules, critical anti-patterns, mandatory gates, and architectural decisions for AI agents
-- [Agent Systems Analysis](./agent-systems-analysis.md) - BMAD methodology overview: 5 installed modules, 22-agent roster, workflow engine mechanics, non-BMAD agents, integration patterns, and recommendations
+| Document | Description |
+|----------|-------------|
+| [Project Context](project-context.md) | AI-optimized project context: 85 development rules, critical anti-patterns, mandatory gates, and architectural decisions for AI agents |
+| [Agent Systems Analysis](agent-systems-analysis.md) | BMAD methodology overview: 5 installed modules, 22-agent roster, workflow engine mechanics, integration patterns |
+| [SOLUTIONS](SOLUTIONS.md) | Known solutions and fix patterns |
+| [Project Overview](project-overview.md) | Executive summary, tech stack, key features, and architecture highlights |
 
-## Getting Started
+---
 
-### Frontend Setup
+## Project Stats
 
-**Prerequisites:** Node.js 20+, npm 9+, Supabase CLI
+| Metric | Value |
+|--------|-------|
+| Repository type | Multi-part monorepo |
+| Frontend framework | Next.js 15.5.12 (App Router, Turbopack) |
+| Backend framework | Python FastAPI |
+| Database | Supabase PostgreSQL |
+| Supabase migrations | 55 |
+| Database tables/views/functions | 287 |
+| TypeScript types file | 20,790 lines |
+| API route files | ~150+ |
+| API domains | 30+ |
+| React Query hooks | ~80 |
+| Service files | 14 |
+| Component directories | 100+ |
+| UI primitives (shadcn) | 55+ |
+| GitHub Actions workflows | 9 |
+| Deployment platforms | Vercel + Render |
 
-**Install & Run:**
+---
 
-```bash
-cd frontend
-npm install
-npm run dev          # Development server on localhost:3000
-```
+## Key Files Reference
 
-**Key Commands:**
+| File | Purpose |
+|------|---------|
+| `CLAUDE.md` | Mandatory rules for Claude Code (read before all work) |
+| `frontend/src/types/database.types.ts` | Auto-generated Supabase types (source of truth) |
+| `frontend/src/proxy.ts` | Auth middleware — Supabase session refresh |
+| `frontend/src/lib/ai/orchestrator.ts` | AI routing and RAG context assembly |
+| `frontend/src/lib/ai/rag-assistant-prompt.ts` | AI assistant system prompt |
+| `frontend/src/lib/navigation-config.ts` | App navigation structure |
+| `frontend/src/design-system/CLAUDE_CODE_UI_GUIDE.md` | UI patterns and Tailwind classes |
+| `supabase/migrations/` | 55 SQL migration files |
+| `backend/src/services/` | Python AI and integration services |
+| `.github/workflows/` | 9 CI/CD workflows |
 
-```bash
-npm run build        # Production build
-npm run quality      # TypeScript + ESLint checks
-npm run test         # Playwright E2E tests (auto-auth)
-npm run test:unit    # Jest unit tests
-npm run db:types     # Regenerate Supabase types
-```
+---
 
-### Backend Setup
+## Navigation by Role
 
-**Prerequisites:** Python 3.11+, pip, Docker (optional)
+### New Developer
+1. [Technology Stack](technology-stack.md) — Understand the stack
+2. [Development Guide](development-guide.md) — Get running locally
+3. [Source Tree Analysis](source-tree-analysis.md) — Navigate the codebase
+4. [Component Inventory](component-inventory.md) — Find existing components
 
-**Install & Run:**
+### Frontend Developer
+1. [Frontend Architecture](architecture-frontend.md) — Patterns and layers
+2. [Component Inventory](component-inventory.md) — Components, hooks, services
+3. [API Contracts](api-contracts.md) — Available endpoints
+4. [Data Models](data-models.md) — Database schema
 
-```bash
-cd backend
-pip install -r requirements.txt
-python entrypoint.py    # FastAPI on localhost:8000
-```
+### Backend / AI Developer
+1. [Backend Architecture](architecture-backend.md) — FastAPI + AI services
+2. [RAG & AI Tools](rag-and-ai-tools.md) — RAG pipeline and tool inventory
+3. [Integration Architecture](integration-architecture.md) — Service connections
+4. [Data Models](data-models.md) — pgvector + table structure
 
-**Or with Docker:**
+### DevOps / Deployment
+1. [Deployment Guide](deployment-guide.md) — Vercel + Render + Supabase
+2. [Integration Architecture](integration-architecture.md) — Service topology
 
-```bash
-docker compose up backend
-```
-
-### Full Stack (Both Parts)
-
-```bash
-npm install          # Root monorepo dependencies
-npm run dev          # Runs frontend + backend concurrently
-```
+---
 
 ## For AI-Assisted Development
 
@@ -147,10 +146,13 @@ This documentation is intended to help both humans and AI agents understand and 
 **Database changes:**
 > Reference: `data-models.md` - Check FK types, RLS policies, and naming conventions
 
+**AI/RAG features:**
+> Reference: `rag-and-ai-tools.md`, `architecture-backend.md`, `data-models.md`
+
 **Deployment changes:**
 > Reference: `deployment-guide.md`
 
-### Mandatory Gates (from `AGENTS.md` / project rules):
+### Mandatory Gates (from CLAUDE.md):
 
 Before writing code, always check these gates:
 
@@ -158,25 +160,31 @@ Before writing code, always check these gates:
 2. **Route Naming Gate** - Use `[projectId]` not `[id]` for dynamic routes
 3. **Next.js Cache Gate** - Clear `.next` before debugging new or changed routes
 4. **Root Cause Gate** - Gather evidence before modifying code
-5. **Page Header Gate** - Use `ProjectPageHeader` and `PageContainer` for project page shells
-
-### Documentation File Quick Reference:
-
-| Need to understand... | Read this file |
-|----------------------|----------------|
-| Overall project | `project-overview.md` |
-| Directory structure | `source-tree-analysis.md` |
-| Frontend architecture | `architecture-frontend.md` |
-| Backend architecture | `architecture-backend.md` |
-| UI components & hooks | `component-inventory.md` |
-| API endpoints | `api-contracts.md` |
-| Database schema | `data-models.md` |
-| Frontend ↔ Backend | `integration-architecture.md` |
-| Dev setup & workflow | `development-guide.md` |
-| Deployment & CI/CD | `deployment-guide.md` |
-| Dev rules & anti-patterns | `project-context.md` |
-| BMAD agents & workflows | `agent-systems-analysis.md` |
+5. **Design System Gate** - Use `PageShell`, import from `@/components/ds` or `@/components/ui`
 
 ---
 
-_Originally generated via BMAD and then curated for current repo usage._
+## All Files in This Directory
+
+| File | Description |
+|------|-------------|
+| `index.md` | This file |
+| `project-overview.md` | Executive summary and architecture highlights |
+| `architecture-frontend.md` | Frontend architecture deep dive |
+| `architecture-backend.md` | Backend architecture deep dive |
+| `api-contracts.md` | API route documentation |
+| `data-models.md` | Full database schema reference (detailed columns + enums + pgvector functions) |
+| `component-inventory.md` | Component, hook, and service inventory |
+| `deployment-guide.md` | Deployment and infrastructure guide |
+| `development-guide.md` | Local development setup and workflow |
+| `integration-architecture.md` | Cross-service integration patterns |
+| `source-tree-analysis.md` | Annotated directory structure |
+| `rag-and-ai-tools.md` | RAG pipeline, AI tools, chat architecture |
+| `technology-stack.md` | Full technology stack inventory |
+| `SOLUTIONS.md` | Known solutions and fix patterns |
+| `agent-systems-analysis.md` | BMAD agent methodology and roster |
+| `project-context.md` | AI-optimized development rules and context |
+
+---
+
+_Consolidated from BMAD-generated and deep-scan documentation._

@@ -2,7 +2,7 @@
 
 **Generated:** 2026-02-23
 **Source:** Reality Map audit of all 31 features
-**Companion:** `docs-ai/contents/docs/REALITY-MAP.md`
+**Companion:** `docs/REALITY-MAP.md`
 
 ---
 

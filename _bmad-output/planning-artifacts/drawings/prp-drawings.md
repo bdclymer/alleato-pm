@@ -142,11 +142,11 @@ Upload Drawing Form:
   pattern: Depth padding, expand/collapse state, nested data
   gotcha: Performance with deep nesting levels
 
-- docfile: docs-ai/contents/docs/file-upload-storage-patterns.md
+- docfile: docs/file-upload-storage-patterns.md
   why: Comprehensive file handling patterns documented
   section: Storage paths, metadata structure, error handling
 
-- docfile: docs-ai/contents/docs/pdf-viewer-libraries.md
+- docfile: docs/pdf-viewer-libraries.md
   why: PDF viewer comparison and implementation guide
   section: React-PDF setup, performance optimization
 ```
@@ -923,7 +923,7 @@ node scripts/test-large-drawing-upload.js
 
 ## Procore Crawl Data Reference
 
-Based on the analysis of `/Users/meganharrison/Documents/github/alleato-pm/docs-ai/contents/docs/PRPs/drawings/`, the Drawings tool should replicate these Procore features:
+Based on the analysis of `/Users/meganharrison/Documents/github/alleato-pm/docs/PRPs/drawings/`, the Drawings tool should replicate these Procore features:
 
 ### Key UI Elements from Procore
 

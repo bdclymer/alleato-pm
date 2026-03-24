@@ -122,7 +122,7 @@ Include a "Database Schema" section in the PRP with:
 
 #### Step 1: Read Incident Log**
 
-docs-ai/contents/docs/patterns/INCIDENT-LOG.md
+docs/patterns/INCIDENT-LOG.md
 
 - Identify all 🔴 CRITICAL and 🟡 WARNING incidents
 - Note any incidents related to this feature domain
@@ -143,7 +143,7 @@ Based on the feature type, read relevant pattern documentation:
 **Pattern File Locations:**
 
 ```bash
-docs-ai/contents/docs/patterns/
+docs/patterns/
 ├── INCIDENT-LOG.md                    # Comprehensive incident history
 ├── database-issues.md                 # Schema and query problems
 ├── api-routing-errors.md              # Route and endpoint failures
@@ -208,14 +208,14 @@ Before starting codebase analysis, check for existing Procore crawl data and spe
 
 ```bash
 # Crawl data location (inside the PRP tool folder):
-docs-ai/contents/docs/PRPs/{feature}/crawl/
+docs/PRPs/{feature}/crawl/
 
 # Key files to load:
-docs-ai/contents/docs/PRPs/{feature}/crawl/crawl-summary.json  # Structured summary
-docs-ai/contents/docs/PRPs/{feature}/crawl/spec/COMMANDS.md    # Domain commands
-docs-ai/contents/docs/PRPs/{feature}/crawl/spec/MUTATIONS.md   # Behavior specs
-docs-ai/contents/docs/PRPs/{feature}/crawl/spec/schema.sql     # Database schema
-docs-ai/contents/docs/PRPs/{feature}/crawl/spec/FORMS.md       # UI form specs
+docs/PRPs/{feature}/crawl/crawl-summary.json  # Structured summary
+docs/PRPs/{feature}/crawl/spec/COMMANDS.md    # Domain commands
+docs/PRPs/{feature}/crawl/spec/MUTATIONS.md   # Behavior specs
+docs/PRPs/{feature}/crawl/spec/schema.sql     # Database schema
+docs/PRPs/{feature}/crawl/spec/FORMS.md       # UI form specs
 ```
 
 **If crawl-summary.json exists**, read it first - it contains:
@@ -282,7 +282,7 @@ This section contains all crawl data files, sitemap, and screenshots from the Pr
 | Pages | DOM | `pages/{page}/dom.html` | Full DOM snapshot |
 | Pages | Metadata | `pages/{page}/metadata.json` | Links, dropdowns, system actions |
 
-**Base Path**: `docs-ai/contents/docs/PRPs/{feature}/crawl/`
+**Base Path**: `docs/PRPs/{feature}/crawl/`
 
 ### Screenshots
 

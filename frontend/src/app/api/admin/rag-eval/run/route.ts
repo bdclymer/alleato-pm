@@ -5,7 +5,7 @@ import fs from "fs";
 
 const REPO_ROOT = path.resolve(process.cwd(), "..");
 const PYTHON = path.join(REPO_ROOT, "backend/.venv/bin/python");
-const RAG_DIR = path.join(REPO_ROOT, "docs-ai/contents/docs/PRPs/rag");
+const RAG_DIR = path.join(REPO_ROOT, "docs/PRPs/rag");
 
 type EvalType = "l1" | "l2" | "reranker" | "coverage" | "e2e";
 

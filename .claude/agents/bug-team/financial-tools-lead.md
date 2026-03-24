@@ -232,7 +232,7 @@ For each tool:
 - Run all 7 test scenarios using agent-browser
 - Capture screenshots for every test (pass AND fail)
 - Write a Playwright spec file at frontend/tests/e2e/{tool}-crud.spec.ts
-- Save results to docs-ai/contents/docs/financial-tools/e2e-results-{tool}.md
+- Save results to docs/financial-tools/e2e-results-{tool}.md
 
 Dev server: http://localhost:3000
 Auth: already configured (do NOT add login code)
@@ -266,10 +266,10 @@ Prerequisites complete:
 - All implementors have finished their tools
 - e2e-tester has completed all 7 tools with 6/7+ tests passing
 - Investigation reports are in .claude/investigations/{tool}/
-- E2E results are in docs-ai/contents/docs/financial-tools/e2e-results-{tool}.md
+- E2E results are in docs/financial-tools/e2e-results-{tool}.md
 
 Verify all 7 tools against the 10-point Definition of Done.
-Produce the final report: docs-ai/contents/docs/financial-tools/DOD-final-report.md
+Produce the final report: docs/financial-tools/DOD-final-report.md
 
 Do NOT fix any failures yourself. Report them to me and I will assign fixes.
 

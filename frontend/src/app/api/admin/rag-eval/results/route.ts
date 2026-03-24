@@ -3,7 +3,7 @@ import fs from "fs";
 import path from "path";
 
 const REPO_ROOT = path.resolve(process.cwd(), "..");
-const RAG_DIR = path.join(REPO_ROOT, "docs-ai/contents/docs/PRPs/rag");
+const RAG_DIR = path.join(REPO_ROOT, "docs/PRPs/rag");
 
 function readJsonFile(filePath: string) {
   try {

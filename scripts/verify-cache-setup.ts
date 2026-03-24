@@ -103,7 +103,7 @@ if (allPassed) {
 
   console.log('📚 Documentation:');
   console.log('   .claude/MONITORING-SETUP-COMPLETE.md');
-  console.log('   docs-ai/contents/docs/CACHE-MONITORING-GUIDE.md\n');
+  console.log('   docs/CACHE-MONITORING-GUIDE.md\n');
 } else {
   console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   console.log('❌ SETUP INCOMPLETE');

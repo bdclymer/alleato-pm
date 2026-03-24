@@ -259,13 +259,13 @@ Skills are **instruction packages** (not agents) that agents can load and follow
 
 ### 3.3 PRP System
 
-**Location:** `docs-ai/contents/docs/PRPs/`
+**Location:** `docs/PRPs/`
 
 PRPs (Project Requirements Plans) are feature-specific implementation specifications that bridge between BMAD planning and actual implementation.
 
 **Structure:**
 ```
-docs-ai/contents/docs/PRPs/
+docs/PRPs/
 ├── direct-costs/
 │   ├── spec-direct-costs.md     # Main spec
 │   ├── plans/                   # Implementation plans
@@ -323,7 +323,7 @@ Bring non-BMAD agents into party mode for specialized discussions (e.g., "Databa
 | **Non-BMAD Agents** | `.claude/agents/` | `bug-team/*.md`, `database/*.md`, `design/*.md` |
 | **Commands** | `.claude/commands/` | `bmad-*.md`, `workflow/*.md` |
 | **Skills** | `.agents/skills/` | `prp-skills/`, `verification-before-completion/` |
-| **PRPs** | `docs-ai/contents/docs/PRPs/` | `{feature}/spec-{feature}.md` |
+| **PRPs** | `docs/PRPs/` | `{feature}/spec-{feature}.md` |
 | **Agent Registry** | `.claude/` | `AGENT-REGISTRY.md` — unified lookup index |
 | **Project Docs** | `docs/` | Architecture, data models, API contracts |
 | **BMAD Artifacts** | `_bmad-output/` | `planning-artifacts/`, `implementation-artifacts/` |

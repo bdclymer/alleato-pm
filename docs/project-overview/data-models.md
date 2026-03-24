@@ -5,9 +5,12 @@
 | Property | Value |
 |----------|-------|
 | **Database** | Supabase (PostgreSQL with Row Level Security) |
-| **Total Tables** | 284 |
-| **Types File** | `frontend/src/types/database.types.ts` (17,629 lines) |
-| **Migrations** | 22 files in `supabase/migrations/` |
+| **Total Tables/Views/Functions** | 287 |
+| **Types File** | `frontend/src/types/database.types.ts` (20,790 lines) |
+| **Migrations** | 55 files in `supabase/migrations/` |
+| **Database Enums** | 17 |
+| **pgvector Search Functions** | 30+ |
+| **Database Functions (RPC)** | 60+ |
 | **Primary Key Types** | `projects.id` -> INTEGER, most others -> UUID, `cost_codes.id` -> STRING |
 
 ---
@@ -799,6 +802,127 @@ Document chunks for RAG (Retrieval-Augmented Generation) with vector embeddings.
 - **chat_sessions** - Top-level AI conversation sessions
 - **chat_messages** - Individual messages within sessions
 - **chat_threads** - Threaded conversation support
+
+---
+
+## Acumatica ERP Integration
+
+Bidirectional sync with Acumatica accounting system. All tables store raw payloads alongside mapped fields.
+
+| Table | Description |
+|-------|-------------|
+| `acumatica_ap_bill_lines` | AP bill line items from Acumatica |
+| `acumatica_ap_bills` | Accounts payable bills |
+| `acumatica_ar_invoice_lines` | AR invoice line items |
+| `acumatica_ar_invoices` | Accounts receivable invoices |
+| `acumatica_change_orders` | Change orders synced from Acumatica |
+| `acumatica_checks` | Payment checks |
+| `acumatica_payments` | Payment records |
+| `acumatica_project_budgets` | Project budget data from Acumatica |
+| `acumatica_purchase_orders` | Purchase orders |
+| `acumatica_subcontracts` | Subcontract records |
+| `acumatica_sync_state` | Sync status tracking per entity type |
+
+---
+
+## Meetings & Communications
+
+| Table | Description |
+|-------|-------------|
+| `meetings` | Meeting records (from Fireflies.ai integration) |
+| `meeting_chunks` | Segmented meeting transcript chunks |
+| `meeting_embeddings` | Vector embeddings for meeting content |
+| `meeting_digests` | AI-generated meeting summaries |
+| `daily_recaps` | AI-generated daily recap summaries |
+
+---
+
+## App Metadata & Configuration
+
+| Table | Description |
+|-------|-------------|
+| `app_pages` / `app_page_links` | Application page registry |
+| `app_commands` | Command palette entries |
+| `app_roles` | Role definitions |
+| `app_ui_components` | UI component registry |
+| `app_ui_tables` / `app_ui_table_columns` | Table configuration |
+| `app_state_transitions` | State machine transitions |
+| `app_system_states` / `app_system_actions` | System state management |
+| `app_functional_capabilities` / `app_capability_actions` | Feature capabilities |
+| `app_parity_checks` | Procore feature parity tracking |
+| `database_tables_catalog` | Database introspection catalog |
+| `design_recommendations` | AI design recommendations |
+| `admin_view_backups` | Saved admin view configurations |
+
+---
+
+## Documents & RAG Infrastructure
+
+Additional tables beyond the `chunks` table documented above.
+
+| Table | Description |
+|-------|-------------|
+| `documents` | Uploaded document records |
+| `document_chunks` | RAG chunks from documents (24K+ rows, unified embedding table) |
+| `document_embeddings` | Vector embeddings |
+| `document_metadata` | Document metadata |
+| `knowledge_documents` | Knowledge base documents |
+| `ai_analysis_jobs` | Background AI analysis job queue |
+| `ai_memories` | Persistent AI memory per user/project |
+| `ai_models` | Available AI model configurations |
+| `asrs_*` (6 tables) | Automated Sprinkler Reference System knowledge base |
+| `block_embeddings` | pgvector embeddings for content blocks |
+| `briefing_runs` | Daily briefing generation history |
+| `crawled_pages` | Web-crawled page content + embeddings |
+| `code_examples` | Code example embeddings |
+| `company_context` | Company-level AI context |
+| `company_knowledge` | Company knowledge base documents |
+
+---
+
+## Database Enums
+
+| Enum | Values |
+|------|--------|
+| `billing_period_status` | open, closed, approved |
+| `budget_status` | locked, unlocked |
+| `calculation_method` | unit_price, lump_sum, percentage |
+| `change_event_status` | open, closed |
+| `change_order_status` | draft, pending, approved, void |
+| `commitment_type` | subcontract, purchase_order, service_order |
+| `company_type` | vendor, subcontractor, owner, architect, other |
+| `contract_status` | draft, pending, executed, closed, terminated |
+| `contract_type` | prime_contract, commitment |
+| `erp_sync_status` | pending, synced, failed, resyncing |
+| `invoice_status` | draft, pending, approved, paid, void |
+| `issue_category` | (multiple categories) |
+| `issue_severity` | Low, Medium, High, Critical |
+| `issue_status` | Open, In Progress, Resolved, Pending Verification |
+| `payment_status` | received, void |
+| `prime_contract_co_status` | draft, submitted, approved, void |
+| `prime_contract_sov_status` | draft, approved, locked |
+| `prime_contract_status` / `prime_contract_status_v2` | draft, pending, executed, closed |
+| `project_status` | active, inactive, complete |
+| `task_status` | todo, doing, review, done |
+
+---
+
+## pgvector Functions (RAG Search)
+
+| Function | Description |
+|----------|-------------|
+| `match_chunks` | Semantic search over document chunks |
+| `match_documents` / `match_documents_enhanced` | Full document semantic search |
+| `match_meeting_chunks` / `match_meeting_chunks_with_project` | Meeting transcript search |
+| `match_memories` | AI memory search |
+| `match_crawled_pages` | Web-crawled content search |
+| `hybrid_search` | Combined semantic + full-text search |
+| `hybrid_search_fm_global` | FM Global knowledge base hybrid search |
+| `full_text_search_meetings` | Full-text meeting search |
+| `search_all_knowledge` | Cross-source knowledge search |
+| `vector_search` | Generic vector similarity search |
+| `get_document_insights_page` | Paginated document insights |
+| `get_project_matching_context` | AI context for project queries |
 
 ---
 

@@ -621,7 +621,7 @@ export default function RagEvalPage() {
         {activeTab === "run" && (
           <div className="space-y-3 max-w-2xl">
             <p className="text-sm text-muted-foreground mb-4">
-              Results are saved to <code className="text-xs bg-muted px-1 py-0.5 rounded">docs-ai/contents/docs/PRPs/rag/</code> and auto-loaded on the Results tabs after each run.
+              Results are saved to <code className="text-xs bg-muted px-1 py-0.5 rounded">docs/PRPs/rag/</code> and auto-loaded on the Results tabs after each run.
             </p>
             {(["coverage", "l1", "l2", "reranker", "e2e"] as EvalType[]).map((type) => (
               <RunCard key={type} type={type} onComplete={fetchResults} />
