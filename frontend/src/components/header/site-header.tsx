@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronRight, ChevronsUpDown, Menu } from "lucide-react";
+import { ChevronRight, ChevronsUpDown, Inbox, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useProjectPermissions } from "@/hooks/use-project-permissions";
@@ -111,6 +111,13 @@ export function SiteHeader() {
           <React.Suspense fallback={null}>
             <CommentsSidebar />
           </React.Suspense>
+          <Link
+            href="/feedback-inbox"
+            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+            aria-label="Feedback inbox"
+          >
+            <Inbox className="h-4 w-4" />
+          </Link>
           <React.Suspense fallback={null}>
             <NotificationBell />
           </React.Suspense>

@@ -16,6 +16,7 @@ const adminLinks = [
   { label: "Design System", href: "/design-system" },
   { label: "Procore Tools", href: "/procore-tools" },
   { label: "Procore Docs", href: "/procore-docs" },
+  { label: "Feedback Inbox", href: "/feedback-inbox" },
 ];
 
 function AdminDropdown() {
