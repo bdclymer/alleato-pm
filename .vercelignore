@@ -1,0 +1,24 @@
+# Large non-runtime directories (prevents upload bloat)
+_bmad
+_bmad-output
+backend
+docs
+docs-ai
+dogfood-output
+e2e-screenshots
+logs
+memories
+output
+procore-crawls
+procore-templates
+scripts
+tests
+tools
+tmp
+verify-output
+vermillian
+
+# Frontend dev-only artifacts
+frontend/config/playwright
+frontend/playwright-report
+frontend/tests
