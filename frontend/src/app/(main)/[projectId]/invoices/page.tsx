@@ -487,11 +487,6 @@ export default function ProjectInvoicesPage(): ReactElement {
           description: "Billing period records will appear here once configured.",
           filteredDescription: "Billing period records will appear here once configured.",
           isFiltered: false,
-          action: (
-            <Button variant="outline" size="sm" onClick={() => router.push("/billing-periods")}>
-              Open Billing Periods Tool
-            </Button>
-          ),
         }}
         pagination={{
           page: 1,
