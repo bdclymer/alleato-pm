@@ -612,10 +612,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
           body: JSON.stringify({
             contract_number: data.number,
             title: data.title,
-            client_id:
-              data.ownerCompanyId && /^\d+$/.test(data.ownerCompanyId)
-                ? Number.parseInt(data.ownerCompanyId, 10)
-                : null,
+            client_id: data.ownerCompanyId || null,
             contractor_id: data.contractorId || null,
             architect_engineer_id: data.architectEngineerId || null,
             contract_company_id:
