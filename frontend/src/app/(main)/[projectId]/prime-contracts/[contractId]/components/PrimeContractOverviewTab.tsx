@@ -578,7 +578,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                           <TableRow className="bg-muted/70 hover:bg-muted/70">
                             <TableHead className="w-10 px-1 py-1.5" />
                             <TableHead className="min-w-72 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
-                              Budget Code *
+                              Budget Code
                             </TableHead>
                             <TableHead className="min-w-64 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
                               Description

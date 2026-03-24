@@ -1103,20 +1103,11 @@ const [isSovEditing, setIsSovEditing] = useState(false);
   const handleSaveSovEdit = async () => {
     const normalizedDraftItems = normalizeSovDraftItems(sovDraftItems);
 
-    if (normalizedDraftItems.length === 0) {
-      toast.error("At least one SOV line item is required");
-      return;
-    }
+    // Group headers are UI-only and are not persisted to the database.
+    const persistableItems = normalizedDraftItems.filter((item) => !item.is_group_header);
 
-    // Each SOV line must have a budget code selected (either existing or newly created).
-    const missingBudgetCodeItem = normalizedDraftItems.find(
-      (item) => !sovDraftBudgetCodeIds[item.id] && item.cost_code_id == null,
-    );
-    if (missingBudgetCodeItem) {
-      const label = missingBudgetCodeItem.description || `Line ${missingBudgetCodeItem.line_number}`;
-      toast.error(
-        `"${label}" needs a budget code — use the budget code selector to assign or create one`,
-      );
+    if (persistableItems.length === 0) {
+      toast.error("At least one SOV line item is required");
       return;
     }
 
@@ -1124,15 +1115,15 @@ const [isSovEditing, setIsSovEditing] = useState(false);
     try {
       const existingIds = new Set(lineItems.map((item) => item.id));
       const incomingIds = new Set(
-        normalizedDraftItems
+        persistableItems
           .filter((item) => existingIds.has(item.id))
           .map((item) => item.id),
       );
 
-      const updatePayload = normalizedDraftItems.filter((item) =>
+      const updatePayload = persistableItems.filter((item) =>
         existingIds.has(item.id),
       );
-      const createPayload = normalizedDraftItems.filter(
+      const createPayload = persistableItems.filter(
         (item) => !existingIds.has(item.id),
       );
       const deletionIds = lineItems
