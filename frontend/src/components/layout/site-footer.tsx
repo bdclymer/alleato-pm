@@ -11,9 +11,6 @@ const adminLinks = [
   { label: "RAG Eval", href: "/rag-eval" },
   { label: "Redoc", href: "/redoc" },
   { label: "API Docs", href: "/api-docs" },
-];
-
-const footerLinks = [
   { label: "Database", href: "/database" },
   { label: "Docs", href: "/docs" },
   { label: "Design System", href: "/design-system" },
@@ -69,15 +66,6 @@ export function SiteFooter() {
       <div className="flex flex-col items-center gap-3 px-4 py-6 sm:flex-row sm:justify-between sm:px-6 lg:px-8">
         <nav className="flex flex-wrap items-center gap-x-4 gap-y-1">
           <AdminDropdown />
-          {footerLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              {link.label}
-            </Link>
-          ))}
         </nav>
         <p className="text-xs text-muted-foreground">
           &copy; {currentYear} Alleato Group. All rights reserved.
