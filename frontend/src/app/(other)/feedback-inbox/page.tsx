@@ -13,8 +13,11 @@ import {
   CheckCircle2,
   Circle,
   Clock,
+  Copy,
   ExternalLink,
   GitBranch,
+  GripVertical,
+  Loader2,
   MessageSquare,
   Send,
   XCircle,
@@ -74,7 +77,20 @@ type FeedbackComment = {
   author: UserProfile;
 };
 
-type StatusFilter = "open" | "submitted" | "closed" | "all";
+type GitHubComment = {
+  id: number;
+  body: string;
+  created_at: string;
+  updated_at: string;
+  user: {
+    login: string;
+    avatar_url: string;
+    type: string; // "User" | "Bot"
+  };
+  author_association: string;
+};
+
+type StatusFilter = "open" | "submitted" | "in_progress" | "closed" | "all";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -83,22 +99,31 @@ type StatusFilter = "open" | "submitted" | "closed" | "all";
 const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
   { value: "open", label: "Open" },
   { value: "submitted", label: "Submitted" },
+  { value: "in_progress", label: "In Progress" },
   { value: "closed", label: "Closed" },
   { value: "all", label: "All" },
 ];
 
-const STATUS_META: Record<string, { icon: typeof Circle; className: string; dotClassName: string; label: string }> = {
+const STATUS_META: Record<string, { icon: typeof Circle; className: string; dotClassName: string; label: string; showInList?: boolean }> = {
   open: {
     icon: Circle,
     className: "text-amber-600 dark:text-amber-400",
     dotClassName: "bg-amber-500",
     label: "Open",
   },
+  in_progress: {
+    icon: Loader2,
+    className: "text-purple-600 dark:text-purple-400",
+    dotClassName: "bg-purple-500 animate-pulse",
+    label: "In Progress",
+    showInList: true,
+  },
   submitted: {
     icon: ArrowUpRight,
     className: "text-blue-600 dark:text-blue-400",
     dotClassName: "bg-blue-500",
     label: "Submitted",
+    showInList: true,
   },
   github_failed: {
     icon: XCircle,
@@ -126,6 +151,11 @@ const SEVERITY_COLORS: Record<string, string> = {
   medium: "text-amber-600 dark:text-amber-400",
   low: "text-muted-foreground",
 };
+
+const PANEL_MIN_WIDTH = 280;
+const PANEL_MAX_WIDTH = 600;
+const PANEL_DEFAULT_WIDTH = 480;
+const PANEL_STORAGE_KEY = "feedback-inbox-panel-width";
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -165,7 +195,6 @@ function displayName(profile: UserProfile): string {
 function extractMentionIds(text: string, users: UserProfile[]): string[] {
   const ids: string[] = [];
   for (const user of users) {
-    // Match @firstName, @fullName, or @email prefix (case insensitive)
     const name = displayName(user).toLowerCase();
     const pattern = new RegExp(`@${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i");
     if (pattern.test(text)) {
@@ -173,6 +202,73 @@ function extractMentionIds(text: string, users: UserProfile[]): string[] {
     }
   }
   return ids;
+}
+
+function getSavedPanelWidth(): number {
+  if (typeof window === "undefined") return PANEL_DEFAULT_WIDTH;
+  try {
+    const saved = localStorage.getItem(PANEL_STORAGE_KEY);
+    if (saved) {
+      const w = parseInt(saved, 10);
+      if (w >= PANEL_MIN_WIDTH && w <= PANEL_MAX_WIDTH) return w;
+    }
+  } catch {
+    // ignore
+  }
+  return PANEL_DEFAULT_WIDTH;
+}
+
+/** Render simple markdown: bold, italic, inline code, links, line breaks */
+function renderSimpleMarkdown(text: string): React.ReactNode[] {
+  const lines = text.split("\n");
+  const nodes: React.ReactNode[] = [];
+
+  for (let li = 0; li < lines.length; li++) {
+    if (li > 0) nodes.push(<br key={`br-${li}`} />);
+
+    const line = lines[li];
+    // Split by markdown patterns
+    const parts = line.split(/(\*\*[^*]+\*\*|_[^_]+_|`[^`]+`|\[([^\]]+)\]\(([^)]+)\))/g);
+
+    for (let i = 0; i < parts.length; i++) {
+      const part = parts[i];
+      if (!part) continue;
+
+      if (part.startsWith("**") && part.endsWith("**")) {
+        nodes.push(<strong key={`${li}-${i}`}>{part.slice(2, -2)}</strong>);
+      } else if (part.startsWith("_") && part.endsWith("_")) {
+        nodes.push(<em key={`${li}-${i}`}>{part.slice(1, -1)}</em>);
+      } else if (part.startsWith("`") && part.endsWith("`")) {
+        nodes.push(
+          <code key={`${li}-${i}`} className="rounded bg-muted px-1 py-0.5 text-[11px] font-mono">
+            {part.slice(1, -1)}
+          </code>,
+        );
+      } else if (part.startsWith("[")) {
+        // Link — the regex captures the text and url in subsequent groups
+        const linkText = parts[i + 1];
+        const linkUrl = parts[i + 2];
+        if (linkText && linkUrl) {
+          nodes.push(
+            <a
+              key={`${li}-${i}`}
+              href={linkUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary underline"
+            >
+              {linkText}
+            </a>,
+          );
+          i += 2; // skip the captured groups
+        }
+      } else {
+        nodes.push(part);
+      }
+    }
+  }
+
+  return nodes;
 }
 
 // ---------------------------------------------------------------------------
@@ -183,16 +279,19 @@ function CommentInput({
   onSubmit,
   users,
   submitting,
+  inputRef: externalInputRef,
 }: {
   onSubmit: (body: string, mentions: string[]) => void;
   users: UserProfile[];
   submitting: boolean;
+  inputRef?: React.RefObject<HTMLTextAreaElement | null>;
 }) {
   const [value, setValue] = useState("");
   const [showMentions, setShowMentions] = useState(false);
   const [mentionQuery, setMentionQuery] = useState("");
   const [mentionIndex, setMentionIndex] = useState(0);
-  const inputRef = useRef<HTMLTextAreaElement>(null);
+  const localInputRef = useRef<HTMLTextAreaElement>(null);
+  const inputRef = externalInputRef ?? localInputRef;
 
   const filteredUsers = useMemo(() => {
     if (!mentionQuery) return users;
@@ -208,7 +307,6 @@ function CommentInput({
     const text = e.target.value;
     setValue(text);
 
-    // Check if user is typing @mention
     const cursorPos = e.target.selectionStart;
     const textBeforeCursor = text.slice(0, cursorPos);
     const atMatch = textBeforeCursor.match(/@(\w*)$/);
@@ -238,7 +336,6 @@ function CommentInput({
     setShowMentions(false);
     setMentionQuery("");
 
-    // Refocus after state update
     requestAnimationFrame(() => {
       textarea.focus();
       const newPos = atIndex + mentionText.length;
@@ -293,7 +390,7 @@ function CommentInput({
                 i === mentionIndex ? "bg-muted" : "hover:bg-muted/50",
               )}
               onMouseDown={(e) => {
-                e.preventDefault(); // prevent blur
+                e.preventDefault();
                 insertMention(user);
               }}
               onMouseEnter={() => setMentionIndex(i)}
@@ -343,7 +440,13 @@ function CommentInput({
 // Comments Section
 // ---------------------------------------------------------------------------
 
-function CommentsSection({ feedbackItemId }: { feedbackItemId: string }) {
+function CommentsSection({
+  feedbackItemId,
+  commentInputRef,
+}: {
+  feedbackItemId: string;
+  commentInputRef?: React.RefObject<HTMLTextAreaElement | null>;
+}) {
   const [comments, setComments] = useState<FeedbackComment[]>([]);
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -359,7 +462,7 @@ function CommentsSection({ feedbackItemId }: { feedbackItemId: string }) {
       const data = await res.json();
       setComments(data.comments ?? []);
     } catch {
-      // silent — comments are secondary
+      // silent
     } finally {
       setLoading(false);
     }
@@ -370,7 +473,6 @@ function CommentsSection({ feedbackItemId }: { feedbackItemId: string }) {
       const res = await fetch("/api/users");
       if (!res.ok) return;
       const data = await res.json();
-      // Handle various response shapes
       const userList = Array.isArray(data) ? data : data.users ?? data.data ?? [];
       setUsers(userList);
     } catch {
@@ -421,7 +523,6 @@ function CommentsSection({ feedbackItemId }: { feedbackItemId: string }) {
 
   /** Render comment body with @mentions highlighted */
   function renderBody(body: string) {
-    // Match @Name patterns and highlight them
     const parts = body.split(/(@\w+(?:\s\w+)?)/g);
     return parts.map((part) => {
       if (part.startsWith("@")) {
@@ -482,9 +583,317 @@ function CommentsSection({ feedbackItemId }: { feedbackItemId: string }) {
         onSubmit={handleSubmit}
         users={users}
         submitting={submitting}
+        inputRef={commentInputRef}
       />
     </div>
   );
+}
+
+// ---------------------------------------------------------------------------
+// GitHub Activity Section
+// ---------------------------------------------------------------------------
+
+function GitHubActivitySection({ issueNumber }: { issueNumber: number }) {
+  const [comments, setComments] = useState<GitHubComment[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchComments = useCallback(async () => {
+    try {
+      const res = await fetch(
+        `/api/admin/feedback/github-comments?issueNumber=${issueNumber}`,
+      );
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error ?? `HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      setComments(data.comments ?? []);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch");
+    } finally {
+      setLoading(false);
+    }
+  }, [issueNumber]);
+
+  useEffect(() => {
+    setLoading(true);
+    setComments([]);
+    setError(null);
+    fetchComments();
+
+    // Auto-refresh every 30 seconds
+    const interval = setInterval(fetchComments, 30_000);
+    return () => clearInterval(interval);
+  }, [fetchComments]);
+
+  const isBotComment = (comment: GitHubComment) =>
+    comment.user.type === "Bot" ||
+    comment.user.login.endsWith("[bot]") ||
+    comment.user.login === "github-actions";
+
+  return (
+    <div>
+      <div className="flex items-center gap-2 mb-3">
+        <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+          GitHub Activity
+        </p>
+        <span className="text-[10px] text-muted-foreground">
+          #{issueNumber}
+        </span>
+      </div>
+
+      {loading && (
+        <div className="flex items-center justify-center py-4">
+          <div className="h-3 w-3 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+        </div>
+      )}
+
+      {error && (
+        <p className="text-xs text-destructive py-2">
+          {error}
+        </p>
+      )}
+
+      {!loading && !error && comments.length === 0 && (
+        <p className="text-xs text-muted-foreground py-2">
+          No GitHub comments yet.
+        </p>
+      )}
+
+      <div className="space-y-3 max-h-80 overflow-y-auto">
+        {comments.map((comment) => (
+          <div key={comment.id} className="flex gap-2.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={comment.user.avatar_url}
+              alt={comment.user.login}
+              className="h-7 w-7 shrink-0 rounded-full mt-0.5"
+            />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-foreground">
+                  {comment.user.login}
+                </span>
+                {isBotComment(comment) && (
+                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 font-medium text-purple-600 dark:text-purple-400 border-purple-300 dark:border-purple-700">
+                    Claude Code
+                  </Badge>
+                )}
+                <span className="text-[10px] text-muted-foreground">
+                  {relativeTime(comment.created_at)}
+                </span>
+              </div>
+              <div className="mt-0.5 text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+                {renderSimpleMarkdown(comment.body)}
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Context Menu for List Items
+// ---------------------------------------------------------------------------
+
+function ListItemContextMenu({
+  item,
+  children,
+  onUpdateStatus,
+  onSendToGitHub,
+}: {
+  item: FeedbackItem;
+  children: React.ReactNode;
+  onUpdateStatus: (id: string, status: string) => void;
+  onSendToGitHub: (id: string) => void;
+}) {
+  const [contextPos, setContextPos] = useState<{ x: number; y: number } | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  function handleContextMenu(e: React.MouseEvent) {
+    e.preventDefault();
+    setContextPos({ x: e.clientX, y: e.clientY });
+  }
+
+  useEffect(() => {
+    if (!contextPos) return;
+
+    function handleClickOutside(e: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setContextPos(null);
+      }
+    }
+
+    function handleEscape(e: KeyboardEvent) {
+      if (e.key === "Escape") setContextPos(null);
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleEscape);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleEscape);
+    };
+  }, [contextPos]);
+
+  const isClosable = item.status === "open" || item.status === "github_failed" || item.status === "submitted" || item.status === "in_progress";
+
+  function handleAction(action: string) {
+    setContextPos(null);
+    switch (action) {
+      case "close":
+        onUpdateStatus(item.id, "closed");
+        break;
+      case "reopen":
+        onUpdateStatus(item.id, "open");
+        break;
+      case "send_to_github":
+        onSendToGitHub(item.id);
+        break;
+      case "view_github":
+        if (item.github_issue_url) {
+          window.open(item.github_issue_url, "_blank", "noopener,noreferrer");
+        }
+        break;
+      case "copy_link":
+        navigator.clipboard.writeText(`${window.location.origin}/feedback-inbox?id=${item.id}`);
+        toast.success("Link copied to clipboard");
+        break;
+    }
+  }
+
+  return (
+    <>
+      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+      <div onContextMenu={handleContextMenu} className="contents">
+        {children}
+      </div>
+
+      {contextPos && (
+        <div
+          ref={menuRef}
+          className="fixed z-50 min-w-40 rounded-md border border-border bg-popover p-1 shadow-sm animate-in fade-in-0 zoom-in-95"
+          style={{ top: contextPos.y, left: contextPos.x }}
+        >
+          {isClosable ? (
+            <button
+              type="button"
+              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-foreground hover:bg-muted transition-colors"
+              onClick={() => handleAction("close")}
+            >
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              Close
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-foreground hover:bg-muted transition-colors"
+              onClick={() => handleAction("reopen")}
+            >
+              <Circle className="h-3.5 w-3.5" />
+              Re-open
+            </button>
+          )}
+
+          <div className="my-1 h-px bg-border" />
+
+          {!item.github_issue_number && (
+            <button
+              type="button"
+              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-foreground hover:bg-muted transition-colors"
+              onClick={() => handleAction("send_to_github")}
+            >
+              <GitBranch className="h-3.5 w-3.5" />
+              Send to Claude Code
+            </button>
+          )}
+
+          {item.github_issue_url && (
+            <button
+              type="button"
+              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-foreground hover:bg-muted transition-colors"
+              onClick={() => handleAction("view_github")}
+            >
+              <ExternalLink className="h-3.5 w-3.5" />
+              View in GitHub
+            </button>
+          )}
+
+          <button
+            type="button"
+            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-foreground hover:bg-muted transition-colors"
+            onClick={() => handleAction("copy_link")}
+          >
+            <Copy className="h-3.5 w-3.5" />
+            Copy link
+          </button>
+        </div>
+      )}
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Resizable Panel Hook
+// ---------------------------------------------------------------------------
+
+function useResizablePanel() {
+  const [panelWidth, setPanelWidth] = useState(PANEL_DEFAULT_WIDTH);
+  const isDragging = useRef(false);
+  const startX = useRef(0);
+  const startWidth = useRef(0);
+
+  // Load saved width on mount
+  useEffect(() => {
+    setPanelWidth(getSavedPanelWidth());
+  }, []);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.preventDefault();
+    isDragging.current = true;
+    startX.current = e.clientX;
+    startWidth.current = panelWidth;
+    document.body.style.cursor = "col-resize";
+    document.body.style.userSelect = "none";
+  }, [panelWidth]);
+
+  useEffect(() => {
+    function handleMouseMove(e: MouseEvent) {
+      if (!isDragging.current) return;
+      const delta = e.clientX - startX.current;
+      const newWidth = Math.min(
+        PANEL_MAX_WIDTH,
+        Math.max(PANEL_MIN_WIDTH, startWidth.current + delta),
+      );
+      setPanelWidth(newWidth);
+    }
+
+    function handleMouseUp() {
+      if (!isDragging.current) return;
+      isDragging.current = false;
+      document.body.style.cursor = "";
+      document.body.style.userSelect = "";
+      // Persist to localStorage
+      try {
+        localStorage.setItem(PANEL_STORAGE_KEY, String(panelWidth));
+      } catch {
+        // ignore
+      }
+    }
+
+    document.addEventListener("mousemove", handleMouseMove);
+    document.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      document.removeEventListener("mousemove", handleMouseMove);
+      document.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [panelWidth]);
+
+  return { panelWidth, handleMouseDown };
 }
 
 // ---------------------------------------------------------------------------
@@ -498,6 +907,7 @@ function FeedbackDetail({
   onUpdateStatus,
   onSendToGitHub,
   onBack,
+  commentInputRef,
 }: {
   item: FeedbackItem;
   updatingId: string | null;
@@ -505,6 +915,7 @@ function FeedbackDetail({
   onUpdateStatus: (id: string, status: string) => void;
   onSendToGitHub: (id: string) => void;
   onBack?: () => void;
+  commentInputRef?: React.RefObject<HTMLTextAreaElement | null>;
 }) {
   return (
     <div className="space-y-6 px-6 py-6 lg:px-12 lg:py-8">
@@ -649,7 +1060,7 @@ function FeedbackDetail({
 
       {/* Actions */}
       <div className="flex items-center gap-2 border-t border-border pt-4">
-        {/* Send to Claude Code — only if no issue exists yet */}
+        {/* Send to Claude Code */}
         {!item.github_issue_number && (
           <Button
             size="sm"
@@ -661,7 +1072,7 @@ function FeedbackDetail({
           </Button>
         )}
 
-        {/* View Issue in GitHub — when issue already exists */}
+        {/* View Issue in GitHub */}
         {item.github_issue_url && (
           <Button
             size="sm"
@@ -679,7 +1090,7 @@ function FeedbackDetail({
           </Button>
         )}
 
-        {(item.status === "open" || item.status === "github_failed" || item.status === "submitted") && (
+        {(item.status === "open" || item.status === "github_failed" || item.status === "submitted" || item.status === "in_progress") && (
           <Button
             size="sm"
             variant="outline"
@@ -703,8 +1114,15 @@ function FeedbackDetail({
 
       {/* Comments */}
       <div className="border-t border-border pt-6">
-        <CommentsSection feedbackItemId={item.id} />
+        <CommentsSection feedbackItemId={item.id} commentInputRef={commentInputRef} />
       </div>
+
+      {/* GitHub Activity */}
+      {item.github_issue_number && (
+        <div className="border-t border-border pt-6">
+          <GitHubActivitySection issueNumber={item.github_issue_number} />
+        </div>
+      )}
     </div>
   );
 }
@@ -722,6 +1140,12 @@ export default function FeedbackInboxPage() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [sendingToGitHub, setSendingToGitHub] = useState(false);
   const [mobileShowDetail, setMobileShowDetail] = useState(false);
+  const [focusedIndex, setFocusedIndex] = useState(0);
+
+  const listPanelRef = useRef<HTMLDivElement>(null);
+  const commentInputRef = useRef<HTMLTextAreaElement>(null);
+
+  const { panelWidth, handleMouseDown } = useResizablePanel();
 
   const selected = useMemo(
     () => items.find((i) => i.id === selectedId) ?? null,
@@ -734,10 +1158,11 @@ export default function FeedbackInboxPage() {
     try {
       const params = new URLSearchParams();
       if (filter !== "all") {
-        params.set(
-          "status",
-          filter === "open" ? "open,github_failed" : filter,
-        );
+        if (filter === "open") {
+          params.set("status", "open,github_failed");
+        } else {
+          params.set("status", filter);
+        }
       }
       const res = await fetch(`/api/admin/feedback?${params.toString()}`);
       if (!res.ok) throw new Error("Fetch failed");
@@ -759,8 +1184,82 @@ export default function FeedbackInboxPage() {
   useEffect(() => {
     if (!loading && items.length > 0 && !selectedId) {
       setSelectedId(items[0].id);
+      setFocusedIndex(0);
     }
   }, [loading, items, selectedId]);
+
+  // Keep focusedIndex in sync with selectedId
+  useEffect(() => {
+    if (selectedId) {
+      const idx = items.findIndex((i) => i.id === selectedId);
+      if (idx >= 0) setFocusedIndex(idx);
+    }
+  }, [selectedId, items]);
+
+  // ---- Keyboard Navigation ----
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      // Don't capture when typing in an input/textarea
+      const target = e.target as HTMLElement;
+      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) {
+        return;
+      }
+
+      switch (e.key) {
+        case "ArrowDown": {
+          e.preventDefault();
+          if (items.length === 0) return;
+          const nextIdx = Math.min(focusedIndex + 1, items.length - 1);
+          setFocusedIndex(nextIdx);
+          setSelectedId(items[nextIdx].id);
+          // Scroll the focused item into view
+          const listEl = listPanelRef.current;
+          if (listEl) {
+            const buttons = listEl.querySelectorAll("[data-feedback-item]");
+            buttons[nextIdx]?.scrollIntoView({ block: "nearest" });
+          }
+          break;
+        }
+        case "ArrowUp": {
+          e.preventDefault();
+          if (items.length === 0) return;
+          const prevIdx = Math.max(focusedIndex - 1, 0);
+          setFocusedIndex(prevIdx);
+          setSelectedId(items[prevIdx].id);
+          const listEl = listPanelRef.current;
+          if (listEl) {
+            const buttons = listEl.querySelectorAll("[data-feedback-item]");
+            buttons[prevIdx]?.scrollIntoView({ block: "nearest" });
+          }
+          break;
+        }
+        case "Enter": {
+          if (items.length === 0) return;
+          setSelectedId(items[focusedIndex].id);
+          setMobileShowDetail(true);
+          break;
+        }
+        case "Escape": {
+          setMobileShowDetail(false);
+          break;
+        }
+        case "c": {
+          e.preventDefault();
+          commentInputRef.current?.focus();
+          break;
+        }
+        case "g": {
+          if (selected?.github_issue_url) {
+            window.open(selected.github_issue_url, "_blank", "noopener,noreferrer");
+          }
+          break;
+        }
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [items, focusedIndex, selected]);
 
   // ---- Update status ----
   async function updateStatus(id: string, status: string) {
@@ -829,15 +1328,28 @@ export default function FeedbackInboxPage() {
             <span className="text-xs text-muted-foreground">{total}</span>
           )}
         </div>
+        <div className="hidden lg:flex items-center gap-3">
+          <p className="text-[10px] text-muted-foreground">
+            <kbd className="rounded border border-border px-1 py-0.5 text-[9px]">&uarr;&darr;</kbd> navigate
+            <span className="mx-1.5 text-border">|</span>
+            <kbd className="rounded border border-border px-1 py-0.5 text-[9px]">c</kbd> comment
+            <span className="mx-1.5 text-border">|</span>
+            <kbd className="rounded border border-border px-1 py-0.5 text-[9px]">g</kbd> github
+          </p>
+        </div>
       </div>
 
       <div className="flex flex-1 min-h-0">
         {/* ---- Left: list panel ---- */}
+        {/* eslint-disable-next-line react/forbid-dom-props */}
         <div
+          ref={listPanelRef}
           className={cn(
-            "flex w-full flex-col border-r border-border lg:w-120 lg:max-w-lg",
+            "flex flex-col border-r border-border",
             mobileShowDetail ? "hidden lg:flex" : "flex",
+            "w-full lg:w-auto lg:shrink-0",
           )}
+          style={{ maxWidth: panelWidth, minWidth: PANEL_MIN_WIDTH }}
         >
           {/* Filter tabs */}
           <div className="flex items-center gap-1 border-b border-border px-4 py-2">
@@ -884,70 +1396,102 @@ export default function FeedbackInboxPage() {
             )}
 
             {!loading &&
-              items.map((item) => {
+              items.map((item, index) => {
                 const meta = STATUS_META[item.status] ?? STATUS_META.open;
                 const isSelected = selectedId === item.id;
+                const isFocused = focusedIndex === index;
 
                 return (
-                  <button
+                  <ListItemContextMenu
                     key={item.id}
-                    type="button"
-                    onClick={() => selectItem(item.id)}
-                    className={cn(
-                      "group flex w-full cursor-pointer items-start gap-3 border-b border-border px-4 py-3 text-left transition-colors",
-                      isSelected
-                        ? "bg-muted/60"
-                        : "hover:bg-muted/30",
-                    )}
+                    item={item}
+                    onUpdateStatus={updateStatus}
+                    onSendToGitHub={sendToGitHub}
                   >
-                    {/* Status dot */}
-                    <div
+                    <button
+                      type="button"
+                      data-feedback-item
+                      onClick={() => selectItem(item.id)}
                       className={cn(
-                        "mt-1.5 h-2 w-2 shrink-0 rounded-full",
-                        meta.dotClassName,
+                        "group flex w-full cursor-pointer items-start gap-3 border-b border-border px-4 py-3 text-left transition-colors",
+                        isSelected
+                          ? "bg-muted/60"
+                          : "hover:bg-muted/30",
+                        isFocused && !isSelected && "ring-1 ring-inset ring-ring/30",
                       )}
-                    />
+                    >
+                      {/* Status dot */}
+                      <div
+                        className={cn(
+                          "mt-1.5 h-2 w-2 shrink-0 rounded-full",
+                          meta.dotClassName,
+                        )}
+                      />
 
-                    <div className="flex-1 min-w-0">
-                      {/* Title row */}
-                      <div className="flex items-center gap-2">
-                        <span className="truncate text-sm font-medium text-foreground">
-                          {item.title}
-                        </span>
-                        {item.severity === "high" && (
-                          <span className="shrink-0 text-[10px] font-semibold text-red-600 dark:text-red-400">
-                            HIGH
+                      <div className="flex-1 min-w-0">
+                        {/* Title row */}
+                        <div className="flex items-center gap-2">
+                          <span className="truncate text-sm font-medium text-foreground">
+                            {item.title}
                           </span>
+                          {item.severity === "high" && (
+                            <span className="shrink-0 text-[10px] font-semibold text-red-600 dark:text-red-400">
+                              HIGH
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Meta row */}
+                        <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                          <span>
+                            {REQUEST_TYPE_LABELS[item.request_type] ?? item.request_type}
+                          </span>
+                          <span className="text-border">|</span>
+                          <span className="truncate font-mono text-[11px]">
+                            {item.page_path}
+                          </span>
+                        </div>
+
+                        {/* Status text for in_progress and submitted */}
+                        {meta.showInList && (
+                          <div className={cn("mt-0.5 flex items-center gap-1.5 text-[10px] font-medium", meta.className)}>
+                            {item.status === "in_progress" && (
+                              <Loader2 className="h-2.5 w-2.5 animate-spin" />
+                            )}
+                            {item.status === "submitted" && (
+                              <ArrowUpRight className="h-2.5 w-2.5" />
+                            )}
+                            {meta.label}
+                          </div>
+                        )}
+
+                        {/* Comment preview */}
+                        {item.comment && !meta.showInList && (
+                          <p className="mt-1 truncate text-xs text-muted-foreground">
+                            {item.comment}
+                          </p>
                         )}
                       </div>
 
-                      {/* Meta row */}
-                      <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                        <span>
-                          {REQUEST_TYPE_LABELS[item.request_type] ?? item.request_type}
-                        </span>
-                        <span className="text-border">|</span>
-                        <span className="truncate font-mono text-[11px]">
-                          {item.page_path}
-                        </span>
-                      </div>
-
-                      {/* Comment preview */}
-                      {item.comment && (
-                        <p className="mt-1 truncate text-xs text-muted-foreground">
-                          {item.comment}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Timestamp */}
-                    <span className="shrink-0 pt-0.5 text-[10px] text-muted-foreground">
-                      {relativeTime(item.created_at)}
-                    </span>
-                  </button>
+                      {/* Timestamp */}
+                      <span className="shrink-0 pt-0.5 text-[10px] text-muted-foreground">
+                        {relativeTime(item.created_at)}
+                      </span>
+                    </button>
+                  </ListItemContextMenu>
                 );
               })}
           </div>
+        </div>
+
+        {/* ---- Resize handle ---- */}
+        {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
+        <div
+          className="hidden lg:flex items-center justify-center w-1.5 cursor-col-resize group hover:bg-muted/50 active:bg-muted transition-colors shrink-0"
+          onMouseDown={handleMouseDown}
+          aria-hidden="true"
+        >
+          <GripVertical className="h-4 w-4 text-muted-foreground/0 group-hover:text-muted-foreground transition-colors" />
         </div>
 
         {/* ---- Right: detail panel (desktop) ---- */}
@@ -967,6 +1511,7 @@ export default function FeedbackInboxPage() {
               sendingToGitHub={sendingToGitHub}
               onUpdateStatus={updateStatus}
               onSendToGitHub={sendToGitHub}
+              commentInputRef={commentInputRef}
             />
           )}
         </div>
@@ -981,6 +1526,7 @@ export default function FeedbackInboxPage() {
               onUpdateStatus={updateStatus}
               onSendToGitHub={sendToGitHub}
               onBack={handleMobileBack}
+              commentInputRef={commentInputRef}
             />
           </div>
         )}
