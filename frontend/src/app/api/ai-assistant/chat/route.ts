@@ -11,21 +11,13 @@ import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { getLanguageModel } from "@/lib/ai/providers";
 import {
-  buildCouncilModePromptInjection,
   createStrategistTools,
-  getStrategistSystemPrompt,
   STRATEGIST_MODEL,
 } from "@/lib/ai/orchestrator";
 import {
-  generateConversationMemory,
-  getRecentConversationSummaries,
-  buildRecentConversationsBlock,
-} from "@/lib/ai/services/conversation-memory";
-import {
-  getMemoriesForSession,
-  buildMemoryContextBlock,
-} from "@/lib/ai/services/ai-memory-service";
-import { extractAndStoreMemories } from "@/lib/ai/services/memory-extraction";
+  assembleSystemPrompt,
+  runPostResponseTasks,
+} from "@/lib/ai/bot-core";
 
 export const maxDuration = 120;
 
@@ -34,23 +26,6 @@ function extractTextFromParts(parts: UIMessage["parts"]): string {
     .filter((p): p is { type: "text"; text: string } => p.type === "text")
     .map((p) => p.text)
     .join("");
-}
-
-function isPortfolioRiskQuery(text: string): boolean {
-  const normalized = text.toLowerCase();
-  const hasRiskLanguage =
-    normalized.includes("risk") ||
-    normalized.includes("risky") ||
-    normalized.includes("at risk") ||
-    normalized.includes("critical item") ||
-    normalized.includes("critical items") ||
-    normalized.includes("exposure");
-  const hasPortfolioLanguage =
-    normalized.includes("project") ||
-    normalized.includes("projects") ||
-    normalized.includes("portfolio") ||
-    normalized.includes("jobs");
-  return hasRiskLanguage && hasPortfolioLanguage;
 }
 
 export async function POST(request: Request) {
@@ -97,10 +72,7 @@ export async function POST(request: Request) {
     }
   }
 
-  // Build C-Suite Strategist tools — includes consultCFO + base project tools.
-  // When the Strategist decides a question is financial, it calls consultCFO,
-  // which spawns a separate CFO agent with financial tools. The Strategist
-  // synthesizes the CFO's analysis with cross-functional context.
+  // Build tools and system prompt using shared bot-core logic
   const modelMessages = await convertToModelMessages(messages);
   const tools = createStrategistTools(user.id, {
     onTrace: (trace) => {
@@ -111,90 +83,14 @@ export async function POST(request: Request) {
     ? extractTextFromParts(lastUserMessage.parts)
     : "";
 
-  // Inject user memories into the system prompt.
-  // Preferences are always included. Semantically relevant facts/lessons/
-  // context/commitments are retrieved based on the current message.
-  let systemPrompt = getStrategistSystemPrompt();
-  if (lastUserContent) {
-    try {
-      // Run memory fetches in parallel — typed memories + recent session summaries.
-      // Recent summaries are only injected on the FIRST turn of a session
-      // (messages.length === 1) so they don't bloat every subsequent turn.
-      const isFirstTurn = messages.length === 1;
-
-      const [{ preferences, relevant, team }, recentSummaries] =
-        await Promise.all([
-          getMemoriesForSession({
-            userId: user.id,
-            firstMessage: lastUserContent,
-          }),
-          isFirstTurn
-            ? getRecentConversationSummaries(user.id, sessionId, 3)
-            : Promise.resolve([]),
-        ]);
-
-      const memoryBlock = buildMemoryContextBlock(preferences, relevant, team);
-      const recentBlock = buildRecentConversationsBlock(recentSummaries);
-
-      // Layer the context blocks before the main system prompt:
-      // [Recent conversations] → [Typed memories] → [System prompt]
-      // This order ensures the AI reads the most personal/recent context first.
-      const contextParts = [recentBlock, memoryBlock].filter(Boolean);
-      if (contextParts.length > 0) {
-        systemPrompt = contextParts.join("\n\n") + "\n\n---\n\n" + systemPrompt;
-      }
-    } catch {
-      // Memory injection failure is non-fatal — continue without it
-    }
-  }
-
-  // Selected project context — injected when user pins a project in the UI.
-  // Tells the AI to default all project-specific questions to this project
-  // without requiring explicit disambiguation.
-  if (selectedProjectId) {
-    try {
-      const { data: project } = await supabase
-        .from("projects")
-        .select("name, project_number, phase, client, health_status")
-        .eq("id", selectedProjectId)
-        .single();
-
-      if (project) {
-        const projectLine = [
-          project.name,
-          project.project_number ? `#${project.project_number}` : null,
-          project.phase ? `Phase: ${project.phase}` : null,
-          project.client ? `Client: ${project.client}` : null,
-          project.health_status ? `Status: ${project.health_status}` : null,
-        ]
-          .filter(Boolean)
-          .join(" · ");
-
-        systemPrompt +=
-          `\n\n## Active Project Context\n` +
-          `The user has pinned: **${projectLine}**\n` +
-          `Assume all project-specific questions refer to this project unless the user explicitly mentions a different one. ` +
-          `Skip disambiguation steps and go straight to retrieving data for this project.`;
-      }
-    } catch {
-      // Non-fatal — continue without project context
-    }
-  }
-
-  if (lastUserContent && isPortfolioRiskQuery(lastUserContent)) {
-    systemPrompt +=
-      "\n\n## Runtime Risk Routing Override\n" +
-      "For THIS request, you MUST call consultCFO before any other tool. " +
-      "Then ensure CFO analysis includes getProjectsWithRisks output before final answer.";
-  }
-
-  // Council Mode — multi-voice C-Suite session.
-  // Overrides the normal synthesize-and-present flow: each specialist speaks
-  // in their own voice, labeled with their icon, and the Strategist adds only
-  // a brief closing synthesis. Inspired by BMAD party-mode.
-  if (councilMode) {
-    systemPrompt += buildCouncilModePromptInjection();
-  }
+  const systemPrompt = await assembleSystemPrompt({
+    userId: user.id,
+    messageText: lastUserContent,
+    selectedProjectId,
+    councilMode,
+    sessionId,
+    isFirstTurn: messages.length === 1,
+  });
   const stream = createUIMessageStream({
     execute: async ({ writer }) => {
       const result = streamText({
@@ -259,23 +155,7 @@ export async function POST(request: Request) {
 
   // Post-response tasks — run AFTER the streaming response is sent.
   // Zero impact on user-facing latency.
-  after(async () => {
-    // Generate conversation memory — summarize + embed this conversation
-    //    so the AI can recall it in future sessions.
-    try {
-      await generateConversationMemory(sessionId, user.id);
-    } catch (e) {
-      console.error("[conversation-memory] failed:", e);
-    }
-
-    // 3. Extract and store durable typed memories (facts, preferences,
-    //    lessons, commitments, context) from this conversation.
-    try {
-      await extractAndStoreMemories(sessionId, user.id);
-    } catch (e) {
-      console.error("[memory-extraction] failed:", e);
-    }
-  });
+  after(() => runPostResponseTasks(sessionId, user.id));
 
   return createUIMessageStreamResponse({ stream });
 }
