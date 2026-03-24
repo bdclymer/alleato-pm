@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import html2canvas from "html2canvas";
 import { usePathname } from "next/navigation";
-import { Camera, ImagePlus, MessageSquarePlus, RefreshCw, Trash2, X } from "lucide-react";
+import { Camera, ImagePlus, ListFilter, RefreshCw, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE,
@@ -345,36 +345,25 @@ export function AdminFeedbackWidget() {
       <div
         {...feedbackTargetProps("admin.feedback-widget")}
         {...{ [ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE]: "true" }}
-        className="fixed bottom-5 right-5 z-[9999] flex items-center gap-2"
+        className="fixed bottom-5 right-5 z-[9999]"
       >
-        {isSelecting && (
-          <div className="hidden rounded-full border border-border bg-background/95 px-3 py-1.5 text-xs text-muted-foreground shadow-sm backdrop-blur md:block">
-            Click an element to file feedback. Press Esc to cancel.
-          </div>
-        )}
-        <Button
+        <button
           type="button"
-          size="sm"
           onClick={toggleSelectMode}
           className={cn(
-            "h-11 rounded-full px-4 shadow-sm",
+            "flex h-12 w-12 items-center justify-center rounded-full shadow-sm transition-all",
             isSelecting
               ? "bg-foreground text-background hover:bg-foreground/90"
               : "bg-background text-foreground border border-border hover:bg-muted",
           )}
+          aria-label={isSelecting ? "Cancel feedback" : "Feedback mode"}
         >
           {isSelecting ? (
-            <>
-              <X className="mr-2 h-4 w-4" />
-              Cancel feedback
-            </>
+            <Sparkles className="h-5 w-5" />
           ) : (
-            <>
-              <MessageSquarePlus className="mr-2 h-4 w-4" />
-              Feedback mode
-            </>
+            <ListFilter className="h-5 w-5" />
           )}
-        </Button>
+        </button>
       </div>
 
       <Dialog

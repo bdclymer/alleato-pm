@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { StatusBadge } from "@/components/ds/status-badge";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -146,11 +147,6 @@ const REQUEST_TYPE_LABELS: Record<string, string> = {
   question: "Question",
 };
 
-const SEVERITY_COLORS: Record<string, string> = {
-  high: "text-red-600 dark:text-red-400",
-  medium: "text-amber-600 dark:text-amber-400",
-  low: "text-muted-foreground",
-};
 
 const PANEL_MIN_WIDTH = 280;
 const PANEL_MAX_WIDTH = 600;
@@ -952,31 +948,29 @@ function FeedbackDetail({
           </div>
         </div>
 
-        {/* Meta — clean inline layout */}
-        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
-          <span className={cn("font-medium", STATUS_META[item.status]?.className)}>
-            {STATUS_META[item.status]?.label ?? item.status}
+        {/* Date */}
+        <p className="mt-1 text-xs text-muted-foreground">
+          {new Date(item.created_at).toLocaleDateString("en-US", {
+            month: "short",
+            day: "numeric",
+            year: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+          })}
+        </p>
+
+        {/* Meta pills */}
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          <StatusBadge status={STATUS_META[item.status]?.label ?? item.status} />
+          <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+            {REQUEST_TYPE_LABELS[item.request_type] ?? item.request_type}
           </span>
-          <span className="text-border">·</span>
-          <span>{REQUEST_TYPE_LABELS[item.request_type] ?? item.request_type}</span>
           {item.severity && (
-            <>
-              <span className="text-border">·</span>
-              <span className={cn("font-medium", SEVERITY_COLORS[item.severity])}>
-                {item.severity.charAt(0).toUpperCase() + item.severity.slice(1)}
-              </span>
-            </>
+            <StatusBadge
+              status={item.severity.charAt(0).toUpperCase() + item.severity.slice(1)}
+              variant={item.severity === "high" ? "error" : item.severity === "medium" ? "warning" : "neutral"}
+            />
           )}
-          <span className="text-border">·</span>
-          <span>
-            {new Date(item.created_at).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-              hour: "numeric",
-              minute: "2-digit",
-            })}
-          </span>
         </div>
       </div>
 
