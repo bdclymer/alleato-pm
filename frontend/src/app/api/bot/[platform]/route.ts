@@ -20,14 +20,22 @@ export async function POST(
   request: Request,
   context: { params: Promise<{ platform: string }> },
 ) {
-  const { platform } = await context.params;
+  try {
+    const { platform } = await context.params;
 
-  const handler = bot.webhooks[platform as Platform];
-  if (!handler) {
-    return new Response(`Unknown platform: ${platform}`, { status: 404 });
+    const handler = bot.webhooks[platform as Platform];
+    if (!handler) {
+      return new Response(`Unknown platform: ${platform}`, { status: 404 });
+    }
+
+    return await handler(request, {
+      waitUntil: (task: Promise<unknown>) => after(() => task),
+    });
+  } catch (error) {
+    console.error("[bot-webhook] Error:", error);
+    return new Response(
+      JSON.stringify({ error: String(error) }),
+      { status: 500, headers: { "Content-Type": "application/json" } },
+    );
   }
-
-  return handler(request, {
-    waitUntil: (task: Promise<unknown>) => after(() => task),
-  });
 }
