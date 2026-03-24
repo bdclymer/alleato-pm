@@ -17,17 +17,17 @@ export default function MainLayout({
   children: ReactNode;
 }): ReactElement {
   const pathname = usePathname();
-  const hideSiteHeader = pathname === "/team-chat";
+  const isFullBleed = pathname === "/team-chat" || pathname === "/command-center";
 
   return (
     <SidebarProvider defaultOpen={false}>
       <AppSidebar />
       <SidebarInset className="overflow-hidden">
-        {!hideSiteHeader && <SiteHeader />}
-        <main className="flex flex-1 flex-col gap-4 pl-4 pt-4 pb-4 overflow-auto min-w-0">
+        {!isFullBleed && <SiteHeader />}
+        <main className={isFullBleed ? "flex-1 min-h-0 flex flex-col" : undefined}>
           {children}
         </main>
-        <Footer />
+        {!isFullBleed && <Footer />}
       </SidebarInset>
     </SidebarProvider>
   );

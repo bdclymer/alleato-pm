@@ -139,6 +139,7 @@ export default function NewCommitmentPage() {
           ? "Create a new subcontract commitment"
           : "Create a new purchase order commitment"
       }
+      maxWidth="3xl"
       onBack={() => router.back()}
       backLabel="Back"
     >

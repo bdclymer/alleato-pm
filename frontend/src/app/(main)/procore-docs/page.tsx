@@ -581,7 +581,10 @@ export default function ProcoreDocsPage() {
 
       {/* ─── AI Chat Sheet ─── */}
       <Sheet open={chatOpen} onOpenChange={setChatOpen}>
-        <SheetContent side="right" className="flex w-full max-w-xl flex-col p-0 sm:max-w-2xl">
+        <SheetContent
+          side="right"
+          className="flex min-h-0 w-full max-w-xl flex-col p-0 sm:max-w-2xl"
+        >
           <SheetHeader className="border-b px-5 py-4">
             <div className="flex items-center gap-3">
               <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
@@ -599,7 +602,7 @@ export default function ProcoreDocsPage() {
           </SheetHeader>
 
           {/* Messages */}
-          <ScrollArea className="flex-1 px-5 py-4">
+          <ScrollArea className="min-h-0 flex-1 px-5 py-4">
             <div className="space-y-4 pb-4">
               {messages.length === 0 && (
                 <div className="py-12 text-center">

@@ -8,6 +8,8 @@ import { FavoritesProvider } from "@/contexts/favorites-context";
 import { Toaster } from "@/components/ui/sonner";
 import { DevAutoFillForms } from "@/components/dev/DevAutoFillForms";
 import { AgentationThemeSync } from "@/components/dev/AgentationThemeSync";
+import { DevAnnotationOverlay } from "@/components/dev/dev-annotation-overlay";
+import { DesignViolationOverlay } from "@/components/dev/design-violation-overlay";
 import { Providers } from "./Providers";
 import { Agentation } from "agentation";
 import "./globals.css";
@@ -72,6 +74,9 @@ export default function RootLayout({
           <>
             <AgentationThemeSync />
             <Agentation />
+            <DesignViolationOverlay />
+            {/* DevAnnotationOverlay disabled — Agentation MCP already handles this workflow */}
+            {/* <DevAnnotationOverlay /> */}
           </>
         )}
       </body>

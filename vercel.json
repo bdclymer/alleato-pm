@@ -1,5 +1,9 @@
 {
   "framework": "nextjs",
   "installCommand": "pnpm install",
-  "buildCommand": "NODE_OPTIONS='--max-old-space-size=7168' pnpm run build"
+  "buildCommand": "NODE_OPTIONS='--max-old-space-size=7168' pnpm run build",
+  "crons": [
+    { "path": "/api/cron/decay-memories", "schedule": "0 4 * * 0" },
+    { "path": "/api/cron/daily-flags", "schedule": "0 6 * * *" }
+  ]
 }

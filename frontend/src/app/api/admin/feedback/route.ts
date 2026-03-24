@@ -425,3 +425,140 @@ export async function POST(request: Request) {
     });
   }
 }
+
+// ---------------------------------------------------------------------------
+// GET — List feedback items with optional filters
+// ---------------------------------------------------------------------------
+
+const listQuerySchema = z.object({
+  status: z.string().optional(),
+  requestType: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(200).optional(),
+  offset: z.coerce.number().int().min(0).optional(),
+});
+
+export async function GET(request: Request) {
+  try {
+    const requestUser = await requireAdminUser();
+    if (!requestUser) {
+      return jsonError(403, {
+        error: "Admin access required",
+        hint: "Only admin users can view production feedback.",
+      });
+    }
+
+    const url = new URL(request.url);
+    const parsed = listQuerySchema.safeParse(
+      Object.fromEntries(url.searchParams),
+    );
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid query parameters", details: parsed.error.flatten() },
+        { status: 400 },
+      );
+    }
+
+    const { status, requestType, limit = 100, offset = 0 } = parsed.data;
+    const serviceSupabase = createServiceClient();
+
+    let query = serviceSupabase
+      .from("admin_feedback_items")
+      .select(
+        "id, created_at, updated_at, created_by, project_id, page_url, page_path, page_title, target_id, target_selector, target_text, target_tag, dom_path, target_rect, title, comment, request_type, severity, status, screenshot_url, screenshot_path, github_issue_number, github_issue_url, github_issue_state, metadata",
+        { count: "exact" },
+      )
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (status) {
+      const statuses = status.split(",").map((s) => s.trim()).filter(Boolean);
+      if (statuses.length === 1) {
+        query = query.eq("status", statuses[0]);
+      } else if (statuses.length > 1) {
+        query = query.in("status", statuses);
+      }
+    }
+
+    if (requestType) {
+      query = query.eq("request_type", requestType);
+    }
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      const details = toErrorDetails(error);
+      return jsonError(500, {
+        error: "Failed to fetch feedback items",
+        code: details.code,
+        details: details.message,
+      });
+    }
+
+    return NextResponse.json({ items: data ?? [], total: count ?? 0 });
+  } catch (error) {
+    console.error("[AdminFeedback] List failed", error);
+    const message =
+      error instanceof Error ? error.message : "Failed to list feedback";
+    return jsonError(500, { error: "Failed to list feedback", details: message });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// PATCH — Update feedback item status
+// ---------------------------------------------------------------------------
+
+const patchSchema = z.object({
+  id: z.string().uuid(),
+  status: z.enum(["open", "submitted", "github_failed", "closed"]).optional(),
+  title: z.string().trim().min(1).max(200).optional(),
+});
+
+export async function PATCH(request: Request) {
+  try {
+    const requestUser = await requireAdminUser();
+    if (!requestUser) {
+      return jsonError(403, {
+        error: "Admin access required",
+        hint: "Only admin users can update feedback.",
+      });
+    }
+
+    const body = await request.json();
+    const parsed = patchSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid payload", details: parsed.error.flatten() },
+        { status: 400 },
+      );
+    }
+
+    const { id, ...updates } = parsed.data;
+    if (Object.keys(updates).length === 0) {
+      return jsonError(400, { error: "No fields to update" });
+    }
+
+    const serviceSupabase = createServiceClient();
+    const { data, error } = await serviceSupabase
+      .from("admin_feedback_items")
+      .update(updates)
+      .eq("id", id)
+      .select("id, status, title")
+      .single();
+
+    if (error) {
+      const details = toErrorDetails(error);
+      return jsonError(500, {
+        error: "Failed to update feedback item",
+        code: details.code,
+        details: details.message,
+      });
+    }
+
+    return NextResponse.json({ item: data });
+  } catch (error) {
+    console.error("[AdminFeedback] Patch failed", error);
+    const message =
+      error instanceof Error ? error.message : "Failed to update feedback";
+    return jsonError(500, { error: "Failed to update feedback", details: message });
+  }
+}

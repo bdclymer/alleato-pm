@@ -788,7 +788,7 @@ export function CreateSubcontractForm({
           </Alert>
         )}
 
-        <div className="max-w-4xl space-y-8">
+        <div className="space-y-8">
 
         {/* General Information Section */}
         <section className="space-y-6 border-b border-border/70 pb-8">

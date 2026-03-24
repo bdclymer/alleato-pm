@@ -173,7 +173,7 @@ export function DocsChat() {
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetContent
           side="right"
-          className="flex flex-col p-0"
+          className="flex min-h-0 flex-col p-0"
           style={{ width: `${width}px`, maxWidth: "100vw" }}
         >
           {/* Resize Handle */}
@@ -203,7 +203,7 @@ export function DocsChat() {
           </SheetHeader>
 
           {/* Messages Area */}
-          <ScrollArea className="flex-1 px-6 py-4">
+          <ScrollArea className="min-h-0 flex-1 px-6 py-4">
             <div className="space-y-6 pb-4">
               {messages.length === 0 && (
                 <div className="text-center text-muted-foreground py-16">

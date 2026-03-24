@@ -36,6 +36,37 @@ const nextConfig: NextConfig = {
   },
   // Set the workspace root to silence Next.js warning about multiple lockfiles
   outputFileTracingRoot: path.join(__dirname, "../"),
+  outputFileTracingExcludes: {
+    // Exclude ALL non-frontend directories from every serverless function.
+    // outputFileTracingRoot is ../ (repo root), so everything at the repo
+    // level is a candidate for tracing. Only the frontend/ runtime code
+    // should be bundled — everything else is dev-only or irrelevant.
+    "/*": [
+      "../_bmad/**",
+      "../_bmad-output/**",
+      "../backend/**",
+      "../docs/**",
+      "../docs-ai/**",
+      "../dogfood-output/**",
+      "../e2e-screenshots/**",
+      "../logs/**",
+      "../memories/**",
+      "../node_modules/**",
+      "../output/**",
+      "../procore-crawls/**",
+      "../procore-templates/**",
+      "../scripts/**",
+      "../supabase/**",
+      "../tests/**",
+      "../tools/**",
+      "../tmp/**",
+      "../verify-output/**",
+      "../vermillian/**",
+      "./config/playwright/**",
+      "./playwright-report/**",
+      "./tests/**",
+    ],
+  },
   // Security headers (OWASP best practices)
   async headers() {
     return [

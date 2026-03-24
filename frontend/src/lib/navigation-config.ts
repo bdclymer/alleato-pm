@@ -20,6 +20,7 @@ import {
   FolderOpen,
   Hammer,
   Home,
+  LayoutDashboard,
   Mail,
   MessageCircle,
   Package,
@@ -201,6 +202,14 @@ export interface SidebarNavGroup {
 }
 
 export const sidebarNavGroups: SidebarNavGroup[] = [
+  {
+    id: "command",
+    label: "Command Center",
+    icon: LayoutDashboard,
+    tools: [
+      { name: "Command Center", path: "/command-center", icon: LayoutDashboard, requiresProject: false },
+    ],
+  },
   {
     id: "financial",
     label: "Financial",

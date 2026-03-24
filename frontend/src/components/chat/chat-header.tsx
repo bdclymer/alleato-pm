@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  Menu,
-  Hash,
-  Search,
-  Users,
-  MoreVertical,
-  MessageSquare,
-} from "lucide-react";
+import { Hash, Menu, MessageSquare, MoreVertical, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -29,26 +22,26 @@ export function ChatHeader({
   isConnected,
 }: ChatHeaderProps) {
   return (
-    <div className="h-14 border-b border-[hsl(var(--chat-border))] bg-[hsl(var(--chat-panel))]/80 backdrop-blur-sm flex items-center px-4 gap-4">
+    <div className="h-14 border-b border-border bg-background/80 backdrop-blur-sm flex items-center px-4 gap-4">
       {/* Mobile Menu Button */}
       <Button
         variant="ghost"
         size="icon"
         onClick={onToggleSidebar}
-        className="md:hidden text-[hsl(var(--chat-muted))] hover:text-[hsl(var(--chat-text))] hover:bg-[hsl(var(--chat-hover))]"
+        className="md:hidden text-muted-foreground hover:text-foreground"
       >
         <Menu className="h-5 w-5" />
       </Button>
 
       {/* Channel Name */}
       <div className="flex items-center gap-2 flex-1 min-w-0">
-        <Hash className="h-5 w-5 text-[hsl(var(--chat-muted))] shrink-0" />
+        <Hash className="h-5 w-5 text-muted-foreground shrink-0" />
         <div className="min-w-0">
-          <h2 className="text-base font-semibold text-[hsl(var(--chat-text))] truncate">
+          <h2 className="text-base font-semibold text-foreground truncate">
             {channelName}
           </h2>
           {topic && (
-            <p className="text-xs text-[hsl(var(--chat-muted))] truncate hidden sm:block">
+            <p className="text-xs text-muted-foreground truncate hidden sm:block">
               {topic}
             </p>
           )}
@@ -60,10 +53,10 @@ export function ChatHeader({
         <span
           className={cn(
             "h-2 w-2 rounded-full",
-            isConnected ? "bg-green-500" : "bg-muted0",
+            isConnected ? "bg-green-500" : "bg-muted-foreground",
           )}
         />
-        <span className="text-xs text-[hsl(var(--chat-muted))] hidden sm:inline">
+        <span className="text-xs text-muted-foreground hidden sm:inline">
           {isConnected ? "Connected" : "Connecting..."}
         </span>
       </div>
@@ -73,7 +66,7 @@ export function ChatHeader({
         <Button
           variant="ghost"
           size="icon"
-          className="text-[hsl(var(--chat-muted))] hover:text-[hsl(var(--chat-text))] hover:bg-[hsl(var(--chat-hover))] hidden sm:flex"
+          className="hidden sm:flex text-muted-foreground hover:text-foreground"
         >
           <Search className="h-4 w-4" />
         </Button>
@@ -82,7 +75,7 @@ export function ChatHeader({
           variant="ghost"
           size="icon"
           onClick={onToggleRightPanel}
-          className="text-[hsl(var(--chat-muted))] hover:text-[hsl(var(--chat-text))] hover:bg-[hsl(var(--chat-hover))]"
+          className="text-muted-foreground hover:text-foreground"
         >
           <MessageSquare className="h-4 w-4" />
         </Button>
@@ -90,7 +83,7 @@ export function ChatHeader({
         <Button
           variant="ghost"
           size="icon"
-          className="text-[hsl(var(--chat-muted))] hover:text-[hsl(var(--chat-text))] hover:bg-[hsl(var(--chat-hover))]"
+          className="text-muted-foreground hover:text-foreground"
         >
           <MoreVertical className="h-4 w-4" />
         </Button>
