@@ -1,4 +1,3 @@
-npm warn exec The following package was not found and will be installed: supabase@2.84.0
 export type Json =
   | string
   | number
@@ -1373,6 +1372,7 @@ export type Database = {
       }
       admin_feedback_items: {
         Row: {
+          agent_context: Json | null
           comment: string
           created_at: string
           created_by: string
@@ -1397,9 +1397,11 @@ export type Database = {
           target_tag: string | null
           target_text: string | null
           title: string
+          tool_id: number | null
           updated_at: string
         }
         Insert: {
+          agent_context?: Json | null
           comment: string
           created_at?: string
           created_by: string
@@ -1424,9 +1426,11 @@ export type Database = {
           target_tag?: string | null
           target_text?: string | null
           title: string
+          tool_id?: number | null
           updated_at?: string
         }
         Update: {
+          agent_context?: Json | null
           comment?: string
           created_at?: string
           created_by?: string
@@ -1451,6 +1455,7 @@ export type Database = {
           target_tag?: string | null
           target_text?: string | null
           title?: string
+          tool_id?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -1508,6 +1513,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_feedback_items_tool_id_fkey"
+            columns: ["tool_id"]
+            isOneToOne: false
+            referencedRelation: "procore_tools"
             referencedColumns: ["id"]
           },
         ]

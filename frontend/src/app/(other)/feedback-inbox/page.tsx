@@ -11,15 +11,19 @@ import {
   ArrowLeft,
   ArrowUpRight,
   CheckCircle2,
+  ChevronDown,
   Circle,
   Clock,
   Copy,
   ExternalLink,
   GitBranch,
   GripVertical,
+  Link2,
   Loader2,
   MessageSquare,
+  Play,
   Send,
+  Wrench,
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -893,6 +897,283 @@ function useResizablePanel() {
 }
 
 // ---------------------------------------------------------------------------
+// Tool Context Section
+// ---------------------------------------------------------------------------
+
+type ToolOption = { id: number; name: string; slug: string; category: string };
+type ToolContextData = {
+  tool_name: string;
+  procore_url: string | null;
+  prp_path: string | null;
+  research_folder: string;
+  manifest_path: string;
+  crawl_command: string;
+};
+
+function ToolContextSection({ item }: { item: FeedbackItem }) {
+  const [tools, setTools] = useState<ToolOption[]>([]);
+  const [assignedToolId, setAssignedToolId] = useState<number | null>(null);
+  const [context, setContext] = useState<ToolContextData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [crawling, setCrawling] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Load tools list and auto-match on mount
+  useEffect(() => {
+    let cancelled = false;
+
+    async function init() {
+      setLoading(true);
+      try {
+        // Fetch tools list and auto-match in parallel
+        const [toolsRes, matchRes] = await Promise.all([
+          fetch("/api/admin/feedback/tools?action=list"),
+          fetch(`/api/admin/feedback/tools?action=match&feedbackId=${item.id}`),
+        ]);
+
+        if (cancelled) return;
+
+        if (toolsRes.ok) {
+          const data = await toolsRes.json();
+          setTools(data.tools ?? []);
+        }
+
+        if (matchRes.ok) {
+          const data = await matchRes.json();
+          if (data.match) {
+            setAssignedToolId(data.match.id);
+            setContext(data.context ?? null);
+          }
+        }
+      } catch {
+        // Non-fatal
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    init();
+    return () => { cancelled = true; };
+  }, [item.id]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!showDropdown) return;
+    function handleClick(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [showDropdown]);
+
+  async function handleAssign(toolId: number) {
+    setShowDropdown(false);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/feedback/tools", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ feedbackId: item.id, toolId }),
+      });
+      if (res.ok) {
+        setAssignedToolId(toolId);
+        // Fetch resolved context
+        const ctxRes = await fetch(`/api/admin/feedback/tools?action=resolve&toolId=${toolId}`);
+        if (ctxRes.ok) {
+          const data = await ctxRes.json();
+          setContext(data.context ?? null);
+        }
+        toast.success("Tool assigned");
+      }
+    } catch {
+      toast.error("Failed to assign tool");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleAutoMatch() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/feedback/tools", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ feedbackId: item.id, toolId: null, auto: true }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const newToolId = data.item?.tool_id;
+        setAssignedToolId(newToolId ?? null);
+        if (newToolId) {
+          const ctxRes = await fetch(`/api/admin/feedback/tools?action=resolve&toolId=${newToolId}`);
+          if (ctxRes.ok) {
+            const ctxData = await ctxRes.json();
+            setContext(ctxData.context ?? null);
+          }
+          toast.success("Tool auto-matched");
+        } else {
+          setContext(null);
+          toast("No matching tool found", { description: "Assign one manually." });
+        }
+      }
+    } catch {
+      toast.error("Auto-match failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleCrawl() {
+    if (!context) return;
+    const slug = tools.find((t) => t.id === assignedToolId)?.slug;
+    if (!slug) return;
+
+    setCrawling(true);
+    try {
+      const res = await fetch("/api/admin/feedback/crawl", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug }),
+      });
+      if (res.ok) {
+        toast.success("Procore crawl complete", { description: `Manifest saved for ${slug}` });
+      } else {
+        const data = await res.json().catch(() => null);
+        toast.error("Crawl failed", { description: data?.hint ?? data?.error ?? "Unknown error" });
+      }
+    } catch {
+      toast.error("Crawl request failed");
+    } finally {
+      setCrawling(false);
+    }
+  }
+
+  const assignedTool = tools.find((t) => t.id === assignedToolId);
+
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-3">
+        Tool Context
+      </p>
+
+      {/* Tool assignment */}
+      <div className="flex items-center gap-2 mb-3">
+        <div className="relative" ref={dropdownRef}>
+          <button
+            type="button"
+            onClick={() => setShowDropdown(!showDropdown)}
+            disabled={loading}
+            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+          >
+            <Wrench className="h-3 w-3 text-muted-foreground" />
+            {assignedTool ? assignedTool.name : "Assign tool..."}
+            <ChevronDown className="h-3 w-3 text-muted-foreground" />
+          </button>
+
+          {showDropdown && (
+            <div className="absolute left-0 top-full z-50 mt-1 max-h-60 w-56 overflow-y-auto rounded-md border border-border bg-popover p-1 shadow-md">
+              {tools.map((tool) => (
+                <button
+                  key={tool.id}
+                  type="button"
+                  onClick={() => handleAssign(tool.id)}
+                  className={cn(
+                    "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs transition-colors hover:bg-muted",
+                    tool.id === assignedToolId && "bg-primary/10 text-primary",
+                  )}
+                >
+                  <span className="truncate">{tool.name}</span>
+                  <span className="ml-auto text-[10px] text-muted-foreground">{tool.category}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <button
+          type="button"
+          onClick={handleAutoMatch}
+          disabled={loading}
+          className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+          title="Auto-detect tool from feedback content"
+        >
+          {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3" />}
+          Auto-match
+        </button>
+      </div>
+
+      {/* Resolved context */}
+      {context && (
+        <div className="space-y-1.5 rounded-md border border-border bg-muted/30 p-3">
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-muted-foreground w-20 shrink-0">Tool</span>
+            <span className="font-medium text-foreground">{context.tool_name}</span>
+          </div>
+          {context.procore_url && (
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-muted-foreground w-20 shrink-0">Procore</span>
+              <a
+                href={context.procore_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="truncate font-mono text-[11px] text-primary hover:underline flex items-center gap-1"
+              >
+                <Link2 className="h-3 w-3 shrink-0" />
+                {context.procore_url.replace(/https?:\/\/[^/]+/, "")}
+              </a>
+            </div>
+          )}
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-muted-foreground w-20 shrink-0">PRP</span>
+            <code className="truncate rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-foreground">
+              {context.prp_path}
+            </code>
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-muted-foreground w-20 shrink-0">Research</span>
+            <code className="truncate rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-foreground">
+              {context.research_folder}
+            </code>
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-muted-foreground w-20 shrink-0">Manifest</span>
+            <code className="truncate rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-foreground">
+              {context.manifest_path}
+            </code>
+          </div>
+
+          {/* Crawl button */}
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={handleCrawl}
+              disabled={crawling}
+              className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2.5 py-1.5 text-xs font-medium text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
+            >
+              {crawling ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Play className="h-3 w-3" />
+              )}
+              {crawling ? "Crawling Procore..." : "Crawl Procore"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {!context && !loading && (
+        <p className="text-xs text-muted-foreground">
+          No tool matched. Assign one manually or click Auto-match.
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Detail Panel (shared between desktop and mobile)
 // ---------------------------------------------------------------------------
 
@@ -1046,6 +1327,9 @@ function FeedbackDetail({
           )}
         </div>
       </div>
+
+      {/* Tool Context */}
+      <ToolContextSection item={item} />
 
       {/* Actions */}
       <div className="flex items-center gap-2 pt-2">

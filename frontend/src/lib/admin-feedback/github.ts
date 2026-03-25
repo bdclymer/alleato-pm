@@ -2,6 +2,7 @@ import type {
   AdminFeedbackRequestType,
   AdminFeedbackSeverity,
 } from "./constants";
+import type { ToolContextBundle } from "./context-resolver";
 
 type GitHubIssuePayload = {
   title: string;
@@ -25,6 +26,8 @@ export type CreateGitHubIssueInput = {
   screenshotUrl: string | null;
   projectId: number | null;
   metadata: Record<string, unknown>;
+  /** Resolved tool context bundle — included when a tool match exists */
+  toolContext?: ToolContextBundle | null;
 };
 
 export type CreatedGitHubIssue = {
@@ -96,6 +99,43 @@ function buildIssueBody(input: CreateGitHubIssueInput) {
 
   if (input.screenshotUrl) {
     lines.push("", `## Screenshot`, `![Feedback screenshot](${input.screenshotUrl})`);
+  }
+
+  // Append tool context for agents if a tool was matched
+  if (input.toolContext) {
+    const ctx = input.toolContext;
+    lines.push(
+      "",
+      "## Agent Context",
+      "",
+      `**Matched Tool:** ${ctx.tool_name} (${ctx.tool_category})`,
+    );
+
+    if (ctx.tool_description) {
+      lines.push(`**Description:** ${ctx.tool_description}`);
+    }
+
+    if (ctx.procore_url) {
+      lines.push(`**Procore URL:** ${ctx.procore_url}`);
+    }
+
+    lines.push(
+      `**PRP:** \`${ctx.prp_path}\``,
+      `**Research Folder:** \`${ctx.research_folder}\``,
+      `**Crawl Manifest:** \`${ctx.manifest_path}\``,
+      `**Screenshots:** \`${ctx.screenshots_folder}\``,
+      "",
+      "### Resolution Steps",
+      "",
+      ...ctx.resolution_steps,
+      "",
+      "### If More Detail Is Needed",
+      "",
+      "Run the Procore deep crawl to capture the latest field-level data:",
+      "```bash",
+      ctx.crawl_command,
+      "```",
+    );
   }
 
   lines.push(

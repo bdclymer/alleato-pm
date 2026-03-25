@@ -7,6 +7,8 @@ import {
   ADMIN_FEEDBACK_SEVERITIES,
 } from "@/lib/admin-feedback/constants";
 import { createGitHubIssue } from "@/lib/admin-feedback/github";
+import { matchFeedbackToTool, getToolById } from "@/lib/admin-feedback/tool-matcher";
+import { resolveToolContext, contextToAgentPayload } from "@/lib/admin-feedback/context-resolver";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import type { Database } from "@/types/database.types";
@@ -309,6 +311,13 @@ export async function POST(request: Request) {
       payload.pageTitle,
     );
 
+    // Auto-match to a procore_tools row
+    const matchedTool = await matchFeedbackToTool(title, payload.comment);
+    const toolContext = matchedTool ? resolveToolContext(matchedTool) : null;
+    const agentContext = toolContext
+      ? toJsonValue(contextToAgentPayload(toolContext))
+      : null;
+
     const insertPayload: FeedbackInsert = {
       created_by: requestUser.id,
       project_id: payload.projectId ?? null,
@@ -329,6 +338,8 @@ export async function POST(request: Request) {
       screenshot_path: screenshotPath,
       screenshot_url: screenshotUrl,
       metadata,
+      ...(matchedTool ? { tool_id: matchedTool.id } : {}),
+      ...(agentContext ? { agent_context: agentContext } : {}),
     };
 
     const serviceSupabase = createServiceClient();
@@ -376,6 +387,7 @@ export async function POST(request: Request) {
         screenshotUrl,
         projectId: payload.projectId ?? null,
         metadata: payload.metadata ?? {},
+        toolContext,
       });
     } catch (error) {
       githubWarning =
@@ -464,7 +476,7 @@ export async function GET(request: Request) {
     let query = serviceSupabase
       .from("admin_feedback_items")
       .select(
-        "id, created_at, updated_at, created_by, project_id, page_url, page_path, page_title, target_id, target_selector, target_text, target_tag, dom_path, target_rect, title, comment, request_type, severity, status, screenshot_url, screenshot_path, github_issue_number, github_issue_url, github_issue_state, metadata",
+        "id, created_at, updated_at, created_by, project_id, page_url, page_path, page_title, target_id, target_selector, target_text, target_tag, dom_path, target_rect, title, comment, request_type, severity, status, screenshot_url, screenshot_path, github_issue_number, github_issue_url, github_issue_state, metadata, tool_id, agent_context",
         { count: "exact" },
       )
       .order("created_at", { ascending: false })
@@ -612,6 +624,22 @@ export async function PUT(request: Request) {
       });
     }
 
+    // Resolve tool context if a tool is assigned
+    let sendToolContext = null;
+    const itemToolId = (item as Record<string, unknown>).tool_id;
+    if (typeof itemToolId === "number") {
+      const tool = await getToolById(itemToolId);
+      if (tool) {
+        sendToolContext = resolveToolContext(tool);
+      }
+    } else {
+      // Try auto-matching if no tool assigned
+      const autoMatch = await matchFeedbackToTool(item.title, item.comment);
+      if (autoMatch) {
+        sendToolContext = resolveToolContext(autoMatch);
+      }
+    }
+
     // Create GitHub issue
     const githubIssue = await createGitHubIssue({
       title: item.title,
@@ -629,6 +657,7 @@ export async function PUT(request: Request) {
       screenshotUrl: item.screenshot_url ?? null,
       projectId: item.project_id ?? null,
       metadata: (item.metadata as Record<string, unknown>) ?? {},
+      toolContext: sendToolContext,
     });
 
     if (!githubIssue) {
