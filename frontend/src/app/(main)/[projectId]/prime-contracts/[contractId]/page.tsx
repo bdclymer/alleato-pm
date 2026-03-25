@@ -1643,7 +1643,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
       title: contract.title,
       status: contract.status,
       executed: contract.executed,
-      ownerCompanyId: contract.contract_company_id || undefined,
+      ownerCompanyId: contract.client_id || contract.contract_company_id || undefined,
       contractorId: contract.contractor_id || undefined,
       architectEngineerId: contract.architect_engineer_id || undefined,
       contractCompanyId: contract.contract_company_id || undefined,
