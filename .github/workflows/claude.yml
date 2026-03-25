@@ -11,7 +11,33 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  claude:
+  # Automatic PR review on every PR open/update
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            Review this pull request. Analyze the diff and provide a concise code review focusing on:
+            1. Bugs or logic errors
+            2. Security concerns
+            3. Performance issues
+            4. Code quality and maintainability
+
+            Be concise. Only flag real issues — skip style nitpicks and minor formatting.
+            If the PR looks good, say so briefly.
+
+  # On-demand @claude interaction in issues and PR comments
+  assist:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -19,12 +45,13 @@ jobs:
       pull-requests: write
       issues: write
     if: |
-      (github.event_name == 'pull_request') ||
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'claude'))
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
