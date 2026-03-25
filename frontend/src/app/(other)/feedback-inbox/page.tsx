@@ -1571,6 +1571,7 @@ export default function FeedbackInboxPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [sendingToGitHub, setSendingToGitHub] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [mobileShowDetail, setMobileShowDetail] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(0);
 
@@ -1741,6 +1742,29 @@ export default function FeedbackInboxPage() {
     }
   }
 
+  // ---- Delete ----
+  async function deleteItem(id: string) {
+    setDeletingId(id);
+    try {
+      const res = await fetch("/api/admin/feedback", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (!res.ok) throw new Error("Delete failed");
+      toast.success("Feedback item deleted");
+      if (selectedId === id) {
+        setSelectedId(null);
+        setMobileShowDetail(false);
+      }
+      fetchItems();
+    } catch {
+      toast.error("Failed to delete feedback item");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   // ---- Select item ----
   function selectItem(id: string) {
     setSelectedId(id);
@@ -1841,6 +1865,7 @@ export default function FeedbackInboxPage() {
                     item={item}
                     onUpdateStatus={updateStatus}
                     onSendToGitHub={sendToGitHub}
+                    onDelete={deleteItem}
                   >
                     <button
                       type="button"
@@ -1895,6 +1920,9 @@ export default function FeedbackInboxPage() {
                             {item.status === "submitted" && (
                               <ArrowUpRight className="h-2.5 w-2.5" />
                             )}
+                            {item.status === "resolved" && (
+                              <ShieldCheck className="h-2.5 w-2.5" />
+                            )}
                             {meta.label}
                           </div>
                         )}
@@ -1943,8 +1971,10 @@ export default function FeedbackInboxPage() {
               item={selected}
               updatingId={updatingId}
               sendingToGitHub={sendingToGitHub}
+              deletingId={deletingId}
               onUpdateStatus={updateStatus}
               onSendToGitHub={sendToGitHub}
+              onDelete={deleteItem}
               commentInputRef={commentInputRef}
             />
           )}
@@ -1959,6 +1989,8 @@ export default function FeedbackInboxPage() {
               sendingToGitHub={sendingToGitHub}
               onUpdateStatus={updateStatus}
               onSendToGitHub={sendToGitHub}
+              deletingId={deletingId}
+              onDelete={deleteItem}
               onBack={handleMobileBack}
               commentInputRef={commentInputRef}
             />
