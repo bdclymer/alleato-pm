@@ -446,11 +446,11 @@ export function ProjectCommandCenter({
               Contract Value
             </span>
             <span className="text-xl font-semibold tabular-nums tracking-tight text-foreground">
-              {fmtCompact(contractValue)}
+              {fmtFull(contractValue)}
             </span>
             {approvedCOTotal > 0 && (
               <p className="text-xs text-muted-foreground mt-0.5">
-                +{fmtCompact(approvedCOTotal)} in COs
+                +{fmtFull(approvedCOTotal)} in COs
               </p>
             )}
             <Link
@@ -471,7 +471,7 @@ export function ProjectCommandCenter({
             ) : (
               <>
                 <span className="text-xl font-semibold tabular-nums tracking-tight text-foreground">
-                  {fmtCompact(revisedBudget)}
+                  {fmtFull(revisedBudget)}
                 </span>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {spendPct}% spent
