@@ -253,6 +253,9 @@ def run_graph_sync(supabase: Client) -> dict:
             logger.info("[GraphSync] Embedding complete: %s", embed_result)
         except Exception as e:
             logger.error("[GraphSync] Embedding step failed: %s", e)
+            summary["errors"].append(f"Embedding failed: {e}")
             summary["embed"] = {"error": str(e)}
 
-    return {"status": "complete", "total_synced": total, **summary}
+    # Report status accurately — "complete" only if no errors
+    status = "complete" if not summary["errors"] else "complete_with_errors"
+    return {"status": status, "total_synced": total, **summary}

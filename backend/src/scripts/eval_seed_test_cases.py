@@ -137,6 +137,119 @@ SEED_TEST_CASES = [
 ]
 
 
+# ---------------------------------------------------------------------------
+# Integration-specific test cases
+# These force the agent to use specific data source tools and verify they
+# return actual data. If a source is down (like Outlook after March 20),
+# these tests will fail — unlike the broad strategic questions above.
+# ---------------------------------------------------------------------------
+
+INTEGRATION_TEST_CASES = [
+    {
+        "name": "[Integration] Outlook email search",
+        "category": "integration_outlook",
+        "query": "Search my emails for the most recent messages from this week. What are the latest email threads?",
+        "should_identify": [
+            "specific email subjects with dates",
+            "sender names and email addresses",
+            "actual email content from recent days",
+        ],
+        "should_recommend": [],
+        "should_not_miss": [
+            "at least one email from the current week or past 7 days",
+            "specific dates on the emails (not vague references)",
+        ],
+        "scoring_method": "llm_judge",
+        "pass_threshold": 0.70,
+    },
+    {
+        "name": "[Integration] Teams message search",
+        "category": "integration_teams",
+        "query": "What are the most recent Teams messages or channel discussions? Show me what's been discussed in Teams this week.",
+        "should_identify": [
+            "specific Teams channel names",
+            "message content with dates",
+            "participants in the discussions",
+        ],
+        "should_recommend": [],
+        "should_not_miss": [
+            "at least one Teams message from the current week or past 7 days",
+            "the channel or chat where the message was posted",
+        ],
+        "scoring_method": "llm_judge",
+        "pass_threshold": 0.70,
+    },
+    {
+        "name": "[Integration] Meeting transcript search",
+        "category": "integration_transcripts",
+        "query": "What meetings happened in the last two weeks? Give me details from the most recent meeting transcripts.",
+        "should_identify": [
+            "specific meeting titles with dates",
+            "meeting participants by name",
+            "key discussion points from transcript content",
+        ],
+        "should_recommend": [],
+        "should_not_miss": [
+            "at least one meeting from the past 14 days with actual transcript content",
+            "action items or decisions from the meetings if any were discussed",
+        ],
+        "scoring_method": "llm_judge",
+        "pass_threshold": 0.70,
+    },
+    {
+        "name": "[Integration] SQL/database project query",
+        "category": "integration_sql",
+        "query": "List all active projects with their current budget status. I want to see project names, total budgets, and committed costs.",
+        "should_identify": [
+            "specific project names from the database",
+            "actual dollar amounts for budgets",
+            "committed cost figures per project",
+        ],
+        "should_recommend": [],
+        "should_not_miss": [
+            "at least 2 real project names (not made up)",
+            "numerical budget figures with dollar amounts",
+        ],
+        "scoring_method": "llm_judge",
+        "pass_threshold": 0.70,
+    },
+    {
+        "name": "[Integration] Semantic search across all sources",
+        "category": "integration_semantic",
+        "query": "Search across all sources — emails, Teams, meetings, and documents — for anything related to scheduling or timeline concerns. What's the most recent information from each source?",
+        "should_identify": [
+            "results from multiple distinct source types (not just one)",
+            "specific dates showing recency of each source",
+            "content from at least 2 different source types",
+        ],
+        "should_recommend": [],
+        "should_not_miss": [
+            "must cite which source type each piece of information came from",
+            "must include at least 2 of: email, Teams, meeting transcript, document",
+        ],
+        "scoring_method": "llm_judge",
+        "pass_threshold": 0.70,
+    },
+    {
+        "name": "[Integration] Monica/CRM contact lookup",
+        "category": "integration_contacts",
+        "query": "Who are the key people on our projects? Give me names, roles, and contact information for our project team members.",
+        "should_identify": [
+            "real person names from the directory",
+            "job titles or project roles",
+            "email addresses or contact details",
+        ],
+        "should_recommend": [],
+        "should_not_miss": [
+            "at least 3 real team member names",
+            "their roles or titles on specific projects",
+        ],
+        "scoring_method": "llm_judge",
+        "pass_threshold": 0.70,
+    },
+]
+
+
 def get_supabase():
     url = os.environ.get("SUPABASE_URL") or os.environ.get("NEXT_PUBLIC_SUPABASE_URL")
     key = os.environ.get("SUPABASE_SERVICE_ROLE_KEY") or os.environ.get("SUPABASE_SERVICE_KEY")
@@ -146,10 +259,14 @@ def get_supabase():
     return create_client(url, key, ClientOptions(postgrest_client_timeout=60))
 
 
-def seed_test_cases(supabase, dry_run: bool = False) -> int:
+def seed_test_cases(supabase, dry_run: bool = False, include_integration: bool = True) -> int:
     """Insert seed test cases into eval_test_cases table."""
+    all_cases = list(SEED_TEST_CASES)
+    if include_integration:
+        all_cases.extend(INTEGRATION_TEST_CASES)
+
     inserted = 0
-    for tc in SEED_TEST_CASES:
+    for tc in all_cases:
         row = {
             "name": tc["name"],
             "category": tc["category"],
