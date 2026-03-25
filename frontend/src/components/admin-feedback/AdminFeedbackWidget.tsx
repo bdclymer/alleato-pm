@@ -83,20 +83,39 @@ async function captureTargetScreenshot(target: HTMLElement) {
   );
   const cropHeight = Math.max(rect.height + padding * 2, 220);
 
-  const canvas = await html2canvas(document.body, {
-    backgroundColor: "#ffffff",
-    scale: Math.min(window.devicePixelRatio || 1, 2),
-    logging: false,
-    useCORS: true,
-    x: cropX,
-    y: cropY,
-    width: cropWidth,
-    height: cropHeight,
-    windowWidth: document.documentElement.scrollWidth,
-    windowHeight: document.documentElement.scrollHeight,
+  // Hide overlays (dialog, feedback widget) during capture
+  const overlays = document.querySelectorAll(
+    `[${ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE}], [data-radix-dialog-overlay], [role="dialog"]`,
+  );
+  const hidden: { el: HTMLElement; prev: string }[] = [];
+  overlays.forEach((el) => {
+    if (el instanceof HTMLElement) {
+      hidden.push({ el, prev: el.style.visibility });
+      el.style.visibility = "hidden";
+    }
   });
 
-  return canvas.toDataURL("image/png");
+  try {
+    const canvas = await html2canvas(document.body, {
+      backgroundColor: "#ffffff",
+      scale: Math.min(window.devicePixelRatio || 1, 2),
+      logging: false,
+      useCORS: true,
+      x: cropX,
+      y: cropY,
+      width: cropWidth,
+      height: cropHeight,
+      windowWidth: document.documentElement.scrollWidth,
+      windowHeight: document.documentElement.scrollHeight,
+    });
+
+    return canvas.toDataURL("image/png");
+  } finally {
+    // Restore overlays
+    hidden.forEach(({ el, prev }) => {
+      el.style.visibility = prev;
+    });
+  }
 }
 
 export function AdminFeedbackWidget() {
@@ -212,6 +231,18 @@ export function AdminFeedbackWidget() {
       isCancelled = true;
     };
   }, [dialogOpen, selectedElement]);
+
+  // Set cursor to crosshair when selecting
+  useEffect(() => {
+    if (isSelecting) {
+      document.body.style.cursor = "crosshair";
+    } else {
+      document.body.style.cursor = "";
+    }
+    return () => {
+      document.body.style.cursor = "";
+    };
+  }, [isSelecting]);
 
   if (isLoading || !isAdmin) {
     return null;
@@ -345,8 +376,13 @@ export function AdminFeedbackWidget() {
       <div
         {...feedbackTargetProps("admin.feedback-widget")}
         {...{ [ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE]: "true" }}
-        className="fixed bottom-5 right-5 z-[9999]"
+        className="fixed bottom-5 right-5 z-[9999] flex items-center gap-2"
       >
+        {isSelecting && (
+          <div className="hidden rounded-full bg-foreground px-3 py-1.5 text-xs text-background shadow-sm md:block">
+            Click an element · Esc to cancel
+          </div>
+        )}
         <button
           type="button"
           onClick={toggleSelectMode}
