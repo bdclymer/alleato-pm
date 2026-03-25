@@ -20,7 +20,7 @@
     {
       "id": 1,
       "prompt": "I want to make sure our submittals feature has all the same forms and fields as Procore before we release it. Can you do a feature parity check? Focus especially on the create/edit forms - every field needs to match exactly.",
-      "expected_output": "Agent should: 1) Find existing submittals crawler, 2) Know to run structured analysis after crawl, 3) Focus on form field extraction (name, type, required, validation, options), 4) Cross-reference with Alleato submittals implementation, 5) Produce form-field-level comparison with status indicators and impact ratings, 6) Save report to docs-ai/contents/docs/PRPs/submittals/",
+      "expected_output": "Agent should: 1) Find existing submittals crawler, 2) Know to run structured analysis after crawl, 3) Focus on form field extraction (name, type, required, validation, options), 4) Cross-reference with Alleato submittals implementation, 5) Produce form-field-level comparison with status indicators and impact ratings, 6) Save report to docs/PRPs/submittals/",
       "files": [],
       "assertions": [
         {"id": "finds-submittals-crawler", "text": "Agent identifies and locates the submittals crawler script", "type": "presence"},
@@ -34,7 +34,7 @@
     {
       "id": 2,
       "prompt": "We're about to start building the transmittals tool. Before we begin, can you audit what Procore has for transmittals so we know exactly what we need to build? I need a complete inventory of pages, forms, table columns, statuses, and workflows.",
-      "expected_output": "Agent should: 1) Find existing transmittals crawler, 2) Run crawl and structured analysis, 3) Since this is a 'not yet built' tool, the gap analysis should show most items as NOT IMPLEMENTED, 4) Generate comprehensive task list prioritized by impact, 5) Include database schema requirements for new tables/columns, 6) Save to docs-ai/contents/docs/PRPs/transmittals/",
+      "expected_output": "Agent should: 1) Find existing transmittals crawler, 2) Run crawl and structured analysis, 3) Since this is a 'not yet built' tool, the gap analysis should show most items as NOT IMPLEMENTED, 4) Generate comprehensive task list prioritized by impact, 5) Include database schema requirements for new tables/columns, 6) Save to docs/PRPs/transmittals/",
       "files": [],
       "assertions": [
         {"id": "finds-transmittals-crawler", "text": "Agent identifies and locates the transmittals crawler script", "type": "presence"},

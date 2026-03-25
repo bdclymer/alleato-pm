@@ -1,64 +1,39 @@
-# Alleato-Procore - Integration Architecture
+# Integration Architecture -- Alleato-PM
 
-**Date:** 2026-02-23
+> Last updated: 2026-03-24
 
-## Overview
+---
 
-Alleato-Procore is a multi-part system where the frontend (Next.js) and backend (FastAPI) integrate through shared infrastructure (Supabase) and HTTP proxies. This document details how the parts communicate.
-
-## System Architecture Diagram
+## System Overview
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                        User Browser                          │
-└─────────────────────┬───────────────────────────────────────┘
-                      │
-┌─────────────────────▼───────────────────────────────────────┐
-│                   Vercel (Frontend)                           │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │              Next.js 15 App Router                     │   │
-│  │  ┌──────────────┐  ┌──────────────┐  ┌───────────┐  │   │
-│  │  │  Pages (31    │  │  API Routes  │  │ Middleware │  │   │
-│  │  │  project     │  │  (326+ HTTP  │  │ (auth,     │  │   │
-│  │  │  tools)      │  │  handlers)   │  │  headers)  │  │   │
-│  │  └──────┬───────┘  └──────┬───────┘  └───────────┘  │   │
-│  │         │                  │                           │   │
-│  │  ┌──────▼──────────────────▼──────────────────────┐  │   │
-│  │  │         Supabase Client (SSR + Browser)         │  │   │
-│  │  └──────────────────┬─────────────────────────────┘  │   │
-│  └─────────────────────┼────────────────────────────────┘   │
-│                        │                                     │
-│  Proxy rewrites:       │                                     │
-│  /rag-chatkit/* ──────►│──► Backend :8051                    │
-│  /chatkit/* ──────────►│──► Backend :8051                    │
-└────────────────────────┼─────────────────────────────────────┘
-                         │
-         ┌───────────────▼───────────────┐
-         │                               │
-┌────────▼────────┐            ┌─────────▼─────────┐
-│    Supabase     │            │   Render (Backend)  │
-│  ┌───────────┐  │            │  ┌───────────────┐  │
-│  │ PostgreSQL │  │            │  │   FastAPI      │  │
-│  │ (284 tbls) │  │◄───────────│  │   + Uvicorn   │  │
-│  ├───────────┤  │            │  ├───────────────┤  │
-│  │    Auth    │  │            │  │ Agent Workflow │  │
-│  ├───────────┤  │            │  │ RAG Pipeline   │  │
-│  │  Storage   │  │            │  │ Ingestion      │  │
-│  ├───────────┤  │            │  │ ChatKit Server │  │
-│  │  Realtime  │  │            │  │ YokeFlow       │  │
-│  └───────────┘  │            │  └───────────────┘  │
-└─────────────────┘            └─────────────────────┘
-                                        │
-                               ┌────────▼────────┐
-                               │    OpenAI API    │
-                               │  (GPT, Agents,   │
-                               │   Embeddings)    │
-                               └─────────────────┘
++---------------------------------------------------------------------+
+|                         ALLEATO-PM SYSTEM                           |
++---------------------------+-----------------------------------------+
+|   Frontend (Vercel)       |          Backend (Render)               |
+|                           |                                         |
+|   Next.js 15 / React 19  |   Python FastAPI (port 8051)            |
+|   +-- App Router          |   +-- RAG Pipeline                     |
+|   +-- proxy.ts (auth)     |   +-- Daily Digest Generation          |
+|   +-- API Routes (196+)   |   +-- Acumatica Sync Service           |
+|   +-- AI SDK v6           |   +-- Multi-Agent Workflow              |
+|   +-- Liveblocks          |   +-- APScheduler (cron)               |
+|                           |                                         |
+|   Rewrites:               |                                         |
+|   /rag-chatkit/* ---------+---> http://127.0.0.1:8051              |
+|   /chatkit/* -------------+---> http://127.0.0.1:8051              |
++---------------------------+-----------------------------------------+
+|                    Supabase (Shared Database)                       |
+|   PostgreSQL + RLS | Auth | Storage | pgvector                     |
+|   55 migrations | Auto-generated TypeScript types                  |
++---------------------------------------------------------------------+
 ```
+
+---
 
 ## Integration Points
 
-### 1. Frontend → Supabase (Direct)
+### 1. Frontend -> Supabase (Direct)
 
 **Pattern:** Supabase JS SDK with browser and server clients
 
@@ -69,7 +44,7 @@ Alleato-Procore is a multi-part system where the frontend (Next.js) and backend 
 
 **Data Flow:**
 ```
-User action → Hook (use-*.ts) → Supabase query → PostgreSQL → Response → React Query cache → UI update
+User action -> Hook (use-*.ts) -> Supabase query -> PostgreSQL -> Response -> React Query cache -> UI update
 ```
 
 **Key Files:**
@@ -83,7 +58,7 @@ User action → Hook (use-*.ts) → Supabase query → PostgreSQL → Response �
 - RLS policies enforce per-user data access
 - Auth state saved for Playwright tests at `tests/.auth/user.json`
 
-### 2. Frontend → Backend (HTTP Proxy)
+### 2. Frontend -> Backend (HTTP Proxy)
 
 **Pattern:** Next.js rewrite rules proxy specific paths to the backend
 
@@ -91,13 +66,16 @@ User action → Hook (use-*.ts) → Supabase query → PostgreSQL → Response �
 ```typescript
 rewrites: async () => ({
   beforeFiles: [
-    { source: '/rag-chatkit/:path*', destination: 'http://localhost:8051/rag-chatkit/:path*' },
-    { source: '/chatkit/:path*', destination: 'http://localhost:8051/chatkit/:path*' },
+    { source: '/rag-chatkit/:path*', destination: 'http://127.0.0.1:8051/rag-chatkit/:path*' },
+    { source: '/chatkit/:path*', destination: 'http://127.0.0.1:8051/chatkit/:path*' },
   ],
 })
 ```
 
+This allows the frontend to call the backend as if it were on the same origin (no CORS). In production, Vercel proxies to the Render-hosted backend.
+
 **Endpoints Proxied:**
+
 | Frontend Path | Backend Path | Purpose |
 |---------------|-------------|---------|
 | `/rag-chatkit` | `/rag-chatkit` | RAG ChatKit (SSE streaming) |
@@ -110,12 +88,17 @@ rewrites: async () => ({
 **Streaming Pattern:**
 The RAG ChatKit uses Server-Sent Events (SSE) for real-time AI response streaming:
 ```
-Frontend → POST /rag-chatkit → Backend → Classification Agent → Specialist Agent → SSE Stream → Frontend UI
+Frontend -> POST /rag-chatkit -> Backend -> Classification Agent -> Specialist Agent -> SSE Stream -> Frontend UI
 ```
 
-### 3. Backend → Supabase (Direct)
+### 3. Backend -> Supabase (Direct)
 
-**Pattern:** Supabase Python SDK for RAG storage and retrieval
+**Pattern:** Supabase Python SDK + asyncpg for RAG storage and retrieval
+
+The Python backend uses:
+- `supabase-py` (v2) -- async Supabase client with service role key (bypasses RLS)
+- `asyncpg` -- direct PostgreSQL async connection for high-performance queries
+- `psycopg2-binary` -- synchronous PostgreSQL for scripts
 
 **Key File:** `backend/src/services/supabase_helpers.py`
 
@@ -126,7 +109,12 @@ Frontend → POST /rag-chatkit → Backend → Classification Agent → Speciali
 - Insight storage (`ai_insights`, `ai_tasks` tables)
 - Task management for AI workflows
 
-### 4. Backend → OpenAI
+The backend uses the **service role key** (bypasses RLS) for:
+- Scheduled jobs (daily digest, memory decay)
+- AI analysis pipelines
+- Acumatica sync operations
+
+### 4. Backend -> OpenAI
 
 **Pattern:** OpenAI SDK for LLM operations, Agents SDK for multi-agent workflows
 
@@ -136,7 +124,7 @@ Frontend → POST /rag-chatkit → Backend → Classification Agent → Speciali
 - **Response Synthesis**: LLM-generated responses with RAG context
 - **Tool Calling**: Agents call tools for data retrieval, calculations, etc.
 
-### 5. Frontend ↔ Supabase Realtime
+### 5. Frontend <-> Supabase Realtime
 
 **Pattern:** Supabase Realtime subscriptions for live updates
 
@@ -149,6 +137,85 @@ Frontend → POST /rag-chatkit → Backend → Classification Agent → Speciali
 - `use-realtime-cursors.ts` - Collaborative cursor positions
 - `use-realtime-presence-room.ts` - Online presence
 - `useDirectoryRealtime.ts` - Real-time directory updates
+
+---
+
+## External Service Integrations
+
+### Acumatica ERP (Bidirectional Sync)
+
+```
+Acumatica ERP <----------------------------> Alleato-PM (Supabase)
+                Cookie auth (POST /entity/auth/login)
+                Company: "Alleato Group LLC"
+                API version: 24.200.001
+```
+
+**Sync routes (frontend):**
+- `POST /api/sync/acumatica/ar-invoices`
+- `POST /api/sync/acumatica/ar-payments`
+- `POST /api/sync/acumatica/commitments`
+- `POST /api/sync/acumatica/direct-costs`
+- `POST /api/sync/acumatica/vendors`
+
+**Backend service:** `backend/src/services/acumatica_sync.py`
+
+**CRITICAL:** Never use OData `$filter` -- causes HTTP 500. Use `$select`, `$top`, `$expand` only. Filter in-memory.
+
+### Fireflies.ai (Meeting Transcripts)
+
+```
+Fireflies.ai --------------------------------> Supabase
+             Webhook / API                      meetings table
+                                                meeting_chunks
+                                                meeting_embeddings
+```
+
+Meeting transcripts are ingested, chunked, and embedded for RAG search. Backend service handles sync and backfill via `mcp__fireflies-docs__search_fireflies` MCP.
+
+### Liveblocks (Real-time Collaboration)
+
+```
+Browser --------------------------------------> Liveblocks
+         @liveblocks/* v3.15.2                   Rooms, Presence, Storage
+         Lexical/Yjs for rich text               WebSocket (managed)
+```
+
+**Auth:** `POST /api/liveblocks-auth` -- creates Liveblocks session token from Supabase identity.
+**Features:** Collaborative cursors, presence indicators, shared rich text editing.
+
+### OpenAI / AI Gateway (AI Inference)
+
+```
+Frontend/Backend -----------------------------> AI Gateway
+                  ai (Vercel AI SDK v6)           +-- OpenAI (text-embedding-3-small/large)
+                  model: 'openai/gpt-4o'          +-- OpenAI (GPT-4o, etc.)
+                  AI_GATEWAY_API_KEY              +-- Anthropic (claude-sonnet-4-6)
+                  (BYOK - billing stays
+                   with OpenAI)
+```
+
+**RAG embeddings:** `text-embedding-3-small` (1536-dim) or `text-embedding-3-large` (3072-dim)
+**Chat:** `gpt-4o` or `claude-sonnet-4-6` via AI Gateway
+**Key file:** `frontend/src/lib/ai/providers.ts`
+
+### Vercel Blob (File Storage)
+
+```
+Browser --------------------------------------> Vercel Blob
+         @vercel/blob v2.3.x                    S3-compatible object storage
+         POST /api/documents/upload             (drawings, documents, attachments)
+```
+
+### Resend (Transactional Email)
+
+```
+Backend/Frontend -----------------------------> Resend
+                  resend v6.9.x                  POST /api/notifications/trigger
+                  RESEND_API_KEY                Email delivery
+```
+
+---
 
 ## Shared Resources
 
@@ -180,57 +247,99 @@ Both frontend and backend read/write to the same Supabase PostgreSQL database:
 **Backend-only:**
 - `OPENAI_API_KEY`
 - `USE_UNIFIED_AGENT` (agent routing mode)
-- `PORT` (default: 8000)
+- `PORT` (default: 8051)
 - `CORS_ORIGINS` (allowed frontend URLs)
 - `DATABASE_URL` (for YokeFlow)
+- `ACCOUNTING_USER` / `ACCOUNTING_PASSWORD` (Acumatica)
 
-## Deployment Architecture
+---
 
-### Production
+## Data Flow Diagrams
+
+### AI Chat Request
 
 ```
-GitHub (main branch)
-    │
-    ├──► GitHub Actions (ci.yml)
-    │       ├── Quality check (lint + typecheck)
-    │       ├── Unit tests (Jest)
-    │       └── Build verification
-    │
-    ├──► GitHub Actions (deploy-frontend.yml)
-    │       └── Vercel deployment (preview on PR, production on main)
-    │
-    ├──► GitHub Actions (deploy-backend.yml)
-    │       ├── Backend tests (pytest)
-    │       └── Render deployment (Docker)
-    │
-    └──► GitHub Actions (e2e.yml)
-            ├── Smoke tests (on PR)
-            └── Full E2E suite (on main + nightly)
+1. User submits message in AI chat UI
+   -> useChat (Vercel AI SDK, @ai-sdk/react)
+   -> POST /api/ai-assistant/chat
+
+2. Route handler (frontend/src/app/api/ai-assistant/chat/route.ts)
+   -> Authenticates Supabase session
+   -> Calls AI orchestrator (frontend/src/lib/ai/orchestrator.ts)
+
+3. Orchestrator determines routing:
+   -> Financial data -> match_meeting_chunks_with_project (pgvector)
+   -> Meeting context -> full_text_search_meetings
+   -> General knowledge -> match_crawled_pages
+   -> Company context -> match_memories
+
+4. Constructs prompt with retrieved context
+   -> streamText (Vercel AI SDK v6)
+   -> model: 'openai/gpt-4o' via AI Gateway
+
+5. Streaming response -> toUIMessageStreamResponse()
+   -> SSE back to browser
+   -> useChat processes UIMessage stream
+   -> Message.tsx / MessageResponse.tsx renders output
 ```
 
-### CORS Configuration
+### RAG Ingestion
 
-Backend allows requests from:
-- `http://localhost:3000` (frontend dev)
-- `http://localhost:3001` (frontend dev alt)
-- `https://alleato-procore.vercel.app` (production)
-- `https://www.alleato-procore.vercel.app` (production www)
-- `https://alleato-pm-1.onrender.com` (backend self-reference)
+```
+1. Document uploaded -> POST /api/documents/upload
+   -> Stored in Vercel Blob
+   -> Record created in documents table
+
+2. POST /api/documents/trigger-pipeline
+   -> backend/src/services/pipeline/
+
+3. Python pipeline:
+   -> Extract text (pypdf, python-docx)
+   -> Chunk text into segments
+   -> Generate embeddings (OpenAI text-embedding-3-small)
+   -> Store in document_chunks + document_embeddings tables
+
+4. pgvector enables semantic search:
+   -> match_documents() / match_chunks()
+   -> Used by AI orchestrator for RAG context
+```
+
+### Acumatica Sync
+
+```
+1. Cron / manual trigger -> POST /api/sync/acumatica/{entity}
+
+2. Route handler -> acumatica_sync.py (backend)
+
+3. Backend:
+   -> POST /entity/auth/login (cookie auth)
+   -> GET /entity/Default/24.200.001/{Entity}
+     (params: $select, $top, $expand only - NO $filter)
+   -> Filter in-memory
+
+4. Upsert to Supabase:
+   -> acumatica_{entity} table
+   -> Update acumatica_sync_state
+
+5. Trigger frontend re-fetch via React Query invalidation
+```
+
+---
 
 ## Data Consistency Patterns
 
 ### Type Generation Pipeline
 
 ```
-Supabase Schema → supabase gen types → database.types.ts → TypeScript compilation → Runtime safety
+Supabase Schema -> supabase gen types -> database.types.ts -> TypeScript compilation -> Runtime safety
 ```
 
-The `npm run db:types` command regenerates the 17,629-line types file, ensuring frontend code matches the actual database schema.
+The `npm run db:types` command regenerates the types file, ensuring frontend code matches the actual database schema.
 
 ### Migration Flow
 
 ```
-Developer writes SQL → supabase/migrations/ → Applied to Supabase → Types regenerated → Frontend updated
+Developer writes SQL -> supabase/migrations/ -> Applied to Supabase -> Types regenerated -> Frontend updated
 ```
 
 ### Financial Data Consistency
@@ -246,4 +355,52 @@ budget_lines (original amounts)
 
 ---
 
-_Generated using BMAD Method `document-project` workflow_
+## Deployment Architecture (CI/CD)
+
+```
+GitHub (main branch)
+    |
+    +---> GitHub Actions (ci.yml)
+    |       +-- Quality check (lint + typecheck)
+    |       +-- Unit tests (Jest)
+    |       +-- Build verification
+    |
+    +---> GitHub Actions (deploy-frontend.yml)
+    |       +-- Vercel deployment (preview on PR, production on main)
+    |
+    +---> GitHub Actions (deploy-backend.yml)
+    |       +-- Backend tests (pytest)
+    |       +-- Render deployment (Docker)
+    |
+    +---> GitHub Actions (e2e.yml)
+            +-- Smoke tests (on PR)
+            +-- Full E2E suite (on main + nightly)
+```
+
+---
+
+## Security Architecture
+
+| Layer | Mechanism |
+|-------|-----------|
+| Request auth | `proxy.ts` -> `updateSession()` -- Supabase JWT refresh |
+| Database | RLS on all 287 tables -- enforced at Postgres level |
+| API routes | `createClient()` from server -- validates JWT per request |
+| Backend | Service role key -- only for scheduled/internal operations |
+| Secrets | `.env` + Vercel/Render dashboard env vars -- never committed |
+| CORS | `next.config.ts` security headers + backend CORS config |
+| File uploads | Supabase Storage RLS policies |
+| Liveblocks | Token minted per-user via `/api/liveblocks-auth` |
+
+### CORS Configuration
+
+Backend allows requests from:
+- `http://localhost:3000` (frontend dev)
+- `http://localhost:3001` (frontend dev alt)
+- `https://alleato-procore.vercel.app` (production)
+- `https://www.alleato-procore.vercel.app` (production www)
+- `https://alleato-pm-1.onrender.com` (backend self-reference)
+
+---
+
+_Generated using BMAD Method document-project workflow. Last merged: 2026-03-24._

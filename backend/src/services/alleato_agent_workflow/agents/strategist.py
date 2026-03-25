@@ -45,6 +45,9 @@ from agents import Agent, ModelSettings
 from ..tools import (
     web_search_preview,
     search_meetings,
+    search_emails,
+    search_teams_messages,
+    search_documents,
     search_decisions,
     search_risks,
     search_opportunities,
@@ -187,6 +190,9 @@ strategist_agent = Agent(
     tools=[
         web_search_preview,
         search_meetings,
+        search_emails,
+        search_teams_messages,
+        search_documents,
         search_decisions,
         search_risks,
         search_opportunities,

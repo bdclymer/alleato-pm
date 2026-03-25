@@ -56,6 +56,7 @@
     "@ai-sdk/openai": "^3.0.25",
     "@ai-sdk/react": "^3.0.71",
     "@chat-adapter/slack": "^4.21.0",
+    "@chat-adapter/state-memory": "^4.21.0",
     "@chat-adapter/state-pg": "^4.21.0",
     "@chat-adapter/teams": "^4.21.0",
     "@chat-adapter/telegram": "^4.21.0",

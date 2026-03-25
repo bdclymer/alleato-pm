@@ -23,7 +23,7 @@
 
 ### 1. Incident Tracking
 
-**Location:** `docs-ai/contents/docs/patterns/INCIDENT-LOG.md`
+**Location:** `docs/patterns/INCIDENT-LOG.md`
 
 **Purpose:**
 
@@ -41,7 +41,7 @@
 
 ### 2. Error Pattern Documentation
 
-**Location:** `docs-ai/contents/docs/patterns/errors/[error-name]/index.mdx`
+**Location:** `docs/patterns/errors/[error-name]/index.mdx`
 
 **Each pattern includes:**
 
@@ -135,7 +135,7 @@ cat .claude/PREVENTION-CHECKLIST.md
 
 **Step 1: Check if Pattern Exists**
 ```bash
-cat docs-ai/contents/docs/patterns/INCIDENT-LOG.md
+cat docs/patterns/INCIDENT-LOG.md
 ```
 **Step 2: Apply Known Fix**
 If pattern documented, use the fix from error pattern document.
@@ -248,7 +248,7 @@ alleato-pm/
 │       ├── SCAFFOLD-FIRST.md
 │       └── USE-AVAILABLE-TOOLS.md
 ├── CLAUDE.md                             ← Main reference (updated with prevention)
-└── docs-ai/contents/docs/patterns/
+└── docs/patterns/
     ├── INCIDENT-LOG.md                   ← Incident tracking
     └── errors/
         ├── nextjs-cache-404/

@@ -22,6 +22,7 @@ import { z } from "zod";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createProjectTools } from "@/lib/ai/tools/project-tools";
 import { createWebSearchTools } from "@/lib/ai/tools/web-search";
+import { createActionTools } from "@/lib/ai/tools/action-tools";
 import { strategistSystemPrompt } from "@/lib/ai/agents/strategist";
 import { soul } from "@/lib/ai/soul";
 import { identity } from "@/lib/ai/identity";
@@ -750,6 +751,10 @@ export function createStrategistTools(
   // Web search tools — available to Strategist for external research
   // (competitive questions, market intel, industry trends)
   const webSearchTools = createWebSearchTools(options as any);
+  // Action tools — write layer. Gives the Strategist the ability to create
+  // and update records (change orders, RFIs, tasks, risks, etc.) in addition
+  // to reading and analyzing data.
+  const actionTools = createActionTools(userId, options as any);
   // Do not expose risk-dedicated tools directly to the Strategist.
   // This forces portfolio/project risk questions through consultCFO,
   // where the specialist prompt requires risk-specific workflows.
@@ -763,6 +768,8 @@ export function createStrategistTools(
   return {
     // Web search — available directly to the Strategist for external research
     ...webSearchTools,
+    // Action tools — write layer (create/update records)
+    ...actionTools,
     // The Strategist's specialist consultation tools
     consultCFO: tool({
       description:

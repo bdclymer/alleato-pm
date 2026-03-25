@@ -26,7 +26,7 @@ App URL: http://localhost:3000
 Test project ID: 67 (Vermillion Rise Warehouse)
 Auth: already configured — DO NOT add login steps to tests
 Saved auth: frontend/tests/.auth/user.json
-Test output dir: docs-ai/contents/docs/financial-tools/e2e-results-{tool}.md
+Test output dir: docs/financial-tools/e2e-results-{tool}.md
 Playwright test dir: frontend/tests/e2e/{tool}-crud.spec.ts
 ```
 
@@ -61,7 +61,7 @@ Run all 7 test scenarios per tool. Capture evidence for each.
 
 ```bash
 agent-browser open {URL}
-agent-browser screenshot --output docs-ai/contents/docs/financial-tools/screenshots/{tool}-load.png
+agent-browser screenshot --output docs/financial-tools/screenshots/{tool}-load.png
 agent-browser console --level error
 agent-browser snapshot
 ```
@@ -96,14 +96,14 @@ agent-browser snapshot -i
 agent-browser snapshot -i
 # Find and click the "Add", "New", or "Create" button
 agent-browser click @{ref-of-add-button}
-agent-browser screenshot --output docs-ai/contents/docs/financial-tools/screenshots/{tool}-create-form.png
+agent-browser screenshot --output docs/financial-tools/screenshots/{tool}-create-form.png
 agent-browser snapshot -i
 # Fill required fields
 agent-browser fill @{ref-of-name-field} "E2E Test Record"
 # Fill other required fields with valid test values
 agent-browser click @{ref-of-submit-button}
 agent-browser wait-for --text "created" --timeout 5000
-agent-browser screenshot --output docs-ai/contents/docs/financial-tools/screenshots/{tool}-create-success.png
+agent-browser screenshot --output docs/financial-tools/screenshots/{tool}-create-success.png
 ```
 
 **Pass criteria:**
@@ -127,13 +127,13 @@ agent-browser screenshot --output docs-ai/contents/docs/financial-tools/screensh
 ```bash
 # Click the record just created (or any existing record)
 agent-browser click @{ref-of-first-row}
-agent-browser screenshot --output docs-ai/contents/docs/financial-tools/screenshots/{tool}-edit-open.png
+agent-browser screenshot --output docs/financial-tools/screenshots/{tool}-edit-open.png
 agent-browser snapshot -i
 # Find an editable field and change it
 agent-browser fill @{ref-of-editable-field} "E2E Test Record EDITED"
 agent-browser click @{ref-of-save-button}
 agent-browser wait-for --text "updated" --timeout 5000
-agent-browser screenshot --output docs-ai/contents/docs/financial-tools/screenshots/{tool}-edit-success.png
+agent-browser screenshot --output docs/financial-tools/screenshots/{tool}-edit-success.png
 # Reload and verify the change persists
 agent-browser open {URL}
 agent-browser snapshot
@@ -157,7 +157,7 @@ agent-browser snapshot -i
 # Confirm dialog if present
 agent-browser click @{ref-of-confirm-button}
 agent-browser wait-for --text "deleted" --timeout 5000
-agent-browser screenshot --output docs-ai/contents/docs/financial-tools/screenshots/{tool}-delete-success.png
+agent-browser screenshot --output docs/financial-tools/screenshots/{tool}-delete-success.png
 ```
 
 **Pass criteria:**
@@ -177,7 +177,7 @@ agent-browser click @{ref-of-add-button}
 agent-browser snapshot -i
 # Submit without filling anything
 agent-browser click @{ref-of-submit-button}
-agent-browser screenshot --output docs-ai/contents/docs/financial-tools/screenshots/{tool}-validation.png
+agent-browser screenshot --output docs/financial-tools/screenshots/{tool}-validation.png
 agent-browser snapshot
 ```
 
@@ -194,7 +194,7 @@ agent-browser snapshot
 ```bash
 agent-browser resize --width 375 --height 812
 agent-browser open {URL}
-agent-browser screenshot --output docs-ai/contents/docs/financial-tools/screenshots/{tool}-mobile.png
+agent-browser screenshot --output docs/financial-tools/screenshots/{tool}-mobile.png
 agent-browser resize --width 1280 --height 800
 ```
 
@@ -291,7 +291,7 @@ test.describe('{Tool Name} — CRUD', () => {
 ## Evidence Format
 
 Save all test results to:
-`docs-ai/contents/docs/financial-tools/e2e-results-{tool}.md`
+`docs/financial-tools/e2e-results-{tool}.md`
 
 ```markdown
 # E2E Test Results — {Tool Name}
@@ -340,7 +340,7 @@ When all tests for a tool complete:
 ```
 Message: "E2E complete for {TOOL}: [N/7] passing.
 Failures: [list failed test names].
-Evidence: docs-ai/contents/docs/financial-tools/e2e-results-{tool}.md
+Evidence: docs/financial-tools/e2e-results-{tool}.md
 Test file written: frontend/tests/e2e/{tool}-crud.spec.ts"
 ```
 
@@ -348,7 +348,7 @@ When all 7 tools tested:
 ```
 Message: "E2E complete ALL TOOLS.
 Budget: N/7 | Prime: N/7 | Commitments: N/7 | Change Events: N/7 | Change Orders: N/7 | Direct Costs: N/7 | Invoicing: N/7
-Full evidence in: docs-ai/contents/docs/financial-tools/
+Full evidence in: docs/financial-tools/
 Ready for DoD verification."
 ```
 

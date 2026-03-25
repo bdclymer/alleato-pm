@@ -12,7 +12,7 @@ Before ANY code change, database operation, API development, or problem-solving:
 
 ### 1. Check Learning System
 
-- Read relevant pattern documentation in `/docs-ai/contents/docs/patterns/`
+- Read relevant pattern documentation in `/docs/patterns/`
 - Search for similar issues in documented patterns
 - Review solutions for comparable problems
 
@@ -119,22 +119,22 @@ npm run db:types
 
 **For Authentication Issues:**
 
-- Read: `/docs-ai/contents/docs/patterns/authentication-errors.md`
+- Read: `/docs/patterns/authentication-errors.md`
 - Focus: Missing users_auth link pattern
 
 **For Database Work:**
 
-- Read: `/docs-ai/contents/docs/patterns/database-issues.md`
+- Read: `/docs/patterns/database-issues.md`
 - Focus: Foreign key type mismatch and missing types patterns
 
 **For API Development:**
 
-- Read: `/docs-ai/contents/docs/patterns/api-routing-errors.md`
+- Read: `/docs/patterns/api-routing-errors.md`
 - Focus: Generic parameter conflicts and missing permission checks
 
 **For Any Bug:**
 
-- Read: `/docs-ai/contents/docs/patterns/claude-code-learning-system/index.mdx`
+- Read: `/docs/patterns/claude-code-learning-system/index.mdx`
 - Apply: Mandatory documentation process
 
 ---
@@ -212,7 +212,7 @@ npm run db:types
 find app -name "*[*]*" | sort
 
 # Search for authentication patterns
-grep -r "users_auth" docs-ai/contents/docs/patterns/
+grep -r "users_auth" docs/patterns/
 
 # Find API routes without permission checks
 grep -r "export async function" app/api/ | xargs grep -L "PermissionService"

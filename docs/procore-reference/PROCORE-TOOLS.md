@@ -4,13 +4,13 @@
 
 | Tool Name       | Description                                                  | Status | PRP Folder                                                                                          | Frontend Link                              |
 | --------------- | ------------------------------------------------------------ | ------ | --------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| Prime Contracts | Manage owner contracts and contract values                   | Active | `/docs-ai/contents/docs/PRPs/prime-contracts`                                                       | [/60/prime-contracts](http://localhost:3003/60/prime-contracts) |
-| Budget          | Track budget line items and cost performance                 | Active | `/docs-ai/contents/docs/PRPs/budget`                                                                | [/60/budget](http://localhost:3003/60/budget) |
-| Commitments     | Manage subcontract and purchase order commitments            | Active | `/docs-ai/contents/docs/PRPs/commitments`                                                           | [/60/commitments](http://localhost:3003/60/commitments) |
-| Change Orders   | Track and approve financial changes                          | Active | `/docs-ai/contents/docs/PRPs/change-orders`                                                         | [/60/change-orders](http://localhost:3003/60/change-orders) |
-| Change Events   | Early-stage cost impact tracking before formal change orders | Active | `/docs-ai/contents/docs/PRPs/change-events`                                                         | [/60/change-events](http://localhost:3003/60/change-events) |
-| Direct Costs    | Record expenses, invoices, and other direct project costs    | Active | `/docs-ai/contents/docs/PRPs/direct-costs`                                                          | [/60/direct-costs](http://localhost:3003/60/direct-costs) |
-| Invoicing       | Manage billing and invoicing workflows                       | Active | `/docs-ai/contents/docs/PRPs/invoicing`                                                             | [/60/invoicing](http://localhost:3003/60/invoicing) |
+| Prime Contracts | Manage owner contracts and contract values                   | Active | `/docs/PRPs/prime-contracts`                                                       | [/60/prime-contracts](http://localhost:3003/60/prime-contracts) |
+| Budget          | Track budget line items and cost performance                 | Active | `/docs/PRPs/budget`                                                                | [/60/budget](http://localhost:3003/60/budget) |
+| Commitments     | Manage subcontract and purchase order commitments            | Active | `/docs/PRPs/commitments`                                                           | [/60/commitments](http://localhost:3003/60/commitments) |
+| Change Orders   | Track and approve financial changes                          | Active | `/docs/PRPs/change-orders`                                                         | [/60/change-orders](http://localhost:3003/60/change-orders) |
+| Change Events   | Early-stage cost impact tracking before formal change orders | Active | `/docs/PRPs/change-events`                                                         | [/60/change-events](http://localhost:3003/60/change-events) |
+| Direct Costs    | Record expenses, invoices, and other direct project costs    | Active | `/docs/PRPs/direct-costs`                                                          | [/60/direct-costs](http://localhost:3003/60/direct-costs) |
+| Invoicing       | Manage billing and invoicing workflows                       | Active | `/docs/PRPs/invoicing`                                                             | [/60/invoicing](http://localhost:3003/60/invoicing) |
 
 ---
 
@@ -18,18 +18,18 @@
 
 | Tool Name      | Description                                            | Status   | PRP Folder                                                                                          | Frontend Link                              |
 | -------------- | ------------------------------------------------------ | -------- | --------------------------------------------------------------------------------------------------- | ------------------------------------------ |
-| Emails         | Log and manage project-related email communications    | Active   | `/docs-ai/contents/docs/PRPs/emails`                                                                | [/60/emails](http://localhost:3003/60/emails) |
-| RFIs           | Create, track, and resolve Requests for Information    | Active   | `/docs-ai/contents/docs/PRPs/rfis`                                                                  | [/60/rfis](http://localhost:3003/60/rfis) |
-| Submittals     | Manage submittal packages, reviews, and approvals      | Active   | `/docs-ai/contents/docs/PRPs/submittals`                                                            | [/60/submittals](http://localhost:3003/60/submittals) |
-| Transmittals   | Send and track official document transmissions         | Active   | `/docs-ai/contents/docs/PRPs/transmittals`                                                          | [/60/transmittals](http://localhost:3003/60/transmittals) |
-| Punch List     | Create and manage punch list items                     | Active   | `/docs-ai/contents/docs/PRPs/punch-list`                                                            | [/60/punch-list](http://localhost:3003/60/punch-list) |
-| Meetings       | Schedule meetings and manage agendas and minutes       | Active   | `/docs-ai/contents/docs/PRPs/meetings`                                                              | [/60/meetings](http://localhost:3003/60/meetings) |
-| Schedule       | Project scheduling and timeline visibility             | Active   | `/docs-ai/contents/docs/PRPs/scheduling`                                                            | [/60/schedule](http://localhost:3003/60/schedule) |
-| Daily Log      | Daily tracking of labor, equipment, notes, and weather | Active   | `/docs-ai/contents/docs/PRPs/daily-logs`                                                            | [/60/daily-log](http://localhost:3003/60/daily-log) |
-| Photos         | Store and organize site photos                         | Active   | `/docs-ai/contents/docs/PRPs/photos`                                                                | [/60/photos](http://localhost:3003/60/photos) |
-| Drawings       | Upload, version, and annotate construction drawings    | Active   | `/docs-ai/contents/docs/PRPs/drawings`                                                              | [/60/drawings](http://localhost:3003/60/drawings) |
-| Specifications | Manage project specification sections                  | Active   | `/docs-ai/contents/docs/PRPs/specifications`                                                        | [/60/specifications](http://localhost:3003/60/specifications) |
-| Scheduling     | Advanced scheduling functionality                      | **Beta** | `/docs-ai/contents/docs/PRPs/scheduling`                                                            | [/60/scheduling](http://localhost:3003/60/scheduling) |
+| Emails         | Log and manage project-related email communications    | Active   | `/docs/PRPs/emails`                                                                | [/60/emails](http://localhost:3003/60/emails) |
+| RFIs           | Create, track, and resolve Requests for Information    | Active   | `/docs/PRPs/rfis`                                                                  | [/60/rfis](http://localhost:3003/60/rfis) |
+| Submittals     | Manage submittal packages, reviews, and approvals      | Active   | `/docs/PRPs/submittals`                                                            | [/60/submittals](http://localhost:3003/60/submittals) |
+| Transmittals   | Send and track official document transmissions         | Active   | `/docs/PRPs/transmittals`                                                          | [/60/transmittals](http://localhost:3003/60/transmittals) |
+| Punch List     | Create and manage punch list items                     | Active   | `/docs/PRPs/punch-list`                                                            | [/60/punch-list](http://localhost:3003/60/punch-list) |
+| Meetings       | Schedule meetings and manage agendas and minutes       | Active   | `/docs/PRPs/meetings`                                                              | [/60/meetings](http://localhost:3003/60/meetings) |
+| Schedule       | Project scheduling and timeline visibility             | Active   | `/docs/PRPs/scheduling`                                                            | [/60/schedule](http://localhost:3003/60/schedule) |
+| Daily Log      | Daily tracking of labor, equipment, notes, and weather | Active   | `/docs/PRPs/daily-logs`                                                            | [/60/daily-log](http://localhost:3003/60/daily-log) |
+| Photos         | Store and organize site photos                         | Active   | `/docs/PRPs/photos`                                                                | [/60/photos](http://localhost:3003/60/photos) |
+| Drawings       | Upload, version, and annotate construction drawings    | Active   | `/docs/PRPs/drawings`                                                              | [/60/drawings](http://localhost:3003/60/drawings) |
+| Specifications | Manage project specification sections                  | Active   | `/docs/PRPs/specifications`                                                        | [/60/specifications](http://localhost:3003/60/specifications) |
+| Scheduling     | Advanced scheduling functionality                      | **Beta** | `/docs/PRPs/scheduling`                                                            | [/60/scheduling](http://localhost:3003/60/scheduling) |
 
 ---
 
@@ -40,11 +40,11 @@
 | Home               | Project overview dashboard with high-level activity and shortcuts | Active   | —                                            | [/60/home](http://localhost:3003/60/home) |
 | 360 Reporting      | Cross-tool reporting and analytics across the project             | Active   | —                                            | [/60/reporting](http://localhost:3003/60/reporting) |
 | Documents          | Centralized document storage and file management                  | Active   | —                                            | [/60/documents](http://localhost:3003/60/documents) |
-| Directory          | Project-level contacts, companies, and users                      | Active   | `/docs-ai/contents/docs/PRPs/directory`      | [/60/directory](http://localhost:3003/60/directory) |
+| Directory          | Project-level contacts, companies, and users                      | Active   | `/docs/PRPs/directory`      | [/60/directory](http://localhost:3003/60/directory) |
 | Tasks              | Task assignment and tracking for project items                    | Active   | —                                            | [/60/tasks](http://localhost:3003/60/tasks) |
 | Admin              | Project configuration, permissions, and settings                  | Active   | —                                            | [/60/admin](http://localhost:3003/60/admin) |
 | Connection Manager | Manage ERP and third-party integrations                           | Active   | —                                            | —                                          |
-| Agent Builder      | Build AI-powered agents within Procore                            | **Beta** | `/docs-ai/contents/docs/PRPs/agent`          | —                                          |
+| Agent Builder      | Build AI-powered agents within Procore                            | **Beta** | `/docs/PRPs/agent`          | —                                          |
 
 
 

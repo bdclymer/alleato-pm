@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import html2canvas from "html2canvas";
 import { usePathname } from "next/navigation";
-import { Camera, ImagePlus, MessageSquarePlus, RefreshCw, Trash2, X } from "lucide-react";
+import { Camera, ImagePlus, ListFilter, RefreshCw, Sparkles, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE,
@@ -83,20 +83,39 @@ async function captureTargetScreenshot(target: HTMLElement) {
   );
   const cropHeight = Math.max(rect.height + padding * 2, 220);
 
-  const canvas = await html2canvas(document.body, {
-    backgroundColor: "#ffffff",
-    scale: Math.min(window.devicePixelRatio || 1, 2),
-    logging: false,
-    useCORS: true,
-    x: cropX,
-    y: cropY,
-    width: cropWidth,
-    height: cropHeight,
-    windowWidth: document.documentElement.scrollWidth,
-    windowHeight: document.documentElement.scrollHeight,
+  // Hide overlays (dialog, feedback widget) during capture
+  const overlays = document.querySelectorAll(
+    `[${ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE}], [data-radix-dialog-overlay], [role="dialog"]`,
+  );
+  const hidden: { el: HTMLElement; prev: string }[] = [];
+  overlays.forEach((el) => {
+    if (el instanceof HTMLElement) {
+      hidden.push({ el, prev: el.style.visibility });
+      el.style.visibility = "hidden";
+    }
   });
 
-  return canvas.toDataURL("image/png");
+  try {
+    const canvas = await html2canvas(document.body, {
+      backgroundColor: "#ffffff",
+      scale: Math.min(window.devicePixelRatio || 1, 2),
+      logging: false,
+      useCORS: true,
+      x: cropX,
+      y: cropY,
+      width: cropWidth,
+      height: cropHeight,
+      windowWidth: document.documentElement.scrollWidth,
+      windowHeight: document.documentElement.scrollHeight,
+    });
+
+    return canvas.toDataURL("image/png");
+  } finally {
+    // Restore overlays
+    hidden.forEach(({ el, prev }) => {
+      el.style.visibility = prev;
+    });
+  }
 }
 
 export function AdminFeedbackWidget() {
@@ -212,6 +231,18 @@ export function AdminFeedbackWidget() {
       isCancelled = true;
     };
   }, [dialogOpen, selectedElement]);
+
+  // Set cursor to crosshair when selecting
+  useEffect(() => {
+    if (isSelecting) {
+      document.body.style.cursor = "crosshair";
+    } else {
+      document.body.style.cursor = "";
+    }
+    return () => {
+      document.body.style.cursor = "";
+    };
+  }, [isSelecting]);
 
   if (isLoading || !isAdmin) {
     return null;
@@ -348,33 +379,27 @@ export function AdminFeedbackWidget() {
         className="fixed bottom-5 right-5 z-[9999] flex items-center gap-2"
       >
         {isSelecting && (
-          <div className="hidden rounded-full border border-border bg-background/95 px-3 py-1.5 text-xs text-muted-foreground shadow-sm backdrop-blur md:block">
-            Click an element to file feedback. Press Esc to cancel.
+          <div className="hidden rounded-full bg-foreground px-3 py-1.5 text-xs text-background shadow-sm md:block">
+            Click an element · Esc to cancel
           </div>
         )}
-        <Button
+        <button
           type="button"
-          size="sm"
           onClick={toggleSelectMode}
           className={cn(
-            "h-11 rounded-full px-4 shadow-sm",
+            "flex h-12 w-12 items-center justify-center rounded-full shadow-sm transition-all",
             isSelecting
               ? "bg-foreground text-background hover:bg-foreground/90"
               : "bg-background text-foreground border border-border hover:bg-muted",
           )}
+          aria-label={isSelecting ? "Cancel feedback" : "Feedback mode"}
         >
           {isSelecting ? (
-            <>
-              <X className="mr-2 h-4 w-4" />
-              Cancel feedback
-            </>
+            <Sparkles className="h-5 w-5" />
           ) : (
-            <>
-              <MessageSquarePlus className="mr-2 h-4 w-4" />
-              Feedback mode
-            </>
+            <ListFilter className="h-5 w-5" />
           )}
-        </Button>
+        </button>
       </div>
 
       <Dialog

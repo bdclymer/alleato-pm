@@ -64,7 +64,7 @@ BMAD and PRP are **separate systems** with a **light integration** through three
 
 **Where:** Step 2 of `dev-story` workflow (instructions.xml)
 
-**What:** When loading project context, dev-story checks if a PRP `TASKS.md` exists at `docs-ai/contents/docs/PRPs/{feature}/TASKS.md`. If found:
+**What:** When loading project context, dev-story checks if a PRP `TASKS.md` exists at `docs/PRPs/{feature}/TASKS.md`. If found:
 - Loads TASKS.md for implementation task ordering
 - Loads the PRP document for Known Pitfalls, Database Schema, and Implementation Patterns
 - Uses PRP task ordering as implementation guidance

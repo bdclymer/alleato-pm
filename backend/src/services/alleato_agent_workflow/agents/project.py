@@ -41,6 +41,9 @@ USED BY: alleato_agent_workflow.py when classification = "project"
 from agents import Agent, ModelSettings
 from ..tools import (
     search_meetings,
+    search_emails,
+    search_teams_messages,
+    search_documents,
     search_decisions,
     search_risks,
     search_opportunities,
@@ -161,6 +164,9 @@ project_agent = Agent(
     model="gpt-5.1",
     tools=[
         search_meetings,
+        search_emails,
+        search_teams_messages,
+        search_documents,
         search_decisions,
         search_risks,
         search_opportunities,

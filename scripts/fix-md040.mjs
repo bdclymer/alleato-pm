@@ -21,7 +21,7 @@ const VERBOSE = process.argv.includes("--verbose");
 
 // Directories to scan
 const SCAN_DIRS = [
-  "docs-ai",
+  "docs",
   ".claude",
   "PRPs",
   "DOCS_NEED_TO_FILE",

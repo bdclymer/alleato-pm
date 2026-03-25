@@ -130,6 +130,210 @@ async def search_meetings(query: str, limit: int = 10, project_id: Optional[int]
 
 
 @function_tool
+async def search_emails(query: str, limit: int = 10) -> str:
+    """
+    Search synced Outlook emails using semantic similarity.
+    Use this when the user asks about emails, email conversations,
+    or what was communicated via email.
+
+    Args:
+        query: The search query text
+        limit: Maximum number of results to return (default: 10)
+
+    Returns:
+        Formatted string with matching email content, similarity scores, and source citations
+    """
+    try:
+        supabase = get_supabase_client()
+        embedding = await get_query_embedding_async(query)
+
+        if not embedding:
+            return "Error: Could not generate embedding for query"
+
+        rpc_params = {
+            'query_embedding': embedding,
+            'filter_source_types': ['email'],
+            'match_count': limit,
+            'match_threshold': 0.25
+        }
+
+        result = supabase.rpc('search_document_chunks', rpc_params).execute()
+
+        if not result.data:
+            return "No matching emails found."
+
+        output = []
+        sources = []
+
+        for idx, item in enumerate(result.data, 1):
+            similarity_pct = f"{item.get('similarity', 0) * 100:.0f}%"
+            title = item.get('doc_title', 'Untitled Email')
+            date = item.get('doc_date', item.get('doc_created_at', 'Unknown date'))
+            chunk_id = item.get('chunk_id', f'chunk-{idx}')
+
+            source_ref = f"[Source {idx}]"
+            sources.append({
+                "id": chunk_id,
+                "ref": source_ref,
+                "type": "email",
+                "title": title,
+                "date": str(date)[:10] if date else "Unknown",
+                "relevance": similarity_pct
+            })
+
+            output.append(f"{source_ref} **{title}** ({similarity_pct} match)")
+            output.append(f"  Date: {str(date)[:10] if date else 'Unknown'}")
+            chunk_text = item.get('chunk_text', '')
+            if chunk_text:
+                output.append(f"  Content: {chunk_text[:300]}...")
+            output.append("")
+
+        output.append("\n---\n**Sources:**")
+        for src in sources:
+            output.append(f"- {src['ref']}: {src['title']} ({src['date']}) - {src['relevance']} relevance")
+
+        return "\n".join(output)
+    except Exception as e:
+        return f"Error searching emails: {str(e)}"
+
+
+@function_tool
+async def search_teams_messages(query: str, limit: int = 10) -> str:
+    """
+    Search synced Microsoft Teams channel messages and direct messages
+    using semantic similarity. Use this when the user asks about Teams
+    conversations, Teams channels, or what was said in Teams.
+
+    Args:
+        query: The search query text
+        limit: Maximum number of results to return (default: 10)
+
+    Returns:
+        Formatted string with matching Teams messages, similarity scores, and source citations
+    """
+    try:
+        supabase = get_supabase_client()
+        embedding = await get_query_embedding_async(query)
+
+        if not embedding:
+            return "Error: Could not generate embedding for query"
+
+        rpc_params = {
+            'query_embedding': embedding,
+            'filter_source_types': ['teams_message'],
+            'match_count': limit,
+            'match_threshold': 0.25
+        }
+
+        result = supabase.rpc('search_document_chunks', rpc_params).execute()
+
+        if not result.data:
+            return "No matching Teams messages found."
+
+        output = []
+        sources = []
+
+        for idx, item in enumerate(result.data, 1):
+            similarity_pct = f"{item.get('similarity', 0) * 100:.0f}%"
+            title = item.get('doc_title', 'Teams Message')
+            date = item.get('doc_date', item.get('doc_created_at', 'Unknown date'))
+            chunk_id = item.get('chunk_id', f'chunk-{idx}')
+
+            source_ref = f"[Source {idx}]"
+            sources.append({
+                "id": chunk_id,
+                "ref": source_ref,
+                "type": "teams_message",
+                "title": title,
+                "date": str(date)[:10] if date else "Unknown",
+                "relevance": similarity_pct
+            })
+
+            output.append(f"{source_ref} **{title}** ({similarity_pct} match)")
+            output.append(f"  Date: {str(date)[:10] if date else 'Unknown'}")
+            chunk_text = item.get('chunk_text', '')
+            if chunk_text:
+                output.append(f"  Content: {chunk_text[:300]}...")
+            output.append("")
+
+        output.append("\n---\n**Sources:**")
+        for src in sources:
+            output.append(f"- {src['ref']}: {src['title']} ({src['date']}) - {src['relevance']} relevance")
+
+        return "\n".join(output)
+    except Exception as e:
+        return f"Error searching Teams messages: {str(e)}"
+
+
+@function_tool
+async def search_documents(query: str, limit: int = 10) -> str:
+    """
+    Search synced OneDrive and SharePoint documents using semantic similarity.
+    Use this when the user asks about files, documents, SOWs, specs,
+    contracts, submittals, or any content stored in OneDrive or SharePoint.
+
+    Args:
+        query: The search query text
+        limit: Maximum number of results to return (default: 10)
+
+    Returns:
+        Formatted string with matching document content, similarity scores, and source citations
+    """
+    try:
+        supabase = get_supabase_client()
+        embedding = await get_query_embedding_async(query)
+
+        if not embedding:
+            return "Error: Could not generate embedding for query"
+
+        rpc_params = {
+            'query_embedding': embedding,
+            'filter_source_types': ['onedrive_document'],
+            'match_count': limit,
+            'match_threshold': 0.25
+        }
+
+        result = supabase.rpc('search_document_chunks', rpc_params).execute()
+
+        if not result.data:
+            return "No matching documents found."
+
+        output = []
+        sources = []
+
+        for idx, item in enumerate(result.data, 1):
+            similarity_pct = f"{item.get('similarity', 0) * 100:.0f}%"
+            title = item.get('doc_title', 'Untitled Document')
+            date = item.get('doc_date', item.get('doc_created_at', 'Unknown date'))
+            chunk_id = item.get('chunk_id', f'chunk-{idx}')
+
+            source_ref = f"[Source {idx}]"
+            sources.append({
+                "id": chunk_id,
+                "ref": source_ref,
+                "type": "onedrive_document",
+                "title": title,
+                "date": str(date)[:10] if date else "Unknown",
+                "relevance": similarity_pct
+            })
+
+            output.append(f"{source_ref} **{title}** ({similarity_pct} match)")
+            output.append(f"  Date: {str(date)[:10] if date else 'Unknown'}")
+            chunk_text = item.get('chunk_text', '')
+            if chunk_text:
+                output.append(f"  Content: {chunk_text[:300]}...")
+            output.append("")
+
+        output.append("\n---\n**Sources:**")
+        for src in sources:
+            output.append(f"- {src['ref']}: {src['title']} ({src['date']}) - {src['relevance']} relevance")
+
+        return "\n".join(output)
+    except Exception as e:
+        return f"Error searching documents: {str(e)}"
+
+
+@function_tool
 async def search_decisions(query: str, limit: int = 10, project_id: Optional[int] = None) -> str:
     """
     Search decisions using semantic similarity (vector search).

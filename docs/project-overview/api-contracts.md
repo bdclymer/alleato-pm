@@ -1,11 +1,13 @@
-# Alleato-Procore API Contracts Documentation
+# Alleato-PM API Contracts Documentation
+
+> Generated: 2026-03-22 (merged) | Source: `frontend/src/app/api/`
 
 ## Overview
 
-The Alleato-Procore platform exposes a comprehensive REST API surface built on Next.js 15 App Router API routes with Supabase as the backend database and authentication provider.
+The Alleato-PM platform exposes a comprehensive REST API surface built on Next.js 15 App Router API routes with Supabase as the backend database and authentication provider.
 
 **Key Statistics:**
-- 196 API route files
+- 150+ API route files
 - 326+ HTTP method handlers
 - All project-scoped routes follow the pattern: `/api/projects/[projectId]/<resource>/route.ts`
 
@@ -20,30 +22,30 @@ The Alleato-Procore platform exposes a comprehensive REST API surface built on N
 - Auth guards on all protected endpoints
 
 **Pagination (standard query params):**
-- `page` — page number (1-indexed)
-- `limit` or `per_page` — items per page
-- `sort` — column to sort by
-- `order` — `asc` or `desc`
-- `search` — full-text search term
+- `page` -- page number (1-indexed)
+- `limit` or `per_page` -- items per page
+- `sort` -- column to sort by
+- `order` -- `asc` or `desc`
+- `search` -- full-text search term
 
 **Multi-View Support:**
-- `view=hierarchy` — tree/nested structure
-- `view=gantt` — Gantt chart data format
-- `view=summary` — aggregated summary
-- `view=summary-by-cost-code` — grouped by cost code
+- `view=hierarchy` -- tree/nested structure
+- `view=gantt` -- Gantt chart data format
+- `view=summary` -- aggregated summary
+- `view=summary-by-cost-code` -- grouped by cost code
 
 **Bulk Operations:**
-- `/bulk` — batch create/update/delete
-- `/import` — import from Excel/CSV
-- `/export` — export to Excel/CSV
+- `/bulk` -- batch create/update/delete
+- `/import` -- import from Excel/CSV
+- `/export` -- export to Excel/CSV
 
 **Workflow Actions:**
-- `/approve` — approve a pending item
-- `/reject` — reject a pending item
-- `/submit` — submit for review
-- `/restore` — restore a soft-deleted item
-- `/deactivate` — soft-deactivate
-- `/reactivate` — reactivate a deactivated item
+- `/approve` -- approve a pending item
+- `/reject` -- reject a pending item
+- `/submit` -- submit for review
+- `/restore` -- restore a soft-deleted item
+- `/deactivate` -- soft-deactivate
+- `/reactivate` -- reactivate a deactivated item
 
 ---
 
@@ -57,11 +59,16 @@ The Alleato-Procore platform exposes a comprehensive REST API surface built on N
 |--------|----------|-------------|
 | POST | `/api/auth/signup` | Register a new user account |
 | GET | `/api/auth/admin-check` | Check if current user has admin privileges |
+| POST | `/api/auth/admin-check` | Check admin status (POST variant) |
 | POST | `/api/auth/post-login-redirect` | Determine redirect URL after successful login |
 | POST | `/api/admin/set-admin-status` | Set or revoke admin status for a user |
+| GET/POST | `/api/admin/company-context` | Get/set company-wide context for AI |
+| GET/POST | `/api/admin/company-knowledge` | Manage company knowledge base |
 | POST | `/api/dev/make-admin` | Dev tool: promote user to admin |
 | GET | `/api/dev/schema` | Dev tool: retrieve database schema information |
 | POST | `/api/dev/schema` | Dev tool: execute schema operations |
+
+Auth pattern: Supabase SSR session via `proxy.ts` -> `updateSession()`. All requests checked for valid Supabase JWT.
 
 ---
 
@@ -74,6 +81,7 @@ The Alleato-Procore platform exposes a comprehensive REST API surface built on N
 | GET | `/api/projects/bootstrap` | Bootstrap data for project initialization |
 | GET | `/api/projects/[projectId]` | Get project details by ID |
 | PATCH | `/api/projects/[projectId]` | Update project details |
+| DELETE | `/api/projects/[projectId]` | Delete a project |
 | GET | `/api/projects/[projectId]/checklist` | Get project setup checklist status |
 | GET | `/api/projects/[projectId]/employees` | List employees assigned to project |
 
@@ -91,6 +99,7 @@ The Alleato-Procore platform exposes a comprehensive REST API surface built on N
 | GET | `/api/projects/[projectId]/budget/history` | Get budget change history |
 | GET | `/api/projects/[projectId]/budget/forecast` | Get budget forecast data |
 | GET | `/api/projects/[projectId]/budget/export` | Export budget to Excel/CSV |
+| POST | `/api/projects/[projectId]/budget/export` | Export budget (POST variant) |
 | POST | `/api/projects/[projectId]/budget/import` | Import budget from Excel/CSV |
 | GET | `/api/projects/[projectId]/budget/lock` | Get budget lock status |
 | POST | `/api/projects/[projectId]/budget/lock` | Lock the budget |
@@ -101,9 +110,11 @@ The Alleato-Procore platform exposes a comprehensive REST API surface built on N
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
+| GET | `/api/projects/[projectId]/budget/line-items` | List budget line items |
+| POST | `/api/projects/[projectId]/budget/line-items` | Create a budget line item |
 | GET | `/api/projects/[projectId]/budget/lines/[lineId]` | Get a specific budget line item |
-| PATCH | `/api/projects/[projectId]/budget/lines/[lineId]` | Update a budget line item |
-| DELETE | `/api/projects/[projectId]/budget/lines/[lineId]` | Delete a budget line item |
+| PATCH | `/api/projects/[projectId]/budget/line-items/[lineItemId]` | Update a budget line item |
+| DELETE | `/api/projects/[projectId]/budget/line-items/[lineItemId]` | Delete a budget line item |
 | GET | `/api/projects/[projectId]/budget/lines/[lineId]/history` | Get change history for a line item |
 
 **Budget Views**
@@ -143,6 +154,45 @@ The Alleato-Procore platform exposes a comprehensive REST API surface built on N
 
 ---
 
+### Prime Contracts
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/projects/[projectId]/prime-contracts` | List prime contracts |
+| POST | `/api/projects/[projectId]/prime-contracts` | Create a prime contract |
+| GET | `/api/projects/[projectId]/prime-contracts/[contractId]` | Get prime contract details |
+| PATCH | `/api/projects/[projectId]/prime-contracts/[contractId]` | Update a prime contract |
+| DELETE | `/api/projects/[projectId]/prime-contracts/[contractId]` | Delete a prime contract |
+
+**Prime Contract Change Orders (PCCOs)**
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/projects/[projectId]/prime-contract-change-orders` | List PCCOs |
+| POST | `/api/projects/[projectId]/prime-contract-change-orders` | Create a PCCO |
+| GET | `/api/projects/[projectId]/prime-contract-change-orders/[primeCoId]` | Get PCCO details |
+| PATCH | `/api/projects/[projectId]/prime-contract-change-orders/[primeCoId]` | Update a PCCO |
+| DELETE | `/api/projects/[projectId]/prime-contract-change-orders/[primeCoId]` | Delete a PCCO |
+| POST | `/api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/approve` | Approve PCCO |
+| POST | `/api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/reject` | Reject PCCO |
+| GET | `/api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/attachments` | List attachments |
+| POST | `/api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/attachments` | Upload attachment |
+| DELETE | `/api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/attachments/[attachmentId]` | Delete attachment |
+| GET | `/api/projects/[projectId]/prime-contract-change-orders/export` | Export PCCOs |
+
+**Vertical Markup**
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/projects/[projectId]/vertical-markup` | List vertical markup entries |
+| POST | `/api/projects/[projectId]/vertical-markup` | Create a vertical markup entry |
+| GET | `/api/projects/[projectId]/vertical-markup/[markupId]` | Get markup details |
+| PUT | `/api/projects/[projectId]/vertical-markup/[markupId]` | Update a markup entry |
+| DELETE | `/api/projects/[projectId]/vertical-markup/[markupId]` | Delete a markup entry |
+| POST | `/api/projects/[projectId]/vertical-markup/calculate` | Calculate vertical markup |
+
+---
+
 ### Contracts & Commitments
 
 **Contracts (55+ endpoints)**
@@ -178,22 +228,27 @@ The Alleato-Procore platform exposes a comprehensive REST API surface built on N
 | POST | `/api/projects/[projectId]/contracts/[contractId]/change-orders/[changeOrderId]/approve` | Approve a change order |
 | POST | `/api/projects/[projectId]/contracts/[contractId]/change-orders/[changeOrderId]/reject` | Reject a change order |
 
-**Commitments (Legacy & Current)**
+**Commitments**
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/projects/[projectId]/commitments` | List commitments (legacy endpoint) |
-| POST | `/api/projects/[projectId]/commitments` | Create a commitment |
+| GET | `/api/commitments` | List commitments (global) |
+| POST | `/api/commitments` | Create a commitment |
+| GET | `/api/commitments/[id]` | Get commitment details |
+| PATCH | `/api/commitments/[id]` | Update a commitment |
+| DELETE | `/api/commitments/[id]` | Delete a commitment |
+| GET | `/api/projects/[projectId]/commitments` | List commitments (project-scoped) |
+| POST | `/api/projects/[projectId]/commitments` | Create a commitment (project-scoped) |
 | GET | `/api/projects/[projectId]/commitments/[commitmentId]` | Get commitment details |
 | PUT | `/api/projects/[projectId]/commitments/[commitmentId]` | Update a commitment |
 | DELETE | `/api/projects/[projectId]/commitments/[commitmentId]` | Delete a commitment |
 | POST | `/api/projects/[projectId]/commitments/[commitmentId]/restore` | Restore a deleted commitment |
-| DELETE | `/api/projects/[projectId]/commitments/[commitmentId]/permanent-delete` | Permanently delete a commitment |
-| GET | `/api/projects/[projectId]/commitments/[commitmentId]/attachments` | List commitment attachments |
+| DELETE | `/api/projects/[projectId]/commitments/[commitmentId]/permanent-delete` | Permanently delete |
+| GET | `/api/projects/[projectId]/commitments/[commitmentId]/attachments` | List attachments |
 | POST | `/api/projects/[projectId]/commitments/[commitmentId]/attachments` | Upload attachment |
-| GET | `/api/projects/[projectId]/commitments/[commitmentId]/email` | Get email trail for commitment |
-| GET | `/api/projects/[projectId]/commitments/[commitmentId]/export` | Export commitment to file |
-| GET | `/api/projects/[projectId]/commitments/[commitmentId]/invoices` | List invoices for commitment |
+| GET | `/api/projects/[projectId]/commitments/[commitmentId]/email` | Get email trail |
+| GET | `/api/projects/[projectId]/commitments/[commitmentId]/export` | Export commitment |
+| GET | `/api/projects/[projectId]/commitments/[commitmentId]/invoices` | List invoices |
 | GET | `/api/projects/[projectId]/commitments/[commitmentId]/advanced-settings` | Get advanced settings |
 | PUT | `/api/projects/[projectId]/commitments/[commitmentId]/advanced-settings` | Update advanced settings |
 
@@ -201,11 +256,17 @@ The Alleato-Procore platform exposes a comprehensive REST API surface built on N
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/projects/[projectId]/commitments/[commitmentId]/change-orders` | List commitment change orders |
-| POST | `/api/projects/[projectId]/commitments/[commitmentId]/change-orders` | Create a commitment change order |
-| GET | `/api/projects/[projectId]/commitments/[commitmentId]/change-orders/[changeOrderId]` | Get change order details |
-| PUT | `/api/projects/[projectId]/commitments/[commitmentId]/change-orders/[changeOrderId]` | Update a change order |
-| DELETE | `/api/projects/[projectId]/commitments/[commitmentId]/change-orders/[changeOrderId]` | Delete a change order |
+| GET | `/api/commitments/[id]/change-orders` | List commitment change orders (global) |
+| POST | `/api/commitments/[id]/change-orders` | Create a CCO (global) |
+| GET | `/api/commitments/[id]/change-orders/[changeOrderId]` | Get CCO details (global) |
+| PATCH | `/api/commitments/[id]/change-orders/[changeOrderId]` | Update a CCO (global) |
+| DELETE | `/api/commitments/[id]/change-orders/[changeOrderId]` | Delete a CCO (global) |
+| POST | `/api/commitments/[id]/change-orders/[changeOrderId]/approve` | Approve CCO |
+| GET | `/api/projects/[projectId]/commitments/[commitmentId]/change-orders` | List CCOs (project-scoped) |
+| POST | `/api/projects/[projectId]/commitments/[commitmentId]/change-orders` | Create a CCO (project-scoped) |
+| GET | `/api/projects/[projectId]/commitments/[commitmentId]/change-orders/[changeOrderId]` | Get CCO details |
+| PUT | `/api/projects/[projectId]/commitments/[commitmentId]/change-orders/[changeOrderId]` | Update a CCO |
+| DELETE | `/api/projects/[projectId]/commitments/[commitmentId]/change-orders/[changeOrderId]` | Delete a CCO |
 
 **Commitment Line Items**
 
@@ -240,7 +301,7 @@ The Alleato-Procore platform exposes a comprehensive REST API surface built on N
 | PUT | `/api/projects/[projectId]/change-events/[changeEventId]` | Update a change event |
 | DELETE | `/api/projects/[projectId]/change-events/[changeEventId]` | Delete a change event |
 | GET | `/api/projects/[projectId]/change-events/[changeEventId]/history` | Get change event history |
-| POST | `/api/projects/[projectId]/change-events/[changeEventId]/convert-to-change-order` | Convert event to a change order |
+| POST | `/api/projects/[projectId]/change-events/[changeEventId]/convert-to-change-order` | Convert to change order |
 
 **Change Event Line Items**
 
@@ -267,6 +328,7 @@ The Alleato-Procore platform exposes a comprehensive REST API surface built on N
 |--------|----------|-------------|
 | GET | `/api/projects/[projectId]/change-events/[changeEventId]/approvals` | List approvals |
 | POST | `/api/projects/[projectId]/change-events/[changeEventId]/approvals` | Create/submit approval |
+| POST | `/api/projects/[projectId]/change-events/[changeEventId]/approve` | Approve change event |
 
 **Change Event RFQs**
 
@@ -350,6 +412,30 @@ The Alleato-Procore platform exposes a comprehensive REST API surface built on N
 
 ---
 
+### Invoicing
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/invoices` | List invoices (global) |
+| POST | `/api/invoices` | Create an invoice (global) |
+| GET | `/api/projects/[projectId]/invoicing/owner` | Owner invoicing data (SOV-based) |
+| POST | `/api/projects/[projectId]/invoicing/owner` | Create owner invoice |
+| GET | `/api/projects/[projectId]/invoicing/owner/[invoiceId]` | Get invoice details |
+| PATCH | `/api/projects/[projectId]/invoicing/owner/[invoiceId]` | Update an invoice |
+| DELETE | `/api/projects/[projectId]/invoicing/owner/[invoiceId]` | Delete an invoice |
+| POST | `/api/projects/[projectId]/invoicing/owner/[invoiceId]/submit` | Submit invoice for approval |
+| POST | `/api/projects/[projectId]/invoicing/[invoiceId]/approve` | Approve an invoice |
+| GET/POST | `/api/projects/[projectId]/billing-periods` | Billing periods |
+
+**Commitment Invoices**
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/commitments/[id]/invoices` | List commitment invoices |
+| POST | `/api/commitments/[id]/invoices` | Create commitment invoice |
+
+---
+
 ### Directory & People
 
 **People (45+ endpoints)**
@@ -361,7 +447,7 @@ The Alleato-Procore platform exposes a comprehensive REST API surface built on N
 | GET | `/api/projects/[projectId]/directory/people/[personId]` | Get person details |
 | PUT | `/api/projects/[projectId]/directory/people/[personId]` | Update person details |
 | DELETE | `/api/projects/[projectId]/directory/people/[personId]` | Remove person from directory |
-| POST | `/api/projects/[projectId]/directory/people/[personId]/invite` | Send invitation to person |
+| POST | `/api/projects/[projectId]/directory/people/[personId]/invite` | Send invitation |
 | POST | `/api/projects/[projectId]/directory/people/[personId]/reinvite` | Re-send invitation |
 | POST | `/api/projects/[projectId]/directory/people/[personId]/resend-invite` | Resend invitation email |
 | POST | `/api/projects/[projectId]/directory/people/[personId]/deactivate` | Deactivate a person |
@@ -391,11 +477,22 @@ The Alleato-Procore platform exposes a comprehensive REST API surface built on N
 | GET | `/api/projects/[projectId]/directory/companies/[companyId]` | Get company details |
 | PUT | `/api/projects/[projectId]/directory/companies/[companyId]` | Update company details |
 | DELETE | `/api/projects/[projectId]/directory/companies/[companyId]` | Remove company |
-| GET | `/api/companies` | List companies (global scope) |
+| GET | `/api/companies` | List companies (global) |
 | POST | `/api/companies` | Create a company (global) |
 | GET | `/api/companies/[companyId]` | Get company (global) |
 | PUT | `/api/companies/[companyId]` | Update company (global) |
 | DELETE | `/api/companies/[companyId]` | Delete company (global) |
+| GET | `/api/directory/companies` | List directory companies |
+| POST | `/api/directory/companies` | Create directory company |
+| GET | `/api/directory/companies/[companyId]` | Get directory company details |
+| PATCH | `/api/directory/companies/[companyId]` | Update directory company |
+| DELETE | `/api/directory/companies/[companyId]` | Delete directory company |
+| GET | `/api/directory/companies/[companyId]/details` | Detailed company info |
+| POST | `/api/directory/companies/[companyId]/add-to-project` | Add company to project |
+| GET/POST | `/api/directory/project-companies` | Project-company associations |
+| GET/POST | `/api/contacts` | Contacts |
+| GET/POST | `/api/people` | People directory |
+| GET/POST | `/api/clients` | Client companies |
 
 **Groups**
 
@@ -408,7 +505,7 @@ The Alleato-Procore platform exposes a comprehensive REST API surface built on N
 | DELETE | `/api/projects/[projectId]/directory/groups/[groupId]` | Delete a group |
 | GET | `/api/projects/[projectId]/directory/groups/[groupId]/members` | List group members |
 | POST | `/api/projects/[projectId]/directory/groups/[groupId]/members` | Add members to group |
-| DELETE | `/api/projects/[projectId]/directory/groups/[groupId]/members/[memberId]` | Remove member from group |
+| DELETE | `/api/projects/[projectId]/directory/groups/[groupId]/members/[memberId]` | Remove member |
 | POST | `/api/projects/[projectId]/directory/groups/[groupId]/bulk-add` | Bulk add users to group |
 
 **Directory Utilities**
@@ -439,6 +536,7 @@ The Alleato-Procore platform exposes a comprehensive REST API surface built on N
 | GET | `/api/projects/[projectId]/drawings/[drawingId]` | Get drawing details |
 | PUT | `/api/projects/[projectId]/drawings/[drawingId]` | Update a drawing |
 | DELETE | `/api/projects/[projectId]/drawings/[drawingId]` | Delete a drawing |
+| POST | `/api/projects/[projectId]/drawings/upload` | Upload drawing file |
 
 **Drawing Revisions**
 
@@ -453,8 +551,8 @@ The Alleato-Procore platform exposes a comprehensive REST API surface built on N
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/projects/[projectId]/drawings/areas` | List drawing areas |
-| POST | `/api/projects/[projectId]/drawings/areas` | Create a drawing area |
+| GET | `/api/projects/[projectId]/drawing-areas` | List drawing areas |
+| POST | `/api/projects/[projectId]/drawing-areas` | Create a drawing area |
 | GET | `/api/projects/[projectId]/drawings/areas/[areaId]` | Get area details |
 | PUT | `/api/projects/[projectId]/drawings/areas/[areaId]` | Update an area |
 | DELETE | `/api/projects/[projectId]/drawings/areas/[areaId]` | Delete an area |
@@ -463,8 +561,8 @@ The Alleato-Procore platform exposes a comprehensive REST API surface built on N
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/projects/[projectId]/drawings/sets` | List drawing sets |
-| POST | `/api/projects/[projectId]/drawings/sets` | Create a drawing set |
+| GET | `/api/projects/[projectId]/drawing-sets` | List drawing sets |
+| POST | `/api/projects/[projectId]/drawing-sets` | Create a drawing set |
 | GET | `/api/projects/[projectId]/drawings/sets/[setId]` | Get set details |
 | PUT | `/api/projects/[projectId]/drawings/sets/[setId]` | Update a set |
 | DELETE | `/api/projects/[projectId]/drawings/sets/[setId]` | Delete a set |
@@ -501,6 +599,35 @@ The Alleato-Procore platform exposes a comprehensive REST API surface built on N
 | GET | `/api/projects/[projectId]/specifications/areas/[areaId]` | Get area details |
 | PUT | `/api/projects/[projectId]/specifications/areas/[areaId]` | Update an area |
 | DELETE | `/api/projects/[projectId]/specifications/areas/[areaId]` | Delete an area |
+
+---
+
+### Submittals
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/projects/[projectId]/submittals` | List submittals |
+| POST | `/api/projects/[projectId]/submittals` | Create a submittal |
+| GET | `/api/projects/[projectId]/submittals/[submittalId]` | Get submittal details |
+| PATCH | `/api/projects/[projectId]/submittals/[submittalId]` | Update a submittal |
+| DELETE | `/api/projects/[projectId]/submittals/[submittalId]` | Delete a submittal |
+
+---
+
+### RFIs
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/projects/[projectId]/rfis` | List RFIs (project-scoped) |
+| POST | `/api/projects/[projectId]/rfis` | Create an RFI |
+| GET | `/api/projects/[projectId]/rfis/[rfiId]` | Get RFI details |
+| PATCH | `/api/projects/[projectId]/rfis/[rfiId]` | Update an RFI |
+| DELETE | `/api/projects/[projectId]/rfis/[rfiId]` | Delete an RFI |
+| GET | `/api/rfis` | List RFIs (global) |
+| POST | `/api/rfis` | Create an RFI (global) |
+| GET | `/api/rfis/[rfiId]` | Get RFI details (global) |
+| PUT | `/api/rfis/[rfiId]` | Update an RFI (global) |
+| DELETE | `/api/rfis/[rfiId]` | Delete an RFI (global) |
 
 ---
 
@@ -541,6 +668,10 @@ The Alleato-Procore platform exposes a comprehensive REST API surface built on N
 | GET | `/api/projects/[projectId]/meetings/[meetingId]` | Get meeting details |
 | PUT | `/api/projects/[projectId]/meetings/[meetingId]` | Update a meeting |
 | DELETE | `/api/projects/[projectId]/meetings/[meetingId]` | Delete a meeting |
+| GET | `/api/projects/[projectId]/meetings/[meetingId]/digest` | AI-generated meeting digest |
+| GET/POST | `/api/projects/[projectId]/meetings/[meetingId]/prep` | Meeting prep document |
+| POST | `/api/projects/[projectId]/meetings/[meetingId]/prep/generate` | Generate AI meeting prep |
+| GET | `/api/meetings/[meetingId]` | Global meeting endpoint |
 
 ---
 
@@ -549,58 +680,121 @@ The Alleato-Procore platform exposes a comprehensive REST API surface built on N
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/projects/[projectId]/permissions` | Get project permissions matrix |
+| POST | `/api/projects/[projectId]/permissions` | Create project permission |
 | POST | `/api/projects/[projectId]/permissions/assign` | Assign permissions to a user |
 | POST | `/api/projects/[projectId]/permissions/override` | Create a permission override |
 | DELETE | `/api/projects/[projectId]/permissions/override` | Remove a permission override |
 | GET | `/api/permissions/templates` | List permission templates |
+| POST | `/api/permissions/templates` | Create permission template |
+| GET/POST | `/api/projects/[projectId]/vendors` | Project vendors |
 
 ---
 
-### Invoicing
+### AI Assistant
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/projects/[projectId]/invoicing/owner` | Get owner invoicing data |
-| GET | `/api/projects/[projectId]/invoicing/[invoiceId]` | Get invoice details |
-| PUT | `/api/projects/[projectId]/invoicing/[invoiceId]` | Update an invoice |
-| POST | `/api/projects/[projectId]/invoicing/[invoiceId]/submit` | Submit invoice for approval |
-| POST | `/api/projects/[projectId]/invoicing/[invoiceId]/approve` | Approve an invoice |
-
-**Legacy Invoices**
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/invoices` | List invoices (legacy) |
-| POST | `/api/invoices` | Create an invoice (legacy) |
+| POST | `/api/ai-assistant/chat` | Stream AI chat response (Vercel AI SDK) |
+| GET | `/api/ai-assistant/conversations` | List conversations |
+| POST | `/api/ai-assistant/conversations` | Create a conversation |
+| GET | `/api/ai-assistant/conversations/[sessionId]` | Get conversation |
+| DELETE | `/api/ai-assistant/conversations/[sessionId]` | Delete conversation |
+| GET | `/api/ai-assistant/messages/[sessionId]` | Get conversation messages |
+| POST | `/api/ai-assistant/feedback` | Submit response feedback |
+| GET | `/api/ai-assistant/memories` | List AI memories |
+| POST | `/api/ai-assistant/memories` | Create AI memory |
+| DELETE | `/api/ai-assistant/memories/[id]` | Delete memory |
+| GET | `/api/ai-assistant/usage-stats` | Usage statistics |
 
 ---
 
-### Vertical Markup
+### RAG Chat
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/projects/[projectId]/vertical-markup` | List vertical markup entries |
-| POST | `/api/projects/[projectId]/vertical-markup` | Create a vertical markup entry |
-| GET | `/api/projects/[projectId]/vertical-markup/[markupId]` | Get markup details |
-| PUT | `/api/projects/[projectId]/vertical-markup/[markupId]` | Update a markup entry |
-| DELETE | `/api/projects/[projectId]/vertical-markup/[markupId]` | Delete a markup entry |
-| POST | `/api/projects/[projectId]/vertical-markup/calculate` | Calculate vertical markup |
+| POST | `/api/rag-chat` | RAG-enhanced chat (Next.js route handler) |
+| POST/GET | `/api/rag-chatkit` | OpenAI ChatKit-compatible endpoint |
+| POST | `/api/rag-chatkit/bootstrap` | Bootstrap RAG chat session |
+| GET/POST | `/api/rag-chatkit/state` | Chat session state |
+| POST | `/api/tool-calling` | Generic tool-calling endpoint |
+| POST | `/api/primitives/tool-calling` | Primitive tool test endpoint |
 
 ---
 
-### RFIs
+### Documents & Files
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/rfis` | List RFIs |
-| POST | `/api/rfis` | Create an RFI |
-| GET | `/api/rfis/[rfiId]` | Get RFI details |
-| PUT | `/api/rfis/[rfiId]` | Update an RFI |
-| DELETE | `/api/rfis/[rfiId]` | Delete an RFI |
+| POST | `/api/documents/upload` | Upload document |
+| POST | `/api/documents/trigger-pipeline` | Trigger RAG ingestion pipeline |
+| POST | `/api/documents/status` | Check document processing status |
+| POST | `/api/documents/[docId]/assign-project` | Assign doc to project |
+| POST | `/api/document-center/[recordType]/[recordId]/pdf` | Generate PDF |
+| POST | `/api/document-center/[recordType]/[recordId]/email` | Email document |
+| GET/POST | `/api/document-center/[recordType]/[recordId]/recipients` | Manage email recipients |
+| GET | `/api/files/read` | Read file contents |
 
 ---
 
-### Utilities
+### Procore Docs / Knowledge
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/procore-docs/ask` | Ask question against Procore docs RAG |
+| GET | `/api/docs-search` | Search documentation |
+| GET | `/api/docs/check` | Check doc availability |
+| GET/POST | `/api/knowledge` | Knowledge base management |
+
+---
+
+### Liveblocks (Real-time Collaboration)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/liveblocks-auth` | Authenticate Liveblocks session |
+| GET/POST | `/api/liveblocks/rooms` | Manage collaboration rooms |
+| GET/POST | `/api/liveblocks/users` | User presence |
+| GET | `/api/liveblocks/users/search` | Search users |
+| POST | `/api/liveblocks/webhook` | Liveblocks webhook handler |
+
+---
+
+### ERP Sync (Acumatica)
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/sync/acumatica/ar-invoices` | Sync AR invoices from Acumatica |
+| POST | `/api/sync/acumatica/ar-payments` | Sync AR payments |
+| POST | `/api/sync/acumatica/commitments` | Sync commitments/POs |
+| POST | `/api/sync/acumatica/direct-costs` | Sync direct costs |
+| POST | `/api/sync/acumatica/vendors` | Sync vendor list |
+
+---
+
+### Financial Insights
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/financial-insights/alerts` | Get financial alerts |
+| POST | `/api/financial-insights/scan` | Run financial scan |
+| POST | `/api/financial-insights/cross-reference` | Cross-reference financial data |
+
+---
+
+### Monitoring & Notifications
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/health` | Health check endpoint |
+| GET | `/api/monitoring/dashboard` | Monitoring metrics |
+| POST | `/api/monitoring/notify` | Send monitoring notification |
+| GET | `/api/monitoring/todo-integration` | TODO integration status |
+| WebSocket | `/api/monitoring/websocket` | Real-time monitoring feed |
+| POST | `/api/notifications/trigger` | Trigger user notification |
+
+---
+
+### Utilities & Dev Tools
 
 **Dev Tools**
 
@@ -609,22 +803,9 @@ The Alleato-Procore platform exposes a comprehensive REST API surface built on N
 | POST | `/api/dev/check-routes` | Check for route conflicts |
 | POST | `/api/dev/clear-cache` | Clear Next.js cache |
 | POST | `/api/dev/regenerate-types` | Regenerate Supabase types |
-
-**Health & Monitoring**
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/health` | Health check endpoint |
-| GET | `/api/monitoring` | Application monitoring data |
-| GET | `/api/websocket` | WebSocket connection endpoint |
-
-**Search & AI**
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/docs-search` | Search documentation |
-| POST | `/api/rag-chat` | RAG-powered chat endpoint |
-| POST | `/api/rag-chatkit` | RAG ChatKit endpoint |
+| GET | `/api/dev-tools/check-routes` | Check for route conflicts |
+| POST | `/api/dev-tools/clear-cache` | Clear Next.js cache |
+| POST | `/api/dev-tools/regenerate-types` | Regenerate Supabase types |
 
 **Table Operations (Admin)**
 
@@ -634,6 +815,7 @@ The Alleato-Procore platform exposes a comprehensive REST API surface built on N
 | POST | `/api/table-insert` | Insert a row into a table |
 | POST | `/api/table-update` | Update a row in a table |
 | POST | `/api/table-delete` | Delete a row from a table |
+| GET | `/api/database-tables-catalog/[schemaName]/[tableName]` | Browse table schema |
 
 **File & Document Operations**
 
@@ -643,27 +825,31 @@ The Alleato-Procore platform exposes a comprehensive REST API surface built on N
 | GET | `/api/document/status` | Get document processing status |
 | POST | `/api/document/trigger-pipeline` | Trigger document processing pipeline |
 
-**Integration & Todo**
+**Tasks (Global)**
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/todo-integration` | Get todo integration status |
-| POST | `/api/todo-integration` | Create/update todo integration |
+| GET/POST | `/api/tasks` | Global task management |
+| GET/PATCH/DELETE | `/api/tasks/[taskId]` | Single task |
+| POST | `/api/tasks/bulk` | Bulk task operations |
 
-**OG & Proxy**
+**Estimates**
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
+| GET | `/api/estimates` | List estimates |
+| GET | `/api/estimates/stats` | Estimate statistics |
+
+**Misc**
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/avatar/[personId]` | Generate/fetch avatar |
+| POST | `/api/company/logo` | Upload company logo |
 | GET | `/api/og/fetch` | Fetch Open Graph metadata |
 | GET | `/api/og/proxy` | Proxy Open Graph images |
 | ALL | `/api/supabase-proxy/[...path]` | Proxy requests to Supabase (catch-all) |
-
-**Tool Calling**
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/api/primitives/tool-calling` | Execute a tool call (primitives) |
-| POST | `/api/tool-calling` | Execute a tool call |
+| GET | `/api/cron/decay-memories` | Cron: decay old AI memories |
 
 ---
 
@@ -738,7 +924,7 @@ GET /api/projects/[projectId]/resource?page=1&limit=25&sort=created_at&order=des
 | `limit` / `per_page` | number | 25 | Items per page |
 | `sort` | string | `created_at` | Column to sort by |
 | `order` | string | `desc` | Sort direction (`asc` or `desc`) |
-| `search` | string | — | Full-text search query |
+| `search` | string | -- | Full-text search query |
 
 Response format:
 
@@ -819,13 +1005,13 @@ All API errors use the `apiErrorResponse()` utility for consistent formatting:
 ```
 
 Common HTTP status codes:
-- `400` — Bad Request (validation failure)
-- `401` — Unauthorized (not authenticated)
-- `403` — Forbidden (insufficient permissions)
-- `404` — Not Found (resource does not exist)
-- `409` — Conflict (duplicate or constraint violation)
-- `422` — Unprocessable Entity (business logic violation)
-- `500` — Internal Server Error
+- `400` -- Bad Request (validation failure)
+- `401` -- Unauthorized (not authenticated)
+- `403` -- Forbidden (insufficient permissions)
+- `404` -- Not Found (resource does not exist)
+- `409` -- Conflict (duplicate or constraint violation)
+- `422` -- Unprocessable Entity (business logic violation)
+- `500` -- Internal Server Error
 
 ### Zod Validation
 
@@ -854,4 +1040,14 @@ export async function POST(request: NextRequest) {
 
 ---
 
-_Generated using BMAD Method document-project workflow_
+## Summary
+
+| Metric | Count |
+|--------|-------|
+| Total route files | 150+ |
+| Total endpoint handlers | 326+ |
+| API domains | 30+ |
+| Project-scoped routes | ~80 |
+| Global routes | ~70 |
+| AI/RAG routes | 15+ |
+| ERP sync routes | 5 |

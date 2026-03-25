@@ -1,22 +1,35 @@
-# Large non-runtime directories (prevents upload bloat)
-_bmad
-_bmad-output
-backend
-docs
-docs-ai
-dogfood-output
-e2e-screenshots
-logs
-memories
-output
-procore-crawls
-procore-templates
-scripts
-tests
-tools
-tmp
-verify-output
-vermillian
+# Large non-runtime directories at repo root (prevents upload bloat)
+/_bmad
+/_bmad-output
+/backend
+/docs-ai
+/dogfood-output
+/e2e-screenshots
+/logs
+/memories
+/output
+/procore-crawls
+/procore-templates
+/tests
+/tmp
+/verify-output
+/vermillian
+
+# Large subdirs inside docs (keep docs/design which the build reads)
+/docs/.archive
+/docs/BMAD
+/docs/PRPs
+/docs/asrs
+/docs/change-order-process
+/docs/procore-reference/procore-workflow-images
+/docs/reports
+
+# Scripts — keep scripts/ since build may need it
+# but exclude large subdirs
+/scripts/screenshot-capture
+/scripts/playwright-crawl
+/scripts/feature-tracker
+/scripts/change-events-crawl
 
 # Frontend dev-only artifacts
 frontend/config/playwright

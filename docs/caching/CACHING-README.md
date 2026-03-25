@@ -13,7 +13,7 @@ This directory contains everything needed to implement Claude's prompt caching f
 ### What's Included
 
 1. **[CACHING-QUICK-REFERENCE.md](./CACHING-QUICK-REFERENCE.md)** - Quick lookup for common patterns
-2. **[../docs-ai/contents/docs/CLAUDE-CACHING-STRATEGY.md](../docs-ai/contents/docs/CLAUDE-CACHING-STRATEGY.md)** - Full strategy document
+2. **[../docs/CLAUDE-CACHING-STRATEGY.md](../docs/CLAUDE-CACHING-STRATEGY.md)** - Full strategy document
 3. **[../scripts/claude-cache-helper.ts](../scripts/claude-cache-helper.ts)** - TypeScript utilities for caching
 
 ---
@@ -143,7 +143,7 @@ buildCachedSystemPrompt(CachePreset.DATABASE)
 
 ### Custom (With PRP or Additional Context)
 ```typescript
-const prpContent = readFileSync('docs-ai/contents/docs/PRPs/my-feature.md', 'utf-8');
+const prpContent = readFileSync('docs/PRPs/my-feature.md', 'utf-8');
 buildCachedSystemPrompt(CachePreset.CUSTOM, prpContent)
 ```
 **Use for:** Feature implementations, scaffolding, multi-step workflows
@@ -329,7 +329,7 @@ export async function generateCode(prompt: string) {
 ## Next Steps
 
 1. **Read:** [CACHING-QUICK-REFERENCE.md](./CACHING-QUICK-REFERENCE.md) for common patterns
-2. **Review:** [Full strategy](../docs-ai/contents/docs/CLAUDE-CACHING-STRATEGY.md) for deep dive
+2. **Review:** [Full strategy](../docs/CLAUDE-CACHING-STRATEGY.md) for deep dive
 3. **Implement:** Use [claude-cache-helper.ts](../scripts/claude-cache-helper.ts) in your code
 4. **Monitor:** Track cache hit rates and costs
 5. **Optimize:** Adjust strategy based on usage patterns

@@ -1,0 +1,530 @@
+{
+  "timestamp": "2026-03-24T00:42:10Z",
+  "eval_type": "level_3_e2e",
+  "project_id": 67,
+  "num_questions": 20,
+  "summary": {
+    "specificity": 4.15,
+    "accuracy": 4.7,
+    "completeness": 4.3,
+    "actionability": 3.85,
+    "overall": 4.35
+  },
+  "category_averages": {
+    "boundary": {
+      "specificity": 4.0,
+      "accuracy": 4.0,
+      "completeness": 4.0,
+      "actionability": 3.0,
+      "overall": 4.0
+    },
+    "cross_source": {
+      "specificity": 4.75,
+      "accuracy": 5.0,
+      "completeness": 5.0,
+      "actionability": 4.75,
+      "overall": 5.0
+    },
+    "financial": {
+      "specificity": 3.67,
+      "accuracy": 4.67,
+      "completeness": 3.67,
+      "actionability": 3.33,
+      "overall": 4.0
+    },
+    "meeting_detail": {
+      "specificity": 3.8,
+      "accuracy": 4.8,
+      "completeness": 4.0,
+      "actionability": 3.8,
+      "overall": 4.0
+    },
+    "multi_hop": {
+      "specificity": 4.0,
+      "accuracy": 4.67,
+      "completeness": 4.0,
+      "actionability": 3.67,
+      "overall": 4.33
+    },
+    "simple": {
+      "specificity": 5.0,
+      "accuracy": 5.0,
+      "completeness": 5.0,
+      "actionability": 5.0,
+      "overall": 5.0
+    },
+    "strategic": {
+      "specificity": 4.33,
+      "accuracy": 4.33,
+      "completeness": 4.67,
+      "actionability": 3.33,
+      "overall": 4.33
+    }
+  },
+  "l2_baseline_comparison": {
+    "financial": {
+      "specificity": {
+        "l3": 3.67,
+        "l2": 1.67
+      },
+      "accuracy": {
+        "l3": 4.67,
+        "l2": 4.67
+      },
+      "completeness": {
+        "l3": 3.67,
+        "l2": 2.33
+      },
+      "actionability": {
+        "l3": 3.33,
+        "l2": 2.0
+      },
+      "overall": {
+        "l3": 4.0,
+        "l2": 2.33
+      }
+    }
+  },
+  "questions": [
+    {
+      "id": 1,
+      "question": "What was discussed in the Goodwill Kokomo space plan and finishes review?",
+      "category": "meeting_detail",
+      "retrieval_mode": "vector",
+      "context_summary": "10 chunks from {'meeting_summary_embed', 'meeting_segment_summary'}",
+      "generated_answer": "The context provided does not include any specific details about a Goodwill Kokomo space plan and finishes review. The available information focuses on projects at Allisonville Road, Noblesville, and other locations, but does not mention Kokomo. If you have more specific information or another source related to the Kokomo project, please provide it for a more accurate response.",
+      "scores": {
+        "specificity": 1,
+        "accuracy": 5,
+        "completeness": 1,
+        "actionability": 1,
+        "overall": 1,
+        "explanation": "The response lacks any specific details about the Goodwill Kokomo space plan and finishes review, making it entirely generic. While it accurately states that no information is available, it fails to address the question or provide actionable insights."
+      },
+      "latency_ms": {
+        "retrieval": 3458.1,
+        "generation": 2458.6,
+        "judging": 1983.2
+      },
+      "error": null
+    },
+    {
+      "id": 2,
+      "question": "What came up in the Uniqlo and GPC huddle meetings this week?",
+      "category": "meeting_detail",
+      "retrieval_mode": "vector",
+      "context_summary": "10 chunks from {'meeting_section', 'meeting_segment_summary', 'meeting_summary'}",
+      "generated_answer": "The Uniqlo & GPC Huddle held on October 15, 2023, focused on aligning strategies and enhancing collaboration between Uniqlo and GPC. Key participants included John Smith, Sarah Johnson, and Michael Lee. The meeting covered several critical topics:\n\n1. **Marketing and Sales Performance**: There was a discussion on the performance of current marketing campaigns, with a noted 15% increase in customer engagement due to recent efforts. A new joint marketing initiative targeting the Southeast Asian market is set to launch in Q1 2024.\n\n2. **Supply Chain Challenges**: Concerns were raised about ongoing supply chain disruptions, with potential delays impacting product availability. Michael Lee emphasized the need for contingency planning, and additional resources were allocated to address these challenges.\n\n3. **Upcoming Product Launches**: Plans for the launch of a new winter collection were discussed, with a phased rollout starting online on November 1, 2023, and in-store on November 15, 2023. GPC will lead logistics to ensure timely delivery.\n\n4. **Action Items and Next Steps**: Key action items include developing a new marketing strategy, coordinating promotional materials, and reviewing supply chain processes. Bi-weekly check-ins and monthly follow-up meetings were scheduled to monitor progress.\n\n5. **Risks and Concerns**: The meeting highlighted risks related to supply chain disruptions and the potential for brand misalignment in marketing efforts. Both teams agreed to closely monitor these risks and adjust strategies as needed.",
+      "scores": {
+        "specificity": 5,
+        "accuracy": 5,
+        "completeness": 5,
+        "actionability": 5,
+        "overall": 5,
+        "explanation": "The answer provides specific details about the Uniqlo and GPC huddle, including names of participants, dates, and project-specific issues discussed. It accurately reflects the context of the meeting and offers actionable items for follow-up, making it a comprehensive and reliable response."
+      },
+      "latency_ms": {
+        "retrieval": 1896.1,
+        "generation": 4727.9,
+        "judging": 1449.9
+      },
+      "error": null
+    },
+    {
+      "id": 3,
+      "question": "What was discussed about fire suppression at the Nexcom project?",
+      "category": "meeting_detail",
+      "retrieval_mode": "vector",
+      "context_summary": "10 chunks from {'meeting_summary_embed', 'meeting_summary', 'insight', 'email', 'meeting_segment_summary'}",
+      "generated_answer": "The discussions about fire suppression at the Nexcom project primarily revolved around the Request for Quotation (RFQ) for the fire suppression system, specifically identified as SYS-25-0010752. Key stakeholders involved in these discussions included Kebba Mass, the Assistant Project Manager at Alleato Group, and Joe Moore, a Project Engineer II at Hy-Tek. \n\nThe discussions highlighted the need for a site survey at the Nexcom job site in Pensacola, FL, to assess potential upgrades to the fire suppression system, such as new risers and fire pump upgrades. Specific requests were made for pricing on various components, including monitoring devices, painting costs for sprinkler pipes, labeling costs, and the implications of using USA-based materials. It was also emphasized that the current status of the Professional Engineer (PE) license needed confirmation for calculations relevant to the Pensacola site.\n\nThe fire suppression system was noted to include approximately 775 heads, which might change based on existing infrastructure. The communication stressed the importance of a high-level schedule and outlined specific requirements for installation crews, including background checks and compliance with RealID regulations to access the NAS base. Action items included reviewing the revised proposal and addressing questions regarding site surveys and pricing for various system components. \n\nAdditionally, an email from Brandon Clymer to Ray King confirmed the acceptance of discussions on fire suppression strategies and technologies for the Nexcom G2P project, marking a significant step in the project timeline and indicating a commitment to moving forward with the project discussions.",
+      "scores": {
+        "specificity": 5,
+        "accuracy": 5,
+        "completeness": 5,
+        "actionability": 5,
+        "overall": 5,
+        "explanation": "The answer provides specific details about the fire suppression discussions at the Nexcom project, including names, system identifiers, and technical requirements. It accurately reflects the context of the discussions and offers actionable items for stakeholders to follow up on, demonstrating a thorough understanding of the project's needs."
+      },
+      "latency_ms": {
+        "retrieval": 1859.0,
+        "generation": 3356.1,
+        "judging": 1674.2
+      },
+      "error": null
+    },
+    {
+      "id": 4,
+      "question": "What action items came out of the most recent weekly touchbase on the HVAC upgrade?",
+      "category": "meeting_detail",
+      "retrieval_mode": "vector",
+      "context_summary": "10 chunks from {'meeting_section', 'meeting_summary'}",
+      "generated_answer": "The most recent weekly touchbase on the HVAC upgrade, held on October 25, 2023, resulted in several action items:\n\n1. **John Smith** will coordinate with contractors to finalize the revised project timeline, accommodating the delayed equipment delivery.\n2. **Sarah Johnson** is tasked with drafting a contingency plan by November 5, 2023, to address any further delays.\n3. **Michael Lee** will follow up with suppliers to expedite the delivery of the delayed units and report back by the next meeting.\n4. The team agreed to schedule a follow-up meeting on November 8, 2023, to review progress and address any ongoing issues.\n\nThese actions are aimed at ensuring the project remains on track despite the challenges posed by supply chain delays.",
+      "scores": {
+        "specificity": 5,
+        "accuracy": 5,
+        "completeness": 5,
+        "actionability": 5,
+        "overall": 5,
+        "explanation": "The answer provides specific details about the HVAC upgrade weekly touchbase, including the date of the meeting and concrete action items with assigned individuals and deadlines. It thoroughly addresses the question by listing actionable steps that can be taken to keep the project on track, demonstrating a high level of accuracy and relevance."
+      },
+      "latency_ms": {
+        "retrieval": 1708.4,
+        "generation": 2582.0,
+        "judging": 1469.7
+      },
+      "error": null
+    },
+    {
+      "id": 5,
+      "question": "What billing or accounting issues were discussed in the Questions Accounting Indy meeting?",
+      "category": "meeting_detail",
+      "retrieval_mode": "vector",
+      "context_summary": "10 chunks from {'meeting_summary'}",
+      "generated_answer": "The context provided does not mention a meeting specifically titled \"Questions Accounting Indy.\" However, several billing and accounting issues were discussed in various meetings that might be relevant:\n\n1. **Billing Discrepancies and Reconciliation**: In the \"Alleato Billing Questions\" meeting held on October 15, 2023, discrepancies in billing statements were highlighted, particularly related to service hours billed versus hours logged by the operations team. A bi-weekly reconciliation process was agreed upon to ensure charges align with services rendered. Mark Thompson was tasked with preparing a detailed report on the billing discrepancies by October 22, 2023, and Sarah Johnson was to coordinate with the operations team to gather accurate service hour logs.\n\n2. **Owner Billing for Westfield Collective**: In the \"Owner Billing: Westfield Collective\" meeting, issues with billing software were discussed, including missing data and the need for auto-fill amounts. Discrepancies in invoiced amounts, particularly concerning electrical work and HVAC systems, were noted. The team decided on specific billing percentages for various tasks and emphasized syncing billing data with the accounting system to prevent discrepancies.\n\n3. **Accounts Receivable and Payable Management**: In a Weekly Accounting Meeting, an outstanding balance of $1,663 was noted, with Applied Engineering having a specific balance of $3,200. The need for timely resolution of subcontractor billing issues, particularly regarding delayed change orders, was emphasized.\n\nThese discussions highlight ongoing efforts to address billing inaccuracies, improve reconciliation processes, and ensure accurate financial reporting.",
+      "scores": {
+        "specificity": 3,
+        "accuracy": 4,
+        "completeness": 4,
+        "actionability": 3,
+        "overall": 4,
+        "explanation": "The answer provides some specific details about billing issues discussed in related meetings, but it does not directly address the 'Questions Accounting Indy' meeting, which affects its specificity. It accurately reflects the context of billing discrepancies and reconciliation processes, making it a solid response overall, though it could offer clearer actionable steps."
+      },
+      "latency_ms": {
+        "retrieval": 2162.2,
+        "generation": 3366.1,
+        "judging": 1415.8
+      },
+      "error": null
+    },
+    {
+      "id": 6,
+      "question": "How is the Goodwill portfolio performing \u2014 combine what you know from meetings, budgets, and any documents?",
+      "category": "multi_hop",
+      "retrieval_mode": "vector",
+      "context_summary": "10 chunks from {'meeting_summary_embed', 'meeting_segment_summary', 'meeting_summary'}",
+      "generated_answer": "The Goodwill portfolio is currently experiencing positive performance trends, with several key areas of growth and strategic initiatives underway. According to the latest meetings and financial reviews, Goodwill's retail operations have seen a notable increase in revenue. Specifically, there has been a 10% increase in retail revenue compared to the previous quarter, as reported by John Smith during the Goodwill Weekly OAC Meeting on October 23, 2023. This growth is attributed to enhanced donation drives and thrift store sales, as well as successful marketing campaigns that have increased foot traffic by 15%.\n\nFinancially, the organization is focusing on strategic investments, particularly in technology upgrades, to improve inventory management systems and operational efficiency. A budget increase for these technology upgrades has been approved, reflecting a commitment to streamline operations and sustain revenue growth.\n\nCommunity outreach programs are also performing well, with a 15% increase in local engagement reported by Emily Davis. The success of these initiatives has led to decisions to expand community programs, including more vocational training workshops and partnerships with local organizations to enhance community impact.\n\nHowever, there are concerns about potential economic fluctuations impacting retail sales and the sustainability of the recent revenue increase. The committee has acknowledged these risks and is developing contingency plans to address them. Additionally, there are ongoing challenges with budget management, particularly regarding potential overruns in projects like Goodwill Tremont.\n\nOverall, the Goodwill portfolio is performing well, with strategic initiatives in place to support continued growth and community engagement, while also addressing potential risks and financial challenges.",
+      "scores": {
+        "specificity": 4,
+        "accuracy": 5,
+        "completeness": 5,
+        "actionability": 4,
+        "overall": 5,
+        "explanation": "The answer provides specific details about revenue increases, key projects, and meeting references, demonstrating a strong grasp of the Goodwill portfolio's performance. It accurately synthesizes information from multiple sources and addresses both successes and challenges, offering actionable insights for strategic planning."
+      },
+      "latency_ms": {
+        "retrieval": 1529.4,
+        "generation": 4051.8,
+        "judging": 1784.7
+      },
+      "error": null
+    },
+    {
+      "id": 7,
+      "question": "What's happening with hiring and onboarding \u2014 who are the new people and what systems are being set up?",
+      "category": "multi_hop",
+      "retrieval_mode": "vector",
+      "context_summary": "10 chunks from {'meeting_transcript', 'meeting_section', 'meeting_segment_summary'}",
+      "generated_answer": "The current focus on hiring and onboarding at Alleato Group involves several key activities and new personnel. \n\n1. **New Hire Onboarding**: Enzo Andrade is a new hire undergoing the onboarding process. His system access has been established across Bluebeam, Procore, and Job Planner to ensure full role functionality. An onboarding email has been drafted for him, including setup instructions for corporate credentials and software to ensure a smooth first day experience. Additionally, Enzo's office is being prepared with personalized touches to foster a welcoming environment, and logistics for his laptop and software access have been confirmed.\n\n2. **System and Process Enhancements**: The onboarding process is being enhanced by providing clear communication and support for new hires, as highlighted by Jesse Dawson. This includes ensuring timely access to necessary systems, as emphasized by Mar\u00eda Alejandra Calcetero.\n\n3. **Hiring for Critical Roles**: There is an immediate focus on hiring project managers for critical roles in projects like Brookville Goodwill and Kokomo. This is crucial to meet upcoming staffing needs.\n\n4. **Intern Program Expansion**: The intern program is being expanded with two interns starting in May and June, with the possibility of recruiting more if needed to support project teams.\n\n5. **Centralized Application Management**: Job postings are being linked directly to Indeed to ensure a single source for applications, simplifying management and improving efficiency.\n\nOverall, the company is actively working on improving the onboarding experience and addressing critical staffing needs to support ongoing and future projects.",
+      "scores": {
+        "specificity": 5,
+        "accuracy": 5,
+        "completeness": 5,
+        "actionability": 5,
+        "overall": 5,
+        "explanation": "The answer provides specific names of new hires and details about their onboarding processes, as well as information on system enhancements and hiring strategies. It thoroughly addresses all aspects of the question, offering actionable insights into the company's hiring and onboarding efforts."
+      },
+      "latency_ms": {
+        "retrieval": 2049.8,
+        "generation": 4392.2,
+        "judging": 1545.1
+      },
+      "error": null
+    },
+    {
+      "id": 8,
+      "question": "Compare the status of the Uniqlo Phillipsburg project versus Vermillion Rise \u2014 which needs more attention?",
+      "category": "multi_hop",
+      "retrieval_mode": "vector",
+      "context_summary": "10 chunks from {'onedrive_document'}",
+      "generated_answer": "Based on the provided context, the Uniqlo Phillipsburg project is progressing steadily with no reported delays as of the latest reports. Key activities such as mobilization, temporary fence installation, and floor remediation have been initiated, and there is a consistent update on procurement and submittals. Critical items include awaiting comments from the city on plans and transformer clarification and lead time on materials. The project is on track with a substantial completion date set for May 15, 2026.\n\nUnfortunately, there is no information provided about the Vermillion Rise project in the context above. Without details on its status, progress, or any challenges it may be facing, it is not possible to accurately compare the two projects or determine which one requires more attention. If you have specific details about the Vermillion Rise project, please provide them for a more comprehensive comparison.",
+      "scores": {
+        "specificity": 3,
+        "accuracy": 4,
+        "completeness": 2,
+        "actionability": 2,
+        "overall": 3,
+        "explanation": "The answer provides specific details about the Uniqlo Phillipsburg project, including key activities and a completion date, which enhances its specificity and accuracy. However, it lacks information on the Vermillion Rise project, leading to a lower score in completeness and actionability, as it does not provide a comparative assessment or actionable insights."
+      },
+      "latency_ms": {
+        "retrieval": 894.8,
+        "generation": 3251.4,
+        "judging": 2104.0
+      },
+      "error": null
+    },
+    {
+      "id": 9,
+      "question": "What's the latest on the Vermillion Rise project based on recent meetings and project data?",
+      "category": "cross_source",
+      "retrieval_mode": "vector",
+      "context_summary": "10 chunks from {'meeting_summary_embed', 'meeting_segment_summary', 'meeting_section'}",
+      "generated_answer": "The latest updates on the Vermillion Rise project, as discussed in recent meetings, highlight several key developments and challenges:\n\n1. **Project Timeline and Milestones**: The first phase of the Vermillion Rise project is scheduled for completion by December 2023. However, there have been discussions about potential delays due to ongoing supply chain disruptions, which have already led to a 10% increase in costs. A six-week buffer is recommended to accommodate redesign and scheduling adjustments due to facility downsizing.\n\n2. **Design and Construction Updates**: The project team has approved revised architectural plans that incorporate additional green spaces to enhance community appeal. Design meetings have focused on establishing a clear timeline, with earthwork starting in February and precast production by mid-March. Utility routing has been finalized to minimize costs, and storm infrastructure is being sized for the full master plan to prevent future costly replacements.\n\n3. **Budget and Financial Adjustments**: The budget has been adjusted to allocate an additional $50,000 to address unforeseen costs. Financial Analyst Emily Chen is tasked with revising the budget forecast to reflect these new allocations. The team is closely monitoring potential further increases in material costs.\n\n4. **Marketing and Community Engagement**: A marketing strategy has been approved, focusing on digital outreach and local partnerships. A promotional campaign is set to launch in January 2024, emphasizing community engagement to mitigate any negative feedback as construction progresses.\n\n5. **Facility Downsizing**: The project is considering facility downsizing to reduce costs while maintaining future expansion capabilities. The revised plant layout reduces space by 60,000 square feet, with a cost estimate for the reduced project scope due by the next board meeting.\n\n6. **Risks and Concerns**: Key risks include potential delays from supply chain issues and community sentiment. The team is developing contingency plans to address these risks and ensure the project remains on track.\n\nOverall, the Vermillion Rise project is progressing with strategic adjustments to design, budget, and marketing plans to address current challenges and ensure successful completion.",
+      "scores": {
+        "specificity": 5,
+        "accuracy": 5,
+        "completeness": 5,
+        "actionability": 5,
+        "overall": 5,
+        "explanation": "The answer provides specific details about the project timeline, budget adjustments, and design updates, demonstrating a thorough understanding of the current status. It addresses all aspects of the question, including recent meeting discussions and actionable steps for the project team, making it a reliable and informative response."
+      },
+      "latency_ms": {
+        "retrieval": 1255.2,
+        "generation": 5679.5,
+        "judging": 1513.9
+      },
+      "error": null
+    },
+    {
+      "id": 10,
+      "question": "What should I focus on this week as the owner? Base this on actual recent meetings, not generic advice.",
+      "category": "cross_source",
+      "retrieval_mode": "vector",
+      "context_summary": "10 chunks from {'meeting_transcript', 'meeting_summary_embed', 'insight', 'meeting_summary'}",
+      "generated_answer": "As the owner, your focus this week should be on several key areas based on recent meetings:\n\n1. **Operational Efficiency and Project Management**: Ensure that the team is following through on the action items from the Weekly Company Operations Meeting. This includes overseeing the adjustments to the Goodwill drawings as per Kimley Horn's recommendations to avoid compliance issues. Additionally, ensure that A.J. is following up on the fire alarm installation and warranty items for Ulta, and that Nick resolves permit issues for his projects.\n\n2. **Staffing and Workload Management**: Address the backlog of proposals and contracts that Nick is managing by supporting Alec Wehner in assisting him. This will help in alleviating pressure and ensuring timely execution of projects. Monitor the progress on organizing and prioritizing these tasks.\n\n3. **Financial and Compliance Oversight**: Follow up on the submission of all required tax documents to Civis to ensure compliance and avoid penalty risks. Also, ensure that Maria is refining internal processes and that proactive communication is maintained to streamline information flow and increase alignment on weekly goals.\n\n4. **Meeting Efficiency**: Implement the structured approach discussed in the Weekly Accounting Meeting to make meetings more efficient. Ensure that agendas are sent out 24 hours in advance, with all necessary documents attached, so that you and Jesse can pre-review and come prepared with questions.\n\n5. **Risk Management**: Address the potential delays in project approvals for the Godiva and GW retail stores, and ensure timely communication with subcontractors to avoid bottlenecks. Also, resolve the issue of damage caused by movers at the Goodwill site to prevent additional costs and delays.\n\nBy focusing on these areas, you can enhance operational efficiency, ensure compliance, and mitigate risks effectively.",
+      "scores": {
+        "specificity": 5,
+        "accuracy": 5,
+        "completeness": 5,
+        "actionability": 5,
+        "overall": 5,
+        "explanation": "The response is highly specific, referencing actual meetings and their outcomes, such as the Weekly Company Operations Meeting and the Weekly Accounting Meeting. It provides clear, actionable priorities that are directly tied to real data points, ensuring that the owner can effectively focus on critical areas for the week."
+      },
+      "latency_ms": {
+        "retrieval": 1091.4,
+        "generation": 5685.1,
+        "judging": 1575.4
+      },
+      "error": null
+    },
+    {
+      "id": 11,
+      "question": "What stresses Brandon out the most based on what he's said in meetings?",
+      "category": "cross_source",
+      "retrieval_mode": "vector",
+      "context_summary": "10 chunks from {'meeting_transcript', 'meeting_segment_summary'}",
+      "generated_answer": "Brandon Clymer is primarily stressed by excessive and unproductive calls, particularly from David, as well as the overwhelming operational and administrative tasks that limit his ability to focus on strategic growth and business development. He has expressed frustration with random, unexplained bills from vendors, which adds to his stress. Additionally, Brandon is concerned about the need for better delegation and communication within the team to alleviate some of his burdens. He also questions the necessity of his presence in certain meetings, indicating a need for clearer expectations regarding meeting attendance.",
+      "scores": {
+        "specificity": 4,
+        "accuracy": 5,
+        "completeness": 5,
+        "actionability": 4,
+        "overall": 5,
+        "explanation": "The answer effectively references specific stressors mentioned by Brandon, such as excessive calls from David and random vendor bills. It thoroughly addresses the aspects of his stress while providing actionable insights regarding delegation and communication."
+      },
+      "latency_ms": {
+        "retrieval": 1919.8,
+        "generation": 3072.7,
+        "judging": 1243.2
+      },
+      "error": null
+    },
+    {
+      "id": 12,
+      "question": "Summarize all subcontractor and vendor billing discussions from recent meetings",
+      "category": "cross_source",
+      "retrieval_mode": "vector",
+      "context_summary": "10 chunks from {'meeting_summary_embed', 'meeting_segment_summary', 'meeting_summary'}",
+      "generated_answer": "Recent meetings at Alleato Group have focused extensively on subcontractor and vendor billing processes, highlighting several key areas of concern and action items:\n\n1. **Subcontractor Billing Inefficiencies**: During the Sub Billings meeting on October 15, 2023, inefficiencies in the billing process were discussed, including invoice discrepancies and delays that have led to subcontractor dissatisfaction. A new billing software is being integrated to streamline operations, with a dedicated training session scheduled for October 25, 2023, to address these issues. A standardized invoice template is also being developed to minimize discrepancies, with John Smith overseeing its creation and distribution by the end of October.\n\n2. **Westfield Collective Project Billing**: In the Owner Billing meeting for the Westfield Collective project, the team addressed the need for accurate invoicing across multiple contracts. Discrepancies in billed amounts for tasks such as electrical work and HVAC systems were noted, and billing percentages were adjusted for various tasks based on completion status. Ensuring synchronization with the accounting system was emphasized to prevent future discrepancies.\n\n3. **Goodwill Bart CI & Subcontracts**: The meeting on October 15, 2023, reviewed subcontractor performance and budget allocations. A decision was made to terminate the contract with XYZ Subcontractors due to underperformance, with a formal notice to be issued by October 20, 2023. Discussions with ABC Contractors for potential partnerships were initiated, with a focus on supporting high-performing subcontractors.\n\n4. **Design Invoice Review**: The Design Invoice Review meeting evaluated outstanding invoices, identifying discrepancies such as a 15% budget overrun in Invoice #1032 from Creative Designs. The team decided to request a detailed breakdown of additional charges before proceeding with approval.\n\n5. **Billing Discrepancies and Reconciliation**: In the Alleato Billing Questions meeting, discrepancies between billed service hours and logged hours were discussed. A bi-weekly reconciliation process was implemented to ensure alignment between charges and services rendered, with a follow-up meeting scheduled for November 1, 2023, to assess the process's effectiveness.\n\n6. **Accounts Receivable and Payable Management**: The Weekly Accounting Meeting highlighted outstanding payments, including $21,000 owed by Aspire, and a backlog of pending credit card transactions. The need for timely resolution of subcontractor billing issues and adjustments in retainage for Merit Contracting was noted, emphasizing the importance of timely financial reporting and communication.\n\nThese discussions underscore the company's commitment to improving billing accuracy and efficiency, maintaining strong subcontractor relationships, and ensuring timely financial operations.",
+      "scores": {
+        "specificity": 5,
+        "accuracy": 5,
+        "completeness": 5,
+        "actionability": 5,
+        "overall": 5,
+        "explanation": "The AI-generated answer provides a detailed summary of subcontractor and vendor billing discussions, referencing specific meetings, dates, and processes. It includes actionable items such as training sessions and contract terminations, demonstrating a thorough understanding of the context and offering clear steps for improvement."
+      },
+      "latency_ms": {
+        "retrieval": 1482.1,
+        "generation": 6208.0,
+        "judging": 1898.2
+      },
+      "error": null
+    },
+    {
+      "id": 13,
+      "question": "What is the total budget for Vermillion Rise Warehouse and what are the top 5 line items by cost?",
+      "category": "financial",
+      "retrieval_mode": "sql_budget",
+      "context_summary": "total=$12,939,266.00, 78 line items",
+      "generated_answer": "The total budget for the Vermillion Rise Warehouse project is $12,939,266.00. The top 5 line items by cost are:\n\n1. Cast-in-Place Concrete.Subcontract: $1,575,000.00\n2. Contractor Fee.Subcontract: $1,403,960.00\n3. Central HVAC Equipment.Material: $1,300,000.00\n4. Precast Structural Concrete.Subcontract: $1,175,720.00\n5. HVAC Air Distribution.Subcontract: $1,000,000.00",
+      "scores": {
+        "specificity": 5,
+        "accuracy": 5,
+        "completeness": 5,
+        "actionability": 5,
+        "overall": 5,
+        "explanation": "The answer provides a specific total budget amount and lists the top 5 line items with their respective costs, fulfilling all aspects of the question. It is accurate and actionable, allowing the user to understand the budget breakdown clearly."
+      },
+      "latency_ms": {
+        "retrieval": 228.6,
+        "generation": 1865.4,
+        "judging": 1457.3
+      },
+      "error": null
+    },
+    {
+      "id": 14,
+      "question": "Show me all change events for Vermillion Rise with their current status",
+      "category": "financial",
+      "retrieval_mode": "sql_change_events",
+      "context_summary": "2 change events",
+      "generated_answer": "The Vermillion Rise Warehouse project has two change events, both of which are currently open:\n\n1. CE #004: Test Change Event UI - Audit [Open]\n2. CE #003: Test Change Event - Audit [Open]",
+      "scores": {
+        "specificity": 3,
+        "accuracy": 5,
+        "completeness": 3,
+        "actionability": 3,
+        "overall": 4,
+        "explanation": "The answer provides specific change event titles and their statuses, which is good for specificity and accuracy. However, it lacks the total count of open vs closed events and does not provide a complete overview of all change events, which affects completeness."
+      },
+      "latency_ms": {
+        "retrieval": 189.8,
+        "generation": 1176.0,
+        "judging": 1741.1
+      },
+      "error": null
+    },
+    {
+      "id": 15,
+      "question": "What commitments do we have on Vermillion Rise and which vendors are they with?",
+      "category": "financial",
+      "retrieval_mode": "sql_commitments",
+      "context_summary": "4 commitments",
+      "generated_answer": "For the Vermillion Rise Warehouse project, there are a total of four commitments, all currently in draft status. However, the context provided does not specify the vendors associated with these commitments. The commitments are as follows:\n\n1. Test PO Debug [PO-1773770778757] \u2014 purchase order\n2. Test Subcontract SC-GAUNTLET-001 EDITED [SC-GAUNTLET-001-EDITED] \u2014 subcontract\n3. Test PO PO-GAUNTLET-001 [PO-GAUNTLET-001] \u2014 purchase order\n4. Test Subcontract - Final FG5 [SC-FG-005] \u2014 subcontract\n\nTo identify the vendors, you would need to refer to additional documentation or the procurement system where vendor details are recorded.",
+      "scores": {
+        "specificity": 3,
+        "accuracy": 4,
+        "completeness": 3,
+        "actionability": 2,
+        "overall": 3,
+        "explanation": "The answer provides specific commitment titles and types, but lacks vendor names, which is a critical aspect of the question. While the statuses are mentioned, the overall response does not fully address the user's request for vendor information, limiting its actionability."
+      },
+      "latency_ms": {
+        "retrieval": 147.1,
+        "generation": 1888.1,
+        "judging": 1243.3
+      },
+      "error": null
+    },
+    {
+      "id": 16,
+      "question": "Based on meeting discussions, what are the top 3 risks across our active projects right now?",
+      "category": "strategic",
+      "retrieval_mode": "vector",
+      "context_summary": "10 chunks from {'meeting_segment_summary'}",
+      "generated_answer": "Based on the meeting discussions, the top three risks across our active projects are:\n\n1. **Project Timeline and Schedule Delays**: Multiple projects, including Paradise Isles and Goodwill Tremont, have identified risks associated with potential delays in project timelines. These delays could be due to unforeseen circumstances, resource shortages, and external dependencies, as discussed in the meetings.\n\n2. **Supply Chain and Resource Allocation Issues**: The Miami Project and Wilmer timeline discussions highlighted concerns about supply chain issues and potential resource shortages. These risks could significantly impact the ability to meet project deadlines and maintain budget constraints.\n\n3. **Regulatory and External Dependencies**: The Miami Project also faces risks related to regulatory hurdles, which could delay project progress. Additionally, external dependencies identified in the Wilmer timeline discussion could pose challenges to maintaining project schedules and deliverables.",
+      "scores": {
+        "specificity": 4,
+        "accuracy": 4,
+        "completeness": 4,
+        "actionability": 3,
+        "overall": 4,
+        "explanation": "The answer identifies three specific risks and references particular projects, which enhances specificity and accuracy. However, while it provides actionable insights, it could be improved by suggesting specific steps to mitigate these risks."
+      },
+      "latency_ms": {
+        "retrieval": 1336.6,
+        "generation": 2279.0,
+        "judging": 1536.5
+      },
+      "error": null
+    },
+    {
+      "id": 17,
+      "question": "What patterns do you see in our recent meeting topics that suggest where the business is heading?",
+      "category": "strategic",
+      "retrieval_mode": "vector",
+      "context_summary": "10 chunks from {'meeting_segment_summary'}",
+      "generated_answer": "The recent meeting topics suggest that Alleato Group is increasingly focused on adapting to market trends and exploring new development opportunities. Several meetings, such as those titled \"Development Opportunity,\" \"Uniqlo+Alleato Group,\" and \"Crate Escape - Pre-Con Review,\" indicate a strong emphasis on identifying growth areas and responding to shifts in consumer behavior and market conditions. This is further supported by discussions on emerging competitors and changing customer preferences, as noted in the \"Zach - Solar Sales Update.\"\n\nAdditionally, there is a clear interest in leveraging technology and innovation, as seen in meetings discussing IT initiatives and the potential adoption of new technologies. The focus on e-commerce and digital strategies, particularly in the retail sector, suggests a strategic pivot towards enhancing online presence and adapting to digital consumer trends.\n\nThe Tampa Entrepreneurs meeting highlights a broader strategic direction towards collaboration and networking, aiming to build resilience and adaptability in the face of potential economic challenges. The establishment of a monthly networking event and an online resource platform indicates a commitment to fostering community engagement and sharing best practices among entrepreneurs.\n\nOverall, the patterns suggest that Alleato Group is positioning itself to be agile and forward-thinking, with a keen eye on market dynamics, technological advancements, and collaborative growth strategies.",
+      "scores": {
+        "specificity": 4,
+        "accuracy": 4,
+        "completeness": 5,
+        "actionability": 3,
+        "overall": 4,
+        "explanation": "The answer identifies specific meeting topics that reflect the company's strategic direction, demonstrating a good level of specificity and completeness. While it accurately interprets the implications of these topics, it could provide more actionable steps for the business to take based on these insights."
+      },
+      "latency_ms": {
+        "retrieval": 685.2,
+        "generation": 3609.8,
+        "judging": 1537.8
+      },
+      "error": null
+    },
+    {
+      "id": 18,
+      "question": "What do we know about the Union Distillery Building project from meetings?",
+      "category": "strategic",
+      "retrieval_mode": "vector",
+      "context_summary": "10 chunks from {'meeting_transcript', 'meeting_summary_embed', 'email'}",
+      "generated_answer": "The Union Distillery Building project involves plans for a steel structure with a brick facade and wraparound patio, similar to previous projects like Liberty and Westfield. The project is currently awaiting financing, as indicated by Brandon Clymer in a meeting. A bank-ready budget can be produced without new design changes, with Brandon providing key budget details. The project also includes plans for six to eight volleyball courts and a playground, pending funding discussions with P 1440. There are elevation challenges due to 30 to 40-foot differences, requiring careful design and a $1 million contingency in the budget for elevation-related uncertainties. Parking requirements are a concern, with the current plan including 390 spaces, which is likely insufficient, prompting exploration of additional acreage for expanded parking options. The project has been accepted by Brandon Clymer as of March 18, 2026, in an email to Brian Luftman.",
+      "scores": {
+        "specificity": 5,
+        "accuracy": 5,
+        "completeness": 5,
+        "actionability": 4,
+        "overall": 5,
+        "explanation": "The answer provides specific details about the Union Distillery Building project, including names, budget figures, and project features. It accurately reflects the context of the project and addresses all aspects of the question thoroughly. The actionable information regarding financing and parking requirements is clear, though it could be slightly improved by suggesting specific next steps."
+      },
+      "latency_ms": {
+        "retrieval": 1596.4,
+        "generation": 3160.0,
+        "judging": 1651.7
+      },
+      "error": null
+    },
+    {
+      "id": 19,
+      "question": "What projects do we have active right now?",
+      "category": "simple",
+      "retrieval_mode": "sql_projects",
+      "context_summary": "50 projects",
+      "generated_answer": "The active projects currently underway are:\n\n1. GPC Hai Robotic\n2. Alleato - Leads\n3. Alleato AI\n4. Alleato Finance (Alleato Group)\n5. Alleato Internal Ops (Alleato Group)\n6. Alleato Marketing (Alleato Group)\n7. Aspire at St. Lucie (Aspire)\n8. CEVA Bernville ASRS Phase 2 (CEVA Logistics U.S., INC)\n9. Exol Wilmer\n10. Forza Dayton\n11. Goodwill Bart (Goodwill)\n12. Goodwill Bloomington (Goodwill)\n13. Goodwill Canton, IL\n14. Goodwill Commons (Goodwill)\n15. Goodwill Noblesville (Goodwill)\n16. Goodwill Shadeland Ave\n17. Goodwill Shelbyville (Goodwill)\n18. Goodwill Tremont (Goodwill)\n19. Goodwill- Decatur\n20. GW Allisonville Rd IN (Goodwill)\n21. GW Galesburg\n22. GW Macomb\n23. GW Morris\n24. GW Peru",
+      "scores": {
+        "specificity": 5,
+        "accuracy": 5,
+        "completeness": 5,
+        "actionability": 5,
+        "overall": 5,
+        "explanation": "The answer provides a comprehensive list of active projects with specific names and associated clients, demonstrating high specificity and accuracy. It thoroughly addresses the question and offers actionable information for the user to reference current projects."
+      },
+      "latency_ms": {
+        "retrieval": 150.6,
+        "generation": 2123.1,
+        "judging": 1350.4
+      },
+      "error": null
+    },
+    {
+      "id": 20,
+      "question": "What do our meeting notes say about concrete mix design specifications?",
+      "category": "boundary",
+      "retrieval_mode": "vector",
+      "context_summary": "10 chunks from {'onedrive_document', 'insight', 'meeting_segment_summary'}",
+      "generated_answer": "The meeting notes for the Crate Escapes Sitework/Concrete project indicate a need for clarity on concrete mix design specifications. Specifically, Tom reviewed the concrete specifications provided by the engineer and discussed the necessity for clarity on various components, including the concrete slab and additional alternates for the project. This suggests that the current specifications may be ambiguous or insufficiently detailed, leading to potential misunderstandings. \n\nAdditionally, there is a noted opportunity to explore alternative concrete mixes that may achieve higher strength results more consistently, as highlighted in the report titled \"TM25021ConcreteCylinders06162025A_418264\" by W&A Alt & Witzig Engineering, Inc. This report, although primarily focused on the Westfield Collective project, underscores the importance of ensuring that concrete mix designs meet specified strength requirements, such as the 4000 psi at 28 days for slabs on grade, as mentioned in several documents.",
+      "scores": {
+        "specificity": 4,
+        "accuracy": 4,
+        "completeness": 4,
+        "actionability": 3,
+        "overall": 4,
+        "explanation": "The answer provides specific references to discussions and documents related to concrete mix design specifications, which enhances its specificity. It is mostly accurate, grounded in the context of the meeting notes, but it could be clearer about the ambiguity of the specifications. While it offers some actionable insights, such as exploring alternative mixes, it lacks direct steps for the user to take."
+      },
+      "latency_ms": {
+        "retrieval": 1713.0,
+        "generation": 3046.9,
+        "judging": 2212.4
+      },
+      "error": null
+    }
+  ]
+}

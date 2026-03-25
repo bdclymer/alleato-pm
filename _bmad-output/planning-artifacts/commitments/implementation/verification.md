@@ -5,7 +5,7 @@ description: Evidence-based validation of the Commitments module implementation
 
 # PRP Validation Report
 
-**PRP File**: `docs-ai/contents/docs/PRPs/commitments/`
+**PRP File**: `docs/PRPs/commitments/`
 **Feature**: commitments
 **Validation Date**: 2026-02-03T15:30:00Z
 **Overall Status**: PASS
@@ -224,8 +224,8 @@ description: Evidence-based validation of the Commitments module implementation
 
 ## Evidence Artifacts
 
-- **Verification report**: `docs-ai/contents/docs/PRPs/commitments/verification/index.mdx` (this file)
-- **Prior verification**: `docs-ai/contents/docs/PRPs/commitments/verification-detail-tabs/index.mdx` (29 tests, 100% pass)
+- **Verification report**: `docs/PRPs/commitments/verification/index.mdx` (this file)
+- **Prior verification**: `docs/PRPs/commitments/verification-detail-tabs/index.mdx` (29 tests, 100% pass)
 - **Test files**: 20 files in `frontend/tests/` totaling 6,427 lines
 - **API routes**: 16+ route files in `frontend/src/app/api/commitments/`
 - **Components**: 5 tab components + forms + dialogs in `frontend/src/components/commitments/`

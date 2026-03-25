@@ -81,7 +81,7 @@ Check all 7 tools against 10-point Definition of Done:
 **Status:** NOT STARTED
 
 ### 🔴 TODO: Phase 5 — Final Report
-Write `docs-ai/contents/docs/financial-tools/COMPLETION-REPORT.md` summarizing all work.
+Write `docs/financial-tools/COMPLETION-REPORT.md` summarizing all work.
 
 **Status:** NOT STARTED
 

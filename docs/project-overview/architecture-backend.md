@@ -4,6 +4,8 @@
 
 Comprehensive architecture reference for the Python FastAPI backend powering AI-driven construction project management features.
 
+> The backend is a Python FastAPI service running on port **8051**. It handles AI/agent pipelines requiring server-side orchestration, background job scheduling (daily digest, memory decay), Acumatica ERP bidirectional sync, document ingestion, and RAG pipeline processing. It is not the primary data API (Next.js handles most REST endpoints). The backend exists for heavy AI workloads and integrations that require Python's AI ecosystem.
+
 ---
 
 ## Table of Contents
@@ -11,10 +13,15 @@ Comprehensive architecture reference for the Python FastAPI backend powering AI-
 1. [Technology Stack](#technology-stack)
 2. [API Endpoints](#api-endpoints)
 3. [Service Architecture](#service-architecture)
-4. [Agent Workflow](#agent-workflow)
-5. [Deployment](#deployment)
-6. [Scripts](#scripts)
-7. [Dependencies](#dependencies)
+4. [AI Agent Architecture](#ai-agent-architecture)
+5. [RAG Pipeline](#rag-pipeline)
+6. [Agent Workflow](#agent-workflow)
+7. [Scheduled Jobs](#scheduled-jobs)
+8. [Supabase Integration](#supabase-integration)
+9. [Acumatica Sync](#acumatica-sync)
+10. [Deployment](#deployment)
+11. [Scripts](#scripts)
+12. [Dependencies](#dependencies)
 
 ---
 
@@ -29,10 +36,14 @@ Comprehensive architecture reference for the Python FastAPI backend powering AI-
 | AI (OpenAI Agents) | OpenAI Agents SDK | 0.1+ |
 | AI (Anthropic) | Claude Agent SDK | 0.1.18+ |
 | AI (LangChain) | LangChain | 0.1+ |
+| AI (LangChain Community) | LangChain Community | 0.0.10+ |
 | Database Client | Supabase Python | 2.0+ |
+| Database (async) | asyncpg | latest |
+| Database (sync) | psycopg2-binary | latest |
+| Scheduler | APScheduler | latest |
 | Web Scraping | Crawl4AI | latest |
 | Observability | Langfuse | latest |
-| Deployment | Docker on Render | port 8000 |
+| Deployment | Docker on Render | port 8051 |
 
 **Entry point:** `entrypoint.py` starts Uvicorn which loads `src.api.main:app`.
 
@@ -112,6 +123,33 @@ Comprehensive architecture reference for the Python FastAPI backend powering AI-
 ---
 
 ## Service Architecture
+
+```
+backend/src/
+├── api/
+│   ├── main.py             # FastAPI app: creates app, registers routers, CORS config
+│   ├── server.py           # Uvicorn server entrypoint
+│   └── admin_endpoints.py  # Admin management endpoints
+│
+├── services/
+│   ├── acumatica_sync.py       # Acumatica ERP sync (cookie auth)
+│   ├── daily_digest.py         # AI daily briefing generation
+│   ├── email_service.py        # Transactional email (Resend)
+│   ├── memory_store.py         # AI memory CRUD + vector search
+│   ├── scheduler.py            # APScheduler job definitions
+│   ├── supabase_helpers.py     # Shared Supabase utility functions
+│   │
+│   ├── ingestion/              # Document + web ingestion pipeline
+│   ├── insights/               # AI insights generation
+│   ├── integrations/           # Third-party integrations
+│   ├── pipeline/               # RAG pipeline orchestration
+│   ├── alleato_agent_workflow/ # Multi-agent orchestration
+│   └── rfi_agent/              # RFI-specific AI agent
+│
+├── scripts/                # One-off migration/fix scripts
+├── types/                  # Pydantic type definitions
+└── workers/                # Background task workers
+```
 
 ### 1. alleato_agent_workflow/ -- RAG Agent System
 
@@ -213,6 +251,63 @@ Maintains ChatKit conversation thread state in memory.
 
 ---
 
+## AI Agent Architecture
+
+### Multi-Agent Workflow (`alleato_agent_workflow/`)
+
+Orchestrates multiple AI agents using OpenAI Agents SDK + Claude Agent SDK:
+
+- **Project Intelligence Agent** -- analyzes project data, identifies risks
+- **Financial Analysis Agent** -- processes budget and cost data
+- **Meeting Intelligence Agent** -- extracts action items and summaries
+- **RFI Agent** (`rfi_agent/`) -- specialized RFI drafting and analysis
+
+### Agent Framework Stack
+
+```
+openai-agents (0.1+)          — OpenAI Agents SDK for multi-agent coordination
+claude-agent-sdk (0.1.18+)    — Claude Agent SDK integration
+langchain (0.1+)              — LLM pipeline chains
+langchain-community (0.0.10+) — Extended connectors
+```
+
+---
+
+## RAG Pipeline
+
+Full detail: [`rag-pipeline.md`](rag-pipeline.md)
+
+The pipeline runs as 3 sequential stages triggered by `metadata_id` (UUID in `document_metadata`):
+
+```
+document_metadata (input)
+  │
+  ├── Stage 1: Parser — routes by document type
+  │   ├── source="fireflies" / category="meeting" → Meeting Parser (Fireflies markdown)
+  │   ├── .pdf / .docx / .doc                     → Generic Document Parser
+  │   └── .csv/.xlsx + financial category          → Financial Parser
+  │   └── Writes semantic segments → meeting_segments table
+  │
+  ├── Stage 2: Embedder
+  │   ├── Chunks: 3000 chars target / 500 overlap, sentence boundaries
+  │   ├── Chunk types: transcript, section (Summary, Action Items, Notes topics),
+  │   │   segment summary, meeting summary
+  │   ├── Batch-embeds: text-embedding-3-large (3072-dim, halfvec)
+  │   └── Stores → documents table (upserted by content-hash)
+  │
+  └── Stage 3: Extractor
+      ├── LLM (gpt-4o-mini) normalizes decisions/risks/tasks/opportunities
+      ├── Stores → insights table (decisions, risks, opportunities)
+      └── Stores → tasks table (assignee, email, due date, priority)
+```
+
+**Embedding model:** `text-embedding-3-large` at **3072 dimensions** (`halfvec(3072)`)
+**LLM:** `gpt-4o-mini` -- direct OpenAI API (not through AI Gateway)
+**Job tracking:** `fireflies_ingestion_jobs` (stage: `chunked` -> `embedded` -> `done` / `error`)
+**Retry:** Exponential backoff on transient DB timeouts (`PIPELINE_TRANSIENT_RETRIES` env var)
+
+---
+
 ## Agent Workflow
 
 The RAG ChatKit agent workflow follows a six-step pipeline:
@@ -260,19 +355,106 @@ User Query
 
 ---
 
+## Scheduled Jobs (APScheduler)
+
+`services/scheduler.py` defines background jobs:
+
+| Job | Schedule | Description |
+|-----|----------|-------------|
+| Daily Digest | Daily 6:00 AM | Generate AI briefings per project |
+| Memory Decay | Weekly | Decay/expire old AI memories |
+| Meeting Sync | On trigger | Re-sync Fireflies meeting data |
+| Insights Refresh | Periodic | Regenerate AI insights |
+
+---
+
+## Supabase Integration
+
+The backend uses the **service role key** (bypasses RLS) for all database access:
+
+```python
+from supabase import create_client, Client
+
+supabase: Client = create_client(
+    os.environ["SUPABASE_URL"],
+    os.environ["SUPABASE_SERVICE_ROLE_KEY"]  # Bypasses RLS
+)
+```
+
+High-performance queries use asyncpg directly:
+
+```python
+import asyncpg
+
+conn = await asyncpg.connect(os.environ["DATABASE_URL"])
+rows = await conn.fetch("SELECT * FROM meetings WHERE project_id = $1", project_id)
+```
+
+---
+
+## Acumatica Sync
+
+Bidirectional sync with Acumatica ERP using cookie-based authentication (NOT bearer token):
+
+```python
+# Cookie-based auth
+auth_response = await client.post(
+    f"{base_url}/entity/auth/login",
+    json={
+        "name": os.environ["ACCOUNTING_USER"],
+        "password": os.environ["ACCOUNTING_PASSWORD"],
+        "company": "Alleato Group LLC"  # Exact casing required
+    }
+)
+# 204 response + cookies
+
+# Fetch data (safe OData params only)
+data = await client.get(
+    f"{base_url}/entity/Default/24.200.001/APBill",
+    params={"$select": "ReferenceNbr,Status,Amount", "$top": 500}
+    # NEVER use $filter — causes HTTP 500 "Type conversions not supported"
+)
+```
+
+**CRITICAL:** Never use OData `$filter` -- it causes HTTP 500. Use `$select`, `$top`, `$expand` only. Filter results in-memory.
+
+---
+
 ## Deployment
+
+### FastAPI Configuration
+
+```python
+# main.py pattern
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://alleato-procore.vercel.app", "http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+```
+
+**Port:** 8051 (proxied from frontend at `/rag-chatkit/*`)
+**Health check:** `GET /health`
+**ASGI server:** Uvicorn
 
 ### Docker Configuration
 
 - **Base image:** Python 3.11-slim
 - **Health check:** HTTP GET to `/health` endpoint
-- **Port:** 8000 (exposed and mapped)
+- **Port:** 8051 (exposed and mapped)
 
 ### Render Configuration
 
 - **Service type:** Docker
-- **Port:** 8000
-- **Environment variables:** Supabase URL, Supabase anon key, OpenAI API key, and other service credentials
+- **Port:** 8051
+- **Environment variables:** Supabase URL, Supabase service role key, OpenAI API key, Accounting credentials, and other service credentials
 - **PYTHONPATH:** `/app:/app/src:/app/src/services:/app/src/workers`
 
 ### CORS Configuration
@@ -281,6 +463,18 @@ User Query
 |-------------|----------------|
 | Development | `http://localhost:3000`, `http://localhost:3001` |
 | Production | `https://alleato-procore.vercel.app` |
+
+### Local Development
+
+```bash
+cd backend
+source .venv/bin/activate
+./start.sh    # Starts Uvicorn with hot reload
+
+# Tests
+pytest
+pytest tests/ -v --asyncio-mode=auto
+```
 
 ---
 
@@ -313,6 +507,7 @@ Utility scripts for data management, processing, and maintenance tasks.
 | `openai-agents` | OpenAI Agents SDK (multi-agent orchestration) |
 | `openai-chatkit` | OpenAI ChatKit (conversational UI backend) |
 | `langchain` | LLM application framework (chains, prompts, memory) |
+| `langchain-community` | Extended connectors for LangChain |
 | `claude-agent-sdk` | Anthropic Claude Agent SDK |
 
 ### Web Framework
@@ -329,7 +524,13 @@ Utility scripts for data management, processing, and maintenance tasks.
 |---------|---------|
 | `supabase` | Supabase Python client (auth, database, storage) |
 | `psycopg2-binary` | PostgreSQL adapter (synchronous) |
-| `asyncpg` | PostgreSQL adapter (asynchronous) |
+| `asyncpg` | PostgreSQL adapter (asynchronous, high-performance) |
+
+### Scheduling
+
+| Package | Purpose |
+|---------|---------|
+| `apscheduler` | Background job scheduling (daily digest, memory decay, etc.) |
 
 ### Data Processing
 
@@ -371,4 +572,4 @@ Utility scripts for data management, processing, and maintenance tasks.
 
 ---
 
-_Generated using BMAD Method document-project workflow_
+_Generated using BMAD Method document-project workflow. Last merged: 2026-03-24._

@@ -120,6 +120,7 @@ export default function ProjectsPage() {
               estRevenue: toNullableNumber(p["est revenue"]),
               estProfit: toNullableNumber(p["est profit"]),
               category,
+              onedrive: toNullableString(p.onedrive),
               // Legacy fields for backward compatibility
               projectNumber: toStringValue(
                 p["job number"],
@@ -262,6 +263,7 @@ export default function ProjectsPage() {
           estRevenue: p["est revenue"] || null,
           estProfit: p["est profit"] || null,
           category: p.category || "",
+          onedrive: p.onedrive || null,
           projectNumber: p["job number"] || p.id.toString(),
           address: p.address || "",
           city: p.address ? p.address.split(",")[0] || "" : "",

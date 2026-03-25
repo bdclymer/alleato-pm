@@ -199,7 +199,7 @@ _This file contains critical rules and patterns that AI agents must follow when 
 | File Type | Location |
 |-----------|----------|
 | Scripts | `scripts/` (with subdirs) |
-| Documentation | `docs-ai/` or `DOCS_NEED_TO_FILE/` |
+| Documentation | `docs/` |
 | Claude rules | `.claude/rules/` |
 | SQL migrations | `supabase/migrations/` |
 | Frontend code | `frontend/src/` |

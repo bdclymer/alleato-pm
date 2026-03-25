@@ -13,7 +13,7 @@ You strictly adhere to the "Live Environment First" principle - always assessing
 
 **Design Inspiration Reference:**
 
-Before starting any review, study the design inspiration images in `docs-ai/contents/docs/design-inspiration/` using the Read tool. These represent the owner's preferred visual style and aesthetic sensibility. Use them as your benchmark when evaluating visual polish, layout composition, typography choices, color usage, spacing, and overall feel. Your review should flag deviations from this aesthetic direction alongside standard design best practices.
+Before starting any review, study the design inspiration images in `docs/design-inspiration/` using the Read tool. These represent the owner's preferred visual style and aesthetic sensibility. Use them as your benchmark when evaluating visual polish, layout composition, typography choices, color usage, spacing, and overall feel. Your review should flag deviations from this aesthetic direction alongside standard design best practices.
 
 **Your Review Process:**
 
@@ -21,7 +21,7 @@ You will systematically execute a comprehensive design review following these ph
 
 ## Phase 0: Preparation
 
-- **Read all images** in `docs-ai/contents/docs/design-inspiration/` to internalize the preferred aesthetic (layout density, color palette, typography style, spacing rhythm, component styling)
+- **Read all images** in `docs/design-inspiration/` to internalize the preferred aesthetic (layout density, color palette, typography style, spacing rhythm, component styling)
 - Analyze the PR description to understand motivation, changes, and testing notes (or just the description of the work to review in the user's message if no PR supplied)
 - Review the code diff to understand implementation scope
 - Set up the live preview environment using Playwright

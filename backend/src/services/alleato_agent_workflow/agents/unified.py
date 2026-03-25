@@ -136,6 +136,9 @@ from agents import Agent, ModelSettings
 from ..tools import (
     # Vector search tools
     search_meetings,
+    search_emails,
+    search_teams_messages,
+    search_documents,
     search_decisions,
     search_risks,
     search_opportunities,
@@ -162,6 +165,9 @@ You have access to ALL company data through multiple tool categories:
 **Vector Search (Semantic):**
 Use these for content-based queries where you need to find information by meaning:
 - search_meetings() - Search meeting transcripts by semantic similarity
+- search_emails() - Search synced Outlook emails. USE THIS when user asks about emails, email threads, or email communications
+- search_teams_messages() - Search Microsoft Teams channel messages and DMs. USE THIS when user asks about Teams conversations
+- search_documents() - Search OneDrive/SharePoint files (SOWs, specs, contracts, submittals). USE THIS when user asks about files or documents
 - search_decisions() - Find decisions by content
 - search_risks() - Identify risks by description
 - search_opportunities() - Surface opportunities
@@ -356,6 +362,9 @@ unified_agent = Agent(
     tools=[
         # Vector search tools (semantic)
         search_meetings,
+        search_emails,
+        search_teams_messages,
+        search_documents,
         search_decisions,
         search_risks,
         search_opportunities,

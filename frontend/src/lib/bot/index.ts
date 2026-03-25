@@ -15,7 +15,7 @@ import { Chat, toAiMessages } from "chat";
 import { createSlackAdapter } from "@chat-adapter/slack";
 import { createTeamsAdapter } from "@chat-adapter/teams";
 import { createTelegramAdapter } from "@chat-adapter/telegram";
-import { createPostgresState } from "@chat-adapter/state-pg";
+import { createMemoryState } from "@chat-adapter/state-memory";
 import {
   streamBotResponse,
   persistChatMessage,
@@ -43,13 +43,9 @@ if (process.env.TELEGRAM_BOT_TOKEN) {
 }
 
 // ---------------------------------------------------------------------------
-// State adapter — use Postgres since we already have Supabase
+// State adapter — memory state for serverless (thread state is ephemeral;
+// we persist conversation history in our own Supabase chat_messages table)
 // ---------------------------------------------------------------------------
-
-const pgUrl =
-  process.env.DATABASE_URL ||
-  process.env.POSTGRES_URL ||
-  process.env.NEXT_PUBLIC_SUPABASE_URL;
 
 // ---------------------------------------------------------------------------
 // Bot instance
@@ -58,9 +54,7 @@ const pgUrl =
 export const bot = new Chat({
   userName: "alleato",
   adapters,
-  state: createPostgresState({
-    url: pgUrl,
-  }),
+  state: createMemoryState(),
   // Force-release locks so new messages interrupt long-running AI responses
   onLockConflict: "force",
   // Streaming update interval for post+edit fallback (Teams, Telegram)

@@ -10,7 +10,7 @@ Use this command when the implementation work is complete and you need an eviden
 ## Inputs
 
 - `{prp_path}`: Exact relative path to the PRP/Plan document in `/Users/meganharrison/Documents/alleato-pm/_bmad-output/planning-artifacts/{FEATURE.md}`.
-- `--feature {feature-name}`: Optional override for the feature slug. When omitted, derive the slug from the PRP folder (the directory immediately under `docs-ai/contents/docs/PRPs/` that contains the PRP).
+- `--feature {feature-name}`: Optional override for the feature slug. When omitted, derive the slug from the PRP folder (the directory immediately under `docs/PRPs/` that contains the PRP).
 
 Record the resolved feature name; it is required for locating `TASKS.md`, the verification report, and test artifacts.
 

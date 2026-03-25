@@ -176,8 +176,8 @@ monitor.recordEvent(
 | `scripts/claude-cache-helper.ts` | Caching utilities | ~350 lines |
 | `scripts/cache-example.ts` | Working demo | ~200 lines |
 | `scripts/verify-cache-setup.ts` | Setup checker | ~100 lines |
-| `docs-ai/contents/docs/CACHE-MONITORING-GUIDE.md` | Full guide | Comprehensive |
-| `docs-ai/contents/docs/CLAUDE-CACHING-STRATEGY.md` | Strategy doc | Detailed |
+| `docs/CACHE-MONITORING-GUIDE.md` | Full guide | Comprehensive |
+| `docs/CLAUDE-CACHING-STRATEGY.md` | Strategy doc | Detailed |
 | `.claude/CACHING-QUICK-REFERENCE.md` | Quick lookup | TL;DR |
 | `.claude/CACHING-README.md` | Getting started | Tutorial |
 | `.claude/MONITORING-SETUP-COMPLETE.md` | Setup guide | Step-by-step |
@@ -243,7 +243,7 @@ Export data and celebrate your savings!
 
 ### "Low hit rate"
 **Cause:** Content changing between requests.
-**Fix:** Check [CACHE-MONITORING-GUIDE.md](../docs-ai/contents/docs/CACHE-MONITORING-GUIDE.md) troubleshooting section.
+**Fix:** Check [CACHE-MONITORING-GUIDE.md](../docs/CACHE-MONITORING-GUIDE.md) troubleshooting section.
 
 ---
 
@@ -265,8 +265,8 @@ Export data and celebrate your savings!
 | [MONITORING-SETUP-COMPLETE.md](./MONITORING-SETUP-COMPLETE.md) | Detailed setup guide |
 | [CACHING-QUICK-REFERENCE.md](./CACHING-QUICK-REFERENCE.md) | Quick lookup |
 | [CACHING-README.md](./CACHING-README.md) | Getting started tutorial |
-| [CACHE-MONITORING-GUIDE.md](../docs-ai/contents/docs/CACHE-MONITORING-GUIDE.md) | Complete monitoring guide |
-| [CLAUDE-CACHING-STRATEGY.md](../docs-ai/contents/docs/CLAUDE-CACHING-STRATEGY.md) | Full strategy document |
+| [CACHE-MONITORING-GUIDE.md](../docs/CACHE-MONITORING-GUIDE.md) | Complete monitoring guide |
+| [CLAUDE-CACHING-STRATEGY.md](../docs/CLAUDE-CACHING-STRATEGY.md) | Full strategy document |
 
 ---
 

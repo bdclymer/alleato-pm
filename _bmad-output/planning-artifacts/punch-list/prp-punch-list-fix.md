@@ -7,7 +7,7 @@ The punch list feature is approximately 5% implemented. Two page files exist (on
 ### Working (DO NOT TOUCH)
 
 - **`(tables)/punch-list/page.tsx`**: Static mock-data table page with DataTable, status/priority badges, and action dropdown. Uses hardcoded mock data. The UI structure and column definitions are a valid starting reference. Leave the component structure but it will need to be connected to real data.
-- **Crawl data** in `docs-ai/contents/docs/PRPs/punch-list/crawl/`: 50 pages captured including screenshots, DOM, and metadata for list view, new item form, configure tab, my items, recycle bin, and 43 PDF views. All intact and useful for implementation reference.
+- **Crawl data** in `docs/PRPs/punch-list/crawl/`: 50 pages captured including screenshots, DOM, and metadata for list view, new item form, configure tab, my items, recycle bin, and 43 PDF views. All intact and useful for implementation reference.
 - **PRP documents**: Both the feature spec (`punch-list/index.mdx`) and execution plan (`execution-plan-punch-list/index.mdx`) are comprehensive and match Procore's actual implementation.
 - **DataTable component** at `frontend/src/components/tables/DataTable.tsx`: Shared component used by the tables page. Works fine.
 

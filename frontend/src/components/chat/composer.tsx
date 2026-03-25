@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, KeyboardEvent } from "react";
-import { Paperclip, Smile, Send } from "lucide-react";
+import { Paperclip, Send, Smile } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -19,7 +19,6 @@ export function Composer({ onSend, channelName, disabled }: ComposerProps) {
     if (message.trim() && !disabled) {
       onSend(message);
       setMessage("");
-      // Reset textarea height
       if (textareaRef.current) {
         textareaRef.current.style.height = "auto";
       }
@@ -35,22 +34,20 @@ export function Composer({ onSend, channelName, disabled }: ComposerProps) {
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setMessage(e.target.value);
-
-    // Auto-resize textarea
     const textarea = e.target;
     textarea.style.height = "auto";
-    const newHeight = Math.min(textarea.scrollHeight, 150); // Max 6 lines
+    const newHeight = Math.min(textarea.scrollHeight, 150);
     textarea.style.height = `${newHeight}px`;
   };
 
   return (
-    <div className="border-t border-[hsl(var(--chat-border))] bg-[hsl(var(--chat-panel))] px-4 py-4">
+    <div className="border-t border-border bg-background px-4 py-4">
       <div className="flex items-end gap-2">
         {/* Attachment Button */}
         <Button
           variant="ghost"
           size="icon"
-          className="shrink-0 text-[hsl(var(--chat-muted))] hover:text-[hsl(var(--chat-text))] hover:bg-[hsl(var(--chat-hover))]"
+          className="shrink-0 text-muted-foreground hover:text-foreground"
           disabled={disabled}
           title="Attach file"
         >
@@ -66,7 +63,7 @@ export function Composer({ onSend, channelName, disabled }: ComposerProps) {
             onKeyDown={handleKeyDown}
             placeholder={`Message #${channelName}`}
             disabled={disabled}
-            className="min-h-[40px] max-h-[150px] resize-none bg-[hsl(var(--chat-bg))] border-[hsl(var(--chat-border))] text-[hsl(var(--chat-text))] placeholder:text-[hsl(var(--chat-muted))] pr-10"
+            className="min-h-[40px] max-h-[150px] resize-none bg-background border-border pr-10"
             rows={1}
           />
 
@@ -74,7 +71,7 @@ export function Composer({ onSend, channelName, disabled }: ComposerProps) {
           <Button
             variant="ghost"
             size="icon"
-            className="absolute right-1 bottom-1 h-8 w-8 text-[hsl(var(--chat-muted))] hover:text-[hsl(var(--chat-text))] hover:bg-[hsl(var(--chat-hover))]"
+            className="absolute right-1 bottom-1 h-8 w-8 text-muted-foreground hover:text-foreground"
             disabled={disabled}
             title="Add emoji"
           >
@@ -86,21 +83,21 @@ export function Composer({ onSend, channelName, disabled }: ComposerProps) {
         <Button
           onClick={handleSend}
           disabled={!message.trim() || disabled}
-          className="shrink-0 bg-[hsl(var(--chat-accent))] text-white hover:bg-[hsl(var(--chat-accent))]/90"
           size="icon"
+          className="shrink-0"
         >
           <Send className="h-4 w-4" />
         </Button>
       </div>
 
       {/* Helper Text */}
-      <div className="mt-2 text-xs text-[hsl(var(--chat-muted))]">
+      <div className="mt-2 text-xs text-muted-foreground">
         <span className="hidden sm:inline">
-          <kbd className="px-1.5 py-0.5 bg-[hsl(var(--chat-bg))] border border-[hsl(var(--chat-border))] rounded text-xs">
+          <kbd className="px-1.5 py-0.5 bg-muted border border-border rounded text-xs">
             Enter
           </kbd>{" "}
           to send,{" "}
-          <kbd className="px-1.5 py-0.5 bg-[hsl(var(--chat-bg))] border border-[hsl(var(--chat-border))] rounded text-xs">
+          <kbd className="px-1.5 py-0.5 bg-muted border border-border rounded text-xs">
             Shift + Enter
           </kbd>{" "}
           for new line

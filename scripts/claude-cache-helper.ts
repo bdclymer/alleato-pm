@@ -2,7 +2,7 @@
  * Claude Prompt Caching Helper
  *
  * Utilities for creating optimally-cached Claude API requests
- * See: docs-ai/contents/docs/CLAUDE-CACHING-STRATEGY.md
+ * See: docs/CLAUDE-CACHING-STRATEGY.md
  */
 
 import { readFileSync } from 'fs';

@@ -32,6 +32,7 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  ExternalLink,
   Pencil,
 } from "lucide-react";
 import {
@@ -304,6 +305,28 @@ export function ProjectsTable({
         />
       ),
       size: 150,
+    },
+    {
+      accessorKey: "onedrive",
+      header: () => <span>OneDrive</span>,
+      cell: ({ row }) => {
+        const url = row.getValue("onedrive") as string | null;
+        if (!url) return <span className="text-muted-foreground">-</span>;
+        return (
+          <a
+            href={url}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center justify-center p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            aria-label="Open OneDrive folder"
+            title="Open OneDrive folder"
+          >
+            <ExternalLink className="w-4 h-4" />
+          </a>
+        );
+      },
+      size: 80,
     },
     {
       id: "actions",

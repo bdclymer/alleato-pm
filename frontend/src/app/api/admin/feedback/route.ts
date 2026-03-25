@@ -425,3 +425,246 @@ export async function POST(request: Request) {
     });
   }
 }
+
+// ---------------------------------------------------------------------------
+// GET — List feedback items with optional filters
+// ---------------------------------------------------------------------------
+
+const listQuerySchema = z.object({
+  status: z.string().optional(),
+  requestType: z.string().optional(),
+  limit: z.coerce.number().int().min(1).max(200).optional(),
+  offset: z.coerce.number().int().min(0).optional(),
+});
+
+export async function GET(request: Request) {
+  try {
+    const requestUser = await requireAdminUser();
+    if (!requestUser) {
+      return jsonError(403, {
+        error: "Admin access required",
+        hint: "Only admin users can view production feedback.",
+      });
+    }
+
+    const url = new URL(request.url);
+    const parsed = listQuerySchema.safeParse(
+      Object.fromEntries(url.searchParams),
+    );
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid query parameters", details: parsed.error.flatten() },
+        { status: 400 },
+      );
+    }
+
+    const { status, requestType, limit = 100, offset = 0 } = parsed.data;
+    const serviceSupabase = createServiceClient();
+
+    let query = serviceSupabase
+      .from("admin_feedback_items")
+      .select(
+        "id, created_at, updated_at, created_by, project_id, page_url, page_path, page_title, target_id, target_selector, target_text, target_tag, dom_path, target_rect, title, comment, request_type, severity, status, screenshot_url, screenshot_path, github_issue_number, github_issue_url, github_issue_state, metadata",
+        { count: "exact" },
+      )
+      .order("created_at", { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (status) {
+      const statuses = status.split(",").map((s) => s.trim()).filter(Boolean);
+      if (statuses.length === 1) {
+        query = query.eq("status", statuses[0]);
+      } else if (statuses.length > 1) {
+        query = query.in("status", statuses);
+      }
+    }
+
+    if (requestType) {
+      query = query.eq("request_type", requestType);
+    }
+
+    const { data, error, count } = await query;
+
+    if (error) {
+      const details = toErrorDetails(error);
+      return jsonError(500, {
+        error: "Failed to fetch feedback items",
+        code: details.code,
+        details: details.message,
+      });
+    }
+
+    return NextResponse.json({ items: data ?? [], total: count ?? 0 });
+  } catch (error) {
+    console.error("[AdminFeedback] List failed", error);
+    const message =
+      error instanceof Error ? error.message : "Failed to list feedback";
+    return jsonError(500, { error: "Failed to list feedback", details: message });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// PATCH — Update feedback item status
+// ---------------------------------------------------------------------------
+
+const patchSchema = z.object({
+  id: z.string().uuid(),
+  status: z.enum(["open", "submitted", "github_failed", "closed"]).optional(),
+  title: z.string().trim().min(1).max(200).optional(),
+});
+
+export async function PATCH(request: Request) {
+  try {
+    const requestUser = await requireAdminUser();
+    if (!requestUser) {
+      return jsonError(403, {
+        error: "Admin access required",
+        hint: "Only admin users can update feedback.",
+      });
+    }
+
+    const body = await request.json();
+    const parsed = patchSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid payload", details: parsed.error.flatten() },
+        { status: 400 },
+      );
+    }
+
+    const { id, ...updates } = parsed.data;
+    if (Object.keys(updates).length === 0) {
+      return jsonError(400, { error: "No fields to update" });
+    }
+
+    const serviceSupabase = createServiceClient();
+    const { data, error } = await serviceSupabase
+      .from("admin_feedback_items")
+      .update(updates)
+      .eq("id", id)
+      .select("id, status, title")
+      .single();
+
+    if (error) {
+      const details = toErrorDetails(error);
+      return jsonError(500, {
+        error: "Failed to update feedback item",
+        code: details.code,
+        details: details.message,
+      });
+    }
+
+    return NextResponse.json({ item: data });
+  } catch (error) {
+    console.error("[AdminFeedback] Patch failed", error);
+    const message =
+      error instanceof Error ? error.message : "Failed to update feedback";
+    return jsonError(500, { error: "Failed to update feedback", details: message });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// PUT — Send existing feedback item to GitHub as an issue
+// ---------------------------------------------------------------------------
+
+const sendToGitHubSchema = z.object({
+  id: z.string().uuid(),
+});
+
+export async function PUT(request: Request) {
+  try {
+    const requestUser = await requireAdminUser();
+    if (!requestUser) {
+      return jsonError(403, {
+        error: "Admin access required",
+        hint: "Only admin users can send feedback to GitHub.",
+      });
+    }
+
+    const body = await request.json();
+    const parsed = sendToGitHubSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid payload", details: parsed.error.flatten() },
+        { status: 400 },
+      );
+    }
+
+    const { id } = parsed.data;
+    const serviceSupabase = createServiceClient();
+
+    // Fetch the full feedback item
+    const { data: item, error: fetchError } = await serviceSupabase
+      .from("admin_feedback_items")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (fetchError || !item) {
+      return jsonError(404, { error: "Feedback item not found" });
+    }
+
+    if (item.github_issue_number) {
+      return jsonError(400, {
+        error: "Already submitted",
+        details: `GitHub issue #${item.github_issue_number} already exists.`,
+        github_issue_url: item.github_issue_url,
+      });
+    }
+
+    // Create GitHub issue
+    const githubIssue = await createGitHubIssue({
+      title: item.title,
+      comment: item.comment,
+      pageUrl: item.page_url,
+      pagePath: item.page_path,
+      pageTitle: item.page_title ?? null,
+      requestType: item.request_type as Parameters<typeof createGitHubIssue>[0]["requestType"],
+      severity: (item.severity ?? "medium") as Parameters<typeof createGitHubIssue>[0]["severity"],
+      targetId: item.target_id ?? null,
+      targetSelector: item.target_selector,
+      targetTag: item.target_tag ?? null,
+      targetText: item.target_text ?? null,
+      domPath: item.dom_path ?? null,
+      screenshotUrl: item.screenshot_url ?? null,
+      projectId: item.project_id ?? null,
+      metadata: (item.metadata as Record<string, unknown>) ?? {},
+    });
+
+    if (!githubIssue) {
+      return jsonError(500, {
+        error: "GitHub integration not configured",
+        hint: "Set GITHUB_FEEDBACK_REPO_OWNER, GITHUB_FEEDBACK_REPO_NAME, and GITHUB_FEEDBACK_TOKEN environment variables.",
+      });
+    }
+
+    // Update the feedback item with GitHub issue info
+    const { data: updated, error: updateError } = await serviceSupabase
+      .from("admin_feedback_items")
+      .update({
+        github_issue_number: githubIssue.number,
+        github_issue_url: githubIssue.url,
+        github_issue_state: githubIssue.state,
+        status: "submitted",
+      })
+      .eq("id", id)
+      .select("id, status, github_issue_number, github_issue_url, github_issue_state")
+      .single();
+
+    if (updateError) {
+      // Issue was created but DB update failed — still return the issue info
+      return NextResponse.json({
+        item: { id, status: "submitted" },
+        githubIssue,
+        warning: "GitHub issue created but failed to update local record.",
+      });
+    }
+
+    return NextResponse.json({ item: updated, githubIssue });
+  } catch (error) {
+    console.error("[AdminFeedback] Send to GitHub failed", error);
+    const message =
+      error instanceof Error ? error.message : "Failed to create GitHub issue";
+    return jsonError(500, { error: "Failed to send to GitHub", details: message });
+  }
+}

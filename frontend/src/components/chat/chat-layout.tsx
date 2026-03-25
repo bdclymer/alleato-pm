@@ -28,7 +28,7 @@ export function ChatLayout({ username, onUsernameChange }: ChatLayoutProps) {
   }, []);
 
   return (
-    <div className="flex h-full min-h-0 bg-[hsl(var(--chat-bg))] text-[hsl(var(--chat-text))]">
+    <div className="flex h-full min-h-0 bg-muted text-foreground">
       {/* Desktop Sidebar */}
       <div className="hidden md:block">
         <ChatSidebar
@@ -41,7 +41,7 @@ export function ChatLayout({ username, onUsernameChange }: ChatLayoutProps) {
       <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
         <SheetContent
           side="left"
-          className="p-0 w-64 bg-[hsl(var(--chat-panel))] border-[hsl(var(--chat-border))]"
+          className="p-0 w-64 bg-muted border-border"
         >
           <ChatSidebar
             activeChannel={activeChannel}
@@ -81,7 +81,7 @@ export function ChatLayout({ username, onUsernameChange }: ChatLayoutProps) {
       <Sheet open={rightPanelOpen && isMobile} onOpenChange={setRightPanelOpen}>
         <SheetContent
           side="right"
-          className="p-0 w-80 bg-[hsl(var(--chat-panel))] border-[hsl(var(--chat-border))]"
+          className="p-0 w-80 border-[hsl(var(--chat-border))]"
         >
           <ChatRightPanel
             selectedMessageId={selectedMessageId}

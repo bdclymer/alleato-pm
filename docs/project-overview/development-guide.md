@@ -1,141 +1,284 @@
-# Alleato-Procore Development Guide
+# Development Guide — Alleato-PM
+
+> Generated: 2026-03-22 | Source: CLAUDE.md, package.json, playwright.config.ts
+
+---
 
 ## Prerequisites
-- Node.js 20+, npm 9+
-- Python 3.11+
-- Supabase CLI
-- Git
 
-## Getting Started
+| Tool | Version | Notes |
+|------|---------|-------|
+| Node.js | 18+ | Required by Next.js |
+| Python | 3.11+ | Required by FastAPI backend |
+| pnpm | 10.13.1 | Package manager (two lockfiles: root + frontend/) |
+| Supabase CLI | latest | For migrations and type generation |
 
-### Initial Setup
+---
+
+## Initial Setup
+
 ```bash
-git clone <repo-url>
+# 1. Clone repo
+git clone https://github.com/MeganHarrison/alleato-pm.git
 cd alleato-pm
-npm run install:all
+
+# 2. Install all dependencies
+npm run install:all       # Installs root + frontend node_modules
+
+# 3. Set up environment variables
+cp .env.example .env      # Fill in required secrets
+# Required: SUPABASE_URL, SUPABASE_ANON_KEY, OPENAI_API_KEY (or AI_GATEWAY_API_KEY),
+#           ACCOUNTING_USER, ACCOUNTING_PASSWORD, PROCORE_USER, PROCORE_PASSWORD
+
+# 4. Generate Supabase types (MANDATORY before any database work)
+npm run db:types
+
+# 5. Set up Python backend
+cd backend
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cd ..
 ```
 
-### Environment Variables
-Frontend requires `.env.local` in `frontend/`:
-- NEXT_PUBLIC_SUPABASE_URL
-- NEXT_PUBLIC_SUPABASE_ANON_KEY
-- SUPABASE_SERVICE_ROLE_KEY
+---
 
-Backend configuration depends on the local backend startup path. Use the variables expected by `backend/start.sh` and the backend service configuration before running `npm run dev:backend`.
+## Running the Application
 
-## Development Commands
-
-### Running Locally
 ```bash
-npm run dev                    # Frontend + Backend concurrently
-npm run dev:frontend           # Frontend only (localhost:3000)
-npm run dev:backend            # Backend only
+# Full stack (frontend + backend concurrently)
+npm run dev
+
+# Frontend only (Next.js on port 3000)
+npm run dev:frontend
+
+# Backend only (FastAPI on port 8051)
+npm run dev:backend
 ```
 
-### Build & Quality
+**Frontend:** `http://localhost:3000`
+**Backend API:** `http://localhost:8051`
+**Backend proxied through frontend:** `http://localhost:3000/rag-chatkit/*`
+
+---
+
+## Common Development Tasks
+
+### Supabase Types (MANDATORY before database work)
+
 ```bash
-npm run build                  # Frontend production build
-cd frontend && npm run quality
-cd frontend && npm run quality:fix
+# Regenerate types after any schema change
+npm run db:types
+# Outputs to: frontend/src/types/database.types.ts
 ```
 
-### Database
+**Always read the generated types before writing any database code.** Never assume table names or column types.
+
+### Database Migrations
+
 ```bash
-npm run db:types               # Regenerate Supabase types (MANDATORY before DB work)
-npm run db:push                # Push schema changes
-npm run seed:db                # Seed database
-npm run seed:financial         # Seed financial data
+# Push a new migration
+supabase db push && npm run db:types
+
+# Or use the root script
+npm run db:push
 ```
 
-### Testing
+### Route Conflict Check
+
+After creating new API routes:
 ```bash
-# Preferred interactive verification
-npm run verify:browser
-
-# Repo-level tests
-npm run test
-npm run test:backend
-
-# Frontend tests
-cd frontend && npm run test
-cd frontend && npm run test:headed
-cd frontend && npm run test:ui
-cd frontend && npm run test:unit
-cd frontend && npm run test:unit:coverage
-
-# Single test file
-cd frontend && npx playwright test tests/e2e/specific-test.spec.ts --config=config/playwright/playwright.config.ts --headed
+npm run check:routes
 ```
 
-Auth is AUTOMATIC - saved in tests/.auth/user.json. Never manually log in.
+Routes MUST use specific parameter names (`[projectId]`, `[companyId]`, etc.). Never use generic `[id]`.
 
-## Mandatory Gates (from CLAUDE.md)
+### Clearing Next.js Cache
 
-### 1. Supabase Types Gate
-Before ANY database code: run `npm run db:types`, read database.types.ts, verify tables/columns exist, verify FK types match PK types (projects.id is INTEGER, not UUID!)
-
-### 2. Route Naming Gate
-Use [projectId], [companyId], [contractId], [userId], [recordId] - NEVER generic [id]. Run `npm run check:routes` after creating routes.
-
-### 3. Next.js Cache Gate
-Before debugging any 404 or routing issue on new files:
-
+Before debugging any 404 or routing issue:
 ```bash
-cd frontend
-rm -rf .next
-pkill -f "next dev"
-npm run dev > /tmp/nextjs-dev.log 2>&1 &
+cd frontend && rm -rf .next && pkill -f "next dev" && npm run dev > /tmp/nextjs-dev.log 2>&1 &
 sleep 10
 tail -20 /tmp/nextjs-dev.log
 ```
 
-### 4. Root Cause Gate
-Before modifying code: gather runtime evidence, state root cause with evidence, THEN fix.
+### Scaffolding New Features
 
-### 5. Page Header Gate
-All project pages MUST use ProjectPageHeader + PageContainer from @/components/layout
+```bash
+# Generate full CRUD feature (enforces all gates)
+/create-feature <EntityName>
 
-### 6. Authentication Gate
-Never ask for manual login. Credentials in .env. Playwright uses saved auth state.
+# With custom fields
+/create-feature DrawingArea --fields 'name:text,area_number:text,status:text'
+```
 
-## Architecture Patterns
+---
 
-### Data Flow
-User Action -> React Component -> Hook (use-*.ts) -> Supabase Query -> React Query Cache -> UI Update
+## Testing
 
-### Provider Stack (root layout)
-QueryProvider -> ThemeProvider -> ProjectProvider -> FavoritesProvider -> HeaderProvider
+### Playwright E2E Tests
 
-### File Locations
-| Type | Location |
-|------|----------|
-| Pages | frontend/src/app/(main)/[projectId]/<tool>/page.tsx |
-| API Routes | frontend/src/app/api/projects/[projectId]/<resource>/route.ts |
-| Hooks | frontend/src/hooks/use-<entity>.ts |
-| Services | frontend/src/services/<Entity>Service.ts |
-| Components | frontend/src/components/<domain>/<Component>.tsx |
-| Schemas | frontend/src/lib/schemas/<entity>.ts |
-| Migrations | supabase/migrations/<timestamp>_<desc>.sql |
-| Tests | frontend/tests/e2e/<feature>.spec.ts |
+Authentication is pre-saved in `frontend/tests/.auth/user.json`. No manual login needed.
 
-### Component Patterns
-- Use shadcn/ui primitives from @/components/ui/
-- Domain components in @/components/domain/
-- Forms use React Hook Form + Zod
-- Tables use DataTable components with responsive variants
-- Project pages: ProjectPageHeader + PageContainer
+```bash
+cd frontend
 
-## Deployment
-- Frontend: Vercel (automatic from GitHub)
-- Backend: Render (Docker container, port 8000)
-- Database: Supabase hosted
+# Run all tests (headless)
+npm run test
 
-## Common Pitfalls
-1. Never install @supabase/auth-helpers-nextjs (deprecated, use @supabase/ssr)
-2. Always clear .next cache when creating new routes
-3. FK types must match PK types (projects.id = INTEGER)
-4. Don't use generic [id] in dynamic routes
-5. Run db:types before any database work
-6. Prefer `npm run verify:browser` for evidence-based end-to-end verification
+# Run with browser visible
+npm run test:headed
 
-_Originally generated via BMAD and updated to match current repo commands and gates._
+# Open Playwright UI (best for debugging)
+npm run test:ui
+
+# Run specific test file
+npx playwright test tests/e2e/budget-line-item-validation.spec.ts --headed
+
+# Re-authenticate if session expires
+npx playwright test tests/auth.setup.ts
+```
+
+**Test credentials:** `test1@mail.com` / `test12026!!!` (from `.env` `TEST_USER_1`/`TEST_PASSWORD_1`)
+**Test project:** Project ID 67 (Vermillion Rise Warehouse)
+**Config:** `frontend/config/playwright/playwright.config.ts`
+**Dev server port:** 3002 (separate from dev port 3000)
+
+### Unit Tests (Jest)
+
+```bash
+cd frontend
+npm run test:unit
+npm run test:unit:watch
+npm run test:unit:coverage
+```
+
+### Backend Tests (pytest)
+
+```bash
+cd backend
+pytest
+pytest --cov --cov-report=html
+```
+
+---
+
+## Code Quality
+
+```bash
+# From frontend directory
+npm run lint             # ESLint
+npm run typecheck        # TypeScript type checking
+
+# From root (runs both)
+npm run quality          # typecheck + lint
+npm run quality:fix      # typecheck + lint with auto-fix
+```
+
+**Pre-commit hooks** (Husky + lint-staged):
+- TypeScript check
+- ESLint (fails on design system violations)
+
+**ESLint design system rules (hard errors):**
+- `design-system/no-hardcoded-colors` — No hex codes or bare color classes
+- `design-system/no-arbitrary-spacing` — No `p-[10px]` style values
+- `design-system/require-semantic-colors` — Must use token-based colors
+
+---
+
+## Environment Variables
+
+Key variables required in `.env` (project root):
+
+```bash
+# Supabase
+NEXT_PUBLIC_SUPABASE_URL=
+NEXT_PUBLIC_SUPABASE_ANON_KEY=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# AI (via AI Gateway BYOK or direct)
+AI_GATEWAY_API_KEY=          # AI Gateway with BYOK mode
+OPENAI_API_KEY=              # Fallback if gateway key not set
+
+# ERP Integration
+ACCOUNTING_USER=             # Acumatica username
+ACCOUNTING_PASSWORD=         # Acumatica password
+
+# Procore (for crawlers/scripts)
+PROCORE_USER=bclymer@alleatogroup.com
+PROCORE_PASSWORD=Clymer926!
+
+# Test credentials
+TEST_USER_1=test1@mail.com
+TEST_PASSWORD_1=test12026!!!
+
+# Liveblocks
+LIVEBLOCKS_SECRET_KEY=
+NEXT_PUBLIC_LIVEBLOCKS_PUBLIC_KEY=
+
+# Email
+RESEND_API_KEY=
+
+# File storage
+BLOB_READ_WRITE_TOKEN=       # Vercel Blob
+```
+
+---
+
+## Database Seeding
+
+```bash
+npm run seed:db               # Full database seed
+npm run seed:db:dry           # Dry run (no changes)
+npm run seed:db:reset         # Reset and reseed
+npm run seed:financial        # Seed financial data only
+npm run seed:project          # Seed project financial data
+```
+
+---
+
+## Design System Rules
+
+Before building any UI:
+
+1. Read `frontend/src/design-system/CLAUDE_CODE_UI_GUIDE.md` — exact Tailwind classes
+2. Read `frontend/src/design-system/tokens.md` — allowed colors, spacing, shadows
+3. Import from `@/components/ui/` (base primitives) or `@/components/ds/` (design system)
+
+**Forbidden:**
+- Hardcoded colors (`bg-gray-200`, `#hex`, `text-gray-600`)
+- Arbitrary spacing (`p-[10px]`, `gap-[14px]`)
+- Heavy shadows (`shadow-md`, `shadow-lg`, `shadow-xl`)
+- Generic `[id]` route parameters
+
+---
+
+## MANDATORY GATES (Summary)
+
+See `CLAUDE.md` and `.claude/PREVENTION-CHECKLIST.md` for full rules. Top 5:
+
+1. **Run `npm run db:types`** before any database code
+2. **Use specific route parameters** (`[projectId]` not `[id]`)
+3. **Clear `.next` cache** before debugging 404s
+4. **Gather evidence first** before modifying code for bug fixes
+5. **Use `/create-feature`** instead of writing CRUD from scratch
+
+---
+
+## Useful Scripts
+
+```bash
+# RAG verification
+npm run rag:verify:financial
+npm run rag:verify:risk-routing
+
+# Cache management
+npm run cache:stats
+npm run cache:recent
+
+# Playwright dashboard
+npm run dashboard:playwright
+
+# Procore docs crawler
+node scripts/crawl-procore-support-docs.mjs
+```

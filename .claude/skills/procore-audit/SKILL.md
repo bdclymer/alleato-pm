@@ -277,12 +277,12 @@ List everything Procore has that Alleato lacks, prioritized by impact:
 
 Save the report to:
 ```
-docs-ai/contents/docs/PRPs/<tool>/gap-analysis-report.md
+docs/PRPs/<tool>/gap-analysis-report.md
 ```
 
 Also save structured JSON for programmatic use:
 ```
-docs-ai/contents/docs/PRPs/<tool>/gap-analysis.json
+docs/PRPs/<tool>/gap-analysis.json
 ```
 
 ---
@@ -320,7 +320,7 @@ implementable:
 
 Save to:
 ```
-docs-ai/contents/docs/PRPs/<tool>/implementation-tasks.md
+docs/PRPs/<tool>/implementation-tasks.md
 ```
 
 ---
@@ -401,4 +401,4 @@ After implementation is complete, re-run Phase 1 and Phase 2 to verify:
 | API routes | `frontend/src/app/api/projects/[projectId]/<tool>/` |
 | Database types | `frontend/src/types/database.types.ts` |
 | Feature tracker | `/procore-tracker` UI + `procore_features` / `procore_modules` tables |
-| Gap reports output | `docs-ai/contents/docs/PRPs/<tool>/` |
+| Gap reports output | `docs/PRPs/<tool>/` |

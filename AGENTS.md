@@ -354,7 +354,7 @@ npx playwright test tests/e2e/budget-line-item-validation.spec.ts --headed
 | E2E tests | `frontend/tests/` |
 | Claude/Codex rules | `.claude/rules/` |
 | PRPs / feature specs | `_bmad-output/planning-artifacts/<feature>/` |
-| Docs | `docs-ai/contents/docs/` |
+| Docs | `docs/` |
 
 Never create `.md`, `.js`, `.ts`, `.py`, or `.sh` files at project root (except `CLAUDE.md`, `AGENTS.md`, `README.md`).
 

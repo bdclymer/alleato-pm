@@ -1,3 +1,4 @@
+npm warn exec The following package was not found and will be installed: supabase@2.84.0
 export type Json =
   | string
   | number
@@ -1324,6 +1325,192 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      admin_feedback_comments: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          feedback_item_id: string
+          id: string
+          mentions: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          feedback_item_id: string
+          id?: string
+          mentions?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          feedback_item_id?: string
+          id?: string
+          mentions?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_feedback_comments_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_feedback_comments_feedback_item_id_fkey"
+            columns: ["feedback_item_id"]
+            isOneToOne: false
+            referencedRelation: "admin_feedback_items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      admin_feedback_items: {
+        Row: {
+          comment: string
+          created_at: string
+          created_by: string
+          dom_path: string | null
+          github_issue_number: number | null
+          github_issue_state: string | null
+          github_issue_url: string | null
+          id: string
+          metadata: Json
+          page_path: string
+          page_title: string | null
+          page_url: string
+          project_id: number | null
+          request_type: string
+          screenshot_path: string | null
+          screenshot_url: string | null
+          severity: string | null
+          status: string
+          target_id: string | null
+          target_rect: Json | null
+          target_selector: string
+          target_tag: string | null
+          target_text: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          comment: string
+          created_at?: string
+          created_by: string
+          dom_path?: string | null
+          github_issue_number?: number | null
+          github_issue_state?: string | null
+          github_issue_url?: string | null
+          id?: string
+          metadata?: Json
+          page_path: string
+          page_title?: string | null
+          page_url: string
+          project_id?: number | null
+          request_type?: string
+          screenshot_path?: string | null
+          screenshot_url?: string | null
+          severity?: string | null
+          status?: string
+          target_id?: string | null
+          target_rect?: Json | null
+          target_selector: string
+          target_tag?: string | null
+          target_text?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          comment?: string
+          created_at?: string
+          created_by?: string
+          dom_path?: string | null
+          github_issue_number?: number | null
+          github_issue_state?: string | null
+          github_issue_url?: string | null
+          id?: string
+          metadata?: Json
+          page_path?: string
+          page_title?: string | null
+          page_url?: string
+          project_id?: number | null
+          request_type?: string
+          screenshot_path?: string | null
+          screenshot_url?: string | null
+          severity?: string | null
+          status?: string
+          target_id?: string | null
+          target_rect?: Json | null
+          target_selector?: string
+          target_tag?: string | null
+          target_text?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_feedback_items_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "user_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_feedback_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "admin_feedback_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_feedback_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_feedback_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "admin_feedback_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_feedback_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "admin_feedback_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       admin_view_backups: {
         Row: {
@@ -2686,6 +2873,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      bot_user_mappings: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          id: number
+          platform: string
+          platform_user_id: string
+          supabase_user_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          id?: never
+          platform: string
+          platform_user_id: string
+          supabase_user_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          id?: never
+          platform?: string
+          platform_user_id?: string
+          supabase_user_id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       briefing_runs: {
         Row: {
@@ -6078,6 +6295,102 @@ export type Database = {
           },
         ]
       }
+      design_violations: {
+        Row: {
+          created_at: string | null
+          element_description: string | null
+          element_selector: string | null
+          fixed_at: string | null
+          fixed_in_file: string | null
+          id: string
+          notes: string | null
+          priority: string | null
+          route: string
+          screenshot_url: string | null
+          status: string | null
+          submitted_by: string | null
+          updated_at: string | null
+          violation_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          element_description?: string | null
+          element_selector?: string | null
+          fixed_at?: string | null
+          fixed_in_file?: string | null
+          id?: string
+          notes?: string | null
+          priority?: string | null
+          route: string
+          screenshot_url?: string | null
+          status?: string | null
+          submitted_by?: string | null
+          updated_at?: string | null
+          violation_type: string
+        }
+        Update: {
+          created_at?: string | null
+          element_description?: string | null
+          element_selector?: string | null
+          fixed_at?: string | null
+          fixed_in_file?: string | null
+          id?: string
+          notes?: string | null
+          priority?: string | null
+          route?: string
+          screenshot_url?: string | null
+          status?: string | null
+          submitted_by?: string | null
+          updated_at?: string | null
+          violation_type?: string
+        }
+        Relationships: []
+      }
+      dev_annotations: {
+        Row: {
+          ai_replied_at: string | null
+          ai_reply: string | null
+          comment: string
+          component_hint: string | null
+          created_at: string | null
+          created_by: string | null
+          element_selector: string | null
+          id: string
+          resolved_at: string | null
+          route: string
+          screenshot_url: string | null
+          status: string | null
+        }
+        Insert: {
+          ai_replied_at?: string | null
+          ai_reply?: string | null
+          comment: string
+          component_hint?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          element_selector?: string | null
+          id?: string
+          resolved_at?: string | null
+          route: string
+          screenshot_url?: string | null
+          status?: string | null
+        }
+        Update: {
+          ai_replied_at?: string | null
+          ai_reply?: string | null
+          comment?: string
+          component_hint?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          element_selector?: string | null
+          id?: string
+          resolved_at?: string | null
+          route?: string
+          screenshot_url?: string | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       direct_cost_line_items: {
         Row: {
           budget_code_id: string
@@ -6752,6 +7065,7 @@ export type Database = {
           content_hash: string | null
           created_at: string | null
           date: string | null
+          decisions: Json | null
           description: string | null
           duration_minutes: number | null
           extended_sections: Json | null
@@ -6763,6 +7077,7 @@ export type Database = {
           host_email: string | null
           id: string
           is_silent_meeting: boolean | null
+          key_topics: Json | null
           keywords: string[] | null
           meeting_attendance: Json | null
           meeting_attendees: Json | null
@@ -6785,6 +7100,7 @@ export type Database = {
           status: string | null
           storage_bucket: string | null
           summary: string | null
+          summary_bullets: Json | null
           summary_embedding: unknown
           tags: string | null
           title: string | null
@@ -6808,6 +7124,7 @@ export type Database = {
           content_hash?: string | null
           created_at?: string | null
           date?: string | null
+          decisions?: Json | null
           description?: string | null
           duration_minutes?: number | null
           extended_sections?: Json | null
@@ -6819,6 +7136,7 @@ export type Database = {
           host_email?: string | null
           id: string
           is_silent_meeting?: boolean | null
+          key_topics?: Json | null
           keywords?: string[] | null
           meeting_attendance?: Json | null
           meeting_attendees?: Json | null
@@ -6841,6 +7159,7 @@ export type Database = {
           status?: string | null
           storage_bucket?: string | null
           summary?: string | null
+          summary_bullets?: Json | null
           summary_embedding?: unknown
           tags?: string | null
           title?: string | null
@@ -6864,6 +7183,7 @@ export type Database = {
           content_hash?: string | null
           created_at?: string | null
           date?: string | null
+          decisions?: Json | null
           description?: string | null
           duration_minutes?: number | null
           extended_sections?: Json | null
@@ -6875,6 +7195,7 @@ export type Database = {
           host_email?: string | null
           id?: string
           is_silent_meeting?: boolean | null
+          key_topics?: Json | null
           keywords?: string[] | null
           meeting_attendance?: Json | null
           meeting_attendees?: Json | null
@@ -6897,6 +7218,7 @@ export type Database = {
           status?: string | null
           storage_bucket?: string | null
           summary?: string | null
+          summary_bullets?: Json | null
           summary_embedding?: unknown
           tags?: string | null
           title?: string | null
@@ -9391,6 +9713,80 @@ export type Database = {
             columns: ["document_id"]
             isOneToOne: false
             referencedRelation: "document_metadata_manual_only"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      initiative_cards: {
+        Row: {
+          assignee: string | null
+          assignee_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          dispatch_status: string | null
+          due_date: string | null
+          external_id: string | null
+          github_issue_url: string | null
+          id: string
+          labels: string[] | null
+          linked_record_id: string | null
+          linked_record_type: string | null
+          priority: string
+          sort_order: number
+          source: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignee?: string | null
+          assignee_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          dispatch_status?: string | null
+          due_date?: string | null
+          external_id?: string | null
+          github_issue_url?: string | null
+          id?: string
+          labels?: string[] | null
+          linked_record_id?: string | null
+          linked_record_type?: string | null
+          priority?: string
+          sort_order?: number
+          source?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignee?: string | null
+          assignee_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          dispatch_status?: string | null
+          due_date?: string | null
+          external_id?: string | null
+          github_issue_url?: string | null
+          id?: string
+          labels?: string[] | null
+          linked_record_id?: string | null
+          linked_record_type?: string | null
+          priority?: string
+          sort_order?: number
+          source?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "initiative_cards_assignee_id_fkey"
+            columns: ["assignee_id"]
+            isOneToOne: false
+            referencedRelation: "people"
             referencedColumns: ["id"]
           },
         ]
@@ -16907,6 +17303,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      team_chat_messages: {
+        Row: {
+          channel_id: string
+          content: string
+          created_at: string
+          id: string
+          user_id: string | null
+          user_name: string
+        }
+        Insert: {
+          channel_id: string
+          content: string
+          created_at?: string
+          id?: string
+          user_id?: string | null
+          user_name: string
+        }
+        Update: {
+          channel_id?: string
+          content?: string
+          created_at?: string
+          id?: string
+          user_id?: string | null
+          user_name?: string
+        }
+        Relationships: []
       }
       todos: {
         Row: {

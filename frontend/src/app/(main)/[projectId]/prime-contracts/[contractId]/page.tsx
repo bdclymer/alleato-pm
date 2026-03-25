@@ -5,7 +5,6 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   AlertCircle,
   ArrowLeft,
-  Calculator,
   Check,
   ChevronDown,
   Download,
@@ -71,7 +70,6 @@ import type {
   ContractTab,
   InvoiceFormState,
   LineItemFormState,
-  MarkupCalculationResponse,
   Payment,
   PaymentApplication,
   PaymentFormState,
@@ -127,9 +125,6 @@ export default function ProjectContractDetailPage() {
   const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
   const [verticalMarkups, setVerticalMarkups] = useState<VerticalMarkup[]>([]);
   const [markupsLoading, setMarkupsLoading] = useState(false);
-  const [previewBaseAmount, setPreviewBaseAmount] = useState<string>("10000");
-  const [calculationResult, setCalculationResult] = useState<MarkupCalculationResponse | null>(null);
-  const [calculationLoading, setCalculationLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<ContractTab>("overview");
 const [isSovEditing, setIsSovEditing] = useState(false);
   const [isSavingSovChanges, setIsSavingSovChanges] = useState(false);
@@ -546,42 +541,6 @@ const [isSovEditing, setIsSovEditing] = useState(false);
     fetchVerticalMarkups();
   }, [contract, projectId]);
 
-  // Calculate markup preview when base amount changes or markups load
-  const calculateMarkupPreview = async () => {
-    const baseAmount = parseFloat(previewBaseAmount);
-    if (isNaN(baseAmount) || baseAmount <= 0) {
-      setCalculationResult(null);
-      return;
-    }
-
-    try {
-      setCalculationLoading(true);
-      const response = await fetch(
-        `/api/projects/${projectId}/vertical-markup/calculate`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ baseAmount }),
-        }
-      );
-
-      if (!response.ok) {
-        return;
-      }
-
-      const data = await response.json();
-      setCalculationResult(data);
-    } catch (err) {
-
-      console.error("Failed to load data:", err);
-
-      // Intentionally swallowed: component shows appropriate state on error
-
-    } finally {
-      setCalculationLoading(false);
-    }
-  };
-
   const handleBack = () => {
     router.push(`/${projectId}/prime-contracts`);
   };
@@ -653,10 +612,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
           body: JSON.stringify({
             contract_number: data.number,
             title: data.title,
-            client_id:
-              data.ownerCompanyId && /^\d+$/.test(data.ownerCompanyId)
-                ? Number.parseInt(data.ownerCompanyId, 10)
-                : null,
+            client_id: data.ownerCompanyId || null,
             contractor_id: data.contractorId || null,
             architect_engineer_id: data.architectEngineerId || null,
             contract_company_id:
@@ -1546,7 +1502,17 @@ const [isSovEditing, setIsSovEditing] = useState(false);
 
   const parseBulletList = (value: string | null | undefined): string[] => {
     if (!value) return [];
-    return value
+    // Strip HTML tags to get plain text, then split into bullet items
+    const plainText = value
+      .replace(/<br\s*\/?>/gi, "\n")
+      .replace(/<\/?(p|div|li)[^>]*>/gi, "\n")
+      .replace(/<[^>]+>/g, "")
+      .replace(/&nbsp;/g, " ")
+      .replace(/&amp;/g, "&")
+      .replace(/&lt;/g, "<")
+      .replace(/&gt;/g, ">")
+      .replace(/&#\d+;/g, "");
+    return plainText
       .split(/[\n•]+/)
       .map((item) => item.trim())
       .filter((item) => item.length > 0);
@@ -1677,8 +1643,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
       title: contract.title,
       status: contract.status,
       executed: contract.executed,
-      ownerCompanyId:
-        contract.contract_company_id || contract.client_id?.toString() || undefined,
+      ownerCompanyId: contract.contract_company_id || undefined,
       contractorId: contract.contractor_id || undefined,
       architectEngineerId: contract.architect_engineer_id || undefined,
       contractCompanyId: contract.contract_company_id || undefined,
@@ -2516,261 +2481,92 @@ lineItemsLoading={lineItemsLoading}
         )}
 
         {activeTab === "financial-markup" && (
-          <div>
-            <div className="space-y-6">
-              {/* Markup Overview */}
-              <div className="bg-background">
-                <div className="mb-4">
-                  <h3 className="text-lg font-semibold">Financial Markup</h3>
+          <div className="space-y-8">
+            <section className="space-y-2">
+              <h3 className="text-lg font-semibold">Financial Markup</h3>
+            </section>
+
+            <section className="space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h4 className="text-base font-semibold">Horizontal Markup</h4>
                   <p className="text-sm text-muted-foreground">
-                    Configure markup percentages applied to change orders on this contract
+                    Calculated on each line item individually.
                   </p>
                 </div>
-                <div>
-                  <div className="space-y-6">
-                    {/* Explanation */}
-                    <div className="bg-muted/50 p-4 rounded-lg">
-                      <h4 className="text-sm font-medium mb-2">About Financial Markup</h4>
-                      <p className="text-sm text-muted-foreground">
-                        Financial markup represents the difference between the cost of work and the sales price,
-                        accounting for overhead expenses and profit. Markups are applied to Prime Contract Change Orders (PCCOs).
-                      </p>
-                    </div>
+                <Button size="sm" disabled>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Horizontal Markup
+                </Button>
+              </div>
+            </section>
 
-                    {/* Markup Types Explanation */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="border rounded-lg p-4">
-                        <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-blue-500" />
-                          Horizontal Markup
-                        </h4>
-                        <p className="text-sm text-muted-foreground">
-                          Calculates markup on individual line items. Markup amounts appear in the same row as each line item on the Schedule of Values.
-                        </p>
-                      </div>
-                      <div className="border rounded-lg p-4">
-                        <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-green-500" />
-                          Vertical Markup
-                        </h4>
-                        <p className="text-sm text-muted-foreground">
-                          Calculates markup as a subtotal on all line items. Markup amounts appear after the subtotal on the Schedule of Values.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+            <section className="space-y-4 border-t border-border/60 pt-6">
+              <div>
+                <h4 className="text-base font-semibold">Vertical Markup</h4>
+                <p className="text-sm text-muted-foreground">
+                  Calculated on subtotal of line items.
+                </p>
               </div>
 
-              {/* Vertical Markup Configuration */}
-              <div className="bg-background">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 className="text-lg font-semibold">Vertical Markup Configuration</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Project-level markup settings applied to change orders
-                    </p>
-                  </div>
-                  <Button variant="outline" size="sm" disabled>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Markup
-                  </Button>
-                </div>
-                <div>
-                  {markupsLoading ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <p>Loading markup settings...</p>
-                    </div>
-                  ) : verticalMarkups.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground">
-                      <Calculator className="h-12 w-12 mx-auto mb-[var(--group-gap)] opacity-50" />
-                      <p>No markup items configured</p>
-                      <p className="text-xs mt-2">
-                        Add markup items like GC Fee, Insurance, Bond, or Overhead to apply to change orders.
-                      </p>
-                    </div>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Order</TableHead>
-                          <TableHead>Markup Type</TableHead>
-                          <TableHead className="text-right">Percentage</TableHead>
-                          <TableHead>Compound</TableHead>
-                        </TableRow>
-                      </TableHeader>
-                      <TableBody>
-                        {verticalMarkups
-                          .sort((a, b) => a.calculation_order - b.calculation_order)
-                          .map((markup) => (
-                            <TableRow key={markup.id}>
-                              <TableCell className="font-medium">
-                                {markup.calculation_order}
-                              </TableCell>
-                              <TableCell>{markup.markup_type}</TableCell>
-                              <TableCell className="text-right">
-                                {markup.percentage.toFixed(3)}%
-                              </TableCell>
-                              <TableCell>
-                                {markup.compound ? (
-                                  <Badge variant="secondary">Compounds Above</Badge>
-                                ) : (
-                                  <span className="text-muted-foreground">Base Only</span>
-                                )}
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                      </TableBody>
-                    </Table>
-                  )}
-                </div>
+              <div className="overflow-x-auto overflow-hidden rounded-lg border border-border/70 bg-muted/20">
+                <Table>
+                  <TableHeader className="border-y-0 [&_tr]:border-b-0">
+                    <TableRow className="bg-muted/70 hover:bg-muted/70">
+                      <TableHead className="px-3 py-2 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                        Markup Name
+                      </TableHead>
+                      <TableHead className="px-3 py-2 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                        %
+                      </TableHead>
+                      <TableHead className="px-3 py-2 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                        Calculation Type
+                      </TableHead>
+                      <TableHead className="px-3 py-2 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                        Application Criteria
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {markupsLoading ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="py-8 text-center text-muted-foreground">
+                          Loading markup settings...
+                        </TableCell>
+                      </TableRow>
+                    ) : verticalMarkups.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={4} className="py-8 text-center text-muted-foreground">
+                          No markup items configured
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      [...verticalMarkups]
+                        .sort((a, b) => a.calculation_order - b.calculation_order)
+                        .map((markup) => (
+                          <TableRow key={markup.id} className="border-b border-border/60 bg-background hover:bg-muted/20">
+                            <TableCell className="px-3 py-2.5">{markup.markup_type}</TableCell>
+                            <TableCell className="px-3 py-2.5 text-right">
+                              {markup.percentage.toFixed(3)}%
+                            </TableCell>
+                            <TableCell className="px-3 py-2.5">
+                              {markup.compound ? "Compounds all Above" : "Basic Calculation"}
+                            </TableCell>
+                            <TableCell className="px-3 py-2.5">Applies to All Line Items</TableCell>
+                          </TableRow>
+                        ))
+                    )}
+                  </TableBody>
+                </Table>
               </div>
 
-              {/* Markup Calculation Preview */}
-              {verticalMarkups.length > 0 && (
-                <div className="bg-background" data-testid="markup-calculation-preview">
-                  <div className="mb-4">
-                    <h3 className="text-lg font-semibold">Calculation Preview</h3>
-                    <p className="text-sm text-muted-foreground">
-                      Test how markups will be applied to a change order amount
-                    </p>
-                  </div>
-                  <div>
-                    <div className="space-y-6">
-                      {/* Input Section */}
-                      <div className="flex items-end gap-4">
-                        <div className="flex-1 max-w-xs">
-                          <Label htmlFor="preview-amount">Base Amount (Change Order Cost)</Label>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-muted-foreground">$</span>
-                            <Input
-                              id="preview-amount"
-                              type="number"
-                              value={previewBaseAmount}
-                              onChange={(e) => setPreviewBaseAmount(e.target.value)}
-                              placeholder="10000"
-                              data-testid="markup-preview-input"
-                            />
-                          </div>
-                        </div>
-                        <Button
-                          onClick={calculateMarkupPreview}
-                          disabled={calculationLoading}
-                          data-testid="calculate-markup-btn"
-                        >
-                          <Calculator className="h-4 w-4 mr-2" />
-                          {calculationLoading ? "Calculating..." : "Calculate"}
-                        </Button>
-                      </div>
-
-                      {/* Calculation Results */}
-                      {calculationResult && (
-                        <div className="space-y-4" data-testid="markup-calculation-results">
-                          <Table>
-                            <TableHeader>
-                              <TableRow>
-                                <TableHead>Markup Type</TableHead>
-                                <TableHead className="text-right">Percentage</TableHead>
-                                <TableHead>Calculation Base</TableHead>
-                                <TableHead className="text-right">Markup Amount</TableHead>
-                                <TableHead className="text-right">Running Total</TableHead>
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {/* Base Amount Row */}
-                              <TableRow className="bg-muted/30">
-                                <TableCell className="font-medium">Base Amount</TableCell>
-                                <TableCell className="text-right">--</TableCell>
-                                <TableCell>--</TableCell>
-                                <TableCell className="text-right">--</TableCell>
-                                <TableCell className="text-right font-medium">
-                                  {formatCurrency(calculationResult.baseAmount)}
-                                </TableCell>
-                              </TableRow>
-                              {calculationResult.calculations.map((calc, index) => (
-                                <TableRow key={index} data-testid={`markup-row-${index}`}>
-                                  <TableCell>{calc.markup_type}</TableCell>
-                                  <TableCell className="text-right">{calc.percentage.toFixed(3)}%</TableCell>
-                                  <TableCell>
-                                    {calc.compound ? (
-                                      <span className="text-xs text-muted-foreground">
-                                        Running Total ({formatCurrency(calc.baseAmount)})
-                                      </span>
-                                    ) : (
-                                      <span className="text-xs text-muted-foreground">
-                                        Base Only ({formatCurrency(calc.baseAmount)})
-                                      </span>
-                                    )}
-                                  </TableCell>
-                                  <TableCell className="text-right text-green-600" data-testid={`markup-amount-${index}`}>
-                                    +{formatCurrency(calc.markupAmount)}
-                                  </TableCell>
-                                  <TableCell className="text-right font-medium">
-                                    {formatCurrency(calc.runningTotal)}
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                            <tfoot>
-                              <TableRow className="bg-muted font-medium">
-                                <TableCell colSpan={3}>Total with Markup</TableCell>
-                                <TableCell className="text-right text-green-600" data-testid="total-markup">
-                                  +{formatCurrency(calculationResult.totalMarkup)}
-                                </TableCell>
-                                <TableCell className="text-right text-lg" data-testid="final-amount">
-                                  {formatCurrency(calculationResult.finalAmount)}
-                                </TableCell>
-                              </TableRow>
-                            </tfoot>
-                          </Table>
-
-                          {/* Summary */}
-                          <div className="bg-muted/50 p-4 rounded-lg">
-                            <p className="text-sm">
-                              <strong>Summary:</strong> A change order with base cost of{" "}
-                              <strong>{formatCurrency(calculationResult.baseAmount)}</strong> would have{" "}
-                              <strong>{formatCurrency(calculationResult.totalMarkup)}</strong> in markup applied,
-                              resulting in a total billable amount of{" "}
-                              <strong>{formatCurrency(calculationResult.finalAmount)}</strong>.
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Common Markup Categories Reference */}
-              <div className="bg-background">
-                <div className="mb-4">
-                  <h3 className="text-lg font-semibold">Common Markup Categories</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Typical markup items used in construction contracts
-                  </p>
-                </div>
-                <div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
-                    <div className="border rounded-lg p-4">
-                      <p className="text-sm font-medium">GC Fee / Contractor&apos;s Fee</p>
-                      <p className="text-xs text-muted-foreground">Typically 3-10%</p>
-                    </div>
-                    <div className="border rounded-lg p-4">
-                      <p className="text-sm font-medium">Insurance</p>
-                      <p className="text-xs text-muted-foreground">Typically 1-2%</p>
-                    </div>
-                    <div className="border rounded-lg p-4">
-                      <p className="text-sm font-medium">Bond</p>
-                      <p className="text-xs text-muted-foreground">Typically 0.5-2%</p>
-                    </div>
-                    <div className="border rounded-lg p-4">
-                      <p className="text-sm font-medium">Overhead</p>
-                      <p className="text-xs text-muted-foreground">Typically 5-15%</p>
-                    </div>
-                  </div>
-                </div>
+              <div className="flex justify-end">
+                <Button size="sm" disabled>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Vertical Markup
+                </Button>
               </div>
-            </div>
+            </section>
           </div>
         )}
 

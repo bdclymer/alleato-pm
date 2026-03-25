@@ -118,5 +118,5 @@
     "deployment-guide.md"
   ],
   "resume_instructions": "Scan complete. Run with mode=update to refresh documentation.",
-  "user_context": "PRPs folder at docs-ai/contents/docs/PRPs is key planning resource. User notes extensive existing docs that may have stale/unnecessary content."
+  "user_context": "PRPs folder at docs/PRPs is key planning resource. User notes extensive existing docs that may have stale/unnecessary content."
 }

@@ -34,7 +34,11 @@
       "Bash(NODE_PATH=./node_modules node /tmp/form-gauntlet-subcontract.js)",
       "Bash(NODE_PATH=./node_modules node -e ':*)",
       "mcp__claude_ai_Supabase__execute_sql",
-      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__navigate_page"
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__navigate_page",
+      "Bash(mkdir -p /Users/meganharrison/Documents/alleato-pm/docs/roadmap)",
+      "Bash(mv /Users/meganharrison/Documents/alleato-pm/ROADMAP.md /Users/meganharrison/Documents/alleato-pm/docs/roadmap/ROADMAP.md)",
+      "Bash(mv /Users/meganharrison/Documents/alleato-pm/HANDOFF.md /Users/meganharrison/Documents/alleato-pm/docs/roadmap/HANDOFF.md)",
+      "mcp__claude_ai_Supabase__apply_migration"
     ],
     "additionalDirectories": [
       "/Users/meganharrison/Documents/alleato-pm/.claude/form-gauntlet/commitments/forms/create_subcontract",

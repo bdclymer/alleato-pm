@@ -45,5 +45,6 @@
     },
     "explorerExclude.backup": {},
     "markdown-pdf.convertOnSave": false,
-    "markdown-preview-enhanced.enableScriptExecution": false
+    "markdown-preview-enhanced.enableScriptExecution": false,
+    "markdown.extension.print.onFileSave": false
 }

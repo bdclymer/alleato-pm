@@ -7,7 +7,7 @@ const repoRoot = process.cwd();
 const frontendDir = path.join(repoRoot, "frontend");
 const appDir = path.join(frontendDir, "src", "app");
 const srcDir = path.join(frontendDir, "src");
-const outputDir = path.join(repoRoot, "docs-ai", "contents", "docs", "reports");
+const outputDir = path.join(repoRoot, "docs", "reports");
 
 const PAGE_EXTS = new Set([".tsx", ".ts", ".jsx", ".js", ".mdx"]);
 

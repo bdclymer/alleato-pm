@@ -58,7 +58,7 @@
 ### 2026-02-02 16:30
 
 - Started: Audit and gap analysis
-- PRP: `docs-ai/contents/docs/PRPs/punch-list/prp-punch-list-fix.md`
+- PRP: `docs/PRPs/punch-list/prp-punch-list-fix.md`
 - Findings: Feature is ~5% implemented. Two placeholder pages exist (one mock-data table view, one "Coming soon" stub). No database table, no API routes, no hooks, no services, no components, no tests.
 - Next: Begin Phase 1 tasks (fix broken pages), then Phase 2 (database)
 
@@ -80,10 +80,10 @@
 
 ## Quick Reference
 
-**PRP Document**: `docs-ai/contents/docs/PRPs/punch-list/prp-punch-list-fix.md`
-**Original PRP**: `docs-ai/contents/docs/PRPs/punch-list/punch-list/index.mdx`
-**Execution Plan**: `docs-ai/contents/docs/PRPs/punch-list/execution-plan-punch-list/index.mdx`
-**Crawl Data**: `docs-ai/contents/docs/PRPs/punch-list/crawl/`
+**PRP Document**: `docs/PRPs/punch-list/prp-punch-list-fix.md`
+**Original PRP**: `docs/PRPs/punch-list/punch-list/index.mdx`
+**Execution Plan**: `docs/PRPs/punch-list/execution-plan-punch-list/index.mdx`
+**Crawl Data**: `docs/PRPs/punch-list/crawl/`
 
 ### Key Commands
 

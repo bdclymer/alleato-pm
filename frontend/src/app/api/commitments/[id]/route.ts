@@ -220,13 +220,13 @@ export async function GET(
     if (record?.contract_company_id) {
       const { data: vendorData } = await supabase
         .from("vendors")
-        .select("id, vendor_name")
+        .select("id, name")
         .eq("id", record.contract_company_id as string)
         .single();
       if (vendorData) {
         contractCompany = {
           id: vendorData.id,
-          name: vendorData.vendor_name,
+          name: vendorData.name,
           type: "vendor",
         };
       }

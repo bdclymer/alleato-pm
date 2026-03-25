@@ -20,7 +20,7 @@ Located in `_bmad-output/planning-artifacts/rfis/`:
 | `docs/procore-reference/PROCORE-TOOLS.md` | RFIs listed as "Implementation" status |
 | `docs/procore-reference/INDEX_FEATURES.md` | RFIs: "Partial" implementation, 182 crawled files, MEDIUM priority |
 | No `rfis-reference.md` exists | — |
-| No `docs-ai/contents/docs/PRPs/rfis/` exists | Referenced in PROCORE-TOOLS.md but never created |
+| No `docs/PRPs/rfis/` exists | Referenced in PROCORE-TOOLS.md but never created |
 
 ## Implementation Files
 

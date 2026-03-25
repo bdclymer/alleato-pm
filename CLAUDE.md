@@ -15,6 +15,19 @@ Core workflow:
 3. `agent-browser click @e1` / `fill @e2 "text"` - Interact using refs
 4. Re-snapshot after page changes
 
+## 🔧 PROACTIVE ISSUE FIXING (MANDATORY)
+
+**When you identify issues during any task — even if they weren't caused by your current session — do NOT just report them and move on.** Assign a sub-agent to fix each issue immediately.
+
+- If you find a bug while working on something else → spawn a sub-agent to fix it
+- If an eval reveals retrieval gaps → spawn a sub-agent to improve retrieval
+- If you notice broken patterns, stale code, or incorrect behavior → fix it or delegate it
+- The only exception is if fixing would be destructive or the user explicitly says to skip it
+
+**Never write "improvement opportunities" or "next steps" lists without acting on them.** If you can identify the fix, do the fix.
+
+---
+
 ## 🚨 STOP REPEATING MISTAKES - READ THIS FIRST
 
 **Before starting ANY task, check:** `.claude/PREVENTION-CHECKLIST.md`
@@ -48,7 +61,7 @@ Core workflow:
    - ONLY THEN modify code (not before)
 
 **Full prevention system:** `.claude/PREVENTION-CHECKLIST.md`
-**Incident tracking:** `docs-ai/contents/docs/patterns/INCIDENT-LOG.md`
+**Incident tracking:** `docs/patterns/INCIDENT-LOG.md`
 **PRP Workflow:** `.claude/PRP-WORKFLOW.md` — step-by-step guide for new features and fix/complete workflows
 
 ---
@@ -77,7 +90,7 @@ These rules are NON-NEGOTIABLE. Violating them wastes significant time.
 **Required Steps:**
 
 1. Read `.claude/MANDATORY-ERROR-PREVENTION.md`
-2. Check relevant patterns in `docs-ai/contents/docs/patterns/`
+2. Check relevant patterns in `docs/patterns/`
 3. Apply documented solutions for known issues
 4. Follow pre-action validation checklist
 
@@ -251,8 +264,8 @@ import { PageContainer, ProjectPageHeader } from "@/components/layout";
 | File Type | Required Location |
 |-----------|------------------|
 | Scripts (.js, .ts, .py, .sh) | `scripts/` (with subdirs) |
-| Documentation (.md, .mdx) | `docs-ai/` or `DOCS_NEED_TO_FILE/` |
-| PRPs | `docs-ai/contents/docs/PRPs/<domain>/` |
+| Documentation (.md, .mdx) | `docs/` or `DOCS_NEED_TO_FILE/` |
+| PRPs | `docs/PRPs/<domain>/` |
 | Claude rules | `.claude/rules/` |
 | SQL migrations | `supabase/migrations/` |
 | Frontend code | `frontend/src/` |
@@ -680,9 +693,10 @@ Before claiming tests pass:
 2. Observe the browser DOM/output
 3. Only then diagnose or fix issues
 
-### Save all documentation in the docs-ai folder.
+### Save all documentation in the docs/ folder.
 
-- file-path: /Users/meganharrison/Documents/github/alleato-pm/docs-ai/contents/docs
+- file-path: /Users/meganharrison/Documents/alleato-pm/docs
+- `docs-ai/` is DEPRECATED — all content has been merged into `docs/`. Never create files in `docs-ai/`.
 
 ## UI/UX Design Standards
 
@@ -778,3 +792,142 @@ import { PageShell } from "@/components/layout";
 ## Project-Specific Notes
 
 [Add project-specific requirements here]
+
+---
+
+## 🧠 WORKING CONTEXT PROTOCOL (ANTI-AMNESIA SYSTEM)
+
+### The problem this solves
+
+Every new Claude Code session starts with zero memory of previous sessions. Without this protocol,
+Claude re-explores the database, re-reads component files, and re-discovers root causes it already
+found 10 minutes ago. This wastes your time and kills momentum.
+
+### How it works
+
+WORKING_CONTEXT.md is a living scratchpad that travels between sessions. Claude reads it first,
+updates it last. You never have to re-explain where things are or what was already tried.
+
+### Your rules
+
+**START of every session:**
+1. Read `WORKING_CONTEXT.md` immediately
+2. Read any file paths listed in "Current focus" before touching code
+3. If the context answers your question, use that answer — do not re-explore
+
+**END of every session:**
+Update `WORKING_CONTEXT.md` with:
+- What you worked on
+- What you found (exact table names, column names, component paths, root causes)
+- What you changed and why
+- What's still broken or incomplete
+- Any dead ends (what you tried that didn't work)
+
+This update is not optional. It is the entire point of the system.
+
+---
+
+## 🗄️ MEMORY SYSTEM: How context and memory actually work
+
+*This section is for Megan — explains the "why" behind the system in plain terms.*
+
+### The context window (short-term memory)
+
+Claude Code has a context window — roughly, the amount of text it can "hold in mind" at once.
+Think of it like working memory. Everything it reads during a session lives there.
+
+When the session ends, that memory is gone. When a new session starts, the slate is clean.
+This is not a bug — it's how LLMs work. The fix is externalizing memory into files.
+
+### Why Claude "forgets" mid-session
+
+Even within a long session, if Claude reads many large files, earlier content gets pushed toward the
+"edge" of the context window and receives less attention. This is why it sometimes re-explores things
+it already touched 30 minutes earlier in the same chat. WORKING_CONTEXT.md counteracts this by
+keeping the most important facts in a compact, always-referenced file.
+
+### RAG — how the AI "remembers" without remembering everything
+
+RAG (Retrieval-Augmented Generation) is the answer to "how can it know everything without holding
+everything in memory at once?"
+
+The idea: instead of putting ALL knowledge into the context window (impossible — it would overflow),
+you store knowledge as searchable embeddings in a database. When Claude needs to know something, it
+searches for the relevant pieces and pulls only those into context.
+
+Think of it like the difference between:
+- Memorizing an entire library (impossible)
+- Having a really good librarian who can find the right page in seconds
+
+For Alleato, your Fireflies pipeline already does this for meeting notes. The same pattern could
+extend to code changes, debugging sessions, and architectural decisions — giving Claude a queryable
+history of the entire project.
+
+### The two-layer memory system (what we're building toward)
+
+| Layer | What it is | Scope |
+|-------|-----------|-------|
+| WORKING_CONTEXT.md | Session scratchpad — current focus, recent findings | Current sprint |
+| Project memory DB | Supabase embeddings of decisions, fixes, patterns | All time |
+
+WORKING_CONTEXT.md is the fast, immediate layer. The Supabase memory layer is the long-term layer
+that prevents the same bugs from being re-investigated months later.
+
+Right now, implement WORKING_CONTEXT.md. The database layer comes next.
+
+
+---
+
+## 🎨 DESIGN SYSTEM — MANDATORY BEFORE ANY UI WORK
+
+### The problem this solves
+
+AI coding agents pattern-match from the code they're reading. If 60% of existing
+pages use wrong patterns (bg-white, raw buttons, card trap), the agent reproduces
+those wrong patterns — no matter what the docs say.
+
+This section gives you the right patterns to copy from. Use them. Every time.
+
+### RULE: Read golden examples before writing any component
+
+File: `frontend/src/components/ds/GOLDEN-EXAMPLES.tsx`
+
+This file contains the ONLY correct implementations of:
+- Page shell (dashboard, table, form, detail variants)
+- Buttons (all variants, loading state)
+- Text hierarchy (all 4 tiers)
+- Surface/card patterns (bento, tonal, hover rows)
+- Status badges (never hand-roll colors)
+- Empty states, loading states, form fields, table rows
+
+**Copy from GOLDEN-EXAMPLES.tsx. Do not look at existing pages for patterns.**
+Existing pages may be wrong. Golden examples are always right.
+
+### The 4 rules that catch 80% of violations
+
+1. **Never `<button>`** — always `<Button>` from `@/components/ui/button`
+2. **Never `bg-white`** — use `bg-card` (surface) or `bg-background` (page)
+3. **Never card trap** — `bg-card + border border-border + rounded` on one element
+4. **Never hand-roll status colors** — use `<StatusBadge status="..." />`
+
+ESLint enforces rules 1-3 as ERRORS that block the build.
+
+### Design violation tracker
+
+When Megan flags something with the right-click overlay, it appears at:
+`/design-violations` — a Linear-style inbox.
+
+**At the start of every session:**
+1. Check `/api/dev/violations?status=open` for flagged violations
+2. Fix open violations BEFORE starting new feature work
+3. Mark violations as fixed via `PATCH /api/dev/violations`
+
+This is non-negotiable. Violations accumulate and degrade the codebase.
+Fix them first, build new things second.
+
+### Design system docs (read in this order)
+
+1. `frontend/src/components/ds/GOLDEN-EXAMPLES.tsx` — copy-paste patterns
+2. `docs/design/DESIGN.md` — full reference
+3. `docs/design/UI_GUIDE.md` — exact Tailwind class combos
+4. `docs/design/tokens.md` — color/spacing token tables
