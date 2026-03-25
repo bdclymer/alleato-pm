@@ -43,7 +43,10 @@ jobs:
       - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          additional_permissions: "Read,Glob,Grep,Bash(git diff:*),Bash(git log:*),Bash(git show:*)"
+          additional_permissions: |
+            Bash(git diff:*)
+            Bash(git log:*)
+            Bash(git show:*)
           prompt: |
             Review this pull request. Analyze the diff and provide a concise code review focusing on:
             1. Bugs or logic errors
@@ -74,7 +77,10 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           trigger_phrase: '@claude'
           assignee_trigger: 'claude'
-          additional_permissions: "Read,Write,Edit,Glob,Grep,Bash,WebFetch,WebSearch"
+          additional_permissions: |
+            Edit
+            Write
+            Bash(*)
           claude_args: '--append-system-prompt "You are working on the Alleato PM codebase — a Next.js 15 + Supabase construction project management app. Frontend code is in frontend/src/. Use semantic color tokens (bg-background, text-foreground) — never hardcoded colors. Use [projectId] not [id] for dynamic route params. Import components from @/components/ui/ or @/components/ds/. Run cd frontend && npx tsc --noEmit to verify TypeScript before committing." --max-turns 20'
 
   # Auto-resolve new issues (automation mode — prompt includes issue content)
@@ -95,7 +101,10 @@ jobs:
       - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          additional_permissions: "Read,Write,Edit,Glob,Grep,Bash,WebFetch,WebSearch"
+          additional_permissions: |
+            Edit
+            Write
+            Bash(*)
           claude_args: '--max-turns 25'
           prompt: |
             GitHub Issue #${{ github.event.issue.number }}: ${{ github.event.issue.title }}
