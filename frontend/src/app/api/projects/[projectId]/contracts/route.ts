@@ -25,7 +25,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         `
         *,
         vendor:vendors(id, name),
-        client:companies!prime_contracts_client_company_id_fkey(id, name)
+        client:companies!prime_contracts_client_company_id_fkey(id, name),
+        contract_company:companies!prime_contracts_contract_company_id_fkey(id, name)
       `,
       )
       .eq("project_id", parseInt(projectId, 10))
@@ -110,8 +111,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       const revisedValue = (contract.original_contract_value ?? 0) + agg.approved;
       const invoicedAmount = invoicedAggregates[contract.id] ?? 0;
       const paymentsReceived = paymentsAggregates[contract.id] ?? 0;
+      // Use contract_company as fallback when client_id is not set
+      const clientData = (contract as Record<string, unknown>).client ?? (contract as Record<string, unknown>).contract_company ?? null;
       return {
         ...contract,
+        client: clientData,
         approved_change_orders: agg.approved,
         pending_change_orders: agg.pending,
         draft_change_orders: agg.draft,
