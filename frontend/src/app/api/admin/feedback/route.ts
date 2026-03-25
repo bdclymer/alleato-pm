@@ -311,8 +311,8 @@ export async function POST(request: Request) {
       payload.pageTitle,
     );
 
-    // Auto-match to a procore_tools row
-    const matchedTool = await matchFeedbackToTool(title, payload.comment);
+    // Auto-match to a procore_tools row (URL path is strongest signal)
+    const matchedTool = await matchFeedbackToTool(title, payload.comment, payload.pagePath);
     const toolContext = matchedTool ? resolveToolContext(matchedTool) : null;
     const agentContext = toolContext
       ? toJsonValue(contextToAgentPayload(toolContext))
@@ -633,8 +633,8 @@ export async function PUT(request: Request) {
         sendToolContext = resolveToolContext(tool);
       }
     } else {
-      // Try auto-matching if no tool assigned
-      const autoMatch = await matchFeedbackToTool(item.title, item.comment);
+      // Try auto-matching if no tool assigned (use URL path as primary signal)
+      const autoMatch = await matchFeedbackToTool(item.title, item.comment, item.page_path);
       if (autoMatch) {
         sendToolContext = resolveToolContext(autoMatch);
       }

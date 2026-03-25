@@ -94,6 +94,28 @@ const KEYWORD_ALIASES: Record<string, string[]> = {
 };
 
 /**
+ * Extract the tool slug from a URL path like "/67/prime-contracts/new" → "prime-contracts".
+ * Looks for known tool slugs in the path segments.
+ */
+function extractToolSlugFromPath(
+  pagePath: string,
+  knownSlugs: Set<string>,
+): string | null {
+  const segments = pagePath
+    .replace(/^\//, "")
+    .split("/")
+    .filter(Boolean);
+
+  for (const segment of segments) {
+    if (knownSlugs.has(segment)) {
+      return segment;
+    }
+  }
+
+  return null;
+}
+
+/**
  * Score how well a block of text matches a given tool based on keyword hits.
  */
 function scoreText(text: string, toolSlug: string, toolName: string): number {
@@ -124,12 +146,15 @@ function scoreText(text: string, toolSlug: string, toolName: string): number {
 }
 
 /**
- * Given feedback title and comment, find the best-matching procore_tools row.
+ * Given feedback title, comment, and page path, find the best-matching procore_tools row.
+ * URL path is the strongest signal — if the path contains a tool slug, that tool wins.
+ * Falls back to title/comment keyword matching.
  * Returns null if no tool scores above the minimum threshold.
  */
 export async function matchFeedbackToTool(
   title: string,
   comment: string,
+  pagePath?: string,
 ): Promise<MatchedTool | null> {
   const supabase = createServiceClient();
 
@@ -142,6 +167,28 @@ export async function matchFeedbackToTool(
     return null;
   }
 
+  // URL path match — strongest signal, instant win
+  if (pagePath) {
+    const knownSlugs = new Set(tools.map((t) => t.slug));
+    const pathSlug = extractToolSlugFromPath(pagePath, knownSlugs);
+    if (pathSlug) {
+      const urlMatch = tools.find((t) => t.slug === pathSlug);
+      if (urlMatch) {
+        return {
+          id: urlMatch.id,
+          name: urlMatch.name,
+          slug: urlMatch.slug,
+          category: urlMatch.category,
+          procore_link: urlMatch.procore_link,
+          prp_path: urlMatch.prp_path,
+          description: urlMatch.description,
+          score: 100,
+        };
+      }
+    }
+  }
+
+  // Fall back to text-based keyword scoring
   const combinedText = `${title} ${comment}`;
   let bestMatch: MatchedTool | null = null;
   let bestScore = 0;
