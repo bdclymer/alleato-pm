@@ -190,9 +190,9 @@ async function ensureFeedbackBucket() {
 }
 
 function decodeScreenshot(dataUrl: string) {
-  const matches = dataUrl.match(/^data:(image\/png|image\/jpeg|image\/webp);base64,(.+)$/);
+  const matches = dataUrl.match(/^data:(image\/(?:png|jpeg|webp|gif|heic|heif|avif));base64,(.+)$/);
   if (!matches) {
-    throw new Error("Screenshot must be a PNG, JPEG, or WEBP data URL");
+    throw new Error("Screenshot must be a PNG, JPEG, WEBP, GIF, or AVIF data URL");
   }
 
   return {

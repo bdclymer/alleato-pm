@@ -76,23 +76,27 @@ export function NavUser({
     .slice(0, 2) || "U"
 
   return (
-    <SidebarMenu>
-      <SidebarMenuItem>
+    <SidebarMenu className={isCollapsed ? "items-center" : undefined}>
+      <SidebarMenuItem className={isCollapsed ? "w-8" : undefined}>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className={`data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground ${isCollapsed ? "flex items-center justify-center p-0!" : ""}`}
+              className={`data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground ${isCollapsed ? "justify-center gap-0 p-0!" : ""}`}
             >
-              <Avatar className={`h-8 w-8 rounded-full ${isCollapsed ? "mx-auto" : ""}`}>
+              <Avatar className="h-8 w-8 rounded-full">
                 <AvatarImage src={displayUser.avatar} alt={displayUser.name} />
                 <AvatarFallback className="rounded-full">{initials}</AvatarFallback>
               </Avatar>
-              <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-medium">{displayUser.name}</span>
-                <span className="truncate text-xs">{displayUser.email}</span>
-              </div>
-              <ChevronsUpDown className="ml-auto size-4" />
+              {!isCollapsed && (
+                <>
+                  <div className="grid flex-1 text-left text-sm leading-tight">
+                    <span className="truncate font-medium">{displayUser.name}</span>
+                    <span className="truncate text-xs">{displayUser.email}</span>
+                  </div>
+                  <ChevronsUpDown className="ml-auto size-4" />
+                </>
+              )}
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent

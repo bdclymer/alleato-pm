@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import html2canvas from "html2canvas";
 import { usePathname } from "next/navigation";
-import { Camera, ImagePlus, ListFilter, RefreshCw, Sparkles, Trash2 } from "lucide-react";
+import { Camera, ImagePlus, ListFilter, RefreshCw, Sparkles, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import {
   ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE,
@@ -134,6 +134,37 @@ export function AdminFeedbackWidget() {
   const [isCapturingScreenshot, setIsCapturingScreenshot] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const frameRef = useRef<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file.");
+      return;
+    }
+
+    // 10MB limit
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Image must be under 10MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setScreenshotDataUrl(reader.result);
+      }
+    };
+    reader.onerror = () => {
+      toast.error("Failed to read image file.");
+    };
+    reader.readAsDataURL(file);
+
+    // Reset the input so the same file can be re-selected
+    event.target.value = "";
+  }, []);
 
   const isAdmin = profile?.isAdmin === true;
   const hoveredRect = hoveredTarget ? getRectState(hoveredTarget) : null;
@@ -469,10 +500,26 @@ export function AdminFeedbackWidget() {
                   <div>
                     <Label>Screenshot</Label>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Optional. Use the selected area preview or remove it before submitting.
+                      Optional. Upload an image or capture the selected area.
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleFileUpload}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Upload className="mr-2 h-3.5 w-3.5" />
+                      Upload
+                    </Button>
                     <Button
                       type="button"
                       variant="outline"
@@ -492,8 +539,8 @@ export function AdminFeedbackWidget() {
                         </>
                       ) : (
                         <>
-                          <ImagePlus className="mr-2 h-3.5 w-3.5" />
-                          Add
+                          <Camera className="mr-2 h-3.5 w-3.5" />
+                          Capture
                         </>
                       )}
                     </Button>
@@ -519,16 +566,27 @@ export function AdminFeedbackWidget() {
                       className="h-56 w-full object-cover object-top"
                     />
                   ) : (
-                    <div className="flex h-56 flex-col items-center justify-center gap-3 px-6 text-center">
+                    <div
+                      className="flex h-56 cursor-pointer flex-col items-center justify-center gap-3 px-6 text-center transition-colors hover:bg-muted/40"
+                      onClick={() => fileInputRef.current?.click()}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          fileInputRef.current?.click();
+                        }
+                      }}
+                    >
                       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-background text-muted-foreground shadow-sm">
-                        <Camera className="h-5 w-5" />
+                        <Upload className="h-5 w-5" />
                       </div>
                       <div className="space-y-1">
                         <p className="text-sm font-medium text-foreground">
-                          No screenshot attached
+                          Click to upload a screenshot
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          You can submit without one, or capture a preview of the selected area.
+                          Or use the Capture button to grab the selected area.
                         </p>
                       </div>
                     </div>
