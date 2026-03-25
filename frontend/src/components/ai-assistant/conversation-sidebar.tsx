@@ -289,9 +289,9 @@ export function ConversationSidebar({
 
           <SheetContent
             side="left"
-            className="w-80 p-0 [&>button]:hidden"
+            className="h-svh max-h-svh w-72 rounded-none p-0 [&>button]:hidden sm:w-80"
           >
-            <div className="flex h-full flex-col bg-sidebar text-sidebar-foreground">
+            <div className="flex h-full min-h-svh flex-col bg-sidebar text-sidebar-foreground">
               <SheetHeader className="border-b border-sidebar-border px-4 py-4 text-left">
                 <div className="flex items-center justify-between gap-2">
                   <SheetTitle className="text-sm font-semibold text-sidebar-foreground">

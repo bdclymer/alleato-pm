@@ -521,7 +521,7 @@ export async function GET(request: Request) {
 
 const patchSchema = z.object({
   id: z.string().uuid(),
-  status: z.enum(["open", "submitted", "github_failed", "closed"]).optional(),
+  status: z.enum(["open", "submitted", "github_failed", "resolved", "closed"]).optional(),
   title: z.string().trim().min(1).max(200).optional(),
 });
 
@@ -695,5 +695,92 @@ export async function PUT(request: Request) {
     const message =
       error instanceof Error ? error.message : "Failed to create GitHub issue";
     return jsonError(500, { error: "Failed to send to GitHub", details: message });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// DELETE — Delete a feedback item and its related data
+// ---------------------------------------------------------------------------
+
+const deleteSchema = z.object({
+  id: z.string().uuid(),
+});
+
+export async function DELETE(request: Request) {
+  try {
+    const requestUser = await requireAdminUser();
+    if (!requestUser) {
+      return jsonError(403, {
+        error: "Admin access required",
+        hint: "Only admin users can delete feedback.",
+      });
+    }
+
+    const body = await request.json();
+    const parsed = deleteSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid payload", details: parsed.error.flatten() },
+        { status: 400 },
+      );
+    }
+
+    const { id } = parsed.data;
+    const serviceSupabase = createServiceClient();
+
+    // Fetch the feedback item to get screenshot_path before deleting
+    const { data: item, error: fetchError } = await serviceSupabase
+      .from("admin_feedback_items")
+      .select("id, screenshot_path")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (fetchError || !item) {
+      return jsonError(404, { error: "Feedback item not found" });
+    }
+
+    // Delete related comments first (FK constraint)
+    const { error: commentsError } = await serviceSupabase
+      .from("admin_feedback_comments")
+      .delete()
+      .eq("feedback_item_id", id);
+
+    if (commentsError) {
+      const details = toErrorDetails(commentsError);
+      return jsonError(500, {
+        error: "Failed to delete feedback comments",
+        code: details.code,
+        details: details.message,
+      });
+    }
+
+    // Delete the feedback item
+    const { error: deleteError } = await serviceSupabase
+      .from("admin_feedback_items")
+      .delete()
+      .eq("id", id);
+
+    if (deleteError) {
+      const details = toErrorDetails(deleteError);
+      return jsonError(500, {
+        error: "Failed to delete feedback item",
+        code: details.code,
+        details: details.message,
+      });
+    }
+
+    // Delete screenshot from storage if it exists
+    if (item.screenshot_path) {
+      await serviceSupabase.storage
+        .from(ADMIN_FEEDBACK_BUCKET)
+        .remove([item.screenshot_path]);
+    }
+
+    return NextResponse.json({ deleted: true });
+  } catch (error) {
+    console.error("[AdminFeedback] Delete failed", error);
+    const message =
+      error instanceof Error ? error.message : "Failed to delete feedback";
+    return jsonError(500, { error: "Failed to delete feedback", details: message });
   }
 }

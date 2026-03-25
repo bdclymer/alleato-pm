@@ -18,11 +18,15 @@ import {
   ExternalLink,
   GitBranch,
   GripVertical,
+  Image as ImageIcon,
   Link2,
   Loader2,
   MessageSquare,
   Play,
   Send,
+  ShieldCheck,
+  Trash2,
+  Upload,
   Wrench,
   XCircle,
 } from "lucide-react";
@@ -77,6 +81,7 @@ type FeedbackComment = {
   author_id: string;
   body: string;
   mentions: string[] | null;
+  screenshot_url: string | null;
   created_at: string;
   updated_at: string;
   author: UserProfile;
@@ -95,7 +100,7 @@ type GitHubComment = {
   author_association: string;
 };
 
-type StatusFilter = "open" | "submitted" | "in_progress" | "closed" | "all";
+type StatusFilter = "open" | "submitted" | "in_progress" | "resolved" | "closed" | "all";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -105,6 +110,7 @@ const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
   { value: "open", label: "Open" },
   { value: "submitted", label: "Submitted" },
   { value: "in_progress", label: "In Progress" },
+  { value: "resolved", label: "Resolved" },
   { value: "closed", label: "Closed" },
   { value: "all", label: "All" },
 ];
@@ -136,10 +142,17 @@ const STATUS_META: Record<string, { icon: typeof Circle; className: string; dotC
     dotClassName: "bg-red-500",
     label: "GitHub failed",
   },
-  closed: {
-    icon: CheckCircle2,
+  resolved: {
+    icon: ShieldCheck,
     className: "text-green-600 dark:text-green-400",
     dotClassName: "bg-green-500",
+    label: "Resolved",
+    showInList: true,
+  },
+  closed: {
+    icon: CheckCircle2,
+    className: "text-muted-foreground",
+    dotClassName: "bg-muted-foreground",
     label: "Closed",
   },
 };
@@ -281,7 +294,7 @@ function CommentInput({
   submitting,
   inputRef: externalInputRef,
 }: {
-  onSubmit: (body: string, mentions: string[]) => void;
+  onSubmit: (body: string, mentions: string[], screenshotDataUrl: string | null) => void;
   users: UserProfile[];
   submitting: boolean;
   inputRef?: React.RefObject<HTMLTextAreaElement | null>;
@@ -290,8 +303,32 @@ function CommentInput({
   const [showMentions, setShowMentions] = useState(false);
   const [mentionQuery, setMentionQuery] = useState("");
   const [mentionIndex, setMentionIndex] = useState(0);
+  const [screenshotDataUrl, setScreenshotDataUrl] = useState<string | null>(null);
   const localInputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = externalInputRef ?? localInputRef;
+
+  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Image must be under 10MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setScreenshotDataUrl(reader.result);
+      }
+    };
+    reader.onerror = () => toast.error("Failed to read image file.");
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  }
 
   const filteredUsers = useMemo(() => {
     if (!mentionQuery) return users;
@@ -369,10 +406,11 @@ function CommentInput({
 
   function handleSubmit() {
     const trimmed = value.trim();
-    if (!trimmed || submitting) return;
+    if ((!trimmed && !screenshotDataUrl) || submitting) return;
     const mentions = extractMentionIds(trimmed, users);
-    onSubmit(trimmed, mentions);
+    onSubmit(trimmed || "(screenshot)", mentions, screenshotDataUrl);
     setValue("");
+    setScreenshotDataUrl(null);
     setShowMentions(false);
   }
 
@@ -409,7 +447,34 @@ function CommentInput({
         </div>
       )}
 
+      {/* Screenshot preview */}
+      {screenshotDataUrl && (
+        <div className="mb-2 relative inline-block">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={screenshotDataUrl}
+            alt="Comment screenshot"
+            className="h-24 max-w-48 rounded-lg border border-border object-cover"
+          />
+          <button
+            type="button"
+            onClick={() => setScreenshotDataUrl(null)}
+            className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-sm transition-colors hover:bg-destructive/90"
+            aria-label="Remove screenshot"
+          >
+            <XCircle className="h-3 w-3" />
+          </button>
+        </div>
+      )}
+
       <div className="flex items-end gap-2">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileUpload}
+        />
         <textarea
           ref={inputRef}
           value={value}
@@ -421,8 +486,17 @@ function CommentInput({
         />
         <Button
           size="sm"
+          variant="ghost"
+          onClick={() => fileInputRef.current?.click()}
+          className="h-8 w-8 p-0 shrink-0"
+          aria-label="Attach screenshot"
+        >
+          <ImageIcon className="h-3.5 w-3.5" />
+        </Button>
+        <Button
+          size="sm"
           onClick={handleSubmit}
-          disabled={!value.trim() || submitting}
+          disabled={(!value.trim() && !screenshotDataUrl) || submitting}
           className="h-8 w-8 p-0 shrink-0"
           aria-label="Send comment"
         >
@@ -430,7 +504,7 @@ function CommentInput({
         </Button>
       </div>
       <p className="mt-1 text-[10px] text-muted-foreground">
-        Press <kbd className="rounded border border-border px-1 py-0.5 text-[9px]">Cmd+Enter</kbd> to send
+        Press <kbd className="rounded border border-border px-1 py-0.5 text-[9px]">Cmd+Enter</kbd> to send · Click <ImageIcon className="inline h-3 w-3" /> to attach a screenshot
       </p>
     </div>
   );
@@ -495,7 +569,7 @@ function CommentsSection({
     });
   }
 
-  async function handleSubmit(body: string, mentions: string[]) {
+  async function handleSubmit(body: string, mentions: string[], screenshotDataUrl: string | null) {
     setSubmitting(true);
     try {
       const res = await fetch("/api/admin/feedback/comments", {
@@ -505,6 +579,7 @@ function CommentsSection({
           feedbackItemId,
           body,
           mentions,
+          screenshotDataUrl,
         }),
       });
       if (!res.ok) throw new Error("Failed to add comment");
