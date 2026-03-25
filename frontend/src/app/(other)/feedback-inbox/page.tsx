@@ -648,6 +648,21 @@ function CommentsSection({
               <p className="mt-0.5 text-sm text-foreground whitespace-pre-wrap leading-relaxed">
                 {renderBody(comment.body)}
               </p>
+              {comment.screenshot_url && (
+                <a
+                  href={comment.screenshot_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1.5 inline-block"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={comment.screenshot_url}
+                    alt="Comment screenshot"
+                    className="max-h-40 max-w-full rounded-lg border border-border object-cover hover:opacity-90 transition-opacity"
+                  />
+                </a>
+              )}
             </div>
           </div>
         ))}
@@ -780,11 +795,13 @@ function ListItemContextMenu({
   children,
   onUpdateStatus,
   onSendToGitHub,
+  onDelete,
 }: {
   item: FeedbackItem;
   children: React.ReactNode;
   onUpdateStatus: (id: string, status: string) => void;
   onSendToGitHub: (id: string) => void;
+  onDelete: (id: string) => void;
 }) {
   const [contextPos, setContextPos] = useState<{ x: number; y: number } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -816,10 +833,14 @@ function ListItemContextMenu({
   }, [contextPos]);
 
   const isClosable = item.status === "open" || item.status === "github_failed" || item.status === "submitted" || item.status === "in_progress";
+  const isResolvable = item.status !== "resolved" && item.status !== "closed";
 
   function handleAction(action: string) {
     setContextPos(null);
     switch (action) {
+      case "resolve":
+        onUpdateStatus(item.id, "resolved");
+        break;
       case "close":
         onUpdateStatus(item.id, "closed");
         break;
@@ -838,6 +859,11 @@ function ListItemContextMenu({
         navigator.clipboard.writeText(`${window.location.origin}/feedback-inbox?id=${item.id}`);
         toast.success("Link copied to clipboard");
         break;
+      case "delete":
+        if (window.confirm("Delete this feedback item? This cannot be undone.")) {
+          onDelete(item.id);
+        }
+        break;
     }
   }
 
@@ -854,6 +880,17 @@ function ListItemContextMenu({
           className="fixed z-50 min-w-40 rounded-md border border-border bg-popover p-1 shadow-sm animate-in fade-in-0 zoom-in-95"
           style={{ top: contextPos.y, left: contextPos.x }}
         >
+          {isResolvable && (
+            <button
+              type="button"
+              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-foreground hover:bg-muted transition-colors"
+              onClick={() => handleAction("resolve")}
+            >
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Resolve
+            </button>
+          )}
+
           {isClosable ? (
             <button
               type="button"
@@ -905,6 +942,17 @@ function ListItemContextMenu({
           >
             <Copy className="h-3.5 w-3.5" />
             Copy link
+          </button>
+
+          <div className="my-1 h-px bg-border" />
+
+          <button
+            type="button"
+            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-destructive hover:bg-destructive/10 transition-colors"
+            onClick={() => handleAction("delete")}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            Delete
           </button>
         </div>
       )}
@@ -1256,16 +1304,20 @@ function FeedbackDetail({
   item,
   updatingId,
   sendingToGitHub,
+  deletingId,
   onUpdateStatus,
   onSendToGitHub,
+  onDelete,
   onBack,
   commentInputRef,
 }: {
   item: FeedbackItem;
   updatingId: string | null;
   sendingToGitHub: boolean;
+  deletingId: string | null;
   onUpdateStatus: (id: string, status: string) => void;
   onSendToGitHub: (id: string) => void;
+  onDelete: (id: string) => void;
   onBack?: () => void;
   commentInputRef?: React.RefObject<HTMLTextAreaElement | null>;
 }) {
@@ -1438,7 +1490,21 @@ function FeedbackDetail({
           </Button>
         )}
 
-        {(item.status === "open" || item.status === "github_failed" || item.status === "submitted" || item.status === "in_progress") && (
+        {/* Resolve */}
+        {item.status !== "resolved" && item.status !== "closed" && (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => onUpdateStatus(item.id, "resolved")}
+            disabled={updatingId === item.id}
+          >
+            <ShieldCheck className="h-3.5 w-3.5" />
+            {updatingId === item.id ? "Updating..." : "Resolve"}
+          </Button>
+        )}
+
+        {/* Close */}
+        {item.status !== "closed" && item.status !== "resolved" && (
           <Button
             size="sm"
             variant="outline"
@@ -1448,7 +1514,9 @@ function FeedbackDetail({
             {updatingId === item.id ? "Updating..." : "Close"}
           </Button>
         )}
-        {item.status === "closed" && (
+
+        {/* Re-open */}
+        {(item.status === "closed" || item.status === "resolved") && (
           <Button
             size="sm"
             variant="outline"
@@ -1458,6 +1526,22 @@ function FeedbackDetail({
             {updatingId === item.id ? "Updating..." : "Re-open"}
           </Button>
         )}
+
+        {/* Delete */}
+        <Button
+          size="sm"
+          variant="ghost"
+          className="text-destructive hover:text-destructive hover:bg-destructive/10 ml-auto"
+          onClick={() => {
+            if (window.confirm("Delete this feedback item? This cannot be undone.")) {
+              onDelete(item.id);
+            }
+          }}
+          disabled={deletingId === item.id}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+          {deletingId === item.id ? "Deleting..." : "Delete"}
+        </Button>
       </div>
 
       {/* Comments */}

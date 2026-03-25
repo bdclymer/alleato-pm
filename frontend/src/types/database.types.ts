@@ -1333,6 +1333,8 @@ export type Database = {
           feedback_item_id: string
           id: string
           mentions: string[] | null
+          screenshot_path: string | null
+          screenshot_url: string | null
           updated_at: string
         }
         Insert: {
@@ -1342,6 +1344,8 @@ export type Database = {
           feedback_item_id: string
           id?: string
           mentions?: string[] | null
+          screenshot_path?: string | null
+          screenshot_url?: string | null
           updated_at?: string
         }
         Update: {
@@ -1351,6 +1355,8 @@ export type Database = {
           feedback_item_id?: string
           id?: string
           mentions?: string[] | null
+          screenshot_path?: string | null
+          screenshot_url?: string | null
           updated_at?: string
         }
         Relationships: [
