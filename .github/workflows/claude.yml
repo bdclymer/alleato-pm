@@ -78,6 +78,7 @@ jobs:
           assignee_trigger: 'claude'
           label_trigger: 'claude'
           additional_permissions: "Read,Write,Edit,Glob,Grep,Bash,WebFetch,WebSearch"
+          show_full_output: true
           prompt: |
             You are working on the Alleato PM codebase — a Next.js 15 + Supabase construction project management app.
 
