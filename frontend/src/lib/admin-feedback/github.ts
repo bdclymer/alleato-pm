@@ -140,29 +140,60 @@ async function postIssue(
   };
 }
 
+async function addLabels(
+  config: NonNullable<ReturnType<typeof getRepoConfig>>,
+  issueNumber: number,
+  labels: string[],
+) {
+  // Add labels in a separate call so the "labeled" event fires distinctly,
+  // which is required for GitHub Actions workflows that trigger on labeled events.
+  await fetch(
+    `https://api.github.com/repos/${config.owner}/${config.repo}/issues/${issueNumber}/labels`,
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/vnd.github+json",
+        Authorization: `Bearer ${config.token}`,
+        "Content-Type": "application/json",
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+      body: JSON.stringify({ labels }),
+    },
+  );
+}
+
 export async function createGitHubIssue(input: CreateGitHubIssueInput) {
   const config = getRepoConfig();
   if (!config) {
     return null;
   }
 
+  const labels = buildLabels(input.requestType);
+
+  // Create issue WITHOUT labels first
   const payload: GitHubIssuePayload = {
     title: input.title,
     body: buildIssueBody(input),
-    labels: buildLabels(input.requestType),
   };
 
+  let issue: { number: number; url: string; state: string };
+
   try {
-    return await postIssue(config, payload);
+    issue = await postIssue(config, payload);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (!message.includes("Validation Failed")) {
       throw error;
     }
-
-    return postIssue(config, {
-      title: payload.title,
-      body: payload.body,
-    });
+    issue = await postIssue(config, payload);
   }
+
+  // Then add labels separately so the "labeled" event triggers the Claude workflow
+  try {
+    await addLabels(config, issue.number, labels);
+  } catch {
+    // Non-fatal — issue was created, labels are secondary
+  }
+
+  return issue;
 }
