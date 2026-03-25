@@ -128,9 +128,9 @@ const billingPeriodColumnConfig: ColumnConfig[] = [
   { id: "period_number", label: "Period #", alwaysVisible: true },
   { id: "period", label: "Period", defaultVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
-  { id: "invoices", label: "Invoices", defaultVisible: true },
-  { id: "totalInvoiced", label: "Total Invoiced", defaultVisible: true },
-  { id: "paymentStatus", label: "Payment Status", defaultVisible: true },
+  { id: "workCompleted", label: "Work Completed", defaultVisible: true },
+  { id: "paymentDue", label: "Payment Due", defaultVisible: true },
+  { id: "retention", label: "Retention", defaultVisible: true },
 ];
 
 const billingPeriodDefaultVisibleColumns = billingPeriodColumnConfig
@@ -143,23 +143,13 @@ const billingPeriodFilters: FilterConfig[] = [
     label: "Status",
     type: "select",
     options: [
-      { value: "open", label: "Open" },
-      { value: "closed", label: "Closed" },
+      { value: "draft", label: "Draft" },
+      { value: "submitted", label: "Submitted" },
+      { value: "approved", label: "Approved" },
+      { value: "paid", label: "Paid" },
     ],
   },
 ];
-
-function getPaymentBar(invoiced: number, paid: number) {
-  if (invoiced === 0) return { pct: 0, color: "bg-muted" };
-  const pct = Math.max(0, Math.min(100, (paid / invoiced) * 100));
-  if (pct >= 100) return { pct, color: "bg-primary" };
-  if (pct >= 50) return { pct, color: "bg-warning" };
-  return { pct, color: "bg-destructive" };
-}
-
-function bpStatus(bp: BillingPeriod): string {
-  return bp.is_closed ? "closed" : "open";
-}
 
 function buildBillingPeriodColumns(
   _onView: (bp: BillingPeriod) => void,
@@ -194,49 +184,40 @@ function buildBillingPeriodColumns(
       label: "Status",
       defaultVisible: true,
       sortable: true,
-      sortValue: (bp) => bpStatus(bp),
-      render: (bp) => <StatusBadge status={bpStatus(bp)} />,
+      sortValue: (bp) => bp.status,
+      render: (bp) => <StatusBadge status={bp.status} />,
     },
     {
-      id: "invoices",
-      label: "Invoices",
+      id: "workCompleted",
+      label: "Work Completed",
       defaultVisible: true,
       sortable: true,
-      sortValue: (bp) => bp.invoice_count,
-      render: (bp) => <span className="tabular-nums">{bp.invoice_count}</span>,
-    },
-    {
-      id: "totalInvoiced",
-      label: "Total Invoiced",
-      defaultVisible: true,
-      sortable: true,
-      sortValue: (bp) => bp.total_invoiced,
+      sortValue: (bp) => bp.work_completed,
       render: (bp) => (
-        <span className="font-medium tabular-nums">{formatCurrency(bp.total_invoiced)}</span>
+        <span className="font-medium tabular-nums">{formatCurrency(bp.work_completed)}</span>
       ),
     },
     {
-      id: "paymentStatus",
-      label: "Payment Status",
+      id: "paymentDue",
+      label: "Payment Due",
       defaultVisible: true,
       sortable: true,
-      sortValue: (bp) => bp.total_paid,
-      render: (bp) => {
-        const { pct, color } = getPaymentBar(bp.total_invoiced, bp.total_paid);
-        return (
-          <div className="space-y-1 min-w-[120px]">
-            <span className="text-xs tabular-nums">
-              {formatCurrency(bp.total_paid)} / {formatCurrency(bp.total_invoiced)}
-            </span>
-            <div className="h-1.5 w-full rounded-full bg-muted">
-              <div
-                className={`${color} h-1.5 rounded-full transition-all`}
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-          </div>
-        );
-      },
+      sortValue: (bp) => bp.current_payment_due,
+      render: (bp) => (
+        <span className="font-medium tabular-nums">{formatCurrency(bp.current_payment_due)}</span>
+      ),
+    },
+    {
+      id: "retention",
+      label: "Retention",
+      defaultVisible: true,
+      sortable: true,
+      sortValue: (bp) => bp.retention_amount,
+      render: (bp) => (
+        <span className="tabular-nums text-muted-foreground">
+          {formatCurrency(bp.retention_amount)} ({bp.retention_percentage}%)
+        </span>
+      ),
     },
   ];
 }
@@ -471,10 +452,7 @@ export default function ProjectInvoicesPage(): ReactElement {
   const filteredBillingPeriods = React.useMemo(() => {
     let items = [...billingPeriodsRaw];
     if (activeTab === "billing-periods" && statusFilter) {
-      items = items.filter((bp) => {
-        const s = bp.is_closed ? "closed" : "open";
-        return s === statusFilter;
-      });
+      items = items.filter((bp) => bp.status === statusFilter);
     }
     const search = tableState.debouncedSearch.toLowerCase().trim();
     if (activeTab === "billing-periods" && search) {

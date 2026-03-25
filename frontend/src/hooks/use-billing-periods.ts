@@ -13,17 +13,21 @@ import { toast } from "sonner";
 
 export interface BillingPeriodItem {
   id: string;
+  contract_id: string;
   period_number: number;
   start_date: string;
   end_date: string;
-  is_closed: boolean;
-  closed_date: string | null;
-  closed_by: string | null;
-  created_at: string | null;
-  updated_at: string | null;
-  invoice_count: number;
-  total_invoiced: number;
-  total_paid: number;
+  billing_date: string;
+  status: string;
+  work_completed: number;
+  stored_materials: number;
+  current_payment_due: number;
+  retention_percentage: number;
+  retention_amount: number;
+  net_payment_due: number;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface CreateBillingPeriodPayload {

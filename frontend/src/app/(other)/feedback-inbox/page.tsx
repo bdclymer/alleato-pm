@@ -17,6 +17,7 @@ import {
   Copy,
   ExternalLink,
   GitBranch,
+  Github,
   GripVertical,
   Image as ImageIcon,
   Link2,
@@ -110,9 +111,16 @@ const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
   { value: "open", label: "Open" },
   { value: "submitted", label: "Submitted" },
   { value: "in_progress", label: "In Progress" },
-  { value: "resolved", label: "Resolved" },
   { value: "closed", label: "Closed" },
   { value: "all", label: "All" },
+];
+
+const STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: "open", label: "Open" },
+  { value: "submitted", label: "Submitted" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "resolved", label: "Resolved" },
+  { value: "closed", label: "Closed" },
 ];
 
 const STATUS_META: Record<string, { icon: typeof Circle; className: string; dotClassName: string; label: string; showInList?: boolean }> = {
@@ -467,45 +475,47 @@ function CommentInput({
         </div>
       )}
 
-      <div className="flex items-end gap-2">
-        <input
-          ref={fileInputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleFileUpload}
-        />
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileUpload}
+      />
+      <div className="rounded-lg border border-border bg-background focus-within:ring-1 focus-within:ring-ring">
         <textarea
           ref={inputRef}
           value={value}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           placeholder="Add a comment... Use @ to mention someone"
-          rows={2}
-          className="flex-1 resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          rows={3}
+          className="w-full resize-none border-0 bg-transparent px-3 pt-3 pb-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
         />
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => fileInputRef.current?.click()}
-          className="h-8 w-8 p-0 shrink-0"
-          aria-label="Attach screenshot"
-        >
-          <ImageIcon className="h-3.5 w-3.5" />
-        </Button>
-        <Button
-          size="sm"
-          onClick={handleSubmit}
-          disabled={(!value.trim() && !screenshotDataUrl) || submitting}
-          className="h-8 w-8 p-0 shrink-0"
-          aria-label="Send comment"
-        >
-          <Send className="h-3.5 w-3.5" />
-        </Button>
+        <div className="flex items-center justify-between border-t border-border/50 px-3 py-2">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <ImageIcon className="h-3.5 w-3.5" />
+            Attach image
+          </button>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-muted-foreground">
+              <kbd className="rounded border border-border px-1 py-0.5 text-[9px]">&#8984;Enter</kbd>
+            </span>
+            <Button
+              size="sm"
+              onClick={handleSubmit}
+              disabled={(!value.trim() && !screenshotDataUrl) || submitting}
+              className="h-7 px-3 text-xs"
+            >
+              {submitting ? "Sending..." : "Submit"}
+            </Button>
+          </div>
+        </div>
       </div>
-      <p className="mt-1 text-[10px] text-muted-foreground">
-        Press <kbd className="rounded border border-border px-1 py-0.5 text-[9px]">Cmd+Enter</kbd> to send · Click <ImageIcon className="inline h-3 w-3" /> to attach a screenshot
-      </p>
     </div>
   );
 }
@@ -613,7 +623,7 @@ function CommentsSection({
 
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-3">
+      <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
         Comments
       </p>
 
@@ -725,8 +735,8 @@ function GitHubActivitySection({ issueNumber }: { issueNumber: number }) {
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-3">
-        <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+      <div className="flex items-center gap-2 mb-2">
+        <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
           GitHub Activity
         </p>
         <span className="text-[10px] text-muted-foreground">
@@ -752,7 +762,7 @@ function GitHubActivitySection({ issueNumber }: { issueNumber: number }) {
         </p>
       )}
 
-      <div className="space-y-3 max-h-80 overflow-y-auto">
+      <div className="space-y-4">
         {comments.map((comment) => (
           <div key={comment.id} className="flex gap-2.5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1178,7 +1188,7 @@ function ToolContextSection({ item }: { item: FeedbackItem }) {
 
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-3">
+      <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
         Tool Context
       </p>
 
@@ -1192,7 +1202,7 @@ function ToolContextSection({ item }: { item: FeedbackItem }) {
             className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-50"
           >
             <Wrench className="h-3 w-3 text-muted-foreground" />
-            {assignedTool ? assignedTool.name : "Assign tool..."}
+            {assignedTool ? assignedTool.name : "Assign tool"}
             <ChevronDown className="h-3 w-3 text-muted-foreground" />
           </button>
 
@@ -1322,7 +1332,7 @@ function FeedbackDetail({
   commentInputRef?: React.RefObject<HTMLTextAreaElement | null>;
 }) {
   return (
-    <div className="mx-auto max-w-4xl space-y-8 px-6 py-6 lg:px-10 lg:py-8">
+    <div className="mx-auto max-w-4xl space-y-6 px-6 py-6 lg:px-10 lg:py-8">
       {/* Mobile back button */}
       {onBack && (
         <button
@@ -1335,86 +1345,135 @@ function FeedbackDetail({
         </button>
       )}
 
-      {/* Header */}
+      {/* Header + Actions */}
       <div>
         <div className="flex items-start justify-between gap-4">
-          <h2 className="text-lg font-semibold text-foreground">
-            {item.title}
-          </h2>
-          <div className="flex items-center gap-2 shrink-0">
-            {item.github_issue_url && (
-              <a
-                href={item.github_issue_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted/80 transition-colors"
-              >
-                <ExternalLink className="h-3 w-3" />
-                #{item.github_issue_number}
-              </a>
-            )}
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg font-semibold text-foreground">
+              {item.title}
+            </h2>
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+              <span>
+                {REQUEST_TYPE_LABELS[item.request_type] ?? item.request_type}
+              </span>
+              {item.severity && (
+                <>
+                  <span className="text-border">·</span>
+                  <span className={cn(
+                    "font-medium",
+                    item.severity === "high" && "text-red-600 dark:text-red-400",
+                    item.severity === "medium" && "text-amber-600 dark:text-amber-400",
+                    item.severity === "low" && "text-muted-foreground",
+                  )}>
+                    {item.severity.charAt(0).toUpperCase() + item.severity.slice(1)} priority
+                  </span>
+                </>
+              )}
+              <span className="text-border">·</span>
+              <span>
+                {new Date(item.created_at).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                  hour: "numeric",
+                  minute: "2-digit",
+                })}
+              </span>
+            </div>
           </div>
+
+          {/* Delete in corner */}
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0 shrink-0"
+            onClick={() => {
+              if (window.confirm("Delete this feedback item? This cannot be undone.")) {
+                onDelete(item.id);
+              }
+            }}
+            disabled={deletingId === item.id}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
         </div>
 
-        {/* Date */}
-        <p className="mt-1 text-xs text-muted-foreground">
-          {new Date(item.created_at).toLocaleDateString("en-US", {
-            month: "short",
-            day: "numeric",
-            year: "numeric",
-            hour: "numeric",
-            minute: "2-digit",
-          })}
-        </p>
-
-        {/* Meta pills */}
+        {/* Inline actions */}
         <div className="mt-3 flex flex-wrap items-center gap-2">
-          <StatusBadge status={STATUS_META[item.status]?.label ?? item.status} />
-          <span className="inline-flex items-center rounded-md bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-            {REQUEST_TYPE_LABELS[item.request_type] ?? item.request_type}
-          </span>
-          {item.severity && (
-            <StatusBadge
-              status={item.severity.charAt(0).toUpperCase() + item.severity.slice(1)}
-              variant={item.severity === "high" ? "error" : item.severity === "medium" ? "warning" : "neutral"}
-            />
+          {/* Status dropdown */}
+          <div className="relative">
+            <select
+              value={item.status}
+              onChange={(e) => onUpdateStatus(item.id, e.target.value)}
+              disabled={updatingId === item.id}
+              className={cn(
+                "h-7 appearance-none rounded-md pl-2 pr-7 text-xs font-medium border-0 cursor-pointer transition-colors focus:outline-none focus:ring-1 focus:ring-ring",
+                item.status === "resolved" && "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+                item.status === "closed" && "bg-muted text-muted-foreground",
+                item.status === "open" && "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+                item.status === "submitted" && "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+                item.status === "in_progress" && "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+              )}
+            >
+              {STATUS_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 opacity-50" />
+          </div>
+
+          {/* GitHub */}
+          {!item.github_issue_number && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onSendToGitHub(item.id)}
+              disabled={sendingToGitHub}
+              className="h-7 text-xs"
+            >
+              <Github className="h-3 w-3" />
+              {sendingToGitHub ? "Sending..." : "Create Issue"}
+            </Button>
+          )}
+          {item.github_issue_url && (
+            <a
+              href={item.github_issue_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Github className="h-3 w-3" />
+              #{item.github_issue_number}
+            </a>
           )}
         </div>
       </div>
 
       {/* Description */}
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-3">
-          Description
-        </p>
         <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
           {item.comment}
         </p>
-      </div>
 
-      {/* Screenshot */}
-      {item.screenshot_url && (
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-3">
-            Screenshot
-          </p>
-          <div className="overflow-hidden rounded-lg">
+        {/* Screenshot */}
+        {item.screenshot_url && (
+          <div className="mt-3 overflow-hidden rounded-lg border border-border">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={item.screenshot_url}
               alt="Feedback screenshot"
-              className="w-full max-h-75 object-cover object-top rounded-lg"
+              className="w-full max-h-75 object-cover object-top"
             />
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Location */}
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-3">
-          Location
-        </p>
-        <div className="space-y-1.5">
+      {/* Details (Location + Tool Context) */}
+      <div className="rounded-lg bg-muted/40 px-4 py-3 space-y-3">
+        {/* Location rows */}
+        <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs">
             <span className="text-muted-foreground w-16 shrink-0">Page</span>
             <a
@@ -1453,107 +1512,17 @@ function FeedbackDetail({
             </div>
           )}
         </div>
-      </div>
 
-      {/* Tool Context */}
-      <ToolContextSection item={item} />
-
-      {/* Actions */}
-      <div className="flex items-center gap-2 pt-2">
-        {/* Create Issue */}
-        {!item.github_issue_number && (
-          <Button
-            size="sm"
-            onClick={() => onSendToGitHub(item.id)}
-            disabled={sendingToGitHub}
-          >
-            <GitBranch className="h-3.5 w-3.5" />
-            {sendingToGitHub ? "Sending..." : "Create Issue"}
-          </Button>
-        )}
-
-        {/* View Issue in GitHub */}
-        {item.github_issue_url && (
-          <Button
-            size="sm"
-            variant="outline"
-            asChild
-          >
-            <a
-              href={item.github_issue_url}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <ExternalLink className="h-3.5 w-3.5" />
-              View Issue in GitHub
-            </a>
-          </Button>
-        )}
-
-        {/* Resolve */}
-        {item.status !== "resolved" && item.status !== "closed" && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onUpdateStatus(item.id, "resolved")}
-            disabled={updatingId === item.id}
-          >
-            <ShieldCheck className="h-3.5 w-3.5" />
-            {updatingId === item.id ? "Updating..." : "Resolve"}
-          </Button>
-        )}
-
-        {/* Close */}
-        {item.status !== "closed" && item.status !== "resolved" && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onUpdateStatus(item.id, "closed")}
-            disabled={updatingId === item.id}
-          >
-            {updatingId === item.id ? "Updating..." : "Close"}
-          </Button>
-        )}
-
-        {/* Re-open */}
-        {(item.status === "closed" || item.status === "resolved") && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onUpdateStatus(item.id, "open")}
-            disabled={updatingId === item.id}
-          >
-            {updatingId === item.id ? "Updating..." : "Re-open"}
-          </Button>
-        )}
-
-        {/* Delete */}
-        <Button
-          size="sm"
-          variant="ghost"
-          className="text-destructive hover:text-destructive hover:bg-destructive/10 ml-auto"
-          onClick={() => {
-            if (window.confirm("Delete this feedback item? This cannot be undone.")) {
-              onDelete(item.id);
-            }
-          }}
-          disabled={deletingId === item.id}
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-          {deletingId === item.id ? "Deleting..." : "Delete"}
-        </Button>
+        {/* Tool Context inline */}
+        <ToolContextSection item={item} />
       </div>
 
       {/* Comments */}
-      <div className="pt-2">
-        <CommentsSection feedbackItemId={item.id} commentInputRef={commentInputRef} />
-      </div>
+      <CommentsSection feedbackItemId={item.id} commentInputRef={commentInputRef} />
 
       {/* GitHub Activity */}
       {item.github_issue_number && (
-        <div className="pt-2">
-          <GitHubActivitySection issueNumber={item.github_issue_number} />
-        </div>
+        <GitHubActivitySection issueNumber={item.github_issue_number} />
       )}
     </div>
   );
