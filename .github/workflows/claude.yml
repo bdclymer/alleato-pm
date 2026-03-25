@@ -11,7 +11,7 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  # Auto-label every new issue with 'claude' so Claude picks it up
+  # Auto-label every new issue with 'claude' so it's visible
   auto-label:
     runs-on: ubuntu-latest
     permissions:
@@ -54,8 +54,8 @@ jobs:
             Be concise. Only flag real issues — skip style nitpicks and minor formatting.
             If the PR looks good, say so briefly.
 
-  # Automatic issue resolution and on-demand @claude interaction
-  assist:
+  # On-demand @claude interaction (interactive mode — no prompt)
+  respond:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -64,9 +64,7 @@ jobs:
       issues: write
     if: |
       (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'issues' && github.event.action == 'opened') ||
-      (github.event_name == 'issues' && github.event.action == 'labeled' && contains(github.event.issue.labels.*.name, 'claude'))
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude'))
     steps:
       - uses: actions/checkout@v4
         with:
@@ -76,22 +74,38 @@ jobs:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           trigger_phrase: '@claude'
           assignee_trigger: 'claude'
-          label_trigger: 'claude'
           additional_permissions: "Read,Write,Edit,Glob,Grep,Bash,WebFetch,WebSearch"
-          show_full_output: true
-          prompt: |
-            You are working on the Alleato PM codebase — a Next.js 15 + Supabase construction project management app.
+          claude_args: '--append-system-prompt "You are working on the Alleato PM codebase — a Next.js 15 + Supabase construction project management app. Frontend code is in frontend/src/. Use semantic color tokens (bg-background, text-foreground) — never hardcoded colors. Use [projectId] not [id] for dynamic route params. Import components from @/components/ui/ or @/components/ds/. Run cd frontend && npx tsc --noEmit to verify TypeScript before committing." --max-turns 20'
 
-            When assigned a GitHub issue:
-            1. Read the issue description carefully
-            2. Investigate the relevant code to understand the problem
-            3. Implement the fix or feature
-            4. Ensure TypeScript compiles without errors
-            5. Create a PR with your changes
+  # Auto-resolve new issues (automation mode — prompt includes issue content)
+  auto-resolve:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: write
+      pull-requests: write
+      issues: write
+    if: |
+      (github.event_name == 'issues' && github.event.action == 'opened') ||
+      (github.event_name == 'issues' && github.event.action == 'labeled' && contains(github.event.issue.labels.*.name, 'claude'))
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          additional_permissions: "Read,Write,Edit,Glob,Grep,Bash,WebFetch,WebSearch"
+          claude_args: '--max-turns 25'
+          prompt: |
+            GitHub Issue #${{ github.event.issue.number }}: ${{ github.event.issue.title }}
+
+            ${{ github.event.issue.body }}
+
+            Investigate the relevant code in this repository, implement the fix or feature described above, ensure TypeScript compiles without errors (cd frontend && npx tsc --noEmit), and create a PR with your changes.
 
             Key conventions:
             - Frontend code is in frontend/src/
             - Use semantic color tokens (bg-background, text-foreground) — never hardcoded colors
             - Use [projectId] not [id] for dynamic route params
             - Import components from @/components/ui/ or @/components/ds/
-            - Run `cd frontend && npx tsc --noEmit` to verify TypeScript before committing
