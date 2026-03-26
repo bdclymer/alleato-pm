@@ -118,7 +118,11 @@ const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
 const STATUS_OPTIONS: { value: string; label: string }[] = [
   { value: "open", label: "Open" },
   { value: "submitted", label: "Submitted" },
-  { value: "in_progress", label: "In Progress" },
+  { value: "triaged", label: "Triaged" },
+  { value: "diagnosing", label: "Diagnosing" },
+  { value: "fixing", label: "Fixing" },
+  { value: "verifying", label: "Verifying" },
+  { value: "in_review", label: "In Review" },
   { value: "resolved", label: "Resolved" },
 ];
 
@@ -141,6 +145,41 @@ const STATUS_META: Record<string, { icon: typeof Circle; className: string; dotC
     className: "text-blue-600 dark:text-blue-400",
     dotClassName: "bg-blue-500",
     label: "Submitted",
+    showInList: true,
+  },
+  triaged: {
+    icon: ArrowUpRight,
+    className: "text-blue-600 dark:text-blue-400",
+    dotClassName: "bg-blue-500",
+    label: "Triaged",
+    showInList: true,
+  },
+  diagnosing: {
+    icon: Loader2,
+    className: "text-purple-600 dark:text-purple-400",
+    dotClassName: "bg-purple-500 animate-pulse",
+    label: "Diagnosing",
+    showInList: true,
+  },
+  fixing: {
+    icon: Loader2,
+    className: "text-purple-600 dark:text-purple-400",
+    dotClassName: "bg-purple-500 animate-pulse",
+    label: "Fixing",
+    showInList: true,
+  },
+  verifying: {
+    icon: Loader2,
+    className: "text-purple-600 dark:text-purple-400",
+    dotClassName: "bg-purple-500 animate-pulse",
+    label: "Verifying",
+    showInList: true,
+  },
+  in_review: {
+    icon: ArrowUpRight,
+    className: "text-orange-600 dark:text-orange-400",
+    dotClassName: "bg-orange-500",
+    label: "In Review",
     showInList: true,
   },
   github_failed: {
@@ -1561,6 +1600,8 @@ export default function FeedbackInboxPage() {
       if (filter !== "all") {
         if (filter === "open") {
           params.set("status", "open,github_failed");
+        } else if (filter === "in_progress") {
+          params.set("status", "submitted,triaged,diagnosing,fixing,verifying,in_review");
         } else {
           params.set("status", filter);
         }

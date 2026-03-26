@@ -6,12 +6,17 @@ on:
   pull_request_review_comment:
     types: [created]
   issues:
-    types: [opened, assigned, labeled]
+    types: [opened, labeled]
   pull_request:
     types: [opened, synchronize, reopened]
 
+# Prevent duplicate runs for the same issue/PR
+concurrency:
+  group: claude-${{ github.event.issue.number || github.event.pull_request.number }}
+  cancel-in-progress: false
+
 jobs:
-  # Auto-label every new issue with 'claude' so it's visible
+  # ── Auto-label every new issue with 'claude' ──
   auto-label:
     runs-on: ubuntu-latest
     permissions:
@@ -28,7 +33,7 @@ jobs:
               labels: ['claude']
             });
 
-  # Automatic PR review on every PR open/update
+  # ── Automatic PR review on every PR open/update ──
   review:
     runs-on: ubuntu-latest
     permissions:
@@ -48,16 +53,19 @@ jobs:
             Bash(git log:*)
             Bash(git show:*)
           prompt: |
-            Review this pull request. Analyze the diff and provide a concise code review focusing on:
-            1. Bugs or logic errors
-            2. Security concerns
-            3. Performance issues
-            4. Code quality and maintainability
+            Review this pull request for the Alleato PM codebase (Next.js 15 + Supabase construction management app).
 
-            Be concise. Only flag real issues — skip style nitpicks and minor formatting.
+            Focus on:
+            1. Bugs, logic errors, or data loss risks (especially silent field drops like budget_code_id → null)
+            2. Security concerns (SQL injection, XSS, auth bypass)
+            3. Design system violations (hardcoded colors, arbitrary spacing, missing semantic tokens)
+            4. Route naming (must use [projectId] not [id])
+            5. Type safety (no `any`, proper null checks)
+
+            Be concise. Only flag real issues — skip style nitpicks.
             If the PR looks good, say so briefly.
 
-  # On-demand @claude interaction (interactive mode — no prompt)
+  # ── On-demand @claude interaction ──
   respond:
     runs-on: ubuntu-latest
     permissions:
@@ -81,9 +89,9 @@ jobs:
             Edit
             Write
             Bash(*)
-          claude_args: '--append-system-prompt "You are working on the Alleato PM codebase — a Next.js 15 + Supabase construction project management app. Frontend code is in frontend/src/. Use semantic color tokens (bg-background, text-foreground) — never hardcoded colors. Use [projectId] not [id] for dynamic route params. Import components from @/components/ui/ or @/components/ds/. Run cd frontend && npx tsc --noEmit to verify TypeScript before committing." --max-turns 20'
+          claude_args: '--max-turns 25'
 
-  # Auto-resolve new issues (automation mode — prompt includes issue content)
+  # ── Auto-resolve issues: diagnose → fix → verify → PR ──
   auto-resolve:
     runs-on: ubuntu-latest
     permissions:
@@ -98,6 +106,22 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
+      # Update feedback status to "diagnosing" via Supabase API
+      - name: Update feedback status
+        if: contains(github.event.issue.labels.*.name, 'admin-feedback')
+        env:
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          curl -s -X PATCH "$SUPABASE_URL/rest/v1/admin_feedback_items?github_issue_number=eq.$ISSUE_NUMBER" \
+            -H "apikey: $SUPABASE_SERVICE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_KEY" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=minimal" \
+            -d '{"status": "diagnosing"}' || true
+
       - uses: anthropics/claude-code-action@v1
         with:
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -105,16 +129,62 @@ jobs:
             Edit
             Write
             Bash(*)
-          claude_args: '--max-turns 25'
+          claude_args: '--max-turns 30'
           prompt: |
-            GitHub Issue #${{ github.event.issue.number }}: ${{ github.event.issue.title }}
+            # Auto-resolve GitHub Issue #${{ github.event.issue.number }}
 
+            **Title:** ${{ github.event.issue.title }}
+
+            **Body:**
             ${{ github.event.issue.body }}
 
-            Investigate the relevant code in this repository, implement the fix or feature described above, ensure TypeScript compiles without errors (cd frontend && npx tsc --noEmit), and create a PR with your changes.
+            ---
 
-            Key conventions:
-            - Frontend code is in frontend/src/
-            - Use semantic color tokens (bg-background, text-foreground) — never hardcoded colors
-            - Use [projectId] not [id] for dynamic route params
-            - Import components from @/components/ui/ or @/components/ds/
+            ## Instructions
+
+            You are working on the Alleato PM codebase — a Next.js 15 + Supabase construction project management app.
+
+            ### Step 1: Diagnose
+            - Read the issue carefully. If it contains an "Agent Context" section, use those file paths.
+            - If it references a PRP, read it for intended behavior.
+            - Identify the root cause by reading the relevant source files.
+
+            ### Step 2: Fix
+            - Make minimal, targeted changes. Don't refactor surrounding code.
+            - Frontend code is in `frontend/src/`.
+            - Use semantic color tokens (`bg-background`, `text-foreground`) — never hardcoded colors.
+            - Use `[projectId]` not `[id]` for dynamic route params.
+            - Import components from `@/components/ui/` or `@/components/ds/`.
+
+            ### Step 3: Verify
+            - Run `cd frontend && npx tsc --noEmit` to check TypeScript.
+            - If the issue is about a UI feature, verify the fix makes logical sense.
+
+            ### Step 4: Create PR
+            - Create a branch named `claude/issue-${{ github.event.issue.number }}-{short-description}`.
+            - Commit with a clear message referencing the issue: `Closes #${{ github.event.issue.number }}`.
+            - Push and create a PR with a summary of what was fixed and why.
+
+            ### Conventions
+            - Never use `any` type.
+            - Never use `@ts-ignore`.
+            - Use existing components from `@/components/ds/` — don't create one-off custom components.
+            - Use `StatusBadge` for status display (colors are automatic).
+            - Check `docs/design/DESIGN.md` for design system rules.
+            - Forms use React Hook Form + Zod validation.
+            - Data fetching uses React Query hooks in `frontend/src/hooks/use-*.ts`.
+
+      # Update feedback status to "in_review" after PR is created
+      - name: Update feedback status to in_review
+        if: contains(github.event.issue.labels.*.name, 'admin-feedback')
+        env:
+          SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          curl -s -X PATCH "$SUPABASE_URL/rest/v1/admin_feedback_items?github_issue_number=eq.$ISSUE_NUMBER" \
+            -H "apikey: $SUPABASE_SERVICE_KEY" \
+            -H "Authorization: Bearer $SUPABASE_SERVICE_KEY" \
+            -H "Content-Type: application/json" \
+            -H "Prefer: return=minimal" \
+            -d '{"status": "in_review"}' || true

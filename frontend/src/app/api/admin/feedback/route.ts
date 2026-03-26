@@ -521,7 +521,7 @@ export async function GET(request: Request) {
 
 const patchSchema = z.object({
   id: z.string().uuid(),
-  status: z.enum(["open", "submitted", "github_failed", "resolved", "closed"]).optional(),
+  status: z.enum(["open", "submitted", "github_failed", "triaged", "diagnosing", "fixing", "verifying", "in_review", "resolved", "closed"]).optional(),
   title: z.string().trim().min(1).max(200).optional(),
 });
 
