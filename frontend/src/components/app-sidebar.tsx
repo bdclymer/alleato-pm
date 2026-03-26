@@ -295,8 +295,33 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
   const router = useRouter()
   const { state, toggleSidebar, isMobile } = useSidebar()
+  const [isHovering, setIsHovering] = React.useState(false)
+  const hoverTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Hover-to-peek: when collapsed, hovering expands temporarily
+  // The sidebar reverts to collapsed when the mouse leaves
+  const isPinned = state === "expanded"
+  const isVisuallyExpanded = isPinned || (isHovering && !isMobile)
   // On mobile, the sidebar renders inside a Sheet — always show expanded navigation
-  const isCollapsed = isMobile ? false : state === "collapsed"
+  const isCollapsed = isMobile ? false : !isVisuallyExpanded
+
+  const handleMouseEnter = React.useCallback(() => {
+    if (isPinned || isMobile) return
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
+    hoverTimerRef.current = setTimeout(() => setIsHovering(true), 200)
+  }, [isPinned, isMobile])
+
+  const handleMouseLeave = React.useCallback(() => {
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
+    setIsHovering(false)
+  }, [])
+
+  // Clean up timer on unmount
+  React.useEffect(() => {
+    return () => {
+      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
+    }
+  }, [])
 
   const [user, setUser] = React.useState<User | null>(null)
   const supabase = createClient()
@@ -371,7 +396,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, [filterTools])
 
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar
+      collapsible="icon"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      data-hover-expanded={isHovering && !isPinned ? "true" : undefined}
+      {...props}
+    >
       {/* ── Header ── */}
       <SidebarHeader className={cn(isCollapsed ? "px-0 pt-6 pb-2" : "px-3 pt-5 pb-3")}>
         {isCollapsed ? (
