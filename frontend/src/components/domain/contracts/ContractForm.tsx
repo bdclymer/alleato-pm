@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { Plus, HelpCircle, Sparkles, Search, ChevronRight, ChevronDown } from "lucide-react";
+import { Plus, HelpCircle, Sparkles, Search, ChevronRight, ChevronDown, Trash2 } from "lucide-react";
 import { FormGrid, FormGridRow } from "@/components/forms";
 import {
   Dialog,
@@ -1022,12 +1022,13 @@ export function ContractForm({
                 <th className="px-1 py-1.5 text-left text-[11px] font-normal normal-case tracking-normal text-muted-foreground w-36">
                   Amount Remaining
                 </th>
+                <th className="w-10" />
               </tr>
             </thead>
             <tbody>
               {(formData.sovItems || []).length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-muted-foreground">
+                  <td colSpan={6} className="py-8 text-center text-muted-foreground">
                     <div className="flex flex-col items-center space-y-2">
                       <p className="text-sm text-muted-foreground">
                         No line items yet.
@@ -1061,6 +1062,19 @@ export function ContractForm({
                           className="h-8 border-border bg-background font-medium"
                           data-testid="sov-group-name"
                         />
+                      </td>
+                      <td className="px-1 py-2 align-middle">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          type="button"
+                          onClick={() => removeSOVLine(item.id)}
+                          className="h-8 w-8 shrink-0 p-0 text-muted-foreground hover:text-destructive"
+                          aria-label="Remove group"
+                          data-testid="sov-remove-group"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </td>
                     </tr>
                   ) : (
@@ -1140,29 +1154,17 @@ export function ContractForm({
                         </Popover>
                       </td>
                       <td className="px-1 py-2 align-middle">
-                        <div className="flex items-center gap-2">
-                          <Input
-                            value={item.description}
-                            onChange={(e) =>
-                              updateSOVLine(item.id, {
-                                description: e.target.value,
-                              })
-                            }
-                            placeholder="Description"
-                            className="h-8 border-border bg-muted"
-                            data-testid="sov-line-description"
-                          />
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            type="button"
-                            onClick={() => removeSOVLine(item.id)}
-                            className="h-8 w-8 shrink-0 p-0 text-muted-foreground hover:text-destructive"
-                            aria-label="Remove line item"
-                          >
-                            ×
-                          </Button>
-                        </div>
+                        <Input
+                          value={item.description}
+                          onChange={(e) =>
+                            updateSOVLine(item.id, {
+                              description: e.target.value,
+                            })
+                          }
+                          placeholder="Description"
+                          className="h-8 border-border bg-muted"
+                          data-testid="sov-line-description"
+                        />
                       </td>
                       <td className="px-1 py-2 align-middle">
                         <Input
@@ -1188,6 +1190,19 @@ export function ContractForm({
                         data-testid="sov-line-amount-remaining"
                       >
                         ${((item.amount || 0) - (item.billedToDate || 0)).toFixed(2)}
+                      </td>
+                      <td className="px-1 py-2 align-middle">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          type="button"
+                          onClick={() => removeSOVLine(item.id)}
+                          className="h-8 w-8 shrink-0 p-0 text-muted-foreground hover:text-destructive"
+                          aria-label="Remove line item"
+                          data-testid="sov-remove-line"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </td>
                     </tr>
                   )
@@ -1217,6 +1232,7 @@ export function ContractForm({
                 >
                   ${sovTotals.amountRemaining.toFixed(2)}
                 </td>
+                <td />
               </tr>
             ) : null}
           </table>
