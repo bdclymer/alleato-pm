@@ -11,7 +11,7 @@ import {
   ExpandedState,
   RowSelectionState,
 } from "@tanstack/react-table";
-import { ChevronRight, ChevronDown, X, Check } from "lucide-react";
+import { ChevronRight, ChevronDown, X, Check, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -918,7 +918,7 @@ export function BudgetTable({
     },
     {
       id: "actions",
-      header: () => <ColumnHeader lines={["Actions"]} />,
+      header: () => null,
       cell: ({ row }) => {
         const hasChildren = Boolean(
           row.original.children && row.original.children.length > 0
@@ -938,18 +938,19 @@ export function BudgetTable({
             <Button
               type="button"
               variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs"
+              size="icon"
+              className="h-7 w-7"
               onClick={handleEdit}
+              aria-label="Edit line item"
             >
-              Edit
+              <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
             </Button>
           </div>
         );
       },
-      size: 88,
-      minSize: 80,
-      maxSize: 120,
+      size: 48,
+      minSize: 40,
+      maxSize: 56,
     },
   ];
 

@@ -119,7 +119,7 @@ export function BudgetLineItemForm({
   const [showCreateCodeModal, setShowCreateCodeModal] = useState(false);
   const [newCodeData, setNewCodeData] = useState({
     costCodeId: "",
-    costType: "R",
+    costType: "",
   });
   const [expandedDivisions, setExpandedDivisions] = useState<Set<string>>(
     new Set(),
@@ -374,7 +374,7 @@ export function BudgetLineItemForm({
       });
 
       setShowCreateCodeModal(false);
-      setNewCodeData({ costCodeId: "", costType: "R" });
+      setNewCodeData({ costCodeId: "", costType: "" });
       toast.success("Budget code created and added to form");
     } catch (error) {
       toast.error(
@@ -875,7 +875,7 @@ export function BudgetLineItemForm({
                 }
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Select cost type..." />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="R">R - Contract Revenue</SelectItem>

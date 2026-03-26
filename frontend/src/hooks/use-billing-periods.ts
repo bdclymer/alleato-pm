@@ -31,8 +31,10 @@ export interface BillingPeriodItem {
 }
 
 export interface CreateBillingPeriodPayload {
+  contract_id: string;
   start_date: string;
   end_date: string;
+  billing_date: string;
   period_number?: number;
 }
 

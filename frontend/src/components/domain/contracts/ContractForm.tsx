@@ -192,7 +192,7 @@ export function ContractForm({
   const [showCreateBudgetCodeModal, setShowCreateBudgetCodeModal] = React.useState(false);
   const [newBudgetCodeData, setNewBudgetCodeData] = React.useState({
     costCodeId: "",
-    costType: "R",
+    costType: "",
   });
   const [availableCostCodes, setAvailableCostCodes] = React.useState<
     Array<{
@@ -439,22 +439,24 @@ export function ContractForm({
       setBudgetCodes([...budgetCodes, budgetCode]);
 
       // Autopopulate the newly created budget code in the first empty row
-      const firstEmptyRow = formData.sovItems?.find((row) => !row.budgetCodeId);
+      setFormData((prev) => {
+        const items = prev.sovItems || [];
+        const firstEmptyRow = items.find((row) => !row.budgetCodeId);
 
-      if (firstEmptyRow) {
-        // Populate the first empty row with the new budget code
-        updateFormData({
-          sovItems: formData.sovItems?.map((row) =>
-            row.id === firstEmptyRow.id
-              ? {
-                  ...row,
-                  budgetCodeId: budgetCode.id,
-                  budgetCodeLabel: budgetCode.fullLabel,
-                }
-              : row,
-          ),
-        });
-      } else {
+        if (firstEmptyRow) {
+          return {
+            ...prev,
+            sovItems: items.map((row) =>
+              row.id === firstEmptyRow.id
+                ? {
+                    ...row,
+                    budgetCodeId: budgetCode.id,
+                    budgetCodeLabel: budgetCode.fullLabel,
+                  }
+                : row,
+            ),
+          };
+        }
         // All rows are filled, add a new row with the budget code
         const newLine: SOVLineItem = {
           id: `sov-${Date.now()}`,
@@ -462,17 +464,20 @@ export function ContractForm({
           budgetCodeLabel: budgetCode.fullLabel,
           description: "",
           amount: 0,
-          quantity: formData.accountingMethod === "unit_quantity" ? 1 : undefined,
-          unitCost: formData.accountingMethod === "unit_quantity" ? 0 : undefined,
-          unitOfMeasure: formData.accountingMethod === "unit_quantity" ? "" : undefined,
+          quantity: prev.accountingMethod === "unit_quantity" ? 1 : undefined,
+          unitCost: prev.accountingMethod === "unit_quantity" ? 0 : undefined,
+          unitOfMeasure: prev.accountingMethod === "unit_quantity" ? "" : undefined,
           billedToDate: 0,
           amountRemaining: 0,
         };
-        updateFormData({ sovItems: [...(formData.sovItems || []), newLine] });
-      }
+        return {
+          ...prev,
+          sovItems: [...items, newLine],
+        };
+      });
 
       setShowCreateBudgetCodeModal(false);
-      setNewBudgetCodeData({ costCodeId: "", costType: "R" });
+      setNewBudgetCodeData({ costCodeId: "", costType: "" });
       toast.success("Budget code created and added to form");
     } catch (error) {
       toast.error(
@@ -484,69 +489,79 @@ export function ContractForm({
   };
 
   const handleBudgetCodeSelect = (rowId: string, code: BudgetCode) => {
-    updateFormData({
-      sovItems: formData.sovItems?.map((row) =>
+    setFormData((prev) => ({
+      ...prev,
+      sovItems: (prev.sovItems || []).map((row) =>
         row.id === rowId
           ? { ...row, budgetCodeId: code.id, budgetCodeLabel: code.fullLabel }
           : row,
       ),
-    });
+    }));
     setOpenBudgetCodePopover(null);
   };
 
   const addSOVLine = () => {
-    const isUnitQuantity = formData.accountingMethod === "unit_quantity";
-    const newLine: SOVLineItem = {
-      id: `sov-${Date.now()}`,
-      budgetCodeId: "",
-      budgetCodeLabel: "",
-      description: "",
-      amount: 0,
-      // Only initialize quantity/unitCost in unit_quantity mode
-      quantity: isUnitQuantity ? 1 : undefined,
-      unitCost: isUnitQuantity ? 0 : undefined,
-      unitOfMeasure: isUnitQuantity ? "" : undefined,
-      billedToDate: 0,
-      amountRemaining: 0,
-    };
-    updateFormData({ sovItems: [...(formData.sovItems || []), newLine] });
+    setFormData((prev) => {
+      const isUnitQuantity = prev.accountingMethod === "unit_quantity";
+      const newLine: SOVLineItem = {
+        id: `sov-${Date.now()}`,
+        budgetCodeId: "",
+        budgetCodeLabel: "",
+        description: "",
+        amount: 0,
+        // Only initialize quantity/unitCost in unit_quantity mode
+        quantity: isUnitQuantity ? 1 : undefined,
+        unitCost: isUnitQuantity ? 0 : undefined,
+        unitOfMeasure: isUnitQuantity ? "" : undefined,
+        billedToDate: 0,
+        amountRemaining: 0,
+      };
+      return { ...prev, sovItems: [...(prev.sovItems || []), newLine] };
+    });
   };
 
   const addSOVGroup = () => {
-    const newGroup: SOVLineItem = {
-      id: `sov-group-${Date.now()}`,
-      isGroup: true,
-      description: "New Group",
-      amount: 0,
-      billedToDate: 0,
-      amountRemaining: 0,
-    };
-    updateFormData({ sovItems: [...(formData.sovItems || []), newGroup] });
+    setFormData((prev) => {
+      const newGroup: SOVLineItem = {
+        id: `sov-group-${Date.now()}`,
+        isGroup: true,
+        description: "New Group",
+        amount: 0,
+        billedToDate: 0,
+        amountRemaining: 0,
+      };
+      return { ...prev, sovItems: [...(prev.sovItems || []), newGroup] };
+    });
   };
 
   const updateSOVLine = (id: string, updates: Partial<SOVLineItem>) => {
-    const items = formData.sovItems || [];
-    const isUnitQuantity = formData.accountingMethod === "unit_quantity";
-    updateFormData({
-      sovItems: items.map((item) =>
-        item.id === id
-          ? {
-              ...item,
-              ...updates,
-              amount:
-                isUnitQuantity && (updates.quantity || updates.unitCost)
-                  ? (updates.quantity ?? item.quantity ?? 0) *
-                    (updates.unitCost ?? item.unitCost ?? 0)
-                  : updates.amount ?? item.amount,
-            }
-          : item,
-      ),
+    setFormData((prev) => {
+      const items = prev.sovItems || [];
+      const isUnitQuantity = prev.accountingMethod === "unit_quantity";
+      return {
+        ...prev,
+        sovItems: items.map((item) =>
+          item.id === id
+            ? {
+                ...item,
+                ...updates,
+                amount:
+                  isUnitQuantity && (updates.quantity || updates.unitCost)
+                    ? (updates.quantity ?? item.quantity ?? 0) *
+                      (updates.unitCost ?? item.unitCost ?? 0)
+                    : updates.amount ?? item.amount,
+              }
+            : item,
+        ),
+      };
     });
   };
 
   const removeSOVLine = (id: string) => {
-    const items = formData.sovItems || [];
-    updateFormData({ sovItems: items.filter((item) => item.id !== id) });
+    setFormData((prev) => ({
+      ...prev,
+      sovItems: (prev.sovItems || []).filter((item) => item.id !== id),
+    }));
   };
 
   const handleImportFromBudgetSuccess = (items: unknown[]) => {
@@ -583,7 +598,10 @@ export function ContractForm({
       };
     });
 
-    updateFormData({ sovItems: [...(formData.sovItems || []), ...mapped] });
+    setFormData((prev) => ({
+      ...prev,
+      sovItems: [...(prev.sovItems || []), ...mapped],
+    }));
     toast.success(`Imported ${mapped.length} SOV line item${mapped.length === 1 ? "" : "s"}`);
   };
 
@@ -1183,13 +1201,13 @@ export function ContractForm({
                         />
                       </td>
                       <td className="px-1 py-2 text-right text-sm font-medium">
-                        ${(item.billedToDate || 0).toFixed(2)}
+                        ${(item.billedToDate || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                       <td
                         className="px-1 py-2 text-right text-sm font-medium"
                         data-testid="sov-line-amount-remaining"
                       >
-                        ${((item.amount || 0) - (item.billedToDate || 0)).toFixed(2)}
+                        ${((item.amount || 0) - (item.billedToDate || 0)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </td>
                       <td className="px-1 py-2 align-middle">
                         <Button
@@ -1218,19 +1236,19 @@ export function ContractForm({
                   className="px-1 py-2 text-right text-sm font-semibold text-foreground"
                   data-testid="sov-total-amount"
                 >
-                  ${sovTotals.amount.toFixed(2)}
+                  ${sovTotals.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </td>
                 <td
                   className="px-1 py-2 text-right text-sm font-semibold text-foreground"
                   data-testid="sov-total-billed"
                 >
-                  ${sovTotals.billedToDate.toFixed(2)}
+                  ${sovTotals.billedToDate.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </td>
                 <td
                   className="px-1 py-2 text-right text-sm font-semibold text-foreground"
                   data-testid="sov-total-remaining"
                 >
-                  ${sovTotals.amountRemaining.toFixed(2)}
+                  ${sovTotals.amountRemaining.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </td>
                 <td />
               </tr>
@@ -1466,13 +1484,13 @@ export function ContractForm({
             <div className="grid gap-2">
               <Label htmlFor="costType">Cost Type*</Label>
               <Select
-                value={newBudgetCodeData.costType}
+                value={newBudgetCodeData.costType || undefined}
                 onValueChange={(value) =>
                   setNewBudgetCodeData({ ...newBudgetCodeData, costType: value })
                 }
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Select cost type..." />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="R">R - Contract Revenue</SelectItem>

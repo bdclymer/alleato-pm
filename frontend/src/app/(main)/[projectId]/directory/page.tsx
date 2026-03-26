@@ -233,9 +233,16 @@ function MemberCombobox({
                         : "opacity-0"
                     )}
                   />
-                  <span className="text-sm">
-                    {person.first_name} {person.last_name}
-                  </span>
+                  <div className="flex flex-col">
+                    <span className="text-sm">
+                      {person.first_name} {person.last_name}
+                    </span>
+                    {(person.job_title || person.company_name) && (
+                      <span className="text-xs text-muted-foreground">
+                        {[person.job_title, person.company_name].filter(Boolean).join(" · ")}
+                      </span>
+                    )}
+                  </div>
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -251,11 +258,13 @@ function AssignMemberDialog({
   onOpenChange,
   role,
   onSave,
+  projectId,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   role: ProjectRole | null;
   onSave: (roleId: string, personIds: string[]) => Promise<void>;
+  projectId: string;
 }) {
   const [people, setPeople] = React.useState<PersonOption[]>([]);
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
@@ -265,29 +274,33 @@ function AssignMemberDialog({
     if (!open || !role) return;
     setSelectedIds(role.members.map((m) => m.person_id));
 
+    // Fetch ALL people from the company directory so any person can be assigned
     const supabase = createClient();
-    supabase
-      .from("people")
-      .select(
-        "id, first_name, last_name, email, job_title, company:companies(name)"
-      )
-      .order("first_name")
-      .then(({ data }) => {
-        if (data) {
-          setPeople(
-            data.map((p) => ({
-              id: p.id,
-              first_name: p.first_name,
-              last_name: p.last_name,
-              email: p.email,
-              job_title: p.job_title,
-              company_name:
-                (p.company as { name?: string } | null)?.name ?? null,
-            }))
-          );
-        }
-      });
-  }, [open, role]);
+    const loadAllPeople = async () => {
+      const { data } = await supabase
+        .from("people")
+        .select(
+          "id, first_name, last_name, email, job_title, company:companies(name)"
+        )
+        .order("first_name");
+
+      if (data) {
+        setPeople(
+          data.map((p) => ({
+            id: p.id,
+            first_name: p.first_name,
+            last_name: p.last_name,
+            email: p.email,
+            job_title: p.job_title,
+            company_name:
+              (p.company as { name?: string } | null)?.name ?? null,
+          }))
+        );
+      }
+    };
+
+    loadAllPeople();
+  }, [open, role, projectId]);
 
   const toggle = (id: string) =>
     setSelectedIds((prev) =>
@@ -298,8 +311,33 @@ function AssignMemberDialog({
     if (!role) return;
     setSaving(true);
     try {
+      // Auto-add selected people as project members if not already
+      const supabase = createClient();
+      const projectIdNum = parseInt(projectId, 10);
+      for (const personId of selectedIds) {
+        const { data: existing } = await supabase
+          .from("project_directory_memberships")
+          .select("id")
+          .eq("project_id", projectIdNum)
+          .eq("person_id", personId)
+          .eq("status", "active")
+          .maybeSingle();
+
+        if (!existing) {
+          await supabase.from("project_directory_memberships").upsert(
+            { project_id: projectIdNum, person_id: personId, status: "active" },
+            { onConflict: "project_id,person_id" }
+          );
+        }
+      }
+
       await onSave(role.id, selectedIds);
+      toast.success("Role assignment updated");
       onOpenChange(false);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to update role assignment"
+      );
     } finally {
       setSaving(false);
     }
@@ -307,7 +345,7 @@ function AssignMemberDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg w-[95vw]">
         <DialogHeader>
           <DialogTitle>Assign Members — {role?.role_name}</DialogTitle>
         </DialogHeader>
@@ -1142,6 +1180,7 @@ function TeamTab({ projectId }: { projectId: string }) {
         }
         role={assignDialog.role}
         onSave={updateRoleMembers}
+        projectId={projectId}
       />
       <CreateRoleDialog
         open={createRoleOpen}

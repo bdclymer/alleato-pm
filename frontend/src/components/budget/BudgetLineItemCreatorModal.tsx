@@ -109,7 +109,7 @@ export function BudgetLineItemCreatorModal({
   const [showCreateCodeModal, setShowCreateCodeModal] = React.useState(false);
   const [newCodeData, setNewCodeData] = React.useState({
     costCodeId: "",
-    costType: "L",
+    costType: "",
   });
   const [availableCostCodes, setAvailableCostCodes] = React.useState<
     CostCodeOption[]
@@ -454,7 +454,7 @@ export function BudgetLineItemCreatorModal({
         ];
       });
       setShowCreateCodeModal(false);
-      setNewCodeData({ costCodeId: "", costType: "L" });
+      setNewCodeData({ costCodeId: "", costType: "" });
       toast.success("Budget code created successfully");
     } catch (error) {
       toast.error(
@@ -920,7 +920,7 @@ export function BudgetLineItemCreatorModal({
                 }
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Select cost type..." />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="L">L - Labor</SelectItem>

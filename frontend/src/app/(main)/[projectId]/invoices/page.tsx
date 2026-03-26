@@ -4,15 +4,26 @@ import * as React from "react";
 import type { ReactElement } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Plus, Eye, MoreHorizontal } from "lucide-react";
+import { toast } from "sonner";
 
 import { StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   UnifiedTablePage,
   useUnifiedTableState,
@@ -23,7 +34,7 @@ import {
 } from "@/components/tables/unified";
 import { useOwnerInvoicesList } from "@/hooks/use-invoicing";
 import { useCommitmentsList } from "@/hooks/use-commitments-query";
-import { useBillingPeriodsList, type BillingPeriodItem } from "@/hooks/use-billing-periods";
+import { useBillingPeriodsList, useCreateBillingPeriod, type BillingPeriodItem } from "@/hooks/use-billing-periods";
 import type { CommitmentListItem } from "@/lib/validation/commitments";
 import {
   buildInvoiceTableColumns,
@@ -275,6 +286,10 @@ export default function ProjectInvoicesPage(): ReactElement {
     billingPeriodDefaultVisibleColumns,
   );
   const [createBpOpen, setCreateBpOpen] = React.useState(false);
+  const [bpFormStartDate, setBpFormStartDate] = React.useState("");
+  const [bpFormEndDate, setBpFormEndDate] = React.useState("");
+  const [bpFormBillingDate, setBpFormBillingDate] = React.useState("");
+  const createBpMutation = useCreateBillingPeriod(projectId);
 
   const {
     data: billingPeriodsRaw = [],
@@ -624,17 +639,18 @@ export default function ProjectInvoicesPage(): ReactElement {
         <DropdownMenuContent align="end">
           <DropdownMenuItem
             onClick={() =>
-              router.push(`/${projectId}/invoices?tab=billing-periods&periodId=${bp.id}`)
+              toast.info(`Billing Period BP-${String(bp.period_number).padStart(3, "0")} — ${bp.status}. Net payment due: ${formatCurrency(bp.net_payment_due)}`)
             }
           >
             <Eye className="mr-2 h-4 w-4" />
-            View
+            View Details
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     );
 
     return (
+      <>
       <UnifiedTablePage
         header={{
           title: "Invoices",
@@ -678,7 +694,7 @@ export default function ProjectInvoicesPage(): ReactElement {
           columns: bpColumns,
           getRowId: (bp) => bp.id,
           onRowClick: (bp) =>
-            router.push(`/${projectId}/invoices?tab=billing-periods&periodId=${bp.id}`),
+            toast.info(`Billing Period BP-${String(bp.period_number).padStart(3, "0")} — ${bp.status}. Net payment due: ${formatCurrency(bp.net_payment_due)}`),
           rowActions: renderBpRowActions,
         }}
         sorting={{
@@ -719,6 +735,80 @@ export default function ProjectInvoicesPage(): ReactElement {
           enableViews: false,
         }}
       />
+      <Dialog open={createBpOpen} onOpenChange={setCreateBpOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create Billing Period</DialogTitle>
+            <DialogDescription>
+              Add a new billing period to this project&apos;s prime contract.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="bp-start">Start Date</Label>
+              <Input
+                id="bp-start"
+                type="date"
+                value={bpFormStartDate}
+                onChange={(e) => setBpFormStartDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bp-end">End Date</Label>
+              <Input
+                id="bp-end"
+                type="date"
+                value={bpFormEndDate}
+                onChange={(e) => setBpFormEndDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bp-billing">Billing Date</Label>
+              <Input
+                id="bp-billing"
+                type="date"
+                value={bpFormBillingDate}
+                onChange={(e) => setBpFormBillingDate(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateBpOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={createBpMutation.isPending || !bpFormStartDate || !bpFormEndDate || !bpFormBillingDate}
+              onClick={() => {
+                // Use the first prime contract for this project
+                const contractId = billingPeriodsRaw[0]?.contract_id;
+                if (!contractId) {
+                  toast.error("No prime contract found for this project.");
+                  return;
+                }
+                createBpMutation.mutate(
+                  {
+                    contract_id: contractId,
+                    start_date: bpFormStartDate,
+                    end_date: bpFormEndDate,
+                    billing_date: bpFormBillingDate,
+                  },
+                  {
+                    onSuccess: () => {
+                      setCreateBpOpen(false);
+                      setBpFormStartDate("");
+                      setBpFormEndDate("");
+                      setBpFormBillingDate("");
+                    },
+                  },
+                );
+              }}
+            >
+              {createBpMutation.isPending ? "Creating..." : "Create"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      </>
     );
   }
 

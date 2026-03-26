@@ -120,7 +120,6 @@ const STATUS_OPTIONS: { value: string; label: string }[] = [
   { value: "submitted", label: "Submitted" },
   { value: "in_progress", label: "In Progress" },
   { value: "resolved", label: "Resolved" },
-  { value: "closed", label: "Closed" },
 ];
 
 const STATUS_META: Record<string, { icon: typeof Circle; className: string; dotClassName: string; label: string; showInList?: boolean }> = {
