@@ -17,6 +17,8 @@ interface PageTabsProps {
   tabs: Tab[];
   className?: string;
   variant?: "default" | "inline";
+  /** When provided, called instead of router.push — enables local-state tab switching */
+  onTabClick?: (href: string) => void;
 }
 
 /**
@@ -27,6 +29,7 @@ export function PageTabs({
   tabs,
   className,
   variant = "default",
+  onTabClick,
 }: PageTabsProps): ReactElement {
   const pathname = usePathname();
   const router = useRouter();
@@ -65,7 +68,7 @@ export function PageTabs({
               <button
                 key={tab.href}
                 type="button"
-                onClick={() => router.push(tab.href)}
+                onClick={() => onTabClick ? onTabClick(tab.href) : router.push(tab.href)}
                 aria-label={tab.label}
                 data-testid={tab.testId}
                 className={cn(

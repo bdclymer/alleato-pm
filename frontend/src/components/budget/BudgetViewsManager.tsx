@@ -208,7 +208,7 @@ export function BudgetViewsManager({
   if (loading) {
     return (
       <Button variant="outline" disabled>
-        <Settings className="w-4 h-4 mr-2" />
+        <Settings />
         Loading...
       </Button>
     );
@@ -219,7 +219,7 @@ export function BudgetViewsManager({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline">
-            <Settings className="w-4 h-4 mr-2" />
+            <Settings />
             {currentView?.name || "Select View"}
           </Button>
         </DropdownMenuTrigger>
@@ -253,7 +253,7 @@ export function BudgetViewsManager({
                       handleEditView(view);
                     }}
                   >
-                    <Pencil className="h-3 w-3" />
+                    <Pencil />
                   </Button>
                   <Button
                     variant="ghost"
@@ -264,7 +264,7 @@ export function BudgetViewsManager({
                       handleCloneView(view);
                     }}
                   >
-                    <Copy className="h-3 w-3" />
+                    <Copy />
                   </Button>
                   <Button
                     variant="ghost"

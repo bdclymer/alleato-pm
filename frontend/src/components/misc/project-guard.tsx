@@ -72,7 +72,7 @@ export function ProjectGuard({
               className="flex-1"
               onClick={() => router.push(redirectTo)}
             >
-              <FolderOpen className="mr-2 h-4 w-4" />
+              <FolderOpen />
               Go to Projects
             </Button>
           </div>

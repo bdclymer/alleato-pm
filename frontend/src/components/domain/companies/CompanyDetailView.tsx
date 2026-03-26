@@ -70,7 +70,7 @@ export function CompanyDetailView({
       <div className="text-center py-12">
         <Text tone="destructive">{error?.message || "Company not found"}</Text>
         <Button variant="outline" onClick={onBackClick} className="mt-4">
-          <ArrowLeft className="h-4 w-4 mr-2" />
+          <ArrowLeft />
           Back to Companies
         </Button>
       </div>
@@ -85,7 +85,7 @@ export function CompanyDetailView({
       <div className="flex items-start justify-between">
         <div className="flex items-start gap-4">
           <Button variant="ghost" size="icon" onClick={onBackClick}>
-            <ArrowLeft className="h-5 w-5" />
+            <ArrowLeft />
           </Button>
           <div className="flex items-center gap-4">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
@@ -114,7 +114,7 @@ export function CompanyDetailView({
         </div>
         {onEditClick && (
           <Button variant="outline" onClick={() => onEditClick(company)}>
-            <Edit className="h-4 w-4 mr-2" />
+            <Edit />
             Edit Company
           </Button>
         )}
@@ -296,7 +296,7 @@ export function CompanyDetailView({
               </div>
               {onAddUser && (
                 <Button onClick={onAddUser}>
-                  <UserPlus className="h-4 w-4 mr-2" />
+                  <UserPlus />
                   Add User
                 </Button>
               )}
@@ -359,7 +359,7 @@ export function CompanyDetailView({
                       onClick={onAddUser}
                       className="mt-4"
                     >
-                      <UserPlus className="h-4 w-4 mr-2" />
+                      <UserPlus />
                       Add User
                     </Button>
                   )}

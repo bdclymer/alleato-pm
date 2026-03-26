@@ -1121,7 +1121,7 @@ export function ContractForm({
                                   || budgetCodes.find((c) => c.id === item.budgetCodeId)?.fullLabel
                                   || "Select budget code..."}
                               </span>
-                              <Search className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
+                              <Search className="shrink-0 opacity-50" />
                             </Button>
                           </PopoverTrigger>
                           <PopoverContent
@@ -1265,7 +1265,7 @@ export function ContractForm({
               className="h-10 gap-2 px-4"
               data-testid="sov-add-line-item"
             >
-              <Plus className="h-4 w-4" />
+              <Plus />
               Add Line Item
             </Button>
 
@@ -1386,7 +1386,7 @@ export function ContractForm({
             onClick={handleAutoFill}
             className="gap-2"
           >
-            <Sparkles className="h-4 w-4" />
+            <Sparkles />
             Auto-fill
           </Button>
         ) : (

@@ -921,7 +921,7 @@ export function ProjectHomeClient({
     if (hasBudgetData && budgetUtilization > 90) list.push({ id: "budget-critical", severity: "critical", label: `Budget ${budgetUtilization.toFixed(0)}% committed`, href: `/${project.id}/budget` });
     else if (hasBudgetData && budgetUtilization > 75) list.push({ id: "budget-warn", severity: "warning", label: `Budget ${budgetUtilization.toFixed(0)}% committed`, href: `/${project.id}/budget` });
     if (openRfis.length > 3) list.push({ id: "rfis", severity: openRfis.length > 8 ? "warning" : "info", label: `${openRfis.length} open RFIs`, href: `/${project.id}/rfis` });
-    if (pendingChangeOrders.length > 0) { const val = pendingChangeOrders.reduce((s, co) => s + (co.amount || 0), 0); list.push({ id: "cos", severity: pendingChangeOrders.length > 5 ? "warning" : "info", label: `${pendingChangeOrders.length} change orders · ${formatCompactCurrency(val)}`, href: `/${project.id}/change-orders` }); }
+    if (pendingChangeOrders.length > 0) { const val = pendingChangeOrders.reduce((s, co) => s + (co.total_amount || 0), 0); list.push({ id: "cos", severity: pendingChangeOrders.length > 5 ? "warning" : "info", label: `${pendingChangeOrders.length} change orders · ${formatCompactCurrency(val)}`, href: `/${project.id}/change-orders` }); }
     if (openChangeEvents.length > 0) list.push({ id: "ce", severity: "info", label: `${openChangeEvents.length} open change events`, href: `/${project.id}/change-events` });
     if (schedule.length > 0) { const overdue = schedule.filter((t) => t.end_date && new Date(t.end_date) < new Date() && t.status !== "completed" && t.status !== "complete" && t.status !== "done"); if (overdue.length > 0) list.push({ id: "schedule-overdue", severity: overdue.length > 5 ? "critical" : "warning", label: `${overdue.length} schedule tasks overdue`, href: `/${project.id}/schedule` }); }
     return list.slice(0, 5);
@@ -930,7 +930,7 @@ export function ProjectHomeClient({
   // Activity items
   const activityItems = React.useMemo(() => {
     const items: Array<{ text: React.ReactNode; href?: string; color: "blue" | "green" | "amber" | "red" }> = [];
-    if (pendingChangeOrders.length > 0) { const latest = pendingChangeOrders[0]; items.push({ text: <><strong>{latest.title || `CO #${latest.co_number}`}</strong> pending approval{latest.amount ? ` · ${formatCompactCurrency(latest.amount)}` : ""}</>, href: `/${project.id}/change-orders`, color: "amber" }); }
+    if (pendingChangeOrders.length > 0) { const latest = pendingChangeOrders[0]; items.push({ text: <><strong>{latest.title || `CO #${latest.pcco_number}`}</strong> pending approval{latest.total_amount ? ` · ${formatCompactCurrency(latest.total_amount)}` : ""}</>, href: `/${project.id}/change-orders`, color: "amber" }); }
     if (openRfis.length > 0) items.push({ text: <><strong>{openRfis.length} RFI{openRfis.length !== 1 ? "s" : ""}</strong> awaiting response</>, href: `/${project.id}/rfis`, color: "blue" });
     if (lastDailyLog) items.push({ text: <><strong>Daily log</strong> filed {format(new Date(lastDailyLog.created_at || Date.now()), "MMM d")}</>, href: `/${project.id}/daily-log`, color: "green" });
     if (commitments.length > 0) { const executed = commitments.filter((c) => c.executed).length; items.push({ text: <><strong>{executed}/{commitments.length}</strong> commitments executed</>, href: `/${project.id}/commitments`, color: executed === commitments.length ? "green" : "blue" }); }
@@ -947,7 +947,7 @@ export function ProjectHomeClient({
       { label: "Committed", value: committed, pct: (committed / totalBudget) * 100 },
       { label: "Remaining", value: remaining, pct: (remaining / totalBudget) * 100 },
     ];
-    const pendingValue = pendingChangeOrders.reduce((sum, co) => sum + (co.amount || 0), 0);
+    const pendingValue = pendingChangeOrders.reduce((sum, co) => sum + (co.total_amount || 0), 0);
     if (pendingValue > 0) items.push({ label: "Pending COs", value: pendingValue, pct: (pendingValue / totalBudget) * 100 });
     return items;
   }, [hasBudgetData, committed, remaining, totalBudget, pendingChangeOrders]);

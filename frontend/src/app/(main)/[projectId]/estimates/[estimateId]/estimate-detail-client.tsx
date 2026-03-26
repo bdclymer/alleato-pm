@@ -471,7 +471,7 @@ export function EstimateDetailClient({
               size="sm"
               onClick={() => router.push(`/${projectId}/estimates`)}
             >
-              <ArrowLeft className="mr-1 h-4 w-4" />
+              <ArrowLeft />
               Back
             </Button>
             <Button

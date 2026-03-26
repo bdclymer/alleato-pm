@@ -130,7 +130,7 @@ function DragHandle({ id }: { id: number }) {
       size="icon"
       className="text-muted-foreground size-7 hover:bg-transparent"
     >
-      <IconGripVertical className="text-muted-foreground size-3" />
+      <IconGripVertical className="text-muted-foreground" />
       <span className="sr-only">Drag to reorder</span>
     </Button>
   )

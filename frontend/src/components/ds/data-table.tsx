@@ -82,7 +82,7 @@ export function DataTable<T extends { id: string | number }>({
                 <td
                   key={col.key}
                   className={cn(
-                    "py-3 text-sm",
+                    "px-3 py-3 text-sm",
                     col.primary
                       ? "font-medium text-foreground"
                       : "text-muted-foreground",

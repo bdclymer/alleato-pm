@@ -300,7 +300,7 @@ export function ScheduleOfValuesTab({
           <div className="mt-4">
             <div className="flex flex-wrap justify-center gap-2">
               <Button size="sm" onClick={handleAdd}>
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus />
                 Add Line Item
               </Button>
               <Button
@@ -343,7 +343,7 @@ export function ScheduleOfValuesTab({
               {isImporting ? "Importing..." : "Import from Budget"}
             </Button>
             <Button size="sm" variant="outline" onClick={handleAdd} disabled={isSaving}>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus />
               Add Line Item
             </Button>
             {hasUnsavedChanges && (
@@ -353,7 +353,7 @@ export function ScheduleOfValuesTab({
                 disabled={isSaving}
                 className="bg-green-600 hover:bg-green-700"
               >
-                <Save className="h-4 w-4 mr-2" />
+                <Save />
                 {isSaving ? "Saving..." : "Save Changes"}
               </Button>
             )}
@@ -457,7 +457,7 @@ export function ScheduleOfValuesTab({
                           disabled={index === 0}
                           onClick={() => moveItem(item.id, "up")}
                         >
-                          <ArrowUp className="h-4 w-4" />
+                          <ArrowUp />
                         </Button>
                         <Button
                           variant="ghost"
@@ -466,7 +466,7 @@ export function ScheduleOfValuesTab({
                           disabled={index === items.length - 1}
                           onClick={() => moveItem(item.id, "down")}
                         >
-                          <ArrowDown className="h-4 w-4" />
+                          <ArrowDown />
                         </Button>
                         <Button
                           variant="ghost"

@@ -293,7 +293,7 @@ export function DocumentDeliveryDialog({
                 {isDownloading ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
-                  <Download className="mr-2 h-4 w-4" />
+                  <Download />
                 )}
                 Download PDF
               </Button>
@@ -416,7 +416,7 @@ export function DocumentDeliveryDialog({
                 {isSending ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
-                  <Mail className="mr-2 h-4 w-4" />
+                  <Mail />
                 )}
                 Send Email
               </Button>

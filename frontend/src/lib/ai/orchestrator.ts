@@ -526,7 +526,7 @@ export const agentRegistry: Record<string, AgentConfig> = {
       return {
         ...createProjectTools(userId, options as any),
         ...createWebSearchTools(options as any),
-      };
+      } as unknown as ToolSet;
     },
   },
 };
@@ -976,7 +976,7 @@ export function createStrategistTools(
     // Include base project tools so the Strategist can answer
     // questions directly when no specialist route is needed
     ...strategistBaseTools,
-  };
+  } as unknown as ToolSet;
 }
 
 // ---------------------------------------------------------------------------

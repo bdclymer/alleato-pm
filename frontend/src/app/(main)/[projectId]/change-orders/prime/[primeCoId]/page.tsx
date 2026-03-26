@@ -350,7 +350,7 @@ export default function PrimeContractCODetailPage() {
           <div className="text-center text-destructive">{error || "Not found"}</div>
           <div className="mt-4 flex justify-center">
             <Button onClick={handleBack}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <ArrowLeft />
               Back to Change Orders
             </Button>
           </div>
@@ -506,7 +506,7 @@ export default function PrimeContractCODetailPage() {
         actions={
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={handleBack}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <ArrowLeft />
               Back
             </Button>
             {co.status === "Proposed" && (
@@ -525,19 +525,19 @@ export default function PrimeContractCODetailPage() {
                   onClick={handleApprove}
                   className="bg-green-600 hover:bg-green-700 text-white"
                 >
-                  <Check className="mr-2 h-4 w-4" />
+                  <Check />
                   Approve
                 </Button>
               </>
             )}
             <Button variant="default" size="sm" onClick={() => setIsEditing(true)}>
-              <Edit className="mr-2 h-4 w-4" />
+              <Edit />
               Edit
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
-                  <MoreHorizontal className="h-4 w-4" />
+                  <MoreHorizontal />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -638,7 +638,7 @@ export default function PrimeContractCODetailPage() {
             </CardTitle>
             <Button variant="outline" size="sm" asChild>
               <label className="cursor-pointer">
-                <FileUp className="mr-2 h-4 w-4" />
+                <FileUp />
                 Upload File
                 <input
                   type="file"

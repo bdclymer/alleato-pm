@@ -26,12 +26,12 @@ export function DateAvatar({ date, size = "md", className }: DateAvatarProps) {
 
   return (
     <div className={cn("flex flex-col items-center gap-0.5 shrink-0", className)}>
-      <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground leading-none">
+      <span className="text-[10px] font-bold uppercase tracking-wider text-primary leading-none">
         {month}
       </span>
       <div
         className={cn(
-          "flex items-center justify-center rounded-full border border-border bg-muted/50 font-semibold text-foreground leading-none",
+          "flex items-center justify-center rounded-full bg-primary/15 font-semibold text-primary leading-none",
           sizeClasses[size],
         )}
       >

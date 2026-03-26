@@ -242,7 +242,7 @@ export default function DocumentPipelinePage() {
             disabled={refreshing}
           >
             <RefreshCw
-              className={`h-4 w-4 mr-2 ${refreshing ? "animate-spin" : ""}`}
+              className={refreshing ? "animate-spin" : undefined}
             />
             Refresh
           </Button>
@@ -292,12 +292,12 @@ export default function DocumentPipelinePage() {
                 >
                   {isProcessing ? (
                     <>
-                      <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                      <RefreshCw className="animate-spin" />
                       Processing...
                     </>
                   ) : (
                     <>
-                      <PlayCircle className="h-4 w-4 mr-2" />
+                      <PlayCircle />
                       Trigger {config.label}
                     </>
                   )}

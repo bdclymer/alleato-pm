@@ -44,7 +44,18 @@ import { PageContainer } from "@/components/layout";
 import { PageHeader } from "@/components/layout/page-header-unified";
 import { cn } from "@/lib/utils";
 
-type CrawledPage = DbTypes["public"]["Tables"]["crawled_pages"]["Row"];
+type CrawledPage = {
+  id: string;
+  url: string;
+  title: string | null;
+  category: string | null;
+  content: string | null;
+  chunk_count: number | null;
+  embedding_count: number | null;
+  created_at: string | null;
+  updated_at: string | null;
+  [key: string]: unknown;
+};
 
 // Category icons and styling
 const CATEGORY_STYLES: Record<
@@ -169,13 +180,14 @@ export default function CrawledPagesPage() {
     const fetchCrawledPages = async () => {
       try {
         const supabase = createClient();
-        const { data, error } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data, error } = await (supabase as any)
           .from("crawled_pages")
           .select("*")
           .order("created_at", { ascending: false });
 
         if (error) throw error;
-        setCrawledPages(data || []);
+        setCrawledPages((data || []) as CrawledPage[]);
       } catch (error) {
 
         console.error("Failed to load crawled pages:", error);

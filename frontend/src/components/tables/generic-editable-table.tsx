@@ -336,7 +336,7 @@ export function GenericEditableTable<T extends { id: string | number }>({
             {isSaving ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <Check className="h-4 w-4 text-success" />
+              <Check className="text-success" />
             )}
           </Button>
           <Button
@@ -359,7 +359,7 @@ export function GenericEditableTable<T extends { id: string | number }>({
       <DropdownMenu>
         <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-            <MoreHorizontal className="h-4 w-4" />
+            <MoreHorizontal />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">

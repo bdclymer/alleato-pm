@@ -26,7 +26,7 @@ export function PortfolioSidebar({
           onClick={onCreateProject}
           className="w-full bg-primary hover:bg-primary/90 text-white"
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus />
           Create Project
         </Button>
       </div>

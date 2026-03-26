@@ -532,7 +532,7 @@ export default function ClientDashboard({
                                   window.open(doc.file_url, "_blank")
                                 }
                               >
-                                <Download className="h-4 w-4" />
+                                <Download />
                               </Button>
                             )}
                           </TableCell>

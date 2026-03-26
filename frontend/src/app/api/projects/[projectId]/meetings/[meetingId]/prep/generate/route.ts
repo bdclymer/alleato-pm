@@ -9,7 +9,7 @@ import {
   buildMeetingPrepUserMessage,
 } from "@/lib/ai/prompts/meeting-prep";
 
-const MODEL_ID = "anthropic/claude-sonnet-4-5";
+const MODEL_ID = "anthropic/claude-sonnet-4.5";
 
 type RouteParams = { params: Promise<{ projectId: string; meetingId: string }> };
 
@@ -65,11 +65,12 @@ export async function POST(_request: Request, { params }: RouteParams) {
     // 3. Fetch digest for last meeting (if exists)
     let lastDigest = null;
     if (lastMeeting) {
-      const { data: digest } = await serviceClient
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: digest } = await (serviceClient as any)
         .from("meeting_digests")
         .select("*")
         .eq("metadata_id", lastMeeting.id)
-        .maybeSingle();
+        .maybeSingle() as { data: { digest_text?: string; action_items_summary?: unknown[]; decisions_summary?: unknown[] } | null; error: unknown };
       lastDigest = digest;
     }
 

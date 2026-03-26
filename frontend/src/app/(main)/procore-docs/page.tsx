@@ -315,7 +315,7 @@ export default function ProcoreDocsPage() {
               onClick={() => setChatOpen(true)}
               className="h-9 gap-2 self-start"
             >
-              <Sparkles className="h-3.5 w-3.5" />
+              <Sparkles />
               Ask AI
             </Button>
           </div>
@@ -364,7 +364,7 @@ export default function ProcoreDocsPage() {
                 >
                   {selectedCategory ?? "All categories"}
                 </span>
-                <ChevronsUpDown className="ml-2 h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
+                <ChevronsUpDown className="shrink-0 text-muted-foreground/50" />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[220px] p-0" align="start">
@@ -707,7 +707,7 @@ export default function ProcoreDocsPage() {
                 size="icon"
                 className="h-9 w-9 shrink-0"
               >
-                <SendHorizontal className="h-4 w-4" />
+                <SendHorizontal />
               </Button>
             </div>
           </div>

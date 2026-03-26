@@ -51,6 +51,7 @@ type ApiErrorPayload = {
   code?: string;
   hint?: string;
   details?: string;
+  github_issue_url?: string | null;
 };
 
 function jsonError(status: number, payload: ApiErrorPayload) {

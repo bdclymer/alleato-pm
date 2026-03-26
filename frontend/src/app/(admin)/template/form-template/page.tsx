@@ -163,7 +163,7 @@ export default function StandardFormPage() {
             onClick={handleCancel}
             className="w-full sm:w-auto"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft />
             Back to List
           </Button>
         }

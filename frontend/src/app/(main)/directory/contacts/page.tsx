@@ -264,7 +264,7 @@ function ContactPreviewPane({
             onClick={() => hasPrev && onSelectContact(contacts[currentIndex - 1].id)}
             aria-label="Previous contact"
           >
-            <ChevronLeft className="h-3.5 w-3.5" />
+            <ChevronLeft />
           </Button>
           <Button
             size="icon"
@@ -274,7 +274,7 @@ function ContactPreviewPane({
             onClick={() => hasNext && onSelectContact(contacts[currentIndex + 1].id)}
             aria-label="Next contact"
           >
-            <ChevronRight className="h-3.5 w-3.5" />
+            <ChevronRight />
           </Button>
           <span className="text-xs text-muted-foreground ml-1">
             {currentIndex + 1} of {contacts.length}
@@ -289,7 +289,7 @@ function ContactPreviewPane({
             aria-label="Open full page"
             title="Open full page"
           >
-            <ArrowUpRight className="h-3 w-3" />
+            <ArrowUpRight />
           </Button>
           <Button
             size="icon"
@@ -775,7 +775,7 @@ export default function DirectoryContactsPage(): ReactElement {
       return (
         <div className="flex items-center justify-end gap-1">
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleSaveInlineEdit}>
-            <Check className="h-4 w-4" />
+            <Check />
           </Button>
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleCancelInlineEdit}>
             <X className="h-4 w-4" />
@@ -788,7 +788,7 @@ export default function DirectoryContactsPage(): ReactElement {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreHorizontal className="h-4 w-4" />
+            <MoreHorizontal />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -817,7 +817,7 @@ export default function DirectoryContactsPage(): ReactElement {
             "Manage companies, clients, contacts, users, and employees across your organization",
           actions: (
             <Button onClick={() => setDialogOpen(true)} className="bg-primary hover:bg-primary/90">
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus />
               New Contact
             </Button>
           ),
@@ -909,7 +909,7 @@ export default function DirectoryContactsPage(): ReactElement {
           isFiltered,
           action: (
             <Button onClick={() => setDialogOpen(true)} className="bg-primary hover:bg-primary/90">
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus />
               Add Contact
             </Button>
           ),

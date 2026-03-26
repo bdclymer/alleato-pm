@@ -176,7 +176,7 @@ export function ExportDialog({
               </>
             ) : (
               <>
-                <Download className="mr-2 h-4 w-4" />
+                <Download />
                 Export CSV
               </>
             )}

@@ -195,7 +195,7 @@ export default function DirectoryCompaniesPage() {
           showProjectName={false}
           actions={
             <Button onClick={handleAddCompany} variant="default">
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus />
               Add Company
             </Button>
           }
@@ -219,7 +219,7 @@ export default function DirectoryCompaniesPage() {
         showProjectName={false}
         actions={
           <Button onClick={handleAddCompany} variant="default">
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus />
             Add Company
           </Button>
         }
@@ -267,7 +267,7 @@ export default function DirectoryCompaniesPage() {
                   Get started by adding your first company.
                 </Text>
                 <Button onClick={handleAddCompany} variant="default">
-                  <Plus className="mr-2 h-4 w-4" />
+                  <Plus />
                   Add Company
                 </Button>
               </div>

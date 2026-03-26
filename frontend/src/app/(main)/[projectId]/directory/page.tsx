@@ -210,7 +210,7 @@ function MemberCombobox({
           {selectedIds.length > 0
             ? `${selectedIds.length} selected`
             : "Select people..."}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronsUpDown className="shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0" align="start">
@@ -881,7 +881,7 @@ function MembersTab({ projectId }: { projectId: string }) {
         count={search ? filtered.length : undefined}
         action={
           <Button size="sm" onClick={() => setAddOpen(true)}>
-            <UserPlus className="mr-1.5 h-3.5 w-3.5" />
+            <UserPlus />
             Add Member
           </Button>
         }
@@ -969,7 +969,7 @@ function MembersTab({ projectId }: { projectId: string }) {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="h-4 w-4" />
+                          <MoreHorizontal />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
@@ -1026,7 +1026,7 @@ function RoleCard({
           className="text-xs h-7 px-2 shrink-0"
           onClick={() => onAssign(role)}
         >
-          <Pencil className="h-3 w-3 mr-1" />
+          <Pencil />
           Edit
         </Button>
       </div>
@@ -1325,7 +1325,7 @@ function VendorsTab({ projectId }: { projectId: string }) {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="h-4 w-4" />
+                          <MoreHorizontal />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">

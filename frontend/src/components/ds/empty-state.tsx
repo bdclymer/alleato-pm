@@ -26,20 +26,20 @@ export function EmptyState({
   return (
     <div
       className={cn(
-        "flex flex-col items-center justify-center py-16 text-center",
+        "flex flex-col items-center justify-center py-12 text-center",
         className
       )}
     >
-      <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-muted">
+      <div className="mb-3 text-muted-foreground/40 [&_svg]:size-8">
         {icon}
       </div>
-      <h3 className="text-sm font-medium text-foreground">{title}</h3>
-      <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+      <p className="text-sm font-medium text-foreground">{title}</p>
+      <p className="mt-0.5 max-w-xs text-[13px] text-muted-foreground">
         {description}
       </p>
       {action && (
-        <Button onClick={action.onClick} className="mt-4" size="sm">
-          <Plus className="h-4 w-4" />
+        <Button onClick={action.onClick} className="mt-3" size="sm" variant="outline">
+          <Plus />
           {action.label}
         </Button>
       )}

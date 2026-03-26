@@ -135,11 +135,11 @@ export default function MembersSettingsPage() {
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={() => void loadMembers()} disabled={isLoading}>
-            <RefreshCw className="h-3.5 w-3.5" />
+            <RefreshCw />
             Refresh
           </Button>
           <Button size="sm" className="gap-2">
-            <UserPlus className="h-3.5 w-3.5" />
+            <UserPlus />
             Invite member
           </Button>
         </div>

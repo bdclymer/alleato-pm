@@ -1,7 +1,33 @@
 #!/usr/bin/env sh
 
-# Fast pre-commit: route check + lint-staged only.
+# Fast pre-commit: route check + root file guard + lint-staged only.
 # Full typecheck and unit tests run in CI.
+
+# ── Root file guard ──────────────────────────────────────────────
+# Only these files are allowed at the project root. Everything else
+# (especially .md, .js, .ts, .py, .sh) must go in docs/, scripts/, etc.
+ALLOWED_ROOT="README.md|CLAUDE.md|AGENTS.md|CONTRIBUTING.md|WORKING_CONTEXT.md|DESIGN.md|CHANGELOG.md|LICENSE|LICENSE.md"
+
+STRAY_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E "^[^/]+\.(md|js|ts|py|sh|html)$" | grep -Ev "^($ALLOWED_ROOT)$" || true)
+
+if [ -n "$STRAY_FILES" ]; then
+  echo ""
+  echo "ERROR: Files staged in the project root that belong elsewhere:"
+  echo ""
+  echo "$STRAY_FILES" | while read file; do
+    echo "  - $file"
+  done
+  echo ""
+  echo "Move them to the correct location:"
+  echo "  .md files   -> docs/"
+  echo "  .js/.ts     -> scripts/ or frontend/src/"
+  echo "  .py/.sh     -> scripts/"
+  echo "  .html       -> docs/ or frontend/"
+  echo ""
+  echo "Allowed root files: $ALLOWED_ROOT"
+  echo ""
+  exit 1
+fi
 
 npm run check:routes
 if [ $? -ne 0 ]; then

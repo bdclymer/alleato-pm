@@ -34,7 +34,7 @@ export function RowDetailClient({
         {canEdit && (
           <Button variant="outline" onClick={handleEdit}>
             {" "}
-            <Pencil className="mr-2 h-4 w-4" /> Edit{" "}
+            <Pencil /> Edit{" "}
           </Button>
         )}{" "}
         {canDelete && (

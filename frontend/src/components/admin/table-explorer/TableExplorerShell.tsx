@@ -120,13 +120,13 @@ export function TableExplorerShell({
             onClick={handleRefresh}
             title="Refresh"
           >
-            <RefreshCw className="h-4 w-4" />
+            <RefreshCw />
           </Button>
 
           {config.permissions.create && (
             <Button asChild>
               <Link href={`/admin/tables/${table}/new`}>
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus />
                 New
               </Link>
             </Button>

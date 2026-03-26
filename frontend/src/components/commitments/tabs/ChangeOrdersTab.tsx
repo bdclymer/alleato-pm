@@ -115,7 +115,7 @@ export const ChangeOrdersTab = memo(function ChangeOrdersTab({ commitmentId, pro
           className="h-8 px-2"
         >
           Number
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <ArrowUpDown />
         </Button>
       ),
       cell: ({ row }) => (
@@ -149,7 +149,7 @@ export const ChangeOrdersTab = memo(function ChangeOrdersTab({ commitmentId, pro
           className="h-8 px-2"
         >
           Amount
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <ArrowUpDown />
         </Button>
       ),
       cell: ({ row }) => <Text>{formatCurrency(row.original.amount)}</Text>,
@@ -163,7 +163,7 @@ export const ChangeOrdersTab = memo(function ChangeOrdersTab({ commitmentId, pro
           className="h-8 px-2"
         >
           Created Date
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <ArrowUpDown />
         </Button>
       ),
       cell: ({ row }) => <Text>{formatDate(row.original.created_at)}</Text>,

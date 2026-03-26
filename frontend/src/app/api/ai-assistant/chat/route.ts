@@ -5,6 +5,7 @@ import {
   stepCountIs,
   streamText,
   type UIMessage,
+  type ToolSet,
 } from "ai";
 import { after } from "next/server";
 import { getApiRouteUser } from "@/lib/supabase/server";
@@ -97,7 +98,7 @@ export async function POST(request: Request) {
         model: getLanguageModel(STRATEGIST_MODEL),
         system: systemPrompt,
         messages: modelMessages,
-        tools,
+        tools: tools as unknown as ToolSet,
         // Strategist gets 7 steps to route, consult specialists, and synthesize.
         // Each specialist gets up to 5 internal tool-call steps.
         stopWhen: stepCountIs(7),

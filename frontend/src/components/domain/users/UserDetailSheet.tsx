@@ -234,7 +234,7 @@ export function UserDetailSheet({
 
           <SheetFooter className="flex flex-col gap-2 sm:flex-col">
             <Button variant="outline" onClick={handleEdit} className="w-full">
-              <Edit className="size-4 mr-2" />
+              <Edit />
               Edit User
             </Button>
 
@@ -245,7 +245,7 @@ export function UserDetailSheet({
                 disabled={resendInviteMutation.isPending}
                 className="w-full"
               >
-                <RefreshCw className="size-4 mr-2" />
+                <RefreshCw />
                 {resendInviteMutation.isPending
                   ? "Sending..."
                   : "Resend Invite"}
@@ -258,7 +258,7 @@ export function UserDetailSheet({
               disabled={removeUserMutation.isPending}
               className="w-full"
             >
-              <UserX className="size-4 mr-2" />
+              <UserX />
               {removeUserMutation.isPending
                 ? "Removing..."
                 : "Remove from Project"}

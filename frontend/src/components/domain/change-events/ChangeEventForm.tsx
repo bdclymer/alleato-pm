@@ -1580,7 +1580,7 @@ export function ChangeEventForm({
                 onClick={addLineItem}
                 className="gap-1.5"
               >
-                <Plus className="h-3.5 w-3.5" />
+                <Plus />
                 Add Line Item
               </Button>
 
@@ -1595,7 +1595,7 @@ export function ChangeEventForm({
                 className="gap-1.5 text-muted-foreground hover:text-foreground"
                 onClick={() => csvInputRef.current?.click()}
               >
-                <Upload className="h-3.5 w-3.5" />
+                <Upload />
                 Import CSV
               </Button>
 
@@ -1650,7 +1650,7 @@ export function ChangeEventForm({
                       className="gap-1.5 text-muted-foreground hover:text-foreground"
                       onClick={() => handleAddAllCommitmentLineItems(addFromCommitmentId)}
                     >
-                      <Plus className="h-3.5 w-3.5" />
+                      <Plus />
                       Add All Lines
                     </Button>
                   )}

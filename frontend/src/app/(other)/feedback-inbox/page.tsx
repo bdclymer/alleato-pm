@@ -1471,7 +1471,7 @@ function FeedbackDetail({
               disabled={sendingToGitHub}
               className="h-7 text-xs"
             >
-              <Github className="h-3 w-3" />
+              <Github />
               {sendingToGitHub ? "Sending..." : "Create Issue"}
             </Button>
           )}

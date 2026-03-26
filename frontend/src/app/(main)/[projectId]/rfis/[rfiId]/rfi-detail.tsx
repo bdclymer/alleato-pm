@@ -157,7 +157,7 @@ export function RfiDetail({ rfi, projectId }: RfiDetailProps) {
           onClick={() => router.push(`/${projectId}/rfis`)}
           className="gap-2"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft />
           Back to RFIs
         </Button>
         <div className="flex items-center gap-2">
@@ -206,7 +206,7 @@ export function RfiDetail({ rfi, projectId }: RfiDetailProps) {
                 onClick={form.handleSubmit(handleSave)}
                 disabled={updateRfi.isPending}
               >
-                <Save className="h-4 w-4 mr-2" />
+                <Save />
                 Save Changes
               </Button>
             </>

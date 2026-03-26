@@ -584,7 +584,7 @@ export function DrawingViewer({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="ghost" size="sm" onClick={() => setPageNumber((p) => Math.max(1, p - 1))} disabled={pageNumber === 1}>
-                    <ChevronLeft className="h-4 w-4" />
+                    <ChevronLeft />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Previous page</TooltipContent>
@@ -603,7 +603,7 @@ export function DrawingViewer({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="ghost" size="sm" onClick={() => setPageNumber((p) => Math.min(numPages, p + 1))} disabled={pageNumber === numPages}>
-                    <ChevronRight className="h-4 w-4" />
+                    <ChevronRight />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Next page</TooltipContent>
@@ -650,7 +650,7 @@ export function DrawingViewer({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="sm" onClick={rotateLeft}>
-                  <RotateCcw className="h-4 w-4" />
+                  <RotateCcw />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Rotate left</TooltipContent>
@@ -658,7 +658,7 @@ export function DrawingViewer({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="sm" onClick={rotateRight}>
-                  <RotateCw className="h-4 w-4" />
+                  <RotateCw />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Rotate right</TooltipContent>

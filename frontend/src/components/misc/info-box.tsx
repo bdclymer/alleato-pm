@@ -11,7 +11,7 @@ import {
   ListTodo,
   Sparkles,
 } from "lucide-react";
-import { SectionHeader } from "@/components/ui/section-header";
+import { SectionHeader } from "@/components/ds/section-header";
 import { format } from "date-fns";
 import type { ReactNode } from "react";
 
@@ -32,7 +32,7 @@ export function InfoBox({
     <div className={`border border-neutral-200 bg-background p-6 ${className}`}>
       <div className="flex items-center gap-4 mb-4">
         {icon}
-        <SectionHeader>{title}</SectionHeader>
+        <SectionHeader title={title} />
       </div>
       <div className="text-base font-light text-neutral-900">{children}</div>
     </div>

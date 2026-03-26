@@ -35,7 +35,7 @@ export function SimplePagination({
             onClick={() => onPageChange(currentPage - 1)}
             className="h-8 gap-1 text-xs font-medium text-muted-foreground"
           >
-            <ChevronLeft className="h-3.5 w-3.5" />
+            <ChevronLeft />
             Previous
           </Button>
         </li>
@@ -104,7 +104,7 @@ export function SimplePagination({
             className="h-8 gap-1 text-xs font-medium text-muted-foreground"
           >
             Next
-            <ChevronRight className="h-3.5 w-3.5" />
+            <ChevronRight />
           </Button>
         </li>
       </ul>

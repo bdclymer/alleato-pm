@@ -106,7 +106,7 @@ export function PortfolioHeader({
             variant="outline"
             className="h-9 text-sm px-4"
           >
-            <FileText className="w-4 h-4 mr-2" />
+            <FileText />
             Settings
           </Button>
         )}
@@ -141,7 +141,7 @@ export function PortfolioHeader({
               className="h-9 text-sm px-4 border-green-500 text-green-600 hover:bg-green-50"
               title="Create fully populated test project"
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus />
               Create Test Project
             </Button>
           )}
@@ -151,7 +151,7 @@ export function PortfolioHeader({
             onClick={onCreateProject}
             className="bg-brand text-white hover:bg-brand/90 h-9 text-sm px-4 shadow-sm hover:shadow transition-all duration-200"
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus />
             Create Project
           </Button>
         </div>

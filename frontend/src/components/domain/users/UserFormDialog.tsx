@@ -345,7 +345,7 @@ export function UserFormDialog({
               onClick={() => setAddMode("create")}
               disabled={isSubmitting}
             >
-              <UserPlus className="mr-2 h-4 w-4" />
+              <UserPlus />
               Create New User
             </Button>
           </div>

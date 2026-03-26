@@ -300,7 +300,7 @@ export function DetailPanel<T extends Record<string, unknown>>({
                     disabled={!canNavigatePrev}
                     onClick={() => onNavigate("prev")}
                   >
-                    <ChevronUp className="h-4 w-4" />
+                    <ChevronUp />
                   </Button>
                   <Button
                     variant="ghost"
@@ -309,7 +309,7 @@ export function DetailPanel<T extends Record<string, unknown>>({
                     disabled={!canNavigateNext}
                     onClick={() => onNavigate("next")}
                   >
-                    <ChevronDown className="h-4 w-4" />
+                    <ChevronDown />
                   </Button>
                 </>
               )}

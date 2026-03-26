@@ -245,7 +245,7 @@ export default function CommitmentConfigurePage() {
           disabled={isSaving}
           className="gap-2"
         >
-          <Save className="h-4 w-4" />
+          <Save />
           Update
         </Button>
       }
@@ -1038,7 +1038,7 @@ export default function CommitmentConfigurePage() {
               disabled={isSaving}
               className="gap-2"
             >
-              <Save className="h-4 w-4" />
+              <Save />
               Update
             </Button>
           </div>

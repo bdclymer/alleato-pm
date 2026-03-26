@@ -349,7 +349,7 @@ export function EnhancedDevPanel() {
     <Sheet>
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="h-8 w-8 relative">
-          <Code className="h-4 w-4" />
+          <Code />
           {consoleErrors.filter(e => e.type === "error").length > 0 && (
             <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-2xs font-semibold text-white flex items-center justify-center">
               {consoleErrors.filter(e => e.type === "error").length}
@@ -496,7 +496,7 @@ export function EnhancedDevPanel() {
                     {isChecking ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (
-                      <RefreshCw className="h-4 w-4" />
+                      <RefreshCw />
                     )}
                     <span className="ml-2">Run Checks</span>
                   </Button>
@@ -564,7 +564,7 @@ export function EnhancedDevPanel() {
                     className="w-full justify-start"
                     onClick={regenerateTypes}
                   >
-                    <FileCode className="h-4 w-4 mr-2" />
+                    <FileCode />
                     Regenerate Supabase Types
                     <Badge variant="secondary" className="ml-auto text-xs">
                       90+ min saved
@@ -580,7 +580,7 @@ export function EnhancedDevPanel() {
                     {isCheckingRoutes ? (
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     ) : (
-                      <GitBranch className="h-4 w-4 mr-2" />
+                      <GitBranch />
                     )}
                     Check Route Conflicts
                     <Badge variant="secondary" className="ml-auto text-xs">
@@ -621,7 +621,7 @@ export function EnhancedDevPanel() {
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      <ExternalLink className="h-4 w-4 mr-2" />
+                      <ExternalLink />
                       Open Supabase Dashboard
                     </a>
                   </Button>
@@ -631,7 +631,7 @@ export function EnhancedDevPanel() {
                 asChild
               >
                 <a href="/.claude/rules" target="_blank">
-                  <ExternalLink className="h-4 w-4 mr-2" />
+                  <ExternalLink />
                   View Claude Rules
                 </a>
               </Button>

@@ -7,11 +7,6 @@
  *
  * Usage in layout.tsx (already done):
  *   {process.env.NODE_ENV === "development" && <DesignViolationOverlay />}
- *
- * Violation types match the DB check constraint:
- *   wrong_button | bg_white | card_trap | wrong_text_hierarchy |
- *   hardcoded_color | arbitrary_spacing | missing_token |
- *   wrong_component | inconsistent_pattern | other
  */
 import { useState, useEffect, useCallback, useRef } from "react";
 import { usePathname } from "next/navigation";
@@ -36,6 +31,18 @@ const VIOLATION_LABELS: Record<ViolationType, string> = {
 
 type ContextMenu = { x: number; y: number; selector: string; label: string } | null;
 type Stats = { open: number; in_progress: number; fixed: number };
+type Position = { x: number; y: number };
+
+const POS_KEY = "design-widget-pos";
+
+function loadPos(): Position {
+  if (typeof window === "undefined") return { x: 16, y: 700 };
+  try {
+    const raw = localStorage.getItem(POS_KEY);
+    if (raw) return JSON.parse(raw) as Position;
+  } catch {}
+  return { x: 16, y: window.innerHeight - 52 };
+}
 
 export function DesignViolationOverlay() {
   const pathname = usePathname();
@@ -45,7 +52,14 @@ export function DesignViolationOverlay() {
   const [submitting, setSubmitting] = useState(false);
   const [stats, setStats] = useState<Stats>({ open: 0, in_progress: 0, fixed: 0 });
   const [toast, setToast] = useState<string | null>(null);
+  const [pos, setPos] = useState<Position>({ x: 16, y: 700 });
   const menuRef = useRef<HTMLDivElement>(null);
+  const widgetRef = useRef<HTMLButtonElement>(null);
+  const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
+  const isDragging = useRef(false);
+
+  // Hydrate position after mount
+  useEffect(() => { setPos(loadPos()); }, []);
 
   const fetchStats = useCallback(async () => {
     try {
@@ -63,6 +77,41 @@ export function DesignViolationOverlay() {
   }, []);
 
   useEffect(() => { fetchStats(); }, [fetchStats]);
+
+  // Drag handling
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    isDragging.current = false;
+    dragRef.current = { startX: e.clientX, startY: e.clientY, origX: pos.x, origY: pos.y };
+
+    const onMove = (me: MouseEvent) => {
+      if (!dragRef.current) return;
+      const dx = me.clientX - dragRef.current.startX;
+      const dy = me.clientY - dragRef.current.startY;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) isDragging.current = true;
+      const newX = Math.max(0, Math.min(window.innerWidth - 40, dragRef.current.origX + dx));
+      const newY = Math.max(0, Math.min(window.innerHeight - 40, dragRef.current.origY + dy));
+      setPos({ x: newX, y: newY });
+    };
+
+    const onUp = () => {
+      if (dragRef.current) {
+        const newX = Math.max(0, Math.min(window.innerWidth - 40, dragRef.current.origX + 0));
+        // Save current pos to localStorage
+        setPos((p) => {
+          try { localStorage.setItem(POS_KEY, JSON.stringify(p)); } catch {}
+          return p;
+        });
+      }
+      dragRef.current = null;
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+    };
+
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  }, [pos]);
 
   // Build a readable CSS selector for the right-clicked element
   function buildSelector(el: Element): string {
@@ -93,7 +142,7 @@ export function DesignViolationOverlay() {
   useEffect(() => {
     function onContextMenu(e: MouseEvent) {
       const target = e.target as Element;
-      if (menuRef.current?.contains(target)) return;
+      if (menuRef.current?.contains(target) || widgetRef.current?.contains(target)) return;
       e.preventDefault();
       setMenu({
         x: Math.min(e.clientX, window.innerWidth - 320),
@@ -125,7 +174,6 @@ export function DesignViolationOverlay() {
     if (selected.length === 0 || !menu) return;
     setSubmitting(true);
     try {
-      // Submit one violation per selected type
       await Promise.all(selected.map(type =>
         fetch("/api/dev/violations", {
           method: "POST",
@@ -148,37 +196,29 @@ export function DesignViolationOverlay() {
     }
   }
 
+  const totalBadge = stats.open + stats.in_progress;
+
   return (
     <>
-      {/* Stats badge — bottom left so it doesn't clash with Agentation */}
-      <div
-        className="fixed bottom-4 left-4 z-[9998] flex items-center gap-2 bg-zinc-900 text-white text-xs font-medium px-3 py-2 rounded-full shadow-lg border border-zinc-700 cursor-default select-none"
+      {/* Draggable icon widget */}
+      <button
+        ref={widgetRef}
+        onMouseDown={handleMouseDown}
         title="Design violations — right-click any element to flag"
+        style={{ left: pos.x, top: pos.y }}
+        className="fixed z-[9998] w-8 h-8 rounded-full bg-zinc-900 border border-zinc-700 shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing select-none hover:bg-zinc-800 transition-colors"
       >
-        <span className="text-base">🎨</span>
-        {stats.open > 0 && (
-          <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-            {stats.open} open
+        <span className="text-base leading-none">🎨</span>
+        {totalBadge > 0 && (
+          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center leading-none">
+            {totalBadge > 9 ? "9+" : totalBadge}
           </span>
         )}
-        {stats.in_progress > 0 && (
-          <span className="bg-amber-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-            {stats.in_progress} in progress
-          </span>
-        )}
-        {stats.fixed > 0 && (
-          <span className="bg-green-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-            {stats.fixed} fixed
-          </span>
-        )}
-        {stats.open === 0 && stats.in_progress === 0 && (
-          <span className="text-zinc-400">No violations</span>
-        )}
-      </div>
+      </button>
 
       {/* Toast */}
       {toast && (
-        <div className="fixed bottom-16 left-4 z-[9999] bg-green-700 text-white text-xs font-medium px-3 py-2 rounded-lg shadow-lg">
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[9999] bg-green-700 text-white text-xs font-medium px-3 py-2 rounded-lg shadow-lg">
           ✓ {toast}
         </div>
       )}

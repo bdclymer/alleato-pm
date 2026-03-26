@@ -112,7 +112,7 @@ export function DateField({
               aria-label={`Open calendar for ${label}`}
               className="shrink-0"
             >
-              <CalendarIcon className="h-4 w-4" />
+              <CalendarIcon />
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="end">

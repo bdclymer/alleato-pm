@@ -103,7 +103,7 @@ export function ProgressReports({ projectId }: ProgressReportsProps) {
           Track project progress through detailed reports
         </p>
         <Button size="sm" className="gap-2">
-          <FileText className="w-4 h-4" />
+          <FileText />
           Create Report
         </Button>
       </div>

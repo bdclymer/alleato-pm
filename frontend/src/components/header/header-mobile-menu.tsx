@@ -66,7 +66,7 @@ export function HeaderMobileMenu({
           className="h-8 w-8 p-2 text-zinc-700 hover:bg-zinc-100 hover:text-zinc-900 md:hidden"
           aria-label="Open navigation menu"
         >
-          <Menu className="h-4 w-4" />
+          <Menu />
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-[300px] sm:w-[350px] p-0">

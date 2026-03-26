@@ -137,7 +137,7 @@ export const InvoicesTab = memo(function InvoicesTab({ commitmentId }: InvoicesT
           className="h-8 px-2"
         >
           Scheduled Value
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <ArrowUpDown />
         </Button>
       ),
       cell: ({ row }) => (
@@ -155,7 +155,7 @@ export const InvoicesTab = memo(function InvoicesTab({ commitmentId }: InvoicesT
           className="h-8 px-2"
         >
           Billed to Date
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <ArrowUpDown />
         </Button>
       ),
       cell: ({ row }) => (

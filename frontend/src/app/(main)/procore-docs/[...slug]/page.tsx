@@ -88,7 +88,7 @@ export default async function SupportArticlePage({ params }: Props) {
       <div className="flex items-center justify-between mb-6">
         <Button variant="ghost" size="sm" className="gap-1.5 -ml-2 text-muted-foreground" asChild>
           <Link href="/procore-docs">
-            <ArrowLeft className="h-3.5 w-3.5" />
+            <ArrowLeft />
             Back to docs
           </Link>
         </Button>

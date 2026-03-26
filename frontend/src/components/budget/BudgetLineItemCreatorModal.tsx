@@ -653,7 +653,7 @@ export function BudgetLineItemCreatorModal({
                                     <span className="truncate">
                                       {row.budgetCodeLabel || "Select budget code..."}
                                     </span>
-                                    <Search className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
+                                    <Search className="shrink-0 opacity-50" />
                                   </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-[400px] p-0" align="start">
@@ -805,7 +805,7 @@ export function BudgetLineItemCreatorModal({
                     title="Add line item"
                     className="h-8 px-0 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-transparent border-0 shadow-none"
                   >
-                    <Plus className="mr-1.5 h-4 w-4" />
+                    <Plus />
                     Add Line Item
                   </Button>
                 </div>

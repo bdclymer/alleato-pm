@@ -382,7 +382,7 @@ export function MeetingsDataTable({
               <Button variant="outline" size="sm">
                 <Columns3 className="h-4 w-4 mr-2" />
                 Columns
-                <ChevronDown className="h-4 w-4 ml-2" />
+                <ChevronDown />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-[200px]">
@@ -408,7 +408,7 @@ export function MeetingsDataTable({
             </DropdownMenuContent>
           </DropdownMenu>
           <Button onClick={exportToCSV} variant="outline">
-            <Download className="h-4 w-4 mr-2" />
+            <Download />
             Export
           </Button>
         </div>
@@ -630,7 +630,7 @@ export function MeetingsDataTable({
                               onClick={(e) => handleDownload(e, meeting.source)}
                               title="Download/View Source"
                             >
-                              <FileText className="h-4 w-4" />
+                              <FileText />
                             </Button>
                           )}
                           {meeting.fireflies_link && (
@@ -642,7 +642,7 @@ export function MeetingsDataTable({
                               }
                               title="View Fireflies Recording"
                             >
-                              <ExternalLink className="h-4 w-4" />
+                              <ExternalLink />
                             </Button>
                           )}
                           <DropdownMenu>
@@ -651,7 +651,7 @@ export function MeetingsDataTable({
                               onClick={(e) => e.stopPropagation()}
                             >
                               <Button variant="ghost" size="sm">
-                                <MoreHorizontal className="h-4 w-4" />
+                                <MoreHorizontal />
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">

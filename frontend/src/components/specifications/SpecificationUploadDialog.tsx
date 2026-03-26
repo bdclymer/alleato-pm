@@ -140,7 +140,7 @@ export function SpecificationUploadDialog({
       <DialogTrigger asChild>
         {children || (
           <Button>
-            <Upload className="mr-2 h-4 w-4" />
+            <Upload />
             Upload Specification
           </Button>
         )}

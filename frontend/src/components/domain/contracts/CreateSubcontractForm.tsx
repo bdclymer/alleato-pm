@@ -856,7 +856,7 @@ export function CreateSubcontractForm({
                         selectedVendor?.label || "Select vendor"
                       )}
                     </span>
-                    <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    <Search className="shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
@@ -1383,7 +1383,7 @@ export function CreateSubcontractForm({
               className="h-10 gap-2 px-4"
               data-testid="sov-add-line-footer"
             >
-              <Plus className="h-4 w-4" />
+              <Plus />
               Add Line Item
             </Button>
             <Select

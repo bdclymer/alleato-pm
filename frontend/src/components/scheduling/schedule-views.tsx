@@ -855,7 +855,7 @@ function BoardColumn({ title, status, tasks, onTaskClick, onAddTask, onQuickAddT
         className="w-full justify-start gap-2 mb-4 text-primary hover:text-primary hover:bg-background"
         onClick={() => setIsInlineAddOpen((prev) => !prev)}
       >
-        <Plus className="h-4 w-4" />
+        <Plus />
         {isInlineAddOpen ? "Hide quick add" : "Quick add task"}
       </Button>
 
@@ -1104,7 +1104,7 @@ export function ScheduleCalendarView({
             onClick={() => setCurrentDate(subMonths(currentDate, 1))}
             className="transition-colors duration-150"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft />
           </Button>
           <h2 className="text-lg font-semibold min-w-[180px] text-center">
             {format(currentDate, "MMMM yyyy")}
@@ -1115,7 +1115,7 @@ export function ScheduleCalendarView({
             onClick={() => setCurrentDate(addMonths(currentDate, 1))}
             className="transition-colors duration-150"
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight />
           </Button>
         </div>
         <Button
@@ -1260,7 +1260,7 @@ export function ScheduleTimelineView({
             size="icon"
             onClick={() => setCurrentDate(subMonths(currentDate, 1))}
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft />
           </Button>
           <Button
             variant="outline"
@@ -1273,7 +1273,7 @@ export function ScheduleTimelineView({
             size="icon"
             onClick={() => setCurrentDate(addMonths(currentDate, 1))}
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight />
           </Button>
         </div>
         <div className="flex items-center gap-2 text-sm text-muted-foreground">

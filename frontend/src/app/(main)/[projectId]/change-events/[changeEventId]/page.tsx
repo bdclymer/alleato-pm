@@ -533,7 +533,7 @@ export default function ChangeEventDetailPage() {
             Error
           </Text>
           <Button variant="ghost" size="sm" onClick={handleBack}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
+            <ArrowLeft />
             Back to Change Events
           </Button>
         </div>
@@ -565,7 +565,7 @@ export default function ChangeEventDetailPage() {
           </div>
           <Inline gap="sm">
             <Button variant="ghost" size="sm" onClick={handleBack}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <ArrowLeft />
               Back
             </Button>
             <Button
@@ -608,7 +608,7 @@ export default function ChangeEventDetailPage() {
         </div>
         <Inline gap="sm">
           <Button variant="ghost" size="sm" onClick={handleBack}>
-            <ArrowLeft className="mr-2 h-4 w-4" />
+            <ArrowLeft />
             Back
           </Button>
           <Button
@@ -616,7 +616,7 @@ export default function ChangeEventDetailPage() {
             size="sm"
             onClick={handleExport}
           >
-            <Download className="mr-2 h-4 w-4" />
+            <Download />
             Export
           </Button>
           <Button
@@ -625,13 +625,13 @@ export default function ChangeEventDetailPage() {
             onClick={handleEdit}
             disabled={!canEdit}
           >
-            <Edit className="mr-2 h-4 w-4" />
+            <Edit />
             Edit
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreHorizontal className="h-4 w-4" />
+                <MoreHorizontal />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -699,7 +699,7 @@ export default function ChangeEventDetailPage() {
                   variant="default"
                   onClick={() => setShowConvertDialog(true)}
                 >
-                  <ArrowRight className="mr-2 h-4 w-4" />
+                  <ArrowRight />
                   Convert to Change Order
                 </Button>
               )}

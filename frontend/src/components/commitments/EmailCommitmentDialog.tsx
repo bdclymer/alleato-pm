@@ -423,7 +423,7 @@ export function EmailCommitmentDialog({
               </>
             ) : (
               <>
-                <Mail className="h-4 w-4" />
+                <Mail />
                 Send Email
               </>
             )}

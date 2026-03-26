@@ -118,13 +118,13 @@ export function ChangeHistoryTab({ projectId }: ChangeHistoryTabProps) {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={fetchHistory}>
-            <Filter className="mr-2 h-4 w-4" />
+            <Filter />
             Refresh
           </Button>
           <Button
             onClick={() => toast.info("Export functionality coming soon")}
           >
-            <Download className="mr-2 h-4 w-4" />
+            <Download />
             Export Log
           </Button>
         </div>

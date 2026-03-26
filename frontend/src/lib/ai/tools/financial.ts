@@ -335,7 +335,8 @@ export function createFinancialTools(
           }
           if (contractId) {
             primeCoQuery = primeCoQuery.eq("contract_id", contractId);
-            commitCoQuery = commitCoQuery.eq("contract_id", contractId);
+            // contract_change_orders.contract_id is text
+            commitCoQuery = commitCoQuery.eq("contract_id", String(contractId));
           }
 
           const [primeCoRes, commitCoRes, ceRes, contractRes, coLinesRes] = await Promise.all([
@@ -355,21 +356,22 @@ export function createFinancialTools(
               .from("contracts")
               .select("id, title, contract_number, status")
               .eq("project_id", resolved.id),
-            supabase
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (supabase as any)
               .from("change_order_lines")
               .select(
                 "id, change_order_id, amount, description, cost_code_id, cost_type_id",
               )
-              .eq("project_id", resolved.id),
+              .eq("project_id", resolved.id) as Promise<{ data: Array<Record<string, unknown>> | null; error: unknown }>,
           ]);
 
           // Normalize both CO types into a unified shape
-          const primeCOs = (primeCoRes.data ?? []).map((co: Record<string, unknown>) => ({
+          const primeCOs = ((primeCoRes.data ?? []) as unknown as Record<string, unknown>[]).map((co) => ({
             ...co,
             co_number: co.pcco_number,
             amount: co.total_amount,
           }));
-          const commitCOs = (commitCoRes.data ?? []).map((co: Record<string, unknown>) => ({
+          const commitCOs = ((commitCoRes.data ?? []) as unknown as Record<string, unknown>[]).map((co) => ({
             ...co,
             co_number: co.change_order_number,
           }));
@@ -687,7 +689,10 @@ export function createFinancialTools(
           if ("error" in resolved) return resolved;
 
           // Fetch budget lines (from the view), cost codes, cost types, and forecasts
-          let blQuery = supabase
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const supabaseAny = supabase as any;
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          let blQuery: any = supabaseAny
             .from("v_budget_lines")
             .select(
               "id, original_amount, revised_budget, approved_co_total, " +
@@ -701,7 +706,7 @@ export function createFinancialTools(
 
           const [blRes, ccRes, ctRes, forecastRes, directCostLinesRes] =
             await Promise.all([
-              blQuery,
+              blQuery as Promise<{ data: Array<Record<string, unknown>> | null; error: unknown }>,
               supabase
                 .from("cost_codes")
                 .select("id, division_id, title, division_title"),
@@ -943,7 +948,7 @@ export function createFinancialTools(
           const changeOrders = ((coRes.data ?? []) as unknown as AnyRow[]).map(co => ({
             ...co,
             amount: co.total_amount,
-          }));
+          })) as unknown as AnyRow[];
 
           // Filter invoices to contracts in this project
           // (owner_invoices link through contract_id to contracts table)
@@ -1125,13 +1130,14 @@ export function createFinancialTools(
               )
               .eq("project_id", resolved.id),
             // Budget lines for budget-based analysis
-            supabase
-              .from("v_budget_lines")
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (supabase as any)
+              .from("v_budget_lines" as any)
               .select(
                 "id, original_amount, revised_budget, approved_co_total, " +
                 "budget_mod_total, cost_code_id, cost_type_id, description",
               )
-              .eq("project_id", resolved.id),
+              .eq("project_id", resolved.id) as Promise<{ data: Array<Record<string, unknown>> | null; error: unknown }>,
             // Direct costs
             supabase
               .from("direct_costs")
@@ -1165,7 +1171,7 @@ export function createFinancialTools(
           const changeOrders = ((coRes.data ?? []) as unknown as AnyRow[]).map(co => ({
             ...co,
             amount: co.total_amount,
-          }));
+          })) as unknown as AnyRow[];
 
           // ---- Revenue side ----
           const totalOriginalRevenue = primeContracts.reduce(

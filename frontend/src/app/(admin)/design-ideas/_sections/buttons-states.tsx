@@ -30,19 +30,19 @@ export function ButtonsStatesSection() {
         </h3>
         <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-6 shadow-sm">
           <Button variant="default">
-            <Plus className="h-4 w-4" />
+            <Plus />
             Default
           </Button>
           <Button variant="secondary">
-            <Pencil className="h-4 w-4" />
+            <Pencil />
             Secondary
           </Button>
           <Button variant="outline">
-            <Download className="h-4 w-4" />
+            <Download />
             Outline
           </Button>
           <Button variant="ghost">
-            <Settings className="h-4 w-4" />
+            <Settings />
             Ghost
           </Button>
           <Button variant="destructive">
@@ -76,7 +76,7 @@ export function ButtonsStatesSection() {
           ))}
           <div className="text-center">
             <Button size="icon">
-              <Plus className="h-4 w-4" />
+              <Plus />
             </Button>
             <p className="mt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50 font-mono">
               icon
@@ -84,7 +84,7 @@ export function ButtonsStatesSection() {
           </div>
           <div className="text-center">
             <Button size="icon-sm">
-              <Plus className="h-4 w-4" />
+              <Plus />
             </Button>
             <p className="mt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/50 font-mono">
               icon-sm

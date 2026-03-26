@@ -738,7 +738,7 @@ export function DirectCostsClient({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button size="sm">
-                  <Plus className="mr-2 h-4 w-4" />
+                  <Plus />
                   Create
                 </Button>
               </DropdownMenuTrigger>
@@ -796,7 +796,7 @@ export function DirectCostsClient({
                     onClick={handleErpSync}
                     aria-label="Sync from ERP"
                   >
-                    <RefreshCw className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} />
+                    <RefreshCw className={isSyncing ? "animate-spin" : undefined} />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Sync direct costs from Acumatica</TooltipContent>
@@ -813,7 +813,7 @@ export function DirectCostsClient({
                 setIsImportDialogOpen(true);
               }}
             >
-              <Upload className="mr-2 h-4 w-4" />
+              <Upload />
               Import CSV
             </Button>
           ),
@@ -859,7 +859,7 @@ export function DirectCostsClient({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreHorizontal className="h-4 w-4" />
+                  <MoreHorizontal />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">

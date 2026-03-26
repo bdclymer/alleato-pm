@@ -95,7 +95,7 @@ export default function DrawingAreasPage() {
               size="sm"
               onClick={() => router.push(`/${projectId}/drawings/areas/settings`)}
             >
-              <Settings className="h-4 w-4 sm:mr-2" />
+              <Settings className="sm:" />
               <span className="hidden xs:inline">Settings</span>
             </Button>
 
@@ -104,7 +104,7 @@ export default function DrawingAreasPage() {
               onClick={() => handleCreateArea()}
               disabled={createArea.isPending}
             >
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus />
               Create Area
             </Button>
           </div>
@@ -150,7 +150,7 @@ export default function DrawingAreasPage() {
                 onClick={() => handleCreateArea()}
                 disabled={createArea.isPending}
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus />
                 Create First Area
               </Button>
             </div>

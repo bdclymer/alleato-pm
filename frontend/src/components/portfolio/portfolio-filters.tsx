@@ -132,7 +132,7 @@ export function PortfolioFilters({
               size="sm"
               className="relative h-9 shrink-0 px-2.5 border-border hover:border-border/80"
             >
-              <SlidersHorizontal className="w-4 h-4" />
+              <SlidersHorizontal />
               {activeFiltersCount > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white">
                   {activeFiltersCount}
@@ -303,7 +303,7 @@ export function PortfolioFilters({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button className="bg-brand text-white hover:bg-brand/90 h-9 px-2 shrink-0">
-                <FileText className="w-4 h-4" />
+                <FileText />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -323,7 +323,7 @@ export function PortfolioFilters({
             onClick={onCreateProject}
             className="bg-brand text-white hover:bg-brand/90 h-9 px-2 shrink-0"
           >
-            <Plus className="w-4 h-4" />
+            <Plus />
           </Button>
         )}
       </div>
@@ -351,7 +351,7 @@ export function PortfolioFilters({
                 className="relative h-10 w-10 border-border hover:border-border/80"
                 aria-label="Open filters"
               >
-                <Filter className="h-4 w-4" />
+                <Filter />
                 {activeFiltersCount > 0 && (
                   <span className="absolute -top-1.5 -right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-brand text-[10px] font-bold text-white">
                     {activeFiltersCount}
@@ -480,9 +480,9 @@ export function PortfolioFilters({
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="h-10 text-sm border-border hover:border-border/80">
-                <FileText className="w-4 h-4 mr-2" />
+                <FileText />
                 Export
-                <ChevronDown className="w-4 h-4 ml-1" />
+                <ChevronDown />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -502,7 +502,7 @@ export function PortfolioFilters({
             onClick={onCreateProject}
             className="bg-brand text-white hover:bg-brand/90 h-10 text-sm"
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus />
             Create Project
           </Button>
         )}

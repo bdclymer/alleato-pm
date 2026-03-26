@@ -171,7 +171,7 @@ export function CommentsSidebar() {
         aria-label="Comments"
         onClick={() => setOpen(true)}
       >
-        <MessageSquare className="h-4 w-4" />
+        <MessageSquare />
       </Button>
 
       <Sheet open={open} onOpenChange={setOpen}>

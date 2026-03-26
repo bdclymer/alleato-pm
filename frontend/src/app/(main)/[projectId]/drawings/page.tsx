@@ -163,7 +163,7 @@ export default function ProjectDrawingsPage() {
         actions: (
           <>
             <Button size="sm" onClick={() => setUploadOpen(true)}>
-              <FileUp className="mr-2 h-4 w-4" />
+              <FileUp />
               Upload
             </Button>
             <DrawingUploadDialog
@@ -234,7 +234,7 @@ export default function ProjectDrawingsPage() {
         isFiltered,
         action: (
           <Button size="sm" onClick={() => setUploadOpen(true)}>
-            <FileUp className="mr-2 h-4 w-4" />
+            <FileUp />
             Upload your first drawing
           </Button>
         ),

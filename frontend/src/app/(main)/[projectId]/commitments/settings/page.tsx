@@ -132,7 +132,7 @@ export default function CommitmentSettingsPage() {
               }
               className="gap-2"
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft />
               Back
             </Button>
             <Button
@@ -141,7 +141,7 @@ export default function CommitmentSettingsPage() {
               disabled={isSaving}
               className="gap-2"
             >
-              <Save className="h-4 w-4" />
+              <Save />
               Save Settings
             </Button>
           </div>

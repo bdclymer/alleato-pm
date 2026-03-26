@@ -685,9 +685,9 @@ export function ChatArea({
               onClick={isStreaming ? onStop : handleSubmit}
             >
               {isStreaming ? (
-                <SquareIcon className="h-4 w-4" />
+                <SquareIcon />
               ) : (
-                <SendIcon className="h-4 w-4" />
+                <SendIcon />
               )}
             </Button>
           </PromptInputAction>

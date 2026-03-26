@@ -219,8 +219,9 @@ export async function GET(
     }
 
     // 4b. Fetch Pending Prime Contract Change Orders
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: pendingContractCOs, error: pendingContractCOsError } =
-      await supabase
+      await (supabase as any)
         .from("change_order_lines")
         .select(
           `
@@ -236,7 +237,7 @@ export async function GET(
       `,
         )
         .eq("change_orders.project_id", projectIdNum)
-        .like("change_orders.status", "Pending%");
+        .like("change_orders.status", "Pending%") as { data: Array<{ id: string; amount: number | null; description: string | null; cost_code_id: string | null; change_orders: { status: string; change_order_number: string; project_id: number } }> | null; error: unknown };
 
     if (!pendingContractCOsError && pendingContractCOs) {
       pendingContractCOs.forEach((co) => {

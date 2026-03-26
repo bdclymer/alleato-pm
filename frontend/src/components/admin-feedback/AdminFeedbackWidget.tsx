@@ -517,7 +517,7 @@ export function AdminFeedbackWidget() {
                       size="sm"
                       onClick={() => fileInputRef.current?.click()}
                     >
-                      <Upload className="mr-2 h-3.5 w-3.5" />
+                      <Upload />
                       Upload
                     </Button>
                     <Button
@@ -529,17 +529,17 @@ export function AdminFeedbackWidget() {
                     >
                       {isCapturingScreenshot ? (
                         <>
-                          <RefreshCw className="mr-2 h-3.5 w-3.5 animate-spin" />
+                          <RefreshCw className="animate-spin" />
                           Capturing
                         </>
                       ) : screenshotDataUrl ? (
                         <>
-                          <RefreshCw className="mr-2 h-3.5 w-3.5" />
+                          <RefreshCw />
                           Retake
                         </>
                       ) : (
                         <>
-                          <Camera className="mr-2 h-3.5 w-3.5" />
+                          <Camera />
                           Capture
                         </>
                       )}

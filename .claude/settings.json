@@ -38,7 +38,10 @@
       "Bash(mkdir -p /Users/meganharrison/Documents/alleato-pm/docs/roadmap)",
       "Bash(mv /Users/meganharrison/Documents/alleato-pm/ROADMAP.md /Users/meganharrison/Documents/alleato-pm/docs/roadmap/ROADMAP.md)",
       "Bash(mv /Users/meganharrison/Documents/alleato-pm/HANDOFF.md /Users/meganharrison/Documents/alleato-pm/docs/roadmap/HANDOFF.md)",
-      "mcp__claude_ai_Supabase__apply_migration"
+      "mcp__claude_ai_Supabase__apply_migration",
+      "Bash(cp /tmp/test-root-guard.md ./TEST_SCRATCH.md)",
+      "Bash(git add:*)",
+      "Bash(grep -E \"^[^/]+\\\\.\\(md|js|ts|py|sh|html\\)$\")"
     ],
     "additionalDirectories": [
       "/Users/meganharrison/Documents/alleato-pm/.claude/form-gauntlet/commitments/forms/create_subcontract",

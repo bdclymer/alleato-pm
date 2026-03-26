@@ -1510,7 +1510,7 @@ export function GenericDataTable({
             className="h-8 w-8 p-0"
             data-testid={`row-actions-${row.id}`}
           >
-            <MoreHorizontal className="h-4 w-4" />
+            <MoreHorizontal />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -2290,7 +2290,7 @@ export function GenericDataTable({
             <div className="flex gap-2">
               {/* Export Button */}
               <Button variant="outline" size="sm" onClick={exportToCSV} className="flex-1 sm:flex-initial">
-                <Download className="h-4 w-4 mr-2" />
+                <Download />
                 <span className="hidden xs:inline">Export</span>
               </Button>
 
@@ -2307,7 +2307,7 @@ export function GenericDataTable({
                   >
                     <Columns3 className="h-4 w-4 sm:mr-2" />
                     <span className="hidden sm:inline">Columns</span>
-                    <ChevronDown className="h-4 w-4 ml-1 sm:ml-2" />
+                    <ChevronDown className="sm:" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-[200px]">

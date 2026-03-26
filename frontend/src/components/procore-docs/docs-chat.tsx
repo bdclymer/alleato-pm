@@ -166,7 +166,7 @@ export function DocsChat() {
         size="icon"
         title="Ask Procore Docs"
       >
-        <MessageCircle className="h-6 w-6" />
+        <MessageCircle />
       </Button>
 
       {/* Chat Sidebar */}
@@ -330,7 +330,7 @@ export function DocsChat() {
                   className="bg-primary text-primary-foreground hover:bg-primary/90"
                   size="icon"
                 >
-                  <Send className="h-4 w-4" />
+                  <Send />
                 </Button>
               </div>
               <p className="text-xs text-center text-muted-foreground">

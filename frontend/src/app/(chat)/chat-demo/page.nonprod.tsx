@@ -170,7 +170,7 @@ function ChatSidebar() {
           </div>
         </div>
         <Button variant="ghost" className="size-8">
-          <Search className="size-4" />
+          <Search />
         </Button>
       </SidebarHeader>
       <SidebarContent className="pt-4">
@@ -179,7 +179,7 @@ function ChatSidebar() {
             variant="outline"
             className="mb-4 flex w-full items-center gap-2"
           >
-            <PlusIcon className="size-4" />
+            <PlusIcon />
             <span>New Chat</span>
           </Button>
         </div>

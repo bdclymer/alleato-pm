@@ -400,7 +400,7 @@ export default function CommitmentCODetailPage() {
           <div className="text-center text-destructive">{error || "Not found"}</div>
           <div className="mt-4 flex justify-center">
             <Button onClick={handleBack}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <ArrowLeft />
               Back to Change Orders
             </Button>
           </div>
@@ -523,7 +523,7 @@ export default function CommitmentCODetailPage() {
         actions={
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={handleBack}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <ArrowLeft />
               Back
             </Button>
             {co.status === "pending" && (
@@ -542,19 +542,19 @@ export default function CommitmentCODetailPage() {
                   onClick={handleApprove}
                   className="bg-green-600 hover:bg-green-700 text-white"
                 >
-                  <Check className="mr-2 h-4 w-4" />
+                  <Check />
                   Approve
                 </Button>
               </>
             )}
             <Button variant="default" size="sm" onClick={() => setIsEditing(true)}>
-              <Edit className="mr-2 h-4 w-4" />
+              <Edit />
               Edit
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
-                  <MoreHorizontal className="h-4 w-4" />
+                  <MoreHorizontal />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">

@@ -34,7 +34,7 @@ function ScrollButton({
       onClick={() => scrollToBottom()}
       {...props}
     >
-      <ChevronDown className="h-5 w-5" />
+      <ChevronDown />
     </Button>
   );
 }

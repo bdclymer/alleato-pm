@@ -95,17 +95,17 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
               size="sm"
               onClick={() => router.push(`/${projectId}/submittals`)}
             >
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <ArrowLeft />
               Back
             </Button>
             <Button size="sm" onClick={() => setEditOpen(true)}>
-              <Edit className="mr-2 h-4 w-4" />
+              <Edit />
               Edit
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon">
-                  <MoreHorizontal className="h-4 w-4" />
+                  <MoreHorizontal />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">

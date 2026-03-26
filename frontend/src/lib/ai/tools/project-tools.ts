@@ -350,14 +350,15 @@ export function createProjectTools(
 
           const [risksRes, insightsRes, issueRes, healthRes, meetingRes] =
             await Promise.all([
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               supabase
-                .from("risks")
+                .from("risks" as any)
                 .select(
                   "id, project_id, status, category, likelihood, impact, description, owner_name, metadata_id, created_at",
                 )
                 .in("project_id", projectIds)
                 .order("created_at", { ascending: false })
-                .limit(2000),
+                .limit(2000) as unknown as Promise<{ data: Array<Record<string, unknown>> | null; error: unknown }>,
               supabase
                 .from("ai_insights")
                 .select(
@@ -607,12 +608,13 @@ export function createProjectTools(
             .select("*")
             .eq("id", resolvedId)
             .single(),
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           supabase
-            .from("v_budget_lines")
+            .from("v_budget_lines" as any)
             .select(
               "id, description, original_amount, revised_budget, approved_co_total",
             )
-            .eq("project_id", resolvedId),
+            .eq("project_id", resolvedId) as unknown as Promise<{ data: Array<Record<string, unknown>> | null; error: unknown }>,
           supabase
             .from("document_metadata")
             .select("title, date, summary, overview, participants")
@@ -938,12 +940,13 @@ export function createProjectTools(
           }
 
           const [budgetRes, contractRes] = await Promise.all([
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             supabase
-              .from("v_budget_lines")
+              .from("v_budget_lines" as any)
               .select(
                 "id, original_amount, revised_budget, approved_co_total, budget_mod_total",
               )
-              .eq("project_id", resolvedId),
+              .eq("project_id", resolvedId) as unknown as Promise<{ data: Array<Record<string, unknown>> | null; error: unknown }>,
             supabase
               .from("prime_contract_financial_summary")
               .select(

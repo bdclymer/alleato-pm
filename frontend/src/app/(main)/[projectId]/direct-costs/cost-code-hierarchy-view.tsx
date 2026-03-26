@@ -264,7 +264,7 @@ export function CostCodeHierarchyView({
         description: "Track and manage direct project costs",
         actions: (
           <Button size="sm" onClick={() => router.push(`/${projectId}/direct-costs/new`)}>
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus />
             New Direct Cost
           </Button>
         ),

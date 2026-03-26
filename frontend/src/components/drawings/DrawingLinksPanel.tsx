@@ -156,7 +156,7 @@ export function DrawingLinksPanel({
                       onClick={() => navigateToEntity(pin)}
                       title="Open in tool"
                     >
-                      <ExternalLink className="h-3 w-3" />
+                      <ExternalLink />
                     </Button>
                   )}
                   <Button

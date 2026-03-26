@@ -65,7 +65,7 @@ export function ScanButton({
           </>
         ) : (
           <>
-            <RefreshCw className="h-4 w-4" />
+            <RefreshCw />
             Run Portfolio Scan
           </>
         )}

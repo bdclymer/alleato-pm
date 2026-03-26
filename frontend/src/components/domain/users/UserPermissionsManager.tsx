@@ -291,7 +291,7 @@ export function UserPermissionsManager({
             disabled={isSaving || overrides.length === 0}
             className="sm:w-auto"
           >
-            <RotateCcw className="size-4 mr-2" />
+            <RotateCcw />
             Reset to Template
           </Button>
 

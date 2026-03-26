@@ -16,7 +16,7 @@ import Link from "next/link";
 import { PageContainer } from "@/components/layout";
 import { EmptyState } from "@/components/ui/empty-state";
 import { PageHeader } from "@/components/layout/page-header-unified";
-import { SectionHeader } from "@/components/ui/section-header";
+import { SectionHeader } from "@/components/ds/section-header";
 import { MetricCard } from "@/components/ui/metric-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -167,7 +167,7 @@ export default function StyleGuidePage() {
               <p className="text-xs text-neutral-500 mb-2">
                 Section Header (Small)
               </p>
-              <SectionHeader>Section Name</SectionHeader>
+              <SectionHeader title="Section Name" />
             </div>
 
             {/* Body Text */}
@@ -264,7 +264,7 @@ export default function StyleGuidePage() {
             <div className="border border-neutral-200 bg-background p-6">
               <div className="flex items-center gap-4 mb-4">
                 <Calendar className="h-4 w-4 text-brand" />
-                <SectionHeader>Date</SectionHeader>
+                <SectionHeader title="Date" />
               </div>
               <p className="text-base font-light text-neutral-900">
                 Friday, December 15, 2024
@@ -274,7 +274,7 @@ export default function StyleGuidePage() {
             <div className="border border-neutral-200 bg-background p-6">
               <div className="flex items-center gap-4 mb-4">
                 <Clock className="h-4 w-4 text-brand" />
-                <SectionHeader>Duration</SectionHeader>
+                <SectionHeader title="Duration" />
               </div>
               <p className="text-base font-light text-neutral-900">
                 45 minutes
@@ -284,7 +284,7 @@ export default function StyleGuidePage() {
             <div className="border border-neutral-200 bg-background p-6">
               <div className="flex items-center gap-4 mb-4">
                 <User className="h-4 w-4 text-brand" />
-                <SectionHeader>Participants</SectionHeader>
+                <SectionHeader title="Participants" />
               </div>
               <p className="text-base font-light text-neutral-900">8 people</p>
             </div>
@@ -292,7 +292,7 @@ export default function StyleGuidePage() {
             <div className="border border-neutral-200 bg-background p-6">
               <div className="flex items-center gap-4 mb-4">
                 <FileText className="h-4 w-4 text-brand" />
-                <SectionHeader>Type</SectionHeader>
+                <SectionHeader title="Type" />
               </div>
               <p className="text-base font-light text-neutral-900">
                 Project Meeting

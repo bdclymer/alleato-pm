@@ -79,7 +79,7 @@ export function FinancialDataTable<T extends { id?: string | number }>({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
-                  <Download className="h-4 w-4 mr-2" />
+                  <Download />
                   Export
                 </Button>
               </DropdownMenuTrigger>

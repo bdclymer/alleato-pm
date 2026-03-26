@@ -30,7 +30,7 @@ export function ChatHeader({
         onClick={onToggleSidebar}
         className="md:hidden text-muted-foreground hover:text-foreground"
       >
-        <Menu className="h-5 w-5" />
+        <Menu />
       </Button>
 
       {/* Channel Name */}
@@ -68,7 +68,7 @@ export function ChatHeader({
           size="icon"
           className="hidden sm:flex text-muted-foreground hover:text-foreground"
         >
-          <Search className="h-4 w-4" />
+          <Search />
         </Button>
 
         <Button
@@ -77,7 +77,7 @@ export function ChatHeader({
           onClick={onToggleRightPanel}
           className="text-muted-foreground hover:text-foreground"
         >
-          <MessageSquare className="h-4 w-4" />
+          <MessageSquare />
         </Button>
 
         <Button
@@ -85,7 +85,7 @@ export function ChatHeader({
           size="icon"
           className="text-muted-foreground hover:text-foreground"
         >
-          <MoreVertical className="h-4 w-4" />
+          <MoreVertical />
         </Button>
       </div>
     </div>

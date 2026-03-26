@@ -268,7 +268,7 @@ function RunCard({ type, onComplete }: { type: EvalType; onComplete: () => void 
         <div className="flex items-center gap-2 shrink-0">
           {lines.length > 0 && (
             <Button variant="ghost" size="sm" onClick={() => setOpen((o) => !o)} className="h-7 px-2">
-              {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+              {open ? <ChevronDown /> : <ChevronRight />}
             </Button>
           )}
           <Button
@@ -279,9 +279,9 @@ function RunCard({ type, onComplete }: { type: EvalType; onComplete: () => void 
             className="h-7 gap-1.5"
           >
             {state === "running" ? (
-              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+              <RefreshCw className="animate-spin" />
             ) : (
-              <Play className="h-3.5 w-3.5" />
+              <Play />
             )}
             {state === "running" ? "Running…" : state === "done" ? "Re-run" : "Run"}
           </Button>

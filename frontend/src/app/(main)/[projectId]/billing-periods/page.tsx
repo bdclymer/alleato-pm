@@ -209,7 +209,7 @@ export default function ProjectBillingPeriodsPage() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">
-                <MoreHorizontal className="h-4 w-4" />
+                <MoreHorizontal />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -276,7 +276,7 @@ export default function ProjectBillingPeriodsPage() {
         ]}
         actions={
           <Button>
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus />
             Create Billing Period
           </Button>
         }

@@ -358,7 +358,7 @@ function SortableLineItemRow({
                   onClick={onDuplicate}
                   className="h-7 w-7 p-0"
                 >
-                  <Copy className="h-3 w-3" />
+                  <Copy />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -598,7 +598,7 @@ export function LineItemsManager({
             onClick={onAdd}
             className="h-10 gap-2 bg-primary px-4 text-primary-foreground hover:bg-primary/90"
           >
-            <Plus className="h-4 w-4" />
+            <Plus />
             Add Line Item
           </Button>
 

@@ -129,7 +129,7 @@ export const RealtimeChat = ({
             type="submit"
             disabled={!isConnected}
           >
-            <Send className="size-4" />
+            <Send />
           </Button>
         )}
       </form>

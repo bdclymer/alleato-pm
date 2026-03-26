@@ -117,7 +117,7 @@ export function RecentPhotos({ projectId }: RecentPhotosProps) {
           Visual documentation of project progress
         </p>
         <Button size="sm" className="gap-2">
-          <Camera className="w-4 h-4" />
+          <Camera />
           Upload Photos
         </Button>
       </div>
@@ -226,7 +226,7 @@ export function RecentPhotos({ projectId }: RecentPhotosProps) {
                           variant="outline"
                           className="gap-2 w-full"
                         >
-                          <Download className="w-4 h-4" />
+                          <Download />
                           Download
                         </Button>
                       </div>

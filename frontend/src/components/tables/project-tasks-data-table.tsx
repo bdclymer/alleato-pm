@@ -175,7 +175,7 @@ const columns: ColumnDef<TaskRow>[] = [
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0">
               <span className="sr-only">Open menu</span>
-              <MoreVerticalIcon className="h-4 w-4" />
+              <MoreVerticalIcon />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -232,9 +232,9 @@ export function ProjectTasksDataTable({ tasks }: ProjectTasksDataTableProps) {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="ml-auto">
-                <ColumnsIcon className="mr-2 h-4 w-4" />
+                <ColumnsIcon />
                 Columns
-                <ChevronDownIcon className="ml-2 h-4 w-4" />
+                <ChevronDownIcon />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -377,7 +377,7 @@ export function ProjectTasksDataTable({ tasks }: ProjectTasksDataTableProps) {
               disabled={!table.getCanPreviousPage()}
             >
               <span className="sr-only">Go to first page</span>
-              <ChevronsLeftIcon className="h-4 w-4" />
+              <ChevronsLeftIcon />
             </Button>
             <Button
               variant="outline"
@@ -386,7 +386,7 @@ export function ProjectTasksDataTable({ tasks }: ProjectTasksDataTableProps) {
               disabled={!table.getCanPreviousPage()}
             >
               <span className="sr-only">Go to previous page</span>
-              <ChevronLeftIcon className="h-4 w-4" />
+              <ChevronLeftIcon />
             </Button>
             <Button
               variant="outline"
@@ -395,7 +395,7 @@ export function ProjectTasksDataTable({ tasks }: ProjectTasksDataTableProps) {
               disabled={!table.getCanNextPage()}
             >
               <span className="sr-only">Go to next page</span>
-              <ChevronRightIcon className="h-4 w-4" />
+              <ChevronRightIcon />
             </Button>
             <Button
               variant="outline"
@@ -404,7 +404,7 @@ export function ProjectTasksDataTable({ tasks }: ProjectTasksDataTableProps) {
               disabled={!table.getCanNextPage()}
             >
               <span className="sr-only">Go to last page</span>
-              <ChevronsRightIcon className="h-4 w-4" />
+              <ChevronsRightIcon />
             </Button>
           </div>
         </div>

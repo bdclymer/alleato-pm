@@ -49,7 +49,7 @@ export function DataTablePaginationResponsive<TData>({
             onClick={() => table.previousPage()}
             disabled={!table.getCanPreviousPage()}
           >
-            <ChevronLeft className="h-4 w-4 mr-1" />
+            <ChevronLeft />
             Previous
           </Button>
 
@@ -64,7 +64,7 @@ export function DataTablePaginationResponsive<TData>({
             disabled={!table.getCanNextPage()}
           >
             Next
-            <ChevronRight className="h-4 w-4 ml-1" />
+            <ChevronRight />
           </Button>
         </div>
 
@@ -131,7 +131,7 @@ export function DataTablePaginationResponsive<TData>({
               disabled={!table.getCanPreviousPage()}
             >
               <span className="sr-only">Go to first page</span>
-              <ChevronsLeft className="h-4 w-4" />
+              <ChevronsLeft />
             </Button>
             <Button
               variant="outline"
@@ -140,7 +140,7 @@ export function DataTablePaginationResponsive<TData>({
               disabled={!table.getCanPreviousPage()}
             >
               <span className="sr-only">Go to previous page</span>
-              <ChevronLeft className="h-4 w-4" />
+              <ChevronLeft />
             </Button>
             <Button
               variant="outline"
@@ -149,7 +149,7 @@ export function DataTablePaginationResponsive<TData>({
               disabled={!table.getCanNextPage()}
             >
               <span className="sr-only">Go to next page</span>
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight />
             </Button>
             <Button
               variant="outline"
@@ -158,7 +158,7 @@ export function DataTablePaginationResponsive<TData>({
               disabled={!table.getCanNextPage()}
             >
               <span className="sr-only">Go to last page</span>
-              <ChevronsRight className="h-4 w-4" />
+              <ChevronsRight />
             </Button>
           </div>
         </div>

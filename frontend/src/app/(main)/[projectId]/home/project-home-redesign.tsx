@@ -370,7 +370,7 @@ export function ProjectHomeRedesign({
     const items: Array<{ id: string; severity: "critical" | "warning" | "info"; title: string; meta: string; href: string }> = [];
 
     if (pendingCOs.length > 0) {
-      const val = pendingCOs.reduce((s, co) => s + (co.amount || 0), 0);
+      const val = pendingCOs.reduce((s, co) => s + (co.total_amount || 0), 0);
       const oldest = Math.max(...pendingCOs.map((co) => differenceInDays(new Date(), new Date(String(co.created_at)))));
       items.push({
         id: "cos",
@@ -428,7 +428,7 @@ export function ProjectHomeRedesign({
   }, [pendingCOs, openRfis, openCEs, lastLogDaysAgo, hasBudget, committedPct, revisedBudget, committedCosts, project.id]);
 
   const attentionItems = React.useMemo(() => {
-    const pendingCoAmount = pendingCOs.reduce((sum, co) => sum + (co.amount || 0), 0);
+    const pendingCoAmount = pendingCOs.reduce((sum, co) => sum + (co.total_amount || 0), 0);
     const oldestPendingCoDays = pendingCOs.length
       ? Math.max(...pendingCOs.map((co) => differenceInDays(new Date(), new Date(String(co.created_at)))))
       : 0;

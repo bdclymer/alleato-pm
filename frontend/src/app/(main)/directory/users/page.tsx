@@ -244,7 +244,7 @@ export default function DirectoryUsersPage() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">
-                <MoreHorizontal className="h-4 w-4" />
+                <MoreHorizontal />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -389,11 +389,11 @@ export default function DirectoryUsersPage() {
 
             <div className="flex items-center gap-2">
               <Button variant="outline" onClick={() => setIsBulkAddOpen(true)}>
-                <Users className="h-4 w-4 mr-2" />
+                <Users />
                 Bulk Add
               </Button>
               <Button onClick={() => setIsAddOpen(true)}>
-                <UserPlus className="h-4 w-4 mr-2" />
+                <UserPlus />
                 Add User
               </Button>
             </div>

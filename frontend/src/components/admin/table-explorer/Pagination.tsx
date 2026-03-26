@@ -113,7 +113,7 @@ export function Pagination({
             disabled={currentPage === 1 || isPending}
             aria-label="First page"
           >
-            <ChevronsLeft className="h-4 w-4" />
+            <ChevronsLeft />
           </Button>
           <Button
             variant="outline"
@@ -122,7 +122,7 @@ export function Pagination({
             disabled={currentPage === 1 || isPending}
             aria-label="Previous page"
           >
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft />
           </Button>
 
           <div className="flex items-center gap-1 px-2 text-sm">
@@ -138,7 +138,7 @@ export function Pagination({
             disabled={currentPage >= totalPages || isPending}
             aria-label="Next page"
           >
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight />
           </Button>
           <Button
             variant="outline"
@@ -147,7 +147,7 @@ export function Pagination({
             disabled={currentPage >= totalPages || isPending}
             aria-label="Last page"
           >
-            <ChevronsRight className="h-4 w-4" />
+            <ChevronsRight />
           </Button>
         </div>
       </div>

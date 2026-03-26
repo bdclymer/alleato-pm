@@ -55,7 +55,7 @@ export function SiteHeader() {
             className="-ml-2 h-12 w-12 p-2 text-muted-foreground hover:text-foreground md:hidden"
             aria-label="Toggle menu"
           >
-            <Menu className="h-6 w-6" />
+            <Menu />
           </Button>
 
           {/* Breadcrumbs — Desktop */}

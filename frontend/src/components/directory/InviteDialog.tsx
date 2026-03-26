@@ -193,7 +193,7 @@ export function InviteDialog({
           </Button>
           <Button onClick={handleSend} disabled={sending || !person.email}>
             {sending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            <Mail className="mr-2 h-4 w-4" />
+            <Mail />
             {isReinvite ? "Resend Invitation" : "Send Invitation"}
           </Button>
         </DialogFooter>

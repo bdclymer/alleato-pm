@@ -302,7 +302,7 @@ export default function ChatRagPage() {
               className="gap-1.5"
               onClick={handleNewChat}
             >
-              <Plus className="h-4 w-4" />
+              <Plus />
               New Thread
             </Button>
           </div>
@@ -352,7 +352,7 @@ export default function ChatRagPage() {
                           variant="ghost"
                           className="h-8 gap-1.5 rounded-full px-3 text-muted-foreground hover:text-foreground"
                         >
-                          <Paperclip className="h-4 w-4" />
+                          <Paperclip />
                           Attach
                         </Button>
                       </div>
@@ -362,7 +362,7 @@ export default function ChatRagPage() {
                         disabled={!input.trim() || isStreaming}
                         onClick={() => void handleSend()}
                       >
-                        <ArrowUp className="h-4 w-4" />
+                        <ArrowUp />
                       </Button>
                     </div>
                   </div>
@@ -484,7 +484,7 @@ export default function ChatRagPage() {
                         variant="ghost"
                         className="h-7 gap-1.5 rounded-full px-2.5 text-muted-foreground hover:text-foreground"
                       >
-                        <Paperclip className="h-3.5 w-3.5" />
+                        <Paperclip />
                         Attach
                       </Button>
                       <Button
@@ -493,7 +493,7 @@ export default function ChatRagPage() {
                         disabled={!input.trim() || isStreaming}
                         onClick={() => void handleSend()}
                       >
-                        <ArrowUp className="h-3.5 w-3.5" />
+                        <ArrowUp />
                       </Button>
                     </div>
                   </div>

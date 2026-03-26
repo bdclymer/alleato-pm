@@ -230,7 +230,7 @@ ${columnRenderSnippet(col)}
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="h-8 w-8">
-          <MoreHorizontal className="h-4 w-4" />
+          <MoreHorizontal />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -823,7 +823,7 @@ export default function TableGeneratorPage() {
                     className="w-full justify-between"
                   >
                     {selectedTable || "Select a table..."}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    <ChevronsUpDown className="shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-full p-0" align="start">
@@ -1179,7 +1179,7 @@ export default function TableGeneratorPage() {
                       )
                     }
                   >
-                    <Copy className="h-4 w-4" />
+                    <Copy />
                     Copy {activeTab === "config" ? "Config" : "Page"}
                   </Button>
                   <Button
@@ -1195,7 +1195,7 @@ export default function TableGeneratorPage() {
                       )
                     }
                   >
-                    <Download className="h-4 w-4" />
+                    <Download />
                     Download {activeTab === "config" ? "Config" : "Page"}
                   </Button>
                 </div>

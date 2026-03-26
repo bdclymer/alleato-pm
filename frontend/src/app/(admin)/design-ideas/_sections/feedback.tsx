@@ -171,7 +171,7 @@ export function FeedbackSection() {
             size="sm"
             onClick={() => toast.error("Failed to save changes")}
           >
-            <AlertCircle className="h-4 w-4" />
+            <AlertCircle />
             Error
           </Button>
           <Button
@@ -179,7 +179,7 @@ export function FeedbackSection() {
             size="sm"
             onClick={() => toast.warning("Unsaved changes will be lost")}
           >
-            <AlertTriangle className="h-4 w-4" />
+            <AlertTriangle />
             Warning
           </Button>
           <Button
@@ -187,7 +187,7 @@ export function FeedbackSection() {
             size="sm"
             onClick={() => toast.info("New version available")}
           >
-            <Info className="h-4 w-4" />
+            <Info />
             Info
           </Button>
         </div>

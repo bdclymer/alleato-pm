@@ -222,7 +222,7 @@ function GroupPreviewPane({
             onClick={() => hasPrev && onSelectGroup(groups[currentIndex - 1].id)}
             aria-label="Previous group"
           >
-            <ChevronLeft className="h-3.5 w-3.5" />
+            <ChevronLeft />
           </Button>
           <Button
             size="icon"
@@ -232,7 +232,7 @@ function GroupPreviewPane({
             onClick={() => hasNext && onSelectGroup(groups[currentIndex + 1].id)}
             aria-label="Next group"
           >
-            <ChevronRight className="h-3.5 w-3.5" />
+            <ChevronRight />
           </Button>
           <span className="text-xs text-muted-foreground ml-1">
             {currentIndex + 1} of {groups.length}
@@ -475,7 +475,7 @@ export default function DistributionGroupsPage(): ReactElement {
                 </SelectContent>
               </Select>
               <Button onClick={() => setIsAddDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus />
                 Add Distribution Group
               </Button>
             </div>

@@ -386,7 +386,7 @@ export function DirectoryTable({
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon">
-                        <MoreHorizontal className="h-4 w-4" />
+                        <MoreHorizontal />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -473,7 +473,7 @@ export function DirectoryTable({
             onClick={() => setShowFilters(!showFilters)}
             className={cn(showFilters && "bg-accent")}
           >
-            <Filter className="mr-2 h-4 w-4" />
+            <Filter />
             Filters
           </Button>
         </div>
@@ -485,7 +485,7 @@ export function DirectoryTable({
             title="Import CSV"
             onClick={() => setIsImportOpen(true)}
           >
-            <Upload className="h-4 w-4" />
+            <Upload />
           </Button>
 
           <Button
@@ -494,7 +494,7 @@ export function DirectoryTable({
             title="Export CSV"
             onClick={() => setIsExportOpen(true)}
           >
-            <Download className="h-4 w-4" />
+            <Download />
           </Button>
 
           <Button
@@ -507,7 +507,7 @@ export function DirectoryTable({
 
           {type === "users" && (
             <Button>
-              <UserPlus className="mr-2 h-4 w-4" />
+              <UserPlus />
               Add User
             </Button>
           )}
@@ -544,7 +544,7 @@ export function DirectoryTable({
             size="sm"
             onClick={() => setIsBulkOpen(true)}
           >
-            <Filter className="mr-2 h-4 w-4" />
+            <Filter />
             Open Bulk Actions
           </Button>
         </div>
@@ -564,9 +564,9 @@ export function DirectoryTable({
                     className="h-8 px-2"
                   >
                     {expandedGroups.size === groups?.length ? (
-                      <ChevronDown className="h-4 w-4" />
+                      <ChevronDown />
                     ) : (
-                      <ChevronRight className="h-4 w-4" />
+                      <ChevronRight />
                     )}
                     <span className="ml-2">All Companies</span>
                   </Button>
@@ -611,9 +611,9 @@ export function DirectoryTable({
                             className="h-6 w-6 p-0"
                           >
                             {expandedGroups.has(group.key) ? (
-                              <ChevronDown className="h-4 w-4" />
+                              <ChevronDown />
                             ) : (
-                              <ChevronRight className="h-4 w-4" />
+                              <ChevronRight />
                             )}
                           </Button>
                           <Building2 className="h-4 w-4 text-muted-foreground" />

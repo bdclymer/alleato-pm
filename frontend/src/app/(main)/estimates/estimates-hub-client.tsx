@@ -104,7 +104,7 @@ export function EstimatesHubClient({ stats }: Props) {
                     }}
                   >
                     View all {EstimateTypeLabels[type]} estimates
-                    <ArrowRight className="ml-1 h-3 w-3" />
+                    <ArrowRight />
                   </Button>
                 </div>
               </button>

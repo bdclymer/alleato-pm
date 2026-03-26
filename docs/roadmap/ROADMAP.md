@@ -9,127 +9,180 @@
 
 ## How to use this document
 
-This is a living roadmap. Work top to bottom by priority tier.
-Each item includes the "why" — read it before building so you understand
-the intent, not just the implementation.
-
+Work top to bottom by priority tier. Each item includes the "why" — read it
+before building so you understand the intent, not just the implementation.
 When you complete an item, mark it done and update WORKING_CONTEXT.md.
 
 ---
 
-## 🔴 IMMEDIATE — Build these now
+## 🔵 IN PROGRESS — Currently being built
+
+### 0. Integrated dev environment — in-app AI coding bridge
+
+**Why this matters:** Right now there are three separate contexts: Claude.ai
+chat (thinking), Claude Code in terminal (building), Alleato in browser
+(testing). Every context switch kills momentum. This collapses them into one.
+
+**What it does:**
+Megan sees a floating "Report Issue" button on any page (dev mode only).
+She clicks it, types a note ("markup dropdown still broken"), and submits.
+The annotation is saved with the current URL, a screenshot, and element info.
+Claude Code polls for new annotations, opens the page in agent-browser,
+reads the relevant component, diagnoses the issue, and posts a reply —
+visible back in the overlay without leaving the app.
+
+**Files to build (being built now):**
+- `supabase/migrations/20260323100000_dev_annotations.sql`
+- `frontend/src/app/api/dev/annotate/route.ts`
+- `frontend/src/components/dev/dev-annotation-overlay.tsx`
+- `scripts/dev-bridge/watch-annotations.ts`
+
+**Wire into root layout (dev only):**
+```tsx
+{process.env.NODE_ENV === 'development' && <DevAnnotationOverlay />}
+```
+
+**Future extensions once v1 works:**
+- Liveblocks threads: Claude Code's cursor visible in real time on the page
+- Element picker: click any element, auto-capture selector + component path
+- Playwright failures auto-create annotations
+- Voice note → Whisper → annotation (zero typing)
+
+---
+
+## 🔴 IMMEDIATE — Build these next
+
+### 1. Client feedback system (triage inbox + client annotation UI)
+
+**Full spec:** `docs/CLIENT-FEEDBACK-SYSTEM.md`
+
+**Why this is urgent:** Before any client gets access to Alleato, there needs
+to be a way for them to report issues and for you to manage them. Without this,
+client feedback happens via text/email and gets lost.
+
+**The key design decision:**
+Clients annotate → Megan reviews in triage inbox → Megan decides what happens.
+Nothing goes directly to AI coding. Megan is the gatekeeper. Always.
+
+**Two surfaces to build:**
+
+Client-facing: A subtle "Leave feedback" button on client-dashboard pages.
+Simple text + optional screenshot. Shows their own submission history with
+plain-language status (not jargon). Mobile friendly.
+
+Internal triage inbox: Linear-style list at `/feedback`. All client feedback
+across all projects. One-click actions: Respond / Send to Claude Code /
+Create GitHub issue / Post to Slack / Create Linear issue / Dismiss.
+
+**Build order (from spec):**
+1. Migration (`supabase/migrations/20260323200000_client_feedback.sql`)
+2. API routes (`/api/feedback/`)
+3. Triage inbox page (useful to Megan immediately, before client UI)
+4. Client feedback button (client-dashboard layout only)
+5. Respond action + client notification
+6. Slack notification on new feedback
+7. "Send to Claude Code" structured prompt
+8. GitHub / Linear integrations
+
+**Connection to Agentation:**
+Agentation = internal (Megan → Claude Code directly)
+Client feedback = external (Client → Megan → Claude Code via triage)
+These are complementary. Never connect client feedback directly to AI coding.
+
+---
 
 ### 1. Subcontractor invoice & billing submission system
 
-**Why this is urgent:** Subcontractors need to submit invoices and sign commitment
-terms, and there's currently no system for this. Every week without it is manual
-coordination overhead for Alleato Group.
+**Why this is urgent:** Subcontractors need to submit invoices and sign
+commitment terms. There is no system for this. Every week without it is
+manual coordination overhead for Alleato Group.
 
-**The key design insight (from Megan):**
+**The key design insight:**
 The construction industry is NOT tech-savvy. Subcontractors hate new tools.
-The less they have to do, the higher the adoption rate.
-Do NOT build a full login portal if a simpler path exists.
+The less they have to do, the higher the adoption rate. Do NOT build a full
+login portal — a magic link approach gets better adoption.
 
 **Recommended approach — two-tier system:**
 
-Tier A (no login required): For invoice submission and line item updates,
-send subcontractors a **magic link** to a pre-filled form scoped to their
-commitment. They see only their line items, fill in quantities/amounts,
-and submit. No account creation, no password, no learning curve.
-This is essentially a public-facing page behind a UUID token — like
-how DocuSign or Typeform work.
+Tier A (no login): Send subcontractors a magic link scoped to their
+commitment. They see only their line items, fill in amounts, and submit.
+No account creation, no password, no learning curve. Works like DocuSign
+or Typeform — public page behind a UUID token.
 
-Tier B (for terms signing): Use a similar magic link approach for
-commitment terms. Show the terms, collect a name + signature (typed or
-drawn), timestamp it, store it. Does not require a full DocuSign integration
-— can be done in-app with a canvas signature element.
+Tier B (terms signing): Same magic link. Show terms, collect name +
+typed signature, timestamp it, store it. No DocuSign integration needed.
 
 **What to build:**
-- `subcontractor_tokens` table — UUID token, commitment_id, expires_at, used_at
-- `/sub/[token]` public route — shows commitment details + invoice form
-- Token generation triggered when a commitment is created or terms are sent
-- Email trigger that sends the magic link to the subcontractor's email
-- Signature capture on terms page (typed name + timestamp at minimum)
+- `subcontractor_tokens` table: uuid token, commitment_id, expires_at, used_at
+- `/sub/[token]` public route: shows commitment + invoice form
+- Token generation when commitment is created
+- Email trigger with magic link
+- Signature capture (typed name + timestamp minimum)
 - Store signed_at, signed_by, ip_address on commitment record
-- Admin view showing submission status per subcontractor
+- Admin view: submission status per subcontractor
 
 **What NOT to build:**
-- Full subcontractor account/login system (too much friction)
-- A separate app or portal (keep it within Alleato's domain)
-
-**Spreadsheet alternative (if magic link is too complex for v1):**
-Generate a pre-formatted Excel file with validation rules per commitment
-(locked headers, dropdown status options, formula-protected totals).
-Subcontractor fills it in, emails it back or uploads it.
-Less ideal but gets the job done immediately.
+- Full subcontractor login/account system (too much friction)
+- Separate app or portal
 
 ---
 
 ### 2. Nightly proactive intelligence scan
 
-**Why this is urgent:** Right now the AI only responds when asked.
-This feature makes it proactive — surfacing issues before anyone thinks to ask.
-It changes the relationship with the tool from "assistant" to "team member."
-
-**What it does:** Runs nightly via cron, scans the portfolio, and sends
-alerts when thresholds are crossed or patterns are detected.
+**Why this is urgent:** The AI only responds when asked. This makes it
+proactive — surfacing issues before anyone thinks to ask. It changes the
+relationship from "assistant" to "team member."
 
 **What to build:**
-- Cron job at `/api/cron/nightly-scan` (cron directory already exists)
-- Scans: budget variance > 8% of original, open RFIs past due date,
-  change orders pending > 14 days, projects with no meeting in 30 days,
-  new AI insights flagged as high/critical since last scan
-- Stores scan results in a new `proactive_alerts` table
-- Sends a digest (email or in-app notification) to Megan
-- Each alert links directly to the relevant record in Alleato
+- Cron job at `/api/cron/nightly-scan` (cron dir exists)
+- Scans: budget variance > 8%, RFIs past due, COs pending > 14 days,
+  projects with no meeting in 30 days, new high/critical AI insights
+- Stores results in `proactive_alerts` table
+- Sends digest (email or in-app notification) with links to records
 
-**Schema needed:**
+**Schema:**
+```sql
+create table proactive_alerts (
+  id uuid primary key default gen_random_uuid(),
+  project_id integer references projects(id),
+  alert_type text not null,
+  message text not null,
+  severity text default 'medium',
+  linked_record_type text,
+  linked_record_id text,
+  sent_at timestamptz default now(),
+  dismissed_at timestamptz
+);
 ```
-proactive_alerts:
-  id, project_id, alert_type, message, severity,
-  linked_record_type, linked_record_id, sent_at, dismissed_at
-```
-
-**Trigger phrases the AI should recognize:**
-"What did the nightly scan find?" / "Any alerts today?" / "What's at risk?"
 
 ---
 
-### 3. RFI, RFQ, and submittal process — needs definition + implementation
+### 3. RFI, RFQ, and submittal process — define then build
 
-**Why this is urgent:** These are core construction PM workflows. Megan noted
-she doesn't fully understand how the RFI/RFQ/submittal process should work
-in Alleato yet. This needs to be defined AND built.
+**Plain English definitions:**
 
-**Plain English definitions (for context):**
+RFI (Request for Information) — A question about drawings/specs that
+needs a formal answer from the architect. Unanswered RFIs cause delays.
 
-RFI (Request for Information) — A subcontractor or GC has a question
-about the drawings or specs that needs a formal answer from the architect
-or engineer. It gets logged, assigned, tracked, and answered. Unanswered
-RFIs cause delays and disputes.
+RFQ (Request for Quote) — Alleato needs pricing from a subcontractor.
+Gets logged, sent out, responses tracked and compared.
 
-RFQ (Request for Quote) — Alleato needs pricing from a subcontractor
-or supplier for a specific scope. Gets logged, sent out, responses
-tracked, and compared.
+Submittal — Before a subcontractor installs something, they submit shop
+drawings for design team approval. Not approved = can't install.
 
-Submittal — Before a subcontractor installs something (steel, windows,
-mechanical equipment), they submit shop drawings or product data for
-the design team to review and approve. If it's not approved, it can't
-be installed. Tracking submittals is critical to schedule.
-
-**What's already in the DB:** rfis table, submittals table both exist.
-The `createRFI` and `createSubmittal` action tools were built today.
+**What's already in the DB:** rfis and submittals tables exist.
+createRFI and createSubmittal action tools were built March 23.
 
 **What's missing:**
-- Clear workflow status progression per record type (who does what, when)
-- Email/notification triggers at each stage (RFI submitted → architect notified, etc.)
-- Dashboard view showing open RFIs by ball-in-court, overdue submittals
-- AI tool: `getOpenRFIsByAssignee` — who's holding things up
-- AI tool: `getSubmittalLog` — what's approved, pending, overdue
+- Workflow status progression (who does what, in what order)
+- Email/notification triggers at each stage
+- Dashboard: open RFIs by ball-in-court, overdue submittals by project
+- AI tool: getOpenRFIsByAssignee — who's holding things up
+- AI tool: getSubmittalLog — approved, pending, overdue
 
-**Recommended first step:** Book a 30-min session with Megan to walk through
-the actual field workflow before building the UI. The DB tables exist —
-the process definition is what's needed first.
+**Recommended first step:** Walk through the actual field workflow with
+Megan before building the UI. The DB tables exist — the process needs
+definition first.
 
 ---
 
@@ -137,59 +190,45 @@ the process definition is what's needed first.
 
 ### 4. Meeting → project update automation
 
-**Why:** You already have Fireflies ingestion, embeddings, and action item
-extraction. The output side is missing: after a meeting is ingested,
-automatically draft a status update, flag new risks mentioned in the transcript,
-and create tasks from action items — then ask for review before saving.
+**Why:** Fireflies ingestion already works. What's missing is the output
+side: after a meeting is ingested, automatically draft a status update,
+flag new risks from the transcript, and create tasks from action items —
+then ask for review before saving.
 
 **What to build:**
-- Trigger: new row inserted into `document_metadata` with type=meeting
-- Pipeline: call AI with the transcript → extract risks, action items, decisions
-- Output: draft `ai_insights` records (severity=medium, resolved=0),
-  draft `schedule_tasks` for each action item
-- Review UI: a simple "review meeting output" modal showing what the AI found,
-  with approve/dismiss per item
-- Only save approved items
-
-**This closes the loop on the Fireflies pipeline — it currently ingests
-but doesn't act on what it finds.**
+- Trigger: new row in `document_metadata` with type=meeting
+- Pipeline: AI reads transcript → extracts risks, action items, decisions
+- Output: draft `ai_insights` (resolved=0) + draft `schedule_tasks`
+- Review UI: modal showing AI findings with approve/dismiss per item
+- Only save approved items — never auto-write without review
 
 ---
 
 ### 5. Voice-in → action-out (mobile)
 
-**Why:** Megan has ideas constantly and loses them. The ambient capture
-pipeline was designed today (see MEMORY-SYSTEM.md for details). This extends
-it specifically to Alleato actions — so a voice note can create a record.
+**Why:** Megan loses ideas constantly due to capture friction. This lets
+a voice note directly create an Alleato record while driving to a jobsite.
 
 **What to build:**
-- Mobile-friendly voice input endpoint in the Alleato chat
-- Press-and-hold to record, releases to transcribe via Whisper
-- Transcription sent to the AI assistant as a message
-- AI recognizes action intent and calls the appropriate action tool
-- Example: "Create an RFI for the HVAC clearance issue on Vermillian,
-  ball in court is the architect, due this Friday" → creates RFI record
-
-**Dependencies:** Whisper API already available, action tools built today,
-mobile viewport already designed for.
+- Mobile-friendly voice input in the chat (press-hold to record)
+- Releases to transcribe via Whisper API
+- AI recognizes action intent → calls the appropriate action tool
+- "Create an RFI for the HVAC clearance issue, ball in court is the
+  architect, due Friday" → creates the RFI record, done
 
 ---
 
 ### 6. Predictive budget variance model
 
-**Why:** Owners pay a premium for visibility into where their budget is going
-before it gets there. This is a genuine competitive differentiator.
+**Why:** Owners pay a premium for forward-looking financial visibility.
 
 **What to build:**
-- Query historical budget data across all completed/current projects
-- Find the pattern: at what % completion do change orders typically spike?
-  What types of change events most often become approved COs?
-- For current projects: at the same stage, how did similar projects trend?
-- Output: "Based on 8 comparable projects, budget is likely to grow 12-18%
-  before completion. Current trajectory: 9% growth with 40% complete."
-- Display as a range/confidence band in the project financial dashboard
-
-**This is an analytics layer — no new data needed, just new queries + AI synthesis.**
+- Query historical budget data across completed/current projects
+- Pattern: at what % complete do COs typically spike?
+- For current projects: at same stage, how did similar projects trend?
+- Output: "Based on 8 comparable projects, budget likely grows 12-18%
+  before completion. Current trajectory: 9% at 40% complete."
+- Display as confidence range in the financial dashboard
 
 ---
 
@@ -197,88 +236,55 @@ before it gets there. This is a genuine competitive differentiator.
 
 ### 7. Client-facing dashboard (scoped read-only + AI)
 
-**Why:** Clients currently get updates through email or meetings. A real-time
-dashboard where they can log in, see their project, and ask questions without
-Alleato Group being in the loop is a huge value-add for owners.
+Clients log in to see their project in real time and ask the AI questions
+without Alleato Group being in the loop. Significant build — don't start
+until immediate items are complete.
 
-**Design constraints:**
-- Scoped: client sees ONLY their project data
-- AI responses must be filtered: no internal notes, no margin data,
-  no subcontractor pricing
-- Read-only: no actions available to clients
-- Language: AI responds in owner-appropriate language (not construction jargon)
-
-**What to build:**
-- Separate auth role: client (vs. admin, team member)
-- RLS policies scoped to client's project_id
-- `/client/[projectId]` route with simplified dashboard
-- Scoped AI system prompt that strips internal context
-- Optional: white-labeled subdomain per client
-
-**This is a significant build — don't start until the immediate items are done.**
-
----
+**Constraints:**
+- Scoped: client sees ONLY their project
+- AI filtered: no internal notes, no margin data, no subcontractor pricing
+- Read-only: no actions for clients
+- Language: owner-appropriate, not construction jargon
 
 ### 8. Agent-to-agent autonomous workflows
 
-**Why:** Currently agents consult each other (Strategist → CFO). The next level
-is agents that hand off tasks autonomously without user prompting.
+CFO detects budget variance → briefs COO on schedule impact → COO flags
+subcontractor → action tool creates RFI + risk record → nightly scan alerts.
 
-**Example workflow:**
-CFO detects budget variance > 10% →
-automatically briefs COO on schedule implications →
-COO flags the affected subcontractor commitment →
-action tool creates an RFI and a risk record →
-nightly scan picks it up and alerts Megan
+Architecture already heading here. Not a near-term build.
 
-**This requires:**
-- Inter-agent message passing (not just consultation)
-- Workflow state machine: what triggers what, in what order
-- Guardrails: what requires human approval vs. runs autonomously
-- Audit trail: every autonomous action logged with reasoning
+### 9. Alleato as a platform
 
-**Not a near-term build — but the architecture is already heading here.**
+The architecture being built — multi-agent C-Suite, Acumatica integration,
+Fireflies pipeline, action tools, subcontractor portal — doesn't exist
+anywhere else at this sophistication level. The procore-crawls directory
+suggests the competitive analysis has been done. Whether Alleato Group is
+the client or the first customer of a product Megan sells more broadly
+is a business question — but the technical foundation handles either path.
 
 ---
 
-### 9. Alleato as a platform (the bigger opportunity)
+## Priority quick reference
 
-**Context:** The architecture being built here — multi-agent C-Suite,
-Acumatica integration, Fireflies pipeline, action tools, subcontractor
-portal — doesn't exist anywhere else at this sophistication level.
-
-Procore costs $300-600/user/month and does not have AI anywhere close
-to this. The `procore-crawls` directory in this project suggests the
-competitive analysis has already been done.
-
-**The question to eventually answer:** Is Alleato Group the client,
-or are they the first customer of a product Megan could sell to
-other construction firms?
-
-This is a business question, not a technical one. But the technical
-foundation is being built correctly for either path.
-
----
-
-## Quick reference — all items by priority
-
-| Priority | Item | Est. complexity |
-|----------|------|----------------|
-| 🔴 Now | Subcontractor invoice + billing + terms signing | Medium-High |
-| 🔴 Now | Nightly proactive intelligence scan | Low-Medium |
-| 🔴 Now | RFI/RFQ/submittal workflow definition + build | Medium |
-| 🟡 High | Meeting → project update automation | Medium |
-| 🟡 High | Voice-in → action-out (mobile) | Medium |
-| 🟡 High | Predictive budget variance model | Medium |
-| 🟢 Future | Client-facing dashboard | High |
-| 🟢 Future | Agent-to-agent autonomous workflows | High |
+| Priority | Item | Complexity |
+|----------|------|-----------|
+| 🔵 Now | Dev bridge (disabled — Agentation handles this) | Done |
+| 🔴 Now | **Client feedback system** (triage inbox + client UI) | Med-High |
+| 🔴 Now | Subcontractor invoice + terms signing | Med-High |
+| 🔴 Now | Nightly proactive scan | Low-Med |
+| 🔴 Now | RFI/RFQ/submittal workflow | Med |
+| 🟡 High | Meeting → project update automation | Med |
+| 🟡 High | Voice-in → action-out | Med |
+| 🟡 High | Predictive budget variance | Med |
+| 🟢 Future | Client-facing dashboard (full auth + scoping) | High |
+| 🟢 Future | Agent-to-agent workflows | High |
 | 🟢 Future | Alleato as a platform | Strategic |
 
 ---
 
 ## Related documents
 
-- `HANDOFF.md` — what was built today, where files are, how to test
+- `HANDOFF.md` — what was built March 23, file locations, how to test
 - `WORKING_CONTEXT.md` — current session state, what's in progress
 - `CLAUDE.md` — your operating instructions for this codebase
 - `docs/AGENTIC-TOOL-LAYER.md` — action tools detail

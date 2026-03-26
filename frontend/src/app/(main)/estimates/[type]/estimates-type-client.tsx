@@ -285,7 +285,7 @@ export function EstimatesTypeClient({ estimateType, typeSlug, estimates }: Props
           description: `All ${typeLabel} estimates across all projects`,
           actions: (
             <Button variant="outline" size="sm" onClick={() => router.push("/estimates")}>
-              <ChevronLeft className="mr-1 h-4 w-4" />
+              <ChevronLeft />
               All Types
             </Button>
           ),
@@ -322,7 +322,7 @@ export function EstimatesTypeClient({ estimateType, typeSlug, estimates }: Props
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreHorizontal className="h-4 w-4" />
+                  <MoreHorizontal />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">

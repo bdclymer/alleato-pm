@@ -846,7 +846,7 @@ export function CreatePurchaseOrderForm({
             disabled={isSubmitting}
             className="h-10 gap-2 px-4"
           >
-            <Plus className="h-4 w-4" />
+            <Plus />
             Add Line Item
           </Button>
           <Select

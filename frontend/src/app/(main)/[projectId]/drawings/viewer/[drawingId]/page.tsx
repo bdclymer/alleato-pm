@@ -472,7 +472,7 @@ export default function DrawingViewerPage() {
                   disabled={!prevDrawing}
                   onClick={() => prevDrawing && navigateToDrawing(prevDrawing.id)}
                 >
-                  <ChevronLeft className="h-4 w-4" />
+                  <ChevronLeft />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">{prevDrawing ? `Previous: ${prevDrawing.title}` : "No previous drawing"}</TooltipContent>
@@ -486,7 +486,7 @@ export default function DrawingViewerPage() {
                   disabled={!nextDrawing}
                   onClick={() => nextDrawing && navigateToDrawing(nextDrawing.id)}
                 >
-                  <ChevronRight className="h-4 w-4" />
+                  <ChevronRight />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">{nextDrawing ? `Next: ${nextDrawing.title}` : "No next drawing"}</TooltipContent>
@@ -551,7 +551,7 @@ export default function DrawingViewerPage() {
                   className="h-7 w-7 p-0 text-zinc-300 hover:text-white hover:bg-zinc-700"
                   onClick={handleDownload}
                 >
-                  <Download className="h-4 w-4" />
+                  <Download />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="bottom">Download</TooltipContent>

@@ -44,7 +44,7 @@ export function MobileFilterModal({
           size="sm"
           className={cn("relative", className)}
         >
-          <Filter className="h-4 w-4" />
+          <Filter />
           <span className="sr-only">Open filters</span>
           {hasActiveFilters && (
             <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-primary" />

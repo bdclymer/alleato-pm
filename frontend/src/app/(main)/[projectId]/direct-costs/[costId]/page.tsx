@@ -227,7 +227,7 @@ export default function DirectCostDetailPage({
                 router.push(`/${resolvedParams.projectId}/direct-costs`)
               }
             >
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <ArrowLeft />
               Back to Direct Costs
             </Button>
           </div>
@@ -250,7 +250,7 @@ export default function DirectCostDetailPage({
         actions={
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={handleOpenEdit}>
-              <Pencil className="mr-2 h-4 w-4" />
+              <Pencil />
               Edit
             </Button>
             <Button

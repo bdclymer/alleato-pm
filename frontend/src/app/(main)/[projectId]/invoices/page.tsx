@@ -535,7 +535,7 @@ export default function ProjectInvoicesPage(): ReactElement {
 
   const createInvoiceAction = (
     <Button size="sm" onClick={() => router.push(`/${projectId}/invoicing/new`)}>
-      <Plus className="mr-2 h-4 w-4" />
+      <Plus />
       New Invoice
     </Button>
   );
@@ -633,7 +633,7 @@ export default function ProjectInvoicesPage(): ReactElement {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-            <MoreHorizontal className="h-4 w-4" />
+            <MoreHorizontal />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -660,7 +660,7 @@ export default function ProjectInvoicesPage(): ReactElement {
               size="sm"
               onClick={() => setCreateBpOpen(true)}
             >
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus />
               Create Billing Period
             </Button>
           ),
@@ -889,7 +889,7 @@ export default function ProjectInvoicesPage(): ReactElement {
         isFiltered,
         action: (
           <Button size="sm" onClick={() => router.push(`/${projectId}/invoicing/new`)}>
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus />
             Create invoice
           </Button>
         ),

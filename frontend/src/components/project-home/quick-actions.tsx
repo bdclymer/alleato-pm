@@ -35,7 +35,7 @@ export function QuickActions({ actions, projectId }: QuickActionsProps) {
                 variant="outline"
                 className="w-full justify-start gap-2 h-10"
               >
-                <Icon className="w-4 h-4" />
+                <Icon />
                 {action.label}
               </Button>
             </Link>

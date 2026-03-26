@@ -943,7 +943,7 @@ export function BudgetTable({
               onClick={handleEdit}
               aria-label="Edit line item"
             >
-              <Pencil className="h-3.5 w-3.5 text-muted-foreground" />
+              <Pencil className="text-muted-foreground" />
             </Button>
           </div>
         );
@@ -1191,7 +1191,7 @@ export function BudgetTable({
                       disabled={isCreating || !newLineItem.description.trim()}
                       title="Save (Enter)"
                     >
-                      <Check className="h-4 w-4 text-success" />
+                      <Check className="text-success" />
                     </Button>
                     <Button
                       size="icon"

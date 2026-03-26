@@ -129,7 +129,7 @@ function ExpandableSearch({
                 className="h-8 w-8"
                 onClick={() => setIsExpanded(true)}
               >
-                <Search className="h-4 w-4" />
+                <Search />
               </Button>
             </TooltipTrigger>
             <TooltipContent>Search</TooltipContent>
@@ -301,7 +301,7 @@ function FilterMenu({
           <TooltipTrigger asChild>
             <PopoverTrigger asChild>
               <Button variant="ghost" size="icon" className="relative h-8 w-8 shrink-0">
-                <Filter className="h-4 w-4" />
+                <Filter />
                 <TableCountIndicator count={activeCount} className="absolute -right-1 -top-1 bg-secondary text-secondary-foreground" />
               </Button>
             </PopoverTrigger>
@@ -495,7 +495,7 @@ export function TableToolbar({
                 className="relative h-9 w-9 shrink-0 p-0"
                 aria-label="Open table controls"
               >
-                <Filter className="h-4 w-4" />
+                <Filter />
                 <TableCountIndicator count={activeFilterCount} className="absolute -right-1 -top-1" />
               </Button>
             </SheetTrigger>
@@ -591,7 +591,7 @@ export function TableToolbar({
                       {mobilePanelActions}
                       {enableExport && onExport ? (
                         <Button variant="outline" size="sm" className="w-full justify-start" onClick={onExport}>
-                          <Download className="mr-2 h-4 w-4" />
+                          <Download />
                           Export
                         </Button>
                       ) : null}
@@ -677,7 +677,7 @@ export function TableToolbar({
                     className="h-8 w-8 shrink-0"
                     onClick={onExport}
                   >
-                    <Download className="h-5 w-5" />
+                    <Download />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Export</TooltipContent>

@@ -242,7 +242,7 @@ export function CostCodesTab({ projectId }: CostCodesTabProps) {
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" size="icon">
-                <Search className="h-4 w-4" />
+                <Search />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-80" align="end">

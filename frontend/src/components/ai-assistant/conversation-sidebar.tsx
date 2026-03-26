@@ -138,7 +138,7 @@ function ConversationActions({
           className="h-7 w-7 rounded-md text-sidebar-foreground/40 hover:bg-sidebar-accent hover:text-sidebar-foreground"
           onClick={(event) => event.stopPropagation()}
         >
-          <MoreHorizontalIcon className="h-4 w-4" />
+          <MoreHorizontalIcon />
           <span className="sr-only">Conversation actions</span>
         </Button>
       </DropdownMenuTrigger>
@@ -263,7 +263,7 @@ export function ConversationSidebar({
               className="h-9 gap-2 rounded-full border border-border/70 bg-accent px-3 text-foreground hover:bg-accent/80"
               onClick={onNewChat}
             >
-              <PlusIcon className="h-4 w-4" />
+              <PlusIcon />
               <span className="text-sm">New chat</span>
             </Button>
           </TooltipTrigger>
@@ -279,7 +279,7 @@ export function ConversationSidebar({
                   variant="ghost"
                   className="h-9 gap-2 rounded-full border border-border/70 bg-accent px-3 text-foreground hover:bg-accent/80"
                 >
-                  <HistoryIcon className="h-4 w-4" />
+                  <HistoryIcon />
                   <span className="text-sm">Chat history</span>
                 </Button>
               </SheetTrigger>
@@ -307,7 +307,7 @@ export function ConversationSidebar({
                       onNewChat();
                     }}
                   >
-                    <PlusIcon className="h-4 w-4" />
+                    <PlusIcon />
                     <span className="sr-only">New chat</span>
                   </Button>
                 </div>

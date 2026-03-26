@@ -206,7 +206,7 @@ function CompanyProfileTab() {
           </p>
         </div>
         <Button size="sm" onClick={handleSave} disabled={updateCtx.isPending}>
-          <Save className="h-3.5 w-3.5 mr-1.5" />
+          <Save />
           {updateCtx.isPending ? "Saving..." : "Save"}
         </Button>
       </div>
@@ -362,7 +362,7 @@ function KnowledgeArticlesTab() {
                 setDialogOpen(true);
               }}
             >
-              <Plus className="h-3.5 w-3.5 mr-1.5" />
+              <Plus />
               Add Article
             </Button>
           </DialogTrigger>
@@ -479,7 +479,7 @@ function KnowledgeArticlesTab() {
                     setDialogOpen(true);
                   }}
                 >
-                  <Pencil className="h-3.5 w-3.5" />
+                  <Pencil />
                 </Button>
                 <Button
                   variant="ghost"
@@ -753,7 +753,7 @@ function DocumentsTab() {
             size="sm"
             onClick={() => fileInputRef.current?.click()}
           >
-            <Upload className="h-3.5 w-3.5 mr-1.5" />
+            <Upload />
             Upload Document
           </Button>
         </div>

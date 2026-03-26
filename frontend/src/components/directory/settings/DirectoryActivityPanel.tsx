@@ -51,7 +51,7 @@ export function DirectoryActivityPanel({
           onClick={loadActivity}
           disabled={loading}
         >
-          <RefreshCw className="h-4 w-4 mr-2" />
+          <RefreshCw />
           Refresh
         </Button>
       </CardHeader>

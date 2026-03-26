@@ -57,7 +57,7 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
-import { PrimeContractTabs } from "./components/PrimeContractTabs";
+import { PageTabs } from "@/components/layout/PageTabs";
 import { PrimeContractOverviewTab } from "./components/PrimeContractOverviewTab";
 import { PrimeContractDialogs } from "./components/PrimeContractDialogs";
 import { ContractForm } from "@/components/domain/contracts";
@@ -1720,7 +1720,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
             onClick={handleBack}
             className="mt-[var(--group-gap)]"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
+            <ArrowLeft />
             Back to Contracts
           </Button>
         </Card>
@@ -1753,7 +1753,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
       title: contract.title,
       status: contract.status,
       executed: contract.executed,
-      ownerCompanyId: contract.client_id || contract.contract_company_id || undefined,
+      ownerCompanyId: contract.client_id != null ? String(contract.client_id) : contract.contract_company_id != null ? String(contract.contract_company_id) : undefined,
       contractorId: contract.contractor_id || undefined,
       architectEngineerId: contract.architect_engineer_id || undefined,
       contractCompanyId: contract.contract_company_id || undefined,
@@ -1831,9 +1831,9 @@ const [isSovEditing, setIsSovEditing] = useState(false);
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="default" size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus />
                   Create
-                  <ChevronDown className="h-4 w-4 ml-2" />
+                  <ChevronDown />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -1887,7 +1887,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
               aria-label="Sync from Acumatica"
               title="Sync invoices & payments from Acumatica"
             >
-              <RefreshCw className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} />
+              <RefreshCw className={isSyncing ? "animate-spin" : undefined} />
             </Button>
             <Button
               variant="outline"
@@ -1899,7 +1899,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
               aria-label="Email"
               title="Email"
             >
-              <Mail className="h-4 w-4" />
+              <Mail />
             </Button>
             <Button
               variant="outline"
@@ -1911,7 +1911,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
               aria-label="Export"
               title="Export"
             >
-              <Download className="h-4 w-4" />
+              <Download />
             </Button>
 
             <Button
@@ -1921,23 +1921,30 @@ const [isSovEditing, setIsSovEditing] = useState(false);
               aria-label="Edit Contract"
               title="Edit Contract"
             >
-              <Pencil className="h-4 w-4" />
+              <Pencil />
             </Button>
           </div>
         }
       />
 
-      <PrimeContractTabs
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        changeOrdersCount={changeOrdersCount}
-        paymentApplicationsCount={paymentApplications.length}
-        paymentsCount={payments.length}
+      <PageTabs
+        variant="inline"
+        className="border-b border-border"
+        tabs={[
+          { label: "General", href: "overview", isActive: activeTab === "overview" },
+          { label: "Change Orders", href: "change-orders", isActive: activeTab === "change-orders", count: changeOrdersCount || undefined },
+          { label: "Invoices", href: "invoices", isActive: activeTab === "invoices", count: paymentApplications.length || undefined },
+          { label: "Payments Received", href: "payments", isActive: activeTab === "payments", count: payments.length || undefined },
+          { label: "Emails", href: "emails", isActive: activeTab === "emails" },
+          { label: "Change History", href: "history", isActive: activeTab === "history" },
+          { label: "Financial Markup", href: "financial-markup", isActive: activeTab === "financial-markup" },
+          { label: "Advanced Settings", href: "advanced-settings", isActive: activeTab === "advanced-settings" },
+        ]}
+        onTabClick={(href) => setActiveTab(href as ContractTab)}
       />
 
-      <div className="space-y-[var(--section-gap)]">
+      {activeTab === "overview" && (
         <PrimeContractOverviewTab
-          activeTab={activeTab}
           contract={contract}
           attachments={attachments}
           attachmentsLoading={attachmentsLoading}
@@ -1969,9 +1976,9 @@ lineItemsLoading={lineItemsLoading}
           onRequestCreateBudgetCode={handleRequestCreateBudgetCodeForSovLine}
           onDeleteSovLine={handleDeleteSovLine}
         />
+        )}
 
-        
-{activeTab === "change-orders" && (
+        {activeTab === "change-orders" && (
           <div>
             <div className="bg-background">
               <div className="flex items-center justify-between mb-4">
@@ -1985,7 +1992,7 @@ lineItemsLoading={lineItemsLoading}
                   </p>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => setShowNewCoDialog(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus />
                   New Change Order
                 </Button>
               </div>
@@ -2058,7 +2065,7 @@ lineItemsLoading={lineItemsLoading}
                                 title="Download PDF"
                                 aria-label={`Download ${co.change_order_number || "change order"} PDF`}
                               >
-                                <Download className="h-3.5 w-3.5" />
+                                <Download />
                               </Button>
                               {co.status !== "approved" && co.status !== "rejected" && (
                                 <>
@@ -2068,7 +2075,7 @@ lineItemsLoading={lineItemsLoading}
                                     className="h-7 px-2 text-xs text-green-700 border-green-300 hover:bg-green-50"
                                     onClick={() => handleApproveCo(co.id)}
                                   >
-                                    <Check className="h-3 w-3 mr-1" />
+                                    <Check />
                                     Approve
                                   </Button>
                                   <Button
@@ -2124,7 +2131,7 @@ lineItemsLoading={lineItemsLoading}
                   </p>
                 </div>
                 <Button size="sm" onClick={() => setShowAddInvoiceDialog(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus />
                   New Invoice
                 </Button>
               </div>
@@ -2356,7 +2363,7 @@ lineItemsLoading={lineItemsLoading}
                   </p>
                 </div>
                 <Button size="sm" onClick={() => setShowAddPaymentDialog(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus />
                   Record Payment
                 </Button>
               </div>
@@ -2608,7 +2615,7 @@ lineItemsLoading={lineItemsLoading}
                   </p>
                 </div>
                 <Button size="sm" onClick={openAddMarkupDialog}>
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus />
                   Add Markup
                 </Button>
               </div>
@@ -2668,7 +2675,7 @@ lineItemsLoading={lineItemsLoading}
                                   className="h-7 px-2"
                                   onClick={() => openEditMarkupDialog(markup)}
                                 >
-                                  <Pencil className="h-3.5 w-3.5" />
+                                  <Pencil />
                                 </Button>
                                 <Button
                                   variant="ghost"
@@ -2818,8 +2825,6 @@ lineItemsLoading={lineItemsLoading}
             </div>
           </div>
         )}
-      </div>
-
       <PrimeContractDialogs
         showAddLineItemDialog={showAddLineItemDialog}
         setShowAddLineItemDialog={setShowAddLineItemDialog}

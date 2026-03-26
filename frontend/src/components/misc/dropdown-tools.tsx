@@ -49,7 +49,7 @@ export function DropdownTools() {
         >
           <span className="text-xs text-muted-foreground">Project Tools</span>
           <span className="ml-2 text-sm font-medium">{currentTool}</span>
-          <ChevronDown className="ml-1 h-3 w-3" />
+          <ChevronDown />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent

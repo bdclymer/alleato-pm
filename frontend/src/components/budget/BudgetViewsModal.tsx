@@ -340,7 +340,7 @@ export function BudgetViewsModal({
                         className="h-8 w-8 p-0 cursor-grab"
                         disabled={view?.is_system}
                       >
-                        <GripVertical className="h-4 w-4" />
+                        <GripVertical />
                       </Button>
 
                       <div className="flex-1 min-w-0">
@@ -386,9 +386,9 @@ export function BudgetViewsModal({
                           className="h-8 w-8 p-0"
                         >
                           {col.is_visible ? (
-                            <Eye className="h-4 w-4" />
+                            <Eye />
                           ) : (
-                            <EyeOff className="h-4 w-4" />
+                            <EyeOff />
                           )}
                         </Button>
                         <Button

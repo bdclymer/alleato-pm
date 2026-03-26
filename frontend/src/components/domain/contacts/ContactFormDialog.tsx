@@ -356,7 +356,7 @@ export function ContactFormDialog({
                           className="w-full justify-start text-primary hover:text-primary"
                           onClick={handleAddCompanyClick}
                         >
-                          <Plus className="mr-2 h-4 w-4" />
+                          <Plus />
                           Add New Company
                         </Button>
                       </div>

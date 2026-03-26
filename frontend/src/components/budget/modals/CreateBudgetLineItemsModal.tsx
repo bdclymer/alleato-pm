@@ -166,7 +166,7 @@ export function CreateBudgetLineItemsModal({
                 className="bg-orange-500 hover:bg-orange-600 text-white"
                 size="lg"
               >
-                <Plus className="h-5 w-5 mr-2" />
+                <Plus />
                 Add Line
               </Button>
             </div>
@@ -352,7 +352,7 @@ export function CreateBudgetLineItemsModal({
                 variant="outline"
                 className="w-full sm:w-auto border-orange-200 text-orange-700 hover:bg-orange-50"
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus />
                 Add Line
               </Button>
             </div>

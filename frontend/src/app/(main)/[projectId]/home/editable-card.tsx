@@ -70,7 +70,7 @@ export function EditableCard({ title, fields, onSave }: EditableCardProps) {
               className="h-8 w-8 p-0"
               onClick={handleEdit}
             >
-              <Pencil className="h-4 w-4 text-foreground" />
+              <Pencil className="text-foreground" />
               <span className="sr-only">Edit {title}</span>
             </Button>
           ) : (
@@ -82,7 +82,7 @@ export function EditableCard({ title, fields, onSave }: EditableCardProps) {
                 onClick={handleSave}
                 disabled={isSaving}
               >
-                <Check className="h-4 w-4 text-success" />
+                <Check className="text-success" />
                 <span className="sr-only">Save changes</span>
               </Button>
               <Button

@@ -70,7 +70,7 @@ function TaskPreviewPane({
             title="Open source meeting"
             onClick={() => onOpenSourceMeeting(task)}
           >
-            <ArrowUpRight className="h-4 w-4" />
+            <ArrowUpRight />
           </Button>
         ) : null}
       </div>

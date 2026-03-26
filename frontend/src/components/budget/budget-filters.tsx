@@ -72,7 +72,7 @@ export function BudgetFilters({
                 title="View options"
                 className="h-9 gap-2 px-3"
               >
-                <SlidersHorizontal className="h-4 w-4" />
+                <SlidersHorizontal />
                 <span className="hidden text-sm sm:inline">View</span>
               </Button>
             </DropdownMenuTrigger>
@@ -196,7 +196,7 @@ export function BudgetFilters({
             aria-label="Analyze variance"
             title="Analyze variance"
           >
-            <Sigma className="h-4 w-4" />
+            <Sigma />
           </Button>
         </TooltipTrigger>
         <TooltipContent>Analyze variance</TooltipContent>

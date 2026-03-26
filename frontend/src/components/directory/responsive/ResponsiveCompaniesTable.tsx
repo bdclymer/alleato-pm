@@ -80,7 +80,7 @@ export function ResponsiveCompaniesTable({
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="sm">
-                          <MoreVertical className="h-4 w-4" />
+                          <MoreVertical />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
@@ -136,7 +136,7 @@ export function ResponsiveCompaniesTable({
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="sm">
-                    <MoreVertical className="h-4 w-4" />
+                    <MoreVertical />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">

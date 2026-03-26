@@ -196,7 +196,7 @@ function ProspectPreviewPane({
             onClick={() => hasPrev && onSelectProspect(String(prospects[currentIndex - 1].id))}
             aria-label="Previous prospect"
           >
-            <ChevronLeft className="h-3.5 w-3.5" />
+            <ChevronLeft />
           </Button>
           <Button
             size="icon"
@@ -206,7 +206,7 @@ function ProspectPreviewPane({
             onClick={() => hasNext && onSelectProspect(String(prospects[currentIndex + 1].id))}
             aria-label="Next prospect"
           >
-            <ChevronRight className="h-3.5 w-3.5" />
+            <ChevronRight />
           </Button>
           <span className="text-xs text-muted-foreground ml-1">
             {currentIndex + 1} of {prospects.length}
@@ -221,7 +221,7 @@ function ProspectPreviewPane({
             title="Open full page"
             disabled
           >
-            <ArrowUpRight className="h-3 w-3" />
+            <ArrowUpRight />
           </Button>
           <Button
             size="icon"
@@ -550,7 +550,7 @@ export default function DirectoryProspectsPage(): ReactElement {
           "Track and manage prospective clients, leads, and business development opportunities",
         actions: (
           <Button className="bg-primary hover:bg-primary/90">
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus />
             New Prospect
           </Button>
         ),

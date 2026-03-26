@@ -372,7 +372,7 @@ export function BudgetSetup({ projectId, onNext, onSkip }: StepComponentProps) {
                 size="sm"
                 onClick={exportBudgetTemplate}
               >
-                <Download className="h-4 w-4 mr-2" />
+                <Download />
                 Export Template
               </Button>
             </div>
@@ -539,7 +539,7 @@ export function BudgetSetup({ projectId, onNext, onSkip }: StepComponentProps) {
                 entry.
               </p>
               <Button variant="outline" disabled>
-                <Upload className="h-4 w-4 mr-2" />
+                <Upload />
                 Upload CSV
               </Button>
             </Card>

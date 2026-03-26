@@ -144,7 +144,7 @@ export const ChangeEventsTableColumns = ({
               data-testid={`change-event-actions-${changeEvent.id}`}
             >
               <span className="sr-only">Open menu</span>
-              <MoreHorizontal className="h-4 w-4" />
+              <MoreHorizontal />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">

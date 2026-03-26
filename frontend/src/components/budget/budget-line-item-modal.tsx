@@ -526,7 +526,7 @@ export function BudgetLineItemModal({
                                     {row.budgetCodeLabel ||
                                       "Select budget code..."}
                                   </span>
-                                  <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                  <Search className="shrink-0 opacity-50" />
                                 </Button>
                               </PopoverTrigger>
                               <PopoverContent
@@ -705,7 +705,7 @@ export function BudgetLineItemModal({
                     onClick={addRow}
                     className="gap-2"
                   >
-                    <Plus className="h-4 w-4" />
+                    <Plus />
                     Add Row
                   </Button>
                 </div>

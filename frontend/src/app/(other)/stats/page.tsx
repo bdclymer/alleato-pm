@@ -771,7 +771,7 @@ export default function MeetingsPage() {
                       className="text-xs"
                     >
                       View All Projects
-                      <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                      <ArrowRight />
                     </Button>
                   </div>
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

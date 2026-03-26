@@ -559,7 +559,7 @@ export default function CompanyDetailsPage() {
               <p className="text-sm text-destructive">{error || "Company not found"}</p>
               <div className="mt-4">
                 <Button variant="outline" onClick={() => router.push("/directory/companies")}>
-                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  <ArrowLeft />
                   Back to Companies
                 </Button>
               </div>
@@ -599,11 +599,11 @@ export default function CompanyDetailsPage() {
         actions={
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={() => router.push("/directory/companies")}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <ArrowLeft />
               Back
             </Button>
             <Button variant="outline" onClick={() => setEditOpen(true)}>
-              <Pencil className="mr-2 h-4 w-4" />
+              <Pencil />
               Edit Company
             </Button>
           </div>
@@ -627,7 +627,7 @@ export default function CompanyDetailsPage() {
                     await loadAvailableContacts();
                   }}
                 >
-                  <Plus className="mr-2 h-4 w-4" />
+                  <Plus />
                   Add Contact
                 </Button>
               </div>
@@ -965,7 +965,7 @@ export default function CompanyDetailsPage() {
                             return `${selected.first_name} ${selected.last_name}${selected.email ? ` • ${selected.email}` : ""}`;
                           })()
                         : "Select contact"}
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      <ChevronsUpDown className="shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
@@ -1171,7 +1171,7 @@ export default function CompanyDetailsPage() {
                           return `${selected.project_number ? `${selected.project_number} • ` : ""}${selected.name || `Project ${selected.id}`}`;
                         })()
                       : "Select project"}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    <ChevronsUpDown className="shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">

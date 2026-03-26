@@ -199,7 +199,7 @@ export function ProjectCreatedModal({ isOpen, onClose, projectId, projectName }:
             </p>
             <Button onClick={onClose} size="sm" className="gap-1.5 group">
               View Dashboard
-              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+              <ArrowRight className="group-hover:translate-x-0.5 transition-transform" />
             </Button>
           </motion.div>
         </motion.div>

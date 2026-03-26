@@ -151,7 +151,7 @@ export default function AccountSettingsPage() {
                   {logoUploading ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
                   ) : (
-                    <Upload className="h-3.5 w-3.5" />
+                    <Upload />
                   )}
                   {logoUploading ? "Uploading..." : "Upload"}
                 </Button>

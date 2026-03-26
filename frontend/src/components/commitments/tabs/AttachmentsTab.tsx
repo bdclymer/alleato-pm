@@ -179,7 +179,7 @@ export const AttachmentsTab = memo(function AttachmentsTab({ commitmentId }: Att
           disabled={isUploading}
           className="gap-2"
         >
-          <Upload className="h-4 w-4" />
+          <Upload />
           Upload File
         </Button>
       </CardHeader>
@@ -256,7 +256,7 @@ export const AttachmentsTab = memo(function AttachmentsTab({ commitmentId }: Att
                       onClick={() => handleDownload(attachment)}
                       disabled={isDeleting}
                     >
-                      <Download className="h-4 w-4 mr-2" />
+                      <Download />
                       Download
                     </Button>
                     <Button

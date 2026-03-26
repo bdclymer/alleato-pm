@@ -69,7 +69,7 @@ export function NotificationBell() {
         aria-label="Notifications"
         onClick={() => setOpen(true)}
       >
-        <Bell className="h-4 w-4" />
+        <Bell />
         <NotificationErrorBoundary>
           <ClientSideSuspense fallback={null}>
             <UnreadBadge />
@@ -226,7 +226,7 @@ function NotificationSidebar({ onClose }: { onClose: () => void }) {
               onClick={() => markAllAsRead()}
               title="Mark all as read"
             >
-              <CheckCheck className="h-4 w-4" />
+              <CheckCheck />
             </Button>
             <Button
               variant="ghost"

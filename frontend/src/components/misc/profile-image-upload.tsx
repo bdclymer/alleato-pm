@@ -188,7 +188,7 @@ export function ProfileImageUpload({
                 onClick={() => document.getElementById("file-input")?.click()}
                 disabled={uploading}
               >
-                <Upload className="mr-2 h-4 w-4" />
+                <Upload />
                 Choose file
               </Button>
               {currentImage && (

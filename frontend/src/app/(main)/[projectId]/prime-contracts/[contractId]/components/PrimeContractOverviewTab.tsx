@@ -60,11 +60,9 @@ import type {
   Contract,
   ContractAttachment,
   ContractLineItem,
-  ContractTab,
 } from "../types";
 
 interface PrimeContractOverviewTabProps {
-  activeTab: ContractTab;
   contract: Contract;
   attachments: ContractAttachment[];
   attachmentsLoading: boolean;
@@ -104,7 +102,6 @@ interface PrimeContractOverviewTabProps {
 
 export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
   const {
-    activeTab,
     contract,
     attachments,
     attachmentsLoading,
@@ -164,8 +161,6 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
   );
 
   return (
-    <>
-        {activeTab === "overview" && (
           <div className="space-y-6 pb-20">
             <section className="rounded-2xl bg-background">
               <div className="pb-6 pt-4">
@@ -298,7 +293,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                                 disabled={isUploadingAttachment}
                               >
                                 <span>
-                                  <Plus className="h-4 w-4 mr-2" />
+                                  <Plus />
                                   {isUploadingAttachment ? "Uploading..." : "Add Attachment"}
                                 </span>
                               </Button>
@@ -511,9 +506,9 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="outline" size="sm" className="gap-1.5">
-                        <Plus className="h-4 w-4" />
+                        <Plus />
                         Add
-                        <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                        <ChevronDown className="text-muted-foreground" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -558,7 +553,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                           onAddSovLine();
                         }}
                       >
-                        <Plus className="h-4 w-4 mr-2" />
+                        <Plus />
                         Add SOV Line
                       </Button>
                     </div>
@@ -816,7 +811,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                                             className="h-8 w-8 p-0 text-muted-foreground"
                                             aria-label={`Actions for line item ${item.line_number}`}
                                           >
-                                            <MoreVertical className="h-4 w-4" />
+                                            <MoreVertical />
                                           </Button>
                                         </DropdownMenuTrigger>
                                         <DropdownMenuContent align="end">
@@ -864,7 +859,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                         className="h-10 gap-2 px-4"
                         onClick={onAddSovLine}
                       >
-                        <Plus className="h-4 w-4" />
+                        <Plus />
                         Add Line Item
                       </Button>
                     </div>
@@ -872,7 +867,5 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                 </div>
             </section>
           </div>
-        )}
-    </>
   );
 }

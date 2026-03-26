@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
 
-export type Decision = Database["public"]["Tables"]["decisions"]["Row"];
+export type Decision = Record<string, unknown>;
 export type DocumentMetadata =
   Database["public"]["Tables"]["document_metadata"]["Row"];
 
@@ -19,7 +19,7 @@ export async function getDecisions(): Promise<DecisionWithMetadata[]> {
   const supabase = await createClient();
 
   const { data, error } = await supabase
-    .from("decisions")
+    .from("decisions" as any)
     .select(
       `
       *,
@@ -48,7 +48,7 @@ export async function getDecisionsByStatus(status: string) {
   const supabase = await createClient();
 
   const { data, error } = await supabase
-    .from("decisions")
+    .from("decisions" as any)
     .select("*")
     .eq("status", status)
     .order("created_at", { ascending: false });
@@ -67,7 +67,7 @@ export async function getDecisionById(id: string) {
   const supabase = await createClient();
 
   const { data, error } = await supabase
-    .from("decisions")
+    .from("decisions" as any)
     .select("*")
     .eq("id", id)
     .single();
@@ -86,7 +86,7 @@ export async function getDecisionsByProject(projectId: number) {
   const supabase = await createClient();
 
   const { data, error } = await supabase
-    .from("decisions")
+    .from("decisions" as any)
     .select("*")
     .eq("project_id", projectId)
     .order("created_at", { ascending: false });

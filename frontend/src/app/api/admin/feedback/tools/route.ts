@@ -143,7 +143,7 @@ export async function POST(request: Request) {
     .from("admin_feedback_items")
     .update({
       tool_id: toolId,
-      agent_context: agentContext,
+      agent_context: agentContext as import("@/types/database.types").Json | null,
     })
     .eq("id", feedbackId)
     .select("id, tool_id, agent_context")

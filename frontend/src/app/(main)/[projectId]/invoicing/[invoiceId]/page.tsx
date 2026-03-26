@@ -389,7 +389,7 @@ export default function InvoiceDetailPage() {
                   {error || "Invoice not found"}
                 </Text>
                 <Button onClick={handleBack}>
-                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  <ArrowLeft />
                   Back to Invoicing
                 </Button>
               </div>
@@ -408,29 +408,29 @@ export default function InvoiceDetailPage() {
         actions={
           <div className="flex gap-2">
             <Button variant="ghost" size="sm" onClick={handleBack}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
+              <ArrowLeft />
               Back
             </Button>
             {invoice.status === "draft" && (
               <>
                 <Button variant="outline" size="sm" onClick={handleEdit}>
-                  <Edit className="h-4 w-4 mr-2" />
+                  <Edit />
                   Edit
                 </Button>
                 <Button size="sm" onClick={handleSubmit}>
-                  <Send className="h-4 w-4 mr-2" />
+                  <Send />
                   Submit for Approval
                 </Button>
               </>
             )}
             {invoice.status === "submitted" && (
               <Button size="sm" onClick={handleApprove}>
-                <Check className="h-4 w-4 mr-2" />
+                <Check />
                 Approve
               </Button>
             )}
             <Button variant="outline" size="sm" onClick={handleExportPDF}>
-              <Download className="h-4 w-4 mr-2" />
+              <Download />
               Export PDF
             </Button>
             {invoice.status !== "approved" && (

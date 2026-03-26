@@ -484,7 +484,7 @@ export default function DocumentsPage() {
               onClick={() => setUploadDialogOpen(true)}
               className="gap-2"
             >
-              <Upload className="h-4 w-4" />
+              <Upload />
               Upload
             </Button>
           ),

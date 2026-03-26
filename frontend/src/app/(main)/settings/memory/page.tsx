@@ -125,7 +125,7 @@ function MemoryRow({
                     disabled={saving || !draft.trim()}
                     className="h-7 text-xs"
                   >
-                    <Check className="h-3 w-3 mr-1" />
+                    <Check />
                     Save
                   </Button>
                   <Button
@@ -184,7 +184,7 @@ function MemoryRow({
               onClick={() => setEditing(true)}
               title="Edit"
             >
-              <Pencil className="h-3.5 w-3.5" />
+              <Pencil />
             </Button>
             <Button
               variant="ghost"
@@ -316,7 +316,7 @@ export default function MemorySettingsPage() {
           onClick={() => loadMemories(typeFilter)}
           className="gap-1.5 text-muted-foreground"
         >
-          <RefreshCw className="h-3.5 w-3.5" />
+          <RefreshCw />
           Refresh
         </Button>
       </div>

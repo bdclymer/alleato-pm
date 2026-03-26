@@ -135,9 +135,18 @@ interface StatusTextProps {
   className?: string;
 }
 
+const textColors: Record<StatusVariant, string> = {
+  success: "text-green-600",
+  warning: "text-yellow-600",
+  error: "text-red-600",
+  info: "text-blue-600",
+  neutral: "text-muted-foreground",
+};
+
 export function StatusText({ status, className }: StatusTextProps) {
+  const resolved = resolveVariant(status);
   return (
-    <span className={cn("text-xs text-muted-foreground", className)}>
+    <span className={cn("text-xs font-medium", textColors[resolved], className)}>
       {status}
     </span>
   );

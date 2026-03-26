@@ -165,7 +165,7 @@ export function RfisClient({ rfis, projectId }: RfisClientProps): ReactElement {
             onClick={() => router.push(`/${projectId}/rfis/new`)}
             data-testid="rfis-create-button"
           >
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus />
             Create RFI
           </Button>
         ),
