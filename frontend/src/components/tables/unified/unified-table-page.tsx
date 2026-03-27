@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 import { PageHeader } from "@/components/layout/page-header-unified";
 import { PageContainer, type PageContainerProps } from "@/components/layout/PageContainer";
 import { PageTabs } from "@/components/layout/PageTabs";
-import { EmptyState } from "@/components/ui/empty-state";
+import { EmptyState } from "@/components/ds";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { TableToolbar, type ColumnConfig, type FilterConfig, type ViewMode } from "./table-toolbar";
 import { Button } from "@/components/ui/button";
-import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, ChevronsLeft, ChevronsRight, EyeOff, MoreHorizontal, Pin, PinOff, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, ChevronsLeft, ChevronsRight, EyeOff, Inbox, MoreHorizontal, Pin, PinOff, Trash2, X } from "lucide-react";
 
 interface TabItem {
   label: string;
@@ -889,14 +889,17 @@ export function UnifiedTablePage<T>({
       {showEmptyState && (
         <div className="mt-4">
           <EmptyState
+            icon={<Inbox />}
             title={emptyState.title}
             description={
               emptyState.isFiltered
                 ? emptyState.filteredDescription
                 : emptyState.description
             }
-            action={emptyState.isFiltered ? undefined : emptyState.action}
           />
+          {!emptyState.isFiltered && emptyState.action && (
+            <div className="flex justify-center mt-3">{emptyState.action}</div>
+          )}
         </div>
       )}
 

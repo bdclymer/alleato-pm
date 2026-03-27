@@ -47,6 +47,9 @@ type CommitmentDetail = Commitment & {
   type?: "subcontract" | "purchase_order" | string;
   pending_change_orders?: number;
   draft_change_orders?: number;
+  inclusions?: string | null;
+  exclusions?: string | null;
+  allow_non_admin_view_sov_items?: boolean;
   change_order_totals?: {
     approved: number;
     pending: number;
@@ -204,6 +207,12 @@ const normalizeCommitment = (raw: unknown): CommitmentDetail | null => {
     project_id:
       typeof record.project_id === "number" ? record.project_id : undefined,
     type: typeof record.type === "string" ? record.type : undefined,
+    inclusions: typeof record.inclusions === "string" ? record.inclusions : null,
+    exclusions: typeof record.exclusions === "string" ? record.exclusions : null,
+    allow_non_admin_view_sov_items:
+      typeof record.allow_non_admin_view_sov_items === "boolean"
+        ? record.allow_non_admin_view_sov_items
+        : false,
     pending_change_orders: Number(record.pending_change_orders ?? 0),
     draft_change_orders: Number(record.draft_change_orders ?? 0),
     change_order_totals:
@@ -249,10 +258,29 @@ function F({
 }
 
 // ---------------------------------------------------------------------------
+// Section heading helper
+// ---------------------------------------------------------------------------
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+      {children}
+    </p>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // General tab — view only
 // ---------------------------------------------------------------------------
 
-function GeneralTab({ commitment }: { commitment: CommitmentDetail }) {
+interface GeneralTabProps {
+  commitment: CommitmentDetail;
+  projectId: number;
+  commitmentId: string;
+  onImportComplete: () => void | Promise<void>;
+}
+
+function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: GeneralTabProps) {
   const isPO = commitment.type === "purchase_order";
   const displayStatus = commitment.status
     ? commitment.status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
@@ -260,7 +288,7 @@ function GeneralTab({ commitment }: { commitment: CommitmentDetail }) {
   const dash = <span className="text-muted-foreground/50">—</span>;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       {/* Vendor highlight card */}
       {commitment.contract_company?.name && (
         <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 px-4 py-3">
@@ -281,9 +309,7 @@ function GeneralTab({ commitment }: { commitment: CommitmentDetail }) {
 
       {/* General Information */}
       <div className="space-y-4">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
-          General Information
-        </p>
+        <SectionLabel>General Information</SectionLabel>
         <div className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-3">
           <F label="Title">{commitment.title || dash}</F>
           <F label="Contract #">{safeNumber(commitment.number) || dash}</F>
@@ -301,7 +327,6 @@ function GeneralTab({ commitment }: { commitment: CommitmentDetail }) {
               {commitment.accounting_method.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
             </F>
           )}
-          <F label="Visibility">{commitment.private ? "Private" : "Public"}</F>
         </div>
         {commitment.description && (
           <div>
@@ -311,11 +336,48 @@ function GeneralTab({ commitment }: { commitment: CommitmentDetail }) {
         )}
       </div>
 
+      {/* Schedule of Values */}
+      <div className="space-y-4">
+        <SectionLabel>Schedule of Values</SectionLabel>
+        <ScheduleOfValuesTab
+          lineItems={commitment.line_items || []}
+          projectId={projectId}
+          commitmentId={commitmentId}
+          commitmentType={commitment.type}
+          onImportComplete={onImportComplete}
+        />
+      </div>
+
+      {/* Inclusions & Exclusions */}
+      <div className="space-y-4">
+        <SectionLabel>Inclusions &amp; Exclusions</SectionLabel>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <p className="text-xs text-muted-foreground">Inclusions</p>
+            {commitment.inclusions ? (
+              <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">
+                {commitment.inclusions}
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground/50">—</p>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            <p className="text-xs text-muted-foreground">Exclusions</p>
+            {commitment.exclusions ? (
+              <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">
+                {commitment.exclusions}
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground/50">—</p>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Contract Dates */}
       <div className="space-y-4">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
-          Contract Dates
-        </p>
+        <SectionLabel>Contract Dates</SectionLabel>
         <div className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-3">
           {!isPO && (
             <F label="Start Date">
@@ -330,6 +392,17 @@ function GeneralTab({ commitment }: { commitment: CommitmentDetail }) {
           </F>
           <F label="Signed Contract Received">
             {commitment.signed_received_date ? formatDate(commitment.signed_received_date) : dash}
+          </F>
+        </div>
+      </div>
+
+      {/* Contract Privacy */}
+      <div className="space-y-4">
+        <SectionLabel>Contract Privacy</SectionLabel>
+        <div className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-3">
+          <F label="Visibility">{commitment.private ? "Private" : "Public"}</F>
+          <F label="Non-Admin Can View SOV Items">
+            {commitment.allow_non_admin_view_sov_items ? "Yes" : "No"}
           </F>
         </div>
       </div>
@@ -576,13 +649,10 @@ export default function CommitmentDetailPage() {
 
       <PageContainer>
         <div className="space-y-6">
-          {/* Financial KPI strip */}
-          <FinancialKpiStrip commitment={commitment} />
-
           <Tabs defaultValue="general" className="space-y-0">
             {/* Tab bar */}
             <div className="mb-6">
-              <TabsList className="h-9">
+              <TabsList variant="line">
                 <TabsTrigger value="general">General</TabsTrigger>
                 <TabsTrigger value="sov">{sovLabel}</TabsTrigger>
                 <TabsTrigger value="change-orders">Change Orders</TabsTrigger>
@@ -599,7 +669,12 @@ export default function CommitmentDetailPage() {
 
             {/* General */}
             <TabsContent value="general">
-              <GeneralTab commitment={commitment} />
+              <GeneralTab
+                commitment={commitment}
+                projectId={projectId}
+                commitmentId={commitment.id}
+                onImportComplete={() => void fetchCommitment()}
+              />
             </TabsContent>
 
             {/* SOV */}

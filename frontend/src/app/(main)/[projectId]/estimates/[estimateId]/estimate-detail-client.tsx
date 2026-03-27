@@ -587,7 +587,7 @@ export function EstimateDetailClient({
           {/* ── Right Column: Working Area ────────────────────────────────── */}
           <div className="flex-1 min-w-0">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList>
+              <TabsList variant="line">
                 <TabsTrigger value="gc">General Conditions</TabsTrigger>
                 <TabsTrigger value="takeoff">Quantity Takeoff</TabsTrigger>
                 <TabsTrigger value="alternates">Alternates &amp; Allowances</TabsTrigger>

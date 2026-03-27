@@ -255,7 +255,7 @@ export default function ContactDetailsPage() {
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="active" className="w-full">
-                <TabsList>
+                <TabsList variant="line">
                   <TabsTrigger value="active">Active Projects</TabsTrigger>
                   <TabsTrigger value="all">All Projects</TabsTrigger>
                 </TabsList>

@@ -13,6 +13,15 @@ import {
   AlertTriangle,
   CheckCircle,
   XCircle,
+  ChevronsUpDown,
+  Calculator,
+  Smile,
+  CalendarIcon,
+  Bold,
+  Italic,
+  Underline,
+  User,
+  CreditCard,
 } from "lucide-react";
 
 // DS barrel — all components from one path
@@ -20,6 +29,13 @@ import {
   // Layout
   PageShell,
   PageTabs,
+  Separator,
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+  ScrollArea,
+  ScrollBar,
   // Status
   StatusBadge,
   StatusDot,
@@ -31,6 +47,12 @@ import {
   Eyebrow,
   DateAvatar,
   AvatarStack,
+  Progress,
+  Avatar,
+  AvatarImage,
+  AvatarFallback,
+  AvatarGroup,
+  AvatarGroupCount,
   // Feedback & states
   EmptyState,
   Skeleton,
@@ -52,6 +74,7 @@ import {
   SelectItem,
   SelectTrigger,
   SelectValue,
+  Slider,
   // Overlays
   Dialog,
   DialogContent,
@@ -88,6 +111,13 @@ import {
   BreadcrumbLink,
   BreadcrumbPage,
   BreadcrumbSeparator,
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandSeparator,
   // Cards
   Card,
   CardContent,
@@ -110,11 +140,37 @@ import {
   TableCountIndicator,
   TruncatedCell,
   // Misc
-  Separator,
   Badge,
 } from "@/components/ds";
 
 import { PageTabsV2 } from "@/components/layout";
+import { SimplePagination } from "@/components/ui/pagination";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Calendar } from "@/components/ui/calendar";
+import { NumberInput } from "@/components/ui/number-input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Drawer,
+  DrawerClose,
+  DrawerContent,
+  DrawerDescription,
+  DrawerFooter,
+  DrawerHeader,
+  DrawerTitle,
+  DrawerTrigger,
+} from "@/components/ui/drawer";
 
 // ---------------------------------------------------------------------------
 // Demo data
@@ -190,6 +246,11 @@ export default function DesignSystemComponentsPage() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [switchChecked, setSwitchChecked] = useState(true);
   const [checkboxChecked, setCheckboxChecked] = useState(true);
+  const [paginationPage, setPaginationPage] = useState(1);
+  const [collapsibleOpen, setCollapsibleOpen] = useState(false);
+  const [sliderValue, setSliderValue] = useState([33]);
+  const [calendarDate, setCalendarDate] = useState<Date | undefined>(new Date());
+  const [numberInputValue, setNumberInputValue] = useState("");
 
   return (
     <PageShell variant="content" title="Design System Components">
@@ -301,6 +362,111 @@ export default function DesignSystemComponentsPage() {
         </div>
         <p className="text-xs text-muted-foreground">
           Alternative pill-style variant. Imported from <code className="rounded bg-muted px-1 py-0.5 font-mono">@/components/layout</code>.
+        </p>
+      </div>
+
+      {/* Separator */}
+      <div className="space-y-3">
+        <h3 className="text-base font-semibold text-foreground">Separator</h3>
+        <p className="text-sm text-muted-foreground">
+          Visual divider for content sections. Supports horizontal (default) and vertical orientations.
+        </p>
+        <div className="space-y-4">
+          <Eyebrow>Horizontal (default)</Eyebrow>
+          <div className="rounded-md bg-muted/30 p-4">
+            <p className="text-sm text-foreground">Content above</p>
+            <Separator className="my-3" />
+            <p className="text-sm text-foreground">Content below</p>
+          </div>
+          <Eyebrow>Vertical</Eyebrow>
+          <div className="flex h-8 items-center gap-4 rounded-md bg-muted/30 px-4">
+            <span className="text-sm text-foreground">Left</span>
+            <Separator orientation="vertical" />
+            <span className="text-sm text-foreground">Center</span>
+            <Separator orientation="vertical" />
+            <span className="text-sm text-foreground">Right</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Accordion */}
+      <div className="space-y-3">
+        <h3 className="text-base font-semibold text-foreground">Accordion</h3>
+        <p className="text-sm text-muted-foreground">
+          Collapsible content sections. Supports single and multiple mode. Import from{" "}
+          <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">@/components/ds</code>.
+        </p>
+        <Accordion type="single" collapsible className="w-full">
+          <AccordionItem value="item-1">
+            <AccordionTrigger>What is the design system?</AccordionTrigger>
+            <AccordionContent>
+              The design system is a collection of reusable components, tokens, and patterns that ensure consistency across the Alleato platform.
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="item-2">
+            <AccordionTrigger>How do I import components?</AccordionTrigger>
+            <AccordionContent>
+              Import everything from <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">@/components/ds</code>. This barrel re-exports all approved shadcn/ui primitives and custom DS components.
+            </AccordionContent>
+          </AccordionItem>
+          <AccordionItem value="item-3">
+            <AccordionTrigger>Can I use hardcoded colors?</AccordionTrigger>
+            <AccordionContent>
+              No. Always use semantic tokens like <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">bg-background</code>,{" "}
+              <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">text-foreground</code>, and{" "}
+              <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">border-border</code>. ESLint will block hardcoded colors.
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </div>
+
+      {/* Collapsible */}
+      <div className="space-y-3">
+        <h3 className="text-base font-semibold text-foreground">Collapsible</h3>
+        <p className="text-sm text-muted-foreground">
+          Toggle content visibility with a trigger. More manual than Accordion — use when you need custom trigger UI.
+        </p>
+        <Collapsible open={collapsibleOpen} onOpenChange={setCollapsibleOpen} className="w-full space-y-2">
+          <div className="flex items-center gap-2">
+            <h4 className="text-sm font-semibold text-foreground">3 tagged items</h4>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="icon-sm">
+                <ChevronsUpDown className="h-4 w-4" />
+                <span className="sr-only">Toggle</span>
+              </Button>
+            </CollapsibleTrigger>
+          </div>
+          <div className="rounded-md bg-muted/30 px-4 py-2 text-sm text-foreground">
+            Always visible item
+          </div>
+          <CollapsibleContent className="space-y-2">
+            <div className="rounded-md bg-muted/30 px-4 py-2 text-sm text-foreground">
+              Hidden item 1
+            </div>
+            <div className="rounded-md bg-muted/30 px-4 py-2 text-sm text-foreground">
+              Hidden item 2
+            </div>
+          </CollapsibleContent>
+        </Collapsible>
+      </div>
+
+      {/* ScrollArea */}
+      <div className="space-y-3">
+        <h3 className="text-base font-semibold text-foreground">ScrollArea</h3>
+        <p className="text-sm text-muted-foreground">
+          Custom scrollbar container. Use for constrained-height lists, code blocks, and side panels.
+        </p>
+        <ScrollArea className="h-48 w-full rounded-md border border-border">
+          <div className="p-4">
+            {Array.from({ length: 20 }, (_, i) => (
+              <div key={i} className="border-b border-border py-2 text-sm text-foreground last:border-b-0">
+                Item {i + 1} — Scrollable content row
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
+        <p className="text-xs text-muted-foreground">
+          Horizontal scrolling: use <code className="rounded bg-muted px-1 py-0.5 font-mono">ScrollBar orientation=&quot;horizontal&quot;</code>.
         </p>
       </div>
 
@@ -417,6 +583,119 @@ export default function DesignSystemComponentsPage() {
         <p className="text-sm text-muted-foreground">
           Overlapping avatar initials. Props: avatars (string[]), max, size (sm | md).
         </p>
+      </div>
+
+      {/* Avatar + AvatarGroup */}
+      <div className="space-y-3">
+        <h3 className="text-base font-semibold text-foreground">Avatar &amp; AvatarGroup (shadcn)</h3>
+        <p className="text-sm text-muted-foreground">
+          Base avatar primitives from shadcn. Use for individual avatars or composable groups with overflow count.
+        </p>
+        <Eyebrow>Single Avatars</Eyebrow>
+        <div className="flex items-center gap-3">
+          <Avatar>
+            <AvatarImage src="https://github.com/shadcn.png" alt="User" />
+            <AvatarFallback>CN</AvatarFallback>
+          </Avatar>
+          <Avatar>
+            <AvatarFallback>JD</AvatarFallback>
+          </Avatar>
+          <Avatar>
+            <AvatarFallback>MH</AvatarFallback>
+          </Avatar>
+        </div>
+        <Eyebrow>AvatarGroup with overflow</Eyebrow>
+        <AvatarGroup>
+          <Avatar>
+            <AvatarFallback>JD</AvatarFallback>
+          </Avatar>
+          <Avatar>
+            <AvatarFallback>MH</AvatarFallback>
+          </Avatar>
+          <Avatar>
+            <AvatarFallback>BC</AvatarFallback>
+          </Avatar>
+          <AvatarGroupCount>+5</AvatarGroupCount>
+        </AvatarGroup>
+      </div>
+
+      {/* Progress */}
+      <div className="space-y-3">
+        <h3 className="text-base font-semibold text-foreground">Progress</h3>
+        <p className="text-sm text-muted-foreground">
+          Linear progress indicator. Pass a <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">value</code> between 0 and 100.
+        </p>
+        <div className="space-y-4">
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Empty (0%)</span>
+              <span>0%</span>
+            </div>
+            <Progress value={0} />
+          </div>
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Quarter (25%)</span>
+              <span>25%</span>
+            </div>
+            <Progress value={25} />
+          </div>
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Half (50%)</span>
+              <span>50%</span>
+            </div>
+            <Progress value={50} />
+          </div>
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Almost (75%)</span>
+              <span>75%</span>
+            </div>
+            <Progress value={75} />
+          </div>
+          <div className="space-y-1">
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Complete (100%)</span>
+              <span>100%</span>
+            </div>
+            <Progress value={100} />
+          </div>
+        </div>
+      </div>
+
+      {/* HoverCard */}
+      <div className="space-y-3">
+        <h3 className="text-base font-semibold text-foreground">HoverCard</h3>
+        <p className="text-sm text-muted-foreground">
+          Content card that appears on hover. Use for user profiles, link previews, or contextual details.
+        </p>
+        <HoverCard>
+          <HoverCardTrigger asChild>
+            <Button variant="link" className="p-0 h-auto text-primary">
+              @alleato-team
+            </Button>
+          </HoverCardTrigger>
+          <HoverCardContent className="w-80">
+            <div className="flex gap-4">
+              <Avatar>
+                <AvatarFallback>AT</AvatarFallback>
+              </Avatar>
+              <div className="space-y-1">
+                <h4 className="text-sm font-semibold text-foreground">Alleato Team</h4>
+                <p className="text-sm text-muted-foreground">
+                  Construction project management platform. Building smarter tools for GCs.
+                </p>
+                <div className="flex items-center pt-2">
+                  <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
+                  <span className="text-xs text-muted-foreground">
+                    Founded January 2025
+                  </span>
+                </div>
+              </div>
+            </div>
+          </HoverCardContent>
+        </HoverCard>
       </div>
 
       {/* ================================================================== */}
@@ -663,6 +942,114 @@ export default function DesignSystemComponentsPage() {
         </div>
       </div>
 
+      {/* Slider */}
+      <div className="space-y-3">
+        <h3 className="text-base font-semibold text-foreground">Slider</h3>
+        <p className="text-sm text-muted-foreground">
+          Draggable value slider. Supports single value and range mode.
+        </p>
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex justify-between text-xs text-muted-foreground">
+              <span>Value</span>
+              <span>{sliderValue[0]}%</span>
+            </div>
+            <Slider
+              value={sliderValue}
+              onValueChange={setSliderValue}
+              max={100}
+              step={1}
+            />
+          </div>
+          <div className="space-y-2">
+            <Eyebrow>Disabled</Eyebrow>
+            <Slider defaultValue={[50]} max={100} step={1} disabled />
+          </div>
+        </div>
+      </div>
+
+      {/* ToggleGroup */}
+      <div className="space-y-3">
+        <h3 className="text-base font-semibold text-foreground">ToggleGroup</h3>
+        <p className="text-sm text-muted-foreground">
+          Mutually exclusive toggle buttons. Use for view modes, alignment, and formatting options.
+        </p>
+        <div className="space-y-4">
+          <Eyebrow>Single selection (outline)</Eyebrow>
+          <ToggleGroup type="single" variant="outline" defaultValue="bold">
+            <ToggleGroupItem value="bold" aria-label="Toggle bold">
+              <Bold className="h-4 w-4" />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="italic" aria-label="Toggle italic">
+              <Italic className="h-4 w-4" />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="underline" aria-label="Toggle underline">
+              <Underline className="h-4 w-4" />
+            </ToggleGroupItem>
+          </ToggleGroup>
+          <Eyebrow>Single selection (default variant)</Eyebrow>
+          <ToggleGroup type="single" defaultValue="list">
+            <ToggleGroupItem value="grid" aria-label="Grid view">
+              <LayoutDashboard className="h-4 w-4" />
+            </ToggleGroupItem>
+            <ToggleGroupItem value="list" aria-label="List view">
+              <List className="h-4 w-4" />
+            </ToggleGroupItem>
+          </ToggleGroup>
+        </div>
+      </div>
+
+      {/* Calendar */}
+      <div className="space-y-3">
+        <h3 className="text-base font-semibold text-foreground">Calendar</h3>
+        <p className="text-sm text-muted-foreground">
+          Month calendar built on react-day-picker. Use inside a Popover to create a DatePicker.
+        </p>
+        <div className="flex justify-start">
+          <Calendar
+            mode="single"
+            selected={calendarDate}
+            onSelect={setCalendarDate}
+            className="rounded-md border border-border"
+          />
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Selected: {calendarDate?.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) ?? "none"}
+        </p>
+      </div>
+
+      {/* NumberInput */}
+      <div className="space-y-3">
+        <h3 className="text-base font-semibold text-foreground">NumberInput</h3>
+        <p className="text-sm text-muted-foreground">
+          Enhanced number input for budget/financial data entry. Auto-selects on focus, formats currency on blur.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="demo-number">Standard Number</Label>
+            <NumberInput
+              id="demo-number"
+              placeholder="Enter amount"
+              value={numberInputValue}
+              onChange={(e) => setNumberInputValue(e.target.value)}
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="demo-currency">Currency Mode</Label>
+            <NumberInput
+              id="demo-currency"
+              placeholder="$0.00"
+              currency
+              value="245000"
+            />
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Props: <code className="rounded bg-muted px-1 py-0.5 font-mono">currency</code> enables format-on-blur,{" "}
+          <code className="rounded bg-muted px-1 py-0.5 font-mono">autoSelectOnFocus</code> selects all text on click.
+        </p>
+      </div>
+
       {/* ================================================================== */}
       {/* SECTION 6: Overlays */}
       {/* ================================================================== */}
@@ -732,7 +1119,58 @@ export default function DesignSystemComponentsPage() {
             </div>
           </PopoverContent>
         </Popover>
+
+        {/* AlertDialog */}
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive">Delete Item</Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete this item and remove its data from our servers.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction>Delete</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Drawer */}
+        <Drawer>
+          <DrawerTrigger asChild>
+            <Button variant="outline">Open Drawer</Button>
+          </DrawerTrigger>
+          <DrawerContent>
+            <DrawerHeader>
+              <DrawerTitle>Drawer Title</DrawerTitle>
+              <DrawerDescription>
+                Drawers slide up from the bottom on mobile. Use for action sheets and mobile-first overlays.
+              </DrawerDescription>
+            </DrawerHeader>
+            <div className="p-4">
+              <p className="text-sm text-muted-foreground">
+                Drawer content goes here. On desktop, this behaves like a bottom sheet.
+              </p>
+            </div>
+            <DrawerFooter>
+              <Button>Submit</Button>
+              <DrawerClose asChild>
+                <Button variant="outline">Cancel</Button>
+              </DrawerClose>
+            </DrawerFooter>
+          </DrawerContent>
+        </Drawer>
       </div>
+
+      <p className="text-xs text-muted-foreground">
+        <strong>When to use which:</strong> Dialog = confirmations &amp; small forms. Sheet = detail panels &amp; large forms.
+        AlertDialog = destructive confirmations (user must choose). Drawer = mobile action sheets. Popover = non-modal contextual content.
+        Tooltip = hover hint text.
+      </p>
 
       {/* ================================================================== */}
       {/* SECTION 7: Navigation */}
@@ -804,6 +1242,67 @@ export default function DesignSystemComponentsPage() {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
+      </div>
+
+      {/* Pagination */}
+      <div className="space-y-3">
+        <h3 className="text-base font-semibold text-foreground">Pagination</h3>
+        <p className="text-sm text-muted-foreground">
+          Page navigation with prev/next buttons and page numbers. Automatically collapses with ellipsis for many pages.
+        </p>
+        <SimplePagination
+          currentPage={paginationPage}
+          totalPages={10}
+          onPageChange={setPaginationPage}
+        />
+        <p className="text-xs text-muted-foreground">
+          Current page: {paginationPage} / 10. Import{" "}
+          <code className="rounded bg-muted px-1 py-0.5 font-mono">SimplePagination</code> from{" "}
+          <code className="rounded bg-muted px-1 py-0.5 font-mono">@/components/ui/pagination</code>.
+        </p>
+      </div>
+
+      {/* Command Palette */}
+      <div className="space-y-3">
+        <h3 className="text-base font-semibold text-foreground">Command Palette</h3>
+        <p className="text-sm text-muted-foreground">
+          Searchable command list (cmdk). Use standalone or inside a Dialog for a spotlight-style search.
+        </p>
+        <Command className="rounded-md border border-border">
+          <CommandInput placeholder="Type a command or search..." />
+          <CommandList>
+            <CommandEmpty>No results found.</CommandEmpty>
+            <CommandGroup heading="Suggestions">
+              <CommandItem>
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                <span>Calendar</span>
+              </CommandItem>
+              <CommandItem>
+                <Smile className="mr-2 h-4 w-4" />
+                <span>Search Emoji</span>
+              </CommandItem>
+              <CommandItem>
+                <Calculator className="mr-2 h-4 w-4" />
+                <span>Calculator</span>
+              </CommandItem>
+            </CommandGroup>
+            <CommandSeparator />
+            <CommandGroup heading="Settings">
+              <CommandItem>
+                <User className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+              </CommandItem>
+              <CommandItem>
+                <CreditCard className="mr-2 h-4 w-4" />
+                <span>Billing</span>
+              </CommandItem>
+              <CommandItem>
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Settings</span>
+              </CommandItem>
+            </CommandGroup>
+          </CommandList>
+        </Command>
       </div>
 
       {/* ================================================================== */}

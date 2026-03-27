@@ -350,7 +350,7 @@ export function MeetingsDataTable({
             onValueChange={setYearFilter}
             className="w-full sm:w-auto"
           >
-            <TabsList className="w-full justify-start overflow-x-auto">
+            <TabsList variant="line">
               <TabsTrigger value="all" className="flex-shrink-0">
                 All
               </TabsTrigger>

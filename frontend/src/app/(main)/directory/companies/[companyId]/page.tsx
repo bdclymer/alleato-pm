@@ -936,7 +936,7 @@ export default function CompanyDetailsPage() {
           </ModalHeader>
 
           <Tabs value={contactMode} onValueChange={(value) => setContactMode(value as "existing" | "new")}>
-            <TabsList className="w-full">
+            <TabsList variant="line">
               <TabsTrigger value="existing" className="flex-1">Existing Contact</TabsTrigger>
               <TabsTrigger value="new" className="flex-1">Create New</TabsTrigger>
             </TabsList>

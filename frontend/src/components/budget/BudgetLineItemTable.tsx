@@ -1,10 +1,10 @@
 import * as React from "react";
-import { Plus } from "lucide-react";
+import { Plus, FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Stack } from "@/components/ui/stack";
 import { Inline } from "@/components/ui/inline";
 import { Text } from "@/components/ui/text";
-import { EmptyState } from "@/components/ui/empty-state";
+import { EmptyState } from "@/components/ds";
 import { BudgetLineItemRow } from "./BudgetLineItemRow";
 import { BudgetLineItemCard } from "./BudgetLineItemCard";
 import type {
@@ -116,6 +116,7 @@ export function BudgetLineItemTable({
               ) : lineItems.length === 0 ? (
                 <div className="px-4 py-8">
                   <EmptyState
+                    icon={<FileSpreadsheet />}
                     title="No line items"
                     description='Click "Add Row" to get started.'
                   />
@@ -156,6 +157,7 @@ export function BudgetLineItemTable({
           ) : lineItems.length === 0 ? (
             <div className="px-4 py-8">
               <EmptyState
+                icon={<FileSpreadsheet />}
                 title="No line items"
                 description='Click "Add Row" to get started.'
               />

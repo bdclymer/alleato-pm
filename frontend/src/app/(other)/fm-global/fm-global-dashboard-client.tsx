@@ -22,7 +22,7 @@ export function FmGlobalDashboardClient({
 }: FmGlobalDashboardClientProps): ReactElement {
   return (
     <Tabs defaultValue="tables" className="w-full">
-      <TabsList className="w-full justify-start">
+      <TabsList variant="line">
         <TabsTrigger value="tables">FM Global Tables</TabsTrigger>
         <TabsTrigger value="figures">FM Global Figures</TabsTrigger>
       </TabsList>

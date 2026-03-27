@@ -285,7 +285,7 @@ export default function NewInvoicePage() {
       <div className="max-w-none mx-0">
         <form onSubmit={handleSubmit} className="space-y-6">
         <Tabs defaultValue="general" className="space-y-4">
-          <TabsList>
+          <TabsList variant="line">
             <TabsTrigger value="general">General Info</TabsTrigger>
             <TabsTrigger value="line-items">Line Items</TabsTrigger>
             <TabsTrigger value="summary">Summary</TabsTrigger>

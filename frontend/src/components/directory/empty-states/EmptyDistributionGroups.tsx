@@ -1,6 +1,5 @@
 import { Users2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { EmptyState } from "@/components/ui/empty-state";
+import { EmptyState } from "@/components/ds";
 
 interface EmptyDistributionGroupsProps {
   onAddGroup?: () => void;
@@ -16,15 +15,13 @@ export function EmptyDistributionGroups({
   if (hasFilters) {
     return (
       <EmptyState
-        icon={<Users2 className="h-12 w-12" />}
+        icon={<Users2 />}
         title="No groups found"
         description="No distribution groups match your current filters. Try adjusting your search or filter criteria."
         action={
-          onClearFilters && (
-            <Button onClick={onClearFilters} variant="outline">
-              Clear Filters
-            </Button>
-          )
+          onClearFilters
+            ? { label: "Clear Filters", onClick: onClearFilters }
+            : undefined
         }
       />
     );
@@ -32,10 +29,14 @@ export function EmptyDistributionGroups({
 
   return (
     <EmptyState
-      icon={<Users2 className="h-12 w-12" />}
+      icon={<Users2 />}
       title="No distribution groups yet"
       description="Create distribution groups to organize and communicate with team members more efficiently."
-      action={onAddGroup && <Button onClick={onAddGroup}>Create Group</Button>}
+      action={
+        onAddGroup
+          ? { label: "Create Group", onClick: onAddGroup }
+          : undefined
+      }
     />
   );
 }

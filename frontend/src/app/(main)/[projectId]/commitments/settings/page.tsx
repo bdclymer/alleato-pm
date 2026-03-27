@@ -150,7 +150,7 @@ export default function CommitmentSettingsPage() {
 
       <div className="max-w-3xl space-y-6">
         <Tabs defaultValue="general">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList variant="line">
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="distribution">Distribution</TabsTrigger>
             <TabsTrigger value="defaults">Defaults</TabsTrigger>

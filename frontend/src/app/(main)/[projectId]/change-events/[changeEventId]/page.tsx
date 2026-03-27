@@ -717,7 +717,7 @@ export default function ChangeEventDetailPage() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList>
+        <TabsList variant="line">
           <TabsTrigger value="general" data-testid="change-event-tab-general">
             General
           </TabsTrigger>

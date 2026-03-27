@@ -20,9 +20,7 @@ function getOpenAI(): OpenAI {
         baseURL: "https://ai-gateway.vercel.sh/v1",
       });
     } else {
-      const apiKey = process.env.OPENAI_API_KEY;
-      if (!apiKey) throw new Error("AI_GATEWAY_API_KEY or OPENAI_API_KEY not set");
-      _openai = new OpenAI({ apiKey });
+      throw new Error("AI_GATEWAY_API_KEY not set — run `vercel env pull` to provision OIDC credentials");
     }
   }
   return _openai;
@@ -821,7 +819,7 @@ export function createActionTools(
         // Synthesize with LLM
         const openai = getOpenAI();
         const completion = await openai.chat.completions.create({
-          model: "gpt-4o-mini",
+          model: "gpt-5.4-mini",
           temperature: 0.3,
           max_tokens: 1500,
           messages: [
@@ -973,6 +971,186 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
           record: data,
           boardUrl: "/command-center",
           tip: "View and drag cards on the Command Center board.",
+        };
+      }),
+    }),
+
+
+    // -------------------------------------------------------------------------
+    // TIER 1 — Commitment creation (subcontracts & purchase orders)
+    // -------------------------------------------------------------------------
+
+    createCommitment: tool({
+      description:
+        "Create a new commitment — either a subcontract (for labor/trade work) or a " +
+        "purchase order (for materials or equipment). Use when the user says " +
+        "'create a subcontract', 'add a PO', 'set up a commitment with [vendor]', " +
+        "or describes awarding work to a subcontractor or supplier. " +
+        "Always show a preview and ask for confirmation before writing. " +
+        "If projectId is unknown, call getPortfolioOverview first.",
+      inputSchema: z.object({
+        projectId: z.number().describe("Project ID — required"),
+        type: z
+          .enum(["subcontract", "purchase_order"])
+          .describe(
+            "Type of commitment: 'subcontract' for labor/trade work, 'purchase_order' for materials/equipment",
+          ),
+        title: z.string().describe("Commitment title, e.g. 'Electrical Work' or 'Structural Steel Supply'"),
+        vendorName: z
+          .string()
+          .optional()
+          .describe("Vendor or subcontractor company name — used to look up contract_company_id"),
+        contractNumber: z
+          .string()
+          .optional()
+          .describe("Contract number — auto-generated (SC-001 or PO-001) if not provided"),
+        status: z
+          .enum(["Draft", "Out for Bid", "Out for Signature", "Approved", "Complete", "Terminated", "Void"])
+          .default("Draft")
+          .describe("Initial status — defaults to Draft"),
+        description: z.string().optional().describe("Scope description"),
+        startDate: z.string().optional().describe("ISO start date, e.g. '2026-04-01'"),
+        estimatedCompletionDate: z.string().optional().describe("ISO estimated completion date"),
+        defaultRetainagePercent: z
+          .number()
+          .optional()
+          .describe("Default retainage percentage, e.g. 10 for 10%"),
+        confirmed: z
+          .boolean()
+          .default(false)
+          .describe("Set to true only after user confirms the preview"),
+      }),
+      execute: withTrace("createCommitment", options, async (input) => {
+        const {
+          projectId,
+          type,
+          title,
+          vendorName,
+          contractNumber,
+          status,
+          description,
+          startDate,
+          estimatedCompletionDate,
+          defaultRetainagePercent,
+          confirmed,
+        } = input;
+
+        const table = type === "subcontract" ? "subcontracts" : "purchase_orders";
+        const prefix = type === "subcontract" ? "SC" : "PO";
+
+        // Auto-generate contract number if not provided
+        let finalContractNumber = contractNumber;
+        if (!finalContractNumber) {
+          const { data: existing } = await (supabase as any)
+            .from(table)
+            .select("contract_number")
+            .eq("project_id", projectId)
+            .order("created_at", { ascending: false })
+            .limit(100);
+
+          // Find highest numeric suffix among existing contract numbers for this prefix
+          let maxNum = 0;
+          for (const row of existing ?? []) {
+            const match = row.contract_number?.match(new RegExp(`^${prefix}-(\\d+)$`));
+            if (match) {
+              const n = parseInt(match[1], 10);
+              if (n > maxNum) maxNum = n;
+            }
+          }
+          finalContractNumber = `${prefix}-${String(maxNum + 1).padStart(3, "0")}`;
+        }
+
+        // Look up vendor ID by name if provided
+        let contractCompanyId: string | null = null;
+        if (vendorName) {
+          const { data: vendorRows } = await supabase
+            .from("vendors")
+            .select("id, name")
+            .ilike("name", `%${vendorName}%`)
+            .limit(1);
+
+          if (vendorRows && vendorRows.length > 0) {
+            contractCompanyId = vendorRows[0].id;
+          }
+        }
+
+        if (!confirmed) {
+          return {
+            action: "preview",
+            message:
+              `Here's the ${type === "subcontract" ? "subcontract" : "purchase order"} I'll create. ` +
+              "Reply **confirm** to proceed or tell me what to change.",
+            preview: {
+              table,
+              fields: {
+                project_id: projectId,
+                contract_number: finalContractNumber,
+                title,
+                status,
+                contract_company_id: contractCompanyId,
+                vendor_name_resolved: contractCompanyId ? vendorName : vendorName ? `${vendorName} (not found in project directory — will need to be linked manually)` : null,
+                description: description ?? null,
+                start_date: startDate ?? null,
+                estimated_completion_date: estimatedCompletionDate ?? null,
+                default_retainage_percent: defaultRetainagePercent ?? null,
+              },
+            },
+          };
+        }
+
+        // Build the insert payload
+        const insertPayload: Record<string, unknown> = {
+          project_id: projectId,
+          contract_number: finalContractNumber,
+          title,
+          status,
+          executed: false,
+          contract_company_id: contractCompanyId,
+          description: description ?? null,
+          default_retainage_percent: defaultRetainagePercent ?? null,
+          updated_at: new Date().toISOString(),
+        };
+
+        if (type === "subcontract") {
+          insertPayload.start_date = startDate ?? null;
+          insertPayload.estimated_completion_date = estimatedCompletionDate ?? null;
+          insertPayload.is_private = true;
+          insertPayload.allow_non_admin_view_sov_items = false;
+          insertPayload.non_admin_user_ids = [];
+          insertPayload.invoice_contact_ids = [];
+        } else {
+          // purchase_order uses delivery_date instead of estimated_completion_date
+          insertPayload.delivery_date = estimatedCompletionDate ?? null;
+          insertPayload.is_private = true;
+          insertPayload.allow_non_admin_view_sov_items = false;
+          insertPayload.non_admin_user_ids = [];
+          insertPayload.invoice_contact_ids = [];
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data, error } = await (supabase as any)
+          .from(table)
+          .insert(insertPayload)
+          .select("id, contract_number, title, status")
+          .single();
+
+        if (error) return { success: false, error: (error as { message: string }).message };
+
+        const label = type === "subcontract" ? "Subcontract" : "Purchase Order";
+        const record = data as { id: string; contract_number: string; title: string; status: string };
+
+        return {
+          success: true,
+          message: `${label} **${record.contract_number} — "${title}"** created successfully.`,
+          record: data,
+          nextSteps: [
+            `Open the Commitments page to add SOV line items and set the contract value`,
+            vendorName && !contractCompanyId
+              ? `Link the vendor "${vendorName}" in the commitment detail page — they weren't found in the project directory`
+              : null,
+            "Upload the signed contract document when available",
+            "Submit for approval when ready",
+          ].filter(Boolean),
         };
       }),
     }),

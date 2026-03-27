@@ -586,7 +586,7 @@ function AddMemberDialog({
           value={tab}
           onValueChange={(v) => setTab(v as "existing" | "new")}
         >
-          <TabsList className="w-full">
+          <TabsList variant="line">
             <TabsTrigger value="existing" className="flex-1">
               Select Existing
             </TabsTrigger>
@@ -1435,7 +1435,7 @@ export default function ProjectDirectoryPage() {
       />
       <PageContainer maxWidth="xl">
         <Tabs defaultValue="members">
-          <TabsList className="mb-6">
+          <TabsList variant="line" className="mb-6">
             <TabsTrigger value="members">
               Members
               <TabCount n={members.length} />

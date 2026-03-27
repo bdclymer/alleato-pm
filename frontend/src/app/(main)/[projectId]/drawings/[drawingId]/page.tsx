@@ -532,7 +532,7 @@ export default function DrawingDetailPage() {
       {/* ------------------------------------------------------------------ */}
       <PageContainer>
         <Tabs defaultValue="general" className="mt-4">
-          <TabsList className="mb-6 flex-wrap h-auto gap-1">
+          <TabsList variant="line" className="mb-6 flex-wrap h-auto">
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="sketches">Sketches</TabsTrigger>
             <TabsTrigger value="download-log">Download Log</TabsTrigger>

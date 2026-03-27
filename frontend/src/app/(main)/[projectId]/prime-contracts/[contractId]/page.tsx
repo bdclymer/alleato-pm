@@ -1943,6 +1943,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
         onTabClick={(href) => setActiveTab(href as ContractTab)}
       />
 
+      <div className="pt-6">
       {activeTab === "overview" && (
         <PrimeContractOverviewTab
           contract={contract}
@@ -2825,6 +2826,7 @@ lineItemsLoading={lineItemsLoading}
             </div>
           </div>
         )}
+      </div>
       <PrimeContractDialogs
         showAddLineItemDialog={showAddLineItemDialog}
         setShowAddLineItemDialog={setShowAddLineItemDialog}

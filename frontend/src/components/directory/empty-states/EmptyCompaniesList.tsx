@@ -1,6 +1,5 @@
 import { Building2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { EmptyState } from "@/components/ui/empty-state";
+import { EmptyState } from "@/components/ds";
 
 interface EmptyCompaniesListProps {
   onAddCompany?: () => void;
@@ -16,15 +15,13 @@ export function EmptyCompaniesList({
   if (hasFilters) {
     return (
       <EmptyState
-        icon={<Building2 className="h-12 w-12" />}
+        icon={<Building2 />}
         title="No companies found"
         description="No companies match your current filters. Try adjusting your search or filter criteria."
         action={
-          onClearFilters && (
-            <Button onClick={onClearFilters} variant="outline">
-              Clear Filters
-            </Button>
-          )
+          onClearFilters
+            ? { label: "Clear Filters", onClick: onClearFilters }
+            : undefined
         }
       />
     );
@@ -32,11 +29,13 @@ export function EmptyCompaniesList({
 
   return (
     <EmptyState
-      icon={<Building2 className="h-12 w-12" />}
+      icon={<Building2 />}
       title="No companies yet"
       description="Get started by adding your first company to the project directory."
       action={
-        onAddCompany && <Button onClick={onAddCompany}>Add Company</Button>
+        onAddCompany
+          ? { label: "Add Company", onClick: onAddCompany }
+          : undefined
       }
     />
   );

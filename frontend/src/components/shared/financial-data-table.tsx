@@ -10,8 +10,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { LoadingState } from "./loading-state";
-import { EmptyState } from "./empty-state";
-import { LucideIcon } from "lucide-react";
+import { EmptyState } from "@/components/ds";
+import type { LucideIcon } from "lucide-react";
+import { Inbox } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 export interface TableColumn<T = any> {
@@ -62,10 +63,14 @@ export function FinancialDataTable<T extends { id?: string | number }>({
   if (!data || data.length === 0) {
     return (
       <EmptyState
-        icon={emptyIcon}
-        message={emptyMessage}
-        actionLabel={emptyActionLabel}
-        onAction={onEmptyAction}
+        icon={emptyIcon ? <>{React.createElement(emptyIcon)}</> : <Inbox />}
+        title={emptyMessage}
+        description=""
+        action={
+          emptyActionLabel && onEmptyAction
+            ? { label: emptyActionLabel, onClick: onEmptyAction }
+            : undefined
+        }
       />
     );
   }

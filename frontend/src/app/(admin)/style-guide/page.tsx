@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { PageContainer } from "@/components/layout";
-import { EmptyState } from "@/components/ui/empty-state";
+import { EmptyState } from "@/components/ds";
 import { PageHeader } from "@/components/layout/page-header-unified";
 import { SectionHeader } from "@/components/ds/section-header";
 import { MetricCard } from "@/components/ui/metric-card";

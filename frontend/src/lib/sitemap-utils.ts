@@ -102,6 +102,7 @@ export const staticRoutes: SitemapRoute[] = [
   // Utility
   { url: "/sitemap-view", title: "Sitemap", category: "Utility", type: "utility", dynamic: false },
   { url: "/design-system", title: "Design System", category: "Utility", type: "utility", dynamic: false },
+  { url: "/components", title: "Component Showcase", category: "Utility", type: "utility", dynamic: false },
   { url: "/api-docs", title: "API Docs", category: "Utility", type: "utility", dynamic: false },
   { url: "/style-guide", title: "Style Guide", category: "Utility", type: "utility", dynamic: false },
 ];
