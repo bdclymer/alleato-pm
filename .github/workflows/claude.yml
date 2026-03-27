@@ -16,6 +16,22 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  auth-check:
+    runs-on: ubuntu-latest
+    outputs:
+      has_auth: ${{ steps.check.outputs.has_auth }}
+    steps:
+      - id: check
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+        run: |
+          if [ -n "$ANTHROPIC_API_KEY" ] || [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
+            echo "has_auth=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_auth=false" >> "$GITHUB_OUTPUT"
+          fi
+
   auto-label:
     runs-on: ubuntu-latest
     permissions:
@@ -33,12 +49,13 @@ jobs:
             });
 
   review:
+    needs: auth-check
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
       pull-requests: write
-    if: github.event_name == 'pull_request' && (secrets.CLAUDE_CODE_OAUTH_TOKEN != '' || secrets.ANTHROPIC_API_KEY != '')
+    if: github.event_name == 'pull_request' && needs.auth-check.outputs.has_auth == 'true'
     steps:
       - uses: actions/checkout@v4
         with:
@@ -65,6 +82,7 @@ jobs:
             If the PR looks good, say so briefly.
 
   respond:
+    needs: auth-check
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -72,7 +90,7 @@ jobs:
       pull-requests: write
       issues: write
     if: |
-      (secrets.CLAUDE_CODE_OAUTH_TOKEN != '' || secrets.ANTHROPIC_API_KEY != '') &&
+      needs.auth-check.outputs.has_auth == 'true' &&
       ((github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')))
     steps:
@@ -92,6 +110,7 @@ jobs:
           claude_args: '--max-turns 25'
 
   auto-resolve:
+    needs: auth-check
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -99,7 +118,7 @@ jobs:
       pull-requests: write
       issues: write
     if: |
-      (secrets.CLAUDE_CODE_OAUTH_TOKEN != '' || secrets.ANTHROPIC_API_KEY != '') &&
+      needs.auth-check.outputs.has_auth == 'true' &&
       ((github.event_name == 'issues' && github.event.action == 'opened') ||
       (github.event_name == 'issues' && github.event.action == 'labeled' && contains(github.event.issue.labels.*.name, 'claude')))
     steps:
