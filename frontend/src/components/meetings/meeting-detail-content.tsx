@@ -16,6 +16,7 @@ import * as React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
+import { Button } from "@/components/ui/button";
 import {
   Collapsible,
   CollapsibleContent,
@@ -309,13 +310,15 @@ export function MeetingDetailContent({
             {meeting.project}
           </span>
         ) : (
-          <button
+          <Button
             type="button"
-            className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground/60 hover:text-muted-foreground transition-colors"
+            variant="ghost"
+            size="sm"
+            className="inline-flex items-center gap-2 text-xs font-medium text-muted-foreground/60 hover:text-muted-foreground h-auto px-0"
           >
             <FolderOpen className="h-3.5 w-3.5" />
             Assign to project
-          </button>
+          </Button>
         )}
         {meeting.fireflies_link ? (
           <a

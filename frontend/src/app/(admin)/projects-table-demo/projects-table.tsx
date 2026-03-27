@@ -44,6 +44,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Project } from "@/types/portfolio";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { EditableCell } from "../../../components/portfolio/editable-cell";
 import { EditProjectDialog } from "../../../components/portfolio/edit-project-dialog";
@@ -132,26 +133,26 @@ export function ProjectsTable({
       accessorKey: "name",
       meta: { sticky: true, left: 0 },
       header: ({ column }) => (
-        <button
-          type="button"
-          className="flex items-center gap-1 hover:text-foreground"
+        <Button
+          variant="ghost"
+          className="flex items-center gap-1 hover:text-foreground h-auto p-0"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Name
           <ArrowUpDown className="w-3.5 h-3.5" />
-        </button>
+        </Button>
       ),
       cell: ({ row }) => (
-        <button
-          type="button"
+        <Button
+          variant="ghost"
           onClick={(e) => {
             e.stopPropagation();
             onProjectClick?.(row.original);
           }}
-          className="font-medium text-primary hover:text-primary/90 transition-colors duration-200 text-left group-hover:underline truncate max-w-[180px]"
+          className="font-medium text-primary hover:text-primary/90 transition-colors duration-200 text-left group-hover:underline truncate max-w-[180px] h-auto p-0"
         >
           {row.getValue("name")}
-        </button>
+        </Button>
       ),
       size: 180,
       minSize: 120,
@@ -160,14 +161,14 @@ export function ProjectsTable({
     {
       accessorKey: "jobNumber",
       header: ({ column }) => (
-        <button
-          type="button"
-          className="flex items-center gap-1 hover:text-foreground"
+        <Button
+          variant="ghost"
+          className="flex items-center gap-1 hover:text-foreground h-auto p-0"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Job Number
           <ArrowUpDown className="w-3.5 h-3.5" />
-        </button>
+        </Button>
       ),
       cell: ({ row }) => (
         <EditableCell
@@ -180,14 +181,14 @@ export function ProjectsTable({
     {
       accessorKey: "client",
       header: ({ column }) => (
-        <button
-          type="button"
-          className="flex items-center gap-1 hover:text-foreground"
+        <Button
+          variant="ghost"
+          className="flex items-center gap-1 hover:text-foreground h-auto p-0"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Client
           <ArrowUpDown className="w-3.5 h-3.5" />
-        </button>
+        </Button>
       ),
       cell: ({ row }) => (
         <EditableCell
@@ -200,14 +201,14 @@ export function ProjectsTable({
     {
       accessorKey: "startDate",
       header: ({ column }) => (
-        <button
-          type="button"
-          className="flex items-center gap-1 hover:text-foreground"
+        <Button
+          variant="ghost"
+          className="flex items-center gap-1 hover:text-foreground h-auto p-0"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Start Date
           <ArrowUpDown className="w-3.5 h-3.5" />
-        </button>
+        </Button>
       ),
       cell: ({ row }) => {
         const date = row.getValue("startDate") as string | null;
@@ -229,14 +230,14 @@ export function ProjectsTable({
     {
       accessorKey: "state",
       header: ({ column }) => (
-        <button
-          type="button"
-          className="flex items-center gap-1 hover:text-foreground"
+        <Button
+          variant="ghost"
+          className="flex items-center gap-1 hover:text-foreground h-auto p-0"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           State
           <ArrowUpDown className="w-3.5 h-3.5" />
-        </button>
+        </Button>
       ),
       cell: ({ row }) => (
         <EditableCell
@@ -249,14 +250,14 @@ export function ProjectsTable({
     {
       accessorKey: "phase",
       header: ({ column }) => (
-        <button
-          type="button"
-          className="flex items-center gap-1 hover:text-foreground"
+        <Button
+          variant="ghost"
+          className="flex items-center gap-1 hover:text-foreground h-auto p-0"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Phase
           <ArrowUpDown className="w-3.5 h-3.5" />
-        </button>
+        </Button>
       ),
       // Case-insensitive filter
       filterFn: (row, id, value) => {
@@ -289,14 +290,14 @@ export function ProjectsTable({
     {
       accessorKey: "category",
       header: ({ column }) => (
-        <button
-          type="button"
-          className="flex items-center gap-1 hover:text-foreground"
+        <Button
+          variant="ghost"
+          className="flex items-center gap-1 hover:text-foreground h-auto p-0"
           onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
         >
           Category
           <ArrowUpDown className="w-3.5 h-3.5" />
-        </button>
+        </Button>
       ),
       cell: ({ row }) => (
         <EditableCell
@@ -332,8 +333,9 @@ export function ProjectsTable({
       id: "actions",
       header: () => <span className="sr-only">Actions</span>,
       cell: ({ row }) => (
-        <button
-          type="button"
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={(e) => {
             e.stopPropagation();
             setEditingProject(row.original);
@@ -343,7 +345,7 @@ export function ProjectsTable({
           aria-label="Edit project"
         >
           <Pencil className="w-4 h-4 text-foreground" />
-        </button>
+        </Button>
       ),
       size: 60,
     },
@@ -396,20 +398,21 @@ export function ProjectsTable({
                 return (
                   <div
                     key={row.id}
-                    className="group relative bg-card border border-border rounded-lg p-4 hover:border-border/80 hover:-translate-y-1 transition-all duration-300"
+                    className="group relative bg-card rounded-lg p-4 hover:-translate-y-1 transition-all duration-300"
                   >
-                    <button
-                      type="button"
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={(e) => {
                         e.stopPropagation();
                         setEditingProject(project);
                         setIsEditDialogOpen(true);
                       }}
-                      className="absolute top-3 right-3 p-1.5 rounded-md opacity-0 group-hover:opacity-100 hover:bg-muted transition-all duration-200"
+                      className="absolute top-3 right-3 p-1.5 h-auto w-auto rounded-md opacity-0 group-hover:opacity-100 hover:bg-muted transition-all duration-200"
                       aria-label={`Edit ${project.name}`}
                     >
                       <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
-                    </button>
+                    </Button>
                     <Link
                       href={projectHref}
                       className="block text-left"
@@ -484,46 +487,50 @@ export function ProjectsTable({
           </div>
 
           <div className="flex items-center gap-1 sm:gap-2">
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="icon"
               aria-label="Go to first page"
-              className="p-2 rounded-md hover:bg-muted transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-2 rounded-md hover:bg-muted transition-colors duration-200"
               onClick={() => table.setPageIndex(0)}
               disabled={!table.getCanPreviousPage()}
             >
               <ChevronsLeft className="w-4 h-4" />
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               aria-label="Go to previous page"
-              className="p-1 rounded hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-1 rounded-md hover:bg-muted"
               onClick={() => table.previousPage()}
               disabled={!table.getCanPreviousPage()}
             >
               <ChevronLeft className="w-3.5 h-3.5" />
-            </button>
+            </Button>
             <span className="text-sm text-foreground px-4 py-1">
               {table.getState().pagination.pageIndex + 1} of{" "}
               {table.getPageCount()}
             </span>
-            <button
-              type="button"
+            <Button
+              variant="ghost"
+              size="icon"
               aria-label="Go to next page"
-              className="p-1 rounded hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-1 rounded-md hover:bg-muted"
               onClick={() => table.nextPage()}
               disabled={!table.getCanNextPage()}
             >
               <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-            <button
-              type="button"
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
               aria-label="Go to last page"
-              className="p-1 rounded hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+              className="p-1 rounded-md hover:bg-muted"
               onClick={() => table.setPageIndex(table.getPageCount() - 1)}
               disabled={!table.getCanNextPage()}
             >
               <ChevronsRight className="w-3.5 h-3.5" />
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -568,18 +575,19 @@ export function ProjectsTable({
                         Job #{project.jobNumber}
                       </p>
                     </div>
-                    <button
-                      type="button"
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={(e) => {
                         e.stopPropagation();
                         setEditingProject(project);
                         setIsEditDialogOpen(true);
                       }}
-                      className="p-1.5 hover:bg-muted rounded-md transition-colors shrink-0"
+                      className="p-1.5 h-auto w-auto hover:bg-muted rounded-md transition-colors shrink-0"
                       aria-label="Edit project"
                     >
                       <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
-                    </button>
+                    </Button>
                   </div>
                   <div className="mt-2 flex flex-wrap items-center gap-2 text-xs">
                     {project.client && (

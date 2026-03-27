@@ -13,6 +13,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface ProjectRolesTabProps {
@@ -200,16 +201,18 @@ function RoleRow({ role, personOptions, onUpdateMembers }: RoleRowProps) {
                       </span>
                     )}
                   </span>
-                  <button
+                  <Button
+                    variant="ghost"
+                    size="icon"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleRemove(member.person_id);
                     }}
-                    className="hover:bg-blue-300 rounded p-0.5"
+                    className="h-4 w-4 p-0 hover:bg-accent rounded"
                     disabled={isUpdating}
                   >
                     <X className="w-3 h-3" />
-                  </button>
+                  </Button>
                 </Badge>
               ))
             )}
@@ -238,11 +241,12 @@ function RoleRow({ role, personOptions, onUpdateMembers }: RoleRowProps) {
                   filteredOptions.map((person) => {
                     const isSelected = selectedIds.includes(person.id);
                     return (
-                      <button
+                      <Button
                         key={person.id}
+                        variant="ghost"
                         className={cn(
-                          "w-full px-4 py-2 text-left text-sm hover:bg-muted flex items-center justify-between",
-                          isSelected && "bg-orange-50",
+                          "w-full justify-between px-4 py-2 text-left text-sm h-auto font-normal",
+                          isSelected && "bg-primary/5",
                         )}
                         onClick={() => handleSelect(person.id)}
                       >
@@ -256,9 +260,9 @@ function RoleRow({ role, personOptions, onUpdateMembers }: RoleRowProps) {
                           )}
                         </span>
                         {isSelected && (
-                          <span className="text-orange-600">✓</span>
+                          <span className="text-primary">✓</span>
                         )}
-                      </button>
+                      </Button>
                     );
                   })
                 )}

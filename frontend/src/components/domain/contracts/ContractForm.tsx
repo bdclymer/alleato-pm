@@ -1434,10 +1434,11 @@ export function ContractForm({
                     .sort(([a], [b]) => a.localeCompare(b))
                     .map(([division]) => (
                       <div key={division} className="border-b last:border-b-0">
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
                           onClick={() => toggleDivision(division)}
-                          className="w-full flex items-center justify-between px-4 py-2 text-left hover:bg-muted transition-colors"
+                          className="w-full flex items-center justify-between px-4 py-2 text-left h-auto font-normal"
                         >
                           <span className="text-sm font-semibold text-foreground">
                             {division}
@@ -1447,21 +1448,22 @@ export function ContractForm({
                           ) : (
                             <ChevronRight className="w-4 h-4 text-muted-foreground" />
                           )}
-                        </button>
+                        </Button>
 
                         {expandedDivisions.has(division) && (
                           <div className="bg-muted">
                             {groupedCostCodes[division].map((costCode) => (
-                              <button
+                              <Button
                                 key={costCode.id}
                                 type="button"
+                                variant="ghost"
                                 onClick={() =>
                                   setNewBudgetCodeData({
                                     ...newBudgetCodeData,
                                     costCodeId: costCode.id,
                                   })
                                 }
-                                className={`w-full text-left px-6 py-2 text-sm hover:bg-muted transition-colors ${
+                                className={`w-full text-left justify-start px-6 py-2 text-sm h-auto font-normal ${
                                   newBudgetCodeData.costCodeId === costCode.id
                                     ? "bg-primary/10 text-primary font-medium"
                                     : "text-foreground"
@@ -1469,7 +1471,7 @@ export function ContractForm({
                               >
                                 {costCode.division_title || costCode.id} -{" "}
                                 {costCode.title}
-                              </button>
+                              </Button>
                             ))}
                           </div>
                         )}

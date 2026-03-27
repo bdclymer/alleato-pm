@@ -184,8 +184,9 @@ export function CostCodeHierarchyView({
             const isExpanded = groupId ? expandedGroups.has(groupId) : false;
 
             return (
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={(event) => {
                   event.stopPropagation();
                   if (!groupId) return;
@@ -199,12 +200,12 @@ export function CostCodeHierarchyView({
                     return next;
                   });
                 }}
-                className="flex items-center gap-2 text-left font-semibold"
+                className="flex items-center gap-2 text-left font-semibold h-auto p-0"
                 style={{ paddingLeft }}
               >
                 {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                 <span>{row.label}</span>
-              </button>
+              </Button>
             );
           }
 

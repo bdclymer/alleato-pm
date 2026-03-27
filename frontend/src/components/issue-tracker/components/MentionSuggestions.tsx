@@ -12,7 +12,7 @@ export function MentionSuggestions({
   mentions,
 }: ComposerEditorMentionSuggestionsProps) {
   return (
-    <Composer.Suggestions className="p-1 bg-white border border-neutral-200 shadow-sm rounded-lg">
+    <Composer.Suggestions className="p-1 bg-card border border-border shadow-sm rounded-lg">
       <Composer.SuggestionsList>
         {mentions.map((mention) => (
           <MentionSuggestion key={mention.id} userId={mention.id} />

@@ -50,11 +50,11 @@ export function ElevationSection() {
         </div>
 
         {/* Layer 4 */}
-        <div className="flex-1 bg-[#e2e2e6] p-5">
+        <div className="flex-1 bg-accent p-5">
           <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60 mb-1">Layer 4 — Controls</div>
-          <div className="font-mono text-[11px] text-muted-foreground/40 mb-1">#e2e2e6</div>
+          <div className="font-mono text-[11px] text-muted-foreground/40 mb-1">accent</div>
           <div className="text-[11px] text-muted-foreground/60 mt-1">Input backgrounds, pressed states, active toggles.</div>
-          <div className="mt-3 text-[10px] font-mono text-muted-foreground/40">bg-[#e2e2e6]</div>
+          <div className="mt-3 text-[10px] font-mono text-muted-foreground/40">bg-accent</div>
         </div>
       </div>
 
@@ -65,13 +65,13 @@ export function ElevationSection() {
           <div className="inline-flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.08em] text-red-600 bg-red-50 px-2 py-[3px] rounded mb-5">
             ✗ Wrong — white page, gray cards
           </div>
-          <div className="bg-white rounded-lg p-4">
+          <div className="bg-card rounded-lg p-4">
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-[#f3f4f6] border border-[#e5e7eb] rounded-md p-3">
+              <div className="bg-muted border border-border rounded-md p-3">
                 <div className="text-[11px] font-semibold text-muted-foreground mb-1">Metric Card</div>
                 <div className="text-xs text-muted-foreground/60">Revenue data</div>
               </div>
-              <div className="bg-[#f3f4f6] border border-[#e5e7eb] rounded-md p-3">
+              <div className="bg-muted border border-border rounded-md p-3">
                 <div className="text-[11px] font-semibold text-muted-foreground mb-1">Another Card</div>
                 <div className="text-xs text-muted-foreground/60">Users data</div>
               </div>
@@ -89,11 +89,11 @@ export function ElevationSection() {
           </div>
           <div className="bg-background rounded-lg p-4">
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-card shadow-sm border border-black/[0.06] rounded-md p-3">
+              <div className="bg-card shadow-sm rounded-md p-3">
                 <div className="text-[11px] font-semibold text-foreground mb-1">Metric Card</div>
                 <div className="text-xs text-muted-foreground/60">Revenue data</div>
               </div>
-              <div className="bg-card shadow-sm border border-black/[0.06] rounded-md p-3">
+              <div className="bg-card shadow-sm rounded-md p-3">
                 <div className="text-[11px] font-semibold text-foreground mb-1">Another Card</div>
                 <div className="text-xs text-muted-foreground/60">Users data</div>
               </div>

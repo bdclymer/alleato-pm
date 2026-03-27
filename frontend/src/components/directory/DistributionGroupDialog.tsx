@@ -332,13 +332,15 @@ export function DistributionGroupDialog({
                           className="flex items-center gap-1"
                         >
                           {person.first_name} {person.last_name}
-                          <button
+                          <Button
                             type="button"
+                            variant="ghost"
+                            size="icon"
                             onClick={() => removeMember(Number(memberId))}
-                            className="ml-1 hover:text-destructive"
+                            className="ml-1 h-4 w-4 p-0 hover:text-destructive"
                           >
                             <X className="h-3 w-3" />
-                          </button>
+                          </Button>
                         </Badge>
                       );
                     })}

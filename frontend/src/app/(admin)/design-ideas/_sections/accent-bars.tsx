@@ -16,25 +16,29 @@ export function AccentBarsSection() {
       <div className="grid grid-cols-2 gap-3 mb-4">
 
         {/* 1. Left border accent */}
-        <div className="bg-card rounded-lg border border-border border-l-[3px] border-l-primary p-4 px-5 shadow-sm">
-          <span className="inline-block text-[10px] font-bold uppercase tracking-[0.08em] text-primary bg-primary/[0.07] border border-primary/20 px-[7px] py-0.5 rounded-sm mb-2">
-            Active
-          </span>
-          <p className="text-[13px] font-semibold text-foreground mb-1">Left border accent</p>
-          <p className="text-[12px] text-muted-foreground/60 leading-[1.5]">
-            3px solid accent. The card behind it is white with shadow-sm for elevation.
-          </p>
+        <div className="rounded-lg border-l-[3px] border-l-primary shadow-sm overflow-hidden">
+          <div className="bg-card p-4 px-5">
+            <span className="inline-block text-[10px] font-bold uppercase tracking-[0.08em] text-primary bg-primary/[0.07] border border-primary/20 px-[7px] py-0.5 rounded-sm mb-2">
+              Active
+            </span>
+            <p className="text-[13px] font-semibold text-foreground mb-1">Left border accent</p>
+            <p className="text-[12px] text-muted-foreground/60 leading-[1.5]">
+              3px solid accent. The card behind it is white with shadow-sm for elevation.
+            </p>
+          </div>
         </div>
 
         {/* 2. Top status stripe */}
-        <div className="bg-card rounded-lg border border-border border-t-2 border-t-green-600 p-4 px-5 shadow-sm">
-          <span className="inline-block text-[10px] font-bold uppercase tracking-[0.08em] text-green-600 bg-green-50 border border-green-600/20 px-[7px] py-0.5 rounded-sm mb-2">
-            Healthy
-          </span>
-          <p className="text-[13px] font-semibold text-foreground mb-1">Top status stripe</p>
-          <p className="text-[12px] text-muted-foreground/60 leading-[1.5]">
-            2px solid green on top. Green needs to be #16a34a in light mode for proper contrast.
-          </p>
+        <div className="rounded-lg border-t-2 border-t-green-600 shadow-sm overflow-hidden">
+          <div className="bg-card p-4 px-5">
+            <span className="inline-block text-[10px] font-bold uppercase tracking-[0.08em] text-green-600 bg-green-50 border border-green-600/20 px-[7px] py-0.5 rounded-sm mb-2">
+              Healthy
+            </span>
+            <p className="text-[13px] font-semibold text-foreground mb-1">Top status stripe</p>
+            <p className="text-[12px] text-muted-foreground/60 leading-[1.5]">
+              2px solid green on top. Green needs to be #16a34a in light mode for proper contrast.
+            </p>
+          </div>
         </div>
 
         {/* 3. Tinted background */}

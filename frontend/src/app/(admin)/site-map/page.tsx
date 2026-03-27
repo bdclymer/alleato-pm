@@ -176,8 +176,9 @@ function buildSitemapTableColumns(
         if (item._group !== undefined) {
           const isCollapsed = collapsedGroups.has(item._group);
           return (
-            <button
-              className="flex items-center gap-2 w-full text-left"
+            <Button
+              variant="ghost"
+              className="flex items-center gap-2 w-full text-left h-auto p-0"
               onClick={(e) => {
                 e.stopPropagation();
                 onToggleGroup(item._group!);
@@ -192,7 +193,7 @@ function buildSitemapTableColumns(
               <Badge variant="secondary" className="text-xs font-normal">
                 {item._groupCount}
               </Badge>
-            </button>
+            </Button>
           );
         }
         const isDynamic = item.url.includes("[");

@@ -64,7 +64,7 @@ export function BudgetLineItemCard({
   );
 
   return (
-    <div className="rounded-md border border-border bg-card p-4 space-y-4">
+    <div className="rounded-md bg-muted p-4 space-y-4">
       {/* Card Header — line number + amount + delete */}
       <div className="flex items-center justify-between">
         <div className="flex items-baseline gap-2">

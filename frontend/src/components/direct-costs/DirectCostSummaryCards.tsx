@@ -119,7 +119,7 @@ function DirectCostSummaryCardsSkeleton() {
       {Array.from({ length: 6 }).map((_, i) => (
         <div
           key={i}
-          className="bg-card text-card-foreground flex flex-col gap-6 rounded-xl border p-6"
+          className="bg-muted/50 text-card-foreground flex flex-col gap-6 rounded-xl p-6"
         >
           <div className="flex items-start justify-between">
             <div className="flex-1 space-y-2">

@@ -100,8 +100,10 @@ export default function DesignViolationsPage() {
         {/* Filter tabs */}
         <div className="flex items-center gap-1 mb-6 border-b border-border pb-3">
           {["open", "in_progress", "fixed", "wont_fix", "all"].map(s => (
-            <button
+            <Button
               key={s}
+              variant={filter === s ? "default" : "ghost"}
+              size="sm"
               onClick={() => setFilter(s)}
               className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
                 filter === s
@@ -110,7 +112,7 @@ export default function DesignViolationsPage() {
               }`}
             >
               {s === "wont_fix" ? "Won't fix" : s === "in_progress" ? "In progress" : s.charAt(0).toUpperCase() + s.slice(1)}
-            </button>
+            </Button>
           ))}
         </div>
 

@@ -283,7 +283,7 @@ function ProjectCard({
 
   return (
     <div
-      className="group cursor-pointer rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary/30"
+      className="group cursor-pointer rounded-lg border border-border bg-background p-4 transition-colors hover:border-primary/30"
       onClick={onClick}
     >
       <div className="flex items-start justify-between gap-3">

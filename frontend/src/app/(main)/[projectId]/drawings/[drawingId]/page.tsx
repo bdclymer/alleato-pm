@@ -168,8 +168,10 @@ function RevisionRow({ revision, projectId, drawingId, onDownload }: RevisionRow
   return (
     <TableRow className={revision.is_current_revision ? "bg-muted/30" : undefined}>
       <TableCell>
-        <button
-          className="text-muted-foreground hover:text-foreground transition-colors"
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground hover:text-foreground transition-colors h-auto p-0"
           onClick={() =>
             router.push(`/${projectId}/drawings/viewer/${drawingId}`)
           }
@@ -177,17 +179,19 @@ function RevisionRow({ revision, projectId, drawingId, onDownload }: RevisionRow
           type="button"
         >
           <Info className="h-4 w-4" />
-        </button>
+        </Button>
       </TableCell>
       <TableCell>
-        <button
-          className="text-muted-foreground hover:text-foreground transition-colors"
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground hover:text-foreground transition-colors h-auto p-0"
           onClick={() => onDownload(revision)}
           title="Download this revision"
           type="button"
         >
           <Download className="h-4 w-4" />
-        </button>
+        </Button>
       </TableCell>
       <TableCell className="font-medium text-foreground">
         {revision.revision_number}

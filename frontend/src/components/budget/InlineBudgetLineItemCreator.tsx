@@ -447,7 +447,7 @@ export function InlineBudgetLineItemCreator({
           </div>
 
           {rows.map((row, index) => (
-            <div key={index} className="bg-card rounded-lg p-4 border border-border">
+            <div key={index} className="bg-muted rounded-lg p-4">
               <div className="grid grid-cols-12 gap-4">
                 {/* Budget Code Selector */}
                 <div className="col-span-4">
@@ -689,10 +689,11 @@ export function InlineBudgetLineItemCreator({
                     .sort(([a], [b]) => a.localeCompare(b))
                     .map(([division]) => (
                       <div key={division} className="border-b last:border-b-0">
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
                           onClick={() => toggleDivision(division)}
-                          className="w-full flex items-center justify-between px-4 py-2 text-left hover:bg-muted transition-colors"
+                          className="w-full flex items-center justify-between px-4 py-2 text-left hover:bg-muted transition-colors rounded-none h-auto"
                         >
                           <span className="text-sm font-semibold text-foreground">
                             {division}
@@ -702,14 +703,15 @@ export function InlineBudgetLineItemCreator({
                           ) : (
                             <ChevronRight className="w-4 h-4 text-muted-foreground" />
                           )}
-                        </button>
+                        </Button>
 
                         {expandedDivisions.has(division) && (
                           <div className="bg-muted/50">
                             {groupedCostCodes[division].map((costCode) => (
-                              <button
+                              <Button
                                 key={costCode.id}
                                 type="button"
+                                variant="ghost"
                                 onClick={() =>
                                   setNewCodeData({
                                     ...newCodeData,
@@ -717,13 +719,13 @@ export function InlineBudgetLineItemCreator({
                                   })
                                 }
                                 className={cn(
-                                  "w-full text-left px-6 py-2 text-sm hover:bg-muted transition-colors",
+                                  "w-full text-left px-6 py-2 text-sm hover:bg-muted transition-colors rounded-none h-auto justify-start",
                                   newCodeData.costCodeId === costCode.id &&
-                                    "bg-blue-50 text-blue-700 font-medium"
+                                    "bg-muted text-foreground font-medium"
                                 )}
                               >
                                 {costCode.id} – {costCode.title}
-                              </button>
+                              </Button>
                             ))}
                           </div>
                         )}

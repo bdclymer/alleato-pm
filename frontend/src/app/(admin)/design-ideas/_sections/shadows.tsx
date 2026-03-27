@@ -18,16 +18,16 @@ export function ShadowsSection() {
       {/* Shadow Grid */}
       <div className="grid grid-cols-4 gap-5 mb-4">
         {/* None */}
-        <div className="bg-card rounded-lg p-5 border border-border">
-          <div className="h-16 bg-card rounded-md border border-border mb-4" />
+        <div className="bg-card rounded-lg p-5">
+          <div className="h-16 bg-card rounded-md mb-4" />
           <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60 mb-1">None</div>
           <div className="font-mono text-[10px] text-muted-foreground/40 mb-2">no shadow</div>
           <div className="text-[12px] text-muted-foreground/60 mt-2">Only for elements already inside a raised container.</div>
         </div>
 
         {/* Shadow SM */}
-        <div className="bg-card rounded-lg p-5 border border-border shadow-sm">
-          <div className="h-16 bg-card rounded-md border border-border shadow-sm mb-4" />
+        <div className="bg-card rounded-lg p-5 shadow-sm">
+          <div className="h-16 bg-card rounded-md shadow-sm mb-4" />
           <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60 mb-1">Shadow SM</div>
           <div className="font-mono text-[10px] text-muted-foreground/40 mb-2 leading-[1.6]">
             0 1px 2px rgba(0,0,0,.06){"\n"}0 1px 3px rgba(0,0,0,.04)
@@ -36,8 +36,8 @@ export function ShadowsSection() {
         </div>
 
         {/* Shadow MD */}
-        <div className="bg-card rounded-lg p-5 border border-border shadow-md">
-          <div className="h-16 bg-card rounded-md border border-border shadow-md mb-4" />
+        <div className="bg-card rounded-lg p-5 shadow-md">
+          <div className="h-16 bg-card rounded-md shadow-md mb-4" />
           <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60 mb-1">Shadow MD</div>
           <div className="font-mono text-[10px] text-muted-foreground/40 mb-2 leading-[1.6]">
             0 4px 6px rgba(0,0,0,.06){"\n"}0 2px 4px rgba(0,0,0,.04)
@@ -46,8 +46,8 @@ export function ShadowsSection() {
         </div>
 
         {/* Shadow LG */}
-        <div className="bg-card rounded-lg p-5 border border-border shadow-lg">
-          <div className="h-16 bg-card rounded-md border border-border shadow-lg mb-4" />
+        <div className="bg-card rounded-lg p-5 shadow-lg">
+          <div className="h-16 bg-card rounded-md shadow-lg mb-4" />
           <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60 mb-1">Shadow LG</div>
           <div className="font-mono text-[10px] text-muted-foreground/40 mb-2 leading-[1.6]">
             0 10px 15px rgba(0,0,0,.07){"\n"}0 4px 6px rgba(0,0,0,.04)
@@ -65,11 +65,11 @@ export function ShadowsSection() {
           </div>
           <div className="bg-background p-4 rounded-lg">
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white border border-border rounded-md p-3">
+              <div className="bg-card rounded-md p-3">
                 <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60 mb-1">Revenue</div>
                 <div className="text-lg font-bold text-foreground">$248k</div>
               </div>
-              <div className="bg-white border border-border rounded-md p-3">
+              <div className="bg-card rounded-md p-3">
                 <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60 mb-1">Users</div>
                 <div className="text-lg font-bold text-foreground">14,821</div>
               </div>
@@ -87,11 +87,11 @@ export function ShadowsSection() {
           </div>
           <div className="bg-background p-4 rounded-lg">
             <div className="grid grid-cols-2 gap-3">
-              <div className="bg-white border border-border shadow-sm rounded-md p-3">
+              <div className="bg-card shadow-sm rounded-md p-3">
                 <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60 mb-1">Revenue</div>
                 <div className="text-lg font-bold text-foreground">$248k</div>
               </div>
-              <div className="bg-white border border-border shadow-sm rounded-md p-3">
+              <div className="bg-card shadow-sm rounded-md p-3">
                 <div className="text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60 mb-1">Users</div>
                 <div className="text-lg font-bold text-foreground">14,821</div>
               </div>

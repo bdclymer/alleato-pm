@@ -245,7 +245,7 @@ export default function IntegrationsSettingsPage() {
               </div>
 
               {/* Integration cards */}
-              <div className="rounded-lg border border-border bg-card overflow-hidden divide-y divide-border">
+              <div className="rounded-lg border border-border overflow-hidden divide-y divide-border">
                 {group.items.map((integration) => (
                   <IntegrationRow key={integration.id} integration={integration} />
                 ))}

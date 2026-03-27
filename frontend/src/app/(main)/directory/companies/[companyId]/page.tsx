@@ -638,10 +638,11 @@ export default function CompanyDetailsPage() {
                   <ul className="divide-y divide-border">
                     {contacts.map((contact) => (
                       <li key={contact.id}>
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
                           onClick={() => router.push(`/directory/contacts/${contact.id}`)}
-                          className="grid w-full grid-cols-[auto_minmax(0,1fr)] items-center gap-3 py-3 text-left transition-colors hover:bg-muted/30 md:grid-cols-[auto_minmax(0,1fr)_minmax(220px,1fr)_180px]"
+                          className="grid w-full h-auto grid-cols-[auto_minmax(0,1fr)] items-center gap-3 py-3 text-left transition-colors hover:bg-muted/30 md:grid-cols-[auto_minmax(0,1fr)_minmax(220px,1fr)_180px] justify-start"
                         >
                           <Avatar className="h-9 w-9 border border-border">
                             <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
@@ -662,7 +663,7 @@ export default function CompanyDetailsPage() {
                           <p className="truncate text-sm text-muted-foreground md:text-right">
                             {contact.phone_business || contact.phone_mobile || "No phone"}
                           </p>
-                        </button>
+                        </Button>
                       </li>
                     ))}
                   </ul>

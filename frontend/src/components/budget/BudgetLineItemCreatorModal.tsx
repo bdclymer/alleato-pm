@@ -766,14 +766,16 @@ export function BudgetLineItemCreatorModal({
 
                             <td className="py-2 align-middle">
                               {rows.length > 1 && (
-                                <button
+                                <Button
                                   type="button"
+                                  variant="ghost"
+                                  size="icon"
                                   onClick={() => removeRow(index)}
                                   disabled={isCreating}
-                                  className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-destructive transition-all rounded"
+                                  className="opacity-0 group-hover:opacity-100 h-7 w-7 text-muted-foreground hover:text-destructive transition-all"
                                 >
                                   <X className="h-4 w-4" />
-                                </button>
+                                </Button>
                               )}
                             </td>
                           </motion.tr>
@@ -868,10 +870,11 @@ export function BudgetLineItemCreatorModal({
                     .sort(([a], [b]) => a.localeCompare(b))
                     .map(([division]) => (
                       <div key={division} className="border-b last:border-b-0">
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
                           onClick={() => toggleDivision(division)}
-                          className="w-full flex items-center justify-between px-4 py-2 text-left hover:bg-muted transition-colors"
+                          className="w-full flex items-center justify-between px-4 py-2 text-left hover:bg-muted transition-colors rounded-none h-auto"
                         >
                           <span className="text-sm font-semibold text-foreground">
                             {division}
@@ -881,14 +884,15 @@ export function BudgetLineItemCreatorModal({
                           ) : (
                             <ChevronRight className="w-4 h-4 text-muted-foreground" />
                           )}
-                        </button>
+                        </Button>
 
                         {expandedDivisions.has(division) && (
                           <div className="bg-muted/50">
                             {groupedCostCodes[division].map((costCode) => (
-                              <button
+                              <Button
                                 key={costCode.id}
                                 type="button"
+                                variant="ghost"
                                 onClick={() =>
                                   setNewCodeData({
                                     ...newCodeData,
@@ -896,13 +900,13 @@ export function BudgetLineItemCreatorModal({
                                   })
                                 }
                                 className={cn(
-                                  "w-full text-left px-6 py-2 text-sm hover:bg-muted transition-colors",
+                                  "w-full text-left px-6 py-2 text-sm hover:bg-muted transition-colors rounded-none h-auto justify-start",
                                   newCodeData.costCodeId === costCode.id &&
                                     "bg-muted text-foreground font-medium"
                                 )}
                               >
                                 {costCode.id} – {costCode.title}
-                              </button>
+                              </Button>
                             ))}
                           </div>
                         )}

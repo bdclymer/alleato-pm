@@ -185,7 +185,7 @@ export function DataDisplaySection() {
         <h3 className="mb-4 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
           Badge Variants
         </h3>
-        <div className="flex flex-wrap gap-2 rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="flex flex-wrap gap-2 rounded-xl bg-card p-6 shadow-sm">
           <Badge variant="default">Default</Badge>
           <Badge variant="secondary">Secondary</Badge>
           <Badge variant="outline">Outline</Badge>
@@ -233,7 +233,7 @@ export function DataDisplaySection() {
         <h3 className="mb-4 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
           Avatars
         </h3>
-        <div className="flex items-end gap-6 rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="flex items-end gap-6 rounded-xl bg-card p-6 shadow-sm">
           {[
             ["h-8 w-8", "BC", "sm"],
             ["h-10 w-10", "MH", "md"],
@@ -270,7 +270,7 @@ export function DataDisplaySection() {
           <h3 className="mb-4 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
             Progress
           </h3>
-          <div className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div className="space-y-4 rounded-xl bg-card p-6 shadow-sm">
             <div className="space-y-1.5">
               <div className="flex justify-between">
                 <p className="text-[10px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
@@ -296,7 +296,7 @@ export function DataDisplaySection() {
           <h3 className="mb-4 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
             Tooltip
           </h3>
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div className="rounded-xl bg-card p-6 shadow-sm">
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>

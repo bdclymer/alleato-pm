@@ -13,12 +13,13 @@ export function SegmentedControl() {
       >
         {["Day", "Week", "Month", "Year"].map((label, index) => {
           return (
+            {/* eslint-disable-next-line design-system/no-design-violations -- animated segmented control requires raw button for AnimatedBackground */}
             <button
               key={index}
               data-id={label}
               type="button"
               aria-label={`${label} view`}
-              className="inline-flex w-20 items-center justify-center text-center text-zinc-800 transition-transform active:scale-[0.98] dark:text-zinc-50"
+              className="inline-flex w-20 items-center justify-center text-center text-foreground transition-transform active:scale-[0.98]"
             >
               {label}
             </button>

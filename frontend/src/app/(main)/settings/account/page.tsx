@@ -98,7 +98,7 @@ export default function AccountSettingsPage() {
       <div className="space-y-8">
         {/* Company Profile */}
         <SectionCard icon={Building2} title="Company Profile">
-          <div className="rounded-lg border border-border bg-card px-5 divide-y divide-border">
+          <div className="rounded-lg border border-border px-5 divide-y divide-border">
             {/* Logo */}
             <div className="py-4">
               <div className="flex items-center gap-4">
@@ -111,14 +111,16 @@ export default function AccountSettingsPage() {
                         fill
                         className="object-cover"
                       />
-                      <button
+                      <Button
                         type="button"
+                        variant="outline"
+                        size="icon"
                         aria-label="Remove logo"
                         onClick={() => setLogoUrl(null)}
-                        className="absolute -top-0.5 -right-0.5 z-10 rounded-full bg-background border border-border p-0.5 shadow-sm hover:bg-muted transition-colors"
+                        className="absolute -top-0.5 -right-0.5 z-10 rounded-full h-5 w-5 p-0.5 shadow-sm hover:bg-muted transition-colors"
                       >
                         <X className="h-3 w-3 text-muted-foreground" />
-                      </button>
+                      </Button>
                     </>
                   ) : (
                     <Building2 className="h-5 w-5 text-muted-foreground/60" />
@@ -220,7 +222,7 @@ export default function AccountSettingsPage() {
 
         {/* Address */}
         <SectionCard icon={MapPin} title="Address">
-          <div className="rounded-lg border border-border bg-card px-5 divide-y divide-border">
+          <div className="rounded-lg border border-border px-5 divide-y divide-border">
             <div className="py-4 space-y-4">
               <div className="space-y-1.5">
                 <Label htmlFor="address" className="text-sm font-medium">
@@ -263,7 +265,7 @@ export default function AccountSettingsPage() {
 
         {/* Plan & Billing */}
         <SectionCard icon={CreditCard} title="Plan & Billing">
-          <div className="rounded-lg border border-border bg-card px-5 divide-y divide-border">
+          <div className="rounded-lg border border-border px-5 divide-y divide-border">
             {/* Plan */}
             <div className="flex items-center justify-between gap-4 py-4">
               <div>

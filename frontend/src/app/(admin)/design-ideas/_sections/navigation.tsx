@@ -36,7 +36,7 @@ export function NavigationSection() {
         <h3 className="mb-4 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
           Tabs
         </h3>
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="rounded-xl bg-card p-6 shadow-sm">
           <Tabs defaultValue="overview">
             <TabsList>
               <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -68,7 +68,7 @@ export function NavigationSection() {
         <h3 className="mb-4 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
           Breadcrumbs
         </h3>
-        <div className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="space-y-4 rounded-xl bg-card p-6 shadow-sm">
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>

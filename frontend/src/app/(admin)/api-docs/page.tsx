@@ -69,7 +69,7 @@ export default function ApiDocsPage() {
         <div
           ref={containerRef}
           id="swagger-ui"
-          className="min-h-[640px] w-full rounded-xl border border-slate-200 bg-white shadow-sm"
+          className="min-h-[640px] w-full rounded-xl bg-card shadow-sm"
         />
       </PageContainer>
     </DashboardLayout>

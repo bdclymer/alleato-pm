@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+
 export function NavSidebarSection() {
   return (
     <section id="nav-pattern">
@@ -168,9 +170,9 @@ export function NavSidebarSection() {
               </div>
               <div className="text-base font-semibold tracking-[-0.01em] text-foreground mt-1">Dashboard</div>
             </div>
-            <button className="bg-primary text-white px-3 py-1.5 rounded-md text-xs font-semibold">
+            <Button size="sm">
               + New Project
-            </button>
+            </Button>
           </div>
 
           {/* Body Text */}

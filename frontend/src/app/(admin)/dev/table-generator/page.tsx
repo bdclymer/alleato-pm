@@ -1133,30 +1133,30 @@ export default function TableGeneratorPage() {
 
                 {/* Tabs */}
                 <div className="flex gap-1 border-b border-border">
-                  <button
-                    type="button"
+                  <Button
+                    variant="ghost"
                     onClick={() => setActiveTab("config")}
                     className={cn(
-                      "px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
+                      "rounded-none px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
                       activeTab === "config"
                         ? "border-primary text-foreground"
                         : "border-transparent text-muted-foreground hover:text-foreground",
                     )}
                   >
                     Table Config
-                  </button>
-                  <button
-                    type="button"
+                  </Button>
+                  <Button
+                    variant="ghost"
                     onClick={() => setActiveTab("page")}
                     className={cn(
-                      "px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
+                      "rounded-none px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
                       activeTab === "page"
                         ? "border-primary text-foreground"
                         : "border-transparent text-muted-foreground hover:text-foreground",
                     )}
                   >
                     Page Component
-                  </button>
+                  </Button>
                 </div>
 
                 <div className="relative">

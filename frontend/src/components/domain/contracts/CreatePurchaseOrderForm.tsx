@@ -656,16 +656,17 @@ export function CreatePurchaseOrderForm({
         <p className="text-sm text-muted-foreground">
           This purchase order&apos;s accounting method is{" "}
           <strong>{accountingMethod === "unit-quantity" ? "unit/quantity" : "amount-based"}</strong>.{" "}
-          <button
+          <Button
             type="button"
-            className="underline hover:text-foreground transition-colors"
+            variant="link"
+            className="underline p-0 h-auto"
             disabled={isSubmitting}
             onClick={() =>
               setAccountingMethod(accountingMethod === "unit-quantity" ? "amount" : "unit-quantity")
             }
           >
             Change to {accountingMethod === "unit-quantity" ? "Amount-based" : "Unit/Quantity"}
-          </button>
+          </Button>
         </p>
 
         {budgetCodesError && (
@@ -987,10 +988,11 @@ export function CreatePurchaseOrderForm({
                     .sort(([a], [b]) => a.localeCompare(b))
                     .map(([division]) => (
                       <div key={division} className="border-b last:border-b-0">
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
                           onClick={() => toggleDivision(division)}
-                          className="flex w-full items-center justify-between px-4 py-2 text-left transition-colors hover:bg-muted"
+                          className="flex w-full items-center justify-between px-4 py-2 text-left h-auto font-normal"
                         >
                           <span className="text-sm font-semibold text-foreground">{division}</span>
                           {expandedDivisions.has(division) ? (
@@ -998,27 +1000,28 @@ export function CreatePurchaseOrderForm({
                           ) : (
                             <ChevronRight className="h-4 w-4 text-muted-foreground" />
                           )}
-                        </button>
+                        </Button>
                         {expandedDivisions.has(division) && (
                           <div className="bg-muted/50">
                             {groupedCostCodes[division].map((costCode) => (
-                              <button
+                              <Button
                                 key={costCode.id}
                                 type="button"
+                                variant="ghost"
                                 onClick={() =>
                                   setNewBudgetCodeData((prev) => ({
                                     ...prev,
                                     costCodeId: costCode.id,
                                   }))
                                 }
-                                className={`w-full px-6 py-2 text-left text-sm transition-colors hover:bg-muted ${
+                                className={`w-full px-6 py-2 text-left justify-start text-sm h-auto font-normal ${
                                   newBudgetCodeData.costCodeId === costCode.id
                                     ? "bg-primary/10 font-medium text-primary"
                                     : "text-foreground"
                                 }`}
                               >
                                 {costCode.division_title || costCode.id} - {costCode.title}
-                              </button>
+                              </Button>
                             ))}
                           </div>
                         )}

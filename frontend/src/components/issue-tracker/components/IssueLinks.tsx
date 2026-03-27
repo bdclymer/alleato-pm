@@ -71,6 +71,7 @@ function Links() {
     <div>
       <div className="flex justify-between items-center text-sm font-medium text-neutral-500">
         Links
+        {/* eslint-disable-next-line design-system/no-design-violations -- icon toggle in liveblocks issue links */}
         <button onClick={() => setCreating(!creating)}>
           {creating ? (
             <span>
@@ -87,7 +88,7 @@ function Links() {
       </div>
       {creating ? (
         <form
-          className="flex justify-between items-center border border-neutral-200 has-[:focus]:border-neutral-400 rounded-lg overflow-hidden shadow-sm bg-white my-2"
+          className="flex justify-between items-center border border-border has-[:focus]:border-border/80 rounded-lg overflow-hidden shadow-sm bg-card my-2"
           onSubmit={addLink}
         >
           <input
@@ -98,6 +99,7 @@ function Links() {
             onChange={(e) => setUrl(e.target.value)}
             autoFocus
           />
+          {/* eslint-disable-next-line design-system/no-design-violations -- inline form submit in liveblocks */}
           <button className="text-neutral-600 hover:text-neutral-900 transition-colors px-3 py-2">
             <span className="sr-only">Add new link</span>
             <SubmitIcon className="w-4 h-4" />
@@ -154,7 +156,7 @@ function LinkPreview({
   }, [link, onlyPlaceholder]);
 
   return (
-    <div className="isolate relative h-10 text-sm flex justify-between items-center border border-neutral-200 rounded-lg max-w-full shadow-sm bg-white my-2 cursor-pointer w-full overflow-hidden">
+    <div className="isolate relative h-10 text-sm flex justify-between items-center border border-border rounded-lg max-w-full shadow-sm bg-card my-2 cursor-pointer w-full overflow-hidden">
       <Link
         href={link}
         target="_blank"
@@ -188,9 +190,10 @@ function LinkPreview({
               </span>
             ) : null}
           </div>
+          {/* eslint-disable-next-line design-system/no-design-violations -- inline remove action in liveblocks */}
           <button
             onClick={onRemove}
-            className="z-10 flex-shrink-0 text-neutral-400 hover:text-neutral-600 transition-colors px-3 py-2"
+            className="z-10 flex-shrink-0 text-muted-foreground hover:text-foreground transition-colors px-3 py-2"
           >
             <span className="sr-only">Remove link</span>
             <RubbishIcon className="w-4 h-4" />

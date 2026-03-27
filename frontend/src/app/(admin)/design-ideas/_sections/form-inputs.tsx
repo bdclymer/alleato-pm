@@ -35,7 +35,7 @@ export function FormInputsSection() {
         </div>
       </div>
 
-      <div className="grid gap-8 rounded-xl border border-border bg-card p-6 shadow-sm sm:grid-cols-2">
+      <div className="grid gap-8 rounded-xl bg-card p-6 shadow-sm sm:grid-cols-2">
         {/* Text Input */}
         <div className="space-y-2">
           <Label htmlFor="demo-input">Text Input</Label>

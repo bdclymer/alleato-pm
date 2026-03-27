@@ -208,7 +208,7 @@ export default function MeetingPrepPage() {
               <p className="text-xs mt-1">This may take 15-30 seconds</p>
             </div>
           ) : content ? (
-            <div className="rounded-md border bg-card p-6">
+            <div className="rounded-md bg-card p-6">
               <Editor
                 content={content}
                 onSaveContent={handleSaveContent}

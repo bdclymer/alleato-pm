@@ -285,19 +285,19 @@ export default function ProjectBillingPeriodsPage() {
         <div className="space-y-6">
           {/* Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-card rounded-lg border border-border p-4">
+            <div className="bg-card rounded-lg p-4">
               <div className="text-sm font-medium text-muted-foreground">Total Periods</div>
               <div className="text-2xl font-bold text-foreground mt-1">
                 {data.length}
               </div>
             </div>
-            <div className="bg-card rounded-lg border border-border p-4">
+            <div className="bg-card rounded-lg p-4">
               <div className="text-sm font-medium text-muted-foreground">Open Periods</div>
               <div className="text-2xl font-bold text-foreground mt-1">
                 {openPeriods.length}
               </div>
             </div>
-            <div className="bg-card rounded-lg border border-border p-4">
+            <div className="bg-card rounded-lg p-4">
               <div className="text-sm font-medium text-muted-foreground">
                 Total Invoiced
               </div>
@@ -305,7 +305,7 @@ export default function ProjectBillingPeriodsPage() {
                 ${totalInvoiced.toLocaleString()}
               </div>
             </div>
-            <div className="bg-card rounded-lg border border-border p-4">
+            <div className="bg-card rounded-lg p-4">
               <div className="text-sm font-medium text-muted-foreground">Outstanding</div>
               <div className="text-2xl font-bold text-foreground mt-1">
                 ${outstanding.toLocaleString()}
@@ -314,7 +314,7 @@ export default function ProjectBillingPeriodsPage() {
           </div>
 
           {/* Table */}
-          <div className="bg-card rounded-lg border border-border overflow-hidden">
+          <div className="bg-card rounded-lg overflow-hidden">
             <DataTable
               columns={columns}
               data={data}

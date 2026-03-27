@@ -123,6 +123,7 @@ function InfoCard({
         {" "}
         <span className="truncate">{value}</span>{" "}
         {onCopy && (
+          {/* eslint-disable-next-line design-system/no-design-violations -- dev-only debug panel */}
           <button onClick={onCopy} className="p-1 hover:bg-zinc-700 rounded">
             {" "}
             {copied ? (

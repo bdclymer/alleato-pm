@@ -42,6 +42,7 @@ export function PageTabsV2({ tabs, className }: PageTabsV2Props) {
               : pathname === tab.href);
 
           return (
+            {/* eslint-disable-next-line design-system/no-design-violations -- custom tab primitive */}
             <button
               key={tab.href}
               type="button"

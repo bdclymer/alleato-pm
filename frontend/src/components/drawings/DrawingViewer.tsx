@@ -712,12 +712,14 @@ export function DrawingViewer({
           {annotationMode && (
             <div className="flex items-center gap-1 ml-1">
               {PRESET_COLORS.map((c) => (
-                <button
+                <Button
                   key={c}
                   type="button"
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setAnnotationColor(c)}
                   className={cn(
-                    "h-5 w-5 rounded-full border-2 transition-transform",
+                    "h-5 w-5 rounded-full border-2 p-0 transition-transform",
                     annotationColor === c
                       ? "border-foreground scale-110"
                       : "border-transparent hover:scale-110"
@@ -733,21 +735,20 @@ export function DrawingViewer({
           {annotationMode && activeTool !== "text" && activeTool !== "eraser" && (
             <div className="flex items-center gap-1 ml-1">
               {STROKE_WIDTHS.map((w) => (
-                <button
+                <Button
                   key={w}
                   type="button"
+                  variant={strokeWidth === w ? "secondary" : "ghost"}
+                  size="icon"
                   onClick={() => setStrokeWidth(w)}
-                  className={cn(
-                    "h-6 w-6 rounded flex items-center justify-center transition-colors",
-                    strokeWidth === w ? "bg-secondary" : "hover:bg-muted"
-                  )}
+                  className="h-6 w-6"
                   title={`${w}px`}
                 >
                   <div
                     className="rounded-full bg-foreground"
                     style={{ width: w + 2, height: w + 2 }}
                   />
-                </button>
+                </Button>
               ))}
             </div>
           )}

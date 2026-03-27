@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+
 export function EmptyStatesSection() {
   return (
     <section id="empty">
@@ -43,9 +45,9 @@ export function EmptyStatesSection() {
             <p className="text-[13px] text-muted-foreground/60 leading-[1.6] max-w-[240px]">
               Create your first project to start tracking metrics and managing your team&apos;s work.
             </p>
-            <button className="mt-1 px-4 py-2 bg-primary text-white rounded-md text-[13px] font-semibold shadow-sm">
+            <Button size="sm" className="mt-1">
               Create project
-            </button>
+            </Button>
           </div>
 
           <p className="text-xs text-muted-foreground/60 mt-4 pt-3 border-t border-border leading-[1.6]">

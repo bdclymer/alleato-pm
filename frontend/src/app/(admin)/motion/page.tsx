@@ -19,6 +19,7 @@ import { Marquee } from "@/components/motion/marquee";
 import { TabsTransitionPanel } from "@/components/motion/motion-tabs";
 
 import { TextEffect } from "@/components/motion/text-effect";
+import { Button } from "@/components/ui/button";
 
 export default function ComponentsPage() {
   return (
@@ -106,34 +107,34 @@ export default function ComponentsPage() {
                 duration: 0.3,
               }}
             >
-              <button
-                type="button"
+              <Button
+                variant="ghost"
                 data-id="1"
                 className="px-6 py-4 text-foreground transition-colors hover:text-white"
               >
                 Features
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="ghost"
                 data-id="2"
                 className="px-6 py-4 text-foreground transition-colors hover:text-white"
               >
                 Pricing
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="ghost"
                 data-id="3"
                 className="px-6 py-4 text-foreground transition-colors hover:text-white"
               >
                 About
-              </button>
-              <button
-                type="button"
+              </Button>
+              <Button
+                variant="ghost"
                 data-id="4"
                 className="px-6 py-4 text-foreground transition-colors hover:text-white"
               >
                 Contact
-              </button>
+              </Button>
             </AnimatedBackground>
           </div>
         </ComponentSection>
@@ -413,18 +414,17 @@ function MorphingDialogBasicThree() {
                   and peaceful hikes for all skill levels.
                 </p>
                 <div className="mt-6 flex gap-4">
-                  <button
-                    type="button"
-                    className="rounded-lg bg-blue-600 px-6 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+                  <Button
+                    className="rounded-lg px-6 py-2 text-sm font-medium"
                   >
                     Book Now
-                  </button>
-                  <button
-                    type="button"
-                    className="rounded-lg border border-border px-6 py-2 text-sm font-medium text-foreground hover:bg-muted transition-colors"
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="rounded-lg px-6 py-2 text-sm font-medium"
                   >
                     Learn More
-                  </button>
+                  </Button>
                 </div>
               </MorphingDialogDescription>
             </div>

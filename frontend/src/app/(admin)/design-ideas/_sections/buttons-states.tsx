@@ -28,7 +28,7 @@ export function ButtonsStatesSection() {
         <h3 className="mb-3 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
           Variants
         </h3>
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="flex flex-wrap items-center gap-3 rounded-xl bg-card p-6 shadow-sm">
           <Button variant="default">
             <Plus />
             Default
@@ -58,7 +58,7 @@ export function ButtonsStatesSection() {
         <h3 className="mb-3 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
           Sizes
         </h3>
-        <div className="flex flex-wrap items-end gap-6 rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="flex flex-wrap items-end gap-6 rounded-xl bg-card p-6 shadow-sm">
           {(
             [
               ["xs", "Extra Small"],
@@ -98,7 +98,7 @@ export function ButtonsStatesSection() {
         <h3 className="mb-3 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
           Disabled
         </h3>
-        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="flex flex-wrap items-center gap-3 rounded-xl bg-card p-6 shadow-sm">
           <Button disabled>Default</Button>
           <Button variant="secondary" disabled>Secondary</Button>
           <Button variant="outline" disabled>Outline</Button>

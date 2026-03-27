@@ -35,6 +35,7 @@ function AdminDropdown() {
 
   return (
     <div ref={ref} className="relative">
+      {/* eslint-disable-next-line design-system/no-design-violations -- minimal footer toggle */}
       <button
         type="button"
         onClick={() => setOpen(!open)}

@@ -345,9 +345,10 @@ export default function DesignSystemComponentsPage() {
             const key = `tab${i + 1}`;
             const isActive = activeTabV2 === key;
             return (
-              <button
+              <Button
                 key={key}
                 type="button"
+                variant="ghost"
                 onClick={() => setActiveTabV2(key)}
                 className={`inline-flex h-[calc(100%-1px)] items-center justify-center rounded-md border px-4 py-1 text-sm font-medium whitespace-nowrap transition-all ${
                   isActive
@@ -356,7 +357,7 @@ export default function DesignSystemComponentsPage() {
                 }`}
               >
                 {label}
-              </button>
+              </Button>
             );
           })}
         </div>

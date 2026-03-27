@@ -201,6 +201,7 @@ export function DesignViolationOverlay() {
   return (
     <>
       {/* Draggable icon widget */}
+      {/* eslint-disable-next-line design-system/no-design-violations -- dev-only draggable widget */}
       <button
         ref={widgetRef}
         onMouseDown={handleMouseDown}
@@ -272,6 +273,7 @@ export function DesignViolationOverlay() {
 
             {/* Actions */}
             <div className="px-3 pb-3 flex items-center gap-2">
+              {/* eslint-disable-next-line design-system/no-design-violations -- dev-only context menu */}
               <button
                 onClick={handleSubmit}
                 disabled={selected.length === 0 || submitting}
@@ -279,6 +281,7 @@ export function DesignViolationOverlay() {
               >
                 {submitting ? "Flagging..." : `Flag${selected.length > 0 ? ` (${selected.length})` : ""}`}
               </button>
+              {/* eslint-disable-next-line design-system/no-design-violations -- dev-only context menu */}
               <button
                 onClick={() => setMenu(null)}
                 className="px-3 py-1.5 text-xs text-zinc-400 hover:text-white transition-colors"

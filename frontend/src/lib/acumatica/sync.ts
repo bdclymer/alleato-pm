@@ -502,11 +502,20 @@ export async function syncARPayments(
     const refNbr = payment.ReferenceNbr;
     const paymentDate = payment.Date ? payment.Date.split("T")[0] : now.split("T")[0];
 
+    // Normalize payment method to match DB constraint
+    const rawMethod = (payment.PaymentMethod ?? "").toLowerCase().trim();
+    let method = "other";
+    if (rawMethod.includes("check")) method = "check";
+    else if (rawMethod.includes("wire")) method = "wire";
+    else if (rawMethod.includes("ach")) method = "ach";
+    else if (rawMethod.includes("credit")) method = "credit_card";
+    else if (rawMethod === "cash") method = "cash";
+
     const fields = {
       amount: payment.PaymentAmount ?? 0,
       payment_date: paymentDate,
       payment_number: refNbr,
-      method: payment.PaymentMethod ?? null,
+      method,
       reference_number: payment.ExternalRef ?? null,
       notes: payment.Description ?? null,
       acumatica_ref_nbr: refNbr,

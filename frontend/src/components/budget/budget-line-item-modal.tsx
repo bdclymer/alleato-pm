@@ -753,10 +753,11 @@ export function BudgetLineItemModal({
                     .sort(([a], [b]) => a.localeCompare(b))
                     .map(([division]) => (
                       <div key={division} className="border-b last:border-b-0">
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
                           onClick={() => toggleDivision(division)}
-                          className="w-full flex items-center justify-between px-4 py-2 text-left hover:bg-muted transition-colors"
+                          className="w-full flex items-center justify-between px-4 py-2 text-left hover:bg-muted transition-colors rounded-none h-auto"
                         >
                           <span className="text-sm font-semibold text-foreground">
                             {division}
@@ -766,29 +767,30 @@ export function BudgetLineItemModal({
                           ) : (
                             <ChevronRight className="w-4 h-4 text-muted-foreground" />
                           )}
-                        </button>
+                        </Button>
 
                         {expandedDivisions.has(division) && (
                           <div className="bg-muted/50">
                             {groupedCostCodes[division].map((costCode) => (
-                              <button
+                              <Button
                                 key={costCode.id}
                                 type="button"
+                                variant="ghost"
                                 onClick={() =>
                                   setNewCodeData({
                                     ...newCodeData,
                                     costCodeId: costCode.id,
                                   })
                                 }
-                                className={`w-full text-left px-6 py-2 text-sm hover:bg-muted transition-colors ${
+                                className={`w-full text-left px-6 py-2 text-sm hover:bg-muted transition-colors rounded-none h-auto justify-start font-normal ${
                                   newCodeData.costCodeId === costCode.id
-                                    ? "bg-info/10 text-info font-medium"
+                                    ? "bg-muted text-foreground font-medium"
                                     : "text-foreground"
                                 }`}
                               >
                                 {costCode.division_title || costCode.id} -{" "}
                                 {costCode.title}
-                              </button>
+                              </Button>
                             ))}
                           </div>
                         )}

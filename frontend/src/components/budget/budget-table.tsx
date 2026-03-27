@@ -328,17 +328,18 @@ function EditableCurrencyCell({
 
   if (isClickable) {
     return (
-      <button
+      <Button
         type="button"
+        variant="ghost"
         aria-label={`Edit ${formatCurrency(value)}`}
         className={cn(
-          "text-right cursor-pointer px-1 py-0.5 rounded transition-colors w-full",
+          "text-right cursor-pointer px-1 py-0.5 rounded transition-colors w-full h-auto font-normal",
           "hover:bg-muted/80 underline decoration-muted-foreground/40 underline-offset-2 hover:decoration-foreground",
         )}
         onClick={onEdit}
       >
         <CurrencyCell value={value} />
-      </button>
+      </Button>
     );
   }
 
@@ -503,13 +504,15 @@ export function BudgetTable({
           return <div className="w-4" />;
         }
         return (
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={(e) => {
               e.stopPropagation();
               row.toggleExpanded();
             }}
-            className="p-0.5 hover:bg-muted rounded"
+            className="h-6 w-6 hover:bg-muted"
             aria-label={
               row.getIsExpanded()
                 ? `Collapse ${row.original.description}`
@@ -521,7 +524,7 @@ export function BudgetTable({
             ) : (
               <ChevronRight className="w-4 h-4 text-muted-foreground" />
             )}
-          </button>
+          </Button>
         );
       },
       size: 24,

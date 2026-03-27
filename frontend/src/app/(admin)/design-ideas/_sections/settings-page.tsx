@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+
 export function SettingsPageSection() {
   return (
     <section id="settings-pattern">
@@ -15,7 +17,7 @@ export function SettingsPageSection() {
       </div>
 
       {/* Settings Card */}
-      <div className="bg-card border border-border rounded-xl overflow-hidden max-w-[640px] shadow-md mb-4">
+      <div className="bg-card rounded-xl overflow-hidden max-w-[640px] shadow-sm mb-4">
 
         {/* Section 1 — General */}
         <div className="p-7 px-8 border-b border-border">
@@ -32,7 +34,7 @@ export function SettingsPageSection() {
             <input
               type="text"
               defaultValue="Megan Harrison"
-              className="w-full bg-card border border-border rounded-md px-3 py-2 text-[13px] text-foreground outline-none shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
+              className="w-full bg-background border border-border rounded-md px-3 py-2 text-[13px] text-foreground outline-none shadow-xs"
               readOnly
             />
           </div>
@@ -45,7 +47,7 @@ export function SettingsPageSection() {
             <input
               type="email"
               defaultValue="megan@meganharrison.llc"
-              className="w-full bg-card border border-border rounded-md px-3 py-2 text-[13px] text-foreground outline-none shadow-[0_1px_2px_rgba(0,0,0,0.04)]"
+              className="w-full bg-background border border-border rounded-md px-3 py-2 text-[13px] text-foreground outline-none shadow-xs"
               readOnly
             />
           </div>
@@ -66,7 +68,7 @@ export function SettingsPageSection() {
             </div>
             {/* ON toggle */}
             <div className="w-9 h-5 rounded-full relative cursor-pointer transition-colors bg-primary">
-              <span className="w-3.5 h-3.5 rounded-full bg-white shadow-sm absolute top-[3px] left-[18px] transition-all" />
+              <span className="w-3.5 h-3.5 rounded-full bg-card shadow-sm absolute top-[3px] left-[18px] transition-all" />
             </div>
           </div>
 
@@ -80,7 +82,7 @@ export function SettingsPageSection() {
             </div>
             {/* ON toggle */}
             <div className="w-9 h-5 rounded-full relative cursor-pointer transition-colors bg-primary">
-              <span className="w-3.5 h-3.5 rounded-full bg-white shadow-sm absolute top-[3px] left-[18px] transition-all" />
+              <span className="w-3.5 h-3.5 rounded-full bg-card shadow-sm absolute top-[3px] left-[18px] transition-all" />
             </div>
           </div>
 
@@ -93,8 +95,8 @@ export function SettingsPageSection() {
               <div className="text-[11px] text-muted-foreground/60 mt-0.5">Product updates and announcements</div>
             </div>
             {/* OFF toggle */}
-            <div className="w-9 h-5 rounded-full relative cursor-pointer transition-colors bg-[#e2e2e6] border border-border">
-              <span className="w-3.5 h-3.5 rounded-full bg-white shadow-sm absolute top-[3px] left-[3px] transition-all" />
+            <div className="w-9 h-5 rounded-full relative cursor-pointer transition-colors bg-muted border border-border">
+              <span className="w-3.5 h-3.5 rounded-full bg-card shadow-sm absolute top-[3px] left-[3px] transition-all" />
             </div>
           </div>
         </div>
@@ -111,20 +113,20 @@ export function SettingsPageSection() {
               <div className="text-[13px] text-muted-foreground">Delete workspace</div>
               <div className="text-[12px] text-muted-foreground/60 mt-0.5">Permanently removes all data.</div>
             </div>
-            <button className="px-3.5 py-1.5 rounded-md text-[13px] font-medium text-red-600 bg-red-50 border border-red-600/20">
+            <Button variant="destructive" size="sm">
               Delete workspace
-            </button>
+            </Button>
           </div>
         </div>
 
         {/* Footer */}
         <div className="flex items-center justify-end gap-2 px-8 py-4 bg-muted/50 border-t border-border">
-          <button className="px-3.5 py-1.5 rounded-md text-[13px] font-medium text-muted-foreground bg-card border border-border shadow-sm">
+          <Button variant="outline" size="sm">
             Cancel
-          </button>
-          <button className="px-3.5 py-1.5 rounded-md text-[13px] font-semibold text-white bg-primary shadow-sm">
+          </Button>
+          <Button size="sm">
             Save
-          </button>
+          </Button>
         </div>
       </div>
     </section>

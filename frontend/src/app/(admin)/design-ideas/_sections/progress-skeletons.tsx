@@ -27,7 +27,7 @@ export function ProgressSkeletonsSection() {
           <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
             Progress Bars
           </h3>
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm space-y-6">
+          <div className="rounded-xl bg-card p-6 shadow-sm space-y-6">
             {/* Basic */}
             <div className="space-y-2">
               <div className="flex items-center justify-between">
@@ -138,7 +138,7 @@ export function ProgressSkeletonsSection() {
           </h3>
           <div className="space-y-4">
             {/* KPI Card Skeleton */}
-            <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-3">
+            <div className="rounded-xl bg-card p-5 shadow-sm space-y-3">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/50">
                 KPI Card
               </p>
@@ -154,7 +154,7 @@ export function ProgressSkeletonsSection() {
             </div>
 
             {/* Table Row Skeletons */}
-            <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-3">
+            <div className="rounded-xl bg-card p-5 shadow-sm space-y-3">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/50">
                 Table Rows
               </p>
@@ -178,7 +178,7 @@ export function ProgressSkeletonsSection() {
             </div>
 
             {/* Profile / Detail Skeleton */}
-            <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-3">
+            <div className="rounded-xl bg-card p-5 shadow-sm space-y-3">
               <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/50">
                 Detail Panel
               </p>
@@ -204,7 +204,7 @@ export function ProgressSkeletonsSection() {
       </div>
 
       {/* Step Progress */}
-      <div className="mt-6 rounded-xl border border-border bg-card p-6 shadow-sm">
+      <div className="mt-6 rounded-xl bg-card p-6 shadow-sm">
         <p className="mb-5 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
           Step Progress
         </p>

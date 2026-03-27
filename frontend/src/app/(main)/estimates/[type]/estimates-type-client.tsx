@@ -194,15 +194,16 @@ export function EstimatesTypeClient({ estimateType, typeSlug, estimates }: Props
         label: "Project",
         defaultVisible: true,
         render: (item: CompanyEstimateRow) => (
-          <button
-            className="text-sm text-primary hover:underline"
+          <Button
+            variant="link"
+            className="text-sm text-primary hover:underline h-auto p-0"
             onClick={(e) => {
               e.stopPropagation();
               router.push(`/${item.project_id}/estimates`);
             }}
           >
             {item.project_name || "—"}
-          </button>
+          </Button>
         ),
         sortValue: (item: CompanyEstimateRow) => item.project_name ?? "",
       },

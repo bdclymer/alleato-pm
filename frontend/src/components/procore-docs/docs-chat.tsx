@@ -177,6 +177,7 @@ export function DocsChat() {
           style={{ width: `${width}px`, maxWidth: "100vw" }}
         >
           {/* Resize Handle */}
+          {/* eslint-disable-next-line design-system/no-design-violations -- custom resize handle requires raw button for drag behavior */}
           <button
             type="button"
             onMouseDown={handleResizeStart}
@@ -227,14 +228,15 @@ export function DocsChat() {
                         "What are change orders?",
                         "How do commitments work?",
                       ].map((example) => (
-                        <button
+                        <Button
                           key={example}
                           type="button"
+                          variant="outline"
                           onClick={() => setInput(example)}
-                          className="text-xs px-4 py-2 rounded-lg bg-background dark:bg-gray-800 border border-border dark:border-gray-700 hover:border-blue-300 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/20 transition-colors text-left"
+                          className="text-xs px-4 py-2 h-auto rounded-lg hover:border-blue-300 dark:hover:border-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/20 transition-colors text-left justify-start"
                         >
                           {example}
-                        </button>
+                        </Button>
                       ))}
                     </div>
                   </div>

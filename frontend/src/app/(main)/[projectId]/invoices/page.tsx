@@ -356,13 +356,14 @@ export default function ProjectInvoicesPage(): ReactElement {
         sortable: true,
         sortValue: (item) => item.number,
         render: (item) => (
-          <button
+          <Button
             type="button"
-            className="font-medium text-primary hover:underline"
+            variant="link"
+            className="font-medium text-primary hover:underline h-auto p-0"
             onClick={() => router.push(`/${projectId}/commitments/${item.id}`)}
           >
             {item.number}
-          </button>
+          </Button>
         ),
       },
       {

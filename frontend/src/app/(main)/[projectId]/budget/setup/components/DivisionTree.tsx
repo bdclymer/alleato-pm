@@ -2,6 +2,7 @@
 
 import { ChevronRight, ChevronDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 export interface DivisionItem {
   id: string;
@@ -61,10 +62,11 @@ export function DivisionTree<T extends DivisionItem>({
     >
       {sortedDivisions.map((division) => (
         <div key={division} className="border-b last:border-b-0">
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={() => onToggleDivision(division)}
-            className="w-full flex items-center justify-between px-4 py-2 text-left hover:bg-muted transition-colors"
+            className="w-full flex items-center justify-between px-4 py-2 text-left hover:bg-muted transition-colors h-auto rounded-none"
           >
             <span className="text-sm font-semibold text-foreground flex items-center gap-2">
               {expandedDivisions.has(division) ? (
@@ -79,24 +81,25 @@ export function DivisionTree<T extends DivisionItem>({
                 ({groupedItems[division].length})
               </span>
             )}
-          </button>
+          </Button>
 
           {expandedDivisions.has(division) && (
             <div className="bg-muted/50">
               {groupedItems[division].map((item) => (
-                <button
+                <Button
                   key={item.id}
                   type="button"
+                  variant="ghost"
                   onClick={() => onSelectItem(item)}
                   className={cn(
-                    "w-full text-left px-6 py-2 text-sm hover:bg-muted transition-colors",
+                    "w-full text-left px-6 py-2 text-sm hover:bg-muted transition-colors h-auto rounded-none justify-start",
                     selectedId === item.id
                       ? "bg-info/10 text-info font-medium"
                       : "text-foreground",
                   )}
                 >
                   {renderItem ? renderItem(item) : item.label}
-                </button>
+                </Button>
               ))}
             </div>
           )}

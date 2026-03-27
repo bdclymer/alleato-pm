@@ -80,7 +80,7 @@ export function TypographySection() {
       </div>
 
       {/* Type Specimen */}
-      <div className="rounded-xl border border-border bg-card p-8 shadow-sm">
+      <div className="rounded-xl bg-card p-8 shadow-sm">
         {typeScale.map((t) => (
           <div
             key={t.spec}

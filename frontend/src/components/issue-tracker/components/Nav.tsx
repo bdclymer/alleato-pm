@@ -32,17 +32,19 @@ export function Nav() {
         <Link href="/" className="flex items-center gap-1.5">
           <span className="w-28 text-black font-semibold">Acme Inc</span>
         </Link>
+        {/* eslint-disable-next-line design-system/no-design-violations -- liveblocks nav action */}
         <button
           onClick={() => {
             setCreating(true);
             createIssue();
           }}
-          className="bg-white rounded-lg p-1.5 shadow-sm border border-neutral-200 text"
+          className="bg-card rounded-lg p-1.5 shadow-sm border border-border text"
         >
           <CreateIcon className="w-4 h-4" />
         </button>
       </div>
       {pathname.startsWith("/issue/") ? (
+        {/* eslint-disable-next-line design-system/no-design-violations -- liveblocks nav toggle */}
         <button
           onClick={toggleInbox}
           className={classNames(

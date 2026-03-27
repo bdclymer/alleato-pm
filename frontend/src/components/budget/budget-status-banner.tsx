@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Info, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { BudgetSyncStatus } from "@/types/budget";
 
 interface BudgetStatusBannerProps {
@@ -25,7 +26,7 @@ export function BudgetStatusBanner({
   };
 
   return (
-    <div className="bg-[hsl(var(--procore-info-bg))] text-[hsl(var(--procore-info-text))] px-4 py-4 flex items-center justify-between rounded-lg">
+    <div className="bg-info/10 text-info-foreground px-4 py-4 flex items-center justify-between rounded-lg">
       <div className="flex items-center gap-2">
         <Info className="w-4 h-4 flex-shrink-0" />
         <span className="text-xs">
@@ -43,12 +44,14 @@ export function BudgetStatusBanner({
         </span>
       </div>
       {onDismiss && (
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={handleDismiss}
-          className="text-[hsl(var(--procore-info-text))] hover:opacity-70"
+          className="text-info-foreground hover:opacity-70 h-7 w-7"
         >
           <X className="w-4 h-4" />
-        </button>
+        </Button>
       )}
     </div>
   );

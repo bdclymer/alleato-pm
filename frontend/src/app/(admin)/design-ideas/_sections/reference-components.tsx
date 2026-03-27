@@ -90,7 +90,7 @@ export function ReferenceComponentsSection() {
         </p>
 
         {/* All statuses grid */}
-        <div className="rounded-lg border border-border bg-card p-6">
+        <div className="rounded-lg bg-card p-6">
           <div className="flex flex-wrap gap-2">
             {allStatuses.map((status) => (
               <StatusBadge key={status} status={status} />
@@ -118,7 +118,7 @@ export function ReferenceComponentsSection() {
       {/* StatusDot */}
       <div className="mb-12">
         <SubHeader>StatusDot — Minimal inline dot for tables</SubHeader>
-        <div className="rounded-lg border border-border bg-card p-6">
+        <div className="rounded-lg bg-card p-6">
           <div className="flex flex-wrap gap-6">
             <StatusDot status="Active" />
             <StatusDot status="Pending" />
@@ -132,7 +132,7 @@ export function ReferenceComponentsSection() {
       {/* StatusText */}
       <div className="mb-12">
         <SubHeader>StatusText — Plain muted text (no pill, no color)</SubHeader>
-        <div className="rounded-lg border border-border bg-card p-6">
+        <div className="rounded-lg bg-card p-6">
           <div className="flex flex-wrap gap-6">
             <StatusText status="Not synced" />
             <StatusText status="No ERP status" />
@@ -146,7 +146,7 @@ export function ReferenceComponentsSection() {
           ================================================================ */}
       <div className="mb-12">
         <SubHeader>Eyebrow — 11px uppercase label (Tier 1 text)</SubHeader>
-        <div className="rounded-lg border border-border bg-card p-6 space-y-4">
+        <div className="rounded-lg bg-card p-6 space-y-4">
           <div>
             <Eyebrow>Total Budget</Eyebrow>
             <p className="mt-1 text-2xl font-semibold tracking-tight text-foreground">$9.3M</p>
@@ -163,7 +163,7 @@ export function ReferenceComponentsSection() {
           ================================================================ */}
       <div className="mb-12">
         <SubHeader>KpiBlock — Single metric with 3-tier hierarchy</SubHeader>
-        <div className="grid grid-cols-3 gap-12 rounded-lg border border-border bg-card p-6">
+        <div className="grid grid-cols-3 gap-12 rounded-lg bg-card p-6">
           <KpiBlock
             label="Total Budget"
             value="$9.3M"
@@ -202,7 +202,7 @@ export function ReferenceComponentsSection() {
           ================================================================ */}
       <div className="mb-12">
         <SubHeader>SectionHeader — Title + count + action</SubHeader>
-        <div className="space-y-4 rounded-lg border border-border bg-card p-6">
+        <div className="space-y-4 rounded-lg bg-card p-6">
           <SectionHeader
             title="Meetings"
             count={57}
@@ -227,7 +227,7 @@ export function ReferenceComponentsSection() {
         <p className="mb-4 text-xs text-muted-foreground">
           11px uppercase headers, primary column emphasis, row hover, tabular-nums for currency. Status via StatusBadge.
         </p>
-        <div className="rounded-lg border border-border bg-card p-6">
+        <div className="rounded-lg bg-card p-6">
           <DataTable<SampleRow>
             columns={[
               { key: "name", header: "Project", primary: true, render: (row) => row.name },
@@ -245,7 +245,7 @@ export function ReferenceComponentsSection() {
         </div>
 
         {/* Table with StatusDot instead */}
-        <div className="mt-6 rounded-lg border border-border bg-card p-6">
+        <div className="mt-6 rounded-lg bg-card p-6">
           <p className="mb-4 text-xs text-muted-foreground">Same table, using StatusDot instead of StatusBadge:</p>
           <DataTable<SampleRow>
             columns={[
@@ -267,7 +267,7 @@ export function ReferenceComponentsSection() {
           ================================================================ */}
       <div className="mb-12">
         <SubHeader>AvatarStack — Overlapping initials</SubHeader>
-        <div className="rounded-lg border border-border bg-card p-6">
+        <div className="rounded-lg bg-card p-6">
           <div className="flex items-end gap-12">
             <div>
               <p className="mb-2 text-xs text-muted-foreground">Small (default)</p>
@@ -290,7 +290,7 @@ export function ReferenceComponentsSection() {
           ================================================================ */}
       <div className="mb-12">
         <SubHeader>EmptyState — Icon + title + description + action</SubHeader>
-        <div className="rounded-lg border border-border bg-card">
+        <div className="rounded-lg bg-card">
           <EmptyState
             icon={<FileText className="h-6 w-6 text-muted-foreground" />}
             title="No direct costs yet"

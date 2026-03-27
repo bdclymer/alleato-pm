@@ -14,28 +14,30 @@ const buttonBase =
 export function ThemeToggle({ value, onChange }: ThemeToggleProps) {
   return (
     <div className="inline-flex items-center gap-1 rounded-full border border-slate-200 bg-background/60 p-1 shadow-sm backdrop-blur-sm dark:border-slate-800 dark:bg-slate-900/60">
+      {/* eslint-disable-next-line design-system/no-design-violations -- theme toggle pill button */}
       <button
         type="button"
         onClick={() => onChange("light")}
         className={clsx(
           buttonBase,
           value === "light"
-            ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
-            : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100",
+            ? "bg-foreground text-background shadow-sm"
+            : "text-muted-foreground hover:text-foreground",
         )}
         aria-label="Use light theme"
         aria-pressed={value === "light"}
       >
         <Sun className="h-4 w-4" aria-hidden />
       </button>
+      {/* eslint-disable-next-line design-system/no-design-violations -- theme toggle pill button */}
       <button
         type="button"
         onClick={() => onChange("dark")}
         className={clsx(
           buttonBase,
           value === "dark"
-            ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
-            : "text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100",
+            ? "bg-foreground text-background shadow-sm"
+            : "text-muted-foreground hover:text-foreground",
         )}
         aria-label="Use dark theme"
         aria-pressed={value === "dark"}

@@ -88,15 +88,16 @@ export function LinkPinModal({
             {(["rfi", "punch_item", "coordination_issue", "task"] as const).map((type) => {
               const c = PIN_TYPE_CONFIG[type];
               return (
-                <button
+                <Button
                   key={type}
                   type="button"
+                  variant="outline"
                   onClick={() => setSelectedType(type)}
                   className={cn(
-                    "flex flex-col items-center gap-1.5 p-2.5 rounded-lg border text-xs font-medium transition-all",
+                    "flex flex-col items-center gap-1.5 p-2.5 rounded-lg text-xs font-medium h-auto",
                     selectedType === type
                       ? "border-primary bg-primary/5 text-primary"
-                      : "border-border text-muted-foreground hover:border-border/80 hover:bg-muted/40"
+                      : "text-muted-foreground hover:bg-muted/40"
                   )}
                 >
                   <div
@@ -106,7 +107,7 @@ export function LinkPinModal({
                     {c.icon}
                   </div>
                   {c.label}
-                </button>
+                </Button>
               );
             })}
           </div>

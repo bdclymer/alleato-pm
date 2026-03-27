@@ -179,7 +179,7 @@ function ToolsDropdown({
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent align="end" sideOffset={6} className="w-[860px] p-0 bg-[#F9FAFB] border border-[#E5E7EB] shadow-[0_2px_8px_rgba(0,0,0,0.08)]">
+      <PopoverContent align="end" sideOffset={6} className="w-[860px] p-0 bg-muted border border-border shadow-sm">
         {/* Panel header */}
         <div className="flex items-center justify-between border-b border-border/50 px-5 py-2.5">
           <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">

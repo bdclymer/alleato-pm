@@ -223,6 +223,7 @@ const PurePreviewMessage = ({
                       )}
                       {state === "approval-requested" && approvalId && (
                         <div className="flex items-center justify-end gap-2 border-t px-4 py-4">
+                          {/* eslint-disable-next-line design-system/no-design-violations -- tool approval action */}
                           <button
                             className="rounded-md px-4 py-1.5 text-muted-foreground text-sm transition-colors hover:bg-muted hover:text-foreground"
                             onClick={() => {
@@ -236,6 +237,7 @@ const PurePreviewMessage = ({
                           >
                             Deny
                           </button>
+                          {/* eslint-disable-next-line design-system/no-design-violations -- tool approval action */}
                           <button
                             className="rounded-md bg-primary px-4 py-1.5 text-primary-foreground text-sm transition-colors hover:bg-primary/90"
                             onClick={() => {

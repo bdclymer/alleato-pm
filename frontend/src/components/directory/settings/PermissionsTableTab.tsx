@@ -16,6 +16,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
@@ -210,36 +211,42 @@ function PermissionIndicator({
   if (isActive) {
     if (level === "none") {
       return (
-        <button
+        <Button
+          variant="ghost"
+          size="icon"
           onClick={onClick}
           disabled={disabled}
-          className="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-red-50"
+          className="h-6 w-6"
           title="No access (active)"
         >
           <X className="w-4 h-4 text-red-500" />
-        </button>
+        </Button>
       );
     }
     return (
-      <button
+      <Button
+        variant="ghost"
+        size="icon"
         onClick={onClick}
         disabled={disabled}
-        className="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-green-50"
+        className="h-6 w-6"
         title={`${level} (active)`}
       >
         <Check className="w-4 h-4 text-green-500" />
-      </button>
+      </Button>
     );
   }
 
   return (
-    <button
+    <Button
+      variant="ghost"
+      size="icon"
       onClick={onClick}
       disabled={disabled}
-      className="inline-flex items-center justify-center w-6 h-6 rounded hover:bg-muted"
+      className="h-6 w-6"
       title={`Set to ${level}`}
     >
-      <X className="w-4 h-4 text-gray-300" />
-    </button>
+      <X className="w-4 h-4 text-muted-foreground/30" />
+    </Button>
   );
 }

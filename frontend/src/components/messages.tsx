@@ -89,6 +89,7 @@ function PureMessages({
         </div>
       </div>
 
+      {/* eslint-disable-next-line design-system/no-design-violations -- floating scroll-to-bottom FAB */}
       <button
         aria-label="Scroll to bottom"
         className={`absolute bottom-4 left-1/2 z-10 -translate-x-1/2 rounded-full border bg-background p-2 shadow-lg transition-all hover:bg-muted ${

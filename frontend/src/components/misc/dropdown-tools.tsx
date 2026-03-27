@@ -45,7 +45,7 @@ export function DropdownTools() {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          className="flex h-8 items-center gap-2 rounded px-2 text-[hsl(var(--procore-header-text))] transition-colors hover:bg-brand"
+          className="flex h-8 items-center gap-2 rounded px-2 text-foreground transition-colors hover:bg-muted"
         >
           <span className="text-xs text-muted-foreground">Project Tools</span>
           <span className="ml-2 text-sm font-medium">{currentTool}</span>

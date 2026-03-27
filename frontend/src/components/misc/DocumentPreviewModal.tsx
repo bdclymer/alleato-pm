@@ -40,10 +40,11 @@ export function DocumentPreviewModal({
               </p>
             ) : null}
           </div>
+          {/* eslint-disable-next-line design-system/no-design-violations -- modal close with custom styling */}
           <button
             type="button"
             onClick={onClose}
-            className="rounded-full border border-slate-200/80 bg-background px-4 py-1 text-sm font-medium text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 dark:border-slate-700/70 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-800"
+            className="rounded-full border border-border bg-background px-4 py-1 text-sm font-medium text-muted-foreground shadow-sm transition hover:-translate-y-0.5 hover:bg-muted focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
           >
             Close
           </button>

@@ -2,6 +2,7 @@
 
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 interface Tab {
   id: string;
@@ -42,20 +43,21 @@ export function BudgetTabs({
             {tabs.map((tab) => {
               const isActive = activeTab === tab.id;
               return (
-                <button
+                <Button
                   key={tab.id}
                   type="button"
+                  variant="ghost"
                   onClick={() => onTabChange?.(tab.id)}
                   className={cn(
-                    "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 pb-4 pt-4 text-sm font-medium transition-colors",
+                    "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 rounded-none pb-4 pt-4 text-sm font-medium transition-colors h-auto px-0",
                     isActive
                       ? "border-primary text-primary"
-                      : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
+                      : "border-transparent text-muted-foreground hover:border-border hover:text-foreground hover:bg-transparent"
                   )}
                   aria-current={isActive ? "page" : undefined}
                 >
                   {tab.label}
-                </button>
+                </Button>
               );
             })}
           </div>

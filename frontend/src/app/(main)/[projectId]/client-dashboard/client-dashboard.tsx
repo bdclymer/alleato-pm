@@ -104,7 +104,7 @@ export default function ClientDashboard({
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100/50">
       <div className="container mx-auto p-6 space-y-8">
         {/* Header */}
-        <div className="bg-white rounded-xl shadow-sm border p-8">
+        <div className="bg-card rounded-xl shadow-sm border p-8">
           <div className="flex items-start justify-between">
             <div>
               <h1 className="text-4xl font-bold text-foreground">

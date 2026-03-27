@@ -162,7 +162,8 @@ export function GoldenSurfaces() {
   return (
     <div className="space-y-4">
 
-      {/* ✅ KPI bento — shared border, internal dividers only */}
+      {/* ✅ KPI bento — shared surface, internal dividers only */}
+      {/* eslint-disable-next-line design-system/no-design-violations -- golden example showing bento pattern with intentional shared border */}
       <div className="overflow-hidden rounded-lg border border-border bg-card divide-x divide-border">
         <div className="grid grid-cols-4">
           <div className="px-6 py-5">

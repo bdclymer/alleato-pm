@@ -44,7 +44,7 @@ export function Select({
           align="start"
           avoidCollisions={true}
         >
-          <RadixSelect.ScrollUpButton className="flex items-center justify-center h-[25px] bg-white cursor-default">
+          <RadixSelect.ScrollUpButton className="flex items-center justify-center h-[25px] bg-card cursor-default">
             <ChevronUpIcon className="w-4 h-4" />
           </RadixSelect.ScrollUpButton>
           <RadixSelect.Viewport>
@@ -82,7 +82,7 @@ export function Select({
               ))}
             </RadixSelect.Group>
           </RadixSelect.Viewport>
-          <RadixSelect.ScrollDownButton className="flex items-center justify-center h-[25px] bg-white cursor-default">
+          <RadixSelect.ScrollDownButton className="flex items-center justify-center h-[25px] bg-card cursor-default">
             <ChevronDownIcon className="w-4 h-4" />
           </RadixSelect.ScrollDownButton>
         </RadixSelect.Content>

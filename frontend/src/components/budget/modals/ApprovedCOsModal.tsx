@@ -125,7 +125,7 @@ export function ApprovedCOsModal({
         {activeTab === "approved" ? (
           <div className="p-6 space-y-4">
             {/* Total Summary */}
-            <div className="rounded-lg border border-border shadow-xs p-4 bg-card">
+            <div className="rounded-lg shadow-xs p-4 bg-muted">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-foreground">

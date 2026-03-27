@@ -38,7 +38,7 @@ export function TabsSection() {
           <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
             Pill Tabs — Default
           </h3>
-          <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="rounded-xl bg-card shadow-sm overflow-hidden">
             <Tabs defaultValue="overview" className="p-6">
               <TabsList>
                 <TabsTrigger value="overview">Overview</TabsTrigger>
@@ -146,7 +146,7 @@ export function TabsSection() {
           <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
             Underline Tabs — Line Variant
           </h3>
-          <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="rounded-xl bg-card shadow-sm overflow-hidden">
             <Tabs defaultValue="inbox" className="p-6">
               <div className="border-b border-border -mx-6 px-6 pb-0 mb-6">
                 <TabsList variant="line" className="gap-0">
@@ -250,7 +250,7 @@ export function TabsSection() {
           <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
             View Toggle (Compact Pills)
           </h3>
-          <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div className="rounded-xl bg-card p-6 shadow-sm">
             <Tabs defaultValue="grid">
               <TabsList className="h-8">
                 <TabsTrigger value="grid" className="h-6 gap-1.5 px-2.5">

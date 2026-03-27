@@ -62,7 +62,7 @@ export function BudgetLineItemTable({
   );
 
   return (
-    <div className="sm:border sm:rounded-md sm:bg-card sm:shadow-xs">
+    <div className="sm:rounded-md sm:bg-card sm:shadow-xs">
       <Stack gap="sm">
         {/* Summary Bar */}
         <div className="border-b bg-muted px-4 sm:px-6 py-4 sm:rounded-t-md">

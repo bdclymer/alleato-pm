@@ -31,7 +31,7 @@ export function KnowledgeDocumentsPanel({
   });
 
   return (
-    <div className="flex h-full flex-col rounded-xl border border-border bg-card shadow-sm dark:border-border dark:bg-card">
+    <div className="flex h-full flex-col rounded-xl bg-card shadow-sm">
       <div className="border-b border-slate-200/60 px-6 py-4 dark:border-slate-800/60">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -149,11 +149,12 @@ function DocumentGrid({
           const active = activeDocumentIds.has(document.id);
           const fileVariant = getFileVariant(document.filename);
           return (
+            {/* eslint-disable-next-line design-system/no-design-violations -- knowledge document card button */}
             <button
               type="button"
               key={document.id}
               className={clsx(
-                "group flex h-full min-h-[260px] flex-col justify-between overflow-hidden rounded-xl border bg-card p-4 text-left shadow-sm transition-all duration-200 hover:border-border/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-500 dark:border-border dark:bg-card",
+                "group flex h-full min-h-[260px] flex-col justify-between overflow-hidden rounded-xl bg-card p-4 text-left shadow-sm transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
                 active
                   ? "border-blue-500/70 ring-2 ring-blue-400/60"
                   : "border-slate-200/70 dark:ring-0",

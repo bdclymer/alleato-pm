@@ -136,6 +136,7 @@ export function DevAnnotationOverlay() {
             {repliedCount} reply{repliedCount > 1 ? " replies" : ""} from Claude
           </div>
         )}
+        {/* eslint-disable-next-line design-system/no-design-violations -- dev-only floating widget */}
         <button
           onClick={() => setOpen((v) => !v)}
           className="relative flex items-center gap-1.5 bg-zinc-900 text-white text-xs font-medium px-3 py-2 rounded-full shadow-lg border border-zinc-700 hover:bg-zinc-800 transition-colors"
@@ -162,6 +163,7 @@ export function DevAnnotationOverlay() {
                 {pathname}
               </span>
             </div>
+            {/* eslint-disable-next-line design-system/no-design-violations -- dev-only panel close */}
             <button
               onClick={() => setOpen(false)}
               className="text-muted-foreground hover:text-foreground text-lg leading-none"
@@ -172,6 +174,7 @@ export function DevAnnotationOverlay() {
 
           {/* Tabs */}
           <div className="flex border-b border-border">
+            {/* eslint-disable-next-line design-system/no-design-violations -- dev-only tab control */}
             <button
               onClick={() => setTab("new")}
               className={`flex-1 text-xs py-2 font-medium transition-colors ${
@@ -182,6 +185,7 @@ export function DevAnnotationOverlay() {
             >
               + New annotation
             </button>
+            {/* eslint-disable-next-line design-system/no-design-violations -- dev-only tab control */}
             <button
               onClick={() => setTab("history")}
               className={`flex-1 text-xs py-2 font-medium transition-colors relative ${
@@ -210,6 +214,7 @@ export function DevAnnotationOverlay() {
                 autoFocus
               />
               <div className="flex items-center justify-between">
+                {/* eslint-disable-next-line design-system/no-design-violations -- dev-only action */}
                 <button
                   onClick={captureScreenshot}
                   disabled={capturing}
@@ -218,6 +223,7 @@ export function DevAnnotationOverlay() {
                   {capturing ? "Capturing..." : screenshotData ? "✓ Screenshot captured" : "📷 Add screenshot"}
                 </button>
                 {screenshotData && (
+                  {/* eslint-disable-next-line design-system/no-design-violations -- dev-only action */}
                   <button
                     onClick={() => setScreenshotData(null)}
                     className="text-xs text-destructive hover:underline"

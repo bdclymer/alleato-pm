@@ -67,6 +67,7 @@ import { Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { ResponsiveDistributionGroupsTable } from "@/components/directory/responsive/ResponsiveDistributionGroupsTable";
 import type { PersonWithDetails } from "@/services/directoryService";
+import { Button } from "@/components/ui/button";
 
 // ─── Types ───────────────────────────────────────────────────────
 
@@ -363,12 +364,14 @@ function AssignMemberDialog({
                 return (
                   <Badge key={id} variant="secondary" className="gap-1">
                     {p.first_name} {p.last_name}
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => toggle(id)}
-                      className="ml-0.5 rounded-sm hover:bg-muted"
+                      className="ml-0.5 rounded-sm hover:bg-muted h-auto p-0 px-0.5"
                     >
                       ×
-                    </button>
+                    </Button>
                   </Badge>
                 );
               })}
@@ -1009,7 +1012,7 @@ function RoleCard({
   onRemoveMember: (roleId: string, memberIds: string[]) => void;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+    <div className="rounded-lg bg-card p-4 space-y-3">
       {/* Role header */}
       <div className="flex items-start justify-between gap-2">
         <div>
@@ -1033,12 +1036,13 @@ function RoleCard({
 
       {/* Members */}
       {role.members.length === 0 ? (
-        <button
+        <Button
+          variant="ghost"
           onClick={() => onAssign(role)}
-          className="w-full rounded-md border border-dashed border-border/70 py-3 text-xs text-muted-foreground hover:border-border hover:text-foreground transition-colors"
+          className="w-full rounded-md border border-dashed border-border/70 py-3 text-xs text-muted-foreground hover:border-border hover:text-foreground transition-colors h-auto"
         >
           + Assign someone
-        </button>
+        </Button>
       ) : (
         <div className="space-y-2">
           {role.members.map((member) => {
@@ -1063,7 +1067,9 @@ function RoleCard({
                     </p>
                   )}
                 </div>
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() =>
                     onRemoveMember(
                       role.id,
@@ -1072,11 +1078,11 @@ function RoleCard({
                         .map((m) => m.person_id)
                     )
                   }
-                  className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive h-auto p-0"
                   title="Remove from role"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
-                </button>
+                </Button>
               </div>
             );
           })}

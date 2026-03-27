@@ -2,6 +2,7 @@ import { memo } from "react";
 import { toast } from "sonner";
 import { useArtifact } from "@/hooks/use-artifact";
 import type { ArtifactKind } from "./artifact";
+import { Button } from "@/components/ui/button";
 import { FileIcon, LoaderIcon, MessageIcon, PencilEditIcon } from "./icons";
 
 const getActionText = (
@@ -36,8 +37,9 @@ function PureDocumentToolResult({
   const { setArtifact } = useArtifact();
 
   return (
-    <button
-      className="flex w-fit cursor-pointer flex-row items-start gap-4 rounded-xl border bg-background px-4 py-2"
+    <Button
+      variant="outline"
+      className="flex w-fit cursor-pointer flex-row items-start gap-4 rounded-xl px-4 py-2 h-auto"
       onClick={(event) => {
         if (isReadonly) {
           toast.error(
@@ -79,7 +81,7 @@ function PureDocumentToolResult({
       <div className="text-left">
         {`${getActionText(type, "past")} "${result.title}"`}
       </div>
-    </button>
+    </Button>
   );
 }
 
@@ -102,8 +104,9 @@ function PureDocumentToolCall({
   const { setArtifact } = useArtifact();
 
   return (
-    <button
-      className="cursor pointer flex w-fit flex-row items-start justify-between gap-4 rounded-xl border px-4 py-2"
+    <Button
+      variant="outline"
+      className="cursor-pointer flex w-fit flex-row items-start justify-between gap-4 rounded-xl px-4 py-2 h-auto"
       onClick={(event) => {
         if (isReadonly) {
           toast.error(
@@ -130,7 +133,7 @@ function PureDocumentToolCall({
       type="button"
     >
       <div className="flex flex-row items-start gap-4">
-        <div className="mt-1 text-zinc-500">
+        <div className="mt-1 text-muted-foreground">
           {type === "create" ? (
             <FileIcon />
           ) : type === "update" ? (
@@ -154,7 +157,7 @@ function PureDocumentToolCall({
       </div>
 
       <div className="mt-1 animate-spin">{<LoaderIcon />}</div>
-    </button>
+    </Button>
   );
 }
 

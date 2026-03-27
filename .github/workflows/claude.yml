@@ -9,14 +9,13 @@ on:
     types: [opened, labeled]
   pull_request:
     types: [opened, synchronize, reopened]
+  workflow_dispatch:
 
-# Prevent duplicate runs for the same issue/PR
 concurrency:
-  group: claude-${{ github.event.issue.number || github.event.pull_request.number }}
+  group: claude-${{ github.event.issue.number || github.event.pull_request.number || github.run_id }}
   cancel-in-progress: false
 
 jobs:
-  # ── Auto-label every new issue with 'claude' ──
   auto-label:
     runs-on: ubuntu-latest
     permissions:
@@ -33,20 +32,20 @@ jobs:
               labels: ['claude']
             });
 
-  # ── Automatic PR review on every PR open/update ──
   review:
     runs-on: ubuntu-latest
     permissions:
       id-token: write
       contents: read
       pull-requests: write
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' && (secrets.CLAUDE_CODE_OAUTH_TOKEN != '' || secrets.ANTHROPIC_API_KEY != '')
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: anthropics/claude-code-action@v1
         with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           additional_permissions: |
             Bash(git diff:*)
@@ -65,7 +64,6 @@ jobs:
             Be concise. Only flag real issues — skip style nitpicks.
             If the PR looks good, say so briefly.
 
-  # ── On-demand @claude interaction ──
   respond:
     runs-on: ubuntu-latest
     permissions:
@@ -74,14 +72,16 @@ jobs:
       pull-requests: write
       issues: write
     if: |
-      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
-      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude'))
+      (secrets.CLAUDE_CODE_OAUTH_TOKEN != '' || secrets.ANTHROPIC_API_KEY != '') &&
+      ((github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
+      (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')))
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
       - uses: anthropics/claude-code-action@v1
         with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           trigger_phrase: '@claude'
           assignee_trigger: 'claude'
@@ -91,7 +91,6 @@ jobs:
             Bash(*)
           claude_args: '--max-turns 25'
 
-  # ── Auto-resolve issues: diagnose → fix → verify → PR ──
   auto-resolve:
     runs-on: ubuntu-latest
     permissions:
@@ -100,14 +99,14 @@ jobs:
       pull-requests: write
       issues: write
     if: |
-      (github.event_name == 'issues' && github.event.action == 'opened') ||
-      (github.event_name == 'issues' && github.event.action == 'labeled' && contains(github.event.issue.labels.*.name, 'claude'))
+      (secrets.CLAUDE_CODE_OAUTH_TOKEN != '' || secrets.ANTHROPIC_API_KEY != '') &&
+      ((github.event_name == 'issues' && github.event.action == 'opened') ||
+      (github.event_name == 'issues' && github.event.action == 'labeled' && contains(github.event.issue.labels.*.name, 'claude')))
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # Update feedback status to "diagnosing" via Supabase API
       - name: Update feedback status
         if: contains(github.event.issue.labels.*.name, 'admin-feedback')
         env:
@@ -124,6 +123,7 @@ jobs:
 
       - uses: anthropics/claude-code-action@v1
         with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           additional_permissions: |
             Edit
@@ -165,16 +165,6 @@ jobs:
             - Commit with a clear message referencing the issue: `Closes #${{ github.event.issue.number }}`.
             - Push and create a PR with a summary of what was fixed and why.
 
-            ### Conventions
-            - Never use `any` type.
-            - Never use `@ts-ignore`.
-            - Use existing components from `@/components/ds/` — don't create one-off custom components.
-            - Use `StatusBadge` for status display (colors are automatic).
-            - Check `docs/design/DESIGN.md` for design system rules.
-            - Forms use React Hook Form + Zod validation.
-            - Data fetching uses React Query hooks in `frontend/src/hooks/use-*.ts`.
-
-      # Update feedback status to "in_review" after PR is created
       - name: Update feedback status to in_review
         if: contains(github.event.issue.labels.*.name, 'admin-feedback')
         env:

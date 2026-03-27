@@ -137,7 +137,7 @@ export function BudgetLineHistoryModal({
                     : entry.change_type === "delete"
                       ? "border-destructive/70"
                       : "border-info/70"
-                } pl-4 pb-4 ${index < history.length - 1 ? "mb-1" : ""} rounded-lg bg-background shadow-[0_10px_30px_-24px_rgba(0,0,0,0.45)]`}
+                } pl-4 pb-4 ${index < history.length - 1 ? "mb-1" : ""} rounded-lg bg-background shadow-sm`}
               >
                 <div className="flex items-start gap-4">
                   <div

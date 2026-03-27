@@ -569,11 +569,12 @@ export default function RagEvalPage() {
         {/* Tabs */}
         <div className="flex gap-1 border-b border-border mb-6">
           {tabs.map((tab) => (
-            <button
+            <Button
               key={tab.id}
+              variant="ghost"
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-2",
+                "rounded-none px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-2",
                 activeTab === tab.id
                   ? "border-primary text-foreground"
                   : "border-transparent text-muted-foreground hover:text-foreground",
@@ -585,7 +586,7 @@ export default function RagEvalPage() {
                   {tab.badge}
                 </Badge>
               )}
-            </button>
+            </Button>
           ))}
         </div>
 

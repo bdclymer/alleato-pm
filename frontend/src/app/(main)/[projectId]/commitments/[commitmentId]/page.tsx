@@ -421,7 +421,7 @@ function FinancialKpiStrip({ commitment }: { commitment: CommitmentDetail }) {
     : 0;
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card">
+    <div className="overflow-hidden rounded-lg bg-card">
       <div className="grid grid-cols-2 divide-x divide-border sm:grid-cols-5">
         <div className="px-5 py-4">
           <KpiBlock

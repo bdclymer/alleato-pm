@@ -11,6 +11,7 @@ import {
 import { TableLayout } from "@/components/layouts";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 const BASE_CONFIG: Omit<GenericTableConfig, "rowActions"> = {
   searchFields: ["number", "title", "description"],
@@ -201,12 +202,13 @@ export default function CommitmentsRecycleBinPage() {
         {tabs.map((tab) => {
           const isActive = pathname === tab.href;
           return (
-            <button
+            <Button
               key={tab.href}
               type="button"
+              variant="ghost"
               onClick={() => router.push(tab.href)}
               className={cn(
-                "inline-flex items-center gap-2 border-b-2 py-4 px-1 text-sm font-medium transition-colors whitespace-nowrap",
+                "inline-flex items-center gap-2 border-b-2 py-4 px-1 text-sm font-medium transition-colors whitespace-nowrap rounded-none h-auto",
                 isActive
                   ? "border-brand text-brand"
                   : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
@@ -226,7 +228,7 @@ export default function CommitmentsRecycleBinPage() {
                   {tab.count}
                 </span>
               )}
-            </button>
+            </Button>
           );
         })}
       </nav>

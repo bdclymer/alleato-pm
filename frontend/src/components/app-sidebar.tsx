@@ -173,6 +173,7 @@ function CollapsedGroupIcon({
 
   return (
     <div className="relative" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+      {/* eslint-disable-next-line design-system/no-design-violations -- sidebar nav icon trigger with custom sidebar tokens */}
       <button
         type="button"
         className={cn(
@@ -417,6 +418,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 className="rounded"
               />
             </Link>
+            {/* eslint-disable-next-line design-system/no-design-violations -- sidebar toggle with custom sidebar tokens */}
             <button
               type="button"
               onClick={toggleSidebar}
@@ -439,6 +441,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   className="h-7 w-auto"
                 />
               </Link>
+              {/* eslint-disable-next-line design-system/no-design-violations -- sidebar toggle with custom sidebar tokens */}
               <button
                 type="button"
                 onClick={toggleSidebar}
@@ -463,7 +466,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
 
       {/* ── Content ── */}
-      <SidebarContent className={cn(isCollapsed ? "items-center pl-1 pr-0 py-2" : "pl-2 pr-1 py-1")}>
+      <SidebarContent
+        className={cn(
+          isCollapsed ? "items-center pl-1 pr-0 py-2" : "pl-2 pr-1 py-1",
+          "group-data-[hover-expanded=true]:overflow-y-auto"
+        )}
+      >
         {isCollapsed ? (
           // Collapsed: group icons with hover flyouts
           <div className="flex flex-col items-center gap-1">

@@ -143,14 +143,16 @@ export function InlineTeamMemberForm({
         <span className="text-xs font-medium text-neutral-600 uppercase tracking-wider">
           Add Team Member
         </span>
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           onClick={onCancel}
-          className="text-neutral-400 hover:text-neutral-600 transition-colors"
+          className="h-7 w-7 text-muted-foreground hover:text-foreground transition-colors"
         >
           <X className="h-4 w-4" />
           <span className="sr-only">Cancel</span>
-        </button>
+        </Button>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">

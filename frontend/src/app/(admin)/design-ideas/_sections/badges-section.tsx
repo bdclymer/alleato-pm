@@ -34,7 +34,7 @@ export function BadgesSection() {
 
       <div className="space-y-6">
         {/* Variant Row */}
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="rounded-xl bg-card p-6 shadow-sm">
           <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
             All Variants
           </p>
@@ -49,7 +49,7 @@ export function BadgesSection() {
         </div>
 
         {/* Semantic Status */}
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="rounded-xl bg-card p-6 shadow-sm">
           <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
             Semantic Status Badges
           </p>
@@ -86,7 +86,7 @@ export function BadgesSection() {
         </div>
 
         {/* Role Badges */}
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="rounded-xl bg-card p-6 shadow-sm">
           <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
             Role / Permission Chips
           </p>
@@ -104,7 +104,7 @@ export function BadgesSection() {
           <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
             In Context — Table Rows
           </h3>
-          <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="rounded-xl bg-card shadow-sm overflow-hidden">
             <table className="w-full text-[13px]">
               <thead>
                 <tr className="border-b border-border bg-muted/30">
@@ -192,7 +192,7 @@ export function BadgesSection() {
         </div>
 
         {/* Count / Number Badges */}
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="rounded-xl bg-card p-6 shadow-sm">
           <p className="mb-4 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
             Count Badges (Notification Dots)
           </p>

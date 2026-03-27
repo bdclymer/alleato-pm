@@ -176,7 +176,7 @@ export function EditMeetingModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] bg-card shadow-[0_30px_80px_-40px_rgba(0,0,0,0.45)]">
+      <DialogContent className="sm:max-w-[600px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Edit Meeting</DialogTitle>
@@ -217,25 +217,28 @@ export function EditMeetingModal({
                 {showProjectDropdown && projectOptions.length > 0 && (
                   <div className="absolute z-50 w-full mt-1 bg-background border border-border rounded-md shadow-sm max-h-60 overflow-auto">
                     {projectOptions.map((project) => (
-                      <button
+                      <Button
                         key={project.id}
                         type="button"
-                        className="w-full px-4 py-2 text-left text-sm hover:bg-neutral-100 focus:bg-neutral-100 focus:outline-none"
+                        variant="ghost"
+                        className="w-full px-4 py-2 text-left text-sm h-auto font-normal justify-start"
                         onClick={() => {
                           setSelectedProjectId(project.id);
                           setProjectSearch(project.name ?? '');
                           setShowProjectDropdown(false);
                         }}
                       >
-                        <div className="font-medium text-neutral-900">
-                          {project.name}
+                        <div className="flex flex-col items-start">
+                          <span className="font-medium text-foreground">
+                            {project.name}
+                          </span>
+                          {project.client && (
+                            <span className="text-xs text-muted-foreground">
+                              {project.client}
+                            </span>
+                          )}
                         </div>
-                        {project.client && (
-                          <div className="text-xs text-neutral-500">
-                            {project.client}
-                          </div>
-                        )}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 )}

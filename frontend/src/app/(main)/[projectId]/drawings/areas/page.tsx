@@ -122,7 +122,7 @@ export default function DrawingAreasPage() {
         </div>
 
         {/* Drawing Area Selector */}
-        <div className="bg-card border rounded-lg p-6">
+        <div className="bg-card rounded-lg p-6">
           {isLoading ? (
             <div className="flex items-center justify-center h-64">
               <div className="text-muted-foreground">Loading drawing areas...</div>

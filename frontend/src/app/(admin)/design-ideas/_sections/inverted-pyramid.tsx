@@ -1,5 +1,7 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+
 export function InvertedPyramidSection() {
   return (
     <section id="inverted-pyramid">
@@ -15,7 +17,7 @@ export function InvertedPyramidSection() {
       </div>
 
       {/* Demo Card */}
-      <div className="bg-card border border-border rounded-xl overflow-hidden shadow-md mb-4">
+      <div className="bg-card rounded-xl overflow-hidden shadow-sm mb-4">
 
         {/* A. Header Row */}
         <div className="p-6 px-7 border-b border-border flex items-start justify-between bg-card">
@@ -23,9 +25,9 @@ export function InvertedPyramidSection() {
             <div className="text-xl font-semibold tracking-[-0.02em] text-foreground">Analytics Overview</div>
             <div className="text-[13px] text-muted-foreground/60 mt-0.5">November 2024 · Updated 4 minutes ago</div>
           </div>
-          <button className="bg-primary text-white px-4 py-2 rounded-md text-[13px] font-semibold shadow-sm">
+          <Button size="sm">
             Export Report
-          </button>
+          </Button>
         </div>
 
         {/* B. KPI Row */}

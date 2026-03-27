@@ -414,6 +414,7 @@ export function AdminFeedbackWidget() {
             Click an element · Esc to cancel
           </div>
         )}
+        {/* eslint-disable-next-line design-system/no-design-violations -- floating action button with custom shape */}
         <button
           type="button"
           onClick={toggleSelectMode}

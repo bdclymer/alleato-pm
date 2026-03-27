@@ -47,7 +47,7 @@ export function SpacingSection() {
         <h3 className="mb-4 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
           Spacing Scale
         </h3>
-        <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="rounded-xl bg-card p-6 shadow-sm">
           {spacingScale.map((s, i) => (
             <div
               key={s.token}
@@ -103,7 +103,7 @@ export function SpacingSection() {
             {shadows.map((s) => (
               <div key={s.token} className="text-center">
                 <div
-                  className={`h-24 rounded-lg border border-border bg-card ${s.token} mb-3`}
+                  className={`h-24 rounded-lg bg-card ${s.token} mb-3`}
                 />
                 <p className="text-sm font-medium text-foreground">
                   {s.token}

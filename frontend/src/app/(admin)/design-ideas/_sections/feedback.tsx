@@ -75,7 +75,7 @@ export function FeedbackSection() {
         <h3 className="mb-4 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
           EmptyState Component
         </h3>
-        <div className="rounded-xl border border-border bg-card shadow-sm">
+        <div className="rounded-xl bg-card shadow-sm">
           <EmptyState
             icon={<FileText className="h-6 w-6 text-muted-foreground" />}
             title="No contracts yet"
@@ -118,7 +118,7 @@ export function FeedbackSection() {
           <h3 className="mb-4 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
             Skeleton Loader
           </h3>
-          <div className="space-y-4 rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div className="space-y-4 rounded-xl bg-card p-6 shadow-sm">
             <div className="flex items-center gap-4">
               <Skeleton className="h-10 w-10 rounded-full" />
               <div className="space-y-2">
@@ -135,7 +135,7 @@ export function FeedbackSection() {
           <h3 className="mb-4 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
             Spinner
           </h3>
-          <div className="flex items-center gap-8 rounded-xl border border-border bg-card p-6 shadow-sm">
+          <div className="flex items-center gap-8 rounded-xl bg-card p-6 shadow-sm">
             {[
               ["size-4", "16px"],
               ["size-6", "24px"],
@@ -157,7 +157,7 @@ export function FeedbackSection() {
         <h3 className="mb-4 text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
           Toast Notifications
         </h3>
-        <div className="flex flex-wrap gap-3 rounded-xl border border-border bg-card p-6 shadow-sm">
+        <div className="flex flex-wrap gap-3 rounded-xl bg-card p-6 shadow-sm">
           <Button
             variant="outline"
             size="sm"

@@ -199,6 +199,7 @@ export const InlineCitationCarouselPrev = ({
   }, [api]);
 
   return (
+    // eslint-disable-next-line design-system/no-design-violations -- carousel nav primitive
     <button
       aria-label="Previous"
       className={cn("shrink-0", className)}
@@ -226,6 +227,7 @@ export const InlineCitationCarouselNext = ({
   }, [api]);
 
   return (
+    // eslint-disable-next-line design-system/no-design-violations -- carousel nav primitive
     <button
       aria-label="Next"
       className={cn("shrink-0", className)}

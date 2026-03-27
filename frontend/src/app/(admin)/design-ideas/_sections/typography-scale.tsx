@@ -12,7 +12,7 @@ export function TypographyScaleSection() {
       </div>
 
       {/* Typography Demo Panel */}
-      <div className="bg-card border border-border rounded-xl p-8 shadow-sm">
+      <div className="bg-card rounded-xl p-8 shadow-sm">
         {/* Row 1: Eyebrow / Section Label */}
         <div className="flex items-baseline gap-4 py-[10px] border-b border-border">
           <div className="font-mono text-[10px] text-muted-foreground/40 w-[140px] shrink-0 leading-[1.6] whitespace-pre-line">

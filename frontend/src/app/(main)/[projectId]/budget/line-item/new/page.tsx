@@ -646,10 +646,11 @@ export default function NewBudgetLineItemPage() {
                     .map(([division]) => (
                       <div key={division} className="border-b last:border-b-0">
                         {/* Division Header - Clickable */}
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
                           onClick={() => toggleDivision(division)}
-                          className="w-full flex items-center justify-between px-4 py-2 text-left hover:bg-muted transition-colors"
+                          className="w-full flex items-center justify-between px-4 py-2 text-left hover:bg-muted transition-colors h-auto rounded-none"
                         >
                           <span className="text-sm font-semibold text-foreground">
                             {division}
@@ -659,29 +660,30 @@ export default function NewBudgetLineItemPage() {
                           ) : (
                             <ChevronRight className="w-4 h-4 text-muted-foreground" />
                           )}
-                        </button>
+                        </Button>
 
                         {/* Cost Codes - Only show when expanded */}
                         {expandedDivisions.has(division) && (
                           <div className="bg-muted/50">
                             {groupedCostCodes[division].map((costCode) => (
-                              <button
+                              <Button
                                 key={costCode.id}
                                 type="button"
+                                variant="ghost"
                                 onClick={() =>
                                   setNewCodeData({
                                     ...newCodeData,
                                     costCodeId: costCode.id,
                                   })
                                 }
-                                className={`w-full text-left px-6 py-2 text-sm hover:bg-muted transition-colors ${
+                                className={`w-full text-left px-6 py-2 text-sm hover:bg-muted transition-colors h-auto rounded-none justify-start ${
                                   newCodeData.costCodeId === costCode.id
                                     ? "bg-info/10 text-info font-medium"
                                     : "text-foreground"
                                 }`}
                               >
                                 {costCode.id} – {costCode.title}
-                              </button>
+                              </Button>
                             ))}
                           </div>
                         )}

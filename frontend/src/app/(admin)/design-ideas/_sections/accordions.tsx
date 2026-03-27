@@ -41,7 +41,7 @@ export function AccordionsSection() {
           <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
             FAQ / Single Open
           </h3>
-          <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="rounded-xl bg-card shadow-sm overflow-hidden">
             <Accordion type="single" collapsible className="px-1">
               <AccordionItem value="q1">
                 <AccordionTrigger className="px-5 text-[13px] font-medium hover:no-underline">
@@ -92,7 +92,7 @@ export function AccordionsSection() {
           <h3 className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
             Settings / Multi Open + Icons
           </h3>
-          <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+          <div className="rounded-xl bg-card shadow-sm overflow-hidden">
             <Accordion type="multiple" className="px-1">
               <AccordionItem value="security">
                 <AccordionTrigger className="px-5 hover:no-underline">

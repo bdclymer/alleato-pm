@@ -137,13 +137,14 @@ export function ProjectSetupWizard({ projectId }: ProjectSetupWizardProps) {
                 const isClickable = isCompleted || index <= currentStep;
 
                 return (
-                  <button
+                  <Button
                     key={step.id}
+                    variant="ghost"
                     onClick={() => handleStepClick(index)}
                     disabled={!isClickable}
-                    className={`w-full text-left px-4 py-4 rounded-lg transition-colors flex items-start gap-4 ${
+                    className={`w-full text-left px-4 py-4 h-auto rounded-lg transition-colors flex items-start gap-4 justify-start ${
                       isCurrent
-                        ? "bg-primary text-primary-foreground"
+                        ? "bg-primary text-primary-foreground hover:bg-primary/90"
                         : isCompleted
                           ? "bg-muted hover:bg-muted/80"
                           : "bg-background hover:bg-muted/50 text-muted-foreground"
@@ -160,7 +161,7 @@ export function ProjectSetupWizard({ projectId }: ProjectSetupWizardProps) {
                         {step.description}
                       </div>
                     </div>
-                  </button>
+                  </Button>
                 );
               })}
             </nav>

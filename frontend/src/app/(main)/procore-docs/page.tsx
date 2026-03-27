@@ -336,14 +336,16 @@ export default function ProcoreDocsPage() {
               className="h-9 border-border/50 bg-card pl-9 text-sm shadow-none placeholder:text-muted-foreground/50"
             />
             {search && (
-              <button
+              <Button
                 type="button"
+                variant="ghost"
+                size="icon"
                 onClick={() => setSearch("")}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground/50 hover:text-muted-foreground h-6 w-6 p-0"
                 aria-label="Clear search"
               >
                 <X className="h-3.5 w-3.5" />
-              </button>
+              </Button>
             )}
           </div>
 
@@ -419,11 +421,12 @@ export default function ProcoreDocsPage() {
             {/* Category quick-link cards */}
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {HERO_CARDS.map((card) => (
-                <button
+                <Button
                   key={card.title}
                   type="button"
+                  variant="ghost"
                   onClick={() => selectCategory(card.category)}
-                  className="group relative rounded-lg border border-border/50 bg-card p-5 text-left transition-all hover:border-border hover:bg-accent/30"
+                  className="group relative h-auto rounded-lg border border-border/50 bg-background p-5 text-left transition-all hover:border-border hover:bg-accent/30 flex flex-col items-start"
                 >
                   <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-md bg-muted text-muted-foreground transition-colors group-hover:bg-primary/10 group-hover:text-primary">
                     {card.icon}
@@ -435,7 +438,7 @@ export default function ProcoreDocsPage() {
                     {card.description}
                   </p>
                   <ChevronRight className="absolute right-4 top-5 h-4 w-4 text-muted-foreground/30 transition-all group-hover:text-muted-foreground group-hover:translate-x-0.5" />
-                </button>
+                </Button>
               ))}
             </div>
 
@@ -452,11 +455,12 @@ export default function ProcoreDocsPage() {
                         !HERO_CARDS.some((card) => card.category === cat)
                     )
                     .map((cat) => (
-                      <button
+                      <Button
                         key={cat}
                         type="button"
+                        variant="ghost"
                         onClick={() => selectCategory(cat)}
-                        className="group flex items-start gap-3 text-left"
+                        className="group flex h-auto items-start gap-3 text-left justify-start"
                       >
                         <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground transition-colors group-hover:bg-primary/10 group-hover:text-primary">
                           {getCategoryIcon(cat)}
@@ -469,7 +473,7 @@ export default function ProcoreDocsPage() {
                             Browse {cat.toLowerCase()} documentation and guides.
                           </p>
                         </div>
-                      </button>
+                      </Button>
                     ))}
                 </div>
               </div>
@@ -622,17 +626,18 @@ export default function ProcoreDocsPage() {
                       "What are change orders?",
                       "How do commitments work?",
                     ].map((example) => (
-                      <button
+                      <Button
                         key={example}
                         type="button"
+                        variant="outline"
                         onClick={() => {
                           setChatInput(example);
                           chatInputRef.current?.focus();
                         }}
-                        className="rounded-md border border-border/50 bg-card px-3 py-2 text-left text-xs text-muted-foreground transition-colors hover:bg-accent/30 hover:text-foreground"
+                        className="rounded-md border-border/50 bg-background px-3 py-2 text-left text-xs text-muted-foreground transition-colors hover:bg-accent/30 hover:text-foreground h-auto justify-start"
                       >
                         {example}
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 </div>

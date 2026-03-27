@@ -19,6 +19,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Form,
   FormControl,
   FormField,
@@ -512,19 +520,14 @@ export default function PrimeContractCODetailPage() {
             {co.status === "Proposed" && (
               <>
                 <Button
-                  variant="outline"
+                  variant="destructive"
                   size="sm"
                   onClick={() => setShowRejectDialog(true)}
-                  className="border-red-300 text-red-700 hover:bg-red-50"
                 >
                   <X className="mr-2 h-4 w-4" />
                   Reject
                 </Button>
-                <Button
-                  size="sm"
-                  onClick={handleApprove}
-                  className="bg-green-600 hover:bg-green-700 text-white"
-                >
+                <Button size="sm" onClick={handleApprove}>
                   <Check />
                   Approve
                 </Button>
@@ -553,7 +556,7 @@ export default function PrimeContractCODetailPage() {
           </div>
         }
       />
-      <PageContainer className="space-y-6">
+      <PageContainer className="space-y-8">
         {/* KPI row */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <Card>
@@ -692,46 +695,47 @@ export default function PrimeContractCODetailPage() {
       </PageContainer>
 
       {/* Rejection dialog */}
-      {showRejectDialog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <Card className="w-full max-w-md">
-            <CardHeader>
-              <CardTitle>Reject Change Order</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Please provide a reason for rejecting this change order.
-              </p>
-              <Textarea
-                placeholder="Rejection reason..."
-                value={rejectionReason}
-                onChange={(e) => setRejectionReason(e.target.value)}
-                rows={3}
-              />
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setShowRejectDialog(false);
-                    setRejectionReason("");
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={handleReject}
-                  disabled={!rejectionReason.trim()}
-                >
-                  Reject
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      <Dialog
+        open={showRejectDialog}
+        onOpenChange={(open) => {
+          setShowRejectDialog(open);
+          if (!open) setRejectionReason("");
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reject Change Order</DialogTitle>
+            <DialogDescription>
+              Please provide a reason for rejecting this change order.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Textarea
+              placeholder="Rejection reason..."
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              rows={3}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowRejectDialog(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={handleReject}
+              disabled={!rejectionReason.trim()}
+            >
+              Reject
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

@@ -266,35 +266,37 @@ export default function ChatRagPage() {
       <div className="relative flex min-w-0 flex-1 flex-col">
         {/* Top bar — model selector & new thread */}
         <div className="flex h-14 shrink-0 items-center justify-between border-b border-border/40 px-6">
-          <button
+          <Button
             type="button"
+            variant="ghost"
             className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
           >
             <Sparkles className="h-4 w-4 text-primary" />
             Alleato AI
             <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-          </button>
+          </Button>
           <div className="flex items-center gap-2">
             {/* Council mode toggle */}
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">Council</span>
-              <button
+              <Button
                 type="button"
                 role="switch"
+                variant="ghost"
                 aria-checked={councilMode}
                 onClick={() => setCouncilMode((v) => !v)}
                 className={cn(
-                  "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                  "relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full p-0 transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
                   councilMode ? "bg-primary" : "bg-muted-foreground/30",
                 )}
               >
                 <span
                   className={cn(
-                    "pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-xs transition-transform duration-200 mt-0.5",
+                    "pointer-events-none inline-block h-4 w-4 rounded-full bg-background shadow-xs transition-transform duration-200 mt-0.5",
                     councilMode ? "translate-x-4" : "translate-x-0.5",
                   )}
                 />
-              </button>
+              </Button>
             </div>
             <Button
               size="sm"
@@ -331,7 +333,7 @@ export default function ChatRagPage() {
 
                 {/* Input area */}
                 <div className="mt-10 w-full">
-                  <div className="relative rounded-2xl border border-border bg-card shadow-xs transition-shadow focus-within:shadow-sm focus-within:border-primary/40">
+                  <div className="relative rounded-2xl border border-border bg-background shadow-xs transition-shadow focus-within:shadow-sm focus-within:border-primary/40">
                     <Textarea
                       ref={textareaRef}
                       value={input}
@@ -377,15 +379,16 @@ export default function ChatRagPage() {
                     {activeStarters.map((starter) => {
                       const Icon = starter.icon;
                       return (
-                        <button
+                        <Button
                           key={starter.label}
                           type="button"
+                          variant="outline"
                           onClick={() => handleStarterClick(starter.label)}
-                          className="group flex items-start gap-3 rounded-xl border border-border/60 bg-card px-4 py-3 text-left text-sm text-foreground transition-all hover:border-primary/30 hover:bg-muted/40"
+                          className="group flex h-auto items-start gap-3 rounded-xl border-border/60 bg-background px-4 py-3 text-left text-sm text-foreground transition-all hover:border-primary/30 hover:bg-muted/40"
                         >
                           <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
                           <span className="leading-snug">{starter.label}</span>
-                        </button>
+                        </Button>
                       );
                     })}
                   </div>
@@ -463,7 +466,7 @@ export default function ChatRagPage() {
               {/* Bottom input — active chat */}
               <div className="border-t border-border/40 bg-background px-6 pb-6 pt-4">
                 <div className="mx-auto max-w-3xl">
-                  <div className="relative rounded-2xl border border-border bg-card shadow-xs transition-shadow focus-within:shadow-sm focus-within:border-primary/40">
+                  <div className="relative rounded-2xl border border-border bg-background shadow-xs transition-shadow focus-within:shadow-sm focus-within:border-primary/40">
                     <Textarea
                       ref={textareaRef}
                       value={input}

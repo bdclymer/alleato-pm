@@ -1,4 +1,7 @@
 // @ts-nocheck
+/* eslint-disable design-system/no-hardcoded-colors, design-system/no-design-violations */
+// This file is a design system showcase/mockup page that intentionally uses
+// hardcoded colors and inline styles to demonstrate a proposed design direction.
 "use client";
 
 import { useState, useRef, useEffect } from "react";

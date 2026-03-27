@@ -95,12 +95,13 @@ export function BudgetFilters({
                   {snapshots.map((snapshot) => {
                     const isActive = selectedSnapshot === snapshot.id;
                     return (
-                      <button
+                      <Button
                         key={snapshot.id}
                         type="button"
+                        variant="outline"
                         onClick={() => onSnapshotChange(snapshot.id)}
                         className={cn(
-                          "flex w-full items-center justify-between rounded-md border px-3 py-2 text-left text-sm transition-colors",
+                          "flex w-full items-center justify-between h-auto px-3 py-2 text-left text-sm transition-colors font-normal",
                           isActive
                             ? "border-primary/40 bg-primary/10 text-foreground"
                             : "border-border hover:border-primary/20 hover:bg-accent/40"
@@ -108,7 +109,7 @@ export function BudgetFilters({
                       >
                         <span>{snapshot.name}</span>
                         {isActive ? <span className="text-xs font-medium text-primary">Selected</span> : null}
-                      </button>
+                      </Button>
                     );
                   })}
                 </div>
@@ -125,19 +126,20 @@ export function BudgetFilters({
                   {groups.map((group) => {
                     const isActive = selectedGroup === group.id;
                     return (
-                      <button
+                      <Button
                         key={group.id}
                         type="button"
+                        variant="outline"
                         onClick={() => onGroupChange(group.id)}
                         className={cn(
-                          "rounded-md border px-3 py-2 text-left text-sm transition-colors",
+                          "h-auto px-3 py-2 text-left text-sm transition-colors font-normal",
                           isActive
                             ? "border-primary/40 bg-primary/10 text-foreground"
                             : "border-border hover:border-primary/20 hover:bg-accent/40"
                         )}
                       >
                         {group.name}
-                      </button>
+                      </Button>
                     );
                   })}
                 </div>
@@ -163,12 +165,13 @@ export function BudgetFilters({
                   ).map((filter) => {
                     const isActive = activeQuickFilter === filter.id;
                     return (
-                      <button
+                      <Button
                         key={filter.id}
                         type="button"
+                        variant="outline"
                         onClick={() => onQuickFilterChange?.(filter.id)}
                         className={cn(
-                          "flex items-center gap-2 rounded-md border px-3 py-2 text-left text-sm transition-colors",
+                          "flex items-center gap-2 h-auto px-3 py-2 text-left text-sm transition-colors font-normal",
                           isActive
                             ? "border-primary/40 bg-primary/10 text-foreground"
                             : "border-border hover:border-primary/20 hover:bg-accent/40"
@@ -176,7 +179,7 @@ export function BudgetFilters({
                       >
                         <span className={cn("h-2 w-2 rounded-full", filter.dotClassName)} />
                         <span>{filter.label}</span>
-                      </button>
+                      </Button>
                     );
                   })}
                 </div>
