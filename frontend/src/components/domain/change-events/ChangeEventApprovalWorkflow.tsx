@@ -248,7 +248,7 @@ export function ChangeEventApprovalWorkflow({
               disabled={isSubmitting}
               className="w-full sm:w-auto"
             >
-              <Send className="mr-2 h-4 w-4" />
+              <Send />
               Submit for Approval
             </Button>
           </div>
@@ -312,7 +312,7 @@ export function ChangeEventApprovalWorkflow({
                   variant="destructive"
                   className="flex-1"
                 >
-                  <XCircle className="mr-2 h-4 w-4" />
+                  <XCircle />
                   Reject
                 </Button>
               </div>

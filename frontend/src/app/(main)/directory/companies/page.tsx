@@ -258,7 +258,7 @@ function CompanyPreviewPane({
             onClick={() => hasPrev && onSelectCompany(companies[currentIndex - 1].id)}
             aria-label="Previous company"
           >
-            <ChevronLeft className="h-3.5 w-3.5" />
+            <ChevronLeft />
           </Button>
           <Button
             size="icon"
@@ -268,7 +268,7 @@ function CompanyPreviewPane({
             onClick={() => hasNext && onSelectCompany(companies[currentIndex + 1].id)}
             aria-label="Next company"
           >
-            <ChevronRight className="h-3.5 w-3.5" />
+            <ChevronRight />
           </Button>
           <span className="text-xs text-muted-foreground ml-1">
             {currentIndex + 1} of {companies.length}
@@ -283,7 +283,7 @@ function CompanyPreviewPane({
             aria-label="Open full page"
             title="Open full page"
           >
-            <ArrowUpRight className="h-3 w-3" />
+            <ArrowUpRight />
           </Button>
           <Button
             size="icon"
@@ -639,9 +639,9 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button size="sm" variant="default" className="bg-primary hover:bg-primary/90">
-                <Plus className="mr-1.5 h-3.5 w-3.5" />
+                <Plus />
                 Add
-                <ChevronDown className="ml-1.5 h-3.5 w-3.5" />
+                <ChevronDown />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
@@ -698,7 +698,7 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
                   onClick={handleErpSync}
                   aria-label="Sync from ERP"
                 >
-                  <RefreshCw className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} />
+                  <RefreshCw className={isSyncing ? "animate-spin" : undefined} />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Sync companies &amp; vendors from Acumatica</TooltipContent>

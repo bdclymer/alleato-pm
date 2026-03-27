@@ -1,5 +1,7 @@
+import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { ADMIN_FEEDBACK_BUCKET } from "@/lib/admin-feedback/constants";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -49,7 +51,7 @@ export async function GET(request: Request) {
     const supabase = createServiceClient();
     const { data, error } = await supabase
       .from("admin_feedback_comments")
-      .select("id, feedback_item_id, author_id, body, mentions, created_at, updated_at")
+      .select("id, feedback_item_id, author_id, body, mentions, screenshot_url, screenshot_path, created_at, updated_at")
       .eq("feedback_item_id", parsed.data.feedbackItemId)
       .order("created_at", { ascending: true });
 
@@ -92,7 +94,63 @@ const postSchema = z.object({
   feedbackItemId: z.string().uuid(),
   body: z.string().trim().min(1).max(5000),
   mentions: z.array(z.string().uuid()).optional(),
+  screenshotDataUrl: z.string().trim().nullable().optional(),
 });
+
+function decodeScreenshot(dataUrl: string) {
+  const matches = dataUrl.match(
+    /^data:(image\/(?:png|jpeg|webp|gif|heic|heif|avif));base64,(.+)$/,
+  );
+  if (!matches) {
+    throw new Error("Screenshot must be a PNG, JPEG, WEBP, GIF, or AVIF data URL");
+  }
+  return {
+    mimeType: matches[1],
+    buffer: Buffer.from(matches[2], "base64"),
+  };
+}
+
+async function ensureFeedbackBucket() {
+  const svc = createServiceClient();
+  const { error: getBucketError } = await svc.storage.getBucket(ADMIN_FEEDBACK_BUCKET);
+
+  if (getBucketError) {
+    const msg = (getBucketError as { message?: string }).message?.toLowerCase() ?? "";
+    const isNotFound = msg.includes("not found") || msg.includes("does not exist");
+    if (!isNotFound) throw new Error("Unable to verify feedback screenshot bucket");
+
+    const { error: createErr } = await svc.storage.createBucket(ADMIN_FEEDBACK_BUCKET, {
+      public: true,
+    });
+    if (createErr) throw new Error("Unable to create feedback screenshot bucket");
+  }
+}
+
+async function uploadCommentScreenshot(userId: string, screenshotDataUrl: string) {
+  await ensureFeedbackBucket();
+  const svc = createServiceClient();
+  const screenshot = decodeScreenshot(screenshotDataUrl);
+  const extension = screenshot.mimeType.split("/")[1] ?? "png";
+  const filePath = `comments/${userId}/${new Date().toISOString().slice(0, 10)}/${randomUUID()}.${extension}`;
+
+  const { error: uploadError } = await svc.storage
+    .from(ADMIN_FEEDBACK_BUCKET)
+    .upload(filePath, screenshot.buffer, {
+      contentType: screenshot.mimeType,
+      cacheControl: "3600",
+      upsert: false,
+    });
+
+  if (uploadError) {
+    throw new Error(`Failed to upload comment screenshot: ${(uploadError as { message?: string }).message ?? "unknown"}`);
+  }
+
+  const {
+    data: { publicUrl },
+  } = svc.storage.from(ADMIN_FEEDBACK_BUCKET).getPublicUrl(filePath);
+
+  return { screenshotPath: filePath, screenshotUrl: publicUrl };
+}
 
 export async function POST(request: Request) {
   try {
@@ -108,7 +166,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const { feedbackItemId, body, mentions = [] } = parsed.data;
+    const { feedbackItemId, body, mentions = [], screenshotDataUrl } = parsed.data;
     const supabase = createServiceClient();
 
     // Verify the feedback item exists
@@ -122,6 +180,21 @@ export async function POST(request: Request) {
       return jsonError(404, { error: "Feedback item not found" });
     }
 
+    // Upload screenshot if provided
+    let screenshotUrl: string | null = null;
+    let screenshotPath: string | null = null;
+
+    if (screenshotDataUrl) {
+      try {
+        const uploaded = await uploadCommentScreenshot(user.id, screenshotDataUrl);
+        screenshotUrl = uploaded.screenshotUrl;
+        screenshotPath = uploaded.screenshotPath;
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Screenshot upload failed";
+        return jsonError(500, { error: "Failed to upload comment screenshot", details: msg });
+      }
+    }
+
     // Insert comment
     const { data: comment, error: insertError } = await supabase
       .from("admin_feedback_comments")
@@ -130,8 +203,10 @@ export async function POST(request: Request) {
         author_id: user.id,
         body,
         mentions,
+        screenshot_url: screenshotUrl,
+        screenshot_path: screenshotPath,
       })
-      .select("id, feedback_item_id, author_id, body, mentions, created_at, updated_at")
+      .select("id, feedback_item_id, author_id, body, mentions, screenshot_url, screenshot_path, created_at, updated_at")
       .single();
 
     if (insertError) {

@@ -11,7 +11,7 @@ import {
   ExpandedState,
   RowSelectionState,
 } from "@tanstack/react-table";
-import { ChevronRight, ChevronDown, X, Check } from "lucide-react";
+import { ChevronRight, ChevronDown, X, Check, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -328,17 +328,18 @@ function EditableCurrencyCell({
 
   if (isClickable) {
     return (
-      <button
+      <Button
         type="button"
+        variant="ghost"
         aria-label={`Edit ${formatCurrency(value)}`}
         className={cn(
-          "text-right cursor-pointer px-1 py-0.5 rounded transition-colors w-full",
+          "text-right cursor-pointer px-1 py-0.5 rounded transition-colors w-full h-auto font-normal",
           "hover:bg-muted/80 underline decoration-muted-foreground/40 underline-offset-2 hover:decoration-foreground",
         )}
         onClick={onEdit}
       >
         <CurrencyCell value={value} />
-      </button>
+      </Button>
     );
   }
 
@@ -503,13 +504,15 @@ export function BudgetTable({
           return <div className="w-4" />;
         }
         return (
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={(e) => {
               e.stopPropagation();
               row.toggleExpanded();
             }}
-            className="p-0.5 hover:bg-muted rounded"
+            className="h-6 w-6 hover:bg-muted"
             aria-label={
               row.getIsExpanded()
                 ? `Collapse ${row.original.description}`
@@ -521,7 +524,7 @@ export function BudgetTable({
             ) : (
               <ChevronRight className="w-4 h-4 text-muted-foreground" />
             )}
-          </button>
+          </Button>
         );
       },
       size: 24,
@@ -918,7 +921,7 @@ export function BudgetTable({
     },
     {
       id: "actions",
-      header: () => <ColumnHeader lines={["Actions"]} />,
+      header: () => null,
       cell: ({ row }) => {
         const hasChildren = Boolean(
           row.original.children && row.original.children.length > 0
@@ -938,18 +941,19 @@ export function BudgetTable({
             <Button
               type="button"
               variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-xs"
+              size="icon"
+              className="h-7 w-7"
               onClick={handleEdit}
+              aria-label="Edit line item"
             >
-              Edit
+              <Pencil className="text-muted-foreground" />
             </Button>
           </div>
         );
       },
-      size: 88,
-      minSize: 80,
-      maxSize: 120,
+      size: 48,
+      minSize: 40,
+      maxSize: 56,
     },
   ];
 
@@ -1190,7 +1194,7 @@ export function BudgetTable({
                       disabled={isCreating || !newLineItem.description.trim()}
                       title="Save (Enter)"
                     >
-                      <Check className="h-4 w-4 text-success" />
+                      <Check className="text-success" />
                     </Button>
                     <Button
                       size="icon"

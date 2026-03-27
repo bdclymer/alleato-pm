@@ -275,7 +275,7 @@ export function ChangeEventConvertDialog({
             onClick={handleConvert}
             disabled={isConverting || !targetContractId || isLoadingContracts}
           >
-            <ArrowRight className="h-4 w-4 mr-2" />
+            <ArrowRight />
             Convert to Change Order
           </Button>
         </DialogFooter>

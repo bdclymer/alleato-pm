@@ -168,8 +168,10 @@ function RevisionRow({ revision, projectId, drawingId, onDownload }: RevisionRow
   return (
     <TableRow className={revision.is_current_revision ? "bg-muted/30" : undefined}>
       <TableCell>
-        <button
-          className="text-muted-foreground hover:text-foreground transition-colors"
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground hover:text-foreground transition-colors h-auto p-0"
           onClick={() =>
             router.push(`/${projectId}/drawings/viewer/${drawingId}`)
           }
@@ -177,17 +179,19 @@ function RevisionRow({ revision, projectId, drawingId, onDownload }: RevisionRow
           type="button"
         >
           <Info className="h-4 w-4" />
-        </button>
+        </Button>
       </TableCell>
       <TableCell>
-        <button
-          className="text-muted-foreground hover:text-foreground transition-colors"
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground hover:text-foreground transition-colors h-auto p-0"
           onClick={() => onDownload(revision)}
           title="Download this revision"
           type="button"
         >
           <Download className="h-4 w-4" />
-        </button>
+        </Button>
       </TableCell>
       <TableCell className="font-medium text-foreground">
         {revision.revision_number}
@@ -211,7 +215,7 @@ function RevisionRow({ revision, projectId, drawingId, onDownload }: RevisionRow
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-              <MoreHorizontal className="h-4 w-4" />
+              <MoreHorizontal />
               <span className="sr-only">Actions</span>
             </Button>
           </DropdownMenuTrigger>
@@ -362,7 +366,7 @@ export default function DrawingDetailPage() {
             {error instanceof Error ? error.message : "Unknown error"}
           </p>
           <Button onClick={() => router.push(`/${projectId}/drawings`)}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
+            <ArrowLeft />
             Back to Drawings
           </Button>
         </div>
@@ -436,7 +440,7 @@ export default function DrawingDetailPage() {
               className="shrink-0"
               onClick={() => router.push(`/${projectId}/drawings`)}
             >
-              <ArrowLeft className="h-4 w-4" />
+              <ArrowLeft />
               <span className="hidden sm:inline ml-1">Back</span>
             </Button>
 
@@ -468,7 +472,7 @@ export default function DrawingDetailPage() {
                 router.push(`/${projectId}/drawings/viewer/${drawingId}`)
               }
             >
-              <Eye className="h-4 w-4 mr-1.5" />
+              <Eye />
               View
             </Button>
 
@@ -478,14 +482,14 @@ export default function DrawingDetailPage() {
               onClick={handleDownloadCurrent}
               disabled={!currentRevision?.file_url}
             >
-              <Download className="h-4 w-4 mr-1.5" />
+              <Download />
               Download
             </Button>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm" className="px-2">
-                  <MoreHorizontal className="h-4 w-4" />
+                  <MoreHorizontal />
                   <span className="sr-only">More actions</span>
                 </Button>
               </DropdownMenuTrigger>
@@ -532,7 +536,7 @@ export default function DrawingDetailPage() {
       {/* ------------------------------------------------------------------ */}
       <PageContainer>
         <Tabs defaultValue="general" className="mt-4">
-          <TabsList className="mb-6 flex-wrap h-auto gap-1">
+          <TabsList variant="line" className="mb-6 flex-wrap h-auto">
             <TabsTrigger value="general">General</TabsTrigger>
             <TabsTrigger value="sketches">Sketches</TabsTrigger>
             <TabsTrigger value="download-log">Download Log</TabsTrigger>
@@ -569,7 +573,7 @@ export default function DrawingDetailPage() {
                         size="sm"
                         onClick={handleStartEdit}
                       >
-                        <Pencil className="h-3.5 w-3.5 mr-1.5" />
+                        <Pencil />
                         Edit
                       </Button>
                     ) : (
@@ -588,7 +592,7 @@ export default function DrawingDetailPage() {
                           onClick={handleSaveEdit}
                           disabled={updateDrawing.isPending}
                         >
-                          <Check className="h-3.5 w-3.5 mr-1" />
+                          <Check />
                           {updateDrawing.isPending ? "Saving…" : "Save"}
                         </Button>
                       </div>
@@ -791,7 +795,7 @@ export default function DrawingDetailPage() {
                             )
                           }
                         >
-                          <Eye className="h-4 w-4 mr-1.5" />
+                          <Eye />
                           View Full Drawing
                         </Button>
                       </div>
@@ -820,7 +824,7 @@ export default function DrawingDetailPage() {
                 size="sm"
                 onClick={() => toast.info("Add Sketch — coming soon")}
               >
-                <PenLine className="h-4 w-4 mr-1.5" />
+                <PenLine />
                 Add Sketch
               </Button>
             </div>
@@ -895,7 +899,7 @@ export default function DrawingDetailPage() {
                 size="sm"
                 onClick={() => toast.info("Compose Email — coming soon")}
               >
-                <Mail className="h-4 w-4 mr-1.5" />
+                <Mail />
                 Compose Email
               </Button>
             </div>

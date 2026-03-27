@@ -144,7 +144,7 @@ export function ResponsiveAuthUsersTable({
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="h-8 w-8">
-                      <MoreHorizontal className="h-4 w-4" />
+                      <MoreHorizontal />
                       <span className="sr-only">Open menu</span>
                     </Button>
                   </DropdownMenuTrigger>

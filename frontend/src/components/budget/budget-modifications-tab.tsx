@@ -198,7 +198,7 @@ export function BudgetModificationsTab({
             </p>
           </div>
           <Button onClick={onCreateClick}>
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus />
             New Modification
           </Button>
         </div>

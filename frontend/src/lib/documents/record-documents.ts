@@ -1415,7 +1415,7 @@ async function loadChangeOrderBundle(
     throw new Error("Change order not found");
   }
 
-  const changeOrder = changeOrderData as ChangeOrderRow;
+  const changeOrder = changeOrderData as unknown as ChangeOrderRow;
 
   const [contractResult, lineItemsResult, reviewerPeopleResult] = await Promise.all([
     changeOrder.contract_id
@@ -1426,7 +1426,7 @@ async function loadChangeOrderBundle(
           .single()
       : Promise.resolve({ data: null, error: null }),
     supabase
-      .from("change_order_lines")
+      .from("change_order_lines" as any)
       .select("id, description, amount")
       .eq("change_order_id", numericId)
       .order("created_at", { ascending: true }),

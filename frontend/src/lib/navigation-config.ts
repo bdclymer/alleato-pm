@@ -203,15 +203,6 @@ export interface SidebarNavGroup {
 
 export const sidebarNavGroups: SidebarNavGroup[] = [
   {
-    id: "command",
-    label: "Command Center",
-    icon: LayoutDashboard,
-    tools: [
-      { name: "Command Center", path: "/command-center", icon: LayoutDashboard, requiresProject: false },
-      { name: "Feedback Inbox", path: "/feedback-inbox", icon: MessageCircle, requiresProject: false, adminOnly: true },
-    ],
-  },
-  {
     id: "financial",
     label: "Financial",
     icon: DollarSign,
@@ -529,6 +520,22 @@ export const headerNavGroups: HeaderNavGroup[] = [
 
 // Admin/Settings tools (shown in gear icon dropdown)
 export const adminSettingsTools: HeaderNavigationTool[] = [
+  {
+    name: "Command Center",
+    path: "/command-center",
+    requiresProject: false,
+    icon: LayoutDashboard,
+    description: "Operational dashboard",
+    adminOnly: true,
+  },
+  {
+    name: "Feedback Inbox",
+    path: "/feedback-inbox",
+    requiresProject: false,
+    icon: MessageCircle,
+    description: "User feedback and requests",
+    adminOnly: true,
+  },
   {
     name: "Settings",
     path: "settings/plugins",

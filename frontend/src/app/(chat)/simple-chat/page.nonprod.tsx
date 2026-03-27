@@ -138,15 +138,16 @@ export default function SimpleChatPage() {
                       "Summarize latest meetings",
                       "Help me plan a project",
                     ].map((prompt) => (
-                      <button
+                      <Button
                         key={prompt}
+                        variant="outline"
                         onClick={() => setInput(prompt)}
-                        className="text-left p-4 rounded-lg border border-border hover:bg-muted transition-colors"
+                        className="text-left p-4 h-auto rounded-lg hover:bg-muted transition-colors justify-start"
                       >
                         <p className="text-sm font-medium text-foreground">
                           {prompt}
                         </p>
-                      </button>
+                      </Button>
                     ))}
                   </div>
                 </div>
@@ -292,7 +293,7 @@ export default function SimpleChatPage() {
                   {isLoading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    <Send className="h-4 w-4" />
+                    <Send />
                   )}
                 </Button>
               </div>

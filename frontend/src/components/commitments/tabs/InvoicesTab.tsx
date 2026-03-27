@@ -137,7 +137,7 @@ export const InvoicesTab = memo(function InvoicesTab({ commitmentId }: InvoicesT
           className="h-8 px-2"
         >
           Scheduled Value
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <ArrowUpDown />
         </Button>
       ),
       cell: ({ row }) => (
@@ -155,7 +155,7 @@ export const InvoicesTab = memo(function InvoicesTab({ commitmentId }: InvoicesT
           className="h-8 px-2"
         >
           Billed to Date
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          <ArrowUpDown />
         </Button>
       ),
       cell: ({ row }) => (
@@ -248,7 +248,7 @@ export const InvoicesTab = memo(function InvoicesTab({ commitmentId }: InvoicesT
 
               {/* Summary Grid */}
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <div className="rounded-lg border bg-card p-4">
+                <div className="rounded-lg bg-muted/50 p-4">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <DollarSign className="h-4 w-4" />
                     <Text size="xs">Contract Value</Text>
@@ -258,7 +258,7 @@ export const InvoicesTab = memo(function InvoicesTab({ commitmentId }: InvoicesT
                   </Text>
                 </div>
 
-                <div className="rounded-lg border bg-card p-4">
+                <div className="rounded-lg bg-muted/50 p-4">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <TrendingUp className="h-4 w-4" />
                     <Text size="xs">Total Invoiced</Text>
@@ -268,7 +268,7 @@ export const InvoicesTab = memo(function InvoicesTab({ commitmentId }: InvoicesT
                   </Text>
                 </div>
 
-                <div className="rounded-lg border bg-card p-4">
+                <div className="rounded-lg bg-muted/50 p-4">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Receipt className="h-4 w-4" />
                     <Text size="xs">Remaining to Invoice</Text>
@@ -278,7 +278,7 @@ export const InvoicesTab = memo(function InvoicesTab({ commitmentId }: InvoicesT
                   </Text>
                 </div>
 
-                <div className="rounded-lg border bg-card p-4">
+                <div className="rounded-lg bg-muted/50 p-4">
                   <div className="flex items-center gap-2 text-muted-foreground">
                     <Percent className="h-4 w-4" />
                     <Text size="xs">% Invoiced</Text>

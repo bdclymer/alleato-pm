@@ -74,6 +74,7 @@ export function HeaderNavGroup({
 
   return (
     <>
+      {/* eslint-disable-next-line design-system/no-design-violations -- dark header nav trigger with custom styling */}
       <button
         ref={triggerRef}
         type="button"

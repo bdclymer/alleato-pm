@@ -93,7 +93,7 @@ export function MessageGroup({
               className="h-7 w-7 text-[hsl(var(--chat-muted))] hover:text-[hsl(var(--chat-text))] hover:bg-[hsl(var(--chat-hover))]"
               title="Reply in thread"
             >
-              <MessageSquare className="h-3.5 w-3.5" />
+              <MessageSquare />
             </Button>
             <Button
               variant="ghost"
@@ -101,7 +101,7 @@ export function MessageGroup({
               className="h-7 w-7 text-[hsl(var(--chat-muted))] hover:text-[hsl(var(--chat-text))] hover:bg-[hsl(var(--chat-hover))]"
               title="Add reaction"
             >
-              <Smile className="h-3.5 w-3.5" />
+              <Smile />
             </Button>
             <Button
               variant="ghost"
@@ -109,7 +109,7 @@ export function MessageGroup({
               className="h-7 w-7 text-[hsl(var(--chat-muted))] hover:text-[hsl(var(--chat-text))] hover:bg-[hsl(var(--chat-hover))]"
               title="More actions"
             >
-              <MoreHorizontal className="h-3.5 w-3.5" />
+              <MoreHorizontal />
             </Button>
           </div>
         )}

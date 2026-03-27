@@ -47,10 +47,11 @@ export function EstimatesHubClient({ stats }: Props) {
             const slug = EstimateTypeToSlug[type];
 
             return (
-              <button
+              <Button
                 key={type}
+                variant="outline"
                 onClick={() => router.push(`/estimates/${slug}`)}
-                className="group relative flex flex-col rounded-lg border border-border bg-card p-6 text-left transition-all hover:border-primary/40 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="group relative flex h-auto flex-col rounded-lg bg-background p-6 text-left transition-all hover:border-primary/40 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <div className="mb-4 flex items-start justify-between">
                   <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10">
@@ -104,10 +105,10 @@ export function EstimatesHubClient({ stats }: Props) {
                     }}
                   >
                     View all {EstimateTypeLabels[type]} estimates
-                    <ArrowRight className="ml-1 h-3 w-3" />
+                    <ArrowRight />
                   </Button>
                 </div>
-              </button>
+              </Button>
             );
           })}
         </div>

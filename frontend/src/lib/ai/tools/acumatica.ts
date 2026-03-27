@@ -263,7 +263,7 @@ export function createAcumaticaTools(
 
           // Filter in-memory to avoid Acumatica OData $filter HTTP 500
           const bills = status
-            ? allBills.filter((b) => b.Status?.value === status)
+            ? allBills.filter((b) => (b.Status as unknown as { value?: string } | undefined)?.value === status)
             : allBills;
 
           const totalAmount = bills.reduce((s, b) => s + (b.Amount ?? 0), 0);
@@ -324,7 +324,7 @@ export function createAcumaticaTools(
 
           // Filter in-memory to avoid Acumatica OData $filter HTTP 500
           const invoices = status
-            ? allInvoices.filter((i) => i.Status?.value === status)
+            ? allInvoices.filter((i) => (i.Status as unknown as { value?: string } | undefined)?.value === status)
             : allInvoices;
 
           const totalAmount = invoices.reduce(
@@ -546,7 +546,7 @@ export function createAcumaticaTools(
 
           // Filter in-memory to avoid Acumatica OData $filter HTTP 500
           const pos = status
-            ? allPos.filter((po) => po.Status?.value === status)
+            ? allPos.filter((po) => (po.Status as unknown as { value?: string } | undefined)?.value === status)
             : allPos;
 
           const totalOrderValue = pos.reduce(

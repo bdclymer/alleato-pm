@@ -2,6 +2,7 @@
 
 import { ReactNode } from "react";
 import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
@@ -52,13 +53,15 @@ export function BaseSidebar({
                 <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
               )}
             </div>
-            <button
+            <Button
+              variant="ghost"
+              size="icon"
               onClick={onClose}
-              className="rounded-md p-2 hover:bg-accent hover:text-accent-foreground transition-colors text-muted-foreground"
+              className="text-muted-foreground"
               aria-label="Close"
             >
               <X className="h-5 w-5" />
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -122,18 +125,19 @@ export function SidebarTabs({
     <div className="border-b border-border px-6 py-2 bg-muted flex-shrink-0">
       <div className="flex gap-2">
         {tabs.map((tab) => (
-          <button
+          <Button
             key={tab.id}
+            variant={activeTab === tab.id ? "outline" : "ghost"}
             onClick={() => onTabChange(tab.id)}
             className={cn(
-              "px-4 py-2 text-sm font-medium rounded-md transition-all",
+              "px-4 py-2 text-sm font-medium transition-all h-auto",
               activeTab === tab.id
-                ? "bg-background text-primary shadow-xs border border-border"
+                ? "bg-background text-primary shadow-xs"
                 : "text-muted-foreground hover:text-foreground hover:bg-background/50",
             )}
           >
             {tab.label}
-          </button>
+          </Button>
         ))}
       </div>
     </div>

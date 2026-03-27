@@ -185,7 +185,7 @@ export function RichTextField({
             disabled={disabled}
             className="h-7 w-7 p-0 text-muted-foreground"
           >
-            <Bold className="h-3.5 w-3.5" />
+            <Bold />
           </Button>
           <Button
             size="sm"
@@ -195,7 +195,7 @@ export function RichTextField({
             disabled={disabled}
             className="h-7 w-7 p-0 text-muted-foreground"
           >
-            <Italic className="h-3.5 w-3.5" />
+            <Italic />
           </Button>
           <Button
             size="sm"
@@ -205,7 +205,7 @@ export function RichTextField({
             disabled={disabled}
             className="h-7 w-7 p-0 text-muted-foreground"
           >
-            <Underline className="h-3.5 w-3.5" />
+            <Underline />
           </Button>
           <Separator orientation="vertical" className="mx-1 h-4" />
           <Button
@@ -216,7 +216,7 @@ export function RichTextField({
             disabled={disabled}
             className="h-7 w-7 p-0 text-muted-foreground"
           >
-            <List className="h-3.5 w-3.5" />
+            <List />
           </Button>
           <Button
             size="sm"
@@ -226,7 +226,7 @@ export function RichTextField({
             disabled={disabled}
             className="h-7 w-7 p-0 text-muted-foreground"
           >
-            <ListOrdered className="h-3.5 w-3.5" />
+            <ListOrdered />
           </Button>
           <Separator orientation="vertical" className="mx-1 h-4" />
           <Button
@@ -238,7 +238,7 @@ export function RichTextField({
             className="h-7 w-7 p-0 text-muted-foreground"
             title="Clear formatting"
           >
-            <RemoveFormatting className="h-3.5 w-3.5" />
+            <RemoveFormatting />
           </Button>
         </div>
         <div

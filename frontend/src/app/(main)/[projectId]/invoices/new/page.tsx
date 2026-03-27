@@ -276,7 +276,7 @@ export default function NewInvoicePage() {
           onClick={() => router.back()}
           className="gap-2"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft />
           Back
         </Button>
       }
@@ -285,7 +285,7 @@ export default function NewInvoicePage() {
       <div className="max-w-none mx-0">
         <form onSubmit={handleSubmit} className="space-y-6">
         <Tabs defaultValue="general" className="space-y-4">
-          <TabsList>
+          <TabsList variant="line">
             <TabsTrigger value="general">General Info</TabsTrigger>
             <TabsTrigger value="line-items">Line Items</TabsTrigger>
             <TabsTrigger value="summary">Summary</TabsTrigger>
@@ -433,7 +433,7 @@ export default function NewInvoicePage() {
                             !invoiceData.invoiceDate && "text-muted-foreground",
                           )}
                         >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          <CalendarIcon />
                           {invoiceData.invoiceDate
                             ? format(invoiceData.invoiceDate, "PPP")
                             : "Select date"}
@@ -466,7 +466,7 @@ export default function NewInvoicePage() {
                             !invoiceData.dueDate && "text-muted-foreground",
                           )}
                         >
-                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          <CalendarIcon />
                           {invoiceData.dueDate
                             ? format(invoiceData.dueDate, "PPP")
                             : "Select date"}
@@ -711,7 +711,7 @@ export default function NewInvoicePage() {
 
                 <div className="mt-4">
                   <Button type="button" variant="outline" onClick={addLineItem}>
-                    <Plus className="h-4 w-4 mr-2" />
+                    <Plus />
                     Add Line Item
                   </Button>
                 </div>

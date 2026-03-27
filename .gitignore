@@ -87,6 +87,7 @@ tmp/
 
 # Test/run artifacts
 e2e-screenshots/
+verify-output/
 output/
 tests/agent-browser-runs/
 frontend/tests/agent-browser-runs/

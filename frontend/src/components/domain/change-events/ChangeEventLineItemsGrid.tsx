@@ -714,7 +714,7 @@ export function ChangeEventLineItemsGrid({
           className="flex items-center gap-2"
           data-testid="change-event-line-item-add"
         >
-          <Plus className="h-4 w-4" />
+          <Plus />
           Add Line Item
         </Button>
 

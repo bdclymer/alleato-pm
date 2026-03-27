@@ -61,7 +61,7 @@ export function HeaderAdminMenu({
           className="h-8 w-8 p-0 text-zinc-300 hover:text-white hover:bg-zinc-700/50"
           aria-label="Settings and admin tools"
         >
-          <Settings className="h-4 w-4" />
+          <Settings />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" sideOffset={8} className="w-56">

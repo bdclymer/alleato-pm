@@ -3,10 +3,27 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Plus } from "lucide-react";
+import { Plus, Eye, MoreHorizontal } from "lucide-react";
+import { toast } from "sonner";
 
 import { StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   UnifiedTablePage,
   useUnifiedTableState,
@@ -17,6 +34,7 @@ import {
 } from "@/components/tables/unified";
 import { useOwnerInvoicesList } from "@/hooks/use-invoicing";
 import { useCommitmentsList } from "@/hooks/use-commitments-query";
+import { useBillingPeriodsList, useCreateBillingPeriod, type BillingPeriodItem } from "@/hooks/use-billing-periods";
 import type { CommitmentListItem } from "@/lib/validation/commitments";
 import {
   buildInvoiceTableColumns,
@@ -111,6 +129,110 @@ function sortItems<T>(
   });
 }
 
+// ---------------------------------------------------------------------------
+// Billing Periods — inline tab columns + helpers
+// ---------------------------------------------------------------------------
+
+type BillingPeriod = BillingPeriodItem;
+
+const billingPeriodColumnConfig: ColumnConfig[] = [
+  { id: "period_number", label: "Period #", alwaysVisible: true },
+  { id: "period", label: "Period", defaultVisible: true },
+  { id: "status", label: "Status", defaultVisible: true },
+  { id: "workCompleted", label: "Work Completed", defaultVisible: true },
+  { id: "paymentDue", label: "Payment Due", defaultVisible: true },
+  { id: "retention", label: "Retention", defaultVisible: true },
+];
+
+const billingPeriodDefaultVisibleColumns = billingPeriodColumnConfig
+  .filter((c) => c.defaultVisible !== false || c.alwaysVisible)
+  .map((c) => c.id);
+
+const billingPeriodFilters: FilterConfig[] = [
+  {
+    id: "status",
+    label: "Status",
+    type: "select",
+    options: [
+      { value: "draft", label: "Draft" },
+      { value: "submitted", label: "Submitted" },
+      { value: "approved", label: "Approved" },
+      { value: "paid", label: "Paid" },
+    ],
+  },
+];
+
+function buildBillingPeriodColumns(
+  _onView: (bp: BillingPeriod) => void,
+): TableColumn<BillingPeriod>[] {
+  return [
+    {
+      id: "period_number",
+      label: "Period #",
+      alwaysVisible: true,
+      sortable: true,
+      sortValue: (bp) => bp.period_number,
+      render: (bp) => (
+        <span className="font-medium text-primary tabular-nums">
+          BP-{String(bp.period_number).padStart(3, "0")}
+        </span>
+      ),
+    },
+    {
+      id: "period",
+      label: "Period",
+      defaultVisible: true,
+      sortable: true,
+      sortValue: (bp) => bp.start_date,
+      render: (bp) => (
+        <span className="text-sm text-muted-foreground">
+          {formatDate(bp.start_date)} – {formatDate(bp.end_date)}
+        </span>
+      ),
+    },
+    {
+      id: "status",
+      label: "Status",
+      defaultVisible: true,
+      sortable: true,
+      sortValue: (bp) => bp.status,
+      render: (bp) => <StatusBadge status={bp.status} />,
+    },
+    {
+      id: "workCompleted",
+      label: "Work Completed",
+      defaultVisible: true,
+      sortable: true,
+      sortValue: (bp) => bp.work_completed,
+      render: (bp) => (
+        <span className="font-medium tabular-nums">{formatCurrency(bp.work_completed)}</span>
+      ),
+    },
+    {
+      id: "paymentDue",
+      label: "Payment Due",
+      defaultVisible: true,
+      sortable: true,
+      sortValue: (bp) => bp.current_payment_due,
+      render: (bp) => (
+        <span className="font-medium tabular-nums">{formatCurrency(bp.current_payment_due)}</span>
+      ),
+    },
+    {
+      id: "retention",
+      label: "Retention",
+      defaultVisible: true,
+      sortable: true,
+      sortValue: (bp) => bp.retention_amount,
+      render: (bp) => (
+        <span className="tabular-nums text-muted-foreground">
+          {formatCurrency(bp.retention_amount)} ({bp.retention_percentage}%)
+        </span>
+      ),
+    },
+  ];
+}
+
 export default function ProjectInvoicesPage(): ReactElement {
   const params = useParams<{ projectId: string }>();
   const pathname = usePathname();
@@ -160,6 +282,21 @@ export default function ProjectInvoicesPage(): ReactElement {
   );
   const [subcontractorVisibleColumns, setSubcontractorVisibleColumns] =
     React.useState<string[]>(subcontractorDefaultVisibleColumns);
+  const [bpVisibleColumns, setBpVisibleColumns] = React.useState<string[]>(
+    billingPeriodDefaultVisibleColumns,
+  );
+  const [createBpOpen, setCreateBpOpen] = React.useState(false);
+  const [bpFormStartDate, setBpFormStartDate] = React.useState("");
+  const [bpFormEndDate, setBpFormEndDate] = React.useState("");
+  const [bpFormBillingDate, setBpFormBillingDate] = React.useState("");
+  const createBpMutation = useCreateBillingPeriod(projectId);
+
+  const {
+    data: billingPeriodsRaw = [],
+    isLoading: bpLoading,
+    isFetching: bpFetching,
+    error: bpError,
+  } = useBillingPeriodsList(projectId);
 
   const { data: ownerRawInvoices = [], isLoading: ownerLoading, isFetching: ownerFetching, error: ownerError } =
     useOwnerInvoicesList(projectId, {
@@ -219,13 +356,14 @@ export default function ProjectInvoicesPage(): ReactElement {
         sortable: true,
         sortValue: (item) => item.number,
         render: (item) => (
-          <button
+          <Button
             type="button"
-            className="font-medium text-primary hover:underline"
+            variant="link"
+            className="font-medium text-primary hover:underline h-auto p-0"
             onClick={() => router.push(`/${projectId}/commitments/${item.id}`)}
           >
             {item.number}
-          </button>
+          </Button>
         ),
       },
       {
@@ -318,6 +456,44 @@ export default function ProjectInvoicesPage(): ReactElement {
   const subcontractorTotalItems = subcontractorResponse?.meta.total ?? sortedSubcontractors.length;
   const subcontractorTotalPages = subcontractorResponse?.meta.totalPages ?? 1;
 
+  // Billing periods — columns + filtered/sorted data
+  const bpColumns = React.useMemo(
+    () =>
+      buildBillingPeriodColumns((bp) =>
+        router.push(`/${projectId}/invoices?tab=billing-periods&periodId=${bp.id}`),
+      ),
+    [projectId, router],
+  );
+
+  const filteredBillingPeriods = React.useMemo(() => {
+    let items = [...billingPeriodsRaw];
+    if (activeTab === "billing-periods" && statusFilter) {
+      items = items.filter((bp) => bp.status === statusFilter);
+    }
+    const search = tableState.debouncedSearch.toLowerCase().trim();
+    if (activeTab === "billing-periods" && search) {
+      const periodLabel = (bp: BillingPeriod) =>
+        `BP-${String(bp.period_number).padStart(3, "0")}`.toLowerCase();
+      items = items.filter(
+        (bp) =>
+          periodLabel(bp).includes(search) ||
+          bp.start_date.includes(search) ||
+          bp.end_date.includes(search),
+      );
+    }
+    return items;
+  }, [activeTab, statusFilter, tableState.debouncedSearch, billingPeriodsRaw]);
+
+  const sortedBillingPeriods = React.useMemo(
+    () => sortItems(filteredBillingPeriods, bpColumns, tableState.sortBy, tableState.sortDirection),
+    [filteredBillingPeriods, bpColumns, tableState.sortBy, tableState.sortDirection],
+  );
+
+  const bpTotalItems = sortedBillingPeriods.length;
+  const bpTotalPages = Math.max(1, Math.ceil(bpTotalItems / tableState.perPage));
+  const bpOffset = (tableState.page - 1) * tableState.perPage;
+  const bpPageItems = sortedBillingPeriods.slice(bpOffset, bpOffset + tableState.perPage);
+
   const tabs = [
     {
       label: "Owner",
@@ -360,7 +536,7 @@ export default function ProjectInvoicesPage(): ReactElement {
 
   const createInvoiceAction = (
     <Button size="sm" onClick={() => router.push(`/${projectId}/invoicing/new`)}>
-      <Plus className="mr-2 h-4 w-4" />
+      <Plus />
       New Invoice
     </Button>
   );
@@ -452,59 +628,188 @@ export default function ProjectInvoicesPage(): ReactElement {
   }
 
   if (activeTab === "billing-periods") {
+    const bpIsFiltered = Boolean(tableState.searchInput) || Boolean(activeFilters.status);
+
+    const renderBpRowActions = (bp: BillingPeriod) => (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+            <MoreHorizontal />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            onClick={() =>
+              toast.info(`Billing Period BP-${String(bp.period_number).padStart(3, "0")} — ${bp.status}. Net payment due: ${formatCurrency(bp.net_payment_due)}`)
+            }
+          >
+            <Eye className="mr-2 h-4 w-4" />
+            View Details
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+
     return (
+      <>
       <UnifiedTablePage
         header={{
           title: "Invoices",
           description: "Track owner and subcontractor invoice activity",
-          actions: createInvoiceAction,
+          actions: (
+            <Button
+              size="sm"
+              onClick={() => setCreateBpOpen(true)}
+            >
+              <Plus />
+              Create Billing Period
+            </Button>
+          ),
         }}
         tabs={tabs}
         toolbar={{
-          totalItems: 0,
-          filteredItems: 0,
-          selectedCount: 0,
-          searchValue: "",
-          onSearchChange: () => undefined,
-          searchPlaceholder: "",
+          totalItems: billingPeriodsRaw.length,
+          filteredItems: bpTotalItems,
+          selectedCount: tableState.selectedIds.length,
+          searchValue: tableState.searchInput,
+          onSearchChange: tableState.setSearchInput,
+          searchPlaceholder: "Search billing periods...",
           currentView: "table",
           onViewChange: () => undefined,
           enabledViews: ["table"],
-          columns: [],
-          visibleColumns: [],
-          onColumnVisibilityChange: () => undefined,
+          filters: billingPeriodFilters,
+          activeFilters,
+          onFilterChange: handleFilterChange,
+          onClearFilters: () => handleFilterChange(EMPTY_FILTERS),
+          columns: billingPeriodColumnConfig,
+          visibleColumns: bpVisibleColumns,
+          onColumnVisibilityChange: setBpVisibleColumns,
         }}
         data={{
-          items: [] as OwnerInvoice[],
-          isLoading: false,
+          items: bpPageItems,
+          isLoading: bpLoading,
+          isFetching: bpFetching,
+          error: bpError instanceof Error ? bpError : bpError ? new Error("Failed to load billing periods") : undefined,
         }}
         table={{
-          columns: ownerColumns,
-          getRowId: (item) => String(item.id),
+          columns: bpColumns,
+          getRowId: (bp) => bp.id,
+          onRowClick: (bp) =>
+            toast.info(`Billing Period BP-${String(bp.period_number).padStart(3, "0")} — ${bp.status}. Net payment due: ${formatCurrency(bp.net_payment_due)}`),
+          rowActions: renderBpRowActions,
+        }}
+        sorting={{
+          sortBy: tableState.sortBy,
+          sortDirection: tableState.sortDirection,
+          onSortChange: (sortBy, direction) => {
+            tableState.setSortBy(sortBy);
+            tableState.setSortDirection(direction);
+            tableState.setSearchParams({ sort: sortBy, sort_dir: direction, page: "1" });
+            tableState.setPage(1);
+          },
+        }}
+        selection={{
+          selectedIds: tableState.selectedIds,
+          onSelectAll: (checked) => {
+            tableState.setSelectedIds(checked ? bpPageItems.map((bp) => bp.id) : []);
+          },
+          onSelectRow: (id, checked) => {
+            tableState.setSelectedIds((prev) =>
+              checked ? [...prev, String(id)] : prev.filter((existingId) => existingId !== id),
+            );
+          },
         }}
         emptyState={{
           title: "No billing periods yet",
-          description: "Billing period records will appear here once configured.",
-          filteredDescription: "Billing period records will appear here once configured.",
-          isFiltered: false,
+          description: "Create a billing period to organize invoices by cycle.",
+          filteredDescription: "Try adjusting your search or filters.",
+          isFiltered: bpIsFiltered,
         }}
         pagination={{
-          page: 1,
-          totalPages: 1,
+          page: tableState.page,
+          totalPages: bpTotalPages,
           perPage: tableState.perPage,
-          onPageChange: () => undefined,
-          onPerPageChange: () => undefined,
+          onPageChange: handlePaginationChange,
+          onPerPageChange: handlePerPageChange,
         }}
         features={{
           enableViews: false,
-          enableSearch: false,
-          enableFilters: false,
-          enableRowSelection: false,
-          enableColumnToggle: false,
-          enableExport: false,
-          enableBulkDelete: false,
         }}
       />
+      <Dialog open={createBpOpen} onOpenChange={setCreateBpOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Create Billing Period</DialogTitle>
+            <DialogDescription>
+              Add a new billing period to this project&apos;s prime contract.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="bp-start">Start Date</Label>
+              <Input
+                id="bp-start"
+                type="date"
+                value={bpFormStartDate}
+                onChange={(e) => setBpFormStartDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bp-end">End Date</Label>
+              <Input
+                id="bp-end"
+                type="date"
+                value={bpFormEndDate}
+                onChange={(e) => setBpFormEndDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="bp-billing">Billing Date</Label>
+              <Input
+                id="bp-billing"
+                type="date"
+                value={bpFormBillingDate}
+                onChange={(e) => setBpFormBillingDate(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateBpOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              disabled={createBpMutation.isPending || !bpFormStartDate || !bpFormEndDate || !bpFormBillingDate}
+              onClick={() => {
+                // Use the first prime contract for this project
+                const contractId = billingPeriodsRaw[0]?.contract_id;
+                if (!contractId) {
+                  toast.error("No prime contract found for this project.");
+                  return;
+                }
+                createBpMutation.mutate(
+                  {
+                    contract_id: contractId,
+                    start_date: bpFormStartDate,
+                    end_date: bpFormEndDate,
+                    billing_date: bpFormBillingDate,
+                  },
+                  {
+                    onSuccess: () => {
+                      setCreateBpOpen(false);
+                      setBpFormStartDate("");
+                      setBpFormEndDate("");
+                      setBpFormBillingDate("");
+                    },
+                  },
+                );
+              }}
+            >
+              {createBpMutation.isPending ? "Creating..." : "Create"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      </>
     );
   }
 
@@ -585,7 +890,7 @@ export default function ProjectInvoicesPage(): ReactElement {
         isFiltered,
         action: (
           <Button size="sm" onClick={() => router.push(`/${projectId}/invoicing/new`)}>
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus />
             Create invoice
           </Button>
         ),

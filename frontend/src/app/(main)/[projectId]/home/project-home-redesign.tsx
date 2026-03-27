@@ -216,9 +216,9 @@ function AiPanel({ projectId, onClose }: { projectId: number; onClose: () => voi
             <p className="text-xs text-muted-foreground">Powered by project data</p>
           </div>
         </div>
-        <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
+        <Button variant="ghost" size="sm" onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors h-auto p-0">
           <X className="h-4 w-4" />
-        </button>
+        </Button>
       </div>
       <div className="flex-1 overflow-y-auto px-5 py-5 space-y-4">
         <div className="flex gap-3">
@@ -235,13 +235,14 @@ function AiPanel({ projectId, onClose }: { projectId: number; onClose: () => voi
             "Which change orders need approval?",
             "Summarize open RFIs",
           ].map((p) => (
-            <button
+            <Button
               key={p}
+              variant="outline"
               onClick={() => setInput(p)}
-              className="block w-full text-left text-xs text-muted-foreground hover:text-foreground border border-border rounded px-3 py-2 hover:bg-muted/50 transition-colors"
+              className="block w-full text-left text-xs text-muted-foreground hover:text-foreground rounded px-3 py-2 hover:bg-muted/50 transition-colors h-auto"
             >
               {p}
-            </button>
+            </Button>
           ))}
         </div>
       </div>
@@ -253,9 +254,9 @@ function AiPanel({ projectId, onClose }: { projectId: number; onClose: () => voi
             placeholder="Ask about this project…"
             className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60 outline-none"
           />
-          <button className="text-muted-foreground hover:text-foreground flex-shrink-0">
+          <Button variant="ghost" className="text-muted-foreground hover:text-foreground flex-shrink-0 h-auto p-0">
             <Send className="h-3.5 w-3.5" />
-          </button>
+          </Button>
         </div>
         <p className="text-[10px] text-muted-foreground/50 mt-2 text-center">
           Full chat at{" "}
@@ -370,7 +371,7 @@ export function ProjectHomeRedesign({
     const items: Array<{ id: string; severity: "critical" | "warning" | "info"; title: string; meta: string; href: string }> = [];
 
     if (pendingCOs.length > 0) {
-      const val = pendingCOs.reduce((s, co) => s + (co.amount || 0), 0);
+      const val = pendingCOs.reduce((s, co) => s + (co.total_amount || 0), 0);
       const oldest = Math.max(...pendingCOs.map((co) => differenceInDays(new Date(), new Date(String(co.created_at)))));
       items.push({
         id: "cos",
@@ -428,7 +429,7 @@ export function ProjectHomeRedesign({
   }, [pendingCOs, openRfis, openCEs, lastLogDaysAgo, hasBudget, committedPct, revisedBudget, committedCosts, project.id]);
 
   const attentionItems = React.useMemo(() => {
-    const pendingCoAmount = pendingCOs.reduce((sum, co) => sum + (co.amount || 0), 0);
+    const pendingCoAmount = pendingCOs.reduce((sum, co) => sum + (co.total_amount || 0), 0);
     const oldestPendingCoDays = pendingCOs.length
       ? Math.max(...pendingCOs.map((co) => differenceInDays(new Date(), new Date(String(co.created_at)))))
       : 0;
@@ -555,7 +556,7 @@ export function ProjectHomeRedesign({
                 <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">Financials</h2>
                 <Link href={`/${project.id}/budget`} className="text-xs text-muted-foreground hover:text-foreground transition-colors">View Budget →</Link>
               </div>
-              <div className="rounded-lg border border-border bg-card overflow-hidden">
+              <div className="rounded-lg bg-card overflow-hidden">
                 <div className="grid grid-cols-2 sm:grid-cols-5">
                   {(() => {
                     const billedToDate = commitments.reduce((s, c) => s + (c.billed_to_date || 0), 0);
@@ -760,7 +761,7 @@ export function ProjectHomeRedesign({
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                 <Link
                   href={`/${project.id}/rfis`}
-                  className="rounded-lg border border-border bg-card px-4 py-3 hover:bg-muted/30 transition-colors"
+                  className="rounded-lg bg-card px-4 py-3 hover:bg-muted/30 transition-colors"
                 >
                   <p className="text-sm font-medium text-foreground">RFIs</p>
                   <p className="text-xs text-muted-foreground mt-1">
@@ -769,14 +770,14 @@ export function ProjectHomeRedesign({
                 </Link>
                 <Link
                   href={`/${project.id}/submittals`}
-                  className="rounded-lg border border-border bg-card px-4 py-3 hover:bg-muted/30 transition-colors"
+                  className="rounded-lg bg-card px-4 py-3 hover:bg-muted/30 transition-colors"
                 >
                   <p className="text-sm font-medium text-foreground">Submittals</p>
                   <p className="text-xs text-muted-foreground mt-1">Review and track status</p>
                 </Link>
                 <Link
                   href={`/${project.id}/documents`}
-                  className="rounded-lg border border-border bg-card px-4 py-3 hover:bg-muted/30 transition-colors"
+                  className="rounded-lg bg-card px-4 py-3 hover:bg-muted/30 transition-colors"
                 >
                   <p className="text-sm font-medium text-foreground">Documents</p>
                   <p className="text-xs text-muted-foreground mt-1">Central file access</p>
@@ -792,7 +793,7 @@ export function ProjectHomeRedesign({
                 </h2>
                 <span className="text-xs text-muted-foreground">Live discussion feed</span>
               </div>
-              <div className="rounded-lg border border-border bg-card px-4 py-4">
+              <div className="rounded-lg bg-card px-4 py-4">
                 <p className="text-sm text-muted-foreground">No comments yet.</p>
               </div>
             </section>
@@ -805,7 +806,7 @@ export function ProjectHomeRedesign({
                 </h2>
                 <span className="text-xs text-muted-foreground">Real-time workspace</span>
               </div>
-              <div className="rounded-lg border border-border bg-card px-4 py-4">
+              <div className="rounded-lg bg-card px-4 py-4">
                 <p className="text-sm text-muted-foreground">Live blocks are ready for collaborative project updates.</p>
               </div>
             </section>
@@ -831,7 +832,7 @@ export function ProjectHomeRedesign({
                       <Link
                         key={log.id}
                         href={`/${project.id}/daily-log`}
-                        className="rounded-lg border border-border bg-card px-4 py-3 hover:bg-muted/30 transition-colors"
+                        className="rounded-lg bg-card px-4 py-3 hover:bg-muted/30 transition-colors"
                       >
                         <div className="flex items-center justify-between mb-2">
                           <span className="text-sm font-medium text-foreground">
@@ -966,16 +967,16 @@ export function ProjectHomeRedesign({
       </div>
 
       {/* ── AI WIDGET ─────────────────────────────────────────── */}
-      <button
+      <Button
         onClick={() => setAiOpen(true)}
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-foreground text-background rounded-full pl-4 pr-5 py-3 shadow-sm hover:opacity-90 transition-opacity text-sm font-medium"
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-foreground text-background rounded-full pl-4 pr-5 py-3 shadow-sm hover:opacity-90 transition-opacity text-sm font-medium h-auto"
       >
         <span className="relative flex h-2 w-2">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
           <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
         </span>
         Ask AI
-      </button>
+      </Button>
 
       {aiOpen && (
         <div className="fixed inset-y-0 right-0 z-50 flex">

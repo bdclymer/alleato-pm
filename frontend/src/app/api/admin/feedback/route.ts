@@ -7,6 +7,8 @@ import {
   ADMIN_FEEDBACK_SEVERITIES,
 } from "@/lib/admin-feedback/constants";
 import { createGitHubIssue } from "@/lib/admin-feedback/github";
+import { matchFeedbackToTool, getToolById } from "@/lib/admin-feedback/tool-matcher";
+import { resolveToolContext, contextToAgentPayload } from "@/lib/admin-feedback/context-resolver";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import type { Database } from "@/types/database.types";
@@ -49,6 +51,7 @@ type ApiErrorPayload = {
   code?: string;
   hint?: string;
   details?: string;
+  github_issue_url?: string | null;
 };
 
 function jsonError(status: number, payload: ApiErrorPayload) {
@@ -188,9 +191,9 @@ async function ensureFeedbackBucket() {
 }
 
 function decodeScreenshot(dataUrl: string) {
-  const matches = dataUrl.match(/^data:(image\/png|image\/jpeg|image\/webp);base64,(.+)$/);
+  const matches = dataUrl.match(/^data:(image\/(?:png|jpeg|webp|gif|heic|heif|avif));base64,(.+)$/);
   if (!matches) {
-    throw new Error("Screenshot must be a PNG, JPEG, or WEBP data URL");
+    throw new Error("Screenshot must be a PNG, JPEG, WEBP, GIF, or AVIF data URL");
   }
 
   return {
@@ -309,6 +312,13 @@ export async function POST(request: Request) {
       payload.pageTitle,
     );
 
+    // Auto-match to a procore_tools row (URL path is strongest signal)
+    const matchedTool = await matchFeedbackToTool(title, payload.comment, payload.pagePath);
+    const toolContext = matchedTool ? resolveToolContext(matchedTool) : null;
+    const agentContext = toolContext
+      ? toJsonValue(contextToAgentPayload(toolContext))
+      : null;
+
     const insertPayload: FeedbackInsert = {
       created_by: requestUser.id,
       project_id: payload.projectId ?? null,
@@ -329,6 +339,8 @@ export async function POST(request: Request) {
       screenshot_path: screenshotPath,
       screenshot_url: screenshotUrl,
       metadata,
+      ...(matchedTool ? { tool_id: matchedTool.id } : {}),
+      ...(agentContext ? { agent_context: agentContext } : {}),
     };
 
     const serviceSupabase = createServiceClient();
@@ -376,6 +388,7 @@ export async function POST(request: Request) {
         screenshotUrl,
         projectId: payload.projectId ?? null,
         metadata: payload.metadata ?? {},
+        toolContext,
       });
     } catch (error) {
       githubWarning =
@@ -464,7 +477,7 @@ export async function GET(request: Request) {
     let query = serviceSupabase
       .from("admin_feedback_items")
       .select(
-        "id, created_at, updated_at, created_by, project_id, page_url, page_path, page_title, target_id, target_selector, target_text, target_tag, dom_path, target_rect, title, comment, request_type, severity, status, screenshot_url, screenshot_path, github_issue_number, github_issue_url, github_issue_state, metadata",
+        "id, created_at, updated_at, created_by, project_id, page_url, page_path, page_title, target_id, target_selector, target_text, target_tag, dom_path, target_rect, title, comment, request_type, severity, status, screenshot_url, screenshot_path, github_issue_number, github_issue_url, github_issue_state, metadata, tool_id, agent_context",
         { count: "exact" },
       )
       .order("created_at", { ascending: false })
@@ -509,7 +522,7 @@ export async function GET(request: Request) {
 
 const patchSchema = z.object({
   id: z.string().uuid(),
-  status: z.enum(["open", "submitted", "github_failed", "closed"]).optional(),
+  status: z.enum(["open", "submitted", "github_failed", "triaged", "diagnosing", "fixing", "verifying", "in_review", "resolved", "closed"]).optional(),
   title: z.string().trim().min(1).max(200).optional(),
 });
 
@@ -612,6 +625,22 @@ export async function PUT(request: Request) {
       });
     }
 
+    // Resolve tool context if a tool is assigned
+    let sendToolContext = null;
+    const itemToolId = (item as Record<string, unknown>).tool_id;
+    if (typeof itemToolId === "number") {
+      const tool = await getToolById(itemToolId);
+      if (tool) {
+        sendToolContext = resolveToolContext(tool);
+      }
+    } else {
+      // Try auto-matching if no tool assigned (use URL path as primary signal)
+      const autoMatch = await matchFeedbackToTool(item.title, item.comment, item.page_path);
+      if (autoMatch) {
+        sendToolContext = resolveToolContext(autoMatch);
+      }
+    }
+
     // Create GitHub issue
     const githubIssue = await createGitHubIssue({
       title: item.title,
@@ -629,6 +658,7 @@ export async function PUT(request: Request) {
       screenshotUrl: item.screenshot_url ?? null,
       projectId: item.project_id ?? null,
       metadata: (item.metadata as Record<string, unknown>) ?? {},
+      toolContext: sendToolContext,
     });
 
     if (!githubIssue) {
@@ -666,5 +696,92 @@ export async function PUT(request: Request) {
     const message =
       error instanceof Error ? error.message : "Failed to create GitHub issue";
     return jsonError(500, { error: "Failed to send to GitHub", details: message });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// DELETE — Delete a feedback item and its related data
+// ---------------------------------------------------------------------------
+
+const deleteSchema = z.object({
+  id: z.string().uuid(),
+});
+
+export async function DELETE(request: Request) {
+  try {
+    const requestUser = await requireAdminUser();
+    if (!requestUser) {
+      return jsonError(403, {
+        error: "Admin access required",
+        hint: "Only admin users can delete feedback.",
+      });
+    }
+
+    const body = await request.json();
+    const parsed = deleteSchema.safeParse(body);
+    if (!parsed.success) {
+      return NextResponse.json(
+        { error: "Invalid payload", details: parsed.error.flatten() },
+        { status: 400 },
+      );
+    }
+
+    const { id } = parsed.data;
+    const serviceSupabase = createServiceClient();
+
+    // Fetch the feedback item to get screenshot_path before deleting
+    const { data: item, error: fetchError } = await serviceSupabase
+      .from("admin_feedback_items")
+      .select("id, screenshot_path")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (fetchError || !item) {
+      return jsonError(404, { error: "Feedback item not found" });
+    }
+
+    // Delete related comments first (FK constraint)
+    const { error: commentsError } = await serviceSupabase
+      .from("admin_feedback_comments")
+      .delete()
+      .eq("feedback_item_id", id);
+
+    if (commentsError) {
+      const details = toErrorDetails(commentsError);
+      return jsonError(500, {
+        error: "Failed to delete feedback comments",
+        code: details.code,
+        details: details.message,
+      });
+    }
+
+    // Delete the feedback item
+    const { error: deleteError } = await serviceSupabase
+      .from("admin_feedback_items")
+      .delete()
+      .eq("id", id);
+
+    if (deleteError) {
+      const details = toErrorDetails(deleteError);
+      return jsonError(500, {
+        error: "Failed to delete feedback item",
+        code: details.code,
+        details: details.message,
+      });
+    }
+
+    // Delete screenshot from storage if it exists
+    if (item.screenshot_path) {
+      await serviceSupabase.storage
+        .from(ADMIN_FEEDBACK_BUCKET)
+        .remove([item.screenshot_path]);
+    }
+
+    return NextResponse.json({ deleted: true });
+  } catch (error) {
+    console.error("[AdminFeedback] Delete failed", error);
+    const message =
+      error instanceof Error ? error.message : "Failed to delete feedback";
+    return jsonError(500, { error: "Failed to delete feedback", details: message });
   }
 }

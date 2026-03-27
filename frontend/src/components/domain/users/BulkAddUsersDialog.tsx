@@ -274,7 +274,7 @@ export function BulkAddUsersDialog({
                 size="sm"
                 onClick={addEmptyUser}
               >
-                <Plus className="size-4 mr-2" />
+                <Plus />
                 Add User
               </Button>
             </div>

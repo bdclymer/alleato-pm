@@ -856,7 +856,7 @@ export function CreateSubcontractForm({
                         selectedVendor?.label || "Select vendor"
                       )}
                     </span>
-                    <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    <Search className="shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
@@ -1035,9 +1035,10 @@ export function CreateSubcontractForm({
                 : "unit/quantity"}
             </strong>
             .{" "}
-            <button
+            <Button
               type="button"
-              className="underline hover:text-foreground transition-colors"
+              variant="link"
+              className="underline p-0 h-auto"
               disabled={isSubmitting}
               onClick={toggleAccountingMethod}
               data-testid="sov-accounting-toggle"
@@ -1046,7 +1047,7 @@ export function CreateSubcontractForm({
               {accountingMethod === "amount_based"
                 ? "Unit/Quantity"
                 : "Amount-based"}
-            </button>
+            </Button>
           </p>
 
           <div className="flex items-center justify-between">
@@ -1383,7 +1384,7 @@ export function CreateSubcontractForm({
               className="h-10 gap-2 px-4"
               data-testid="sov-add-line-footer"
             >
-              <Plus className="h-4 w-4" />
+              <Plus />
               Add Line Item
             </Button>
             <Select
@@ -1731,10 +1732,11 @@ export function CreateSubcontractForm({
                     .sort(([a], [b]) => a.localeCompare(b))
                     .map(([division]) => (
                       <div key={division} className="border-b last:border-b-0">
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
                           onClick={() => toggleDivision(division)}
-                          className="w-full flex items-center justify-between px-4 py-2 text-left hover:bg-muted transition-colors"
+                          className="w-full flex items-center justify-between px-4 py-2 text-left h-auto font-normal"
                         >
                           <span className="text-sm font-semibold text-foreground">
                             {division}
@@ -1744,29 +1746,30 @@ export function CreateSubcontractForm({
                           ) : (
                             <ChevronRight className="w-4 h-4 text-muted-foreground" />
                           )}
-                        </button>
+                        </Button>
 
                         {expandedDivisions.has(division) && (
                           <div className="bg-muted/50">
                             {groupedCostCodes[division].map((costCode) => (
-                              <button
+                              <Button
                                 key={costCode.id}
                                 type="button"
+                                variant="ghost"
                                 onClick={() =>
                                   setNewBudgetCodeData({
                                     ...newBudgetCodeData,
                                     costCodeId: costCode.id,
                                   })
                                 }
-                                className={`w-full text-left px-6 py-2 text-sm hover:bg-muted transition-colors ${
+                                className={`w-full text-left justify-start px-6 py-2 text-sm h-auto font-normal ${
                                   newBudgetCodeData.costCodeId === costCode.id
-                                    ? "bg-blue-50 text-blue-700 font-medium dark:bg-blue-950 dark:text-blue-300"
+                                    ? "bg-primary/10 text-primary font-medium"
                                     : "text-foreground"
                                 }`}
                               >
                                 {costCode.division_title || costCode.id} -{" "}
                                 {costCode.title}
-                              </button>
+                              </Button>
                             ))}
                           </div>
                         )}

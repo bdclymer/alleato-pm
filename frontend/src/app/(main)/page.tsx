@@ -231,7 +231,7 @@ function EditableCell({
           onClick={(e) => { e.stopPropagation(); handleSave(); }}
           disabled={saving}
         >
-          <Check className="h-3 w-3" />
+          <Check />
         </Button>
         <Button
           variant="ghost"
@@ -283,7 +283,7 @@ function ProjectCard({
 
   return (
     <div
-      className="group cursor-pointer rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary/30"
+      className="group cursor-pointer rounded-lg border border-border bg-background p-4 transition-colors hover:border-primary/30"
       onClick={onClick}
     >
       <div className="flex items-start justify-between gap-3">
@@ -303,7 +303,7 @@ function ProjectCard({
             onEdit();
           }}
         >
-          <MoreVertical className="h-4 w-4" />
+          <MoreVertical />
         </Button>
       </div>
 
@@ -990,7 +990,7 @@ export default function PortfolioPage() {
         description: "All projects across your organization",
         actions: (
           <Button size="sm" onClick={handleCreateProject}>
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus />
             New Project
           </Button>
         ),
@@ -1035,7 +1035,7 @@ export default function PortfolioPage() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" size="icon" className="h-8 w-8">
-                <MoreVertical className="h-4 w-4" />
+                <MoreVertical />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -1050,7 +1050,7 @@ export default function PortfolioPage() {
               </DropdownMenuItem>
               <DropdownMenuItem
                 className="text-destructive"
-                onClick={() => handleDeleteProject(item.id)}
+                onClick={() => handleDeleteProject(item)}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Delete

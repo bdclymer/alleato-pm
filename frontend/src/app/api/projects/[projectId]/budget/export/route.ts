@@ -92,7 +92,7 @@ export async function GET(
     ] = await Promise.all([
       // Budget lines from materialized view
       supabase
-        .from("v_budget_lines")
+        .from("v_budget_lines" as any)
         .select(
           `
           *,
@@ -105,7 +105,8 @@ export async function GET(
         .order("cost_code_id", { ascending: true }),
 
       // Direct costs for calculations
-      supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any)
         .from("direct_cost_line_items")
         .select(
           `
@@ -121,7 +122,7 @@ export async function GET(
         `,
         )
         .eq("direct_costs.project_id", numericProjectId)
-        .in("direct_costs.status", APPROVED_DIRECT_COST_STATUSES),
+        .in("direct_costs.status", APPROVED_DIRECT_COST_STATUSES) as Promise<{ data: Array<Record<string, unknown>> | null; error: unknown }>,
 
       // Subcontract SOV items with pending status for Pending Cost Changes
       supabase
@@ -140,11 +141,12 @@ export async function GET(
         .in("purchase_orders.status", PENDING_PO_STATUSES),
 
       // Pending change orders for Pending Budget Changes
-      supabase
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (supabase as any)
         .from("change_order_lines")
         .select("cost_code_id, amount, change_orders!inner(status, project_id)")
         .eq("change_orders.project_id", numericProjectId)
-        .like("change_orders.status", "Pending%"),
+        .like("change_orders.status", "Pending%") as Promise<{ data: Array<Record<string, unknown>> | null; error: unknown }>,
 
       // Executed/Approved Subcontract SOV items for Committed Costs
       supabase
@@ -379,7 +381,7 @@ export async function GET(
     }
 
     // Transform to export format
-    const exportData: ExportBudgetRow[] = (budgetLinesRes.data || []).map(
+    const exportData: ExportBudgetRow[] = ((budgetLinesRes.data || []) as unknown as Record<string, unknown>[]).map(
       (item: Record<string, unknown>) => {
         const costCode = item.cost_code as
           | { id?: string; title?: string; division_id?: string }

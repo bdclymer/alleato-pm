@@ -147,35 +147,37 @@ export function CommittedCostsModal({
         <div className="flex items-center justify-between">
           <div className="flex gap-2">
             {tabs.map((tab) => (
-              <button
+              <Button
                 key={tab.id}
                 type="button"
+                variant={activeTab === tab.id ? "outline" : "ghost"}
                 onClick={() =>
                   setActiveTab(tab.id as "commitments" | "breakdown")
                 }
                 className={cn(
-                  "px-4 py-2 text-sm font-medium rounded-md transition-all",
+                  "px-4 py-2 text-sm font-medium transition-all h-auto",
                   activeTab === tab.id
-                    ? "bg-background text-orange-600 shadow-sm border border-border"
+                    ? "bg-background text-primary shadow-sm"
                     : "text-foreground hover:text-foreground hover:bg-background/50",
                 )}
               >
                 {tab.label}
-              </button>
+              </Button>
             ))}
           </div>
 
           {/* Type Filter */}
           <div className="flex gap-2">
             {["all", "subcontract", "purchase_order"].map((type) => (
-              <button
+              <Button
                 key={type}
                 type="button"
+                variant={typeFilter === type ? "default" : "ghost"}
                 onClick={() => setTypeFilter(type as typeof typeFilter)}
                 className={cn(
-                  "px-4 py-1 text-xs font-medium rounded-full transition-all",
+                  "px-4 py-1 text-xs font-medium rounded-full transition-all h-auto",
                   typeFilter === type
-                    ? "bg-orange-500 text-white"
+                    ? "bg-primary text-primary-foreground"
                     : "bg-muted text-foreground hover:bg-muted",
                 )}
               >
@@ -184,7 +186,7 @@ export function CommittedCostsModal({
                   : type === "subcontract"
                     ? "Subcontracts"
                     : "POs"}
-              </button>
+              </Button>
             ))}
           </div>
         </div>

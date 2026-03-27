@@ -104,12 +104,12 @@ export function TableView({
                     {col.label}
                     {isSorted ? (
                       currentDir === "asc" ? (
-                        <ArrowUp className="h-4 w-4" />
+                        <ArrowUp />
                       ) : (
-                        <ArrowDown className="h-4 w-4" />
+                        <ArrowDown />
                       )
                     ) : (
-                      <ArrowUpDown className="h-4 w-4 opacity-50" />
+                      <ArrowUpDown className="opacity-50" />
                     )}
                   </Button>
                 </TableHead>

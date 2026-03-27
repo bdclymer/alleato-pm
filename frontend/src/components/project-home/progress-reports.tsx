@@ -103,7 +103,7 @@ export function ProgressReports({ projectId }: ProgressReportsProps) {
           Track project progress through detailed reports
         </p>
         <Button size="sm" className="gap-2">
-          <FileText className="w-4 h-4" />
+          <FileText />
           Create Report
         </Button>
       </div>
@@ -179,12 +179,14 @@ export function ProgressReports({ projectId }: ProgressReportsProps) {
                   >
                     View
                   </Link>
-                  <button
-                    className="text-muted-foreground hover:text-foreground p-1"
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-foreground"
                     title="Download Report"
                   >
                     <Download className="w-4 h-4" />
-                  </button>
+                  </Button>
                 </div>
               </div>
             </CardContent>

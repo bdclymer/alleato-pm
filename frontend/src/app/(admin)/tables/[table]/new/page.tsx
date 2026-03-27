@@ -59,7 +59,7 @@ export default async function NewRowPage({ params }: NewRowPageProps) {
         <div className="flex items-center gap-2 mb-4">
           <Button variant="ghost" size="sm" asChild>
             <Link href={`/admin/tables/${table}`}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <ArrowLeft />
               Back to {config.label}
             </Link>
           </Button>

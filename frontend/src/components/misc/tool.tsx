@@ -146,7 +146,7 @@ const Tool = ({ toolPart, defaultOpen = false, className }: ToolProps) => {
               </span>
               {getStateBadge()}
             </div>
-            <ChevronDown className={cn("h-4 w-4", isOpen && "rotate-180")} />
+            <ChevronDown className={cn(isOpen && "rotate-180")} />
           </Button>
         </CollapsibleTrigger>
         <CollapsibleContent

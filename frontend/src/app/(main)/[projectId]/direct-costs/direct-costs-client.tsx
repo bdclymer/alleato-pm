@@ -670,10 +670,11 @@ export function DirectCostsClient({
 
   const renderSummaryListItem = React.useCallback(
     (item: DirectCostRow): ReactElement => (
-      <button
+      <Button
         type="button"
+        variant="outline"
         onClick={() => handleSummaryRowClick(item)}
-        className="w-full rounded-lg border border-border bg-background p-3 text-left transition-colors hover:bg-muted/30"
+        className="w-full rounded-lg bg-background p-3 text-left transition-colors hover:bg-muted/30 h-auto"
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 space-y-1">
@@ -695,7 +696,7 @@ export function DirectCostsClient({
           </span>
           <span className="text-xs text-muted-foreground">{formatDate(item.date)}</span>
         </div>
-      </button>
+      </Button>
     ),
     [handleSummaryRowClick],
   );
@@ -738,7 +739,7 @@ export function DirectCostsClient({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button size="sm">
-                  <Plus className="mr-2 h-4 w-4" />
+                  <Plus />
                   Create
                 </Button>
               </DropdownMenuTrigger>
@@ -796,7 +797,7 @@ export function DirectCostsClient({
                     onClick={handleErpSync}
                     aria-label="Sync from ERP"
                   >
-                    <RefreshCw className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} />
+                    <RefreshCw className={isSyncing ? "animate-spin" : undefined} />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Sync direct costs from Acumatica</TooltipContent>
@@ -813,7 +814,7 @@ export function DirectCostsClient({
                 setIsImportDialogOpen(true);
               }}
             >
-              <Upload className="mr-2 h-4 w-4" />
+              <Upload />
               Import CSV
             </Button>
           ),
@@ -859,7 +860,7 @@ export function DirectCostsClient({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreHorizontal className="h-4 w-4" />
+                  <MoreHorizontal />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">

@@ -283,9 +283,9 @@ export function DataTableGroupable<TData, TValue>({
           className="h-8 w-full justify-start"
         >
           {row.getIsExpanded() ? (
-            <ChevronDown className="h-4 w-4 mr-2" />
+            <ChevronDown />
           ) : (
-            <ChevronRight className="h-4 w-4 mr-2" />
+            <ChevronRight />
           )}
           <span className="capitalize">
             {groupValue || "—"}{" "}

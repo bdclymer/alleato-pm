@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import html2canvas from "html2canvas";
 import { usePathname } from "next/navigation";
-import { Camera, ImagePlus, MessageSquarePlus, RefreshCw, Trash2, X } from "lucide-react";
+import { Camera, ImagePlus, ListFilter, RefreshCw, Sparkles, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import {
   ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE,
@@ -83,20 +83,39 @@ async function captureTargetScreenshot(target: HTMLElement) {
   );
   const cropHeight = Math.max(rect.height + padding * 2, 220);
 
-  const canvas = await html2canvas(document.body, {
-    backgroundColor: "#ffffff",
-    scale: Math.min(window.devicePixelRatio || 1, 2),
-    logging: false,
-    useCORS: true,
-    x: cropX,
-    y: cropY,
-    width: cropWidth,
-    height: cropHeight,
-    windowWidth: document.documentElement.scrollWidth,
-    windowHeight: document.documentElement.scrollHeight,
+  // Hide overlays (dialog, feedback widget) during capture
+  const overlays = document.querySelectorAll(
+    `[${ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE}], [data-radix-dialog-overlay], [role="dialog"]`,
+  );
+  const hidden: { el: HTMLElement; prev: string }[] = [];
+  overlays.forEach((el) => {
+    if (el instanceof HTMLElement) {
+      hidden.push({ el, prev: el.style.visibility });
+      el.style.visibility = "hidden";
+    }
   });
 
-  return canvas.toDataURL("image/png");
+  try {
+    const canvas = await html2canvas(document.body, {
+      backgroundColor: "#ffffff",
+      scale: Math.min(window.devicePixelRatio || 1, 2),
+      logging: false,
+      useCORS: true,
+      x: cropX,
+      y: cropY,
+      width: cropWidth,
+      height: cropHeight,
+      windowWidth: document.documentElement.scrollWidth,
+      windowHeight: document.documentElement.scrollHeight,
+    });
+
+    return canvas.toDataURL("image/png");
+  } finally {
+    // Restore overlays
+    hidden.forEach(({ el, prev }) => {
+      el.style.visibility = prev;
+    });
+  }
 }
 
 export function AdminFeedbackWidget() {
@@ -115,6 +134,37 @@ export function AdminFeedbackWidget() {
   const [isCapturingScreenshot, setIsCapturingScreenshot] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const frameRef = useRef<number | null>(null);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleFileUpload = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file.");
+      return;
+    }
+
+    // 10MB limit
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Image must be under 10MB.");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setScreenshotDataUrl(reader.result);
+      }
+    };
+    reader.onerror = () => {
+      toast.error("Failed to read image file.");
+    };
+    reader.readAsDataURL(file);
+
+    // Reset the input so the same file can be re-selected
+    event.target.value = "";
+  }, []);
 
   const isAdmin = profile?.isAdmin === true;
   const hoveredRect = hoveredTarget ? getRectState(hoveredTarget) : null;
@@ -212,6 +262,18 @@ export function AdminFeedbackWidget() {
       isCancelled = true;
     };
   }, [dialogOpen, selectedElement]);
+
+  // Set cursor to crosshair when selecting
+  useEffect(() => {
+    if (isSelecting) {
+      document.body.style.cursor = "crosshair";
+    } else {
+      document.body.style.cursor = "";
+    }
+    return () => {
+      document.body.style.cursor = "";
+    };
+  }, [isSelecting]);
 
   if (isLoading || !isAdmin) {
     return null;
@@ -348,33 +410,28 @@ export function AdminFeedbackWidget() {
         className="fixed bottom-5 right-5 z-[9999] flex items-center gap-2"
       >
         {isSelecting && (
-          <div className="hidden rounded-full border border-border bg-background/95 px-3 py-1.5 text-xs text-muted-foreground shadow-sm backdrop-blur md:block">
-            Click an element to file feedback. Press Esc to cancel.
+          <div className="hidden rounded-full bg-foreground px-3 py-1.5 text-xs text-background shadow-sm md:block">
+            Click an element · Esc to cancel
           </div>
         )}
-        <Button
+        {/* eslint-disable-next-line design-system/no-design-violations -- floating action button with custom shape */}
+        <button
           type="button"
-          size="sm"
           onClick={toggleSelectMode}
           className={cn(
-            "h-11 rounded-full px-4 shadow-sm",
+            "flex h-12 w-12 items-center justify-center rounded-full shadow-sm transition-all",
             isSelecting
               ? "bg-foreground text-background hover:bg-foreground/90"
               : "bg-background text-foreground border border-border hover:bg-muted",
           )}
+          aria-label={isSelecting ? "Cancel feedback" : "Feedback mode"}
         >
           {isSelecting ? (
-            <>
-              <X className="mr-2 h-4 w-4" />
-              Cancel feedback
-            </>
+            <Sparkles className="h-5 w-5" />
           ) : (
-            <>
-              <MessageSquarePlus className="mr-2 h-4 w-4" />
-              Feedback mode
-            </>
+            <ListFilter className="h-5 w-5" />
           )}
-        </Button>
+        </button>
       </div>
 
       <Dialog
@@ -444,10 +501,26 @@ export function AdminFeedbackWidget() {
                   <div>
                     <Label>Screenshot</Label>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Optional. Use the selected area preview or remove it before submitting.
+                      Optional. Upload an image or capture the selected area.
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleFileUpload}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Upload />
+                      Upload
+                    </Button>
                     <Button
                       type="button"
                       variant="outline"
@@ -457,18 +530,18 @@ export function AdminFeedbackWidget() {
                     >
                       {isCapturingScreenshot ? (
                         <>
-                          <RefreshCw className="mr-2 h-3.5 w-3.5 animate-spin" />
+                          <RefreshCw className="animate-spin" />
                           Capturing
                         </>
                       ) : screenshotDataUrl ? (
                         <>
-                          <RefreshCw className="mr-2 h-3.5 w-3.5" />
+                          <RefreshCw />
                           Retake
                         </>
                       ) : (
                         <>
-                          <ImagePlus className="mr-2 h-3.5 w-3.5" />
-                          Add
+                          <Camera />
+                          Capture
                         </>
                       )}
                     </Button>
@@ -494,16 +567,27 @@ export function AdminFeedbackWidget() {
                       className="h-56 w-full object-cover object-top"
                     />
                   ) : (
-                    <div className="flex h-56 flex-col items-center justify-center gap-3 px-6 text-center">
+                    <div
+                      className="flex h-56 cursor-pointer flex-col items-center justify-center gap-3 px-6 text-center transition-colors hover:bg-muted/40"
+                      onClick={() => fileInputRef.current?.click()}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter" || e.key === " ") {
+                          e.preventDefault();
+                          fileInputRef.current?.click();
+                        }
+                      }}
+                    >
                       <div className="flex h-12 w-12 items-center justify-center rounded-full bg-background text-muted-foreground shadow-sm">
-                        <Camera className="h-5 w-5" />
+                        <Upload className="h-5 w-5" />
                       </div>
                       <div className="space-y-1">
                         <p className="text-sm font-medium text-foreground">
-                          No screenshot attached
+                          Click to upload a screenshot
                         </p>
                         <p className="text-xs text-muted-foreground">
-                          You can submit without one, or capture a preview of the selected area.
+                          Or use the Capture button to grab the selected area.
                         </p>
                       </div>
                     </div>

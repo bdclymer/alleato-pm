@@ -25,8 +25,6 @@ import { useBudgetData } from "@/hooks/use-budget-data";
 import { useCurrentUserName } from "@/hooks/use-current-user-name";
 import { StatusBadge, Skeleton } from "@/components/ds";
 import { Button } from "@/components/ui/button";
-import { EditProjectSidebar } from "@/components/project/edit-project-sidebar";
-import { RealtimeAvatarStack } from "@/components/realtime-avatar-stack";
 import { RealtimeCursors } from "@/components/realtime-cursors";
 import type { Database } from "@/types/database.types";
 
@@ -223,7 +221,6 @@ export function ProjectCommandCenter({
   schedule = [],
   budget = [],
 }: ProjectCommandCenterProps) {
-  const [isEditSidebarOpen, setIsEditSidebarOpen] = React.useState(false);
   const projectId = String(project.id);
   const roomName = `project-home:${projectId}`;
   const currentUserName = useCurrentUserName();
@@ -398,21 +395,9 @@ export function ProjectCommandCenter({
               <Button asChild variant="secondary" size="sm">
                 <Link href={`/${projectId}/setup`}>Edit</Link>
               </Button>
-              <Button size="sm" onClick={() => setIsEditSidebarOpen(true)}>
-                Project Checklist
-              </Button>
             </div>
 
             <div className="flex items-start gap-6">
-              <div className="min-w-40 text-right">
-                <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-                  Collaborators
-                </div>
-                <div className="flex justify-end">
-                  <RealtimeAvatarStack roomName={roomName} />
-                </div>
-              </div>
-
               {project.health_score != null && (
                 <div className="text-right shrink-0">
                   <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">
@@ -429,11 +414,6 @@ export function ProjectCommandCenter({
         </div>
       </div>
 
-      <EditProjectSidebar
-        project={project}
-        open={isEditSidebarOpen}
-        onOpenChange={setIsEditSidebarOpen}
-      />
 
       {/* ────────────────────────────────────────────────────
           KPI RAIL
@@ -446,11 +426,11 @@ export function ProjectCommandCenter({
               Contract Value
             </span>
             <span className="text-xl font-semibold tabular-nums tracking-tight text-foreground">
-              {fmtCompact(contractValue)}
+              {fmtFull(contractValue)}
             </span>
             {approvedCOTotal > 0 && (
               <p className="text-xs text-muted-foreground mt-0.5">
-                +{fmtCompact(approvedCOTotal)} in COs
+                +{fmtFull(approvedCOTotal)} in COs
               </p>
             )}
             <Link
@@ -471,7 +451,7 @@ export function ProjectCommandCenter({
             ) : (
               <>
                 <span className="text-xl font-semibold tabular-nums tracking-tight text-foreground">
-                  {fmtCompact(revisedBudget)}
+                  {fmtFull(revisedBudget)}
                 </span>
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {spendPct}% spent

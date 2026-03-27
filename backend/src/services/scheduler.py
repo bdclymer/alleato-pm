@@ -80,7 +80,18 @@ def init_scheduler() -> None:
         )
 
     # Microsoft Graph sync (Outlook + Teams + OneDrive) — hourly by default
-    if os.getenv("GRAPH_SYNC_ENABLED", "false").lower() in ("1", "true", "yes"):
+    # Auto-enable when Graph credentials are configured (unless explicitly disabled)
+    graph_has_creds = bool(
+        os.getenv("MICROSOFT_CLIENT_ID") and
+        os.getenv("MICROSOFT_CLIENT_SECRET") and
+        os.getenv("MICROSOFT_TENANT_ID")
+    )
+    graph_sync_setting = os.getenv("GRAPH_SYNC_ENABLED", "auto").lower()
+    graph_sync_enabled = (
+        graph_sync_setting in ("1", "true", "yes") or
+        (graph_sync_setting == "auto" and graph_has_creds)
+    )
+    if graph_sync_enabled:
         graph_interval_minutes = max(5, int(os.getenv("GRAPH_SYNC_INTERVAL_MINUTES", "60")))
         scheduler.add_job(
             run_graph_sync_job,
@@ -94,6 +105,15 @@ def init_scheduler() -> None:
             "[Scheduler] Microsoft Graph sync every %d min",
             graph_interval_minutes,
         )
+    else:
+        if graph_has_creds:
+            logger.warning(
+                "[Scheduler] Microsoft Graph credentials ARE configured but sync is DISABLED "
+                "(GRAPH_SYNC_ENABLED=%s). Set GRAPH_SYNC_ENABLED=true or remove the var to auto-enable.",
+                graph_sync_setting,
+            )
+        else:
+            logger.info("[Scheduler] Microsoft Graph sync disabled (no credentials configured)")
 
     scheduler.start()
     logger.info(

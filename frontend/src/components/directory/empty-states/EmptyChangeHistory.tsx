@@ -1,5 +1,5 @@
 import { History } from "lucide-react";
-import { EmptyState } from "@/components/ui/empty-state";
+import { EmptyState } from "@/components/ds";
 
 interface EmptyChangeHistoryProps {
   entityType?: "company" | "user" | "project";

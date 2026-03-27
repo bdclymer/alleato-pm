@@ -109,7 +109,7 @@ export function BudgetLineItemCreatorModal({
   const [showCreateCodeModal, setShowCreateCodeModal] = React.useState(false);
   const [newCodeData, setNewCodeData] = React.useState({
     costCodeId: "",
-    costType: "L",
+    costType: "",
   });
   const [availableCostCodes, setAvailableCostCodes] = React.useState<
     CostCodeOption[]
@@ -454,7 +454,7 @@ export function BudgetLineItemCreatorModal({
         ];
       });
       setShowCreateCodeModal(false);
-      setNewCodeData({ costCodeId: "", costType: "L" });
+      setNewCodeData({ costCodeId: "", costType: "" });
       toast.success("Budget code created successfully");
     } catch (error) {
       toast.error(
@@ -653,7 +653,7 @@ export function BudgetLineItemCreatorModal({
                                     <span className="truncate">
                                       {row.budgetCodeLabel || "Select budget code..."}
                                     </span>
-                                    <Search className="ml-2 h-3.5 w-3.5 shrink-0 opacity-50" />
+                                    <Search className="shrink-0 opacity-50" />
                                   </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-[400px] p-0" align="start">
@@ -766,14 +766,16 @@ export function BudgetLineItemCreatorModal({
 
                             <td className="py-2 align-middle">
                               {rows.length > 1 && (
-                                <button
+                                <Button
                                   type="button"
+                                  variant="ghost"
+                                  size="icon"
                                   onClick={() => removeRow(index)}
                                   disabled={isCreating}
-                                  className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-destructive transition-all rounded"
+                                  className="opacity-0 group-hover:opacity-100 h-7 w-7 text-muted-foreground hover:text-destructive transition-all"
                                 >
                                   <X className="h-4 w-4" />
-                                </button>
+                                </Button>
                               )}
                             </td>
                           </motion.tr>
@@ -805,7 +807,7 @@ export function BudgetLineItemCreatorModal({
                     title="Add line item"
                     className="h-8 px-0 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-transparent border-0 shadow-none"
                   >
-                    <Plus className="mr-1.5 h-4 w-4" />
+                    <Plus />
                     Add Line Item
                   </Button>
                 </div>
@@ -868,10 +870,11 @@ export function BudgetLineItemCreatorModal({
                     .sort(([a], [b]) => a.localeCompare(b))
                     .map(([division]) => (
                       <div key={division} className="border-b last:border-b-0">
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
                           onClick={() => toggleDivision(division)}
-                          className="w-full flex items-center justify-between px-4 py-2 text-left hover:bg-muted transition-colors"
+                          className="w-full flex items-center justify-between px-4 py-2 text-left hover:bg-muted transition-colors rounded-none h-auto"
                         >
                           <span className="text-sm font-semibold text-foreground">
                             {division}
@@ -881,14 +884,15 @@ export function BudgetLineItemCreatorModal({
                           ) : (
                             <ChevronRight className="w-4 h-4 text-muted-foreground" />
                           )}
-                        </button>
+                        </Button>
 
                         {expandedDivisions.has(division) && (
                           <div className="bg-muted/50">
                             {groupedCostCodes[division].map((costCode) => (
-                              <button
+                              <Button
                                 key={costCode.id}
                                 type="button"
+                                variant="ghost"
                                 onClick={() =>
                                   setNewCodeData({
                                     ...newCodeData,
@@ -896,13 +900,13 @@ export function BudgetLineItemCreatorModal({
                                   })
                                 }
                                 className={cn(
-                                  "w-full text-left px-6 py-2 text-sm hover:bg-muted transition-colors",
+                                  "w-full text-left px-6 py-2 text-sm hover:bg-muted transition-colors rounded-none h-auto justify-start",
                                   newCodeData.costCodeId === costCode.id &&
                                     "bg-muted text-foreground font-medium"
                                 )}
                               >
                                 {costCode.id} – {costCode.title}
-                              </button>
+                              </Button>
                             ))}
                           </div>
                         )}
@@ -920,7 +924,7 @@ export function BudgetLineItemCreatorModal({
                 }
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Select cost type..." />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="L">L - Labor</SelectItem>
@@ -934,7 +938,7 @@ export function BudgetLineItemCreatorModal({
             <div className="p-4 bg-muted rounded-md">
               <p className="text-sm font-medium text-foreground">Preview:</p>
               <p className="text-sm text-foreground mt-1">
-                {newCodeData.costCodeId ? (
+                {newCodeData.costCodeId && newCodeData.costType ? (
                   <>
                     {newCodeData.costCodeId}.{newCodeData.costType} –{" "}
                     {availableCostCodes.find((cc) => cc.id === newCodeData.costCodeId)?.title} –{" "}

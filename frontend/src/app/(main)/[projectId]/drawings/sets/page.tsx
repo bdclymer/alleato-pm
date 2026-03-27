@@ -96,7 +96,7 @@ export default function DrawingSetsPage() {
         tabs={tabs(projectId)}
         actions={
           <Button size="sm" onClick={() => setShowCreateRow(true)}>
-            <Plus className="h-4 w-4 mr-1.5" />
+            <Plus />
             New Set
           </Button>
         }
@@ -260,7 +260,7 @@ export default function DrawingSetsPage() {
                           }
                         >
                           View
-                          <ArrowRight className="h-3 w-3 ml-1" />
+                          <ArrowRight />
                         </Button>
                       )}
                     </TableCell>

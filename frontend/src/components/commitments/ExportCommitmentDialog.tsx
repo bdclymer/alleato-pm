@@ -302,7 +302,7 @@ export function ExportCommitmentDialog({
               </>
             ) : (
               <>
-                <FileDown className="h-4 w-4" />
+                <FileDown />
                 Export
               </>
             )}

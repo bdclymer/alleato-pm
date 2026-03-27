@@ -173,6 +173,7 @@ function CollapsedGroupIcon({
 
   return (
     <div className="relative" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+      {/* eslint-disable-next-line design-system/no-design-violations -- sidebar nav icon trigger with custom sidebar tokens */}
       <button
         type="button"
         className={cn(
@@ -295,8 +296,33 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
   const router = useRouter()
   const { state, toggleSidebar, isMobile } = useSidebar()
+  const [isHovering, setIsHovering] = React.useState(false)
+  const hoverTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // Hover-to-peek: when collapsed, hovering expands temporarily
+  // The sidebar reverts to collapsed when the mouse leaves
+  const isPinned = state === "expanded"
+  const isVisuallyExpanded = isPinned || (isHovering && !isMobile)
   // On mobile, the sidebar renders inside a Sheet — always show expanded navigation
-  const isCollapsed = isMobile ? false : state === "collapsed"
+  const isCollapsed = isMobile ? false : !isVisuallyExpanded
+
+  const handleMouseEnter = React.useCallback(() => {
+    if (isPinned || isMobile) return
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
+    hoverTimerRef.current = setTimeout(() => setIsHovering(true), 200)
+  }, [isPinned, isMobile])
+
+  const handleMouseLeave = React.useCallback(() => {
+    if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
+    setIsHovering(false)
+  }, [])
+
+  // Clean up timer on unmount
+  React.useEffect(() => {
+    return () => {
+      if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
+    }
+  }, [])
 
   const [user, setUser] = React.useState<User | null>(null)
   const supabase = createClient()
@@ -371,7 +397,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   }, [filterTools])
 
   return (
-    <Sidebar collapsible="icon" {...props}>
+    <Sidebar
+      collapsible="icon"
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      data-hover-expanded={isHovering && !isPinned ? "true" : undefined}
+      {...props}
+    >
       {/* ── Header ── */}
       <SidebarHeader className={cn(isCollapsed ? "px-0 pt-6 pb-2" : "px-3 pt-5 pb-3")}>
         {isCollapsed ? (
@@ -386,6 +418,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 className="rounded"
               />
             </Link>
+            {/* eslint-disable-next-line design-system/no-design-violations -- sidebar toggle with custom sidebar tokens */}
             <button
               type="button"
               onClick={toggleSidebar}
@@ -408,6 +441,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   className="h-7 w-auto"
                 />
               </Link>
+              {/* eslint-disable-next-line design-system/no-design-violations -- sidebar toggle with custom sidebar tokens */}
               <button
                 type="button"
                 onClick={toggleSidebar}
@@ -432,7 +466,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
 
       {/* ── Content ── */}
-      <SidebarContent className={cn(isCollapsed ? "items-center pl-1 pr-0 py-2" : "pl-2 pr-1 py-1")}>
+      <SidebarContent
+        className={cn(
+          isCollapsed ? "items-center pl-1 pr-0 py-2" : "pl-2 pr-1 py-1",
+          "group-data-[hover-expanded=true]:overflow-y-auto"
+        )}
+      >
         {isCollapsed ? (
           // Collapsed: group icons with hover flyouts
           <div className="flex flex-col items-center gap-1">

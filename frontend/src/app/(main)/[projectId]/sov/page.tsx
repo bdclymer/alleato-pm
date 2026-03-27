@@ -274,7 +274,7 @@ export default function ProjectSOVPage() {
             size="sm"
             onClick={() => router.push(`/${projectId}/contracts/new`)}
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus />
             New Contract
           </Button>
         }
@@ -307,7 +307,7 @@ export default function ProjectSOVPage() {
               Create a contract and add line items to get started
             </p>
             <Button onClick={() => router.push(`/${projectId}/contracts/new`)}>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus />
               Create Contract
             </Button>
           </div>

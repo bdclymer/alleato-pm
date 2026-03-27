@@ -47,9 +47,11 @@ function InboxActionButtons() {
 
   return (
     <>
+      {/* eslint-disable-next-line design-system/no-design-violations -- icon-only action in liveblocks inbox */}
       <button onClick={markAsRead}>
         <CheckCheckIcon className="w-4 h-4 text-emerald-700" />
       </button>
+      {/* eslint-disable-next-line design-system/no-design-violations -- icon-only action in liveblocks inbox */}
       <button onClick={deleteAll}>
         <RubbishIcon className="w-4 h-4 text-red-700" />
       </button>

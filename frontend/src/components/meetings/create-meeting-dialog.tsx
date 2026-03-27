@@ -109,12 +109,12 @@ export function CreateMeetingDialog({
       <DialogTrigger asChild>
         {trigger || (
           <Button>
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus />
             Create Meeting
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[600px] bg-card shadow-[0_30px_80px_-40px_rgba(0,0,0,0.45)]">
+      <DialogContent className="sm:max-w-[600px]">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>Create Meeting</DialogTitle>

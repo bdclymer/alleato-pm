@@ -97,7 +97,7 @@ export function SimplifiedHeader({
                   className="h-7 px-2 text-white hover:bg-gray-700 flex items-center gap-2"
                 >
                   <span className="text-sm">{selectedProject}</span>
-                  <ChevronDown className="h-3 w-3" />
+                  <ChevronDown />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-64">
@@ -134,7 +134,7 @@ export function SimplifiedHeader({
                   className="h-7 px-2 text-white hover:bg-gray-700 flex items-center gap-2"
                 >
                   <span className="text-sm">{selectedTool}</span>
-                  <ChevronDown className="h-3 w-3" />
+                  <ChevronDown />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-56">
@@ -170,7 +170,7 @@ export function SimplifiedHeader({
           size="icon"
           className="h-9 w-9 text-white hover:bg-gray-700 rounded-full"
         >
-          <Search className="h-5 w-5" />
+          <Search />
         </Button>
 
         <Button
@@ -178,7 +178,7 @@ export function SimplifiedHeader({
           size="icon"
           className="h-9 w-9 text-white hover:bg-gray-700 rounded-full"
         >
-          <MessageSquare className="h-5 w-5" />
+          <MessageSquare />
         </Button>
 
         <Button
@@ -186,7 +186,7 @@ export function SimplifiedHeader({
           size="icon"
           className="h-9 w-9 text-white hover:bg-gray-700 rounded-full"
         >
-          <HelpCircle className="h-5 w-5" />
+          <HelpCircle />
         </Button>
 
         <Button
@@ -194,7 +194,7 @@ export function SimplifiedHeader({
           size="icon"
           className="h-9 w-9 text-white hover:bg-gray-700 rounded-full"
         >
-          <Bell className="h-5 w-5" />
+          <Bell />
         </Button>
 
         <Avatar className="h-9 w-9 cursor-pointer ring-2 ring-gray-600 hover:ring-gray-500">

@@ -126,7 +126,7 @@ export function DevPanel() {
     <Sheet>
       <SheetTrigger asChild>
         <Button variant="ghost" size="icon" className="h-8 w-8">
-          <Code className="h-4 w-4" />
+          <Code />
         </Button>
       </SheetTrigger>
       <SheetContent className="w-[400px] sm:w-[540px]">
@@ -204,7 +204,7 @@ export function DevPanel() {
                   {isChecking ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    <RefreshCw className="h-4 w-4" />
+                    <RefreshCw />
                   )}
                   <span className="ml-2">Run Checks</span>
                 </Button>
@@ -272,7 +272,7 @@ export function DevPanel() {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    <ExternalLink className="h-4 w-4 mr-2" />
+                    <ExternalLink />
                     Open Supabase Dashboard
                   </a>
                 </Button>
@@ -282,7 +282,7 @@ export function DevPanel() {
                   asChild
                 >
                   <a href="/api" target="_blank">
-                    <ExternalLink className="h-4 w-4 mr-2" />
+                    <ExternalLink />
                     View API Routes
                   </a>
                 </Button>

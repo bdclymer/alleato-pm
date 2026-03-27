@@ -77,6 +77,7 @@ export function ProjectCreatedModal({ isOpen, onClose, projectId, projectName }:
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
+      {/* eslint-disable-next-line design-system/no-design-violations -- DialogContent is a card-like component with intentional border */}
       <DialogContent className="max-w-[480px] p-0 overflow-hidden bg-card rounded-xl shadow-sm border-border">
         <motion.div
           initial={prefersReducedMotion ? false : { opacity: 0, scale: 0.97, y: 8 }}
@@ -199,7 +200,7 @@ export function ProjectCreatedModal({ isOpen, onClose, projectId, projectName }:
             </p>
             <Button onClick={onClose} size="sm" className="gap-1.5 group">
               View Dashboard
-              <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+              <ArrowRight className="group-hover:translate-x-0.5 transition-transform" />
             </Button>
           </motion.div>
         </motion.div>

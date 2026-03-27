@@ -26,16 +26,17 @@ export function PortfolioSidebar({
           onClick={onCreateProject}
           className="w-full bg-primary hover:bg-primary/90 text-white"
         >
-          <Plus className="w-4 h-4 mr-2" />
+          <Plus />
           Create Project
         </Button>
       </div>
 
       {/* Custom Reports section */}
       <div className="flex-1 overflow-auto">
-        <button
+        <Button
+          variant="ghost"
           onClick={() => setIsReportsExpanded(!isReportsExpanded)}
-          className="w-full flex items-center justify-between px-4 py-4 text-sm font-medium text-foreground hover:bg-muted"
+          className="w-full flex items-center justify-between px-4 py-4 text-sm font-medium text-foreground hover:bg-muted rounded-none h-auto"
         >
           <span>Custom Reports</span>
           <ChevronRight
@@ -44,20 +45,21 @@ export function PortfolioSidebar({
               isReportsExpanded && "rotate-90",
             )}
           />
-        </button>
+        </Button>
 
         {isReportsExpanded && (
           <div className="px-2 pb-2">
             {customReports.length > 0 ? (
               customReports.map((report) => (
-                <button
+                <Button
                   key={report.id}
+                  variant="ghost"
                   onClick={() => onReportClick?.(report.id)}
-                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-foreground hover:bg-muted rounded"
+                  className="w-full flex items-center justify-start gap-2 px-4 py-2 text-sm text-foreground hover:bg-muted rounded h-auto"
                 >
                   <FileText className="w-4 h-4 text-muted-foreground" />
                   {report.name}
-                </button>
+                </Button>
               ))
             ) : (
               <p className="px-4 py-2 text-sm text-muted-foreground">

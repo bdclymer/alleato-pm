@@ -734,7 +734,7 @@ export default function MeetingsPage() {
 
           {/* Main Content with Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
-            <TabsList className="mb-4">
+            <TabsList variant="line" className="mb-4">
               <TabsTrigger value="overview" className="gap-2">
                 <LayoutGrid className="h-4 w-4" />
                 Overview
@@ -771,7 +771,7 @@ export default function MeetingsPage() {
                       className="text-xs"
                     >
                       View All Projects
-                      <ArrowRight className="h-3.5 w-3.5 ml-1" />
+                      <ArrowRight />
                     </Button>
                   </div>
                   <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">

@@ -293,7 +293,7 @@ export function DocumentDeliveryDialog({
                 {isDownloading ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
-                  <Download className="mr-2 h-4 w-4" />
+                  <Download />
                 )}
                 Download PDF
               </Button>
@@ -312,14 +312,16 @@ export function DocumentDeliveryDialog({
                       className="flex items-center gap-1 py-1"
                     >
                       <span>{recipient.name}</span>
-                      <button
+                      <Button
                         type="button"
+                        variant="ghost"
+                        size="icon"
                         onClick={() => removeRecipient(recipient.id)}
-                        className="rounded-full p-0.5 transition hover:bg-muted"
+                        className="h-4 w-4 rounded-full p-0"
                         aria-label={`Remove ${recipient.email}`}
                       >
                         <X className="h-3 w-3" />
-                      </button>
+                      </Button>
                     </Badge>
                   ))}
                 </div>
@@ -364,10 +366,11 @@ export function DocumentDeliveryDialog({
               ) : (
                 <div className="space-y-2 rounded-xl border border-border bg-background p-3">
                   {availableRecipients.map((option) => (
-                    <button
+                    <Button
                       key={option.id}
                       type="button"
-                      className="flex w-full items-center justify-between rounded-lg border border-border px-3 py-2 text-left transition hover:bg-muted/30"
+                      variant="ghost"
+                      className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left h-auto font-normal hover:bg-muted/30"
                       onClick={() =>
                         addRecipient({
                           id: option.id,
@@ -385,7 +388,7 @@ export function DocumentDeliveryDialog({
                       {option.defaultSelected ? (
                         <CheckCircle2 className="h-4 w-4 text-primary" />
                       ) : null}
-                    </button>
+                    </Button>
                   ))}
                 </div>
               )}
@@ -416,7 +419,7 @@ export function DocumentDeliveryDialog({
                 {isSending ? (
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 ) : (
-                  <Mail className="mr-2 h-4 w-4" />
+                  <Mail />
                 )}
                 Send Email
               </Button>

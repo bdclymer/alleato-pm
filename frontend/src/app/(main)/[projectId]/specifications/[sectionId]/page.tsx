@@ -152,17 +152,17 @@ export default function SpecificationDetailPage() {
         actions={
           <div className="flex items-center gap-2">
             <Button variant="ghost" onClick={() => router.back()}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <ArrowLeft />
               Back
             </Button>
             <AddRevisionDialog projectId={projectId} sectionId={sectionId}>
               <Button variant="outline">
-                <Upload className="mr-2 h-4 w-4" />
+                <Upload />
                 Add Revision
               </Button>
             </AddRevisionDialog>
             <Button variant="outline" onClick={() => setEditingSpec(true)}>
-              <Pencil className="mr-2 h-4 w-4" />
+              <Pencil />
               Edit
             </Button>
           </div>
@@ -219,7 +219,7 @@ export default function SpecificationDetailPage() {
                       size="sm"
                       onClick={() => handleDownload(specification.current_revision!.id.toString())}
                     >
-                      <Download className="mr-2 h-4 w-4" />
+                      <Download />
                       Download
                     </Button>
                   </div>
@@ -302,7 +302,7 @@ export default function SpecificationDetailPage() {
                                   size="sm"
                                   onClick={() => handleDownload(revision.id.toString())}
                                 >
-                                  <Download className="h-4 w-4" />
+                                  <Download />
                                 </Button>
                                 {!isCurrent && (
                                   <Button

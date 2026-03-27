@@ -1,9 +1,8 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type * as React from "react";
-import { useForm } from "react-hook-form";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Building2,
   Download,
@@ -12,11 +11,9 @@ import {
   Mail,
   MessageSquare,
   Receipt,
-  Save,
   Trash2,
-  X,
 } from "lucide-react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { AdvancedSettingsTab } from "@/components/commitments/tabs/AdvancedSettingsTab";
@@ -27,15 +24,9 @@ import { DocumentDeliveryDialog } from "@/components/documents/DocumentDeliveryD
 import { EmptyState } from "@/components/ds/empty-state";
 import { KpiBlock } from "@/components/ds/kpi";
 import { StatusBadge } from "@/components/ds/status-badge";
-import { RHFComboboxField } from "@/components/forms/fields/RHFComboboxField";
-import { RHFDateField } from "@/components/forms/fields/RHFDateField";
-import { RHFSelectField } from "@/components/forms/fields/RHFSelectField";
-import { RHFTextareaField } from "@/components/forms/fields/RHFTextareaField";
-import { RHFTextField } from "@/components/forms/fields/RHFTextField";
 import { ProjectPageHeader } from "@/components/layout";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { Button } from "@/components/ui/button";
-import { Form } from "@/components/ui/form";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -56,6 +47,9 @@ type CommitmentDetail = Commitment & {
   type?: "subcontract" | "purchase_order" | string;
   pending_change_orders?: number;
   draft_change_orders?: number;
+  inclusions?: string | null;
+  exclusions?: string | null;
+  allow_non_admin_view_sov_items?: boolean;
   change_order_totals?: {
     approved: number;
     pending: number;
@@ -75,19 +69,6 @@ type CommitmentDetail = Commitment & {
     unit_cost?: number | null;
     billed_to_date?: number | null;
   }>;
-};
-
-type EditFormValues = {
-  contractNumber: string;
-  title: string;
-  contractCompanyId: string;
-  status: string;
-  accountingMethod: string;
-  description: string;
-  startDate: string;
-  completionDate: string;
-  executedDate: string;
-  signedReceivedDate: string;
 };
 
 // ---------------------------------------------------------------------------
@@ -226,6 +207,12 @@ const normalizeCommitment = (raw: unknown): CommitmentDetail | null => {
     project_id:
       typeof record.project_id === "number" ? record.project_id : undefined,
     type: typeof record.type === "string" ? record.type : undefined,
+    inclusions: typeof record.inclusions === "string" ? record.inclusions : null,
+    exclusions: typeof record.exclusions === "string" ? record.exclusions : null,
+    allow_non_admin_view_sov_items:
+      typeof record.allow_non_admin_view_sov_items === "boolean"
+        ? record.allow_non_admin_view_sov_items
+        : false,
     pending_change_orders: Number(record.pending_change_orders ?? 0),
     draft_change_orders: Number(record.draft_change_orders ?? 0),
     change_order_totals:
@@ -271,262 +258,37 @@ function F({
 }
 
 // ---------------------------------------------------------------------------
-// General tab — view + inline edit
+// Section heading helper
 // ---------------------------------------------------------------------------
 
-function GeneralTab({
-  commitment,
-  projectId,
-  isEditing,
-  onSaved,
-  onCancelEdit,
-}: {
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+      {children}
+    </p>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// General tab — view only
+// ---------------------------------------------------------------------------
+
+interface GeneralTabProps {
   commitment: CommitmentDetail;
   projectId: number;
-  isEditing: boolean;
-  onSaved: () => void;
-  onCancelEdit: () => void;
-}) {
+  commitmentId: string;
+  onImportComplete: () => void | Promise<void>;
+}
+
+function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: GeneralTabProps) {
   const isPO = commitment.type === "purchase_order";
-
-  const normalizeStatus = (raw: string | undefined): string => {
-    if (!raw) return "Draft";
-    const lower = raw.toLowerCase().replace(/_/g, " ");
-    const subMap: Record<string, string> = {
-      draft: "Draft",
-      "out for signature": "Out for Signature",
-      pending: "Pending",
-      approved: "Approved",
-      complete: "Complete",
-      void: "Void",
-    };
-    const poMap: Record<string, string> = {
-      draft: "Draft",
-      approved: "Approved",
-      sent: "Sent",
-      acknowledged: "Acknowledged",
-      completed: "Completed",
-      complete: "Completed",
-    };
-    return (isPO ? poMap : subMap)[lower] ?? raw;
-  };
-
-  const { data: vendorOptions = [] } = useQuery({
-    queryKey: ["vendors", projectId],
-    queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/vendors`);
-      if (!res.ok) return [];
-      const data = (await res.json()) as
-        | { vendors?: Array<{ id: string | number; name: string }> }
-        | Array<{ id: string | number; name: string }>;
-      const list = Array.isArray(data) ? data : (data.vendors ?? []);
-      return list.map((v) => ({ value: String(v.id), label: v.name }));
-    },
-    enabled: isEditing,
-  });
-
-  const buildFormValues = (): EditFormValues => ({
-    contractNumber: commitment.number || "",
-    title: commitment.title || "",
-    contractCompanyId: commitment.contract_company_id || "",
-    status: normalizeStatus(commitment.status),
-    accountingMethod: commitment.accounting_method || "amount",
-    description: commitment.description || "",
-    startDate: commitment.start_date || "",
-    completionDate: commitment.substantial_completion_date || "",
-    executedDate: commitment.executed_date || "",
-    signedReceivedDate: commitment.signed_received_date || "",
-  });
-
-  const form = useForm<EditFormValues>({ defaultValues: buildFormValues() });
-
-  useEffect(() => {
-    if (isEditing) form.reset(buildFormValues());
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isEditing, commitment.id]);
-
-  const statusOptions = isPO
-    ? [
-        { value: "Draft", label: "Draft" },
-        { value: "Approved", label: "Approved" },
-        { value: "Sent", label: "Sent" },
-        { value: "Acknowledged", label: "Acknowledged" },
-        { value: "Completed", label: "Completed" },
-      ]
-    : [
-        { value: "Draft", label: "Draft" },
-        { value: "Out for Signature", label: "Out for Signature" },
-        { value: "Pending", label: "Pending" },
-        { value: "Approved", label: "Approved" },
-        { value: "Complete", label: "Complete" },
-        { value: "Void", label: "Void" },
-      ];
-
-  const accountingMethodOptions = isPO
-    ? [
-        { value: "amount", label: "Amount Based" },
-        { value: "unit-quantity", label: "Unit / Quantity" },
-      ]
-    : [
-        { value: "amount_based", label: "Amount Based" },
-        { value: "unit_quantity", label: "Unit / Quantity" },
-      ];
-
-  const handleSubmit = form.handleSubmit(async (data) => {
-    try {
-      const body = isPO
-        ? {
-            contract_number: data.contractNumber,
-            title: data.title,
-            contract_company_id: data.contractCompanyId || null,
-            status: data.status,
-            description: data.description || null,
-            accounting_method: data.accountingMethod || null,
-            delivery_date: data.completionDate || null,
-            is_private: commitment.private ?? true,
-            allow_non_admin_view_sov_items: false,
-          }
-        : {
-            contract_number: data.contractNumber,
-            title: data.title,
-            contract_company_id: data.contractCompanyId || null,
-            status: data.status,
-            description: data.description || null,
-            start_date: data.startDate || null,
-            estimated_completion_date: data.completionDate || null,
-            contract_date: data.executedDate || null,
-            is_private: commitment.private ?? true,
-            allow_non_admin_view_sov_items: false,
-          };
-
-      const res = await fetch(`/api/commitments/${commitment.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-
-      if (!res.ok) {
-        const err = (await res.json()) as { error?: string };
-        throw new Error(err.error || "Failed to save");
-      }
-
-      toast.success(
-        `${isPO ? "Purchase order" : "Subcontract"} updated successfully`,
-      );
-      onSaved();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save");
-    }
-  });
-
   const displayStatus = commitment.status
     ? commitment.status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
     : "Draft";
-
-  // ── EDIT MODE ──────────────────────────────────────────────────────────────
-  if (isEditing) {
-    return (
-      <Form {...form}>
-        <form onSubmit={handleSubmit} className="max-w-2xl space-y-5">
-          <div className="grid grid-cols-2 gap-4">
-            <RHFTextField
-              control={form.control}
-              name="contractNumber"
-              label="Contract #"
-            />
-            <RHFSelectField
-              control={form.control}
-              name="status"
-              label="Status"
-              options={statusOptions}
-              placeholder="Select status"
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <RHFTextField control={form.control} name="title" label="Title" />
-            <RHFComboboxField
-              control={form.control}
-              name="contractCompanyId"
-              label="Vendor"
-              options={vendorOptions}
-              placeholder="Search vendors…"
-              searchPlaceholder="Type to search…"
-              emptyMessage="No vendors found"
-            />
-          </div>
-          {isPO && (
-            <div className="grid grid-cols-2 gap-4">
-              <RHFSelectField
-                control={form.control}
-                name="accountingMethod"
-                label="Accounting Method"
-                options={accountingMethodOptions}
-                placeholder="Select method"
-              />
-            </div>
-          )}
-          <RHFTextareaField
-            control={form.control}
-            name="description"
-            label="Description"
-            placeholder="Add a description…"
-          />
-          <div className="grid grid-cols-2 gap-4">
-            {!isPO && (
-              <RHFDateField
-                control={form.control}
-                name="startDate"
-                label="Start Date"
-                nullable
-              />
-            )}
-            <RHFDateField
-              control={form.control}
-              name="completionDate"
-              label={isPO ? "Delivery Date" : "Completion Date"}
-              nullable
-            />
-            <RHFDateField
-              control={form.control}
-              name="executedDate"
-              label="Contract Date"
-              nullable
-            />
-            <RHFDateField
-              control={form.control}
-              name="signedReceivedDate"
-              label="Signed Received"
-              nullable
-            />
-          </div>
-          <div className="flex items-center gap-2 pt-1">
-            <Button
-              type="submit"
-              size="sm"
-              disabled={form.formState.isSubmitting}
-            >
-              <Save className="mr-1.5 h-3.5 w-3.5" />
-              {form.formState.isSubmitting ? "Saving…" : "Save"}
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={onCancelEdit}
-            >
-              Cancel
-            </Button>
-          </div>
-        </form>
-      </Form>
-    );
-  }
-
-  // ── VIEW MODE ──────────────────────────────────────────────────────────────
   const dash = <span className="text-muted-foreground/50">—</span>;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-10">
       {/* Vendor highlight card */}
       {commitment.contract_company?.name && (
         <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 px-4 py-3">
@@ -547,16 +309,12 @@ function GeneralTab({
 
       {/* General Information */}
       <div className="space-y-4">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
-          General Information
-        </p>
+        <SectionLabel>General Information</SectionLabel>
         <div className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-3">
           <F label="Title">{commitment.title || dash}</F>
           <F label="Contract #">{safeNumber(commitment.number) || dash}</F>
           {!commitment.contract_company?.name && (
-            <F label={isPO ? "Vendor" : "Subcontractor"}>
-              {dash}
-            </F>
+            <F label={isPO ? "Vendor" : "Subcontractor"}>{dash}</F>
           )}
           {!commitment.contract_company?.name && (
             <F label="Status"><StatusBadge status={displayStatus} /></F>
@@ -569,7 +327,6 @@ function GeneralTab({
               {commitment.accounting_method.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
             </F>
           )}
-          <F label="Visibility">{commitment.private ? "Private" : "Public"}</F>
         </div>
         {commitment.description && (
           <div>
@@ -579,11 +336,48 @@ function GeneralTab({
         )}
       </div>
 
+      {/* Schedule of Values */}
+      <div className="space-y-4">
+        <SectionLabel>Schedule of Values</SectionLabel>
+        <ScheduleOfValuesTab
+          lineItems={commitment.line_items || []}
+          projectId={projectId}
+          commitmentId={commitmentId}
+          commitmentType={commitment.type}
+          onImportComplete={onImportComplete}
+        />
+      </div>
+
+      {/* Inclusions & Exclusions */}
+      <div className="space-y-4">
+        <SectionLabel>Inclusions &amp; Exclusions</SectionLabel>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <p className="text-xs text-muted-foreground">Inclusions</p>
+            {commitment.inclusions ? (
+              <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">
+                {commitment.inclusions}
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground/50">—</p>
+            )}
+          </div>
+          <div className="space-y-1.5">
+            <p className="text-xs text-muted-foreground">Exclusions</p>
+            {commitment.exclusions ? (
+              <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">
+                {commitment.exclusions}
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground/50">—</p>
+            )}
+          </div>
+        </div>
+      </div>
+
       {/* Contract Dates */}
       <div className="space-y-4">
-        <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
-          Contract Dates
-        </p>
+        <SectionLabel>Contract Dates</SectionLabel>
         <div className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-3">
           {!isPO && (
             <F label="Start Date">
@@ -598,6 +392,17 @@ function GeneralTab({
           </F>
           <F label="Signed Contract Received">
             {commitment.signed_received_date ? formatDate(commitment.signed_received_date) : dash}
+          </F>
+        </div>
+      </div>
+
+      {/* Contract Privacy */}
+      <div className="space-y-4">
+        <SectionLabel>Contract Privacy</SectionLabel>
+        <div className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-3">
+          <F label="Visibility">{commitment.private ? "Private" : "Public"}</F>
+          <F label="Non-Admin Can View SOV Items">
+            {commitment.allow_non_admin_view_sov_items ? "Yes" : "No"}
           </F>
         </div>
       </div>
@@ -616,7 +421,7 @@ function FinancialKpiStrip({ commitment }: { commitment: CommitmentDetail }) {
     : 0;
 
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-card">
+    <div className="overflow-hidden rounded-lg bg-card">
       <div className="grid grid-cols-2 divide-x divide-border sm:grid-cols-5">
         <div className="px-5 py-4">
           <KpiBlock
@@ -683,7 +488,6 @@ function ComingSoonTab({ icon, label }: { icon: React.ReactNode; label: string }
 
 export default function CommitmentDetailPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const params = useParams();
   const projectId = parseInt(params.projectId as string);
   const commitmentId = params.commitmentId as string;
@@ -694,7 +498,6 @@ export default function CommitmentDetailPage() {
   const [documentDialogTab, setDocumentDialogTab] = useState<
     "download" | "email"
   >("download");
-  const [isEditing, setIsEditing] = useState(false);
 
   const {
     data: rawData,
@@ -719,10 +522,6 @@ export default function CommitmentDetailPage() {
   useProjectTitle(
     commitment ? `${commitment.number} — ${commitment.title}` : "Loading…",
   );
-
-  useEffect(() => {
-    if (searchParams.get("edit") === "1") setIsEditing(true);
-  }, [searchParams]);
 
   const handleDelete = useCallback(async () => {
     if (
@@ -769,12 +568,6 @@ export default function CommitmentDetailPage() {
 
   const displayNumber = safeNumber(commitment?.number);
 
-  const breadcrumbs = [
-    { label: "Projects", href: "/" },
-    { label: "Project", href: `/${projectId}` },
-    { label: "Commitments", href: `/${projectId}/commitments` },
-    { label: displayNumber || commitment?.title || "Details" },
-  ];
   const headerClassName = "px-3 sm:px-5 lg:px-7";
 
   // ── Loading ──
@@ -784,7 +577,6 @@ export default function CommitmentDetailPage() {
         <ProjectPageHeader
           title="Commitment Details"
           description="Loading…"
-          breadcrumbs={breadcrumbs}
           className={headerClassName}
         />
         <PageContainer>
@@ -811,7 +603,6 @@ export default function CommitmentDetailPage() {
         <ProjectPageHeader
           title="Commitment Details"
           description="Not found"
-          breadcrumbs={breadcrumbs}
           className={headerClassName}
         />
         <PageContainer>
@@ -828,19 +619,40 @@ export default function CommitmentDetailPage() {
       <ProjectPageHeader
         title={commitment.title || displayNumber || "Commitment"}
         description={displayNumber ? `${displayNumber} · ${contractType}` : contractType}
-        breadcrumbs={breadcrumbs}
         className={headerClassName}
+        actions={
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="icon" onClick={handleEmail}>
+              <Mail />
+            </Button>
+            <Button variant="ghost" size="icon" onClick={handleExport}>
+              <Download />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => router.push(`/${projectId}/commitments/${commitmentId}/edit`)}
+            >
+              <Edit />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleDelete}
+              className="text-muted-foreground hover:text-destructive"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        }
       />
 
       <PageContainer>
         <div className="space-y-6">
-          {/* Financial KPI strip */}
-          <FinancialKpiStrip commitment={commitment} />
-
           <Tabs defaultValue="general" className="space-y-0">
-            {/* Tab bar + actions */}
-            <div className="mb-6 flex items-center justify-between gap-4">
-              <TabsList className="h-9">
+            {/* Tab bar */}
+            <div className="mb-6">
+              <TabsList variant="line">
                 <TabsTrigger value="general">General</TabsTrigger>
                 <TabsTrigger value="sov">{sovLabel}</TabsTrigger>
                 <TabsTrigger value="change-orders">Change Orders</TabsTrigger>
@@ -853,47 +665,6 @@ export default function CommitmentDetailPage() {
                   Advanced Settings
                 </TabsTrigger>
               </TabsList>
-
-              <div className="flex items-center gap-1 shrink-0">
-                {isEditing ? (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setIsEditing(false)}
-                  >
-                    <X className="h-4 w-4" />
-                    Cancel
-                  </Button>
-                ) : (
-                  <>
-                    <Button variant="ghost" size="sm" onClick={handleEmail}>
-                      <Mail className="h-4 w-4" />
-                      Email
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={handleExport}>
-                      <Download className="h-4 w-4" />
-                      Export
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setIsEditing(true)}
-                    >
-                      <Edit className="h-4 w-4" />
-                      Edit
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={handleDelete}
-                      className="text-muted-foreground hover:text-destructive"
-                    >
-                      <Trash2 className="h-4 w-4" />
-                      Delete
-                    </Button>
-                  </>
-                )}
-              </div>
             </div>
 
             {/* General */}
@@ -901,12 +672,8 @@ export default function CommitmentDetailPage() {
               <GeneralTab
                 commitment={commitment}
                 projectId={projectId}
-                isEditing={isEditing}
-                onSaved={() => {
-                  setIsEditing(false);
-                  void fetchCommitment();
-                }}
-                onCancelEdit={() => setIsEditing(false)}
+                commitmentId={commitment.id}
+                onImportComplete={() => void fetchCommitment()}
               />
             </TabsContent>
 

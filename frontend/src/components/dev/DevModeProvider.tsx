@@ -81,6 +81,7 @@ function DevModePanel() {
         <span className="font-bold text-yellow-900 text-sm">
           DEV MODE: Data Sources ({dataSources.length})
         </span>
+        {/* eslint-disable-next-line design-system/no-design-violations -- dev-only mode panel */}
         <button
           onClick={toggle}
           className="text-yellow-700 hover:text-yellow-900 text-xs underline"

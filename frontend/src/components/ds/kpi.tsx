@@ -73,6 +73,7 @@ export function KpiBlock({
 
 export function KpiRow({ metrics }: { metrics: KpiBlockProps[] }) {
   return (
+    /* eslint-disable-next-line design-system/no-design-violations -- KPI bento container uses intentional shared border */
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <div
         className={cn(

@@ -36,7 +36,7 @@ export function ViewOptions({
           size="sm"
           className="h-8 gap-2 text-neutral-600 hover:text-neutral-900"
         >
-          <SlidersHorizontal className="h-4 w-4" />
+          <SlidersHorizontal />
           <span className="text-sm font-medium">View</span>
         </Button>
       </DropdownMenuTrigger>

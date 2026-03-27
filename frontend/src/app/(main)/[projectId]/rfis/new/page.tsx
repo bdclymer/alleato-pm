@@ -97,7 +97,7 @@ export default function NewRfiPage() {
           onClick={() => router.push(`/${projectId}/rfis`)}
           className="gap-2"
         >
-          <ArrowLeft className="h-4 w-4" />
+          <ArrowLeft />
           Back to RFIs
         </Button>
       }
@@ -307,7 +307,7 @@ export default function NewRfiPage() {
               onClick={handleSaveAsDraft}
               disabled={createRfi.isPending}
             >
-              <Save className="h-4 w-4 mr-2" />
+              <Save />
               Save as Draft
             </Button>
           </FormActions>

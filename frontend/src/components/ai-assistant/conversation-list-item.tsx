@@ -78,7 +78,7 @@ export function ConversationListItem({
           className="h-7 w-7 shrink-0"
           onClick={handleSaveRename}
         >
-          <CheckIcon className="h-3.5 w-3.5" />
+          <CheckIcon />
         </Button>
         <Button
           size="icon"
@@ -86,7 +86,7 @@ export function ConversationListItem({
           className="h-7 w-7 shrink-0"
           onClick={handleCancelRename}
         >
-          <XIcon className="h-3.5 w-3.5" />
+          <XIcon />
         </Button>
       </div>
     );
@@ -134,7 +134,7 @@ export function ConversationListItem({
             setIsEditing(true);
           }}
         >
-          <PencilIcon className="h-3 w-3" />
+          <PencilIcon />
         </Button>
         <Button
           size="icon"

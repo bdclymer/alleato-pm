@@ -86,17 +86,26 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // Parse request body
     const body = await request.json();
+    const directoryService = new DirectoryService(supabase);
 
-    // Validate required fields
+    // If person_id is provided, add an existing person to this project
+    if (body.person_id) {
+      const result = await directoryService.addPersonToProject(projectId, {
+        person_id: body.person_id,
+        permission_template_id: body.permission_template_id,
+        person_type: body.person_type,
+      });
+      return NextResponse.json(result, { status: 201 });
+    }
+
+    // Otherwise, create a new person — validate required fields
     if (!body.first_name || !body.last_name || !body.person_type) {
       return NextResponse.json(
-        { error: "Missing required fields" },
+        { error: "Missing required fields: first_name, last_name, person_type" },
         { status: 400 },
       );
     }
 
-    // Create person
-    const directoryService = new DirectoryService(supabase);
     const person = await directoryService.createPerson(projectId, body);
 
     return NextResponse.json(person, { status: 201 });

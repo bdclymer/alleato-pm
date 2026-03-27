@@ -285,20 +285,21 @@ export function BudgetModificationsModal({
                   "void",
                 ] as StatusFilter[]
               ).map((status) => (
-                <button
+                <Button
                   key={status}
+                  variant={statusFilter === status ? "default" : "ghost"}
                   onClick={() => setStatusFilter(status)}
                   className={cn(
-                    "px-4 py-1.5 text-sm font-medium rounded-full transition-all",
+                    "px-4 py-1.5 text-sm font-medium rounded-full transition-all h-auto",
                     statusFilter === status
-                      ? "bg-orange-500 text-white"
+                      ? "bg-primary text-primary-foreground"
                       : "bg-muted text-foreground hover:bg-muted",
                   )}
                 >
                   {status === "all"
                     ? "All"
                     : status.charAt(0).toUpperCase() + status.slice(1)}
-                </button>
+                </Button>
               ))}
             </div>
 

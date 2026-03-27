@@ -24,6 +24,8 @@ import { createProjectTools } from "@/lib/ai/tools/project-tools";
 import { createWebSearchTools } from "@/lib/ai/tools/web-search";
 import { createActionTools } from "@/lib/ai/tools/action-tools";
 import { strategistSystemPrompt } from "@/lib/ai/agents/strategist";
+import { soul } from "@/lib/ai/soul";
+import { identity } from "@/lib/ai/identity";
 import { cfoSystemPrompt } from "@/lib/ai/agents/cfo";
 import { cooSystemPrompt } from "@/lib/ai/agents/coo";
 import { croSystemPrompt } from "@/lib/ai/agents/cro";
@@ -524,7 +526,7 @@ export const agentRegistry: Record<string, AgentConfig> = {
       return {
         ...createProjectTools(userId, options as any),
         ...createWebSearchTools(options as any),
-      };
+      } as unknown as ToolSet;
     },
   },
 };
@@ -974,7 +976,7 @@ export function createStrategistTools(
     // Include base project tools so the Strategist can answer
     // questions directly when no specialist route is needed
     ...strategistBaseTools,
-  };
+  } as unknown as ToolSet;
 }
 
 // ---------------------------------------------------------------------------
@@ -1088,12 +1090,22 @@ export const STRATEGIST_MODEL = "openai/gpt-5.4";
 /**
  * Returns the full Strategist system prompt.
  *
- * This is a function (not a constant) so we can later inject dynamic
- * context like current date, active project list, etc.
+ * Injects soul (personality/tone) and identity (role/self-concept) BEFORE
+ * the operational strategist instructions. This ensures the agent speaks
+ * like a real person — warm, direct, conversational — rather than a
+ * committee of labeled C-suite agents.
+ *
+ * The soul and identity layers are the HIGHEST PRIORITY personality
+ * instructions. The strategist routing logic is operational plumbing
+ * that happens behind the scenes.
  */
 export function getStrategistSystemPrompt(): string {
   const today = new Date().toISOString().split("T")[0];
-  return `${strategistSystemPrompt}
+  return `${soul}
+
+${identity}
+
+${strategistSystemPrompt}
 
 ## Runtime Date Context
 Today is ${today} (YYYY-MM-DD).

@@ -471,7 +471,7 @@ export function EstimateDetailClient({
               size="sm"
               onClick={() => router.push(`/${projectId}/estimates`)}
             >
-              <ArrowLeft className="mr-1 h-4 w-4" />
+              <ArrowLeft />
               Back
             </Button>
             <Button
@@ -561,7 +561,7 @@ export function EstimateDetailClient({
             </div>
 
             {/* Totals Footer */}
-            <div className="border border-border rounded-b-md bg-card divide-y divide-border/50">
+            <div className="rounded-b-md bg-card divide-y divide-border/50">
               <SummaryRow label="Subtotal" value={formatCurrency(summary.subtotal)} />
               <SummaryRow
                 label={`Contingency`}
@@ -587,7 +587,7 @@ export function EstimateDetailClient({
           {/* ── Right Column: Working Area ────────────────────────────────── */}
           <div className="flex-1 min-w-0">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
-              <TabsList>
+              <TabsList variant="line">
                 <TabsTrigger value="gc">General Conditions</TabsTrigger>
                 <TabsTrigger value="takeoff">Quantity Takeoff</TabsTrigger>
                 <TabsTrigger value="alternates">Alternates &amp; Allowances</TabsTrigger>
@@ -1014,10 +1014,11 @@ function QTODivisionSection({
 }) {
   return (
     <div>
-      <button
+      <Button
         type="button"
+        variant="ghost"
         onClick={onToggle}
-        className="flex w-full items-center justify-between bg-muted/30 px-4 py-2.5 text-left hover:bg-muted/50 transition-colors"
+        className="flex w-full items-center justify-between bg-muted/30 px-4 py-2.5 text-left hover:bg-muted/50 transition-colors h-auto rounded-none"
       >
         <span className="flex items-center gap-2 text-sm">
           {isExpanded ? (
@@ -1034,7 +1035,7 @@ function QTODivisionSection({
         <span className="text-sm font-medium tabular-nums text-foreground">
           {total > 0 ? formatCurrency(total) : "—"}
         </span>
-      </button>
+      </Button>
 
       {isExpanded && (
         <div className="bg-card">
@@ -1071,14 +1072,16 @@ function QTODivisionSection({
           )}
 
           <div className="pl-10 py-2 border-t border-border/30">
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="sm"
               onClick={onAddRow}
-              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors h-auto p-0"
             >
               <Plus className="h-3 w-3" />
               Add item
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -1142,14 +1145,16 @@ function QTORowItem({
         {row.total_cost > 0 ? formatCurrency(row.total_cost) : "—"}
       </td>
       <td className="px-3 py-1.5 align-middle">
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="sm"
           aria-label="Remove line item"
           onClick={onDelete}
-          className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+          className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity h-auto p-0"
         >
           <Trash2 className="h-3.5 w-3.5" />
-        </button>
+        </Button>
       </td>
     </tr>
   );

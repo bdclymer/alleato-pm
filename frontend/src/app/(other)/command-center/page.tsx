@@ -206,7 +206,7 @@ function ExpandableSearch({
       <Tooltip>
         <TooltipTrigger asChild>
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsExpanded(true)}>
-            <Search className="h-4 w-4" />
+            <Search />
           </Button>
         </TooltipTrigger>
         <TooltipContent>Search</TooltipContent>
@@ -542,7 +542,7 @@ export default function CommandCenterPage() {
                   <TooltipTrigger asChild>
                     <PopoverTrigger asChild>
                       <Button variant="ghost" size="icon" className="relative h-8 w-8">
-                        <Filter className="h-4 w-4" />
+                        <Filter />
                         {hasActiveFilters && (
                           <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-primary px-1 text-[9px] font-bold text-primary-foreground">
                             {ALL_PRIORITIES.length - priorityFilter.size + ALL_SOURCES.length - sourceFilter.size + (allLabels.length > 0 ? allLabels.length - labelFilter.size : 0)}
@@ -663,7 +663,7 @@ export default function CommandCenterPage() {
               }}
             >
               New
-              <ChevronDown className="h-3 w-3 ml-1" />
+              <ChevronDown />
             </Button>
           </div>
         </div>
@@ -780,7 +780,7 @@ function KanbanColumn({
           className="h-7 w-7 text-muted-foreground hover:text-foreground"
           onClick={onAddCard}
         >
-          <Plus className="h-4 w-4" />
+          <Plus />
         </Button>
       </div>
 
@@ -1003,7 +1003,7 @@ function CardContent({
                 size="icon"
                 className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
               >
-                <MoreHorizontal className="h-3.5 w-3.5" />
+                <MoreHorizontal />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-40">

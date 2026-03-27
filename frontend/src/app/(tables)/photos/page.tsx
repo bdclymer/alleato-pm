@@ -91,11 +91,11 @@ export default function PhotosPage() {
               onClick={() => setViewMode("list")}
               className={viewMode === "list" ? "bg-muted" : ""}
             >
-              <List className="h-4 w-4" />
+              <List />
             </Button>
           </div>
           <Button className="bg-primary hover:bg-primary/90">
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus />
             Upload Photos
           </Button>
         </div>
@@ -191,7 +191,7 @@ export default function PhotosPage() {
                   </div>
                   <div className="flex items-center gap-2">
                     <Button variant="ghost" size="sm">
-                      <Download className="h-4 w-4" />
+                      <Download />
                     </Button>
                     <Button variant="ghost" size="sm">
                       <Trash2 className="h-4 w-4 text-red-600" />

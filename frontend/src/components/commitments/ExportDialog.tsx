@@ -291,7 +291,7 @@ export function ExportDialog({
               </>
             ) : (
               <>
-                <FileDown className="h-4 w-4" />
+                <FileDown />
                 {format === "pdf" ? "Generate PDF" : "Export"}
               </>
             )}

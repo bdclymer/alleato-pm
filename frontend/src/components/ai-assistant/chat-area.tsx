@@ -568,7 +568,7 @@ export function ChatArea({
       isLoading={isStreaming}
       onSubmit={handleSubmit}
       className={cn(
-        "rounded-[1.75rem] border-0 bg-card px-3 py-2 shadow-sm",
+        "rounded-[1.5rem] border-0 bg-card px-2.5 py-2 shadow-sm sm:rounded-[1.75rem] sm:px-3",
         hasMessages && "rounded-[1.75rem]",
       )}
     >
@@ -578,16 +578,16 @@ export function ChatArea({
             ? "Ask the council for a recommendation..."
             : "How can I help with your projects today?"
         }
-        className="min-h-14 px-2 pb-2 pt-2 text-[15px] leading-6 placeholder:text-muted-foreground/80"
+        className="min-h-11 px-2 pb-1.5 pt-1.5 text-sm leading-6 placeholder:text-muted-foreground/80 sm:min-h-12 sm:text-[15px]"
       />
-      <PromptInputActions className="flex-col items-stretch gap-2 px-1 pb-1 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex min-w-0 flex-wrap items-center gap-2">
+      <PromptInputActions className="flex items-center justify-between gap-2 px-1 pb-1">
+        <div className="flex min-w-0 items-center gap-1 overflow-x-auto pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <Popover open={projectOpen} onOpenChange={setProjectOpen}>
             <PopoverTrigger asChild>
               <button
                 type="button"
                 className={cn(
-                  "flex min-h-10 items-center gap-1.5 rounded-full bg-transparent px-3 py-2 text-xs font-medium transition-colors",
+                  "flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-transparent px-2.5 py-1.5 text-xs font-medium transition-colors",
                   selectedProject
                     ? "text-foreground"
                     : "text-muted-foreground hover:text-foreground",
@@ -595,7 +595,7 @@ export function ChatArea({
                 aria-label="Select project context"
               >
                 <Building2Icon className="h-3.5 w-3.5 shrink-0" />
-                <span className="max-w-36 truncate">
+                <span className="max-w-24 truncate sm:max-w-36">
                   {selectedProject ? (selectedProject.name ?? "Project") : "All projects"}
                 </span>
                 {selectedProject ? (
@@ -651,7 +651,7 @@ export function ChatArea({
             aria-checked={councilMode}
             onClick={handleCouncilToggle}
             className={cn(
-              "flex min-h-10 items-center gap-2 rounded-full bg-transparent px-3 py-2 text-xs font-medium transition-colors",
+              "flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-transparent px-2.5 py-1.5 text-xs font-medium transition-colors",
               councilMode
                 ? "text-foreground"
                 : "text-foreground",
@@ -675,19 +675,19 @@ export function ChatArea({
             Council Mode
           </button>
         </div>
-        <div className="flex items-center justify-between gap-3 sm:justify-end">
+        <div className="flex shrink-0 items-center justify-end gap-2">
           <PromptInputAction tooltip={isStreaming ? "Stop" : "Send"}>
             <Button
               size="icon"
               variant={input.trim() ? "default" : "ghost"}
-              className="h-10 w-10 rounded-full"
+              className="h-9 w-9 rounded-full"
               disabled={!input.trim() && !isStreaming}
               onClick={isStreaming ? onStop : handleSubmit}
             >
               {isStreaming ? (
-                <SquareIcon className="h-4 w-4" />
+                <SquareIcon />
               ) : (
-                <SendIcon className="h-4 w-4" />
+                <SendIcon />
               )}
             </Button>
           </PromptInputAction>
@@ -699,12 +699,8 @@ export function ChatArea({
   return (
     <div className="relative flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden bg-background">
       {!hasMessages && !isLoadingMessages ? (
-        <div className="flex min-h-0 flex-1">
-          <WelcomeScreen
-            onSelectPrompt={(prompt) => onSubmit(prompt)}
-          >
-            {promptInputEl}
-          </WelcomeScreen>
+        <div className="flex min-h-0 flex-1 pb-36 md:pb-40">
+          <WelcomeScreen onSelectPrompt={(prompt) => onSubmit(prompt)} />
         </div>
       ) : (
         <>
@@ -897,6 +893,7 @@ export function ChatArea({
                         key={suggestion}
                         suggestion={suggestion}
                         onClick={handleSuggestionClick}
+                        className="h-8 px-3 text-xs sm:h-9 sm:px-4 sm:text-sm"
                       />
                     ))}
                   </Suggestions>
@@ -905,14 +902,14 @@ export function ChatArea({
             </ConversationContent>
             <ConversationScrollButton className="bottom-28 md:bottom-28" />
           </Conversation>
-
-          <div className="absolute inset-x-0 bottom-0 z-20 shrink-0 bg-background/95 px-3 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur md:px-4">
-            <div className="mx-auto w-full max-w-3xl">
-              {promptInputEl}
-            </div>
-          </div>
         </>
       )}
+
+      <div className="absolute inset-x-0 bottom-0 z-20 shrink-0 bg-background/95 px-3 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 backdrop-blur md:px-4">
+        <div className="mx-auto w-full max-w-3xl">
+          {promptInputEl}
+        </div>
+      </div>
     </div>
   );
 }

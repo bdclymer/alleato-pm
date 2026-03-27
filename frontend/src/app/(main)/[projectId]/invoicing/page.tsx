@@ -301,9 +301,9 @@ export default function ProjectInvoicingPage(): ReactElement {
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button size="sm">
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus />
           Create Invoice
-          <ChevronDown className="h-4 w-4 ml-2" />
+          <ChevronDown />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -368,7 +368,7 @@ export default function ProjectInvoicingPage(): ReactElement {
                     onClick={handleErpSync}
                     aria-label="Sync from ERP"
                   >
-                    <RefreshCw className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} />
+                    <RefreshCw className={isSyncing ? "animate-spin" : undefined} />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Sync invoices from Acumatica</TooltipContent>
@@ -429,7 +429,7 @@ export default function ProjectInvoicingPage(): ReactElement {
           isFiltered,
           action: (
             <Button size="sm" onClick={() => router.push(`/${projectId}/invoicing/new`)}>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus />
               Create your first invoice
             </Button>
           ),

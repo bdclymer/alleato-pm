@@ -94,7 +94,7 @@ export function AppHeader({
       <div className="flex items-center gap-4">
         {/* Notifications */}
         <Button variant="ghost" size="icon" className="relative">
-          <IconBell className="h-5 w-5" />
+          <IconBell />
           <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-destructive" />
         </Button>
 
@@ -110,13 +110,13 @@ export function AppHeader({
                 />
               ) : (
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
-                  <IconUser className="h-4 w-4" />
+                  <IconUser />
                 </div>
               )}
               <span className="hidden md:inline">
                 {user?.name || user?.email || "User"}
               </span>
-              <IconChevronDown className="h-4 w-4" />
+              <IconChevronDown />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">

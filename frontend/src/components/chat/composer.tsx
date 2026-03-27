@@ -51,7 +51,7 @@ export function Composer({ onSend, channelName, disabled }: ComposerProps) {
           disabled={disabled}
           title="Attach file"
         >
-          <Paperclip className="h-5 w-5" />
+          <Paperclip />
         </Button>
 
         {/* Message Input */}
@@ -75,7 +75,7 @@ export function Composer({ onSend, channelName, disabled }: ComposerProps) {
             disabled={disabled}
             title="Add emoji"
           >
-            <Smile className="h-4 w-4" />
+            <Smile />
           </Button>
         </div>
 
@@ -86,7 +86,7 @@ export function Composer({ onSend, channelName, disabled }: ComposerProps) {
           size="icon"
           className="shrink-0"
         >
-          <Send className="h-4 w-4" />
+          <Send />
         </Button>
       </div>
 

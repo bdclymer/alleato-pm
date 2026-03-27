@@ -103,7 +103,7 @@ export default function ProjectsPage() {
         const toNullableNumber = (value: unknown): number | null =>
           typeof value === "number" ? value : null;
 
-        const mappedProjects: Project[] = allProjectRows.map(
+        const mappedProjects = allProjectRows.map(
           (p: Record<string, unknown>) => {
             const address = toStringValue(p.address);
             const phase = toStringValue(p.phase);
@@ -139,7 +139,7 @@ export default function ProjectsPage() {
           },
         );
 
-        setProjects(mappedProjects);
+        setProjects(mappedProjects as Project[]);
       } catch (error) {
         console.error("Error fetching projects:", error);
       } finally {

@@ -166,7 +166,7 @@ export function CreateBudgetLineItemsModal({
                 className="bg-orange-500 hover:bg-orange-600 text-white"
                 size="lg"
               >
-                <Plus className="h-5 w-5 mr-2" />
+                <Plus />
                 Add Line
               </Button>
             </div>
@@ -258,13 +258,15 @@ export function CreateBudgetLineItemsModal({
                         </Select>
                       </td>
                       <td className="px-4 py-4 text-center">
-                        <button
+                        <Button
+                          variant="ghost"
+                          size="icon"
                           onClick={() => removeLine(item.id)}
-                          className="text-red-500 hover:text-red-700"
+                          className="text-destructive hover:text-destructive h-7 w-7"
                           aria-label="Delete line"
                         >
                           <Trash2 className="h-4 w-4" />
-                        </button>
+                        </Button>
                       </td>
                     </tr>
                   ))}
@@ -283,12 +285,14 @@ export function CreateBudgetLineItemsModal({
                     <span className="text-sm font-semibold text-foreground">
                       Line {index + 1}
                     </span>
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => removeLine(item.id)}
-                      className="text-red-500 hover:text-red-700 rounded-full p-2 -mr-2 -mt-2"
+                      className="text-destructive hover:text-destructive h-8 w-8 -mr-2 -mt-2"
                     >
                       <Trash2 className="h-4 w-4" />
-                    </button>
+                    </Button>
                   </div>
 
                   <div>
@@ -352,7 +356,7 @@ export function CreateBudgetLineItemsModal({
                 variant="outline"
                 className="w-full sm:w-auto border-orange-200 text-orange-700 hover:bg-orange-50"
               >
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus />
                 Add Line
               </Button>
             </div>

@@ -1,6 +1,5 @@
 import { Users } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { EmptyState } from "@/components/ui/empty-state";
+import { EmptyState } from "@/components/ds";
 
 interface EmptyUsersListProps {
   onAddUser?: () => void;
@@ -16,15 +15,13 @@ export function EmptyUsersList({
   if (hasFilters) {
     return (
       <EmptyState
-        icon={<Users className="h-12 w-12" />}
+        icon={<Users />}
         title="No users found"
         description="No users match your current filters. Try adjusting your search or filter criteria."
         action={
-          onClearFilters && (
-            <Button onClick={onClearFilters} variant="outline">
-              Clear Filters
-            </Button>
-          )
+          onClearFilters
+            ? { label: "Clear Filters", onClick: onClearFilters }
+            : undefined
         }
       />
     );
@@ -32,10 +29,14 @@ export function EmptyUsersList({
 
   return (
     <EmptyState
-      icon={<Users className="h-12 w-12" />}
+      icon={<Users />}
       title="No users yet"
       description="Get started by adding your first user to the project directory."
-      action={onAddUser && <Button onClick={onAddUser}>Add User</Button>}
+      action={
+        onAddUser
+          ? { label: "Add User", onClick: onAddUser }
+          : undefined
+      }
     />
   );
 }

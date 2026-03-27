@@ -47,7 +47,7 @@ export function GalleryView({ table, config, rows }: GalleryViewProps) {
         return (
           <div
             key={rowId}
-            className="group relative rounded-lg border bg-card overflow-hidden cursor-pointer transition-all hover:border-border/80"
+            className="group relative rounded-lg bg-card overflow-hidden cursor-pointer transition-all hover:bg-muted/50"
             onClick={() => handleRowClick(rowId)}
           >
             {/* Cover Image */}

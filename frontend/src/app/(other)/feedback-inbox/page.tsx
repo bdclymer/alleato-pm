@@ -11,15 +11,24 @@ import {
   ArrowLeft,
   ArrowUpRight,
   CheckCircle2,
+  ChevronDown,
   Circle,
   Clock,
   Copy,
   ExternalLink,
   GitBranch,
+  Github,
   GripVertical,
+  Image as ImageIcon,
+  Link2,
   Loader2,
   MessageSquare,
+  Play,
   Send,
+  ShieldCheck,
+  Trash2,
+  Upload,
+  Wrench,
   XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -27,6 +36,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { StatusBadge } from "@/components/ds/status-badge";
 
 // ---------------------------------------------------------------------------
 // Types
@@ -72,6 +82,7 @@ type FeedbackComment = {
   author_id: string;
   body: string;
   mentions: string[] | null;
+  screenshot_url: string | null;
   created_at: string;
   updated_at: string;
   author: UserProfile;
@@ -90,7 +101,7 @@ type GitHubComment = {
   author_association: string;
 };
 
-type StatusFilter = "open" | "submitted" | "in_progress" | "closed" | "all";
+type StatusFilter = "open" | "submitted" | "in_progress" | "resolved" | "closed" | "all";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -102,6 +113,17 @@ const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
   { value: "in_progress", label: "In Progress" },
   { value: "closed", label: "Closed" },
   { value: "all", label: "All" },
+];
+
+const STATUS_OPTIONS: { value: string; label: string }[] = [
+  { value: "open", label: "Open" },
+  { value: "submitted", label: "Submitted" },
+  { value: "triaged", label: "Triaged" },
+  { value: "diagnosing", label: "Diagnosing" },
+  { value: "fixing", label: "Fixing" },
+  { value: "verifying", label: "Verifying" },
+  { value: "in_review", label: "In Review" },
+  { value: "resolved", label: "Resolved" },
 ];
 
 const STATUS_META: Record<string, { icon: typeof Circle; className: string; dotClassName: string; label: string; showInList?: boolean }> = {
@@ -125,16 +147,58 @@ const STATUS_META: Record<string, { icon: typeof Circle; className: string; dotC
     label: "Submitted",
     showInList: true,
   },
+  triaged: {
+    icon: ArrowUpRight,
+    className: "text-blue-600 dark:text-blue-400",
+    dotClassName: "bg-blue-500",
+    label: "Triaged",
+    showInList: true,
+  },
+  diagnosing: {
+    icon: Loader2,
+    className: "text-purple-600 dark:text-purple-400",
+    dotClassName: "bg-purple-500 animate-pulse",
+    label: "Diagnosing",
+    showInList: true,
+  },
+  fixing: {
+    icon: Loader2,
+    className: "text-purple-600 dark:text-purple-400",
+    dotClassName: "bg-purple-500 animate-pulse",
+    label: "Fixing",
+    showInList: true,
+  },
+  verifying: {
+    icon: Loader2,
+    className: "text-purple-600 dark:text-purple-400",
+    dotClassName: "bg-purple-500 animate-pulse",
+    label: "Verifying",
+    showInList: true,
+  },
+  in_review: {
+    icon: ArrowUpRight,
+    className: "text-orange-600 dark:text-orange-400",
+    dotClassName: "bg-orange-500",
+    label: "In Review",
+    showInList: true,
+  },
   github_failed: {
     icon: XCircle,
     className: "text-red-600 dark:text-red-400",
     dotClassName: "bg-red-500",
     label: "GitHub failed",
   },
-  closed: {
-    icon: CheckCircle2,
+  resolved: {
+    icon: ShieldCheck,
     className: "text-green-600 dark:text-green-400",
     dotClassName: "bg-green-500",
+    label: "Resolved",
+    showInList: true,
+  },
+  closed: {
+    icon: CheckCircle2,
+    className: "text-muted-foreground",
+    dotClassName: "bg-muted-foreground",
     label: "Closed",
   },
 };
@@ -146,11 +210,6 @@ const REQUEST_TYPE_LABELS: Record<string, string> = {
   question: "Question",
 };
 
-const SEVERITY_COLORS: Record<string, string> = {
-  high: "text-red-600 dark:text-red-400",
-  medium: "text-amber-600 dark:text-amber-400",
-  low: "text-muted-foreground",
-};
 
 const PANEL_MIN_WIDTH = 280;
 const PANEL_MAX_WIDTH = 600;
@@ -281,7 +340,7 @@ function CommentInput({
   submitting,
   inputRef: externalInputRef,
 }: {
-  onSubmit: (body: string, mentions: string[]) => void;
+  onSubmit: (body: string, mentions: string[], screenshotDataUrl: string | null) => void;
   users: UserProfile[];
   submitting: boolean;
   inputRef?: React.RefObject<HTMLTextAreaElement | null>;
@@ -290,8 +349,32 @@ function CommentInput({
   const [showMentions, setShowMentions] = useState(false);
   const [mentionQuery, setMentionQuery] = useState("");
   const [mentionIndex, setMentionIndex] = useState(0);
+  const [screenshotDataUrl, setScreenshotDataUrl] = useState<string | null>(null);
   const localInputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = externalInputRef ?? localInputRef;
+
+  function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please select an image file.");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("Image must be under 10MB.");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") {
+        setScreenshotDataUrl(reader.result);
+      }
+    };
+    reader.onerror = () => toast.error("Failed to read image file.");
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  }
 
   const filteredUsers = useMemo(() => {
     if (!mentionQuery) return users;
@@ -369,10 +452,11 @@ function CommentInput({
 
   function handleSubmit() {
     const trimmed = value.trim();
-    if (!trimmed || submitting) return;
+    if ((!trimmed && !screenshotDataUrl) || submitting) return;
     const mentions = extractMentionIds(trimmed, users);
-    onSubmit(trimmed, mentions);
+    onSubmit(trimmed || "(screenshot)", mentions, screenshotDataUrl);
     setValue("");
+    setScreenshotDataUrl(null);
     setShowMentions(false);
   }
 
@@ -409,29 +493,67 @@ function CommentInput({
         </div>
       )}
 
-      <div className="flex items-end gap-2">
+      {/* Screenshot preview */}
+      {screenshotDataUrl && (
+        <div className="mb-2 relative inline-block">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={screenshotDataUrl}
+            alt="Comment screenshot"
+            className="h-24 max-w-48 rounded-lg border border-border object-cover"
+          />
+          <button
+            type="button"
+            onClick={() => setScreenshotDataUrl(null)}
+            className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-sm transition-colors hover:bg-destructive/90"
+            aria-label="Remove screenshot"
+          >
+            <XCircle className="h-3 w-3" />
+          </button>
+        </div>
+      )}
+
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept="image/*"
+        className="hidden"
+        onChange={handleFileUpload}
+      />
+      <div className="rounded-lg border border-border bg-background focus-within:ring-1 focus-within:ring-ring">
         <textarea
           ref={inputRef}
           value={value}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           placeholder="Add a comment... Use @ to mention someone"
-          rows={2}
-          className="flex-1 resize-none rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+          rows={3}
+          className="w-full resize-none border-0 bg-transparent px-3 pt-3 pb-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
         />
-        <Button
-          size="sm"
-          onClick={handleSubmit}
-          disabled={!value.trim() || submitting}
-          className="h-8 w-8 p-0 shrink-0"
-          aria-label="Send comment"
-        >
-          <Send className="h-3.5 w-3.5" />
-        </Button>
+        <div className="flex items-center justify-between border-t border-border/50 px-3 py-2">
+          <button
+            type="button"
+            onClick={() => fileInputRef.current?.click()}
+            className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <ImageIcon className="h-3.5 w-3.5" />
+            Attach image
+          </button>
+          <div className="flex items-center gap-2">
+            <span className="text-[10px] text-muted-foreground">
+              <kbd className="rounded border border-border px-1 py-0.5 text-[9px]">&#8984;Enter</kbd>
+            </span>
+            <Button
+              size="sm"
+              onClick={handleSubmit}
+              disabled={(!value.trim() && !screenshotDataUrl) || submitting}
+              className="h-7 px-3 text-xs"
+            >
+              {submitting ? "Sending..." : "Submit"}
+            </Button>
+          </div>
+        </div>
       </div>
-      <p className="mt-1 text-[10px] text-muted-foreground">
-        Press <kbd className="rounded border border-border px-1 py-0.5 text-[9px]">Cmd+Enter</kbd> to send
-      </p>
     </div>
   );
 }
@@ -495,7 +617,7 @@ function CommentsSection({
     });
   }
 
-  async function handleSubmit(body: string, mentions: string[]) {
+  async function handleSubmit(body: string, mentions: string[], screenshotDataUrl: string | null) {
     setSubmitting(true);
     try {
       const res = await fetch("/api/admin/feedback/comments", {
@@ -505,6 +627,7 @@ function CommentsSection({
           feedbackItemId,
           body,
           mentions,
+          screenshotDataUrl,
         }),
       });
       if (!res.ok) throw new Error("Failed to add comment");
@@ -538,7 +661,7 @@ function CommentsSection({
 
   return (
     <div>
-      <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-3">
+      <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
         Comments
       </p>
 
@@ -573,6 +696,21 @@ function CommentsSection({
               <p className="mt-0.5 text-sm text-foreground whitespace-pre-wrap leading-relaxed">
                 {renderBody(comment.body)}
               </p>
+              {comment.screenshot_url && (
+                <a
+                  href={comment.screenshot_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1.5 inline-block"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={comment.screenshot_url}
+                    alt="Comment screenshot"
+                    className="max-h-40 max-w-full rounded-lg border border-border object-cover hover:opacity-90 transition-opacity"
+                  />
+                </a>
+              )}
             </div>
           </div>
         ))}
@@ -635,8 +773,8 @@ function GitHubActivitySection({ issueNumber }: { issueNumber: number }) {
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-3">
-        <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+      <div className="flex items-center gap-2 mb-2">
+        <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
           GitHub Activity
         </p>
         <span className="text-[10px] text-muted-foreground">
@@ -662,7 +800,7 @@ function GitHubActivitySection({ issueNumber }: { issueNumber: number }) {
         </p>
       )}
 
-      <div className="space-y-3 max-h-80 overflow-y-auto">
+      <div className="space-y-4">
         {comments.map((comment) => (
           <div key={comment.id} className="flex gap-2.5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -705,11 +843,13 @@ function ListItemContextMenu({
   children,
   onUpdateStatus,
   onSendToGitHub,
+  onDelete,
 }: {
   item: FeedbackItem;
   children: React.ReactNode;
   onUpdateStatus: (id: string, status: string) => void;
   onSendToGitHub: (id: string) => void;
+  onDelete: (id: string) => void;
 }) {
   const [contextPos, setContextPos] = useState<{ x: number; y: number } | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -741,10 +881,14 @@ function ListItemContextMenu({
   }, [contextPos]);
 
   const isClosable = item.status === "open" || item.status === "github_failed" || item.status === "submitted" || item.status === "in_progress";
+  const isResolvable = item.status !== "resolved" && item.status !== "closed";
 
   function handleAction(action: string) {
     setContextPos(null);
     switch (action) {
+      case "resolve":
+        onUpdateStatus(item.id, "resolved");
+        break;
       case "close":
         onUpdateStatus(item.id, "closed");
         break;
@@ -763,6 +907,11 @@ function ListItemContextMenu({
         navigator.clipboard.writeText(`${window.location.origin}/feedback-inbox?id=${item.id}`);
         toast.success("Link copied to clipboard");
         break;
+      case "delete":
+        if (window.confirm("Delete this feedback item? This cannot be undone.")) {
+          onDelete(item.id);
+        }
+        break;
     }
   }
 
@@ -779,6 +928,17 @@ function ListItemContextMenu({
           className="fixed z-50 min-w-40 rounded-md border border-border bg-popover p-1 shadow-sm animate-in fade-in-0 zoom-in-95"
           style={{ top: contextPos.y, left: contextPos.x }}
         >
+          {isResolvable && (
+            <button
+              type="button"
+              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-foreground hover:bg-muted transition-colors"
+              onClick={() => handleAction("resolve")}
+            >
+              <ShieldCheck className="h-3.5 w-3.5" />
+              Resolve
+            </button>
+          )}
+
           {isClosable ? (
             <button
               type="button"
@@ -830,6 +990,17 @@ function ListItemContextMenu({
           >
             <Copy className="h-3.5 w-3.5" />
             Copy link
+          </button>
+
+          <div className="my-1 h-px bg-border" />
+
+          <button
+            type="button"
+            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-destructive hover:bg-destructive/10 transition-colors"
+            onClick={() => handleAction("delete")}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            Delete
           </button>
         </div>
       )}
@@ -897,6 +1068,283 @@ function useResizablePanel() {
 }
 
 // ---------------------------------------------------------------------------
+// Tool Context Section
+// ---------------------------------------------------------------------------
+
+type ToolOption = { id: number; name: string; slug: string; category: string };
+type ToolContextData = {
+  tool_name: string;
+  procore_url: string | null;
+  prp_path: string | null;
+  research_folder: string;
+  manifest_path: string;
+  crawl_command: string;
+};
+
+function ToolContextSection({ item }: { item: FeedbackItem }) {
+  const [tools, setTools] = useState<ToolOption[]>([]);
+  const [assignedToolId, setAssignedToolId] = useState<number | null>(null);
+  const [context, setContext] = useState<ToolContextData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [crawling, setCrawling] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Load tools list and auto-match on mount
+  useEffect(() => {
+    let cancelled = false;
+
+    async function init() {
+      setLoading(true);
+      try {
+        // Fetch tools list and auto-match in parallel
+        const [toolsRes, matchRes] = await Promise.all([
+          fetch("/api/admin/feedback/tools?action=list"),
+          fetch(`/api/admin/feedback/tools?action=match&feedbackId=${item.id}`),
+        ]);
+
+        if (cancelled) return;
+
+        if (toolsRes.ok) {
+          const data = await toolsRes.json();
+          setTools(data.tools ?? []);
+        }
+
+        if (matchRes.ok) {
+          const data = await matchRes.json();
+          if (data.match) {
+            setAssignedToolId(data.match.id);
+            setContext(data.context ?? null);
+          }
+        }
+      } catch {
+        // Non-fatal
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    init();
+    return () => { cancelled = true; };
+  }, [item.id]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!showDropdown) return;
+    function handleClick(e: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [showDropdown]);
+
+  async function handleAssign(toolId: number) {
+    setShowDropdown(false);
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/feedback/tools", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ feedbackId: item.id, toolId }),
+      });
+      if (res.ok) {
+        setAssignedToolId(toolId);
+        // Fetch resolved context
+        const ctxRes = await fetch(`/api/admin/feedback/tools?action=resolve&toolId=${toolId}`);
+        if (ctxRes.ok) {
+          const data = await ctxRes.json();
+          setContext(data.context ?? null);
+        }
+        toast.success("Tool assigned");
+      }
+    } catch {
+      toast.error("Failed to assign tool");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleAutoMatch() {
+    setLoading(true);
+    try {
+      const res = await fetch("/api/admin/feedback/tools", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ feedbackId: item.id, toolId: null, auto: true }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const newToolId = data.item?.tool_id;
+        setAssignedToolId(newToolId ?? null);
+        if (newToolId) {
+          const ctxRes = await fetch(`/api/admin/feedback/tools?action=resolve&toolId=${newToolId}`);
+          if (ctxRes.ok) {
+            const ctxData = await ctxRes.json();
+            setContext(ctxData.context ?? null);
+          }
+          toast.success("Tool auto-matched");
+        } else {
+          setContext(null);
+          toast("No matching tool found", { description: "Assign one manually." });
+        }
+      }
+    } catch {
+      toast.error("Auto-match failed");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleCrawl() {
+    if (!context) return;
+    const slug = tools.find((t) => t.id === assignedToolId)?.slug;
+    if (!slug) return;
+
+    setCrawling(true);
+    try {
+      const res = await fetch("/api/admin/feedback/crawl", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slug }),
+      });
+      if (res.ok) {
+        toast.success("Procore crawl complete", { description: `Manifest saved for ${slug}` });
+      } else {
+        const data = await res.json().catch(() => null);
+        toast.error("Crawl failed", { description: data?.hint ?? data?.error ?? "Unknown error" });
+      }
+    } catch {
+      toast.error("Crawl request failed");
+    } finally {
+      setCrawling(false);
+    }
+  }
+
+  const assignedTool = tools.find((t) => t.id === assignedToolId);
+
+  return (
+    <div>
+      <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
+        Tool Context
+      </p>
+
+      {/* Tool assignment */}
+      <div className="flex items-center gap-2 mb-3">
+        <div className="relative" ref={dropdownRef}>
+          <button
+            type="button"
+            onClick={() => setShowDropdown(!showDropdown)}
+            disabled={loading}
+            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+          >
+            <Wrench className="h-3 w-3 text-muted-foreground" />
+            {assignedTool ? assignedTool.name : "Assign tool"}
+            <ChevronDown className="h-3 w-3 text-muted-foreground" />
+          </button>
+
+          {showDropdown && (
+            <div className="absolute left-0 top-full z-50 mt-1 max-h-60 w-56 overflow-y-auto rounded-md border border-border bg-popover p-1 shadow-md">
+              {tools.map((tool) => (
+                <button
+                  key={tool.id}
+                  type="button"
+                  onClick={() => handleAssign(tool.id)}
+                  className={cn(
+                    "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs transition-colors hover:bg-muted",
+                    tool.id === assignedToolId && "bg-primary/10 text-primary",
+                  )}
+                >
+                  <span className="truncate">{tool.name}</span>
+                  <span className="ml-auto text-[10px] text-muted-foreground">{tool.category}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <button
+          type="button"
+          onClick={handleAutoMatch}
+          disabled={loading}
+          className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+          title="Auto-detect tool from feedback content"
+        >
+          {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3" />}
+          Auto-match
+        </button>
+      </div>
+
+      {/* Resolved context */}
+      {context && (
+        <div className="space-y-1.5 rounded-md border border-border bg-muted/30 p-3">
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-muted-foreground w-20 shrink-0">Tool</span>
+            <span className="font-medium text-foreground">{context.tool_name}</span>
+          </div>
+          {context.procore_url && (
+            <div className="flex items-center gap-2 text-xs">
+              <span className="text-muted-foreground w-20 shrink-0">Procore</span>
+              <a
+                href={context.procore_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="truncate font-mono text-[11px] text-primary hover:underline flex items-center gap-1"
+              >
+                <Link2 className="h-3 w-3 shrink-0" />
+                {context.procore_url.replace(/https?:\/\/[^/]+/, "")}
+              </a>
+            </div>
+          )}
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-muted-foreground w-20 shrink-0">PRP</span>
+            <code className="truncate rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-foreground">
+              {context.prp_path}
+            </code>
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-muted-foreground w-20 shrink-0">Research</span>
+            <code className="truncate rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-foreground">
+              {context.research_folder}
+            </code>
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            <span className="text-muted-foreground w-20 shrink-0">Manifest</span>
+            <code className="truncate rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-foreground">
+              {context.manifest_path}
+            </code>
+          </div>
+
+          {/* Crawl button */}
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={handleCrawl}
+              disabled={crawling}
+              className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2.5 py-1.5 text-xs font-medium text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
+            >
+              {crawling ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Play className="h-3 w-3" />
+              )}
+              {crawling ? "Crawling Procore..." : "Crawl Procore"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {!context && !loading && (
+        <p className="text-xs text-muted-foreground">
+          No tool matched. Assign one manually or click Auto-match.
+        </p>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Detail Panel (shared between desktop and mobile)
 // ---------------------------------------------------------------------------
 
@@ -904,21 +1352,25 @@ function FeedbackDetail({
   item,
   updatingId,
   sendingToGitHub,
+  deletingId,
   onUpdateStatus,
   onSendToGitHub,
+  onDelete,
   onBack,
   commentInputRef,
 }: {
   item: FeedbackItem;
   updatingId: string | null;
   sendingToGitHub: boolean;
+  deletingId: string | null;
   onUpdateStatus: (id: string, status: string) => void;
   onSendToGitHub: (id: string) => void;
+  onDelete: (id: string) => void;
   onBack?: () => void;
   commentInputRef?: React.RefObject<HTMLTextAreaElement | null>;
 }) {
   return (
-    <div className="mx-auto max-w-4xl space-y-8 px-6 py-6 lg:px-10 lg:py-8">
+    <div className="mx-auto max-w-4xl space-y-6 px-6 py-6 lg:px-10 lg:py-8">
       {/* Mobile back button */}
       {onBack && (
         <button
@@ -931,88 +1383,135 @@ function FeedbackDetail({
         </button>
       )}
 
-      {/* Header */}
+      {/* Header + Actions */}
       <div>
         <div className="flex items-start justify-between gap-4">
-          <h2 className="text-lg font-semibold text-foreground">
-            {item.title}
-          </h2>
-          <div className="flex items-center gap-2 shrink-0">
-            {item.github_issue_url && (
-              <a
-                href={item.github_issue_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-xs font-medium text-foreground hover:bg-muted/80 transition-colors"
-              >
-                <ExternalLink className="h-3 w-3" />
-                #{item.github_issue_number}
-              </a>
-            )}
+          <div className="flex-1 min-w-0">
+            <h2 className="text-lg font-semibold text-foreground">
+              {item.title}
+            </h2>
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+              <span>
+                {REQUEST_TYPE_LABELS[item.request_type] ?? item.request_type}
+              </span>
+              {item.severity && (
+                <>
+                  <span className="text-border">·</span>
+                  <span className={cn(
+                    "font-medium",
+                    item.severity === "high" && "text-red-600 dark:text-red-400",
+                    item.severity === "medium" && "text-amber-600 dark:text-amber-400",
+                    item.severity === "low" && "text-muted-foreground",
+                  )}>
+                    {item.severity.charAt(0).toUpperCase() + item.severity.slice(1)} priority
+                  </span>
+                </>
+              )}
+              <span className="text-border">·</span>
+              <span>
+                {new Date(item.created_at).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                  hour: "numeric",
+                  minute: "2-digit",
+                })}
+              </span>
+            </div>
           </div>
+
+          {/* Delete in corner */}
+          <Button
+            size="sm"
+            variant="ghost"
+            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0 shrink-0"
+            onClick={() => {
+              if (window.confirm("Delete this feedback item? This cannot be undone.")) {
+                onDelete(item.id);
+              }
+            }}
+            disabled={deletingId === item.id}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
         </div>
 
-        {/* Meta — clean inline layout */}
-        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-muted-foreground">
-          <span className={cn("font-medium", STATUS_META[item.status]?.className)}>
-            {STATUS_META[item.status]?.label ?? item.status}
-          </span>
-          <span className="text-border">·</span>
-          <span>{REQUEST_TYPE_LABELS[item.request_type] ?? item.request_type}</span>
-          {item.severity && (
-            <>
-              <span className="text-border">·</span>
-              <span className={cn("font-medium", SEVERITY_COLORS[item.severity])}>
-                {item.severity.charAt(0).toUpperCase() + item.severity.slice(1)}
-              </span>
-            </>
+        {/* Inline actions */}
+        <div className="mt-3 flex flex-wrap items-center gap-2">
+          {/* Status dropdown */}
+          <div className="relative">
+            <select
+              value={item.status}
+              onChange={(e) => onUpdateStatus(item.id, e.target.value)}
+              disabled={updatingId === item.id}
+              className={cn(
+                "h-7 appearance-none rounded-md pl-2 pr-7 text-xs font-medium border-0 cursor-pointer transition-colors focus:outline-none focus:ring-1 focus:ring-ring",
+                item.status === "resolved" && "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
+                item.status === "closed" && "bg-muted text-muted-foreground",
+                item.status === "open" && "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
+                item.status === "submitted" && "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400",
+                item.status === "in_progress" && "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+              )}
+            >
+              {STATUS_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 h-3 w-3 -translate-y-1/2 opacity-50" />
+          </div>
+
+          {/* GitHub */}
+          {!item.github_issue_number && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => onSendToGitHub(item.id)}
+              disabled={sendingToGitHub}
+              className="h-7 text-xs"
+            >
+              <Github />
+              {sendingToGitHub ? "Sending..." : "Create Issue"}
+            </Button>
           )}
-          <span className="text-border">·</span>
-          <span>
-            {new Date(item.created_at).toLocaleDateString("en-US", {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-              hour: "numeric",
-              minute: "2-digit",
-            })}
-          </span>
+          {item.github_issue_url && (
+            <a
+              href={item.github_issue_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+            >
+              <Github className="h-3 w-3" />
+              #{item.github_issue_number}
+            </a>
+          )}
         </div>
       </div>
 
       {/* Description */}
       <div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-3">
-          Description
-        </p>
         <p className="text-sm text-foreground whitespace-pre-wrap leading-relaxed">
           {item.comment}
         </p>
-      </div>
 
-      {/* Screenshot */}
-      {item.screenshot_url && (
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-3">
-            Screenshot
-          </p>
-          <div className="overflow-hidden rounded-lg">
+        {/* Screenshot */}
+        {item.screenshot_url && (
+          <div className="mt-3 overflow-hidden rounded-lg border border-border">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={item.screenshot_url}
               alt="Feedback screenshot"
-              className="w-full max-h-75 object-cover object-top rounded-lg"
+              className="w-full max-h-75 object-cover object-top"
             />
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Location */}
-      <div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-primary mb-3">
-          Location
-        </p>
-        <div className="space-y-1.5">
+      {/* Details (Location + Tool Context) */}
+      <div className="rounded-lg bg-muted/40 px-4 py-3 space-y-3">
+        {/* Location rows */}
+        <div className="space-y-1">
           <div className="flex items-center gap-2 text-xs">
             <span className="text-muted-foreground w-16 shrink-0">Page</span>
             <a
@@ -1051,72 +1550,17 @@ function FeedbackDetail({
             </div>
           )}
         </div>
-      </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-2 pt-2">
-        {/* Create Issue */}
-        {!item.github_issue_number && (
-          <Button
-            size="sm"
-            onClick={() => onSendToGitHub(item.id)}
-            disabled={sendingToGitHub}
-          >
-            <GitBranch className="h-3.5 w-3.5" />
-            {sendingToGitHub ? "Sending..." : "Create Issue"}
-          </Button>
-        )}
-
-        {/* View Issue in GitHub */}
-        {item.github_issue_url && (
-          <Button
-            size="sm"
-            variant="outline"
-            asChild
-          >
-            <a
-              href={item.github_issue_url}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <ExternalLink className="h-3.5 w-3.5" />
-              View Issue in GitHub
-            </a>
-          </Button>
-        )}
-
-        {(item.status === "open" || item.status === "github_failed" || item.status === "submitted" || item.status === "in_progress") && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onUpdateStatus(item.id, "closed")}
-            disabled={updatingId === item.id}
-          >
-            {updatingId === item.id ? "Updating..." : "Close"}
-          </Button>
-        )}
-        {item.status === "closed" && (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => onUpdateStatus(item.id, "open")}
-            disabled={updatingId === item.id}
-          >
-            {updatingId === item.id ? "Updating..." : "Re-open"}
-          </Button>
-        )}
+        {/* Tool Context inline */}
+        <ToolContextSection item={item} />
       </div>
 
       {/* Comments */}
-      <div className="pt-2">
-        <CommentsSection feedbackItemId={item.id} commentInputRef={commentInputRef} />
-      </div>
+      <CommentsSection feedbackItemId={item.id} commentInputRef={commentInputRef} />
 
       {/* GitHub Activity */}
       {item.github_issue_number && (
-        <div className="pt-2">
-          <GitHubActivitySection issueNumber={item.github_issue_number} />
-        </div>
+        <GitHubActivitySection issueNumber={item.github_issue_number} />
       )}
     </div>
   );
@@ -1134,6 +1578,7 @@ export default function FeedbackInboxPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [sendingToGitHub, setSendingToGitHub] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [mobileShowDetail, setMobileShowDetail] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState(0);
 
@@ -1155,6 +1600,8 @@ export default function FeedbackInboxPage() {
       if (filter !== "all") {
         if (filter === "open") {
           params.set("status", "open,github_failed");
+        } else if (filter === "in_progress") {
+          params.set("status", "submitted,triaged,diagnosing,fixing,verifying,in_review");
         } else {
           params.set("status", filter);
         }
@@ -1304,6 +1751,29 @@ export default function FeedbackInboxPage() {
     }
   }
 
+  // ---- Delete ----
+  async function deleteItem(id: string) {
+    setDeletingId(id);
+    try {
+      const res = await fetch("/api/admin/feedback", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      if (!res.ok) throw new Error("Delete failed");
+      toast.success("Feedback item deleted");
+      if (selectedId === id) {
+        setSelectedId(null);
+        setMobileShowDetail(false);
+      }
+      fetchItems();
+    } catch {
+      toast.error("Failed to delete feedback item");
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
   // ---- Select item ----
   function selectItem(id: string) {
     setSelectedId(id);
@@ -1404,6 +1874,7 @@ export default function FeedbackInboxPage() {
                     item={item}
                     onUpdateStatus={updateStatus}
                     onSendToGitHub={sendToGitHub}
+                    onDelete={deleteItem}
                   >
                     <button
                       type="button"
@@ -1458,6 +1929,9 @@ export default function FeedbackInboxPage() {
                             {item.status === "submitted" && (
                               <ArrowUpRight className="h-2.5 w-2.5" />
                             )}
+                            {item.status === "resolved" && (
+                              <ShieldCheck className="h-2.5 w-2.5" />
+                            )}
                             {meta.label}
                           </div>
                         )}
@@ -1506,8 +1980,10 @@ export default function FeedbackInboxPage() {
               item={selected}
               updatingId={updatingId}
               sendingToGitHub={sendingToGitHub}
+              deletingId={deletingId}
               onUpdateStatus={updateStatus}
               onSendToGitHub={sendToGitHub}
+              onDelete={deleteItem}
               commentInputRef={commentInputRef}
             />
           )}
@@ -1522,6 +1998,8 @@ export default function FeedbackInboxPage() {
               sendingToGitHub={sendingToGitHub}
               onUpdateStatus={updateStatus}
               onSendToGitHub={sendToGitHub}
+              deletingId={deletingId}
+              onDelete={deleteItem}
               onBack={handleMobileBack}
               commentInputRef={commentInputRef}
             />

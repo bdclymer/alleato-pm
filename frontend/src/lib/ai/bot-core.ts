@@ -6,7 +6,7 @@
  * tool creation, memory injection) so it can be called from any channel.
  */
 
-import { generateText, streamText, stepCountIs, type ModelMessage } from "ai";
+import { generateText, streamText, stepCountIs, type ModelMessage, type ToolSet } from "ai";
 import { getLanguageModel } from "@/lib/ai/providers";
 import {
   buildCouncilModePromptInjection,
@@ -191,7 +191,7 @@ export async function generateBotResponse(
     model: getLanguageModel(STRATEGIST_MODEL),
     system: systemPrompt,
     messages,
-    tools,
+    tools: tools as unknown as ToolSet,
     stopWhen: stepCountIs(7),
   });
 
@@ -247,7 +247,7 @@ export async function streamBotResponse(options: BotCoreOptions) {
     model: getLanguageModel(STRATEGIST_MODEL),
     system: systemPrompt,
     messages,
-    tools,
+    tools: tools as unknown as ToolSet,
     stopWhen: stepCountIs(7),
   });
 
@@ -294,7 +294,7 @@ export async function persistChatMessage(params: {
   metadata?: Record<string, unknown>;
 }): Promise<void> {
   const supabase = createServiceClient();
-  await supabase.from("chat_history").insert({
+  await (supabase.from("chat_history") as any).insert({
     session_id: params.sessionId,
     user_id: params.userId,
     role: params.role,

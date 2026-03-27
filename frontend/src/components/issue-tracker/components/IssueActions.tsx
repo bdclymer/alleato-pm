@@ -15,6 +15,7 @@ export function IssueActions({ issueId }: { issueId: string }) {
           <Loading />
         </div>
       ) : null}
+      {/* eslint-disable-next-line design-system/no-design-violations -- liveblocks issue action */}
       <button
         className="text-red-600 text-sm"
         onClick={() => {

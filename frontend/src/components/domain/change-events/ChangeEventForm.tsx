@@ -227,15 +227,15 @@ function VendorCombobox({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button
+        <Button
           type="button"
+          variant="outline"
           role="combobox"
           aria-expanded={open}
           aria-controls={vendorListId}
           aria-label="Select vendor"
           className={cn(
-            "flex h-9 w-full items-center justify-between rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-colors",
-            "focus-visible:border-neutral-400 focus-visible:outline-none",
+            "flex h-9 w-full items-center justify-between px-3 py-2 text-sm font-normal",
             !selected && "text-muted-foreground",
           )}
         >
@@ -243,7 +243,7 @@ function VendorCombobox({
             {selected ? selected.vendor_name : "Select vendor..."}
           </span>
           <ChevronsUpDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[300px] p-0" align="start" sideOffset={0}>
         <Command shouldFilter={false}>
@@ -333,15 +333,15 @@ function ContractCombobox({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button
+        <Button
           type="button"
+          variant="outline"
           role="combobox"
           aria-expanded={open}
           aria-controls={contractListId}
           aria-label="Select contract"
           className={cn(
-            "flex h-9 w-full min-w-0 items-center justify-between overflow-hidden rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs transition-colors",
-            "focus-visible:border-neutral-400 focus-visible:outline-none",
+            "flex h-9 w-full min-w-0 items-center justify-between overflow-hidden px-3 py-2 text-sm font-normal",
             !selected && "text-muted-foreground",
           )}
         >
@@ -349,7 +349,7 @@ function ContractCombobox({
             {selected ? selected.label : "Select commitment..."}
           </span>
           <ChevronDown className="ml-2 h-3 w-3 shrink-0 opacity-50" />
-        </button>
+        </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[350px] p-0" align="start" sideOffset={0}>
         <Command shouldFilter={false}>
@@ -456,7 +456,7 @@ function AddCompanyModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/90">
-      <div className="w-full max-w-md rounded-lg border bg-card p-6 shadow-sm">
+      <div className="w-full max-w-md rounded-lg bg-card p-6 shadow-sm">
         <h3 className="text-lg font-semibold">Add Company to Directory</h3>
         <p className="mt-1 text-sm text-muted-foreground">
           Add a new company to the project directory so it can be selected as a vendor.
@@ -1580,7 +1580,7 @@ export function ChangeEventForm({
                 onClick={addLineItem}
                 className="gap-1.5"
               >
-                <Plus className="h-3.5 w-3.5" />
+                <Plus />
                 Add Line Item
               </Button>
 
@@ -1595,7 +1595,7 @@ export function ChangeEventForm({
                 className="gap-1.5 text-muted-foreground hover:text-foreground"
                 onClick={() => csvInputRef.current?.click()}
               >
-                <Upload className="h-3.5 w-3.5" />
+                <Upload />
                 Import CSV
               </Button>
 
@@ -1650,7 +1650,7 @@ export function ChangeEventForm({
                       className="gap-1.5 text-muted-foreground hover:text-foreground"
                       onClick={() => handleAddAllCommitmentLineItems(addFromCommitmentId)}
                     >
-                      <Plus className="h-3.5 w-3.5" />
+                      <Plus />
                       Add All Lines
                     </Button>
                   )}

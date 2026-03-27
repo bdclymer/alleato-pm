@@ -270,7 +270,7 @@ export default function AuditLogPage() {
 
       {/* Event groups */}
       {grouped.length === 0 ? (
-        <div className="rounded-lg border border-border bg-card px-5 py-12 text-center">
+        <div className="rounded-lg border border-border px-5 py-12 text-center">
           <p className="text-sm text-muted-foreground">No events found.</p>
         </div>
       ) : (
@@ -280,7 +280,7 @@ export default function AuditLogPage() {
               <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground px-1">
                 {group.date}
               </p>
-              <div className="rounded-lg border border-border bg-card overflow-hidden divide-y divide-border">
+              <div className="rounded-lg border border-border overflow-hidden divide-y divide-border">
                 {group.events.map((event) => (
                   <AuditRow key={event.id} event={event} />
                 ))}

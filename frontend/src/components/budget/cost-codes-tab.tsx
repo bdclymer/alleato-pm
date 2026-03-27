@@ -242,7 +242,7 @@ export function CostCodesTab({ projectId }: CostCodesTabProps) {
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" size="icon">
-                <Search className="h-4 w-4" />
+                <Search />
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-80" align="end">
@@ -257,14 +257,16 @@ export function CostCodesTab({ projectId }: CostCodesTabProps) {
                     className="pl-8 pr-8"
                   />
                   {searchQuery && (
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       onClick={() => setSearchQuery("")}
-                      className="absolute right-2 top-2.5 text-muted-foreground hover:text-foreground"
+                      className="absolute right-2 top-1.5 h-7 w-7 text-muted-foreground hover:text-foreground"
                       type="button"
                       aria-label="Clear search"
                     >
                       <X className="h-4 w-4" />
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>
@@ -302,8 +304,9 @@ export function CostCodesTab({ projectId }: CostCodesTabProps) {
                 className={isEvenDivision ? "bg-muted/50" : "bg-background"}
               >
                 <div className="flex items-center justify-between py-2 px-4 hover:bg-muted/50">
-                  <button
-                    className="flex items-center gap-2 cursor-pointer flex-1 text-left"
+                  <Button
+                    variant="ghost"
+                    className="flex items-center gap-2 cursor-pointer flex-1 text-left h-auto py-0 px-0 hover:bg-transparent"
                     onClick={() => toggleDivision(division)}
                     type="button"
                   >
@@ -319,7 +322,7 @@ export function CostCodesTab({ projectId }: CostCodesTabProps) {
                       ({codes.filter((c) => selectedCostCodes.has(c.id)).length}
                       /{codes.length})
                     </span>
-                  </button>
+                  </Button>
                   <Button
                     size="sm"
                     variant="ghost"
@@ -336,10 +339,11 @@ export function CostCodesTab({ projectId }: CostCodesTabProps) {
                       const isSelected = selectedCostCodes.has(code.id);
 
                       return (
-                        <button
+                        <Button
                           key={code.id}
                           type="button"
-                          className="flex items-center gap-4 py-1.5 px-2 rounded hover:bg-muted/70 cursor-pointer w-full text-left"
+                          variant="ghost"
+                          className="flex items-center gap-4 py-1.5 px-2 hover:bg-muted/70 cursor-pointer w-full text-left h-auto justify-start font-normal"
                           onClick={() => toggleCostCode(code.id)}
                         >
                           <Checkbox
@@ -355,7 +359,7 @@ export function CostCodesTab({ projectId }: CostCodesTabProps) {
                               </span>
                             )}
                           </div>
-                        </button>
+                        </Button>
                       );
                     })}
                   </div>

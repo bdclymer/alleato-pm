@@ -329,7 +329,7 @@ export function ImportFromBudgetModal({
               </>
             ) : (
               <>
-                <Upload className="w-4 h-4 mr-2" />
+                <Upload />
                 Import {selectedIds.size > 0 && `(${selectedIds.size})`}
               </>
             )}

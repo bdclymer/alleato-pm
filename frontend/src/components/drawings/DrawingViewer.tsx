@@ -584,7 +584,7 @@ export function DrawingViewer({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="ghost" size="sm" onClick={() => setPageNumber((p) => Math.max(1, p - 1))} disabled={pageNumber === 1}>
-                    <ChevronLeft className="h-4 w-4" />
+                    <ChevronLeft />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Previous page</TooltipContent>
@@ -603,7 +603,7 @@ export function DrawingViewer({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button variant="ghost" size="sm" onClick={() => setPageNumber((p) => Math.min(numPages, p + 1))} disabled={pageNumber === numPages}>
-                    <ChevronRight className="h-4 w-4" />
+                    <ChevronRight />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Next page</TooltipContent>
@@ -650,7 +650,7 @@ export function DrawingViewer({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="sm" onClick={rotateLeft}>
-                  <RotateCcw className="h-4 w-4" />
+                  <RotateCcw />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Rotate left</TooltipContent>
@@ -658,7 +658,7 @@ export function DrawingViewer({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="sm" onClick={rotateRight}>
-                  <RotateCw className="h-4 w-4" />
+                  <RotateCw />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Rotate right</TooltipContent>
@@ -712,12 +712,14 @@ export function DrawingViewer({
           {annotationMode && (
             <div className="flex items-center gap-1 ml-1">
               {PRESET_COLORS.map((c) => (
-                <button
+                <Button
                   key={c}
                   type="button"
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setAnnotationColor(c)}
                   className={cn(
-                    "h-5 w-5 rounded-full border-2 transition-transform",
+                    "h-5 w-5 rounded-full border-2 p-0 transition-transform",
                     annotationColor === c
                       ? "border-foreground scale-110"
                       : "border-transparent hover:scale-110"
@@ -733,21 +735,20 @@ export function DrawingViewer({
           {annotationMode && activeTool !== "text" && activeTool !== "eraser" && (
             <div className="flex items-center gap-1 ml-1">
               {STROKE_WIDTHS.map((w) => (
-                <button
+                <Button
                   key={w}
                   type="button"
+                  variant={strokeWidth === w ? "secondary" : "ghost"}
+                  size="icon"
                   onClick={() => setStrokeWidth(w)}
-                  className={cn(
-                    "h-6 w-6 rounded flex items-center justify-center transition-colors",
-                    strokeWidth === w ? "bg-secondary" : "hover:bg-muted"
-                  )}
+                  className="h-6 w-6"
                   title={`${w}px`}
                 >
                   <div
                     className="rounded-full bg-foreground"
                     style={{ width: w + 2, height: w + 2 }}
                   />
-                </button>
+                </Button>
               ))}
             </div>
           )}

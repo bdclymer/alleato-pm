@@ -399,12 +399,12 @@ function DirectorySubSection({
 
         <Popover open={addOpen} onOpenChange={setAddOpen}>
           <PopoverTrigger asChild>
-            <button className="w-full group flex items-center gap-2.5 rounded-md px-2 py-1.5 -mx-2 hover:bg-muted/50 transition-colors text-left" disabled={adding}>
+            <Button variant="ghost" className="w-full group flex items-center gap-2.5 rounded-md px-2 py-1.5 -mx-2 hover:bg-muted/50 transition-colors text-left h-auto" disabled={adding}>
               <div className="h-7 w-7 rounded-full border border-dashed border-muted-foreground/30 flex items-center justify-center flex-shrink-0 group-hover:border-primary/50 group-hover:bg-primary/5 transition-colors">
                 <Plus className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-primary/60 transition-colors" />
               </div>
               <p className="text-sm text-muted-foreground/50 group-hover:text-foreground/70 transition-colors">{addLabel}</p>
-            </button>
+            </Button>
           </PopoverTrigger>
           <PopoverContent className="w-72 p-0" align="end" sideOffset={4}>
             <Command shouldFilter={false}>
@@ -557,7 +557,7 @@ function RoleBasedTeamSection({ projectId }: { projectId: number }) {
             return (
               <Popover key={role.id} open={isActive} onOpenChange={(open) => { setActiveRoleId(open ? role.id : null); if (!open) setSearchValue(""); }}>
                 <PopoverTrigger asChild>
-                  <button className="w-full group flex items-center gap-2.5 rounded-md px-2 py-1.5 -mx-2 hover:bg-muted/50 transition-colors text-left" disabled={assigning}>
+                  <Button variant="ghost" className="w-full group flex items-center gap-2.5 rounded-md px-2 py-1.5 -mx-2 hover:bg-muted/50 transition-colors text-left h-auto" disabled={assigning}>
                     {member ? (
                       <>
                         <Avatar className="h-7 w-7 flex-shrink-0">
@@ -571,13 +571,14 @@ function RoleBasedTeamSection({ projectId }: { projectId: number }) {
                             {role.role_name}{member.company_name ? ` · ${member.company_name}` : ""}
                           </p>
                         </div>
-                        <button
-                          className="h-6 w-6 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 text-muted-foreground/40 hover:text-red-500 hover:bg-red-50 transition-all flex-shrink-0"
+                        <Button
+                          variant="ghost"
+                          className="h-6 w-6 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 text-muted-foreground/40 hover:text-red-500 hover:bg-red-50 transition-all flex-shrink-0 p-0"
                           title={`Remove ${member.full_name} from ${role.role_name}`}
                           onClick={(e) => handleUnassign(role.id, e)}
                         >
                           <X className="h-3 w-3" />
-                        </button>
+                        </Button>
                       </>
                     ) : (
                       <>
@@ -590,7 +591,7 @@ function RoleBasedTeamSection({ projectId }: { projectId: number }) {
                         </div>
                       </>
                     )}
-                  </button>
+                  </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-72 p-0" align="end" sideOffset={4}>
                   <Command shouldFilter={false}>
@@ -681,9 +682,9 @@ function AiWidget({ projectId }: { projectId: number }) {
 
   return (
     <>
-      <button
+      <Button
         onClick={() => setOpen(true)}
-        className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-foreground text-background rounded-full pl-4 pr-5 py-3 shadow-sm hover:opacity-90 transition-opacity text-sm font-medium"
+        className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 bg-foreground text-background rounded-full pl-4 pr-5 py-3 shadow-sm hover:opacity-90 transition-opacity text-sm font-medium h-auto"
         aria-label="Open AI assistant"
       >
         <span className="relative flex h-2 w-2">
@@ -691,7 +692,7 @@ function AiWidget({ projectId }: { projectId: number }) {
           <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
         </span>
         Ask AI
-      </button>
+      </Button>
       {open && (
         <div className="fixed inset-y-0 right-0 z-50 flex">
           <div role="presentation" className="flex-1 cursor-default" onClick={() => setOpen(false)} />
@@ -706,9 +707,9 @@ function AiWidget({ projectId }: { projectId: number }) {
                   <p className="text-xs text-muted-foreground">Powered by project data</p>
                 </div>
               </div>
-              <button onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground transition-colors">
+              <Button variant="ghost" size="sm" onClick={() => setOpen(false)} className="text-muted-foreground hover:text-foreground transition-colors h-auto p-0">
                 <X className="h-4 w-4" />
-              </button>
+              </Button>
             </div>
             <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
               <div className="flex gap-3">
@@ -721,18 +722,18 @@ function AiWidget({ projectId }: { projectId: number }) {
               </div>
               <div className="space-y-2 pl-9">
                 {["Summarize the financial health of this project", "Which change orders are most at risk?", "What are the top priorities this week?"].map((prompt) => (
-                  <button key={prompt} onClick={() => setInput(prompt)} className="block w-full text-left text-xs text-muted-foreground hover:text-foreground border border-border rounded-md px-3 py-2 hover:bg-muted/50 transition-colors">
+                  <Button key={prompt} variant="outline" onClick={() => setInput(prompt)} className="block w-full text-left text-xs text-muted-foreground hover:text-foreground rounded-md px-3 py-2 hover:bg-muted/50 transition-colors h-auto">
                     {prompt}
-                  </button>
+                  </Button>
                 ))}
               </div>
             </div>
             <div className="border-t border-border px-4 py-4">
               <div className="flex items-center gap-2 border border-border rounded-lg px-3 py-2.5 bg-background focus-within:ring-1 focus-within:ring-ring">
                 <input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Ask about this project..." className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/60 outline-none" />
-                <button className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0" aria-label="Send message">
+                <Button variant="ghost" className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0 h-auto p-0" aria-label="Send message">
                   <Send className="h-3.5 w-3.5" />
-                </button>
+                </Button>
               </div>
               <p className="text-[10px] text-muted-foreground/50 mt-2 text-center">
                 Full AI chat at{" "}
@@ -921,7 +922,7 @@ export function ProjectHomeClient({
     if (hasBudgetData && budgetUtilization > 90) list.push({ id: "budget-critical", severity: "critical", label: `Budget ${budgetUtilization.toFixed(0)}% committed`, href: `/${project.id}/budget` });
     else if (hasBudgetData && budgetUtilization > 75) list.push({ id: "budget-warn", severity: "warning", label: `Budget ${budgetUtilization.toFixed(0)}% committed`, href: `/${project.id}/budget` });
     if (openRfis.length > 3) list.push({ id: "rfis", severity: openRfis.length > 8 ? "warning" : "info", label: `${openRfis.length} open RFIs`, href: `/${project.id}/rfis` });
-    if (pendingChangeOrders.length > 0) { const val = pendingChangeOrders.reduce((s, co) => s + (co.amount || 0), 0); list.push({ id: "cos", severity: pendingChangeOrders.length > 5 ? "warning" : "info", label: `${pendingChangeOrders.length} change orders · ${formatCompactCurrency(val)}`, href: `/${project.id}/change-orders` }); }
+    if (pendingChangeOrders.length > 0) { const val = pendingChangeOrders.reduce((s, co) => s + (co.total_amount || 0), 0); list.push({ id: "cos", severity: pendingChangeOrders.length > 5 ? "warning" : "info", label: `${pendingChangeOrders.length} change orders · ${formatCompactCurrency(val)}`, href: `/${project.id}/change-orders` }); }
     if (openChangeEvents.length > 0) list.push({ id: "ce", severity: "info", label: `${openChangeEvents.length} open change events`, href: `/${project.id}/change-events` });
     if (schedule.length > 0) { const overdue = schedule.filter((t) => t.end_date && new Date(t.end_date) < new Date() && t.status !== "completed" && t.status !== "complete" && t.status !== "done"); if (overdue.length > 0) list.push({ id: "schedule-overdue", severity: overdue.length > 5 ? "critical" : "warning", label: `${overdue.length} schedule tasks overdue`, href: `/${project.id}/schedule` }); }
     return list.slice(0, 5);
@@ -930,7 +931,7 @@ export function ProjectHomeClient({
   // Activity items
   const activityItems = React.useMemo(() => {
     const items: Array<{ text: React.ReactNode; href?: string; color: "blue" | "green" | "amber" | "red" }> = [];
-    if (pendingChangeOrders.length > 0) { const latest = pendingChangeOrders[0]; items.push({ text: <><strong>{latest.title || `CO #${latest.co_number}`}</strong> pending approval{latest.amount ? ` · ${formatCompactCurrency(latest.amount)}` : ""}</>, href: `/${project.id}/change-orders`, color: "amber" }); }
+    if (pendingChangeOrders.length > 0) { const latest = pendingChangeOrders[0]; items.push({ text: <><strong>{latest.title || `CO #${latest.pcco_number}`}</strong> pending approval{latest.total_amount ? ` · ${formatCompactCurrency(latest.total_amount)}` : ""}</>, href: `/${project.id}/change-orders`, color: "amber" }); }
     if (openRfis.length > 0) items.push({ text: <><strong>{openRfis.length} RFI{openRfis.length !== 1 ? "s" : ""}</strong> awaiting response</>, href: `/${project.id}/rfis`, color: "blue" });
     if (lastDailyLog) items.push({ text: <><strong>Daily log</strong> filed {format(new Date(lastDailyLog.created_at || Date.now()), "MMM d")}</>, href: `/${project.id}/daily-log`, color: "green" });
     if (commitments.length > 0) { const executed = commitments.filter((c) => c.executed).length; items.push({ text: <><strong>{executed}/{commitments.length}</strong> commitments executed</>, href: `/${project.id}/commitments`, color: executed === commitments.length ? "green" : "blue" }); }
@@ -947,7 +948,7 @@ export function ProjectHomeClient({
       { label: "Committed", value: committed, pct: (committed / totalBudget) * 100 },
       { label: "Remaining", value: remaining, pct: (remaining / totalBudget) * 100 },
     ];
-    const pendingValue = pendingChangeOrders.reduce((sum, co) => sum + (co.amount || 0), 0);
+    const pendingValue = pendingChangeOrders.reduce((sum, co) => sum + (co.total_amount || 0), 0);
     if (pendingValue > 0) items.push({ label: "Pending COs", value: pendingValue, pct: (pendingValue / totalBudget) * 100 });
     return items;
   }, [hasBudgetData, committed, remaining, totalBudget, pendingChangeOrders]);
@@ -1024,9 +1025,9 @@ export function ProjectHomeClient({
             {signals.map((signal) => (
               <SignalChip key={signal.id} label={signal.label} severity={signal.severity} href={signal.href} />
             ))}
-            <button onClick={() => setSignalsDismissed(true)} className="text-muted-foreground/30 hover:text-muted-foreground/60 transition-colors ml-1" aria-label="Dismiss signals">
+            <Button variant="ghost" onClick={() => setSignalsDismissed(true)} className="text-muted-foreground/30 hover:text-muted-foreground/60 transition-colors ml-1 h-auto p-0" aria-label="Dismiss signals">
               <X className="h-3.5 w-3.5" />
-            </button>
+            </Button>
           </div>
         )}
 

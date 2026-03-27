@@ -56,7 +56,7 @@ export function Comments() {
         }
       >
         <ThreadList />
-        <Composer className="border border-neutral-200 !my-4 rounded-lg overflow-hidden shadow-sm bg-white" />
+        <Composer className="border border-border !my-4 rounded-lg overflow-hidden shadow-sm bg-card" />
       </ClientSideSuspense>
     </>
   );
@@ -85,9 +85,10 @@ function CustomThread({ thread }: { thread: ThreadData }) {
 
   if (!open) {
     return (
+      {/* eslint-disable-next-line design-system/no-design-violations -- liveblocks thread toggle */}
       <button
         onClick={() => setOpen(true)}
-        className="border border-neutral-200 my-4 rounded-lg overflow-hidden shadow-sm bg-white w-full text-sm text-left flex items-center h-10 px-3"
+        className="border border-border my-4 rounded-lg overflow-hidden shadow-sm bg-card w-full text-sm text-left flex items-center h-10 px-3"
       >
         <Icon.Check className="mr-1.5" /> Thread resolved
       </button>
@@ -98,7 +99,7 @@ function CustomThread({ thread }: { thread: ThreadData }) {
     <Thread
       key={thread.id}
       thread={thread}
-      className="border border-neutral-200 my-4 rounded-lg overflow-hidden shadow-sm bg-white"
+      className="border border-border my-4 rounded-lg overflow-hidden shadow-sm bg-card"
       onResolvedChange={(resolved) => {
         if (resolved) {
           setOpen(false);

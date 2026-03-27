@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import { toast } from "sonner";
-import { SectionHeader } from "@/components/ui/section-header";
+import { SectionHeader } from "@/components/ds/section-header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -282,7 +282,7 @@ export function FormattedTranscript({
 
   return (
     <div ref={transcriptContainerRef} className="space-y-2">
-      <SectionHeader className="mb-1">Full Transcript</SectionHeader>
+      <SectionHeader title="Full Transcript" className="mb-1" />
 
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}

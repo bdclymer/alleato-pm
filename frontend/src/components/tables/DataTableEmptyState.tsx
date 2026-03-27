@@ -1,12 +1,11 @@
-// This component is deprecated - use empty-state from ui folder instead
+// This component is deprecated - use EmptyState from @/components/ds
 // Keeping for backwards compatibility during migration
 
 "use client";
 
 import * as React from "react";
 import { FileX2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { EmptyState as UnifiedEmptyState } from "@/components/ui/empty-state";
+import { EmptyState } from "@/components/ds";
 
 interface DataTableEmptyStateProps {
   icon?: React.ElementType;
@@ -20,7 +19,7 @@ interface DataTableEmptyStateProps {
 }
 
 /**
- * @deprecated Use EmptyState from @/components/ui/empty-state with variant="table"
+ * @deprecated Use EmptyState from @/components/ds
  * This is a compatibility wrapper that will be removed in the future
  */
 export function DataTableEmptyState({
@@ -31,15 +30,11 @@ export function DataTableEmptyState({
   className,
 }: DataTableEmptyStateProps) {
   return (
-    <UnifiedEmptyState
-      variant="table"
-      icon={<Icon className="h-10 w-10" />}
+    <EmptyState
+      icon={<Icon />}
       title={title}
-      description={description}
-      action={
-        action && <Button onClick={action.onClick}>{action.label}</Button>
-      }
-      iconWithBackground
+      description={description ?? ""}
+      action={action}
       className={className}
     />
   );

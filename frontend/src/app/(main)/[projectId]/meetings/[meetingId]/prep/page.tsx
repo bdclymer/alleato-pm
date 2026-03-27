@@ -184,7 +184,7 @@ export default function MeetingPrepPage() {
             {generatePrep.isPending ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
-              <Sparkles className="mr-2 h-4 w-4" />
+              <Sparkles />
             )}
             {generatePrep.isPending
               ? "Generating..."
@@ -208,7 +208,7 @@ export default function MeetingPrepPage() {
               <p className="text-xs mt-1">This may take 15-30 seconds</p>
             </div>
           ) : content ? (
-            <div className="rounded-md border bg-card p-6">
+            <div className="rounded-md bg-card p-6">
               <Editor
                 content={content}
                 onSaveContent={handleSaveContent}
@@ -231,7 +231,7 @@ export default function MeetingPrepPage() {
               </p>
               <div className="flex items-center gap-3">
                 <Button onClick={handleGenerate}>
-                  <Sparkles className="mr-2 h-4 w-4" />
+                  <Sparkles />
                   Generate Meeting Prep
                 </Button>
                 <Button

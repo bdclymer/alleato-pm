@@ -368,7 +368,7 @@ export function ProjectDirectorySetup({
         {/* Add Person Button */}
         <div className="flex justify-center">
           <Button onClick={() => setShowAddDialog(true)} variant="outline">
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus />
             Add Person
           </Button>
         </div>

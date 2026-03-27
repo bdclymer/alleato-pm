@@ -1241,10 +1241,11 @@ export function createOperationalTools(
           if ("error" in resolved) return resolved;
 
           // Fetch budget lines with full financial data
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const { data: budgetRows, error } = await supabase
-            .from("v_budget_lines")
+            .from("v_budget_lines" as any)
             .select("*")
-            .eq("project_id", resolved.id);
+            .eq("project_id", resolved.id) as { data: Array<Record<string, unknown>> | null; error: { message: string } | null };
 
           if (error) return { error: error.message };
           const lines = (budgetRows ?? []) as AnyRow[];

@@ -71,7 +71,7 @@ export default function AdminCheckPage() {
           </p>
         </div>
         <Button onClick={fetchAdminStatus} variant="outline" size="sm">
-          <RefreshCw className="mr-2 h-4 w-4" />
+          <RefreshCw />
           Refresh
         </Button>
       </div>

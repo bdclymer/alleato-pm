@@ -3,6 +3,7 @@
 import * as React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { TaskRow } from "./task-row";
 
@@ -37,25 +38,26 @@ export function EpicSection({
   return (
     <div className="space-y-0">
       {/* Epic Header */}
-      <button
+      <Button
+        variant="ghost"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center justify-between w-full h-10 px-4 -mx-4 rounded transition-colors duration-150 hover:bg-neutral-50 group"
+        className="flex items-center justify-between w-full h-10 px-4 -mx-4 rounded transition-colors duration-150 hover:bg-muted group"
       >
         <div className="flex items-center gap-2">
           <ChevronRight
             className={cn(
-              "h-3 w-3 text-neutral-400 transition-transform duration-200",
+              "h-3 w-3 text-muted-foreground transition-transform duration-200",
               isOpen && "rotate-90"
             )}
           />
-          <h3 className="text-base font-semibold text-neutral-800 tracking-tight">
+          <h3 className="text-base font-semibold text-foreground tracking-tight">
             {name}
           </h3>
-          <span className="text-xs font-medium text-neutral-500">
+          <span className="text-xs font-medium text-muted-foreground">
             {completedCount}/{totalCount}
           </span>
         </div>
-      </button>
+      </Button>
 
       {/* Task List */}
       <AnimatePresence initial={false}>

@@ -17,6 +17,11 @@ Usage:
   cd backend && .venv/bin/python src/scripts/strategist_eval.py --from-db
   cd backend && .venv/bin/python src/scripts/strategist_eval.py --scenario 2
   cd backend && .venv/bin/python src/scripts/strategist_eval.py --output /tmp/strategist-eval.json
+
+  # Integration tests — test each data source (Outlook, Teams, transcripts, SQL)
+  cd backend && .venv/bin/python src/scripts/strategist_eval.py --integration
+  cd backend && .venv/bin/python src/scripts/strategist_eval.py --integration --verbose
+  cd backend && .venv/bin/python src/scripts/strategist_eval.py --all  # seed + integration
 """
 
 import argparse
@@ -188,6 +193,167 @@ SEED_SCENARIOS: List[Dict[str, Any]] = [
             "Should reference specific emails/meetings where client concerns were raised. "
             "Must distinguish between routine project friction and escalation-risk situations. "
             "Recommendations should be relationship-focused, not just task-focused."
+        ),
+    },
+]
+
+
+# ---------------------------------------------------------------------------
+# Integration-specific eval scenarios
+# These specifically test whether each data source tool is working.
+# If Outlook/Teams/Transcripts stop syncing, these will fail.
+# ---------------------------------------------------------------------------
+
+INTEGRATION_SCENARIOS: List[Dict[str, Any]] = [
+    {
+        "id": 101,
+        "name": "[Integration] Outlook email search",
+        "category": "integration_outlook",
+        "query": (
+            "Search my emails for the most recent messages. "
+            "What are the latest email threads from this week?"
+        ),
+        "should_identify": [
+            "specific email subjects with dates",
+            "sender names and email addresses",
+            "actual email content from recent days",
+        ],
+        "should_recommend": [],
+        "should_not_miss": [
+            "at least one email from the current week with a real date",
+            "email sender name or address",
+        ],
+        "good_answer_criteria": (
+            "Must call the searchEmails tool and return real email data. "
+            "Must include specific email subjects, dates, and senders. "
+            "If no emails found, the response must NOT fabricate data — it should "
+            "clearly state no recent emails were found (indicating a sync issue). "
+            "Generic responses like 'I can search emails for you' without actual data = FAIL."
+        ),
+    },
+    {
+        "id": 102,
+        "name": "[Integration] Teams message search",
+        "category": "integration_teams",
+        "query": (
+            "What are the most recent Teams messages or channel discussions? "
+            "Show me what's been discussed in Teams this week."
+        ),
+        "should_identify": [
+            "specific Teams channel names",
+            "message content with dates",
+            "participants in the discussions",
+        ],
+        "should_recommend": [],
+        "should_not_miss": [
+            "at least one Teams message with a real date",
+            "the channel or chat where the message was posted",
+        ],
+        "good_answer_criteria": (
+            "Must call the searchTeamsMessages tool and return real Teams data. "
+            "Must include channel names, dates, and message content. "
+            "If no messages found, must clearly state this (indicating sync issue). "
+            "Generic 'I can help with Teams' without data = FAIL."
+        ),
+    },
+    {
+        "id": 103,
+        "name": "[Integration] Meeting transcript search",
+        "category": "integration_transcripts",
+        "query": (
+            "What meetings happened in the last two weeks? "
+            "Give me details from the most recent meeting transcripts."
+        ),
+        "should_identify": [
+            "specific meeting titles with dates",
+            "meeting participants by name",
+            "key discussion points from transcript content",
+        ],
+        "should_recommend": [],
+        "should_not_miss": [
+            "at least one meeting from the past 14 days with transcript content",
+            "meeting participant names",
+        ],
+        "good_answer_criteria": (
+            "Must call searchMeetingsByTopic or getMeetingDetails and return real meeting data. "
+            "Must include meeting titles, dates, and actual transcript excerpts or summaries. "
+            "If no meetings found in the past 14 days, flag as potential Fireflies sync issue. "
+            "Responses without specific meeting data = FAIL."
+        ),
+    },
+    {
+        "id": 104,
+        "name": "[Integration] SQL/database project data",
+        "category": "integration_sql",
+        "query": (
+            "List all active projects with their current budget status. "
+            "I want to see project names, total budgets, and committed costs."
+        ),
+        "should_identify": [
+            "specific project names from the database",
+            "actual dollar amounts for budgets",
+            "committed cost figures per project",
+        ],
+        "should_recommend": [],
+        "should_not_miss": [
+            "at least 2 real project names",
+            "numerical budget figures with dollar amounts",
+        ],
+        "good_answer_criteria": (
+            "Must call project/financial tools and return real database data. "
+            "Must include project names, budget numbers, and cost figures. "
+            "Generic financial advice without specific project data = FAIL."
+        ),
+    },
+    {
+        "id": 105,
+        "name": "[Integration] Cross-source freshness check",
+        "category": "integration_cross_source",
+        "query": (
+            "Search across all sources — emails, Teams, meetings, and documents — "
+            "for anything about scheduling or timeline. What's the most recent "
+            "information from each source type?"
+        ),
+        "should_identify": [
+            "results from multiple distinct source types",
+            "specific dates showing recency of each source",
+            "content from at least 2 different data sources",
+        ],
+        "should_recommend": [],
+        "should_not_miss": [
+            "must cite which source type each piece came from (email, Teams, meeting, etc.)",
+            "must include results from at least 2 sources",
+        ],
+        "good_answer_criteria": (
+            "Must call semanticSearch or multiple source-specific tools. "
+            "Must return data from at least 2 source types with dates. "
+            "If only one source type returns data, the response should flag "
+            "that other sources appear to be empty or stale. "
+            "Single-source responses without noting missing sources = FAIL."
+        ),
+    },
+    {
+        "id": 106,
+        "name": "[Integration] People/directory lookup",
+        "category": "integration_directory",
+        "query": (
+            "Who are the key people on our projects? Give me names, roles, "
+            "and contact information for our project team members."
+        ),
+        "should_identify": [
+            "real person names from the directory",
+            "job titles or project roles",
+            "email addresses or contact details",
+        ],
+        "should_recommend": [],
+        "should_not_miss": [
+            "at least 3 real team member names",
+            "their roles or titles on specific projects",
+        ],
+        "good_answer_criteria": (
+            "Must call getPeopleAndRoles or a directory tool. "
+            "Must return actual names, titles, and project assignments. "
+            "Generic advice about team management without real names = FAIL."
         ),
     },
 ]
@@ -637,6 +803,10 @@ async def async_main():
     parser.add_argument("--dry-run", action="store_true", help="Show scenarios without running")
     parser.add_argument("--from-db", action="store_true",
                         help="Load scenarios from eval_test_cases table instead of seeds")
+    parser.add_argument("--integration", action="store_true",
+                        help="Run ONLY integration-specific scenarios (Outlook, Teams, transcripts, SQL, etc.)")
+    parser.add_argument("--all", action="store_true",
+                        help="Run both seed AND integration scenarios")
     parser.add_argument("--scenario", type=int, default=None, metavar="N",
                         help="Run only scenario N")
     parser.add_argument("--save-to-db", action="store_true",
@@ -654,6 +824,12 @@ async def async_main():
             logger.error("No enabled test cases found in eval_test_cases. Run seed insertion first.")
             return
         logger.info(f"Loaded {len(scenarios)} scenarios from database")
+    elif args.integration:
+        scenarios = INTEGRATION_SCENARIOS
+        logger.info(f"Using {len(scenarios)} integration test scenarios")
+    elif args.all:
+        scenarios = SEED_SCENARIOS + INTEGRATION_SCENARIOS
+        logger.info(f"Using {len(SEED_SCENARIOS)} seed + {len(INTEGRATION_SCENARIOS)} integration = {len(scenarios)} total scenarios")
     else:
         scenarios = SEED_SCENARIOS
         logger.info(f"Using {len(scenarios)} seed scenarios")

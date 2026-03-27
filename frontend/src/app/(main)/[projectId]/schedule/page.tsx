@@ -188,7 +188,7 @@ function BulkActionBar({
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="sm">
             Update Status
-            <ChevronDown className="h-3 w-3 ml-1" />
+            <ChevronDown />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
@@ -745,7 +745,7 @@ export default function ProjectSchedulePage() {
         size="sm"
         onClick={() => handleAddTask()}
       >
-        <Plus className="h-4 w-4 mr-2" />
+        <Plus />
         Add Task
       </Button>
     </div>
@@ -836,7 +836,7 @@ export default function ProjectSchedulePage() {
                   onClick={() => refetch()}
                   disabled={isLoading}
                 >
-                  <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
+                  <RefreshCw className={cn(isLoading && "animate-spin")} />
                   Try Again
                 </Button>
               )}
@@ -893,11 +893,11 @@ export default function ProjectSchedulePage() {
               </p>
               <div className="flex gap-4">
                 <Button size="sm" onClick={() => handleAddTask()}>
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus />
                   Add Task
                 </Button>
                 <Button size="sm" variant="outline" onClick={() => setIsImportExportModalOpen(true)}>
-                  <Upload className="h-4 w-4 mr-2" />
+                  <Upload />
                   Import Schedule
                 </Button>
               </div>

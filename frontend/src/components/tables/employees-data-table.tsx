@@ -329,7 +329,7 @@ export function EmployeesDataTable({
               <Button variant="outline" size="sm">
                 <Columns3 className="h-4 w-4 mr-2" />
                 Columns
-                <ChevronDown className="h-4 w-4 ml-2" />
+                <ChevronDown />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-[200px]">
@@ -355,7 +355,7 @@ export function EmployeesDataTable({
             </DropdownMenuContent>
           </DropdownMenu>
           <Button onClick={exportToCSV} variant="outline">
-            <Download className="h-4 w-4 mr-2" />
+            <Download />
             Export
           </Button>
         </div>
@@ -583,7 +583,7 @@ export function EmployeesDataTable({
                             onClick={(e) => e.stopPropagation()}
                           >
                             <Button variant="ghost" size="sm">
-                              <MoreHorizontal className="h-4 w-4" />
+                              <MoreHorizontal />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">

@@ -136,11 +136,11 @@ export function SnapshotsTab({ projectId }: SnapshotsTabProps) {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={fetchSnapshots}>
-            <History className="mr-2 h-4 w-4" />
+            <History />
             Refresh
           </Button>
           <Button onClick={createSnapshot} disabled={creating}>
-            <Camera className="mr-2 h-4 w-4" />
+            <Camera />
             {creating ? "Creating..." : "Create Snapshot"}
           </Button>
         </div>
@@ -189,7 +189,7 @@ export function SnapshotsTab({ projectId }: SnapshotsTabProps) {
               className="w-full mt-4"
               onClick={() => toast.info("Export functionality coming soon")}
             >
-              <Download className="mr-2 h-3 w-3" />
+              <Download />
               Export
             </Button>
           </CardContent>
@@ -256,7 +256,7 @@ export function SnapshotsTab({ projectId }: SnapshotsTabProps) {
                   className="w-full mt-4"
                   onClick={() => toast.info("Export functionality coming soon")}
                 >
-                  <Download className="mr-2 h-3 w-3" />
+                  <Download />
                   Export
                 </Button>
               </CardContent>

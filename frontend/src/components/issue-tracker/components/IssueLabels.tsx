@@ -68,6 +68,7 @@ function Labels() {
           >
             <div className="bg-neutral-400/60 rounded-full w-2 h-2" />
             {text}{" "}
+            {/* eslint-disable-next-line design-system/no-design-violations -- inline label remove action */}
             <button
               className="text-base leading-none pb-0.5 text-neutral-400"
               onClick={() => removeLabel(id)}

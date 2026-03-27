@@ -82,14 +82,14 @@ async function resolveUserId(platformUserId: string): Promise<string> {
   }
 
   // Fallback: use a service account or the first admin user
-  const { data: admin } = await supabase
+  const { data: admin } = await (supabase as any)
     .from("profiles")
     .select("id")
     .eq("role", "admin")
     .limit(1)
     .single();
 
-  return admin?.id ?? "system";
+  return (admin as any)?.id ?? "system";
 }
 
 // ---------------------------------------------------------------------------

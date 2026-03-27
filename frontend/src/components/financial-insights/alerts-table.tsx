@@ -163,7 +163,7 @@ function getColumns(onCrossReference?: (projectId: number) => void): TableColumn
             }}
             className="gap-1.5 text-xs"
           >
-            <GitCompareArrows className="h-3.5 w-3.5" />
+            <GitCompareArrows />
             Compare
           </Button>
         ) : null,

@@ -219,7 +219,7 @@ function renderRowActions(
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size="icon" className="h-8 w-8">
-          <MoreHorizontal className="h-4 w-4" />
+          <MoreHorizontal />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -444,7 +444,7 @@ export function SupportArticlesClient({
     () =>
       sortArticles(
         filteredArticles,
-        tableState.sortBy,
+        tableState.sortBy ?? "title",
         tableState.sortDirection,
       ),
     [filteredArticles, tableState.sortBy, tableState.sortDirection],
@@ -623,7 +623,7 @@ export function SupportArticlesClient({
           tableState.setSearchParams({ page: String(p) });
         },
         onPerPageChange: (pp) => {
-          tableState.setPerPage(pp);
+          tableState.setPerPage(Number(pp));
           tableState.setPage(1);
         },
       }}

@@ -135,9 +135,9 @@ export function AutoForm({
                 className="gap-2 -ml-2"
               >
                 {showHidden ? (
-                  <ChevronDown className="h-4 w-4" />
+                  <ChevronDown />
                 ) : (
-                  <ChevronRight className="h-4 w-4" />
+                  <ChevronRight />
                 )}
                 {showHidden ? "Hide" : "Show"} hidden fields (
                 {hiddenColumns.length})
@@ -172,7 +172,7 @@ export function AutoForm({
             Cancel
           </Button>
           <Button type="submit" disabled={isPending}>
-            <Save className="mr-2 h-4 w-4" />
+            <Save />
             {isPending
               ? "Saving..."
               : mode === "create"

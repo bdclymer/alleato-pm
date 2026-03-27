@@ -134,7 +134,7 @@ export default function NewInvoicePage() {
           size="sm"
           onClick={() => router.push(`/${projectId}/invoicing`)}
         >
-          <ArrowLeft className="mr-2 h-4 w-4" />
+          <ArrowLeft />
           Back to Invoicing
         </Button>
       }

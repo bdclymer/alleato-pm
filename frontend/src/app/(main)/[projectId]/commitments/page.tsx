@@ -393,9 +393,9 @@ export default function ProjectCommitmentsPage(): ReactElement {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus />
                   Create
-                  <ChevronDown className="h-4 w-4 ml-2" />
+                  <ChevronDown />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -447,7 +447,7 @@ export default function ProjectCommitmentsPage(): ReactElement {
                     onClick={handleErpSync}
                     aria-label="Sync from ERP"
                   >
-                    <RefreshCw className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} />
+                    <RefreshCw className={isSyncing ? "animate-spin" : undefined} />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Sync commitments from Acumatica</TooltipContent>

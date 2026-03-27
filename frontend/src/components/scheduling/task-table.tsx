@@ -296,9 +296,9 @@ function TaskRow({
                 }}
               >
                 {isExpanded ? (
-                  <ChevronDown className="h-4 w-4" />
+                  <ChevronDown />
                 ) : (
-                  <ChevronRight className="h-4 w-4" />
+                  <ChevronRight />
                 )}
               </Button>
             ) : (
@@ -391,7 +391,7 @@ function TaskRow({
                 size="sm"
                 className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-150"
               >
-                <MoreHorizontal className="h-4 w-4" />
+                <MoreHorizontal />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">

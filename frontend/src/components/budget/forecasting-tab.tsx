@@ -98,13 +98,13 @@ export function ForecastingTab({ projectId }: ForecastingTabProps) {
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={fetchForecast}>
-            <Calculator className="mr-2 h-4 w-4" />
+            <Calculator />
             Recalculate Forecast
           </Button>
           <Button
             onClick={() => toast.info("Export functionality coming soon")}
           >
-            <FileSpreadsheet className="mr-2 h-4 w-4" />
+            <FileSpreadsheet />
             Export Forecast
           </Button>
         </div>

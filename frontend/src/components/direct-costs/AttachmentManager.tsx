@@ -211,7 +211,7 @@ export function AttachmentManager({
             onClick={() => fileInputRef.current?.click()}
             disabled={isUploading}
           >
-            <Upload className="h-4 w-4" />
+            <Upload />
             Choose Files
           </Button>
           <input
@@ -351,7 +351,7 @@ export function AttachmentManager({
                       className="h-7 w-7"
                       onClick={() => window.open(attachment.url || "", "_blank")}
                     >
-                      <Download className="h-3.5 w-3.5" />
+                      <Download />
                     </Button>
                   )}
                   <Button

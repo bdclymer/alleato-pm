@@ -105,10 +105,11 @@ export default function DirectoryUsersPage() {
           `${user.first_name[0] || ""}${user.last_name[0] || ""}`;
 
         return (
-          <button
+          <Button
             type="button"
+            variant="ghost"
             onClick={() => setSelectedUser(user)}
-            className="flex items-center gap-4 hover:opacity-80 transition-opacity text-left"
+            className="flex items-center gap-4 hover:opacity-80 transition-opacity text-left h-auto p-0 justify-start"
           >
             <Avatar className="h-8 w-8">
               <AvatarFallback className="bg-primary/10 text-primary">
@@ -118,7 +119,7 @@ export default function DirectoryUsersPage() {
             <Text as="span" weight="medium">
               {fullName}
             </Text>
-          </button>
+          </Button>
         );
       },
     },
@@ -244,7 +245,7 @@ export default function DirectoryUsersPage() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">
-                <MoreHorizontal className="h-4 w-4" />
+                <MoreHorizontal />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -389,18 +390,18 @@ export default function DirectoryUsersPage() {
 
             <div className="flex items-center gap-2">
               <Button variant="outline" onClick={() => setIsBulkAddOpen(true)}>
-                <Users className="h-4 w-4 mr-2" />
+                <Users />
                 Bulk Add
               </Button>
               <Button onClick={() => setIsAddOpen(true)}>
-                <UserPlus className="h-4 w-4 mr-2" />
+                <UserPlus />
                 Add User
               </Button>
             </div>
           </div>
 
           {/* Users Table */}
-          <div className="bg-card rounded-lg shadow border border-border">
+          <div className="bg-card rounded-lg shadow">
             <DataTable
               columns={columns}
               data={users}

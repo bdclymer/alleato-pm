@@ -177,7 +177,7 @@ export default function NewChangeEventPage() {
           );
         }}
       >
-        <Sparkles className="h-4 w-4" />
+        <Sparkles />
         Autofill
       </Button>
     ) : undefined;

@@ -113,11 +113,11 @@ export function ProjectChecklistSidebar({
           title="Setup Checklist"
         >
           {iconOnly ? (
-            <ListChecks className="h-4 w-4" />
+            <ListChecks />
           ) : (
             <>
               <span>{buttonLabel}</span>
-              <ChevronRight className="h-4 w-4" />
+              <ChevronRight />
             </>
           )}
         </Button>

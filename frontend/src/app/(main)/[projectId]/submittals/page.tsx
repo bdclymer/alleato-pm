@@ -201,7 +201,7 @@ export default function SubmittalsPage(): ReactElement {
               data-testid="submittals-dropdown-create"
               onClick={() => setDialogOpen(true)}
             >
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus />
               Add Submittal
             </Button>
           ),
@@ -266,7 +266,7 @@ export default function SubmittalsPage(): ReactElement {
           action:
             isComingSoonTab || activeTab === "recycle-bin" ? undefined : (
               <Button size="sm" onClick={() => setDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus />
                 Create your first submittal
               </Button>
             ),

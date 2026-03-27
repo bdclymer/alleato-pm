@@ -71,7 +71,7 @@ export function DirectCostPreviewPane({
             onClick={() => onOpenDirectCostPage(directCost)}
           >
             Open
-            <ArrowUpRight className="h-4 w-4 ml-1.5" />
+            <ArrowUpRight />
           </Button>
         </div>
       </div>

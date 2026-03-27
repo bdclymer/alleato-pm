@@ -38,10 +38,10 @@ export function GoldenDashboardPage() {
     <PageShell variant="dashboard" title="Project Overview" actions={<Button>+ New Project</Button>}>
       {/* KPI row goes first on dashboard pages */}
       <KpiRow metrics={[
-        { label: "CONTRACT VALUE", value: "$4.2M", trend: "+12%" },
-        { label: "OPEN RFIs", value: "7", trend: null },
-        { label: "BUDGET USED", value: "64%", trend: null },
-        { label: "DAYS TO COMPLETION", value: "42", trend: "-3" },
+        { label: "CONTRACT VALUE", value: "$4.2M" },
+        { label: "OPEN RFIs", value: "7" },
+        { label: "BUDGET USED", value: "64%" },
+        { label: "DAYS TO COMPLETION", value: "42" },
       ]} />
       {/* Content below */}
     </PageShell>
@@ -52,6 +52,7 @@ export function GoldenTablePage() {
   return (
     <PageShell variant="table" title="Commitments" actions={<Button>+ New Commitment</Button>}>
       {/* UnifiedTablePage or DataTable goes here */}
+      {null}
     </PageShell>
   );
 }
@@ -77,6 +78,7 @@ export function GoldenDetailPage({ status }: { status: string }) {
       statusBadge={<StatusBadge status={status} />}
     >
       {/* Tabs or line items */}
+      {null}
     </PageShell>
   );
 }
@@ -160,7 +162,8 @@ export function GoldenSurfaces() {
   return (
     <div className="space-y-4">
 
-      {/* ✅ KPI bento — shared border, internal dividers only */}
+      {/* ✅ KPI bento — shared surface, internal dividers only */}
+      {/* eslint-disable-next-line design-system/no-design-violations -- golden example showing bento pattern with intentional shared border */}
       <div className="overflow-hidden rounded-lg border border-border bg-card divide-x divide-border">
         <div className="grid grid-cols-4">
           <div className="px-6 py-5">
@@ -233,9 +236,10 @@ export function GoldenStatusBadges() {
 export function GoldenEmptyState() {
   return (
     <EmptyState
+      icon={null}
       title="No change orders yet"
       description="Change orders will appear here once they're created."
-      action={<Button variant="outline">+ Create Change Order</Button>}
+      action={{ label: "+ Create Change Order", onClick: () => {} }}
     />
   );
 }

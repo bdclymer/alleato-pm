@@ -125,7 +125,7 @@ export default function ContactDetailsPage() {
               onClick={() => router.push("/directory/contacts")}
               className="mt-4"
             >
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <ArrowLeft />
               Back to Contacts
             </Button>
           </div>
@@ -148,13 +148,13 @@ export default function ContactDetailsPage() {
               variant="outline"
               onClick={() => router.push("/directory/contacts")}
             >
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <ArrowLeft />
               Back to Contacts
             </Button>
             <Button
               className="bg-primary hover:bg-primary/90"
             >
-              <Edit className="mr-2 h-4 w-4" />
+              <Edit />
               Edit Contact
             </Button>
           </div>
@@ -255,7 +255,7 @@ export default function ContactDetailsPage() {
             </CardHeader>
             <CardContent>
               <Tabs defaultValue="active" className="w-full">
-                <TabsList>
+                <TabsList variant="line">
                   <TabsTrigger value="active">Active Projects</TabsTrigger>
                   <TabsTrigger value="all">All Projects</TabsTrigger>
                 </TabsList>

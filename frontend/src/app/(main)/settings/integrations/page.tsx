@@ -186,7 +186,7 @@ function IntegrationRow({ integration }: { integration: Integration }) {
       <div className="shrink-0 flex items-center gap-2">
         {isConnected && (
           <Button variant="ghost" size="sm" className="h-7 w-7 p-0 text-muted-foreground">
-            <RefreshCw className="h-3.5 w-3.5" />
+            <RefreshCw />
           </Button>
         )}
         {isConnected && (
@@ -245,7 +245,7 @@ export default function IntegrationsSettingsPage() {
               </div>
 
               {/* Integration cards */}
-              <div className="rounded-lg border border-border bg-card overflow-hidden divide-y divide-border">
+              <div className="rounded-lg border border-border overflow-hidden divide-y divide-border">
                 {group.items.map((integration) => (
                   <IntegrationRow key={integration.id} integration={integration} />
                 ))}

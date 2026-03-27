@@ -97,7 +97,7 @@ export function MegaMenuPanel({
   );
 
   return (
-    <div className="w-screen bg-[#252525]">
+    <div className="w-screen bg-zinc-800">
       <div className="mx-auto max-w-4xl px-12 py-8">
         {/* Featured column — content transitions per hovered group */}
         <div

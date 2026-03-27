@@ -297,11 +297,11 @@ export function VerticalMarkupSettings({
           </div>
           <div className="flex gap-2">
             <Button variant="outline" onClick={() => setShowCalculator(true)}>
-              <Calculator className="h-4 w-4 mr-2" />
+              <Calculator />
               Test Calculator
             </Button>
             <Button onClick={() => setShowAddDialog(true)}>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus />
               Add Markup
             </Button>
           </div>
@@ -510,7 +510,7 @@ export function VerticalMarkupSettings({
               </div>
             </div>
             <Button onClick={handleCalculate} className="w-full">
-              <Calculator className="h-4 w-4 mr-2" />
+              <Calculator />
               Calculate
             </Button>
 

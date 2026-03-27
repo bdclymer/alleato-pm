@@ -164,7 +164,7 @@ export default function TablesDirectoryPage() {
         </p>
       </div>
 
-      <div className="bg-white border border-neutral-200 rounded-lg overflow-hidden">
+      <div className="bg-card rounded-lg overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>

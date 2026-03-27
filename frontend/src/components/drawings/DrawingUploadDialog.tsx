@@ -332,10 +332,11 @@ export function DrawingUploadDialog({
 
             {/* Advanced Options */}
             <div className="border-t pt-4">
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 onClick={() => setShowAdvanced((v) => !v)}
-                className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary transition-colors"
+                className="flex items-center gap-2 text-sm font-medium text-foreground hover:text-primary px-0"
               >
                 {showAdvanced ? (
                   <ChevronDown className="h-4 w-4" />
@@ -343,7 +344,7 @@ export function DrawingUploadDialog({
                   <ChevronRight className="h-4 w-4" />
                 )}
                 Advanced Options
-              </button>
+              </Button>
 
               {showAdvanced && (
                 <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">

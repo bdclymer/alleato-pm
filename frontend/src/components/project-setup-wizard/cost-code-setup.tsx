@@ -397,7 +397,7 @@ export function CostCodeSetup({
             variant="outline"
             disabled={saving}
           >
-            <Upload className="h-4 w-4 mr-2" />
+            <Upload />
             Import Standard Codes
           </Button>
         </div>
@@ -445,7 +445,7 @@ export function CostCodeSetup({
             variant="outline"
             disabled={saving}
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus />
             Add Custom Code
           </Button>
         </div>

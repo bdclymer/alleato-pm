@@ -187,7 +187,7 @@ function Sidebar({
           data-sidebar="sidebar"
           data-slot="sidebar"
           data-mobile="true"
-          className="bg-sidebar text-sidebar-foreground h-dvh max-h-dvh w-[var(--sidebar-width)] p-0 [&>button]:hidden"
+          className="bg-sidebar text-sidebar-foreground h-svh max-h-svh w-[var(--sidebar-width)] rounded-none p-0 [&>button]:hidden"
           style={
             {
               "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
@@ -213,8 +213,10 @@ function Sidebar({
       data-variant={variant}
       data-side={side}
       data-slot="sidebar"
+      {...props}
     >
       {/* This is what handles the sidebar gap on desktop */}
+      {/* Gap stays at icon width even during hover-expand (overlay, not push) */}
       <div
         data-slot="sidebar-gap"
         className={cn(
@@ -226,6 +228,7 @@ function Sidebar({
             : "group-data-[collapsible=icon]:w-[var(--sidebar-width-icon)]"
         )}
       />
+      {/* Sidebar container: expands to full width on hover-expand (overlays content) */}
       <div
         data-slot="sidebar-container"
         className={cn(
@@ -237,9 +240,10 @@ function Sidebar({
           variant === "floating" || variant === "inset"
             ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+1rem+2px)]"
             : "group-data-[collapsible=icon]:w-[var(--sidebar-width-icon)] group-data-[side=left]:border-r group-data-[side=right]:border-l",
+          // Hover-expand: container goes to full width while gap stays at icon width
+          "group-data-[hover-expanded=true]:w-[var(--sidebar-width)] group-data-[hover-expanded=true]:shadow-lg group-data-[hover-expanded=true]:z-30",
           className
         )}
-        {...props}
       >
         <div
           data-sidebar="sidebar"

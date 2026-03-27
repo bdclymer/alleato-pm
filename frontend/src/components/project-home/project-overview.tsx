@@ -10,6 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { DocumentMetadataModal } from "./document-metadata-modal";
 
 interface ProjectOverviewProps {
@@ -109,12 +110,13 @@ export function ProjectOverview({ items, projectId }: ProjectOverviewProps) {
             {items.map((item) => (
               <TableRow key={item.id}>
                 <TableCell>
-                  <button
+                  <Button
+                    variant="link"
                     onClick={() => handleItemClick(item)}
-                    className="text-link hover:text-link-hover hover:underline font-medium text-left"
+                    className="text-link hover:text-link-hover hover:underline font-medium text-left p-0 h-auto"
                   >
                     {item.name}
-                  </button>
+                  </Button>
                 </TableCell>
                 <TableCell>
                   <OverviewBar item={item} />

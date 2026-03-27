@@ -126,7 +126,7 @@ function KeyboardTipsPopover(): ReactElement {
     <Popover>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Keyboard tips">
-          <Lightbulb className="h-4.5 w-4.5" />
+          <Lightbulb />
         </Button>
       </PopoverTrigger>
       <PopoverContent align="end" className="w-72 space-y-2 p-3">
@@ -192,7 +192,7 @@ export function MeetingPreviewPane({
               className="shrink-0"
             >
               View
-              <ArrowUpRight className="h-3.5 w-3.5 ml-1" />
+              <ArrowUpRight />
             </Button>
           </div>
         </div>

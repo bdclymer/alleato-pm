@@ -210,7 +210,7 @@ export function PluginManagerUI() {
             <Dialog>
               <DialogTrigger asChild>
                 <Button>
-                  <Download className="mr-2 h-4 w-4" />
+                  <Download />
                   Install Plugin
                 </Button>
               </DialogTrigger>
@@ -308,7 +308,7 @@ export function PluginManagerUI() {
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                             <Button variant="ghost" size="icon">
-                              <MoreVertical className="h-4 w-4" />
+                              <MoreVertical />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">

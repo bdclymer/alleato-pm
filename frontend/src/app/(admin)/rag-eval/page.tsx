@@ -268,7 +268,7 @@ function RunCard({ type, onComplete }: { type: EvalType; onComplete: () => void 
         <div className="flex items-center gap-2 shrink-0">
           {lines.length > 0 && (
             <Button variant="ghost" size="sm" onClick={() => setOpen((o) => !o)} className="h-7 px-2">
-              {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+              {open ? <ChevronDown /> : <ChevronRight />}
             </Button>
           )}
           <Button
@@ -279,9 +279,9 @@ function RunCard({ type, onComplete }: { type: EvalType; onComplete: () => void 
             className="h-7 gap-1.5"
           >
             {state === "running" ? (
-              <RefreshCw className="h-3.5 w-3.5 animate-spin" />
+              <RefreshCw className="animate-spin" />
             ) : (
-              <Play className="h-3.5 w-3.5" />
+              <Play />
             )}
             {state === "running" ? "Running…" : state === "done" ? "Re-run" : "Run"}
           </Button>
@@ -569,11 +569,12 @@ export default function RagEvalPage() {
         {/* Tabs */}
         <div className="flex gap-1 border-b border-border mb-6">
           {tabs.map((tab) => (
-            <button
+            <Button
               key={tab.id}
+              variant="ghost"
               onClick={() => setActiveTab(tab.id)}
               className={cn(
-                "px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-2",
+                "rounded-none px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors flex items-center gap-2",
                 activeTab === tab.id
                   ? "border-primary text-foreground"
                   : "border-transparent text-muted-foreground hover:text-foreground",
@@ -585,7 +586,7 @@ export default function RagEvalPage() {
                   {tab.badge}
                 </Badge>
               )}
-            </button>
+            </Button>
           ))}
         </div>
 

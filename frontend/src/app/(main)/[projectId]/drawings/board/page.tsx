@@ -190,7 +190,7 @@ export default function DrawingsBoardPage() {
         description="Drag-and-drop drawing packages by status"
         actions={
           <Button size="sm" className="gap-2">
-            <FileUp className="h-4 w-4" />
+            <FileUp />
             Upload revisions
           </Button>
         }
@@ -205,7 +205,7 @@ export default function DrawingsBoardPage() {
                 <CardTitle className="text-base">Status board</CardTitle>
               </div>
               <Button variant="outline" size="sm" className="gap-2">
-                <Download className="h-4 w-4" />
+                <Download />
                 Export board
               </Button>
             </CardHeader>
@@ -314,7 +314,7 @@ function BoardCard({ item, columnId }: BoardCardProps) {
           className="text-muted-foreground hover:bg-muted/40"
           aria-label="Drag card"
         >
-          <GripVertical className="h-4 w-4" />
+          <GripVertical />
         </Button>
         <BoardCardPreview item={item} />
       </div>

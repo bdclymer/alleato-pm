@@ -3,7 +3,7 @@ import {
   customProvider,
   extractReasoningMiddleware,
   wrapLanguageModel,
-  type LanguageModelV1Middleware,
+  type LanguageModelMiddleware,
 } from "ai";
 import { isTestEnvironment } from "../constants";
 
@@ -33,7 +33,7 @@ const openai = createOpenAI(
 // Run `npx @ai-sdk/devtools` then open http://localhost:4983
 // ---------------------------------------------------------------------------
 
-let devToolsMiddlewareFn: (() => LanguageModelV1Middleware) | null = null;
+let devToolsMiddlewareFn: (() => LanguageModelMiddleware) | null = null;
 if (process.env.NODE_ENV === "development") {
   try {
     // Dynamic import so it's never bundled for production

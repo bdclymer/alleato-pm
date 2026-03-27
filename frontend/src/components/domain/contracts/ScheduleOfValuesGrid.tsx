@@ -71,7 +71,7 @@ export function ScheduleOfValuesGrid({
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold">Schedule of Values</h3>
         <Button onClick={addRow} size="sm">
-          <Plus className="mr-2 h-4 w-4" />
+          <Plus />
           Add Line Item
         </Button>
       </div>

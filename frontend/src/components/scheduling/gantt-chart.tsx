@@ -23,6 +23,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Circle,
@@ -653,9 +654,11 @@ export function GanttChart({ data, onTaskClick, onQuickAddTask, onUpdateTask, vi
           {/* Two-row header aligned with SVG timeline (total = HEADER_HEIGHT) */}
           {/* Row 1: aligned with month row — light bg to match SVG */}
           <div className="flex items-center bg-muted/20 pl-1.5" style={{ height: HEADER_ROW_1 }}>
-            <button
+            <Button
               type="button"
-              className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-foreground"
               onClick={() => setIsPanelCollapsed((prev) => !prev)}
               aria-label={isPanelCollapsed ? "Expand task panel" : "Collapse task panel"}
               title={isPanelCollapsed ? "Expand task panel" : "Collapse task panel"}
@@ -665,7 +668,7 @@ export function GanttChart({ data, onTaskClick, onQuickAddTask, onUpdateTask, vi
               ) : (
                 <PanelLeftClose className="h-4 w-4" />
               )}
-            </button>
+            </Button>
           </div>
           <div className="overflow-x-auto overflow-y-hidden">
             <div style={{ minWidth: leftMinWidth }}>
@@ -732,9 +735,11 @@ export function GanttChart({ data, onTaskClick, onQuickAddTask, onUpdateTask, vi
                           style={{ paddingLeft: `${2 + task.level * 16}px` }}
                         >
                           {isParent ? (
-                            <button
+                            <Button
                               type="button"
-                              className="flex-shrink-0 p-0.5 rounded hover:bg-muted transition-colors"
+                              variant="ghost"
+                              size="icon"
+                              className="flex-shrink-0 h-5 w-5 p-0.5 hover:bg-muted"
                               onClick={(e) => { e.stopPropagation(); toggleCollapse(task.id); }}
                               aria-label={isCollapsed ? "Expand" : "Collapse"}
                             >
@@ -743,30 +748,32 @@ export function GanttChart({ data, onTaskClick, onQuickAddTask, onUpdateTask, vi
                               ) : (
                                 <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
                               )}
-                            </button>
+                            </Button>
                           ) : (
                             <span className="w-[18px] flex-shrink-0" />
                           )}
-                          <button
+                          <Button
                             type="button"
-                            className="flex-shrink-0 rounded-sm border border-border hover:border-foreground/40 transition-colors h-3.5 w-3.5 flex items-center justify-center"
+                            variant="outline"
+                            className="flex-shrink-0 rounded-sm hover:border-foreground/40 transition-colors h-3.5 w-3.5 p-0 flex items-center justify-center"
                             onClick={() => onTaskClick?.(task.id)}
                             aria-label={`Select ${task.name}`}
                           >
                             {task.percent_complete === 100 && (
                               <CheckCircle2 className="h-3.5 w-3.5 text-status-success" />
                             )}
-                          </button>
-                          <button
+                          </Button>
+                          <Button
                             type="button"
+                            variant="link"
                             className={cn(
-                              "text-[13px] truncate text-left bg-transparent border-none p-0 ml-1.5 cursor-pointer hover:underline",
+                              "text-[13px] truncate text-left p-0 ml-1.5 h-auto hover:underline decoration-0",
                               isParent ? "font-semibold text-foreground" : "font-normal text-foreground"
                             )}
                             onClick={() => onTaskClick?.(task.id)}
                           >
                             {task.name}
-                          </button>
+                          </Button>
                         </div>
                       ) : column.id === "start_date" ? (
                         <span className="text-[12px] text-muted-foreground">

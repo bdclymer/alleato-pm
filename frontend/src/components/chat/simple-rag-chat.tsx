@@ -308,7 +308,7 @@ export function SimpleRagChat({
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              <SendHorizontal className="h-4 w-4" />
+              <SendHorizontal />
             )}
           </Button>
         </div>

@@ -270,7 +270,7 @@ export function ImportBudgetModal({
               size="sm"
               className="gap-2"
             >
-              <Upload className="w-4 h-4" />
+              <Upload />
               Download Template
             </Button>
           </div>
@@ -425,7 +425,7 @@ export function ImportBudgetModal({
               </>
             ) : (
               <>
-                <Upload className="w-4 h-4 mr-2" />
+                <Upload />
                 Import
               </>
             )}

@@ -57,10 +57,11 @@ export function ScheduleOfValuesTab({
   const [isSaving, setIsSaving] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
-  // Fetch cost codes for budget code selection
+  // Fetch cost codes for budget code selection — need high limit to cover all divisions
   const { costCodes, options: costCodeOptions, isLoading: costCodesLoading } = useCostCodes({
     enabled: true,
     useFallback: true,
+    limit: 1000,
   });
 
   useEffect(() => {
@@ -300,7 +301,7 @@ export function ScheduleOfValuesTab({
           <div className="mt-4">
             <div className="flex flex-wrap justify-center gap-2">
               <Button size="sm" onClick={handleAdd}>
-                <Plus className="h-4 w-4 mr-2" />
+                <Plus />
                 Add Line Item
               </Button>
               <Button
@@ -343,7 +344,7 @@ export function ScheduleOfValuesTab({
               {isImporting ? "Importing..." : "Import from Budget"}
             </Button>
             <Button size="sm" variant="outline" onClick={handleAdd} disabled={isSaving}>
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus />
               Add Line Item
             </Button>
             {hasUnsavedChanges && (
@@ -353,7 +354,7 @@ export function ScheduleOfValuesTab({
                 disabled={isSaving}
                 className="bg-green-600 hover:bg-green-700"
               >
-                <Save className="h-4 w-4 mr-2" />
+                <Save />
                 {isSaving ? "Saving..." : "Save Changes"}
               </Button>
             )}
@@ -398,36 +399,33 @@ export function ScheduleOfValuesTab({
                       />
                     </td>
                     <td className="px-4 py-2 whitespace-nowrap min-w-[200px]">
-                      <div className="space-y-1">
-                        {item.budget_code && (
-                          <Text size="xs" tone="muted" className="px-1">
-                            {item.budget_code}
-                            {getBudgetCodeDescription(item.budget_code)
-                              ? ` — ${getBudgetCodeDescription(item.budget_code)}`
-                              : ""}
-                          </Text>
-                        )}
-                        <Select
-                          value={item.budget_code || "none"}
-                          onValueChange={(value) => updateItem(item.id, "budget_code", value === "none" ? "" : value)}
-                          disabled={costCodesLoading}
+                      <Select
+                        value={item.budget_code || "none"}
+                        onValueChange={(value) => updateItem(item.id, "budget_code", value === "none" ? "" : value)}
+                        disabled={costCodesLoading}
+                      >
+                        <SelectTrigger
+                          className="w-full"
+                          aria-label={`Budget code ${index + 1}`}
                         >
-                          <SelectTrigger
-                            className="w-full"
-                            aria-label={`Budget code ${index + 1}`}
-                          >
-                            <SelectValue placeholder={costCodesLoading ? "Loading..." : "Select budget code"} />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="none">No budget code</SelectItem>
-                            {costCodeOptions.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                          <SelectValue placeholder={costCodesLoading ? "Loading..." : "Select budget code"}>
+                            {item.budget_code
+                              ? (() => {
+                                  const match = costCodeOptions.find((o) => o.value === item.budget_code);
+                                  return match ? match.label : item.budget_code;
+                                })()
+                              : "No budget code"}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">No budget code</SelectItem>
+                          {costCodeOptions.map((option) => (
+                            <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </td>
                     <td className="px-4 py-2 text-right">
                       <Input
@@ -457,7 +455,7 @@ export function ScheduleOfValuesTab({
                           disabled={index === 0}
                           onClick={() => moveItem(item.id, "up")}
                         >
-                          <ArrowUp className="h-4 w-4" />
+                          <ArrowUp />
                         </Button>
                         <Button
                           variant="ghost"
@@ -466,7 +464,7 @@ export function ScheduleOfValuesTab({
                           disabled={index === items.length - 1}
                           onClick={() => moveItem(item.id, "down")}
                         >
-                          <ArrowDown className="h-4 w-4" />
+                          <ArrowDown />
                         </Button>
                         <Button
                           variant="ghost"
@@ -497,11 +495,6 @@ export function ScheduleOfValuesTab({
           </table>
         </div>
 
-        {/* Budget Impact Summary */}
-        <BudgetImpactSummary
-          items={items}
-          costCodes={costCodes}
-        />
     </div>
   );
 }
@@ -533,9 +526,10 @@ function BudgetImpactSummary({ items, costCodes }: BudgetImpactSummaryProps) {
       const code = item.budget_code || "unassigned";
       if (!summary[code]) {
         const costCode = costCodes.find((c) => c.id === code);
+        const title = costCode?.title || costCode?.description;
         summary[code] = {
           code,
-          description: costCode?.title || costCode?.description || (code === "unassigned" ? "No Budget Code" : code),
+          description: code === "unassigned" ? "No Budget Code" : (title ? `${code} — ${title}` : code),
           totalAmount: 0,
           totalBilled: 0,
           lineCount: 0,

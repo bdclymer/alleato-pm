@@ -410,7 +410,7 @@ export function PermissionTemplateDialog({
                   onClick={handleCopyTemplate}
                   disabled={!selectedTemplate}
                 >
-                  <Copy className="mr-2 h-4 w-4" />
+                  <Copy />
                   Copy
                 </Button>
               </div>

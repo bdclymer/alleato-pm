@@ -1,6 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
@@ -56,7 +57,7 @@ export function BaseModal({
           sizeClasses[size],
           "w-[98vw] sm:w-full",
           "max-h-[92vh] flex flex-col",
-          "rounded-2xl border border-border bg-card shadow-[0_30px_80px_-40px_rgba(0,0,0,0.45)]",
+          "rounded-2xl bg-card shadow-sm",
           "transition-transform duration-200",
           className,
         )}
@@ -70,13 +71,15 @@ export function BaseModal({
               {title}
             </DialogTitle>
             {showCloseButton && (
-              <button
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={onClose}
-                className="rounded-full border border-white/10 bg-background/5 p-2 text-white hover:border-white/30 hover:bg-background/10 transition-all"
+                className="rounded-full border border-white/10 bg-background/5 h-8 w-8 text-white hover:border-white/30 hover:bg-background/10 transition-all"
                 aria-label="Close modal"
               >
                 <X className="h-4 w-4" />
-              </button>
+              </Button>
             )}
           </div>
         </DialogHeader>

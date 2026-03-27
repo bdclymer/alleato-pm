@@ -481,7 +481,7 @@ export function ImportExportModal({
                     className="flex-1"
                     onClick={() => setExportFormat("csv")}
                   >
-                    <FileSpreadsheet className="h-4 w-4 mr-2" />
+                    <FileSpreadsheet />
                     CSV
                   </Button>
                   <Button
@@ -490,7 +490,7 @@ export function ImportExportModal({
                     className="flex-1"
                     onClick={() => setExportFormat("json")}
                   >
-                    <FileJson className="h-4 w-4 mr-2" />
+                    <FileJson />
                     JSON
                   </Button>
                 </div>
@@ -529,7 +529,7 @@ export function ImportExportModal({
                   </>
                 ) : (
                   <>
-                    <Download className="mr-2 h-4 w-4" />
+                    <Download />
                     Export {tasks.length} Tasks
                   </>
                 )}
@@ -554,7 +554,7 @@ export function ImportExportModal({
                   onClick={handleDownloadTemplate}
                   className="shrink-0"
                 >
-                  <Download className="h-4 w-4 mr-2" />
+                  <Download />
                   Download Template
                 </Button>
               </div>
@@ -651,7 +651,7 @@ export function ImportExportModal({
                   </>
                 ) : (
                   <>
-                    <Upload className="mr-2 h-4 w-4" />
+                    <Upload />
                     Import Tasks
                   </>
                 )}

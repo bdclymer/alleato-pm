@@ -559,7 +559,7 @@ export default function CompanyDetailsPage() {
               <p className="text-sm text-destructive">{error || "Company not found"}</p>
               <div className="mt-4">
                 <Button variant="outline" onClick={() => router.push("/directory/companies")}>
-                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  <ArrowLeft />
                   Back to Companies
                 </Button>
               </div>
@@ -599,11 +599,11 @@ export default function CompanyDetailsPage() {
         actions={
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" onClick={() => router.push("/directory/companies")}>
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <ArrowLeft />
               Back
             </Button>
             <Button variant="outline" onClick={() => setEditOpen(true)}>
-              <Pencil className="mr-2 h-4 w-4" />
+              <Pencil />
               Edit Company
             </Button>
           </div>
@@ -627,7 +627,7 @@ export default function CompanyDetailsPage() {
                     await loadAvailableContacts();
                   }}
                 >
-                  <Plus className="mr-2 h-4 w-4" />
+                  <Plus />
                   Add Contact
                 </Button>
               </div>
@@ -638,10 +638,11 @@ export default function CompanyDetailsPage() {
                   <ul className="divide-y divide-border">
                     {contacts.map((contact) => (
                       <li key={contact.id}>
-                        <button
+                        <Button
                           type="button"
+                          variant="ghost"
                           onClick={() => router.push(`/directory/contacts/${contact.id}`)}
-                          className="grid w-full grid-cols-[auto_minmax(0,1fr)] items-center gap-3 py-3 text-left transition-colors hover:bg-muted/30 md:grid-cols-[auto_minmax(0,1fr)_minmax(220px,1fr)_180px]"
+                          className="grid w-full h-auto grid-cols-[auto_minmax(0,1fr)] items-center gap-3 py-3 text-left transition-colors hover:bg-muted/30 md:grid-cols-[auto_minmax(0,1fr)_minmax(220px,1fr)_180px] justify-start"
                         >
                           <Avatar className="h-9 w-9 border border-border">
                             <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
@@ -662,7 +663,7 @@ export default function CompanyDetailsPage() {
                           <p className="truncate text-sm text-muted-foreground md:text-right">
                             {contact.phone_business || contact.phone_mobile || "No phone"}
                           </p>
-                        </button>
+                        </Button>
                       </li>
                     ))}
                   </ul>
@@ -936,7 +937,7 @@ export default function CompanyDetailsPage() {
           </ModalHeader>
 
           <Tabs value={contactMode} onValueChange={(value) => setContactMode(value as "existing" | "new")}>
-            <TabsList className="w-full">
+            <TabsList variant="line">
               <TabsTrigger value="existing" className="flex-1">Existing Contact</TabsTrigger>
               <TabsTrigger value="new" className="flex-1">Create New</TabsTrigger>
             </TabsList>
@@ -965,7 +966,7 @@ export default function CompanyDetailsPage() {
                             return `${selected.first_name} ${selected.last_name}${selected.email ? ` • ${selected.email}` : ""}`;
                           })()
                         : "Select contact"}
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      <ChevronsUpDown className="shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
@@ -1171,7 +1172,7 @@ export default function CompanyDetailsPage() {
                           return `${selected.project_number ? `${selected.project_number} • ` : ""}${selected.name || `Project ${selected.id}`}`;
                         })()
                       : "Select project"}
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    <ChevronsUpDown className="shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">

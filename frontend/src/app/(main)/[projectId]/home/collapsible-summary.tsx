@@ -28,9 +28,9 @@ export function CollapsibleSummary({ summary }: CollapsibleSummaryProps) {
             <CollapsibleTrigger asChild>
               <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
                 {isOpen ? (
-                  <ChevronUp className="h-4 w-4 text-foreground" />
+                  <ChevronUp className="text-foreground" />
                 ) : (
-                  <ChevronDown className="h-4 w-4 text-foreground" />
+                  <ChevronDown className="text-foreground" />
                 )}
                 <span className="sr-only">Toggle summary</span>
               </Button>

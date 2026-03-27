@@ -123,7 +123,7 @@ export default function DrawingsPage() {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="h-8 w-8 p-0">
-              <MoreHorizontal className="h-4 w-4" />
+              <MoreHorizontal />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -167,7 +167,7 @@ export default function DrawingsPage() {
           </p>
         </div>
         <Button className="bg-primary hover:bg-primary/90">
-          <Plus className="h-4 w-4 mr-2" />
+          <Plus />
           Upload Drawing
         </Button>
       </div>

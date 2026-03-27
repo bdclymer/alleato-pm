@@ -345,7 +345,7 @@ export function UserFormDialog({
               onClick={() => setAddMode("create")}
               disabled={isSubmitting}
             >
-              <UserPlus className="mr-2 h-4 w-4" />
+              <UserPlus />
               Create New User
             </Button>
           </div>
@@ -393,11 +393,12 @@ export function UserFormDialog({
                   const fullName = `${person.first_name || ""} ${person.last_name || ""}`.trim();
 
                   return (
-                    <button
+                    <Button
                       key={person.id}
                       type="button"
+                      variant="ghost"
                       className={cn(
-                        "w-full text-left px-3 py-3 flex items-center justify-between hover:bg-muted/40 transition-colors",
+                        "w-full text-left px-3 py-3 flex items-center justify-between h-auto font-normal",
                         isSelected && "bg-muted/60",
                         isAlreadyOnProject && "opacity-60 cursor-not-allowed hover:bg-transparent",
                       )}
@@ -427,7 +428,7 @@ export function UserFormDialog({
                           <Check className="h-4 w-4 text-primary" />
                         ) : null}
                       </div>
-                    </button>
+                    </Button>
                   );
                 })
               )}

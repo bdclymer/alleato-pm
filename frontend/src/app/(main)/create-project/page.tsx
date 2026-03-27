@@ -361,13 +361,15 @@ function CreateProjectForm() {
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <button
+                <Button
                   type="button"
-                  className="inline-flex h-4 w-4 items-center justify-center text-muted-foreground transition-colors hover:text-foreground"
+                  variant="ghost"
+                  size="icon"
+                  className="inline-flex h-4 w-4 items-center justify-center text-muted-foreground transition-colors hover:text-foreground p-0"
                   aria-label={`${field.label} guidance`}
                 >
                   <CircleHelp className="h-4 w-4" />
-                </button>
+                </Button>
               </TooltipTrigger>
               <TooltipContent side="top" className="max-w-sm text-left">
                 {tooltipContent}

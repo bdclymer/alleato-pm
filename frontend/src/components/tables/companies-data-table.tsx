@@ -104,7 +104,7 @@ const columns: ColumnDef<Company>[] = [
               variant="link"
               className="w-fit px-0 text-left text-foreground"
             >
-              <BuildingIcon className="mr-2 size-4" />
+              <BuildingIcon />
               {company.name}
             </Button>
           }

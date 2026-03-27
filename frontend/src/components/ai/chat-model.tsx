@@ -163,7 +163,7 @@ export default function Ai02() {
               className="h-6 w-6 text-muted-foreground hover:text-foreground transition-all duration-100"
               title="Attach images"
             >
-              <IconPhotoScan className="h-5 w-5" />
+              <IconPhotoScan />
             </Button>
 
             <Button
@@ -175,7 +175,7 @@ export default function Ai02() {
               )}
               disabled={!inputValue}
             >
-              <IconArrowUp className="h-4 w-4 text-primary-foreground" />
+              <IconArrowUp className="text-primary-foreground" />
             </Button>
           </div>
         </div>
@@ -191,7 +191,7 @@ export default function Ai02() {
               className="group flex items-center gap-2 rounded-full border px-4 py-2 text-sm text-foreground transition-all duration-200 hover:bg-muted/30 h-auto bg-transparent dark:bg-muted"
               onClick={() => handlePromptClick(button.prompt)}
             >
-              <IconComponent className="h-4 w-4 text-muted-foreground transition-colors group-hover:text-foreground" />
+              <IconComponent className="text-muted-foreground transition-colors group-hover:text-foreground" />
               <span>{button.text}</span>
             </Button>
           );

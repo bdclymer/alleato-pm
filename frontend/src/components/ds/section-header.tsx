@@ -20,27 +20,30 @@ export function SectionHeader({
   className,
 }: SectionHeaderProps) {
   return (
-    <div className={cn("mb-4 flex items-center justify-between", className)}>
+    <div className={cn("flex items-center justify-between", className)}>
       <div className="flex items-baseline gap-2">
         <h2 className="text-lg font-semibold tracking-tight text-foreground">
           {title}
         </h2>
         {count !== undefined && (
-          <span className="text-sm text-muted-foreground/60">{count}</span>
+          <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+            {count}
+          </span>
         )}
       </div>
       {action &&
         (action.onClick ? (
+          {/* eslint-disable-next-line design-system/no-design-violations -- minimal inline link-style action */}
           <button
             onClick={action.onClick}
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="text-sm font-medium text-primary transition-colors hover:text-primary/80"
           >
             {action.label}
           </button>
         ) : (
           <a
             href={action.href}
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            className="text-sm font-medium text-primary transition-colors hover:text-primary/80"
           >
             {action.label}
           </a>

@@ -484,7 +484,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="gap-1.5">
                 Add to
-                <ChevronDown className="h-3.5 w-3.5" />
+                <ChevronDown />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start">
@@ -527,7 +527,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
           className="gap-1.5"
           onClick={() => setShowRfqSheet(true)}
         >
-          <Send className="h-3.5 w-3.5" />
+          <Send />
           Send Requests for Quote
         </Button>
       </div>
@@ -543,7 +543,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
             className="gap-2"
             data-testid="change-events-new-button"
           >
-            <Plus className="h-4 w-4" />
+            <Plus />
             New Change Event
           </Button>
         ),

@@ -157,9 +157,9 @@ export function DirectorySummary({ projectId }: DirectorySummaryProps) {
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button size="sm" variant="ghost" className="h-7 px-2">
-              <Plus className="h-3.5 w-3.5 mr-1" />
+              <Plus />
               Add
-              <ChevronDown className="h-3.5 w-3.5 ml-1" />
+              <ChevronDown />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-48">

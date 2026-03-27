@@ -18,6 +18,7 @@ import {
   X,
   AlertTriangle,
   RefreshCw,
+  Trash2,
 } from "lucide-react";
 
 import { arrayMove } from "@dnd-kit/sortable";
@@ -56,7 +57,7 @@ import {
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
-import { PrimeContractTabs } from "./components/PrimeContractTabs";
+import { PageTabs } from "@/components/layout/PageTabs";
 import { PrimeContractOverviewTab } from "./components/PrimeContractOverviewTab";
 import { PrimeContractDialogs } from "./components/PrimeContractDialogs";
 import { ContractForm } from "@/components/domain/contracts";
@@ -125,6 +126,15 @@ export default function ProjectContractDetailPage() {
   const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
   const [verticalMarkups, setVerticalMarkups] = useState<VerticalMarkup[]>([]);
   const [markupsLoading, setMarkupsLoading] = useState(false);
+  const [showAddMarkupDialog, setShowAddMarkupDialog] = useState(false);
+  const [editingMarkup, setEditingMarkup] = useState<VerticalMarkup | null>(null);
+  const [markupForm, setMarkupForm] = useState({
+    markup_type: "",
+    percentage: "",
+    compound: false,
+  });
+  const [isSubmittingMarkup, setIsSubmittingMarkup] = useState(false);
+  const [deletingMarkupId, setDeletingMarkupId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<ContractTab>("overview");
 const [isSovEditing, setIsSovEditing] = useState(false);
   const [isSavingSovChanges, setIsSavingSovChanges] = useState(false);
@@ -541,6 +551,109 @@ const [isSovEditing, setIsSovEditing] = useState(false);
     fetchVerticalMarkups();
   }, [contract, projectId]);
 
+  // ─── Financial Markup CRUD ─────────────────────────────────────────────
+
+  const resetMarkupForm = () => {
+    setMarkupForm({ markup_type: "", percentage: "", compound: false });
+    setEditingMarkup(null);
+  };
+
+  const openAddMarkupDialog = () => {
+    resetMarkupForm();
+    setShowAddMarkupDialog(true);
+  };
+
+  const openEditMarkupDialog = (markup: VerticalMarkup) => {
+    setEditingMarkup(markup);
+    setMarkupForm({
+      markup_type: markup.markup_type,
+      percentage: String(markup.percentage),
+      compound: markup.compound,
+    });
+    setShowAddMarkupDialog(true);
+  };
+
+  const handleSubmitMarkup = async () => {
+    if (!markupForm.markup_type.trim() || !markupForm.percentage) {
+      toast.error("Markup name and percentage are required");
+      return;
+    }
+
+    const pct = parseFloat(markupForm.percentage);
+    if (Number.isNaN(pct) || pct < 0 || pct > 100) {
+      toast.error("Percentage must be between 0 and 100");
+      return;
+    }
+
+    setIsSubmittingMarkup(true);
+    try {
+      if (editingMarkup) {
+        // Update existing markup via PUT (bulk update with single item)
+        const updatedMarkups = verticalMarkups.map((m) =>
+          m.id === editingMarkup.id
+            ? { ...m, markup_type: markupForm.markup_type.trim(), percentage: pct, compound: markupForm.compound }
+            : m,
+        );
+        const response = await fetch(`/api/projects/${projectId}/vertical-markup`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ markups: updatedMarkups }),
+        });
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.error || "Failed to update markup");
+        }
+        const data = await response.json();
+        setVerticalMarkups(data.markups || []);
+        toast.success("Markup updated");
+      } else {
+        // Create new markup via POST
+        const response = await fetch(`/api/projects/${projectId}/vertical-markup`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            markup_type: markupForm.markup_type.trim(),
+            percentage: pct,
+            compound: markupForm.compound,
+          }),
+        });
+        if (!response.ok) {
+          const err = await response.json();
+          throw new Error(err.error || "Failed to create markup");
+        }
+        const data = await response.json();
+        setVerticalMarkups((prev) => [...prev, data.data]);
+        toast.success("Markup added");
+      }
+      setShowAddMarkupDialog(false);
+      resetMarkupForm();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save markup");
+    } finally {
+      setIsSubmittingMarkup(false);
+    }
+  };
+
+  const handleDeleteMarkup = async (markupId: string) => {
+    setDeletingMarkupId(markupId);
+    try {
+      const response = await fetch(
+        `/api/projects/${projectId}/vertical-markup?markupId=${markupId}`,
+        { method: "DELETE" },
+      );
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.error || "Failed to delete markup");
+      }
+      setVerticalMarkups((prev) => prev.filter((m) => m.id !== markupId));
+      toast.success("Markup deleted");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete markup");
+    } finally {
+      setDeletingMarkupId(null);
+    }
+  };
+
   const handleBack = () => {
     router.push(`/${projectId}/prime-contracts`);
   };
@@ -612,10 +725,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
           body: JSON.stringify({
             contract_number: data.number,
             title: data.title,
-            client_id:
-              data.ownerCompanyId && /^\d+$/.test(data.ownerCompanyId)
-                ? Number.parseInt(data.ownerCompanyId, 10)
-                : null,
+            client_id: data.ownerCompanyId || null,
             contractor_id: data.contractorId || null,
             architect_engineer_id: data.architectEngineerId || null,
             contract_company_id:
@@ -676,7 +786,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
         ),
       );
 
-      const sovItems = data.sovItems || [];
+      const sovItems = (data.sovItems || []).filter((item) => !item.isGroup);
       const itemsToPersist = sovItems.map((item, index) => {
         const budgetCodeId = item.budgetCodeId || "";
         const costCodeId = budgetCodeIdToCostCode.get(budgetCodeId)
@@ -1103,20 +1213,17 @@ const [isSovEditing, setIsSovEditing] = useState(false);
   const handleSaveSovEdit = async () => {
     const normalizedDraftItems = normalizeSovDraftItems(sovDraftItems);
 
-    if (normalizedDraftItems.length === 0) {
-      toast.error("At least one SOV line item is required");
-      return;
-    }
+    // Group headers are UI-only and are not persisted to the database.
+    // Re-index line numbers after filtering so persisted lines are contiguous
+    // (1, 2, 3, ...) regardless of how many group headers existed in the UI.
+    // Without this, group headers shift line_number values, causing gaps that
+    // can violate the UNIQUE(contract_id, line_number) constraint on concurrent PUTs.
+    const persistableItems = normalizedDraftItems
+      .filter((item) => !item.is_group_header)
+      .map((item, idx) => ({ ...item, line_number: idx + 1 }));
 
-    // Each SOV line must have a budget code selected (either existing or newly created).
-    const missingBudgetCodeItem = normalizedDraftItems.find(
-      (item) => !sovDraftBudgetCodeIds[item.id] && item.cost_code_id == null,
-    );
-    if (missingBudgetCodeItem) {
-      const label = missingBudgetCodeItem.description || `Line ${missingBudgetCodeItem.line_number}`;
-      toast.error(
-        `"${label}" needs a budget code — use the budget code selector to assign or create one`,
-      );
+    if (persistableItems.length === 0) {
+      toast.error("At least one SOV line item is required");
       return;
     }
 
@@ -1124,15 +1231,15 @@ const [isSovEditing, setIsSovEditing] = useState(false);
     try {
       const existingIds = new Set(lineItems.map((item) => item.id));
       const incomingIds = new Set(
-        normalizedDraftItems
+        persistableItems
           .filter((item) => existingIds.has(item.id))
           .map((item) => item.id),
       );
 
-      const updatePayload = normalizedDraftItems.filter((item) =>
+      const updatePayload = persistableItems.filter((item) =>
         existingIds.has(item.id),
       );
-      const createPayload = normalizedDraftItems.filter(
+      const createPayload = persistableItems.filter(
         (item) => !existingIds.has(item.id),
       );
       const deletionIds = lineItems
@@ -1613,7 +1720,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
             onClick={handleBack}
             className="mt-[var(--group-gap)]"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
+            <ArrowLeft />
             Back to Contracts
           </Button>
         </Card>
@@ -1646,8 +1753,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
       title: contract.title,
       status: contract.status,
       executed: contract.executed,
-      ownerCompanyId:
-        contract.contract_company_id || contract.client_id?.toString() || undefined,
+      ownerCompanyId: contract.client_id != null ? String(contract.client_id) : contract.contract_company_id != null ? String(contract.contract_company_id) : undefined,
       contractorId: contract.contractor_id || undefined,
       architectEngineerId: contract.architect_engineer_id || undefined,
       contractCompanyId: contract.contract_company_id || undefined,
@@ -1725,9 +1831,9 @@ const [isSovEditing, setIsSovEditing] = useState(false);
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="default" size="sm">
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus />
                   Create
-                  <ChevronDown className="h-4 w-4 ml-2" />
+                  <ChevronDown />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -1781,7 +1887,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
               aria-label="Sync from Acumatica"
               title="Sync invoices & payments from Acumatica"
             >
-              <RefreshCw className={`h-4 w-4 ${isSyncing ? "animate-spin" : ""}`} />
+              <RefreshCw className={isSyncing ? "animate-spin" : undefined} />
             </Button>
             <Button
               variant="outline"
@@ -1793,7 +1899,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
               aria-label="Email"
               title="Email"
             >
-              <Mail className="h-4 w-4" />
+              <Mail />
             </Button>
             <Button
               variant="outline"
@@ -1805,7 +1911,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
               aria-label="Export"
               title="Export"
             >
-              <Download className="h-4 w-4" />
+              <Download />
             </Button>
 
             <Button
@@ -1815,23 +1921,31 @@ const [isSovEditing, setIsSovEditing] = useState(false);
               aria-label="Edit Contract"
               title="Edit Contract"
             >
-              <Pencil className="h-4 w-4" />
+              <Pencil />
             </Button>
           </div>
         }
       />
 
-      <PrimeContractTabs
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
-        changeOrdersCount={changeOrdersCount}
-        paymentApplicationsCount={paymentApplications.length}
-        paymentsCount={payments.length}
+      <PageTabs
+        variant="inline"
+        className="border-b border-border"
+        tabs={[
+          { label: "General", href: "overview", isActive: activeTab === "overview" },
+          { label: "Change Orders", href: "change-orders", isActive: activeTab === "change-orders", count: changeOrdersCount || undefined },
+          { label: "Invoices", href: "invoices", isActive: activeTab === "invoices", count: paymentApplications.length || undefined },
+          { label: "Payments Received", href: "payments", isActive: activeTab === "payments", count: payments.length || undefined },
+          { label: "Emails", href: "emails", isActive: activeTab === "emails" },
+          { label: "Change History", href: "history", isActive: activeTab === "history" },
+          { label: "Financial Markup", href: "financial-markup", isActive: activeTab === "financial-markup" },
+          { label: "Advanced Settings", href: "advanced-settings", isActive: activeTab === "advanced-settings" },
+        ]}
+        onTabClick={(href) => setActiveTab(href as ContractTab)}
       />
 
-      <div className="space-y-[var(--section-gap)]">
+      <div className="pt-6">
+      {activeTab === "overview" && (
         <PrimeContractOverviewTab
-          activeTab={activeTab}
           contract={contract}
           attachments={attachments}
           attachmentsLoading={attachmentsLoading}
@@ -1863,9 +1977,9 @@ lineItemsLoading={lineItemsLoading}
           onRequestCreateBudgetCode={handleRequestCreateBudgetCodeForSovLine}
           onDeleteSovLine={handleDeleteSovLine}
         />
+        )}
 
-        
-{activeTab === "change-orders" && (
+        {activeTab === "change-orders" && (
           <div>
             <div className="bg-background">
               <div className="flex items-center justify-between mb-4">
@@ -1879,7 +1993,7 @@ lineItemsLoading={lineItemsLoading}
                   </p>
                 </div>
                 <Button variant="outline" size="sm" onClick={() => setShowNewCoDialog(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus />
                   New Change Order
                 </Button>
               </div>
@@ -1952,7 +2066,7 @@ lineItemsLoading={lineItemsLoading}
                                 title="Download PDF"
                                 aria-label={`Download ${co.change_order_number || "change order"} PDF`}
                               >
-                                <Download className="h-3.5 w-3.5" />
+                                <Download />
                               </Button>
                               {co.status !== "approved" && co.status !== "rejected" && (
                                 <>
@@ -1962,7 +2076,7 @@ lineItemsLoading={lineItemsLoading}
                                     className="h-7 px-2 text-xs text-green-700 border-green-300 hover:bg-green-50"
                                     onClick={() => handleApproveCo(co.id)}
                                   >
-                                    <Check className="h-3 w-3 mr-1" />
+                                    <Check />
                                     Approve
                                   </Button>
                                   <Button
@@ -2018,7 +2132,7 @@ lineItemsLoading={lineItemsLoading}
                   </p>
                 </div>
                 <Button size="sm" onClick={() => setShowAddInvoiceDialog(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus />
                   New Invoice
                 </Button>
               </div>
@@ -2250,7 +2364,7 @@ lineItemsLoading={lineItemsLoading}
                   </p>
                 </div>
                 <Button size="sm" onClick={() => setShowAddPaymentDialog(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus />
                   Record Payment
                 </Button>
               </div>
@@ -2488,29 +2602,23 @@ lineItemsLoading={lineItemsLoading}
           <div className="space-y-8">
             <section className="space-y-2">
               <h3 className="text-lg font-semibold">Financial Markup</h3>
-            </section>
-
-            <section className="space-y-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h4 className="text-base font-semibold">Horizontal Markup</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Calculated on each line item individually.
-                  </p>
-                </div>
-                <Button size="sm" disabled>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Horizontal Markup
-                </Button>
-              </div>
+              <p className="text-sm text-muted-foreground">
+                Add percentage-based markups (e.g., tax, overhead, profit, insurance) to contract values.
+              </p>
             </section>
 
             <section className="space-y-4 border-t border-border/60 pt-6">
-              <div>
-                <h4 className="text-base font-semibold">Vertical Markup</h4>
-                <p className="text-sm text-muted-foreground">
-                  Calculated on subtotal of line items.
-                </p>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h4 className="text-base font-semibold">Vertical Markup</h4>
+                  <p className="text-sm text-muted-foreground">
+                    Calculated on subtotal of line items. Compound markups include previous markup amounts.
+                  </p>
+                </div>
+                <Button size="sm" onClick={openAddMarkupDialog}>
+                  <Plus />
+                  Add Markup
+                </Button>
               </div>
 
               <div className="overflow-x-auto overflow-hidden rounded-lg border border-border/70 bg-muted/20">
@@ -2529,19 +2637,22 @@ lineItemsLoading={lineItemsLoading}
                       <TableHead className="px-3 py-2 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
                         Application Criteria
                       </TableHead>
+                      <TableHead className="px-3 py-2 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                        Actions
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {markupsLoading ? (
                       <TableRow>
-                        <TableCell colSpan={4} className="py-8 text-center text-muted-foreground">
+                        <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
                           Loading markup settings...
                         </TableCell>
                       </TableRow>
                     ) : verticalMarkups.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={4} className="py-8 text-center text-muted-foreground">
-                          No markup items configured
+                        <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
+                          No markup items configured. Click &quot;Add Markup&quot; to get started.
                         </TableCell>
                       </TableRow>
                     ) : (
@@ -2549,7 +2660,7 @@ lineItemsLoading={lineItemsLoading}
                         .sort((a, b) => a.calculation_order - b.calculation_order)
                         .map((markup) => (
                           <TableRow key={markup.id} className="border-b border-border/60 bg-background hover:bg-muted/20">
-                            <TableCell className="px-3 py-2.5">{markup.markup_type}</TableCell>
+                            <TableCell className="px-3 py-2.5 capitalize">{markup.markup_type}</TableCell>
                             <TableCell className="px-3 py-2.5 text-right">
                               {markup.percentage.toFixed(3)}%
                             </TableCell>
@@ -2557,20 +2668,122 @@ lineItemsLoading={lineItemsLoading}
                               {markup.compound ? "Compounds all Above" : "Basic Calculation"}
                             </TableCell>
                             <TableCell className="px-3 py-2.5">Applies to All Line Items</TableCell>
+                            <TableCell className="px-3 py-2.5 text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 px-2"
+                                  onClick={() => openEditMarkupDialog(markup)}
+                                >
+                                  <Pencil />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 px-2 text-destructive hover:text-destructive"
+                                  onClick={() => handleDeleteMarkup(markup.id)}
+                                  disabled={deletingMarkupId === markup.id}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            </TableCell>
                           </TableRow>
                         ))
                     )}
                   </TableBody>
                 </Table>
               </div>
-
-              <div className="flex justify-end">
-                <Button size="sm" disabled>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Add Vertical Markup
-                </Button>
-              </div>
             </section>
+
+            {/* Add/Edit Markup Dialog */}
+            <Modal open={showAddMarkupDialog} onOpenChange={(open) => {
+              if (!open) {
+                setShowAddMarkupDialog(false);
+                resetMarkupForm();
+              }
+            }}>
+              <ModalContent>
+                <ModalHeader>
+                  <ModalTitle>{editingMarkup ? "Edit Markup" : "Add Markup"}</ModalTitle>
+                  <ModalDescription>
+                    {editingMarkup
+                      ? "Update the markup name, percentage, and calculation type."
+                      : "Add a percentage-based markup such as tax, overhead, profit, or insurance."}
+                  </ModalDescription>
+                </ModalHeader>
+                <div className="space-y-4 px-6 py-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="markup-name">Markup Type</Label>
+                    <select
+                      id="markup-name"
+                      className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      value={markupForm.markup_type}
+                      onChange={(e) =>
+                        setMarkupForm((prev) => ({ ...prev, markup_type: e.target.value }))
+                      }
+                    >
+                      <option value="">Select markup type...</option>
+                      <option value="insurance">Insurance</option>
+                      <option value="bond">Bond</option>
+                      <option value="fee">Fee</option>
+                      <option value="overhead">Overhead</option>
+                      <option value="custom">Custom</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="markup-percentage">Percentage (%)</Label>
+                    <Input
+                      id="markup-percentage"
+                      type="number"
+                      step="0.001"
+                      min="0"
+                      max="100"
+                      placeholder="e.g., 10.000"
+                      value={markupForm.percentage}
+                      onChange={(e) =>
+                        setMarkupForm((prev) => ({ ...prev, percentage: e.target.value }))
+                      }
+                    />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <input
+                      id="markup-compound"
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                      checked={markupForm.compound}
+                      onChange={(e) =>
+                        setMarkupForm((prev) => ({ ...prev, compound: e.target.checked }))
+                      }
+                    />
+                    <div>
+                      <Label htmlFor="markup-compound" className="cursor-pointer">Compound Markup</Label>
+                      <p className="text-xs text-muted-foreground">
+                        When enabled, this markup is calculated on the subtotal plus all previous markups.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <ModalFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowAddMarkupDialog(false);
+                      resetMarkupForm();
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleSubmitMarkup}
+                    disabled={isSubmittingMarkup || !markupForm.markup_type.trim() || !markupForm.percentage}
+                  >
+                    {isSubmittingMarkup ? "Saving..." : editingMarkup ? "Update" : "Add Markup"}
+                  </Button>
+                </ModalFooter>
+              </ModalContent>
+            </Modal>
           </div>
         )}
 
@@ -2614,7 +2827,6 @@ lineItemsLoading={lineItemsLoading}
           </div>
         )}
       </div>
-
       <PrimeContractDialogs
         showAddLineItemDialog={showAddLineItemDialog}
         setShowAddLineItemDialog={setShowAddLineItemDialog}

@@ -113,7 +113,7 @@ const columns: ColumnDef<ContactWithCompany>[] = [
               variant="link"
               className="w-fit px-0 text-left text-foreground"
             >
-              <UserIcon className="mr-2 size-4" />
+              <UserIcon />
               {fullName}
             </Button>
           }

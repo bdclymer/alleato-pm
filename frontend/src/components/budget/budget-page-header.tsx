@@ -126,9 +126,9 @@ export function BudgetPageHeader({
               size="sm"
               className="bg-primary hover:bg-primary/90 text-white flex-1 min-w-[100px]"
             >
-              <Plus className="w-4 h-4 mr-1" />
+              <Plus />
               Create
-              <ChevronDown className="w-4 h-4 ml-1" />
+              <ChevronDown />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -153,7 +153,7 @@ export function BudgetPageHeader({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" size="sm" className="flex-1 min-w-[100px]">
-              <MoreVertical className="w-4 h-4 mr-1" />
+              <MoreVertical />
               Actions
             </Button>
           </DropdownMenuTrigger>
@@ -224,9 +224,9 @@ export function BudgetPageHeader({
               size="sm"
               className="bg-primary hover:bg-primary/90 text-white"
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus />
               Create
-              <ChevronDown className="w-4 h-4 ml-2" />
+              <ChevronDown />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -254,7 +254,7 @@ export function BudgetPageHeader({
             size="sm"
             onClick={onUnlockBudget}
           >
-            <Unlock className="w-4 h-4 mr-2" />
+            <Unlock />
             <span className="hidden lg:inline">Unlock Budget</span>
             <span className="lg:hidden">Unlock</span>
           </Button>
@@ -264,7 +264,7 @@ export function BudgetPageHeader({
             size="sm"
             onClick={() => setShowLockDialog(true)}
           >
-            <Lock className="w-4 h-4 mr-2" />
+            <Lock />
             <span className="hidden lg:inline">Lock Budget</span>
             <span className="lg:hidden">Lock</span>
           </Button>
@@ -279,7 +279,7 @@ export function BudgetPageHeader({
               onClick={onResendToERP}
               aria-label="Sync to ERP"
             >
-              <RefreshCw className="w-4 h-4" />
+              <RefreshCw />
             </Button>
           </TooltipTrigger>
           <TooltipContent>Sync to ERP</TooltipContent>
@@ -294,7 +294,7 @@ export function BudgetPageHeader({
               aria-label="Export"
               title="Export"
             >
-              <Download className="w-4 h-4" />
+              <Download />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
@@ -314,7 +314,7 @@ export function BudgetPageHeader({
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" size="icon" className="text-muted-foreground">
-              <MoreVertical className="w-5 h-5" />
+              <MoreVertical />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">

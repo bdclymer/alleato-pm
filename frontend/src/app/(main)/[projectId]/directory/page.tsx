@@ -67,6 +67,7 @@ import { Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { ResponsiveDistributionGroupsTable } from "@/components/directory/responsive/ResponsiveDistributionGroupsTable";
 import type { PersonWithDetails } from "@/services/directoryService";
+import { Button } from "@/components/ui/button";
 
 // ─── Types ───────────────────────────────────────────────────────
 
@@ -210,7 +211,7 @@ function MemberCombobox({
           {selectedIds.length > 0
             ? `${selectedIds.length} selected`
             : "Select people..."}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronsUpDown className="shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0" align="start">
@@ -233,9 +234,16 @@ function MemberCombobox({
                         : "opacity-0"
                     )}
                   />
-                  <span className="text-sm">
-                    {person.first_name} {person.last_name}
-                  </span>
+                  <div className="flex flex-col">
+                    <span className="text-sm">
+                      {person.first_name} {person.last_name}
+                    </span>
+                    {(person.job_title || person.company_name) && (
+                      <span className="text-xs text-muted-foreground">
+                        {[person.job_title, person.company_name].filter(Boolean).join(" · ")}
+                      </span>
+                    )}
+                  </div>
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -251,11 +259,13 @@ function AssignMemberDialog({
   onOpenChange,
   role,
   onSave,
+  projectId,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   role: ProjectRole | null;
   onSave: (roleId: string, personIds: string[]) => Promise<void>;
+  projectId: string;
 }) {
   const [people, setPeople] = React.useState<PersonOption[]>([]);
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
@@ -265,29 +275,33 @@ function AssignMemberDialog({
     if (!open || !role) return;
     setSelectedIds(role.members.map((m) => m.person_id));
 
+    // Fetch ALL people from the company directory so any person can be assigned
     const supabase = createClient();
-    supabase
-      .from("people")
-      .select(
-        "id, first_name, last_name, email, job_title, company:companies(name)"
-      )
-      .order("first_name")
-      .then(({ data }) => {
-        if (data) {
-          setPeople(
-            data.map((p) => ({
-              id: p.id,
-              first_name: p.first_name,
-              last_name: p.last_name,
-              email: p.email,
-              job_title: p.job_title,
-              company_name:
-                (p.company as { name?: string } | null)?.name ?? null,
-            }))
-          );
-        }
-      });
-  }, [open, role]);
+    const loadAllPeople = async () => {
+      const { data } = await supabase
+        .from("people")
+        .select(
+          "id, first_name, last_name, email, job_title, company:companies(name)"
+        )
+        .order("first_name");
+
+      if (data) {
+        setPeople(
+          data.map((p) => ({
+            id: p.id,
+            first_name: p.first_name,
+            last_name: p.last_name,
+            email: p.email,
+            job_title: p.job_title,
+            company_name:
+              (p.company as { name?: string } | null)?.name ?? null,
+          }))
+        );
+      }
+    };
+
+    loadAllPeople();
+  }, [open, role, projectId]);
 
   const toggle = (id: string) =>
     setSelectedIds((prev) =>
@@ -298,8 +312,33 @@ function AssignMemberDialog({
     if (!role) return;
     setSaving(true);
     try {
+      // Auto-add selected people as project members if not already
+      const supabase = createClient();
+      const projectIdNum = parseInt(projectId, 10);
+      for (const personId of selectedIds) {
+        const { data: existing } = await supabase
+          .from("project_directory_memberships")
+          .select("id")
+          .eq("project_id", projectIdNum)
+          .eq("person_id", personId)
+          .eq("status", "active")
+          .maybeSingle();
+
+        if (!existing) {
+          await supabase.from("project_directory_memberships").upsert(
+            { project_id: projectIdNum, person_id: personId, status: "active" },
+            { onConflict: "project_id,person_id" }
+          );
+        }
+      }
+
       await onSave(role.id, selectedIds);
+      toast.success("Role assignment updated");
       onOpenChange(false);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to update role assignment"
+      );
     } finally {
       setSaving(false);
     }
@@ -307,7 +346,7 @@ function AssignMemberDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-lg w-[95vw]">
         <DialogHeader>
           <DialogTitle>Assign Members — {role?.role_name}</DialogTitle>
         </DialogHeader>
@@ -325,12 +364,14 @@ function AssignMemberDialog({
                 return (
                   <Badge key={id} variant="secondary" className="gap-1">
                     {p.first_name} {p.last_name}
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="sm"
                       onClick={() => toggle(id)}
-                      className="ml-0.5 rounded-sm hover:bg-muted"
+                      className="ml-0.5 rounded-sm hover:bg-muted h-auto p-0 px-0.5"
                     >
                       ×
-                    </button>
+                    </Button>
                   </Badge>
                 );
               })}
@@ -548,7 +589,7 @@ function AddMemberDialog({
           value={tab}
           onValueChange={(v) => setTab(v as "existing" | "new")}
         >
-          <TabsList className="w-full">
+          <TabsList variant="line">
             <TabsTrigger value="existing" className="flex-1">
               Select Existing
             </TabsTrigger>
@@ -843,7 +884,7 @@ function MembersTab({ projectId }: { projectId: string }) {
         count={search ? filtered.length : undefined}
         action={
           <Button size="sm" onClick={() => setAddOpen(true)}>
-            <UserPlus className="mr-1.5 h-3.5 w-3.5" />
+            <UserPlus />
             Add Member
           </Button>
         }
@@ -931,7 +972,7 @@ function MembersTab({ projectId }: { projectId: string }) {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="h-4 w-4" />
+                          <MoreHorizontal />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
@@ -971,7 +1012,7 @@ function RoleCard({
   onRemoveMember: (roleId: string, memberIds: string[]) => void;
 }) {
   return (
-    <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+    <div className="rounded-lg bg-card p-4 space-y-3">
       {/* Role header */}
       <div className="flex items-start justify-between gap-2">
         <div>
@@ -988,19 +1029,20 @@ function RoleCard({
           className="text-xs h-7 px-2 shrink-0"
           onClick={() => onAssign(role)}
         >
-          <Pencil className="h-3 w-3 mr-1" />
+          <Pencil />
           Edit
         </Button>
       </div>
 
       {/* Members */}
       {role.members.length === 0 ? (
-        <button
+        <Button
+          variant="ghost"
           onClick={() => onAssign(role)}
-          className="w-full rounded-md border border-dashed border-border/70 py-3 text-xs text-muted-foreground hover:border-border hover:text-foreground transition-colors"
+          className="w-full rounded-md border border-dashed border-border/70 py-3 text-xs text-muted-foreground hover:border-border hover:text-foreground transition-colors h-auto"
         >
           + Assign someone
-        </button>
+        </Button>
       ) : (
         <div className="space-y-2">
           {role.members.map((member) => {
@@ -1025,7 +1067,9 @@ function RoleCard({
                     </p>
                   )}
                 </div>
-                <button
+                <Button
+                  variant="ghost"
+                  size="sm"
                   onClick={() =>
                     onRemoveMember(
                       role.id,
@@ -1034,11 +1078,11 @@ function RoleCard({
                         .map((m) => m.person_id)
                     )
                   }
-                  className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-destructive h-auto p-0"
                   title="Remove from role"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
-                </button>
+                </Button>
               </div>
             );
           })}
@@ -1142,6 +1186,7 @@ function TeamTab({ projectId }: { projectId: string }) {
         }
         role={assignDialog.role}
         onSave={updateRoleMembers}
+        projectId={projectId}
       />
       <CreateRoleDialog
         open={createRoleOpen}
@@ -1286,7 +1331,7 @@ function VendorsTab({ projectId }: { projectId: string }) {
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
                         <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="h-4 w-4" />
+                          <MoreHorizontal />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
@@ -1396,7 +1441,7 @@ export default function ProjectDirectoryPage() {
       />
       <PageContainer maxWidth="xl">
         <Tabs defaultValue="members">
-          <TabsList className="mb-6">
+          <TabsList variant="line" className="mb-6">
             <TabsTrigger value="members">
               Members
               <TabCount n={members.length} />

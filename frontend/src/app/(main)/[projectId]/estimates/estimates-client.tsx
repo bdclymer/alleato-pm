@@ -221,7 +221,7 @@ export function EstimatesClient({
               size="sm"
               onClick={() => router.push(`/${projectId}/estimates/new`)}
             >
-              <Plus className="mr-1 h-4 w-4" />
+              <Plus />
               New Estimate
             </Button>
           ),
@@ -258,7 +258,7 @@ export function EstimatesClient({
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <MoreHorizontal className="h-4 w-4" />
+                  <MoreHorizontal />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
@@ -353,7 +353,7 @@ export function EstimatesClient({
               size="sm"
               onClick={() => router.push(`/${projectId}/estimates/new`)}
             >
-              <Plus className="mr-1 h-4 w-4" />
+              <Plus />
               New Estimate
             </Button>
           ),

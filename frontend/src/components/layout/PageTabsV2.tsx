@@ -33,7 +33,7 @@ export function PageTabsV2({ tabs, className }: PageTabsV2Props) {
 
   return (
     <div className={cn("px-4 sm:px-6 lg:px-8", className)}>
-      <div className="inline-flex h-9 w-fit items-center justify-center rounded-lg bg-muted p-[3px]">
+      <div className="inline-flex h-9 w-fit items-center justify-center rounded-lg bg-muted/50 p-[3px]">
         {tabs.map((tab) => {
           const isActive =
             tab.isActive ??
@@ -42,6 +42,7 @@ export function PageTabsV2({ tabs, className }: PageTabsV2Props) {
               : pathname === tab.href);
 
           return (
+            {/* eslint-disable-next-line design-system/no-design-violations -- custom tab primitive */}
             <button
               key={tab.href}
               type="button"
@@ -51,7 +52,7 @@ export function PageTabsV2({ tabs, className }: PageTabsV2Props) {
               className={cn(
                 "inline-flex h-[calc(100%-1px)] flex-1 items-center justify-center gap-2 rounded-md border border-transparent px-4 py-1 text-sm font-medium whitespace-nowrap transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
                 isActive
-                  ? "bg-background text-foreground shadow-sm"
+                  ? "bg-background text-foreground shadow-sm border-border"
                   : "text-muted-foreground hover:text-foreground",
               )}
               aria-current={isActive ? "page" : undefined}

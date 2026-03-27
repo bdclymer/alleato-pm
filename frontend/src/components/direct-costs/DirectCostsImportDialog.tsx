@@ -466,7 +466,7 @@ export function DirectCostsImportDialog({
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isImporting}
               >
-                <Upload className="mr-2 h-4 w-4" />
+                <Upload />
                 Browse
               </Button>
             </div>

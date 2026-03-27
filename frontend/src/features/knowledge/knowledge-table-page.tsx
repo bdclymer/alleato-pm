@@ -191,7 +191,7 @@ export function KnowledgeTablePage() {
           description: "Your team's second brain — capture insights, lessons, and expertise",
           actions: (
             <Button onClick={handleCreate} size="sm">
-              <Plus className="mr-1.5 h-4 w-4" />
+              <Plus />
               Add Entry
             </Button>
           ),
@@ -269,7 +269,7 @@ export function KnowledgeTablePage() {
           isFiltered,
           action: (
             <Button onClick={handleCreate} size="sm">
-              <Plus className="mr-1.5 h-4 w-4" />
+              <Plus />
               Add First Entry
             </Button>
           ),

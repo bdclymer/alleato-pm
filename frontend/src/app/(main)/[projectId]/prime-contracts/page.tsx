@@ -410,14 +410,14 @@ export default function ProjectContractsPage(): ReactElement {
                 onClick={() => router.push(`/${projectId}/prime-contracts/configure`)}
                 aria-label="Configure prime contracts"
               >
-                <Settings className="h-4 w-4" />
+                <Settings />
               </Button>
               <Button
                 size="sm"
                 onClick={() => router.push(`/${projectId}/prime-contracts/new`)}
                 aria-label="Create new contract"
               >
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus />
                 Create
               </Button>
             </div>
@@ -457,7 +457,7 @@ export default function ProjectContractsPage(): ReactElement {
               className="w-full justify-start"
               onClick={() => router.push(`/${projectId}/prime-contracts/configure`)}
             >
-              <Settings className="mr-2 h-4 w-4" />
+              <Settings />
               Configure
             </Button>
           ),

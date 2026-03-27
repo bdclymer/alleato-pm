@@ -48,7 +48,7 @@ export const ScrollButton = forwardRef<HTMLButtonElement, ScrollButtonProps>(
         onClick={scrollToBottom}
         {...props}
       >
-        <ArrowDown className="h-4 w-4" />
+        <ArrowDown />
       </Button>
     );
   },

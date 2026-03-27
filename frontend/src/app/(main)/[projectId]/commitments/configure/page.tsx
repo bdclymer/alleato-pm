@@ -245,7 +245,7 @@ export default function CommitmentConfigurePage() {
           disabled={isSaving}
           className="gap-2"
         >
-          <Save className="h-4 w-4" />
+          <Save />
           Update
         </Button>
       }
@@ -253,46 +253,34 @@ export default function CommitmentConfigurePage() {
     >
       <div className="space-y-8">
         <nav className="flex flex-wrap gap-2 border-b border-border/70 pb-4">
-            <button
+            <Button
+              variant={activeTab === "contract-configuration" ? "default" : "outline"}
+              size="sm"
               onClick={() => setActiveTab("contract-configuration")}
-              className={`rounded-md px-4 py-2 text-sm ${
-                activeTab === "contract-configuration"
-                  ? "bg-primary text-primary-foreground"
-                  : "border border-border bg-background hover:bg-muted"
-              }`}
             >
               Contract Configuration
-            </button>
-            <button
+            </Button>
+            <Button
+              variant={activeTab === "workflow-settings" ? "default" : "outline"}
+              size="sm"
               onClick={() => setActiveTab("workflow-settings")}
-              className={`rounded-md px-4 py-2 text-sm ${
-                activeTab === "workflow-settings"
-                  ? "bg-primary text-primary-foreground"
-                  : "border border-border bg-background hover:bg-muted"
-              }`}
             >
               Workflow Settings
-            </button>
-            <button
+            </Button>
+            <Button
+              variant={activeTab === "invoice-settings" ? "default" : "outline"}
+              size="sm"
               onClick={() => setActiveTab("invoice-settings")}
-              className={`rounded-md px-4 py-2 text-sm ${
-                activeTab === "invoice-settings"
-                  ? "bg-primary text-primary-foreground"
-                  : "border border-border bg-background hover:bg-muted"
-              }`}
             >
               Invoice Settings
-            </button>
-            <button
+            </Button>
+            <Button
+              variant={activeTab === "permissions" ? "default" : "outline"}
+              size="sm"
               onClick={() => setActiveTab("permissions")}
-              className={`rounded-md px-4 py-2 text-sm ${
-                activeTab === "permissions"
-                  ? "bg-primary text-primary-foreground"
-                  : "border border-border bg-background hover:bg-muted"
-              }`}
             >
               Permissions Table
-            </button>
+            </Button>
           </nav>
 
         <main className="space-y-8">
@@ -1038,7 +1026,7 @@ export default function CommitmentConfigurePage() {
               disabled={isSaving}
               className="gap-2"
             >
-              <Save className="h-4 w-4" />
+              <Save />
               Update
             </Button>
           </div>

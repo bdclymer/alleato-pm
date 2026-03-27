@@ -319,7 +319,7 @@ export function ImportDialog({
               type="button"
               onClick={handleTemplateDownload}
             >
-              <Download className="mr-2 h-4 w-4" />
+              <Download />
               Download Template
             </Button>
             <Button

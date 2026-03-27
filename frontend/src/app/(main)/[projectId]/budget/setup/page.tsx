@@ -264,12 +264,12 @@ export default function BudgetSetupPage() {
             onClick={() => router.push(`/${projectId}/budget`)}
             className="gap-2 sm:hidden"
           >
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft />
             Back
           </Button>
           <div className="hidden sm:flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={handleAddRow}>
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus />
               Add Row
             </Button>
             <Button

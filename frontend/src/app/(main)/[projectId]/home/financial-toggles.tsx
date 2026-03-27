@@ -70,9 +70,9 @@ function ToggleSection({
           <h3 className="text-lg font-semibold">{title}</h3>
         </div>
         {isOpen ? (
-          <ChevronDown className="h-5 w-5" />
+          <ChevronDown />
         ) : (
-          <ChevronRight className="h-5 w-5" />
+          <ChevronRight />
         )}
       </Button>
 
@@ -168,7 +168,7 @@ export function FinancialToggles({
             </a>
             <Button asChild size="sm" className="flex items-center gap-1">
               <a href={`/${project.id}/budget/new`}>
-                <Plus className="h-4 w-4" />
+                <Plus />
                 Create Budget
               </a>
             </Button>
@@ -235,7 +235,7 @@ export function FinancialToggles({
             </a>
             <Button asChild size="sm" className="flex items-center gap-1">
               <a href={`/${project.id}/contracts/new`}>
-                <Plus className="h-4 w-4" />
+                <Plus />
                 Create Contract
               </a>
             </Button>
@@ -306,7 +306,7 @@ export function FinancialToggles({
             </a>
             <Button asChild size="sm" className="flex items-center gap-1">
               <a href={`/${project.id}/commitments/new`}>
-                <Plus className="h-4 w-4" />
+                <Plus />
                 Create Commitment
               </a>
             </Button>

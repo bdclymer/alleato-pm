@@ -245,13 +245,15 @@ export function EmailCommitmentDialog({
                     className="flex items-center gap-1 pr-1"
                   >
                     <span className="max-w-[200px] truncate">{recipient.name}</span>
-                    <button
+                    <Button
                       type="button"
+                      variant="ghost"
+                      size="icon"
                       onClick={() => removeRecipient(recipient.id)}
-                      className="ml-1 rounded-full hover:bg-muted p-0.5"
+                      className="ml-1 h-4 w-4 rounded-full p-0"
                     >
                       <X className="h-3 w-3" />
-                    </button>
+                    </Button>
                   </Badge>
                 ))}
               </div>
@@ -423,7 +425,7 @@ export function EmailCommitmentDialog({
               </>
             ) : (
               <>
-                <Mail className="h-4 w-4" />
+                <Mail />
                 Send Email
               </>
             )}

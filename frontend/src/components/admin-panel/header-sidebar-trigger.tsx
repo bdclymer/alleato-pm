@@ -21,7 +21,7 @@ export function HeaderSidebarTrigger({ className }: HeaderSidebarTriggerProps) {
       className={cn("size-7", className)}
       onClick={toggleOpen}
     >
-      <PanelLeftIcon className="h-4 w-4" />
+      <PanelLeftIcon />
       <span className="sr-only">Toggle Sidebar</span>
     </Button>
   );

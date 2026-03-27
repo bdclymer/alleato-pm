@@ -126,7 +126,7 @@ export default function Ai01() {
                   size="icon"
                   className="h-9 w-9 rounded-full hover:bg-accent outline-none ring-0"
                 >
-                  <IconPlus className="size-6 text-muted-foreground" />
+                  <IconPlus className="text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
 
@@ -174,7 +174,7 @@ export default function Ai01() {
                 size="icon"
                 className="h-9 w-9 rounded-full hover:bg-accent"
               >
-                <IconMicrophone className="size-5 text-muted-foreground" />
+                <IconMicrophone className="text-muted-foreground" />
               </Button>
 
               <Button
@@ -183,7 +183,7 @@ export default function Ai01() {
                 size="icon"
                 className="h-9 w-9 rounded-full hover:bg-accent relative"
               >
-                <IconWaveSine className="size-5 text-muted-foreground" />
+                <IconWaveSine className="text-muted-foreground" />
               </Button>
 
               {message.trim() && (
@@ -192,7 +192,7 @@ export default function Ai01() {
                   size="icon"
                   className="h-9 w-9 rounded-full"
                 >
-                  <IconSend className="size-5" />
+                  <IconSend />
                 </Button>
               )}
             </div>

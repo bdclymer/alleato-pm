@@ -2,6 +2,7 @@ import type {
   AdminFeedbackRequestType,
   AdminFeedbackSeverity,
 } from "./constants";
+import type { ToolContextBundle } from "./context-resolver";
 
 type GitHubIssuePayload = {
   title: string;
@@ -25,6 +26,8 @@ export type CreateGitHubIssueInput = {
   screenshotUrl: string | null;
   projectId: number | null;
   metadata: Record<string, unknown>;
+  /** Resolved tool context bundle — included when a tool match exists */
+  toolContext?: ToolContextBundle | null;
 };
 
 export type CreatedGitHubIssue = {
@@ -98,6 +101,43 @@ function buildIssueBody(input: CreateGitHubIssueInput) {
     lines.push("", `## Screenshot`, `![Feedback screenshot](${input.screenshotUrl})`);
   }
 
+  // Append tool context for agents if a tool was matched
+  if (input.toolContext) {
+    const ctx = input.toolContext;
+    lines.push(
+      "",
+      "## Agent Context",
+      "",
+      `**Matched Tool:** ${ctx.tool_name} (${ctx.tool_category})`,
+    );
+
+    if (ctx.tool_description) {
+      lines.push(`**Description:** ${ctx.tool_description}`);
+    }
+
+    if (ctx.procore_url) {
+      lines.push(`**Procore URL:** ${ctx.procore_url}`);
+    }
+
+    lines.push(
+      `**PRP:** \`${ctx.prp_path}\``,
+      `**Research Folder:** \`${ctx.research_folder}\``,
+      `**Crawl Manifest:** \`${ctx.manifest_path}\``,
+      `**Screenshots:** \`${ctx.screenshots_folder}\``,
+      "",
+      "### Resolution Steps",
+      "",
+      ...ctx.resolution_steps,
+      "",
+      "### If More Detail Is Needed",
+      "",
+      "Run the Procore deep crawl to capture the latest field-level data:",
+      "```bash",
+      ctx.crawl_command,
+      "```",
+    );
+  }
+
   lines.push(
     "",
     "## Agent Payload",
@@ -140,29 +180,60 @@ async function postIssue(
   };
 }
 
+async function addLabels(
+  config: NonNullable<ReturnType<typeof getRepoConfig>>,
+  issueNumber: number,
+  labels: string[],
+) {
+  // Add labels in a separate call so the "labeled" event fires distinctly,
+  // which is required for GitHub Actions workflows that trigger on labeled events.
+  await fetch(
+    `https://api.github.com/repos/${config.owner}/${config.repo}/issues/${issueNumber}/labels`,
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/vnd.github+json",
+        Authorization: `Bearer ${config.token}`,
+        "Content-Type": "application/json",
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+      body: JSON.stringify({ labels }),
+    },
+  );
+}
+
 export async function createGitHubIssue(input: CreateGitHubIssueInput) {
   const config = getRepoConfig();
   if (!config) {
     return null;
   }
 
+  const labels = buildLabels(input.requestType);
+
+  // Create issue WITHOUT labels first
   const payload: GitHubIssuePayload = {
     title: input.title,
     body: buildIssueBody(input),
-    labels: buildLabels(input.requestType),
   };
 
+  let issue: { number: number; url: string; state: string };
+
   try {
-    return await postIssue(config, payload);
+    issue = await postIssue(config, payload);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     if (!message.includes("Validation Failed")) {
       throw error;
     }
-
-    return postIssue(config, {
-      title: payload.title,
-      body: payload.body,
-    });
+    issue = await postIssue(config, payload);
   }
+
+  // Then add labels separately so the "labeled" event triggers the Claude workflow
+  try {
+    await addLabels(config, issue.number, labels);
+  } catch {
+    // Non-fatal — issue was created, labels are secondary
+  }
+
+  return issue;
 }

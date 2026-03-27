@@ -581,16 +581,17 @@ export function DirectCostForm({
                   Back to List
                 </Button>
                 {showAutoFill && (
-                  <button
+                  <Button
                     type="button"
+                    variant="outline"
                     onClick={handleAutoFill}
                     disabled={isAutoFilling || isLoadingOptions}
-                    className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-info/30 bg-info/10 px-4 py-2 text-sm text-info transition-colors hover:bg-info/20 disabled:opacity-50 sm:w-auto"
+                    className="w-full sm:w-auto"
                     title="Development only: Fill form with test data"
                   >
                     <Wand2 className="h-4 w-4" />
                     {isAutoFilling ? 'Filling...' : 'Auto-Fill'}
-                  </button>
+                  </Button>
                 )}
               </div>
 

@@ -278,7 +278,7 @@ export function PunchListClient({ projectId }: PunchListClientProps) {
     if (isRecycleBin) {
       return (
         <Button variant="ghost" size="sm" onClick={() => handleRestore(item.id)}>
-          <RotateCcw className="mr-1 h-4 w-4" />
+          <RotateCcw />
           Restore
         </Button>
       );
@@ -287,7 +287,7 @@ export function PunchListClient({ projectId }: PunchListClientProps) {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" size="icon" className="h-8 w-8">
-            <MoreHorizontal className="h-4 w-4" />
+            <MoreHorizontal />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -313,13 +313,13 @@ export function PunchListClient({ projectId }: PunchListClientProps) {
           actions: (
             <div className="flex items-center gap-2">
               <Button size="sm" onClick={() => setFormOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
+                <Plus />
                 Create Punch Item
               </Button>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm">
-                    <Download className="mr-2 h-4 w-4" />
+                    <Download />
                     Export
                   </Button>
                 </DropdownMenuTrigger>
@@ -407,7 +407,7 @@ export function PunchListClient({ projectId }: PunchListClientProps) {
           isFiltered,
           action: isRecycleBin ? undefined : (
             <Button size="sm" onClick={() => setFormOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus />
               Create your first punch item
             </Button>
           ),

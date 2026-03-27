@@ -3,6 +3,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Check, X, Pencil } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface EditableCellProps {
   value: string | number | null | undefined;
@@ -86,28 +87,32 @@ export function EditableCell({
           )}
           placeholder={placeholder}
         />
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           onClick={(e) => {
             e.stopPropagation();
             handleSave();
           }}
           disabled={isSaving}
-          className="p-1 text-green-600 hover:bg-green-50 rounded disabled:opacity-50"
+          className="h-7 w-7 text-green-600 hover:bg-green-50"
         >
           <Check className="w-4 h-4" />
-        </button>
-        <button
+        </Button>
+        <Button
           type="button"
+          variant="ghost"
+          size="icon"
           onClick={(e) => {
             e.stopPropagation();
             handleCancel();
           }}
           disabled={isSaving}
-          className="p-1 text-red-600 hover:bg-red-50 rounded disabled:opacity-50"
+          className="h-7 w-7 text-red-600 hover:bg-red-50"
         >
           <X className="w-4 h-4" />
-        </button>
+        </Button>
       </div>
     );
   }

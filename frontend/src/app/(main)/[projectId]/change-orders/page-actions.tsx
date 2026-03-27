@@ -50,7 +50,7 @@ export function PageActions({ projectId, tab = "prime" }: PageActionsProps) {
     <>
       <div className="hidden items-center gap-2 sm:flex">
         <Button variant="outline" size="sm" onClick={handleExport}>
-          <Download className="mr-2 h-4 w-4" />
+          <Download />
           Export CSV
         </Button>
         <Button asChild size="sm" data-testid="change-orders-create-button">
@@ -67,7 +67,7 @@ export function PageActions({ projectId, tab = "prime" }: PageActionsProps) {
           aria-label="Create change order"
         >
           <Link href={createHref}>
-            <Plus className="h-4 w-4" />
+            <Plus />
           </Link>
         </Button>
       </div>

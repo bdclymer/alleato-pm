@@ -117,7 +117,7 @@ export function WelcomeScreen({
           <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-muted-foreground">
             AI Strategist
           </p>
-          <h1 className="font-sans text-balance text-4xl font-semibold tracking-tight text-foreground sm:text-5xl">
+          <h1 className="font-sans text-balance text-3xl font-semibold tracking-tight text-foreground sm:text-5xl">
             {displayName ? `How can I help, ${displayName}?` : "How can I help?"}
           </h1>
         </div>
@@ -125,14 +125,14 @@ export function WelcomeScreen({
         {children && <div className="mx-auto mt-8 max-w-3xl">{children}</div>}
 
         <div className="mt-6 flex flex-wrap items-center justify-center gap-2.5">
-          {SUGGESTIONS.slice(0, 5).map((suggestion) => (
+          {SUGGESTIONS.slice(0, 8).map((suggestion, index) => (
             <button
               key={suggestion.prompt}
               type="button"
               onClick={() => onSelectPrompt(suggestion.prompt)}
-              className="inline-flex min-h-10 items-center gap-2 rounded-full border border-border/70 bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-muted/40"
+              className={`inline-flex min-h-9 items-center gap-1.5 rounded-full border border-border/70 bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-muted/40 sm:min-h-10 sm:gap-2 sm:px-4 sm:py-2 sm:text-sm ${index >= 4 ? "hidden sm:inline-flex" : ""}`}
             >
-              <suggestion.icon className="h-4 w-4 text-muted-foreground" />
+              <suggestion.icon className="h-3.5 w-3.5 text-muted-foreground sm:h-4 sm:w-4" />
               {suggestion.title}
             </button>
           ))}

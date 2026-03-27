@@ -50,12 +50,13 @@ export function PortfolioHeader({
           aria-label="Portfolio tabs"
         >
           {views.map((view) => (
-            <button
+            <Button
               key={view.id}
               type="button"
+              variant="ghost"
               onClick={() => onViewChange(view.id)}
               className={cn(
-                "group inline-flex items-center gap-2 border-b-2 py-4 px-2 text-sm font-medium transition-all duration-200 whitespace-nowrap",
+                "group inline-flex items-center gap-2 border-b-2 py-4 px-2 text-sm font-medium transition-all duration-200 whitespace-nowrap rounded-none h-auto",
                 activeView === view.id
                   ? "border-brand text-brand"
                   : "border-transparent text-muted-foreground hover:border-muted-foreground hover:text-foreground",
@@ -63,17 +64,18 @@ export function PortfolioHeader({
               aria-current={activeView === view.id ? "page" : undefined}
             >
               <span>{view.name}</span>
-            </button>
+            </Button>
           ))}
 
           {/* Financial Views dropdown */}
           {financialViews.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
                   className={cn(
-                    "group inline-flex items-center gap-2 border-b-2 py-4 px-2 text-sm font-medium transition-all duration-200 whitespace-nowrap",
+                    "group inline-flex items-center gap-2 border-b-2 py-4 px-2 text-sm font-medium transition-all duration-200 whitespace-nowrap rounded-none h-auto",
                     financialViews.some((v) => v.id === activeView)
                       ? "border-brand text-brand"
                       : "border-transparent text-muted-foreground hover:border-muted-foreground hover:text-foreground",
@@ -81,7 +83,7 @@ export function PortfolioHeader({
                 >
                   <span>Financial Views</span>
                   <ChevronDown className="w-4 h-4" />
-                </button>
+                </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start">
                 {financialViews.map((view) => (
@@ -106,7 +108,7 @@ export function PortfolioHeader({
             variant="outline"
             className="h-9 text-sm px-4"
           >
-            <FileText className="w-4 h-4 mr-2" />
+            <FileText />
             Settings
           </Button>
         )}
@@ -114,14 +116,16 @@ export function PortfolioHeader({
         {/* Export dropdown */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button
+            <Button
                 type="button"
-                className="p-2.5 hover:bg-muted rounded-md transition-all duration-200 hover:scale-105 border border-border"
+                variant="outline"
+                size="icon"
+                className="h-9 w-9 hover:scale-105 transition-all duration-200"
                 title="Export"
                 aria-label="Export"
               >
                 <ArrowUpFromLine className="w-4 h-4" />
-              </button>
+              </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => onExport?.("pdf")}>
@@ -141,7 +145,7 @@ export function PortfolioHeader({
               className="h-9 text-sm px-4 border-green-500 text-green-600 hover:bg-green-50"
               title="Create fully populated test project"
             >
-              <Plus className="w-4 h-4 mr-2" />
+              <Plus />
               Create Test Project
             </Button>
           )}
@@ -151,7 +155,7 @@ export function PortfolioHeader({
             onClick={onCreateProject}
             className="bg-brand text-white hover:bg-brand/90 h-9 text-sm px-4 shadow-sm hover:shadow transition-all duration-200"
           >
-            <Plus className="w-4 h-4 mr-2" />
+            <Plus />
             Create Project
           </Button>
         </div>

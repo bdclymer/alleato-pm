@@ -15,7 +15,7 @@ for (const line of envLines) {
   const t = line.trim();
   if (!t || t.startsWith("#")) continue;
   const [k, ...v] = t.split("=");
-  env[k.trim()] = v.join("=").trim();
+  env[k.trim()] = v.join("=").trim().replace(/^["']|["']$/g, "");
 }
 
 const SUPABASE_URL = env.NEXT_PUBLIC_SUPABASE_URL;
@@ -43,8 +43,10 @@ async function login() {
 function unwrap(raw) {
   if (raw === null || raw === undefined) return raw;
   if (Array.isArray(raw)) return raw.map(unwrap);
-  if (typeof raw === "object" && "value" in raw && Object.keys(raw).length === 1) return raw.value;
   if (typeof raw === "object") {
+    const keys = Object.keys(raw);
+    if (keys.length === 0) return null; // Empty object {} → null
+    if (keys.length === 1 && "value" in raw) return raw.value;
     const result = {};
     for (const [k, v] of Object.entries(raw)) result[k] = unwrap(v);
     return result;
@@ -188,16 +190,179 @@ async function syncInvoices() {
   return result;
 }
 
+// =============================================================================
+// Phase 2: Bridge acumatica_ar_invoices → owner_invoices + line items
+// =============================================================================
+
+function mapAcumaticaStatus(status) {
+  if (!status) return "draft";
+  const s = status.toLowerCase();
+  if (s === "open" || s === "balanced") return "submitted";
+  if (s === "closed") return "paid";
+  if (s === "voided") return "void";
+  if (s === "released") return "approved";
+  return "draft";
+}
+
+async function bridgeToOwnerInvoices(supabase) {
+  console.log("\n--- Phase 2: Bridge to owner_invoices ---");
+  const now = new Date().toISOString();
+
+  // 1. Build project mapping: acumatica_project_id → projects.id
+  const { data: projects } = await supabase
+    .from("projects")
+    .select("id, acumatica_project_id")
+    .not("acumatica_project_id", "is", null);
+  const acumaticaToProjectId = new Map(
+    (projects ?? []).map(p => [p.acumatica_project_id, p.id])
+  );
+  console.log(`  ${acumaticaToProjectId.size} projects with acumatica_project_id`);
+
+  // 2. Build prime_contracts mapping: project_id → first prime_contract.id
+  const { data: primeContracts } = await supabase
+    .from("prime_contracts")
+    .select("id, project_id, contract_number");
+  const projectToPrimeContract = new Map();
+  for (const pc of primeContracts ?? []) {
+    // Use first prime contract per project (most projects have one)
+    if (!projectToPrimeContract.has(pc.project_id)) {
+      projectToPrimeContract.set(pc.project_id, pc.id);
+    }
+  }
+  console.log(`  ${projectToPrimeContract.size} projects with prime contracts`);
+
+  // 3. Load all acumatica_ar_invoices with their lines
+  const { data: rawInvoices } = await supabase
+    .from("acumatica_ar_invoices")
+    .select("*, acumatica_ar_invoice_lines(*)");
+
+  // 4. Load existing owner_invoices keyed by acumatica_ref_nbr + acumatica_doc_type
+  const { data: existingOwner } = await supabase
+    .from("owner_invoices")
+    .select("id, acumatica_ref_nbr, acumatica_doc_type");
+  const ownerMap = new Map(
+    (existingOwner ?? []).map(r => [`${r.acumatica_ref_nbr}|${r.acumatica_doc_type}`, r.id])
+  );
+
+  const result = { created: 0, updated: 0, lineItems: 0, skipped: 0, errors: [] };
+
+  for (const inv of rawInvoices ?? []) {
+    const refNbr = inv.reference_nbr;
+    const docType = inv.type ?? "Invoice";
+    const key = `${refNbr}|${docType}`;
+
+    // Resolve project_id from the Acumatica project field
+    const projectId = acumaticaToProjectId.get(inv.project);
+    if (!projectId) {
+      result.skipped++;
+      continue; // Can't map to a project — skip
+    }
+
+    // Resolve prime_contract_id for this project
+    const primeContractId = projectToPrimeContract.get(projectId);
+    if (!primeContractId) {
+      result.skipped++;
+      continue; // No prime contract for this project — skip
+    }
+
+    const ownerRow = {
+      acumatica_ref_nbr:  refNbr,
+      acumatica_doc_type: docType,
+      acumatica_sync_at:  now,
+      invoice_number:     refNbr,
+      status:             mapAcumaticaStatus(inv.status),
+      prime_contract_id:  primeContractId,
+      contract_id:        null, // legacy field, not used
+      period_start:       toDate(inv.date),
+      period_end:         null,
+      updated_at:         now,
+    };
+
+    try {
+      let ownerInvoiceId = ownerMap.get(key);
+
+      if (ownerInvoiceId) {
+        const { error } = await supabase
+          .from("owner_invoices")
+          .update(ownerRow)
+          .eq("id", ownerInvoiceId);
+        if (error) { result.errors.push(`owner ${key}: ${error.message}`); continue; }
+        result.updated++;
+      } else {
+        const { data, error } = await supabase
+          .from("owner_invoices")
+          .insert(ownerRow)
+          .select("id")
+          .single();
+        if (error) { result.errors.push(`owner ${key}: ${error.message}`); continue; }
+        ownerInvoiceId = data.id;
+        result.created++;
+      }
+
+      // Sync line items: acumatica_ar_invoice_lines → owner_invoice_line_items
+      const rawLines = inv.acumatica_ar_invoice_lines ?? [];
+      if (rawLines.length > 0) {
+        // Delete existing line items for this owner invoice, then re-insert
+        await supabase.from("owner_invoice_line_items").delete().eq("invoice_id", ownerInvoiceId);
+
+        const lineRows = rawLines.map(l => ({
+          invoice_id:        ownerInvoiceId,
+          acumatica_line_nbr: l.line_nbr,
+          description:       l.transaction_description ?? l.account ?? null,
+          approved_amount:   l.amount ?? l.extended_price ?? 0,
+          category:          l.account ?? null,
+        }));
+
+        const { error: lineErr } = await supabase
+          .from("owner_invoice_line_items")
+          .insert(lineRows);
+        if (lineErr) result.errors.push(`owner lines ${key}: ${lineErr.message}`);
+        else result.lineItems += lineRows.length;
+      }
+    } catch (err) {
+      result.errors.push(`owner ${key}: ${err.message}`);
+    }
+  }
+
+  console.log(`  Created    : ${result.created}`);
+  console.log(`  Updated    : ${result.updated}`);
+  console.log(`  Line items : ${result.lineItems}`);
+  console.log(`  Skipped    : ${result.skipped} (no project/contract mapping)`);
+  if (result.errors.length > 0) result.errors.forEach(e => console.log(`    ✗ ${e}`));
+  return result;
+}
+
 (async () => {
   console.log("Starting Acumatica AR invoice sync...\n");
   await login();
-  const result = await syncInvoices();
 
-  console.log("\n--- Results ---");
+  // Phase 1: Sync raw Acumatica data
+  const result = await syncInvoices();
+  console.log("\n--- Phase 1 Results (raw sync) ---");
   console.log(`  Created : ${result.created}`);
   console.log(`  Updated : ${result.updated}`);
   console.log(`  Lines   : ${result.lines}`);
   console.log(`  Errors  : ${result.errors.length}`);
   if (result.errors.length > 0) result.errors.forEach(e => console.log(`    ✗ ${e}`));
+
+  // Phase 2: Bridge to UI-facing tables
+  const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY);
+  await bridgeToOwnerInvoices(supabase);
+
+  // Logout to free the API session
+  await fetch(`${BASE_URL}/entity/auth/logout`, {
+    method: "POST",
+    headers: { Cookie: sessionCookies },
+  }).catch(() => {});
+  console.log("✓ Logged out of Acumatica");
+
   console.log("\nDone.");
-})().catch(err => { console.error("Fatal:", err.message); process.exit(1); });
+})().catch(async (err) => {
+  if (sessionCookies) {
+    await fetch(`${BASE_URL}/entity/auth/logout`, {
+      method: "POST", headers: { Cookie: sessionCookies },
+    }).catch(() => {});
+  }
+  console.error("Fatal:", err.message);
+  process.exit(1);
+});

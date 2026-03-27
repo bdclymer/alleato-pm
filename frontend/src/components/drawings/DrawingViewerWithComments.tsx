@@ -4,6 +4,7 @@ import { useState, useCallback, type CSSProperties } from "react";
 import { RoomProvider, ClientSideSuspense, useThreads } from "@liveblocks/react/suspense";
 import { FloatingComposer, FloatingThread, CommentPin } from "@liveblocks/react-ui";
 import { MessageSquare } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { DrawingViewer } from "./DrawingViewer";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -133,15 +134,17 @@ function ViewerWithCommentState({
             setIsPendingComposerOpen(false);
           }}
         >
-          <button
+          <Button
             type="button"
-            className="inline-flex items-center gap-1 rounded-full border border-zinc-700 bg-zinc-900/95 px-2.5 py-1 text-[11px] font-medium text-zinc-100 shadow-sm transition-colors hover:border-zinc-500 hover:bg-zinc-800"
+            variant="secondary"
+            size="sm"
+            className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium h-auto"
             style={pendingPinStyle}
             onClick={() => setIsPendingComposerOpen(true)}
           >
             <MessageSquare className="h-3 w-3" />
             <span>Reply</span>
-          </button>
+          </Button>
         </FloatingComposer>
       )}
 
