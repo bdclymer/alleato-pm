@@ -1,0 +1,195 @@
+name: Codex Assistant
+
+on:
+  issue_comment:
+    types: [created]
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+
+concurrency:
+  group: codex-${{ github.event.issue.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  auth-check:
+    runs-on: ubuntu-latest
+    outputs:
+      has_key: ${{ steps.check.outputs.has_key }}
+    steps:
+      - id: check
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [ -n "$OPENAI_API_KEY" ]; then
+            echo "has_key=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_key=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  respond:
+    needs: auth-check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    if: |
+      needs.auth-check.outputs.has_key == 'true' &&
+      github.event_name == 'issue_comment' &&
+      contains(github.event.comment.body, '@codex')
+    outputs:
+      final_message: ${{ steps.run_codex.outputs.final-message }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Add eyes reaction to trigger comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: "eyes"
+            });
+
+      - name: Run Codex for issue comment
+        id: run_codex
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          prompt: |
+            You are fixing GitHub issue #${{ github.event.issue.number }} in ${{ github.repository }}.
+
+            Issue title:
+            ${{ github.event.issue.title }}
+
+            Issue body:
+            ${{ github.event.issue.body }}
+
+            Triggering comment:
+            ${{ github.event.comment.body }}
+
+            Requirements:
+            - Diagnose the root cause with evidence from the code.
+            - Implement a minimal targeted fix in this repository.
+            - Run the relevant verification commands.
+            - Commit changes to a new branch named:
+              codex/issue-${{ github.event.issue.number }}-{short-description}
+            - Push the branch and open a pull request that includes:
+              - What was broken
+              - What you changed
+              - Verification evidence
+              - Closes #${{ github.event.issue.number }}
+            - Post a concise status update and PR link in your final message.
+
+      - name: Post Codex result to issue
+        if: steps.run_codex.outputs.final-message != ''
+        uses: actions/github-script@v7
+        env:
+          CODEX_FINAL_MESSAGE: ${{ steps.run_codex.outputs.final-message }}
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: process.env.CODEX_FINAL_MESSAGE
+            });
+
+  auto-resolve:
+    needs: auth-check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+    if: |
+      needs.auth-check.outputs.has_key == 'true' &&
+      github.event_name == 'issues' &&
+      github.event.action == 'labeled' &&
+      contains(github.event.issue.labels.*.name, 'codex')
+    outputs:
+      final_message: ${{ steps.run_codex.outputs.final-message }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Add eyes reaction to issue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.reactions.createForIssue({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              content: "eyes"
+            });
+
+      - name: Run Codex for labeled issue
+        id: run_codex
+        uses: openai/codex-action@v1
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          prompt: |
+            You are fixing GitHub issue #${{ github.event.issue.number }} in ${{ github.repository }}.
+
+            Issue title:
+            ${{ github.event.issue.title }}
+
+            Issue body:
+            ${{ github.event.issue.body }}
+
+            Requirements:
+            - Diagnose the root cause with evidence from the code.
+            - Implement a minimal targeted fix in this repository.
+            - Run the relevant verification commands.
+            - Commit changes to a new branch named:
+              codex/issue-${{ github.event.issue.number }}-{short-description}
+            - Push the branch and open a pull request that includes:
+              - What was broken
+              - What you changed
+              - Verification evidence
+              - Closes #${{ github.event.issue.number }}
+            - Post a concise status update and PR link in your final message.
+
+      - name: Post Codex result to issue
+        if: steps.run_codex.outputs.final-message != ''
+        uses: actions/github-script@v7
+        env:
+          CODEX_FINAL_MESSAGE: ${{ steps.run_codex.outputs.final-message }}
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: process.env.CODEX_FINAL_MESSAGE
+            });
+
+  missing-api-key:
+    needs: auth-check
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    if: |
+      needs.auth-check.outputs.has_key != 'true' &&
+      (
+        (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@codex')) ||
+        (github.event_name == 'issues' && github.event.action == 'labeled' && contains(github.event.issue.labels.*.name, 'codex'))
+      )
+    steps:
+      - name: Post missing secret notice
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body: "Codex trigger received, but `OPENAI_API_KEY` is not configured in repository secrets. Add it to enable `@codex` issue automation."
+            });
