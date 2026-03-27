@@ -938,7 +938,7 @@ export function BudgetLineItemCreatorModal({
             <div className="p-4 bg-muted rounded-md">
               <p className="text-sm font-medium text-foreground">Preview:</p>
               <p className="text-sm text-foreground mt-1">
-                {newCodeData.costCodeId ? (
+                {newCodeData.costCodeId && newCodeData.costType ? (
                   <>
                     {newCodeData.costCodeId}.{newCodeData.costType} –{" "}
                     {availableCostCodes.find((cc) => cc.id === newCodeData.costCodeId)?.title} –{" "}
