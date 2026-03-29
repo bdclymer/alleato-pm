@@ -793,6 +793,20 @@ export function DirectCostsClient({
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8 shrink-0"
+                    onClick={() => setIsImportDialogOpen(true)}
+                    aria-label="Import CSV"
+                  >
+                    <Upload />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Import CSV</TooltipContent>
+              </Tooltip>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 shrink-0"
                     disabled={isSyncing}
                     onClick={handleErpSync}
                     aria-label="Sync from ERP"
