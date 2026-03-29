@@ -120,14 +120,23 @@ jobs:
     if: |
       needs.auth-check.outputs.has_auth == 'true' &&
       ((github.event_name == 'issues' && github.event.action == 'opened') ||
-      (github.event_name == 'issues' && github.event.action == 'labeled' && contains(github.event.issue.labels.*.name, 'claude')))
+      (github.event_name == 'issues' && github.event.action == 'labeled' && (contains(github.event.issue.labels.*.name, 'claude') || contains(github.event.issue.labels.*.name, 'admin-feedback'))))
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      - name: Check for existing branch (dedup)
+        id: dedup
+        run: |
+          if git ls-remote --heads origin "claude/issue-${{ github.event.issue.number }}-*" | grep -q .; then
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Update feedback status
-        if: contains(github.event.issue.labels.*.name, 'admin-feedback')
+        if: steps.dedup.outputs.exists == 'false' && contains(github.event.issue.labels.*.name, 'admin-feedback')
         env:
           SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
@@ -141,6 +150,7 @@ jobs:
             -d '{"status": "diagnosing"}' || true
 
       - uses: anthropics/claude-code-action@v1
+        if: steps.dedup.outputs.exists == 'false'
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
@@ -185,7 +195,7 @@ jobs:
             - Push and create a PR with a summary of what was fixed and why.
 
       - name: Update feedback status to in_review
-        if: contains(github.event.issue.labels.*.name, 'admin-feedback')
+        if: steps.dedup.outputs.exists == 'false' && contains(github.event.issue.labels.*.name, 'admin-feedback')
         env:
           SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
           SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
