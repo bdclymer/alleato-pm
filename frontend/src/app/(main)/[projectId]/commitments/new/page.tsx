@@ -37,7 +37,34 @@ export default function NewCommitmentPage() {
     }
   };
 
-  const handleSubmitSubcontract = async (data: CreateSubcontractInput) => {
+  const uploadCommitmentAttachments = async (
+    commitmentId: string,
+    files: File[],
+  ) => {
+    if (!files.length) return;
+
+    for (const file of files) {
+      const formData = new FormData();
+      formData.append("file", file);
+      const uploadResponse = await fetch(
+        `/api/commitments/${commitmentId}/attachments`,
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
+
+      if (!uploadResponse.ok) {
+        const uploadError = await parseApiError(uploadResponse);
+        throw new Error(uploadError.error || "Failed to upload attachment");
+      }
+    }
+  };
+
+  const handleSubmitSubcontract = async (
+    data: CreateSubcontractInput,
+    attachmentFiles: File[] = [],
+  ) => {
     console.warn(
       "[New Commitment Page] Starting subcontract submission for project:",
       projectId,
@@ -73,12 +100,19 @@ export default function NewCommitmentPage() {
       throw detailedError;
     }
 
-    const responseData = await response.json();
+    const responseData = (await response.json()) as {
+      data?: { id?: string };
+    };
     console.warn("[New Commitment Page] Response status:", response.status);
     console.warn(
       "[New Commitment Page] Subcontract created successfully:",
       responseData.data,
     );
+
+    const createdCommitmentId = responseData?.data?.id;
+    if (createdCommitmentId && attachmentFiles.length > 0) {
+      await uploadCommitmentAttachments(createdCommitmentId, attachmentFiles);
+    }
 
     // Navigate back to commitments page
     router.push(`/${projectId}/commitments`);

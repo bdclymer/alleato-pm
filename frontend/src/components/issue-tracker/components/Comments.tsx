@@ -84,8 +84,8 @@ function CustomThread({ thread }: { thread: ThreadData }) {
   const issueId = getIssueId(room.id);
 
   if (!open) {
+    // eslint-disable-next-line design-system/no-design-violations -- liveblocks thread toggle
     return (
-      {/* eslint-disable-next-line design-system/no-design-violations -- liveblocks thread toggle */}
       <button
         onClick={() => setOpen(true)}
         className="border border-border my-4 rounded-lg overflow-hidden shadow-sm bg-card w-full text-sm text-left flex items-center h-10 px-3"

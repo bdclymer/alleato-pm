@@ -4,10 +4,10 @@
   "private": true,
   "packageManager": "pnpm@10.13.1",
   "scripts": {
-    "postinstall": "rm -rf .next",
+    "postinstall": "rm -rf .next 2>/dev/null || true",
     "dev": "next dev --turbopack",
     "dev:clean": "rm -rf .next && next dev --turbopack",
-    "build": "NODE_OPTIONS='--max-old-space-size=7168' next build --turbopack",
+    "build": "NODE_OPTIONS='--max-old-space-size=7168' next build",
     "start": "next start",
     "lint": "eslint .",
     "set-admin": "node scripts/set-admin.mjs",

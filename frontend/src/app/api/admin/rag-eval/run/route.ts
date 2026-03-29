@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
   const fs = await import("fs");
 
   const REPO_ROOT = path.resolve(process.cwd(), "..");
-  const PYTHON = path.join(REPO_ROOT, "backend/.venv/bin/python");
+  const PYTHON = process.env.RAG_EVAL_PYTHON_BIN || "python3";
   const RAG_DIR = path.join(REPO_ROOT, "docs/PRPs/rag");
 
   type EvalType = "l1" | "l2" | "reranker" | "coverage" | "e2e";
@@ -62,13 +62,6 @@ export async function POST(request: NextRequest) {
     return Response.json(
       { error: `Unknown eval type: ${evalType}. Valid: ${Object.keys(EVAL_CONFIGS).join(", ")}` },
       { status: 400 },
-    );
-  }
-
-  if (!fs.existsSync(PYTHON)) {
-    return Response.json(
-      { error: `Python venv not found at ${PYTHON}. Run: cd backend && python -m venv .venv && pip install -r requirements.txt` },
-      { status: 503 },
     );
   }
 

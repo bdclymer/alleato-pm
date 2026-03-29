@@ -24,6 +24,8 @@ import type {
 export interface VendorSyncResult {
   created: number;
   updated: number;
+  companiesCreated: number;
+  companiesUpdated: number;
   errors: string[];
 }
 
@@ -52,7 +54,13 @@ function toVendorFields(v: FlatVendor, now: string) {
  * @param companyId — The Alleato PM company UUID to associate new vendors with
  */
 export async function syncVendors(companyId: string): Promise<VendorSyncResult> {
-  const result: VendorSyncResult = { created: 0, updated: 0, errors: [] };
+  const result: VendorSyncResult = {
+    created: 0,
+    updated: 0,
+    companiesCreated: 0,
+    companiesUpdated: 0,
+    errors: [],
+  };
 
   const acuClient = createAcumaticaClient();
   await acuClient.login();
@@ -65,6 +73,29 @@ export async function syncVendors(companyId: string): Promise<VendorSyncResult> 
   const activeVendors = acuVendors.filter((v) => v.Status === "Active");
 
   const supabase = await createClient();
+
+  // Keep the app's company directory in sync with Acumatica vendors.
+  // New Acumatica vendors are materialized as companies so they can be used
+  // across the application, even before they're attached to a project.
+  const { data: existingCompanies, error: companyFetchError } = await supabase
+    .from("companies")
+    .select("id, name, status, type");
+
+  if (companyFetchError) {
+    result.errors.push(
+      `Failed to load existing companies: ${companyFetchError.message}`,
+    );
+    return result;
+  }
+
+  const companyByName = new Map<
+    string,
+    { id: string; name: string; status: string | null; type: string | null }
+  >();
+
+  for (const company of existingCompanies ?? []) {
+    companyByName.set(company.name.toLowerCase().trim(), company);
+  }
 
   const { data: existingVendors, error: fetchError } = await supabase
     .from("vendors")
@@ -88,9 +119,54 @@ export async function syncVendors(companyId: string): Promise<VendorSyncResult> 
 
   for (const acuVendor of activeVendors) {
     const acuId = acuVendor.VendorID;
+    const vendorName = acuVendor.VendorName.trim();
+    const vendorNameKey = vendorName.toLowerCase();
     const fields = toVendorFields(acuVendor, now);
 
     try {
+      const existingCompany = companyByName.get(vendorNameKey);
+      if (!existingCompany) {
+        const { data: insertedCompany, error: insertCompanyError } = await supabase
+          .from("companies")
+          .insert({
+            name: vendorName,
+            type: "VENDOR",
+            status: "ACTIVE",
+          })
+          .select("id, name, status, type")
+          .single();
+
+        if (insertCompanyError) {
+          result.errors.push(
+            `${acuId} (${vendorName}) company upsert failed: ${insertCompanyError.message}`,
+          );
+        } else if (insertedCompany) {
+          companyByName.set(vendorNameKey, insertedCompany);
+          result.companiesCreated++;
+        }
+      } else if (!existingCompany.type || !existingCompany.status) {
+        const companyPatch: { type?: string; status?: string } = {};
+        if (!existingCompany.type) companyPatch.type = "VENDOR";
+        if (!existingCompany.status) companyPatch.status = "ACTIVE";
+
+        const { error: updateCompanyError } = await supabase
+          .from("companies")
+          .update(companyPatch)
+          .eq("id", existingCompany.id);
+
+        if (updateCompanyError) {
+          result.errors.push(
+            `${acuId} (${vendorName}) company update failed: ${updateCompanyError.message}`,
+          );
+        } else {
+          companyByName.set(vendorNameKey, {
+            ...existingCompany,
+            ...companyPatch,
+          });
+          result.companiesUpdated++;
+        }
+      }
+
       const linkedById = byAcuId.get(acuId);
       if (linkedById) {
         const { error } = await supabase.from("vendors").update(fields).eq("id", linkedById.id);
@@ -99,7 +175,7 @@ export async function syncVendors(companyId: string): Promise<VendorSyncResult> 
         continue;
       }
 
-      const linkedByName = byName.get(acuVendor.VendorName.toLowerCase().trim());
+      const linkedByName = byName.get(vendorNameKey);
       if (linkedByName) {
         const { error } = await supabase.from("vendors")
           .update({ ...fields, acumatica_vendor_id: acuId })

@@ -14,9 +14,13 @@ import { Text } from "@/components/ui/text";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useDropzone } from "react-dropzone";
-import type { Database } from "@/types/database.types";
 
-type Attachment = Database["public"]["Tables"]["attachments"]["Row"];
+type Attachment = {
+  id: string;
+  fileName: string;
+  url: string;
+  uploadedAt?: string;
+};
 
 interface AttachmentsTabProps {
   commitmentId: string;
@@ -59,21 +63,20 @@ export const AttachmentsTab = memo(function AttachmentsTab({ commitmentId }: Att
     setIsUploading(true);
 
     try {
-      const formData = new FormData();
-      files.forEach((file) => {
-        formData.append("files", file);
-      });
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append("file", file);
+        const response = await fetch(`/api/commitments/${commitmentId}/attachments`, {
+          method: "POST",
+          body: formData,
+        });
 
-      const response = await fetch(`/api/commitments/${commitmentId}/attachments`, {
-        method: "POST",
-        body: formData,
-      });
+        if (!response.ok) {
+          throw new Error("Failed to upload files");
+        }
 
-      if (!response.ok) {
-        throw new Error("Failed to upload files");
+        await response.json();
       }
-
-      await response.json();
       toast.success(`${files.length} file(s) uploaded successfully`);
 
       // Refresh attachments list
@@ -242,10 +245,10 @@ export const AttachmentsTab = memo(function AttachmentsTab({ commitmentId }: Att
                     <FileText className="h-8 w-8 text-muted-foreground flex-shrink-0" />
                     <div className="min-w-0 flex-1">
                       <Text className="truncate" size="sm" weight="medium">
-                        {attachment.file_name}
+                        {attachment.fileName}
                       </Text>
                       <Text variant="muted" size="xs">
-                        Uploaded {attachment.uploaded_at ? formatDate(attachment.uploaded_at) : 'Unknown'}
+                        Uploaded {attachment.uploadedAt ? formatDate(attachment.uploadedAt) : "Unknown"}
                       </Text>
                     </div>
                   </div>

@@ -63,6 +63,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useProjectUsers } from "@/hooks/use-project-users";
 import { useCompanyContacts } from "@/hooks/use-company-contacts";
 import { createClient } from "@/lib/supabase/client";
+import { formatCurrency } from "@/lib/utils";
 import { toast } from "sonner";
 import {
   Tooltip,
@@ -120,7 +121,7 @@ const UNIT_OF_MEASURES = [
 
 interface CreateSubcontractFormProps {
   projectId: number;
-  onSubmit: (data: CreateSubcontractInput) => Promise<void>;
+  onSubmit: (data: CreateSubcontractInput, attachmentFiles?: File[]) => Promise<void>;
   onCancel: () => void;
   initialData?: Partial<CreateSubcontractInput> & {
     sovLines?: SovLineItem[];
@@ -169,8 +170,17 @@ export function CreateSubcontractForm({
     initialData?.sovLines || [],
   );
   const [attachments, setAttachments] = React.useState<
-    Array<{ name: string; size: number; type: string }>
-  >([]);
+    Array<{ name: string; size: number; type: string; url?: string }>
+  >(
+    (initialData?.attachments || []).map((attachment) => ({
+      name: attachment.name,
+      size: attachment.size ?? 0,
+      type: attachment.type ?? "",
+    })),
+  );
+  const [pendingAttachmentFiles, setPendingAttachmentFiles] = React.useState<File[]>(
+    [],
+  );
 
   // Budget code state (matching prime contracts pattern)
   const [budgetCodes, setBudgetCodes] = React.useState<BudgetCode[]>([]);
@@ -349,6 +359,52 @@ export function CreateSubcontractForm({
     fetchBudgetCodes();
   }, [projectId]);
 
+  React.useEffect(() => {
+    if (!initialData?.attachments) return;
+    setAttachments(
+      initialData.attachments.map((attachment) => ({
+        name: attachment.name,
+        size: attachment.size ?? 0,
+        type: attachment.type ?? "",
+      })),
+    );
+  }, [initialData?.attachments]);
+
+  React.useEffect(() => {
+    if (budgetCodes.length === 0) return;
+
+    setSovLines((prevLines) => {
+      let changed = false;
+
+      const nextLines = prevLines.map((line) => {
+        if (line.isGroup) return line;
+        if (line.budgetCodeId && line.budgetCodeLabel) return line;
+
+        const storedCode = `${line.budgetCode ?? ""}`.trim();
+        if (!storedCode) return line;
+
+        const matchedCode = budgetCodes.find(
+          (code) =>
+            code.id === storedCode ||
+            code.code === storedCode ||
+            code.fullLabel === storedCode,
+        );
+
+        if (!matchedCode) return line;
+
+        changed = true;
+        return {
+          ...line,
+          budgetCodeId: matchedCode.id,
+          budgetCode: matchedCode.code,
+          budgetCodeLabel: matchedCode.fullLabel,
+        };
+      });
+
+      return changed ? nextLines : prevLines;
+    });
+  }, [budgetCodes]);
+
   // Fetch cost codes when create budget code modal opens
   React.useEffect(() => {
     const fetchCostCodes = async () => {
@@ -506,9 +562,14 @@ export function CreateSubcontractForm({
       const submitData = {
         ...data,
         sov: sovLines,
+        attachments: attachments.map((attachment) => ({
+          name: attachment.name,
+          size: attachment.size,
+          type: attachment.type,
+        })),
       };
 
-      await onSubmit(submitData);
+      await onSubmit(submitData, pendingAttachmentFiles);
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "An unexpected error occurred";
@@ -542,6 +603,38 @@ export function CreateSubcontractForm({
   };
 
   const csvInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleAttachmentListChange = (
+    nextAttachments: Array<{ name: string; size: number; type: string; url?: string }>,
+  ) => {
+    setAttachments(nextAttachments);
+    setPendingAttachmentFiles((previousFiles) =>
+      previousFiles.filter((file) =>
+        nextAttachments.some(
+          (attachment) =>
+            attachment.name === file.name && attachment.size === file.size,
+        ),
+      ),
+    );
+  };
+
+  const handleFilesSelected = (selectedFiles: File[]) => {
+    setPendingAttachmentFiles((previousFiles) => {
+      const nextFiles = [...previousFiles];
+      for (const file of selectedFiles) {
+        const exists = nextFiles.some(
+          (candidate) =>
+            candidate.name === file.name &&
+            candidate.size === file.size &&
+            candidate.lastModified === file.lastModified,
+        );
+        if (!exists) {
+          nextFiles.push(file);
+        }
+      }
+      return nextFiles;
+    });
+  };
 
   const addSOVLine = () => {
     const isUnitQuantity = accountingMethod === "unit_quantity";
@@ -1009,7 +1102,8 @@ export function CreateSubcontractForm({
             <FileUploadField
               label=""
               value={attachments}
-              onChange={setAttachments}
+              onChange={handleAttachmentListChange}
+              onFilesSelected={handleFilesSelected}
               multiple
               maxFiles={20}
               maxSize={50 * 1024 * 1024}
@@ -1316,16 +1410,15 @@ export function CreateSubcontractForm({
                         </InputGroup>
                       </td>
                       <td className="px-1 py-1.5 pt-3 text-right text-sm">
-                        ${(line.billedToDate || 0).toFixed(2)}
+                        {formatCurrency(line.billedToDate || 0)}
                       </td>
                       <td
                         className="px-1 py-1.5 pt-3 text-right text-sm"
                         data-testid="sov-line-amount-remaining"
                       >
-                        $
-                        {(
-                          (line.amount || 0) - (line.billedToDate || 0)
-                        ).toFixed(2)}
+                        {formatCurrency(
+                          (line.amount || 0) - (line.billedToDate || 0),
+                        )}
                       </td>
                       <td className="px-1 py-1.5">
                         <Button
@@ -1354,19 +1447,19 @@ export function CreateSubcontractForm({
                     className="px-1 py-2 text-right text-sm font-semibold text-foreground"
                     data-testid="sov-total-amount"
                   >
-                    ${totals.amount.toFixed(2)}
+                    {formatCurrency(totals.amount)}
                   </td>
                   <td
                     className="px-1 py-2 text-right text-sm font-semibold text-foreground"
                     data-testid="sov-total-billed"
                   >
-                    ${totals.billedToDate.toFixed(2)}
+                    {formatCurrency(totals.billedToDate)}
                   </td>
                   <td
                     className="px-1 py-2 text-right text-sm font-semibold text-foreground"
                     data-testid="sov-total-remaining"
                   >
-                    ${totals.amountRemaining.toFixed(2)}
+                    {formatCurrency(totals.amountRemaining)}
                   </td>
                   <td className="px-1 py-2" />
                 </tr>
@@ -1376,7 +1469,7 @@ export function CreateSubcontractForm({
             </DndContext>
           </div>
 
-          <div className="flex flex-col gap-4 pt-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-3 pt-4">
             <Button
               type="button"
               onClick={addSOVLine}
@@ -1666,11 +1759,11 @@ export function CreateSubcontractForm({
         </div>
 
         {/* Footer Actions */}
-        <div className="mt-10 flex items-center justify-between gap-4 border-t pt-4">
+        <div className="mt-10 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-muted-foreground">
             <span className="text-destructive">*</span> Required fields
           </p>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap items-center gap-3 sm:justify-end">
             {showAutoFill && (
               <Button
                 type="button"

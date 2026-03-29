@@ -17,12 +17,21 @@ const commitmentEditSchema = z
     contract_company_id: z.string().nullable().optional(),
     status: z.string().optional(),
     description: z.string().nullable().optional(),
+    inclusions: z.string().nullable().optional(),
+    exclusions: z.string().nullable().optional(),
     start_date: z.string().nullable().optional(),
     estimated_completion_date: z.string().nullable().optional(),
+    actual_completion_date: z.string().nullable().optional(),
     contract_date: z.string().nullable().optional(),
+    signed_contract_received_date: z.string().nullable().optional(),
+    signed_po_received_date: z.string().nullable().optional(),
+    issued_on_date: z.string().nullable().optional(),
     delivery_date: z.string().nullable().optional(),
+    default_retainage_percent: z.number().nullable().optional(),
     is_private: z.boolean().optional(),
+    non_admin_user_ids: z.array(z.string()).optional(),
     allow_non_admin_view_sov_items: z.boolean().optional(),
+    invoice_contact_ids: z.array(z.string()).optional(),
     accounting_method: z.string().nullable().optional(),
   })
   .passthrough();
@@ -363,20 +372,29 @@ export async function PUT(
     def(validatedData.contract_company_id, "contract_company_id");
     def(validatedData.status, "status");
     def(validatedData.description, "description");
+    def(validatedData.default_retainage_percent, "default_retainage_percent");
     def(validatedData.is_private, "is_private");
+    def(validatedData.non_admin_user_ids, "non_admin_user_ids");
     def(validatedData.allow_non_admin_view_sov_items, "allow_non_admin_view_sov_items");
+    def(validatedData.invoice_contact_ids, "invoice_contact_ids");
     def(validatedData.contract_date, "contract_date");
+    def(validatedData.issued_on_date, "issued_on_date");
 
     // Subcontract-only columns
     if (unifiedData.commitment_type === "subcontract") {
       def(validatedData.start_date, "start_date");
       def(validatedData.estimated_completion_date, "estimated_completion_date");
+      def(validatedData.actual_completion_date, "actual_completion_date");
+      def(validatedData.signed_contract_received_date, "signed_contract_received_date");
+      def(validatedData.inclusions, "inclusions");
+      def(validatedData.exclusions, "exclusions");
     }
 
     // Purchase-order-only columns
     if (unifiedData.commitment_type === "purchase_order") {
       def(validatedData.delivery_date, "delivery_date");
       def(validatedData.accounting_method, "accounting_method");
+      def(validatedData.signed_po_received_date, "signed_po_received_date");
     }
 
     // Update commitment

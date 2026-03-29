@@ -9,8 +9,9 @@ const ALLEATO_COMPANY_ID = "bef9dcfc-531e-47c9-90a5-4cadd99447fb";
  * POST /api/sync/acumatica/vendors
  *
  * Pulls all active vendors from Acumatica and upserts them into
- * the vendors table. Matches on acumatica_vendor_id first, then
- * name, then creates new records.
+ * the vendors table. Also ensures each vendor exists in the app's
+ * global companies table by name so new Acumatica companies appear
+ * in the directory.
  *
  * No body required — always syncs into the Alleato Group company.
  */

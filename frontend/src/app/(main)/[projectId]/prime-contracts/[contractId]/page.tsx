@@ -2304,7 +2304,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
                 <DropdownMenuItem
                   onClick={() =>
                     router.push(
-                      `/form-change-event?projectId=${projectId}&contractId=${contractId}`,
+                      `/${projectId}/change-events/new?contractId=${contractId}`,
                     )
                   }
                 >
@@ -2314,7 +2314,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
                 <DropdownMenuItem
                   onClick={() =>
                     router.push(
-                      `/form-change-order?projectId=${projectId}&contractId=${contractId}`,
+                      `/${projectId}/change-orders/prime/new?contractId=${contractId}`,
                     )
                   }
                 >
@@ -2324,7 +2324,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
                 <DropdownMenuItem
                   onClick={() =>
                     router.push(
-                      `/form-purchase-order?projectId=${projectId}&contractId=${contractId}`,
+                      `/${projectId}/commitments/new?type=purchase_order&contractId=${contractId}`,
                     )
                   }
                 >
@@ -2334,7 +2334,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
                 <DropdownMenuItem
                   onClick={() =>
                     router.push(
-                      `/form-subcontract?projectId=${projectId}&contractId=${contractId}`,
+                      `/${projectId}/commitments/new?type=subcontract&contractId=${contractId}`,
                     )
                   }
                 >

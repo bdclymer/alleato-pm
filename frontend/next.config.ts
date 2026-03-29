@@ -51,7 +51,6 @@ const nextConfig: NextConfig = {
       "../e2e-screenshots/**",
       "../logs/**",
       "../memories/**",
-      "../node_modules/**",
       "../output/**",
       "../procore-crawls/**",
       "../procore-templates/**",

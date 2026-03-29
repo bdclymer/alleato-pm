@@ -464,7 +464,8 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
       if (!resp.ok) throw new Error(data.error ?? "Sync failed");
       const { result } = data;
       toast.success(
-        `ERP sync complete: ${result.created} created, ${result.updated} updated` +
+        `ERP sync complete: ${result.created} vendors created, ${result.updated} vendors updated, ` +
+          `${result.companiesCreated ?? 0} companies created, ${result.companiesUpdated ?? 0} companies updated` +
           (result.errors.length > 0 ? ` (${result.errors.length} errors)` : ""),
       );
       router.refresh();
