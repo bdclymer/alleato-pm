@@ -34,7 +34,7 @@ import {
   companySchema,
   type CompanyFormData,
 } from "@/lib/schemas/financial-schemas";
-import { createCompany, updateCompany } from "@/app/(other)/actions/table-actions";
+import { createCompany, updateCompany } from "@/app/(main)/actions/table-actions";
 
 interface Company {
   id: string;

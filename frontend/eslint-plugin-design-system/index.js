@@ -9,6 +9,7 @@ const noHardcodedColors = require('./rules/no-hardcoded-colors');
 const noArbitrarySpacing = require('./rules/no-arbitrary-spacing');
 const requireSemanticColors = require('./rules/require-semantic-colors');
 const noDesignViolations = require('./rules/no-design-violations');
+const requirePageShell = require('./rules/require-page-shell');
 
 module.exports = {
   rules: {
@@ -16,6 +17,7 @@ module.exports = {
     'no-arbitrary-spacing': noArbitrarySpacing,
     'require-semantic-colors': requireSemanticColors,
     'no-design-violations': noDesignViolations,
+    'require-page-shell': requirePageShell,
   },
   configs: {
     recommended: {
@@ -25,6 +27,7 @@ module.exports = {
         'design-system/no-arbitrary-spacing': 'error',
         'design-system/require-semantic-colors': 'warn',
         'design-system/no-design-violations': 'error',
+        'design-system/require-page-shell': 'warn',
       },
     },
     strict: {
@@ -33,6 +36,7 @@ module.exports = {
         'design-system/no-hardcoded-colors': 'error',
         'design-system/no-arbitrary-spacing': 'error',
         'design-system/require-semantic-colors': 'error',
+        'design-system/require-page-shell': 'error',
       },
     },
   },

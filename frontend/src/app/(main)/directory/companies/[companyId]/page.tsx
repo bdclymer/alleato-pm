@@ -7,7 +7,7 @@ import { ArrowLeft, Calendar, Check, ChevronsUpDown, FolderOpen, Pencil, Plus, U
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
-import { createContact, updateContact } from "@/app/(other)/actions/table-actions";
+import { createContact, updateContact } from "@/app/(main)/actions/table-actions";
 import { PageContainer, ProjectPageHeader } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";

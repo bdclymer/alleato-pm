@@ -1,12 +1,8 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  BaseSidebar,
-  SidebarBody,
-  SidebarFooter,
-  SidebarTabs,
-} from "./BaseSidebar";
+import { BaseSidebar, SidebarBody, SidebarFooter } from "./BaseSidebar";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -33,16 +29,27 @@ interface ForecastToCompleteModalProps {
   }) => Promise<void>;
 }
 
-/**
- * ForecastToCompleteModal - Edit forecast to complete settings
- *
- * Features:
- * - Three forecast methods: Lump Sum, Manual, Monitored
- * - Real-time calculation display
- * - Shows projected over/under
- * - Mobile responsive layout
- * - Matches Procore design patterns
- */
+const METHODS = [
+  {
+    value: "lump_sum" as const,
+    label: "Lump Sum",
+    description: "Fixed amount to complete.",
+    icon: Calculator,
+  },
+  {
+    value: "manual" as const,
+    label: "Manual",
+    description: "Set forecast based on your estimate.",
+    icon: BarChart3,
+  },
+  {
+    value: "monitored" as const,
+    label: "Monitored",
+    description: "Projected Budget − Projected Costs.",
+    icon: TrendingUp,
+  },
+];
+
 export function ForecastToCompleteModal({
   open,
   onClose,
@@ -51,30 +58,26 @@ export function ForecastToCompleteModal({
   currentData,
   onSave,
 }: ForecastToCompleteModalProps) {
-  const [activeTab, setActiveTab] = useState<"forecast" | "history">(
-    "forecast",
+  const [activeTab, setActiveTab] = useState("forecast");
+  const [forecastMethod, setForecastMethod] = useState<"lump_sum" | "manual" | "monitored">(
+    currentData?.forecastMethod || "lump_sum",
   );
-  const [forecastMethod, setForecastMethod] = useState<
-    "lump_sum" | "manual" | "monitored"
-  >(currentData?.forecastMethod || "lump_sum");
   const [forecastAmount, setForecastAmount] = useState<string>(
     currentData?.forecastAmount?.toString() || "0",
   );
   const [isSaving, setIsSaving] = useState(false);
 
-  // Calculate forecast to complete based on method
   const projectedBudget = currentData?.projectedBudget || 0;
   const projectedCosts = currentData?.projectedCosts || 0;
 
   const calculatedForecast =
     forecastMethod === "lump_sum" || forecastMethod === "manual"
       ? parseFloat(forecastAmount) || 0
-      : Math.max(0, projectedBudget - projectedCosts); // Monitored method
+      : Math.max(0, projectedBudget - projectedCosts);
 
   const estimatedCostAtCompletion = projectedCosts + calculatedForecast;
   const projectedOverUnder = projectedBudget - estimatedCostAtCompletion;
 
-  // Reset form when modal opens/closes
   useEffect(() => {
     if (open) {
       setForecastMethod(currentData?.forecastMethod || "lump_sum");
@@ -93,11 +96,7 @@ export function ForecastToCompleteModal({
       });
       onClose();
     } catch (error) {
-
-      console.error("Failed to fetch forecast:", error);
-
-      // Intentionally swallowed: modal shows empty state on error
-
+      console.error("Failed to save forecast:", error);
     } finally {
       setIsSaving(false);
     }
@@ -109,14 +108,20 @@ export function ForecastToCompleteModal({
 
   const handleClose = () => {
     if (hasChanges) {
-      if (
-        confirm("You have unsaved changes. Are you sure you want to close?")
-      ) {
+      if (confirm("You have unsaved changes. Are you sure you want to close?")) {
         onClose();
       }
     } else {
       onClose();
     }
+  };
+
+  const formatInputCurrency = (value: string): string => {
+    const num = parseFloat(value);
+    if (isNaN(num)) return "";
+    const [whole, decimal] = value.split(".");
+    const formattedWhole = parseInt(whole || "0", 10).toLocaleString("en-US");
+    return decimal !== undefined ? `${formattedWhole}.${decimal}` : formattedWhole;
   };
 
   const formatCurrency = (value: number): string => {
@@ -126,16 +131,8 @@ export function ForecastToCompleteModal({
       maximumFractionDigits: 2,
     }).format(Math.abs(value));
 
-    if (isNegative) {
-      return `($${formatted})`;
-    }
-    return `$${formatted}`;
+    return isNegative ? `($${formatted})` : `$${formatted}`;
   };
-
-  const tabs = [
-    { id: "forecast", label: "Forecast" },
-    { id: "history", label: "History" },
-  ];
 
   return (
     <BaseSidebar
@@ -145,201 +142,132 @@ export function ForecastToCompleteModal({
       subtitle={costCode}
       size="lg"
     >
-      {/* Tabs */}
-      <SidebarTabs
-        tabs={tabs}
-        activeTab={activeTab}
-        onTabChange={(id) => setActiveTab(id as "forecast" | "history")}
-      />
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1 min-h-0">
+        <div className="px-8 flex-shrink-0">
+          <TabsList>
+            <TabsTrigger value="forecast">Forecast</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
+          </TabsList>
+        </div>
 
-      {/* Content */}
-      <SidebarBody className="bg-background">
-        {activeTab === "forecast" ? (
-          <div className="p-6 space-y-6">
-            {/* Current Budget Summary */}
-            <div className="rounded-xl border border-slate-200 shadow-sm p-4 bg-gradient-to-br from-green-50 via-white to-white">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-xs text-foreground">Projected Budget</p>
-                  <p className="text-lg font-bold text-foreground">
-                    {formatCurrency(projectedBudget)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-foreground">Projected Costs</p>
-                  <p className="text-lg font-bold text-foreground">
-                    {formatCurrency(projectedCosts)}
-                  </p>
-                </div>
+        <SidebarBody>
+          <TabsContent value="forecast" className="px-8 py-4 space-y-4">
+            {/* Budget Summary */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Projected Budget</p>
+                <p className="text-lg font-semibold text-foreground mt-0.5">
+                  {formatCurrency(projectedBudget)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-muted-foreground">Projected Costs</p>
+                <p className="text-lg font-semibold text-foreground mt-0.5">
+                  {formatCurrency(projectedCosts)}
+                </p>
               </div>
             </div>
 
             {/* Forecast Method */}
-            <div className="rounded-xl border border-slate-200 shadow-sm p-4 bg-gradient-to-br from-white via-slate-50 to-white">
-              <Label className="text-xs uppercase tracking-[0.2em] text-slate-500 block mb-4">
-                Forecast Method
-              </Label>
+            <div>
+              <Label className="text-xs font-medium text-muted-foreground">Forecast Method</Label>
               <RadioGroup
                 value={forecastMethod}
-                onValueChange={(v) =>
-                  setForecastMethod(v as typeof forecastMethod)
-                }
-                className="grid gap-4"
+                onValueChange={(v) => setForecastMethod(v as typeof forecastMethod)}
+                className="mt-2 space-y-0.5"
               >
-                <label
-                  htmlFor="lump_sum"
-                  className={cn(
-                    "flex items-start gap-4 rounded-xl border border-slate-200 bg-background px-4 py-4 shadow-sm cursor-pointer transition-all",
-                    forecastMethod === "lump_sum" &&
-                      "border-orange-400/70 shadow-[0_12px_30px_-18px_rgba(255,115,29,0.55)] bg-orange-50/60",
-                  )}
-                >
-                  <RadioGroupItem
-                    value="lump_sum"
-                    id="lump_sum"
-                    className="mt-1"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 font-semibold text-slate-900">
-                      <Calculator className="h-4 w-4 text-orange-500" />
-                      Lump Sum
-                    </div>
-                    <p className="text-sm text-slate-600 mt-1">
-                      Enter a fixed amount to complete.
-                    </p>
-                  </div>
-                </label>
-
-                <label
-                  htmlFor="manual"
-                  className={cn(
-                    "flex items-start gap-4 rounded-xl border border-slate-200 bg-background px-4 py-4 shadow-sm cursor-pointer transition-all",
-                    forecastMethod === "manual" &&
-                      "border-orange-400/70 shadow-[0_12px_30px_-18px_rgba(255,115,29,0.55)] bg-orange-50/60",
-                  )}
-                >
-                  <RadioGroupItem value="manual" id="manual" className="mt-1" />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 font-semibold text-slate-900">
-                      <BarChart3 className="h-4 w-4 text-orange-500" />
-                      Manual
-                    </div>
-                    <p className="text-sm text-slate-600 mt-1">
-                      Manually set forecast based on your estimate.
-                    </p>
-                  </div>
-                </label>
-
-                <label
-                  htmlFor="monitored"
-                  className={cn(
-                    "flex items-start gap-4 rounded-xl border border-slate-200 bg-background px-4 py-4 shadow-sm cursor-pointer transition-all",
-                    forecastMethod === "monitored" &&
-                      "border-orange-400/70 shadow-[0_12px_30px_-18px_rgba(255,115,29,0.55)] bg-orange-50/60",
-                  )}
-                >
-                  <RadioGroupItem
-                    value="monitored"
-                    id="monitored"
-                    className="mt-1"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 font-semibold text-slate-900">
-                      <TrendingUp className="h-4 w-4 text-orange-500" />
-                      Monitored
-                    </div>
-                    <p className="text-sm text-slate-600 mt-1">
-                      Automatically calculated as Projected Budget - Projected
-                      Costs.
-                    </p>
-                  </div>
-                </label>
+                {METHODS.map((method) => {
+                  const Icon = method.icon;
+                  return (
+                    <label
+                      key={method.value}
+                      htmlFor={method.value}
+                      className={cn(
+                        "flex items-center gap-2 rounded-md px-2 py-1.5 cursor-pointer transition-colors",
+                        forecastMethod === method.value
+                          ? "bg-muted"
+                          : "hover:bg-muted/50",
+                      )}
+                    >
+                      <RadioGroupItem value={method.value} id={method.value} />
+                      <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                      <span className="text-sm font-medium text-foreground">{method.label}</span>
+                      <span className="text-xs text-muted-foreground">{method.description}</span>
+                    </label>
+                  );
+                })}
               </RadioGroup>
             </div>
 
-            {/* Amount Input (only for Lump Sum and Manual) */}
+            {/* Amount Input */}
             {(forecastMethod === "lump_sum" || forecastMethod === "manual") && (
-              <div className="rounded-xl border border-slate-200 bg-background shadow-sm p-4">
-                <Label
-                  htmlFor="forecastAmount"
-                  className="text-sm font-medium text-foreground"
-                >
+              <div>
+                <Label htmlFor="forecastAmount" className="text-sm font-medium text-foreground">
                   Forecast Amount
                 </Label>
-                <Input
-                  id="forecastAmount"
-                  type="number"
-                  step="0.01"
-                  value={forecastAmount}
-                  onChange={(e) => setForecastAmount(e.target.value)}
-                  placeholder="$0.00"
-                  className="mt-2"
-                />
+                <div className="relative mt-1">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
+                  <Input
+                    id="forecastAmount"
+                    type="text"
+                    inputMode="decimal"
+                    value={formatInputCurrency(forecastAmount)}
+                    onChange={(e) => {
+                      const raw = e.target.value.replace(/[^0-9.]/g, "");
+                      setForecastAmount(raw);
+                    }}
+                    placeholder="0.00"
+                    className="pl-7 tabular-nums"
+                  />
+                </div>
               </div>
             )}
 
-            {/* Calculation Display */}
-            <div className="rounded-xl border border-slate-200 bg-slate-50 shadow-sm p-4">
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-foreground">
-                    Forecast To Complete
-                  </span>
-                  <span className="text-lg font-bold text-foreground">
-                    {formatCurrency(calculatedForecast)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center border-t border-slate-200 pt-4">
-                  <span className="text-sm text-foreground">
-                    Estimated Cost at Completion
-                  </span>
-                  <span className="text-lg font-semibold text-foreground">
-                    {formatCurrency(estimatedCostAtCompletion)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center border-t border-slate-200 pt-4">
-                  <span className="text-sm font-semibold text-foreground">
-                    Projected Over / Under
-                  </span>
-                  <span
-                    className={cn(
-                      "text-lg font-bold",
-                      projectedOverUnder < 0
-                        ? "text-red-600"
-                        : "text-green-600",
-                    )}
-                  >
-                    {formatCurrency(projectedOverUnder)}
-                  </span>
-                </div>
+            {/* Calculations */}
+            <div className="rounded-lg bg-muted/50 px-4 py-3 space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Forecast To Complete</span>
+                <span className="text-sm font-semibold text-foreground tabular-nums">
+                  {formatCurrency(calculatedForecast)}
+                </span>
+              </div>
+              <div className="border-t border-border" />
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-muted-foreground">Est. Cost at Completion</span>
+                <span className="text-sm font-semibold text-foreground tabular-nums">
+                  {formatCurrency(estimatedCostAtCompletion)}
+                </span>
+              </div>
+              <div className="border-t border-border" />
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium text-foreground">Projected Over / Under</span>
+                <span
+                  className={cn(
+                    "text-sm font-bold tabular-nums",
+                    projectedOverUnder < 0 ? "text-destructive" : "text-foreground",
+                  )}
+                >
+                  {formatCurrency(projectedOverUnder)}
+                </span>
               </div>
             </div>
-          </div>
-        ) : (
-          <div className="p-6 space-y-4">
-            <p className="text-sm text-foreground">
-              View the history of forecast changes for this budget line.
+          </TabsContent>
+
+          <TabsContent value="history" className="px-8 py-5">
+            <p className="text-sm text-muted-foreground text-center py-12">
+              Forecast history coming soon.
             </p>
+          </TabsContent>
+        </SidebarBody>
+      </Tabs>
 
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 text-center">
-              <p className="text-muted-foreground">History view coming soon</p>
-            </div>
-          </div>
-        )}
-      </SidebarBody>
-
-      {/* Footer */}
       <SidebarFooter>
         <div className="flex items-center justify-end gap-2">
           <Button variant="outline" onClick={handleClose} disabled={isSaving}>
             Cancel
           </Button>
           {activeTab === "forecast" && (
-            <Button
-              onClick={handleSave}
-              disabled={isSaving || !hasChanges}
-              className="bg-orange-500 hover:bg-orange-600 text-white"
-            >
+            <Button onClick={handleSave} disabled={isSaving || !hasChanges}>
               {isSaving ? "Saving..." : "Save"}
             </Button>
           )}

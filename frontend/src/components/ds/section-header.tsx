@@ -33,8 +33,9 @@ export function SectionHeader({
       </div>
       {action &&
         (action.onClick ? (
-          {/* eslint-disable-next-line design-system/no-design-violations -- minimal inline link-style action */}
+          // eslint-disable-next-line design-system/no-design-violations -- minimal inline link-style action
           <button
+            type="button"
             onClick={action.onClick}
             className="text-sm font-medium text-primary transition-colors hover:text-primary/80"
           >

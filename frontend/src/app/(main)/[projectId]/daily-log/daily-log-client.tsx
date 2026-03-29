@@ -119,7 +119,7 @@ export function DailyLogClient({ projectId, dailyLogs }: DailyLogClientProps) {
     router,
     defaults: {
       view: "table",
-      allowedViews: ["table"],
+      allowedViews: ["table", "card", "list"],
       page: 1,
       perPage: 25,
       search: "",
@@ -180,9 +180,12 @@ export function DailyLogClient({ projectId, dailyLogs }: DailyLogClientProps) {
         searchValue: tableState.searchInput,
         onSearchChange: tableState.setSearchInput,
         searchPlaceholder: "Search by date or author...",
-        currentView: "table",
-        onViewChange: () => undefined,
-        enabledViews: ["table"],
+        currentView: tableState.currentView,
+        onViewChange: (view) => {
+          tableState.setCurrentView(view);
+          tableState.setSearchParams({ view });
+        },
+        enabledViews: ["table", "card", "list"],
         activeFilters: {},
         onFilterChange: () => undefined,
         onClearFilters: () => undefined,
@@ -199,6 +202,50 @@ export function DailyLogClient({ projectId, dailyLogs }: DailyLogClientProps) {
         columns: tableColumns,
         getRowId: (item) => item.id,
         onDelete: handleDeleteLog,
+      }}
+      views={{
+        card: (item) => (
+          <div className="rounded-lg border p-4">
+            <p className="text-xs uppercase text-muted-foreground">Daily Log</p>
+            <h3 className="mt-1 font-medium">
+              {item.log_date
+                ? new Date(item.log_date).toLocaleDateString("en-US", {
+                    year: "numeric",
+                    month: "short",
+                    day: "numeric",
+                  })
+                : "No date"}
+            </h3>
+            <p className="mt-2 line-clamp-2 text-sm text-muted-foreground">
+              {item.weather_conditions
+                ? typeof item.weather_conditions === "string"
+                  ? item.weather_conditions
+                  : JSON.stringify(item.weather_conditions)
+                : "No weather details"}
+            </p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Created by {item.created_by ?? "Unknown"}
+            </p>
+          </div>
+        ),
+        list: (item) => (
+          <div className="flex items-center justify-between rounded-md px-4 py-2">
+            <div>
+              <p className="text-sm font-medium">
+                {item.log_date
+                  ? new Date(item.log_date).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "short",
+                      day: "numeric",
+                    })
+                  : "No date"}
+              </p>
+              <p className="line-clamp-1 text-xs text-muted-foreground">
+                {item.created_by ? `By ${item.created_by}` : "No author"}
+              </p>
+            </div>
+          </div>
+        ),
       }}
       sorting={{
         sortBy: tableState.sortBy,

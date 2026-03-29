@@ -28,13 +28,15 @@ interface MegaMenuPanelProps {
 const FEATURED_TOOLS: Record<string, string[]> = {
   finance: ["Budget", "Prime Contracts", "Commitments", "Change Orders", "Direct Costs", "Invoicing", "Change Events"],
   operations: ["Schedule", "Meetings", "Daily Log", "Punch List", "RFIs", "Submittals", "Transmittals", "Emails", "Photos", "Drawings", "Specifications", "Documents"],
-  company: ["Projects", "Company Directory", "360 Reporting"],
+  project: ["Project Directory", "Project Tasks", "Project Settings"],
+  company: ["Projects", "Company Directory", "Permissions", "360 Reporting"],
 };
 
 // Display label for the featured column
 const FEATURED_LABELS: Record<string, string> = {
   finance: "Explore Financial",
   operations: "Explore Operations",
+  project: "Explore Project",
   company: "Explore Company",
 };
 

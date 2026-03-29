@@ -4,6 +4,7 @@ import * as React from "react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
+import type { ColumnDef } from "@tanstack/react-table";
 import {
   FileText,
   MoreHorizontal,
@@ -13,14 +14,7 @@ import {
   Eye,
 } from "lucide-react";
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable } from "@/components/tables/DataTable";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -71,7 +65,7 @@ export function SpecificationListTable({
     try {
       await deleteMutation.mutateAsync(deleteId);
       setDeleteId(null);
-    } catch (error) {
+    } catch {
       // Error already handled by mutation
     }
   };
@@ -88,7 +82,7 @@ export function SpecificationListTable({
 
       const { url } = await response.json();
       window.open(url, "_blank");
-    } catch (error) {
+    } catch {
       toast.error("Failed to download file");
     }
   };
@@ -112,6 +106,139 @@ export function SpecificationListTable({
     return (bytes / (1024 * 1024)).toFixed(1) + " MB";
   };
 
+  const columns = React.useMemo<ColumnDef<SpecificationWithRevision>[]>(
+    () => [
+      {
+        accessorKey: "section_number",
+        header: "Section #",
+        cell: ({ row }) => (
+          <span className="font-mono font-medium">{row.original.section_number}</span>
+        ),
+      },
+      {
+        accessorKey: "title",
+        header: "Title",
+        cell: ({ row }) => {
+          const spec = row.original;
+          return (
+            <div>
+              <div className="flex items-center space-x-2">
+                <FileText className="h-4 w-4 text-muted-foreground" />
+                <span className="font-medium">{spec.title}</span>
+              </div>
+              {spec.description && (
+                <p className="mt-1 line-clamp-1 text-sm text-muted-foreground">
+                  {spec.description}
+                </p>
+              )}
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "status",
+        header: "Status",
+        cell: ({ row }) => getStatusBadge(row.original.status),
+      },
+      {
+        id: "revision",
+        header: "Revision",
+        cell: ({ row }) => {
+          const revision = row.original.current_revision;
+          return revision ? (
+            <span className="text-sm">Rev {revision.revision_number}</span>
+          ) : (
+            <span className="text-sm text-muted-foreground">No revisions</span>
+          );
+        },
+      },
+      {
+        id: "file_size",
+        header: "File Size",
+        cell: ({ row }) => {
+          const revision = row.original.current_revision;
+          return revision ? (
+            <span className="text-sm">{formatFileSize(revision.file_size)}</span>
+          ) : (
+            <span className="text-sm text-muted-foreground">—</span>
+          );
+        },
+      },
+      {
+        id: "updated_at",
+        header: "Last Updated",
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground">
+            {formatDistanceToNow(new Date(row.original.updated_at || row.original.created_at), {
+              addSuffix: true,
+            })}
+          </span>
+        ),
+      },
+      {
+        id: "areas",
+        header: "Areas",
+        cell: ({ row }) =>
+          row.original.area_count > 0 ? (
+            <Badge variant="secondary" className="text-xs">
+              {row.original.area_count}
+            </Badge>
+          ) : (
+            <span className="text-sm text-muted-foreground">—</span>
+          ),
+      },
+      {
+        id: "actions",
+        header: "",
+        cell: ({ row }) => {
+          const spec = row.original;
+          return (
+            <div onClick={(event) => event.stopPropagation()}>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">Open menu</span>
+                    <MoreHorizontal />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                  <DropdownMenuItem onClick={() => handleView(spec.id)}>
+                    <Eye className="mr-2 h-4 w-4" />
+                    View Details
+                  </DropdownMenuItem>
+                  {spec.current_revision && (
+                    <DropdownMenuItem
+                      onClick={() => handleDownload(spec.id, spec.current_revision!.id)}
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      Download
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuSeparator />
+                  {onEdit && (
+                    <DropdownMenuItem onClick={() => onEdit(spec)}>
+                      <Pencil className="mr-2 h-4 w-4" />
+                      Edit Metadata
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem
+                    onClick={() => setDeleteId(spec.id.toString())}
+                    className="text-red-600"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Delete
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          );
+        },
+      },
+    ],
+    [onEdit],
+  );
+
   if (specifications.length === 0) {
     return (
       <div className="text-center py-12 border border-dashed rounded-lg">
@@ -128,118 +255,13 @@ export function SpecificationListTable({
 
   return (
     <>
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-[120px]">Section #</TableHead>
-              <TableHead>Title</TableHead>
-              <TableHead className="w-[100px]">Status</TableHead>
-              <TableHead className="w-[120px]">Revision</TableHead>
-              <TableHead className="w-[100px]">File Size</TableHead>
-              <TableHead className="w-[140px]">Last Updated</TableHead>
-              <TableHead className="w-[80px]">Areas</TableHead>
-              <TableHead className="w-[70px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {specifications.map((spec) => (
-              <TableRow
-                key={spec.id}
-                className="cursor-pointer hover:bg-muted"
-                onClick={() => handleView(spec.id)}
-              >
-                <TableCell className="font-mono font-medium">
-                  {spec.section_number}
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center space-x-2">
-                    <FileText className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">{spec.title}</span>
-                  </div>
-                  {spec.description && (
-                    <p className="text-sm text-muted-foreground mt-1 line-clamp-1">
-                      {spec.description}
-                    </p>
-                  )}
-                </TableCell>
-                <TableCell>{getStatusBadge(spec.status)}</TableCell>
-                <TableCell>
-                  {spec.current_revision ? (
-                    <span className="text-sm">
-                      Rev {spec.current_revision.revision_number}
-                    </span>
-                  ) : (
-                    <span className="text-sm text-muted-foreground">No revisions</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  {spec.current_revision && (
-                    <span className="text-sm">
-                      {formatFileSize(spec.current_revision.file_size)}
-                    </span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <span className="text-sm text-muted-foreground">
-                    {formatDistanceToNow(new Date(spec.updated_at || spec.created_at), {
-                      addSuffix: true,
-                    })}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  {spec.area_count > 0 && (
-                    <Badge variant="secondary" className="text-xs">
-                      {spec.area_count}
-                    </Badge>
-                  )}
-                </TableCell>
-                <TableCell onClick={(e) => e.stopPropagation()}>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0">
-                        <span className="sr-only">Open menu</span>
-                        <MoreHorizontal />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                      <DropdownMenuItem onClick={() => handleView(spec.id)}>
-                        <Eye className="mr-2 h-4 w-4" />
-                        View Details
-                      </DropdownMenuItem>
-                      {spec.current_revision && (
-                        <DropdownMenuItem
-                          onClick={() =>
-                            handleDownload(spec.id, spec.current_revision!.id)
-                          }
-                        >
-                          <Download className="mr-2 h-4 w-4" />
-                          Download
-                        </DropdownMenuItem>
-                      )}
-                      <DropdownMenuSeparator />
-                      {onEdit && (
-                        <DropdownMenuItem onClick={() => onEdit(spec)}>
-                          <Pencil className="mr-2 h-4 w-4" />
-                          Edit Metadata
-                        </DropdownMenuItem>
-                      )}
-                      <DropdownMenuItem
-                        onClick={() => setDeleteId(spec.id.toString())}
-                        className="text-red-600"
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      <DataTable
+        columns={columns}
+        data={specifications}
+        showToolbar={false}
+        showPagination={false}
+        onRowClick={(spec) => handleView(spec.id)}
+      />
 
       <AlertDialog open={!!deleteId} onOpenChange={() => setDeleteId(null)}>
         <AlertDialogContent>

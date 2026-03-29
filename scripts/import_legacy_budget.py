@@ -42,10 +42,10 @@ ENV_CANDIDATES = (
 
 COST_TYPE_MAP = {
     "labor": "L",
-    "expense": "E",
+    "expense": "X",
     "subcontract": "S",
     "material": "M",
-    "equipment": "X",
+    "equipment": "E",
     "other": "O",
     "revenue": "R",
 }
@@ -511,6 +511,7 @@ def import_rows(
     }
 
     imported_count = 0
+    skipped_duplicates = 0
     warnings: list[str] = []
 
     for index, row in enumerate(rows, start=2):
@@ -532,20 +533,29 @@ def import_rows(
             imported_count += 1
             continue
 
-        client.insert(
-            "budget_lines",
-            {
-                "project_id": project_id,
-                "cost_code_id": cost_code_id,
-                "cost_type_id": cost_type_id,
-                "description": row.description or None,
-                "original_amount": row.original_budget,
-                "quantity": None,
-                "unit_of_measure": None,
-                "unit_cost": None,
-            },
-        )
-        imported_count += 1
+        try:
+            client.insert(
+                "budget_lines",
+                {
+                    "project_id": project_id,
+                    "cost_code_id": cost_code_id,
+                    "cost_type_id": cost_type_id,
+                    "description": row.description or None,
+                    "original_amount": row.original_budget,
+                    "quantity": None,
+                    "unit_of_measure": None,
+                    "unit_cost": None,
+                },
+            )
+            imported_count += 1
+        except RuntimeError as exc:
+            if "uq_budget_line" in str(exc) or '"code":"23505"' in str(exc):
+                skipped_duplicates += 1
+                warnings.append(
+                    f'Row {index}: Skipped duplicate budget line for cost code "{cost_code_id}" and cost type "{row.cost_type}".'
+                )
+                continue
+            raise
 
     total_budget, budget_warning = update_project_budget_summary(client, project_id)
     if budget_warning:
@@ -556,6 +566,7 @@ def import_rows(
 
     return {
         "imported_count": imported_count,
+        "skipped_duplicates": skipped_duplicates,
         "warnings": warnings,
         "total_budget": total_budget,
     }
@@ -640,7 +651,14 @@ def main() -> int:
 
     result = import_rows(client, project_id, rows, args.dry_run)
     mode = "Dry run complete" if args.dry_run else "Import complete"
-    print(f"{mode}: {result['imported_count']} rows processed")
+    print(
+        f"{mode}: {result['imported_count']} rows imported"
+        + (
+            f", {result.get('skipped_duplicates', 0)} duplicates skipped"
+            if not args.dry_run
+            else ""
+        )
+    )
     print(f"Project budget total after import: {result['total_budget']:.2f}")
     if result["warnings"]:
         print("Warnings:")

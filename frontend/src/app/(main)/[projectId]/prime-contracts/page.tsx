@@ -378,24 +378,6 @@ export default function ProjectContractsPage(): ReactElement {
 
   const isFiltered = Boolean(tableState.searchInput) || Boolean(activeFilters.status);
 
-  const tabs = [
-    {
-      label: "All Contracts",
-      href: `/${projectId}/prime-contracts`,
-      isActive: !statusFilter,
-    },
-    {
-      label: "Approved",
-      href: `/${projectId}/prime-contracts?status=approved`,
-      isActive: statusFilter === "approved",
-    },
-    {
-      label: "Complete",
-      href: `/${projectId}/prime-contracts?status=complete`,
-      isActive: statusFilter === "complete",
-    },
-  ];
-
   return (
     <>
       <UnifiedTablePage
@@ -423,7 +405,6 @@ export default function ProjectContractsPage(): ReactElement {
             </div>
           ),
         }}
-        tabs={tabs}
         layout={{
           fullBleedTable: false,
         }}
@@ -468,6 +449,7 @@ export default function ProjectContractsPage(): ReactElement {
           error: error ?? undefined,
         }}
         table={{
+          defaultPinnedLeftColumns: ["expand", "contract_number"],
           columns: [
             {
               id: "expand",

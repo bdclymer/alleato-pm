@@ -59,6 +59,7 @@ export const staticRoutes: SitemapRoute[] = [
   { url: "/[projectId]/daily-log", title: "Daily Log", category: "Project — Field", type: "list", dynamic: true },
   { url: "/[projectId]/specifications", title: "Specifications", category: "Project — Field", type: "list", dynamic: true },
   { url: "/[projectId]/transmittals", title: "Transmittals", category: "Project — Field", type: "list", dynamic: true },
+  { url: "/[projectId]/emails", title: "Emails", category: "Project — Field", type: "list", dynamic: true },
 
   // Project — Admin
   { url: "/[projectId]/directory/team", title: "Directory — Team", category: "Project — Admin", type: "list", dynamic: true },
@@ -102,7 +103,7 @@ export const staticRoutes: SitemapRoute[] = [
   // Utility
   { url: "/sitemap-view", title: "Sitemap", category: "Utility", type: "utility", dynamic: false },
   { url: "/design-system", title: "Design System", category: "Utility", type: "utility", dynamic: false },
-  { url: "/components", title: "Component Showcase", category: "Utility", type: "utility", dynamic: false },
+  { url: "/design", title: "Component Showcase", category: "Utility", type: "utility", dynamic: false },
   { url: "/api-docs", title: "API Docs", category: "Utility", type: "utility", dynamic: false },
   { url: "/style-guide", title: "Style Guide", category: "Utility", type: "utility", dynamic: false },
 ];

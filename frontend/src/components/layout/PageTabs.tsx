@@ -65,36 +65,40 @@ export function PageTabs({
                 : pathname === tab.href);
 
             return (
-              {/* eslint-disable-next-line design-system/no-design-violations -- custom tab primitive */}
-              <button
-                key={tab.href}
-                type="button"
-                onClick={() => onTabClick ? onTabClick(tab.href) : router.push(tab.href)}
-                aria-label={tab.label}
-                data-testid={tab.testId}
-                className={cn(
-                  buttonClasses,
-                  isActive
-                    ? "border-primary text-primary font-semibold"
-                    : "border-transparent text-foreground/60 font-medium hover:text-foreground",
-                )}
-                aria-current={isActive ? "page" : undefined}
-              >
-                <span>{tab.label}</span>
-                {tab.count !== undefined && (
-                  <span
-                    className={cn(
-                      "rounded-full px-2.5 py-0.5 text-xs font-medium",
-                      isActive
-                        ? "bg-primary/10 text-primary"
-                        : "bg-muted text-foreground",
-                    )}
-                    data-testid={tab.countTestId}
-                  >
-                    {tab.count}
-                  </span>
-                )}
-              </button>
+              <>
+                {/* eslint-disable-next-line design-system/no-design-violations -- custom tab primitive */}
+                <button
+                  key={tab.href}
+                  type="button"
+                  onClick={() =>
+                    onTabClick ? onTabClick(tab.href) : router.push(tab.href)
+                  }
+                  aria-label={tab.label}
+                  data-testid={tab.testId}
+                  className={cn(
+                    buttonClasses,
+                    isActive
+                      ? "border-primary text-primary font-semibold"
+                      : "border-transparent text-foreground/60 font-medium hover:text-foreground",
+                  )}
+                  aria-current={isActive ? "page" : undefined}
+                >
+                  <span>{tab.label}</span>
+                  {tab.count !== undefined && (
+                    <span
+                      className={cn(
+                        "rounded-full px-2.5 py-0.5 text-xs font-medium",
+                        isActive
+                          ? "bg-primary/10 text-primary"
+                          : "bg-muted text-foreground",
+                      )}
+                      data-testid={tab.countTestId}
+                    >
+                      {tab.count}
+                    </span>
+                  )}
+                </button>
+              </>
             );
           })}
         </div>

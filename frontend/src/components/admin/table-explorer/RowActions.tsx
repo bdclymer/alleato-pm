@@ -12,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DeleteConfirmation } from "./DeleteConfirmation";
-import { duplicateTableRow } from "@/app/(other)/actions/admin-table-actions";
+import { duplicateTableRow } from "@/app/(main)/actions/admin-table-actions";
 import { type TableConfig } from "@/lib/table-registry";
 import { toast } from "sonner";
 

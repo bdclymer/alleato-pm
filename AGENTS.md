@@ -265,7 +265,6 @@ Not allowed for line-items sections:
 - Decorative alternate table skins that diverge from the canonical pattern
 - Per-page reinvention of spacing/typography for line-item grids
 
-Reference: `docs/design/AI-UI-BASELINE.md`
 Primary design reference: `docs/design/DESIGN.md`
 
 ---

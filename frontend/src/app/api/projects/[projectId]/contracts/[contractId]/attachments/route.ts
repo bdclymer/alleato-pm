@@ -7,6 +7,11 @@ interface RouteParams {
   params: Promise<{ projectId: string; contractId: string }>;
 }
 
+const isMissingJoinTableError = (error: { code?: string; message?: string } | null) =>
+  !!error &&
+  (error.code === "PGRST205" ||
+    error.message?.includes("Could not find the table 'public.prime_contract_attachments'"));
+
 const createAttachmentSchema = z.object({
   fileName: z.string().max(255),
   filePath: z.string(),
@@ -22,6 +27,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { projectId, contractId } = await params;
     const supabase = await createClient();
+    const serviceClient = createServiceClient();
 
     const { data: contract } = await supabase
       .from("prime_contracts")
@@ -37,18 +43,79 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const { data: attachments, error } = await supabase
-      .from("attachments")
-      .select("*")
-      .eq("attached_to_id", contractId)
-      .eq("attached_to_table", "prime_contracts")
-      .order("uploaded_at", { ascending: false });
+    const { data: linkRows, error: linkError } = await serviceClient
+      .from("prime_contract_attachments")
+      .select("attachment_id")
+      .eq("contract_id", contractId);
 
-    if (error) {
+    if (linkError && !isMissingJoinTableError(linkError)) {
       return NextResponse.json(
-        { error: "Failed to fetch attachments", details: error.message },
+        { error: "Failed to fetch attachment links", details: linkError.message },
         { status: 400 },
       );
+    }
+
+    const linkedAttachmentIds = (linkRows ?? []).map((row) => row.attachment_id);
+
+    let attachments: Array<{
+      id: string;
+      attached_to_id: string | null;
+      file_name: string | null;
+      url: string | null;
+      uploaded_at: string | null;
+    }> = [];
+
+    if (linkedAttachmentIds.length > 0) {
+      const { data: mappedAttachments, error: mappedAttachmentsError } = await serviceClient
+        .from("attachments")
+        .select("id, attached_to_id, file_name, url, uploaded_at")
+        .in("id", linkedAttachmentIds)
+        .order("uploaded_at", { ascending: false });
+
+      if (mappedAttachmentsError) {
+        return NextResponse.json(
+          {
+            error: "Failed to fetch mapped attachments",
+            details: mappedAttachmentsError.message,
+          },
+          { status: 400 },
+        );
+      }
+
+      attachments = mappedAttachments ?? [];
+    } else {
+      // Temporary fallback while environments are being migrated.
+      const { data: legacyAttachments, error: legacyError } = await serviceClient
+        .from("attachments")
+        .select("id, attached_to_id, file_name, url, uploaded_at")
+        .eq("attached_to_id", contractId)
+        .eq("attached_to_table", "prime_contracts")
+        .order("uploaded_at", { ascending: false });
+
+      if (legacyError) {
+        return NextResponse.json(
+          { error: "Failed to fetch attachments", details: legacyError.message },
+          { status: 400 },
+        );
+      }
+
+      attachments = legacyAttachments ?? [];
+    }
+
+    // Final fallback for environments with detached legacy rows:
+    // recover rows by storage path pattern when attached_to_id is null.
+    if (attachments.length === 0) {
+      const { data: pathMatchedAttachments, error: pathMatchedError } =
+        await serviceClient
+          .from("attachments")
+          .select("id, attached_to_id, file_name, url, uploaded_at")
+          .eq("project_id", parseInt(projectId, 10))
+          .ilike("url", `%/prime-contracts/${projectId}/${contractId}/%`)
+          .order("uploaded_at", { ascending: false });
+
+      if (!pathMatchedError && pathMatchedAttachments) {
+        attachments = pathMatchedAttachments;
+      }
     }
 
     const formattedAttachments = (attachments || []).map((attachment) => ({
@@ -133,20 +200,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const bucket = serviceClient.storage.from("project-files");
     const fileBuffer = await file.arrayBuffer();
 
-    // Try with the real content type first; if the bucket rejects it (MIME
-    // allow-list), fall back to application/octet-stream so any file type uploads.
-    let { error: uploadError } = await bucket.upload(storagePath, fileBuffer, {
-      contentType: file.type || "application/octet-stream",
+    const contentType = file.type?.trim() || "application/octet-stream";
+    const { error: uploadError } = await bucket.upload(storagePath, fileBuffer, {
+      contentType,
       upsert: false,
     });
-
-    if (uploadError) {
-      const retry = await bucket.upload(storagePath, fileBuffer, {
-        contentType: "application/octet-stream",
-        upsert: false,
-      });
-      uploadError = retry.error;
-    }
 
     if (uploadError) {
       return NextResponse.json(
@@ -159,9 +217,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       data: { publicUrl },
     } = bucket.getPublicUrl(storagePath);
 
-    const { data: attachment, error: dbError } = await serviceClient
+    const { data: attachment, error: attachmentError } = await serviceClient
       .from("attachments")
       .insert({
+        // Keep legacy polymorphic pointer during migration for compatibility.
         attached_to_id: contractId,
         attached_to_table: "prime_contracts",
         project_id: contract.project_id,
@@ -173,13 +232,32 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       .select()
       .single();
 
-    if (dbError) {
-      console.error('Failed to insert attachment record:', dbError);
+    if (attachmentError || !attachment) {
+      console.error("Failed to insert attachment record:", attachmentError);
       await serviceClient.storage.from("project-files").remove([storagePath]);
       return NextResponse.json(
         {
           error: "Failed to create attachment record",
-          details: dbError.message,
+          details: attachmentError?.message ?? "Unknown insert error",
+        },
+        { status: 400 },
+      );
+    }
+
+    const { error: linkInsertError } = await serviceClient
+      .from("prime_contract_attachments")
+      .insert({
+        contract_id: contractId,
+        attachment_id: attachment.id,
+      });
+
+    if (linkInsertError && !isMissingJoinTableError(linkInsertError)) {
+      await serviceClient.from("attachments").delete().eq("id", attachment.id);
+      await serviceClient.storage.from("project-files").remove([storagePath]);
+      return NextResponse.json(
+        {
+          error: "Failed to create contract attachment link",
+          details: linkInsertError.message,
         },
         { status: 400 },
       );

@@ -151,7 +151,7 @@ export const contractsTableConfig: GenericTableConfig = {
     },
     {
       id: "payments_received",
-      label: "Payments Received",
+      label: "Payments",
       defaultVisible: false,
       type: "number",
       sortable: false, // Calculated field
@@ -163,7 +163,7 @@ export const contractsTableConfig: GenericTableConfig = {
     },
     {
       id: "remaining_balance",
-      label: "Remaining Balance",
+      label: "Balance",
       defaultVisible: false,
       type: "number",
       sortable: false, // Calculated field

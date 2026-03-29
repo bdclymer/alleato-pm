@@ -26,6 +26,7 @@ import { useCurrentUserName } from "@/hooks/use-current-user-name";
 import { StatusBadge, Skeleton } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import { RealtimeCursors } from "@/components/realtime-cursors";
+import { EditProjectSidebar } from "@/components/project/edit-project-sidebar";
 import type { Database } from "@/types/database.types";
 
 /* ─────────────────────────────────────────────────────────────
@@ -40,6 +41,7 @@ type Meeting = Database["public"]["Tables"]["document_metadata"]["Row"];
 type ChangeOrder = any;
 type RFI = Database["public"]["Tables"]["rfis"]["Row"];
 type Contract = Database["public"]["Tables"]["prime_contracts"]["Row"];
+type ContractLineItem = Database["public"]["Tables"]["contract_line_items"]["Row"];
 type ChangeEvent = Database["public"]["Tables"]["change_events"]["Row"];
 
 interface Commitment {
@@ -69,6 +71,7 @@ interface ProjectCommandCenterProps {
   rfis: RFI[];
   commitments: Commitment[];
   contracts: Contract[];
+  contractLineItems?: Pick<ContractLineItem, "contract_id" | "total_cost" | "quantity" | "unit_cost">[];
   changeEvents?: ChangeEvent[];
   schedule?: any[];
   // unused but accepted for API compatibility
@@ -217,21 +220,35 @@ export function ProjectCommandCenter({
   rfis,
   commitments,
   contracts,
+  contractLineItems = [],
   changeEvents = [],
   schedule = [],
   budget = [],
 }: ProjectCommandCenterProps) {
   const projectId = String(project.id);
+  const [isEditProjectSidebarOpen, setIsEditProjectSidebarOpen] = React.useState(false);
   const roomName = `project-home:${projectId}`;
   const currentUserName = useCurrentUserName();
   const { grandTotals, loading: budgetLoading } = useBudgetData(projectId, { silent: true });
 
   /* ── Derived: Contract ─────────────────────────────── */
   const primaryContract = contracts[0] ?? null;
+  const primaryContractSovTotal = primaryContract
+    ? contractLineItems
+        .filter((line) => line.contract_id === primaryContract.id)
+        .reduce((sum, line) => {
+          const explicitTotal = line.total_cost ?? 0;
+          if (explicitTotal !== 0) return sum + explicitTotal;
+          const derivedTotal = (line.quantity ?? 0) * (line.unit_cost ?? 0);
+          return sum + derivedTotal;
+        }, 0)
+    : 0;
   const contractValue =
-    (primaryContract?.revised_contract_value as number | null) ??
-    (primaryContract?.original_contract_value as number | null) ??
-    null;
+    primaryContractSovTotal > 0
+      ? primaryContractSovTotal
+      : (primaryContract?.revised_contract_value as number | null) ??
+        (primaryContract?.original_contract_value as number | null) ??
+        null;
   const primeContractHref = primaryContract
     ? `/${projectId}/prime-contracts/${primaryContract.id}`
     : `/${projectId}/prime-contracts/new`;
@@ -392,8 +409,12 @@ export function ProjectCommandCenter({
 
           <div className="flex flex-col items-end gap-3 shrink-0">
             <div className="flex items-center gap-2">
-              <Button asChild variant="secondary" size="sm">
-                <Link href={`/${projectId}/setup`}>Edit</Link>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setIsEditProjectSidebarOpen(true)}
+              >
+                Edit
               </Button>
             </div>
 
@@ -1051,6 +1072,12 @@ export function ProjectCommandCenter({
           </section>
         </div>
       </div>
+
+      <EditProjectSidebar
+        project={project}
+        open={isEditProjectSidebarOpen}
+        onOpenChange={setIsEditProjectSidebarOpen}
+      />
     </div>
   );
 }

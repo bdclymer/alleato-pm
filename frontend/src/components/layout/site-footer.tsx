@@ -6,17 +6,42 @@ import { ChevronUp } from "lucide-react";
 
 const currentYear = new Date().getFullYear();
 
-const adminLinks = [
-  { label: "Admin", href: "/admin" },
-  { label: "RAG Eval", href: "/rag-eval" },
-  { label: "Redoc", href: "/redoc" },
-  { label: "API Docs", href: "/api-docs" },
-  { label: "Database", href: "/database" },
-  { label: "Docs", href: "/docs" },
-  { label: "Design System", href: "/design-system" },
-  { label: "Procore Tools", href: "/procore-tools" },
-  { label: "Procore Docs", href: "/procore-docs" },
-  { label: "Feedback Inbox", href: "/feedback-inbox" },
+const adminSections = [
+  {
+    label: "Admin",
+    links: [
+      { label: "Command Center", href: "/command-center" },
+      { label: "Admin Dashboard", href: "/admin" },
+      { label: "Feedback Inbox", href: "/feedback-inbox" },
+      { label: "Updates", href: "/updates" },
+    ],
+  },
+  {
+    label: "Design",
+    links: [
+      { label: "Design", href: "/design" },
+      { label: "Style Guide", href: "/style-guide" },
+      { label: "Design System", href: "/design-system" },
+      { label: "Design Violations", href: "/design-violations" },
+    ],
+  },
+  {
+    label: "Developer",
+    links: [
+      { label: "API Docs", href: "/api-docs" },
+      { label: "Redoc", href: "/redoc" },
+      { label: "Database", href: "/database" },
+      { label: "RAG Eval", href: "/rag-eval" },
+      { label: "Docs", href: "/docs" },
+    ],
+  },
+  {
+    label: "Procore",
+    links: [
+      { label: "Procore Tools", href: "/procore-tools" },
+      { label: "Procore Docs", href: "/procore-docs" },
+    ],
+  },
 ];
 
 function AdminDropdown() {
@@ -45,17 +70,28 @@ function AdminDropdown() {
         <ChevronUp className={`h-3 w-3 transition-transform ${open ? "" : "rotate-180"}`} />
       </button>
       {open && (
-        <div className="absolute bottom-full left-0 mb-1 min-w-36 rounded-md border border-border bg-popover py-1 shadow-sm">
-          {adminLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              onClick={() => setOpen(false)}
-              className="block px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              {link.label}
-            </Link>
-          ))}
+        <div className="absolute bottom-full left-0 mb-1 rounded-md border border-border bg-popover p-5 shadow-sm">
+          <div className="flex gap-8">
+            {adminSections.map((section) => (
+              <div key={section.label} className="shrink-0">
+                <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                  {section.label}
+                </h3>
+                <div className="space-y-0.5">
+                  {section.links.map((link) => (
+                    <Link
+                      key={link.href}
+                      href={link.href}
+                      onClick={() => setOpen(false)}
+                      className="block whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

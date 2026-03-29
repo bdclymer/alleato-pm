@@ -182,7 +182,7 @@ function ToolsDropdown({
       <PopoverContent align="end" sideOffset={6} className="w-[860px] p-0 bg-muted border border-border shadow-sm">
         {/* Panel header */}
         <div className="flex items-center justify-between border-b border-border/50 px-5 py-2.5">
-          <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+          <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
             Navigate to
           </span>
           {!projectId && (
@@ -236,7 +236,7 @@ function ToolsGroup({
           );
           return (
             <div key={subGroup.label} className="mb-3 last:mb-0">
-              <p className="mb-1 px-2 text-[10px] font-medium text-muted-foreground/40">
+              <p className="mb-1 px-2 text-[10px] font-medium text-muted-foreground/70">
                 {subGroup.label}
               </p>
               {subTools.map((tool) => (
@@ -262,7 +262,7 @@ function ToolsGroup({
   // Default: flat list
   return (
     <div className="flex flex-1 flex-col gap-0 p-4">
-      <p className="mb-3 px-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
+      <p className="mb-3 px-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
         {group.label}
       </p>
       {group.tools.map((tool) => (

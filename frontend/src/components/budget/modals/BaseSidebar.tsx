@@ -42,10 +42,11 @@ export function BaseSidebar({
     <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
       <SheetContent
         side="right"
-        className={cn("w-full p-0 flex flex-col", sizeClasses[size])}
+        showCloseButton={false}
+        className={cn("w-full p-0 flex flex-col bg-background", sizeClasses[size])}
       >
         {/* Header */}
-        <div className="bg-card border-b border-border px-6 py-4 flex-shrink-0">
+        <div className="bg-card px-8 py-6 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-semibold text-foreground">{title}</h2>
@@ -100,7 +101,7 @@ export function SidebarFooter({
   return (
     <div
       className={cn(
-        "border-t border-border bg-muted px-6 py-4 flex-shrink-0",
+        "border-t border-border bg-muted px-8 py-6 flex-shrink-0",
         className,
       )}
     >
@@ -122,7 +123,7 @@ export function SidebarTabs({
   onTabChange: (tabId: string) => void;
 }) {
   return (
-    <div className="border-b border-border px-6 py-2 bg-muted flex-shrink-0">
+    <div className="px-8 py-2 bg-transparent flex-shrink-0">
       <div className="flex gap-2">
         {tabs.map((tab) => (
           <Button

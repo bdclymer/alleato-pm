@@ -113,28 +113,6 @@ export default function NewContractPage() {
         }
       }
 
-      // Attachment uploads are non-fatal — navigate even if they fail
-      if (data.attachmentFiles && data.attachmentFiles.length > 0) {
-        for (const file of data.attachmentFiles) {
-          const formData = new FormData();
-          formData.append("file", file);
-          try {
-            const attachmentResponse = await fetch(
-              `/api/projects/${projectId}/contracts/${newContract.id}/attachments`,
-              { method: "POST", body: formData },
-            );
-            if (!attachmentResponse.ok) {
-              const errorData = await attachmentResponse.json().catch(() => ({}));
-              console.error("Attachment upload failed:", errorData);
-              toast.warning(`Attachment "${file.name}" failed to upload — you can add it from the contract page.`);
-            }
-          } catch (attachErr) {
-            console.error("Attachment upload error:", attachErr);
-            toast.warning(`Attachment "${file.name}" failed to upload — you can add it from the contract page.`);
-          }
-        }
-      }
-
       toast.success("Prime contract created");
       router.push(`/${projectId}/prime-contracts/${newContract.id}`);
     } catch (err) {

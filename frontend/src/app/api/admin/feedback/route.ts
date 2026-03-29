@@ -522,9 +522,14 @@ export async function GET(request: Request) {
 
 const patchSchema = z.object({
   id: z.string().uuid(),
-  status: z.enum(["open", "submitted", "github_failed", "triaged", "diagnosing", "fixing", "verifying", "in_review", "resolved", "closed"]).optional(),
+  status: z.enum(["open", "submitted", "github_failed", "in_progress", "triaged", "diagnosing", "fixing", "verifying", "in_review", "resolved", "closed"]).optional(),
   title: z.string().trim().min(1).max(200).optional(),
 });
+
+const LEGACY_STATUS_FALLBACKS: Record<string, string> = {
+  in_progress: "submitted",
+  resolved: "closed",
+};
 
 export async function PATCH(request: Request) {
   try {
@@ -551,15 +556,42 @@ export async function PATCH(request: Request) {
     }
 
     const serviceSupabase = createServiceClient();
-    const { data, error } = await serviceSupabase
+    let { data, error } = await serviceSupabase
       .from("admin_feedback_items")
       .update(updates)
       .eq("id", id)
       .select("id, status, title")
       .single();
 
+    if (
+      error &&
+      updates.status &&
+      toErrorDetails(error).code === "23514" &&
+      LEGACY_STATUS_FALLBACKS[updates.status]
+    ) {
+      const fallbackStatus = LEGACY_STATUS_FALLBACKS[updates.status];
+      const fallbackUpdates = { ...updates, status: fallbackStatus };
+
+      const fallbackResult = await serviceSupabase
+        .from("admin_feedback_items")
+        .update(fallbackUpdates)
+        .eq("id", id)
+        .select("id, status, title")
+        .single();
+
+      data = fallbackResult.data;
+      error = fallbackResult.error;
+    }
+
     if (error) {
       const details = toErrorDetails(error);
+      if (details.code === "23514") {
+        return jsonError(400, {
+          error: "Invalid feedback status",
+          code: details.code,
+          details: details.message,
+        });
+      }
       return jsonError(500, {
         error: "Failed to update feedback item",
         code: details.code,

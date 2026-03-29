@@ -11,7 +11,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { deleteTableRow } from "@/app/(other)/actions/admin-table-actions";
+import { deleteTableRow } from "@/app/(main)/actions/admin-table-actions";
 import { toast } from "sonner";
 
 interface DeleteConfirmationProps {

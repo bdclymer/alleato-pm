@@ -1,26 +1,17 @@
-"use client";
+/* eslint-disable design-system/require-page-shell -- UnifiedTablePage provides its own page layout */
+import type { Metadata } from "next";
+import { EmailsClient } from "./emails-client";
 
-import { useParams } from "next/navigation";
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
-import { Card } from "@/components/ui/card";
+export const metadata: Metadata = {
+  title: "Emails",
+};
 
-export default function ProjectEmailsPage() {
-  const params = useParams();
-  const projectId = params.projectId as string;
+interface PageProps {
+  params: Promise<{ projectId: string }>;
+}
 
-  return (
-    <>
-      <ProjectPageHeader
-        title="Emails"
-        description="Project email communications"
-      />
-      <PageContainer>
-        <Card className="p-6">
-          <p className="text-muted-foreground">
-            Emails for project {projectId} - Coming soon
-          </p>
-        </Card>
-      </PageContainer>
-    </>
-  );
+export default async function ProjectEmailsPage({ params }: PageProps) {
+  const { projectId } = await params;
+
+  return <EmailsClient projectId={parseInt(projectId, 10)} />;
 }

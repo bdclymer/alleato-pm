@@ -57,5 +57,4 @@ The page canvas should stay open by default.
 
 ## Full reference
 
-`frontend/src/design-system/DESIGN.md`
 `docs/design/DESIGN.md`

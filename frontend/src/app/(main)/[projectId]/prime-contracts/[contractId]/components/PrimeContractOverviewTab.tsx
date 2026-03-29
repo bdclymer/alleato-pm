@@ -7,7 +7,7 @@ import {
   Rows3,
   Trash2,
 } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import {
   DndContext,
   closestCenter,
@@ -24,8 +24,12 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 
-import { cn } from "@/lib/utils";
-import { Eyebrow } from "@/components/ds";
+import {
+  ContentSectionStack,
+  LabelValueRow,
+  SectionRuleHeading,
+  SummaryValueRow,
+} from "@/components/layout";
 import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,13 +45,6 @@ import {
 } from "@/components/ui/input-group";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Table,
   TableBody,
   TableCell,
@@ -55,16 +52,18 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { UnitTypes } from "@/lib/schemas/direct-costs";
+import { getCostTypeLabel } from "@/constants/budget";
 import type {
   BudgetCode,
   Contract,
   ContractAttachment,
   ContractLineItem,
+  PrimeContractCO,
 } from "../types";
 
 interface PrimeContractOverviewTabProps {
   contract: Contract;
+  changeOrders: PrimeContractCO[];
   attachments: ContractAttachment[];
   attachmentsLoading: boolean;
   isUploadingAttachment: boolean;
@@ -101,68 +100,10 @@ interface PrimeContractOverviewTabProps {
   onDeleteSovLine?: (lineId: string) => Promise<void>;
 }
 
-/* ─── Reusable sub-components ─── */
-
-function FieldRow({
-  label,
-  children,
-  missing,
-}: {
-  label: string;
-  children: React.ReactNode;
-  missing?: boolean;
-}) {
-  return (
-    <div className="flex items-baseline justify-between gap-4">
-      <dt className="shrink-0 text-muted-foreground">{label}</dt>
-      <dd
-        className={cn(
-          "text-right",
-          missing ? "italic text-muted-foreground" : "font-medium",
-        )}
-      >
-        {children}
-      </dd>
-    </div>
-  );
-}
-
-function SummaryRow({
-  label,
-  value,
-  bold,
-  border,
-}: {
-  label: string;
-  value: string;
-  bold?: boolean;
-  border?: boolean;
-}) {
-  return (
-    <div
-      className={cn(
-        "flex items-center justify-between",
-        border && "border-t border-border/40 pt-3",
-      )}
-    >
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd
-        className={cn(
-          "text-right tabular-nums",
-          bold ? "text-base font-semibold" : "font-semibold",
-        )}
-      >
-        {value}
-      </dd>
-    </div>
-  );
-}
-
-/* ─── Main component ─── */
-
 export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
   const {
     contract,
+    changeOrders,
     attachments,
     attachmentsLoading,
     isUploadingAttachment,
@@ -215,221 +156,270 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
     }
   };
 
-  const displayedSovTotal = displayedSovItems.reduce(
-    (sum, item) => sum + (Number(item.quantity) || 0) * (Number(item.unit_cost) || 0),
-    0,
-  );
+  const displayedSovTotal = displayedSovItems.reduce((sum, item) => {
+    if (item.is_group_header) return sum;
+    return sum + (Number(item.quantity) || 0) * (Number(item.unit_cost) || 0);
+  }, 0);
+  const computedChangeOrderTotals = useMemo(() => {
+    const totals = { approved: 0, pending: 0, draft: 0 };
+    for (const co of changeOrders) {
+      const amount = Number(co.amount) || 0;
+      const status = (co.status || "").toLowerCase();
+      if (status === "approved") {
+        totals.approved += amount;
+      } else if (status === "pending") {
+        totals.pending += amount;
+      } else if (status === "draft" || status === "proposed") {
+        totals.draft += amount;
+      }
+    }
+    return totals;
+  }, [changeOrders]);
+  const approvedChangeOrdersTotal =
+    changeOrders.length > 0
+      ? computedChangeOrderTotals.approved
+      : Number(contract.approved_change_orders) || 0;
+  const pendingChangeOrdersTotal =
+    changeOrders.length > 0
+      ? computedChangeOrderTotals.pending
+      : Number(contract.pending_change_orders) || 0;
+  const draftChangeOrdersTotal =
+    changeOrders.length > 0
+      ? computedChangeOrderTotals.draft
+      : Number(contract.draft_change_orders) || 0;
+  const revisedContractAmount = displayedSovTotal + approvedChangeOrdersTotal;
+  const pendingRevisedContractAmount =
+    revisedContractAmount + pendingChangeOrdersTotal;
+  const invoicesTotal = Number(contract.invoiced_amount) || 0;
+  const paymentsReceivedTotal = Number(contract.payments_received) || 0;
+  const remainingBalanceTotal = revisedContractAmount - paymentsReceivedTotal;
+  const percentPaid =
+    revisedContractAmount > 0
+      ? (paymentsReceivedTotal / revisedContractAmount) * 100
+      : 0;
+  const billedToDateRatio =
+    displayedSovTotal > 0
+      ? Math.min(1, Math.max(0, invoicesTotal / displayedSovTotal))
+      : 0;
+  const renderDateOrDash = (value: string | null | undefined) =>
+    value ? formatDate(value) : <span className="text-muted-foreground/60">—</span>;
 
   return (
-    <div className="space-y-10 pb-20">
+    <ContentSectionStack className="pb-20">
       {/* ─── General section: 3-column layout matching Procore ─── */}
       <section>
-        <div className="grid grid-cols-[1fr_1fr_minmax(260px,320px)] gap-8">
-          {/* Left column: Details */}
-          <div className="space-y-6">
-            <div className="border-b border-border pb-2">
-              <Eyebrow>Details</Eyebrow>
-            </div>
-            <dl className="space-y-4 text-sm">
-              <FieldRow label="Contract #">
-                {contract.contract_number || "Not set"}
-              </FieldRow>
-              <FieldRow label="Title">
-                {contract.title}
-              </FieldRow>
-              <FieldRow label="Description" missing={getTextValue(contract.description).isMissing}>
-                <span className="leading-relaxed">
-                  {getTextValue(contract.description).text}
-                </span>
-              </FieldRow>
-              <FieldRow label="Status">
-                {formatStatusLabel(contract.status)}
-              </FieldRow>
-              <FieldRow label="Executed">
-                {contract.executed ? formatDate(contract.executed_at) || "Yes" : "No"}
-              </FieldRow>
-            </dl>
+        <div className="grid grid-cols-[minmax(0,1fr)_minmax(340px,420px)] gap-x-16 gap-y-10">
+          {/* Left column with inner rows */}
+          <div className="space-y-8">
+            <div className="grid grid-cols-2 gap-x-14 gap-y-8">
+              {/* Details */}
+              <div className="space-y-6">
+                <SectionRuleHeading label="Details" className="[&_span]:text-primary" />
+                <dl className="space-y-4 text-sm">
+                  <LabelValueRow label="Contract #">
+                    {contract.contract_number || "Not set"}
+                  </LabelValueRow>
+                  <LabelValueRow label="Title">
+                    {contract.title}
+                  </LabelValueRow>
+                  <LabelValueRow label="Status">
+                    {formatStatusLabel(contract.status)}
+                  </LabelValueRow>
+                  <LabelValueRow label="Executed">
+                    {contract.executed ? formatDate(contract.executed_at) || "Yes" : "No"}
+                  </LabelValueRow>
+                </dl>
 
-            {/* Attachments inline under Details */}
-            <div className="pt-2">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Attachments</span>
-                <label className="cursor-pointer">
-                  <input
-                    type="file"
-                    className="sr-only"
-                    disabled={isUploadingAttachment}
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) handleUploadAttachment(file);
-                      e.target.value = "";
-                    }}
-                  />
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    asChild
-                    disabled={isUploadingAttachment}
-                    className="h-6 px-2 text-xs"
-                  >
-                    <span>
-                      <Plus className="h-3 w-3" />
-                      {isUploadingAttachment ? "Uploading..." : "Add"}
-                    </span>
-                  </Button>
-                </label>
-              </div>
-              <div className="mt-2 flex flex-wrap gap-3">
-                {attachmentsLoading ? (
-                  <p className="text-sm italic text-muted-foreground">Loading...</p>
-                ) : attachments.length === 0 ? (
-                  <p className="text-sm italic text-muted-foreground">No attachments yet</p>
-                ) : (
-                  attachments.map((att) => (
-                    <div key={att.id} className="group flex items-center gap-1.5 text-sm">
-                      <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-                      {att.downloadUrl || att.url ? (
-                        <a
-                          href={att.downloadUrl || att.url || "#"}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-foreground hover:underline"
-                        >
-                          {att.fileName}
-                        </a>
-                      ) : (
-                        <span className="text-muted-foreground">
-                          {att.fileName}
-                        </span>
-                      )}
+                {/* Attachments inline under Details */}
+                <div className="pt-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-muted-foreground">Attachments</span>
+                    <label className="cursor-pointer">
+                      <input
+                        type="file"
+                        className="sr-only"
+                        disabled={isUploadingAttachment}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleUploadAttachment(file);
+                          e.target.value = "";
+                        }}
+                      />
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-5 w-5 shrink-0 p-0 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive"
-                        onClick={() => handleDeleteAttachment(att.id)}
-                        aria-label={`Delete ${att.fileName}`}
+                        asChild
+                        disabled={isUploadingAttachment}
+                        className="h-6 px-2 text-xs text-primary hover:text-primary"
                       >
-                        <Trash2 className="h-3 w-3" />
+                        <span>
+                          <Plus className="h-3 w-3" />
+                          {isUploadingAttachment ? "Uploading..." : "Add"}
+                        </span>
                       </Button>
-                    </div>
-                  ))
-                )}
+                    </label>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-3">
+                    {attachmentsLoading ? (
+                      <p className="text-sm italic text-muted-foreground">Loading...</p>
+                    ) : attachments.length === 0 ? (
+                      <p className="text-sm italic text-muted-foreground">No attachments yet</p>
+                    ) : (
+                      attachments.map((att) => (
+                        <div key={att.id} className="group flex items-center gap-1.5 text-sm">
+                          <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                          {att.downloadUrl || att.url ? (
+                            <a
+                              href={att.downloadUrl || att.url || "#"}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-foreground hover:underline"
+                            >
+                              {att.fileName}
+                            </a>
+                          ) : (
+                            <span className="text-muted-foreground">
+                              {att.fileName}
+                            </span>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-5 w-5 shrink-0 p-0 text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive"
+                            onClick={() => handleDeleteAttachment(att.id)}
+                            aria-label={`Delete ${att.fileName}`}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Entity Roles */}
+              <div className="space-y-6">
+                <SectionRuleHeading label="Entity Roles" className="[&_span]:text-primary" />
+                <dl className="space-y-4 text-sm">
+                  <LabelValueRow label="Contractor" missing={!contract.contractor?.name}>
+                    {contract.contractor?.name || "Not set"}
+                  </LabelValueRow>
+                  <LabelValueRow label="Architect" missing={!contract.architect_engineer?.name}>
+                    {contract.architect_engineer?.name || "Not set"}
+                  </LabelValueRow>
+                  <LabelValueRow label="Owner" missing={!ownerName}>
+                    {ownerName || "Not set"}
+                  </LabelValueRow>
+                  <LabelValueRow label="Default Retainage">
+                    {contract.retention_percentage ?? 0}%
+                  </LabelValueRow>
+                </dl>
               </div>
             </div>
-          </div>
 
-          {/* Middle column: Entity Roles */}
-          <div className="space-y-6">
-            <div className="border-b border-border pb-2">
-              <Eyebrow>Entity Roles</Eyebrow>
+            {/* Row directly below Details + Entity Roles */}
+            <div className="space-y-4">
+              <dl className="space-y-4 text-sm">
+                <LabelValueRow
+                  label="Description"
+                  missing={getTextValue(contract.description).isMissing}
+                  valueClassName="leading-relaxed font-normal text-foreground"
+                >
+                  {getTextValue(contract.description).text}
+                </LabelValueRow>
+                <LabelValueRow
+                  label="Inclusions"
+                  missing={inclusionsList.length === 0}
+                  valueClassName="leading-relaxed font-normal text-foreground"
+                >
+                  {inclusionsList.length === 0 ? (
+                    "Not set"
+                  ) : (
+                    <div className="space-y-1">
+                      {inclusionsList.map((line, index) => (
+                        <p key={`inclusion-${index}`}>{line}</p>
+                      ))}
+                    </div>
+                  )}
+                </LabelValueRow>
+                <LabelValueRow
+                  label="Exclusions"
+                  missing={exclusionsList.length === 0}
+                  valueClassName="leading-relaxed font-normal text-foreground"
+                >
+                  {exclusionsList.length === 0 ? (
+                    "Not set"
+                  ) : (
+                    <div className="space-y-1">
+                      {exclusionsList.map((line, index) => (
+                        <p key={`exclusion-${index}`}>{line}</p>
+                      ))}
+                    </div>
+                  )}
+                </LabelValueRow>
+              </dl>
             </div>
-            <dl className="space-y-4 text-sm">
-              <FieldRow label="Contractor" missing={!contract.contractor?.name}>
-                {contract.contractor?.name || "Not set"}
-              </FieldRow>
-              <FieldRow label="Architect" missing={!contract.architect_engineer?.name}>
-                {contract.architect_engineer?.name || "Not set"}
-              </FieldRow>
-              <FieldRow label="Owner" missing={!ownerName}>
-                {ownerName || "Not set"}
-              </FieldRow>
-              <FieldRow label="Default Retainage">
-                {contract.retention_percentage ?? 0}%
-              </FieldRow>
-            </dl>
           </div>
 
           {/* Right sidebar: Financial Summary + Key Dates stacked */}
-          <div className="space-y-6">
+          <div className="space-y-8">
             {/* Financial Summary */}
-            <div className="rounded-md bg-muted/50 p-5 space-y-4">
-              <div className="border-b border-border pb-2">
-                <Eyebrow>Financial Summary</Eyebrow>
+            <div className="space-y-4">
+              <SectionRuleHeading label="Financial Summary" className="[&_span]:text-primary" />
+              <div className="rounded-md border border-border bg-muted p-6">
+                <dl className="space-y-3 text-sm">
+                  <SummaryValueRow label="Original Contract Amount" value={formatCurrency(displayedSovTotal)} />
+                  <SummaryValueRow label="Revised Contract Amount" value={formatCurrency(revisedContractAmount)} />
+                  <SummaryValueRow label="Pending Revised Amount" value={formatCurrency(pendingRevisedContractAmount)} />
+                  <SummaryValueRow label="Pending Change Orders" value={formatCurrency(pendingChangeOrdersTotal)} />
+                  <SummaryValueRow label="Approved Change Orders" value={formatCurrency(approvedChangeOrdersTotal)} />
+                  <SummaryValueRow label="Draft Change Orders" value={formatCurrency(draftChangeOrdersTotal)} />
+                  <SummaryValueRow label="Invoices" value={formatCurrency(invoicesTotal)} />
+                  <SummaryValueRow label="Payments Received" value={formatCurrency(paymentsReceivedTotal)} />
+                  <SummaryValueRow label="Remaining Balance" value={formatCurrency(remainingBalanceTotal)} />
+                  <SummaryValueRow label="Percent Paid" value={`${percentPaid.toFixed(2)}%`} bold border />
+                </dl>
               </div>
-              <dl className="space-y-3 text-sm">
-                <SummaryRow label="Original Contract Amount" value={formatCurrency(contract.original_contract_value)} />
-                <SummaryRow label="Revised Contract Amount" value={formatCurrency(contract.revised_contract_value)} />
-                <SummaryRow label="Pending Revised Amount" value={formatCurrency(contract.pending_revised_contract_amount)} />
-                <SummaryRow label="Pending Change Orders" value={formatCurrency(contract.pending_change_orders)} />
-                <SummaryRow label="Approved Change Orders" value={formatCurrency(contract.approved_change_orders)} />
-                <SummaryRow label="Draft Change Orders" value={formatCurrency(contract.draft_change_orders)} />
-                <SummaryRow label="Invoices" value={formatCurrency(contract.invoiced_amount)} />
-                <SummaryRow label="Payments Received" value={formatCurrency(contract.payments_received)} />
-                <SummaryRow label="Remaining Balance" value={formatCurrency(contract.remaining_balance)} />
-                <SummaryRow label="Percent Paid" value={`${contract.percent_paid}%`} bold border />
-              </dl>
             </div>
 
             {/* Key Dates */}
-            <div className="rounded-md bg-muted/50 p-5 space-y-4">
-              <div className="border-b border-border pb-2">
-                <Eyebrow>Key Dates</Eyebrow>
+            <div className="space-y-4">
+              <SectionRuleHeading label="Key Dates" className="[&_span]:text-primary" />
+              <div className="rounded-md border border-border bg-muted p-6">
+                <dl className="space-y-3 text-sm">
+                  <LabelValueRow label="Start Date">
+                    {renderDateOrDash(contract.start_date)}
+                  </LabelValueRow>
+                  <LabelValueRow label="Estimated Completion">
+                    {renderDateOrDash(contract.end_date)}
+                  </LabelValueRow>
+                  <LabelValueRow label="Substantial Completion">
+                    {renderDateOrDash(contract.substantial_completion_date)}
+                  </LabelValueRow>
+                  <LabelValueRow label="Actual Completion">
+                    {renderDateOrDash(contract.actual_completion_date)}
+                  </LabelValueRow>
+                  <LabelValueRow label="Signed Contract Received">
+                    {renderDateOrDash(contract.signed_contract_received_date)}
+                  </LabelValueRow>
+                  <LabelValueRow label="Contract Termination">
+                    {renderDateOrDash(contract.contract_termination_date)}
+                  </LabelValueRow>
+                </dl>
               </div>
-              <dl className="space-y-3 text-sm">
-                <FieldRow label="Start Date">
-                  {contract.start_date ? formatDate(contract.start_date) : "Not set"}
-                </FieldRow>
-                <FieldRow label="Estimated Completion">
-                  {contract.end_date ? formatDate(contract.end_date) : "Not set"}
-                </FieldRow>
-                <FieldRow label="Substantial Completion">
-                  {contract.substantial_completion_date
-                    ? formatDate(contract.substantial_completion_date)
-                    : "Not set"}
-                </FieldRow>
-                <FieldRow label="Actual Completion">
-                  {contract.actual_completion_date
-                    ? formatDate(contract.actual_completion_date)
-                    : "Not set"}
-                </FieldRow>
-                <FieldRow label="Signed Contract Received">
-                  {contract.signed_contract_received_date
-                    ? formatDate(contract.signed_contract_received_date)
-                    : "Not set"}
-                </FieldRow>
-                <FieldRow label="Contract Termination">
-                  {contract.contract_termination_date
-                    ? formatDate(contract.contract_termination_date)
-                    : "Not set"}
-                </FieldRow>
-              </dl>
             </div>
           </div>
         </div>
-      </section>
-
-      {/* ─── Inclusions ─── */}
-      <section>
-        <Eyebrow>Inclusions</Eyebrow>
-        {inclusionsList.length === 0 ? (
-          <p className="mt-3 text-sm italic text-muted-foreground">Not set</p>
-        ) : (
-          <div className="mt-3 text-sm leading-relaxed text-foreground/80">
-            {inclusionsList.map((item) => (
-              <p key={item} className="mt-1">{item}</p>
-            ))}
-          </div>
-        )}
-      </section>
-
-      {/* ─── Exclusions ─── */}
-      <section>
-        <Eyebrow>Exclusions</Eyebrow>
-        {exclusionsList.length === 0 ? (
-          <p className="mt-3 text-sm italic text-muted-foreground">Not set</p>
-        ) : (
-          <div className="mt-3 text-sm leading-relaxed text-foreground/80">
-            {exclusionsList.map((item) => (
-              <p key={item} className="mt-1">{item}</p>
-            ))}
-          </div>
-        )}
       </section>
 
       {/* ─── Schedule of Values ─── */}
       <section>
         <div className="flex items-center justify-between">
           <h3 className="text-base font-semibold">Schedule of Values</h3>
+          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            {displayedSovItems.filter((item) => !item.is_group_header).length} active line items
+          </span>
           <div className="flex items-center gap-2">
             {isSovEditing ? (
               <>
@@ -516,17 +506,14 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                         <TableHead className="min-w-64 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
                           Description
                         </TableHead>
-                        <TableHead className="w-36 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
-                          Quantity *
-                        </TableHead>
-                        <TableHead className="w-36 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
-                          UOM
-                        </TableHead>
-                        <TableHead className="w-44 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
-                          Unit Cost *
+                        <TableHead className="w-40 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                          Amount
                         </TableHead>
                         <TableHead className="w-40 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
-                          Line Total
+                          Bill to Date
+                        </TableHead>
+                        <TableHead className="w-40 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                          Amount Remaining
                         </TableHead>
                         <TableHead className="w-24 px-1 py-1.5" />
                       </TableRow>
@@ -535,18 +522,25 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                       {displayedSovItems.map((item) => {
                         if (item.is_group_header) {
                           return (
-                            <TableRow
+                            <SortableSovRow
                               key={item.id}
+                              id={item.id}
                               className="border-b border-border/60 bg-muted/40 hover:bg-muted/50"
                             >
-                              <TableCell className="w-10 px-1 py-1.5">
+                              {({ attributes, listeners }) => (
+                                <>
+                              <TableCell className="w-10 px-1 py-1">
                                 {isSovEditing && (
-                                  <div className="mt-1 cursor-grab rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted active:cursor-grabbing">
+                                  <div
+                                    className="mt-1 cursor-grab rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted active:cursor-grabbing"
+                                    {...attributes}
+                                    {...listeners}
+                                  >
                                     <GripVertical className="h-4 w-4" />
                                   </div>
                                 )}
                               </TableCell>
-                              <TableCell colSpan={6} className="px-1 py-1.5">
+                              <TableCell colSpan={5} className="px-1 py-1">
                                 {isSovEditing ? (
                                   <Input
                                     value={item.group_name || item.description || ""}
@@ -562,7 +556,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                                   </span>
                                 )}
                               </TableCell>
-                              <TableCell className="w-24 px-1 py-1.5">
+                              <TableCell className="w-24 px-1 py-1">
                                 {isSovEditing && (
                                   <div className="flex justify-end">
                                     <Button
@@ -576,12 +570,16 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                                   </div>
                                 )}
                               </TableCell>
-                            </TableRow>
+                                </>
+                              )}
+                            </SortableSovRow>
                           );
                         }
 
                         const lineTotal =
                           (Number(item.quantity) || 0) * (Number(item.unit_cost) || 0);
+                        const lineBilledToDate = lineTotal * billedToDateRatio;
+                        const lineAmountRemaining = lineTotal - lineBilledToDate;
                         const selectedBudgetCode = item.budget_code_id
                           ? budgetCodes.find((code) => code.id === item.budget_code_id)
                           : budgetCodes.find(
@@ -593,18 +591,33 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                           (isSovEditing ? sovDraftBudgetCodeIds[item.id] : undefined) ||
                           selectedBudgetCode?.id ||
                           "";
+                        const displayBudgetCode = selectedBudgetCode?.code || item.cost_code?.code || "--";
+                        const displayBudgetDescription =
+                          selectedBudgetCode?.description || item.cost_code?.name || "";
+                        const displayCostType = selectedBudgetCode?.costType
+                          ? getCostTypeLabel(selectedBudgetCode.costType)
+                          : "";
 
                         return (
-                          <TableRow
+                          <SortableSovRow
                             key={item.id}
+                            id={item.id}
                             className="group border-b border-border/60 bg-background transition-colors hover:bg-muted/20"
                           >
-                            <TableCell className="w-10 px-1 py-1.5 align-top">
-                              <div className="mt-1 cursor-grab rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted active:cursor-grabbing">
-                                <GripVertical className="h-4 w-4" />
-                              </div>
+                            {({ attributes, listeners }) => (
+                              <>
+                            <TableCell className="w-10 px-1 py-1 align-top">
+                              {isSovEditing ? (
+                                <div
+                                  className="mt-1 cursor-grab rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted active:cursor-grabbing"
+                                  {...attributes}
+                                  {...listeners}
+                                >
+                                  <GripVertical className="h-4 w-4" />
+                                </div>
+                              ) : null}
                             </TableCell>
-                            <TableCell className="min-w-72 px-1 py-1.5 align-top">
+                            <TableCell className="min-w-72 px-1 py-1 align-top">
                               {isSovEditing ? (
                                 <BudgetCodeSelector
                                   value={selectedBudgetCodeId}
@@ -617,16 +630,18 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                                 />
                               ) : (
                                 <div>
-                                  <div className="font-medium">
-                                    {selectedBudgetCode?.code || item.cost_code?.code || "--"}
+                                  <div className="text-xs font-medium leading-tight">
+                                    {displayBudgetDescription
+                                      ? `${displayBudgetCode} - ${displayBudgetDescription}`
+                                      : displayBudgetCode}
                                   </div>
-                                  <div className="text-sm text-muted-foreground">
-                                    {selectedBudgetCode?.description || item.cost_code?.name || ""}
+                                  <div className="text-xs text-muted-foreground leading-tight">
+                                    {displayCostType || "—"}
                                   </div>
                                 </div>
                               )}
                             </TableCell>
-                            <TableCell className="min-w-64 px-1 py-1.5 align-top">
+                            <TableCell className="min-w-64 px-1 py-1 align-top">
                               {isSovEditing ? (
                                 <Input
                                   value={item.description || ""}
@@ -638,60 +653,10 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                                   placeholder="Enter description"
                                 />
                               ) : (
-                                item.description || "--"
+                                <div className="pt-2 text-xs leading-tight">{item.description || "--"}</div>
                               )}
                             </TableCell>
-                            <TableCell className="w-36 px-1 py-1.5 align-top">
-                              {isSovEditing ? (
-                                <Input
-                                  type="number"
-                                  min="0"
-                                  step="0.01"
-                                  className="text-right"
-                                  value={item.quantity ?? 0}
-                                  onChange={(event) =>
-                                    onUpdateSovLine(item.id, {
-                                      quantity:
-                                        event.target.value === ""
-                                          ? 0
-                                          : Number(event.target.value),
-                                    })
-                                  }
-                                />
-                              ) : (
-                                <div className="pt-2 text-right text-sm tabular-nums">
-                                  {item.unit_of_measure ? (item.quantity ?? 0) : ""}
-                                </div>
-                              )}
-                            </TableCell>
-                            <TableCell className="w-36 px-1 py-1.5 align-top">
-                              {isSovEditing ? (
-                                <Select
-                                  onValueChange={(value) =>
-                                    onUpdateSovLine(item.id, {
-                                      unit_of_measure: value || null,
-                                    })
-                                  }
-                                  value={item.unit_of_measure || undefined}
-                                >
-                                  <SelectTrigger className="h-10 w-full">
-                                    <SelectValue placeholder="Select" />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {UnitTypes.map((unit) => (
-                                      <SelectItem key={unit} value={unit}>
-                                        {unit}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              ) : (
-                                <div className="pt-2 text-sm">
-                                  {item.unit_of_measure || ""}
-                                </div>
-                              )}
-                            </TableCell>
-                            <TableCell className="w-44 px-1 py-1.5 align-top">
+                            <TableCell className="w-40 px-1 py-1 align-top">
                               {isSovEditing ? (
                                 <InputGroup>
                                   <InputGroupAddon>$</InputGroupAddon>
@@ -701,29 +666,42 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                                     step="0.01"
                                     className="h-10 text-right"
                                     placeholder="0.00"
-                                    value={item.unit_cost === 0 ? "" : (item.unit_cost ?? "")}
+                                    value={lineTotal === 0 ? "" : lineTotal}
                                     onChange={(event) =>
-                                      onUpdateSovLine(item.id, {
-                                        unit_cost:
-                                          event.target.value === ""
-                                            ? 0
-                                            : Number(event.target.value),
-                                      })
+                                      {
+                                        if (event.target.value === "") {
+                                          onUpdateSovLine(item.id, { unit_cost: 0 });
+                                          return;
+                                        }
+                                        const nextAmount = Number(event.target.value);
+                                        const quantity = Number(item.quantity);
+                                        const normalizedQuantity =
+                                          quantity > 0 ? quantity : 1;
+                                        onUpdateSovLine(item.id, {
+                                          quantity: normalizedQuantity,
+                                          unit_cost: nextAmount / normalizedQuantity,
+                                        });
+                                      }
                                     }
                                   />
                                 </InputGroup>
                               ) : (
-                                <div className="pt-2 text-right text-sm tabular-nums">
-                                  {formatCurrency(item.unit_cost ?? 0)}
+                                <div className="pt-2 text-right text-xs tabular-nums">
+                                  {formatCurrency(lineTotal)}
                                 </div>
                               )}
                             </TableCell>
-                            <TableCell className="w-40 px-1 py-1.5 align-top">
-                              <div className="pt-2 text-right text-sm font-semibold">
-                                {formatCurrency(lineTotal)}
+                            <TableCell className="w-40 px-1 py-1 align-top">
+                              <div className="pt-2 text-right text-xs tabular-nums">
+                                {formatCurrency(lineBilledToDate)}
                               </div>
                             </TableCell>
-                            <TableCell className="w-24 px-1 py-1.5 align-top">
+                            <TableCell className="w-40 px-1 py-1 align-top">
+                              <div className="pt-2 text-right text-xs font-semibold tabular-nums">
+                                {formatCurrency(lineAmountRemaining)}
+                              </div>
+                            </TableCell>
+                            <TableCell className="w-24 px-1 py-1 align-top">
                               {isSovEditing ? (
                                 <div className="flex justify-end">
                                   <Button
@@ -766,19 +744,11 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                                 </div>
                               )}
                             </TableCell>
-                          </TableRow>
+                              </>
+                            )}
+                          </SortableSovRow>
                         );
                       })}
-                      <TableRow className="hover:bg-muted">
-                        <TableCell className="px-1 py-2" />
-                        <TableCell colSpan={5} className="px-1 py-3 text-xs font-semibold text-foreground">
-                          Totals
-                        </TableCell>
-                        <TableCell className="px-1 py-2 text-right text-sm font-semibold text-foreground">
-                          {formatCurrency(displayedSovTotal)}
-                        </TableCell>
-                        <TableCell className="px-1 py-2" />
-                      </TableRow>
                     </TableBody>
                   </Table>
                 </div>
@@ -799,8 +769,49 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
               </Button>
             </div>
           ) : null}
+
+          {!lineItemsLoading && displayedSovItems.length > 0 ? (
+            <div className="flex justify-end pt-5">
+              <div className="text-right">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Total Contract Value
+                </p>
+                <p className="mt-1 text-4xl font-semibold tabular-nums tracking-tight text-foreground">
+                  {formatCurrency(displayedSovTotal)}
+                </p>
+              </div>
+            </div>
+          ) : null}
         </div>
       </section>
-    </div>
+    </ContentSectionStack>
+  );
+}
+
+interface SortableSovRowProps {
+  id: string;
+  className?: string;
+  children: (dragHandle: {
+    attributes: ReturnType<typeof useSortable>["attributes"];
+    listeners: ReturnType<typeof useSortable>["listeners"];
+  }) => ReactNode;
+}
+
+function SortableSovRow({ id, className, children }: SortableSovRowProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <TableRow
+      ref={setNodeRef}
+      style={style}
+      className={`${className || ""}${isDragging ? " opacity-80 bg-muted/30" : ""}`}
+    >
+      {children({ attributes, listeners })}
+    </TableRow>
   );
 }

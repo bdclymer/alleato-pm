@@ -18,7 +18,7 @@ import {
 import {
   createTableRow,
   updateTableRow,
-} from "@/app/(other)/actions/admin-table-actions";
+} from "@/app/(main)/actions/admin-table-actions";
 import { type ColumnMetadata } from "@/server/db/introspection";
 import { type TableName } from "@/lib/table-registry";
 import { toast } from "sonner";

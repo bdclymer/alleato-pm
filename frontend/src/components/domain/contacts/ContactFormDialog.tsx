@@ -34,7 +34,7 @@ import {
   contactSchema,
   type ContactFormData,
 } from "@/lib/schemas/contact-schema";
-import { createContact, updateContact } from "@/app/(other)/actions/table-actions";
+import { createContact, updateContact } from "@/app/(main)/actions/table-actions";
 import { createClient } from "@/lib/supabase/client";
 import { CompanyFormDialog } from "@/components/domain/companies/CompanyFormDialog";
 import { Building2, Plus } from "lucide-react";

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -11,9 +10,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDistanceToNow } from "date-fns";
 import { cn } from "@/lib/utils";
+import {
+  BaseSidebar,
+  SidebarBody,
+  SidebarFooter,
+} from "@/components/budget/modals/BaseSidebar";
 
 interface HistoryEntry {
   id: string;
@@ -53,7 +59,6 @@ interface OriginalBudgetEditModalProps {
 }
 
 const UOM_OPTIONS = [
-  { value: "", label: "Select" },
   { value: "ea", label: "Each" },
   { value: "lf", label: "Linear Feet" },
   { value: "sf", label: "Square Feet" },
@@ -101,6 +106,13 @@ export function OriginalBudgetEditModal({
   // Focus state for currency inputs - show raw value when focused, formatted when blurred
   const [unitCostFocused, setUnitCostFocused] = useState(false);
   const [originalBudgetFocused, setOriginalBudgetFocused] = useState(false);
+
+  const hasChanges =
+    (parseFloat(unitQty) || 1) !== (lineItem.unitQty ?? 1) ||
+    uom !== (lineItem.uom || "") ||
+    (parseFloat(unitCost) || 0) !==
+      (lineItem.unitCost ?? lineItem.originalBudgetAmount ?? 0) ||
+    (parseFloat(originalBudget) || 0) !== lineItem.originalBudgetAmount;
 
   // Calculate original budget when inputs change
   useEffect(() => {
@@ -223,430 +235,330 @@ export function OriginalBudgetEditModal({
   };
 
   return (
-    <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <SheetContent
-        side="right"
-        className="w-full sm:max-w-lg md:max-w-xl lg:max-w-2xl p-0 flex flex-col"
+    <BaseSidebar
+      open={open}
+      onClose={onClose}
+      title="Original Budget Amount"
+      subtitle={lineItem.costCode}
+      size="xl"
+    >
+      <Tabs
+        value={activeTab}
+        onValueChange={(value) => setActiveTab(value as "original" | "history")}
+        className="flex h-full flex-col gap-0"
       >
-        {/* Header */}
-        <div className="bg-foreground text-white px-6 py-4 flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold">Original Budget Amount</h2>
-              <p className="text-sm text-muted-foreground mt-0.5">
-                {lineItem.costCode}
-              </p>
-            </div>
-            <button
-              onClick={onClose}
-              className="rounded-full p-2 hover:bg-background/10 transition-colors"
-              aria-label="Close"
-            >
-              <X className="h-5 w-5" />
-            </button>
-          </div>
-        </div>
-
-        {/* Tabs */}
-        <div className="border-b border-border px-6 py-2 bg-muted flex-shrink-0">
-          <div className="flex gap-2">
-            <button
-              onClick={() => setActiveTab("original")}
-              className={cn(
-                "px-4 py-2 text-sm font-medium rounded-md transition-all",
-                activeTab === "original"
-                  ? "bg-background text-orange-600 shadow-sm border border-border"
-                  : "text-foreground hover:text-foreground hover:bg-background/50",
-              )}
+        <div className="px-8 pt-1">
+          <TabsList className="h-auto gap-6 !bg-transparent !p-0 !shadow-none">
+            <TabsTrigger
+              value="original"
+              className="rounded-none border-0 !bg-transparent px-0 py-2 text-sm font-medium text-muted-foreground shadow-none data-[state=active]:!bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
             >
               Original Budget
-            </button>
-            <button
-              onClick={() => setActiveTab("history")}
-              className={cn(
-                "px-4 py-2 text-sm font-medium rounded-md transition-all",
-                activeTab === "history"
-                  ? "bg-background text-orange-600 shadow-sm border border-border"
-                  : "text-foreground hover:text-foreground hover:bg-background/50",
-              )}
+            </TabsTrigger>
+            <TabsTrigger
+              value="history"
+              className="rounded-none border-0 !bg-transparent px-0 py-2 text-sm font-medium text-muted-foreground shadow-none data-[state=active]:!bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
             >
               History
-            </button>
-          </div>
+            </TabsTrigger>
+          </TabsList>
         </div>
 
-        {/* Content - Scrollable */}
-        <div className="flex-1 overflow-y-auto">
-          {activeTab === "original" ? (
-            <div className="p-6 space-y-6">
-              {/* Line Item Info */}
-              <div className="rounded-lg border border-border bg-muted px-4 py-4">
-                <p className="text-xs uppercase tracking-wider text-muted-foreground font-medium">
-                  Line Item
-                </p>
-                <p className="text-sm font-semibold text-foreground mt-1">
-                  {lineItem.description}
-                </p>
-              </div>
-
-              {/* Parent Row Notice */}
-              {lineItem.children && lineItem.children.length > 0 && (
-                <div className="rounded-lg border-2 border-orange-200 bg-orange-50 px-4 py-4 flex items-start gap-4">
-                  <div className="flex-shrink-0 w-5 h-5 rounded-full bg-orange-500 flex items-center justify-center mt-0.5">
-                    <svg
-                      className="w-3 h-3 text-white"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                      />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-orange-900">
-                      Aggregated Budget Line
-                    </p>
-                    <p className="text-xs text-orange-700 mt-1">
-                      This is a parent row containing {lineItem.children.length}{" "}
-                      child line item{lineItem.children.length !== 1 ? "s" : ""}
-                      . The values shown are aggregated totals. To edit the
-                      Original Budget, expand this row and click on a child line
-                      item.
-                    </p>
-                  </div>
-                </div>
-              )}
-
-              {/* Current Value */}
-              <div className="flex items-center justify-between py-2 border-b border-border">
-                <span className="text-sm text-muted-foreground">Current Budget</span>
-                <span className="text-lg font-semibold text-foreground">
-                  {currentBudgetValue.toLocaleString("en-US", {
-                    style: "currency",
-                    currency: "USD",
-                  })}
-                </span>
-              </div>
-
-              {/* Calculation Method */}
-              {!isAggregatedRow && (
-                <div className="space-y-4">
-                  <div>
-                    <p className="text-sm font-medium text-foreground">
-                      Calculation Method
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Choose how this budget line is derived.
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    {(["manual", "calculated"] as CalculationMethod[]).map(
-                      (method) => (
-                        <label
-                          key={method}
-                          className={cn(
-                            "flex items-start gap-4 rounded-lg border p-4 cursor-pointer transition-all",
-                            calculationMethod === method
-                              ? "border-brand bg-brand/5 ring-1 ring-brand"
-                              : "border-border bg-background hover:border-border",
-                          )}
-                        >
-                          <input
-                            type="radio"
-                            name="calcMethod"
-                            value={method}
-                            checked={calculationMethod === method}
-                            onChange={() => setCalculationMethod(method)}
-                            className="mt-0.5 h-4 w-4 text-brand focus:ring-brand"
-                          />
-                          <div>
-                            <div className="font-medium text-foreground capitalize">
-                              {method}
-                            </div>
-                            <p className="text-xs text-muted-foreground">
-                              {method === "manual"
-                                ? "Enter a fixed amount directly."
-                                : "Qty × Unit Cost = Budget"}
-                            </p>
-                          </div>
-                        </label>
-                      ),
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {/* Input Fields - Only show for non-aggregated rows */}
-              {!isAggregatedRow && (
-                <>
-                  <div className="grid gap-4 grid-cols-2">
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">
-                        Unit Qty
-                      </label>
-                      <Input
-                        type="number"
-                        value={unitQty}
-                        onChange={(e) => setUnitQty(e.target.value)}
-                        className="mt-1"
-                        disabled={calculationMethod === "manual"}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">
-                        UOM
-                      </label>
-                      <Select
-                        value={uom}
-                        onValueChange={setUom}
-                        disabled={calculationMethod === "manual"}
-                      >
-                        <SelectTrigger className="mt-1">
-                          <SelectValue placeholder="Select" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {UOM_OPTIONS.map((option) => (
-                            <SelectItem
-                              key={option.value}
-                              value={option.value || "none"}
-                            >
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">
-                        Unit Cost
-                      </label>
-                      <Input
-                        type="text"
-                        value={
-                          unitCostFocused
-                            ? unitCost
-                            : formatCurrencyInput(unitCost)
-                        }
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/[^0-9.]/g, "");
-                          setUnitCost(value);
-                        }}
-                        onFocus={() => setUnitCostFocused(true)}
-                        onBlur={() => setUnitCostFocused(false)}
-                        placeholder="0.00"
-                        className="mt-1"
-                        disabled={calculationMethod === "manual"}
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium text-muted-foreground">
-                        Original Budget
-                      </label>
-                      <Input
-                        type="text"
-                        value={
-                          originalBudgetFocused
-                            ? originalBudget
-                            : formatCurrencyInput(originalBudget)
-                        }
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/[^0-9.]/g, "");
-                          setOriginalBudget(value);
-                        }}
-                        onFocus={() => setOriginalBudgetFocused(true)}
-                        onBlur={() => setOriginalBudgetFocused(false)}
-                        placeholder="0.00"
-                        className="mt-1 bg-muted font-semibold"
-                        disabled={calculationMethod === "calculated"}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Formula display for calculated method */}
-                  {calculationMethod === "calculated" && (
-                    <div className="rounded-lg bg-blue-50 border border-blue-200 p-4 text-sm text-blue-800">
-                      <span className="font-medium">Formula:</span>{" "}
-                      {unitQty || "0"} × {formatCurrencyInput(unitCost)} ={" "}
-                      {formatCurrencyInput(originalBudget)}
-                    </div>
-                  )}
-                </>
-              )}
+        <SidebarBody className="bg-background">
+          <TabsContent value="original" className="m-0">
+            <div className="space-y-6 p-6">
+            <div className="space-y-1 rounded-lg border border-border bg-muted/40 px-4 py-4">
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Line Item
+              </p>
+              <p className="text-sm font-semibold text-foreground">
+                {lineItem.description}
+              </p>
             </div>
-          ) : (
-            <div className="p-6 space-y-4">
-              {loading && (
-                <div className="flex items-center justify-center py-8">
-                  <div className="text-sm text-muted-foreground">
-                    Loading history...
+
+            {lineItem.children && lineItem.children.length > 0 && (
+              <div className="rounded-lg border border-status-warning/30 bg-status-warning/10 px-4 py-4">
+                <p className="text-sm font-semibold text-status-warning">
+                  Aggregated Budget Line
+                </p>
+                <p className="mt-1 text-xs text-status-warning">
+                  This is a parent row with {lineItem.children.length} child
+                  line item{lineItem.children.length !== 1 ? "s" : ""}. Edit a
+                  child line item to change Original Budget values.
+                </p>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between border-b border-border pb-3">
+              <span className="text-sm text-muted-foreground">Current Budget</span>
+              <span className="text-2xl font-semibold text-foreground">
+                {currentBudgetValue.toLocaleString("en-US", {
+                  style: "currency",
+                  currency: "USD",
+                })}
+              </span>
+            </div>
+
+            {!isAggregatedRow && (
+              <div className="space-y-3">
+                <div>
+                  <Label className="text-sm font-medium text-foreground">
+                    Calculation Method
+                  </Label>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Choose how this budget line is derived.
+                  </p>
+                </div>
+                <RadioGroup
+                  value={calculationMethod}
+                  onValueChange={(value) =>
+                    setCalculationMethod(value as CalculationMethod)
+                  }
+                  className="space-y-2"
+                >
+                  <label
+                    htmlFor="budget-calc-manual"
+                    className={cn(
+                      "flex cursor-pointer items-start gap-3 rounded-lg border p-4 transition-colors",
+                      calculationMethod === "manual"
+                        ? "border-primary bg-primary/5"
+                        : "border-border bg-background",
+                    )}
+                  >
+                    <RadioGroupItem
+                      id="budget-calc-manual"
+                      value="manual"
+                      className="mt-0.5"
+                    />
+                    <div>
+                      <div className="font-medium text-foreground">Manual</div>
+                      <p className="text-xs text-muted-foreground">
+                        Enter a fixed amount directly.
+                      </p>
+                    </div>
+                  </label>
+                  <label
+                    htmlFor="budget-calc-calculated"
+                    className={cn(
+                      "flex cursor-pointer items-start gap-3 rounded-lg border p-4 transition-colors",
+                      calculationMethod === "calculated"
+                        ? "border-primary bg-primary/5"
+                        : "border-border bg-background",
+                    )}
+                  >
+                    <RadioGroupItem
+                      id="budget-calc-calculated"
+                      value="calculated"
+                      className="mt-0.5"
+                    />
+                    <div>
+                      <div className="font-medium text-foreground">
+                        Calculated
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Qty × Unit Cost = Budget
+                      </p>
+                    </div>
+                  </label>
+                </RadioGroup>
+              </div>
+            )}
+
+            {!isAggregatedRow && (
+              <>
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                  <div>
+                    <Label
+                      htmlFor="budget-unit-qty"
+                      className="text-sm font-medium text-muted-foreground"
+                    >
+                      Unit Qty
+                    </Label>
+                    <Input
+                      id="budget-unit-qty"
+                      type="number"
+                      value={unitQty}
+                      onChange={(e) => setUnitQty(e.target.value)}
+                      className="mt-1"
+                      disabled={calculationMethod === "manual"}
+                    />
+                  </div>
+                  <div>
+                    <Label
+                      htmlFor="budget-uom"
+                      className="text-sm font-medium text-muted-foreground"
+                    >
+                      UOM
+                    </Label>
+                    <Select
+                      value={uom || "__none"}
+                      onValueChange={(value) =>
+                        setUom(value === "__none" ? "" : value)
+                      }
+                      disabled={calculationMethod === "manual"}
+                    >
+                      <SelectTrigger id="budget-uom" className="mt-1">
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__none">Select</SelectItem>
+                        {UOM_OPTIONS.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label
+                      htmlFor="budget-unit-cost"
+                      className="text-sm font-medium text-muted-foreground"
+                    >
+                      Unit Cost
+                    </Label>
+                    <Input
+                      id="budget-unit-cost"
+                      type="text"
+                      value={
+                        unitCostFocused ? unitCost : formatCurrencyInput(unitCost)
+                      }
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/[^0-9.]/g, "");
+                        setUnitCost(value);
+                      }}
+                      onFocus={() => setUnitCostFocused(true)}
+                      onBlur={() => setUnitCostFocused(false)}
+                      placeholder="0.00"
+                      className="mt-1"
+                      disabled={calculationMethod === "manual"}
+                    />
+                  </div>
+                  <div>
+                    <Label
+                      htmlFor="budget-original-amount"
+                      className="text-sm font-medium text-muted-foreground"
+                    >
+                      Original Budget
+                    </Label>
+                    <Input
+                      id="budget-original-amount"
+                      type="text"
+                      value={
+                        originalBudgetFocused
+                          ? originalBudget
+                          : formatCurrencyInput(originalBudget)
+                      }
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/[^0-9.]/g, "");
+                        setOriginalBudget(value);
+                      }}
+                      onFocus={() => setOriginalBudgetFocused(true)}
+                      onBlur={() => setOriginalBudgetFocused(false)}
+                      placeholder="0.00"
+                      className="mt-1 bg-muted/50 font-semibold"
+                      disabled={calculationMethod === "calculated"}
+                    />
                   </div>
                 </div>
-              )}
 
-              {error && (
-                <div className="rounded-md bg-red-50 p-4 border border-red-200 text-sm text-red-800">
-                  {error}
-                </div>
-              )}
+                {calculationMethod === "calculated" && (
+                  <div className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-foreground">
+                    <span className="font-medium">Formula:</span>{" "}
+                    {unitQty || "0"} × {formatCurrencyInput(unitCost)} ={" "}
+                    {formatCurrencyInput(originalBudget)}
+                  </div>
+                )}
+              </>
+            )}
+            </div>
+          </TabsContent>
 
-              {!loading && !error && history.length === 0 && (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p className="text-sm">No changes recorded yet</p>
-                </div>
-              )}
+          <TabsContent value="history" className="m-0">
+            <div className="space-y-4 p-6">
+            {loading && (
+              <div className="py-8 text-center text-sm text-muted-foreground">
+                Loading history...
+              </div>
+            )}
 
-              {!loading && !error && history.length > 0 && (
-                <div className="space-y-4">
+            {error && (
+              <div className="rounded-md border border-destructive/25 bg-destructive/10 p-4 text-sm text-destructive">
+                {error}
+              </div>
+            )}
+
+            {!loading && !error && history.length === 0 && (
+              <div className="py-8 text-center text-sm text-muted-foreground">
+                No changes recorded yet
+              </div>
+            )}
+
+            {!loading && !error && history.length > 0 && (
+              <div className="overflow-hidden rounded-lg border border-border">
+                <div className="divide-y divide-border">
                   {history.map((entry) => (
-                    <div
-                      key={entry.id}
-                      className={cn(
-                        "border-l-4 pl-4 py-4 rounded-r-lg bg-background shadow-sm",
-                        entry.change_type === "create" && "border-green-500",
-                        entry.change_type === "delete" && "border-red-500",
-                        entry.change_type === "update" && "border-blue-500",
-                      )}
-                    >
-                      <div className="flex items-start gap-4">
-                        <div
-                          className={cn(
-                            "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
-                            entry.change_type === "create" &&
-                              "bg-green-100 text-green-600",
-                            entry.change_type === "delete" &&
-                              "bg-red-100 text-red-600",
-                            entry.change_type === "update" &&
-                              "bg-blue-100 text-blue-600",
-                          )}
-                        >
-                          {entry.change_type === "create" && (
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M12 4v16m8-8H4"
-                              />
-                            </svg>
-                          )}
-                          {entry.change_type === "delete" && (
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M6 18L18 6M6 6l12 12"
-                              />
-                            </svg>
-                          )}
-                          {entry.change_type === "update" && (
-                            <svg
-                              className="w-4 h-4"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                              />
-                            </svg>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium text-foreground">
-                            {entry.changed_by.name}
-                          </div>
-                          <div className="text-xs text-muted-foreground">
-                            {formatDistanceToNow(new Date(entry.changed_at), {
-                              addSuffix: true,
-                            })}
-                          </div>
-                          <div className="mt-1.5 text-sm text-foreground">
-                            {entry.change_type === "create" && (
-                              <>
-                                Created {formatFieldName(entry.field_name)}:{" "}
-                                <span className="font-medium text-green-700">
-                                  {formatValue(
-                                    entry.field_name,
-                                    entry.new_value,
-                                  )}
-                                </span>
-                              </>
-                            )}
-                            {entry.change_type === "delete" &&
-                              "Deleted this line item"}
-                            {entry.change_type === "update" && (
-                              <>
-                                Changed {formatFieldName(entry.field_name)} from{" "}
-                                <span className="line-through text-red-600">
-                                  {formatValue(
-                                    entry.field_name,
-                                    entry.old_value,
-                                  )}
-                                </span>{" "}
-                                to{" "}
-                                <span className="font-medium text-green-700">
-                                  {formatValue(
-                                    entry.field_name,
-                                    entry.new_value,
-                                  )}
-                                </span>
-                              </>
-                            )}
-                          </div>
-                          {entry.notes && (
-                            <div className="mt-1 text-xs text-muted-foreground">
-                              Notes: {entry.notes}
-                            </div>
-                          )}
-                        </div>
+                    <div key={entry.id} className="space-y-1 px-4 py-4">
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-sm font-medium text-foreground">
+                          {entry.changed_by.name}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {formatDistanceToNow(new Date(entry.changed_at), {
+                            addSuffix: true,
+                          })}
+                        </span>
                       </div>
+                      <div className="text-sm text-foreground">
+                        {entry.change_type === "create" && (
+                          <>
+                            Created {formatFieldName(entry.field_name)}:{" "}
+                            <span className="font-medium">
+                              {formatValue(entry.field_name, entry.new_value)}
+                            </span>
+                          </>
+                        )}
+                        {entry.change_type === "delete" && "Deleted this line item"}
+                        {entry.change_type === "update" && (
+                          <>
+                            Changed {formatFieldName(entry.field_name)} from{" "}
+                            <span className="line-through">
+                              {formatValue(entry.field_name, entry.old_value)}
+                            </span>{" "}
+                            to{" "}
+                            <span className="font-medium">
+                              {formatValue(entry.field_name, entry.new_value)}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      {entry.notes && (
+                        <div className="text-xs text-muted-foreground">
+                          Notes: {entry.notes}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
-              )}
+              </div>
+            )}
             </div>
+          </TabsContent>
+        </SidebarBody>
+      </Tabs>
+
+      <SidebarFooter className="bg-muted">
+        <div className="flex items-center justify-end gap-3">
+          <Button variant="outline" onClick={onClose}>
+            {activeTab === "history" || isAggregatedRow ? "Close" : "Cancel"}
+          </Button>
+          {activeTab === "original" && !isAggregatedRow && (
+            <Button onClick={handleSave} disabled={saving || !hasChanges}>
+              {saving ? "Saving..." : "Save Changes"}
+            </Button>
           )}
         </div>
-
-        {/* Footer */}
-        <div className="border-t border-border bg-muted px-6 py-4 flex-shrink-0">
-          <div className="flex items-center justify-end gap-4">
-            <Button variant="outline" onClick={onClose}>
-              {isAggregatedRow ? "Close" : "Cancel"}
-            </Button>
-            {activeTab === "original" && !isAggregatedRow && (
-              <Button
-                onClick={handleSave}
-                disabled={saving}
-                className="bg-orange-500 hover:bg-orange-600 text-white"
-              >
-                {saving ? "Saving..." : "Save Changes"}
-              </Button>
-            )}
-          </div>
-        </div>
-      </SheetContent>
-    </Sheet>
+      </SidebarFooter>
+    </BaseSidebar>
   );
 }

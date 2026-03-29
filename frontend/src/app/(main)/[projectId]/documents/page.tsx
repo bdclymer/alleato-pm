@@ -1,27 +1,16 @@
-"use client";
+/* eslint-disable design-system/require-page-shell -- Layout provided by UnifiedTablePage in documents-client.tsx */
+import { DocumentsClient } from "./documents-client";
 
-import { useParams } from "next/navigation";
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
-import { EmptyState } from "@/components/ds";
-import { FileText } from "lucide-react";
+export const metadata = {
+  title: "Documents",
+};
 
-export default function ProjectDocumentsPage() {
-  const params = useParams();
-  void params.projectId;
+export default async function ProjectDocumentsPage({
+  params,
+}: {
+  params: Promise<{ projectId: string }>;
+}) {
+  const { projectId } = await params;
 
-  return (
-    <>
-      <ProjectPageHeader
-        title="Documents"
-        description="Manage project documents and files"
-      />
-      <PageContainer>
-        <EmptyState
-          icon={<FileText className="h-6 w-6 text-muted-foreground" />}
-          title="Documents coming soon"
-          description="Document management will be available in an upcoming release."
-        />
-      </PageContainer>
-    </>
-  );
+  return <DocumentsClient projectId={projectId} />;
 }

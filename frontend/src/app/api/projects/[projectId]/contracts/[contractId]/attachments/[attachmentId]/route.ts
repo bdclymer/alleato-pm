@@ -25,24 +25,48 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Fetch the attachment to get its storage path before deleting
-    const { data: attachment, error: fetchError } = await serviceClient
-      .from("attachments")
-      .select("id, url, attached_to_id")
-      .eq("id", attachmentId)
-      .eq("attached_to_id", contractId)
-      .eq("attached_to_table", "prime_contracts")
+    const { data: link, error: linkError } = await serviceClient
+      .from("prime_contract_attachments")
+      .select("attachment_id")
+      .eq("contract_id", contractId)
+      .eq("attachment_id", attachmentId)
       .single();
 
-    if (fetchError || !attachment) {
-      return NextResponse.json({ error: "Attachment not found" }, { status: 404 });
+    let attachment: { id: string; url: string | null } | null = null;
+
+    if (!linkError && link) {
+      const { data: mappedAttachment, error: mappedAttachmentError } = await serviceClient
+        .from("attachments")
+        .select("id, url")
+        .eq("id", link.attachment_id)
+        .single();
+      if (!mappedAttachmentError && mappedAttachment) {
+        attachment = mappedAttachment;
+      }
+    }
+
+    if (!attachment) {
+      // Temporary fallback while environments are being migrated.
+      const { data: legacyAttachment, error: legacyFetchError } = await serviceClient
+        .from("attachments")
+        .select("id, url")
+        .eq("id", attachmentId)
+        .eq("attached_to_id", contractId)
+        .eq("attached_to_table", "prime_contracts")
+        .single();
+
+      if (legacyFetchError || !legacyAttachment) {
+        return NextResponse.json({ error: "Attachment not found" }, { status: 404 });
+      }
+
+      attachment = legacyAttachment;
     }
 
     // Delete DB record first
     const { error: deleteError } = await serviceClient
       .from("attachments")
       .delete()
-      .eq("id", attachmentId);
+      .eq("id", attachment.id);
 
     if (deleteError) {
       return NextResponse.json(

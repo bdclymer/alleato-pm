@@ -246,7 +246,7 @@ export function RichTextField({
           contentEditable={!disabled}
           onInput={handleInput}
           onPaste={handlePaste}
-          className="min-h-[120px] px-3 py-2.5 focus:outline-none [&_p]:my-0"
+          className="min-h-[120px] max-h-[320px] overflow-y-auto px-3 py-2.5 focus:outline-none [&_p]:my-0"
           data-placeholder={placeholder}
           suppressContentEditableWarning={true}
         />

@@ -21,6 +21,7 @@ import {
   Hammer,
   Home,
   LayoutDashboard,
+  Lock,
   Mail,
   MessageCircle,
   Package,
@@ -454,6 +455,34 @@ export const headerNavGroups: HeaderNavGroup[] = [
     ],
   },
   {
+    id: "project",
+    label: "Project",
+    tools: [
+      {
+        name: "Project Directory",
+        path: "directory",
+        requiresProject: true,
+        icon: Users,
+        description: "Project people and companies",
+        module: "directory",
+      },
+      {
+        name: "Project Tasks",
+        path: "tasks",
+        requiresProject: true,
+        icon: CheckCircle,
+        description: "Project task board",
+      },
+      {
+        name: "Project Settings",
+        path: "settings",
+        requiresProject: true,
+        icon: Settings,
+        description: "Project configuration",
+      },
+    ],
+  },
+  {
     id: "company",
     label: "Company",
     tools: [
@@ -471,6 +500,13 @@ export const headerNavGroups: HeaderNavGroup[] = [
         icon: Users,
         description: "People, companies, contacts",
         module: "directory",
+      },
+      {
+        name: "Permissions",
+        path: "permissions",
+        requiresProject: false,
+        icon: Lock,
+        description: "User roles and access control",
       },
       {
         name: "Meetings",

@@ -121,6 +121,8 @@ export interface UnifiedTablePageProps<T> {
   };
   table: {
     columns: TableColumn<T>[];
+    defaultPinnedLeftColumns?: string[];
+    defaultPinnedRightColumns?: string[];
     rowActions?: (item: T) => ReactNode;
     /** Called when user clicks Delete in the default row-actions menu. When provided without custom rowActions, renders a default "⋯" dropdown with Delete. */
     onDelete?: (item: T) => void;
@@ -300,10 +302,10 @@ export function UnifiedTablePage<T>({
     });
   const [columnWidths, setColumnWidths] = React.useState<Record<string, number>>({});
   const [columnOrder, setColumnOrder] = React.useState<string[]>(visibleColumns);
-  const [columnPinning, setColumnPinning] = React.useState<{ left: string[]; right: string[] }>({
-    left: [],
-    right: [],
-  });
+  const [columnPinning, setColumnPinning] = React.useState<{ left: string[]; right: string[] }>(() => ({
+    left: table.defaultPinnedLeftColumns ?? [],
+    right: table.defaultPinnedRightColumns ?? [],
+  }));
   const [draggedColumnId, setDraggedColumnId] = React.useState<string | null>(null);
   const [rowOrderIds, setRowOrderIds] = React.useState<string[]>([]);
   const [draggedRowId, setDraggedRowId] = React.useState<string | null>(null);
@@ -319,6 +321,7 @@ export function UnifiedTablePage<T>({
   } | null>(null);
   const [isResizingColumn, setIsResizingColumn] = React.useState(false);
   const hasUserManagedColumnOrderRef = React.useRef(false);
+  const selectionColumnWidth = 44;
 
   // ── Side panel collapse & resize state ───────────────────────────────
   const panelStorageKey = sidePanel?.storageKey ?? "unified-table-side-panel";
@@ -492,6 +495,33 @@ export function UnifiedTablePage<T>({
     });
   }, [visibleColumns]);
 
+  const defaultPinnedLeftSignature = React.useMemo(
+    () => (table.defaultPinnedLeftColumns ?? []).join("|"),
+    [table.defaultPinnedLeftColumns],
+  );
+  const defaultPinnedRightSignature = React.useMemo(
+    () => (table.defaultPinnedRightColumns ?? []).join("|"),
+    [table.defaultPinnedRightColumns],
+  );
+
+  React.useEffect(() => {
+    const nextLeft = table.defaultPinnedLeftColumns ?? [];
+    const nextRight = table.defaultPinnedRightColumns ?? [];
+    setColumnPinning((prev) => {
+      const prevLeft = prev.left.join("|");
+      const prevRight = prev.right.join("|");
+      if (prevLeft === defaultPinnedLeftSignature && prevRight === defaultPinnedRightSignature) {
+        return prev;
+      }
+      return { left: nextLeft, right: nextRight };
+    });
+  }, [
+    defaultPinnedLeftSignature,
+    defaultPinnedRightSignature,
+    table.defaultPinnedLeftColumns,
+    table.defaultPinnedRightColumns,
+  ]);
+
   const rowOrderedItems = React.useMemo(() => {
     const isManualRowOrderEnabled = resolvedFeatures.enableRowReorder && !sorting?.sortBy;
     if (!isManualRowOrderEnabled) return sortedItems;
@@ -576,7 +606,7 @@ export function UnifiedTablePage<T>({
   }, [columnOrder, columnPinning.left, columnPinning.right, table.columns, visibleColumns]);
 
   const leftPinnedOffsets = React.useMemo(() => {
-    let offset = hasRowSelection ? 40 : 0;
+    let offset = hasRowSelection ? selectionColumnWidth : 0;
     const result: Record<string, number> = {};
     for (const column of orderedVisibleColumns) {
       if (!columnPinning.left.includes(column.id)) continue;
@@ -584,7 +614,7 @@ export function UnifiedTablePage<T>({
       offset += columnWidths[column.id] ?? column.width ?? 180;
     }
     return result;
-  }, [columnPinning.left, columnWidths, hasRowSelection, orderedVisibleColumns]);
+  }, [columnPinning.left, columnWidths, hasRowSelection, orderedVisibleColumns, selectionColumnWidth]);
 
   const rightPinnedOffsets = React.useMemo(() => {
     let offset = hasRowActions ? 50 : 0;
@@ -965,11 +995,24 @@ export function UnifiedTablePage<T>({
               <TableHeader className={cn((table.stickyHeader !== false) && "sticky top-0 z-20 bg-background")}>
                 <TableRow>
                   {hasRowSelection && (
-                    <TableHead className="w-[40px]">
-                      <Checkbox
-                        checked={allSelected ? true : someSelected ? "indeterminate" : false}
-                        onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
-                      />
+                    <TableHead
+                      className="px-2"
+                      style={{
+                        width: selectionColumnWidth,
+                        minWidth: selectionColumnWidth,
+                        maxWidth: selectionColumnWidth,
+                        position: "sticky",
+                        left: 0,
+                        zIndex: 3,
+                        background: "hsl(var(--background))",
+                      }}
+                    >
+                      <div className="flex items-center justify-center">
+                        <Checkbox
+                          checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                          onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
+                        />
+                      </div>
                     </TableHead>
                   )}
                   {orderedVisibleColumns.map((column) => {
@@ -1175,13 +1218,27 @@ export function UnifiedTablePage<T>({
                     onClick={() => activateRow(item)}
                   >
                     {hasRowSelection && (
-                      <TableCell onClick={(event) => event.stopPropagation()}>
-                        <Checkbox
-                          checked={selectedIds.includes(table.getRowId(item))}
-                          onCheckedChange={(checked) =>
-                            handleSelectRow(table.getRowId(item), Boolean(checked))
-                          }
-                        />
+                      <TableCell
+                        className="px-2"
+                        style={{
+                          width: selectionColumnWidth,
+                          minWidth: selectionColumnWidth,
+                          maxWidth: selectionColumnWidth,
+                          position: "sticky",
+                          left: 0,
+                          zIndex: 2,
+                          background: "hsl(var(--background))",
+                        }}
+                        onClick={(event) => event.stopPropagation()}
+                      >
+                        <div className="flex items-center justify-center">
+                          <Checkbox
+                            checked={selectedIds.includes(table.getRowId(item))}
+                            onCheckedChange={(checked) =>
+                              handleSelectRow(table.getRowId(item), Boolean(checked))
+                            }
+                          />
+                        </div>
                       </TableCell>
                     )}
                     {orderedVisibleColumns.map((column) => (

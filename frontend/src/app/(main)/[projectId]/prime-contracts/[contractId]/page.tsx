@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import { ProjectPageHeader } from "@/components/layout";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { DocumentDeliveryDialog } from "@/components/documents/DocumentDeliveryDialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -56,6 +57,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { PrimeContractOverviewTab } from "./components/PrimeContractOverviewTab";
@@ -81,6 +83,56 @@ import type {
 type BudgetCodeCreateTarget =
   | { type: "line-item-form" }
   | { type: "sov-line"; lineId: string };
+
+interface PrimeContractSettings {
+  project_id: number;
+  co_tier_count: 1 | 2;
+  allow_standard_users_create_pcco: boolean;
+  allow_standard_users_create_pco: boolean;
+  sov_always_editable: boolean;
+  show_markup_on_co_pdf: boolean;
+  show_markup_on_invoice_pdf: boolean;
+  default_distribution_prime_contract: string | null;
+  default_distribution_pcco: string | null;
+  default_distribution_pco: string | null;
+}
+
+const ALLOWED_MARKUP_TYPES = ["insurance", "bond", "fee", "overhead", "custom"] as const;
+
+const normalizeVerticalMarkupRows = (rows: VerticalMarkup[]): VerticalMarkup[] =>
+  rows.map((row) => ({
+    ...row,
+    markup_type: row.markup_type ?? "",
+    percentage: Number.isFinite(Number(row.percentage))
+      ? Number(row.percentage)
+      : 0,
+    compound: Boolean(row.compound),
+    calculation_order: Number.isFinite(Number(row.calculation_order))
+      ? Number(row.calculation_order)
+      : 0,
+  }));
+
+const findDuplicateMarkupTypes = (rows: VerticalMarkup[]): string[] => {
+  const counts = new Map<string, number>();
+  rows.forEach((row) => {
+    const key = (row.markup_type ?? "").trim().toLowerCase();
+    if (!key) return;
+    counts.set(key, (counts.get(key) ?? 0) + 1);
+  });
+  return Array.from(counts.entries())
+    .filter(([, count]) => count > 1)
+    .map(([key]) => key);
+};
+
+const getNextAvailableMarkupType = (rows: VerticalMarkup[]): string | null => {
+  const used = new Set(
+    rows.map((row) => (row.markup_type ?? "").trim().toLowerCase()),
+  );
+  for (const type of ALLOWED_MARKUP_TYPES) {
+    if (!used.has(type)) return type;
+  }
+  return null;
+};
 
 export default function ProjectContractDetailPage() {
   const router = useRouter();
@@ -125,7 +177,24 @@ export default function ProjectContractDetailPage() {
   const [isSubmittingInvoice, setIsSubmittingInvoice] = useState(false);
   const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
   const [verticalMarkups, setVerticalMarkups] = useState<VerticalMarkup[]>([]);
+  const [savedVerticalMarkups, setSavedVerticalMarkups] = useState<VerticalMarkup[]>([]);
   const [markupsLoading, setMarkupsLoading] = useState(false);
+  const [isSavingMarkupTable, setIsSavingMarkupTable] = useState(false);
+  const [markupMapsToById, setMarkupMapsToById] = useState<Record<string, string>>({});
+  const [markupDisplayById, setMarkupDisplayById] = useState<Record<string, "horizontal" | "vertical">>({});
+  const [editingMarkupRowIds, setEditingMarkupRowIds] = useState<Record<string, boolean>>({});
+  const [markupRowDrafts, setMarkupRowDrafts] = useState<
+    Record<
+      string,
+      {
+        markup_type: string;
+        percentage: number;
+        compound: boolean;
+        displayIn: "horizontal" | "vertical";
+        mapsTo: string;
+      }
+    >
+  >({});
   const [showAddMarkupDialog, setShowAddMarkupDialog] = useState(false);
   const [editingMarkup, setEditingMarkup] = useState<VerticalMarkup | null>(null);
   const [markupForm, setMarkupForm] = useState({
@@ -160,6 +229,16 @@ const [isSovEditing, setIsSovEditing] = useState(false);
     useState<BudgetCodeCreateTarget | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [advancedSettings, setAdvancedSettings] = useState<PrimeContractSettings | null>(null);
+  const [advancedSettingsLoading, setAdvancedSettingsLoading] = useState(false);
+  const [advancedSettingsSaving, setAdvancedSettingsSaving] = useState(false);
+  const [contractAdvancedDraft, setContractAdvancedDraft] = useState({
+    inclusions: "",
+    exclusions: "",
+    is_private: false,
+    payment_terms: "",
+    billing_schedule: "",
+  });
 
   // Attachments state
   const [attachments, setAttachments] = useState<ContractAttachment[]>([]);
@@ -536,7 +615,11 @@ const [isSovEditing, setIsSovEditing] = useState(false);
         }
 
         const data = await response.json();
-        setVerticalMarkups(data.markups || []);
+        const fetchedMarkups: VerticalMarkup[] = normalizeVerticalMarkupRows(
+          data.markups || [],
+        );
+        setVerticalMarkups(fetchedMarkups);
+        setSavedVerticalMarkups(fetchedMarkups);
       } catch (err) {
 
         console.error("Failed to load data:", err);
@@ -550,6 +633,90 @@ const [isSovEditing, setIsSovEditing] = useState(false);
 
     fetchVerticalMarkups();
   }, [contract, projectId]);
+
+  useEffect(() => {
+    if (!projectId || !contract) return;
+
+    const fetchAdvancedSettings = async () => {
+      try {
+        setAdvancedSettingsLoading(true);
+        const response = await fetch(`/api/projects/${projectId}/contracts/settings`);
+        if (!response.ok) {
+          throw new Error("Failed to fetch advanced settings");
+        }
+        const data = (await response.json()) as PrimeContractSettings;
+        setAdvancedSettings(data);
+      } catch {
+        toast.error("Failed to load advanced settings");
+      } finally {
+        setAdvancedSettingsLoading(false);
+      }
+    };
+
+    fetchAdvancedSettings();
+  }, [projectId, contract]);
+
+  useEffect(() => {
+    if (!contract) return;
+    setContractAdvancedDraft({
+      inclusions: contract.inclusions ?? "",
+      exclusions: contract.exclusions ?? "",
+      is_private: contract.is_private,
+      payment_terms: contract.payment_terms ?? "",
+      billing_schedule: contract.billing_schedule ?? "",
+    });
+  }, [contract]);
+
+  // Load local "maps to budget code" selections for markup rows.
+  useEffect(() => {
+    if (!projectId) return;
+    const storageKey = `prime-contract-markup-maps:${projectId}`;
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as Record<string, string>;
+      if (parsed && typeof parsed === "object") {
+        setMarkupMapsToById(parsed);
+      }
+    } catch {
+      // ignore localStorage parse issues
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    if (!projectId) return;
+    const storageKey = `prime-contract-markup-maps:${projectId}`;
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(markupMapsToById));
+    } catch {
+      // ignore localStorage write failures
+    }
+  }, [projectId, markupMapsToById]);
+
+  useEffect(() => {
+    if (!projectId) return;
+    const storageKey = `prime-contract-markup-display:${projectId}`;
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (!raw) return;
+      const parsed = JSON.parse(raw) as Record<string, "horizontal" | "vertical">;
+      if (parsed && typeof parsed === "object") {
+        setMarkupDisplayById(parsed);
+      }
+    } catch {
+      // ignore localStorage parse issues
+    }
+  }, [projectId]);
+
+  useEffect(() => {
+    if (!projectId) return;
+    const storageKey = `prime-contract-markup-display:${projectId}`;
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(markupDisplayById));
+    } catch {
+      // ignore localStorage write failures
+    }
+  }, [projectId, markupDisplayById]);
 
   // ─── Financial Markup CRUD ─────────────────────────────────────────────
 
@@ -604,7 +771,9 @@ const [isSovEditing, setIsSovEditing] = useState(false);
           throw new Error(err.error || "Failed to update markup");
         }
         const data = await response.json();
-        setVerticalMarkups(data.markups || []);
+        const normalized = normalizeVerticalMarkupRows(data.markups || []);
+        setVerticalMarkups(normalized);
+        setSavedVerticalMarkups(normalized);
         toast.success("Markup updated");
       } else {
         // Create new markup via POST
@@ -646,11 +815,256 @@ const [isSovEditing, setIsSovEditing] = useState(false);
         throw new Error(err.error || "Failed to delete markup");
       }
       setVerticalMarkups((prev) => prev.filter((m) => m.id !== markupId));
+      setSavedVerticalMarkups((prev) => prev.filter((m) => m.id !== markupId));
+      setMarkupMapsToById((prev) => {
+        const next = { ...prev };
+        delete next[markupId];
+        return next;
+      });
+      setMarkupDisplayById((prev) => {
+        const next = { ...prev };
+        delete next[markupId];
+        return next;
+      });
       toast.success("Markup deleted");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to delete markup");
     } finally {
       setDeletingMarkupId(null);
+    }
+  };
+
+  const updateAdvancedSetting = <K extends keyof PrimeContractSettings>(
+    key: K,
+    value: PrimeContractSettings[K],
+  ) => {
+    setAdvancedSettings((prev) => (prev ? { ...prev, [key]: value } : prev));
+  };
+
+  const saveAdvancedSettings = async () => {
+    if (!contract) {
+      toast.error("Contract not loaded");
+      return;
+    }
+    if (!advancedSettings) {
+      toast.error("Project settings not loaded");
+      return;
+    }
+
+    setAdvancedSettingsSaving(true);
+    try {
+      const [projectSettingsRes, contractRes] = await Promise.all([
+        fetch(`/api/projects/${projectId}/contracts/settings`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(advancedSettings),
+        }),
+        fetch(`/api/projects/${projectId}/contracts/${contractId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            inclusions: contractAdvancedDraft.inclusions || null,
+            exclusions: contractAdvancedDraft.exclusions || null,
+            is_private: contractAdvancedDraft.is_private,
+            payment_terms: contractAdvancedDraft.payment_terms || null,
+            billing_schedule: contractAdvancedDraft.billing_schedule || null,
+          }),
+        }),
+      ]);
+
+      if (!projectSettingsRes.ok) {
+        const err = await projectSettingsRes.json().catch(() => null);
+        throw new Error(err?.error || "Failed to save project contract settings");
+      }
+      if (!contractRes.ok) {
+        const err = await contractRes.json().catch(() => null);
+        throw new Error(err?.error || "Failed to save contract advanced settings");
+      }
+
+      const [savedProjectSettings, savedContract] = await Promise.all([
+        projectSettingsRes.json() as Promise<PrimeContractSettings>,
+        contractRes.json() as Promise<Contract>,
+      ]);
+      setAdvancedSettings(savedProjectSettings);
+      setContract((prev) => (prev ? { ...prev, ...savedContract } : prev));
+      toast.success("Advanced settings saved");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save advanced settings");
+    } finally {
+      setAdvancedSettingsSaving(false);
+    }
+  };
+
+  const handleAddMarkupInline = async () => {
+    setIsSubmittingMarkup(true);
+    const nextMarkupType = getNextAvailableMarkupType(verticalMarkups);
+    if (!nextMarkupType) {
+      setIsSubmittingMarkup(false);
+      toast.error("All available markup types are already added.");
+      return;
+    }
+    try {
+      const response = await fetch(`/api/projects/${projectId}/vertical-markup`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          markup_type: nextMarkupType,
+          percentage: 0,
+          compound: false,
+        }),
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => null);
+        throw new Error(err?.error || "Failed to create markup");
+      }
+
+      const data = await response.json();
+      const newMarkup: VerticalMarkup = data.data;
+      setVerticalMarkups((prev) => [...prev, newMarkup]);
+      setSavedVerticalMarkups((prev) => [...prev, newMarkup]);
+      toast.success("Markup row added");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to add markup");
+    } finally {
+      setIsSubmittingMarkup(false);
+    }
+  };
+
+  const handleInlineMarkupChange = (
+    markupId: string,
+    updates: Partial<Pick<VerticalMarkup, "markup_type" | "percentage" | "compound">>,
+  ) => {
+    setVerticalMarkups((prev) =>
+      prev.map((m) => (m.id === markupId ? { ...m, ...updates } : m)),
+    );
+  };
+
+  const handleInlineMapsToChange = (markupId: string, value: string) => {
+    setMarkupMapsToById((prev) => ({ ...prev, [markupId]: value }));
+  };
+
+  const handleInlineDisplayChange = (
+    markupId: string,
+    value: "horizontal" | "vertical",
+  ) => {
+    setMarkupDisplayById((prev) => ({ ...prev, [markupId]: value }));
+  };
+
+  const handleStartMarkupRowEdit = (markup: VerticalMarkup) => {
+    setMarkupRowDrafts((prev) => ({
+      ...prev,
+      [markup.id]: {
+        markup_type: markup.markup_type,
+        percentage: Number(markup.percentage) || 0,
+        compound: Boolean(markup.compound),
+        displayIn: markupDisplayById[markup.id] ?? "horizontal",
+        mapsTo: markupMapsToById[markup.id] ?? "all",
+      },
+    }));
+    setEditingMarkupRowIds((prev) => ({ ...prev, [markup.id]: true }));
+  };
+
+  const handleCancelMarkupRowEdit = (markupId: string) => {
+    setEditingMarkupRowIds((prev) => {
+      const next = { ...prev };
+      delete next[markupId];
+      return next;
+    });
+    setMarkupRowDrafts((prev) => {
+      const next = { ...prev };
+      delete next[markupId];
+      return next;
+    });
+  };
+
+  const handleSaveMarkupRowEdit = (markupId: string) => {
+    const draft = markupRowDrafts[markupId];
+    if (!draft) return;
+
+    setVerticalMarkups((prev) =>
+      prev.map((row) =>
+        row.id === markupId
+          ? {
+              ...row,
+              markup_type: draft.markup_type,
+              percentage: Number(draft.percentage) || 0,
+              compound: Boolean(draft.compound),
+            }
+          : row,
+      ),
+    );
+    setMarkupDisplayById((prev) => ({ ...prev, [markupId]: draft.displayIn }));
+    setMarkupMapsToById((prev) => ({ ...prev, [markupId]: draft.mapsTo }));
+    handleCancelMarkupRowEdit(markupId);
+  };
+
+  const handleSaveMarkupTable = async () => {
+    const markupsToPersist = [...verticalMarkups]
+      .sort((a, b) => a.calculation_order - b.calculation_order)
+      .map((markup, index) => ({
+        ...markup,
+        markup_type: markup.markup_type.trim(),
+        percentage: Number(markup.percentage),
+        calculation_order: index + 1,
+        maps_to_budget_code_id:
+          markupMapsToById[markup.id] && markupMapsToById[markup.id] !== "all"
+            ? markupMapsToById[markup.id]
+            : null,
+      }));
+
+    if (markupsToPersist.some((markup) => !markup.markup_type)) {
+      toast.error("Each markup row needs a name");
+      return;
+    }
+
+    const duplicateMarkupTypes = findDuplicateMarkupTypes(markupsToPersist);
+    if (duplicateMarkupTypes.length > 0) {
+      toast.error(
+        `Markup names must be unique. Duplicate: ${duplicateMarkupTypes
+          .map((name) => `"${name}"`)
+          .join(", ")}`,
+      );
+      return;
+    }
+
+    if (
+      markupsToPersist.some(
+        (markup) =>
+          Number.isNaN(markup.percentage) ||
+          markup.percentage < 0 ||
+          markup.percentage > 100,
+      )
+    ) {
+      toast.error("Percentages must be between 0 and 100");
+      return;
+    }
+
+    setIsSavingMarkupTable(true);
+    try {
+      const response = await fetch(`/api/projects/${projectId}/vertical-markup`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ markups: markupsToPersist }),
+      });
+      if (!response.ok) {
+        const err = await response.json().catch(() => null);
+        const details =
+          typeof err?.details === "string" && err.details.trim().length > 0
+            ? ` (${err.details})`
+            : "";
+        throw new Error((err?.error || "Failed to save markup table") + details);
+      }
+      const data = await response.json();
+      const updatedMarkups: VerticalMarkup[] = normalizeVerticalMarkupRows(
+        data.markups || [],
+      );
+      setVerticalMarkups(updatedMarkups);
+      setSavedVerticalMarkups(updatedMarkups);
+      toast.success("Markup changes saved");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save markup table");
+    } finally {
+      setIsSavingMarkupTable(false);
     }
   };
 
@@ -709,6 +1123,19 @@ const [isSovEditing, setIsSovEditing] = useState(false);
     [lineItems],
   );
 
+  const hasUnsavedMarkupChanges = useMemo(() => {
+    const normalize = (rows: VerticalMarkup[]) =>
+      [...rows]
+        .sort((a, b) => a.calculation_order - b.calculation_order)
+        .map((row) => ({
+          id: row.id,
+          markup_type: row.markup_type.trim(),
+          percentage: Number(row.percentage),
+          compound: Boolean(row.compound),
+        }));
+    return JSON.stringify(normalize(verticalMarkups)) !== JSON.stringify(normalize(savedVerticalMarkups));
+  }, [verticalMarkups, savedVerticalMarkups]);
+
   const handleInlineEditSubmit = async (data: ContractFormData) => {
     if (!contract) {
       toast.error("Contract data is not loaded");
@@ -717,6 +1144,16 @@ const [isSovEditing, setIsSovEditing] = useState(false);
 
     setIsSavingEdit(true);
     try {
+      const sovItems = (data.sovItems || []).filter((item) => !item.isGroup);
+      const sovTotal = sovItems.reduce(
+        (sum, item) =>
+          sum +
+          (data.accountingMethod === "unit_quantity"
+            ? (item.quantity ?? 0) * (item.unitCost ?? 0)
+            : item.amount || 0),
+        0,
+      );
+
       const response = await fetch(
         `/api/projects/${projectId}/contracts/${contractId}`,
         {
@@ -733,8 +1170,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
             description: data.description,
             status: data.status || "draft",
             executed: data.executed || false,
-            original_contract_value:
-              data.originalAmount ?? contract.original_contract_value ?? 0,
+            original_contract_value: sovTotal,
             start_date: data.startDate?.toISOString().split("T")[0] || null,
             end_date:
               data.estimatedCompletionDate?.toISOString().split("T")[0] || null,
@@ -786,7 +1222,6 @@ const [isSovEditing, setIsSovEditing] = useState(false);
         ),
       );
 
-      const sovItems = (data.sovItems || []).filter((item) => !item.isGroup);
       const itemsToPersist = sovItems.map((item, index) => {
         const budgetCodeId = item.budgetCodeId || "";
         const costCodeId = budgetCodeIdToCostCode.get(budgetCodeId)
@@ -1021,7 +1456,9 @@ const [isSovEditing, setIsSovEditing] = useState(false);
   };
 
   const normalizeSovDraftItems = (items: ContractLineItem[]) =>
-    items.map((item, index) => {
+    items
+      .filter((item): item is ContractLineItem => Boolean(item))
+      .map((item, index) => {
       const quantity = Number(item.quantity) || 0;
       const unitCost = Number(item.unit_cost) || 0;
       return {
@@ -1029,7 +1466,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
         line_number: index + 1,
         total_cost: quantity * unitCost,
       };
-    });
+      });
 
   const handleStartSovEdit = () => {
     setSovDraftItems(normalizeSovDraftItems(lineItems.map((item) => ({ ...item }))));
@@ -1205,8 +1642,14 @@ const [isSovEditing, setIsSovEditing] = useState(false);
   };
 
   const handleReorderSovLines = (oldIndex: number, newIndex: number) => {
+    if (!isSovEditing) {
+      return;
+    }
+
     setSovDraftItems((prev) =>
-      normalizeSovDraftItems(arrayMove(prev, oldIndex, newIndex)),
+      oldIndex < 0 || newIndex < 0 || oldIndex >= prev.length || newIndex >= prev.length
+        ? prev
+        : normalizeSovDraftItems(arrayMove(prev, oldIndex, newIndex)),
     );
   };
 
@@ -1246,46 +1689,71 @@ const [isSovEditing, setIsSovEditing] = useState(false);
         .filter((item) => !incomingIds.has(item.id))
         .map((item) => item.id);
 
-      // Updates and deletions are independent — run them concurrently.
-      // Creates are sequential to avoid the UNIQUE(contract_id, line_number) race condition.
-      const updateDeleteResponses = await Promise.all([
-        ...updatePayload.map((item) =>
-          fetch(
-            `/api/projects/${projectId}/contracts/${contractId}/line-items/${item.id}`,
-            {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                line_number: item.line_number,
-                description: item.description || `Line ${item.line_number}`,
-                cost_code_id: item.cost_code_id,
-                budget_code_id: sovDraftBudgetCodeIds[item.id] || null,
-                quantity: Number(item.quantity) || 0,
-                unit_cost: Number(item.unit_cost) || 0,
-                unit_of_measure: item.unit_of_measure || null,
-              }),
-            },
-          ),
-        ),
-        ...deletionIds.map((lineItemId) =>
+      // Reordering can cause transient line_number collisions (e.g. swapping 10 and 11).
+      // Avoid this by first moving all existing items to a temporary high range, then
+      // applying deletions/final updates/creates.
+      const temporaryLineBase = 100000;
+      for (let index = 0; index < updatePayload.length; index++) {
+        const item = updatePayload[index];
+        const tempRes = await fetch(
+          `/api/projects/${projectId}/contracts/${contractId}/line-items/${item.id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ line_number: temporaryLineBase + index + 1 }),
+          },
+        );
+        if (!tempRes.ok) {
+          const errorData = await tempRes.json().catch(() => ({}));
+          const label = `"${item.description || `Line ${item.line_number}`}"`;
+          throw new Error(
+            `Could not save ${label}: ${errorData.error || errorData.details || "unknown error"}`,
+          );
+        }
+      }
+
+      const deletionResponses = await Promise.all(
+        deletionIds.map((lineItemId) =>
           fetch(
             `/api/projects/${projectId}/contracts/${contractId}/line-items/${lineItemId}`,
             { method: "DELETE" },
           ),
         ),
-      ]);
-
-      const failedIndex = updateDeleteResponses.findIndex((response) => !response.ok);
-      if (failedIndex !== -1) {
-        const failedResponse = updateDeleteResponses[failedIndex];
-        const errorData = await failedResponse.json().catch(() => ({}));
-        const failedItem = failedIndex < updatePayload.length ? updatePayload[failedIndex] : null;
-        const label = failedItem
-          ? `"${failedItem.description || `Line ${failedItem.line_number}`}"`
-          : "a line item";
+      );
+      const failedDeletion = deletionResponses.findIndex((response) => !response.ok);
+      if (failedDeletion !== -1) {
+        const errorData = await deletionResponses[failedDeletion]
+          .json()
+          .catch(() => ({}));
         throw new Error(
-          `Could not save ${label}: ${errorData.error || errorData.details || "unknown error"}`,
+          `Could not delete a removed line item: ${errorData.error || errorData.details || "unknown error"}`,
         );
+      }
+
+      for (const item of updatePayload) {
+        const updateRes = await fetch(
+          `/api/projects/${projectId}/contracts/${contractId}/line-items/${item.id}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              line_number: item.line_number,
+              description: item.description || `Line ${item.line_number}`,
+              cost_code_id: item.cost_code_id,
+              budget_code_id: sovDraftBudgetCodeIds[item.id] || null,
+              quantity: Number(item.quantity) || 0,
+              unit_cost: Number(item.unit_cost) || 0,
+              unit_of_measure: item.unit_of_measure || null,
+            }),
+          },
+        );
+        if (!updateRes.ok) {
+          const errorData = await updateRes.json().catch(() => ({}));
+          const label = `"${item.description || `Line ${item.line_number}`}"`;
+          throw new Error(
+            `Could not save ${label}: ${errorData.error || errorData.details || "unknown error"}`,
+          );
+        }
       }
 
       // Sequential creates to avoid the UNIQUE(contract_id, line_number) constraint race
@@ -1822,10 +2290,6 @@ const [isSovEditing, setIsSovEditing] = useState(false);
               ? `Contractor: ${contract.vendor.name}`
               : "No contractor assigned"
         }
-        breadcrumbs={[
-          { label: "Prime Contracts", href: `/${projectId}/prime-contracts` },
-          { label: `Contract #${contract.contract_number || contract.id}` },
-        ]}
         actions={
           <div className="flex items-center gap-2">
             <DropdownMenu>
@@ -1915,7 +2379,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
             </Button>
 
             <Button
-              variant="outline"
+              variant="default"
               size="icon"
               onClick={handleEdit}
               aria-label="Edit Contract"
@@ -1943,10 +2407,11 @@ const [isSovEditing, setIsSovEditing] = useState(false);
         onTabClick={(href) => setActiveTab(href as ContractTab)}
       />
 
-      <div className="pt-6">
+      <div className="px-4 pt-10 md:px-6 lg:px-8">
       {activeTab === "overview" && (
         <PrimeContractOverviewTab
           contract={contract}
+          changeOrders={changeOrders}
           attachments={attachments}
           attachmentsLoading={attachmentsLoading}
           isUploadingAttachment={isUploadingAttachment}
@@ -2607,18 +3072,22 @@ lineItemsLoading={lineItemsLoading}
               </p>
             </section>
 
-            <section className="space-y-4 border-t border-border/60 pt-6">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <h4 className="text-base font-semibold">Vertical Markup</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Calculated on subtotal of line items. Compound markups include previous markup amounts.
-                  </p>
+            <section className="space-y-4">
+              <div className="flex flex-wrap items-center justify-end gap-3">
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={handleSaveMarkupTable}
+                    disabled={isSavingMarkupTable || !hasUnsavedMarkupChanges}
+                  >
+                    {isSavingMarkupTable ? "Saving..." : "Save Changes"}
+                  </Button>
+                  <Button size="sm" onClick={handleAddMarkupInline} disabled={isSubmittingMarkup}>
+                    <Plus />
+                    {isSubmittingMarkup ? "Adding..." : "Add Markup"}
+                  </Button>
                 </div>
-                <Button size="sm" onClick={openAddMarkupDialog}>
-                  <Plus />
-                  Add Markup
-                </Button>
               </div>
 
               <div className="overflow-x-auto overflow-hidden rounded-lg border border-border/70 bg-muted/20">
@@ -2628,14 +3097,17 @@ lineItemsLoading={lineItemsLoading}
                       <TableHead className="px-3 py-2 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
                         Markup Name
                       </TableHead>
+                      <TableHead className="px-3 py-2 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                        Display In
+                      </TableHead>
+                      <TableHead className="px-3 py-2 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                        Maps To
+                      </TableHead>
                       <TableHead className="px-3 py-2 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
                         %
                       </TableHead>
                       <TableHead className="px-3 py-2 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
                         Calculation Type
-                      </TableHead>
-                      <TableHead className="px-3 py-2 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
-                        Application Criteria
                       </TableHead>
                       <TableHead className="px-3 py-2 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
                         Actions
@@ -2645,39 +3117,212 @@ lineItemsLoading={lineItemsLoading}
                   <TableBody>
                     {markupsLoading ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
+                        <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
                           Loading markup settings...
                         </TableCell>
                       </TableRow>
                     ) : verticalMarkups.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={5} className="py-8 text-center text-muted-foreground">
+                        <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
                           No markup items configured. Click &quot;Add Markup&quot; to get started.
                         </TableCell>
                       </TableRow>
                     ) : (
                       [...verticalMarkups]
                         .sort((a, b) => a.calculation_order - b.calculation_order)
-                        .map((markup) => (
+                        .map((markup) => {
+                          const isEditingRow = Boolean(editingMarkupRowIds[markup.id]);
+                          const rowDraft = markupRowDrafts[markup.id];
+                          const displayIn = markupDisplayById[markup.id] ?? "horizontal";
+                          const mapsTo = markupMapsToById[markup.id] ?? "all";
+                          const mapsToLabel =
+                            mapsTo === "all"
+                              ? "All Budget Codes"
+                              : budgetCodes.find((code) => code.id === mapsTo)?.fullLabel ?? "All Budget Codes";
+
+                          return (
                           <TableRow key={markup.id} className="border-b border-border/60 bg-background hover:bg-muted/20">
-                            <TableCell className="px-3 py-2.5 capitalize">{markup.markup_type}</TableCell>
-                            <TableCell className="px-3 py-2.5 text-right">
-                              {markup.percentage.toFixed(3)}%
+                            <TableCell className="px-3 py-2.5">
+                              {isEditingRow ? (
+                                <select
+                                  value={rowDraft?.markup_type ?? markup.markup_type}
+                                  onChange={(e) =>
+                                    setMarkupRowDrafts((prev) => ({
+                                      ...prev,
+                                      [markup.id]: {
+                                        ...(prev[markup.id] ?? {
+                                          markup_type: markup.markup_type,
+                                          percentage: Number(markup.percentage) || 0,
+                                          compound: Boolean(markup.compound),
+                                          displayIn,
+                                          mapsTo,
+                                        }),
+                                        markup_type: e.target.value,
+                                      },
+                                    }))
+                                  }
+                                  className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                >
+                                  <option value="insurance">Insurance</option>
+                                  <option value="bond">Bond</option>
+                                  <option value="fee">Fee</option>
+                                  <option value="overhead">Overhead</option>
+                                  <option value="custom">Custom</option>
+                                </select>
+                              ) : (
+                                <span className="text-sm text-foreground capitalize">{markup.markup_type}</span>
+                              )}
                             </TableCell>
                             <TableCell className="px-3 py-2.5">
-                              {markup.compound ? "Compounds all Above" : "Basic Calculation"}
+                              {isEditingRow ? (
+                                <select
+                                  value={rowDraft?.displayIn ?? displayIn}
+                                  onChange={(e) =>
+                                    setMarkupRowDrafts((prev) => ({
+                                      ...prev,
+                                      [markup.id]: {
+                                        ...(prev[markup.id] ?? {
+                                          markup_type: markup.markup_type,
+                                          percentage: Number(markup.percentage) || 0,
+                                          compound: Boolean(markup.compound),
+                                          displayIn,
+                                          mapsTo,
+                                        }),
+                                        displayIn: e.target.value as "horizontal" | "vertical",
+                                      },
+                                    }))
+                                  }
+                                  className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                >
+                                  <option value="horizontal">Horizontal</option>
+                                  <option value="vertical">Vertical</option>
+                                </select>
+                              ) : (
+                                <span className="text-sm text-foreground capitalize">{displayIn}</span>
+                              )}
                             </TableCell>
-                            <TableCell className="px-3 py-2.5">Applies to All Line Items</TableCell>
+                            <TableCell className="px-3 py-2.5">
+                              {isEditingRow ? (
+                                <select
+                                  value={rowDraft?.mapsTo ?? mapsTo}
+                                  onChange={(e) =>
+                                    setMarkupRowDrafts((prev) => ({
+                                      ...prev,
+                                      [markup.id]: {
+                                        ...(prev[markup.id] ?? {
+                                          markup_type: markup.markup_type,
+                                          percentage: Number(markup.percentage) || 0,
+                                          compound: Boolean(markup.compound),
+                                          displayIn,
+                                          mapsTo,
+                                        }),
+                                        mapsTo: e.target.value,
+                                      },
+                                    }))
+                                  }
+                                  className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                >
+                                  <option value="all">All Budget Codes</option>
+                                  {budgetCodes.map((code) => (
+                                    <option key={code.id} value={code.id}>
+                                      {code.fullLabel}
+                                    </option>
+                                  ))}
+                                </select>
+                              ) : (
+                                <span className="text-sm text-foreground">{mapsToLabel}</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="px-3 py-2.5 text-right">
+                              {isEditingRow ? (
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  max="100"
+                                  step="0.001"
+                                  value={String(rowDraft?.percentage ?? markup.percentage)}
+                                  onChange={(e) =>
+                                    setMarkupRowDrafts((prev) => ({
+                                      ...prev,
+                                      [markup.id]: {
+                                        ...(prev[markup.id] ?? {
+                                          markup_type: markup.markup_type,
+                                          percentage: Number(markup.percentage) || 0,
+                                          compound: Boolean(markup.compound),
+                                          displayIn,
+                                          mapsTo,
+                                        }),
+                                        percentage: Number(e.target.value || 0),
+                                      },
+                                    }))
+                                  }
+                                  className="h-8 text-right"
+                                />
+                              ) : (
+                                <span className="text-sm text-foreground">{Number(markup.percentage).toFixed(3)}%</span>
+                              )}
+                            </TableCell>
+                            <TableCell className="px-3 py-2.5">
+                              {isEditingRow ? (
+                                <select
+                                  value={(rowDraft?.compound ?? markup.compound) ? "compound" : "basic"}
+                                  onChange={(e) =>
+                                    setMarkupRowDrafts((prev) => ({
+                                      ...prev,
+                                      [markup.id]: {
+                                        ...(prev[markup.id] ?? {
+                                          markup_type: markup.markup_type,
+                                          percentage: Number(markup.percentage) || 0,
+                                          compound: Boolean(markup.compound),
+                                          displayIn,
+                                          mapsTo,
+                                        }),
+                                        compound: e.target.value === "compound",
+                                      },
+                                    }))
+                                  }
+                                  className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                                >
+                                  <option value="basic">Basic Calculation</option>
+                                  <option value="compound">Compounds All Above</option>
+                                </select>
+                              ) : (
+                                <span className="text-sm text-foreground">
+                                  {markup.compound ? "Compounds All Above" : "Basic Calculation"}
+                                </span>
+                              )}
+                            </TableCell>
                             <TableCell className="px-3 py-2.5 text-right">
                               <div className="flex items-center justify-end gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 px-2"
-                                  onClick={() => openEditMarkupDialog(markup)}
-                                >
-                                  <Pencil />
-                                </Button>
+                                {isEditingRow ? (
+                                  <>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-7 px-2"
+                                      onClick={() => handleSaveMarkupRowEdit(markup.id)}
+                                    >
+                                      <Check className="h-3.5 w-3.5" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-7 px-2"
+                                      onClick={() => handleCancelMarkupRowEdit(markup.id)}
+                                    >
+                                      <X className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </>
+                                ) : (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className="h-7 px-2"
+                                    onClick={() => handleStartMarkupRowEdit(markup)}
+                                  >
+                                    <Pencil className="h-3.5 w-3.5" />
+                                  </Button>
+                                )}
                                 <Button
                                   variant="ghost"
                                   size="sm"
@@ -2690,7 +3335,8 @@ lineItemsLoading={lineItemsLoading}
                               </div>
                             </TableCell>
                           </TableRow>
-                        ))
+                        );
+                      })
                     )}
                   </TableBody>
                 </Table>
@@ -2788,42 +3434,174 @@ lineItemsLoading={lineItemsLoading}
         )}
 
         {activeTab === "advanced-settings" && (
-          <div>
-            <div className="bg-background">
-              <div className="mb-4">
-                <h3 className="text-lg font-semibold">Advanced Settings</h3>
-                <p className="text-sm text-muted-foreground">Contract configuration and permissions</p>
+          <div className="space-y-8">
+            {advancedSettingsLoading ? (
+              <div className="space-y-4">
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
+                <Skeleton className="h-20 w-full" />
               </div>
-              <div>
-                <div className="space-y-6">
-                  {/* Inclusions & Exclusions */}
-                  <div className="space-y-4">
-                    <h3 className="text-sm font-medium">Inclusions & Exclusions</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-2">Inclusions</p>
-                        <p className="text-sm">{contract.inclusions || "--"}</p>
-                      </div>
-                      <div>
-                        <p className="text-xs text-muted-foreground mb-2">Exclusions</p>
-                        <p className="text-sm">{contract.exclusions || "--"}</p>
-                      </div>
-                    </div>
-                  </div>
+            ) : (
+              <div className="max-w-3xl space-y-0 bg-background">
+                <section className="px-6 py-5">
+                  <h3 className="text-xl font-semibold tracking-tight">Advanced Settings</h3>
+                </section>
 
-                  {/* Contract Privacy */}
-                  <div className="space-y-4 border-t pt-4">
-                    <h3 className="text-sm font-medium">Contract Privacy</h3>
-                    <div className="flex items-center gap-2">
-                      <Settings className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">
-                        This contract is {contract.is_private ? "private" : "visible to all project members"}
-                      </span>
+                <section className="px-6 py-6">
+                  <h4 className="text-lg font-semibold text-foreground">Financial Markup</h4>
+                  <div className="mt-4 flex items-center gap-3">
+                    <Checkbox
+                      id="enable-financial-markups"
+                      checked={advancedSettings?.show_markup_on_co_pdf ?? true}
+                      onCheckedChange={(checked) =>
+                        updateAdvancedSetting("show_markup_on_co_pdf", !!checked)
+                      }
+                    />
+                    <Label htmlFor="enable-financial-markups" className="text-[15px] font-medium">
+                      Enable Financial Markups
+                    </Label>
+                  </div>
+                </section>
+
+                <section className="px-6 py-6">
+                  <h4 className="text-lg font-semibold text-foreground">Owner Invoices</h4>
+                  <div className="mt-4 space-y-5">
+                    <div className="flex items-center gap-3">
+                      <Checkbox id="enable-owner-invoices" checked disabled />
+                      <Label htmlFor="enable-owner-invoices" className="text-[15px] font-medium text-foreground">
+                        Enable Owner Invoices
+                      </Label>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Checkbox id="approve-sub-invoices" checked={false} disabled />
+                      <Label htmlFor="approve-sub-invoices" className="text-[15px] text-muted-foreground">
+                        Approve Subcontractor Invoices when Owner Approves Owner Invoice
+                      </Label>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Checkbox
+                        id="enable-work-retainage"
+                        checked={advancedSettings?.sov_always_editable ?? false}
+                        onCheckedChange={(checked) =>
+                          updateAdvancedSetting("sov_always_editable", !!checked)
+                        }
+                      />
+                      <Label htmlFor="enable-work-retainage" className="text-[15px] font-medium text-foreground">
+                        Enable Work Retainage This Period
+                      </Label>
                     </div>
                   </div>
-                </div>
+                </section>
+
+                <section className="px-6 py-6">
+                  <h4 className="text-lg font-semibold text-foreground">Stored Materials</h4>
+                  <p className="mt-1 text-[15px] text-muted-foreground">
+                    The Materials Presently Stored column amount is manually managed.
+                  </p>
+                  <div className="mt-4 flex items-center gap-3">
+                    <Checkbox id="enable-material-retainage" checked disabled />
+                    <Label htmlFor="enable-material-retainage" className="text-[15px] font-medium text-foreground">
+                      Enable Material Retainage
+                    </Label>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-4 w-4 p-0 text-muted-foreground hover:bg-transparent"
+                          aria-label="Material retainage info"
+                        >
+                          <AlertCircle className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-md text-left">
+                        To enable Material Retainage, first enable Work Retainage This Period. The
+                        Material Retainage percentage amount will sync with the Work Retainage This
+                        Period.
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                </section>
+
+                <section className="px-6 py-6">
+                  <h4 className="text-lg font-semibold text-foreground">PDF Export</h4>
+                  <p className="mt-1 text-[15px] text-muted-foreground">
+                    Choose what items are displayed on exported invoice PDFs.
+                  </p>
+                  <div className="mt-4 flex items-center gap-3">
+                    <Checkbox
+                      id="show-budget-code"
+                      checked={advancedSettings?.show_markup_on_invoice_pdf ?? true}
+                      onCheckedChange={(checked) =>
+                        updateAdvancedSetting("show_markup_on_invoice_pdf", !!checked)
+                      }
+                    />
+                    <Label htmlFor="show-budget-code" className="text-[15px] font-medium text-foreground">
+                      Show Budget Code
+                    </Label>
+                  </div>
+                </section>
+
+                <section className="px-6 py-6">
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-lg font-semibold text-foreground">Change Orders</h4>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="h-4 w-4 p-0 text-muted-foreground hover:bg-transparent"
+                          aria-label="Change orders level of detail info"
+                        >
+                          <AlertCircle className="h-4 w-4" />
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-lg text-left">
+                        The level of detail that is selected here determines how change orders will
+                        be displayed on the detail page of the Invoice when being viewed or printed
+                        from Procore. The entry and editing of this information will always occur at
+                        the line item level of detail.
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
+                  <div className="mt-3 max-w-md">
+                    <Label htmlFor="co-tier-count" className="sr-only">Change order workflow</Label>
+                    <select
+                      id="co-tier-count"
+                      value={String(advancedSettings?.co_tier_count ?? 1)}
+                      onChange={(e) =>
+                        updateAdvancedSetting(
+                          "co_tier_count",
+                          e.target.value === "1" ? 1 : 2,
+                        )
+                      }
+                      className="flex h-11 w-full rounded-md border border-input bg-background px-3 text-[16px] shadow-xs transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    >
+                      <option value="1">Prime Contract Change Order</option>
+                      <option value="2">Line Items in each Potential Change Order (PCO)</option>
+                    </select>
+                  </div>
+                </section>
+
+                <section className="px-6 py-6">
+                  <h4 className="text-lg font-semibold text-foreground">Payments Received</h4>
+                  <div className="mt-4 flex items-center gap-3">
+                    <Checkbox id="enable-payments" checked disabled />
+                    <Label htmlFor="enable-payments" className="text-[15px] font-medium text-foreground">
+                      Enable Payments
+                    </Label>
+                  </div>
+                </section>
+
+                <section className="flex justify-end px-6 py-5">
+                  <Button onClick={saveAdvancedSettings} disabled={advancedSettingsSaving || !advancedSettings}>
+                    {advancedSettingsSaving ? "Saving..." : "Save Advanced Settings"}
+                  </Button>
+                </section>
               </div>
-            </div>
+            )}
           </div>
         )}
       </div>

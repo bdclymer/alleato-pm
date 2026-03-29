@@ -25,16 +25,41 @@ export async function GET(_request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: "Contract not found" }, { status: 404 });
     }
 
-    const { data: attachment, error } = await supabase
-      .from("attachments")
-      .select("id, url")
-      .eq("id", attachmentId)
-      .eq("attached_to_id", contractId)
-      .eq("attached_to_table", "prime_contracts")
+    const { data: link, error: linkError } = await supabase
+      .from("prime_contract_attachments")
+      .select("attachment_id")
+      .eq("contract_id", contractId)
+      .eq("attachment_id", attachmentId)
       .single();
 
-    if (error || !attachment) {
-      return NextResponse.json({ error: "Attachment not found" }, { status: 404 });
+    let attachment: { id: string; url: string | null } | null = null;
+
+    if (!linkError && link) {
+      const { data: mappedAttachment, error: mappedAttachmentError } = await supabase
+        .from("attachments")
+        .select("id, url")
+        .eq("id", link.attachment_id)
+        .single();
+      if (!mappedAttachmentError && mappedAttachment) {
+        attachment = mappedAttachment;
+      }
+    }
+
+    if (!attachment) {
+      // Temporary fallback while environments are being migrated.
+      const { data: legacyAttachment, error: legacyError } = await supabase
+        .from("attachments")
+        .select("id, url")
+        .eq("id", attachmentId)
+        .eq("attached_to_id", contractId)
+        .eq("attached_to_table", "prime_contracts")
+        .single();
+
+      if (legacyError || !legacyAttachment) {
+        return NextResponse.json({ error: "Attachment not found" }, { status: 404 });
+      }
+
+      attachment = legacyAttachment;
     }
 
     if (!attachment.url) {

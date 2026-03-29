@@ -33,7 +33,7 @@ import {
   clientSchema,
   type ClientFormData,
 } from "@/lib/schemas/financial-schemas";
-import { createClient, updateClient } from "@/app/(other)/actions/table-actions";
+import { createClient, updateClient } from "@/app/(main)/actions/table-actions";
 import { useCompanies } from "@/hooks/use-companies";
 
 interface Client {

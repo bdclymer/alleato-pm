@@ -6741,6 +6741,42 @@ export type Database = {
         }
         Relationships: []
       }
+      prime_contract_attachments: {
+        Row: {
+          attachment_id: string
+          contract_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          attachment_id: string
+          contract_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          attachment_id?: string
+          contract_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prime_contract_attachments_attachment_id_fkey"
+            columns: ["attachment_id"]
+            isOneToOne: false
+            referencedRelation: "attachments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contract_attachments_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "prime_contracts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       prime_contract_change_orders: {
         Row: {
           approved_at: string | null
@@ -13408,4 +13444,3 @@ export const Constants = {
     },
   },
 } as const
-

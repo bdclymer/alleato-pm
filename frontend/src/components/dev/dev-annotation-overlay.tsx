@@ -223,7 +223,7 @@ export function DevAnnotationOverlay() {
                   {capturing ? "Capturing..." : screenshotData ? "✓ Screenshot captured" : "📷 Add screenshot"}
                 </button>
                 {screenshotData && (
-                  {/* eslint-disable-next-line design-system/no-design-violations -- dev-only action */}
+                  // eslint-disable-next-line design-system/no-design-violations -- dev-only action
                   <button
                     onClick={() => setScreenshotData(null)}
                     className="text-xs text-destructive hover:underline"

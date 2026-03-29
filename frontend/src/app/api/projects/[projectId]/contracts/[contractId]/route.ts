@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { updateContractSchema } from "../validation";
 import { ZodError } from "zod";
@@ -236,6 +237,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { projectId, contractId } = await params;
     const supabase = await createClient();
+    const serviceClient = createServiceClient();
 
     // Get current user
     const {
@@ -277,6 +279,19 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
         { status: 400 },
       );
     }
+
+    // Keep uploaded files, but detach legacy polymorphic links from deleted contract
+    // to avoid stale references in the attachments table.
+    // NOTE: prime_contract_attachments now provides FK-enforced links and will cascade.
+    await serviceClient
+      .from("attachments")
+      .update({
+        attached_to_id: null,
+        attached_to_table: null,
+      })
+      .eq("project_id", parseInt(projectId, 10))
+      .eq("attached_to_table", "prime_contracts")
+      .eq("attached_to_id", contractId);
 
     return NextResponse.json(
       { message: "Contract deleted successfully" },

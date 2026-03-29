@@ -64,6 +64,7 @@ export interface VerticalMarkup {
   calculation_order: number;
   compound: boolean;
   project_id: number;
+  maps_to_budget_code_id?: string | null;
 }
 
 export interface MarkupCalculationResult {

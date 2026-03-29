@@ -6,7 +6,7 @@ import {
   addToProjectDirectory,
   updateProjectDirectoryEntry,
   deleteProjectDirectoryEntry,
-} from "@/app/(other)/actions/project-directory-actions";
+} from "@/app/(main)/actions/project-directory-actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

@@ -1,8 +1,18 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
+const ALLOWED_MARKUP_TYPES = ["insurance", "bond", "fee", "overhead", "custom"] as const;
+
+function normalizeMarkupType(value: unknown): string {
+  return String(value ?? "").trim().toLowerCase();
+}
+
+function isAllowedMarkupType(value: string): boolean {
+  return ALLOWED_MARKUP_TYPES.includes(value as (typeof ALLOWED_MARKUP_TYPES)[number]);
+}
+
 export interface VerticalMarkupItem {
-  id: number;
+  id: string;
   projectId: string;
   markup_type: string;
   percentage: number;
@@ -77,10 +87,26 @@ export async function POST(
 
     const body = await request.json();
     const { markup_type, percentage, compound = false } = body;
+    const normalizedMarkupType = normalizeMarkupType(markup_type);
+    const normalizedPercentage = Number(percentage);
 
     if (!markup_type || percentage === undefined) {
       return NextResponse.json(
         { error: "markup_type and percentage are required" },
+        { status: 400 },
+      );
+    }
+    if (!Number.isFinite(normalizedPercentage) || normalizedPercentage < 0 || normalizedPercentage > 100) {
+      return NextResponse.json(
+        { error: "percentage must be a number between 0 and 100" },
+        { status: 400 },
+      );
+    }
+    if (!isAllowedMarkupType(normalizedMarkupType)) {
+      return NextResponse.json(
+        {
+          error: `markup_type must be one of: ${ALLOWED_MARKUP_TYPES.join(", ")}`,
+        },
         { status: 400 },
       );
     }
@@ -108,15 +134,24 @@ export async function POST(
       .from("vertical_markup")
       .insert({
         project_id: projectIdNum,
-        markup_type,
-        percentage,
-        compound,
+        markup_type: normalizedMarkupType,
+        percentage: normalizedPercentage,
+        compound: Boolean(compound),
         calculation_order: nextOrder,
       })
       .select()
       .single();
 
     if (error) {
+      if (error.code === "23505") {
+        return NextResponse.json(
+          {
+            error:
+              "Markup name must be unique for this project. Please rename duplicate markup types and try again.",
+          },
+          { status: 409 },
+        );
+      }
       console.error("Vertical markup insert error:", error);
       return NextResponse.json(
         { error: error.message || "Failed to create vertical markup" },
@@ -168,22 +203,78 @@ export async function PUT(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Update each markup in order
-    const updates = markups.map((markup: VerticalMarkupItem, index: number) =>
-      supabase
+    // Validate payload first so we do not partially update rows.
+    const normalizedMarkupTypes = new Set<string>();
+    for (const [index, markup] of markups.entries()) {
+      const markupType = normalizeMarkupType(markup?.markup_type);
+      const percentage = Number(markup?.percentage);
+      if (!markup?.id || !markupType) {
+        return NextResponse.json(
+          { error: `Invalid markup row at index ${index}: id and markup_type are required` },
+          { status: 400 },
+        );
+      }
+      if (!isAllowedMarkupType(markupType)) {
+        return NextResponse.json(
+          {
+            error: `Invalid markup row at index ${index}: markup_type must be one of ${ALLOWED_MARKUP_TYPES.join(", ")}`,
+          },
+          { status: 400 },
+        );
+      }
+      if (!Number.isFinite(percentage) || percentage < 0 || percentage > 100) {
+        return NextResponse.json(
+          { error: `Invalid markup row at index ${index}: percentage must be between 0 and 100` },
+          { status: 400 },
+        );
+      }
+      const normalizedTypeKey = markupType.toLowerCase();
+      if (normalizedMarkupTypes.has(normalizedTypeKey)) {
+        return NextResponse.json(
+          {
+            error:
+              "Markup name must be unique for this project. Please rename duplicate markup types and try again.",
+          },
+          { status: 409 },
+        );
+      }
+      normalizedMarkupTypes.add(normalizedTypeKey);
+    }
+
+    // Update each markup row.
+    for (const [index, markup] of markups.entries()) {
+      const normalizedMarkupType = normalizeMarkupType(markup.markup_type);
+      const { error: updateError } = await supabase
         .from("vertical_markup")
         .update({
-          markup_type: markup.markup_type,
-          percentage: markup.percentage,
-          compound: markup.compound,
+          markup_type: normalizedMarkupType,
+          percentage: Number(markup.percentage),
+          compound: Boolean(markup.compound),
           calculation_order: index + 1,
           updated_at: new Date().toISOString(),
         })
         .eq("id", markup.id)
-        .eq("project_id", projectIdNum),
-    );
+        .eq("project_id", projectIdNum);
 
-    await Promise.all(updates);
+      if (updateError) {
+        if (updateError.code === "23505") {
+          return NextResponse.json(
+            {
+              error:
+                "Markup name must be unique for this project. Please rename duplicate markup types and try again.",
+            },
+            { status: 409 },
+          );
+        }
+        return NextResponse.json(
+          {
+            error: "Failed to update vertical markups",
+            details: `Row ${index + 1}: ${updateError.message}`,
+          },
+          { status: 500 },
+        );
+      }
+    }
 
     // Fetch updated markups
     const { data, error } = await supabase

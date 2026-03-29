@@ -42,8 +42,8 @@ export const primeContractColumns: ColumnConfig[] = [
   { id: "pending_change_orders", label: "Pending COs", defaultVisible: true },
   { id: "draft_change_orders", label: "Draft COs", defaultVisible: true },
   { id: "invoiced_amount", label: "Invoiced", defaultVisible: true },
-  { id: "payments_received", label: "Payments Received", defaultVisible: false },
-  { id: "remaining_balance", label: "Remaining Balance", defaultVisible: false },
+  { id: "payments_received", label: "Payments", defaultVisible: false },
+  { id: "remaining_balance", label: "Balance", defaultVisible: false },
   { id: "start_date", label: "Start Date", defaultVisible: false },
   { id: "end_date", label: "End Date", defaultVisible: false },
 ];
@@ -89,7 +89,12 @@ export function buildPrimeContractTableColumns(): TableColumn<PrimeContract>[] {
   return [
     {
       ...primeContractColumns[0],
-      render: (item) => <span className="font-medium">{item.contract_number ?? "-"}</span>,
+      width: 220,
+      render: (item) => (
+        <span className="font-medium text-primary underline decoration-primary/40 underline-offset-4">
+          {item.contract_number ?? "-"}
+        </span>
+      ),
       csvValue: (item) => item.contract_number ?? "",
       sortValue: (item) => item.contract_number ?? "",
     },

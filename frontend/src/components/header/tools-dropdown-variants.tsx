@@ -74,7 +74,7 @@ function ToolLink({
 // Section header
 function SectionHeader({ label }: { label: string }) {
   return (
-    <h3 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-500 mb-3 px-2.5">
+    <h3 className="text-[11px] font-semibold uppercase tracking-widest text-zinc-700 mb-3 px-2.5">
       {label}
     </h3>
   );
@@ -130,7 +130,9 @@ const OPERATIONS_TOOLS = [
 
 const FILES_TOOLS = ["Photos", "Drawings", "Specifications", "Documents"];
 
-const COMPANY_TOOLS = ["Projects", "Company Directory", "360 Reporting", "AI Strategist"];
+const PROJECT_TOOLS = ["Project Directory", "Project Tasks", "Project Settings"];
+
+const COMPANY_TOOLS = ["Projects", "Company Directory", "Permissions", "360 Reporting", "AI Strategist"];
 
 export function ToolsDropdownContent(props: ToolsDropdownProps) {
   // Collect all tools from all groups into a flat lookup
@@ -195,6 +197,12 @@ export function ToolsDropdownContent(props: ToolsDropdownProps) {
         <div className="shrink-0">
           <SectionHeader label="Files" />
           <div className="space-y-0.5">{renderColumn(FILES_TOOLS)}</div>
+        </div>
+
+        {/* Project */}
+        <div className="shrink-0">
+          <SectionHeader label="Project" />
+          <div className="space-y-0.5">{renderColumn(PROJECT_TOOLS)}</div>
         </div>
 
         {/* Company */}

@@ -1,199 +1,372 @@
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
-import { Card } from "@/components/ui/card";
-import { getProjectInfo } from "@/lib/supabase/project-fetcher";
+"use client";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 0;
+import { useState, useCallback } from "react";
+import { useParams } from "next/navigation";
+import {
+  Camera,
+  Search,
+  Star,
+  StarOff,
+  Trash2,
+  X,
+  Upload,
+} from "lucide-react";
 
-const PHOTOS_BUCKET = "photos";
+import { PageShell } from "@/components/layout";
+import {
+  Badge,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  Input,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  Skeleton,
+  EmptyState,
+} from "@/components/ds";
+import { usePhotos, useUpdatePhoto, useDeletePhoto } from "@/hooks/use-photos";
+import type { PhotoSummary } from "@/hooks/use-photos";
+import { PhotoUploadDialog } from "@/features/photos/photo-upload-dialog";
+import {
+  ALBUM_OPTIONS,
+  formatFileSize,
+  formatPhotoDate,
+} from "@/features/photos/photos-grid-config";
 
-interface ProjectPhoto {
-  name: string;
-  url: string;
-  size: number;
-  updatedAt: string | null;
-  mimeType: string | null;
-}
+export default function ProjectPhotosPage() {
+  const params = useParams<{ projectId: string }>();
+  const projectId = parseInt(params.projectId, 10);
 
-interface StorageImageLikeEntry {
-  id?: string | null;
-  name: string;
-  metadata?: { mimetype?: string | null; size?: number | null } | null;
-  updated_at?: string | null;
-  created_at?: string | null;
-}
+  const [search, setSearch] = useState("");
+  const [album, setAlbum] = useState("__all__");
+  const [uploadOpen, setUploadOpen] = useState(false);
+  const [lightboxPhoto, setLightboxPhoto] = useState<PhotoSummary | null>(null);
 
-function formatFileSize(bytes: number) {
-  if (!bytes) return "0 B";
-  const units = ["B", "KB", "MB", "GB", "TB"];
-  const exponent = Math.min(
-    Math.floor(Math.log(bytes) / Math.log(1024)),
-    units.length - 1,
+  const albumFilter = album === "__all__" ? undefined : album;
+  const { data: photos, isLoading } = usePhotos(projectId, albumFilter);
+  const deletePhoto = useDeletePhoto(projectId);
+
+  const filteredPhotos = (photos ?? []).filter((photo) => {
+    if (!search) return true;
+    const q = search.toLowerCase();
+    return (
+      photo.title.toLowerCase().includes(q) ||
+      photo.description?.toLowerCase().includes(q) ||
+      photo.file_name.toLowerCase().includes(q)
+    );
+  });
+
+  const handleDelete = useCallback(
+    (photoId: number) => {
+      deletePhoto.mutate(photoId);
+      setLightboxPhoto(null);
+    },
+    [deletePhoto],
   );
-  const value = bytes / Math.pow(1024, exponent);
-  return `${value.toFixed(value >= 10 || exponent === 0 ? 0 : 1)} ${units[exponent]}`;
-}
-
-function formatDateString(timestamp: string | null) {
-  if (!timestamp) return "Unknown date";
-  return new Intl.DateTimeFormat("en-US", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  }).format(new Date(timestamp));
-}
-
-function isImage(entry: StorageImageLikeEntry) {
-  const mimeType = entry.metadata?.mimetype;
-  if (mimeType?.startsWith("image/")) return true;
-  return /\.(png|jpe?g|webp|gif|bmp|svg)$/i.test(entry.name);
-}
-
-async function loadPhotoEntries(
-  supabase: Awaited<ReturnType<typeof getProjectInfo>>["supabase"],
-  projectId: number,
-): Promise<{ photos: ProjectPhoto[]; error?: string }> {
-  const folderPath = `projects/${projectId}/photos`;
-
-  const { data: storageEntries, error: storageError } = await supabase.storage
-    .from(PHOTOS_BUCKET)
-    .list(folderPath, {
-      limit: 60,
-      sortBy: { column: "updated_at", order: "desc" },
-    });
-
-  if (storageError || !storageEntries?.length) {
-    return { photos: [], error: storageError?.message };
-  }
-
-  const photoEntries = storageEntries.filter(
-    (entry) => Boolean(entry.id) && isImage(entry),
-  );
-
-  const photos = await Promise.all(
-    photoEntries.map(async (entry) => {
-      const path = `${folderPath}/${entry.name}`;
-      const signedUrlResponse = await supabase.storage
-        .from(PHOTOS_BUCKET)
-        .createSignedUrl(path, 60 * 60);
-
-      const publicUrlResponse = supabase.storage
-        .from(PHOTOS_BUCKET)
-        .getPublicUrl(path);
-
-      const url =
-        signedUrlResponse.data?.signedUrl ?? publicUrlResponse.data.publicUrl;
-
-      return {
-        name: entry.name,
-        url,
-        size: Number(entry.metadata?.size ?? 0),
-        updatedAt: entry.updated_at ?? entry.created_at ?? null,
-        mimeType: entry.metadata?.mimetype ?? null,
-      };
-    }),
-  );
-
-  return { photos: photos.filter((photo) => Boolean(photo.url)) };
-}
-
-export default async function ProjectPhotosPage({
-  params,
-}: {
-  params: Promise<{ projectId: string }>;
-}) {
-  const { projectId } = await params;
-  const { project, numericProjectId, supabase } =
-    await getProjectInfo(projectId);
-
-  const { photos, error } = await loadPhotoEntries(
-    supabase,
-    numericProjectId,
-  );
-  const totalSize = photos.reduce((sum, photo) => sum + photo.size, 0);
-  const folderPath = `projects/${numericProjectId}/photos`;
 
   return (
-    <>
-      <ProjectPageHeader
-        title="Photos"
-        description={photos.length > 0 ? `${photos.length} photos · ${formatFileSize(totalSize)}` : "Project photo documentation"}
-      />
-      <PageContainer maxWidth="full">
-        <div className="space-y-4">
-          {error ? (
-            <div className="rounded-lg bg-destructive/10 px-4 py-2 text-sm text-destructive">
-              Unable to load photos. Please try again later.
-            </div>
-          ) : null}
-
-          {photos.length === 0 ? (
-            <Card className="p-6" data-testid="photos-empty">
-              {error ? (
-                <div className="space-y-2">
-                  <h2 className="text-lg font-semibold text-foreground">
-                    Unable to load photos
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    Supabase returned an error while reading{" "}
-                    <code>{folderPath}</code>: {error}
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  <h2 className="text-lg font-semibold text-foreground">
-                    No photos found for this project
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    Upload images to the <code>{folderPath}</code> folder in the
-                    Supabase <strong>photos</strong> bucket to see them here.
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    New uploads appear automatically once they are stored in
-                    Supabase.
-                  </p>
-                </div>
-              )}
-            </Card>
-          ) : (
-            <div
-              className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
-              data-testid="photo-grid"
+    <PageShell
+      variant="dashboard"
+      title="Photos"
+      actions={
+        <Button size="sm" onClick={() => setUploadOpen(true)}>
+          <Upload className="mr-1.5 size-4" />
+          Upload Photo
+        </Button>
+      }
+    >
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+          <Input
+            placeholder="Search photos..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9"
+          />
+          {search && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              onClick={() => setSearch("")}
+              className="absolute right-2.5 top-1/2 -translate-y-1/2 size-6 text-muted-foreground hover:text-foreground"
             >
-              {photos.map((photo) => (
-                <Card
-                  key={photo.name}
-                  className="overflow-hidden border-muted-foreground/20"
-                  data-testid="photo-card"
-                >
-                  <div className="relative aspect-video bg-muted">
-                    <img
-                      src={photo.url}
-                      alt={photo.name}
-                      className="h-full w-full object-cover"
-                      loading="lazy"
-                    />
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent p-4">
-                      <p className="truncate text-sm font-medium text-white">
-                        {photo.name}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="space-y-1 p-4 text-sm">
-                    <div className="flex items-center justify-between text-muted-foreground">
-                      <span>{photo.mimeType ?? "image"}</span>
-                      <span>{formatFileSize(photo.size)}</span>
-                    </div>
-                    <div className="text-muted-foreground">
-                      {formatDateString(photo.updatedAt)}
-                    </div>
-                  </div>
-                </Card>
+              <X className="size-4" />
+            </Button>
+          )}
+        </div>
+
+        <Select value={album} onValueChange={setAlbum}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="All Albums" />
+          </SelectTrigger>
+          <SelectContent>
+            {ALBUM_OPTIONS.map((opt) => (
+              <SelectItem key={opt.value} value={opt.value}>
+                {opt.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Loading state */}
+      {isLoading && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <div key={i} className="space-y-2">
+              <Skeleton className="aspect-video w-full rounded-lg" />
+              <Skeleton className="h-4 w-3/4" />
+              <Skeleton className="h-3 w-1/2" />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Empty state */}
+      {!isLoading && filteredPhotos.length === 0 && (
+        <EmptyState
+          icon={<Camera />}
+          title="No photos yet"
+          description={
+            search || albumFilter
+              ? "No photos match your current filters. Try adjusting your search or album selection."
+              : "Upload project photos to document progress, inspections, and more."
+          }
+          action={
+            !search && !albumFilter
+              ? {
+                  label: "Upload Photo",
+                  onClick: () => setUploadOpen(true),
+                }
+              : undefined
+          }
+        />
+      )}
+
+      {/* Photo grid */}
+      {!isLoading && filteredPhotos.length > 0 && (
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {filteredPhotos.map((photo) => (
+            <PhotoCard
+              key={photo.id}
+              photo={photo}
+              projectId={projectId}
+              onClick={() => setLightboxPhoto(photo)}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* Upload dialog */}
+      <PhotoUploadDialog
+        projectId={projectId}
+        open={uploadOpen}
+        onOpenChange={setUploadOpen}
+      />
+
+      {/* Lightbox / detail modal */}
+      {lightboxPhoto && (
+        <PhotoLightbox
+          photo={lightboxPhoto}
+          projectId={projectId}
+          onClose={() => setLightboxPhoto(null)}
+          onDelete={handleDelete}
+        />
+      )}
+    </PageShell>
+  );
+}
+
+// ─── Photo Card ──────────────────────────────────────────────────────────────
+
+function PhotoCard({
+  photo,
+  projectId,
+  onClick,
+}: {
+  photo: PhotoSummary;
+  projectId: number;
+  onClick: () => void;
+}) {
+  const updatePhoto = useUpdatePhoto(projectId, photo.id);
+
+  const toggleStar = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    updatePhoto.mutate({ starred: !photo.starred });
+  };
+
+  return (
+    <div
+      role="button"
+      tabIndex={0}
+      onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
+      className="group relative cursor-pointer overflow-hidden rounded-lg bg-muted text-left transition-shadow hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      {/* Thumbnail */}
+      <div className="relative aspect-video">
+        <img
+          src={photo.file_url}
+          alt={photo.title}
+          className="size-full object-cover"
+          loading="lazy"
+        />
+
+        {/* Star button */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={toggleStar}
+          className="absolute right-2 top-2 size-8 rounded-full bg-background/80 opacity-0 transition-opacity group-hover:opacity-100"
+        >
+          {photo.starred ? (
+            <Star className="size-4 fill-current text-primary" />
+          ) : (
+            <StarOff className="size-4 text-muted-foreground" />
+          )}
+        </Button>
+
+        {/* Gradient overlay with title */}
+        <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/80 to-transparent px-3 pb-2 pt-6">
+          <p className="truncate text-sm font-medium text-foreground">
+            {photo.title}
+          </p>
+        </div>
+      </div>
+
+      {/* Metadata */}
+      <div className="flex items-center justify-between px-3 py-2">
+        <span className="text-xs text-muted-foreground">
+          {formatPhotoDate(photo.date_taken ?? photo.created_at)}
+        </span>
+        <div className="flex items-center gap-1.5">
+          {photo.album && (
+            <Badge variant="secondary" className="text-xs">
+              {photo.album}
+            </Badge>
+          )}
+          {photo.file_size ? (
+            <span className="text-xs text-muted-foreground">
+              {formatFileSize(photo.file_size)}
+            </span>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Lightbox ────────────────────────────────────────────────────────────────
+
+function PhotoLightbox({
+  photo,
+  projectId,
+  onClose,
+  onDelete,
+}: {
+  photo: PhotoSummary;
+  projectId: number;
+  onClose: () => void;
+  onDelete: (id: number) => void;
+}) {
+  const updatePhoto = useUpdatePhoto(projectId, photo.id);
+
+  const toggleStar = () => {
+    updatePhoto.mutate({ starred: !photo.starred });
+  };
+
+  return (
+    <Dialog open onOpenChange={() => onClose()}>
+      <DialogContent className="max-w-3xl p-0 overflow-hidden">
+        <DialogHeader className="px-6 pt-6 pb-0">
+          <DialogTitle>{photo.title}</DialogTitle>
+        </DialogHeader>
+
+        {/* Image */}
+        <div className="relative bg-muted">
+          <img
+            src={photo.file_url}
+            alt={photo.title}
+            className="max-h-[60vh] w-full object-contain"
+          />
+        </div>
+
+        {/* Details */}
+        <div className="space-y-3 px-6 pb-6">
+          {photo.description && (
+            <p className="text-sm text-muted-foreground">{photo.description}</p>
+          )}
+
+          <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+            {photo.album && (
+              <Badge variant="secondary">{photo.album}</Badge>
+            )}
+            {photo.location && <span>{photo.location}</span>}
+            {photo.trade && <span>{photo.trade}</span>}
+            {photo.file_size ? (
+              <span>{formatFileSize(photo.file_size)}</span>
+            ) : null}
+            {photo.date_taken && (
+              <span>{formatPhotoDate(photo.date_taken)}</span>
+            )}
+            {photo.width && photo.height && (
+              <span>
+                {photo.width} x {photo.height}
+              </span>
+            )}
+          </div>
+
+          {photo.tags && photo.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {photo.tags.map((tag) => (
+                <Badge key={tag} variant="outline" className="text-xs">
+                  {tag}
+                </Badge>
               ))}
             </div>
           )}
+
+          {/* Actions */}
+          <div className="flex items-center gap-2 pt-2">
+            <Button variant="outline" size="sm" onClick={toggleStar}>
+              {photo.starred ? (
+                <>
+                  <Star className="mr-1.5 size-4 fill-current text-yellow-500" />
+                  Starred
+                </>
+              ) : (
+                <>
+                  <StarOff className="mr-1.5 size-4" />
+                  Star
+                </>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onDelete(photo.id)}
+              className="text-destructive hover:bg-destructive/10"
+            >
+              <Trash2 className="mr-1.5 size-4" />
+              Delete
+            </Button>
+          </div>
         </div>
-      </PageContainer>
-    </>
+      </DialogContent>
+    </Dialog>
   );
 }

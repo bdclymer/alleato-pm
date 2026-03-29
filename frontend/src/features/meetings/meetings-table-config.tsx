@@ -426,11 +426,12 @@ export function buildMeetingTableColumns(editContext?: EditContext): TableColumn
           <EditableCellWrapper
             isEditing={Boolean(isEditing)}
             displayContent={
-              <TableTagBadge
-                label={item.project}
-                variant={item.project?.toLowerCase().includes("internal") ? "secondary" : "outline"}
-                emptyLabel="No project"
-              />
+              item.project?.trim() ? (
+                <TableTagBadge
+                  label={item.project}
+                  variant={item.project.toLowerCase().includes("internal") ? "secondary" : "outline"}
+                />
+              ) : null
             }
             onClickToEdit={(e) => {
               e.stopPropagation();

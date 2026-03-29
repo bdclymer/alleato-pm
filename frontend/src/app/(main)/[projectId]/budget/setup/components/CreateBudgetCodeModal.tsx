@@ -50,7 +50,7 @@ export function CreateBudgetCodeModal({
   );
   const [formData, setFormData] = useState<NewBudgetCodeData>({
     costCodeId: "",
-    costType: "R",
+    costType: "",
   });
   const [error, setError] = useState<string | null>(null);
 
@@ -89,7 +89,7 @@ export function CreateBudgetCodeModal({
   // Reset form when modal closes
   useEffect(() => {
     if (!open) {
-      setFormData({ costCodeId: "", costType: "R" });
+      setFormData({ costCodeId: "", costType: "" });
       setExpandedDivisions(new Set());
       setError(null);
     }
@@ -220,7 +220,7 @@ export function CreateBudgetCodeModal({
               }
             >
               <SelectTrigger>
-                <SelectValue />
+                <SelectValue placeholder="Select cost type..." />
               </SelectTrigger>
               <SelectContent>
                 {COST_TYPES.map((type) => (
@@ -235,7 +235,7 @@ export function CreateBudgetCodeModal({
           <div className="p-4 bg-muted rounded-md">
             <p className="text-sm font-medium text-foreground">Preview:</p>
             <p className="text-sm text-foreground mt-1">
-              {selectedCostCode ? (
+              {selectedCostCode && formData.costType ? (
                 <>
                   {selectedCostCode.division_title || selectedCostCode.id}.
                   {formData.costType} – {selectedCostCode.title} –{" "}

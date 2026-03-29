@@ -33,6 +33,13 @@ export { FormContainer } from "./FormContainer";
 
 export { PageTabs } from "./PageTabs";
 export { PageTabsV2 } from "./PageTabsV2";
+export {
+  ContentSectionStack,
+  DetailThreeColumnGrid,
+  LabelValueRow,
+  SectionRuleHeading,
+  SummaryValueRow,
+} from "./spacing";
 
 // ── Shell-level components (not page-level, don't use inside pages) ───────────
 export { AppHeader } from "./AppHeader";

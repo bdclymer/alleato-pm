@@ -35,11 +35,26 @@ export type ToolContextBundle = {
   resolution_steps: string[];
 };
 
+function normalizeRepoPath(path: string): string {
+  return path.replace(/\\/g, "/").replace(/\/{2,}/g, "/");
+}
+
+function normalizeToolSlug(slug: string): string {
+  return normalizeRepoPath(slug).replace(/^\/+|\/+$/g, "");
+}
+
 /**
  * Build the full context bundle for a matched tool.
  */
 export function resolveToolContext(tool: MatchedTool): ToolContextBundle {
-  const slug = tool.slug;
+  const slug = normalizeToolSlug(tool.slug);
+  const researchFolder = normalizeRepoPath(`_bmad-output/planning-artifacts/${slug}/`);
+  const manifestPath = normalizeRepoPath(`.claude/procore-manifests/${slug}/manifest.json`);
+  const screenshotsFolder = normalizeRepoPath(`.claude/procore-manifests/${slug}/screenshots/`);
+  const fallbackPrpPath = normalizeRepoPath(
+    `_bmad-output/planning-artifacts/${slug}/prp-${slug}.md`,
+  );
+  const prpPath = normalizeRepoPath(tool.prp_path ?? fallbackPrpPath);
 
   return {
     tool_name: tool.name,
@@ -48,16 +63,16 @@ export function resolveToolContext(tool: MatchedTool): ToolContextBundle {
     tool_description: tool.description,
 
     procore_url: tool.procore_link,
-    prp_path: tool.prp_path ?? `_bmad-output/planning-artifacts/${slug}/prp-${slug}.md`,
-    research_folder: `_bmad-output/planning-artifacts/${slug}/`,
-    manifest_path: `.claude/procore-manifests/${slug}/manifest.json`,
-    screenshots_folder: `.claude/procore-manifests/${slug}/screenshots/`,
+    prp_path: prpPath,
+    research_folder: researchFolder,
+    manifest_path: manifestPath,
+    screenshots_folder: screenshotsFolder,
     crawl_command: `node scripts/playwright-crawl/procore-deep-crawl.js ${slug}`,
 
     resolution_steps: [
-      `1. Read the PRP at \`${tool.prp_path ?? `_bmad-output/planning-artifacts/${slug}/prp-${slug}.md`}\` to understand the intended behavior for ${tool.name}.`,
-      `2. Check the research folder at \`_bmad-output/planning-artifacts/${slug}/\` for screenshots, gap analyses, and design notes.`,
-      `3. Read the crawl manifest at \`.claude/procore-manifests/${slug}/manifest.json\` to see field-level details captured from Procore.`,
+      `1. Read the PRP at \`${prpPath}\` to understand the intended behavior for ${tool.name}.`,
+      `2. Check the research folder at \`${researchFolder}\` for screenshots, gap analyses, and design notes.`,
+      `3. Read the crawl manifest at \`${manifestPath}\` to see field-level details captured from Procore.`,
       `4. If the manifest doesn't cover the specific feature mentioned in the feedback, run a fresh crawl:\n   \`node scripts/playwright-crawl/procore-deep-crawl.js ${slug}\``,
       tool.procore_link
         ? `5. You can also browse the live Procore page directly at:\n   ${tool.procore_link}`

@@ -7,13 +7,14 @@ import { SelectField } from "@/components/forms/SelectField";
 import { NumberField } from "@/components/forms/NumberField";
 import { DateField } from "@/components/forms/DateField";
 import { RichTextField } from "@/components/forms/RichTextField";
+import { MultiSelectField } from "@/components/forms/MultiSelectField";
 import { SearchableSelect } from "@/components/forms/SearchableSelect";
-import { FileUploadField } from "@/components/forms/FileUploadField";
 import { FormSection } from "@/components/forms/FormSection";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
+import { NumberInput } from "@/components/ui/number-input";
 import { Plus, HelpCircle, Sparkles, Search, ChevronRight, ChevronDown, Trash2 } from "lucide-react";
 import { FormGrid, FormGridRow } from "@/components/forms";
 import {
@@ -126,14 +127,6 @@ export interface ContractFormData {
   allowedUsers?: string[];
   allowedUsersCanSeeSov?: boolean;
 
-  // Attachments
-  attachments?: Array<{
-    id: string;
-    name: string;
-    url: string;
-    size: number;
-  }>;
-  attachmentFiles?: File[];
 }
 
 interface ContractFormProps {
@@ -179,10 +172,6 @@ export function ContractForm({
   const [validationErrors, setValidationErrors] = React.useState<
     Partial<Record<"number" | "title" | "executed", string>>
   >({});
-  const [attachmentFiles, setAttachmentFiles] = React.useState<File[]>([]);
-  const [attachmentFileInfos, setAttachmentFileInfos] = React.useState<
-    Array<{ name: string; size: number; type: string }>
-  >([]);
 
   // Budget code state
   const [budgetCodes, setBudgetCodes] = React.useState<BudgetCode[]>([]);
@@ -328,14 +317,7 @@ export function ContractForm({
       return;
     }
 
-    // Include the actual File objects in the submission
-    const submissionData = {
-      ...formData,
-      attachmentFiles: attachmentFiles.length > 0 ? attachmentFiles : undefined
-    };
-    // Debug: Submitting with attachments count: attachmentFiles.length
-
-    await onSubmit(submissionData as ContractFormData);
+    await onSubmit(formData as ContractFormData);
   };
 
   const updateFormData = (updates: Partial<ContractFormData>) => {
@@ -605,44 +587,6 @@ export function ContractForm({
     toast.success(`Imported ${mapped.length} SOV line item${mapped.length === 1 ? "" : "s"}`);
   };
 
-  const handleFilesSelected = (files: File[]) => {
-    // Add new files to our File array
-    const updatedFiles = [...attachmentFiles, ...files];
-    setAttachmentFiles(updatedFiles);
-
-    // Create FileInfo objects for display
-    const newFileInfos = files.map(file => ({
-      name: file.name,
-      size: file.size,
-      type: file.type
-    }));
-    const updatedFileInfos = [...attachmentFileInfos, ...newFileInfos];
-    setAttachmentFileInfos(updatedFileInfos);
-
-    updateFormData({ attachmentFiles: updatedFiles });
-  };
-
-  const handleFilesChanged = (fileInfos: Array<{ name: string; size: number; type: string }>) => {
-    // This is called when files are removed from the UI
-    // Update our FileInfo array
-    setAttachmentFileInfos(fileInfos);
-
-    // FileUploadField calls onFilesSelected and onChange during add flow.
-    // Ignore add-flow onChange to avoid racing and clearing attachmentFiles.
-    if (fileInfos.length >= attachmentFileInfos.length) {
-      return;
-    }
-
-    // Also update the actual File array to match
-    const filtered = attachmentFiles.filter((file) =>
-      fileInfos.some(
-        (info) => info.name === file.name && info.size === file.size,
-      ),
-    );
-    setAttachmentFiles(filtered);
-    updateFormData({ attachmentFiles: filtered });
-  };
-
   const filteredBudgetCodes = budgetCodes.filter((code) =>
     code.fullLabel.toLowerCase().includes(budgetCodeSearchQuery.toLowerCase()),
   );
@@ -901,8 +845,8 @@ export function ContractForm({
       </FormSection>
 
       <FormSection
-        title="Description & Attachments"
-        description="Capture narrative context and supporting files for the agreement."
+        title="Description"
+        description="Capture narrative context for the agreement."
       >
         <FormGrid columns={12} className="gap-y-8">
           <div className="col-span-12">
@@ -913,26 +857,6 @@ export function ContractForm({
               placeholder="Enter contract description..."
               fullWidth
             />
-          </div>
-
-          <div className="col-span-12">
-            <div className="space-y-2">
-              <Label>Attachments</Label>
-              <FileUploadField
-                label=""
-                value={attachmentFileInfos}
-                onChange={handleFilesChanged}
-                onFilesSelected={handleFilesSelected}
-                variant="minimal"
-                multiple
-                maxFiles={20}
-                maxSize={50 * 1024 * 1024}
-                hint="Attach contract documents and supporting files."
-                dropzoneTestId="prime-contract-attachments-dropzone"
-                inputTestId="prime-contract-attachments-input"
-                fileListTestId="prime-contract-attachments-list"
-              />
-            </div>
           </div>
         </FormGrid>
       </FormSection>
@@ -1185,8 +1109,8 @@ export function ContractForm({
                         />
                       </td>
                       <td className="px-1 py-2 align-middle">
-                        <Input
-                          type="number"
+                        <NumberInput
+                          currency
                           value={item.amount || ""}
                           onChange={(e) =>
                             updateSOVLine(item.id, {
@@ -1340,45 +1264,42 @@ export function ContractForm({
             </Label>
           </div>
 
-          {formData.isPrivate && (
-            <div className="space-y-4 pl-6 border-l-2 border-border">
-              <div className="space-y-2">
-                <Label>Access for Non-Admin Users</Label>
-                <Select>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select Values" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {userOptions.map((user) => (
-                      <SelectItem key={user.value} value={user.value}>
-                        {user.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+          <div className="space-y-4 pl-6 border-l-2 border-border">
+            <MultiSelectField
+              label="Access for Non-Admin Users"
+              options={userOptions}
+              value={formData.allowedUsers || []}
+              onChange={(values) => updateFormData({ allowedUsers: values })}
+              placeholder="Select project users"
+              hint={
+                formData.isPrivate
+                  ? "Choose which non-admin project users can access this contract."
+                  : "Enable Private to configure non-admin user access."
+              }
+              disabled={!formData.isPrivate}
+            />
 
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="allow-sov-access"
-                  checked={formData.allowedUsersCanSeeSov || false}
-                  onCheckedChange={(checked) =>
-                    updateFormData({ allowedUsersCanSeeSov: checked === true })
-                  }
-                />
-                <Label htmlFor="allow-sov-access" className="text-sm font-normal">
-                  Allow these non-admin users to view the SOV items.
-                </Label>
-              </div>
+            <div className="flex items-center space-x-2">
+              <Checkbox
+                id="allow-sov-access"
+                checked={formData.allowedUsersCanSeeSov || false}
+                onCheckedChange={(checked) =>
+                  updateFormData({ allowedUsersCanSeeSov: checked === true })
+                }
+                disabled={!formData.isPrivate}
+              />
+              <Label htmlFor="allow-sov-access" className="text-sm font-normal">
+                Allow these non-admin users to view the SOV items.
+              </Label>
             </div>
-          )}
+          </div>
         </div>
       </FormSection>
 
       {/* ================================================================ */}
       {/* FORM ACTIONS */}
       {/* ================================================================ */}
-      <div className="flex items-center justify-between gap-4 border-t pt-8">
+      <div className="flex items-center justify-between gap-4 pt-8">
         {isDevelopment ? (
           <Button
             type="button"

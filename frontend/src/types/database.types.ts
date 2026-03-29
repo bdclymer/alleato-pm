@@ -4083,6 +4083,20 @@ export type Database = {
             foreignKeyName: "change_event_line_items_contract_id_fkey"
             columns: ["contract_id"]
             isOneToOne: false
+            referencedRelation: "contract_financial_summary"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "change_event_line_items_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contract_financial_summary_mv"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "change_event_line_items_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
             referencedRelation: "contracts"
             referencedColumns: ["id"]
           },
@@ -4364,6 +4378,20 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "change_events_prime_contract_id_fkey"
+            columns: ["prime_contract_id"]
+            isOneToOne: false
+            referencedRelation: "contract_financial_summary"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "change_events_prime_contract_id_fkey"
+            columns: ["prime_contract_id"]
+            isOneToOne: false
+            referencedRelation: "contract_financial_summary_mv"
+            referencedColumns: ["contract_id"]
+          },
           {
             foreignKeyName: "change_events_prime_contract_id_fkey"
             columns: ["prime_contract_id"]
@@ -8112,6 +8140,44 @@ export type Database = {
           },
         ]
       }
+      email_attachments: {
+        Row: {
+          content_type: string | null
+          created_at: string | null
+          email_id: number
+          file_name: string
+          file_size: number | null
+          file_url: string
+          id: number
+        }
+        Insert: {
+          content_type?: string | null
+          created_at?: string | null
+          email_id: number
+          file_name: string
+          file_size?: number | null
+          file_url: string
+          id?: never
+        }
+        Update: {
+          content_type?: string | null
+          created_at?: string | null
+          email_id?: number
+          file_name?: string
+          file_size?: number | null
+          file_url?: string
+          id?: never
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_attachments_email_id_fkey"
+            columns: ["email_id"]
+            isOneToOne: false
+            referencedRelation: "project_emails"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       erp_sync_log: {
         Row: {
           created_at: string
@@ -10643,6 +10709,20 @@ export type Database = {
             foreignKeyName: "owner_invoices_contract_id_fkey"
             columns: ["contract_id"]
             isOneToOne: false
+            referencedRelation: "contract_financial_summary"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "owner_invoices_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contract_financial_summary_mv"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "owner_invoices_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
             referencedRelation: "contracts"
             referencedColumns: ["id"]
           },
@@ -10790,6 +10870,20 @@ export type Database = {
           reference_number?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "payment_transactions_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contract_financial_summary"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "payment_transactions_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contract_financial_summary_mv"
+            referencedColumns: ["contract_id"]
+          },
           {
             foreignKeyName: "payment_transactions_contract_id_fkey"
             columns: ["contract_id"]
@@ -11124,6 +11218,20 @@ export type Database = {
             foreignKeyName: "prime_contract_change_orders_contract_id_fkey"
             columns: ["contract_id"]
             isOneToOne: false
+            referencedRelation: "contract_financial_summary"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "prime_contract_change_orders_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contract_financial_summary_mv"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "prime_contract_change_orders_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
             referencedRelation: "contracts"
             referencedColumns: ["id"]
           },
@@ -11188,6 +11296,49 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prime_contract_attachments: {
+        Row: {
+          attachment_id: string
+          contract_id: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          attachment_id: string
+          contract_id: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          attachment_id?: string
+          contract_id?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prime_contract_attachments_attachment_id_fkey"
+            columns: ["attachment_id"]
+            isOneToOne: false
+            referencedRelation: "attachments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contract_attachments_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "prime_contract_financial_summary"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "prime_contract_attachments_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
         ]
@@ -11586,6 +11737,20 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "project_budget_codes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contract_sovs_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contract_financial_summary"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "prime_contract_sovs_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contract_financial_summary_mv"
+            referencedColumns: ["contract_id"]
           },
           {
             foreignKeyName: "prime_contract_sovs_contract_id_fkey"
@@ -12838,6 +13003,256 @@ export type Database = {
           },
         ]
       }
+      project_documents: {
+        Row: {
+          category: string | null
+          content_type: string | null
+          created_at: string | null
+          created_by: string | null
+          deleted_at: string | null
+          description: string | null
+          file_name: string
+          file_size: number | null
+          file_url: string
+          folder: string | null
+          id: number
+          is_private: boolean | null
+          project_id: number
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          title: string
+          updated_at: string | null
+          uploaded_by: string | null
+          version: number | null
+        }
+        Insert: {
+          category?: string | null
+          content_type?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          file_name: string
+          file_size?: number | null
+          file_url: string
+          folder?: string | null
+          id?: never
+          is_private?: boolean | null
+          project_id: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          title: string
+          updated_at?: string | null
+          uploaded_by?: string | null
+          version?: number | null
+        }
+        Update: {
+          category?: string | null
+          content_type?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          file_name?: string
+          file_size?: number | null
+          file_url?: string
+          folder?: string | null
+          id?: never
+          is_private?: boolean | null
+          project_id?: number
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          title?: string
+          updated_at?: string | null
+          uploaded_by?: string | null
+          version?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_documents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_documents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_documents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_documents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_documents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_documents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_documents_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_emails: {
+        Row: {
+          bcc_list: string[] | null
+          body: string | null
+          body_html: string | null
+          cc_list: string[] | null
+          created_at: string | null
+          created_by: string | null
+          deleted_at: string | null
+          distribution_group: string | null
+          from_email: string | null
+          from_name: string | null
+          has_attachments: boolean | null
+          id: number
+          is_private: boolean | null
+          is_starred: boolean | null
+          project_id: number
+          received_at: string | null
+          related_id: string | null
+          related_tool: string | null
+          sent_at: string | null
+          status: string
+          subject: string
+          thread_id: string | null
+          to_list: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          bcc_list?: string[] | null
+          body?: string | null
+          body_html?: string | null
+          cc_list?: string[] | null
+          created_at?: string | null
+          created_by?: string | null
+          deleted_at?: string | null
+          distribution_group?: string | null
+          from_email?: string | null
+          from_name?: string | null
+          has_attachments?: boolean | null
+          id?: never
+          is_private?: boolean | null
+          is_starred?: boolean | null
+          project_id: number
+          received_at?: string | null
+          related_id?: string | null
+          related_tool?: string | null
+          sent_at?: string | null
+          status?: string
+          subject: string
+          thread_id?: string | null
+          to_list?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          bcc_list?: string[] | null
+          body?: string | null
+          body_html?: string | null
+          cc_list?: string[] | null
+          created_at?: string | null
+          created_by?: string | null
+          deleted_at?: string | null
+          distribution_group?: string | null
+          from_email?: string | null
+          from_name?: string | null
+          has_attachments?: boolean | null
+          id?: never
+          is_private?: boolean | null
+          is_starred?: boolean | null
+          project_id?: number
+          received_at?: string | null
+          related_id?: string | null
+          related_tool?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string
+          thread_id?: string | null
+          to_list?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_emails_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_emails_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_emails_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_emails_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_emails_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_emails_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_emails_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       project_insights: {
         Row: {
           captured_at: string
@@ -12917,6 +13332,131 @@ export type Database = {
           },
           {
             foreignKeyName: "project_insights_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_photos: {
+        Row: {
+          album: string | null
+          content_type: string | null
+          created_at: string | null
+          created_by: string | null
+          date_taken: string | null
+          deleted_at: string | null
+          description: string | null
+          file_name: string
+          file_size: number | null
+          file_url: string
+          height: number | null
+          id: number
+          is_private: boolean | null
+          location: string | null
+          project_id: number
+          starred: boolean | null
+          tags: string[] | null
+          title: string
+          trade: string | null
+          updated_at: string | null
+          uploaded_by: string | null
+          width: number | null
+        }
+        Insert: {
+          album?: string | null
+          content_type?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          date_taken?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          file_name: string
+          file_size?: number | null
+          file_url: string
+          height?: number | null
+          id?: never
+          is_private?: boolean | null
+          location?: string | null
+          project_id: number
+          starred?: boolean | null
+          tags?: string[] | null
+          title?: string
+          trade?: string | null
+          updated_at?: string | null
+          uploaded_by?: string | null
+          width?: number | null
+        }
+        Update: {
+          album?: string | null
+          content_type?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          date_taken?: string | null
+          deleted_at?: string | null
+          description?: string | null
+          file_name?: string
+          file_size?: number | null
+          file_url?: string
+          height?: number | null
+          id?: never
+          is_private?: boolean | null
+          location?: string | null
+          project_id?: number
+          starred?: boolean | null
+          tags?: string[] | null
+          title?: string
+          trade?: string | null
+          updated_at?: string | null
+          uploaded_by?: string | null
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_photos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_photos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_photos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_photos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_photos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_photos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_photos_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
@@ -13218,6 +13758,128 @@ export type Database = {
           },
           {
             foreignKeyName: "project_roles_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_transmittals: {
+        Row: {
+          ball_in_court: string | null
+          copies_sent: number | null
+          created_at: string | null
+          created_by: string | null
+          deleted_at: string | null
+          delivery_method: string | null
+          due_date: string | null
+          from_company: string | null
+          from_contact: string | null
+          id: number
+          is_private: boolean | null
+          number: string
+          project_id: number
+          received_date: string | null
+          remarks: string | null
+          sent_date: string | null
+          status: string
+          subject: string
+          to_company: string | null
+          to_contact: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          ball_in_court?: string | null
+          copies_sent?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          deleted_at?: string | null
+          delivery_method?: string | null
+          due_date?: string | null
+          from_company?: string | null
+          from_contact?: string | null
+          id?: never
+          is_private?: boolean | null
+          number: string
+          project_id: number
+          received_date?: string | null
+          remarks?: string | null
+          sent_date?: string | null
+          status?: string
+          subject: string
+          to_company?: string | null
+          to_contact?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          ball_in_court?: string | null
+          copies_sent?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          deleted_at?: string | null
+          delivery_method?: string | null
+          due_date?: string | null
+          from_company?: string | null
+          from_contact?: string | null
+          id?: never
+          is_private?: boolean | null
+          number?: string
+          project_id?: number
+          received_date?: string | null
+          remarks?: string | null
+          sent_date?: string | null
+          status?: string
+          subject?: string
+          to_company?: string | null
+          to_contact?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_transmittals_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_transmittals_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_transmittals_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_transmittals_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "project_transmittals_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_transmittals_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_transmittals_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
@@ -14750,6 +15412,20 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "schedule_of_values_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contract_financial_summary"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "schedule_of_values_contract_id_fkey"
+            columns: ["contract_id"]
+            isOneToOne: false
+            referencedRelation: "contract_financial_summary_mv"
+            referencedColumns: ["contract_id"]
+          },
           {
             foreignKeyName: "schedule_of_values_contract_id_fkey"
             columns: ["contract_id"]
@@ -17373,6 +18049,47 @@ export type Database = {
         }
         Relationships: []
       }
+      transmittal_items: {
+        Row: {
+          created_at: string | null
+          id: number
+          item_title: string
+          item_type: string
+          quantity: number | null
+          remarks: string | null
+          revision: string | null
+          transmittal_id: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: never
+          item_title: string
+          item_type?: string
+          quantity?: number | null
+          remarks?: string | null
+          revision?: string | null
+          transmittal_id: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: never
+          item_title?: string
+          item_type?: string
+          quantity?: number | null
+          remarks?: string | null
+          revision?: string | null
+          transmittal_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transmittal_items_transmittal_id_fkey"
+            columns: ["transmittal_id"]
+            isOneToOne: false
+            referencedRelation: "project_transmittals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_directory_permissions: {
         Row: {
           created_at: string | null
@@ -18313,6 +19030,66 @@ export type Database = {
           updated_at: string | null
         }
         Relationships: []
+      }
+      contract_financial_summary: {
+        Row: {
+          approved_change_orders: number | null
+          client_id: string | null
+          contract_id: number | null
+          contract_number: string | null
+          draft_change_orders: number | null
+          erp_status: string | null
+          executed: boolean | null
+          invoiced_amount: number | null
+          original_contract_amount: number | null
+          payments_received: number | null
+          pending_change_orders: number | null
+          percent_paid: number | null
+          private: boolean | null
+          remaining_balance: number | null
+          revised_contract_amount: number | null
+          status: string | null
+          title: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contract_financial_summary_mv: {
+        Row: {
+          approved_change_orders: number | null
+          client_id: string | null
+          contract_id: number | null
+          contract_number: string | null
+          draft_change_orders: number | null
+          erp_status: string | null
+          executed: boolean | null
+          invoiced_amount: number | null
+          original_contract_amount: number | null
+          payments_received: number | null
+          pending_change_orders: number | null
+          percent_paid: number | null
+          private: boolean | null
+          remaining_balance: number | null
+          revised_contract_amount: number | null
+          status: string | null
+          title: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contracts_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       cost_by_category: {
         Row: {

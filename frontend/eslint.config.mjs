@@ -72,6 +72,7 @@ const config = [
       'design-system/no-arbitrary-spacing': 'warn',
       'design-system/require-semantic-colors': 'warn',
       'design-system/no-design-violations': 'error',
+      'design-system/require-page-shell': 'warn',
     },
   },
 ]

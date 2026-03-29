@@ -170,7 +170,7 @@ function NotificationRow({
       />
       {/* Per-item delete button — visible on hover */}
       {hovered && (
-        {/* eslint-disable-next-line design-system/no-design-violations -- small overlay delete icon */}
+        // eslint-disable-next-line design-system/no-design-violations -- small overlay delete icon
         <button
           type="button"
           className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-md bg-background/80 text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-muted hover:text-destructive transition-all z-10"

@@ -33,6 +33,7 @@ export default async function ProjectHomePage({
     dailyLogsResult,
     commitmentsResult,
     contractsResult,
+    contractLineItemsResult,
     budgetResult,
     changeEventsResult,
     scheduleResult,
@@ -121,6 +122,12 @@ export default async function ProjectHomePage({
       .eq("project_id", numericProjectId)
       .order("created_at", { ascending: false }),
 
+    // Fetch prime contract SOV line items for contract value rollups
+    supabase
+      .from("contract_line_items")
+      .select("contract_id,total_cost,quantity,unit_cost,prime_contracts!inner(project_id)")
+      .eq("prime_contracts.project_id", numericProjectId),
+
     // Fetch budget lines
     supabase
       .from("budget_lines")
@@ -195,6 +202,7 @@ export default async function ProjectHomePage({
     original_amount?: number;
   }>;
   const contracts = contractsResult.data || [];
+  const contractLineItems = contractLineItemsResult.data || [];
   const budget = budgetResult.data || [];
   const changeEvents = changeEventsResult.data || [];
   const schedule = scheduleResult.data || [];
@@ -216,6 +224,7 @@ export default async function ProjectHomePage({
         dailyLogs={dailyLogs}
         commitments={commitments}
         contracts={contracts}
+        contractLineItems={contractLineItems}
         budget={budget}
         changeEvents={changeEvents}
         schedule={schedule}

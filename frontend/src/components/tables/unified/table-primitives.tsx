@@ -221,11 +221,15 @@ export function TableAvatarUsers({
             <AvatarGroup className="justify-start">
               {visibleUsers.map((user) => (
                 <Avatar key={user} className="h-7 w-7">
-                  <AvatarFallback className="text-[10px] font-semibold">{getParticipantInitials(user)}</AvatarFallback>
+                  <AvatarFallback className="text-[10px] font-semibold">
+                    {getParticipantInitials(user)}
+                  </AvatarFallback>
                 </Avatar>
               ))}
               {hiddenCount > 0 ? (
-                <AvatarGroupCount className="h-7 w-7 text-[10px] font-semibold">+{hiddenCount}</AvatarGroupCount>
+                <AvatarGroupCount className="h-7 w-7 text-[10px] font-semibold">
+                  +{hiddenCount}
+                </AvatarGroupCount>
               ) : null}
             </AvatarGroup>
           </div>
