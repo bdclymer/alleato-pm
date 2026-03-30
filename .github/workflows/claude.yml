@@ -23,10 +23,9 @@ jobs:
     steps:
       - id: check
         env:
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: |
-          if [ -n "$ANTHROPIC_API_KEY" ] || [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
+          if [ -n "$CLAUDE_CODE_OAUTH_TOKEN" ]; then
             echo "has_auth=true" >> "$GITHUB_OUTPUT"
           else
             echo "has_auth=false" >> "$GITHUB_OUTPUT"
@@ -51,23 +50,20 @@ jobs:
   review:
     needs: auth-check
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     permissions:
       id-token: write
       contents: read
       pull-requests: write
     if: github.event_name == 'pull_request' && needs.auth-check.outputs.has_auth == 'true'
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
       - uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          additional_permissions: |
-            Bash(git diff:*)
-            Bash(git log:*)
-            Bash(git show:*)
+          claude_args: '--max-turns 15 --allowedTools "Bash(git diff:*),Bash(git log:*),Bash(git show:*)"'
           prompt: |
             Review this pull request for the Alleato PM codebase (Next.js 15 + Supabase construction management app).
 
@@ -80,10 +76,13 @@ jobs:
 
             Be concise. Only flag real issues — skip style nitpicks.
             If the PR looks good, say so briefly.
+        env:
+          CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: ''
 
   respond:
     needs: auth-check
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       id-token: write
       contents: write
@@ -94,24 +93,22 @@ jobs:
       ((github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
       (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')))
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
       - uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           trigger_phrase: '@claude'
           assignee_trigger: 'claude'
-          additional_permissions: |
-            Edit
-            Write
-            Bash(*)
-          claude_args: '--max-turns 25'
+          claude_args: '--max-turns 50 --allowedTools "Edit,Write,Bash(*)"'
+        env:
+          CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: ''
 
   auto-resolve:
     needs: auth-check
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       id-token: write
       contents: write
@@ -122,9 +119,9 @@ jobs:
       ((github.event_name == 'issues' && github.event.action == 'opened') ||
       (github.event_name == 'issues' && github.event.action == 'labeled' && (contains(github.event.issue.labels.*.name, 'claude') || contains(github.event.issue.labels.*.name, 'admin-feedback'))))
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          fetch-depth: 1
 
       - name: Check for existing branch (dedup)
         id: dedup
@@ -152,13 +149,8 @@ jobs:
       - uses: anthropics/claude-code-action@v1
         if: steps.dedup.outputs.exists == 'false'
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          additional_permissions: |
-            Edit
-            Write
-            Bash(*)
-          claude_args: '--max-turns 30 --permission-mode bypassPermissions'
+          claude_args: '--max-turns 50 --permission-mode bypassPermissions --allowedTools "Edit,Write,Bash(*)"'
           prompt: |
             # Auto-resolve GitHub Issue #${{ github.event.issue.number }}
 
@@ -193,6 +185,8 @@ jobs:
             - Create a branch named `claude/issue-${{ github.event.issue.number }}-{short-description}`.
             - Commit with a clear message referencing the issue: `Closes #${{ github.event.issue.number }}`.
             - Push and create a PR with a summary of what was fixed and why.
+        env:
+          CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: ''
 
       - name: Update feedback status to in_review
         if: steps.dedup.outputs.exists == 'false' && contains(github.event.issue.labels.*.name, 'admin-feedback')
