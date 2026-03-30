@@ -1,0 +1,689 @@
+{
+  "feature": "invoicing",
+  "featureName": "Invoicing",
+  "capturedAt": "2026-03-30T02:13:40.290Z",
+  "states": {
+    "list-owner": {
+      "id": "list-owner",
+      "description": "Invoicing — Owner Invoices list",
+      "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214671/tools/invoicing/subcontractor",
+      "columnGroups": [
+        {
+          "label": "",
+          "columns": [
+            "Invoice #",
+            "Invoice Status",
+            "Contract Company",
+            "Billing Period",
+            "Gross Amount",
+            "Net Amount",
+            "Paid Amount",
+            "Invoice Dates",
+            "Contract",
+            "Total Contract Amount",
+            "% Complete",
+            "ERP Status"
+          ],
+          "colspan": 12
+        }
+      ],
+      "columns": [
+        {
+          "label": "Invoice #",
+          "columnGroup": null
+        },
+        {
+          "label": "Invoice Status",
+          "columnGroup": null
+        },
+        {
+          "label": "Contract Company",
+          "columnGroup": null
+        },
+        {
+          "label": "Billing Period",
+          "columnGroup": null
+        },
+        {
+          "label": "Gross Amount",
+          "columnGroup": null
+        },
+        {
+          "label": "Net Amount",
+          "columnGroup": null
+        },
+        {
+          "label": "Paid Amount",
+          "columnGroup": null
+        },
+        {
+          "label": "Invoice Dates",
+          "columnGroup": null
+        },
+        {
+          "label": "Contract",
+          "columnGroup": null
+        },
+        {
+          "label": "Total Contract Amount",
+          "columnGroup": null
+        },
+        {
+          "label": "% Complete",
+          "columnGroup": null
+        },
+        {
+          "label": "ERP Status",
+          "columnGroup": null
+        }
+      ],
+      "toolbarActions": [
+        {
+          "label": "Alleato Group26-999 - MH",
+          "type": "dropdown",
+          "variant": "default"
+        },
+        {
+          "label": "Project ToolsInvoicing",
+          "type": "dropdown",
+          "variant": "default"
+        },
+        {
+          "label": "More",
+          "type": "dropdown",
+          "variant": "default"
+        },
+        {
+          "label": "AppsSelect an App",
+          "type": "dropdown",
+          "variant": "default"
+        },
+        {
+          "label": "Support & Feedback",
+          "type": "dropdown",
+          "variant": "default"
+        },
+        {
+          "label": "Announcements",
+          "type": "button",
+          "variant": "default"
+        },
+        {
+          "label": "BC",
+          "type": "dropdown",
+          "variant": "default"
+        }
+      ],
+      "filters": [],
+      "rowActions": [],
+      "autoRows": [],
+      "formSections": [
+        {
+          "title": "",
+          "fields": [
+            {
+              "name": "billing_period",
+              "label": "Billing Period",
+              "type": "select",
+              "required": false,
+              "placeholder": "",
+              "options": [],
+              "currentValue": "",
+              "helpText": ""
+            },
+            {
+              "name": "contract_company",
+              "label": "Contract Company",
+              "type": "select",
+              "required": false,
+              "placeholder": "",
+              "options": [],
+              "currentValue": "",
+              "helpText": ""
+            },
+            {
+              "name": "payment_status",
+              "label": "Payment Status",
+              "type": "select",
+              "required": false,
+              "placeholder": "",
+              "options": [],
+              "currentValue": "",
+              "helpText": ""
+            },
+            {
+              "name": "invoice_status",
+              "label": "Invoice Status",
+              "type": "select",
+              "required": false,
+              "placeholder": "",
+              "options": [],
+              "currentValue": "",
+              "helpText": ""
+            },
+            {
+              "name": "contract_type",
+              "label": "Contract Type",
+              "type": "select",
+              "required": false,
+              "placeholder": "",
+              "options": [],
+              "currentValue": "",
+              "helpText": ""
+            }
+          ]
+        }
+      ],
+      "tabs": [],
+      "headerFields": [],
+      "screenshot": "screenshots/list-owner.png",
+      "_capture_note": "",
+      "domFile": "dom/list-owner.html"
+    },
+    "list-subcontractor": {
+      "id": "list-subcontractor",
+      "description": "Invoicing — Subcontractor Invoices list",
+      "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214671/tools/invoicing/subcontractor",
+      "columnGroups": [
+        {
+          "label": "",
+          "columns": [
+            "Invoice #",
+            "Invoice Status",
+            "Contract Company",
+            "Billing Period",
+            "Gross Amount",
+            "Net Amount",
+            "Paid Amount",
+            "Invoice Dates",
+            "Contract",
+            "Total Contract Amount",
+            "% Complete",
+            "ERP Status"
+          ],
+          "colspan": 12
+        }
+      ],
+      "columns": [
+        {
+          "label": "Invoice #",
+          "columnGroup": null
+        },
+        {
+          "label": "Invoice Status",
+          "columnGroup": null
+        },
+        {
+          "label": "Contract Company",
+          "columnGroup": null
+        },
+        {
+          "label": "Billing Period",
+          "columnGroup": null
+        },
+        {
+          "label": "Gross Amount",
+          "columnGroup": null
+        },
+        {
+          "label": "Net Amount",
+          "columnGroup": null
+        },
+        {
+          "label": "Paid Amount",
+          "columnGroup": null
+        },
+        {
+          "label": "Invoice Dates",
+          "columnGroup": null
+        },
+        {
+          "label": "Contract",
+          "columnGroup": null
+        },
+        {
+          "label": "Total Contract Amount",
+          "columnGroup": null
+        },
+        {
+          "label": "% Complete",
+          "columnGroup": null
+        },
+        {
+          "label": "ERP Status",
+          "columnGroup": null
+        }
+      ],
+      "toolbarActions": [
+        {
+          "label": "Alleato Group26-999 - MH",
+          "type": "dropdown",
+          "variant": "default"
+        },
+        {
+          "label": "Project ToolsInvoicing",
+          "type": "dropdown",
+          "variant": "default"
+        },
+        {
+          "label": "Which RFI relates to the ATS pad?CmdK",
+          "type": "button",
+          "variant": "default"
+        },
+        {
+          "label": "More",
+          "type": "dropdown",
+          "variant": "default"
+        },
+        {
+          "label": "AppsSelect an App",
+          "type": "dropdown",
+          "variant": "default"
+        },
+        {
+          "label": "Support & Feedback",
+          "type": "dropdown",
+          "variant": "default"
+        },
+        {
+          "label": "Announcements",
+          "type": "button",
+          "variant": "default"
+        },
+        {
+          "label": "BC",
+          "type": "dropdown",
+          "variant": "default"
+        }
+      ],
+      "filters": [],
+      "rowActions": [],
+      "autoRows": [],
+      "formSections": [
+        {
+          "title": "",
+          "fields": [
+            {
+              "name": "billing_period",
+              "label": "Billing Period",
+              "type": "select",
+              "required": false,
+              "placeholder": "",
+              "options": [],
+              "currentValue": "",
+              "helpText": ""
+            },
+            {
+              "name": "contract_company",
+              "label": "Contract Company",
+              "type": "select",
+              "required": false,
+              "placeholder": "",
+              "options": [],
+              "currentValue": "",
+              "helpText": ""
+            },
+            {
+              "name": "payment_status",
+              "label": "Payment Status",
+              "type": "select",
+              "required": false,
+              "placeholder": "",
+              "options": [],
+              "currentValue": "",
+              "helpText": ""
+            },
+            {
+              "name": "invoice_status",
+              "label": "Invoice Status",
+              "type": "select",
+              "required": false,
+              "placeholder": "",
+              "options": [],
+              "currentValue": "",
+              "helpText": ""
+            },
+            {
+              "name": "contract_type",
+              "label": "Contract Type",
+              "type": "select",
+              "required": false,
+              "placeholder": "",
+              "options": [],
+              "currentValue": "",
+              "helpText": ""
+            }
+          ]
+        }
+      ],
+      "tabs": [],
+      "headerFields": [],
+      "screenshot": "screenshots/list-subcontractor.png",
+      "_capture_note": "",
+      "domFile": "dom/list-subcontractor.html"
+    },
+    "po-invoices-list": {
+      "id": "po-invoices-list",
+      "description": "Invoices tab under a specific Purchase Order Contract",
+      "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214671/tools/contracts/commitments/purchase_order_contracts/562949959141576/invoices",
+      "columnGroups": [
+        {
+          "label": "",
+          "columns": [
+            "Invoice Position",
+            "Invoice #",
+            "Invoice Dates",
+            "Billing Date",
+            "Status",
+            "Original Contract Sum",
+            "Net Change By Change Orders",
+            "Revised Contract Sum",
+            "Total Completed and Stored To Date",
+            "Total Retainage",
+            "Total Earned Less Retainage",
+            "Payment Due",
+            "Balance To Finish",
+            "% Complete",
+            "Attachments"
+          ],
+          "colspan": 15
+        }
+      ],
+      "columns": [
+        {
+          "label": "Invoice Position",
+          "columnGroup": null
+        },
+        {
+          "label": "Invoice #",
+          "columnGroup": null
+        },
+        {
+          "label": "Invoice Dates",
+          "columnGroup": null
+        },
+        {
+          "label": "Billing Date",
+          "columnGroup": null
+        },
+        {
+          "label": "Status",
+          "columnGroup": null
+        },
+        {
+          "label": "Original Contract Sum",
+          "columnGroup": null
+        },
+        {
+          "label": "Net Change By Change Orders",
+          "columnGroup": null
+        },
+        {
+          "label": "Revised Contract Sum",
+          "columnGroup": null
+        },
+        {
+          "label": "Total Completed and Stored To Date",
+          "columnGroup": null
+        },
+        {
+          "label": "Total Retainage",
+          "columnGroup": null
+        },
+        {
+          "label": "Total Earned Less Retainage",
+          "columnGroup": null
+        },
+        {
+          "label": "Payment Due",
+          "columnGroup": null
+        },
+        {
+          "label": "Balance To Finish",
+          "columnGroup": null
+        },
+        {
+          "label": "% Complete",
+          "columnGroup": null
+        },
+        {
+          "label": "Attachments",
+          "columnGroup": null
+        }
+      ],
+      "toolbarActions": [
+        {
+          "label": "Alleato Group26-999 - MH",
+          "type": "dropdown",
+          "variant": "default"
+        },
+        {
+          "label": "Project ToolsCommitments",
+          "type": "dropdown",
+          "variant": "default"
+        },
+        {
+          "label": "Who is the adjust duct routing instruction issued to?CmdK",
+          "type": "button",
+          "variant": "default"
+        },
+        {
+          "label": "More",
+          "type": "dropdown",
+          "variant": "default"
+        },
+        {
+          "label": "AppsSelect an App",
+          "type": "dropdown",
+          "variant": "default"
+        },
+        {
+          "label": "Support & Feedback",
+          "type": "dropdown",
+          "variant": "default"
+        },
+        {
+          "label": "Announcements",
+          "type": "button",
+          "variant": "default"
+        },
+        {
+          "label": "BC",
+          "type": "dropdown",
+          "variant": "default"
+        }
+      ],
+      "filters": [],
+      "rowActions": [],
+      "autoRows": [],
+      "formSections": [],
+      "tabs": [],
+      "headerFields": [],
+      "screenshot": "screenshots/po-invoices-list.png",
+      "_capture_note": "",
+      "domFile": "dom/po-invoices-list.html"
+    },
+    "create-form": {
+      "id": "create-form",
+      "description": "Create Invoice form",
+      "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214671/tools/invoicing/subcontractor",
+      "columnGroups": [
+        {
+          "label": "",
+          "columns": [
+            "Invoice #",
+            "Invoice Status",
+            "Contract Company",
+            "Billing Period",
+            "Gross Amount",
+            "Net Amount",
+            "Paid Amount",
+            "Invoice Dates",
+            "Contract",
+            "Total Contract Amount",
+            "% Complete",
+            "ERP Status"
+          ],
+          "colspan": 12
+        }
+      ],
+      "columns": [
+        {
+          "label": "Invoice #",
+          "columnGroup": null
+        },
+        {
+          "label": "Invoice Status",
+          "columnGroup": null
+        },
+        {
+          "label": "Contract Company",
+          "columnGroup": null
+        },
+        {
+          "label": "Billing Period",
+          "columnGroup": null
+        },
+        {
+          "label": "Gross Amount",
+          "columnGroup": null
+        },
+        {
+          "label": "Net Amount",
+          "columnGroup": null
+        },
+        {
+          "label": "Paid Amount",
+          "columnGroup": null
+        },
+        {
+          "label": "Invoice Dates",
+          "columnGroup": null
+        },
+        {
+          "label": "Contract",
+          "columnGroup": null
+        },
+        {
+          "label": "Total Contract Amount",
+          "columnGroup": null
+        },
+        {
+          "label": "% Complete",
+          "columnGroup": null
+        },
+        {
+          "label": "ERP Status",
+          "columnGroup": null
+        }
+      ],
+      "toolbarActions": [
+        {
+          "label": "Alleato Group26-999 - MH",
+          "type": "dropdown",
+          "variant": "default"
+        },
+        {
+          "label": "Project ToolsInvoicing",
+          "type": "dropdown",
+          "variant": "default"
+        },
+        {
+          "label": "How many overdue RFIs are there?CmdK",
+          "type": "button",
+          "variant": "default"
+        },
+        {
+          "label": "More",
+          "type": "dropdown",
+          "variant": "default"
+        },
+        {
+          "label": "AppsSelect an App",
+          "type": "dropdown",
+          "variant": "default"
+        },
+        {
+          "label": "Support & Feedback",
+          "type": "dropdown",
+          "variant": "default"
+        },
+        {
+          "label": "Announcements",
+          "type": "button",
+          "variant": "default"
+        },
+        {
+          "label": "BC",
+          "type": "dropdown",
+          "variant": "default"
+        }
+      ],
+      "filters": [],
+      "rowActions": [],
+      "autoRows": [],
+      "formSections": [
+        {
+          "title": "",
+          "fields": [
+            {
+              "name": "billing_period",
+              "label": "Billing Period",
+              "type": "select",
+              "required": false,
+              "placeholder": "",
+              "options": [],
+              "currentValue": "",
+              "helpText": ""
+            },
+            {
+              "name": "contract_company",
+              "label": "Contract Company",
+              "type": "select",
+              "required": false,
+              "placeholder": "",
+              "options": [],
+              "currentValue": "",
+              "helpText": ""
+            },
+            {
+              "name": "payment_status",
+              "label": "Payment Status",
+              "type": "select",
+              "required": false,
+              "placeholder": "",
+              "options": [],
+              "currentValue": "",
+              "helpText": ""
+            },
+            {
+              "name": "invoice_status",
+              "label": "Invoice Status",
+              "type": "select",
+              "required": false,
+              "placeholder": "",
+              "options": [],
+              "currentValue": "",
+              "helpText": ""
+            },
+            {
+              "name": "contract_type",
+              "label": "Contract Type",
+              "type": "select",
+              "required": false,
+              "placeholder": "",
+              "options": [],
+              "currentValue": "",
+              "helpText": ""
+            }
+          ]
+        }
+      ],
+      "tabs": [],
+      "headerFields": [],
+      "screenshot": "screenshots/create-form.png",
+      "_capture_note": "",
+      "domFile": "dom/create-form.html"
+    }
+  }
+}

@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 type RouteContext = { params: Promise<{ projectId: string }> };
 
 // GET /api/projects/[projectId]/billing-periods
-// Fetches contract_billing_periods for all prime contracts in the project
+// Fetches project-level billing_periods (not contract_billing_periods)
 export async function GET(
   _request: NextRequest,
   context: RouteContext,
@@ -27,29 +27,10 @@ export async function GET(
       return NextResponse.json({ error: "Invalid project ID" }, { status: 400 });
     }
 
-    // Get prime contracts for this project
-    const { data: contracts, error: contractError } = await supabase
-      .from("prime_contracts")
-      .select("id")
-      .eq("project_id", projectIdNum);
-
-    if (contractError) {
-      return NextResponse.json(
-        { error: "Failed to fetch contracts", details: contractError.message },
-        { status: 500 },
-      );
-    }
-
-    const contractIds = (contracts ?? []).map((c) => c.id);
-    if (contractIds.length === 0) {
-      return NextResponse.json({ items: [], total: 0 });
-    }
-
-    // Fetch billing periods for those contracts
     const { data, error } = await supabase
-      .from("contract_billing_periods")
+      .from("billing_periods")
       .select("*")
-      .in("contract_id", contractIds)
+      .eq("project_id", projectIdNum)
       .order("start_date", { ascending: false });
 
     if (error) {
@@ -61,19 +42,13 @@ export async function GET(
 
     const items = (data ?? []).map((bp) => ({
       id: bp.id,
-      contract_id: bp.contract_id,
-      period_number: bp.period_number,
+      project_id: bp.project_id,
+      name: bp.name ?? (bp.start_date && bp.end_date
+        ? `${new Date(bp.start_date).toLocaleDateString()} - ${new Date(bp.end_date).toLocaleDateString()}`
+        : `Period ${bp.id}`),
       start_date: bp.start_date,
       end_date: bp.end_date,
-      billing_date: bp.billing_date,
-      status: bp.status,
-      work_completed: Number(bp.work_completed ?? 0),
-      stored_materials: Number(bp.stored_materials ?? 0),
-      current_payment_due: Number(bp.current_payment_due ?? 0),
-      retention_percentage: Number(bp.retention_percentage ?? 0),
-      retention_amount: Number(bp.retention_amount ?? 0),
-      net_payment_due: Number(bp.net_payment_due ?? 0),
-      notes: bp.notes,
+      is_closed: bp.is_closed ?? false,
       created_at: bp.created_at,
       updated_at: bp.updated_at,
     }));
@@ -109,53 +84,25 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { contract_id, start_date, end_date, billing_date, period_number } = body;
+    const { start_date, end_date, name } = body;
 
-    if (!contract_id || !start_date || !end_date || !billing_date) {
+    if (!start_date || !end_date) {
       return NextResponse.json(
-        { error: "contract_id, start_date, end_date, and billing_date are required" },
+        { error: "start_date and end_date are required" },
         { status: 400 },
       );
     }
 
-    // Verify contract belongs to project
-    const { data: contract } = await supabase
-      .from("prime_contracts")
-      .select("id")
-      .eq("id", contract_id)
-      .eq("project_id", projectIdNum)
-      .maybeSingle();
-
-    if (!contract) {
-      return NextResponse.json(
-        { error: "Contract not found in this project" },
-        { status: 404 },
-      );
-    }
-
-    // Auto-generate period_number if not provided
-    let finalPeriodNumber = period_number;
-    if (!finalPeriodNumber) {
-      const { data: maxPeriod } = await supabase
-        .from("contract_billing_periods")
-        .select("period_number")
-        .eq("contract_id", contract_id)
-        .order("period_number", { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      finalPeriodNumber = (maxPeriod?.period_number ?? 0) + 1;
-    }
+    const derivedName = name ?? `${new Date(start_date).toLocaleDateString()} - ${new Date(end_date).toLocaleDateString()}`;
 
     const { data, error } = await supabase
-      .from("contract_billing_periods")
+      .from("billing_periods")
       .insert({
-        contract_id,
-        period_number: finalPeriodNumber,
+        project_id: projectIdNum,
         start_date,
         end_date,
-        billing_date,
-        status: "draft",
+        name: derivedName,
+        is_closed: false,
       })
       .select()
       .single();

@@ -22,7 +22,7 @@ import { StepComponentProps } from "./project-setup-wizard";
 import type { Database } from "@/types/database.types";
 import { isDevelopment, getAutoFillData } from "@/lib/dev-autofill";
 
-type Contract = Database["public"]["Tables"]["contracts"]["Row"];
+type Contract = Database["public"]["Tables"]["prime_contracts"]["Row"];
 
 export function ContractSetup({
   projectId,
@@ -38,7 +38,7 @@ export function ContractSetup({
     contract_number: "",
     title: "Prime Contract",
     status: "draft",
-    original_contract_amount: 0,
+    original_contract_value: 0,
     client_id: null, // Set from project data when available
   });
 
@@ -64,7 +64,7 @@ export function ContractSetup({
           .toString()
           .padStart(3, "0")}`,
       title: data.title || "Prime Construction Contract",
-      original_contract_amount: data.original_amount || 0,
+      original_contract_value: data.original_amount || 0,
       notes: data.description || "",
     }));
   };
@@ -76,8 +76,8 @@ export function ContractSetup({
 
       if (
         !contract.title ||
-        !contract.original_contract_amount ||
-        contract.original_contract_amount <= 0
+        !contract.original_contract_value ||
+        contract.original_contract_value <= 0
       ) {
         setError("Please provide a contract title and amount");
         return;
@@ -85,14 +85,14 @@ export function ContractSetup({
 
       // Insert the contract
       const { data: newContract, error: contractError } = await supabase
-        .from("contracts")
+        .from("prime_contracts")
         .insert({
           project_id: parseInt(projectId),
-          contract_number: contract.contract_number || null,
+          contract_number: contract.contract_number || "DRAFT",
           title: contract.title || "Prime Contract",
           status: "draft",
-          original_contract_amount: contract.original_contract_amount || 0,
-          revised_contract_amount: contract.original_contract_amount || 0,
+          original_contract_value: contract.original_contract_value || 0,
+          revised_contract_value: contract.original_contract_value || 0,
           client_id: contract.client_id || null,
         })
         .select()
@@ -106,7 +106,7 @@ export function ContractSetup({
           .from("schedule_of_values")
           .insert({
             contract_id: newContract.id,
-            total_amount: newContract.original_contract_amount || 0,
+            total_amount: newContract.original_contract_value || 0,
             status: "draft",
           });
 
@@ -192,10 +192,10 @@ export function ContractSetup({
                 <Input
                   id="amount"
                   type="number"
-                  value={contract.original_contract_amount || ""}
+                  value={contract.original_contract_value || ""}
                   onChange={(e) =>
                     updateContract(
-                      "original_contract_amount",
+                      "original_contract_value",
                       parseFloat(e.target.value) || 0,
                     )
                   }
@@ -243,7 +243,7 @@ export function ContractSetup({
         </Card>
 
         {/* Contract Summary */}
-        {(contract.title || contract.original_contract_amount) && (
+        {(contract.title || contract.original_contract_value) && (
           <Card className="p-4 bg-muted/50">
             <h4 className="text-sm font-medium mb-2">Contract Summary</h4>
             <div className="space-y-1 text-sm">
@@ -253,12 +253,12 @@ export function ContractSetup({
                   <span className="font-medium">{contract.title}</span>
                 </div>
               )}
-              {contract.original_contract_amount &&
-                contract.original_contract_amount > 0 && (
+              {contract.original_contract_value &&
+                contract.original_contract_value > 0 && (
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Amount:</span>
                     <span className="font-medium">
-                      ${contract.original_contract_amount.toLocaleString()}
+                      ${contract.original_contract_value.toLocaleString()}
                     </span>
                   </div>
                 )}
@@ -285,8 +285,8 @@ export function ContractSetup({
           disabled={
             saving ||
             !contract.title ||
-            !contract.original_contract_amount ||
-            contract.original_contract_amount <= 0
+            !contract.original_contract_value ||
+            contract.original_contract_value <= 0
           }
         >
           {saving ? "Saving..." : "Complete Setup"}

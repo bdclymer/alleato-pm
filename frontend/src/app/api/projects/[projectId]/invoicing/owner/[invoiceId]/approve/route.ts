@@ -37,11 +37,11 @@ export async function POST(
       .select(
         `
         *,
-        contracts!inner(project_id)
+        prime_contracts!inner(project_id)
       `,
       )
       .eq("id", invoiceIdNum)
-      .eq("contracts.project_id", projectIdNum)
+      .eq("prime_contracts.project_id", projectIdNum)
       .single();
 
     if (fetchError) {

@@ -25,20 +25,19 @@ const APPROVED_DIRECT_COST_STATUSES = ["Approved"];
  * Pending commitment statuses for Pending Cost Changes calculation
  * Per Procore definitions
  */
-const PENDING_SUBCONTRACT_STATUSES = ["Out For Signature"];
+const PENDING_SUBCONTRACT_STATUSES = ["Out for Signature", "Pending"];
 const PENDING_PO_STATUSES = [
-  "Processing",
-  "Submitted",
-  "Partially Received",
-  "Received",
+  "Draft",
+  "Sent",
+  "Acknowledged",
 ];
 
 /**
  * Executed/Approved commitment statuses for Committed Costs calculation
  * Per Procore: Commitments with executed/approved status count towards committed costs
  */
-const EXECUTED_SUBCONTRACT_STATUSES = ["approved", "executed", "complete"];
-const EXECUTED_PO_STATUSES = ["approved", "executed", "complete"];
+const EXECUTED_SUBCONTRACT_STATUSES = ["Approved", "Complete"];
+const EXECUTED_PO_STATUSES = ["Approved", "Completed"];
 
 interface CostAggregation {
   jobToDateCostDetail: number;
@@ -48,18 +47,26 @@ interface CostAggregation {
   pendingBudgetChanges: number;
 }
 
+interface DirectCostParent {
+  cost_type: string | null;
+  status: string | null;
+  project_id: number | null;
+}
+
 interface DirectCostWithRelations {
   budget_code_id: string | null;
   line_total: number | null;
   quantity: number | null;
   unit_cost: number | null;
-  direct_costs:
-    | {
-        cost_type: string | null;
-        status: string | null;
-        project_id: number | null;
-      }[]
-    | null;
+  // Supabase returns object for belongs-to (inner join) or array for has-many
+  direct_costs: DirectCostParent | DirectCostParent[] | null;
+}
+
+/** Normalize direct_costs from Supabase (could be object or array) */
+function getDirectCostParent(raw: DirectCostWithRelations["direct_costs"]): DirectCostParent | null {
+  if (!raw) return null;
+  if (Array.isArray(raw)) return raw[0] ?? null;
+  return raw;
 }
 
 interface SOVItem {
@@ -274,7 +281,7 @@ export async function GET(
         `,
         )
         .eq("commitment_change_orders.commitments.project_id", projectIdNum)
-        .eq("commitment_change_orders.status", "approved"),
+        .eq("commitment_change_orders.status", "Approved"),
     ]);
 
     if (budgetRowsResult.error) {
@@ -320,7 +327,7 @@ export async function GET(
 
       ensureCostEntry(codeId);
 
-      const directCost = cost.direct_costs?.[0];
+      const directCost = getDirectCostParent(cost.direct_costs);
       const costType = directCost?.cost_type || "Invoice";
       const amount =
         cost.line_total ?? (cost.quantity ?? 0) * (cost.unit_cost ?? 0);

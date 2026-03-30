@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
@@ -42,8 +43,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     // Verify commitment exists and get project_id
     const { data: commitment, error: commitmentError } = await supabase
-      .from("commitments")
-      .select("id, project_id")
+      .from("commitments_unified")
+      .select("id, project_id, commitment_type")
       .eq("id", commitmentId)
       .is("deleted_at", null)
       .single();
@@ -55,17 +56,19 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    const attachmentTables =
+      commitment.commitment_type === "subcontract"
+        ? ["commitments", "subcontracts"]
+        : commitment.commitment_type === "purchase_order"
+          ? ["commitments", "purchase_orders"]
+          : ["commitments"];
+
     // Get attachments using the generic attachments table
     const { data: attachments, error } = await supabase
       .from("attachments")
-      .select(
-        `
-        *,
-        uploader:users!attachments_uploaded_by_fkey(id, email)
-      `,
-      )
+      .select("*")
       .eq("attached_to_id", commitmentId)
-      .eq("attached_to_table", "commitments")
+      .in("attached_to_table", attachmentTables)
       .order("uploaded_at", { ascending: false });
 
     if (error) {
@@ -81,7 +84,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       commitmentId: attachment.attached_to_id,
       fileName: attachment.file_name,
       url: attachment.url,
-      uploadedBy: attachment.uploader,
+      uploadedBy: attachment.uploaded_by,
       uploadedAt: attachment.uploaded_at,
       downloadUrl: `/api/commitments/${commitmentId}/attachments/${attachment.id}/download`,
       _links: {
@@ -132,6 +135,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { id: commitmentId } = await params;
     const supabase = await createClient();
+    const serviceClient = createServiceClient();
 
     // Get current user
     const {
@@ -144,9 +148,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // Verify commitment exists and get project_id
-    const { data: commitment, error: commitmentError } = await supabase
-      .from("commitments")
-      .select("id, project_id, commitment_number")
+    const { data: commitment, error: commitmentError } = await serviceClient
+      .from("commitments_unified")
+      .select("id, project_id")
       .eq("id", commitmentId)
       .is("deleted_at", null)
       .single();
@@ -179,7 +183,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
     const storagePath = `commitments/${commitment.project_id}/${commitmentId}/${fileName}`;
 
-    const { error: uploadError } = await supabase.storage
+    const { error: uploadError } = await serviceClient.storage
       .from("project-files")
       .upload(storagePath, file, {
         contentType: file.type,
@@ -196,10 +200,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Get public URL for the file
     const {
       data: { publicUrl },
-    } = supabase.storage.from("project-files").getPublicUrl(storagePath);
+    } = serviceClient.storage.from("project-files").getPublicUrl(storagePath);
 
     // Create attachment record in generic attachments table
-    const { data: attachment, error: dbError } = await supabase
+    const { data: attachment, error: dbError } = await serviceClient
       .from("attachments")
       .insert({
         attached_to_id: commitmentId,
@@ -215,7 +219,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     if (dbError) {
       // Clean up uploaded file
-      await supabase.storage.from("project-files").remove([storagePath]);
+      await serviceClient.storage.from("project-files").remove([storagePath]);
 
       return NextResponse.json(
         {
@@ -227,7 +231,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // Update commitment modification timestamp
-    await supabase
+    await serviceClient
       .from("commitments")
       .update({
         updated_at: new Date().toISOString(),
@@ -314,7 +318,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     // Verify commitment exists
     const { data: commitment, error: commitmentError } = await supabase
-      .from("commitments")
+      .from("commitments_unified")
       .select("id, project_id")
       .eq("id", commitmentId)
       .is("deleted_at", null)

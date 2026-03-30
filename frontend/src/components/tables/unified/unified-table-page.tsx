@@ -186,6 +186,8 @@ export interface UnifiedTablePageProps<T> {
     collapsible?: boolean;
     /** Show drag handle for resizing (default: true) */
     resizable?: boolean;
+    /** Keep panel sticky to viewport on desktop (default: true) */
+    sticky?: boolean;
     /** localStorage key suffix for persisting width/collapsed state */
     storageKey?: string;
   };
@@ -330,6 +332,7 @@ export function UnifiedTablePage<T>({
   const panelMaxWidth = sidePanel?.maxWidth ?? 640;
   const panelCollapsible = sidePanel?.collapsible !== false;
   const panelResizable = sidePanel?.resizable !== false;
+  const panelSticky = sidePanel?.sticky !== false;
 
   const [panelCollapsed, setPanelCollapsed] = React.useState(false);
   const [panelWidth, setPanelWidth] = React.useState(panelDefaultWidth);
@@ -1467,7 +1470,10 @@ export function UnifiedTablePage<T>({
     <>
       <PageContainer
         maxWidth={containerMaxWidth}
-        className={cn(sidePanel && "pt-0", containerClassName)}
+        className={cn(
+          sidePanel && "pt-0 overflow-x-visible",
+          containerClassName,
+        )}
       >
         {sidePanel ? (
           <>
@@ -1497,7 +1503,10 @@ export function UnifiedTablePage<T>({
               {/* Side panel with resize handle */}
               <aside
                 className={cn(
-                  "hidden lg:flex lg:flex-col lg:sticky lg:top-12 lg:h-[calc(100vh-3rem)] bg-muted border-l border-t border-border relative",
+                  "hidden lg:flex lg:flex-col bg-muted border-l border-t border-border relative",
+                  panelSticky
+                    ? "lg:sticky lg:top-12 lg:max-h-[calc(100dvh-3rem)]"
+                    : "lg:relative lg:max-h-none",
                   panelCollapsed ? "lg:!hidden" : "lg:overflow-y-auto",
                   sidePanel.widthClassName,
                 )}

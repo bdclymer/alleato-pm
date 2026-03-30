@@ -1420,8 +1420,8 @@ async function loadChangeOrderBundle(
   const [contractResult, lineItemsResult, reviewerPeopleResult] = await Promise.all([
     changeOrder.contract_id
       ? supabase
-          .from("contracts")
-          .select("id, contract_number, title, client_id, owner_client_id, original_contract_amount, revised_contract_amount")
+          .from("prime_contracts")
+          .select("id, contract_number, title, client_id, original_contract_value, revised_contract_value")
           .eq("id", changeOrder.contract_id)
           .single()
       : Promise.resolve({ data: null, error: null }),

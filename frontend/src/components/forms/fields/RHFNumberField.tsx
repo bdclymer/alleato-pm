@@ -34,6 +34,12 @@ export function RHFNumberField<TFieldValues extends FieldValues>({
   step = 1,
   disabled,
 }: Props<TFieldValues>) {
+  const parseNumberValue = (raw: string): number => {
+    if (raw.trim() === "") return Number.NaN
+    const parsed = Number(raw)
+    return Number.isNaN(parsed) ? Number.NaN : parsed
+  }
+
   return (
     <FormField
       control={control}
@@ -49,7 +55,7 @@ export function RHFNumberField<TFieldValues extends FieldValues>({
               name={field.name}
               ref={field.ref}
               value={field.value ?? ""}
-              onChange={e => field.onChange(e.target.value)}
+              onChange={e => field.onChange(parseNumberValue(e.target.value))}
               onBlur={field.onBlur}
               placeholder={placeholder}
               min={min}

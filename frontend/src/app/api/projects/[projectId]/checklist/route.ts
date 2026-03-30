@@ -30,7 +30,7 @@ export async function GET(
         .select("id", { count: "exact", head: true })
         .eq("project_id", projectId),
       supabase
-        .from("contracts")
+        .from("prime_contracts")
         .select("id", { count: "exact", head: true })
         .eq("project_id", projectId),
       supabase

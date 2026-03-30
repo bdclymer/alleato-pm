@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 // POST /api/projects/[projectId]/invoicing/owner
@@ -77,7 +77,7 @@ export async function POST(
     }
 
     return NextResponse.json({ data: invoice }, { status: 201 });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },
@@ -114,18 +114,32 @@ export async function GET(
 
     const projectIdNum = parseInt(projectId, 10);
 
-    // Fetch owner invoices with line items, scoped to the project via prime_contracts
-    const { data: invoices, error: invoicesError } = await supabase
+    // Parse optional query filters
+    const { searchParams } = new URL(request.url);
+    const billingPeriodId = searchParams.get("billing_period_id");
+    const primeContractId = searchParams.get("prime_contract_id");
+
+    // Build query scoped to the project via prime_contracts join
+    let query = supabase
       .from("owner_invoices")
       .select(
         `
         *,
         owner_invoice_line_items(*),
-        prime_contracts!inner(id, project_id, contract_number, title)
+        prime_contracts!inner(id, project_id, contract_number, title, contract_amount)
       `,
       )
       .eq("prime_contracts.project_id", projectIdNum)
       .order("created_at", { ascending: false });
+
+    if (billingPeriodId) {
+      query = query.eq("billing_period_id", billingPeriodId);
+    }
+    if (primeContractId) {
+      query = query.eq("prime_contract_id", primeContractId);
+    }
+
+    const { data: invoices, error: invoicesError } = await query;
 
     if (invoicesError) {
       return NextResponse.json(
@@ -134,26 +148,40 @@ export async function GET(
       );
     }
 
-    // Compute total_amount for each invoice (sum of line item approved_amount)
+    // Compute financial summary for each invoice from line items
     const invoicesWithTotals = (invoices || []).map((invoice) => {
       const lineItems = invoice.owner_invoice_line_items || [];
-      const total_amount = lineItems.reduce(
+      const gross_amount = lineItems.reduce(
+        (sum: number, item: { scheduled_value: number | null }) => sum + (item.scheduled_value || 0),
+        0,
+      );
+      const net_amount = lineItems.reduce(
         (sum: number, item: { approved_amount: number | null }) => sum + (item.approved_amount || 0),
         0,
       );
+      const total_amount = net_amount;
 
-      const { prime_contracts: pc, ...invoiceData } = invoice;
+      const pc = Array.isArray(invoice.prime_contracts)
+        ? invoice.prime_contracts[0]
+        : invoice.prime_contracts as { contract_number: string | null; title: string | null; contract_amount: number | null } | null;
+
+      const { prime_contracts: _pc, ...invoiceData } = invoice;
 
       return {
         ...invoiceData,
         contract_number: pc?.contract_number ?? null,
         contract_title: pc?.title ?? null,
+        total_contract_amount: pc?.contract_amount ?? null,
+        gross_amount: invoice.gross_amount ?? gross_amount,
+        net_amount: invoice.net_amount ?? net_amount,
+        paid_amount: invoice.paid_amount ?? null,
+        percent_complete: invoice.percent_complete ?? null,
         total_amount,
       };
     });
 
     return NextResponse.json({ data: invoicesWithTotals });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 },

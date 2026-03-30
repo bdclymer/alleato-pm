@@ -153,7 +153,7 @@ export async function getProjectContracts(
   projectId: number,
 ) {
   return supabase
-    .from("contracts")
+    .from("prime_contracts")
     .select("*")
     .eq("project_id", projectId)
     .order("created_at", { ascending: false });

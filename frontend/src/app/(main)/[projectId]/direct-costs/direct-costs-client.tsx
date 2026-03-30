@@ -702,6 +702,11 @@ export function DirectCostsClient({
   );
 
 
+  const summaryTotal = React.useMemo(
+    () => filteredSummaryItems.reduce((sum, item) => sum + (item.total_amount ?? 0), 0),
+    [filteredSummaryItems],
+  );
+
   const summaryIsFiltered =
     Boolean(tableState.searchInput) ||
     Boolean(activeFilters.status) ||
@@ -919,6 +924,12 @@ export function DirectCostsClient({
               return;
             }
             tableState.setSelectedIds((prev) => prev.filter((itemId) => itemId !== id));
+          },
+        }}
+        footerTotals={{
+          label: "Totals",
+          values: {
+            total_amount: <span className="tabular-nums">{formatAmount(summaryTotal)}</span>,
           },
         }}
         emptyState={{

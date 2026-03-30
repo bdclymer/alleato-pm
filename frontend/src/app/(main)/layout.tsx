@@ -12,6 +12,21 @@ import { LiveCursors } from "@/components/live-cursors/LiveCursors";
 import { AdminFeedbackWidget } from "@/components/admin-feedback/AdminFeedbackWidget";
 import { feedbackTargetProps } from "@/lib/admin-feedback/constants";
 
+/** Floating overlays extracted to a single component to avoid mixed static/dynamic children key warnings. */
+function Overlays({ showChat }: { showChat: boolean }) {
+  return (
+    <>
+      {showChat && <AIChatWidgetLazy />}
+      <React.Suspense fallback={null}>
+        <LiveCursors />
+      </React.Suspense>
+      <React.Suspense fallback={null}>
+        <AdminFeedbackWidget />
+      </React.Suspense>
+    </>
+  );
+}
+
 /**
  * Main layout with sidebar as primary navigation.
  * Sidebar starts expanded with icon-collapse mode.
@@ -38,14 +53,8 @@ export default function MainLayout({
             {children}
             <SiteFooter />
           </main>
-          {showAlleatoAIWidget ? <AIChatWidgetLazy /> : null}
-          <React.Suspense fallback={null}>
-            <LiveCursors />
-          </React.Suspense>
-          <React.Suspense fallback={null}>
-            <AdminFeedbackWidget />
-          </React.Suspense>
         </CreateProjectDevConfigProvider>
+        <Overlays showChat={showAlleatoAIWidget} />
       </SidebarInset>
     </SidebarProvider>
   );

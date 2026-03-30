@@ -975,9 +975,6 @@ export function ChangeEventForm({
     event.preventDefault();
     const nextErrors: Partial<Record<keyof ChangeEventFormData, string>> = {};
 
-    if (!formData.contractNumber.trim()) {
-      nextErrors.contractNumber = "Contract number is required";
-    }
     if (!formData.title.trim()) {
       nextErrors.title = "Title is required";
     }
@@ -1091,10 +1088,9 @@ export function ChangeEventForm({
             <FormGrid columns={3}>
               <TextField
                 label="Number"
-                required
                 value={formData.contractNumber}
                 onChange={(e) => updateFormData({ contractNumber: e.target.value })}
-                placeholder="Enter number"
+                placeholder="Auto-generated"
                 error={errors.contractNumber}
               />
               <TextField
@@ -1673,19 +1669,21 @@ export function ChangeEventForm({
               multiple
               variant="minimal"
               onFilesSelected={(files) => {
-                updateFormData({
-                  attachments: [...formData.attachments, ...files],
-                });
+                setFormData((prev) => ({
+                  ...prev,
+                  attachments: [...prev.attachments, ...files],
+                }));
               }}
               onChange={(nextFiles) => {
                 const remaining = nextFiles.map(
                   (f) => `${f.name}:${f.size}:${f.type || ""}`,
                 );
-                updateFormData({
-                  attachments: formData.attachments.filter((file) =>
+                setFormData((prev) => ({
+                  ...prev,
+                  attachments: prev.attachments.filter((file) =>
                     remaining.includes(`${file.name}:${file.size}:${file.type || ""}`),
                   ),
-                });
+                }));
               }}
               accept=".pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.heic,.csv"
               maxSize={25 * 1024 * 1024}

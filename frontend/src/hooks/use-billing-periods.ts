@@ -12,30 +12,20 @@ import { toast } from "sonner";
 // =============================================================================
 
 export interface BillingPeriodItem {
-  id: string;
-  contract_id: string;
-  period_number: number;
-  start_date: string;
-  end_date: string;
-  billing_date: string;
-  status: string;
-  work_completed: number;
-  stored_materials: number;
-  current_payment_due: number;
-  retention_percentage: number;
-  retention_amount: number;
-  net_payment_due: number;
-  notes: string | null;
+  id: number;
+  project_id: number;
+  name: string;
+  start_date: string | null;
+  end_date: string | null;
+  is_closed: boolean;
   created_at: string;
   updated_at: string;
 }
 
 export interface CreateBillingPeriodPayload {
-  contract_id: string;
   start_date: string;
   end_date: string;
-  billing_date: string;
-  period_number?: number;
+  name?: string;
 }
 
 // =============================================================================

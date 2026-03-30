@@ -16,17 +16,16 @@ const DIRECT_COST_TYPES = ["Invoice", "Expense", "Payroll"];
 const APPROVED_DIRECT_COST_STATUSES = ["Approved", "Paid"];
 
 // Pending commitment statuses for Pending Cost Changes calculation
-const PENDING_SUBCONTRACT_STATUSES = ["Out For Signature"];
+const PENDING_SUBCONTRACT_STATUSES = ["Out for Signature", "Pending"];
 const PENDING_PO_STATUSES = [
-  "Processing",
-  "Submitted",
-  "Partially Received",
-  "Received",
+  "Draft",
+  "Sent",
+  "Acknowledged",
 ];
 
 // Executed/Approved commitment statuses for Committed Costs calculation
-const EXECUTED_SUBCONTRACT_STATUSES = ["approved", "executed", "complete"];
-const EXECUTED_PO_STATUSES = ["approved", "executed", "complete"];
+const EXECUTED_SUBCONTRACT_STATUSES = ["Approved", "Complete"];
+const EXECUTED_PO_STATUSES = ["Approved", "Completed"];
 
 interface ExportBudgetRow {
   "Cost Code": string;
@@ -194,7 +193,7 @@ export async function GET(
         `,
         )
         .eq("commitment_change_orders.commitments.project_id", numericProjectId)
-        .eq("commitment_change_orders.status", "approved"),
+        .eq("commitment_change_orders.status", "Approved"),
     ]);
 
     if (budgetLinesRes.error) {

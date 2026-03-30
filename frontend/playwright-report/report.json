@@ -11,7 +11,7 @@
     "grepInvert": null,
     "maxFailures": 0,
     "metadata": {
-      "actualWorkers": 2
+      "actualWorkers": 1
     },
     "preserveOutput": "always",
     "projects": [
@@ -20,7 +20,7 @@
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 2
+          "actualWorkers": 1
         },
         "id": "setup",
         "name": "setup",
@@ -29,14 +29,14 @@
         "testMatch": [
           "/.*\\.setup\\.ts/"
         ],
-        "timeout": 30000
+        "timeout": 60000
       },
       {
         "outputDir": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 2
+          "actualWorkers": 1
         },
         "id": "chromium",
         "name": "chromium",
@@ -45,14 +45,14 @@
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
         ],
-        "timeout": 30000
+        "timeout": 60000
       },
       {
         "outputDir": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 2
+          "actualWorkers": 1
         },
         "id": "debug",
         "name": "debug",
@@ -63,14 +63,14 @@
         "testMatch": [
           "**/*.@(spec|test).?(c|m)[jt]s?(x)"
         ],
-        "timeout": 30000
+        "timeout": 60000
       },
       {
         "outputDir": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results",
         "repeatEach": 1,
         "retries": 0,
         "metadata": {
-          "actualWorkers": 2
+          "actualWorkers": 1
         },
         "id": "no-auth",
         "name": "no-auth",
@@ -79,7 +79,7 @@
         "testMatch": [
           "/sidebar-collapse-verification\\.spec\\.ts/"
         ],
-        "timeout": 30000
+        "timeout": 60000
       }
     ],
     "quiet": false,
@@ -112,10 +112,10 @@
     "updateSnapshots": "missing",
     "updateSourceMethod": "patch",
     "version": "1.58.1",
-    "workers": 7,
+    "workers": 1,
     "webServer": {
       "command": "npm run dev",
-      "url": "http://localhost:3000",
+      "url": "http://localhost:3001",
       "reuseExistingServer": true
     }
   },
@@ -132,7 +132,7 @@
           "tags": [],
           "tests": [
             {
-              "timeout": 30000,
+              "timeout": 60000,
               "annotations": [],
               "expectedStatus": "passed",
               "projectId": "setup",
@@ -142,7 +142,7 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 1626,
+                  "duration": 401,
                   "errors": [],
                   "stdout": [
                     {
@@ -151,7 +151,7 @@
                   ],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-03-22T18:50:17.549Z",
+                  "startTime": "2026-03-29T22:52:00.989Z",
                   "annotations": [],
                   "attachments": [
                     {
@@ -189,17 +189,17 @@
           "tags": [],
           "tests": [
             {
-              "timeout": 30000,
+              "timeout": 60000,
               "annotations": [],
               "expectedStatus": "passed",
               "projectId": "setup",
               "projectName": "setup",
               "results": [
                 {
-                  "workerIndex": 1,
-                  "parallelIndex": 1,
+                  "workerIndex": 0,
+                  "parallelIndex": 0,
                   "status": "failed",
-                  "duration": 1729,
+                  "duration": 406,
                   "error": {
                     "message": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8082/\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8082/\", waiting until \"load\"\u001b[22m\n",
                     "stack": "Error: page.goto: net::ERR_CONNECTION_REFUSED at http://localhost:8082/\nCall log:\n\u001b[2m  - navigating to \"http://localhost:8082/\", waiting until \"load\"\u001b[22m\n\n    at /Users/meganharrison/Documents/alleato-pm/frontend/tests/supabase-e2e/studio/features/_global.setup.ts:37:14",
@@ -231,7 +231,7 @@
                     }
                   ],
                   "retry": 0,
-                  "startTime": "2026-03-22T18:50:17.646Z",
+                  "startTime": "2026-03-29T22:52:02.195Z",
                   "annotations": [],
                   "attachments": [
                     {
@@ -243,11 +243,6 @@
                       "name": "video",
                       "contentType": "video/webm",
                       "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/supabase-e2e-studio-features-_global.setup.ts-Global-Setup-setup/video.webm"
-                    },
-                    {
-                      "name": "error-context",
-                      "contentType": "text/markdown",
-                      "path": "/Users/meganharrison/Documents/alleato-pm/frontend/test-results/supabase-e2e-studio-features-_global.setup.ts-Global-Setup-setup/error-context.md"
                     }
                   ],
                   "errorLocation": {
@@ -268,60 +263,49 @@
       ]
     },
     {
-      "title": "e2e/verify-delete-contract.spec.ts",
-      "file": "e2e/verify-delete-contract.spec.ts",
+      "title": "e2e/commitments/commitment-submit.spec.ts",
+      "file": "e2e/commitments/commitment-submit.spec.ts",
       "column": 0,
       "line": 0,
-      "specs": [
+      "specs": [],
+      "suites": [
         {
-          "title": "verify contract deletion",
-          "ok": true,
-          "tags": [],
-          "tests": [
+          "title": "Submit Commitment Forms",
+          "file": "e2e/commitments/commitment-submit.spec.ts",
+          "line": 5,
+          "column": 6,
+          "specs": [
             {
-              "timeout": 30000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "chromium",
-              "projectName": "chromium",
-              "results": [],
-              "status": "skipped"
+              "title": "submit purchase order and capture response",
+              "ok": true,
+              "tags": [],
+              "tests": [
+                {
+                  "timeout": 60000,
+                  "annotations": [],
+                  "expectedStatus": "passed",
+                  "projectId": "chromium",
+                  "projectName": "chromium",
+                  "results": [],
+                  "status": "skipped"
+                }
+              ],
+              "id": "a74e9c5003150f124933-e91e2e0c60e163650fdf",
+              "file": "e2e/commitments/commitment-submit.spec.ts",
+              "line": 6,
+              "column": 7
             }
-          ],
-          "id": "ba8fb7a14b798624856b-f5e1214fdd94189dcb27",
-          "file": "e2e/verify-delete-contract.spec.ts",
-          "line": 3,
-          "column": 5
-        },
-        {
-          "title": "verify contract deletion",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 30000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "debug",
-              "projectName": "debug",
-              "results": [],
-              "status": "skipped"
-            }
-          ],
-          "id": "ba8fb7a14b798624856b-dfc18a6fbffc0d50dace",
-          "file": "e2e/verify-delete-contract.spec.ts",
-          "line": 3,
-          "column": 5
+          ]
         }
       ]
     }
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-03-22T18:50:16.363Z",
-    "duration": 3681.688,
+    "startTime": "2026-03-29T22:51:51.288Z",
+    "duration": 11467.11,
     "expected": 1,
-    "skipped": 2,
+    "skipped": 1,
     "unexpected": 1,
     "flaky": 0
   }

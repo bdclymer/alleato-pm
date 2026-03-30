@@ -86,7 +86,7 @@ export const createChangeEventSchema = z.object({
   origin: ChangeEventOrigin.optional(),
   expectingRevenue: z.boolean().default(true),
   lineItemRevenueSource: LineItemRevenueSource.optional(),
-  primeContractId: z.coerce.number().int().positive().optional(),
+  primeContractId: z.union([z.string().uuid(), z.coerce.number().int().positive()]).optional(),
   description: z.string().optional(),
 });
 
@@ -98,7 +98,7 @@ export const updateChangeEventSchema = z.object({
   scope: ChangeEventScope.optional(),
   expectingRevenue: z.boolean().optional(),
   lineItemRevenueSource: LineItemRevenueSource.optional(),
-  primeContractId: z.coerce.number().int().positive().optional(),
+  primeContractId: z.union([z.string().uuid(), z.coerce.number().int().positive()]).optional(),
   description: z.string().optional(),
   status: ChangeEventStatus.optional(), // Only admin can change status
 }); // Create Line Item Schema

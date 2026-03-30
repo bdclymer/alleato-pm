@@ -10,6 +10,13 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { BudgetSnapshot, BudgetGroup } from "@/types/budget";
 
 export type QuickFilterType =
@@ -91,28 +98,18 @@ export function BudgetFilters({
                   </h3>
                   <span className="truncate text-xs text-muted-foreground">{selectedSnapshotName}</span>
                 </div>
-                <div className="grid gap-1.5">
-                  {snapshots.map((snapshot) => {
-                    const isActive = selectedSnapshot === snapshot.id;
-                    return (
-                      <Button
-                        key={snapshot.id}
-                        type="button"
-                        variant="outline"
-                        onClick={() => onSnapshotChange(snapshot.id)}
-                        className={cn(
-                          "flex w-full items-center justify-between h-auto px-3 py-2 text-left text-sm transition-colors font-normal",
-                          isActive
-                            ? "border-primary/40 bg-primary/10 text-foreground"
-                            : "border-border hover:border-primary/20 hover:bg-accent/40"
-                        )}
-                      >
-                        <span>{snapshot.name}</span>
-                        {isActive ? <span className="text-xs font-medium text-primary">Selected</span> : null}
-                      </Button>
-                    );
-                  })}
-                </div>
+                <Select value={selectedSnapshot} onValueChange={onSnapshotChange}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select Snapshot" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {snapshots.map((snapshot) => (
+                      <SelectItem key={snapshot.id} value={snapshot.id}>
+                        {snapshot.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </section>
 
               <section className="space-y-2">
@@ -122,27 +119,18 @@ export function BudgetFilters({
                   </h3>
                   <span className="truncate text-xs text-muted-foreground">{selectedGroupName}</span>
                 </div>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {groups.map((group) => {
-                    const isActive = selectedGroup === group.id;
-                    return (
-                      <Button
-                        key={group.id}
-                        type="button"
-                        variant="outline"
-                        onClick={() => onGroupChange(group.id)}
-                        className={cn(
-                          "h-auto px-3 py-2 text-left text-sm transition-colors font-normal",
-                          isActive
-                            ? "border-primary/40 bg-primary/10 text-foreground"
-                            : "border-border hover:border-primary/20 hover:bg-accent/40"
-                        )}
-                      >
+                <Select value={selectedGroup} onValueChange={onGroupChange}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select Group" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {groups.map((group) => (
+                      <SelectItem key={group.id} value={group.id}>
                         {group.name}
-                      </Button>
-                    );
-                  })}
-                </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </section>
 
               <section className="space-y-2">
@@ -154,35 +142,31 @@ export function BudgetFilters({
                     {quickFilterLabels[activeQuickFilter]}
                   </span>
                 </div>
-                <div className="grid grid-cols-2 gap-1.5">
-                  {(
-                    [
-                      { id: "all", label: "All Items", dotClassName: "bg-muted-foreground" },
-                      { id: "over-budget", label: "Over Budget", dotClassName: "bg-destructive" },
-                      { id: "under-budget", label: "Under Budget", dotClassName: "bg-success" },
-                      { id: "no-activity", label: "No Activity", dotClassName: "bg-muted-foreground/60" },
-                    ] as const
-                  ).map((filter) => {
-                    const isActive = activeQuickFilter === filter.id;
-                    return (
-                      <Button
-                        key={filter.id}
-                        type="button"
-                        variant="outline"
-                        onClick={() => onQuickFilterChange?.(filter.id)}
-                        className={cn(
-                          "flex items-center gap-2 h-auto px-3 py-2 text-left text-sm transition-colors font-normal",
-                          isActive
-                            ? "border-primary/40 bg-primary/10 text-foreground"
-                            : "border-border hover:border-primary/20 hover:bg-accent/40"
-                        )}
-                      >
-                        <span className={cn("h-2 w-2 rounded-full", filter.dotClassName)} />
-                        <span>{filter.label}</span>
-                      </Button>
-                    );
-                  })}
-                </div>
+                <Select
+                  value={activeQuickFilter}
+                  onValueChange={(value) => onQuickFilterChange?.(value as QuickFilterType)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select Filter" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(
+                      [
+                        { id: "all", label: "All Items", dotClassName: "bg-muted-foreground" },
+                        { id: "over-budget", label: "Over Budget", dotClassName: "bg-destructive" },
+                        { id: "under-budget", label: "Under Budget", dotClassName: "bg-success" },
+                        { id: "no-activity", label: "No Activity", dotClassName: "bg-muted-foreground/60" },
+                      ] as const
+                    ).map((filter) => (
+                      <SelectItem key={filter.id} value={filter.id}>
+                        <span className="flex items-center gap-2">
+                          <span className={cn("h-2 w-2 rounded-full", filter.dotClassName)} />
+                          <span>{filter.label}</span>
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </section>
             </div>
           </DropdownMenuContent>

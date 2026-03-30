@@ -22,6 +22,15 @@ const JTD_COST_TYPES = [
 const DIRECT_COST_TYPES = ["Invoice", "Expense", "Payroll"];
 const APPROVED_DIRECT_COST_STATUSES = ["Approved", "Paid"];
 
+interface DirectCostParent {
+  cost_type: string | null;
+  status: string | null;
+  vendor_id: string | null;
+  invoice_number: string | null;
+  date: string | null;
+  vendors: { name: string }[] | { name: string } | null;
+}
+
 interface DirectCostWithRelations {
   id: string;
   budget_code_id: string | null;
@@ -29,20 +38,22 @@ interface DirectCostWithRelations {
   quantity: number | null;
   unit_cost: number | null;
   description: string | null;
-  direct_costs:
-    | {
-        cost_type: string | null;
-        status: string | null;
-        vendor_id: string | null;
-        invoice_number: string | null;
-        date: string | null;
-        vendors:
-          | {
-              name: string;
-            }[]
-          | null;
-      }[]
-    | null;
+  // Supabase returns object for belongs-to or array for has-many depending on join type
+  direct_costs: DirectCostParent | DirectCostParent[] | null;
+}
+
+/** Normalize direct_costs from Supabase (could be object or array) */
+function getDirectCost(raw: DirectCostWithRelations["direct_costs"]): DirectCostParent | null {
+  if (!raw) return null;
+  if (Array.isArray(raw)) return raw[0] ?? null;
+  return raw;
+}
+
+/** Normalize vendors (could be object or array) */
+function getVendorName(vendors: DirectCostParent["vendors"]): string | null {
+  if (!vendors) return null;
+  if (Array.isArray(vendors)) return vendors[0]?.name ?? null;
+  return (vendors as { name: string }).name ?? null;
 }
 
 interface CostBreakdown {
@@ -70,6 +81,7 @@ export async function GET(
 
     const { searchParams } = new URL(request.url);
     const budgetLineId = searchParams.get("budgetLineId");
+    const costCodeParam = searchParams.get("costCode"); // e.g., "21" for division or "21-1313" for specific
     const statusFilter = searchParams.get("status"); // 'approved', 'pending', 'all'
 
     const supabase = await createClient();
@@ -78,9 +90,20 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // If budgetLineId is provided, get the cost_code_id from budget_lines
-    let costCodeId: string | null = null;
-    if (budgetLineId) {
+    // Resolve cost_code_ids to filter by.
+    // Priority: costCode param (supports division prefix like "21") > budgetLineId lookup
+    let costCodeIds: string[] | null = null;
+
+    if (costCodeParam) {
+      // costCode can be a division prefix (e.g., "21") or a full code (e.g., "21-1313")
+      // Find all cost_codes matching this prefix
+      const { data: matchingCodes } = await supabase
+        .from("cost_codes")
+        .select("id")
+        .like("id", `${costCodeParam}%`);
+      costCodeIds = (matchingCodes || []).map((r) => r.id);
+    } else if (budgetLineId && !budgetLineId.startsWith("division-")) {
+      // Real budget line ID — look up the cost_code_id
       const { data: budgetLine, error: lineError } = await supabase
         .from("budget_lines")
         .select("cost_code_id")
@@ -93,7 +116,27 @@ export async function GET(
           { status: 404 },
         );
       }
-      costCodeId = budgetLine.cost_code_id;
+      costCodeIds = budgetLine.cost_code_id ? [budgetLine.cost_code_id] : null;
+    }
+
+    // Translate cost_code_ids to project_cost_code IDs
+    // because direct_cost_line_items.budget_code_id references project_cost_codes.id (not cost_codes.id)
+    let projectCostCodeIds: string[] | null = null;
+    if (costCodeIds && costCodeIds.length > 0) {
+      const { data: pccRows } = await supabase
+        .from("project_cost_codes")
+        .select("id")
+        .eq("project_id", projectIdNum)
+        .in("cost_code_id", costCodeIds);
+      projectCostCodeIds = (pccRows || []).map((r) => r.id);
+      if (projectCostCodeIds.length === 0) {
+        return NextResponse.json({
+          costs: [],
+          totals: { jobToDateCostDetail: 0, directCosts: 0, pendingCosts: 0, count: 0 },
+          breakdown: { Invoice: 0, Expense: 0, Payroll: 0, "Subcontractor Invoice": 0 },
+          meta: { costCodeIds, projectId, statusFilter: statusFilter || "all" },
+        });
+      }
     }
 
     // Build query for direct_cost_line_items
@@ -120,12 +163,11 @@ export async function GET(
         )
       `,
       )
-      .eq("direct_costs.project_id", projectIdNum)
-      .order("direct_costs.date", { ascending: false });
+      .eq("direct_costs.project_id", projectIdNum);
 
-    // Filter by cost_code_id if budgetLineId was provided
-    if (costCodeId) {
-      query = query.eq("budget_code_id", costCodeId);
+    // Filter by project_cost_code IDs (translated from cost_code_id)
+    if (projectCostCodeIds) {
+      query = query.in("budget_code_id", projectCostCodeIds);
     }
 
     const { data: costs, error } = await query;
@@ -153,7 +195,7 @@ export async function GET(
       status ? APPROVED_DIRECT_COST_STATUSES.includes(status) : false;
 
     const filteredCosts = (costs || []).filter((cost: DirectCostWithRelations) => {
-      const directCost = cost.direct_costs?.[0];
+      const directCost = getDirectCost(cost.direct_costs);
       const status = directCost?.status || null;
       if (statusFilter === "approved") {
         return isApprovedStatus(status);
@@ -165,7 +207,7 @@ export async function GET(
     });
 
     for (const cost of filteredCosts as DirectCostWithRelations[]) {
-      const directCost = cost.direct_costs?.[0];
+      const directCost = getDirectCost(cost.direct_costs);
       const costType = directCost?.cost_type || "Invoice";
       const amount =
         cost.line_total ?? (cost.quantity ?? 0) * (cost.unit_cost ?? 0);
@@ -195,13 +237,13 @@ export async function GET(
     // Transform costs for frontend
     const transformedCosts = (filteredCosts || []).map(
       (cost: DirectCostWithRelations) => {
-        const directCost = cost.direct_costs?.[0];
+        const directCost = getDirectCost(cost.direct_costs);
         const amount =
           cost.line_total ?? (cost.quantity ?? 0) * (cost.unit_cost ?? 0);
         const status = isApprovedStatus(directCost?.status || null)
           ? "approved"
           : "pending";
-        const vendor = directCost?.vendors?.[0]?.name || null;
+        const vendor = directCost ? getVendorName(directCost.vendors) : null;
 
         return {
           id: cost.id,
@@ -232,7 +274,7 @@ export async function GET(
       },
       breakdown,
       meta: {
-        costCodeId,
+        costCodeIds,
         projectId,
         statusFilter: statusFilter || "all",
       },

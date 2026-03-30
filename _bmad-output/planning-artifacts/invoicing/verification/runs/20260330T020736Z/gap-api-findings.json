@@ -1,0 +1,194 @@
+{
+  "generated_at": "2026-03-30T02:20:00Z",
+  "worker": "api_parity_worker",
+  "feature": "invoicing",
+  "findings": [
+    {
+      "gap_id": "API-001",
+      "layer": "api",
+      "severity": "critical",
+      "title": "No subcontractor invoice routes exist",
+      "description": "Full subcontractor invoicing workflow missing. Procore has dedicated list with 5 filters (billing_period, contract_company, payment_status, invoice_status, contract_type), status bar (NOT INVITED, INVITED, UNDER REVIEW, APPROVED, REVISE AND RESUBMIT), ERP Status column, and bulk actions. No routes exist under /api/projects/[projectId]/invoicing/subcontractor. Frontend tab marked 'coming soon'.",
+      "expected_endpoint": "GET /api/projects/[projectId]/invoicing/subcontractor",
+      "actual_endpoint": null,
+      "missing_methods": ["GET"],
+      "status": "open"
+    },
+    {
+      "gap_id": "API-002",
+      "layer": "api",
+      "severity": "critical",
+      "title": "No owner invoice line items CRUD endpoints",
+      "description": "No endpoints to create, update, or delete individual line items. InvoiceLineItemsTable is read-only with hardcoded 5% retention. Without line item CRUD, invoices always show $0 totals. The Procore AIA G702/G703 workflow is entirely built around editing SOV line items per invoice.",
+      "expected_endpoint": "GET/POST/PATCH/DELETE /api/projects/[projectId]/invoicing/owner/[invoiceId]/line-items",
+      "actual_endpoint": null,
+      "missing_methods": ["GET", "POST", "PATCH", "DELETE"],
+      "status": "open"
+    },
+    {
+      "gap_id": "API-003",
+      "layer": "api",
+      "severity": "critical",
+      "title": "Broken FK join in owner invoice GET/PATCH/DELETE — uses 'contracts' not 'prime_contracts'",
+      "description": "Owner invoice routes join using 'contracts!inner(project_id)' but owner_invoices.prime_contract_id points to 'prime_contracts' table. All GET, PATCH, DELETE, submit, and approve operations on individual invoices will fail with a Supabase relation error in production.",
+      "expected_endpoint": "GET/PATCH/DELETE /api/projects/[projectId]/invoicing/owner/[invoiceId]",
+      "actual_endpoint": "GET/PATCH/DELETE /api/projects/[projectId]/invoicing/owner/[invoiceId]/route.ts",
+      "missing_methods": [],
+      "status": "open"
+    },
+    {
+      "gap_id": "API-004",
+      "layer": "api",
+      "severity": "critical",
+      "title": "commitments/[id]/invoices POST inserts with wrong FK column name",
+      "description": "POST handler inserts into owner_invoices using 'contract_id: parseInt(id)' but schema uses 'prime_contract_id' (UUID). Insert will fail or produce NULL FK. Also semantically wrong — passing commitment UUID as prime contract ID.",
+      "expected_endpoint": "POST /api/commitments/[id]/invoices",
+      "actual_endpoint": "POST /api/commitments/[id]/invoices/route.ts",
+      "missing_methods": [],
+      "status": "open"
+    },
+    {
+      "gap_id": "API-005",
+      "layer": "api",
+      "severity": "high",
+      "title": "No REVISE AND RESUBMIT status transition endpoint",
+      "description": "Procore has 'REVISE AND RESUBMIT' as first-class transition from UNDER REVIEW. No endpoint exists for this. Current PATCH blocks all non-draft edits so it cannot be used for status-only transitions.",
+      "expected_endpoint": "POST /api/projects/[projectId]/invoicing/owner/[invoiceId]/revise",
+      "actual_endpoint": null,
+      "missing_methods": ["POST"],
+      "status": "open"
+    },
+    {
+      "gap_id": "API-006",
+      "layer": "api",
+      "severity": "high",
+      "title": "No billing period update, close, or delete endpoints",
+      "description": "Billing periods route only supports GET (list) and POST (create). No PATCH/DELETE. Cannot close a billing period — a key Procore workflow gate. billing_periods.status enum (open/closed/approved) and is_active cannot be changed via API.",
+      "expected_endpoint": "PATCH /api/projects/[projectId]/billing-periods/[billingPeriodId]",
+      "actual_endpoint": null,
+      "missing_methods": ["PATCH", "DELETE"],
+      "status": "open"
+    },
+    {
+      "gap_id": "API-007",
+      "layer": "api",
+      "severity": "high",
+      "title": "Billing periods route targets wrong table — contract_billing_periods instead of billing_periods",
+      "description": "Route queries contract_billing_periods (per-contract sub-period table) instead of billing_periods (project-level table linked by project_id). Billing Periods tab will show wrong data.",
+      "expected_endpoint": "GET/POST /api/projects/[projectId]/billing-periods (targeting billing_periods table)",
+      "actual_endpoint": "GET/POST /api/projects/[projectId]/billing-periods (targeting contract_billing_periods table)",
+      "missing_methods": [],
+      "status": "open"
+    },
+    {
+      "gap_id": "API-008",
+      "layer": "api",
+      "severity": "high",
+      "title": "No invoice attachments endpoints",
+      "description": "PO invoices manifest shows Attachments column. No attachment routes for owner invoices or commitment invoices. All other modules have dedicated attachment routes.",
+      "expected_endpoint": "GET/POST/DELETE /api/projects/[projectId]/invoicing/owner/[invoiceId]/attachments",
+      "actual_endpoint": null,
+      "missing_methods": ["GET", "POST", "DELETE"],
+      "status": "open"
+    },
+    {
+      "gap_id": "API-009",
+      "layer": "api",
+      "severity": "high",
+      "title": "Owner invoice list GET has no query-param filters",
+      "description": "GET /api/projects/[projectId]/invoicing/owner returns all invoices without filter params. Procore specifies Billing Period and Prime Contract filters. Frontend does client-side filtering on full result set — performance issue for any real project.",
+      "expected_endpoint": "GET /api/projects/[projectId]/invoicing/owner?billing_period=X&prime_contract=Y",
+      "actual_endpoint": "GET /api/projects/[projectId]/invoicing/owner (no filter support)",
+      "missing_methods": [],
+      "status": "open"
+    },
+    {
+      "gap_id": "API-010",
+      "layer": "api",
+      "severity": "high",
+      "title": "No 'paid' status transition endpoint",
+      "description": "Owner invoice workflow includes 'paid' status. No endpoint to mark invoice as paid, record payment date, or track payment amount. PATCH blocks non-draft edits. Payment tracking is a placeholder (total_paid: 0).",
+      "expected_endpoint": "POST /api/projects/[projectId]/invoicing/owner/[invoiceId]/pay",
+      "actual_endpoint": null,
+      "missing_methods": ["POST"],
+      "status": "open"
+    },
+    {
+      "gap_id": "API-011",
+      "layer": "api",
+      "severity": "medium",
+      "title": "No invoicing export endpoint",
+      "description": "Procore subcontractor list has Export dropdown. No export route for invoicing data (no PDF, no Excel/CSV). Other modules have dedicated export routes.",
+      "expected_endpoint": "GET /api/projects/[projectId]/invoicing/export",
+      "actual_endpoint": null,
+      "missing_methods": ["GET"],
+      "status": "open"
+    },
+    {
+      "gap_id": "API-012",
+      "layer": "api",
+      "severity": "medium",
+      "title": "Commitment invoices endpoint returns SOV summary not discrete invoice records",
+      "description": "GET /api/commitments/[id]/invoices returns SOV billing summary from subcontract_sov_items/purchase_order_sov_items. Procore models PO invoices as discrete 'Invoices (Requisitions)' with 15 columns. No endpoints to create/list/update/delete individual commitment invoice records.",
+      "expected_endpoint": "GET/POST/PATCH/DELETE /api/projects/[projectId]/commitments/[commitmentId]/invoices",
+      "actual_endpoint": "GET /api/commitments/[id]/invoices (SOV summary only)",
+      "missing_methods": ["GET (records)", "POST", "PATCH", "DELETE"],
+      "status": "open"
+    },
+    {
+      "gap_id": "API-013",
+      "layer": "api",
+      "severity": "medium",
+      "title": "PATCH blocks all non-draft edits — prevents REVISE AND RESUBMIT editing",
+      "description": "PATCH returns HTTP 400 for any non-draft invoice. In Procore's workflow, invoices in REVISE AND RESUBMIT status must be editable. A nuanced rule is needed to allow edits in that state.",
+      "expected_endpoint": "PATCH /api/.../invoices/[invoiceId] (allow edits in revise_and_resubmit status)",
+      "actual_endpoint": "PATCH /api/.../invoices/[invoiceId] (blocks all non-draft)",
+      "missing_methods": [],
+      "status": "open"
+    },
+    {
+      "gap_id": "API-014",
+      "layer": "api",
+      "severity": "medium",
+      "title": "Legacy /api/invoices route targets Acumatica ERP table not app invoices",
+      "description": "GET/POST /api/invoices queries acumatica_ar_invoices. Creates a conflicting data model. Should be retired or clearly marked ERP-only.",
+      "expected_endpoint": "N/A (legacy route to deprecate)",
+      "actual_endpoint": "GET/POST /api/invoices/route.ts (hits acumatica_ar_invoices)",
+      "missing_methods": [],
+      "status": "open"
+    },
+    {
+      "gap_id": "API-015",
+      "layer": "api",
+      "severity": "medium",
+      "title": "No project-level billing_periods table routes — Billing Periods tab unbuildable",
+      "description": "No routes target the billing_periods table (project-level). Cannot build the Billing Periods tab without this. billing_periods has project_id, name, start_date, end_date, status, is_active.",
+      "expected_endpoint": "GET/POST/PATCH/DELETE /api/projects/[projectId]/invoicing/billing-periods",
+      "actual_endpoint": null,
+      "missing_methods": ["GET", "POST", "PATCH", "DELETE"],
+      "status": "open"
+    },
+    {
+      "gap_id": "API-016",
+      "layer": "api",
+      "severity": "low",
+      "title": "Submit and approve routes lack precondition guards",
+      "description": "Submit does not check that line items exist. Approve does not verify invoice was previously submitted. Both allow status transitions from any current status without guards.",
+      "expected_endpoint": "POST /api/.../submit and /approve (with precondition checks)",
+      "actual_endpoint": "POST /api/.../submit and /approve (no guards)",
+      "missing_methods": [],
+      "status": "open"
+    },
+    {
+      "gap_id": "API-017",
+      "layer": "api",
+      "severity": "low",
+      "title": "No ERP sync status field in owner invoice list response",
+      "description": "Procore subcontractor list has ERP Status column. Owner invoice list GET response does not include erp_status field. No join to acumatica_ar_invoices to indicate sync status.",
+      "expected_endpoint": "GET /api/.../invoicing/owner (include erp_status in response)",
+      "actual_endpoint": "GET /api/.../invoicing/owner (no erp_status field)",
+      "missing_methods": [],
+      "status": "open"
+    }
+  ]
+}

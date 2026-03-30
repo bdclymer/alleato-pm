@@ -1,0 +1,241 @@
+================================================================================
+DISCOVERY PHASE COMPLETE - Procore Invoicing Feature
+================================================================================
+
+Phase: DISCOVER (discover_procore_worker)
+Workflow: procore-complete
+Feature: invoicing
+Date: 2026-03-30T02:07:36Z
+
+================================================================================
+DELIVERABLES
+================================================================================
+
+File: 02-procore-reference.md (27 KB, 956 lines)
+Status: CREATED
+Location: /Users/meganharrison/Documents/alleato-pm/_bmad-output/planning-artifacts/invoicing/verification/runs/20260330T020736Z/
+
+File: 01-discovery-summary.md (6.1 KB)
+Status: CREATED
+Location: Same directory
+
+================================================================================
+DOCUMENT CONTENTS
+================================================================================
+
+02-PROCORE-REFERENCE.MD includes:
+
+1. WHAT IS INVOICING?
+   - Owner Invoices: Bill to project owners based on SOV
+   - Subcontractor Invoices: Receive from subcontractors (PO/Subcontract/WO)
+   - Billing Periods: Organize chronologically
+   - Payment Tracking: Payments Issued tab
+
+2. INVOICE STATUSES & WORKFLOW
+   - Owner: DRAFT → SUBMITTED → APPROVED
+   - Subcontractor: PENDING → APPROVED → PAID
+   - Status transitions and rules
+   - Approval workflows
+
+3. EXPECTED LIST PAGE COLUMNS
+   - Owner invoices table (Invoice #, Period, Due Date, Amount, Status)
+   - Subcontractor invoices table (Invoice #, Vendor, Commitment, Amount, Status)
+   - Filtering options and sorting capabilities
+   - Action menus and bulk operations
+
+4. EXPECTED CREATE FORM FIELDS
+   - Owner invoice form (Invoice #, Period, Date, SOV line items, Retention)
+   - Subcontractor form (Commitment selector, Invoice date, Period, Line items)
+   - Auto-calculated financial totals
+   - Save vs. Submit distinction
+
+5. EXPECTED DETAIL VIEW TABS/SECTIONS
+   - Invoice Details (header, summary cards)
+   - Line Items (itemized breakdown)
+   - Commitment Details (parent info)
+   - Approvals (workflow history)
+   - Payments (payment tracking)
+   - Activity (change log)
+
+6. EXPECTED LINE ITEM STRUCTURE
+   - Owner line items: SOV reference, completion tracking, retention
+   - Subcontractor line items: Progressive billing, previous + this-period
+   - Computed columns: totals, percent complete
+   - Examples with calculations
+
+7. EXPECTED WORKFLOW & STATUS TRANSITIONS
+   - Detailed state machine diagrams
+   - Transition rules per state
+   - Permission requirements per action
+   - Approval authority and escalation
+
+8. RETENTION TRACKING
+   - Percentage-based hold-back system
+   - Calculation formulas
+   - Release workflows
+   - Separate tracking for reporting
+
+9. EXPORT CAPABILITIES
+   - PDF export (formatted for sending)
+   - Excel export (structured with formulas)
+   - CSV export (for ERP integration)
+
+10. INTEGRATION POINTS
+    - Commitments (PO, Subcontracts, Work Orders)
+    - Schedule of Values (SOV)
+    - Budget and variance analysis
+    - Payment system
+    - ERP systems
+    - Change orders
+    - Financial reporting
+
+11. KEY DATA FIELDS & THEIR PURPOSES
+    - Invoice table fields with descriptions
+    - Line item table fields with calculations
+    - Billing period fields and states
+
+12. BILLING PERIODS CONFIGURATION
+    - Field definitions
+    - States (Open, Closed)
+    - Associations and closure procedures
+
+13. REFERENCE IMPLEMENTATION PATTERNS
+    - List page patterns from screenshots
+    - Detail page tab layout
+    - Form creation patterns
+    - Approval workflow patterns
+
+14. COMMON ISSUES & EDGE CASES
+    - Double billing prevention
+    - Retention complexity
+    - Multi-currency considerations
+    - Approval authority conflicts
+    - Period closure handling
+
+15. SUMMARY OF KEY CHARACTERISTICS
+    - Dual-purpose (Owner + Subcontractor)
+    - Commitment-centric design
+    - Approval-workflow-heavy
+    - Period-organized
+    - Progressive-billing-aware
+    - Retention-capable
+    - Export-rich
+    - Integrated with multiple systems
+    - Audit-trail-focused
+    - Role-based permissions
+
+================================================================================
+DATA SOURCES
+================================================================================
+
+1. Existing Documentation:
+   - /invoicing/research.md (codebase research, 35% implementation)
+   - /invoicing/api-reference.md (API endpoint specs)
+   - /invoicing/invoicing-crawl-status.md (comprehensive crawl analysis)
+   - /invoicing/database-schema-summary.md (schema details)
+   - /invoicing/readme.md (feature overview)
+   - /invoicing/status.md (implementation status)
+   - /invoicing/verification-summary.md (QA findings)
+
+2. Procore Crawl Data:
+   - 47 application pages (screenshots, DOM, metadata)
+   - 34+ support documentation pages
+   - Invoice detail pages for multiple commitment types
+   - UI element extraction and navigation analysis
+
+3. Implementation Artifacts:
+   - Database migration (created, not applied)
+   - 11 API routes for owner invoices
+   - Frontend pages (list, detail)
+   - Components (status badge, line items)
+   - 24 e2e tests (blocked execution)
+
+================================================================================
+REFERENCE URL
+================================================================================
+
+Specific Procore URL for Invoicing:
+https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214671/tools/contracts/commitments/purchase_order_contracts/562949959141576/invoices
+
+This URL shows invoicing within a specific commitment (Purchase Order),
+indicating that invoicing is deeply integrated with the Commitments tool.
+
+================================================================================
+IMPLEMENTATION CONTEXT
+================================================================================
+
+Current Project State:
+- Overall Completion: ~35%
+- Owner Invoices: ~67% complete (viewing/approval works)
+- Subcontractor Invoices: ~0% complete (API stubs only)
+- Forms: 0% (not yet implemented)
+
+Critical Blockers:
+- Database migration not applied to Supabase
+- 47 TypeScript errors in codebase (non-invoicing)
+- Auth setup broken for e2e tests
+
+Next Phases:
+- CAPTURE_SOURCE_OF_TRUTH: Verify live Procore instance
+- RECONCILE_MANIFEST: Match implementation to spec
+- GAP_ANALYZE: Identify remaining work
+- REMEDIATE: Fix blockers and implement gaps
+- VERIFY_IMPLEMENTATION: Run e2e tests
+- FINALIZE_AND_REPORT: Generate verification report
+
+================================================================================
+QUALITY ASSURANCE
+================================================================================
+
+Document Verification:
+✓ Sources cross-referenced
+✓ Naming conventions consistent
+✓ Database schema aligns with API specs
+✓ Frontend patterns documented
+✓ Workflow states defined
+✓ Field definitions complete
+✓ Integration points mapped
+
+Coverage:
+✓ What invoicing is
+✓ Owner and subcontractor invoices
+✓ Billing periods
+✓ Payment tracking
+✓ Status workflows
+✓ List page expectations
+✓ Create form fields
+✓ Detail view structure
+✓ Line item structure
+✓ Retention system
+✓ Approval workflows
+✓ Export capabilities
+✓ Integration points
+✓ Data field reference
+✓ Edge cases and issues
+
+================================================================================
+USAGE RECOMMENDATIONS
+================================================================================
+
+Use 02-procore-reference.md as the authoritative source for:
+
+1. Feature specification (understanding requirements)
+2. UI/UX design (columns, tabs, buttons, workflows)
+3. Database design (field requirements, relationships)
+4. API specification (request/response structures)
+5. Approval workflows (permission and status rules)
+6. Integration points (system connections)
+7. Data validation (business rules, constraints)
+8. User permissions (role-based access control)
+
+This document is comprehensive, detailed, and ready for implementation planning.
+
+================================================================================
+PHASE RESULT: SUCCESS
+================================================================================
+
+Document Status: COMPLETE
+Quality Level: COMPREHENSIVE
+Ready for: Implementation Planning, Design, Development
+
+Next Worker: CAPTURE_SOURCE_OF_TRUTH (verify live Procore instance)

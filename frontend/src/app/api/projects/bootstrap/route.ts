@@ -151,18 +151,18 @@ export async function POST(request: Request) {
     let contract = null;
     if (!clientError && client) {
       const { data: contractData, error: contractError } = await supabase
-        .from("contracts")
+        .from("prime_contracts")
         .insert({
           contract_number: `${projectTemplate.contract.contractNumber}-${Date.now()}`,
           title: projectTemplate.contract.title,
           client_id: client.id,
           project_id: project.id,
           status: "approved",
-          original_contract_amount: projectTemplate.contract.originalAmount,
-          revised_contract_amount: projectTemplate.contract.originalAmount,
+          original_contract_value: projectTemplate.contract.originalAmount,
+          revised_contract_value: projectTemplate.contract.originalAmount,
           retention_percentage: projectTemplate.contract.retentionPercentage,
           executed: true,
-          notes: projectTemplate.contract.scopeOfWork,
+          description: projectTemplate.contract.scopeOfWork,
         })
         .select()
         .single();

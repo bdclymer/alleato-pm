@@ -91,6 +91,90 @@ function normalizeVendorField(value: string | null | undefined): string {
   return trimmed;
 }
 
+function normalizeSearchText(value: string | null | undefined): string {
+  return normalizeVendorField(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+type VendorFieldType = "text" | "boolean" | "date" | "email" | "phone";
+
+const vendorPreviewFields: Array<{
+  key: keyof Vendor;
+  label: string;
+  type?: VendorFieldType;
+}> = [
+  { key: "name", label: "Name" },
+  { key: "legal_name", label: "Legal Name" },
+  { key: "is_active", label: "Active", type: "boolean" },
+  { key: "vendor_class", label: "Vendor Class" },
+  { key: "acumatica_vendor_id", label: "Acumatica Vendor ID" },
+  { key: "acumatica_sync_at", label: "Acumatica Sync At", type: "date" },
+  { key: "contact_name", label: "Contact Name" },
+  { key: "contact_email", label: "Contact Email", type: "email" },
+  { key: "contact_phone", label: "Contact Phone", type: "phone" },
+  { key: "address", label: "Address" },
+  { key: "city", label: "City" },
+  { key: "state", label: "State" },
+  { key: "zip_code", label: "Zip Code" },
+  { key: "payment_method", label: "Payment Method" },
+  { key: "terms", label: "Terms" },
+  { key: "tax_id", label: "Tax ID" },
+  { key: "notes", label: "Notes" },
+  { key: "created_at", label: "Created At", type: "date" },
+  { key: "updated_at", label: "Updated At", type: "date" },
+];
+
+function formatVendorFieldValue(vendor: Vendor, field: (typeof vendorPreviewFields)[number]): ReactElement {
+  const value = vendor[field.key];
+
+  if (field.type === "boolean") {
+    if (value === null || value === undefined) {
+      return <span className="text-muted-foreground">-</span>;
+    }
+    return <span>{value ? "Yes" : "No"}</span>;
+  }
+
+  if (field.type === "date") {
+    if (typeof value !== "string" || !value) {
+      return <span className="text-muted-foreground">-</span>;
+    }
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      return <span className="text-muted-foreground">-</span>;
+    }
+    return <span>{parsed.toLocaleString()}</span>;
+  }
+
+  if (field.type === "email") {
+    const email = normalizeVendorField(typeof value === "string" ? value : "");
+    if (!email) {
+      return <span className="text-muted-foreground">-</span>;
+    }
+    return (
+      <a href={`mailto:${email}`} className="text-primary hover:underline break-all">
+        {email}
+      </a>
+    );
+  }
+
+  if (field.type === "phone") {
+    const phone = normalizeVendorField(typeof value === "string" ? value : "");
+    if (!phone) {
+      return <span className="text-muted-foreground">-</span>;
+    }
+    return <span>{phone}</span>;
+  }
+
+  const text = normalizeVendorField(typeof value === "string" ? value : value == null ? "" : String(value));
+  if (!text) {
+    return <span className="text-muted-foreground">-</span>;
+  }
+  return <span className="break-words">{text}</span>;
+}
+
 function buildVendorTableColumns(): TableColumn<Vendor>[] {
   return [
     {
@@ -259,9 +343,6 @@ function VendorPreviewPane({
             </div>
             <div className="min-w-0 flex-1">
               <h3 className="text-sm font-semibold leading-tight truncate">{vendor.name}</h3>
-              {vendor.legal_name && (
-                <p className="text-xs text-muted-foreground mt-0.5 truncate">{vendor.legal_name}</p>
-              )}
               <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                 <StatusBadge status={vendor.is_active ? "Active" : "Inactive"} />
                 {vendor.vendor_class && (
@@ -303,34 +384,20 @@ function VendorPreviewPane({
           </div>
         )}
 
-        {/* Details section */}
-        {(vendor.payment_method || vendor.terms || vendor.is_1099_vendor != null) && (
-          <div className="px-5 pb-5">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
-              Details
-            </p>
-            <dl className="space-y-2 text-sm">
-              {vendor.payment_method && (
-                <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Payment Method</dt>
-                  <dd>{vendor.payment_method}</dd>
-                </div>
-              )}
-              {vendor.terms && (
-                <div className="flex justify-between">
-                  <dt className="text-muted-foreground">Terms</dt>
-                  <dd>{vendor.terms}</dd>
-                </div>
-              )}
-              {vendor.is_1099_vendor != null && (
-                <div className="flex justify-between">
-                  <dt className="text-muted-foreground">1099 Vendor</dt>
-                  <dd>{vendor.is_1099_vendor ? "Yes" : "No"}</dd>
-                </div>
-              )}
-            </dl>
-          </div>
-        )}
+        {/* Full vendor field set */}
+        <div className="px-5 pb-5">
+          <dl className="space-y-3 text-sm">
+            {vendorPreviewFields.map((field) => (
+              <div
+                key={String(field.key)}
+                className="grid grid-cols-[minmax(120px,140px),1fr] items-start gap-x-2"
+              >
+                <dt className="text-muted-foreground">{field.label}</dt>
+                <dd className="min-w-0 break-words text-right">{formatVendorFieldValue(vendor, field)}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
       </div>
     </div>
   );
@@ -467,7 +534,8 @@ export default function DirectoryVendorsPage(): ReactElement {
 
   // Client-side filtering
   const filteredVendors = React.useMemo(() => {
-    const search = tableState.debouncedSearch.trim().toLowerCase();
+    const search = normalizeSearchText(tableState.debouncedSearch);
+    const searchTokens = search ? search.split(" ") : [];
     const activeFilter = typeof activeFilters.is_active === "string" ? activeFilters.is_active : "";
     const classFilter = typeof activeFilters.vendor_class === "string" ? activeFilters.vendor_class : "";
     const methodFilter = typeof activeFilters.payment_method === "string" ? activeFilters.payment_method : "";
@@ -480,16 +548,35 @@ export default function DirectoryVendorsPage(): ReactElement {
       if (classFilter && (v.vendor_class || "").toLowerCase() !== classFilter.toLowerCase()) return false;
       if (methodFilter && (v.payment_method || "").toLowerCase() !== methodFilter.toLowerCase()) return false;
       if (!search) return true;
-      return (
-        v.name.toLowerCase().includes(search) ||
-        (v.legal_name || "").toLowerCase().includes(search) ||
-        (v.contact_name || "").toLowerCase().includes(search) ||
-        normalizeVendorField(v.contact_email).toLowerCase().includes(search) ||
-        normalizeVendorField(v.contact_phone).toLowerCase().includes(search) ||
-        (v.city || "").toLowerCase().includes(search) ||
-        (v.state || "").toLowerCase().includes(search) ||
-        (v.acumatica_vendor_id || "").toLowerCase().includes(search)
+
+      const searchable = normalizeSearchText(
+        [
+          v.name,
+          v.legal_name,
+          v.contact_name,
+          v.contact_email,
+          v.contact_phone,
+          v.city,
+          v.state,
+          v.address,
+          v.zip_code,
+          v.vendor_class,
+          v.payment_method,
+          v.terms,
+          v.tax_id,
+          v.acumatica_vendor_id,
+        ]
+          .filter(Boolean)
+          .join(" "),
       );
+
+      const compactSearchable = searchable.replace(/\s+/g, "");
+      const compactSearch = search.replace(/\s+/g, "");
+      if (compactSearch && compactSearchable.includes(compactSearch)) {
+        return true;
+      }
+
+      return searchTokens.every((token) => searchable.includes(token));
     });
   }, [vendors, activeFilters, tableState.debouncedSearch]);
 
@@ -618,6 +705,7 @@ export default function DirectoryVendorsPage(): ReactElement {
         onDelete: handleDeleteVendor,
       }}
       sidePanel={{
+        sticky: false,
         content: (
           <VendorPreviewPane
             vendor={selectedVendor}

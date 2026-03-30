@@ -274,6 +274,7 @@ export function CreateSubcontractForm({
     formState: { errors },
     setValue,
     control,
+    reset,
   } = useForm<CreateSubcontractInput>({
     resolver: zodResolver(CreateSubcontractSchema) as never,
     reValidateMode: "onBlur",
@@ -306,6 +307,48 @@ export function CreateSubcontractForm({
       attachments: [],
     },
   });
+
+  React.useEffect(() => {
+    if (mode !== "edit" || !initialData) return;
+
+    reset({
+      contractNumber: initialData.contractNumber || "",
+      status: initialData.status || "Draft",
+      executed: initialData.executed ?? false,
+      accountingMethod: initialData.accountingMethod || "amount_based",
+      sov: initialData.sov || [],
+      privacy: initialData.privacy || {
+        isPrivate: true,
+        nonAdminUserIds: [],
+        allowNonAdminViewSovItems: false,
+      },
+      title: initialData.title || "",
+      contractCompanyId: initialData.contractCompanyId || "",
+      description: initialData.description || "",
+      inclusions: initialData.inclusions || "",
+      exclusions: initialData.exclusions || "",
+      defaultRetainagePercent: initialData.defaultRetainagePercent,
+      dates: initialData.dates || {
+        startDate: undefined,
+        estimatedCompletionDate: undefined,
+        actualCompletionDate: undefined,
+        contractDate: undefined,
+        signedContractReceivedDate: undefined,
+        issuedOnDate: undefined,
+      },
+      invoiceContactIds: initialData.invoiceContactIds || [],
+      attachments: [],
+    });
+
+    setSovLines(initialData.sovLines || []);
+    setAttachments(
+      (initialData.attachments || []).map((attachment) => ({
+        name: attachment.name,
+        size: attachment.size ?? 0,
+        type: attachment.type ?? "",
+      })),
+    );
+  }, [initialData, mode, reset]);
   const showAutoFill = process.env.NODE_ENV === "development";
 
   const contractCompanyId = useWatch({ control, name: "contractCompanyId" });
@@ -313,7 +356,7 @@ export function CreateSubcontractForm({
   const accountingMethod = useWatch({ control, name: "accountingMethod" });
   const statusValue = useWatch({ control, name: "status" });
   const executedValue = useWatch({ control, name: "executed" });
-  // contractCompanyId holds the vendor ID (option.value) — FK references vendors(id)
+  // contractCompanyId holds the vendor ID — subcontracts.contract_company_id FK references vendors(id)
   const selectedVendor = React.useMemo(
     () =>
       vendorOptions.find((option) => option.value === contractCompanyId),
@@ -404,6 +447,31 @@ export function CreateSubcontractForm({
       return changed ? nextLines : prevLines;
     });
   }, [budgetCodes]);
+
+  React.useEffect(() => {
+    const existingCodeSet = new Set(
+      budgetCodes.flatMap((code) => [code.id, code.code, code.fullLabel]),
+    );
+
+    const syntheticCodes: BudgetCode[] = [];
+    for (const line of sovLines) {
+      if (line.isGroup) continue;
+      const code = `${line.budgetCode ?? ""}`.trim();
+      if (!code || existingCodeSet.has(code)) continue;
+
+      existingCodeSet.add(code);
+      syntheticCodes.push({
+        id: code,
+        code,
+        costType: null,
+        description: "",
+        fullLabel: code,
+      });
+    }
+
+    if (syntheticCodes.length === 0) return;
+    setBudgetCodes((prevBudgetCodes) => [...prevBudgetCodes, ...syntheticCodes]);
+  }, [budgetCodes, sovLines]);
 
   // Fetch cost codes when create budget code modal opens
   React.useEffect(() => {
@@ -558,7 +626,7 @@ export function CreateSubcontractForm({
     setSubmitError(null);
     setErrorDetails(null);
     try {
-      // Add SOV lines to submission data
+      // subcontracts.contract_company_id FK references vendors(id) — send vendor ID directly
       const submitData = {
         ...data,
         sov: sovLines,
@@ -1298,14 +1366,14 @@ export function CreateSubcontractForm({
                       </td>
                       <td className="px-1 py-1.5">
                         <BudgetCodeSelector
-                          value={line.budgetCodeId || ""}
+                          value={line.budgetCodeId || line.budgetCode || ""}
                           onValueChange={(_, code) =>
                             handleBudgetCodeSelect(index, code)
                           }
                           budgetCodes={budgetCodes}
                           loading={loadingBudgetCodes}
                           onCreateNew={() => setShowCreateBudgetCodeModal(true)}
-                          placeholder="Select budget code..."
+                          placeholder={line.budgetCode || "Select budget code..."}
                           className="h-10"
                         />
                       </td>
@@ -1327,10 +1395,11 @@ export function CreateSubcontractForm({
                           <td className="px-1 py-1.5">
                             <Input
                               type="number"
-                              value={line.quantity ?? 1}
+                              value={line.quantity || ""}
+                              placeholder="1"
                               onChange={(e) =>
                                 updateSOVLine(index, {
-                                  quantity: parseFloat(e.target.value) || 0,
+                                  quantity: e.target.value === "" ? 0 : parseFloat(e.target.value) || 0,
                                 })
                               }
                               className="h-10 text-right"

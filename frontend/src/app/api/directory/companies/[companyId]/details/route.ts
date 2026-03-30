@@ -10,7 +10,7 @@ type SubcontractWithTotals =
   Database["public"]["Views"]["subcontracts_with_totals"]["Row"];
 type PurchaseOrderWithTotals =
   Database["public"]["Views"]["purchase_orders_with_totals"]["Row"];
-type Contract = Database["public"]["Tables"]["contracts"]["Row"];
+type Contract = Database["public"]["Tables"]["prime_contracts"]["Row"];
 type OwnerInvoice = Database["public"]["Tables"]["owner_invoices"]["Row"];
 type DocumentMetadata = Database["public"]["Tables"]["document_metadata"]["Row"];
 
@@ -48,7 +48,7 @@ type InvoiceItem = {
   id: number;
   invoice_number: string | null;
   status: string | null;
-  contract_id: number | null;
+  contract_id: string | null;
   contract_number: string | null;
   contract_title: string | null;
   project_id: number | null;
@@ -269,7 +269,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
     let meetingsPayload: MeetingItem[] = [];
     if (projectIds.length > 0) {
       const { data: contractsData, error: contractsError } = await supabase
-        .from("contracts")
+        .from("prime_contracts")
         .select("*")
         .in("project_id", projectIds)
         .returns<Contract[]>();
@@ -283,7 +283,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
 
       const contracts = contractsData || [];
       const contractIds = contracts.map((contract) => contract.id);
-      const contractMap = new Map<number, Contract>();
+      const contractMap = new Map<string, Contract>();
       contracts.forEach((contract) => {
         contractMap.set(contract.id, contract);
       });

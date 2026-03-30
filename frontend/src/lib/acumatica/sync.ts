@@ -13,9 +13,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { createAcumaticaClient } from "./client";
 import type {
-  FlatBill,
   FlatInvoice,
   FlatPayment,
+  FlatProjectTransaction,
+  FlatProjectTransactionDetail,
   FlatPurchaseOrder,
   FlatSubcontract,
   FlatVendor,
@@ -202,7 +203,7 @@ export async function syncVendors(companyId: string): Promise<VendorSyncResult> 
 }
 
 // ---------------------------------------------------------------------------
-// Direct Costs Sync (AP Bills → direct_costs)
+// Direct Costs Sync (Acumatica Project Transactions → direct_costs)
 // ---------------------------------------------------------------------------
 
 export interface DirectCostSyncResult {
@@ -211,33 +212,47 @@ export interface DirectCostSyncResult {
   errors: string[];
 }
 
-function mapBillStatus(acuStatus: string): string {
+function mapTransactionStatus(acuStatus: string): string {
   switch (acuStatus) {
-    case "Open":
-      return "Pending";
-    case "Closed":
-      return "Approved";
-    case "Balanced":
+    case "Released":
       return "Approved";
     case "On Hold":
       return "Draft";
+    case "Balanced":
+      return "Pending";
     default:
       return "Draft";
   }
 }
 
-function toBillCostType(bill: FlatBill): string {
-  if (bill.Type === "DebitAdj") return "Expense";
-  return "Invoice";
+/**
+ * Derive cost type from the Acumatica transaction module and original doc type.
+ * Only "Invoice" and "Expense" are valid in the direct_costs table.
+ */
+function toTransactionCostType(
+  module?: string,
+  origDocType?: string,
+): string {
+  if (module === "AP") {
+    if (origDocType === "Debit Adjustment") return "Expense";
+    return "Invoice";
+  }
+  // GL, AR, and all other modules default to Expense
+  return "Expense";
 }
 
 /**
- * Pull AP Bills from Acumatica and upsert into the direct_costs table
- * for a given project.
+ * Pull Project Transactions from Acumatica (PM3040PL) and upsert into
+ * the direct_costs table for a given project.
  *
- * Matching: acumatica_ref_nbr (unique per bill).
- * Bills without a project association are included — they represent
- * company-level AP that should still be visible.
+ * Data flow:
+ * 1. Look up the project's `acumatica_project_id` from the projects table
+ * 2. Fetch all ProjectTransaction records with Details expanded
+ * 3. Filter detail lines where Detail.Project matches our Acumatica project ID
+ * 4. Group matching detail lines by their parent transaction ReferenceNbr
+ * 5. For each transaction with matching lines: sum amounts and upsert a direct_cost
+ *
+ * Matching: acumatica_ref_nbr (the ProjectTransaction ReferenceNbr).
  */
 export async function syncDirectCosts(
   projectId: number,
@@ -245,16 +260,66 @@ export async function syncDirectCosts(
 ): Promise<DirectCostSyncResult> {
   const result: DirectCostSyncResult = { created: 0, updated: 0, errors: [] };
 
+  const supabase = await createClient();
+
+  // 1. Resolve this project's Acumatica project ID
+  const { data: project, error: projError } = await supabase
+    .from("projects")
+    .select("acumatica_project_id")
+    .eq("id", projectId)
+    .single();
+
+  if (projError || !project?.acumatica_project_id) {
+    result.errors.push(
+      `Project ${projectId} has no acumatica_project_id mapped. ` +
+      `Set it in the projects table before syncing.`,
+    );
+    return result;
+  }
+
+  const acuProjectId = project.acumatica_project_id;
+
+  // 2. Fetch project transactions from Acumatica
   const acuClient = createAcumaticaClient();
   await acuClient.login();
 
-  const acuBills = await acuClient.getBills({
-    $top: 500,
-  });
+  // Fetch in pages — there can be ~10K transactions total.
+  // We fetch with Details expanded so we can filter by project on the detail lines.
+  // Page size is kept small (100) because $expand=Details makes payloads large.
+  const allTransactions: FlatProjectTransaction[] = [];
+  let skip = 0;
+  const pageSize = 100;
 
-  const supabase = await createClient();
+  while (true) {
+    const page = await acuClient.getProjectTransactions({
+      $top: pageSize,
+      $skip: skip,
+    });
+    if (page.length === 0) break;
+    allTransactions.push(...page);
+    if (page.length < pageSize) break;
+    skip += pageSize;
+  }
 
-  // Load existing direct costs for this project that have an acumatica_ref_nbr
+  // 3. Filter: keep only transactions that have at least one detail line
+  //    matching our project
+  interface MatchedTransaction {
+    header: FlatProjectTransaction;
+    matchingDetails: FlatProjectTransactionDetail[];
+  }
+
+  const matched: MatchedTransaction[] = [];
+
+  for (const tx of allTransactions) {
+    const matchingDetails = (tx.Details ?? []).filter(
+      (d) => d.Project === acuProjectId,
+    );
+    if (matchingDetails.length > 0) {
+      matched.push({ header: tx, matchingDetails });
+    }
+  }
+
+  // 4. Load existing direct costs for dedup
   const { data: existingCosts, error: fetchError } = await supabase
     .from("direct_costs")
     .select("id, acumatica_ref_nbr")
@@ -271,7 +336,7 @@ export async function syncDirectCosts(
     if (c.acumatica_ref_nbr) byRefNbr.set(c.acumatica_ref_nbr, c.id);
   }
 
-  // Build vendor name → vendor_id lookup
+  // Build vendor lookup (acumatica_vendor_id → vendor.id)
   const { data: vendors } = await supabase
     .from("vendors")
     .select("id, acumatica_vendor_id");
@@ -283,23 +348,56 @@ export async function syncDirectCosts(
 
   const now = new Date().toISOString();
 
-  for (const bill of acuBills) {
-    const refNbr = bill.ReferenceNbr;
+  // 5. Upsert each matched transaction as a direct_cost
+  for (const { header, matchingDetails } of matched) {
+    const refNbr = header.ReferenceNbr;
+
+    // Sum amounts from the matching detail lines (only lines for our project)
+    const totalAmount = matchingDetails.reduce(
+      (sum, d) => sum + (d.Amount ?? 0),
+      0,
+    );
+
+    // Use the earliest detail date, or fall back to header CreatedDateTime
+    const earliestDate = matchingDetails
+      .map((d) => d.Date)
+      .filter(Boolean)
+      .sort()[0];
+    const date = earliestDate
+      ? earliestDate.split("T")[0]
+      : header.CreatedDateTime
+        ? header.CreatedDateTime.split("T")[0]
+        : now.split("T")[0];
+
+    // Resolve vendor from the first detail's VendorOrCustomer
+    const vendorAcuId = matchingDetails[0]?.VendorOrCustomer;
+    const vendorId = vendorAcuId
+      ? vendorByAcuId.get(vendorAcuId) ?? null
+      : null;
+
+    // Build description: use header description, or first detail description
+    const description =
+      header.Description ??
+      matchingDetails[0]?.Description ??
+      null;
+
+    // Financial period from the first detail line
+    const finPeriod = matchingDetails[0]?.FinPeriod ?? null;
 
     const fields = {
-      date: bill.Date ? bill.Date.split("T")[0] : now.split("T")[0],
-      description: bill.Description ?? null,
-      invoice_number: bill.VendorRef ?? null,
-      total_amount: bill.Amount ?? 0,
-      cost_type: toBillCostType(bill),
-      status: mapBillStatus(bill.Status),
+      date,
+      description,
+      invoice_number: header.OriginalDocNbr ?? null,
+      total_amount: totalAmount,
+      cost_type: toTransactionCostType(header.Module, header.OriginalDocType),
+      status: mapTransactionStatus(header.Status),
       terms: null as string | null,
-      vendor_id: vendorByAcuId.get(bill.Vendor) ?? null,
+      vendor_id: vendorId,
       acumatica_ref_nbr: refNbr,
-      acumatica_doc_type: bill.Type ?? null,
-      acumatica_financial_period: bill.FinancialPeriod ?? null,
+      acumatica_doc_type: header.OriginalDocType ?? header.Module ?? null,
+      acumatica_financial_period: finPeriod,
       acumatica_sync_at: now,
-      paid_date: bill.Status === "Closed" && bill.Balance === 0 ? now.split("T")[0] : null,
+      paid_date: null as string | null,
     };
 
     try {

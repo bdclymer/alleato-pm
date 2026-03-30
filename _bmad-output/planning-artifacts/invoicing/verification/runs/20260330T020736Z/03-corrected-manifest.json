@@ -1,0 +1,249 @@
+{
+  "normalized": {
+    "list": {
+      "description": "Owner Invoices list — /tools/invoicing/owner",
+      "columns": [
+        { "label": "Invoice #", "sortable": true, "filterable": false },
+        { "label": "Status", "sortable": true, "filterable": false },
+        { "label": "Company", "sortable": true, "filterable": false },
+        { "label": "Billing Period", "sortable": true, "filterable": false },
+        { "label": "Gross Amount", "sortable": true, "filterable": false },
+        { "label": "Net Amount", "sortable": true, "filterable": false },
+        { "label": "Paid Amount", "sortable": true, "filterable": false },
+        { "label": "Invoice Dates", "sortable": true, "filterable": false },
+        { "label": "Contract", "sortable": true, "filterable": false },
+        { "label": "Total Contract Amount", "sortable": true, "filterable": false },
+        { "label": "% Complete", "sortable": true, "filterable": false }
+      ],
+      "column_groups": [],
+      "row_actions": [],
+      "toolbar_actions": [
+        { "label": "Create Billing Period", "type": "button", "variant": "primary" }
+      ],
+      "filters": [
+        { "name": "billing_period", "label": "Billing Period", "type": "select" },
+        { "name": "prime_contract", "label": "Prime Contract", "type": "select" }
+      ],
+      "status_summary_bar": [
+        { "status": "DRAFT", "shows_count": true, "shows_amount": true },
+        { "status": "UNDER REVIEW", "shows_count": true, "shows_amount": true },
+        { "status": "APPROVED", "shows_count": true, "shows_amount": true },
+        { "status": "REVISE AND RESUBMIT", "shows_count": true, "shows_amount": false }
+      ],
+      "notes": "No ERP Status column on Owner tab. Column label 'Status' (not 'Invoice Status'). Column label 'Company' (not 'Contract Company'). Filters are Billing Period + Prime Contract only (not the 5 filters shown on Subcontractor). No Export button."
+    },
+    "list_subcontractor": {
+      "description": "Subcontractor Invoices list — /tools/invoicing/subcontractor",
+      "columns": [
+        { "label": "Invoice #", "sortable": true, "filterable": false, "has_select_checkbox": true },
+        { "label": "Invoice Status", "sortable": true, "filterable": false },
+        { "label": "Contract Company", "sortable": true, "filterable": false },
+        { "label": "Billing Period", "sortable": true, "filterable": false },
+        { "label": "Gross Amount", "sortable": true, "filterable": false },
+        { "label": "Net Amount", "sortable": true, "filterable": false },
+        { "label": "Paid Amount", "sortable": true, "filterable": false },
+        { "label": "Invoice Dates", "sortable": true, "filterable": false },
+        { "label": "Contract", "sortable": true, "filterable": false },
+        { "label": "Total Contract Amount", "sortable": true, "filterable": false },
+        { "label": "% Complete", "sortable": true, "filterable": false },
+        { "label": "ERP Status", "sortable": true, "filterable": false }
+      ],
+      "column_groups": [],
+      "row_actions": [],
+      "toolbar_actions": [
+        { "label": "Create Billing Period", "type": "button", "variant": "primary" },
+        { "label": "Export", "type": "dropdown", "variant": "secondary" }
+      ],
+      "filters": [
+        { "name": "billing_period", "label": "Billing Period", "type": "select" },
+        { "name": "contract_company", "label": "Contract Company", "type": "select" },
+        { "name": "payment_status", "label": "Payment Status", "type": "select" },
+        { "name": "invoice_status", "label": "Invoice Status", "type": "select" },
+        { "name": "contract_type", "label": "Contract Type", "type": "select" }
+      ],
+      "status_summary_bar": [
+        { "status": "NOT INVITED", "shows_count": true, "shows_amount": false },
+        { "status": "INVITED", "shows_count": true, "shows_amount": true },
+        { "status": "UNDER REVIEW", "shows_count": true, "shows_amount": true },
+        { "status": "APPROVED", "shows_count": true, "shows_amount": true },
+        { "status": "REVISE AND RESUBMIT", "shows_count": true, "shows_amount": false }
+      ],
+      "row_data_observed": [
+        {
+          "invoice_status": "No Invoice Contacts",
+          "contract_company": "Megan Harrison Consulting",
+          "billing_period": "3/1/26 - 3/30/26",
+          "gross_amount": "$0.00",
+          "net_amount": "$0.00",
+          "paid_amount": "$0.00",
+          "invoice_dates": "Not Specified",
+          "contract": "PO-555",
+          "total_contract_amount": "$1,000.00",
+          "percent_complete": "0.00%",
+          "erp_status": "Not Synced"
+        },
+        {
+          "invoice_status": "Not Invited",
+          "contract_company": "Deem, LLC",
+          "billing_period": "3/1/26 - 3/30/26",
+          "gross_amount": "$0.00",
+          "net_amount": "$0.00",
+          "paid_amount": "$0.00",
+          "invoice_dates": "Not Specified",
+          "contract": "SC-002",
+          "total_contract_amount": "$300,000.00",
+          "percent_complete": "0.00%",
+          "erp_status": "Not Synced"
+        }
+      ],
+      "notes": "Has row selection checkboxes (bulk actions). Has ERP Status column (Owner tab does not). Rows represent contract/billing-period combinations, not individual invoices — actual invoices created from within contract detail. Rows show 'No Invoice Contacts' or 'Not Invited' when no invoice submitted yet."
+    },
+    "po_invoices": {
+      "description": "Invoices tab within a Purchase Order contract — /tools/contracts/commitments/purchase_order_contracts/{id}/invoices",
+      "heading": "Invoices (Requisitions)",
+      "columns": [
+        { "label": "Invoice Position", "sortable": true },
+        { "label": "Invoice #", "sortable": true },
+        { "label": "Invoice Dates", "sortable": true },
+        { "label": "Billing Date", "sortable": true },
+        { "label": "Status", "sortable": true },
+        { "label": "Original Contract Sum", "sortable": true },
+        { "label": "Net Change By Change Orders", "sortable": true },
+        { "label": "Revised Contract Sum", "sortable": true },
+        { "label": "Total Completed and Stored To Date", "sortable": true },
+        { "label": "Total Retainage", "sortable": true },
+        { "label": "Total Earned Less Retainage", "sortable": true },
+        { "label": "Payment Due", "sortable": true },
+        { "label": "Balance To Finish", "sortable": true },
+        { "label": "% Complete", "sortable": true },
+        { "label": "Attachments", "sortable": true }
+      ],
+      "column_groups": [],
+      "row_actions": [],
+      "parent_tabs": [
+        "General",
+        "Change Orders",
+        "RFQs",
+        "Invoices",
+        "Payments Issued",
+        "Emails",
+        "Change History",
+        "Advanced Settings"
+      ],
+      "create_entry_point": "Create dropdown on PO header (not a standalone 'Create Invoice' button)",
+      "notes": "Accessed from within Commitments > Purchase Order detail. The tab is labeled 'Invoices (N)' in the nav. The table heading is 'Invoices (Requisitions)'. Status column is labeled 'Status' not 'Invoice Status'. No row-select checkboxes. No filters panel. An unnamed trailing column header exists (uid 10_109). This is a beta UI — 'Exit Beta' and 'Provide Feedback' buttons visible."
+    },
+    "create_form": {
+      "description": "Invoice creation happens from within a contract (PO or SC) via the Invoices tab, not directly from the Invoicing tool list pages",
+      "entry_point": "Commitments > [PO or SC] > Invoices tab > Create button",
+      "fields": [],
+      "sections": [],
+      "notes": "The manifest's 'create-form' state incorrectly points to the subcontractor list URL, not an actual create form. No standalone create form was found on the Invoicing tool list pages. The Subcontractor list only offers 'Create Billing Period'. Invoices (requisitions) are created from within the commitment contract detail page. Form fields could not be captured without an active billing period allowing invoice creation."
+    },
+    "detail": {
+      "description": "Invoice detail view — not directly accessible without an existing invoice",
+      "tabs": [],
+      "sections": [],
+      "notes": "No existing invoices present in the project to inspect. The detail view could not be verified. Based on the PO invoices list columns, the detail likely includes: schedule of values (line items), retainage, stored materials, attachments, and approval workflow."
+    },
+    "workflow": {
+      "subcontractor_statuses": [
+        { "status": "NOT INVITED", "description": "Billing period exists but subcontractor has not been invited to submit" },
+        { "status": "INVITED", "description": "Subcontractor has been invited to submit an invoice" },
+        { "status": "DRAFT", "description": "Invoice is being drafted (implied, not directly observed on sub list)" },
+        { "status": "UNDER REVIEW", "description": "Invoice submitted and under review by GC/owner" },
+        { "status": "APPROVED", "description": "Invoice approved for payment" },
+        { "status": "REVISE AND RESUBMIT", "description": "Invoice returned to subcontractor for revision" }
+      ],
+      "owner_statuses": [
+        { "status": "DRAFT", "description": "Owner invoice in draft" },
+        { "status": "UNDER REVIEW", "description": "Owner invoice under review" },
+        { "status": "APPROVED", "description": "Owner invoice approved" },
+        { "status": "REVISE AND RESUBMIT", "description": "Owner invoice returned for revision" }
+      ],
+      "transitions": [
+        { "from": "NOT INVITED", "to": "INVITED", "action": "Send invitation to subcontractor" },
+        { "from": "INVITED", "to": "UNDER REVIEW", "action": "Subcontractor submits invoice" },
+        { "from": "UNDER REVIEW", "to": "APPROVED", "action": "GC approves" },
+        { "from": "UNDER REVIEW", "to": "REVISE AND RESUBMIT", "action": "GC requests revision" },
+        { "from": "DRAFT", "to": "UNDER REVIEW", "action": "Submit for review (owner workflow)" }
+      ],
+      "notes": "Subcontractor workflow has 5 visible statuses on the summary bar including NOT INVITED. Owner workflow has 4 statuses starting from DRAFT. The NOT INVITED status is unique to subcontractor invoicing and indicates the invite workflow."
+    }
+  },
+  "screenshots": {
+    "list_owner": "/tmp/invoicing-list-owner.png",
+    "list_subcontractor": "/tmp/invoicing-list-subcontractor.png",
+    "po_invoices": "/tmp/invoicing-po-invoices.png"
+  },
+  "reconciliation_notes": [
+    {
+      "severity": "HIGH",
+      "area": "list-owner URL mismatch",
+      "finding": "The manifest's 'list-owner' state has its URL set to the subcontractor URL (/tools/invoicing/subcontractor), not the owner URL (/tools/invoicing/owner). Both states in the manifest point to the same subcontractor URL.",
+      "correct_value": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949955214671/tools/invoicing/owner"
+    },
+    {
+      "severity": "HIGH",
+      "area": "Owner list column names differ from Subcontractor list",
+      "finding": "The manifest records both list-owner and list-subcontractor as having identical columns. In reality they differ significantly: Owner uses 'Status' (not 'Invoice Status'), 'Company' (not 'Contract Company'), and has NO 'ERP Status' column. Subcontractor has row-selection checkboxes; Owner does not.",
+      "manifest_value": "Both states identical: Invoice #, Invoice Status, Contract Company, Billing Period, Gross Amount, Net Amount, Paid Amount, Invoice Dates, Contract, Total Contract Amount, % Complete, ERP Status",
+      "correct_owner_columns": "Invoice #, Status, Company, Billing Period, Gross Amount, Net Amount, Paid Amount, Invoice Dates, Contract, Total Contract Amount, % Complete",
+      "correct_subcontractor_columns": "Invoice # (with select checkbox), Invoice Status, Contract Company, Billing Period, Gross Amount, Net Amount, Paid Amount, Invoice Dates, Contract, Total Contract Amount, % Complete, ERP Status"
+    },
+    {
+      "severity": "HIGH",
+      "area": "Owner filter fields differ from Subcontractor",
+      "finding": "The manifest records identical formSections/filters for list-owner and list-subcontractor (5 fields: billing_period, contract_company, payment_status, invoice_status, contract_type). Live verification shows the Owner tab only has 2 filters: Billing Period and Prime Contract. The Subcontractor tab has the full 5 filters.",
+      "correct_owner_filters": ["Billing Period", "Prime Contract"],
+      "correct_subcontractor_filters": ["Billing Period", "Contract Company", "Payment Status", "Invoice Status", "Contract Type"]
+    },
+    {
+      "severity": "HIGH",
+      "area": "Owner status summary bar differs from Subcontractor",
+      "finding": "Owner summary bar shows: DRAFT ($0), UNDER REVIEW ($0), APPROVED ($0), REVISE AND RESUBMIT (count). Subcontractor summary bar shows: NOT INVITED (count), INVITED (count+amount), UNDER REVIEW (count+amount), APPROVED (count+amount), REVISE AND RESUBMIT (count). The manifest does not capture either status bar.",
+      "correct_value": "See workflow.subcontractor_statuses and workflow.owner_statuses"
+    },
+    {
+      "severity": "MEDIUM",
+      "area": "create-form state is not a real form",
+      "finding": "The manifest's 'create-form' state points to the subcontractor list URL, not a create form URL. The list page does NOT have a 'Create Invoice' button. Invoice creation is done from within the commitment contract detail (Commitments > PO/SC > Invoices tab). The manifest formSections on the create-form state appear to be filter fields captured from the list, not form fields.",
+      "correct_value": "Invoice creation entry point: Commitments tool > [PO or SC contract] > Invoices tab > Create dropdown"
+    },
+    {
+      "severity": "MEDIUM",
+      "area": "Top-level Invoicing tool tabs",
+      "finding": "The Invoicing tool has 3 top-level navigation tabs: Owner, Subcontractor, and Billing Periods. The manifest does not document a 'billing-periods' state. There is also a Settings link.",
+      "missing_states": ["billing-periods", "settings"]
+    },
+    {
+      "severity": "MEDIUM",
+      "area": "Subcontractor list has Export button; Owner does not",
+      "finding": "The Subcontractor list has an Export dropdown button in the toolbar. The Owner list does not. The manifest does not differentiate toolbar actions between the two lists.",
+      "correct_value": "Export button present on Subcontractor, absent on Owner"
+    },
+    {
+      "severity": "LOW",
+      "area": "PO invoices table heading",
+      "finding": "The section heading on the PO invoices tab is 'Invoices (Requisitions)' — the term 'Requisitions' is significant terminology for the AIA G702/G703 payment application workflow.",
+      "correct_value": "Heading: 'Invoices (Requisitions)'"
+    },
+    {
+      "severity": "LOW",
+      "area": "PO invoices page has beta UI indicators",
+      "finding": "The PO invoices page (under Commitments) shows 'Exit Beta' and 'Provide Feedback' buttons, indicating the Commitments tool is in a beta state separate from the Invoicing tool.",
+      "correct_value": "Beta UI — 'Exit Beta' button present"
+    },
+    {
+      "severity": "LOW",
+      "area": "Manifest toolbarActions contain nav/header items",
+      "finding": "The manifest's toolbarActions arrays contain items like 'Alleato Group26-999 - MH', 'Project ToolsInvoicing', 'BC' (avatar), 'Announcements' — these are global page header elements, not tool-specific toolbar actions. They should be excluded from toolbarActions.",
+      "correct_value": "Tool-specific toolbar actions only: Create Billing Period, Export (Subcontractor only)"
+    }
+  ],
+  "generated_at": "2026-03-30T02:07:36Z",
+  "verified_by": "reconcile_manifest_worker",
+  "verification_method": "Live browser inspection via chrome-devtools MCP against us02.procore.com",
+  "project_id": "562949955214671",
+  "company_id": "562949953443325"
+}

@@ -349,6 +349,7 @@ export function CreatePurchaseOrderForm({
   const handleFormSubmit = async (data: CreatePurchaseOrderInput) => {
     setIsSubmitting(true);
     try {
+      // contract_company_id FK references vendors(id) — send vendor ID directly
       const submitData = { ...data, sov: sovLines, accountingMethod };
       await onSubmit(submitData);
     } catch (err) {
@@ -519,22 +520,17 @@ export function CreatePurchaseOrderForm({
           />
         </FormGrid>
 
-        {/* Assigned To — placeholder until users are loaded from DB */}
         <div className="flex w-full flex-col gap-2">
           <Label htmlFor="assignedTo">Assigned To</Label>
-          <Select
-            value={assignedToValue || ""}
-            onValueChange={(value) => setValue("assignedTo", value)}
-            disabled={isSubmitting}
-          >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select person" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="user1">John Doe</SelectItem>
-              <SelectItem value="user2">Jane Smith</SelectItem>
-            </SelectContent>
-          </Select>
+          <Input
+            id="assignedTo"
+            value={assignedToValue ? "Assigned" : "Unassigned"}
+            disabled
+            readOnly
+          />
+          <p className="text-xs text-muted-foreground">
+            Assignee selection is temporarily disabled until project user IDs are wired.
+          </p>
         </div>
 
         <FormGrid columns={2}>
@@ -755,9 +751,9 @@ export function CreatePurchaseOrderForm({
                           type="number"
                           step="0.01"
                           placeholder="1"
-                          value={line.quantity ?? 1}
+                          value={line.quantity || ""}
                           onChange={(e) =>
-                            updateSOVLine(index, "quantity", parseFloat(e.target.value) || 0)
+                            updateSOVLine(index, "quantity", e.target.value === "" ? 0 : parseFloat(e.target.value) || 0)
                           }
                           className="h-10 min-w-24 text-right"
                         />
@@ -784,9 +780,9 @@ export function CreatePurchaseOrderForm({
                           type="number"
                           step="0.01"
                           placeholder="$0.00"
-                          value={line.unitCost || 0}
+                          value={line.unitCost || ""}
                           onChange={(e) =>
-                            updateSOVLine(index, "unitCost", parseFloat(e.target.value) || 0)
+                            updateSOVLine(index, "unitCost", e.target.value === "" ? 0 : parseFloat(e.target.value) || 0)
                           }
                           className="h-10 min-w-36 text-right"
                         />

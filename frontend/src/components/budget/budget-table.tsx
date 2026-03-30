@@ -40,6 +40,11 @@ type ColumnTooltip = {
   type?: "Source Column" | "Calculated Column" | "Standard Column";
   formula: string;
   details?: readonly string[];
+  sectionTitle?: string;
+  sections?: ReadonlyArray<{
+    label: string;
+    items: readonly string[];
+  }>;
 };
 
 const columnTooltips: Record<string, ColumnTooltip> = {
@@ -77,10 +82,16 @@ const columnTooltips: Record<string, ColumnTooltip> = {
     title: "Direct Costs",
     type: "Source Column",
     formula: "Direct Costs (Direct Costs)",
-    details: [
-      "Direct Costs",
-      "Type: Invoice, Expense, Payroll",
-      "Status: Pending, Revise and Resubmit, Approved",
+    sectionTitle: "Direct Costs",
+    sections: [
+      {
+        label: "Type",
+        items: ["Payroll", "Expense", "Invoice"],
+      },
+      {
+        label: "Status",
+        items: ["Approved", "Pending", "Revise and Resubmit"],
+      },
     ],
   },
   pendingChanges: {
@@ -227,17 +238,32 @@ function ColumnHeader({ lines, columnKey }: ColumnHeaderProps) {
       <TooltipContent
         side="bottom"
         align="center"
-        className="max-w-xs space-y-2 text-left leading-snug"
+        className="max-w-sm space-y-3 text-left text-sm leading-relaxed"
       >
-        <div>
-          <p className="font-semibold text-xs">{tooltip.title}</p>
-          {tooltip.type && (
-            <p className="text-2xs opacity-70 mt-0.5">{tooltip.type}</p>
-          )}
-          <p className="text-xs mt-1">{tooltip.formula}</p>
+        <div className="space-y-0.5">
+          <p className="text-lg font-semibold">{tooltip.formula}</p>
+          {tooltip.type && <p className="text-sm text-muted-foreground">{tooltip.type}</p>}
         </div>
+        {(tooltip.sectionTitle || tooltip.sections?.length) && <div className="h-px w-full bg-border/60" />}
+        {tooltip.sectionTitle ? (
+          <p className="text-base font-semibold">{tooltip.sectionTitle}</p>
+        ) : null}
+        {tooltip.sections?.length ? (
+          <div className="space-y-2">
+            {tooltip.sections.map((section) => (
+              <div key={section.label}>
+                <p className="font-semibold">{section.label}</p>
+                <ul className="list-disc space-y-0.5 pl-5">
+                  {section.items.map((item) => (
+                    <li key={`${section.label}-${item}`}>{item}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        ) : null}
         {tooltip.details?.length ? (
-          <ul className="list-disc space-y-1 pl-4 text-xs">
+          <ul className="list-disc space-y-1 pl-5">
             {tooltip.details.map((detail) => (
               <li key={detail}>{detail}</li>
             ))}

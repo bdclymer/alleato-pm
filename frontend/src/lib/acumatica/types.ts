@@ -749,6 +749,106 @@ export interface FlatProjectBudget {
 }
 
 // ---------------------------------------------------------------------------
+// Project Transaction (PM3040PL — cost transactions posted to projects)
+// ---------------------------------------------------------------------------
+
+export interface RawProjectTransactionDetail {
+  AccountGroup?: AcuField<string>;
+  AccountGroupDescription?: AcuField<string>;
+  Allocated?: AcuField<boolean>;
+  Amount?: AcuField<number>;
+  BatchNbr?: AcuField<string>;
+  Billable?: AcuField<boolean>;
+  BillableQty?: AcuField<number>;
+  Billed?: AcuField<boolean>;
+  CostCode?: AcuField<string>;
+  CreditAccount?: AcuField<string>;
+  Date?: AcuField<string>;
+  DebitAccount?: AcuField<string>;
+  Description?: AcuField<string>;
+  EarningType?: AcuField<string>;
+  Employee?: AcuField<string>;
+  EndDate?: AcuField<string>;
+  ExternalRefNbr?: AcuField<string>;
+  FinPeriod?: AcuField<string>;
+  InventoryID?: AcuField<string>;
+  Multiplier?: AcuField<number>;
+  Project?: AcuField<string>;
+  ProjectTask?: AcuField<string>;
+  Qty?: AcuField<number>;
+  Released?: AcuField<boolean>;
+  StartDate?: AcuField<string>;
+  TransactionID?: AcuField<number>;
+  UnitRate?: AcuField<number>;
+  UOM?: AcuField<string>;
+  UseBillableQtyInAmountFormula?: AcuField<boolean>;
+  VendorOrCustomer?: AcuField<string>;
+}
+
+export interface RawProjectTransaction {
+  ReferenceNbr: AcuField<string>;
+  Module?: AcuField<string>;
+  OriginalDocType?: AcuField<string>;
+  OriginalDocNbr?: AcuField<string>;
+  Status: AcuField<string>;
+  TotalAmount?: AcuField<number>;
+  TotalBillableQty?: AcuField<number>;
+  TotalQty?: AcuField<number>;
+  Description?: AcuField<string>;
+  CreatedDateTime?: AcuField<string>;
+  LastModifiedDateTime?: AcuField<string>;
+  Details?: RawProjectTransactionDetail[];
+}
+
+export interface FlatProjectTransactionDetail {
+  AccountGroup?: string;
+  AccountGroupDescription?: string;
+  Allocated?: boolean;
+  Amount?: number;
+  BatchNbr?: string;
+  Billable?: boolean;
+  BillableQty?: number;
+  Billed?: boolean;
+  CostCode?: string;
+  CreditAccount?: string;
+  Date?: string;
+  DebitAccount?: string;
+  Description?: string;
+  EarningType?: string;
+  Employee?: string;
+  EndDate?: string;
+  ExternalRefNbr?: string;
+  FinPeriod?: string;
+  InventoryID?: string;
+  Multiplier?: number;
+  Project?: string;
+  ProjectTask?: string;
+  Qty?: number;
+  Released?: boolean;
+  StartDate?: string;
+  TransactionID?: number;
+  UnitRate?: number;
+  UOM?: string;
+  UseBillableQtyInAmountFormula?: boolean;
+  VendorOrCustomer?: string;
+}
+
+export interface FlatProjectTransaction {
+  ReferenceNbr: string;
+  Module?: string;
+  OriginalDocType?: string;
+  OriginalDocNbr?: string;
+  Status: string;
+  TotalAmount?: number;
+  TotalBillableQty?: number;
+  TotalQty?: number;
+  Description?: string;
+  CreatedDateTime?: string;
+  LastModifiedDateTime?: string;
+  Details?: FlatProjectTransactionDetail[];
+}
+
+// ---------------------------------------------------------------------------
 // Project Task
 // ---------------------------------------------------------------------------
 

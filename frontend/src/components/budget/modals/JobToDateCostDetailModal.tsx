@@ -59,7 +59,7 @@ export function JobToDateCostDetailModal({
   const fetchCosts = async () => {
     setLoading(true);
     try {
-      const url = `/api/projects/${projectId}/budget/direct-costs?budgetLineId=${budgetLineId}&status=approved`;
+      const url = `/api/projects/${projectId}/budget/direct-costs?budgetLineId=${budgetLineId}&costCode=${encodeURIComponent(costCode)}&status=approved`;
       const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();

@@ -70,8 +70,8 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
     // Recalculate contract revised amount if PCCO is linked to a contract
     if (updated.contract_id) {
       const { data: contract } = await supabase
-        .from("contracts")
-        .select("id, original_contract_amount")
+        .from("prime_contracts")
+        .select("id, original_contract_value")
         .eq("id", updated.contract_id)
         .single();
 
@@ -88,11 +88,11 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
         );
 
         const newRevisedAmount =
-          (contract.original_contract_amount ?? 0) + approvedTotal;
+          (contract.original_contract_value ?? 0) + approvedTotal;
 
         await supabase
-          .from("contracts")
-          .update({ revised_contract_amount: newRevisedAmount })
+          .from("prime_contracts")
+          .update({ revised_contract_value: newRevisedAmount })
           .eq("id", updated.contract_id);
       }
     }

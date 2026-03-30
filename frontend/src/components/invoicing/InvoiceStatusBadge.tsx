@@ -1,50 +1,38 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-type InvoiceStatus = "draft" | "submitted" | "approved" | "paid" | "void";
+export type InvoiceStatus =
+  | "draft"
+  | "under_review"
+  | "approved"
+  | "revise_and_resubmit"
+  | "paid"
+  | "void"
+  | "not_invited"
+  | "invited";
+
+const STATUS_CONFIG: Record<InvoiceStatus, { label: string; variant: "default" | "secondary" | "success" | "destructive" | "warning" | "outline" }> = {
+  draft:                { label: "Draft",                variant: "secondary" },
+  under_review:         { label: "Under Review",         variant: "default" },
+  approved:             { label: "Approved",             variant: "success" },
+  revise_and_resubmit:  { label: "Revise and Resubmit",  variant: "destructive" },
+  paid:                 { label: "Paid",                 variant: "success" },
+  void:                 { label: "Void",                 variant: "outline" },
+  not_invited:          { label: "Not Invited",          variant: "secondary" },
+  invited:              { label: "Invited",              variant: "default" },
+};
 
 interface InvoiceStatusBadgeProps {
-  status: InvoiceStatus;
+  status: InvoiceStatus | string;
   className?: string;
 }
 
-/**
- * Invoice Status Badge Component
- *
- * Displays a status badge with appropriate styling for invoice statuses.
- * This is a specialized version of the StatusBadge component for invoices.
- *
- * @example
- * <InvoiceStatusBadge status="approved" />
- */
-export function InvoiceStatusBadge({
-  status,
-  className,
-}: InvoiceStatusBadgeProps) {
-  const getVariant = (): "default" | "secondary" | "success" | "destructive" => {
-    switch (status) {
-      case "paid":
-        return "success";
-      case "approved":
-        return "success";
-      case "submitted":
-        return "default";
-      case "draft":
-        return "secondary";
-      case "void":
-        return "destructive";
-      default:
-        return "secondary";
-    }
-  };
-
-  const getLabel = (): string => {
-    return status.charAt(0).toUpperCase() + status.slice(1);
-  };
+export function InvoiceStatusBadge({ status, className }: InvoiceStatusBadgeProps) {
+  const config = STATUS_CONFIG[status as InvoiceStatus] ?? { label: status, variant: "secondary" as const };
 
   return (
-    <Badge variant={getVariant()} className={cn("capitalize", className)}>
-      {getLabel()}
+    <Badge variant={config.variant} className={cn(className)}>
+      {config.label}
     </Badge>
   );
 }

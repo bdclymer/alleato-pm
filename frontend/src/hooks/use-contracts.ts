@@ -4,21 +4,16 @@ import { createClient } from "@/lib/supabase/client";
 import { useCallback, useEffect, useState } from "react";
 
 export interface Contract {
-  id: number;
-  contract_number: string | null;
+  id: string;
+  contract_number: string;
   client_id: string | null;
-  project_id: number | null;
+  project_id: number;
   status: string | null;
-  original_contract_amount: number | null;
-  invoiced_amount: number | null;
-  payments_received: number | null;
-  pending_change_orders: number | null;
-  approved_change_orders: number | null;
-  draft_change_orders: number | null;
-  executed: boolean | null;
-  erp_status: string | null;
-  notes: string | null;
-  attachment_count: number | null;
+  original_contract_value: number;
+  revised_contract_value: number;
+  executed: boolean;
+  description: string | null;
+  title: string;
   created_at: string;
   // Joined data
   client?: {
@@ -94,11 +89,11 @@ export function useContracts(
     try {
       const supabase = createClient();
       let query = supabase
-        .from("contracts")
+        .from("prime_contracts")
         .select(
           `
           *,
-          client:companies(id, name),
+          client:companies!prime_contracts_client_id_fkey(id, name),
           project:projects(id, name, project_number)
         `,
         )
@@ -152,21 +147,21 @@ export function useContracts(
       try {
         const supabase = createClient();
         const { data, error: insertError } = await supabase
-          .from("contracts")
+          .from("prime_contracts")
           .insert({
-            contract_number: contract.contract_number,
+            contract_number: contract.contract_number || "DRAFT",
             client_id: contract.client_id || null,
             project_id: contract.project_id || 0,
-            title: contract.contract_number || "Untitled Contract",
-            status: contract.status || "draft",
-            original_contract_amount: contract.original_contract_amount,
+            title: contract.title || contract.contract_number || "Untitled Contract",
+            status: (contract.status as "draft" | "out_for_bid" | "out_for_signature" | "approved" | "complete") || "draft",
+            original_contract_value: contract.original_contract_value || 0,
             executed: contract.executed || false,
-            notes: contract.notes,
+            description: contract.description || null,
           })
           .select(
             `
           *,
-          client:companies(id, name),
+          client:companies!prime_contracts_client_id_fkey(id, name),
           project:projects(id, name, project_number)
         `,
           )
@@ -198,10 +193,10 @@ export function useContracts(
       : `Contract #${contract.id}`;
 
     return {
-      value: contract.id.toString(),
+      value: contract.id,
       label,
       contractNumber: contract.contract_number || undefined,
-      amount: contract.original_contract_amount || undefined,
+      amount: contract.original_contract_value || undefined,
     };
   });
 

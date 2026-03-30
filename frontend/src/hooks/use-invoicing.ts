@@ -14,7 +14,8 @@ import type { OwnerInvoice } from "@/features/invoicing/invoicing-table-config";
 // =============================================================================
 
 export interface InvoiceListFilters {
-  status?: string;
+  billing_period_id?: string;
+  prime_contract_id?: string;
   search?: string;
 }
 
@@ -50,8 +51,12 @@ export function useOwnerInvoicesList(
   return useQuery<OwnerInvoice[]>({
     queryKey: invoiceKeys.list(projectId, filters),
     queryFn: async () => {
+      const params = new URLSearchParams();
+      if (filters?.billing_period_id) params.set("billing_period_id", filters.billing_period_id);
+      if (filters?.prime_contract_id) params.set("prime_contract_id", filters.prime_contract_id);
+      const qs = params.toString();
       const response = await fetch(
-        `/api/projects/${projectId}/invoicing/owner`,
+        `/api/projects/${projectId}/invoicing/owner${qs ? `?${qs}` : ""}`,
       );
       if (!response.ok) {
         const error = await response.json().catch(() => ({}));

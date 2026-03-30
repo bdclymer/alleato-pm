@@ -37,11 +37,11 @@ export async function POST(
       .select(
         `
         *,
-        contracts!inner(project_id)
+        prime_contracts!inner(project_id)
       `,
       )
       .eq("id", invoiceIdNum)
-      .eq("contracts.project_id", projectIdNum)
+      .eq("prime_contracts.project_id", projectIdNum)
       .single();
 
     if (fetchError) {
@@ -58,11 +58,11 @@ export async function POST(
       );
     }
 
-    // Update invoice status to submitted
+    // Update invoice status to under_review (Procore: UNDER REVIEW)
     const { data: updatedInvoice, error: updateError } = await supabase
       .from("owner_invoices")
       .update({
-        status: "submitted",
+        status: "under_review",
         submitted_at: new Date().toISOString(),
       })
       .eq("id", invoiceIdNum)

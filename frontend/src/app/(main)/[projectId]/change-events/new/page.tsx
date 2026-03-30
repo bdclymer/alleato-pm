@@ -71,16 +71,25 @@ export default function NewChangeEventPage() {
           origin: ORIGIN_MAP[data.origin || ""] || "Internal",
           expectingRevenue: data.expectingRevenue ?? true,
           lineItemRevenueSource: data.lineItemRevenueSource || undefined,
-          primeContractId: data.primeContractId
-            ? Number(data.primeContractId)
-            : undefined,
+          primeContractId: data.primeContractId || undefined,
           description: mergedDescription || undefined,
         }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: "Unknown error" }));
-        throw new Error(errorData.error || "Failed to create change event");
+        const text = await response.text();
+        let errorMessage = `Failed to create change event (${response.status})`;
+        try {
+          const errorData = JSON.parse(text);
+          if (errorData.details && Array.isArray(errorData.details)) {
+            errorMessage = errorData.details.map((d: { field?: string; message?: string }) => `${d.field}: ${d.message}`).join(', ');
+          } else if (errorData.error) {
+            errorMessage = errorData.error;
+          }
+        } catch {
+          errorMessage = text.slice(0, 200) || errorMessage;
+        }
+        throw new Error(errorMessage);
       }
 
       const newEvent = await response.json();
@@ -91,8 +100,10 @@ export default function NewChangeEventPage() {
             return (
               lineItem.description.trim().length > 0 ||
               lineItem.budgetCode.trim().length > 0 ||
-              lineItem.costQuantity > 0 ||
-              lineItem.revenueQuantity > 0
+              lineItem.costUnitCost > 0 ||
+              lineItem.revenueRom > 0 ||
+              lineItem.costRom > 0 ||
+              lineItem.nonCommittedCost > 0
             );
           })
           .map((lineItem, index) =>
@@ -127,13 +138,22 @@ export default function NewChangeEventPage() {
         data.attachments.map(async (file) => {
           const formData = new FormData();
           formData.append("files", file);
-          await fetch(
+          const uploadResponse = await fetch(
             `/api/projects/${projectId}/change-events/${newEvent.id}/attachments`,
             {
               method: "POST",
               body: formData,
             },
           );
+
+          if (!uploadResponse.ok) {
+            const errorData = await uploadResponse
+              .json()
+              .catch(() => ({ error: "Unknown attachment upload error" }));
+            throw new Error(
+              `Failed to upload attachment "${file.name}": ${errorData.error || "Unknown error"}`,
+            );
+          }
         }),
       );
 

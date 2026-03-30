@@ -5,13 +5,15 @@ import type * as React from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   Building2,
+  ChevronDown,
   Download,
-  Edit,
+  FileText,
   History,
   Mail,
   MessageSquare,
+  Pencil,
+  Plus,
   Receipt,
-  Trash2,
 } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -24,11 +26,16 @@ import { DocumentDeliveryDialog } from "@/components/documents/DocumentDeliveryD
 import { EmptyState } from "@/components/ds/empty-state";
 import { KpiBlock } from "@/components/ds/kpi";
 import { StatusBadge } from "@/components/ds/status-badge";
-import { ProjectPageHeader } from "@/components/layout";
 import { PageContainer } from "@/components/layout/PageContainer";
+import { PageTabs } from "@/components/layout/PageTabs";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   commitmentKeys,
   useCommitmentDetail,
@@ -310,7 +317,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
       {/* General Information */}
       <div className="space-y-4">
         <SectionLabel>General Information</SectionLabel>
-        <div className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
           <F label="Title">{commitment.title || dash}</F>
           <F label="Contract #">{safeNumber(commitment.number) || dash}</F>
           {!commitment.contract_company?.name && (
@@ -378,7 +385,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
       {/* Contract Dates */}
       <div className="space-y-4">
         <SectionLabel>Contract Dates</SectionLabel>
-        <div className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
           {!isPO && (
             <F label="Start Date">
               {commitment.start_date ? formatDate(commitment.start_date) : dash}
@@ -399,7 +406,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
       {/* Contract Privacy */}
       <div className="space-y-4">
         <SectionLabel>Contract Privacy</SectionLabel>
-        <div className="grid grid-cols-2 gap-x-8 gap-y-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
           <F label="Visibility">{commitment.private ? "Private" : "Public"}</F>
           <F label="Non-Admin Can View SOV Items">
             {commitment.allow_non_admin_view_sov_items ? "Yes" : "No"}
@@ -422,7 +429,7 @@ function FinancialKpiStrip({ commitment }: { commitment: CommitmentDetail }) {
 
   return (
     <div className="overflow-hidden rounded-lg bg-card">
-      <div className="grid grid-cols-2 divide-x divide-border sm:grid-cols-5">
+      <div className="grid grid-cols-2 divide-x divide-border lg:grid-cols-5">
         <div className="px-5 py-4">
           <KpiBlock
             label="Original Contract"
@@ -498,6 +505,7 @@ export default function CommitmentDetailPage() {
   const [documentDialogTab, setDocumentDialogTab] = useState<
     "download" | "email"
   >("download");
+  const [activeTab, setActiveTab] = useState("general");
 
   const {
     data: rawData,
@@ -568,194 +576,230 @@ export default function CommitmentDetailPage() {
 
   const displayNumber = safeNumber(commitment?.number);
 
-  const headerClassName = "px-3 sm:px-5 lg:px-7";
-
   // ── Loading ──
   if (isLoading) {
     return (
-      <>
-        <ProjectPageHeader
-          title="Commitment Details"
-          description="Loading…"
-          className={headerClassName}
-        />
-        <PageContainer>
-          <div className="space-y-6">
-            <Skeleton className="h-24 w-full rounded-lg" />
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-5">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="space-y-1.5">
-                  <Skeleton className="h-3 w-20" />
-                  <Skeleton className="h-5 w-40" />
-                </div>
-              ))}
-            </div>
+      <PageContainer>
+        <div className="pt-3 pb-4">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold">Commitment Details</h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">Loading…</p>
+        </div>
+        <div className="space-y-6">
+          <Skeleton className="h-24 w-full rounded-lg" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="space-y-1.5">
+                <Skeleton className="h-3 w-20" />
+                <Skeleton className="h-5 w-40" />
+              </div>
+            ))}
           </div>
-        </PageContainer>
-      </>
+        </div>
+      </PageContainer>
     );
   }
 
   // ── Error ──
   if (error || !commitment) {
     return (
-      <>
-        <ProjectPageHeader
-          title="Commitment Details"
-          description="Not found"
-          className={headerClassName}
-        />
-        <PageContainer>
-          <p className="text-sm text-destructive">{error || "Commitment not found"}</p>
-        </PageContainer>
-      </>
+      <PageContainer>
+        <div className="pt-3 pb-4">
+          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold">Commitment Details</h1>
+          <p className="mt-0.5 text-sm text-muted-foreground">Not found</p>
+        </div>
+        <p className="text-sm text-destructive">{error || "Commitment not found"}</p>
+      </PageContainer>
     );
   }
 
   const sovLabel = isPO ? "PO SOV" : "SC SOV";
 
   return (
-    <>
-      <ProjectPageHeader
-        title={commitment.title || displayNumber || "Commitment"}
-        description={displayNumber ? `${displayNumber} · ${contractType}` : contractType}
-        className={headerClassName}
-        actions={
-          <div className="flex items-center gap-1">
-            <Button variant="ghost" size="icon" onClick={handleEmail}>
+    <PageContainer>
+      {/* Header — stacks title/actions on mobile */}
+      <div className="pt-3 pb-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold truncate">
+              {commitment.title || displayNumber || "Commitment"}
+            </h1>
+            <p className="mt-0.5 text-sm text-muted-foreground truncate">
+              {[
+                displayNumber && `#${displayNumber}`,
+                contractType,
+                commitment.contract_company?.name,
+              ]
+                .filter(Boolean)
+                .join(" · ")}
+            </p>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleEmail}
+              aria-label="Email"
+              title="Email"
+            >
               <Mail />
             </Button>
-            <Button variant="ghost" size="icon" onClick={handleExport}>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleExport}
+              aria-label="Export"
+              title="Export"
+            >
               <Download />
             </Button>
             <Button
-              variant="ghost"
+              variant="outline"
               size="icon"
               onClick={() => router.push(`/${projectId}/commitments/${commitmentId}/edit`)}
+              aria-label="Edit Commitment"
+              title="Edit Commitment"
             >
-              <Edit />
+              <Pencil />
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleDelete}
-              className="text-muted-foreground hover:text-destructive"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="default">
+                  <Plus className="mr-1.5 h-4 w-4" />
+                  Create
+                  <ChevronDown className="ml-1.5 h-3.5 w-3.5 opacity-70" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => {
+                    setActiveTab("change-orders");
+                    toast.info("Navigate to Change Orders tab to create a change event");
+                  }}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  Change Event
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setActiveTab("invoices");
+                    toast.info("Navigate to Invoices tab to create an invoice");
+                  }}
+                >
+                  <Receipt className="mr-2 h-4 w-4" />
+                  Invoice
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    setActiveTab("payments");
+                    toast.info("Navigate to Payments tab to create a payment");
+                  }}
+                >
+                  <Mail className="mr-2 h-4 w-4" />
+                  Payment
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-        }
+        </div>
+      </div>
+
+      <PageTabs
+        variant="inline"
+        className="border-b border-border"
+        tabs={[
+          { label: "General", href: "general", isActive: activeTab === "general" },
+          { label: sovLabel, href: "sov", isActive: activeTab === "sov" },
+          { label: "Change Orders", href: "change-orders", isActive: activeTab === "change-orders" },
+          { label: "RFQs", href: "rfqs", isActive: activeTab === "rfqs" },
+          { label: "Invoices", href: "invoices", isActive: activeTab === "invoices" },
+          { label: "Payments Issued", href: "payments", isActive: activeTab === "payments" },
+          { label: "Emails", href: "emails", isActive: activeTab === "emails" },
+          { label: "Change History", href: "history", isActive: activeTab === "history" },
+          { label: "Advanced Settings", href: "advanced-settings", isActive: activeTab === "advanced-settings" },
+        ]}
+        onTabClick={(href) => setActiveTab(href)}
       />
 
-      <PageContainer>
-        <div className="space-y-6">
-          <Tabs defaultValue="general" className="space-y-0">
-            {/* Tab bar */}
-            <div className="mb-6">
-              <TabsList variant="line">
-                <TabsTrigger value="general">General</TabsTrigger>
-                <TabsTrigger value="sov">{sovLabel}</TabsTrigger>
-                <TabsTrigger value="change-orders">Change Orders</TabsTrigger>
-                <TabsTrigger value="rfqs">RFQs</TabsTrigger>
-                <TabsTrigger value="invoices">Invoices</TabsTrigger>
-                <TabsTrigger value="payments">Payments Issued</TabsTrigger>
-                <TabsTrigger value="emails">Emails</TabsTrigger>
-                <TabsTrigger value="history">Change History</TabsTrigger>
-                <TabsTrigger value="advanced-settings">
-                  Advanced Settings
-                </TabsTrigger>
-              </TabsList>
-            </div>
+      <div className="px-4 pt-10 md:px-6 lg:px-8">
+        {activeTab === "general" && (
+          <GeneralTab
+            commitment={commitment}
+            projectId={projectId}
+            commitmentId={commitment.id}
+            onImportComplete={() => void fetchCommitment()}
+          />
+        )}
 
-            {/* General */}
-            <TabsContent value="general">
-              <GeneralTab
-                commitment={commitment}
-                projectId={projectId}
-                commitmentId={commitment.id}
-                onImportComplete={() => void fetchCommitment()}
-              />
-            </TabsContent>
+        {activeTab === "sov" && (
+          <ScheduleOfValuesTab
+            lineItems={commitment.line_items || []}
+            projectId={projectId}
+            commitmentId={commitment.id}
+            commitmentType={commitment.type}
+            onImportComplete={() => void fetchCommitment()}
+          />
+        )}
 
-            {/* SOV */}
-            <TabsContent value="sov">
-              <ScheduleOfValuesTab
-                lineItems={commitment.line_items || []}
-                projectId={projectId}
-                commitmentId={commitment.id}
-                commitmentType={commitment.type}
-                onImportComplete={() => void fetchCommitment()}
-              />
-            </TabsContent>
+        {activeTab === "change-orders" && (
+          <ChangeOrdersTab
+            commitmentId={commitment.id}
+            projectId={projectId}
+          />
+        )}
 
-            {/* Change Orders */}
-            <TabsContent value="change-orders">
-              <ChangeOrdersTab
-                commitmentId={commitment.id}
-                projectId={projectId}
-              />
-            </TabsContent>
+        {activeTab === "rfqs" && (
+          <ComingSoonTab
+            icon={<MessageSquare className="h-5 w-5 text-muted-foreground" />}
+            label="RFQs"
+          />
+        )}
 
-            {/* RFQs */}
-            <TabsContent value="rfqs">
-              <ComingSoonTab
-                icon={<MessageSquare className="h-5 w-5 text-muted-foreground" />}
-                label="RFQs"
-              />
-            </TabsContent>
+        {activeTab === "invoices" && (
+          <InvoicesTab commitmentId={commitment.id} />
+        )}
 
-            {/* Invoices */}
-            <TabsContent value="invoices">
-              <InvoicesTab commitmentId={commitment.id} />
-            </TabsContent>
+        {activeTab === "payments" && (
+          <ComingSoonTab
+            icon={<Receipt className="h-5 w-5 text-muted-foreground" />}
+            label="Payments Issued"
+          />
+        )}
 
-            {/* Payments Issued */}
-            <TabsContent value="payments">
-              <ComingSoonTab
-                icon={<Receipt className="h-5 w-5 text-muted-foreground" />}
-                label="Payments Issued"
-              />
-            </TabsContent>
+        {activeTab === "emails" && (
+          <ComingSoonTab
+            icon={<Mail className="h-5 w-5 text-muted-foreground" />}
+            label="Emails"
+          />
+        )}
 
-            {/* Emails */}
-            <TabsContent value="emails">
-              <ComingSoonTab
-                icon={<Mail className="h-5 w-5 text-muted-foreground" />}
-                label="Emails"
-              />
-            </TabsContent>
+        {activeTab === "history" && (
+          <ComingSoonTab
+            icon={<History className="h-5 w-5 text-muted-foreground" />}
+            label="Change History"
+          />
+        )}
 
-            {/* Change History */}
-            <TabsContent value="history">
-              <ComingSoonTab
-                icon={<History className="h-5 w-5 text-muted-foreground" />}
-                label="Change History"
-              />
-            </TabsContent>
+        {activeTab === "advanced-settings" && (
+          <AdvancedSettingsTab
+            commitmentId={commitment.id}
+            commitmentType={commitment.type}
+          />
+        )}
+      </div>
 
-            {/* Advanced Settings */}
-            <TabsContent value="advanced-settings">
-              <AdvancedSettingsTab
-                commitmentId={commitment.id}
-                commitmentType={commitment.type}
-              />
-            </TabsContent>
-          </Tabs>
-        </div>
-
-        <DocumentDeliveryDialog
-          open={isExportDialogOpen || isEmailDialogOpen}
-          onOpenChange={(nextOpen) => {
-            setIsExportDialogOpen(nextOpen);
-            setIsEmailDialogOpen(nextOpen);
-          }}
-          initialTab={documentDialogTab}
-          recordType="commitment"
-          recordId={commitment.id}
-          number={commitment.number}
-          title={commitment.title}
-        />
-      </PageContainer>
-    </>
+      <DocumentDeliveryDialog
+        open={isExportDialogOpen || isEmailDialogOpen}
+        onOpenChange={(nextOpen) => {
+          setIsExportDialogOpen(nextOpen);
+          setIsEmailDialogOpen(nextOpen);
+        }}
+        initialTab={documentDialogTab}
+        recordType="commitment"
+        recordId={commitment.id}
+        number={commitment.number}
+        title={commitment.title}
+      />
+    </PageContainer>
   );
 }

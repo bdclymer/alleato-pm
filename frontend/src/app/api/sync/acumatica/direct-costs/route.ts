@@ -5,8 +5,8 @@ import { syncDirectCosts } from "@/lib/acumatica/sync";
 /**
  * POST /api/sync/acumatica/direct-costs
  *
- * Pulls AP Bills from Acumatica and upserts them into the direct_costs
- * table for a given project.
+ * Pulls Project Transactions (PM3040PL) from Acumatica and upserts them
+ * into the direct_costs table for a given project.
  *
  * Body: { projectId: number }
  */

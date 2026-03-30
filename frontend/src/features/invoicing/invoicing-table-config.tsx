@@ -7,7 +7,6 @@ import type {
   FilterConfig,
   TableColumn,
 } from "@/components/tables/unified";
-import { StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -15,6 +14,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  InvoiceStatusBadge,
+  type InvoiceStatus,
+} from "@/components/invoicing/InvoiceStatusBadge";
 
 // =============================================================================
 // Types
@@ -22,15 +25,29 @@ import {
 
 export interface OwnerInvoice {
   id: number;
-  contract_id: number;
+  prime_contract_id: string;
   invoice_number: string | null;
   period_start: string | null;
   period_end: string | null;
-  status: "draft" | "submitted" | "approved" | "paid" | "void";
+  billing_date: string | null;
+  due_date: string | null;
+  status: InvoiceStatus;
   billing_period_id: string | null;
+  billing_period_name?: string | null;
+  // Financial summary (computed from line items or stored)
+  gross_amount: number | null;
+  net_amount: number | null;
+  paid_amount: number | null;
+  percent_complete: number | null;
+  total_amount?: number;
+  // Contract join fields
+  contract_number?: string | null;
+  contract_title?: string | null;
+  total_contract_amount?: number | null;
+  // Vendor/company
+  vendor_name?: string | null;
   created_at: string;
   updated_at: string;
-  total_amount?: number;
 }
 
 // =============================================================================
@@ -56,9 +73,9 @@ function formatDate(dateStr: string | null | undefined): string {
   });
 }
 
-function statusLabel(status: string | null | undefined): string {
-  if (!status) return "—";
-  return status.charAt(0).toUpperCase() + status.slice(1).toLowerCase();
+function formatPercent(value: number | null | undefined): string {
+  if (value === null || value === undefined) return "0%";
+  return `${Math.round(value)}%`;
 }
 
 // =============================================================================
@@ -67,11 +84,16 @@ function statusLabel(status: string | null | undefined): string {
 
 export const invoiceColumns: ColumnConfig[] = [
   { id: "invoice_number", label: "Invoice #", alwaysVisible: true },
-  { id: "contract_id", label: "Contract", defaultVisible: true },
-  { id: "billing_period", label: "Billing Period", defaultVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
-  { id: "total_amount", label: "Amount", defaultVisible: true },
-  { id: "created_at", label: "Created", defaultVisible: false },
+  { id: "vendor_name", label: "Company", defaultVisible: true },
+  { id: "billing_period", label: "Billing Period", defaultVisible: true },
+  { id: "gross_amount", label: "Gross Amount", defaultVisible: true },
+  { id: "net_amount", label: "Net Amount", defaultVisible: true },
+  { id: "paid_amount", label: "Paid Amount", defaultVisible: true },
+  { id: "invoice_dates", label: "Invoice Dates", defaultVisible: true },
+  { id: "contract", label: "Contract", defaultVisible: true },
+  { id: "total_contract_amount", label: "Total Contract Amount", defaultVisible: false },
+  { id: "percent_complete", label: "% Complete", defaultVisible: true },
 ];
 
 export const invoiceDefaultVisibleColumns = invoiceColumns
@@ -84,21 +106,21 @@ export const invoiceDefaultVisibleColumns = invoiceColumns
 
 export const invoiceFilters: FilterConfig[] = [
   {
-    id: "status",
-    label: "Status",
+    id: "billing_period_id",
+    label: "Billing Period",
     type: "select",
-    options: [
-      { value: "draft", label: "Draft" },
-      { value: "submitted", label: "Submitted" },
-      { value: "approved", label: "Approved" },
-      { value: "paid", label: "Paid" },
-      { value: "void", label: "Void" },
-    ],
+    options: [], // populated dynamically from billing periods API
+  },
+  {
+    id: "prime_contract_id",
+    label: "Prime Contract",
+    type: "select",
+    options: [], // populated dynamically from prime contracts API
   },
 ];
 
 // =============================================================================
-// Table Columns (UnifiedTablePage format)
+// Table Columns (UnifiedTablePage format) — 11 Procore-spec columns
 // =============================================================================
 
 export function buildInvoiceTableColumns(
@@ -121,12 +143,18 @@ export function buildInvoiceTableColumns(
       ),
     },
     {
-      id: "contract_id",
-      label: "Contract",
+      id: "status",
+      label: "Status",
+      defaultVisible: true,
+      render: (invoice) => <InvoiceStatusBadge status={invoice.status} />,
+    },
+    {
+      id: "vendor_name",
+      label: "Company",
       defaultVisible: true,
       render: (invoice) => (
-        <span className="text-muted-foreground text-sm">
-          Contract #{invoice.contract_id}
+        <span className="text-sm">
+          {invoice.vendor_name ?? <span className="text-muted-foreground">—</span>}
         </span>
       ),
     },
@@ -135,6 +163,9 @@ export function buildInvoiceTableColumns(
       label: "Billing Period",
       defaultVisible: true,
       render: (invoice) => {
+        if (invoice.billing_period_name) {
+          return <span className="text-sm">{invoice.billing_period_name}</span>;
+        }
         const start = invoice.period_start;
         const end = invoice.period_end;
         if (!start && !end) return <span className="text-muted-foreground">—</span>;
@@ -146,36 +177,97 @@ export function buildInvoiceTableColumns(
       },
     },
     {
-      id: "status",
-      label: "Status",
-      defaultVisible: true,
-      render: (invoice) => (
-        <StatusBadge status={statusLabel(invoice.status)} />
-      ),
-    },
-    {
-      id: "total_amount",
-      label: "Amount",
+      id: "gross_amount",
+      label: "Gross Amount",
       defaultVisible: true,
       render: (invoice) => (
         <span className="font-medium tabular-nums">
-          {formatCurrency(invoice.total_amount)}
+          {formatCurrency(invoice.gross_amount ?? invoice.total_amount)}
         </span>
       ),
       sortable: true,
-      sortValue: (invoice) => invoice.total_amount ?? 0,
+      sortValue: (invoice) => invoice.gross_amount ?? invoice.total_amount ?? 0,
     },
     {
-      id: "created_at",
-      label: "Created",
-      defaultVisible: false,
+      id: "net_amount",
+      label: "Net Amount",
+      defaultVisible: true,
       render: (invoice) => (
-        <span className="text-sm text-muted-foreground">
-          {formatDate(invoice.created_at)}
+        <span className="tabular-nums">
+          {formatCurrency(invoice.net_amount)}
         </span>
       ),
       sortable: true,
-      sortValue: (invoice) => invoice.created_at,
+      sortValue: (invoice) => invoice.net_amount ?? 0,
+    },
+    {
+      id: "paid_amount",
+      label: "Paid Amount",
+      defaultVisible: true,
+      render: (invoice) => (
+        <span className="tabular-nums">
+          {formatCurrency(invoice.paid_amount)}
+        </span>
+      ),
+      sortable: true,
+      sortValue: (invoice) => invoice.paid_amount ?? 0,
+    },
+    {
+      id: "invoice_dates",
+      label: "Invoice Dates",
+      defaultVisible: true,
+      render: (invoice) => {
+        const billing = invoice.billing_date;
+        const due = invoice.due_date;
+        if (!billing && !due) return <span className="text-muted-foreground">—</span>;
+        return (
+          <div className="text-sm space-y-0.5">
+            {billing && <div className="text-muted-foreground text-xs">Billing: {formatDate(billing)}</div>}
+            {due && <div className="text-muted-foreground text-xs">Due: {formatDate(due)}</div>}
+          </div>
+        );
+      },
+    },
+    {
+      id: "contract",
+      label: "Contract",
+      defaultVisible: true,
+      render: (invoice) => {
+        const label = invoice.contract_number ?? invoice.contract_title ?? invoice.prime_contract_id;
+        const sublabel = invoice.contract_number && invoice.contract_title ? invoice.contract_title : null;
+        return (
+          <div className="text-sm">
+            <span className="font-medium">{label}</span>
+            {sublabel && (
+              <p className="text-xs text-muted-foreground truncate max-w-40">{sublabel}</p>
+            )}
+          </div>
+        );
+      },
+    },
+    {
+      id: "total_contract_amount",
+      label: "Total Contract Amount",
+      defaultVisible: false,
+      render: (invoice) => (
+        <span className="tabular-nums">
+          {formatCurrency(invoice.total_contract_amount)}
+        </span>
+      ),
+      sortable: true,
+      sortValue: (invoice) => invoice.total_contract_amount ?? 0,
+    },
+    {
+      id: "percent_complete",
+      label: "% Complete",
+      defaultVisible: true,
+      render: (invoice) => (
+        <span className="tabular-nums text-sm">
+          {formatPercent(invoice.percent_complete)}
+        </span>
+      ),
+      sortable: true,
+      sortValue: (invoice) => invoice.percent_complete ?? 0,
     },
   ];
 }
@@ -190,6 +282,7 @@ export function renderInvoiceRowActions(
   onEdit: (invoice: OwnerInvoice) => void,
   onDelete: (invoice: OwnerInvoice) => void,
 ): ReactElement {
+  const isDeletable = invoice.status !== "approved" && invoice.status !== "paid";
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -209,7 +302,7 @@ export function renderInvoiceRowActions(
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => onDelete(invoice)}
-          disabled={invoice.status === "approved" || invoice.status === "paid"}
+          disabled={!isDeletable}
           className="text-destructive focus:text-destructive"
         >
           <Trash2 className="mr-2 h-4 w-4" />
@@ -233,15 +326,15 @@ export function renderInvoiceCard(invoice: OwnerInvoice): ReactElement {
             {invoice.invoice_number || `INV-${invoice.id}`}
           </p>
           <p className="text-xs text-muted-foreground">
-            Contract #{invoice.contract_id}
+            {invoice.contract_number ?? invoice.prime_contract_id}
           </p>
         </div>
-        <StatusBadge status={statusLabel(invoice.status)} />
+        <InvoiceStatusBadge status={invoice.status} />
       </div>
       <div className="flex items-center justify-between pt-2 border-t border-border">
-        <span className="text-xs text-muted-foreground">Total</span>
+        <span className="text-xs text-muted-foreground">Gross Amount</span>
         <span className="text-sm font-medium tabular-nums">
-          {formatCurrency(invoice.total_amount)}
+          {formatCurrency(invoice.gross_amount ?? invoice.total_amount)}
         </span>
       </div>
     </div>
@@ -261,14 +354,14 @@ export function renderInvoiceList(invoice: OwnerInvoice): ReactElement {
             {invoice.invoice_number || `INV-${invoice.id}`}
           </p>
           <p className="text-xs text-muted-foreground">
-            Contract #{invoice.contract_id}
+            {invoice.contract_number ?? invoice.prime_contract_id}
           </p>
         </div>
       </div>
       <div className="flex items-center gap-4">
-        <StatusBadge status={statusLabel(invoice.status)} />
+        <InvoiceStatusBadge status={invoice.status} />
         <span className="text-sm font-medium tabular-nums w-24 text-right">
-          {formatCurrency(invoice.total_amount)}
+          {formatCurrency(invoice.gross_amount ?? invoice.total_amount)}
         </span>
       </div>
     </div>

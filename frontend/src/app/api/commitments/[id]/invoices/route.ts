@@ -223,7 +223,7 @@ export async function POST(
     const { data: invoice, error: insertError } = await supabase
       .from("owner_invoices")
       .insert({
-        contract_id: parseInt(id),
+        prime_contract_id: id,
         invoice_number,
         period_start,
         period_end,

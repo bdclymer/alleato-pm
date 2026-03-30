@@ -1,0 +1,334 @@
+{
+  "run_id": "20260330T020736Z",
+  "feature": "invoicing",
+  "generated_at": "2026-03-30T02:45:00Z",
+  "task_count": 22,
+  "tasks": [
+    {
+      "task_id": "TASK-001",
+      "title": "Fix broken FK join in owner invoice individual routes",
+      "severity": "critical",
+      "gap_ids": ["API-003"],
+      "layer": "api",
+      "description": "All GET, PATCH, DELETE, submit, and approve operations on individual owner invoices fail because the route joins 'contracts!inner(project_id)' when it should join 'prime_contracts'. This is a pure code fix requiring no schema change. Must be fixed first as it blocks all invoice detail work.",
+      "files_to_change": [
+        "frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/route.ts",
+        "frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/submit/route.ts",
+        "frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/approve/route.ts"
+      ],
+      "status": "open",
+      "dependencies": []
+    },
+    {
+      "task_id": "TASK-002",
+      "title": "Fix wrong FK column in commitment invoice POST",
+      "severity": "critical",
+      "gap_ids": ["API-004"],
+      "layer": "api",
+      "description": "POST /api/commitments/[id]/invoices inserts using 'contract_id: parseInt(id)' but the column is 'prime_contract_id' (UUID). The insert fails or produces NULL FK. Fix the column name and use the correct UUID value. Pure code fix — no schema change needed.",
+      "files_to_change": [
+        "frontend/src/app/api/commitments/[id]/invoices/route.ts"
+      ],
+      "status": "open",
+      "dependencies": []
+    },
+    {
+      "task_id": "TASK-003",
+      "title": "Fix invoice status enum and constrain owner_invoices.status",
+      "severity": "critical",
+      "gap_ids": ["DB-003", "DB-004", "UI-003"],
+      "layer": "database+api+ui",
+      "description": "Add missing enum values (under_review, revise_and_resubmit, not_invited, invited) to the invoice_status DB enum. Add a CHECK constraint to owner_invoices.status so it is typed to the enum. Update InvoiceStatusBadge to render all new statuses with appropriate colors. This is the status foundation that blocks UI-005 (status summary bar) and the REVISE AND RESUBMIT workflow.",
+      "files_to_change": [
+        "supabase/migrations/ (new migration: alter invoice_status enum + add CHECK constraint)",
+        "frontend/src/types/database.types.ts (regenerate after migration)",
+        "frontend/src/components/invoicing/InvoiceStatusBadge.tsx"
+      ],
+      "status": "open",
+      "dependencies": []
+    },
+    {
+      "task_id": "TASK-004",
+      "title": "Build full subcontractor invoicing — DB, API, and UI",
+      "severity": "critical",
+      "gap_ids": ["DB-001", "DB-010", "DB-011", "API-001", "UI-001"],
+      "layer": "all",
+      "description": "Create the subcontractor_invoices table with ERP status column and invitation tracking columns. Build all subcontractor invoice API routes (list with 5 filters, CRUD, status transitions). Build the Subcontractor Invoices tab UI with 12 columns, 5 filters, and status summary bar. This is half the invoicing feature.",
+      "files_to_change": [
+        "supabase/migrations/ (new migration: create subcontractor_invoices table)",
+        "frontend/src/types/database.types.ts (regenerate)",
+        "frontend/src/app/api/projects/[projectId]/invoicing/subcontractor/route.ts (new)",
+        "frontend/src/app/api/projects/[projectId]/invoicing/subcontractor/[invoiceId]/route.ts (new)",
+        "frontend/src/app/(main)/[projectId]/invoicing/page.tsx",
+        "frontend/src/features/invoicing/subcontractor-table-config.tsx (new)"
+      ],
+      "status": "open",
+      "dependencies": ["TASK-003"]
+    },
+    {
+      "task_id": "TASK-005",
+      "title": "Build owner invoice line items CRUD endpoints",
+      "severity": "critical",
+      "gap_ids": ["API-002", "UI-026"],
+      "layer": "api+ui",
+      "description": "Create GET/POST/PATCH/DELETE endpoints for owner invoice line items. Add inline create/edit/delete UI on the invoice detail line items tab. Without this, all invoices show $0 totals — the AIA G702/G703 workflow is entirely blocked.",
+      "files_to_change": [
+        "frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/line-items/route.ts (new)",
+        "frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/line-items/[lineItemId]/route.ts (new)",
+        "frontend/src/app/(main)/[projectId]/invoicing/[invoiceId]/page.tsx",
+        "frontend/src/components/invoicing/InvoiceLineItemsTable.tsx"
+      ],
+      "status": "open",
+      "dependencies": ["TASK-001", "TASK-003"]
+    },
+    {
+      "task_id": "TASK-006",
+      "title": "Migrate invoice detail page to PageShell with 5 tabs",
+      "severity": "high",
+      "gap_ids": ["UI-007", "UI-008", "UI-014"],
+      "layer": "ui",
+      "description": "Replace deprecated ProjectPageHeader + PageContainer with PageShell (variant='detail'). Restructure the detail page to use 5 tabs: Invoice Details, Line Items, Approvals, Payments Issued, Activity. Add approval workflow timeline in the Approvals tab showing status changes, approver names, timestamps, and comments.",
+      "files_to_change": [
+        "frontend/src/app/(main)/[projectId]/invoicing/[invoiceId]/page.tsx"
+      ],
+      "status": "open",
+      "dependencies": ["TASK-001"]
+    },
+    {
+      "task_id": "TASK-007",
+      "title": "Add owner_invoices financial summary columns",
+      "severity": "high",
+      "gap_ids": ["DB-005", "DB-006", "DB-007", "DB-008", "DB-009", "DB-022", "DB-023"],
+      "layer": "database",
+      "description": "Add gross_amount, net_amount, paid_amount, percent_complete, company_id (FK), due_date, and billing_date columns to owner_invoices. These are needed to display the full Procore owner invoice list column set and enable sorting/filtering. Must be done before fixing UI-002 (list columns).",
+      "files_to_change": [
+        "supabase/migrations/ (new migration: add columns to owner_invoices)",
+        "frontend/src/types/database.types.ts (regenerate)"
+      ],
+      "status": "open",
+      "dependencies": []
+    },
+    {
+      "task_id": "TASK-008",
+      "title": "Fix owner invoice list columns and filters",
+      "severity": "high",
+      "gap_ids": ["UI-002", "UI-004", "UI-005", "UI-017"],
+      "layer": "ui",
+      "description": "Update invoicing-table-config.tsx to show all Procore columns: Invoice #, Status, Company, Billing Period, Gross Amount, Net Amount, Paid Amount, Invoice Dates, Contract (name/link not raw ID), Total Contract Amount, % Complete. Replace Status filter with Billing Period + Prime Contract filters. Replace the generic KPI row with the Procore-style clickable status summary bar.",
+      "files_to_change": [
+        "frontend/src/features/invoicing/invoicing-table-config.tsx",
+        "frontend/src/app/(main)/[projectId]/invoicing/page.tsx"
+      ],
+      "status": "open",
+      "dependencies": ["TASK-007", "TASK-003"]
+    },
+    {
+      "task_id": "TASK-009",
+      "title": "Refactor billing_periods schema — status enum, prime_contract FK, name column",
+      "severity": "high",
+      "gap_ids": ["DB-012", "DB-013", "DB-016", "DB-017", "DB-024"],
+      "layer": "database",
+      "description": "Replace the is_closed boolean with a status enum (open/closed/approved). Add prime_contract_id FK. Add a name/label column so billing periods have display names. Add created_by audit column. Resolve the overlap with contract_billing_periods by adding a FK or documentation. This is prerequisite for fixing billing periods API routes.",
+      "files_to_change": [
+        "supabase/migrations/ (new migration: alter billing_periods table)",
+        "frontend/src/types/database.types.ts (regenerate)"
+      ],
+      "status": "open",
+      "dependencies": []
+    },
+    {
+      "task_id": "TASK-010",
+      "title": "Fix billing periods API routes — correct table and add CRUD",
+      "severity": "high",
+      "gap_ids": ["API-006", "API-007", "API-015"],
+      "layer": "api",
+      "description": "Fix billing periods route to query the billing_periods table (not contract_billing_periods). Add PATCH and DELETE endpoints to enable closing/updating billing periods. Add separate invoicing-scoped billing period routes at /api/projects/[projectId]/invoicing/billing-periods.",
+      "files_to_change": [
+        "frontend/src/app/api/projects/[projectId]/billing-periods/route.ts",
+        "frontend/src/app/api/projects/[projectId]/billing-periods/[billingPeriodId]/route.ts (new)",
+        "frontend/src/app/api/projects/[projectId]/invoicing/billing-periods/route.ts (new)"
+      ],
+      "status": "open",
+      "dependencies": ["TASK-009"]
+    },
+    {
+      "task_id": "TASK-011",
+      "title": "Fix Billing Periods pages — real data, UnifiedTablePage, correct routing",
+      "severity": "high",
+      "gap_ids": ["UI-010", "UI-011", "UI-019", "UI-027"],
+      "layer": "ui",
+      "description": "Replace mock data with real API calls on the Billing Periods page. Replace deprecated DataTable with UnifiedTablePage. Activate the Billing Periods tab on the invoicing list page (remove 'coming soon'). Fix the breadcrumb link from /invoices to /invoicing.",
+      "files_to_change": [
+        "frontend/src/app/(main)/[projectId]/billing-periods/page.tsx",
+        "frontend/src/app/(main)/[projectId]/invoicing/page.tsx"
+      ],
+      "status": "open",
+      "dependencies": ["TASK-010"]
+    },
+    {
+      "task_id": "TASK-012",
+      "title": "Add server-side filters to owner invoice list GET",
+      "severity": "high",
+      "gap_ids": ["API-009"],
+      "layer": "api",
+      "description": "Add billing_period and prime_contract query params to GET /api/projects/[projectId]/invoicing/owner. Apply filters server-side to avoid full table scans on real projects.",
+      "files_to_change": [
+        "frontend/src/app/api/projects/[projectId]/invoicing/owner/route.ts"
+      ],
+      "status": "open",
+      "dependencies": []
+    },
+    {
+      "task_id": "TASK-013",
+      "title": "Build commitment invoice requisition table (AIA G702/G703)",
+      "severity": "high",
+      "gap_ids": ["DB-002", "DB-015", "API-012", "UI-009", "UI-024"],
+      "layer": "all",
+      "description": "Create a commitment_invoice_requisitions table to store per-period invoice snapshots (15 columns: invoice position, invoice dates, billing date, status, original contract sum, net change by COs, revised contract sum, total completed and stored, total retainage, total earned less retainage, payment due, balance to finish, % complete). Build CRUD API routes. Replace the billing progress summary in the commitment Invoices tab with the 15-column AIA G703 requisition table. Rename tab to 'Invoices (Requisitions)'.",
+      "files_to_change": [
+        "supabase/migrations/ (new migration: create commitment_invoice_requisitions table)",
+        "frontend/src/types/database.types.ts (regenerate)",
+        "frontend/src/app/api/projects/[projectId]/commitments/[commitmentId]/invoices/route.ts (new or replace)",
+        "frontend/src/components/commitments/tabs/InvoicesTab.tsx",
+        "frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/page.tsx"
+      ],
+      "status": "open",
+      "dependencies": ["TASK-009"]
+    },
+    {
+      "task_id": "TASK-014",
+      "title": "Fix invoice create form — entry point, shape, and status lock",
+      "severity": "high",
+      "gap_ids": ["UI-006", "UI-012", "UI-023"],
+      "layer": "ui",
+      "description": "Restructure invoice creation: primary action on the invoicing list should be 'Create Billing Period', not 'Create Invoice'. Invoice creation should be initiated from within commitment detail (Invoices tab > Create). The create form must include SOV line items section, invoice_date, due_date, and attachments. Status field at creation must be locked to 'draft' only.",
+      "files_to_change": [
+        "frontend/src/app/(main)/[projectId]/invoicing/page.tsx",
+        "frontend/src/app/(main)/[projectId]/invoicing/new/page.tsx",
+        "frontend/src/components/commitments/tabs/InvoicesTab.tsx"
+      ],
+      "status": "open",
+      "dependencies": ["TASK-003", "TASK-007"]
+    },
+    {
+      "task_id": "TASK-015",
+      "title": "Add full AIA G703 SOV columns to invoice detail line items table",
+      "severity": "high",
+      "gap_ids": ["UI-013", "DB-021", "UI-025"],
+      "layer": "database+ui",
+      "description": "Add quantity, unit_cost, and uom columns to owner_invoice_line_items. Update the invoice detail line items table to display all Procore SOV columns: Scheduled Value, Work Completed From Previous Application, Work Completed This Period, Materials Presently Stored, Total Completed, % Complete, Balance to Finish, Retainage, Net Amount. Read retention rate from the contract's retention_percentage field instead of hardcoding 5%.",
+      "files_to_change": [
+        "supabase/migrations/ (new migration: add columns to owner_invoice_line_items)",
+        "frontend/src/types/database.types.ts (regenerate)",
+        "frontend/src/app/(main)/[projectId]/invoicing/[invoiceId]/page.tsx",
+        "frontend/src/components/invoicing/InvoiceLineItemsTable.tsx"
+      ],
+      "status": "open",
+      "dependencies": ["TASK-005", "TASK-006"]
+    },
+    {
+      "task_id": "TASK-016",
+      "title": "Build REVISE AND RESUBMIT workflow — endpoint and PATCH guard update",
+      "severity": "high",
+      "gap_ids": ["API-005", "API-013"],
+      "layer": "api",
+      "description": "Create POST /api/projects/[projectId]/invoicing/owner/[invoiceId]/revise endpoint to transition status from UNDER_REVIEW to REVISE_AND_RESUBMIT. Update PATCH guard to allow field edits when invoice is in revise_and_resubmit status (currently blocks all non-draft).",
+      "files_to_change": [
+        "frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/revise/route.ts (new)",
+        "frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/route.ts"
+      ],
+      "status": "open",
+      "dependencies": ["TASK-001", "TASK-003"]
+    },
+    {
+      "task_id": "TASK-017",
+      "title": "Build payment tracking — DB table, pay endpoint, and Payments tab UI",
+      "severity": "high",
+      "gap_ids": ["DB-007", "API-010", "UI-020"],
+      "layer": "all",
+      "description": "Add paid_amount column to owner_invoices (covered in TASK-007). Create an owner_invoice_payments table for payment records (payment_date, amount, reference). Build POST /api/projects/[projectId]/invoicing/owner/[invoiceId]/pay endpoint. Build the Payments Issued tab on invoice detail and on the commitment detail page.",
+      "files_to_change": [
+        "supabase/migrations/ (new migration: create owner_invoice_payments table)",
+        "frontend/src/types/database.types.ts (regenerate)",
+        "frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/pay/route.ts (new)",
+        "frontend/src/app/(main)/[projectId]/invoicing/[invoiceId]/page.tsx",
+        "frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/page.tsx"
+      ],
+      "status": "open",
+      "dependencies": ["TASK-006", "TASK-007"]
+    },
+    {
+      "task_id": "TASK-018",
+      "title": "Fix invoice edit form — add date fields and enforce approval workflow",
+      "severity": "medium",
+      "gap_ids": ["UI-022", "UI-015"],
+      "layer": "ui",
+      "description": "Add invoice_date and due_date fields to the invoice edit form. Remove the ability to directly set status to any value (status changes must go through proper workflow endpoints). due_date should be a real stored field, not computed as created_at + 30 days.",
+      "files_to_change": [
+        "frontend/src/app/(main)/[projectId]/invoicing/[invoiceId]/edit/page.tsx",
+        "frontend/src/app/(main)/[projectId]/invoicing/[invoiceId]/page.tsx"
+      ],
+      "status": "open",
+      "dependencies": ["TASK-007"]
+    },
+    {
+      "task_id": "TASK-019",
+      "title": "Migrate commitment InvoicesTab to UnifiedTablePage",
+      "severity": "medium",
+      "gap_ids": ["UI-021"],
+      "layer": "ui",
+      "description": "Replace legacy DataTable usage in the commitment Invoices tab with the UnifiedTablePage pattern.",
+      "files_to_change": [
+        "frontend/src/components/commitments/tabs/InvoicesTab.tsx"
+      ],
+      "status": "open",
+      "dependencies": ["TASK-013"]
+    },
+    {
+      "task_id": "TASK-020",
+      "title": "Add invoice attachments — DB table and API routes",
+      "severity": "medium",
+      "gap_ids": ["DB-025", "API-008"],
+      "layer": "database+api",
+      "description": "Create invoice_attachments table (invoice_id, file_url, file_name, uploaded_by, uploaded_at). Build GET/POST/DELETE endpoints for /api/projects/[projectId]/invoicing/owner/[invoiceId]/attachments.",
+      "files_to_change": [
+        "supabase/migrations/ (new migration: create invoice_attachments table)",
+        "frontend/src/types/database.types.ts (regenerate)",
+        "frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/attachments/route.ts (new)"
+      ],
+      "status": "open",
+      "dependencies": ["TASK-001"]
+    },
+    {
+      "task_id": "TASK-021",
+      "title": "Add DB indexes and performance improvements",
+      "severity": "medium",
+      "gap_ids": ["DB-018", "DB-019", "DB-014", "DB-020"],
+      "layer": "database",
+      "description": "Add indexes on owner_invoices.status and owner_invoices.billing_period_id. Add stored_materials column to purchase_order_sov_items. Add unit_cost, quantity, uom columns to subcontract_sov_items for parity with purchase_order_sov_items.",
+      "files_to_change": [
+        "supabase/migrations/ (new migration: add indexes and columns)",
+        "frontend/src/types/database.types.ts (regenerate)"
+      ],
+      "status": "open",
+      "dependencies": []
+    },
+    {
+      "task_id": "TASK-022",
+      "title": "Deprecate legacy /api/invoices ERP route and add submit/approve precondition guards",
+      "severity": "low",
+      "gap_ids": ["API-014", "API-016", "API-017", "UI-023"],
+      "layer": "api+ui",
+      "description": "Mark /api/invoices as ERP-only (rename or add header). Add precondition guards to submit (check line items exist) and approve (check was previously submitted) routes. Add erp_status join to owner invoice list response. Fix primary CTA label on invoicing list page.",
+      "files_to_change": [
+        "frontend/src/app/api/invoices/route.ts",
+        "frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/submit/route.ts",
+        "frontend/src/app/api/projects/[projectId]/invoicing/owner/[invoiceId]/approve/route.ts",
+        "frontend/src/app/api/projects/[projectId]/invoicing/owner/route.ts",
+        "frontend/src/app/(main)/[projectId]/invoicing/page.tsx"
+      ],
+      "status": "open",
+      "dependencies": ["TASK-001", "TASK-003"]
+    }
+  ]
+}

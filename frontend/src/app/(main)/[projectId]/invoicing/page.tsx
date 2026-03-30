@@ -55,7 +55,8 @@ import {
 // =============================================================================
 
 const EMPTY_FILTERS: Record<string, FilterValue> = {
-  status: undefined,
+  billing_period_id: undefined,
+  prime_contract_id: undefined,
 };
 
 type FilterState = Record<string, FilterValue>;
@@ -80,7 +81,8 @@ export default function ProjectInvoicingPage(): ReactElement {
 
   // Initial filter state from URL
   const initialFilters: FilterState = {
-    status: searchParams.get("status") ?? undefined,
+    billing_period_id: searchParams.get("billing_period_id") ?? undefined,
+    prime_contract_id: searchParams.get("prime_contract_id") ?? undefined,
   };
 
   // ─── Table State ───────────────────────────────────────────────────────────
@@ -105,11 +107,11 @@ export default function ProjectInvoicingPage(): ReactElement {
 
   // Sync URL filter params → table state
   React.useEffect(() => {
-    const nextStatus = searchParams.get("status") ?? "";
+    const nextBillingPeriod = searchParams.get("billing_period_id") ?? undefined;
+    const nextContract = searchParams.get("prime_contract_id") ?? undefined;
     tableState.setActiveFilters((prev) => {
-      const normalized = nextStatus || undefined;
-      if (prev.status === normalized) return prev;
-      return { status: normalized };
+      if (prev.billing_period_id === nextBillingPeriod && prev.prime_contract_id === nextContract) return prev;
+      return { billing_period_id: nextBillingPeriod, prime_contract_id: nextContract };
     });
   }, [searchParams, tableState.setActiveFilters]);
 
@@ -117,13 +119,16 @@ export default function ProjectInvoicingPage(): ReactElement {
 
   // ─── Data ──────────────────────────────────────────────────────────────────
 
-  const statusFilter =
-    searchParams.get("status") ||
-    (typeof activeFilters.status === "string" ? activeFilters.status : undefined);
+  const billingPeriodFilter =
+    searchParams.get("billing_period_id") ||
+    (typeof activeFilters.billing_period_id === "string" ? activeFilters.billing_period_id : undefined);
+  const primeContractFilter =
+    searchParams.get("prime_contract_id") ||
+    (typeof activeFilters.prime_contract_id === "string" ? activeFilters.prime_contract_id : undefined);
 
   const { data: rawInvoices = [], isLoading, isFetching, error } = useOwnerInvoicesList(
     projectId,
-    { status: statusFilter },
+    { billing_period_id: billingPeriodFilter, prime_contract_id: primeContractFilter },
   );
 
   const resolvedError =
@@ -171,13 +176,8 @@ export default function ProjectInvoicingPage(): ReactElement {
       });
     }
 
-    // Status filter (client-side supplemental — API already filters, but be safe)
-    if (statusFilter) {
-      items = items.filter((inv) => inv.status === statusFilter);
-    }
-
     return items;
-  }, [rawInvoices, tableState.debouncedSearch, statusFilter]);
+  }, [rawInvoices, tableState.debouncedSearch]);
 
   const tableColumns = buildInvoiceTableColumns(handleView, handleEdit);
 
@@ -229,7 +229,8 @@ export default function ProjectInvoicingPage(): ReactElement {
   function handleFilterChange(nextFilters: FilterState) {
     tableState.setActiveFilters(nextFilters);
     tableState.setSearchParams({
-      status: typeof nextFilters.status === "string" ? nextFilters.status : null,
+      billing_period_id: typeof nextFilters.billing_period_id === "string" ? nextFilters.billing_period_id : null,
+      prime_contract_id: typeof nextFilters.prime_contract_id === "string" ? nextFilters.prime_contract_id : null,
       page: "1",
     });
     tableState.setPage(1);
@@ -246,7 +247,9 @@ export default function ProjectInvoicingPage(): ReactElement {
   // ─── Derived ───────────────────────────────────────────────────────────────
 
   const isFiltered =
-    Boolean(tableState.searchInput) || Boolean(activeFilters.status);
+    Boolean(tableState.searchInput) ||
+    Boolean(activeFilters.billing_period_id) ||
+    Boolean(activeFilters.prime_contract_id);
 
   const totalItems = sortedInvoices.length;
 
@@ -258,7 +261,7 @@ export default function ProjectInvoicingPage(): ReactElement {
 
     const totalInvoiced = rawInvoices.reduce((sum, inv) => sum + (inv.total_amount ?? 0), 0);
     const pending = rawInvoices
-      .filter((inv) => inv.status === "draft" || inv.status === "submitted")
+      .filter((inv) => inv.status === "draft" || inv.status === "under_review" || inv.status === "revise_and_resubmit")
       .reduce((sum, inv) => sum + (inv.total_amount ?? 0), 0);
     const approved = rawInvoices
       .filter((inv) => inv.status === "approved")

@@ -210,7 +210,7 @@ export async function GET(
         total: number
         costRom: number
         count: number
-        contractId: number | null
+        contractId: string | null
       }
     >()
 
@@ -237,19 +237,19 @@ export async function GET(
       new Set(
         Array.from(lineItemMap.values())
           .map((entry) => entry.contractId)
-          .filter((id): id is number => id !== null)
+          .filter((id): id is string => id !== null)
       )
     )
 
     const { data: contracts } = contractIds.length
       ? await (supabase as any)
-          .from('contracts')
+          .from('prime_contracts')
           .select('id, contract_number, title')
           .in('id', contractIds)
       : { data: [] as any[] }
 
     const contractMap = new Map<
-      number,
+      string,
       { contractNumber: string | null; title: string | null }
     >()
     for (const contract of contracts || []) {

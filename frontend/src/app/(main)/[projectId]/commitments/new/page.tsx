@@ -18,22 +18,70 @@ export default function NewCommitmentPage() {
   const type = searchParams.get("type") || "subcontract"; // 'subcontract' or 'purchase_order'
 
   const parseApiError = async (response: Response) => {
+    const rawBody = await response.text();
+    const fallbackError = `Request failed with status ${response.status}`;
+
     try {
-      const json = await response.json();
+      const json = rawBody ? JSON.parse(rawBody) : null;
       return {
         error:
           typeof json?.error === "string"
             ? json.error
-            : `Request failed with status ${response.status}`,
+            : rawBody.trim() || fallbackError,
         details: json?.details,
       };
     } catch {
-      const text = await response.text();
       return {
-        error:
-          text?.trim() || `Request failed with status ${response.status}`,
+        error: rawBody.trim() || fallbackError,
         details: undefined,
       };
+    }
+  };
+
+  const formatApiErrorMessage = (error: string, details: unknown) => {
+    if (!details || typeof details !== "object") return error;
+
+    const detailsRecord = details as Record<string, unknown>;
+    const detailMessage =
+      (typeof detailsRecord.message === "string" && detailsRecord.message) ||
+      (typeof detailsRecord.hint === "string" && detailsRecord.hint) ||
+      (typeof detailsRecord.code === "string" && detailsRecord.code);
+
+    if (!detailMessage) return error;
+    return `${error}: ${detailMessage}`;
+  };
+
+  const isNetworkFetchError = (error: unknown): error is TypeError =>
+    error instanceof TypeError &&
+    error.message.toLowerCase().includes("failed to fetch");
+
+  const findCommitmentByNumber = async (
+    commitmentType: "subcontract" | "purchase_order",
+    contractNumber: string,
+  ): Promise<{ id?: string } | null> => {
+    try {
+      const endpoint =
+        commitmentType === "subcontract"
+          ? `/api/projects/${projectId}/subcontracts`
+          : `/api/projects/${projectId}/purchase-orders`;
+      const res = await fetch(endpoint);
+      if (!res.ok) return null;
+
+      const payload = (await res.json().catch(() => ({}))) as
+        | { data?: Array<{ id?: string; contract_number?: string }> }
+        | Array<{ id?: string; contract_number?: string }>;
+
+      const rows = Array.isArray(payload)
+        ? payload
+        : Array.isArray(payload.data)
+          ? payload.data
+          : [];
+
+      return (
+        rows.find((row) => row.contract_number === contractNumber) ?? null
+      );
+    } catch {
+      return null;
     }
   };
 
@@ -74,48 +122,67 @@ export default function NewCommitmentPage() {
       JSON.stringify(data, null, 2),
     );
 
-    const response = await fetch(`/api/projects/${projectId}/subcontracts`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
-
-    if (!response.ok) {
-      const responseData = await parseApiError(response);
-      // Create a detailed error with response info
-      const errorMessage = responseData.error || "Failed to create subcontract";
-      const detailedError = new Error(errorMessage) as Error & {
-        details?: unknown;
-        status?: number;
-      };
-      detailedError.details = responseData.details;
-      detailedError.status = response.status;
-      console.error("[New Commitment Page] Submission failed:", {
-        status: response.status,
-        error: errorMessage,
-        details: responseData.details,
+    try {
+      const response = await fetch(`/api/projects/${projectId}/subcontracts`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
       });
-      throw detailedError;
+
+      if (!response.ok) {
+        const responseData = await parseApiError(response);
+        // Create a detailed error with response info
+        const errorMessage = responseData.error || "Failed to create subcontract";
+        const detailedError = new Error(errorMessage) as Error & {
+          details?: unknown;
+          status?: number;
+        };
+        detailedError.details = responseData.details;
+        detailedError.status = response.status;
+        console.error("[New Commitment Page] Submission failed:", {
+          status: response.status,
+          error: errorMessage,
+          details: responseData.details,
+        });
+        throw detailedError;
+      }
+
+      const responseData = (await response.json()) as {
+        data?: { id?: string };
+      };
+      console.warn("[New Commitment Page] Response status:", response.status);
+      console.warn(
+        "[New Commitment Page] Subcontract created successfully:",
+        responseData.data,
+      );
+
+      const createdCommitmentId = responseData?.data?.id;
+      if (createdCommitmentId && attachmentFiles.length > 0) {
+        await uploadCommitmentAttachments(createdCommitmentId, attachmentFiles);
+      }
+
+      // Navigate back to commitments page
+      router.push(`/${projectId}/commitments`);
+    } catch (error) {
+      // "Failed to fetch" often means the dev server request dropped during HMR
+      // while the insert still completed. Verify by contract number.
+      if (isNetworkFetchError(error)) {
+        const recovered = await findCommitmentByNumber(
+          "subcontract",
+          data.contractNumber,
+        );
+        if (recovered?.id) {
+          if (attachmentFiles.length > 0) {
+            await uploadCommitmentAttachments(recovered.id, attachmentFiles);
+          }
+          router.push(`/${projectId}/commitments`);
+          return;
+        }
+      }
+      throw error;
     }
-
-    const responseData = (await response.json()) as {
-      data?: { id?: string };
-    };
-    console.warn("[New Commitment Page] Response status:", response.status);
-    console.warn(
-      "[New Commitment Page] Subcontract created successfully:",
-      responseData.data,
-    );
-
-    const createdCommitmentId = responseData?.data?.id;
-    if (createdCommitmentId && attachmentFiles.length > 0) {
-      await uploadCommitmentAttachments(createdCommitmentId, attachmentFiles);
-    }
-
-    // Navigate back to commitments page
-    router.push(`/${projectId}/commitments`);
   };
 
   const handleSubmitPurchaseOrder = async (data: CreatePurchaseOrderInput) => {
@@ -128,30 +195,47 @@ export default function NewCommitmentPage() {
       JSON.stringify(data, null, 2),
     );
 
-    const response = await fetch(`/api/projects/${projectId}/purchase-orders`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(data),
-    });
+    try {
+      const response = await fetch(`/api/projects/${projectId}/purchase-orders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
 
-    if (!response.ok) {
-      const responseData = await parseApiError(response);
-      const errorMessage =
-        responseData.error || "Failed to create purchase order";
-      const detailedError = new Error(errorMessage) as Error & {
-        details?: unknown;
-        status?: number;
-      };
-      detailedError.details = responseData.details;
-      detailedError.status = response.status;
-      console.error("[New Commitment Page] PO submission failed", response.status, errorMessage, responseData.details);
-      throw detailedError;
+      if (!response.ok) {
+        const responseData = await parseApiError(response);
+        const errorMessage = formatApiErrorMessage(
+          responseData.error || "Failed to create purchase order",
+          responseData.details,
+        );
+        const detailedError = new Error(errorMessage) as Error & {
+          details?: unknown;
+          status?: number;
+        };
+        detailedError.details = responseData.details;
+        detailedError.status = response.status;
+        console.error("[New Commitment Page] PO submission failed", response.status, errorMessage, responseData.details);
+        throw detailedError;
+      }
+
+      router.push(`/${projectId}/commitments`);
+    } catch (error) {
+      // "Failed to fetch" often means the dev server request dropped during HMR
+      // while the insert still completed. Verify by contract number.
+      if (isNetworkFetchError(error)) {
+        const recovered = await findCommitmentByNumber(
+          "purchase_order",
+          data.contractNumber,
+        );
+        if (recovered?.id) {
+          router.push(`/${projectId}/commitments`);
+          return;
+        }
+      }
+      throw error;
     }
-
-    const responseData = await response.json();
-    router.push(`/${projectId}/commitments`);
   };
 
   const handleCancel = () => {

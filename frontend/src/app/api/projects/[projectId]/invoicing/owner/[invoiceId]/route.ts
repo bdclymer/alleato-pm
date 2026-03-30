@@ -38,11 +38,11 @@ export async function GET(
         `
         *,
         owner_invoice_line_items(*),
-        contracts!inner(project_id, retention_percentage)
+        prime_contracts!inner(project_id, retention_percentage)
       `,
       )
       .eq("id", invoiceIdNum)
-      .eq("contracts.project_id", projectIdNum)
+      .eq("prime_contracts.project_id", projectIdNum)
       .single();
 
     if (invoiceError) {
@@ -69,11 +69,11 @@ export async function GET(
 
     // Extract retention_percentage from contracts join, then strip join data
     const contractRetentionPercentage =
-      Array.isArray(invoice.contracts)
-        ? (invoice.contracts[0]?.retention_percentage ?? null)
-        : (invoice.contracts as { retention_percentage: number | null } | null)?.retention_percentage ?? null;
+      Array.isArray(invoice.prime_contracts)
+        ? (invoice.prime_contracts[0]?.retention_percentage ?? null)
+        : (invoice.prime_contracts as { retention_percentage: number | null } | null)?.retention_percentage ?? null;
 
-    const { contracts, ...invoiceData } = invoice;
+    const { prime_contracts: _pc, ...invoiceData } = invoice;
 
     return NextResponse.json({
       data: {
@@ -140,9 +140,9 @@ export async function PATCH(
     // Verify the invoice exists and belongs to the project
     const { data: existing, error: fetchError } = await supabase
       .from("owner_invoices")
-      .select(`id, status, contracts!inner(project_id)`)
+      .select(`id, status, prime_contracts!inner(project_id)`)
       .eq("id", invoiceIdNum)
-      .eq("contracts.project_id", projectIdNum)
+      .eq("prime_contracts.project_id", projectIdNum)
       .single();
 
     if (fetchError) {
@@ -158,12 +158,13 @@ export async function PATCH(
       );
     }
 
-    // Only allow edits when the invoice is in draft status
-    if (existing.status !== "draft") {
+    // Allow edits on draft and revise_and_resubmit invoices
+    const editableStatuses = ["draft", "revise_and_resubmit"];
+    if (!editableStatuses.includes(existing.status)) {
       return NextResponse.json(
         {
           error: "Cannot edit invoice",
-          message: `Invoice status is '${existing.status}'. Only draft invoices can be edited.`,
+          message: `Invoice status is '${existing.status}'. Only draft or revise-and-resubmit invoices can be edited.`,
         },
         { status: 400 },
       );
@@ -235,11 +236,11 @@ export async function DELETE(
       .select(
         `
         *,
-        contracts!inner(project_id)
+        prime_contracts!inner(project_id)
       `,
       )
       .eq("id", invoiceIdNum)
-      .eq("contracts.project_id", projectIdNum)
+      .eq("prime_contracts.project_id", projectIdNum)
       .single();
 
     if (fetchError) {

@@ -353,7 +353,7 @@ export function createFinancialTools(
               .order("created_at", { ascending: false })
               .limit(100),
             supabase
-              .from("contracts")
+              .from("prime_contracts")
               .select("id, title, contract_number, status")
               .eq("project_id", resolved.id),
             // eslint-disable-next-line @typescript-eslint/no-explicit-any

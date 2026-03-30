@@ -1,329 +1,365 @@
 "use client";
 
 import * as React from "react";
-import { useParams, useRouter } from "next/navigation";
-import { ColumnDef } from "@tanstack/react-table";
-import { DataTable } from "@/components/tables/DataTable";
-import { Button } from "@/components/ui/button";
-import { StatusBadge } from "@/components/ds";
-import { ProjectPageHeader, PageContainer } from "@/components/layout";
+import type { ReactElement } from "react";
+import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
+import { MoreHorizontal, Plus } from "lucide-react";
+
 import {
-  Plus,
-  MoreHorizontal,
-  Eye,
-  Edit,
-  Trash2,
-  FileText,
-  Lock,
-  Unlock,
-} from "lucide-react";
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  UnifiedTablePage,
+  useUnifiedTableState,
+  type TableColumn,
+} from "@/components/tables/unified";
+import {
+  useBillingPeriodsList,
+  type BillingPeriodItem,
+} from "@/hooks/use-billing-periods";
 
-interface BillingPeriod {
-  id: string;
-  number: string;
-  name: string;
-  startDate: string;
-  endDate: string;
-  status: "draft" | "open" | "locked" | "closed";
-  invoiceCount: number;
-  totalInvoiced: number;
-  totalPaid: number;
-  dueDate: string;
-  closedDate: string | null;
+// =============================================================================
+// Helpers
+// =============================================================================
+
+function formatDate(dateStr: string | null | undefined): string {
+  if (!dateStr) return "—";
+  const d = new Date(dateStr);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 }
 
-const mockBillingPeriods: BillingPeriod[] = [
-  {
-    id: "1",
-    number: "BP-2025-01",
-    name: "January 2025 Billing",
-    startDate: "2025-01-01",
-    endDate: "2025-01-31",
-    status: "open",
-    invoiceCount: 8,
-    totalInvoiced: 287500,
-    totalPaid: 145000,
-    dueDate: "2025-02-15",
-    closedDate: null,
-  },
-  {
-    id: "2",
-    number: "BP-2024-12",
-    name: "December 2024 Billing",
-    startDate: "2024-12-01",
-    endDate: "2024-12-31",
-    status: "closed",
-    invoiceCount: 12,
-    totalInvoiced: 425000,
-    totalPaid: 425000,
-    dueDate: "2025-01-15",
-    closedDate: "2025-01-20",
-  },
-  {
-    id: "3",
-    number: "BP-2024-11",
-    name: "November 2024 Billing",
-    startDate: "2024-11-01",
-    endDate: "2024-11-30",
-    status: "closed",
-    invoiceCount: 10,
-    totalInvoiced: 356000,
-    totalPaid: 356000,
-    dueDate: "2024-12-15",
-    closedDate: "2024-12-18",
-  },
-  {
-    id: "4",
-    number: "BP-2025-02",
-    name: "February 2025 Billing",
-    startDate: "2025-02-01",
-    endDate: "2025-02-28",
-    status: "draft",
-    invoiceCount: 0,
-    totalInvoiced: 0,
-    totalPaid: 0,
-    dueDate: "2025-03-15",
-    closedDate: null,
-  },
+// =============================================================================
+// Column Configs
+// =============================================================================
+
+const columnConfigs = [
+  { id: "name", label: "Period Name", alwaysVisible: true },
+  { id: "start_date", label: "Start Date", defaultVisible: true },
+  { id: "end_date", label: "End Date", defaultVisible: true },
+  { id: "status", label: "Status", defaultVisible: true },
 ];
 
-const getPaymentStatus = (
-  invoiced: number,
-  paid: number,
-): { percentage: number; color: string } => {
-  if (invoiced === 0) return { percentage: 0, color: "bg-muted" };
-  const raw = (paid / invoiced) * 100;
-  const percentage = Math.max(0, Math.min(100, raw));
-  if (percentage >= 100) return { percentage, color: "bg-primary" };
-  if (percentage >= 50) return { percentage, color: "bg-warning" };
-  return { percentage, color: "bg-destructive" };
-};
+const defaultVisibleColumns = columnConfigs
+  .filter((c) => c.defaultVisible !== false || c.alwaysVisible)
+  .map((c) => c.id);
 
-export default function ProjectBillingPeriodsPage() {
+// =============================================================================
+// Page Component
+// =============================================================================
+
+export default function ProjectBillingPeriodsPage(): ReactElement {
   const params = useParams<{ projectId: string }>();
+  const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const projectId = params.projectId ?? "";
 
-  const [data] = React.useState<BillingPeriod[]>(mockBillingPeriods);
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const [periodToDelete, setPeriodToDelete] = React.useState<BillingPeriodItem | null>(null);
 
-  const columns: ColumnDef<BillingPeriod>[] = [
-    {
-      accessorKey: "number",
-      header: "Period Number",
-      cell: ({ row }) => (
-        <Button
-          variant="link"
-          className="p-0 h-auto font-medium"
-          onClick={() => router.push(`/${projectId}/billing-periods/${row.original.id}`)}
-        >
-          {row.getValue("number")}
-        </Button>
-      ),
+  // ─── Table State ───────────────────────────────────────────────────────────
+
+  const tableState = useUnifiedTableState({
+    entityKey: "billing-periods",
+    searchParams,
+    pathname,
+    router,
+    defaults: {
+      view: "table",
+      allowedViews: ["table"],
+      page: 1,
+      perPage: 25,
+      search: "",
+      sortBy: "start_date",
+      sortDirection: "desc",
+      visibleColumns: defaultVisibleColumns,
+      filters: {},
     },
-    {
-      accessorKey: "name",
-      header: "Period Name",
-      cell: ({ row }) => (
-        <div className="font-medium">{row.getValue("name")}</div>
-      ),
-    },
-    {
-      accessorKey: "startDate",
-      header: "Period",
-      cell: ({ row }) => (
-        <div className="text-sm">
-          <div>{new Date(row.getValue("startDate")).toLocaleDateString()}</div>
-          <div className="text-muted-foreground">
-            to {new Date(row.original.endDate).toLocaleDateString()}
-          </div>
-        </div>
-      ),
-    },
-    {
-      accessorKey: "status",
-      header: "Status",
-      cell: ({ row }) => {
-        const status = row.getValue("status") as string;
-        return <StatusBadge status={status} />;
+  });
+
+  // ─── Data ──────────────────────────────────────────────────────────────────
+
+  const { data: rawPeriods = [], isLoading, isFetching, error } = useBillingPeriodsList(projectId);
+
+  const resolvedError =
+    error instanceof Error ? error : error ? new Error("Failed to load billing periods") : undefined;
+
+  // ─── Client-side search ────────────────────────────────────────────────────
+
+  const periods = React.useMemo(() => {
+    let items = rawPeriods;
+    const search = tableState.debouncedSearch.toLowerCase().trim();
+    if (search) {
+      items = items.filter((p) => p.name.toLowerCase().includes(search));
+    }
+    return items;
+  }, [rawPeriods, tableState.debouncedSearch]);
+
+  // ─── Table Columns ─────────────────────────────────────────────────────────
+
+  const tableColumns: TableColumn<BillingPeriodItem>[] = React.useMemo(
+    () => [
+      {
+        id: "name",
+        label: "Period Name",
+        alwaysVisible: true,
+        render: (period) => (
+          <span className="font-medium">{period.name}</span>
+        ),
+        sortable: true,
+        sortValue: (period) => period.name,
       },
-    },
-    {
-      accessorKey: "invoiceCount",
-      header: "Invoices",
-      cell: ({ row }) => (
-        <span className="font-medium">{row.getValue("invoiceCount")}</span>
-      ),
-    },
-    {
-      accessorKey: "totalInvoiced",
-      header: "Total Invoiced",
-      cell: ({ row }) => (
-        <span className="font-medium">
-          ${row.getValue<number>("totalInvoiced").toLocaleString()}
-        </span>
-      ),
-    },
-    {
-      accessorKey: "totalPaid",
-      header: "Payment Status",
-      cell: ({ row }) => {
-        const invoiced = row.original.totalInvoiced;
-        const paid = row.original.totalPaid;
-        const { percentage, color } = getPaymentStatus(invoiced, paid);
-
-        return (
-          <div className="space-y-1">
-            <div className="text-sm font-medium">
-              ${paid.toLocaleString()} / ${invoiced.toLocaleString()}
-            </div>
-            <div className="w-full bg-muted rounded-full h-2">
-              <div
-                className={`${color} h-2 rounded-full transition-all`}
-                style={{ width: `${percentage}%` }}
-              />
-            </div>
-          </div>
-        );
+      {
+        id: "start_date",
+        label: "Start Date",
+        defaultVisible: true,
+        render: (period) => (
+          <span className="text-sm">{formatDate(period.start_date)}</span>
+        ),
+        sortable: true,
+        sortValue: (period) => period.start_date ?? "",
       },
-    },
-    {
-      accessorKey: "dueDate",
-      header: "Due Date",
-      cell: ({ row }) => (
-        <span>{new Date(row.getValue("dueDate")).toLocaleDateString()}</span>
-      ),
-    },
-    {
-      id: "actions",
-      cell: ({ row }) => {
-        const status = row.original.status;
-        const id = row.original.id;
-
-        return (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" className="h-8 w-8 p-0">
-                <MoreHorizontal />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                onClick={() => router.push(`/${projectId}/billing-periods/${id}`)}
-              >
-                <Eye className="mr-2 h-4 w-4" />
-                View
-              </DropdownMenuItem>
-              {status === "draft" && (
-                <DropdownMenuItem
-                  onClick={() => router.push(`/${projectId}/billing-periods/${id}/edit`)}
-                >
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit
-                </DropdownMenuItem>
-              )}
-              {status === "open" && (
-                <>
-                  <DropdownMenuItem
-                    onClick={() => router.push(`/${projectId}/invoices/new?billingPeriodId=${id}`)}
-                  >
-                    <FileText className="mr-2 h-4 w-4" />
-                    Create Invoice
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push(`/${projectId}/billing-periods/${id}/lock`)}>
-                    <Lock className="mr-2 h-4 w-4" />
-                    Lock Period
-                  </DropdownMenuItem>
-                </>
-              )}
-              {status === "locked" && (
-                <DropdownMenuItem onClick={() => router.push(`/${projectId}/billing-periods/${id}/unlock`)}>
-                  <Unlock className="mr-2 h-4 w-4" />
-                  Unlock Period
-                </DropdownMenuItem>
-              )}
-              {status === "draft" && (
-                <DropdownMenuItem className="text-destructive">
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        );
+      {
+        id: "end_date",
+        label: "End Date",
+        defaultVisible: true,
+        render: (period) => (
+          <span className="text-sm">{formatDate(period.end_date)}</span>
+        ),
+        sortable: true,
+        sortValue: (period) => period.end_date ?? "",
       },
-    },
-  ];
+      {
+        id: "status",
+        label: "Status",
+        defaultVisible: true,
+        render: (period) => (
+          <span
+            className={
+              period.is_closed
+                ? "text-xs font-medium text-muted-foreground"
+                : "text-xs font-medium text-primary"
+            }
+          >
+            {period.is_closed ? "Closed" : "Open"}
+          </span>
+        ),
+        sortable: true,
+        sortValue: (period) => (period.is_closed ? 1 : 0),
+      },
+    ],
+    [],
+  );
 
-  const openPeriods = data.filter((p) => p.status === "open");
-  const totalInvoiced = data.reduce((sum, p) => sum + p.totalInvoiced, 0);
-  const totalPaid = data.reduce((sum, p) => sum + p.totalPaid, 0);
-  const outstanding = totalInvoiced - totalPaid;
+  // Sort
+  const sortedPeriods = React.useMemo(() => {
+    if (!tableState.sortBy) return periods;
+    const col = tableColumns.find((c) => c.id === tableState.sortBy);
+    const getSortValue = col?.sortValue;
+    if (!getSortValue) return periods;
+    return [...periods].sort((a, b) => {
+      const va = getSortValue(a);
+      const vb = getSortValue(b);
+      if (va == null && vb == null) return 0;
+      if (va == null) return tableState.sortDirection === "asc" ? -1 : 1;
+      if (vb == null) return tableState.sortDirection === "asc" ? 1 : -1;
+      if (typeof va === "number" && typeof vb === "number") {
+        return tableState.sortDirection === "asc" ? va - vb : vb - va;
+      }
+      const cmp = String(va).localeCompare(String(vb));
+      return tableState.sortDirection === "asc" ? cmp : -cmp;
+    });
+  }, [periods, tableColumns, tableState.sortBy, tableState.sortDirection]);
+
+  // ─── Handlers ──────────────────────────────────────────────────────────────
+
+  function handleDeleteIntent(period: BillingPeriodItem) {
+    setPeriodToDelete(period);
+    setDeleteDialogOpen(true);
+  }
+
+  async function handleDeleteConfirm() {
+    setDeleteDialogOpen(false);
+    setPeriodToDelete(null);
+  }
+
+  // ─── Row Actions ───────────────────────────────────────────────────────────
+
+  function renderRowActions(period: BillingPeriodItem): ReactElement {
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <MoreHorizontal />
+            <span className="sr-only">Open menu</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {!period.is_closed && (
+            <DropdownMenuItem
+              onClick={() =>
+                router.push(`/${projectId}/invoicing/new?billing_period_id=${period.id}`)
+              }
+            >
+              Create Invoice
+            </DropdownMenuItem>
+          )}
+          {!period.is_closed && (
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onClick={() => handleDeleteIntent(period)}
+            >
+              Delete
+            </DropdownMenuItem>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
+
+  const isFiltered = Boolean(tableState.searchInput);
+  const totalItems = sortedPeriods.length;
+
+  // ─── Render ────────────────────────────────────────────────────────────────
 
   return (
     <>
-      <ProjectPageHeader
-        title="Billing Periods"
-        description="Manage invoice billing periods and cycles"
-        breadcrumbs={[
-          { label: "Invoices", href: `/${projectId}/invoices?tab=billing-periods` },
-          { label: "Billing Periods" },
-        ]}
-        actions={
-          <Button>
-            <Plus />
-            Create Billing Period
-          </Button>
-        }
+      <UnifiedTablePage
+        header={{
+          title: "Billing Periods",
+          description: "Manage project invoice billing periods",
+          actions: (
+            <Button
+              size="sm"
+              onClick={() => router.push(`/${projectId}/billing-periods/new`)}
+            >
+              <Plus />
+              New Billing Period
+            </Button>
+          ),
+        }}
+        toolbar={{
+          totalItems,
+          filteredItems: totalItems,
+          selectedCount: tableState.selectedIds.length,
+          searchValue: tableState.searchInput,
+          onSearchChange: tableState.setSearchInput,
+          searchPlaceholder: "Search billing periods...",
+          currentView: tableState.currentView,
+          onViewChange: (view) => {
+            tableState.setCurrentView(view);
+            tableState.setSearchParams({ view });
+          },
+          filters: [],
+          activeFilters: tableState.activeFilters,
+          onFilterChange: tableState.setActiveFilters,
+          onClearFilters: () => tableState.setActiveFilters({}),
+          columns: columnConfigs,
+          visibleColumns: tableState.visibleColumns,
+          onColumnVisibilityChange: tableState.setVisibleColumns,
+        }}
+        data={{
+          items: sortedPeriods,
+          isLoading,
+          isFetching,
+          error: resolvedError,
+        }}
+        table={{
+          columns: tableColumns,
+          getRowId: (item) => String(item.id),
+          rowActions: renderRowActions,
+        }}
+        sorting={{
+          sortBy: tableState.sortBy,
+          sortDirection: tableState.sortDirection,
+          onSortChange: (sortBy, direction) => {
+            tableState.setSortBy(sortBy);
+            tableState.setSortDirection(direction);
+            tableState.setSearchParams({ sort: sortBy, sort_dir: direction, page: "1" });
+            tableState.setPage(1);
+          },
+        }}
+        selection={{
+          selectedIds: tableState.selectedIds,
+          onSelectAll: (checked) => {
+            tableState.setSelectedIds(
+              checked ? sortedPeriods.map((p) => String(p.id)) : [],
+            );
+          },
+          onSelectRow: (id, checked) => {
+            tableState.setSelectedIds((prev) =>
+              checked ? [...prev, String(id)] : prev.filter((x) => x !== String(id)),
+            );
+          },
+        }}
+        emptyState={{
+          title: "No billing periods",
+          description: "Create a billing period to group invoices by date range.",
+          filteredDescription: "Try adjusting your search.",
+          isFiltered,
+          action: (
+            <Button
+              size="sm"
+              onClick={() => router.push(`/${projectId}/billing-periods/new`)}
+            >
+              <Plus />
+              New Billing Period
+            </Button>
+          ),
+        }}
+        pagination={{
+          page: tableState.page,
+          totalPages: Math.max(1, Math.ceil(totalItems / tableState.perPage)),
+          perPage: tableState.perPage,
+          onPageChange: (nextPage) => {
+            tableState.setPage(nextPage);
+            tableState.setSearchParams({ page: String(nextPage) });
+          },
+          onPerPageChange: (nextPerPage) => {
+            const parsed = Number(nextPerPage);
+            if (!Number.isFinite(parsed) || parsed <= 0) return;
+            tableState.setPerPage(parsed);
+            tableState.setSearchParams({ per_page: String(parsed), page: "1" });
+            tableState.setPage(1);
+          },
+        }}
       />
-      <PageContainer>
-        <div className="space-y-6">
-          {/* Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-card rounded-lg p-4">
-              <div className="text-sm font-medium text-muted-foreground">Total Periods</div>
-              <div className="text-2xl font-bold text-foreground mt-1">
-                {data.length}
-              </div>
-            </div>
-            <div className="bg-card rounded-lg p-4">
-              <div className="text-sm font-medium text-muted-foreground">Open Periods</div>
-              <div className="text-2xl font-bold text-foreground mt-1">
-                {openPeriods.length}
-              </div>
-            </div>
-            <div className="bg-card rounded-lg p-4">
-              <div className="text-sm font-medium text-muted-foreground">
-                Total Invoiced
-              </div>
-              <div className="text-2xl font-bold text-foreground mt-1">
-                ${totalInvoiced.toLocaleString()}
-              </div>
-            </div>
-            <div className="bg-card rounded-lg p-4">
-              <div className="text-sm font-medium text-muted-foreground">Outstanding</div>
-              <div className="text-2xl font-bold text-foreground mt-1">
-                ${outstanding.toLocaleString()}
-              </div>
-            </div>
-          </div>
 
-          {/* Table */}
-          <div className="bg-card rounded-lg overflow-hidden">
-            <DataTable
-              columns={columns}
-              data={data}
-              searchKey="name"
-              searchPlaceholder="Search billing periods..."
-            />
-          </div>
-        </div>
-      </PageContainer>
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Billing Period</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete{" "}
+              <strong>{periodToDelete?.name}</strong>? This cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

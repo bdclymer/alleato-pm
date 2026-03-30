@@ -2788,6 +2788,7 @@ export type Database = {
           end_date: string
           id: string
           is_closed: boolean | null
+          name: string | null
           period_number: number
           project_id: number | null
           start_date: string
@@ -2800,6 +2801,7 @@ export type Database = {
           end_date: string
           id?: string
           is_closed?: boolean | null
+          name?: string | null
           period_number: number
           project_id?: number | null
           start_date: string
@@ -2812,6 +2814,7 @@ export type Database = {
           end_date?: string
           id?: string
           is_closed?: boolean | null
+          name?: string | null
           period_number?: number
           project_id?: number | null
           start_date?: string
@@ -4009,7 +4012,7 @@ export type Database = {
         Row: {
           budget_code_id: string | null
           change_event_id: string
-          contract_id: number | null
+          contract_id: string | null
           cost_rom: number | null
           created_at: string
           description: string | null
@@ -4026,7 +4029,7 @@ export type Database = {
         Insert: {
           budget_code_id?: string | null
           change_event_id: string
-          contract_id?: number | null
+          contract_id?: string | null
           cost_rom?: number | null
           created_at?: string
           description?: string | null
@@ -4043,7 +4046,7 @@ export type Database = {
         Update: {
           budget_code_id?: string | null
           change_event_id?: string
-          contract_id?: number | null
+          contract_id?: string | null
           cost_rom?: number | null
           created_at?: string
           description?: string | null
@@ -4083,21 +4086,14 @@ export type Database = {
             foreignKeyName: "change_event_line_items_contract_id_fkey"
             columns: ["contract_id"]
             isOneToOne: false
-            referencedRelation: "contract_financial_summary"
+            referencedRelation: "prime_contract_financial_summary"
             referencedColumns: ["contract_id"]
           },
           {
             foreignKeyName: "change_event_line_items_contract_id_fkey"
             columns: ["contract_id"]
             isOneToOne: false
-            referencedRelation: "contract_financial_summary_mv"
-            referencedColumns: ["contract_id"]
-          },
-          {
-            foreignKeyName: "change_event_line_items_contract_id_fkey"
-            columns: ["contract_id"]
-            isOneToOne: false
-            referencedRelation: "contracts"
+            referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
           {
@@ -4327,7 +4323,7 @@ export type Database = {
           line_item_revenue_source: string | null
           number: string
           origin: string | null
-          prime_contract_id: number | null
+          prime_contract_id: string | null
           project_id: number
           reason: string | null
           scope: string
@@ -4347,7 +4343,7 @@ export type Database = {
           line_item_revenue_source?: string | null
           number: string
           origin?: string | null
-          prime_contract_id?: number | null
+          prime_contract_id?: string | null
           project_id: number
           reason?: string | null
           scope: string
@@ -4367,7 +4363,7 @@ export type Database = {
           line_item_revenue_source?: string | null
           number?: string
           origin?: string | null
-          prime_contract_id?: number | null
+          prime_contract_id?: string | null
           project_id?: number
           reason?: string | null
           scope?: string
@@ -4382,21 +4378,14 @@ export type Database = {
             foreignKeyName: "change_events_prime_contract_id_fkey"
             columns: ["prime_contract_id"]
             isOneToOne: false
-            referencedRelation: "contract_financial_summary"
+            referencedRelation: "prime_contract_financial_summary"
             referencedColumns: ["contract_id"]
           },
           {
             foreignKeyName: "change_events_prime_contract_id_fkey"
             columns: ["prime_contract_id"]
             isOneToOne: false
-            referencedRelation: "contract_financial_summary_mv"
-            referencedColumns: ["contract_id"]
-          },
-          {
-            foreignKeyName: "change_events_prime_contract_id_fkey"
-            columns: ["prime_contract_id"]
-            isOneToOne: false
-            referencedRelation: "contracts"
+            referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
           {
@@ -5578,201 +5567,6 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      contracts: {
-        Row: {
-          actual_completion_date: string | null
-          apply_vertical_markup: boolean | null
-          approved_change_orders: number | null
-          architect_engineer_id: string | null
-          attachment_count: number | null
-          client_id: string | null
-          contract_number: string | null
-          contract_termination_date: string | null
-          contractor_id: string | null
-          created_at: string
-          default_retainage: number | null
-          description: string | null
-          draft_change_orders: number | null
-          erp_status: string | null
-          estimated_completion_date: string | null
-          exclusions: string | null
-          executed: boolean | null
-          id: number
-          inclusions: string | null
-          invoiced_amount: number | null
-          notes: string | null
-          original_contract_amount: number | null
-          owner_client_id: string | null
-          payments_received: number | null
-          pending_change_orders: number | null
-          percent_paid: number | null
-          private: boolean | null
-          project_id: number
-          remaining_balance: number | null
-          retention_percentage: number | null
-          revised_contract_amount: number | null
-          signed_contract_received_date: string | null
-          start_date: string | null
-          status: string | null
-          substantial_completion_date: string | null
-          title: string
-        }
-        Insert: {
-          actual_completion_date?: string | null
-          apply_vertical_markup?: boolean | null
-          approved_change_orders?: number | null
-          architect_engineer_id?: string | null
-          attachment_count?: number | null
-          client_id?: string | null
-          contract_number?: string | null
-          contract_termination_date?: string | null
-          contractor_id?: string | null
-          created_at?: string
-          default_retainage?: number | null
-          description?: string | null
-          draft_change_orders?: number | null
-          erp_status?: string | null
-          estimated_completion_date?: string | null
-          exclusions?: string | null
-          executed?: boolean | null
-          id?: number
-          inclusions?: string | null
-          invoiced_amount?: number | null
-          notes?: string | null
-          original_contract_amount?: number | null
-          owner_client_id?: string | null
-          payments_received?: number | null
-          pending_change_orders?: number | null
-          percent_paid?: number | null
-          private?: boolean | null
-          project_id: number
-          remaining_balance?: number | null
-          retention_percentage?: number | null
-          revised_contract_amount?: number | null
-          signed_contract_received_date?: string | null
-          start_date?: string | null
-          status?: string | null
-          substantial_completion_date?: string | null
-          title: string
-        }
-        Update: {
-          actual_completion_date?: string | null
-          apply_vertical_markup?: boolean | null
-          approved_change_orders?: number | null
-          architect_engineer_id?: string | null
-          attachment_count?: number | null
-          client_id?: string | null
-          contract_number?: string | null
-          contract_termination_date?: string | null
-          contractor_id?: string | null
-          created_at?: string
-          default_retainage?: number | null
-          description?: string | null
-          draft_change_orders?: number | null
-          erp_status?: string | null
-          estimated_completion_date?: string | null
-          exclusions?: string | null
-          executed?: boolean | null
-          id?: number
-          inclusions?: string | null
-          invoiced_amount?: number | null
-          notes?: string | null
-          original_contract_amount?: number | null
-          owner_client_id?: string | null
-          payments_received?: number | null
-          pending_change_orders?: number | null
-          percent_paid?: number | null
-          private?: boolean | null
-          project_id?: number
-          remaining_balance?: number | null
-          retention_percentage?: number | null
-          revised_contract_amount?: number | null
-          signed_contract_received_date?: string | null
-          start_date?: string | null
-          status?: string | null
-          substantial_completion_date?: string | null
-          title?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "contracts_architect_engineer_id_fkey"
-            columns: ["architect_engineer_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contracts_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contracts_contractor_id_fkey"
-            columns: ["contractor_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contracts_owner_client_id_fkey"
-            columns: ["owner_client_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contracts_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_activity_view"
-            referencedColumns: ["project_id"]
-          },
-          {
-            foreignKeyName: "contracts_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_health_dashboard"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contracts_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_health_dashboard_no_summary"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contracts_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "project_issue_summary"
-            referencedColumns: ["project_id"]
-          },
-          {
-            foreignKeyName: "contracts_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contracts_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "projects_with_counts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "contracts_project_id_fkey"
-            columns: ["project_id"]
-            isOneToOne: false
-            referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
         ]
@@ -10651,11 +10445,17 @@ export type Database = {
           acumatica_ref_nbr: string | null
           acumatica_sync_at: string | null
           approved_at: string | null
+          billing_date: string | null
           billing_period_id: string | null
-          contract_id: number | null
+          contract_id: string | null
           created_at: string | null
+          due_date: string | null
+          gross_amount: number | null
           id: number
           invoice_number: string | null
+          net_amount: number | null
+          paid_amount: number | null
+          percent_complete: number | null
           period_end: string | null
           period_start: string | null
           prime_contract_id: string | null
@@ -10668,11 +10468,17 @@ export type Database = {
           acumatica_ref_nbr?: string | null
           acumatica_sync_at?: string | null
           approved_at?: string | null
+          billing_date?: string | null
           billing_period_id?: string | null
-          contract_id?: number | null
+          contract_id?: string | null
           created_at?: string | null
+          due_date?: string | null
+          gross_amount?: number | null
           id?: number
           invoice_number?: string | null
+          net_amount?: number | null
+          paid_amount?: number | null
+          percent_complete?: number | null
           period_end?: string | null
           period_start?: string | null
           prime_contract_id?: string | null
@@ -10685,11 +10491,17 @@ export type Database = {
           acumatica_ref_nbr?: string | null
           acumatica_sync_at?: string | null
           approved_at?: string | null
+          billing_date?: string | null
           billing_period_id?: string | null
-          contract_id?: number | null
+          contract_id?: string | null
           created_at?: string | null
+          due_date?: string | null
+          gross_amount?: number | null
           id?: number
           invoice_number?: string | null
+          net_amount?: number | null
+          paid_amount?: number | null
+          percent_complete?: number | null
           period_end?: string | null
           period_start?: string | null
           prime_contract_id?: string | null
@@ -10709,21 +10521,14 @@ export type Database = {
             foreignKeyName: "owner_invoices_contract_id_fkey"
             columns: ["contract_id"]
             isOneToOne: false
-            referencedRelation: "contract_financial_summary"
+            referencedRelation: "prime_contract_financial_summary"
             referencedColumns: ["contract_id"]
           },
           {
             foreignKeyName: "owner_invoices_contract_id_fkey"
             columns: ["contract_id"]
             isOneToOne: false
-            referencedRelation: "contract_financial_summary_mv"
-            referencedColumns: ["contract_id"]
-          },
-          {
-            foreignKeyName: "owner_invoices_contract_id_fkey"
-            columns: ["contract_id"]
-            isOneToOne: false
-            referencedRelation: "contracts"
+            referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
           {
@@ -10841,7 +10646,7 @@ export type Database = {
       payment_transactions: {
         Row: {
           amount: number
-          contract_id: number
+          contract_id: string
           created_at: string | null
           id: number
           invoice_id: number | null
@@ -10851,7 +10656,7 @@ export type Database = {
         }
         Insert: {
           amount: number
-          contract_id: number
+          contract_id: string
           created_at?: string | null
           id?: number
           invoice_id?: number | null
@@ -10861,7 +10666,7 @@ export type Database = {
         }
         Update: {
           amount?: number
-          contract_id?: number
+          contract_id?: string
           created_at?: string | null
           id?: number
           invoice_id?: number | null
@@ -10874,21 +10679,14 @@ export type Database = {
             foreignKeyName: "payment_transactions_contract_id_fkey"
             columns: ["contract_id"]
             isOneToOne: false
-            referencedRelation: "contract_financial_summary"
+            referencedRelation: "prime_contract_financial_summary"
             referencedColumns: ["contract_id"]
           },
           {
             foreignKeyName: "payment_transactions_contract_id_fkey"
             columns: ["contract_id"]
             isOneToOne: false
-            referencedRelation: "contract_financial_summary_mv"
-            referencedColumns: ["contract_id"]
-          },
-          {
-            foreignKeyName: "payment_transactions_contract_id_fkey"
-            columns: ["contract_id"]
-            isOneToOne: false
-            referencedRelation: "contracts"
+            referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
           {
@@ -11171,7 +10969,7 @@ export type Database = {
         Row: {
           acumatica_external_key: string | null
           approved_at: string | null
-          contract_id: number | null
+          contract_id: string | null
           created_at: string | null
           executed: boolean | null
           id: number
@@ -11186,7 +10984,7 @@ export type Database = {
         Insert: {
           acumatica_external_key?: string | null
           approved_at?: string | null
-          contract_id?: number | null
+          contract_id?: string | null
           created_at?: string | null
           executed?: boolean | null
           id?: number
@@ -11201,7 +10999,7 @@ export type Database = {
         Update: {
           acumatica_external_key?: string | null
           approved_at?: string | null
-          contract_id?: number | null
+          contract_id?: string | null
           created_at?: string | null
           executed?: boolean | null
           id?: number
@@ -11218,21 +11016,14 @@ export type Database = {
             foreignKeyName: "prime_contract_change_orders_contract_id_fkey"
             columns: ["contract_id"]
             isOneToOne: false
-            referencedRelation: "contract_financial_summary"
+            referencedRelation: "prime_contract_financial_summary"
             referencedColumns: ["contract_id"]
           },
           {
             foreignKeyName: "prime_contract_change_orders_contract_id_fkey"
             columns: ["contract_id"]
             isOneToOne: false
-            referencedRelation: "contract_financial_summary_mv"
-            referencedColumns: ["contract_id"]
-          },
-          {
-            foreignKeyName: "prime_contract_change_orders_contract_id_fkey"
-            columns: ["contract_id"]
-            isOneToOne: false
-            referencedRelation: "contracts"
+            referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
           {
@@ -11296,49 +11087,6 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      prime_contract_attachments: {
-        Row: {
-          attachment_id: string
-          contract_id: string
-          created_at: string
-          id: string
-        }
-        Insert: {
-          attachment_id: string
-          contract_id: string
-          created_at?: string
-          id?: string
-        }
-        Update: {
-          attachment_id?: string
-          contract_id?: string
-          created_at?: string
-          id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "prime_contract_attachments_attachment_id_fkey"
-            columns: ["attachment_id"]
-            isOneToOne: false
-            referencedRelation: "attachments"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "prime_contract_attachments_contract_id_fkey"
-            columns: ["contract_id"]
-            isOneToOne: false
-            referencedRelation: "prime_contract_financial_summary"
-            referencedColumns: ["contract_id"]
-          },
-          {
-            foreignKeyName: "prime_contract_attachments_contract_id_fkey"
-            columns: ["contract_id"]
-            isOneToOne: false
-            referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
         ]
@@ -11693,7 +11441,7 @@ export type Database = {
       prime_contract_sovs: {
         Row: {
           budget_code_id: string | null
-          contract_id: number
+          contract_id: string
           cost_code: string | null
           created_at: string
           description: string | null
@@ -11706,7 +11454,7 @@ export type Database = {
         }
         Insert: {
           budget_code_id?: string | null
-          contract_id: number
+          contract_id: string
           cost_code?: string | null
           created_at?: string
           description?: string | null
@@ -11719,7 +11467,7 @@ export type Database = {
         }
         Update: {
           budget_code_id?: string | null
-          contract_id?: number
+          contract_id?: string
           cost_code?: string | null
           created_at?: string
           description?: string | null
@@ -11742,21 +11490,14 @@ export type Database = {
             foreignKeyName: "prime_contract_sovs_contract_id_fkey"
             columns: ["contract_id"]
             isOneToOne: false
-            referencedRelation: "contract_financial_summary"
+            referencedRelation: "prime_contract_financial_summary"
             referencedColumns: ["contract_id"]
           },
           {
             foreignKeyName: "prime_contract_sovs_contract_id_fkey"
             columns: ["contract_id"]
             isOneToOne: false
-            referencedRelation: "contract_financial_summary_mv"
-            referencedColumns: ["contract_id"]
-          },
-          {
-            foreignKeyName: "prime_contract_sovs_contract_id_fkey"
-            columns: ["contract_id"]
-            isOneToOne: false
-            referencedRelation: "contracts"
+            referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
           {
@@ -14638,7 +14379,7 @@ export type Database = {
             foreignKeyName: "purchase_orders_contract_company_id_fkey"
             columns: ["contract_company_id"]
             isOneToOne: false
-            referencedRelation: "companies"
+            referencedRelation: "vendors"
             referencedColumns: ["id"]
           },
           {
@@ -15382,7 +15123,7 @@ export type Database = {
           approved_at: string | null
           approved_by: string | null
           commitment_id: string | null
-          contract_id: number | null
+          contract_id: string | null
           created_at: string | null
           id: string
           status: string | null
@@ -15393,7 +15134,7 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           commitment_id?: string | null
-          contract_id?: number | null
+          contract_id?: string | null
           created_at?: string | null
           id?: string
           status?: string | null
@@ -15404,7 +15145,7 @@ export type Database = {
           approved_at?: string | null
           approved_by?: string | null
           commitment_id?: string | null
-          contract_id?: number | null
+          contract_id?: string | null
           created_at?: string | null
           id?: string
           status?: string | null
@@ -15416,21 +15157,14 @@ export type Database = {
             foreignKeyName: "schedule_of_values_contract_id_fkey"
             columns: ["contract_id"]
             isOneToOne: false
-            referencedRelation: "contract_financial_summary"
+            referencedRelation: "prime_contract_financial_summary"
             referencedColumns: ["contract_id"]
           },
           {
             foreignKeyName: "schedule_of_values_contract_id_fkey"
             columns: ["contract_id"]
             isOneToOne: false
-            referencedRelation: "contract_financial_summary_mv"
-            referencedColumns: ["contract_id"]
-          },
-          {
-            foreignKeyName: "schedule_of_values_contract_id_fkey"
-            columns: ["contract_id"]
-            isOneToOne: false
-            referencedRelation: "contracts"
+            referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
         ]
@@ -19031,66 +18765,6 @@ export type Database = {
         }
         Relationships: []
       }
-      contract_financial_summary: {
-        Row: {
-          approved_change_orders: number | null
-          client_id: string | null
-          contract_id: number | null
-          contract_number: string | null
-          draft_change_orders: number | null
-          erp_status: string | null
-          executed: boolean | null
-          invoiced_amount: number | null
-          original_contract_amount: number | null
-          payments_received: number | null
-          pending_change_orders: number | null
-          percent_paid: number | null
-          private: boolean | null
-          remaining_balance: number | null
-          revised_contract_amount: number | null
-          status: string | null
-          title: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "contracts_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      contract_financial_summary_mv: {
-        Row: {
-          approved_change_orders: number | null
-          client_id: string | null
-          contract_id: number | null
-          contract_number: string | null
-          draft_change_orders: number | null
-          erp_status: string | null
-          executed: boolean | null
-          invoiced_amount: number | null
-          original_contract_amount: number | null
-          payments_received: number | null
-          pending_change_orders: number | null
-          percent_paid: number | null
-          private: boolean | null
-          remaining_balance: number | null
-          revised_contract_amount: number | null
-          status: string | null
-          title: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "contracts_client_id_fkey"
-            columns: ["client_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       cost_by_category: {
         Row: {
           avg_cost: number | null
@@ -20180,7 +19854,7 @@ export type Database = {
             foreignKeyName: "purchase_orders_contract_company_id_fkey"
             columns: ["contract_company_id"]
             isOneToOne: false
-            referencedRelation: "companies"
+            referencedRelation: "vendors"
             referencedColumns: ["id"]
           },
           {
@@ -21921,7 +21595,16 @@ export type Database = {
         | "terminated"
       contract_type: "prime_contract" | "commitment"
       erp_sync_status: "pending" | "synced" | "failed" | "resyncing"
-      invoice_status: "draft" | "pending" | "approved" | "paid" | "void"
+      invoice_status:
+        | "draft"
+        | "pending"
+        | "approved"
+        | "paid"
+        | "void"
+        | "under_review"
+        | "revise_and_resubmit"
+        | "not_invited"
+        | "invited"
       issue_category:
         | "Design"
         | "Submittal"
@@ -22094,7 +21777,17 @@ export const Constants = {
       contract_status: ["draft", "pending", "executed", "closed", "terminated"],
       contract_type: ["prime_contract", "commitment"],
       erp_sync_status: ["pending", "synced", "failed", "resyncing"],
-      invoice_status: ["draft", "pending", "approved", "paid", "void"],
+      invoice_status: [
+        "draft",
+        "pending",
+        "approved",
+        "paid",
+        "void",
+        "under_review",
+        "revise_and_resubmit",
+        "not_invited",
+        "invited",
+      ],
       issue_category: [
         "Design",
         "Submittal",

@@ -519,7 +519,7 @@ export function ProjectCommandCenter({
                   {fmtCompact(committedCosts)}
                 </span>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {commitments.length} contract{commitments.length !== 1 ? "s" : ""}
+                  {commitments.length} commitment{commitments.length !== 1 ? "s" : ""}
                 </p>
               </>
             )}
