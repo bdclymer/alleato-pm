@@ -107,12 +107,57 @@ function extractToolSlugFromPath(
     .filter(Boolean);
 
   for (const segment of segments) {
-    if (knownSlugs.has(segment)) {
-      return segment;
+    const cleaned = decodeURIComponent(segment)
+      .toLowerCase()
+      .split(/[?#]/, 1)[0]
+      .trim();
+
+    if (!cleaned) {
+      continue;
+    }
+
+    if (knownSlugs.has(cleaned)) {
+      return cleaned;
+    }
+
+    const normalized = cleaned.replace(/_/g, "-");
+    if (knownSlugs.has(normalized)) {
+      return normalized;
     }
   }
 
   return null;
+}
+
+/**
+ * Extract candidate path fragments from a full URL.
+ * Includes pathname and hash/query fragments that often hold tab/tool routes.
+ */
+function extractPathsFromUrl(pageUrl?: string): string[] {
+  if (!pageUrl) {
+    return [];
+  }
+
+  try {
+    const parsed = new URL(pageUrl);
+    const paths: string[] = [];
+
+    if (parsed.pathname) {
+      paths.push(parsed.pathname);
+    }
+
+    if (parsed.hash) {
+      paths.push(parsed.hash.replace(/^#/, ""));
+    }
+
+    if (parsed.search) {
+      paths.push(parsed.search.replace(/^\?/, ""));
+    }
+
+    return paths.filter(Boolean);
+  } catch {
+    return [];
+  }
 }
 
 /**
@@ -155,6 +200,7 @@ export async function matchFeedbackToTool(
   title: string,
   comment: string,
   pagePath?: string,
+  pageUrl?: string,
 ): Promise<MatchedTool | null> {
   const supabase = createServiceClient();
 
@@ -167,24 +213,31 @@ export async function matchFeedbackToTool(
     return null;
   }
 
-  // URL path match — strongest signal, instant win
-  if (pagePath) {
-    const knownSlugs = new Set(tools.map((t) => t.slug));
-    const pathSlug = extractToolSlugFromPath(pagePath, knownSlugs);
-    if (pathSlug) {
-      const urlMatch = tools.find((t) => t.slug === pathSlug);
-      if (urlMatch) {
-        return {
-          id: urlMatch.id,
-          name: urlMatch.name,
-          slug: urlMatch.slug,
-          category: urlMatch.category,
-          procore_link: urlMatch.procore_link,
-          prp_path: urlMatch.prp_path,
-          description: urlMatch.description,
-          score: 100,
-        };
-      }
+  // URL/path match — strongest signal, instant win
+  const knownSlugs = new Set(tools.map((t) => t.slug));
+  const pathCandidates = [
+    ...(pagePath ? [pagePath] : []),
+    ...extractPathsFromUrl(pageUrl),
+  ];
+
+  for (const candidatePath of pathCandidates) {
+    const pathSlug = extractToolSlugFromPath(candidatePath, knownSlugs);
+    if (!pathSlug) {
+      continue;
+    }
+
+    const urlMatch = tools.find((t) => t.slug === pathSlug);
+    if (urlMatch) {
+      return {
+        id: urlMatch.id,
+        name: urlMatch.name,
+        slug: urlMatch.slug,
+        category: urlMatch.category,
+        procore_link: urlMatch.procore_link,
+        prp_path: urlMatch.prp_path,
+        description: urlMatch.description,
+        score: 100,
+      };
     }
   }
 

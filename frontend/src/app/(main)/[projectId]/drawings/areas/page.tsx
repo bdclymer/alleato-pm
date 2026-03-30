@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Plus, Folder, Settings } from "lucide-react";
 import { toast } from "sonner";
 import { DrawingAreaSelector } from "@/components/drawings/DrawingAreaSelector";
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { KpiRow } from "@/components/ds";
 
 import { Button } from "@/components/ui/button";
@@ -69,49 +69,40 @@ export default function DrawingAreasPage() {
 
   if (error) {
     return (
-      <>
-        <ProjectPageHeader
-          title="Drawing Areas"
-          description="Organize your drawings into logical areas and subareas"
-        />
-        <PageContainer>
-          <div className="text-center text-destructive p-6">
-            Error loading drawing areas: {error instanceof Error ? error.message : "An unexpected error occurred — please try again"}
-          </div>
-        </PageContainer>
-      </>
+      <PageShell variant="dashboard" title="Drawing Areas">
+        <div className="text-center text-destructive p-6">
+          Error loading drawing areas: {error instanceof Error ? error.message : "An unexpected error occurred — please try again"}
+        </div>
+      </PageShell>
     );
   }
 
   return (
-    <>
-      <ProjectPageHeader
-        title="Drawing Areas"
-        description="Organize your drawings into logical areas and subareas"
-        actions={
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push(`/${projectId}/drawings/areas/settings`)}
-            >
-              <Settings className="sm:" />
-              <span className="hidden xs:inline">Settings</span>
-            </Button>
+    <PageShell
+      variant="dashboard"
+      title="Drawing Areas"
+      actions={
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push(`/${projectId}/drawings/areas/settings`)}
+          >
+            <Settings className="sm:" />
+            <span className="hidden xs:inline">Settings</span>
+          </Button>
 
-            <Button
-              size="sm"
-              onClick={() => handleCreateArea()}
-              disabled={createArea.isPending}
-            >
-              <Plus />
-              Create Area
-            </Button>
-          </div>
-        }
-      />
-
-      <PageContainer>
+          <Button
+            size="sm"
+            onClick={() => handleCreateArea()}
+            disabled={createArea.isPending}
+          >
+            <Plus />
+            Create Area
+          </Button>
+        </div>
+      }
+    >
         {/* Stats */}
         <div className="mb-4">
           <KpiRow metrics={[
@@ -157,7 +148,6 @@ export default function DrawingAreasPage() {
           )}
         </div>
 
-      </PageContainer>
-    </>
+    </PageShell>
   );
 }

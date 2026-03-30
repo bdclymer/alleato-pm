@@ -24,8 +24,7 @@ import {
 import { arrayMove } from "@dnd-kit/sortable";
 import { toast } from "sonner";
 
-import { ProjectPageHeader } from "@/components/layout";
-import { PageContainer } from "@/components/layout/PageContainer";
+import { PageShell } from "@/components/layout";
 import { DocumentDeliveryDialog } from "@/components/documents/DocumentDeliveryDialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
@@ -2171,27 +2170,15 @@ const [isSovEditing, setIsSovEditing] = useState(false);
   );
   if (loading) {
     return (
-      <PageContainer>
-        <ProjectPageHeader
-          title="Prime Contract"
-          description="Loading contract details..."
-        />
+      <PageShell variant="detail" title="Prime Contract" description="Loading contract details...">
         <Skeleton className="h-96" />
-      </PageContainer>
+      </PageShell>
     );
   }
 
   if (error || !contract) {
     return (
-      <PageContainer>
-        <ProjectPageHeader
-          title="Prime Contract"
-          description="Unable to load contract"
-          breadcrumbs={[
-            { label: "Prime Contracts", href: `/${projectId}/prime-contracts` },
-            { label: "Contract Details" },
-          ]}
-        />
+      <PageShell variant="detail" title="Prime Contract" description="Unable to load contract" onBack={handleBack}>
         <Card className="p-[var(--card-padding)]">
           <div className="flex items-center gap-4 text-destructive">
             <AlertCircle className="h-5 w-5" />
@@ -2206,7 +2193,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
             Back to Contracts
           </Button>
         </Card>
-      </PageContainer>
+      </PageShell>
     );
   }
 
@@ -2268,142 +2255,142 @@ const [isSovEditing, setIsSovEditing] = useState(false);
     };
 
     return (
-      <>
-        
-        <PageContainer>
-          <ProjectPageHeader
-          title={`Edit: ${contract.contract_number || contract.title}`}
-          description="Update contract details and SOV line items"
-          actions={
-            <Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>
-              Cancel Edit
-            </Button>
-          }
+      <PageShell
+        variant="form"
+        title={`Edit: ${contract.contract_number || contract.title}`}
+        description="Update contract details and SOV line items"
+        onBack={() => setIsEditing(false)}
+        backLabel="Cancel Edit"
+        actions={
+          <Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>
+            Cancel Edit
+          </Button>
+        }
+      >
+        <ContractForm
+          initialData={initialData}
+          onSubmit={handleInlineEditSubmit}
+          onCancel={() => setIsEditing(false)}
+          isSubmitting={isSavingEdit}
+          mode="edit"
+          projectId={projectId}
         />
-          <ContractForm
-            initialData={initialData}
-            onSubmit={handleInlineEditSubmit}
-            onCancel={() => setIsEditing(false)}
-            isSubmitting={isSavingEdit}
-            mode="edit"
-            projectId={projectId}
-          />
-        </PageContainer>
-      </>
+      </PageShell>
     );
   }
 
   return (
-    <PageContainer>
-      <ProjectPageHeader
-        title={`${contract.title} - #${contract.contract_number || contract.id.slice(0, 8)}`}
-        description={
-          contract.contractor
-            ? `Contractor: ${contract.contractor.name}`
-            : contract.vendor
-              ? `Contractor: ${contract.vendor.name}`
-              : "No contractor assigned"
-        }
-        actions={
-          <div className="flex items-center gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="default" size="sm">
-                  <Plus />
-                  Create
-                  <ChevronDown />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() =>
-                    router.push(
-                      `/${projectId}/change-events/new?contractId=${contractId}`,
-                    )
-                  }
-                >
-                  <FileText className="h-4 w-4 mr-2" />
-                  Change Event
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() =>
-                    router.push(
-                      `/${projectId}/change-orders/prime/new?contractId=${contractId}`,
-                    )
-                  }
-                >
-                  <DollarSign className="h-4 w-4 mr-2" />
-                  Change Order
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() =>
-                    router.push(
-                      `/${projectId}/commitments/new?type=purchase_order&contractId=${contractId}`,
-                    )
-                  }
-                >
-                  <FileText className="h-4 w-4 mr-2" />
-                  Purchase Order
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() =>
-                    router.push(
-                      `/${projectId}/commitments/new?type=subcontract&contractId=${contractId}`,
-                    )
-                  }
-                >
-                  <FileText className="h-4 w-4 mr-2" />
-                  Subcontract
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <Button
-              variant="outline"
-              size="icon"
-              disabled={isSyncing}
-              onClick={handleErpSync}
-              aria-label="Sync from Acumatica"
-              title="Sync invoices & payments from Acumatica"
-            >
-              <RefreshCw className={isSyncing ? "animate-spin" : undefined} />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => {
-                setDocumentDialogTab("email");
-                setIsDocumentDialogOpen(true);
-              }}
-              aria-label="Email"
-              title="Email"
-            >
-              <Mail />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => {
-                setDocumentDialogTab("download");
-                setIsDocumentDialogOpen(true);
-              }}
-              aria-label="Export"
-              title="Export"
-            >
-              <Download />
-            </Button>
+    <PageShell
+      variant="detail"
+      title={`${contract.title} - #${contract.contract_number || contract.id.slice(0, 8)}`}
+      description={
+        contract.contractor
+          ? `Contractor: ${contract.contractor.name}`
+          : contract.vendor
+            ? `Contractor: ${contract.vendor.name}`
+            : "No contractor assigned"
+      }
+      onBack={() => router.back()}
+      actions={
+        <div className="flex items-center gap-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="default" size="sm">
+                <Plus />
+                Create
+                <ChevronDown />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() =>
+                  router.push(
+                    `/${projectId}/change-events/new?contractId=${contractId}`,
+                  )
+                }
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Change Event
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  router.push(
+                    `/${projectId}/change-orders/prime/new?contractId=${contractId}`,
+                  )
+                }
+              >
+                <DollarSign className="h-4 w-4 mr-2" />
+                Change Order
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  router.push(
+                    `/${projectId}/commitments/new?type=purchase_order&contractId=${contractId}`,
+                  )
+                }
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Purchase Order
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() =>
+                  router.push(
+                    `/${projectId}/commitments/new?type=subcontract&contractId=${contractId}`,
+                  )
+                }
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                Subcontract
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button
+            variant="outline"
+            size="icon"
+            disabled={isSyncing}
+            onClick={handleErpSync}
+            aria-label="Sync from Acumatica"
+            title="Sync invoices & payments from Acumatica"
+          >
+            <RefreshCw className={isSyncing ? "animate-spin" : undefined} />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => {
+              setDocumentDialogTab("email");
+              setIsDocumentDialogOpen(true);
+            }}
+            aria-label="Email"
+            title="Email"
+          >
+            <Mail />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={() => {
+              setDocumentDialogTab("download");
+              setIsDocumentDialogOpen(true);
+            }}
+            aria-label="Export"
+            title="Export"
+          >
+            <Download />
+          </Button>
 
-            <Button
-              variant="default"
-              size="icon"
-              onClick={handleEdit}
-              aria-label="Edit Contract"
-              title="Edit Contract"
-            >
-              <Pencil />
-            </Button>
-          </div>
-        }
-      />
+          <Button
+            variant="default"
+            size="icon"
+            onClick={handleEdit}
+            aria-label="Edit Contract"
+            title="Edit Contract"
+          >
+            <Pencil />
+          </Button>
+        </div>
+      }
+    >
 
       <PageTabs
         variant="inline"
@@ -3663,6 +3650,6 @@ lineItemsLoading={lineItemsLoading}
           title={contract.title}
         />
       ) : null}
-    </PageContainer>
+    </PageShell>
   );
 }

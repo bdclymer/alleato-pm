@@ -12,7 +12,7 @@ import {
   useDeleteConversation,
 } from "@/hooks/use-rag-conversations";
 import { ConversationSidebar } from "./conversation-sidebar";
-import { ChatArea } from "./chat-area";
+import { ChatArea, type ResponseQuality } from "./chat-area";
 import type { ToolTraceItem } from "./trace-panel";
 
 interface ChatHistoryMessage {
@@ -22,6 +22,19 @@ interface ChatHistoryMessage {
   sources: unknown[] | null;
   metadata?: {
     tool_trace?: ToolTraceItem[];
+    memory_usage?: {
+      totalUsed: number;
+      preferencesUsed?: number;
+      relevantUsed?: number;
+      teamUsed?: number;
+      recentConversationsUsed?: number;
+      memories?: Array<{
+        id: string;
+        type: string;
+        content: string;
+      }>;
+    };
+    response_quality?: ResponseQuality;
   } | null;
   created_at: string | null;
 }
@@ -59,11 +72,42 @@ function extractSources(
   return sourcesByMessageId;
 }
 
+function extractMemoryUsage(
+  messages: ChatHistoryMessage[],
+): Record<string, NonNullable<ChatHistoryMessage["metadata"]>["memory_usage"]> {
+  const usageByMessageId: Record<
+    string,
+    NonNullable<ChatHistoryMessage["metadata"]>["memory_usage"]
+  > = {};
+  messages.forEach((msg) => {
+    const usage = msg.metadata?.memory_usage;
+    if (usage && typeof usage.totalUsed === "number") {
+      usageByMessageId[msg.id] = usage;
+    }
+  });
+  return usageByMessageId;
+}
+
+function extractResponseQuality(
+  messages: ChatHistoryMessage[],
+): Record<string, ResponseQuality> {
+  const byMessageId: Record<string, ResponseQuality> = {};
+  messages.forEach((msg) => {
+    const quality = msg.metadata?.response_quality;
+    if (quality) {
+      byMessageId[msg.id] = quality;
+    }
+  });
+  return byMessageId;
+}
+
 function ChatWithSession({
   sessionId,
   initialMessages,
   toolTracesByMessageId,
   sourcesByMessageId,
+  memoryUsageByMessageId,
+  responseQualityByMessageId,
   isLoadingMessages,
   pendingFirstMessage,
   councilMode,
@@ -76,6 +120,11 @@ function ChatWithSession({
   initialMessages: UIMessage[];
   toolTracesByMessageId: Record<string, ToolTraceItem[]>;
   sourcesByMessageId: Record<string, unknown[]>;
+  memoryUsageByMessageId: Record<
+    string,
+    NonNullable<ChatHistoryMessage["metadata"]>["memory_usage"]
+  >;
+  responseQualityByMessageId: Record<string, ResponseQuality>;
   isLoadingMessages: boolean;
   pendingFirstMessage: string | null;
   councilMode: boolean;
@@ -152,6 +201,8 @@ function ChatWithSession({
       messages={messages}
       toolTracesByMessageId={toolTracesByMessageId}
       sourcesByMessageId={sourcesByMessageId}
+      memoryUsageByMessageId={memoryUsageByMessageId}
+      responseQualityByMessageId={responseQualityByMessageId}
       isLoadingMessages={isLoadingMessages}
       isStreaming={isStreaming}
       input={input}
@@ -184,6 +235,12 @@ export function RagChatPage() {
   const [sourcesByMessageId, setSourcesByMessageId] = useState<
     Record<string, unknown[]>
   >({});
+  const [memoryUsageByMessageId, setMemoryUsageByMessageId] = useState<
+    Record<string, NonNullable<ChatHistoryMessage["metadata"]>["memory_usage"]>
+  >({});
+  const [responseQualityByMessageId, setResponseQualityByMessageId] = useState<
+    Record<string, ResponseQuality>
+  >({});
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [noSessionInput, setNoSessionInput] = useState("");
   const [councilMode, setCouncilMode] = useState(false);
@@ -206,10 +263,14 @@ export function RagChatPage() {
       setInitialMessages(msgs);
       setToolTracesByMessageId(extractToolTraces(historyMessages));
       setSourcesByMessageId(extractSources(historyMessages));
+      setMemoryUsageByMessageId(extractMemoryUsage(historyMessages));
+      setResponseQualityByMessageId(extractResponseQuality(historyMessages));
     } catch {
       setInitialMessages([]);
       setToolTracesByMessageId({});
       setSourcesByMessageId({});
+      setMemoryUsageByMessageId({});
+      setResponseQualityByMessageId({});
     } finally {
       setIsLoadingMessages(false);
     }
@@ -222,6 +283,8 @@ export function RagChatPage() {
       setInitialMessages([]);
       setToolTracesByMessageId({});
       setSourcesByMessageId({});
+      setMemoryUsageByMessageId({});
+      setResponseQualityByMessageId({});
       return;
     }
     void loadSessionMessages(sessionId);
@@ -324,6 +387,8 @@ export function RagChatPage() {
             initialMessages={initialMessages}
             toolTracesByMessageId={toolTracesByMessageId}
             sourcesByMessageId={sourcesByMessageId}
+            memoryUsageByMessageId={memoryUsageByMessageId}
+            responseQualityByMessageId={responseQualityByMessageId}
             isLoadingMessages={isLoadingMessages}
             pendingFirstMessage={pendingFirstMessage}
             councilMode={councilMode}
@@ -336,6 +401,7 @@ export function RagChatPage() {
           <ChatArea
             messages={[]}
             toolTracesByMessageId={{}}
+            responseQualityByMessageId={{}}
             isLoadingMessages={false}
             isStreaming={false}
             input={noSessionInput}

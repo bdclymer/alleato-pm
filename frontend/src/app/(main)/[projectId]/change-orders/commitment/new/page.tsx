@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/client";
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -107,111 +107,109 @@ export default function NewCommitmentCOPage() {
   };
 
   return (
-    <>
-      <ProjectPageHeader
-        title="New Commitment Change Order"
-        description="Create a new CCO"
-        actions={
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push(`/${projectId}/change-orders?tab=commitment`)}
-              disabled={isSubmitting}
-            >
-              Cancel
-            </Button>
-            <Button
-              size="sm"
-              onClick={form.handleSubmit(handleSubmit)}
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Creating..." : "Create"}
-            </Button>
-          </div>
-        }
-      />
-      <PageContainer className="space-y-6">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <FormField
-                  control={form.control}
-                  name="contract_id"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Contract *</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select a contract" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          {contracts.map((c) => (
-                            <SelectItem key={c.id} value={c.id}>
-                              {c.contract_number || "—"} — {c.title || "Untitled"}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="change_order_number"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>CO Number *</FormLabel>
+    <PageShell
+      variant="form"
+      title="Create Commitment Change Order"
+      onBack={() => router.back()}
+      actions={
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => router.push(`/${projectId}/change-orders?tab=commitment`)}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+          <Button
+            size="sm"
+            onClick={form.handleSubmit(handleSubmit)}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? "Creating..." : "Create"}
+          </Button>
+        </div>
+      }
+    >
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="contract_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Contract *</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. 001816" />
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a contract" />
+                        </SelectTrigger>
                       </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="description"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Description *</FormLabel>
-                      <FormControl>
-                        <Textarea {...field} rows={4} placeholder="Describe the change..." />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="amount"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Amount ($)</FormLabel>
-                      <FormControl>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          value={field.value}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </CardContent>
-            </Card>
-          </form>
-        </Form>
-      </PageContainer>
-    </>
+                      <SelectContent>
+                        {contracts.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.contract_number || "—"} — {c.title || "Untitled"}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="change_order_number"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>CO Number *</FormLabel>
+                    <FormControl>
+                      <Input {...field} placeholder="e.g. 001816" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description *</FormLabel>
+                    <FormControl>
+                      <Textarea {...field} rows={4} placeholder="Describe the change..." />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="amount"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Amount ($)</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={field.value}
+                        onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+        </form>
+      </Form>
+    </PageShell>
   );
 }

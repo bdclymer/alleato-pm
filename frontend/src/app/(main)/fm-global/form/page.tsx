@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 import { createServiceClient } from "@/lib/supabase/service";
 import Link from "next/link";
-import { PageContainer, PageHeader } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { FmGlobalClient } from "./fm-global-client";
 import type { FmGlobalSubmissionSummary } from "@/types/fm-global";
@@ -44,19 +44,17 @@ export default async function FMGlobalSpecsPage(): Promise<ReactElement> {
   const submissions = await getRecentSubmissions();
 
   return (
-    <>
-      <PageHeader
-        title="FM Global Form"
-        description="Enter building details to get exact FM Global table, figures, and sprinkler configuration."
-        actions={
-          <Button variant="outline" asChild>
-            <Link href="/fm-global">Back to Dashboard</Link>
-          </Button>
-        }
-      />
-      <PageContainer maxWidth="xl">
-        <FmGlobalClient initialSubmissions={submissions} />
-      </PageContainer>
-    </>
+    <PageShell
+      variant="form"
+      title="FM Global Form"
+      description="Enter building details to get exact FM Global table, figures, and sprinkler configuration."
+      actions={
+        <Button variant="outline" asChild>
+          <Link href="/fm-global">Back to Dashboard</Link>
+        </Button>
+      }
+    >
+      <FmGlobalClient initialSubmissions={submissions} />
+    </PageShell>
   );
 }

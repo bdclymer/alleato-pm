@@ -17,7 +17,7 @@ type CostCodeRef = {
   title: string | null;
 };
 
-const APPROVED_DIRECT_COST_STATUSES = ["Approved", "Paid"];
+const APPROVED_DIRECT_COST_STATUSES = ["Approved"];
 
 /**
  * GET /api/projects/[projectId]/budget/details

@@ -36,7 +36,7 @@ import {
 } from "@/features/change-events/change-events-table-config";
 import { ChangeEventRfqForm } from "@/components/domain/change-events/ChangeEventRfqForm";
 import type { ChangeEventRfqFormValues } from "@/components/domain/change-events/ChangeEventRfqForm";
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Text } from "@/components/ui/text";
 
@@ -541,26 +541,24 @@ export default function ProjectChangeEventsPage(): ReactElement {
 
   if (!hasValidProjectId) {
     return (
-      <>
-        <ProjectPageHeader
-          title="Change Events"
-          description="Provide a valid project identifier to access change events."
-        />
-        <PageContainer>
-          <Card>
-            <CardHeader>
-              <CardTitle>Invalid Project</CardTitle>
-              <CardDescription>
-                Change events require a numeric project identifier. Navigate through the project
-                workspace to continue.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Text tone="muted">Missing or malformed `{params.projectId}` parameter.</Text>
-            </CardContent>
-          </Card>
-        </PageContainer>
-      </>
+      <PageShell
+        variant="table"
+        title="Change Events"
+        description="Provide a valid project identifier to access change events."
+      >
+        <Card>
+          <CardHeader>
+            <CardTitle>Invalid Project</CardTitle>
+            <CardDescription>
+              Change events require a numeric project identifier. Navigate through the project
+              workspace to continue.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Text tone="muted">Missing or malformed `{params.projectId}` parameter.</Text>
+          </CardContent>
+        </Card>
+      </PageShell>
     );
   }
 

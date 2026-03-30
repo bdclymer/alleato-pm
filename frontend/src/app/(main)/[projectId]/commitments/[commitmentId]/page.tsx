@@ -26,7 +26,7 @@ import { DocumentDeliveryDialog } from "@/components/documents/DocumentDeliveryD
 import { EmptyState } from "@/components/ds/empty-state";
 import { KpiBlock } from "@/components/ds/kpi";
 import { StatusBadge } from "@/components/ds/status-badge";
-import { PageContainer } from "@/components/layout/PageContainer";
+import { PageShell } from "@/components/layout";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { Button } from "@/components/ui/button";
 import {
@@ -579,11 +579,7 @@ export default function CommitmentDetailPage() {
   // ── Loading ──
   if (isLoading) {
     return (
-      <PageContainer>
-        <div className="pt-3 pb-4">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold">Commitment Details</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">Loading…</p>
-        </div>
+      <PageShell variant="detail" title="Commitment Details" description="Loading…" onBack={() => router.back()}>
         <div className="space-y-6">
           <Skeleton className="h-24 w-full rounded-lg" />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
@@ -595,114 +591,108 @@ export default function CommitmentDetailPage() {
             ))}
           </div>
         </div>
-      </PageContainer>
+      </PageShell>
     );
   }
 
   // ── Error ──
   if (error || !commitment) {
     return (
-      <PageContainer>
-        <div className="pt-3 pb-4">
-          <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold">Commitment Details</h1>
-          <p className="mt-0.5 text-sm text-muted-foreground">Not found</p>
-        </div>
+      <PageShell variant="detail" title="Commitment Details" description="Not found" onBack={() => router.back()}>
         <p className="text-sm text-destructive">{error || "Commitment not found"}</p>
-      </PageContainer>
+      </PageShell>
     );
   }
 
   const sovLabel = isPO ? "PO SOV" : "SC SOV";
 
-  return (
-    <PageContainer>
-      {/* Header — stacks title/actions on mobile */}
-      <div className="pt-3 pb-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold truncate">
-              {commitment.title || displayNumber || "Commitment"}
-            </h1>
-            <p className="mt-0.5 text-sm text-muted-foreground truncate">
-              {[
-                displayNumber && `#${displayNumber}`,
-                contractType,
-                commitment.contract_company?.name,
-              ]
-                .filter(Boolean)
-                .join(" · ")}
-            </p>
-          </div>
+  const headerActions = (
+    <>
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={handleEmail}
+        aria-label="Email"
+        title="Email"
+      >
+        <Mail />
+      </Button>
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={handleExport}
+        aria-label="Export"
+        title="Export"
+      >
+        <Download />
+      </Button>
+      <Button
+        variant="outline"
+        size="icon"
+        onClick={() => router.push(`/${projectId}/commitments/${commitmentId}/edit`)}
+        aria-label="Edit Commitment"
+        title="Edit Commitment"
+      >
+        <Pencil />
+      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="default">
+            <Plus className="mr-1.5 h-4 w-4" />
+            Create
+            <ChevronDown className="ml-1.5 h-3.5 w-3.5 opacity-70" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            onClick={() => {
+              setActiveTab("change-orders");
+              toast.info("Navigate to Change Orders tab to create a change event");
+            }}
+          >
+            <FileText className="mr-2 h-4 w-4" />
+            Change Event
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => {
+              setActiveTab("invoices");
+              toast.info("Navigate to Invoices tab to create an invoice");
+            }}
+          >
+            <Receipt className="mr-2 h-4 w-4" />
+            Invoice
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => {
+              setActiveTab("payments");
+              toast.info("Navigate to Payments tab to create a payment");
+            }}
+          >
+            <Mail className="mr-2 h-4 w-4" />
+            Payment
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </>
+  );
 
-          <div className="flex shrink-0 items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleEmail}
-              aria-label="Email"
-              title="Email"
-            >
-              <Mail />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={handleExport}
-              aria-label="Export"
-              title="Export"
-            >
-              <Download />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => router.push(`/${projectId}/commitments/${commitmentId}/edit`)}
-              aria-label="Edit Commitment"
-              title="Edit Commitment"
-            >
-              <Pencil />
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="default">
-                  <Plus className="mr-1.5 h-4 w-4" />
-                  Create
-                  <ChevronDown className="ml-1.5 h-3.5 w-3.5 opacity-70" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() => {
-                    setActiveTab("change-orders");
-                    toast.info("Navigate to Change Orders tab to create a change event");
-                  }}
-                >
-                  <FileText className="mr-2 h-4 w-4" />
-                  Change Event
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setActiveTab("invoices");
-                    toast.info("Navigate to Invoices tab to create an invoice");
-                  }}
-                >
-                  <Receipt className="mr-2 h-4 w-4" />
-                  Invoice
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => {
-                    setActiveTab("payments");
-                    toast.info("Navigate to Payments tab to create a payment");
-                  }}
-                >
-                  <Mail className="mr-2 h-4 w-4" />
-                  Payment
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </div>
+  const description = [
+    displayNumber && `#${displayNumber}`,
+    contractType,
+    commitment.contract_company?.name,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
+  return (
+    <PageShell
+      variant="detail"
+      title={commitment.title || displayNumber || "Commitment"}
+      description={description}
+      actions={headerActions}
+      statusBadge={<StatusBadge status={commitment.status ? commitment.status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "Draft"} />}
+      onBack={() => router.back()}
+    >
 
       <PageTabs
         variant="inline"
@@ -721,7 +711,7 @@ export default function CommitmentDetailPage() {
         onTabClick={(href) => setActiveTab(href)}
       />
 
-      <div className="px-4 pt-10 md:px-6 lg:px-8">
+      <div className="pt-6">
         {activeTab === "general" && (
           <GeneralTab
             commitment={commitment}
@@ -800,6 +790,6 @@ export default function CommitmentDetailPage() {
         number={commitment.number}
         title={commitment.title}
       />
-    </PageContainer>
+    </PageShell>
   );
 }

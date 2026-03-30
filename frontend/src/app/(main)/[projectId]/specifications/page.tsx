@@ -4,7 +4,7 @@ import * as React from "react";
 import { useState } from "react";
 import { useParams } from "next/navigation";
 
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -56,119 +56,117 @@ export default function ProjectSpecificationsPage() {
   const totalPages = Math.ceil(totalCount / 25);
 
   return (
-    <>
-      <ProjectPageHeader
-        title="Specifications"
-        description="Manage project specifications and revisions"
-        actions={
-          <SpecificationUploadDialog projectId={projectId}>
-            <Button size="sm">Upload Specification</Button>
-          </SpecificationUploadDialog>
-        }
-      />
-      <PageContainer>
-        <div className="space-y-4">
-          {/* Toolbar — search + filters inline, no Card wrapper */}
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="relative min-w-[240px] flex-1">
-              <Input
-                placeholder="Search by section number or title..."
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setPage(1);
-                }}
-                className="pr-4"
-              />
-            </div>
+    <PageShell
+      variant="table"
+      title="Specifications"
+      description="Manage project specifications and revisions"
+      actions={
+        <SpecificationUploadDialog projectId={projectId}>
+          <Button size="sm">Upload Specification</Button>
+        </SpecificationUploadDialog>
+      }
+    >
+      <div className="space-y-4">
+        {/* Toolbar — search + filters inline, no Card wrapper */}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="relative min-w-[240px] flex-1">
+            <Input
+              placeholder="Search by section number or title..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              className="pr-4"
+            />
+          </div>
 
+          <Select
+            value={statusFilter}
+            onValueChange={(value: StatusFilter) => {
+              setStatusFilter(value);
+              setPage(1);
+            }}
+          >
+            <SelectTrigger className="w-[160px]">
+              <SelectValue placeholder="All statuses" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="active">Active</SelectItem>
+              <SelectItem value="archived">Archived</SelectItem>
+              <SelectItem value="superseded">Superseded</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {areas && areas.length > 0 && (
             <Select
-              value={statusFilter}
-              onValueChange={(value: StatusFilter) => {
-                setStatusFilter(value);
+              value={areaFilter}
+              onValueChange={(value) => {
+                setAreaFilter(value);
                 setPage(1);
               }}
             >
               <SelectTrigger className="w-[160px]">
-                <SelectValue placeholder="All statuses" />
+                <SelectValue placeholder="All areas" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All statuses</SelectItem>
-                <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="archived">Archived</SelectItem>
-                <SelectItem value="superseded">Superseded</SelectItem>
+                <SelectItem value="all">All areas</SelectItem>
+                {(areas as SpecArea[]).map((area) => (
+                  <SelectItem key={area.id} value={area.id.toString()}>
+                    {area.name}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
+          )}
 
-            {areas && areas.length > 0 && (
-              <Select
-                value={areaFilter}
-                onValueChange={(value) => {
-                  setAreaFilter(value);
-                  setPage(1);
-                }}
-              >
-                <SelectTrigger className="w-[160px]">
-                  <SelectValue placeholder="All areas" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All areas</SelectItem>
-                  {(areas as SpecArea[]).map((area) => (
-                    <SelectItem key={area.id} value={area.id.toString()}>
-                      {area.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-
-            {!isLoading && (
-              <span className="text-sm text-muted-foreground whitespace-nowrap">
-                {totalCount} specification{totalCount !== 1 ? "s" : ""}
-              </span>
-            )}
-          </div>
-
-          {/* Specifications Table */}
-          <SpecificationListTable
-            projectId={projectId}
-            specifications={specifications}
-            onEdit={setEditingSpec}
-          />
-
-          {/* Pagination */}
-          {totalPages > 1 && (
-            <div className="flex items-center justify-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-              >
-                Previous
-              </Button>
-              <span className="text-sm text-muted-foreground">
-                Page {page} of {totalPages}
-              </span>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-              >
-                Next
-              </Button>
-            </div>
+          {!isLoading && (
+            <span className="text-sm text-muted-foreground whitespace-nowrap">
+              {totalCount} specification{totalCount !== 1 ? "s" : ""}
+            </span>
           )}
         </div>
 
-        <SpecificationEditModal
+        {/* Specifications Table */}
+        <SpecificationListTable
           projectId={projectId}
-          specification={editingSpec}
-          open={!!editingSpec}
-          onOpenChange={(open) => !open && setEditingSpec(null)}
+          specifications={specifications}
+          onEdit={setEditingSpec}
         />
-      </PageContainer>
-    </>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+            >
+              Previous
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              Page {page} of {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+            >
+              Next
+            </Button>
+          </div>
+        )}
+      </div>
+
+      <SpecificationEditModal
+        projectId={projectId}
+        specification={editingSpec}
+        open={!!editingSpec}
+        onOpenChange={(open) => !open && setEditingSpec(null)}
+      />
+    </PageShell>
   );
 }

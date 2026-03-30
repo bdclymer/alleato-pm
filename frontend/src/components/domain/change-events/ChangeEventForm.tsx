@@ -87,6 +87,7 @@ type ChangeReason =
   | "existing_condition";
 
 export interface ChangeEventLineItem {
+  id?: string;
   budgetCode: string;
   description: string;
   vendor: string;

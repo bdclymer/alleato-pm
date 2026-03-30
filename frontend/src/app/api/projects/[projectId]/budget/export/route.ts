@@ -13,7 +13,7 @@ const JTD_COST_TYPES = [
 
 // Cost types that count towards Direct Costs (excludes Subcontractor Invoice)
 const DIRECT_COST_TYPES = ["Invoice", "Expense", "Payroll"];
-const APPROVED_DIRECT_COST_STATUSES = ["Approved", "Paid"];
+const APPROVED_DIRECT_COST_STATUSES = ["Approved"];
 
 // Pending commitment statuses for Pending Cost Changes calculation
 const PENDING_SUBCONTRACT_STATUSES = ["Out for Signature", "Pending"];

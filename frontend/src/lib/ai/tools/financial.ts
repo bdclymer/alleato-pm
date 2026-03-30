@@ -1,6 +1,7 @@
 import { tool } from "ai";
 import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/service";
+import { createToolGuardrails, type ToolGuardrails } from "./guardrails";
 
 type AnyRow = Record<string, unknown>;
 
@@ -14,6 +15,7 @@ type ToolTracePayload = {
 
 type CreateFinancialToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
+  pinnedProjectId?: number;
 };
 
 function asNumber(value: unknown): number {
@@ -63,22 +65,36 @@ function withTrace<TInput extends Record<string, unknown>, TResult>(
 /** Resolve a project by name or ID. Returns { id, name } or an error object. */
 async function resolveProject(
   supabase: ReturnType<typeof createServiceClient>,
+  guardrails: ToolGuardrails,
   projectId?: number,
   projectName?: string,
 ): Promise<{ id: number; name: string } | { error: string }> {
-  if (projectId) {
+  const scopedProjectIds = await guardrails.getScopedProjectIds(projectId);
+  if (scopedProjectIds.length === 0) {
+    return { error: "You do not have access to that project." };
+  }
+
+  const effectiveProjectId =
+    typeof projectId === "number" && Number.isFinite(projectId)
+      ? projectId
+      : scopedProjectIds.length === 1
+        ? scopedProjectIds[0]
+        : undefined;
+
+  if (effectiveProjectId) {
     const { data, error } = await supabase
       .from("projects")
       .select("id, name")
-      .eq("id", projectId)
+      .eq("id", effectiveProjectId)
       .single();
-    if (error || !data) return { error: `Project ${projectId} not found` };
+    if (error || !data) return { error: `Project ${effectiveProjectId} not found` };
     return { id: data.id, name: data.name ?? "" };
   }
   if (projectName) {
     const { data, error } = await supabase
       .from("projects")
       .select("id, name")
+      .in("id", scopedProjectIds)
       .ilike("name", `%${projectName}%`)
       .limit(1)
       .single();
@@ -98,6 +114,9 @@ export function createFinancialTools(
   options: CreateFinancialToolsOptions = {},
 ) {
   const supabase = createServiceClient();
+  const guardrails = createToolGuardrails(_userId, {
+    pinnedProjectId: options.pinnedProjectId,
+  });
 
   return {
     // -----------------------------------------------------------------------
@@ -125,7 +144,7 @@ export function createFinancialTools(
         "getCommitmentsOverview",
         options,
         async ({ projectId, projectName, status }) => {
-          const resolved = await resolveProject(supabase, projectId, projectName);
+          const resolved = await resolveProject(supabase, guardrails, projectId, projectName);
           if ("error" in resolved) return resolved;
 
           // Fetch subcontracts and purchase orders in parallel
@@ -305,7 +324,7 @@ export function createFinancialTools(
         "getChangeOrderDetails",
         options,
         async ({ projectId, projectName, status, contractId }) => {
-          const resolved = await resolveProject(supabase, projectId, projectName);
+          const resolved = await resolveProject(supabase, guardrails, projectId, projectName);
           if ("error" in resolved) return resolved;
 
           // Fetch COs from both tables, CO lines, change events, and contracts in parallel
@@ -521,7 +540,7 @@ export function createFinancialTools(
         "getDirectCostsSummary",
         options,
         async ({ projectId, projectName, costType, vendorId, startDate, endDate }) => {
-          const resolved = await resolveProject(supabase, projectId, projectName);
+          const resolved = await resolveProject(supabase, guardrails, projectId, projectName);
           if ("error" in resolved) return resolved;
 
           let dcQuery = supabase
@@ -685,7 +704,7 @@ export function createFinancialTools(
         "getBudgetLineItems",
         options,
         async ({ projectId, projectName, costCodeId }) => {
-          const resolved = await resolveProject(supabase, projectId, projectName);
+          const resolved = await resolveProject(supabase, guardrails, projectId, projectName);
           if ("error" in resolved) return resolved;
 
           // Fetch budget lines (from the view), cost codes, cost types, and forecasts
@@ -903,7 +922,7 @@ export function createFinancialTools(
         "getCostTrends",
         options,
         async ({ projectId, projectName, months }) => {
-          const resolved = await resolveProject(supabase, projectId, projectName);
+          const resolved = await resolveProject(supabase, guardrails, projectId, projectName);
           if ("error" in resolved) return resolved;
 
           const lookbackMonths = months ?? 12;
@@ -1108,7 +1127,7 @@ export function createFinancialTools(
         "getMarginAnalysis",
         options,
         async ({ projectId, projectName }) => {
-          const resolved = await resolveProject(supabase, projectId, projectName);
+          const resolved = await resolveProject(supabase, guardrails, projectId, projectName);
           if ("error" in resolved) return resolved;
 
           // Fetch revenue data (prime contracts) and cost data in parallel

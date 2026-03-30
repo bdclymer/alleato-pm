@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { StatusBadge } from "@/components/ds";
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -334,165 +334,158 @@ export default function PrimeContractCODetailPage() {
   // --- Loading state ---------------------------------------------------------
   if (isLoading) {
     return (
-      <>
-        <ProjectPageHeader title="Loading..." description="Loading change order details" />
-        <PageContainer>
-          <div className="space-y-6">
-            <Skeleton className="h-10 w-full max-w-md" />
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-              <Skeleton className="h-48" />
-              <Skeleton className="h-48" />
-            </div>
+      <PageShell variant="detail" title="Loading..." description="Loading change order details">
+        <div className="space-y-6">
+          <Skeleton className="h-10 w-full max-w-md" />
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <Skeleton className="h-48" />
+            <Skeleton className="h-48" />
           </div>
-        </PageContainer>
-      </>
+        </div>
+      </PageShell>
     );
   }
 
   // --- Error state -----------------------------------------------------------
   if (error || !co) {
     return (
-      <>
-        <ProjectPageHeader title="Error" description="Failed to load change order" />
-        <PageContainer>
-          <div className="text-center text-destructive">{error || "Not found"}</div>
-          <div className="mt-4 flex justify-center">
-            <Button onClick={handleBack}>
-              <ArrowLeft />
-              Back to Change Orders
-            </Button>
-          </div>
-        </PageContainer>
-      </>
+      <PageShell variant="detail" title="Error" description="Failed to load change order" onBack={handleBack}>
+        <div className="text-center text-destructive">{error || "Not found"}</div>
+        <div className="mt-4 flex justify-center">
+          <Button onClick={handleBack}>
+            <ArrowLeft />
+            Back to Change Orders
+          </Button>
+        </div>
+      </PageShell>
     );
   }
 
   // --- Edit mode -------------------------------------------------------------
   if (isEditing) {
     return (
-      <>
-        <ProjectPageHeader
-          title={`Edit ${co.pcco_number || `PCCO #${co.id}`}`}
-          description="Update prime contract change order"
-          actions={
-            <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={() => setIsEditing(false)} disabled={isSaving}>
-                Cancel
-              </Button>
-              <Button size="sm" onClick={form.handleSubmit(handleSave)} disabled={isSaving}>
-                {isSaving ? "Saving..." : "Save Changes"}
-              </Button>
-            </div>
-          }
-        />
-        <PageContainer className="space-y-6">
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(handleSave)} className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Details</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="pcco_number"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>PCCO Number *</FormLabel>
+      <PageShell
+        variant="form"
+        title={`Edit ${co.pcco_number || `PCCO #${co.id}`}`}
+        description="Update prime contract change order"
+        onBack={() => setIsEditing(false)}
+        actions={
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setIsEditing(false)} disabled={isSaving}>
+              Cancel
+            </Button>
+            <Button size="sm" onClick={form.handleSubmit(handleSave)} disabled={isSaving}>
+              {isSaving ? "Saving..." : "Save Changes"}
+            </Button>
+          </div>
+        }
+      >
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSave)} className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <FormField
+                  control={form.control}
+                  name="pcco_number"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>PCCO Number *</FormLabel>
+                      <FormControl>
+                        <Input {...field} placeholder="e.g. 000514" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Title *</FormLabel>
+                      <FormControl>
+                        <Textarea {...field} rows={3} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
-                          <Input {...field} placeholder="e.g. 000514" />
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
                         </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="title"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Title *</FormLabel>
+                        <SelectContent>
+                          <SelectItem value="Proposed">Proposed</SelectItem>
+                          <SelectItem value="Approved">Approved</SelectItem>
+                          <SelectItem value="Rejected">Rejected</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="prime_contract_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Prime Contract</FormLabel>
+                      <Select
+                        onValueChange={(val) => field.onChange(val === "__none__" ? null : val)}
+                        value={field.value ?? "__none__"}
+                      >
                         <FormControl>
-                          <Textarea {...field} rows={3} />
+                          <SelectTrigger>
+                            <SelectValue placeholder="Not assigned" />
+                          </SelectTrigger>
                         </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="status"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Status</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select status" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="Proposed">Proposed</SelectItem>
-                            <SelectItem value="Approved">Approved</SelectItem>
-                            <SelectItem value="Rejected">Rejected</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="prime_contract_id"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Prime Contract</FormLabel>
-                        <Select
-                          onValueChange={(val) => field.onChange(val === "__none__" ? null : val)}
-                          value={field.value ?? "__none__"}
-                        >
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Not assigned" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            <SelectItem value="__none__">Not assigned</SelectItem>
-                            {primeContracts.map((c) => (
-                              <SelectItem key={c.id} value={c.id}>
-                                {c.contract_number} — {c.title || "Untitled"}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="total_amount"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Amount ($)</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            step="0.01"
-                            value={field.value}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </CardContent>
-              </Card>
-            </form>
-          </Form>
-        </PageContainer>
-      </>
+                        <SelectContent>
+                          <SelectItem value="__none__">Not assigned</SelectItem>
+                          {primeContracts.map((c) => (
+                            <SelectItem key={c.id} value={c.id}>
+                              {c.contract_number} — {c.title || "Untitled"}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="total_amount"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Amount ($)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={field.value}
+                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </CardContent>
+            </Card>
+          </form>
+        </Form>
+      </PageShell>
     );
   }
 
@@ -503,7 +496,8 @@ export default function PrimeContractCODetailPage() {
 
   return (
     <>
-      <ProjectPageHeader
+      <PageShell
+        variant="detail"
         title={pageTitle}
         statusBadge={
           <div className="flex items-center gap-2">
@@ -511,12 +505,9 @@ export default function PrimeContractCODetailPage() {
             {co.executed && <StatusBadge status="Executed" />}
           </div>
         }
+        onBack={handleBack}
         actions={
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onClick={handleBack}>
-              <ArrowLeft />
-              Back
-            </Button>
             {co.status === "Proposed" && (
               <>
                 <Button
@@ -555,8 +546,7 @@ export default function PrimeContractCODetailPage() {
             </DropdownMenu>
           </div>
         }
-      />
-      <PageContainer className="space-y-8">
+      >
         {/* KPI row */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <Card>
@@ -692,7 +682,7 @@ export default function PrimeContractCODetailPage() {
             )}
           </CardContent>
         </Card>
-      </PageContainer>
+      </PageShell>
 
       {/* Rejection dialog */}
       <Dialog

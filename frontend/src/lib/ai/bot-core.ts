@@ -21,7 +21,7 @@ import {
 } from "@/lib/ai/services/conversation-memory";
 import {
   getMemoriesForSession,
-  buildMemoryContextBlock,
+  buildMemoryContextPayload,
 } from "@/lib/ai/services/ai-memory-service";
 import { extractAndStoreMemories } from "@/lib/ai/services/memory-extraction";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -45,6 +45,19 @@ export interface BotCoreOptions {
   conversationHistory?: ModelMessage[];
   /** Trace callback for tool calls */
   onTrace?: (trace: Record<string, unknown>) => void;
+}
+
+export interface MemoryUsageSummary {
+  totalUsed: number;
+  preferencesUsed: number;
+  relevantUsed: number;
+  teamUsed: number;
+  recentConversationsUsed: number;
+  memories: Array<{
+    id: string;
+    type: string;
+    content: string;
+  }>;
 }
 
 export interface BotCoreResult {
@@ -71,6 +84,7 @@ export async function assembleSystemPrompt(options: {
   councilMode?: boolean;
   sessionId?: string;
   isFirstTurn?: boolean;
+  onMemoryUsage?: (usage: MemoryUsageSummary) => void;
 }): Promise<string> {
   const {
     userId,
@@ -79,6 +93,7 @@ export async function assembleSystemPrompt(options: {
     councilMode,
     sessionId,
     isFirstTurn = true,
+    onMemoryUsage,
   } = options;
 
   let systemPrompt = getStrategistSystemPrompt();
@@ -94,7 +109,23 @@ export async function assembleSystemPrompt(options: {
             : Promise.resolve([]),
         ]);
 
-      const memoryBlock = buildMemoryContextBlock(preferences, relevant, team);
+      const { block: memoryBlock, selected: selectedMemories } =
+        buildMemoryContextPayload(preferences, relevant, team);
+      const usedMemories = selectedMemories
+        .slice(0, 12)
+        .map((memory) => ({
+          id: memory.id,
+          type: memory.type,
+          content: memory.content,
+        }));
+      onMemoryUsage?.({
+        totalUsed: usedMemories.length,
+        preferencesUsed: preferences.length,
+        relevantUsed: relevant.length,
+        teamUsed: team.length,
+        recentConversationsUsed: recentSummaries.length,
+        memories: usedMemories,
+      });
       const recentBlock = buildRecentConversationsBlock(recentSummaries);
 
       const contextParts = [recentBlock, memoryBlock].filter(Boolean);

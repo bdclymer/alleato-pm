@@ -227,7 +227,18 @@ import { PageShell } from "@/components/layout";
 
 Never create .md/.js/.ts/.py/.sh at project root (except CLAUDE.md, AGENTS.md, README.md).
 
-### 11. Chat & UI Premium Feel Gate
+### 11. Form ↔ Database FK Validation Gate
+
+**BEFORE building or editing ANY form with dropdown/select fields that reference database records:**
+
+1. Check `database.types.ts` — find the FK relationship for each column the form writes to
+2. Check each dropdown component — find what table/API it loads options from, and what `id` field it matches on
+3. **If the FK target table ≠ the dropdown options source table → STOP. Add ID resolution mapping.**
+4. Test: load existing record → click Edit → verify ALL dropdowns show correct pre-filled selections
+
+Known mismatches: `budget_code_id` (FK→budget_lines, dropdown→project_cost_codes), `vendor_id` (FK→companies, dropdown→vendors). Full reference: `docs/patterns/form-id-mismatch-prevention.md`
+
+### 12. Chat & UI Premium Feel Gate
 
 No borders/cards around chat sections. Only the input field gets a border.
 - No `<Alert>`/`<Card>` wrappers in chat — render text directly

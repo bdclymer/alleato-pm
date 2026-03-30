@@ -1,5 +1,4 @@
 "use client";
-import { ProjectPageHeader } from "@/components/layout";
 
 import * as React from "react";
 import { usePathname } from "next/navigation";
@@ -7,8 +6,7 @@ import { ColumnDef } from "@tanstack/react-table";
 import { Mail, Phone } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
-import { PageContainer } from "@/components/layout/PageContainer";
-import { PageTabs } from "@/components/layout/PageTabs";
+import { PageShell } from "@/components/layout";
 import { Text } from "@/components/ui/text";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -170,61 +168,37 @@ export default function DirectoryEmployeesPage() {
 
   if (isLoading) {
     return (
-      <>
-        <ProjectPageHeader
-          title="Directory"
-          description="Manage companies, clients, contacts, users, and employees across your organization"
-          showProjectName={false}
-        />
-        <PageTabs tabs={tabs} />
-        <PageContainer>
-          <div className="flex justify-center items-center py-12">
-            <div className="text-center space-y-4">
-              <Skeleton className="h-12 w-12 rounded-full mx-auto" />
-              <Text tone="muted">Loading employees...</Text>
-            </div>
+      <PageShell variant="table" title="Directory" description="Manage companies, clients, contacts, users, and employees across your organization" tabs={tabs}>
+        <div className="flex justify-center items-center py-12">
+          <div className="text-center space-y-4">
+            <Skeleton className="h-12 w-12 rounded-full mx-auto" />
+            <Text tone="muted">Loading employees...</Text>
           </div>
-        </PageContainer>
-      </>
+        </div>
+      </PageShell>
     );
   }
 
   if (error) {
     return (
-      <>
-        <ProjectPageHeader
-          title="Directory"
-          description="Manage companies, clients, contacts, users, and employees across your organization"
-          showProjectName={false}
-        />
-        <PageTabs tabs={tabs} />
-        <PageContainer>
-          <div className="text-center py-12">
-            <Text tone="destructive">
-              Error loading employees: {error.message}
-            </Text>
-          </div>
-        </PageContainer>
-      </>
+      <PageShell variant="table" title="Directory" description="Manage companies, clients, contacts, users, and employees across your organization" tabs={tabs}>
+        <div className="text-center py-12">
+          <Text tone="destructive">
+            Error loading employees: {error.message}
+          </Text>
+        </div>
+      </PageShell>
     );
   }
 
   return (
-    <>
-      <ProjectPageHeader
-        title="Directory"
-        description="Manage companies, clients, contacts, users, and employees across your organization"
-        showProjectName={false}
+    <PageShell variant="table" title="Directory" description="Manage companies, clients, contacts, users, and employees across your organization" tabs={tabs}>
+      <DataTable
+        columns={columns}
+        data={employees}
+        searchKey="first_name"
+        searchPlaceholder="Search employees..."
       />
-      <PageTabs tabs={tabs} />
-      <PageContainer>
-        <DataTable
-          columns={columns}
-          data={employees}
-          searchKey="first_name"
-          searchPlaceholder="Search employees..."
-        />
-      </PageContainer>
-    </>
+    </PageShell>
   );
 }

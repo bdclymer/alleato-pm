@@ -67,7 +67,10 @@ export interface AgentConfig {
    */
   createTools: (
     userId: string,
-    options?: { onTrace?: (trace: Record<string, unknown>) => void },
+    options?: {
+      onTrace?: (trace: Record<string, unknown>) => void;
+      pinnedProjectId?: number;
+    },
   ) => ToolSet;
 }
 
@@ -630,7 +633,10 @@ export async function consultAgent(
   question: string,
   userId: string,
   context?: string,
-  options?: { onTrace?: (trace: Record<string, unknown>) => void },
+  options?: {
+    onTrace?: (trace: Record<string, unknown>) => void;
+    pinnedProjectId?: number;
+  },
 ): Promise<AgentResponse> {
   const config = agentRegistry[agentId];
   if (!config) {
@@ -650,6 +656,7 @@ export async function consultAgent(
   // tool calls are reported back to the top-level trace collector
   const agentTools = config.createTools(userId, {
     onTrace: options?.onTrace,
+    pinnedProjectId: options?.pinnedProjectId,
   });
 
   const userMessage = context
@@ -719,7 +726,10 @@ export async function consultAgents(
   question: string,
   userId: string,
   context?: string,
-  options?: { onTrace?: (trace: Record<string, unknown>) => void },
+  options?: {
+    onTrace?: (trace: Record<string, unknown>) => void;
+    pinnedProjectId?: number;
+  },
 ): Promise<AgentResponse[]> {
   const promises = agentIds.map((id) =>
     consultAgent(id, question, userId, context, options),
@@ -743,7 +753,10 @@ export async function consultAgents(
  */
 export function createStrategistTools(
   userId: string,
-  options: { onTrace?: (trace: Record<string, unknown>) => void } = {},
+  options: {
+    onTrace?: (trace: Record<string, unknown>) => void;
+    pinnedProjectId?: number;
+  } = {},
 ) {
   // Include the base project tools so the Strategist can answer
   // general questions without routing to a specialist
@@ -798,6 +811,7 @@ export function createStrategistTools(
       execute: async ({ question, context }) => {
         const response = await consultAgent("cfo", question, userId, context, {
           onTrace: options.onTrace,
+          pinnedProjectId: options.pinnedProjectId,
         });
         return {
           agent: response.agent,
@@ -837,6 +851,7 @@ export function createStrategistTools(
       execute: async ({ question, context }) => {
         const response = await consultAgent("coo", question, userId, context, {
           onTrace: options.onTrace,
+          pinnedProjectId: options.pinnedProjectId,
         });
         return {
           agent: response.agent,
@@ -877,6 +892,7 @@ export function createStrategistTools(
       execute: async ({ question, context }) => {
         const response = await consultAgent("cro", question, userId, context, {
           onTrace: options.onTrace,
+          pinnedProjectId: options.pinnedProjectId,
         });
         return {
           agent: response.agent,
@@ -917,7 +933,10 @@ export function createStrategistTools(
           question,
           userId,
           context,
-          { onTrace: options.onTrace },
+          {
+            onTrace: options.onTrace,
+            pinnedProjectId: options.pinnedProjectId,
+          },
         );
         return {
           agent: response.agent,
@@ -960,7 +979,10 @@ export function createStrategistTools(
           question,
           userId,
           context,
-          { onTrace: options.onTrace },
+          {
+            onTrace: options.onTrace,
+            pinnedProjectId: options.pinnedProjectId,
+          },
         );
         return {
           agent: response.agent,

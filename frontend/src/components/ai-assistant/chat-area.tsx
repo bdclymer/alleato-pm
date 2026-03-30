@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useMemo, useState } from "react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 import type { UIMessage } from "ai";
 import { useProjects } from "@/hooks/use-projects";
@@ -73,12 +74,15 @@ import {
   CheckIcon,
   XIcon,
   SparkleIcon,
+  LinkIcon,
+  EraserIcon,
 } from "lucide-react";
 import type { DynamicToolUIPart } from "ai";
 import { toast } from "sonner";
 import { WelcomeScreen } from "./welcome-screen";
 import { TracePanel, type ToolTraceItem } from "./trace-panel";
 import { SourceCitations } from "./source-citations";
+import { CrossSourceTimeline } from "./cross-source-timeline";
 
 // ─── Part extraction helpers ───────────────────────────────────────
 
@@ -107,6 +111,26 @@ interface ToolPart {
   output?: unknown;
   errorText?: string;
   title?: string;
+}
+
+interface MemoryUsage {
+  totalUsed: number;
+  preferencesUsed?: number;
+  relevantUsed?: number;
+  teamUsed?: number;
+  recentConversationsUsed?: number;
+  memories?: Array<{
+    id: string;
+    type: string;
+    content: string;
+  }>;
+}
+
+export interface ResponseQuality {
+  confidence: "high" | "medium" | "low";
+  sourceQuality: "high" | "medium" | "low";
+  score: number;
+  reasons: string[];
 }
 
 function getToolParts(msg: UIMessage): ToolPart[] {
@@ -190,6 +214,101 @@ function formatToolName(name: string): string {
     .trim();
 }
 
+function asObject(value: unknown): Record<string, unknown> {
+  return value && typeof value === "object"
+    ? (value as Record<string, unknown>)
+    : {};
+}
+
+function getToolPreview(part: ToolPart): Record<string, unknown> | null {
+  const output = asObject(part.output);
+  if (output.action !== "preview") return null;
+  const preview = asObject(output.preview);
+  return Object.keys(preview).length > 0 ? preview : null;
+}
+
+function getToolOutputRecord(part: ToolPart): Record<string, unknown> | null {
+  const output = asObject(part.output);
+  const record = asObject(output.record);
+  return Object.keys(record).length > 0 ? record : null;
+}
+
+function toNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim()) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function toStringValue(value: unknown): string | null {
+  if (typeof value === "string" && value.trim()) return value.trim();
+  if (typeof value === "number" && Number.isFinite(value)) return String(value);
+  return null;
+}
+
+function getRecordDeepLinks(part: ToolPart): Array<{ label: string; href: string }> {
+  const input = asObject(part.input);
+  const record = getToolOutputRecord(part);
+  const output = asObject(part.output);
+  const links: Array<{ label: string; href: string }> = [];
+
+  const projectId =
+    toNumber(input.projectId) ??
+    toNumber((record as Record<string, unknown>)?.project_id);
+  const recordId =
+    toStringValue((record as Record<string, unknown>)?.id) ??
+    toStringValue(output.documentId);
+
+  const toolName = getToolNameFromType(part.type);
+
+  if (toolName === "createRFI" && projectId && recordId) {
+    links.push({ label: "Open RFI", href: `/${projectId}/rfis/${recordId}` });
+  }
+
+  if (toolName === "createSubmittal" && projectId && recordId) {
+    links.push({
+      label: "Open Submittal",
+      href: `/${projectId}/submittals/${recordId}`,
+    });
+  }
+
+  if (toolName === "createChangeOrder" && projectId && recordId) {
+    links.push({
+      label: "Open Change Order",
+      href: `/${projectId}/change-orders/prime/${recordId}`,
+    });
+  }
+
+  if (toolName === "createChangeEvent" && projectId && recordId) {
+    links.push({
+      label: "Open Change Event",
+      href: `/${projectId}/change-events/${recordId}`,
+    });
+  }
+
+  if (toolName === "createMeetingNote" && projectId && recordId) {
+    links.push({
+      label: "Open Meeting",
+      href: `/${projectId}/meetings/${recordId}`,
+    });
+  }
+
+  if (toolName === "updateProjectStatus" && projectId) {
+    links.push({ label: "Open Project", href: `/${projectId}/home` });
+  }
+
+  if (recordId && output.boardUrl && typeof output.boardUrl === "string") {
+    links.push({
+      label: "Open Board Card",
+      href: String(output.boardUrl),
+    });
+  }
+
+  return links;
+}
+
 /**
  * Normalize numbered meeting summaries into a clearer layout:
  * "1. **Meeting Name** - details" => "### 1. Meeting Name\n\ndetails"
@@ -240,7 +359,22 @@ function AssistantAvatar({ councilMode }: { councilMode?: boolean }) {
 
 // ─── Tool call display ─────────────────────────────────────────────
 
-function ToolCallItem({ part }: { part: ToolPart }) {
+function ToolCallItem({
+  part,
+  onApprove,
+  onEdit,
+  onRun,
+}: {
+  part: ToolPart;
+  onApprove: (part: ToolPart) => void;
+  onEdit: (part: ToolPart) => void;
+  onRun: (part: ToolPart) => void;
+}) {
+  const preview = getToolPreview(part);
+  const previewFields = asObject(preview?.fields);
+  const previewEntries = Object.entries(previewFields);
+  const links = getRecordDeepLinks(part);
+
   return (
     <ToolDisplay className="mb-1.5">
       <ToolHeader
@@ -251,8 +385,71 @@ function ToolCallItem({ part }: { part: ToolPart }) {
       />
       <ToolContent>
         {part.input != null && <ToolInput input={part.input} />}
+        {preview && (
+          <div className="space-y-2 rounded-md border border-border/60 bg-background p-3">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+              Pending Write
+            </p>
+            {previewEntries.length > 0 && (
+              <div className="space-y-1">
+                {previewEntries.slice(0, 8).map(([key, value]) => (
+                  <div key={key} className="flex items-start justify-between gap-3 text-xs">
+                    <span className="text-muted-foreground">{key}</span>
+                    <span className="w-2/3 break-words text-right text-foreground">
+                      {typeof value === "string"
+                        ? value
+                        : JSON.stringify(value)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+            <div className="flex flex-wrap gap-2 pt-1">
+              <Button
+                type="button"
+                size="sm"
+                className="h-7 text-xs"
+                onClick={() => onApprove(part)}
+              >
+                Approve
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs"
+                onClick={() => onEdit(part)}
+              >
+                Edit
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                className="h-7 text-xs"
+                onClick={() => onRun(part)}
+              >
+                Run
+              </Button>
+            </div>
+          </div>
+        )}
         {(part.state === "output-available" || part.state === "output-error") && (
           <ToolOutput output={part.output} errorText={part.errorText} />
+        )}
+        {links.length > 0 && (
+          <div className="flex flex-wrap gap-2 pt-1">
+            {links.map((link) => (
+              <Link
+                key={`${link.label}-${link.href}`}
+                href={link.href}
+                className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs text-foreground hover:bg-muted"
+              >
+                <LinkIcon className="h-3 w-3" />
+                {link.label}
+              </Link>
+            ))}
+          </div>
         )}
       </ToolContent>
     </ToolDisplay>
@@ -301,6 +498,78 @@ function StreamingIndicator({
           </div>
         </MessageContent>
       </Message>
+    </div>
+  );
+}
+
+function MemoryUsageBadge({
+  usage,
+  onForget,
+}: {
+  usage: MemoryUsage;
+  onForget: (memoryId: string) => Promise<void>;
+}) {
+  const [isForgetting, setIsForgetting] = useState(false);
+  const memories = usage.memories ?? [];
+
+  const handleForget = async () => {
+    if (isForgetting || memories.length === 0) return;
+    setIsForgetting(true);
+    try {
+      await Promise.all(memories.slice(0, 3).map((m) => onForget(m.id)));
+      toast.success("Removed selected memories");
+    } catch {
+      toast.error("Failed to forget memories");
+    } finally {
+      setIsForgetting(false);
+    }
+  };
+
+  return (
+    <div className="mt-2 space-y-2 rounded-md border border-border/60 bg-muted/20 px-2.5 py-2">
+      <p className="text-xs text-muted-foreground">
+        Used {usage.totalUsed} memories
+        {usage.recentConversationsUsed
+          ? ` + ${usage.recentConversationsUsed} recent conversation summaries`
+          : ""}
+      </p>
+      {memories.length > 0 && (
+        <div className="space-y-1">
+          {memories.slice(0, 3).map((memory) => (
+            <p key={memory.id} className="line-clamp-1 text-xs text-foreground/90">
+              {memory.content}
+            </p>
+          ))}
+        </div>
+      )}
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2 text-xs"
+          onClick={() => toast.success("Keeping these memories")}
+        >
+          Keep
+        </Button>
+        <Link
+          href="/settings/memory"
+          className="inline-flex h-7 items-center rounded-md border border-border px-2 text-xs text-foreground hover:bg-muted"
+        >
+          Edit
+        </Link>
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2 text-xs text-destructive hover:text-destructive"
+          onClick={handleForget}
+          disabled={isForgetting || memories.length === 0}
+        >
+          <EraserIcon className="mr-1 h-3 w-3" />
+          Forget
+        </Button>
+      </div>
     </div>
   );
 }
@@ -375,6 +644,19 @@ function generateSuggestions(
   const textLower = text.toLowerCase();
   const toolParts = getToolParts(lastMsg);
   const toolNames = toolParts.map((p) => getToolNameFromType(p.type));
+  const previousUserMessage = [...messages]
+    .reverse()
+    .find((msg) => msg.role === "user");
+  const userIntentText = previousUserMessage
+    ? getMessageText(previousUserMessage).toLowerCase()
+    : "";
+  const outputs = toolParts.map((part) => asObject(part.output));
+  const hasPreview = outputs.some((output) => output.action === "preview");
+  const hasSuccessfulWrite = outputs.some(
+    (output) => output.success === true && output.record && typeof output.record === "object",
+  );
+  const hasErrors = outputs.some((output) => Boolean(output.error)) ||
+    toolParts.some((part) => part.state === "output-error");
 
   // ── Project disambiguation: extract project names as clickable chips ──
   const projectChoices = extractProjectChoices(text);
@@ -386,6 +668,41 @@ function generateSuggestions(
   }
 
   const suggestions: string[] = [];
+
+  // Outcome-first suggestions
+  if (hasPreview) {
+    suggestions.push("Approve and run this draft");
+    suggestions.push("Edit the draft fields before running");
+    suggestions.push("What changes do you recommend before we execute?");
+  }
+
+  if (hasSuccessfulWrite) {
+    suggestions.push("What should I do next after this update?");
+    suggestions.push("Show related records that may be impacted");
+  }
+
+  if (hasErrors) {
+    suggestions.push("Retry with safer defaults");
+    suggestions.push("Explain exactly why that failed");
+  }
+
+  // Intent + tool outcome blend
+  if (userIntentText.includes("timeline") || userIntentText.includes("across sources")) {
+    suggestions.push("Show a cross-source timeline for the last 14 days");
+    suggestions.push("Filter the timeline to only meetings and AI insights");
+  }
+
+  if (userIntentText.includes("rfi") || userIntentText.includes("submittal")) {
+    suggestions.push("Show overdue RFIs and submittals only");
+  }
+
+  if (userIntentText.includes("change order") || userIntentText.includes("co")) {
+    suggestions.push("Summarize pending change orders by project");
+  }
+
+  if (userIntentText.includes("email") || userIntentText.includes("teams")) {
+    suggestions.push("Find communications that conflict with meeting decisions");
+  }
 
   // Based on tools that were used
   if (toolNames.includes("getPortfolioOverview")) {
@@ -456,6 +773,8 @@ interface ChatAreaProps {
   messages: UIMessage[];
   toolTracesByMessageId?: Record<string, ToolTraceItem[]>;
   sourcesByMessageId?: Record<string, unknown[]>;
+  memoryUsageByMessageId?: Record<string, MemoryUsage>;
+  responseQualityByMessageId?: Record<string, ResponseQuality>;
   isLoadingMessages: boolean;
   isStreaming: boolean;
   input: string;
@@ -473,6 +792,8 @@ export function ChatArea({
   messages,
   toolTracesByMessageId = {},
   sourcesByMessageId = {},
+  memoryUsageByMessageId = {},
+  responseQualityByMessageId = {},
   isLoadingMessages,
   isStreaming,
   input,
@@ -541,6 +862,45 @@ export function ChatArea({
     [onSubmit],
   );
 
+  const handleToolApprove = useCallback(
+    (part: ToolPart) => {
+      const toolName = formatToolName(getToolNameFromType(part.type));
+      onSubmit(`I approve this ${toolName} preview. Run it now exactly as shown.`);
+    },
+    [onSubmit],
+  );
+
+  const handleToolEdit = useCallback(
+    (part: ToolPart) => {
+      const preview = getToolPreview(part);
+      const fields = asObject(preview?.fields);
+      const toolName = formatToolName(getToolNameFromType(part.type));
+      onInputChange(
+        `Edit this ${toolName} before running:\n${JSON.stringify(fields, null, 2)}`,
+      );
+    },
+    [onInputChange],
+  );
+
+  const handleToolRun = useCallback(
+    (part: ToolPart) => {
+      const toolName = formatToolName(getToolNameFromType(part.type));
+      onSubmit(
+        `Run ${toolName} now with confirmed=true using the same preview values.`,
+      );
+    },
+    [onSubmit],
+  );
+
+  const handleForgetMemory = useCallback(async (memoryId: string) => {
+    const response = await fetch(`/api/ai-assistant/memories/${memoryId}`, {
+      method: "DELETE",
+    });
+    if (!response.ok) {
+      throw new Error("Failed to forget memory");
+    }
+  }, []);
+
   const hasMessages = messages.length > 0;
 
   // Determine streaming indicator visibility
@@ -568,7 +928,7 @@ export function ChatArea({
       isLoading={isStreaming}
       onSubmit={handleSubmit}
       className={cn(
-        "rounded-[1.5rem] border-0 bg-card px-2.5 py-2 shadow-sm sm:rounded-[1.75rem] sm:px-3",
+        "rounded-[1.5rem] border-0 bg-background px-2.5 py-2 shadow-sm sm:rounded-[1.75rem] sm:px-3",
         hasMessages && "rounded-[1.75rem]",
       )}
     >
@@ -584,8 +944,9 @@ export function ChatArea({
         <div className="flex min-w-0 items-center gap-1 overflow-x-auto pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           <Popover open={projectOpen} onOpenChange={setProjectOpen}>
             <PopoverTrigger asChild>
-              <button
+              <Button
                 type="button"
+                variant="ghost"
                 className={cn(
                   "flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-transparent px-2.5 py-1.5 text-xs font-medium transition-colors",
                   selectedProject
@@ -609,7 +970,7 @@ export function ChatArea({
                 ) : (
                   <ChevronDownIcon className="h-3.5 w-3.5 shrink-0 opacity-50" />
                 )}
-              </button>
+              </Button>
             </PopoverTrigger>
             <PopoverContent className="w-64 p-0" align="start" side="top">
               <Command>
@@ -645,8 +1006,9 @@ export function ChatArea({
             </PopoverContent>
           </Popover>
 
-          <button
+          <Button
             type="button"
+            variant="ghost"
             role="switch"
             aria-checked={councilMode}
             onClick={handleCouncilToggle}
@@ -673,7 +1035,7 @@ export function ChatArea({
               />
             </span>
             Council Mode
-          </button>
+          </Button>
         </div>
         <div className="flex shrink-0 items-center justify-end gap-2">
           <PromptInputAction tooltip={isStreaming ? "Stop" : "Send"}>
@@ -721,6 +1083,8 @@ export function ChatArea({
                   : [];
                 const persistedTraces = toolTracesByMessageId[msg.id] ?? [];
                 const persistedSources = sourcesByMessageId[msg.id] ?? [];
+                const memoryUsage = memoryUsageByMessageId[msg.id];
+                const responseQuality = responseQualityByMessageId[msg.id];
                 const isLastMessage = msgIndex === messages.length - 1;
 
                 // Show tool-only assistant messages with live tool call display
@@ -745,7 +1109,12 @@ export function ChatArea({
                                 </ChainOfThoughtContent>
                               </ChainOfThought>
                             ) : (
-                              <ToolCallItem part={toolParts[0]} />
+                              <ToolCallItem
+                                part={toolParts[0]}
+                                onApprove={handleToolApprove}
+                                onEdit={handleToolEdit}
+                                onRun={handleToolRun}
+                              />
                             )}
                           </MessageContent>
                         </Message>
@@ -811,7 +1180,12 @@ export function ChatArea({
                             </div>
                           ) : toolParts.length === 1 ? (
                             <div className="mb-3">
-                              <ToolCallItem part={toolParts[0]} />
+                              <ToolCallItem
+                                part={toolParts[0]}
+                                onApprove={handleToolApprove}
+                                onEdit={handleToolEdit}
+                                onRun={handleToolRun}
+                              />
                             </div>
                           ) : null}
 
@@ -819,6 +1193,18 @@ export function ChatArea({
                           <MessageResponse className="text-sm leading-6">
                             {formattedAssistantText}
                           </MessageResponse>
+
+                          {responseQuality && (
+                            <div className="mt-2 inline-flex items-center gap-2 rounded-md bg-muted px-2 py-1 text-[11px] text-muted-foreground">
+                              <span>
+                                Confidence: <span className="font-medium">{responseQuality.confidence}</span>
+                              </span>
+                              <span>•</span>
+                              <span>
+                                Sources: <span className="font-medium">{responseQuality.sourceQuality}</span>
+                              </span>
+                            </div>
+                          )}
 
                           {/* Source citations — rendered as subtle chips */}
                           {inlineSources.length > 0 && (
@@ -844,6 +1230,13 @@ export function ChatArea({
                           {/* Source citations */}
                           {persistedSources.length > 0 && (
                             <SourceCitations sources={persistedSources} />
+                          )}
+
+                          {memoryUsage && (
+                            <MemoryUsageBadge
+                              usage={memoryUsage}
+                              onForget={handleForgetMemory}
+                            />
                           )}
                         </MessageContent>
 
@@ -882,6 +1275,12 @@ export function ChatArea({
                   hasToolCalls={lastIsAssistantWithToolCalls}
                   councilMode={councilMode}
                 />
+              )}
+
+              {!isStreaming && hasMessages && (
+                <div className="pl-11">
+                  <CrossSourceTimeline projectId={selectedProjectIdProp} />
+                </div>
               )}
 
               {/* Follow-up suggestions */}

@@ -946,30 +946,41 @@ export function UnifiedTablePage<T>({
               // Use first column (alwaysVisible / name) as title, rest as details
               const titleCol = orderedVisibleColumns[0];
               const detailCols = orderedVisibleColumns.slice(1, 4);
+              const titleContent = titleCol
+                ? React.Children.toArray(titleCol.render(item))
+                : null;
               return (
-                <button
+                <div
                   key={rowId}
-                  type="button"
+                  role="button"
+                  tabIndex={0}
                   className={cn(
-                    "w-full text-left px-4 py-3 cursor-pointer transition-colors",
+                    "w-full text-left px-4 py-3 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border/70",
                     isActive ? "bg-muted" : "active:bg-muted/60",
                   )}
                   onClick={() => activateRow(item)}
+                  onKeyDown={(event) => {
+                    if (event.key !== "Enter" && event.key !== " ") return;
+                    event.preventDefault();
+                    activateRow(item);
+                  }}
                 >
                   {titleCol && (
-                    <div className="text-sm font-medium truncate">{titleCol.render(item)}</div>
+                    <div className="text-sm font-medium truncate">{titleContent}</div>
                   )}
                   {detailCols.length > 0 && (
                     <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                       {detailCols.map((col) => (
                         <span key={col.id} className="inline-flex items-center gap-1 truncate max-w-[10rem]">
                           <span className="text-muted-foreground/60">{col.label}:</span>
-                          <span className="text-foreground/80">{col.render(item)}</span>
+                          <span className="text-foreground/80">
+                            {React.Children.toArray(col.render(item))}
+                          </span>
                         </span>
                       ))}
                     </div>
                   )}
-                </button>
+                </div>
               );
             })}
           </div>

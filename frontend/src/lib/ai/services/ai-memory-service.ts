@@ -412,6 +412,15 @@ export function buildMemoryContextBlock(
   relevantMemories: AiMemory[],
   teamMemories: AiMemory[] = [],
 ): string | null {
+  const payload = buildMemoryContextPayload(preferences, relevantMemories, teamMemories);
+  return payload.block;
+}
+
+export function buildMemoryContextPayload(
+  preferences: AiMemory[],
+  relevantMemories: AiMemory[],
+  teamMemories: AiMemory[] = [],
+): { block: string | null; selected: AiMemory[] } {
   // Deduplicate by id
   const seen = new Set<string>();
   const all: AiMemory[] = [];
@@ -422,7 +431,7 @@ export function buildMemoryContextBlock(
     }
   }
 
-  if (all.length === 0) return null;
+  if (all.length === 0) return { block: null, selected: [] };
 
   // Sort non-preference memories by importance × recency
   const prefs = all.filter((m) => m.type === "preference");
@@ -444,7 +453,7 @@ export function buildMemoryContextBlock(
     tokens += t;
   }
 
-  if (selected.length === 0) return null;
+  if (selected.length === 0) return { block: null, selected: [] };
 
   const byType = new Map<MemoryType, AiMemory[]>();
   for (const m of selected) {
@@ -469,7 +478,10 @@ export function buildMemoryContextBlock(
     lines.push("");
   }
 
-  return lines.join("\n");
+  return {
+    block: lines.join("\n"),
+    selected,
+  };
 }
 
 // ---------------------------------------------------------------------------

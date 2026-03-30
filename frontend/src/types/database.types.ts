@@ -4012,6 +4012,9 @@ export type Database = {
         Row: {
           budget_code_id: string | null
           change_event_id: string
+          commitment_id: string | null
+          commitment_line_item_id: string | null
+          commitment_type: string | null
           contract_id: string | null
           cost_rom: number | null
           created_at: string
@@ -4029,6 +4032,9 @@ export type Database = {
         Insert: {
           budget_code_id?: string | null
           change_event_id: string
+          commitment_id?: string | null
+          commitment_line_item_id?: string | null
+          commitment_type?: string | null
           contract_id?: string | null
           cost_rom?: number | null
           created_at?: string
@@ -4046,6 +4052,9 @@ export type Database = {
         Update: {
           budget_code_id?: string | null
           change_event_id?: string
+          commitment_id?: string | null
+          commitment_line_item_id?: string | null
+          commitment_type?: string | null
           contract_id?: string | null
           cost_rom?: number | null
           created_at?: string
@@ -4101,6 +4110,115 @@ export type Database = {
             columns: ["vendor_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      change_event_related_items: {
+        Row: {
+          change_event_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          project_id: number
+          related_id: string
+          related_number: string | null
+          related_status: string | null
+          related_title: string
+          related_type: string
+          related_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          change_event_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          project_id: number
+          related_id: string
+          related_number?: string | null
+          related_status?: string | null
+          related_title: string
+          related_type: string
+          related_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          change_event_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          project_id?: number
+          related_id?: string
+          related_number?: string | null
+          related_status?: string | null
+          related_title?: string
+          related_type?: string
+          related_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "change_event_related_items_change_event_id_fkey"
+            columns: ["change_event_id"]
+            isOneToOne: false
+            referencedRelation: "change_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_event_related_items_change_event_id_fkey"
+            columns: ["change_event_id"]
+            isOneToOne: false
+            referencedRelation: "change_events_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_event_related_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "change_event_related_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_event_related_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_event_related_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "change_event_related_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_event_related_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_event_related_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
         ]
@@ -6056,6 +6174,8 @@ export type Database = {
         Row: {
           category: string | null
           created_at: string | null
+          fk_columns: string | null
+          notes: string | null
           primary_keys: string | null
           rls_enabled: boolean | null
           row_count: number | null
@@ -6064,10 +6184,13 @@ export type Database = {
           status: string | null
           table_comment: string | null
           table_name: string
+          tools: string | null
         }
         Insert: {
           category?: string | null
           created_at?: string | null
+          fk_columns?: string | null
+          notes?: string | null
           primary_keys?: string | null
           rls_enabled?: boolean | null
           row_count?: number | null
@@ -6076,10 +6199,13 @@ export type Database = {
           status?: string | null
           table_comment?: string | null
           table_name: string
+          tools?: string | null
         }
         Update: {
           category?: string | null
           created_at?: string | null
+          fk_columns?: string | null
+          notes?: string | null
           primary_keys?: string | null
           rls_enabled?: boolean | null
           row_count?: number | null
@@ -6088,6 +6214,7 @@ export type Database = {
           status?: string | null
           table_comment?: string | null
           table_name?: string
+          tools?: string | null
         }
         Relationships: []
       }

@@ -23,7 +23,7 @@ import {
 import { toast } from "sonner";
 import { format } from "date-fns";
 
-import { PageContainer } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -62,13 +62,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
 import { EmptyState } from "@/components/ds";
 import { DrawingComments } from "@/components/drawings/DrawingComments";
 
@@ -380,37 +373,16 @@ export default function DrawingDetailPage() {
 
   if (isLoading) {
     return (
-      <>
-        {/* Header skeleton */}
-        <div className="border-b bg-card">
-          <div className="px-3 sm:px-5 lg:px-7 py-3 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3 min-w-0 flex-1">
-              <Skeleton className="h-8 w-8 rounded-md" />
-              <Skeleton className="h-4 w-48" />
-            </div>
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-8 w-16 rounded-md" />
-              <Skeleton className="h-8 w-24 rounded-md" />
-              <Skeleton className="h-8 w-8 rounded-md" />
-            </div>
+      <PageShell variant="detail" title="" onBack={() => router.back()}>
+        <Skeleton className="h-9 w-full max-w-2xl" />
+        <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-4">
+            <Skeleton className="h-48 w-full rounded-lg" />
+            <Skeleton className="h-64 w-full rounded-lg" />
           </div>
-          <div className="px-3 sm:px-5 lg:px-7 pb-3">
-            <Skeleton className="h-6 w-72 mb-1" />
-            <Skeleton className="h-4 w-40" />
-          </div>
+          <Skeleton className="h-80 w-full rounded-lg" />
         </div>
-        {/* Tab skeleton */}
-        <PageContainer>
-          <Skeleton className="h-9 w-full max-w-2xl mt-4" />
-          <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 space-y-4">
-              <Skeleton className="h-48 w-full rounded-lg" />
-              <Skeleton className="h-64 w-full rounded-lg" />
-            </div>
-            <Skeleton className="h-80 w-full rounded-lg" />
-          </div>
-        </PageContainer>
-      </>
+      </PageShell>
     );
   }
 
@@ -426,115 +398,69 @@ export default function DrawingDetailPage() {
   // ---------------------------------------------------------------------------
 
   return (
-    <>
-      {/* ------------------------------------------------------------------ */}
-      {/* Detail page header (custom — not ProjectPageHeader)                */}
-      {/* ------------------------------------------------------------------ */}
-      <div className="border-b bg-card sticky top-0 z-10">
-        <div className="px-3 sm:px-5 lg:px-7 py-3 flex items-center justify-between gap-4">
-          {/* Left — back + breadcrumb */}
-          <div className="flex items-center gap-3 min-w-0 flex-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="shrink-0"
-              onClick={() => router.push(`/${projectId}/drawings`)}
-            >
-              <ArrowLeft />
-              <span className="hidden sm:inline ml-1">Back</span>
-            </Button>
+    <PageShell
+      variant="detail"
+      title={drawing.title}
+      description={
+        drawing.drawing_number
+          ? `${drawing.drawing_number}${drawing.discipline ? ` · ${drawing.discipline}` : ""}`
+          : undefined
+      }
+      onBack={() => router.back()}
+      statusBadge={
+        currentRevision?.status ? (
+          <StatusBadge status={currentRevision.status} />
+        ) : undefined
+      }
+      actions={
+        <>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              router.push(`/${projectId}/drawings/viewer/${drawingId}`)
+            }
+          >
+            <Eye />
+            View
+          </Button>
 
-            <div className="hidden md:block min-w-0">
-              <Breadcrumb>
-                <BreadcrumbList>
-                  <BreadcrumbItem>
-                    <BreadcrumbLink href={`/${projectId}/drawings`}>
-                      Drawings
-                    </BreadcrumbLink>
-                  </BreadcrumbItem>
-                  <BreadcrumbSeparator />
-                  <BreadcrumbItem className="font-medium text-foreground truncate max-w-[220px]">
-                    {drawing.drawing_number
-                      ? `${drawing.drawing_number}${currentRevision ? ` Rev ${currentRevision.revision_number}` : ""}`
-                      : drawing.title}
-                  </BreadcrumbItem>
-                </BreadcrumbList>
-              </Breadcrumb>
-            </div>
-          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownloadCurrent}
+            disabled={!currentRevision?.file_url}
+          >
+            <Download />
+            Download
+          </Button>
 
-          {/* Right — actions */}
-          <div className="flex items-center gap-1.5 shrink-0">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                router.push(`/${projectId}/drawings/viewer/${drawingId}`)
-              }
-            >
-              <Eye />
-              View
-            </Button>
-
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleDownloadCurrent}
-              disabled={!currentRevision?.file_url}
-            >
-              <Download />
-              Download
-            </Button>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="px-2">
-                  <MoreHorizontal />
-                  <span className="sr-only">More actions</span>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() => toast.info("Email — coming soon")}
-                >
-                  <Mail className="h-4 w-4 mr-2" />
-                  Email
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  className="text-destructive focus:text-destructive"
-                  onClick={() => toast.info("Move to Recycle Bin — coming soon")}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Move to Recycle Bin
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-
-        {/* Title + status row */}
-        <div className="px-3 sm:px-5 lg:px-7 pb-3">
-          <div className="flex items-center gap-3 flex-wrap">
-            <h1 className="text-lg font-semibold text-foreground leading-tight">
-              {drawing.title}
-            </h1>
-            {currentRevision?.status && (
-              <StatusBadge status={currentRevision.status} />
-            )}
-          </div>
-          {drawing.drawing_number && (
-            <p className="text-sm text-muted-foreground mt-0.5">
-              {drawing.drawing_number}
-              {drawing.discipline ? ` · ${drawing.discipline}` : ""}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* ------------------------------------------------------------------ */}
-      {/* Tab navigation + content                                           */}
-      {/* ------------------------------------------------------------------ */}
-      <PageContainer>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm" className="px-2">
+                <MoreHorizontal />
+                <span className="sr-only">More actions</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => toast.info("Email — coming soon")}
+              >
+                <Mail className="h-4 w-4 mr-2" />
+                Email
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={() => toast.info("Move to Recycle Bin — coming soon")}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Move to Recycle Bin
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </>
+      }
+    >
         <Tabs defaultValue="general" className="mt-4">
           <TabsList variant="line" className="mb-6 flex-wrap h-auto">
             <TabsTrigger value="general">General</TabsTrigger>
@@ -930,7 +856,6 @@ export default function DrawingDetailPage() {
             </div>
           </TabsContent>
         </Tabs>
-      </PageContainer>
-    </>
+    </PageShell>
   );
 }

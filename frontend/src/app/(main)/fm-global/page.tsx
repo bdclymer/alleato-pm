@@ -1,7 +1,7 @@
 import type { ReactElement } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { PageContainer, PageHeader } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import type { GenericTableConfig } from "@/components/tables/generic-table-factory";
 import type { Database } from "@/types/database.types";
@@ -233,31 +233,29 @@ export default async function FMGlobalDashboardPage(): Promise<ReactElement> {
   const figureRows = figures ?? [];
 
   return (
-    <>
-      <PageHeader
-        title="FM Global Dashboard"
-        description="Browse FM Global tables and figures, filter by system type, and jump to the matching form."
-        actions={
-          <div className="flex flex-wrap gap-2">
-            <Button asChild>
-              <Link href="/fm-global/form">Open FM Global Form</Link>
-            </Button>
-            <Button variant="outline" asChild>
-              <Link href="/fm_global_tables">Tables Directory</Link>
-            </Button>
-          </div>
-        }
-      />
-      <PageContainer maxWidth="full">
-        <section>
-          <FmGlobalDashboardClient
-            tables={tableRows}
-            figures={figureRows}
-            tablesConfig={buildTablesConfig(tableRows)}
-            figuresConfig={buildFiguresConfig(figureRows)}
-          />
-        </section>
-      </PageContainer>
-    </>
+    <PageShell
+      variant="dashboard"
+      title="FM Global Dashboard"
+      description="Browse FM Global tables and figures, filter by system type, and jump to the matching form."
+      actions={
+        <div className="flex flex-wrap gap-2">
+          <Button asChild>
+            <Link href="/fm-global/form">Open FM Global Form</Link>
+          </Button>
+          <Button variant="outline" asChild>
+            <Link href="/fm_global_tables">Tables Directory</Link>
+          </Button>
+        </div>
+      }
+    >
+      <section>
+        <FmGlobalDashboardClient
+          tables={tableRows}
+          figures={figureRows}
+          tablesConfig={buildTablesConfig(tableRows)}
+          figuresConfig={buildFiguresConfig(figureRows)}
+        />
+      </section>
+    </PageShell>
   );
 }

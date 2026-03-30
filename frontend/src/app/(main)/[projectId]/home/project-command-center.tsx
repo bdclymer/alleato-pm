@@ -17,7 +17,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useBudgetData } from "@/hooks/use-budget-data";
 import { useCurrentUserName } from "@/hooks/use-current-user-name";
-import { StatusBadge, Skeleton } from "@/components/ds";
+import { KpiRow, StatusBadge, Skeleton } from "@/components/ds";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { RealtimeCursors } from "@/components/realtime-cursors";
@@ -65,11 +65,16 @@ interface ProjectCommandCenterProps {
   changeOrders: ChangeOrder[];
   rfis: RFI[];
   commitments: Commitment[];
+  commitmentSovTotal?: number;
   contracts: Contract[];
   contractLineItems?: Pick<ContractLineItem, "contract_id" | "total_cost" | "quantity" | "unit_cost">[];
   changeEvents?: ChangeEvent[];
   schedule?: any[];
   team?: ProjectTeamMember[];
+  homeAlerts?: {
+    hasPrimeContractWithoutFinancialMarkup: boolean;
+    changeOrdersWithoutChangeRequestCount: number;
+  };
   // unused but accepted for API compatibility
   dailyLogs?: any[];
   budget?: any[];
@@ -101,6 +106,21 @@ function fmtFull(value: number | null | undefined): string {
 function pct(numerator: number, denominator: number): number {
   if (!denominator) return 0;
   return Math.min(100, Math.round((numerator / denominator) * 100));
+}
+
+function formatTaskSource(sourceSystem: string | null | undefined): string {
+  const normalized = (sourceSystem ?? "").trim().toLowerCase();
+  if (!normalized) return "Unknown";
+  if (normalized.includes("fireflies")) return "Fireflies";
+  if (normalized.includes("manual")) return "Manual";
+  if (normalized.includes("ai")) return "AI";
+  if (normalized.includes("import")) return "Imported";
+  if (normalized.includes("api")) return "API";
+  return normalized
+    .split(/[_\-\s]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }
 
 function truncateSentence(value: string, max = 110): string {
@@ -223,10 +243,13 @@ export function ProjectCommandCenter({
   changeOrders,
   rfis,
   commitments,
+  commitmentSovTotal = 0,
   contracts,
+  contractLineItems = [],
   changeEvents = [],
   budget = [],
   team = [],
+  homeAlerts,
 }: ProjectCommandCenterProps) {
   const projectId = String(project.id);
   const [isEditProjectSidebarOpen, setIsEditProjectSidebarOpen] = React.useState(false);
@@ -246,6 +269,18 @@ export function ProjectCommandCenter({
   const spendPct = pct(costToDate, revisedBudget);
   const varianceTone: "success" | "danger" | "warning" =
     variance > 0 ? "success" : variance < 0 ? "danger" : "warning";
+
+  /* ── Derived: Prime Contract value ────────────────── */
+  const primeContractValue = contractLineItems.reduce(
+    (sum, li) => sum + (li.total_cost ?? 0),
+    0
+  );
+
+  /* ── Derived: Commitments total ───────────────────── */
+  const commitmentsTotal = commitments.reduce(
+    (sum, c) => sum + (c.contract_amount ?? c.original_amount ?? 0),
+    0
+  );
 
   /* ── Derived: Change pipeline by status ────────────── */
   const ceByStatus = changeEvents.reduce<Record<string, number>>((acc, ce) => {
@@ -311,6 +346,12 @@ export function ProjectCommandCenter({
   const overdueTasks = openTasks.filter(
     (t) => t.due_date && isPast(new Date(t.due_date))
   );
+  const changeOrdersWithoutChangeRequestCount =
+    homeAlerts?.changeOrdersWithoutChangeRequestCount ?? 0;
+  const showPrimeContractMarkupAlert =
+    homeAlerts?.hasPrimeContractWithoutFinancialMarkup ?? false;
+  const hasHomeAlerts =
+    showPrimeContractMarkupAlert || changeOrdersWithoutChangeRequestCount > 0;
 
   /* ── Derived: Days to completion ───────────────────── */
   const completionDate =
@@ -330,6 +371,7 @@ export function ProjectCommandCenter({
       return 0;
     })
     .slice(0, 4);
+  const meetingsById = new Map(meetings.map((meeting) => [meeting.id, meeting]));
 
   /* ── Module nav — only routes that actually exist ──── */
 
@@ -429,12 +471,50 @@ export function ProjectCommandCenter({
 
             {budgetLoading ? (
               <div className="space-y-3">
-                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-16 w-full" />
                 <Skeleton className="h-4 w-full" />
               </div>
             ) : (
-              <div className="space-y-3">
-                {/* Spend */}
+              <div className="space-y-4">
+                {/* KPI Blocks */}
+                <KpiRow
+                  metrics={[
+                    {
+                      label: "Budget",
+                      value: fmtFull(revisedBudget),
+                      href: `/${projectId}/budget`,
+                      context: revisedBudget !== grandTotals.originalBudgetAmount
+                        ? `Original ${fmtFull(grandTotals.originalBudgetAmount)}`
+                        : undefined,
+                    },
+                    {
+                      label: "Prime Contract",
+                      value: fmtFull(primeContractValue || null),
+                      href: `/${projectId}/prime-contracts`,
+                      context: contracts.length > 0
+                        ? `${contracts.length} contract${contracts.length !== 1 ? "s" : ""}`
+                        : undefined,
+                    },
+                    {
+                      label: "Commitments",
+                      value: fmtFull(commitmentSovTotal || null),
+                      href: `/${projectId}/commitments`,
+                      context: commitments.length > 0
+                        ? `${commitments.length} commitment${commitments.length !== 1 ? "s" : ""}`
+                        : undefined,
+                    },
+                    {
+                      label: "Direct Costs",
+                      value: fmtFull(grandTotals.directCosts || null),
+                      href: `/${projectId}/direct-costs`,
+                      context: costToDate > 0
+                        ? `${pct(grandTotals.directCosts, costToDate)}% of cost to date`
+                        : undefined,
+                    },
+                  ]}
+                />
+
+                {/* Spend progress */}
                 <div>
                   <div className="flex items-center justify-between text-xs mb-1.5">
                     <span className="text-muted-foreground">Cost to Date</span>
@@ -448,7 +528,7 @@ export function ProjectCommandCenter({
                   />
                 </div>
 
-                {/* Committed */}
+                {/* Committed progress */}
                 <div>
                   <div className="flex items-center justify-between text-xs mb-1.5">
                     <span className="text-muted-foreground">Committed Costs</span>
@@ -656,144 +736,129 @@ export function ProjectCommandCenter({
 
           <Divider />
 
-          {/* COMMITMENTS SUMMARY */}
+          {/* TASKS */}
           <section>
             <SectionHeading
               action={
                 <Link
-                  href={`/${projectId}/commitments`}
+                  href={`/${projectId}/tasks`}
                   className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
                 >
                   View All <ChevronRight className="h-3 w-3" />
                 </Link>
               }
             >
-              Commitments
+              Tasks
             </SectionHeading>
 
-            {commitments.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No commitments</p>
+            {openTasks.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No open tasks</p>
             ) : (
-              <div className="space-y-2">
-                <div className="flex flex-wrap gap-1.5">
-                  {(["subcontract", "purchase_order"] as const).map((type) => {
-                    const count = commitments.filter((c) => c.type === type).length;
-                    if (!count) return null;
-                    return (
-                      <StatPill
-                        key={type}
-                        label={type === "subcontract" ? "Subcontracts" : "POs"}
-                        value={count}
-                        tone="neutral"
-                      />
-                    );
-                  })}
-                  <StatPill
-                    label="Executed"
-                    value={commitments.filter((c) => c.executed).length}
-                    tone="success"
-                  />
-                </div>
-                <div>
-                  {commitments.slice(0, 4).map((c) => (
-                    <Link
-                      key={c.id}
-                      href={`/${projectId}/commitments/${c.id}`}
-                      className="flex items-start gap-2.5 py-2.5 border-b border-border/50 last:border-0 hover:bg-muted/50 -mx-2 px-2 rounded-md transition-colors"
-                    >
-                      <span
-                        className={cn(
-                          "mt-[5px] h-1.5 w-1.5 rounded-full shrink-0",
-                          c.executed ? "bg-green-500" : "bg-muted-foreground/30"
-                        )}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm truncate">{c.title ?? c.number}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {c.type === "subcontract" ? "Subcontract" : "PO"} · {c.status}
-                        </p>
-                      </div>
-                      <span className="text-xs tabular-nums text-muted-foreground shrink-0">
-                        {fmtCompact(c.contract_amount ?? c.original_amount)}
+              <div className="overflow-x-auto rounded-md border border-border/70 bg-background">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/40">
+                    <tr className="border-b border-border/70">
+                      <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Title</th>
+                      <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Assigned To</th>
+                      <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Created</th>
+                      <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Status</th>
+                      <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Associated Meeting</th>
+                      <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Source</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {openTasks.map((task) => {
+                      const meeting = meetingsById.get(task.metadata_id);
+                      const hasMeetingLink = Boolean(meeting && meeting.type === "meeting");
+
+                      return (
+                        <tr key={task.id} className="border-b border-border/50 last:border-0">
+                          <td className="px-3 py-2.5 align-top">
+                            <p className="font-medium text-foreground">{task.description}</p>
+                          </td>
+                          <td className="px-3 py-2.5 align-top text-muted-foreground">
+                            {task.assignee_name?.trim() || "Unassigned"}
+                          </td>
+                          <td className="px-3 py-2.5 align-top text-muted-foreground tabular-nums">
+                            {format(new Date(task.created_at), "MMM d, yyyy")}
+                          </td>
+                          <td className="px-3 py-2.5 align-top">
+                            <StatusBadge status={task.status} />
+                          </td>
+                          <td className="px-3 py-2.5 align-top">
+                            {hasMeetingLink ? (
+                              <Link
+                                href={`/${projectId}/meetings/${task.metadata_id}`}
+                                className="text-primary hover:text-primary/80 transition-colors"
+                              >
+                                {meeting?.title?.trim() || "Open meeting"}
+                              </Link>
+                            ) : (
+                              <span className="text-muted-foreground">—</span>
+                            )}
+                          </td>
+                          <td className="px-3 py-2.5 align-top text-muted-foreground">
+                            {formatTaskSource(task.source_system)}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </section>
+
+        </div>
+
+        {/* ── RIGHT: Sidebar ──────────────────────────── */}
+        <div className="px-5 py-5 space-y-6 bg-muted/20">
+
+          {/* ALERTS */}
+          <section>
+            <SectionHeading>Alerts</SectionHeading>
+
+            {!hasHomeAlerts ? (
+              <div className="flex items-center gap-2 rounded-md px-3 py-2.5 bg-green-50 text-green-700 text-sm">
+                <CheckCircle2 className="h-4 w-4 shrink-0" />
+                <span>No financial or change-order alerts</span>
+              </div>
+            ) : (
+              <div className="space-y-1.5">
+                {showPrimeContractMarkupAlert && (
+                  <Link
+                    href={`/${projectId}/prime-contracts`}
+                    className="flex items-center justify-between rounded-md px-3 py-2.5 bg-red-50 hover:bg-red-100 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="h-3.5 w-3.5 text-red-600 shrink-0" />
+                      <span className="text-sm font-medium text-red-700">
+                        Prime contract created without financial markup
                       </span>
-                    </Link>
-                  ))}
-                </div>
+                    </div>
+                    <ChevronRight className="h-3.5 w-3.5 text-red-500" />
+                  </Link>
+                )}
+                {changeOrdersWithoutChangeRequestCount > 0 && (
+                  <Link
+                    href={`/${projectId}/change-orders`}
+                    className="flex items-center justify-between rounded-md px-3 py-2.5 bg-red-50 hover:bg-red-100 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="h-3.5 w-3.5 text-red-600 shrink-0" />
+                      <span className="text-sm font-medium text-red-700">
+                        {changeOrdersWithoutChangeRequestCount} change order
+                        {changeOrdersWithoutChangeRequestCount !== 1 ? "s" : ""} without change request
+                      </span>
+                    </div>
+                    <ChevronRight className="h-3.5 w-3.5 text-red-500" />
+                  </Link>
+                )}
               </div>
             )}
           </section>
 
           <Divider />
-
-          {/* RECENT MEETINGS */}
-          <section>
-            <SectionHeading
-              action={
-                <Link
-                  href={`/${projectId}/meetings`}
-                  className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
-                >
-                  View All <ChevronRight className="h-3 w-3" />
-                </Link>
-              }
-            >
-              Recent Meetings
-            </SectionHeading>
-
-            {recentMeetings.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No meetings recorded</p>
-            ) : (
-              <div>
-                {recentMeetings.map((m) => {
-                  const meetingDescriptionSource =
-                    m.summary ??
-                    m.overview ??
-                    m.description ??
-                    m.notes ??
-                    m.action_items ??
-                    null;
-                  const meetingDescription = meetingDescriptionSource
-                    ? truncateSentence(meetingDescriptionSource)
-                    : "Review agenda, decisions, and action items.";
-                  const meetingDateLabel = m.date
-                    ? format(new Date(m.date), "MMM d, yyyy")
-                    : null;
-
-                  return (
-                    <Link
-                      key={m.id}
-                      href={`/${projectId}/meetings/${m.id}`}
-                      className="group flex items-start gap-3 py-2.5 border-b border-border/50 last:border-0 hover:bg-muted/50 -mx-2 px-2 rounded-md transition-colors"
-                    >
-                      <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
-                        <Calendar className="h-3.5 w-3.5" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-3">
-                          <p className="text-sm font-medium leading-snug truncate">
-                            {m.title ?? "Meeting"}
-                          </p>
-                          {meetingDateLabel && (
-                            <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
-                              {meetingDateLabel}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                          {meetingDescription}
-                        </p>
-                      </div>
-                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0 mt-1 group-hover:text-foreground/60 transition-colors" />
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-        </div>
-
-        {/* ── RIGHT: Sidebar ──────────────────────────── */}
-        <div className="px-5 py-5 space-y-6 bg-muted/20">
 
           {/* ACTION REQUIRED */}
           <section>
@@ -936,33 +1001,55 @@ export function ProjectCommandCenter({
 
           <Divider />
 
-          {/* OPEN TASKS */}
-          {openTasks.length > 0 && (
-            <section>
-              <SectionHeading>
-                Tasks ({openTasks.length})
-              </SectionHeading>
-              <div>
-                {openTasks.map((task) => {
-                  const overdue =
-                    task.due_date && isPast(new Date(task.due_date));
+          {/* RECENT MEETINGS */}
+          <section>
+            <SectionHeading
+              action={
+                <Link
+                  href={`/${projectId}/meetings`}
+                  className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+                >
+                  View All <ChevronRight className="h-3 w-3" />
+                </Link>
+              }
+            >
+              Recent Meetings
+            </SectionHeading>
+
+            {recentMeetings.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No meetings recorded</p>
+            ) : (
+              <div className="space-y-1">
+                {recentMeetings.map((m) => {
+                  const meetingDateLabel = m.date
+                    ? format(new Date(m.date), "MMM d")
+                    : null;
+
                   return (
-                    <ItemRow
-                      key={task.id}
-                      dot={overdue ? "red" : "muted"}
-                      title={task.description}
-                      meta={
-                        task.due_date
-                          ? `Due ${format(new Date(task.due_date), "MMM d")}`
-                          : task.assignee_name ?? undefined
-                      }
-                      right={<StatusBadge status={task.status} />}
-                    />
+                    <Link
+                      key={m.id}
+                      href={`/${projectId}/meetings/${m.id}`}
+                      className="group flex items-center gap-3 py-2 px-2 -mx-2 rounded-md hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                        <Calendar className="h-3.5 w-3.5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm truncate group-hover:text-primary transition-colors">
+                          {m.title ?? "Meeting"}
+                        </p>
+                      </div>
+                      {meetingDateLabel && (
+                        <span className="text-xs text-muted-foreground tabular-nums shrink-0">
+                          {meetingDateLabel}
+                        </span>
+                      )}
+                    </Link>
                   );
                 })}
               </div>
-            </section>
-          )}
+            )}
+          </section>
 
         </div>
       </div>

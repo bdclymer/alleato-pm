@@ -3,8 +3,7 @@
 import { AlertCircle, Mail, Shield } from "lucide-react";
 import { useMemo } from "react";
 
-import { PageContainer } from "@/components/layout";
-import { PageHeader } from "@/components/layout/page-header-unified";
+import { PageShell } from "@/components/layout";
 import { ProfileImageUpload } from "@/components/misc/profile-image-upload";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -36,17 +35,7 @@ export default function ProfilePage() {
   }, [profile?.fullName]);
 
   return (
-    <>
-      <PageHeader
-        title={profile?.fullName || "Profile"}
-        description="View account information that is currently active in Alleato."
-        breadcrumbs={[
-          { label: "Account", href: "/settings" },
-          { label: "Profile" },
-        ]}
-      />
-
-      <PageContainer className="space-y-8">
+    <PageShell variant="content" title="Profile">
         {error ? (
           <Alert variant="destructive">
             <AlertCircle className="h-4 w-4" />
@@ -128,7 +117,6 @@ export default function ProfilePage() {
             Only verified, active account fields are shown on this page.
           </p>
         </section>
-      </PageContainer>
-    </>
+    </PageShell>
   );
 }

@@ -2,6 +2,7 @@ import { tool } from "ai";
 import { z } from "zod";
 import { createServiceClient } from "@/lib/supabase/service";
 import OpenAI from "openai";
+import { createToolGuardrails, type ToolGuardrails } from "./guardrails";
 import {
   searchMemories as searchAiMemories,
   writeMemory as writeAiMemory,
@@ -21,6 +22,7 @@ type ToolTracePayload = {
 
 type CreateOperationalToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
+  pinnedProjectId?: number;
 };
 
 function asNumber(value: unknown): number {
@@ -69,22 +71,36 @@ function withTrace<TInput extends Record<string, unknown>, TResult>(
 
 async function resolveProject(
   supabase: ReturnType<typeof createServiceClient>,
+  guardrails: ToolGuardrails,
   projectId?: number,
   projectName?: string,
 ): Promise<{ id: number; name: string } | { error: string }> {
-  if (projectId) {
+  const scopedProjectIds = await guardrails.getScopedProjectIds(projectId);
+  if (scopedProjectIds.length === 0) {
+    return { error: "You do not have access to that project." };
+  }
+
+  const effectiveProjectId =
+    typeof projectId === "number" && Number.isFinite(projectId)
+      ? projectId
+      : scopedProjectIds.length === 1
+        ? scopedProjectIds[0]
+        : undefined;
+
+  if (effectiveProjectId) {
     const { data, error } = await supabase
       .from("projects")
       .select("id, name")
-      .eq("id", projectId)
+      .eq("id", effectiveProjectId)
       .single();
-    if (error || !data) return { error: `Project ${projectId} not found` };
+    if (error || !data) return { error: `Project ${effectiveProjectId} not found` };
     return { id: data.id, name: data.name ?? "" };
   }
   if (projectName) {
     const { data, error } = await supabase
       .from("projects")
       .select("id, name")
+      .in("id", scopedProjectIds)
       .ilike("name", `%${projectName}%`)
       .limit(1)
       .single();
@@ -167,6 +183,9 @@ export function createOperationalTools(
   options: CreateOperationalToolsOptions = {},
 ) {
   const supabase = createServiceClient();
+  const guardrails = createToolGuardrails(userId, {
+    pinnedProjectId: options.pinnedProjectId,
+  });
 
   return {
     // -----------------------------------------------------------------------
@@ -1378,7 +1397,7 @@ export function createOperationalTools(
           // Resolve project name to ID if provided
           let resolvedProjectId = projectId;
           if (!resolvedProjectId && projectName) {
-            const resolved = await resolveProject(supabase, undefined, projectName);
+            const resolved = await resolveProject(supabase, guardrails, undefined, projectName);
             if (!("error" in resolved)) {
               resolvedProjectId = resolved.id;
             }
@@ -1947,7 +1966,7 @@ export function createOperationalTools(
           // Resolve project name
           let resolvedProjectId = projectId;
           if (!resolvedProjectId && projectName) {
-            const resolved = await resolveProject(supabase, undefined, projectName);
+            const resolved = await resolveProject(supabase, guardrails, undefined, projectName);
             if (!("error" in resolved)) {
               resolvedProjectId = resolved.id;
             }
@@ -2310,7 +2329,7 @@ export function createOperationalTools(
             let resolvedProjectId = projectId;
             let resolvedProjectName = projectName;
             if (!resolvedProjectId && projectName) {
-              const resolved = await resolveProject(supabase, undefined, projectName);
+              const resolved = await resolveProject(supabase, guardrails, undefined, projectName);
               if (!("error" in resolved)) {
                 resolvedProjectId = resolved.id;
                 resolvedProjectName = resolved.name;
@@ -2759,7 +2778,7 @@ export function createOperationalTools(
         "queryBudgetData",
         options,
         async ({ projectId, projectName, costCodeFilter }) => {
-          const resolved = await resolveProject(supabase, projectId, projectName);
+          const resolved = await resolveProject(supabase, guardrails, projectId, projectName);
           if ("error" in resolved) return resolved;
 
           let query = supabase
@@ -2821,7 +2840,7 @@ export function createOperationalTools(
         "queryChangeOrders",
         options,
         async ({ projectId, projectName, status }) => {
-          const resolved = await resolveProject(supabase, projectId, projectName);
+          const resolved = await resolveProject(supabase, guardrails, projectId, projectName);
           if ("error" in resolved) return resolved;
 
           // Fetch prime contract change orders (PCCOs)
@@ -2911,7 +2930,7 @@ export function createOperationalTools(
         "queryCommitments",
         options,
         async ({ projectId, projectName, status }) => {
-          const resolved = await resolveProject(supabase, projectId, projectName);
+          const resolved = await resolveProject(supabase, guardrails, projectId, projectName);
           if ("error" in resolved) return resolved;
 
           let query = supabase
@@ -2963,7 +2982,7 @@ export function createOperationalTools(
         "queryDirectCosts",
         options,
         async ({ projectId, projectName }) => {
-          const resolved = await resolveProject(supabase, projectId, projectName);
+          const resolved = await resolveProject(supabase, guardrails, projectId, projectName);
           if ("error" in resolved) return resolved;
 
           const { data, error } = await supabase
@@ -3027,7 +3046,7 @@ export function createOperationalTools(
         "queryScheduleTasks",
         options,
         async ({ projectId, projectName, status }) => {
-          const resolved = await resolveProject(supabase, projectId, projectName);
+          const resolved = await resolveProject(supabase, guardrails, projectId, projectName);
           if ("error" in resolved) return resolved;
 
           let query = supabase

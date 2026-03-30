@@ -1,8 +1,9 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import {
   Code,
+  ChevronUp,
   Database,
   Zap,
   RefreshCw,
@@ -116,7 +117,11 @@ const CHECK_CONSTRAINT_VALUES = {
   companies_status: ["ACTIVE", "INACTIVE"],
 }
 
-export function EnhancedDevPanel() {
+interface EnhancedDevPanelProps {
+  variant?: "sidebar" | "footer"
+}
+
+export function EnhancedDevPanel({ variant = "sidebar" }: EnhancedDevPanelProps) {
   const [healthChecks, setHealthChecks] = useState<HealthCheck[]>([])
   const [isChecking, setIsChecking] = useState(false)
   const [consoleErrors, setConsoleErrors] = useState<ConsoleError[]>([])
@@ -124,6 +129,8 @@ export function EnhancedDevPanel() {
   const [routeConflicts, setRouteConflicts] = useState<string | null>(null)
   const [isCheckingRoutes, setIsCheckingRoutes] = useState(false)
   const [nextjsStatus, setNextjsStatus] = useState<"running" | "stopped" | "unknown">("unknown")
+  const [isFooterOpen, setIsFooterOpen] = useState(false)
+  const footerRef = useRef<HTMLDivElement>(null)
   const params = useParams()
   const pathname = usePathname()
   const supabase = createClient()
@@ -156,6 +163,19 @@ export function EnhancedDevPanel() {
       console.warn = originalWarn
     }
   }, [])
+
+  useEffect(() => {
+    if (variant !== "footer" || !isFooterOpen) return
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (footerRef.current && !footerRef.current.contains(event.target as Node)) {
+        setIsFooterOpen(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [variant, isFooterOpen])
 
   const runHealthChecks = async () => {
     setIsChecking(true)
@@ -341,34 +361,13 @@ export function EnhancedDevPanel() {
   const pageInsight = featureInsights.find((insight) =>
     routeSegments.some((segment) => insight.match === segment),
   )
+  const errorCount = consoleErrors.filter(e => e.type === "error").length
 
   // Only show in development
   if (process.env.NODE_ENV !== "development") return null
 
-  return (
-    <Sheet>
-      <SheetTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8 relative">
-          <Code />
-          {consoleErrors.filter(e => e.type === "error").length > 0 && (
-            <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-2xs font-semibold text-white flex items-center justify-center">
-              {consoleErrors.filter(e => e.type === "error").length}
-            </span>
-          )}
-        </Button>
-      </SheetTrigger>
-      <SheetContent className="!w-[820px] sm:!w-[760px] max-w-[95vw] sm:max-w-none px-6 py-6">
-        <SheetHeader>
-          <SheetTitle className="flex items-center gap-2">
-            <Zap className="h-5 w-5" />
-            Developer Tools
-          </SheetTitle>
-          <SheetDescription>
-            Debugging info and quick actions based on common pain points
-          </SheetDescription>
-        </SheetHeader>
-
-        <Tabs defaultValue="overview" className="mt-6">
+  const panelContent = (
+    <Tabs defaultValue="overview" className="mt-6">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="database">Database</TabsTrigger>
@@ -376,7 +375,9 @@ export function EnhancedDevPanel() {
             <TabsTrigger value="network">Network</TabsTrigger>
           </TabsList>
 
-          <ScrollArea className="h-[calc(100vh-200px)] mt-4 pr-6">
+          <ScrollArea
+            className={`${variant === "footer" ? "h-[min(70vh,640px)]" : "h-[calc(100vh-200px)]"} mt-4 pr-6`}
+          >
             {/* OVERVIEW TAB */}
             <TabsContent value="overview" className="space-y-4">
 
@@ -821,7 +822,67 @@ const supabase = createClient(url, key);
               )}
             </TabsContent>
           </ScrollArea>
-        </Tabs>
+    </Tabs>
+  )
+
+  if (variant === "footer") {
+    return (
+      <div ref={footerRef} className="relative">
+        {/* eslint-disable-next-line design-system/no-design-violations -- footer dev tools toggle */}
+        <button
+          type="button"
+          onClick={() => setIsFooterOpen((prev) => !prev)}
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
+          Developer Tools
+          <ChevronUp className={`h-3 w-3 transition-transform ${isFooterOpen ? "" : "rotate-180"}`} />
+          {errorCount > 0 && (
+            <span className="ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
+              {errorCount}
+            </span>
+          )}
+        </button>
+        {isFooterOpen ? (
+          <div className="absolute bottom-full left-0 z-50 mb-1 w-[min(95vw,980px)] rounded-md border border-border bg-popover p-5 shadow-sm">
+            <div>
+              <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                <Zap className="h-4 w-4" />
+                Developer Tools
+              </h3>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Debugging info and quick actions based on common pain points
+              </p>
+            </div>
+            {panelContent}
+          </div>
+        ) : null}
+      </div>
+    )
+  }
+
+  return (
+    <Sheet>
+      <SheetTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-8 w-8 relative">
+          <Code />
+          {errorCount > 0 && (
+            <span className="absolute -top-1 -right-1 h-4 w-4 rounded-full bg-red-500 text-2xs font-semibold text-white flex items-center justify-center">
+              {errorCount}
+            </span>
+          )}
+        </Button>
+      </SheetTrigger>
+      <SheetContent className="!w-[820px] sm:!w-[760px] max-w-[95vw] sm:max-w-none px-6 py-6">
+        <SheetHeader>
+          <SheetTitle className="flex items-center gap-2">
+            <Zap className="h-5 w-5" />
+            Developer Tools
+          </SheetTitle>
+          <SheetDescription>
+            Debugging info and quick actions based on common pain points
+          </SheetDescription>
+        </SheetHeader>
+        {panelContent}
       </SheetContent>
     </Sheet>
   )

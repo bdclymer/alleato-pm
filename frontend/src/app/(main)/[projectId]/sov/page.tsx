@@ -6,10 +6,8 @@ import { useParams, useRouter } from "next/navigation";
 import { Plus, ArrowUpDown, FileDown } from "lucide-react";
 import { toast } from "sonner";
 
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { PageContainer, PageTabs , ProjectPageHeader } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 
 import {
   Table,
@@ -262,14 +260,28 @@ export default function ProjectSOVPage() {
   };
 
   return (
-    <>
-      <ProjectPageHeader
-        title="Schedule of Values"
-        description="View and manage schedule of values across all contracts"
-        showExportButton={true}
-        onExportCSV={handleExportCSV}
-        onExportPDF={() => toast.info("PDF export coming soon")}
-        actions={
+    <PageShell
+      variant="table"
+      title="Schedule of Values"
+      description="View and manage schedule of values across all contracts"
+      tabs={[
+        {
+          label: "All Line Items",
+          href: `/${projectId}/sov`,
+          count: allLineItems.length,
+        },
+        { label: "By Contract", href: `/${projectId}/sov?view=by-contract` },
+      ]}
+      actions={
+        <div className="flex items-center gap-1.5">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportCSV}
+          >
+            <FileDown />
+            Export CSV
+          </Button>
           <Button
             size="sm"
             onClick={() => router.push(`/${projectId}/contracts/new`)}
@@ -277,21 +289,9 @@ export default function ProjectSOVPage() {
             <Plus />
             New Contract
           </Button>
-        }
-      />
-
-      <PageTabs
-        tabs={[
-          {
-            label: "All Line Items",
-            href: `/${projectId}/sov`,
-            count: allLineItems.length,
-          },
-          { label: "By Contract", href: `/${projectId}/sov?view=by-contract` },
-        ]}
-      />
-
-      <PageContainer className="space-y-6">
+        </div>
+      }
+    >
         {loading ? (
           <div className="flex justify-center items-center h-64">
             <p className="text-muted-foreground">
@@ -429,7 +429,6 @@ export default function ProjectSOVPage() {
             </Table>
           </div>
         )}
-      </PageContainer>
-    </>
+    </PageShell>
   );
 }

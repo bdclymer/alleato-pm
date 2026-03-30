@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
@@ -15,6 +16,7 @@ interface KpiBlockProps {
   };
   context?: string;
   size?: "prominent" | "compact";
+  href?: string;
 }
 
 export type { KpiBlockProps };
@@ -25,9 +27,10 @@ export function KpiBlock({
   delta,
   context,
   size = "prominent",
+  href,
 }: KpiBlockProps) {
-  return (
-    <div>
+  const content = (
+    <>
       {/* Tier 1: Eyebrow */}
       <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
         {label}
@@ -57,14 +60,24 @@ export function KpiBlock({
         )}
       </div>
 
-      {/* Tier 4: Context */}
+      {/* Tier 3: Context */}
       {context && (
         <span className="mt-0.5 block text-xs text-muted-foreground/60">
           {context}
         </span>
       )}
-    </div>
+    </>
   );
+
+  if (href) {
+    return (
+      <Link href={href} className="block group">
+        {content}
+      </Link>
+    );
+  }
+
+  return <div>{content}</div>;
 }
 
 // ---------------------------------------------------------------------------

@@ -1,6 +1,9 @@
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+
+// Comment screenshots are sent as base64 data URLs which can be several MB
+export const maxBodySize = "10mb";
 import { ADMIN_FEEDBACK_BUCKET } from "@/lib/admin-feedback/constants";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";

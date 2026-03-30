@@ -16,7 +16,6 @@ import {
   MoreHorizontal,
   Paperclip,
   Search,
-  Settings,
   Trash2,
   X,
 } from "lucide-react";
@@ -70,7 +69,6 @@ import { formatCurrency } from "@/config/tables";
 import { formatDate } from "@/lib/table-config/formatters";
 import type { ChangeEvent } from "@/types/financial";
 
-import { ChangeEventApprovalWorkflow } from "@/components/domain/change-events/ChangeEventApprovalWorkflow";
 import { ChangeEventConvertDialog } from "@/components/domain/change-events/ChangeEventConvertDialog";
 import { ChangeEventAttachmentsSection } from "@/components/domain/change-events/ChangeEventAttachmentsSection";
 import { EntityComments, EntityRoom } from "@/components/comments/entity-comments";
@@ -110,6 +108,14 @@ interface LineItem {
       division_id?: string | null;
       division_title?: string | null;
     } | null;
+  } | null;
+  commitmentId?: string | null;
+  commitmentType?: string | null;
+  commitmentLineItemId?: string | null;
+  commitment?: {
+    id: string;
+    contract_number: string;
+    title: string;
   } | null;
 }
 
@@ -639,6 +645,11 @@ export default function ChangeEventDetailPage() {
                 REASON_MAP[data.changeReason || ""] || data.changeReason || null,
               scope: data.scope || null,
               description: data.description || null,
+              type: data.type || null,
+              origin: data.origin || null,
+              lineItemRevenueSource: data.lineItemRevenueSource || null,
+              expectingRevenue: data.expectingRevenue,
+              primeContractId: data.primeContractId || null,
             }),
           },
         );
@@ -651,6 +662,80 @@ export default function ChangeEventDetailPage() {
             errorData.message ||
               `HTTP ${response.status}: ${response.statusText}`,
           );
+        }
+
+        // Save line items (update existing, create new)
+        if (data.lineItems && data.lineItems.length > 0) {
+          const lineItemPromises = data.lineItems.map((item, index) => {
+            // Parse prefixed commitment IDs (sub-<uuid> or po-<uuid>)
+            let commitmentId: string | undefined;
+            let commitmentType: string | undefined;
+            let contractId: string | undefined;
+            const contractVal = item.contract || "";
+            if (contractVal.startsWith("sub-")) {
+              commitmentId = contractVal.replace("sub-", "");
+              commitmentType = "subcontract";
+            } else if (contractVal.startsWith("po-")) {
+              commitmentId = contractVal.replace("po-", "");
+              commitmentType = "purchase_order";
+            } else if (contractVal) {
+              contractId = contractVal;
+            }
+
+            const lineItemBody = {
+              description: item.description || "",
+              budgetCodeId: item.budgetCode || undefined,
+              vendorId: item.vendor || undefined,
+              contractId: contractId || undefined,
+              commitmentId: commitmentId || undefined,
+              commitmentType: commitmentType || undefined,
+              commitmentLineItemId: item.commitmentLineItemId || undefined,
+              quantity: item.costQuantity || item.revenueQuantity || 1,
+              unitOfMeasure: item.revenueUnitOfMeasure || undefined,
+              unitCost: item.costUnitCost || item.revenueUnitCost || 0,
+              revenueRom: item.revenueRom || 0,
+              costRom: item.costRom || 0,
+              nonCommittedCost: item.nonCommittedCost || 0,
+              sortOrder: index,
+            };
+
+            if (item.id) {
+              // Update existing line item
+              return fetch(
+                `/api/projects/${projectId}/change-events/${changeEventId}/line-items/${item.id}`,
+                {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(lineItemBody),
+                },
+              );
+            } else {
+              // Create new line item
+              return fetch(
+                `/api/projects/${projectId}/change-events/${changeEventId}/line-items`,
+                {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify(lineItemBody),
+                },
+              );
+            }
+          });
+
+          await Promise.all(lineItemPromises);
+        }
+
+        // Upload attachments if any new files were added
+        if (data.attachments && data.attachments.length > 0) {
+          const uploadPromises = data.attachments.map((file) => {
+            const formData = new FormData();
+            formData.append("file", file);
+            return fetch(
+              `/api/projects/${projectId}/change-events/${changeEventId}/attachments`,
+              { method: "POST", body: formData },
+            );
+          });
+          await Promise.all(uploadPromises);
         }
 
         toast.success("Change event updated successfully");
@@ -685,21 +770,35 @@ export default function ChangeEventDetailPage() {
       changeReason: (changeEvent as any).reason || undefined,
       scope: changeEvent.scope || undefined,
       lineItemRevenueSource:
-        (changeEvent as any).line_item_revenue_source || "",
-      primeContractId: (changeEvent as any).prime_contract_id || "",
+        (changeEvent as any).lineItemRevenueSource || (changeEvent as any).line_item_revenue_source || "",
+      primeContractId: (changeEvent as any).primeContractId || (changeEvent as any).prime_contract_id || "",
       description: changeEvent.description || undefined,
       attachments: [],
       lineItems:
         lineItems.length > 0
           ? lineItems.map((item: any) => ({
+              id: item.id || undefined,
               budgetCode:
+                item.projectBudgetCodeId ||
+                item.budgetCodeId ||
                 item.budgetCode ||
                 item.budget_code_id ||
                 item.budget_code ||
                 "",
               description: item.description || "",
-              vendor: item.vendor || item.vendor_id || "",
-              contract: item.contract || item.contract_id || "",
+              vendor:
+                item.formVendorId ||
+                item.vendorId ||
+                (typeof item.vendor === "string" ? item.vendor : item.vendor?.id) ||
+                item.vendor_id ||
+                "",
+              contract:
+                item.commitmentId && item.commitmentType
+                  ? `${item.commitmentType === "purchase_order" ? "po" : "sub"}-${item.commitmentId}`
+                  : item.contractId ||
+                    (typeof item.contract === "string" ? item.contract : item.contract?.id) ||
+                    item.contract_id ||
+                    "",
               commitmentLineItemId: item.commitmentLineItemId || "",
               revenueUnitOfMeasure:
                 item.revenueUnitOfMeasure || item.unitOfMeasure || "",
@@ -735,8 +834,8 @@ export default function ChangeEventDetailPage() {
     }
   };
 
-  // ── Line item totals ───────────────────────────────────────────────
-  const totals = lineItems.reduce(
+  // ── Line item subtotals ────────────────────────────────────────────
+  const lineItemSubtotals = lineItems.reduce(
     (acc, item) => ({
       costRom: acc.costRom + (item.costRom || 0),
       revenueRom: acc.revenueRom + (item.revenueRom || 0),
@@ -746,6 +845,43 @@ export default function ChangeEventDetailPage() {
     }),
     { costRom: 0, revenueRom: 0, nonCommittedCost: 0, latestPrice: 0, latestCost: 0 },
   );
+
+  // ── Computed markup rows from prime contract vertical markups ──────
+  const computedMarkups = useMemo(() => {
+    if (markupRows.length === 0) return [];
+    const sorted = [...markupRows].sort(
+      (a, b) => a.calculation_order - b.calculation_order,
+    );
+    let runningCostBase = lineItemSubtotals.costRom;
+    let runningRevenueBase = lineItemSubtotals.revenueRom;
+    return sorted.map((m) => {
+      const costAmount = runningCostBase * (m.percentage / 100);
+      const revenueAmount = runningRevenueBase * (m.percentage / 100);
+      if (m.compound) {
+        runningCostBase += costAmount;
+        runningRevenueBase += revenueAmount;
+      }
+      return {
+        id: m.id,
+        markupType: m.markup_type,
+        percentage: m.percentage,
+        costAmount,
+        revenueAmount,
+      };
+    });
+  }, [markupRows, lineItemSubtotals.costRom, lineItemSubtotals.revenueRom]);
+
+  const markupTotalCost = computedMarkups.reduce((s, m) => s + m.costAmount, 0);
+  const markupTotalRevenue = computedMarkups.reduce((s, m) => s + m.revenueAmount, 0);
+
+  // ── Grand totals (line items + markups) ───────────────────────────
+  const totals = {
+    costRom: lineItemSubtotals.costRom + markupTotalCost,
+    revenueRom: lineItemSubtotals.revenueRom + markupTotalRevenue,
+    nonCommittedCost: lineItemSubtotals.nonCommittedCost,
+    latestPrice: lineItemSubtotals.latestPrice + markupTotalRevenue,
+    latestCost: lineItemSubtotals.latestCost + markupTotalCost,
+  };
 
   // ── Loading state ──────────────────────────────────────────────────
   if (isLoading) {
@@ -928,9 +1064,6 @@ export default function ChangeEventDetailPage() {
           <TabsTrigger value="history" data-testid="change-event-tab-history">
             Change History ({historyEntries.length})
           </TabsTrigger>
-          <TabsTrigger value="settings" data-testid="change-event-tab-settings">
-            Advanced Settings
-          </TabsTrigger>
         </TabsList>
 
         {/* ════════════════════════════════════════════════════════════
@@ -1006,18 +1139,27 @@ export default function ChangeEventDetailPage() {
                     Line Item Revenue Source
                   </Text>
                   <Text size="sm">
-                    {(changeEvent as any).line_item_revenue_source || "--"}
+                    {(changeEvent as any).lineItemRevenueSource || (changeEvent as any).line_item_revenue_source || "--"}
                   </Text>
                 </div>
                 <div className="col-span-2">
                   <Text size="xs" tone="muted" weight="medium" className="mb-1">
                     Prime Contract for Markup Estimates
                   </Text>
-                  <Text size="sm">
-                    {(changeEvent as any).prime_contract_id
-                      ? `Contract #${(changeEvent as any).prime_contract_id}`
-                      : "--"}
-                  </Text>
+                  {(changeEvent as any).primeContract?.contract_number
+                    || (changeEvent as any).primeContractId
+                    || (changeEvent as any).prime_contract_id
+                    ? (
+                      <a
+                        href={`/${projectId}/prime-contracts/${(changeEvent as any).primeContractId || (changeEvent as any).prime_contract_id}`}
+                        className="text-sm text-primary hover:underline"
+                      >
+                        {(changeEvent as any).primeContract?.contract_number
+                          ? `${(changeEvent as any).primeContract.contract_number} - ${(changeEvent as any).primeContract.title || ""}`
+                          : `Contract #${(changeEvent as any).primeContractId || (changeEvent as any).prime_contract_id}`}
+                      </a>
+                    )
+                    : <Text size="sm">--</Text>}
                 </div>
               </div>
 
@@ -1159,7 +1301,9 @@ export default function ChangeEventDetailPage() {
                           {li.vendor?.name || "--"}
                         </div>
                         <div className="flex-shrink-0 w-[100px] px-2 py-2 truncate">
-                          {li.contractId ? `#${li.contractId}` : "--"}
+                          {li.commitment?.contract_number
+                            ? `${li.commitment.contract_number} - ${li.commitment.title || ""}`
+                            : li.contractId ? `#${li.contractId}` : "--"}
                         </div>
                         <div className="flex-shrink-0 w-[60px] px-2 py-2 truncate text-muted-foreground">
                           {li.unitOfMeasure || "--"}
@@ -1221,6 +1365,57 @@ export default function ChangeEventDetailPage() {
                       </div>
                     );
                   })}
+
+                  {/* ── Markup rows (auto-computed from prime contract) ── */}
+                  {computedMarkups.length > 0 && (
+                    <>
+                      <div className="flex items-center bg-primary/5 border-t border-border text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                        <div className="flex-shrink-0 w-[160px] px-3 py-1.5">Markup</div>
+                      </div>
+                      {computedMarkups.map((m) => (
+                        <div
+                          key={m.id}
+                          className="flex items-center border-b border-border text-sm bg-primary/5 hover:bg-primary/10 transition-colors"
+                        >
+                          <div className="flex-shrink-0 w-[160px] px-3 py-2 truncate text-muted-foreground italic">
+                            {m.markupType} ({m.percentage}%)
+                          </div>
+                          <div className="flex-shrink-0 w-[140px] px-2 py-2" />
+                          <div className="flex-shrink-0 w-[100px] px-2 py-2" />
+                          <div className="flex-shrink-0 w-[100px] px-2 py-2" />
+                          <div className="flex-shrink-0 w-[60px] px-2 py-2" />
+                          {/* Revenue */}
+                          <div className="flex-shrink-0 w-[55px] px-2 py-2 border-l border-border" />
+                          <div className="flex-shrink-0 w-[90px] px-2 py-2" />
+                          <div className="flex-shrink-0 w-[100px] px-2 py-2 text-right tabular-nums">
+                            {formatCurrency(m.revenueAmount)}
+                          </div>
+                          <div className="flex-shrink-0 w-[100px] px-2 py-2" />
+                          <div className="flex-shrink-0 w-[95px] px-2 py-2 text-right tabular-nums">
+                            {formatCurrency(m.revenueAmount)}
+                          </div>
+                          {/* Cost */}
+                          <div className="flex-shrink-0 w-[55px] px-2 py-2 border-l border-border" />
+                          <div className="flex-shrink-0 w-[90px] px-2 py-2" />
+                          <div className="flex-shrink-0 w-[90px] px-2 py-2 text-right tabular-nums">
+                            {formatCurrency(m.costAmount)}
+                          </div>
+                          <div className="flex-shrink-0 w-[80px] px-2 py-2" />
+                          <div className="flex-shrink-0 w-[95px] px-2 py-2" />
+                          <div className="flex-shrink-0 w-[100px] px-2 py-2" />
+                          <div className="flex-shrink-0 w-[90px] px-2 py-2 text-right tabular-nums">
+                            {formatCurrency(m.costAmount)}
+                          </div>
+                          {/* Over/Under */}
+                          <div className="flex-shrink-0 w-[100px] px-2 py-2 text-right tabular-nums border-l border-border text-muted-foreground">
+                            {formatCurrency(m.revenueAmount - m.costAmount)}
+                          </div>
+                          {/* Budget Mod */}
+                          <div className="flex-shrink-0 w-[100px] px-2 py-2 border-l border-border" />
+                        </div>
+                      ))}
+                    </>
+                  )}
 
                   {/* ── Totals row ── */}
                   <div className="flex items-center bg-muted/30 text-sm font-semibold">
@@ -1381,52 +1576,56 @@ export default function ChangeEventDetailPage() {
                 <Spinner className="size-6 text-muted-foreground" />
               </div>
             ) : historyEntries.length > 0 ? (
-              <div className="space-y-3">
+              <div className="rounded-md border border-border overflow-hidden">
+                <div className="grid grid-cols-[auto_100px_1fr_1fr_160px] gap-x-4 px-4 py-2 bg-muted/50 text-xs font-medium text-muted-foreground border-b border-border">
+                  <span>User</span>
+                  <span>Action</span>
+                  <span>Description</span>
+                  <span>Change</span>
+                  <span>Date</span>
+                </div>
                 {historyEntries.map((entry) => (
                   <div
                     key={entry.id}
-                    className="flex items-start gap-3 p-3 rounded-md hover:bg-muted/50 transition-colors"
+                    className="grid grid-cols-[auto_100px_1fr_1fr_160px] gap-x-4 items-center px-4 py-2.5 border-b border-border last:border-b-0 hover:bg-muted/30 transition-colors"
                   >
-                    <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted">
-                      <Clock className="h-3.5 w-3.5 text-muted-foreground" />
+                    <Text size="sm" weight="medium" className="truncate">
+                      {typeof entry.changedBy === "object" &&
+                      entry.changedBy?.email
+                        ? entry.changedBy.email
+                        : typeof entry.changedBy === "string"
+                          ? "User"
+                          : "System"}
+                    </Text>
+                    <div>
+                      <Badge
+                        variant={getActionBadgeVariant(entry.action)}
+                        className="text-xs px-1.5 py-0"
+                      >
+                        {entry.action}
+                      </Badge>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <Text size="sm" weight="medium" className="truncate">
-                          {typeof entry.changedBy === "object" &&
-                          entry.changedBy?.email
-                            ? entry.changedBy.email
-                            : typeof entry.changedBy === "string"
-                              ? "User"
-                              : "System"}
-                        </Text>
-                        <Badge
-                          variant={getActionBadgeVariant(entry.action)}
-                          className="text-xs px-1.5 py-0"
-                        >
-                          {entry.action}
-                        </Badge>
-                      </div>
-                      <Text size="sm">{entry.description}</Text>
+                    <Text size="sm" className="truncate">{entry.description}</Text>
+                    <div className="truncate">
                       {entry.action === "UPDATE" &&
                         entry.oldValue &&
-                        entry.newValue && (
-                          <div className="mt-1">
-                            <Text size="xs" tone="muted">
-                              <span className="font-medium">
-                                {entry.fieldName}:
-                              </span>{" "}
-                              <span className="line-through">
-                                {entry.oldValue}
-                              </span>{" "}
-                              &rarr; {entry.newValue}
-                            </Text>
-                          </div>
+                        entry.newValue ? (
+                          <Text size="xs" tone="muted">
+                            <span className="font-medium">
+                              {entry.fieldName}:
+                            </span>{" "}
+                            <span className="line-through">
+                              {entry.oldValue}
+                            </span>{" "}
+                            &rarr; {entry.newValue}
+                          </Text>
+                        ) : (
+                          <Text size="xs" tone="muted">&mdash;</Text>
                         )}
-                      <Text size="xs" tone="muted" className="mt-1">
-                        {new Date(entry.changedAt).toLocaleString()}
-                      </Text>
                     </div>
+                    <Text size="xs" tone="muted">
+                      {new Date(entry.changedAt).toLocaleString()}
+                    </Text>
                   </div>
                 ))}
               </div>
@@ -1440,20 +1639,6 @@ export default function ChangeEventDetailPage() {
           </div>
         </TabsContent>
 
-        {/* ════════════════════════════════════════════════════════════
-            ADVANCED SETTINGS TAB
-           ════════════════════════════════════════════════════════════ */}
-        <TabsContent value="settings">
-          <Stack gap="lg">
-            <ChangeEventApprovalWorkflow
-              changeEventId={changeEventId}
-              projectId={projectId}
-              currentStatus={changeEvent.status || "open"}
-              onStatusChange={handleStatusChange}
-              currentUserId={"1"}
-            />
-          </Stack>
-        </TabsContent>
       </Tabs>
 
       <Dialog

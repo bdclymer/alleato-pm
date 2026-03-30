@@ -8,7 +8,9 @@
 import { tool } from "ai";
 import { z } from "zod";
 import OpenAI from "openai";
+import { createHash } from "crypto";
 import { createServiceClient } from "@/lib/supabase/service";
+import { createToolGuardrails } from "./guardrails";
 
 let _openai: OpenAI | null = null;
 function getOpenAI(): OpenAI {
@@ -36,6 +38,7 @@ type ToolTracePayload = {
 
 type ActionToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
+  pinnedProjectId?: number;
 };
 
 function withTrace<TInput extends Record<string, unknown>, TResult>(
@@ -61,6 +64,80 @@ export function createActionTools(
   options: ActionToolsOptions = {},
 ) {
   const supabase = createServiceClient();
+  const guardrails = createToolGuardrails(userId, {
+    pinnedProjectId: options.pinnedProjectId,
+  });
+
+  function resolveIdempotencyKey(
+    toolName: string,
+    input: Record<string, unknown>,
+  ): string {
+    const explicit = typeof input.idempotencyKey === "string" ? input.idempotencyKey.trim() : "";
+    if (explicit) return explicit;
+
+    const clone = { ...input };
+    delete clone.idempotencyKey;
+    return createHash("sha256")
+      .update(`${toolName}:${JSON.stringify(clone)}`)
+      .digest("hex");
+  }
+
+  async function getReplayResponse(
+    toolName: string,
+    idempotencyKey: string,
+  ): Promise<unknown | null> {
+    const { data } = await (supabase as any)
+      .from("ai_tool_write_audits")
+      .select("response_payload")
+      .eq("user_id", userId)
+      .eq("tool_name", toolName)
+      .eq("idempotency_key", idempotencyKey)
+      .eq("status", "success")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    return data?.response_payload ?? null;
+  }
+
+  async function recordWriteAudit(params: {
+    toolName: string;
+    idempotencyKey: string;
+    projectId: number | null;
+    input: Record<string, unknown>;
+    status: "success" | "error";
+    response: unknown;
+  }): Promise<void> {
+    await (supabase as any).from("ai_tool_write_audits").insert({
+      user_id: userId,
+      tool_name: params.toolName,
+      idempotency_key: params.idempotencyKey,
+      project_id: params.projectId,
+      request_payload: params.input,
+      response_payload: params.response,
+      status: params.status,
+    });
+  }
+
+  async function enforceProjectWriteAccess(
+    projectId?: number,
+  ): Promise<{ ok: true; projectId: number | null } | { ok: false; error: string }> {
+    const effectiveProjectId =
+      typeof projectId === "number" && Number.isFinite(projectId)
+        ? projectId
+        : await guardrails.applyPinnedProject(undefined);
+
+    if (effectiveProjectId == null) {
+      return { ok: true, projectId: null };
+    }
+
+    const access = await guardrails.enforceProjectAccess(effectiveProjectId);
+    if (!access.ok) {
+      return { ok: false, error: access.error };
+    }
+
+    return { ok: true, projectId: effectiveProjectId };
+  }
 
   return {
 
@@ -87,9 +164,15 @@ export function createActionTools(
           .boolean()
           .default(false)
           .describe("Set to true only after user confirms the preview"),
+        idempotencyKey: z
+          .string()
+          .optional()
+          .describe("Optional idempotency key to prevent duplicate writes"),
       }),
       execute: withTrace("createChangeOrder", options, async (input) => {
         const { projectId, contractId, title, totalAmount, status, confirmed } = input;
+        const access = await enforceProjectWriteAccess(projectId);
+        if (!access.ok) return { success: false, error: access.error };
 
         // Preview mode — return what would be created without writing
         if (!confirmed) {
@@ -110,6 +193,10 @@ export function createActionTools(
           };
         }
 
+        const idempotencyKey = resolveIdempotencyKey("createChangeOrder", input);
+        const replay = await getReplayResponse("createChangeOrder", idempotencyKey);
+        if (replay) return replay;
+
         // Write mode — user confirmed
         const { data, error } = await supabase
           .from("prime_contract_change_orders")
@@ -123,9 +210,20 @@ export function createActionTools(
           .select("id, title, total_amount, status")
           .single();
 
-        if (error) return { success: false, error: error.message };
+        if (error) {
+          const failure = { success: false, error: error.message };
+          await recordWriteAudit({
+            toolName: "createChangeOrder",
+            idempotencyKey,
+            projectId: access.projectId,
+            input,
+            status: "error",
+            response: failure,
+          });
+          return failure;
+        }
 
-        return {
+        const response = {
           success: true,
           message: `Change order **"${title}"** created successfully.`,
           record: data,
@@ -135,6 +233,15 @@ export function createActionTools(
             "Submit for approval when ready",
           ],
         };
+        await recordWriteAudit({
+          toolName: "createChangeOrder",
+          idempotencyKey,
+          projectId: access.projectId,
+          input,
+          status: "success",
+          response,
+        });
+        return response;
       }),
     }),
 
@@ -154,9 +261,15 @@ export function createActionTools(
         type: z.enum(["potential_change", "trend", "rfi_answer_required"]).default("potential_change"),
         status: z.enum(["open", "in_review", "approved", "rejected", "void"]).default("open"),
         confirmed: z.boolean().default(false),
+        idempotencyKey: z
+          .string()
+          .optional()
+          .describe("Optional idempotency key to prevent duplicate writes"),
       }),
       execute: withTrace("createChangeEvent", options, async (input) => {
         const { projectId, title, description, scope, type, status, confirmed } = input;
+        const access = await enforceProjectWriteAccess(projectId);
+        if (!access.ok) return { success: false, error: access.error };
 
         if (!confirmed) {
           return {
@@ -168,6 +281,10 @@ export function createActionTools(
             },
           };
         }
+
+        const idempotencyKey = resolveIdempotencyKey("createChangeEvent", input);
+        const replay = await getReplayResponse("createChangeEvent", idempotencyKey);
+        if (replay) return replay;
 
         // change_events requires number and updated_at — generate them
         const { data: existing } = await supabase
@@ -196,13 +313,33 @@ export function createActionTools(
           .select("id, title, number, status")
           .single();
 
-        if (error) return { success: false, error: error.message };
+        if (error) {
+          const failure = { success: false, error: error.message };
+          await recordWriteAudit({
+            toolName: "createChangeEvent",
+            idempotencyKey,
+            projectId: access.projectId,
+            input,
+            status: "error",
+            response: failure,
+          });
+          return failure;
+        }
 
-        return {
+        const response = {
           success: true,
           message: `Change event **${data.number} — "${title}"** logged.`,
           record: data,
         };
+        await recordWriteAudit({
+          toolName: "createChangeEvent",
+          idempotencyKey,
+          projectId: access.projectId,
+          input,
+          status: "success",
+          response,
+        });
+        return response;
       }),
     }),
 
@@ -223,9 +360,15 @@ export function createActionTools(
           .describe("New project phase"),
         reason: z.string().optional().describe("Brief reason for the status change"),
         confirmed: z.boolean().default(false),
+        idempotencyKey: z
+          .string()
+          .optional()
+          .describe("Optional idempotency key to prevent duplicate writes"),
       }),
       execute: withTrace("updateProjectStatus", options, async (input) => {
         const { projectId, healthStatus, phase, reason, confirmed } = input;
+        const access = await enforceProjectWriteAccess(projectId);
+        if (!access.ok) return { success: false, error: access.error };
 
         if (!healthStatus && !phase) {
           return { error: "Provide at least one of healthStatus or phase to update." };
@@ -243,6 +386,10 @@ export function createActionTools(
           };
         }
 
+        const idempotencyKey = resolveIdempotencyKey("updateProjectStatus", input);
+        const replay = await getReplayResponse("updateProjectStatus", idempotencyKey);
+        if (replay) return replay;
+
         const { data, error } = await supabase
           .from("projects")
           .update(updates)
@@ -250,14 +397,34 @@ export function createActionTools(
           .select("id, name, health_status, phase")
           .single();
 
-        if (error) return { success: false, error: error.message };
+        if (error) {
+          const failure = { success: false, error: error.message };
+          await recordWriteAudit({
+            toolName: "updateProjectStatus",
+            idempotencyKey,
+            projectId: access.projectId,
+            input,
+            status: "error",
+            response: failure,
+          });
+          return failure;
+        }
 
-        return {
+        const response = {
           success: true,
           message: `Project **${data.name}** updated.`,
           changes: updates,
           reason: reason ?? null,
         };
+        await recordWriteAudit({
+          toolName: "updateProjectStatus",
+          idempotencyKey,
+          projectId: access.projectId,
+          input,
+          status: "success",
+          response,
+        });
+        return response;
       }),
     }),
 
@@ -275,9 +442,15 @@ export function createActionTools(
         costImpact: z.enum(["yes", "no", "tbd"]).optional().default("tbd"),
         scheduleImpact: z.enum(["yes", "no", "tbd"]).optional().default("tbd"),
         confirmed: z.boolean().default(false),
+        idempotencyKey: z
+          .string()
+          .optional()
+          .describe("Optional idempotency key to prevent duplicate writes"),
       }),
       execute: withTrace("createRFI", options, async (input) => {
         const { projectId, subject, question, ballInCourt, dueDate, costImpact, scheduleImpact, confirmed } = input;
+        const access = await enforceProjectWriteAccess(projectId);
+        if (!access.ok) return { success: false, error: access.error };
 
         if (!confirmed) {
           return {
@@ -289,6 +462,10 @@ export function createActionTools(
             },
           };
         }
+
+        const idempotencyKey = resolveIdempotencyKey("createRFI", input);
+        const replay = await getReplayResponse("createRFI", idempotencyKey);
+        if (replay) return replay;
 
         // Get next RFI number for this project
         const { data: existing } = await supabase
@@ -317,13 +494,33 @@ export function createActionTools(
           .select("id, number, subject, status")
           .single();
 
-        if (error) return { success: false, error: error.message };
+        if (error) {
+          const failure = { success: false, error: error.message };
+          await recordWriteAudit({
+            toolName: "createRFI",
+            idempotencyKey,
+            projectId: access.projectId,
+            input,
+            status: "error",
+            response: failure,
+          });
+          return failure;
+        }
 
-        return {
+        const response = {
           success: true,
           message: `RFI #${data.number} — **"${subject}"** created.`,
           record: data,
         };
+        await recordWriteAudit({
+          toolName: "createRFI",
+          idempotencyKey,
+          projectId: access.projectId,
+          input,
+          status: "success",
+          response,
+        });
+        return response;
       }),
     }),
 
@@ -331,7 +528,7 @@ export function createActionTools(
       description:
         "Create an action item or task. Use when the user says 'add a task', " +
         "'assign [person] to [work]', or 'remind me to [action] by [date]'. " +
-        "This does NOT require confirmation — tasks are low-stakes.",
+        "Always show a preview and ask for confirmation before writing.",
       inputSchema: z.object({
         projectId: z.number().describe("Project ID"),
         name: z.string().describe("Task name / description"),
@@ -339,9 +536,38 @@ export function createActionTools(
         dueDate: z.string().optional().describe("ISO due date"),
         notes: z.string().optional().describe("Additional context"),
         priority: z.enum(["low", "normal", "high", "critical"]).default("normal"),
+        confirmed: z.boolean().default(false),
+        idempotencyKey: z
+          .string()
+          .optional()
+          .describe("Optional idempotency key to prevent duplicate writes"),
       }),
       execute: withTrace("createTask", options, async (input) => {
-        const { projectId, name, assignee, dueDate, notes, priority } = input;
+        const { projectId, name, assignee, dueDate, notes, priority, confirmed } = input;
+        const access = await enforceProjectWriteAccess(projectId);
+        if (!access.ok) return { success: false, error: access.error };
+
+        if (!confirmed) {
+          return {
+            action: "preview",
+            message: "Here's the task I'll create. Reply **confirm** to proceed.",
+            preview: {
+              table: "schedule_tasks",
+              fields: {
+                project_id: projectId,
+                name: notes ? `${name} — ${notes}` : name,
+                status: "not_started",
+                finish_date: dueDate ?? null,
+                assignee: assignee ?? null,
+                priority,
+              },
+            },
+          };
+        }
+
+        const idempotencyKey = resolveIdempotencyKey("createTask", input);
+        const replay = await getReplayResponse("createTask", idempotencyKey);
+        if (replay) return replay;
 
         const { data, error } = await supabase
           .from("schedule_tasks")
@@ -356,13 +582,33 @@ export function createActionTools(
           .select("id, name, status")
           .single();
 
-        if (error) return { success: false, error: error.message };
+        if (error) {
+          const failure = { success: false, error: error.message };
+          await recordWriteAudit({
+            toolName: "createTask",
+            idempotencyKey,
+            projectId: access.projectId,
+            input,
+            status: "error",
+            response: failure,
+          });
+          return failure;
+        }
 
-        return {
+        const response = {
           success: true,
           message: `Task **"${name}"** created${assignee ? ` — assigned to ${assignee}` : ""}.`,
           record: data,
         };
+        await recordWriteAudit({
+          toolName: "createTask",
+          idempotencyKey,
+          projectId: access.projectId,
+          input,
+          status: "success",
+          response,
+        });
+        return response;
       }),
     }),
 
@@ -386,9 +632,12 @@ export function createActionTools(
         financialImpact: z.number().optional().describe("Estimated dollar impact"),
         timelineImpactDays: z.number().optional().describe("Estimated schedule impact in days"),
         confirmed: z.boolean().default(false),
+        idempotencyKey: z.string().optional(),
       }),
       execute: withTrace("flagProjectRisk", options, async (input) => {
         const { projectId, title, description, severity, insightType, financialImpact, timelineImpactDays, confirmed } = input;
+        const access = await enforceProjectWriteAccess(projectId);
+        if (!access.ok) return { success: false, error: access.error };
 
         if (!confirmed) {
           return {
@@ -400,6 +649,10 @@ export function createActionTools(
             },
           };
         }
+
+        const idempotencyKey = resolveIdempotencyKey("flagProjectRisk", input);
+        const replay = await getReplayResponse("flagProjectRisk", idempotencyKey);
+        if (replay) return replay;
 
         const { data, error } = await supabase
           .from("ai_insights")
@@ -416,13 +669,33 @@ export function createActionTools(
           .select("id, title, severity")
           .single();
 
-        if (error) return { success: false, error: error.message };
+        if (error) {
+          const failure = { success: false, error: error.message };
+          await recordWriteAudit({
+            toolName: "flagProjectRisk",
+            idempotencyKey,
+            projectId: access.projectId,
+            input,
+            status: "error",
+            response: failure,
+          });
+          return failure;
+        }
 
-        return {
+        const response = {
           success: true,
           message: `Risk **"${title}"** flagged as ${severity}.`,
           record: data,
         };
+        await recordWriteAudit({
+          toolName: "flagProjectRisk",
+          idempotencyKey,
+          projectId: access.projectId,
+          input,
+          status: "success",
+          response,
+        });
+        return response;
       }),
     }),
 
@@ -430,16 +703,35 @@ export function createActionTools(
       description:
         "Update the status of an existing RFI. Use when the user says " +
         "'close RFI #[n]', 'mark RFI [n] as answered', or 'RFI [n] is resolved'. " +
-        "Does not require confirmation for status-only changes.",
+        "Always preview before writing.",
       inputSchema: z.object({
         rfiId: z.string().optional().describe("RFI UUID if known"),
         rfiNumber: z.number().optional().describe("RFI number (easier to get from user)"),
         projectId: z.number().describe("Project ID — needed to look up by number"),
         newStatus: z.enum(["open", "answered", "closed", "void"]).describe("New status"),
         response: z.string().optional().describe("Optional response text to record"),
+        confirmed: z.boolean().default(false),
+        idempotencyKey: z.string().optional(),
       }),
       execute: withTrace("updateRFIStatus", options, async (input) => {
-        const { rfiId, rfiNumber, projectId, newStatus, response } = input;
+        const { rfiId, rfiNumber, projectId, newStatus, response, confirmed } = input;
+        const access = await enforceProjectWriteAccess(projectId);
+        if (!access.ok) return { success: false, error: access.error };
+
+        if (!confirmed) {
+          return {
+            action: "preview",
+            message: "I'll update this RFI status. Reply **confirm** to proceed.",
+            preview: {
+              table: "rfis",
+              fields: { rfiId: rfiId ?? null, rfiNumber: rfiNumber ?? null, projectId, status: newStatus },
+            },
+          };
+        }
+
+        const idempotencyKey = resolveIdempotencyKey("updateRFIStatus", input);
+        const replay = await getReplayResponse("updateRFIStatus", idempotencyKey);
+        if (replay) return replay;
 
         let targetId = rfiId;
         if (!targetId && rfiNumber) {
@@ -469,13 +761,33 @@ export function createActionTools(
           .select("id, number, subject, status")
           .single();
 
-        if (error) return { success: false, error: error.message };
+        if (error) {
+          const failure = { success: false, error: error.message };
+          await recordWriteAudit({
+            toolName: "updateRFIStatus",
+            idempotencyKey,
+            projectId: access.projectId,
+            input,
+            status: "error",
+            response: failure,
+          });
+          return failure;
+        }
 
-        return {
+        const successResponse = {
           success: true,
           message: `RFI #${data.number} — **"${data.subject}"** marked as ${newStatus}.`,
           record: data,
         };
+        await recordWriteAudit({
+          toolName: "updateRFIStatus",
+          idempotencyKey,
+          projectId: access.projectId,
+          input,
+          status: "success",
+          response: successResponse,
+        });
+        return successResponse;
       }),
     }),
 
@@ -488,7 +800,7 @@ export function createActionTools(
         "Log notes from a meeting into the project record. Use when the user says " +
         "'log notes from today's meeting', 'record what we discussed', or " +
         "'save meeting notes for [project]'. Can pre-fill from Fireflies context if available. " +
-        "Does not require confirmation — it's a document record, easy to edit.",
+        "Always preview before writing.",
       inputSchema: z.object({
         projectId: z.number().describe("Project ID"),
         title: z.string().describe("Meeting title, e.g. 'OAC Meeting — March 2026'"),
@@ -497,9 +809,28 @@ export function createActionTools(
         actionItems: z.string().optional().describe("Comma-separated action items from the meeting"),
         participants: z.string().optional().describe("Comma-separated list of attendees"),
         durationMinutes: z.number().optional().describe("Meeting duration in minutes"),
+        confirmed: z.boolean().default(false),
+        idempotencyKey: z.string().optional(),
       }),
       execute: withTrace("createMeetingNote", options, async (input) => {
-        const { projectId, title, date, summary, actionItems, participants, durationMinutes } = input;
+        const { projectId, title, date, summary, actionItems, participants, durationMinutes, confirmed } = input;
+        const access = await enforceProjectWriteAccess(projectId);
+        if (!access.ok) return { success: false, error: access.error };
+
+        if (!confirmed) {
+          return {
+            action: "preview",
+            message: "Here's the meeting note I'll create. Reply **confirm** to proceed.",
+            preview: {
+              table: "document_metadata",
+              fields: { project_id: projectId, title, date, summary, action_items: actionItems ?? null },
+            },
+          };
+        }
+
+        const idempotencyKey = resolveIdempotencyKey("createMeetingNote", input);
+        const replay = await getReplayResponse("createMeetingNote", idempotencyKey);
+        if (replay) return replay;
 
         const { data, error } = await supabase
           .from("document_metadata")
@@ -519,14 +850,34 @@ export function createActionTools(
           .select("id, title, date")
           .single();
 
-        if (error) return { success: false, error: error.message };
+        if (error) {
+          const failure = { success: false, error: error.message };
+          await recordWriteAudit({
+            toolName: "createMeetingNote",
+            idempotencyKey,
+            projectId: access.projectId,
+            input,
+            status: "error",
+            response: failure,
+          });
+          return failure;
+        }
 
-        return {
+        const responseOut = {
           success: true,
           message: `Meeting notes for **"${title}"** saved.`,
           record: data,
           tip: "These notes are now searchable via the AI and will appear in project meeting history.",
         };
+        await recordWriteAudit({
+          toolName: "createMeetingNote",
+          idempotencyKey,
+          projectId: access.projectId,
+          input,
+          status: "success",
+          response: responseOut,
+        });
+        return responseOut;
       }),
     }),
 
@@ -534,7 +885,7 @@ export function createActionTools(
       description:
         "Create a new submittal. Use when the user says 'create a submittal for [spec section]', " +
         "'log a submittal', or 'we need to submit [material/equipment]'. " +
-        "Does not require confirmation.",
+        "Always preview before writing.",
       inputSchema: z.object({
         projectId: z.number().describe("Project ID"),
         title: z.string().describe("Submittal title, e.g. 'Structural Steel Shop Drawings'"),
@@ -542,9 +893,28 @@ export function createActionTools(
         dueDate: z.string().optional().describe("ISO due date"),
         submittedBy: z.string().default("TBD").describe("Subcontractor or party submitting"),
         status: z.enum(["pending", "submitted", "under_review", "approved", "rejected", "revise_resubmit"]).default("pending"),
+        confirmed: z.boolean().default(false),
+        idempotencyKey: z.string().optional(),
       }),
       execute: withTrace("createSubmittal", options, async (input) => {
-        const { projectId, title, specSection, dueDate, submittedBy, status } = input;
+        const { projectId, title, specSection, dueDate, submittedBy, status, confirmed } = input;
+        const access = await enforceProjectWriteAccess(projectId);
+        if (!access.ok) return { success: false, error: access.error };
+
+        if (!confirmed) {
+          return {
+            action: "preview",
+            message: "Here's the submittal I'll create. Reply **confirm** to proceed.",
+            preview: {
+              table: "submittals",
+              fields: { project_id: projectId, title, specification_section: specSection ?? null, final_due_date: dueDate ?? null, submitted_by: submittedBy, status },
+            },
+          };
+        }
+
+        const idempotencyKey = resolveIdempotencyKey("createSubmittal", input);
+        const replay = await getReplayResponse("createSubmittal", idempotencyKey);
+        if (replay) return replay;
 
         // Get next submittal number for this project
         const { data: existing } = await supabase
@@ -574,13 +944,33 @@ export function createActionTools(
           .select("id, title, submittal_number, status")
           .single();
 
-        if (error) return { success: false, error: error.message };
+        if (error) {
+          const failure = { success: false, error: error.message };
+          await recordWriteAudit({
+            toolName: "createSubmittal",
+            idempotencyKey,
+            projectId: access.projectId,
+            input,
+            status: "error",
+            response: failure,
+          });
+          return failure;
+        }
 
-        return {
+        const responseOut = {
           success: true,
           message: `Submittal #${data.submittal_number} — **"${title}"** created.`,
           record: data,
         };
+        await recordWriteAudit({
+          toolName: "createSubmittal",
+          idempotencyKey,
+          projectId: access.projectId,
+          input,
+          status: "success",
+          response: responseOut,
+        });
+        return responseOut;
       }),
     }),
 
@@ -589,7 +979,7 @@ export function createActionTools(
         "Create a daily log entry for a project. Use when the user says " +
         "'log today's daily report', 'record site activity for [date]', or " +
         "'add a daily log entry'. Weather conditions and notes are stored as JSON. " +
-        "Does not require confirmation.",
+        "Always preview before writing.",
       inputSchema: z.object({
         projectId: z.number().describe("Project ID"),
         logDate: z.string().describe("ISO date, e.g. '2026-03-23'").default(new Date().toISOString().split("T")[0]),
@@ -597,9 +987,28 @@ export function createActionTools(
         crewCount: z.number().optional().describe("Total workers on site"),
         workPerformed: z.string().optional().describe("Summary of work performed"),
         notes: z.string().optional().describe("Additional notes or observations"),
+        confirmed: z.boolean().default(false),
+        idempotencyKey: z.string().optional(),
       }),
       execute: withTrace("logDailyReport", options, async (input) => {
-        const { projectId, logDate, weather, crewCount, workPerformed, notes } = input;
+        const { projectId, logDate, weather, crewCount, workPerformed, notes, confirmed } = input;
+        const access = await enforceProjectWriteAccess(projectId);
+        if (!access.ok) return { success: false, error: access.error };
+
+        if (!confirmed) {
+          return {
+            action: "preview",
+            message: "Here's the daily log I'll create. Reply **confirm** to proceed.",
+            preview: {
+              table: "daily_logs",
+              fields: { project_id: projectId, log_date: logDate, weather, crew_count: crewCount ?? null, work_performed: workPerformed ?? null },
+            },
+          };
+        }
+
+        const idempotencyKey = resolveIdempotencyKey("logDailyReport", input);
+        const replay = await getReplayResponse("logDailyReport", idempotencyKey);
+        if (replay) return replay;
 
         const weatherConditions = (weather || crewCount || workPerformed || notes)
           ? { weather, crew_count: crewCount ?? null, work_performed: workPerformed ?? null, notes: notes ?? null }
@@ -616,14 +1025,34 @@ export function createActionTools(
           .select("id, log_date")
           .single();
 
-        if (error) return { success: false, error: error.message };
+        if (error) {
+          const failure = { success: false, error: error.message };
+          await recordWriteAudit({
+            toolName: "logDailyReport",
+            idempotencyKey,
+            projectId: access.projectId,
+            input,
+            status: "error",
+            response: failure,
+          });
+          return failure;
+        }
 
-        return {
+        const responseOut = {
           success: true,
           message: `Daily log for **${logDate}** created.`,
           record: data,
           note: "Crew counts and equipment can be added via the Daily Log page in Alleato.",
         };
+        await recordWriteAudit({
+          toolName: "logDailyReport",
+          idempotencyKey,
+          projectId: access.projectId,
+          input,
+          status: "success",
+          response: responseOut,
+        });
+        return responseOut;
       }),
     }),
 
@@ -640,9 +1069,26 @@ export function createActionTools(
       inputSchema: z.object({
         projectId: z.number().optional().describe("Project ID (provide this OR projectName)"),
         projectName: z.string().optional().describe("Project name (fuzzy match)"),
+        confirmed: z.boolean().default(false),
+        idempotencyKey: z.string().optional(),
       }),
       execute: withTrace("generateProjectSummary", options, async (input) => {
-        const { projectId, projectName } = input;
+        const { projectId, projectName, confirmed } = input;
+
+        if (!confirmed) {
+          return {
+            action: "preview",
+            message: "I'll generate and save this project summary. Reply **confirm** to proceed.",
+            preview: {
+              target: "document_metadata",
+              fields: {
+                project_id: projectId ?? null,
+                project_name: projectName ?? null,
+                type: "project_summary",
+              },
+            },
+          };
+        }
 
         // Resolve project
         let project: { id: number; name: string };
@@ -666,6 +1112,12 @@ export function createActionTools(
         } else {
           return { success: false, error: "Provide either projectId or projectName" };
         }
+
+        const access = await enforceProjectWriteAccess(project.id);
+        if (!access.ok) return { success: false, error: access.error };
+        const idempotencyKey = resolveIdempotencyKey("generateProjectSummary", input);
+        const replay = await getReplayResponse("generateProjectSummary", idempotencyKey);
+        if (replay) return replay;
 
         // Pull data in separate awaits to avoid TS2589 (excessive type depth from large Promise.all)
         const now = new Date();
@@ -857,15 +1309,24 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
           .single();
 
         if (saveError) {
-          return {
+          const partial = {
             success: true,
             message: `Summary generated but could not be saved: ${saveError.message}`,
             summary: synthesizedSummary,
             data: summaryData,
           };
+          await recordWriteAudit({
+            toolName: "generateProjectSummary",
+            idempotencyKey,
+            projectId: access.projectId,
+            input,
+            status: "error",
+            response: partial,
+          });
+          return partial;
         }
 
-        return {
+        const responseOut = {
           success: true,
           message: `Project status summary for **${project.name}** generated and saved.`,
           summary: synthesizedSummary,
@@ -878,6 +1339,15 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
             "Update any overdue items",
           ],
         };
+        await recordWriteAudit({
+          toolName: "generateProjectSummary",
+          idempotencyKey,
+          projectId: access.projectId,
+          input,
+          status: "success",
+          response: responseOut,
+        });
+        return responseOut;
       }),
     }),
 
@@ -918,6 +1388,8 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
           .string()
           .optional()
           .describe("ID of the linked Alleato record"),
+        confirmed: z.boolean().default(false),
+        idempotencyKey: z.string().optional(),
       }),
       execute: withTrace("createInitiativeCard", options, async (input) => {
         const {
@@ -931,7 +1403,30 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
           githubIssueUrl,
           linkedRecordType,
           linkedRecordId,
+          confirmed,
         } = input;
+
+        if (!confirmed) {
+          return {
+            action: "preview",
+            message: "Here's the initiative card I'll create. Reply **confirm** to proceed.",
+            preview: {
+              table: "initiative_cards",
+              fields: {
+                title,
+                status,
+                priority,
+                labels: labels ?? [],
+                assignee: assignee ?? null,
+                due_date: dueDate ?? null,
+              },
+            },
+          };
+        }
+
+        const idempotencyKey = resolveIdempotencyKey("createInitiativeCard", input);
+        const replay = await getReplayResponse("createInitiativeCard", idempotencyKey);
+        if (replay) return replay;
 
         // Get max sort_order for target column
         const { data: maxRow } = await supabase
@@ -963,15 +1458,35 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
           .select("id, title, status, priority")
           .single();
 
-        if (error) return { success: false, error: error.message };
+        if (error) {
+          const failure = { success: false, error: error.message };
+          await recordWriteAudit({
+            toolName: "createInitiativeCard",
+            idempotencyKey,
+            projectId: null,
+            input,
+            status: "error",
+            response: failure,
+          });
+          return failure;
+        }
 
-        return {
+        const responseOut = {
           success: true,
           message: `Initiative **"${title}"** added to the ${status.replace("_", " ")} column.`,
           record: data,
           boardUrl: "/command-center",
           tip: "View and drag cards on the Command Center board.",
         };
+        await recordWriteAudit({
+          toolName: "createInitiativeCard",
+          idempotencyKey,
+          projectId: null,
+          input,
+          status: "success",
+          response: responseOut,
+        });
+        return responseOut;
       }),
     }),
 
@@ -1019,6 +1534,10 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
           .boolean()
           .default(false)
           .describe("Set to true only after user confirms the preview"),
+        idempotencyKey: z
+          .string()
+          .optional()
+          .describe("Optional idempotency key to prevent duplicate writes"),
       }),
       execute: withTrace("createCommitment", options, async (input) => {
         const {
@@ -1034,6 +1553,8 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
           defaultRetainagePercent,
           confirmed,
         } = input;
+        const access = await enforceProjectWriteAccess(projectId);
+        if (!access.ok) return { success: false, error: access.error };
 
         const table = type === "subcontract" ? "subcontracts" : "purchase_orders";
         const prefix = type === "subcontract" ? "SC" : "PO";
@@ -1098,6 +1619,10 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
           };
         }
 
+        const idempotencyKey = resolveIdempotencyKey("createCommitment", input);
+        const replay = await getReplayResponse("createCommitment", idempotencyKey);
+        if (replay) return replay;
+
         // Build the insert payload
         const insertPayload: Record<string, unknown> = {
           project_id: projectId,
@@ -1127,19 +1652,29 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
           insertPayload.invoice_contact_ids = [];
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data, error } = await (supabase as any)
           .from(table)
           .insert(insertPayload)
           .select("id, contract_number, title, status")
           .single();
 
-        if (error) return { success: false, error: (error as { message: string }).message };
+        if (error) {
+          const failure = { success: false, error: (error as { message: string }).message };
+          await recordWriteAudit({
+            toolName: "createCommitment",
+            idempotencyKey,
+            projectId: access.projectId,
+            input,
+            status: "error",
+            response: failure,
+          });
+          return failure;
+        }
 
         const label = type === "subcontract" ? "Subcontract" : "Purchase Order";
         const record = data as { id: string; contract_number: string; title: string; status: string };
 
-        return {
+        const responseOut = {
           success: true,
           message: `${label} **${record.contract_number} — "${title}"** created successfully.`,
           record: data,
@@ -1152,6 +1687,15 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
             "Submit for approval when ready",
           ].filter(Boolean),
         };
+        await recordWriteAudit({
+          toolName: "createCommitment",
+          idempotencyKey,
+          projectId: access.projectId,
+          input,
+          status: "success",
+          response: responseOut,
+        });
+        return responseOut;
       }),
     }),
 

@@ -78,7 +78,6 @@ const SESSION_TTL_MS = 15 * 60 * 1000;
  * Recursively strips the Acumatica `{"value": ...}` envelope from a raw
  * API response. Handles nested objects, arrays, and null/undefined.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function unwrap<T>(raw: any): T {
   if (raw === null || raw === undefined) return raw as T;
 
@@ -298,6 +297,53 @@ class AcumaticaClient {
   }
 
   // -----------------------------------------------------------------------
+  // Generic Entity Upserter (Write)
+  // -----------------------------------------------------------------------
+
+  /**
+   * Upsert (create/update) a record in an Acumatica entity endpoint.
+   *
+   * Acumatica's REST entity API typically accepts PUT for idempotent upserts.
+   * Payload shape must match the target entity's contract.
+   */
+  async upsertEntity<TResponse = Record<string, unknown>>(
+    entityName: string,
+    payload: Record<string, unknown>,
+  ): Promise<TResponse> {
+    const performRequest = async (cookies: string) =>
+      fetch(`${ENTITY_BASE}/${entityName}`, {
+        method: "PUT",
+        headers: {
+          Cookie: cookies,
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+    let cookies = await this.ensureSession();
+    let res = await performRequest(cookies);
+
+    if (res.status === 401 || res.status === 403) {
+      this.session = null;
+      cookies = await this.ensureSession();
+      res = await performRequest(cookies);
+    }
+
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      throw new Error(
+        `Acumatica ${entityName} upsert failed (HTTP ${res.status}): ${text}`,
+      );
+    }
+
+    const text = await res.text();
+    if (!text) return {} as TResponse;
+
+    return unwrap<TResponse>(JSON.parse(text));
+  }
+
+  // -----------------------------------------------------------------------
   // Typed Entity Methods
   // -----------------------------------------------------------------------
 
@@ -384,6 +430,40 @@ class AcumaticaClient {
       $top: 200,
       ...options,
     });
+  }
+
+  // -----------------------------------------------------------------------
+  // Typed Entity Upsert Methods
+  // -----------------------------------------------------------------------
+
+  async upsertPurchaseOrder(
+    payload: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
+    return this.upsertEntity("PurchaseOrder", payload);
+  }
+
+  async upsertSubcontract(
+    payload: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
+    return this.upsertEntity("Subcontract", payload);
+  }
+
+  async upsertChangeOrder(
+    payload: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
+    return this.upsertEntity("ChangeOrder", payload);
+  }
+
+  async upsertInvoice(
+    payload: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
+    return this.upsertEntity("Invoice", payload);
+  }
+
+  async upsertProject(
+    payload: Record<string, unknown>,
+  ): Promise<Record<string, unknown>> {
+    return this.upsertEntity("Project", payload);
   }
 
   // -----------------------------------------------------------------------

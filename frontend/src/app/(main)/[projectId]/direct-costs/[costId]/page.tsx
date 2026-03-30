@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { ProjectPageHeader } from "@/components/layout";
-import { PageContainer } from "@/components/layout/PageContainer";
+import { PageShell } from "@/components/layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -181,60 +180,33 @@ export default function DirectCostDetailPage({
     }
   };
 
-  const breadcrumbs = [
-    { label: "Projects", href: "/" },
-    {
-      label: "Project",
-      href: `/${resolvedParams?.projectId || ""}`,
-    },
-    {
-      label: "Direct Costs",
-      href: `/${resolvedParams?.projectId || ""}/direct-costs`,
-    },
-    { label: "Details" },
-  ];
-
   if (!resolvedParams || isLoading) {
     return (
-      <>
-        <ProjectPageHeader
-          title="Direct Cost Details"
-          description="Loading..."
-          breadcrumbs={breadcrumbs}
-        />
-        <PageContainer>
-          <div className="space-y-6">
-            <Skeleton className="h-64 w-full" />
-            <Skeleton className="h-32 w-full" />
-          </div>
-        </PageContainer>
-      </>
+      <PageShell variant="detail" title="Direct Cost Details" onBack={() => router.back()}>
+        <div className="space-y-6">
+          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-32 w-full" />
+        </div>
+      </PageShell>
     );
   }
 
   if (!directCost) {
     return (
-      <>
-        <ProjectPageHeader
-          title="Direct Cost Details"
-          description="Direct cost not found"
-          breadcrumbs={breadcrumbs}
-        />
-        <PageContainer>
-          <div className="flex flex-col items-center justify-center h-64 gap-4">
-            <p className="text-muted-foreground">Direct cost not found</p>
-            <Button
-              variant="outline"
-              onClick={() =>
-                router.push(`/${resolvedParams.projectId}/direct-costs`)
-              }
-            >
-              <ArrowLeft />
-              Back to Direct Costs
-            </Button>
-          </div>
-        </PageContainer>
-      </>
+      <PageShell variant="detail" title="Direct Cost Details" description="Direct cost not found" onBack={() => router.back()}>
+        <div className="flex flex-col items-center justify-center h-64 gap-4">
+          <p className="text-muted-foreground">Direct cost not found</p>
+          <Button
+            variant="outline"
+            onClick={() =>
+              router.push(`/${resolvedParams.projectId}/direct-costs`)
+            }
+          >
+            <ArrowLeft />
+            Back to Direct Costs
+          </Button>
+        </div>
+      </PageShell>
     );
   }
 
@@ -245,10 +217,11 @@ export default function DirectCostDetailPage({
 
   return (
     <>
-      <ProjectPageHeader
+      <PageShell
+        variant="detail"
         title="Direct Cost Details"
-        description={`${directCost.invoice_number ? `Invoice #${directCost.invoice_number}` : `#${directCost.id.slice(0, 8)}`}`}
-        breadcrumbs={breadcrumbs}
+        description={directCost.invoice_number ? `Invoice #${directCost.invoice_number}` : `#${directCost.id.slice(0, 8)}`}
+        onBack={() => router.back()}
         actions={
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={handleOpenEdit}>
@@ -266,8 +239,7 @@ export default function DirectCostDetailPage({
             </Button>
           </div>
         }
-      />
-      <PageContainer>
+      >
         <div className="space-y-6">
           {/* Main Details */}
           <Card>
@@ -481,7 +453,7 @@ export default function DirectCostDetailPage({
             </CardContent>
           </Card>
         </div>
-      </PageContainer>
+      </PageShell>
 
       {/* Delete Confirmation */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

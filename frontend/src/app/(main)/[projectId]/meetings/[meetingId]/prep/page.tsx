@@ -4,20 +4,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { format } from "date-fns";
 import {
-  ArrowLeft,
-  Calendar,
-  Clock,
   FileText,
   Loader2,
   Sparkles,
-  Tag,
   ExternalLink,
 } from "lucide-react";
 import Link from "next/link";
 
-import { PageContainer } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
-import { StatusBadge } from "@/components/ds";
 import { Editor } from "@/components/text-editor";
 import { useMeeting } from "@/hooks/use-meetings";
 import {
@@ -110,21 +105,21 @@ export default function MeetingPrepPage() {
 
   if (meetingLoading || prepLoading) {
     return (
-      <PageContainer>
+      <PageShell variant="content" title="Meeting Prep" onBack={() => router.back()}>
         <div className="flex items-center justify-center py-20">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
-      </PageContainer>
+      </PageShell>
     );
   }
 
   if (!meeting) {
     return (
-      <PageContainer>
+      <PageShell variant="content" title="Meeting Prep" onBack={() => router.back()}>
         <div className="py-20 text-center text-muted-foreground">
           Meeting not found
         </div>
-      </PageContainer>
+      </PageShell>
     );
   }
 
@@ -133,67 +128,31 @@ export default function MeetingPrepPage() {
     : "Date TBD";
 
   return (
-    <PageContainer>
-      {/* Back link */}
-      <div className="mb-6">
-        <Link
-          href={`/${projectId}/meetings`}
-          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
+    <PageShell
+      variant="content"
+      title={meeting.title}
+      description={formattedDate}
+      onBack={() => router.back()}
+      backLabel="Back to Meetings"
+      actions={
+        <Button
+          onClick={handleGenerate}
+          disabled={generatePrep.isPending}
+          className="shrink-0"
         >
-          <ArrowLeft className="h-4 w-4" />
-          Back to Meetings
-        </Link>
-      </div>
-
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-start justify-between gap-4">
-          <div className="space-y-2">
-            <h1 className="text-2xl font-semibold tracking-tight">
-              {meeting.title}
-            </h1>
-            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1.5">
-                <Calendar className="h-3.5 w-3.5" />
-                {formattedDate}
-              </span>
-              {meeting.duration_minutes && (
-                <span className="flex items-center gap-1.5">
-                  <Clock className="h-3.5 w-3.5" />
-                  {meeting.duration_minutes} min
-                </span>
-              )}
-              {meeting.category && (
-                <span className="flex items-center gap-1.5">
-                  <Tag className="h-3.5 w-3.5" />
-                  {meeting.category}
-                </span>
-              )}
-              {meeting.status && (
-                <StatusBadge status={meeting.status} />
-              )}
-            </div>
-          </div>
-
-          {/* Generate button */}
-          <Button
-            onClick={handleGenerate}
-            disabled={generatePrep.isPending}
-            className="shrink-0"
-          >
-            {generatePrep.isPending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            ) : (
-              <Sparkles />
-            )}
-            {generatePrep.isPending
-              ? "Generating..."
-              : content
-                ? "Regenerate Prep"
-                : "Generate Meeting Prep"}
-          </Button>
-        </div>
-      </div>
+          {generatePrep.isPending ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Sparkles />
+          )}
+          {generatePrep.isPending
+            ? "Generating..."
+            : content
+              ? "Regenerate Prep"
+              : "Generate Meeting Prep"}
+        </Button>
+      }
+    >
 
       {/* Main content */}
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px]">
@@ -324,7 +283,7 @@ export default function MeetingPrepPage() {
           )}
         </aside>
       </div>
-    </PageContainer>
+    </PageShell>
   );
 }
 

@@ -32,10 +32,12 @@ export interface PageShellProps {
 
   // Header
   title: string;
+  description?: string;
   showHeader?: boolean;
   titleContent?: React.ReactNode;
   actions?: React.ReactNode;
   statusBadge?: React.ReactNode;
+  tabs?: { label: string; href: string; isActive: boolean }[];
   showExportButton?: boolean;
   onExportCSV?: () => void;
   onExportPDF?: () => void;
@@ -73,6 +75,8 @@ export function PageShell({
   onExportPDF,
   onBack,
   backLabel = "Back",
+  description,
+  tabs,
   children,
   className,
   contentClassName,
@@ -93,9 +97,11 @@ export function PageShell({
   const header = showHeader ? (
     <PageHeader
       title={title}
+      description={description}
       titleContent={titleContent}
       actions={resolvedActions}
       statusBadge={statusBadge}
+      tabs={tabs}
       showExportButton={showExportButton}
       onExportCSV={onExportCSV}
       onExportPDF={onExportPDF}

@@ -55,7 +55,7 @@ export async function GET(request: Request) {
     const supabase = createServiceClient();
     const { data: item } = await supabase
       .from("admin_feedback_items")
-      .select("title, comment")
+      .select("title, comment, page_path, page_url")
       .eq("id", feedbackId)
       .maybeSingle();
 
@@ -63,7 +63,12 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Feedback item not found" }, { status: 404 });
     }
 
-    const match = await matchFeedbackToTool(item.title, item.comment);
+    const match = await matchFeedbackToTool(
+      item.title,
+      item.comment,
+      item.page_path,
+      item.page_url,
+    );
     if (!match) {
       return NextResponse.json({ match: null, message: "No tool matched above threshold" });
     }
@@ -117,7 +122,7 @@ export async function POST(request: Request) {
   if (auto) {
     const { data: item } = await supabase
       .from("admin_feedback_items")
-      .select("title, comment")
+      .select("title, comment, page_path, page_url")
       .eq("id", feedbackId)
       .maybeSingle();
 
@@ -125,7 +130,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Feedback item not found" }, { status: 404 });
     }
 
-    const match = await matchFeedbackToTool(item.title, item.comment);
+    const match = await matchFeedbackToTool(
+      item.title,
+      item.comment,
+      item.page_path,
+      item.page_url,
+    );
     toolId = match?.id ?? null;
   }
 

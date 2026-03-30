@@ -1025,3 +1025,629 @@ export async function syncCommitments(
     errors: [...subResult.errors, ...poResult.errors],
   };
 }
+
+// ---------------------------------------------------------------------------
+// App → Acumatica Export (Write Sync)
+// ---------------------------------------------------------------------------
+
+export interface ExportSyncResult {
+  created: number;
+  updated: number;
+  skipped: number;
+  errors: string[];
+}
+
+type AcumaticaPayloadValue = string | number | boolean | null | undefined;
+
+function acuField(value: AcumaticaPayloadValue) {
+  return { value };
+}
+
+function toIsoDate(value: string | null | undefined): string {
+  if (!value) return new Date().toISOString().split("T")[0];
+  return value.split("T")[0];
+}
+
+function mapOutboundCommitmentStatus(status: string | null | undefined): string {
+  const normalized = (status ?? "").toLowerCase();
+  if (normalized === "executed" || normalized === "approved" || normalized === "closed") {
+    return "Open";
+  }
+  if (normalized === "void" || normalized === "cancelled" || normalized === "canceled") {
+    return "Canceled";
+  }
+  return "On Hold";
+}
+
+function mapOutboundPrimeCoStatus(status: string | null | undefined): string {
+  const normalized = (status ?? "").toLowerCase();
+  if (normalized === "approved" || normalized === "executed" || normalized === "closed") {
+    return "Open";
+  }
+  if (normalized === "rejected" || normalized === "void") {
+    return "Canceled";
+  }
+  return "On Hold";
+}
+
+function mapOutboundInvoiceStatus(status: string | null | undefined): string {
+  const normalized = (status ?? "").toLowerCase();
+  if (normalized === "approved" || normalized === "paid") return "Released";
+  if (normalized === "submitted") return "Balanced";
+  return "On Hold";
+}
+
+/**
+ * Export project commitments (subcontracts + purchase orders) from the app to Acumatica.
+ */
+export async function exportCommitmentsToAcumatica(
+  projectId: number,
+): Promise<ExportSyncResult> {
+  const result: ExportSyncResult = { created: 0, updated: 0, skipped: 0, errors: [] };
+  const supabase = await createClient();
+  const acuClient = createAcumaticaClient();
+  await acuClient.login();
+
+  const { data: project } = await supabase
+    .from("projects")
+    .select("acumatica_project_id")
+    .eq("id", projectId)
+    .single();
+
+  if (!project?.acumatica_project_id) {
+    result.errors.push("Project has no acumatica_project_id mapping.");
+    return result;
+  }
+
+  const acuProjectId = project.acumatica_project_id;
+
+  const [{ data: subcontracts, error: subError }, { data: purchaseOrders, error: poError }] =
+    await Promise.all([
+      supabase
+        .from("subcontracts")
+        .select(
+          "id, contract_number, acumatica_external_key, status, description, title, contract_date, contract_company_id, executed",
+        )
+        .eq("project_id", projectId)
+        .is("deleted_at", null),
+      supabase
+        .from("purchase_orders")
+        .select(
+          "id, contract_number, acumatica_external_key, status, description, title, contract_date, delivery_date, contract_company_id, executed",
+        )
+        .eq("project_id", projectId)
+        .is("deleted_at", null),
+    ]);
+
+  if (subError) result.errors.push(`Failed loading subcontracts: ${subError.message}`);
+  if (poError) result.errors.push(`Failed loading purchase orders: ${poError.message}`);
+
+  const vendorIds = [
+    ...(subcontracts ?? []).map((s) => s.contract_company_id).filter(Boolean),
+    ...(purchaseOrders ?? []).map((p) => p.contract_company_id).filter(Boolean),
+  ] as string[];
+
+  let vendorAcuById = new Map<string, string>();
+  if (vendorIds.length > 0) {
+    const { data: vendors } = await supabase
+      .from("vendors")
+      .select("id, acumatica_vendor_id")
+      .in("id", Array.from(new Set(vendorIds)));
+    vendorAcuById = new Map(
+      (vendors ?? [])
+        .filter((v) => !!v.acumatica_vendor_id)
+        .map((v) => [v.id, v.acumatica_vendor_id as string]),
+    );
+  }
+
+  const subcontractIds = (subcontracts ?? []).map((s) => s.id);
+  const poIds = (purchaseOrders ?? []).map((p) => p.id);
+
+  const [{ data: subcontractLines }, { data: poLines }] = await Promise.all([
+    subcontractIds.length
+      ? supabase
+          .from("subcontract_sov_items")
+          .select("subcontract_id, line_number, description, amount, budget_code")
+          .in("subcontract_id", subcontractIds)
+      : Promise.resolve({ data: [], error: null }),
+    poIds.length
+      ? supabase
+          .from("purchase_order_sov_items")
+          .select(
+            "purchase_order_id, line_number, description, amount, budget_code, quantity, unit_cost, uom",
+          )
+          .in("purchase_order_id", poIds)
+      : Promise.resolve({ data: [], error: null }),
+  ]);
+
+  const subcontractLinesById = new Map<string, Array<Record<string, unknown>>>();
+  for (const line of subcontractLines ?? []) {
+    const current = subcontractLinesById.get(line.subcontract_id) ?? [];
+    current.push({
+      LineNbr: acuField(line.line_number ?? undefined),
+      Description: acuField(line.description ?? undefined),
+      Amount: acuField(line.amount ?? 0),
+      CostCode: acuField(line.budget_code ?? undefined),
+    });
+    subcontractLinesById.set(line.subcontract_id, current);
+  }
+
+  const poLinesById = new Map<string, Array<Record<string, unknown>>>();
+  for (const line of poLines ?? []) {
+    const current = poLinesById.get(line.purchase_order_id) ?? [];
+    current.push({
+      LineNbr: acuField(line.line_number),
+      Description: acuField(line.description ?? undefined),
+      Amount: acuField(line.amount ?? 0),
+      CostCode: acuField(line.budget_code ?? undefined),
+      Qty: acuField(line.quantity ?? undefined),
+      UnitCost: acuField(line.unit_cost ?? undefined),
+      UOM: acuField(line.uom ?? undefined),
+    });
+    poLinesById.set(line.purchase_order_id, current);
+  }
+
+  for (const sc of subcontracts ?? []) {
+    const vendorAcuId = sc.contract_company_id
+      ? vendorAcuById.get(sc.contract_company_id) ?? null
+      : null;
+    const externalKey = sc.acumatica_external_key ?? sc.contract_number;
+    const details = subcontractLinesById.get(sc.id) ?? [];
+
+    const payload: Record<string, unknown> = {
+      SubcontractNbr: acuField(externalKey),
+      VendorID: acuField(vendorAcuId),
+      Project: acuField(acuProjectId),
+      Description: acuField(sc.description ?? sc.title ?? sc.contract_number),
+      Date: acuField(toIsoDate(sc.contract_date)),
+      Status: acuField(
+        mapOutboundCommitmentStatus(sc.executed ? "executed" : sc.status),
+      ),
+      Details: details,
+    };
+
+    try {
+      const existed = !!sc.acumatica_external_key;
+      const response = await acuClient.upsertSubcontract(payload);
+      const returnedNbr =
+        typeof response.SubcontractNbr === "string" ? response.SubcontractNbr : externalKey;
+
+      await supabase
+        .from("subcontracts")
+        .update({ acumatica_external_key: returnedNbr })
+        .eq("id", sc.id);
+
+      if (existed) result.updated++;
+      else result.created++;
+    } catch (error) {
+      result.errors.push(
+        `Subcontract ${sc.contract_number}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
+
+  for (const po of purchaseOrders ?? []) {
+    const vendorAcuId = po.contract_company_id
+      ? vendorAcuById.get(po.contract_company_id) ?? null
+      : null;
+    const externalKey = po.acumatica_external_key ?? po.contract_number;
+    const details = poLinesById.get(po.id) ?? [];
+
+    const payload: Record<string, unknown> = {
+      Type: acuField("RegularOrder"),
+      OrderNbr: acuField(externalKey),
+      VendorID: acuField(vendorAcuId),
+      Project: acuField(acuProjectId),
+      Description: acuField(po.description ?? po.title ?? po.contract_number),
+      Date: acuField(toIsoDate(po.contract_date)),
+      PromisedOn: acuField(toIsoDate(po.delivery_date)),
+      Status: acuField(
+        mapOutboundCommitmentStatus(po.executed ? "executed" : po.status),
+      ),
+      Details: details,
+    };
+
+    try {
+      const existed = !!po.acumatica_external_key;
+      const response = await acuClient.upsertPurchaseOrder(payload);
+      const returnedNbr =
+        typeof response.OrderNbr === "string" ? response.OrderNbr : externalKey;
+
+      await supabase
+        .from("purchase_orders")
+        .update({ acumatica_external_key: returnedNbr })
+        .eq("id", po.id);
+
+      if (existed) result.updated++;
+      else result.created++;
+    } catch (error) {
+      result.errors.push(
+        `Purchase order ${po.contract_number}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Export prime contracts to Acumatica using the Project entity.
+ */
+export async function exportPrimeContractsToAcumatica(
+  projectId: number,
+): Promise<ExportSyncResult> {
+  const result: ExportSyncResult = { created: 0, updated: 0, skipped: 0, errors: [] };
+  const supabase = await createClient();
+  const acuClient = createAcumaticaClient();
+  await acuClient.login();
+
+  const [{ data: primeContracts, error: contractsError }, { data: project }] =
+    await Promise.all([
+      supabase
+        .from("prime_contracts")
+        .select(
+          "id, contract_number, title, description, status, executed, revised_contract_value, original_contract_value, client_id, contract_company_id",
+        )
+        .eq("project_id", projectId),
+      supabase
+        .from("projects")
+        .select("id, name, acumatica_project_id")
+        .eq("id", projectId)
+        .single(),
+    ]);
+
+  if (contractsError) {
+    result.errors.push(`Failed loading prime contracts: ${contractsError.message}`);
+    return result;
+  }
+
+  if (!primeContracts?.length) {
+    result.skipped++;
+    return result;
+  }
+
+  const companyIds = Array.from(
+    new Set(
+      primeContracts
+        .flatMap((c) => [c.client_id, c.contract_company_id])
+        .filter(Boolean) as string[],
+    ),
+  );
+  let customerByCompanyId = new Map<string, string>();
+  if (companyIds.length > 0) {
+    const { data: companies } = await supabase
+      .from("companies")
+      .select("id, customer_id")
+      .in("id", companyIds);
+    customerByCompanyId = new Map(
+      (companies ?? [])
+        .filter((c) => !!c.customer_id)
+        .map((c) => [c.id, c.customer_id as string]),
+    );
+  }
+
+  for (const contract of primeContracts) {
+    const customerId =
+      (contract.client_id && customerByCompanyId.get(contract.client_id)) ||
+      (contract.contract_company_id &&
+        customerByCompanyId.get(contract.contract_company_id)) ||
+      null;
+    const projectCode = project?.acumatica_project_id ?? contract.contract_number;
+
+    const payload: Record<string, unknown> = {
+      ProjectID: acuField(projectCode),
+      Description: acuField(contract.description ?? contract.title),
+      Customer: acuField(customerId),
+      Status: acuField(contract.executed ? "Active" : "In Planning"),
+      Income: acuField(
+        contract.revised_contract_value ?? contract.original_contract_value ?? 0,
+      ),
+    };
+
+    try {
+      const response = await acuClient.upsertProject(payload);
+      const returnedProjectId =
+        typeof response.ProjectID === "string" ? response.ProjectID : projectCode;
+      if (!project?.acumatica_project_id && returnedProjectId) {
+        await supabase
+          .from("projects")
+          .update({ acumatica_project_id: returnedProjectId })
+          .eq("id", projectId);
+      }
+
+      if (project?.acumatica_project_id) result.updated++;
+      else result.created++;
+    } catch (error) {
+      result.errors.push(
+        `Prime contract ${contract.contract_number}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Export commitment + prime change orders from the app to Acumatica.
+ */
+export async function exportChangeOrdersToAcumatica(
+  projectId: number,
+): Promise<ExportSyncResult> {
+  const result: ExportSyncResult = { created: 0, updated: 0, skipped: 0, errors: [] };
+  const supabase = await createClient();
+  const acuClient = createAcumaticaClient();
+  await acuClient.login();
+
+  const { data: project } = await supabase
+    .from("projects")
+    .select("acumatica_project_id")
+    .eq("id", projectId)
+    .single();
+  if (!project?.acumatica_project_id) {
+    result.errors.push("Project has no acumatica_project_id mapping.");
+    return result;
+  }
+
+  const acuProjectId = project.acumatica_project_id;
+
+  const [{ data: primeCos, error: primeError }, { data: primeContracts, error: mapError }] =
+    await Promise.all([
+      supabase
+        .from("prime_contract_change_orders")
+        .select(
+          "id, pcco_number, title, total_amount, status, submitted_at, acumatica_external_key",
+        )
+        .eq("project_id", projectId),
+      supabase
+        .from("prime_contracts")
+        .select("id")
+        .eq("project_id", projectId),
+    ]);
+  if (primeError) result.errors.push(`Failed loading prime change orders: ${primeError.message}`);
+  if (mapError) result.errors.push(`Failed loading contract map: ${mapError.message}`);
+
+  const contractIds = (primeContracts ?? []).map((c) => c.id);
+  const { data: commitmentCos, error: commitmentError } = contractIds.length
+    ? await supabase
+        .from("contract_change_orders")
+        .select(
+          "id, change_order_number, description, amount, status, requested_date, acumatica_external_key, contract_id",
+        )
+        .in("contract_id", contractIds)
+    : { data: [], error: null };
+
+  if (commitmentError) {
+    result.errors.push(`Failed loading commitment change orders: ${commitmentError.message}`);
+  }
+
+  for (const co of primeCos ?? []) {
+    const referenceNbr = co.acumatica_external_key ?? co.pcco_number ?? `PCCO-${co.id}`;
+    const payload: Record<string, unknown> = {
+      ReferenceNbr: acuField(referenceNbr),
+      Project: acuField(acuProjectId),
+      Description: acuField(co.title),
+      ChangeDate: acuField(toIsoDate(co.submitted_at)),
+      RevenueBudgetChangeTotal: acuField(co.total_amount ?? 0),
+      CommitmentsChangeTotal: acuField(0),
+      Status: acuField(mapOutboundPrimeCoStatus(co.status)),
+    };
+
+    try {
+      const existed = !!co.acumatica_external_key;
+      const response = await acuClient.upsertChangeOrder(payload);
+      const returnedRef =
+        typeof response.ReferenceNbr === "string" ? response.ReferenceNbr : referenceNbr;
+      await supabase
+        .from("prime_contract_change_orders")
+        .update({ acumatica_external_key: returnedRef })
+        .eq("id", co.id);
+
+      if (existed) result.updated++;
+      else result.created++;
+    } catch (error) {
+      result.errors.push(
+        `Prime CO ${referenceNbr}: ${error instanceof Error ? error.message : String(error)}`,
+      );
+    }
+  }
+
+  for (const co of commitmentCos ?? []) {
+    const referenceNbr =
+      co.acumatica_external_key ?? co.change_order_number ?? `CCO-${co.id}`;
+    const payload: Record<string, unknown> = {
+      ReferenceNbr: acuField(referenceNbr),
+      Project: acuField(acuProjectId),
+      Description: acuField(co.description),
+      ChangeDate: acuField(toIsoDate(co.requested_date)),
+      RevenueBudgetChangeTotal: acuField(0),
+      CommitmentsChangeTotal: acuField(co.amount ?? 0),
+      Status: acuField(mapOutboundPrimeCoStatus(co.status)),
+    };
+
+    try {
+      const existed = !!co.acumatica_external_key;
+      const response = await acuClient.upsertChangeOrder(payload);
+      const returnedRef =
+        typeof response.ReferenceNbr === "string" ? response.ReferenceNbr : referenceNbr;
+      await supabase
+        .from("contract_change_orders")
+        .update({ acumatica_external_key: returnedRef })
+        .eq("id", co.id);
+
+      if (existed) result.updated++;
+      else result.created++;
+    } catch (error) {
+      result.errors.push(
+        `Commitment CO ${referenceNbr}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
+
+  return result;
+}
+
+/**
+ * Export owner invoices from the app to Acumatica AR Invoices.
+ */
+export async function exportOwnerInvoicesToAcumatica(
+  projectId: number,
+): Promise<ExportSyncResult> {
+  const result: ExportSyncResult = { created: 0, updated: 0, skipped: 0, errors: [] };
+  const supabase = await createClient();
+  const acuClient = createAcumaticaClient();
+  await acuClient.login();
+
+  const [{ data: project }, { data: primeContracts }] = await Promise.all([
+    supabase
+      .from("projects")
+      .select("acumatica_project_id")
+      .eq("id", projectId)
+      .single(),
+    supabase
+      .from("prime_contracts")
+      .select("id, client_id, contract_company_id")
+      .eq("project_id", projectId),
+  ]);
+
+  if (!project?.acumatica_project_id) {
+    result.errors.push("Project has no acumatica_project_id mapping.");
+    return result;
+  }
+
+  const primeContractIds = (primeContracts ?? []).map((c) => c.id);
+  if (!primeContractIds.length) {
+    result.skipped++;
+    return result;
+  }
+
+  const companyIds = Array.from(
+    new Set(
+      (primeContracts ?? [])
+        .flatMap((c) => [c.client_id, c.contract_company_id])
+        .filter(Boolean) as string[],
+    ),
+  );
+  let customerByCompanyId = new Map<string, string>();
+  if (companyIds.length) {
+    const { data: companies } = await supabase
+      .from("companies")
+      .select("id, customer_id")
+      .in("id", companyIds);
+    customerByCompanyId = new Map(
+      (companies ?? [])
+        .filter((c) => !!c.customer_id)
+        .map((c) => [c.id, c.customer_id as string]),
+    );
+  }
+
+  const customerId =
+    (primeContracts ?? [])
+      .map(
+        (c) =>
+          (c.client_id && customerByCompanyId.get(c.client_id)) ||
+          (c.contract_company_id &&
+            customerByCompanyId.get(c.contract_company_id)) ||
+          null,
+      )
+      .find(Boolean) ?? null;
+
+  if (!customerId) {
+    result.errors.push(
+      "No Acumatica customer mapping found for the project's prime contract companies.",
+    );
+    return result;
+  }
+
+  const { data: invoices, error: invoicesError } = await supabase
+    .from("owner_invoices")
+    .select(
+      "id, invoice_number, status, acumatica_ref_nbr, acumatica_doc_type, billing_date, due_date, period_start, period_end, gross_amount, net_amount, prime_contract_id",
+    )
+    .in("prime_contract_id", primeContractIds);
+
+  if (invoicesError) {
+    result.errors.push(`Failed loading owner invoices: ${invoicesError.message}`);
+    return result;
+  }
+
+  const invoiceIds = (invoices ?? []).map((i) => i.id);
+  const { data: lineItems } = invoiceIds.length
+    ? await supabase
+        .from("owner_invoice_line_items")
+        .select("invoice_id, acumatica_line_nbr, description, approved_amount, category")
+        .in("invoice_id", invoiceIds)
+    : { data: [] };
+
+  const linesByInvoiceId = new Map<number, Array<Record<string, unknown>>>();
+  for (const line of lineItems ?? []) {
+    const current = linesByInvoiceId.get(line.invoice_id) ?? [];
+    current.push({
+      LineNbr: acuField(line.acumatica_line_nbr ?? undefined),
+      TransactionDescription: acuField(line.description ?? undefined),
+      ExtendedPrice: acuField(line.approved_amount ?? 0),
+      AccountID: acuField(line.category ?? undefined),
+    });
+    linesByInvoiceId.set(line.invoice_id, current);
+  }
+
+  const now = new Date().toISOString();
+
+  for (const invoice of invoices ?? []) {
+    const referenceNbr =
+      invoice.acumatica_ref_nbr ??
+      invoice.invoice_number ??
+      `OWNER-INV-${invoice.id}`;
+    const docType = invoice.acumatica_doc_type ?? "Invoice";
+    const details = linesByInvoiceId.get(invoice.id) ?? [];
+
+    const payload: Record<string, unknown> = {
+      Type: acuField(docType),
+      ReferenceNbr: acuField(referenceNbr),
+      Customer: acuField(customerId),
+      Project: acuField(project.acumatica_project_id),
+      Date: acuField(toIsoDate(invoice.billing_date ?? invoice.period_start)),
+      DueDate: acuField(toIsoDate(invoice.due_date ?? invoice.period_end)),
+      Description: acuField(`Owner Invoice ${invoice.invoice_number ?? referenceNbr}`),
+      Amount: acuField(invoice.gross_amount ?? invoice.net_amount ?? 0),
+      Status: acuField(mapOutboundInvoiceStatus(invoice.status)),
+      Details: details,
+    };
+
+    try {
+      const existed = !!invoice.acumatica_ref_nbr;
+      const response = await acuClient.upsertInvoice(payload);
+      const returnedRef =
+        typeof response.ReferenceNbr === "string" ? response.ReferenceNbr : referenceNbr;
+      const returnedType =
+        typeof response.Type === "string" ? response.Type : docType;
+
+      await supabase
+        .from("owner_invoices")
+        .update({
+          acumatica_ref_nbr: returnedRef,
+          acumatica_doc_type: returnedType,
+          acumatica_sync_at: now,
+        })
+        .eq("id", invoice.id);
+
+      if (existed) result.updated++;
+      else result.created++;
+    } catch (error) {
+      result.errors.push(
+        `Owner invoice ${referenceNbr}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
+
+  return result;
+}

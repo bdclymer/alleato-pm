@@ -93,13 +93,14 @@ export const createChangeEventSchema = z.object({
 // Update Change Event Schema
 export const updateChangeEventSchema = z.object({
   title: z.string().min(1).max(255).optional(),
-  type: ChangeEventType.optional(),
-  reason: z.string().max(100).optional(),
-  scope: ChangeEventScope.optional(),
+  type: ChangeEventType.nullable().optional(),
+  reason: z.string().max(100).nullable().optional(),
+  scope: ChangeEventScope.nullable().optional(),
+  origin: ChangeEventOrigin.nullable().optional(),
   expectingRevenue: z.boolean().optional(),
-  lineItemRevenueSource: LineItemRevenueSource.optional(),
-  primeContractId: z.union([z.string().uuid(), z.coerce.number().int().positive()]).optional(),
-  description: z.string().optional(),
+  lineItemRevenueSource: LineItemRevenueSource.nullable().optional(),
+  primeContractId: z.union([z.string().uuid(), z.coerce.number().int().positive()]).nullable().optional(),
+  description: z.string().nullable().optional(),
   status: ChangeEventStatus.optional(), // Only admin can change status
 }); // Create Line Item Schema
 export const createLineItemSchema = z.object({
@@ -107,6 +108,9 @@ export const createLineItemSchema = z.object({
   description: z.string(),
   vendorId: z.string().uuid().optional(),
   contractId: z.string().uuid().optional(),
+  commitmentId: z.string().uuid().optional(),
+  commitmentType: z.enum(["subcontract", "purchase_order"]).optional(),
+  commitmentLineItemId: z.string().uuid().optional(),
   unitOfMeasure: z.string().max(50).optional(),
   quantity: z.number().positive().optional(),
   unitCost: z.number().nonnegative().optional(),

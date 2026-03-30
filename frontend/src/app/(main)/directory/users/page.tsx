@@ -1,5 +1,4 @@
 "use client";
-import { ProjectPageHeader } from "@/components/layout";
 
 import * as React from "react";
 import { usePathname } from "next/navigation";
@@ -9,7 +8,6 @@ import {
   Phone,
   MoreHorizontal,
   Eye,
-  Edit,
   UserX,
   RefreshCw,
   Shield,
@@ -18,8 +16,7 @@ import {
 } from "lucide-react";
 import { useProjectUsers } from "@/hooks/use-project-users";
 
-import { PageContainer } from "@/components/layout/PageContainer";
-import { PageTabs } from "@/components/layout/PageTabs";
+import { PageShell } from "@/components/layout";
 import { Text } from "@/components/ui/text";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -288,52 +285,30 @@ export default function DirectoryUsersPage() {
 
   if (isLoading) {
     return (
-      <>
-        <ProjectPageHeader
-          title="Directory"
-          description="Manage companies, clients, contacts, users, and employees across your organization"
-          showProjectName={false}
-        />
-        <PageTabs tabs={tabs} />
-        <PageContainer>
-          <div className="flex justify-center items-center py-12">
-            <div className="text-center space-y-4">
-              <Skeleton className="h-12 w-12 rounded-full mx-auto" />
-              <Text tone="muted">Loading users...</Text>
-            </div>
+      <PageShell variant="table" title="Directory" description="Manage companies, clients, contacts, users, and employees across your organization" tabs={tabs}>
+        <div className="flex justify-center items-center py-12">
+          <div className="text-center space-y-4">
+            <Skeleton className="h-12 w-12 rounded-full mx-auto" />
+            <Text tone="muted">Loading users...</Text>
           </div>
-        </PageContainer>
-      </>
+        </div>
+      </PageShell>
     );
   }
 
   if (error) {
     return (
-      <>
-        <ProjectPageHeader
-          title="Directory"
-          description="Manage companies, clients, contacts, users, and employees across your organization"
-          showProjectName={false}
-        />
-        <PageTabs tabs={tabs} />
-        <PageContainer>
-          <div className="text-center py-12">
-            <Text tone="destructive">Error loading users: {error.message}</Text>
-          </div>
-        </PageContainer>
-      </>
+      <PageShell variant="table" title="Directory" description="Manage companies, clients, contacts, users, and employees across your organization" tabs={tabs}>
+        <div className="text-center py-12">
+          <Text tone="destructive">Error loading users: {error.message}</Text>
+        </div>
+      </PageShell>
     );
   }
 
   return (
     <>
-      <ProjectPageHeader
-        title="Directory"
-        description="Manage companies, clients, contacts, users, and employees across your organization"
-        showProjectName={false}
-      />
-      <PageTabs tabs={tabs} />
-      <PageContainer>
+      <PageShell variant="table" title="Directory" description="Manage companies, clients, contacts, users, and employees across your organization" tabs={tabs}>
         <div className="space-y-6">
           {/* Stats */}
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -401,16 +376,14 @@ export default function DirectoryUsersPage() {
           </div>
 
           {/* Users Table */}
-          <div className="bg-card rounded-lg shadow">
-            <DataTable
-              columns={columns}
-              data={users}
-              searchKey="first_name"
-              searchPlaceholder="Search users..."
-            />
-          </div>
+          <DataTable
+            columns={columns}
+            data={users}
+            searchKey="first_name"
+            searchPlaceholder="Search users..."
+          />
         </div>
-      </PageContainer>
+      </PageShell>
 
       {/* Dialogs and Sheets */}
       <UserFormDialog

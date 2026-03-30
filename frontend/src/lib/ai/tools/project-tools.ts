@@ -4,6 +4,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { createFinancialTools } from "./financial";
 import { createAcumaticaTools } from "./acumatica";
 import { createOperationalTools } from "./operational";
+import { createToolGuardrails } from "./guardrails";
 
 type AnyRow = Record<string, any>;
 
@@ -17,6 +18,7 @@ type ToolTracePayload = {
 
 type CreateProjectToolsOptions = {
   onTrace?: (trace: ToolTracePayload) => void;
+  pinnedProjectId?: number;
 };
 
 function asNumber(value: unknown): number {
@@ -28,6 +30,29 @@ function asNumber(value: unknown): number {
     return Number.isFinite(parsed) ? parsed : 0;
   }
   return 0;
+}
+
+function parseTextList(value: unknown): string[] {
+  if (typeof value !== "string" || !value.trim()) return [];
+
+  return value
+    .split(/\r?\n|;|•|^\s*-\s*/gm)
+    .map((line) => line.replace(/^\s*[-*]\s*/, "").trim())
+    .filter((line) => line.length > 2);
+}
+
+function extractAssignee(item: string): string | null {
+  const ownerMatch = item.match(
+    /\b(?:owner|assignee|assigned to|by)\s*[:\-]?\s*([A-Z][A-Za-z.'\-\s]{1,40})\b/i,
+  );
+  return ownerMatch ? ownerMatch[1].trim() : null;
+}
+
+function extractDueDate(item: string): string | null {
+  const dueMatch = item.match(
+    /\b(?:due|by|before)\s*[:\-]?\s*(\d{4}-\d{2}-\d{2}|[A-Z][a-z]{2,8}\s+\d{1,2},?\s+\d{4})/i,
+  );
+  return dueMatch ? dueMatch[1].trim() : null;
 }
 
 function withTrace<TInput extends Record<string, unknown>, TResult>(
@@ -64,6 +89,9 @@ export function createProjectTools(
   options: CreateProjectToolsOptions = {},
 ) {
   const supabase = createServiceClient();
+  const guardrails = createToolGuardrails(_userId, {
+    pinnedProjectId: options.pinnedProjectId,
+  });
 
   // Financial tools (commitments, COs, direct costs, budget lines, trends, margin)
   const financialTools = createFinancialTools(_userId, options);
@@ -98,11 +126,20 @@ export function createProjectTools(
         "getPortfolioOverview",
         options,
         async ({ phase }) => {
+        const scopedProjectIds = await guardrails.getScopedProjectIds();
+        if (scopedProjectIds.length === 0) {
+          return {
+            error:
+              "No accessible projects found for your account. Ask an admin to assign you to at least one project.",
+          };
+        }
+
         // Fetch projects filtered by phase
         let projectQuery = supabase
           .from("projects")
           .select("*")
           .eq("archived", false)
+          .in("id", scopedProjectIds)
           .order("name", { ascending: true })
           .limit(50);
 
@@ -316,10 +353,19 @@ export function createProjectTools(
         "getProjectsWithRisks",
         options,
         async ({ phase, maxProjects }) => {
+          const scopedProjectIds = await guardrails.getScopedProjectIds();
+          if (scopedProjectIds.length === 0) {
+            return {
+              error:
+                "No accessible projects found for your account. Ask an admin to assign you to at least one project.",
+            };
+          }
+
           let projectQuery = supabase
             .from("projects")
             .select("id, name, phase, health_status, health_score")
             .eq("archived", false)
+            .in("id", scopedProjectIds)
             .order("name", { ascending: true })
             .limit(200);
 
@@ -546,13 +592,27 @@ export function createProjectTools(
         "getProjectRiskAnalysis",
         options,
         async ({ projectId, projectName }) => {
-        let resolvedId = projectId;
+        const scopedProjectIds = await guardrails.getScopedProjectIds(projectId);
+        if (scopedProjectIds.length === 0) {
+          return {
+            error:
+              "You do not have access to that project. Choose a project you are assigned to.",
+          };
+        }
+
+        let resolvedId =
+          typeof projectId === "number" && Number.isFinite(projectId)
+            ? projectId
+            : scopedProjectIds.length === 1
+              ? scopedProjectIds[0]
+              : undefined;
         let resolvedName = projectName;
 
         if (!resolvedId && projectName) {
           const { data } = await supabase
             .from("projects")
             .select("id, name")
+            .in("id", scopedProjectIds)
             .ilike("name", `%${projectName}%`)
             .limit(1)
             .single();
@@ -566,6 +626,11 @@ export function createProjectTools(
 
         if (!resolvedId) {
           return { error: "Provide projectId or projectName" };
+        }
+
+        const accessCheck = await guardrails.enforceProjectAccess(resolvedId);
+        if (!accessCheck.ok) {
+          return { error: accessCheck.error };
         }
 
         const [
@@ -770,19 +835,25 @@ export function createProjectTools(
         "getFinancialAnalysis",
         options,
         async ({ projectId }) => {
-        let financialQuery = supabase
-          .from("prime_contract_financial_summary")
-          .select("*");
-        if (projectId) {
-          financialQuery = financialQuery.eq("project_id", projectId);
+        const scopedProjectIds = await guardrails.getScopedProjectIds(projectId);
+        if (scopedProjectIds.length === 0) {
+          return {
+            error:
+              "You do not have access to that project. Choose a project you are assigned to.",
+          };
         }
+
+        const financialQuery = supabase
+          .from("prime_contract_financial_summary")
+          .select("*")
+          .in("project_id", scopedProjectIds);
         const { data: financialRows } = await financialQuery;
         const financials = (financialRows ?? []) as AnyRow[];
 
-        let ceQuery = supabase.from("change_events_summary").select("*");
-        if (projectId) {
-          ceQuery = ceQuery.eq("project_id", projectId);
-        }
+        const ceQuery = supabase
+          .from("change_events_summary")
+          .select("*")
+          .in("project_id", scopedProjectIds);
         const { data: ceRows } = await ceQuery;
         const changeEvents = (ceRows ?? []) as AnyRow[];
 
@@ -856,8 +927,8 @@ export function createProjectTools(
         }
 
         return {
-          sourceRef: projectId
-            ? `[Source: Financial Analysis - Project ${projectId}]`
+          sourceRef: scopedProjectIds.length === 1
+            ? `[Source: Financial Analysis - Project ${scopedProjectIds[0]}]`
             : "[Source: Financial Analysis - Portfolio]",
           summary: {
             totalOriginalContractValue: totalOriginalContracts,
@@ -909,13 +980,27 @@ export function createProjectTools(
         "getProjectBudgetSummary",
         options,
         async ({ projectId, projectName }) => {
-          let resolvedId = projectId;
+          const scopedProjectIds = await guardrails.getScopedProjectIds(projectId);
+          if (scopedProjectIds.length === 0) {
+            return {
+              error:
+                "You do not have access to that project. Choose a project you are assigned to.",
+            };
+          }
+
+          let resolvedId =
+            typeof projectId === "number" && Number.isFinite(projectId)
+              ? projectId
+              : scopedProjectIds.length === 1
+                ? scopedProjectIds[0]
+                : undefined;
           let resolvedProject: AnyRow | null = null;
 
           if (!resolvedId && projectName) {
             const { data, error } = await supabase
               .from("projects")
               .select("id, name, phase")
+              .in("id", scopedProjectIds)
               .ilike("name", `%${projectName}%`)
               .limit(1)
               .single();
@@ -928,6 +1013,11 @@ export function createProjectTools(
 
           if (!resolvedId) {
             return { error: "Provide projectId or projectName" };
+          }
+
+          const accessCheck = await guardrails.enforceProjectAccess(resolvedId);
+          if (!accessCheck.ok) {
+            return { error: accessCheck.error };
           }
 
           if (!resolvedProject) {
@@ -1054,32 +1144,21 @@ export function createProjectTools(
         "getActionItemsAndInsights",
         options,
         async ({ projectId, maxResults }) => {
-        // get_priority_insights RPC has a SQL type bug — fall back gracefully
-        let priorityInsights: AnyRow[] = [];
-        try {
-          const { data: priorityRows, error: rpcError } = await supabase.rpc(
-            "get_priority_insights",
-            {
-              p_limit: maxResults ?? 20,
-              ...(projectId ? { p_project_id: projectId } : {}),
-            },
-          );
-          if (!rpcError && priorityRows) {
-            priorityInsights = priorityRows as AnyRow[];
-          }
-        } catch {
-          // RPC broken — using ai_insights fallback below
+        const scopedProjectIds = await guardrails.getScopedProjectIds(projectId);
+        if (scopedProjectIds.length === 0) {
+          return {
+            error:
+              "You do not have access to that project. Choose a project you are assigned to.",
+          };
         }
 
-        let insightQuery = supabase
+        const insightQuery = supabase
           .from("ai_insights")
           .select("*")
+          .in("project_id", scopedProjectIds)
           .order("created_at", { ascending: false })
           .limit((maxResults ?? 20) * 3); // fetch extra to account for JS-side resolved filter
 
-        if (projectId) {
-          insightQuery = insightQuery.eq("project_id", projectId);
-        }
         const { data: insightRows } = await insightQuery;
         // Filter unresolved in JS — handles boolean false, integer 0, and null
         const insights = ((insightRows ?? []) as AnyRow[]).filter((row) => {
@@ -1087,48 +1166,95 @@ export function createProjectTools(
           return r === null || r === undefined || r === false || r === 0 || r === "0";
         }).slice(0, maxResults ?? 20);
 
-        // Meeting summaries — the richest data source for what needs attention
-        let docQuery = supabase
+        // Meeting summaries and structured action items are the richest signal.
+        const docQuery = supabase
           .from("document_metadata")
-          .select("title, date, project, project_id, summary, overview, participants")
+          .select("title, date, project, project_id, summary, overview, participants, action_items, bullet_points")
+          .in("project_id", scopedProjectIds)
           .or("type.eq.meeting,category.eq.meeting")
           .order("date", { ascending: false })
-          .limit(20);
-
-        if (projectId) {
-          docQuery = docQuery.eq("project_id", projectId);
-        }
+          .limit(Math.max(20, (maxResults ?? 20) * 2));
         const { data: docRows } = await docQuery;
         const docs = ((docRows ?? []) as AnyRow[]).filter(
-          (d) => d.summary || d.overview,
+          (d) => d.summary || d.overview || d.action_items || d.bullet_points,
         );
 
         const now = new Date().toISOString().split("T")[0];
-        let rfiQuery = supabase
+        const rfiQuery = supabase
           .from("rfis")
           .select("id, number, subject, status, due_date, ball_in_court")
+          .in("project_id", scopedProjectIds)
           .neq("status", "closed")
           .lt("due_date", now)
           .order("due_date", { ascending: true })
           .limit(10);
-
-        if (projectId) {
-          rfiQuery = rfiQuery.eq("project_id", projectId);
-        }
         const { data: rfiRows } = await rfiQuery;
         const overdueRFIs = (rfiRows ?? []) as AnyRow[];
 
+        const structuredActionItems = docs
+          .flatMap((d) => {
+            const meeting = String(d.title ?? "Meeting");
+            const project = String(d.project ?? "Unknown Project");
+            const date = String(d.date ?? "");
+            const candidates = [
+              ...parseTextList(d.action_items),
+              ...parseTextList(d.bullet_points),
+            ];
+            return candidates.map((item) => {
+              const dueDate = extractDueDate(item);
+              const overdue =
+                dueDate && /^\d{4}-\d{2}-\d{2}$/.test(dueDate)
+                  ? dueDate < now
+                  : false;
+              return {
+                title: item.substring(0, 160),
+                detail: item,
+                assignee: extractAssignee(item),
+                dueDate,
+                overdue,
+                project,
+                meeting,
+                date,
+                sourceRef: `[Source: Meeting - "${meeting}" - ${date}]`,
+              };
+            });
+          })
+          .slice(0, (maxResults ?? 20) * 3);
+
+        const prioritizedMeetingActions = structuredActionItems
+          .map((item) => {
+            let priority = 50;
+            if (item.overdue) priority += 35;
+            if (/(critical|urgent|asap|immediately)/i.test(item.detail)) priority += 20;
+            if (item.assignee) priority += 5;
+            return { ...item, priority };
+          })
+          .sort((a, b) => b.priority - a.priority)
+          .slice(0, maxResults ?? 20);
+
+        const prioritizedInsights = insights
+          .map((i) => {
+            const severity = String(i.severity ?? "").toLowerCase();
+            const severityWeight =
+              severity === "critical" ? 100 : severity === "high" ? 80 : severity === "medium" ? 60 : 40;
+            return {
+              title: i.title,
+              description: i.description,
+              type: i.insight_type,
+              severity: i.severity,
+              daysUntilDue: i.days_until_due,
+              dueDate: i.due_date,
+              assignee: i.assignee,
+              priority: severityWeight,
+            };
+          })
+          .sort((a, b) => b.priority - a.priority)
+          .slice(0, maxResults ?? 20);
+
         return {
           sourceRef: "[Source: Action Items & Insights]",
-          priorityItems: priorityInsights.map((i) => ({
-            title: i.title,
-            description: i.description,
-            type: i.insight_type,
-            severity: i.severity,
-            daysUntilDue: i.days_until_due,
-            dueDate: i.due_date,
-            assignee: i.assignee,
-          })),
+          priorityItems: prioritizedInsights,
+          structuredActionItems: prioritizedMeetingActions,
           unresolvedInsights: insights.map((i) => ({
             title: i.title,
             description: i.description,
@@ -1153,6 +1279,11 @@ export function createProjectTools(
             dueDate: r.due_date,
             ballInCourt: r.ball_in_court,
           })),
+          summary: {
+            insightCount: insights.length,
+            structuredActionItemCount: structuredActionItems.length,
+            overdueRFICount: overdueRFIs.length,
+          },
         };
         },
       ),
@@ -1194,13 +1325,27 @@ export function createProjectTools(
         "getMeetingsByDate",
         options,
         async ({ projectId, projectName, date, startDate, endDate, maxResults }) => {
-          let resolvedProjectId = projectId;
+          const scopedProjectIds = await guardrails.getScopedProjectIds(projectId);
+          if (scopedProjectIds.length === 0) {
+            return {
+              error:
+                "You do not have access to that project. Choose a project you are assigned to.",
+            };
+          }
+
+          let resolvedProjectId =
+            typeof projectId === "number" && Number.isFinite(projectId)
+              ? projectId
+              : scopedProjectIds.length === 1
+                ? scopedProjectIds[0]
+                : undefined;
           let resolvedProjectName: string | null = null;
 
           if (!resolvedProjectId && projectName) {
             const { data: projectRow } = await supabase
               .from("projects")
               .select("id, name")
+              .in("id", scopedProjectIds)
               .ilike("name", `%${projectName}%`)
               .order("name", { ascending: true })
               .limit(1)
@@ -1228,6 +1373,8 @@ export function createProjectTools(
 
           if (resolvedProjectId) {
             meetingsQuery = meetingsQuery.eq("project_id", resolvedProjectId);
+          } else {
+            meetingsQuery = meetingsQuery.in("project_id", scopedProjectIds);
           }
 
           if (effectiveDate) {
@@ -1314,13 +1461,27 @@ export function createProjectTools(
         "searchDocuments",
         options,
         async ({ query, projectId, projectName, maxResults }) => {
+        const scopedProjectIds = await guardrails.getScopedProjectIds(projectId);
+        if (scopedProjectIds.length === 0) {
+          return {
+            error:
+              "You do not have access to that project. Choose a project you are assigned to.",
+          };
+        }
+
         // Resolve project name to ID if provided
-        let resolvedProjectId = projectId;
+        let resolvedProjectId =
+          typeof projectId === "number" && Number.isFinite(projectId)
+            ? projectId
+            : scopedProjectIds.length === 1
+              ? scopedProjectIds[0]
+              : undefined;
         let resolvedProjectName: string | null = null;
         if (!resolvedProjectId && projectName) {
           const { data: projectRow } = await supabase
             .from("projects")
             .select("id, name")
+            .in("id", scopedProjectIds)
             .ilike("name", `%${projectName}%`)
             .order("name", { ascending: true })
             .limit(1)
@@ -1363,17 +1524,19 @@ export function createProjectTools(
           }
         }
 
-        // Cross-project full-text search (no project filter required)
+        // Cross-project full-text search, scoped to allowed projects
         const { data, error } = await supabase.rpc(
           "full_text_search_meetings",
           {
             search_query: query,
-            match_count: maxResults ?? 10,
+            match_count: Math.max((maxResults ?? 10) * 2, 25),
           },
         );
 
         if (error) return { error: error.message };
-        const results = (data ?? []) as AnyRow[];
+        const results = ((data ?? []) as AnyRow[]).filter((r) =>
+          scopedProjectIds.includes(Number(r.project_id)),
+        );
         if (!results.length) {
           return {
             results: [],
@@ -1415,6 +1578,14 @@ export function createProjectTools(
         "getProjectDetails",
         options,
         async ({ projectId, projectName }) => {
+        const scopedProjectIds = await guardrails.getScopedProjectIds(projectId);
+        if (scopedProjectIds.length === 0) {
+          return {
+            error:
+              "You do not have access to that project. Choose a project you are assigned to.",
+          };
+        }
+
         let project: AnyRow | null = null;
 
         if (projectId) {
@@ -1422,6 +1593,7 @@ export function createProjectTools(
             .from("projects")
             .select("*")
             .eq("id", projectId)
+            .in("id", scopedProjectIds)
             .single();
           if (error) return { error: error.message };
           project = data as AnyRow;
@@ -1429,11 +1601,20 @@ export function createProjectTools(
           const { data, error } = await supabase
             .from("projects")
             .select("*")
+            .in("id", scopedProjectIds)
             .ilike("name", `%${projectName}%`)
             .limit(1)
             .single();
           if (error)
             return { error: `No project found matching "${projectName}"` };
+          project = data as AnyRow;
+        } else if (scopedProjectIds.length === 1) {
+          const { data, error } = await supabase
+            .from("projects")
+            .select("*")
+            .eq("id", scopedProjectIds[0])
+            .single();
+          if (error) return { error: error.message };
           project = data as AnyRow;
         } else {
           return { error: "Provide either projectId or projectName" };

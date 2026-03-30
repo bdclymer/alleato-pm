@@ -162,42 +162,69 @@ export async function POST(
       );
     }
 
-    // If budgetCodeId provided, verify it exists and belongs to project
+    // Resolve budgetCodeId: could be budget_lines.id OR project_cost_codes.id
+    let resolvedBudgetCodeId = validatedData.budgetCodeId;
     if (validatedData.budgetCodeId) {
-      const { data: budgetLine, error: budgetError } = await supabase
+      // First try budget_lines directly
+      const { data: budgetLine } = await supabase
         .from('budget_lines')
         .select('id, project_id')
         .eq('id', validatedData.budgetCodeId)
         .single();
 
-      if (budgetError || !budgetLine) {
-        return NextResponse.json(
-          { error: 'Budget code not found' },
-          { status: 404 }
-        );
-      }
+      if (budgetLine) {
+        if (budgetLine.project_id !== parseInt(projectId, 10)) {
+          return NextResponse.json(
+            { error: 'Budget code does not belong to this project' },
+            { status: 400 }
+          );
+        }
+      } else {
+        // Not a budget_lines ID — try project_cost_codes and find matching budget_line
+        const { data: pcc } = await supabase
+          .from('project_cost_codes')
+          .select('id, cost_code_id, cost_type_id')
+          .eq('id', validatedData.budgetCodeId)
+          .single();
 
-      if (budgetLine.project_id !== parseInt(projectId, 10)) {
-        return NextResponse.json(
-          { error: 'Budget code does not belong to this project' },
-          { status: 400 }
-        );
+        if (pcc) {
+          const { data: matchingBudgetLine } = await supabase
+            .from('budget_lines')
+            .select('id')
+            .eq('project_id', parseInt(projectId, 10))
+            .eq('cost_code_id', pcc.cost_code_id)
+            .eq('cost_type_id', pcc.cost_type_id)
+            .single();
+
+          if (matchingBudgetLine) {
+            resolvedBudgetCodeId = matchingBudgetLine.id;
+          }
+          // If no matching budget_line found, still allow — the budget_code_id may be nullable
+        }
       }
     }
 
-    // If vendorId provided, verify it exists
+    // Resolve vendorId: could be companies.id OR vendors.id
+    let resolvedVendorId = validatedData.vendorId;
     if (validatedData.vendorId) {
-      const { data: vendor, error: vendorError } = await supabase
+      // First check if it's a valid companies.id
+      const { data: company } = await supabase
         .from('companies')
         .select('id')
         .eq('id', validatedData.vendorId)
         .single();
 
-      if (vendorError || !vendor) {
-        return NextResponse.json(
-          { error: 'Vendor not found' },
-          { status: 404 }
-        );
+      if (!company) {
+        // Not a companies ID — try vendors table and get company_id
+        const { data: vendor } = await supabase
+          .from('vendors')
+          .select('company_id')
+          .eq('id', validatedData.vendorId)
+          .single();
+
+        if (vendor?.company_id) {
+          resolvedVendorId = vendor.company_id;
+        }
       }
     }
 
@@ -211,10 +238,13 @@ export async function POST(
       .from('change_event_line_items')
       .insert({
         change_event_id: changeEventId,
-        budget_code_id: validatedData.budgetCodeId || undefined,
+        budget_code_id: resolvedBudgetCodeId || undefined,
         description: validatedData.description,
-        vendor_id: validatedData.vendorId || undefined,
+        vendor_id: resolvedVendorId || undefined,
         contract_id: validatedData.contractId ? parseInt(validatedData.contractId, 10) : undefined,
+        commitment_id: validatedData.commitmentId || undefined,
+        commitment_type: validatedData.commitmentType || undefined,
+        commitment_line_item_id: validatedData.commitmentLineItemId || undefined,
         quantity: validatedData.quantity || undefined,
         unit_of_measure: validatedData.unitOfMeasure || undefined,
         unit_cost: validatedData.unitCost || undefined,

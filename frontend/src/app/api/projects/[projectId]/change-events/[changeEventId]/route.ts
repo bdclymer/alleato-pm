@@ -16,12 +16,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const { projectId, changeEventId } = await params;
     const supabase = await createClient();
 
-    // Get change event with related data
+    // Get change event with related data including budget_line and vendor joins
     const { data: changeEvent, error } = await supabase
       .from("change_events")
       .select(
         `
         *,
+        prime_contract:prime_contracts!prime_contract_id(
+          id,
+          contract_number,
+          title
+        ),
         change_event_line_items(
           id,
           description,
@@ -34,9 +39,27 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
           non_committed_cost,
           vendor_id,
           contract_id,
+          commitment_id,
+          commitment_type,
+          commitment_line_item_id,
           sort_order,
           created_at,
-          updated_at
+          updated_at,
+          budget_line:budget_lines!budget_code_id(
+            id,
+            project_budget_code_id,
+            description,
+            cost_code:cost_codes!cost_code_id(
+              id,
+              title,
+              division_id,
+              division_title
+            )
+          ),
+          vendor:companies!vendor_id(
+            id,
+            name
+          )
         ),
         change_event_history(
           id,
@@ -61,8 +84,96 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Calculate totals from line items
+    // Resolve commitment names for line items
     const lineItems = changeEvent.change_event_line_items || [];
+    const commitmentIds = [...new Set(lineItems.filter((li: any) => li.commitment_id).map((li: any) => li.commitment_id))];
+    const commitmentMap: Record<string, { contract_number: string; title: string }> = {};
+
+    if (commitmentIds.length > 0) {
+      // Check subcontracts
+      const { data: subs } = await supabase
+        .from("subcontracts")
+        .select("id, contract_number, title")
+        .in("id", commitmentIds);
+      (subs || []).forEach((s: any) => { commitmentMap[s.id] = s; });
+
+      // Check purchase orders for any not found in subcontracts
+      const remainingIds = commitmentIds.filter((id: string) => !commitmentMap[id]);
+      if (remainingIds.length > 0) {
+        const { data: pos } = await supabase
+          .from("purchase_orders")
+          .select("id, contract_number, title")
+          .in("id", remainingIds);
+        (pos || []).forEach((p: any) => { commitmentMap[p.id] = p; });
+      }
+    }
+
+    // Map company IDs to vendor IDs for edit form compatibility
+    // vendor_id on line items references companies.id, but the form's VendorCombobox uses vendors.id
+    // Match by company name since company_id on vendors may not match directly
+    const companyIds = [...new Set(lineItems.filter((li: any) => li.vendor_id).map((li: any) => li.vendor_id))];
+    const companyToVendorMap: Record<string, string> = {};
+    if (companyIds.length > 0) {
+      // Get company names for the vendor_ids
+      const { data: companies } = await supabase
+        .from("companies")
+        .select("id, name")
+        .in("id", companyIds);
+
+      if (companies && companies.length > 0) {
+        const companyNames = companies.map((c: any) => c.name?.toLowerCase()).filter(Boolean);
+        // Find matching vendors by name
+        const { data: vendorRows } = await supabase
+          .from("vendors")
+          .select("id, name")
+          .eq("is_active", true);
+
+        if (vendorRows) {
+          for (const company of companies as any[]) {
+            const matchingVendor = vendorRows.find((v: any) =>
+              v.name?.toLowerCase() === company.name?.toLowerCase()
+            );
+            if (matchingVendor) {
+              companyToVendorMap[company.id] = matchingVendor.id;
+            }
+          }
+        }
+      }
+    }
+
+    // Map budget_lines IDs to project_cost_codes IDs for edit form compatibility
+    // budget_code_id on line items references budget_lines.id, but the BudgetCodeSelector uses project_cost_codes.id
+    const budgetLineIds = [...new Set(lineItems.filter((li: any) => li.budget_code_id).map((li: any) => li.budget_code_id))];
+    const budgetLineToProjectCodeMap: Record<string, string> = {};
+    if (budgetLineIds.length > 0) {
+      // Get budget lines with cost_code_id and cost_type_id
+      const { data: budgetLines } = await supabase
+        .from("budget_lines")
+        .select("id, cost_code_id, cost_type_id")
+        .in("id", budgetLineIds);
+
+      if (budgetLines && budgetLines.length > 0) {
+        // Get project_cost_codes for this project to match against
+        const { data: projectCostCodes } = await supabase
+          .from("project_cost_codes")
+          .select("id, cost_code_id, cost_type_id")
+          .eq("project_id", parseInt(projectId, 10))
+          .eq("is_active", true);
+
+        if (projectCostCodes) {
+          for (const bl of budgetLines as any[]) {
+            const matchingPcc = projectCostCodes.find((pcc: any) =>
+              pcc.cost_code_id === bl.cost_code_id && pcc.cost_type_id === bl.cost_type_id
+            );
+            if (matchingPcc) {
+              budgetLineToProjectCodeMap[bl.id] = matchingPcc.id;
+            }
+          }
+        }
+      }
+    }
+
+    // Calculate totals from line items
     const totals = {
       revenueRom: lineItems
         .reduce((sum: number, item: any) => sum + (item.revenue_rom || 0), 0)
@@ -120,23 +231,39 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       expectingRevenue: changeEvent.expecting_revenue,
       lineItemRevenueSource: changeEvent.line_item_revenue_source,
       primeContractId: changeEvent.prime_contract_id,
+      primeContract: changeEvent.prime_contract || null,
       totals,
-      lineItems: lineItems.map((item: any) => ({
-        id: item.id,
-        description: item.description,
-        budgetCodeId: item.budget_code_id,
-        quantity: item.quantity,
-        unitOfMeasure: item.unit_of_measure,
-        unitCost: item.unit_cost,
-        revenueRom: item.revenue_rom,
-        costRom: item.cost_rom,
-        nonCommittedCost: item.non_committed_cost,
-        vendorId: item.vendor_id,
-        contractId: item.contract_id,
-        sortOrder: item.sort_order,
-        createdAt: item.created_at,
-        updatedAt: item.updated_at,
-      })),
+      lineItems: lineItems.map((item: any) => {
+        const quantity = item.quantity || 0;
+        const unitCost = item.unit_cost || 0;
+        return {
+          id: item.id,
+          description: item.description,
+          budgetCodeId: item.budget_code_id,
+          // projectBudgetCodeId maps budget_lines → project_cost_codes for form selectors
+          projectBudgetCodeId: budgetLineToProjectCodeMap[item.budget_code_id] || item.budget_line?.project_budget_code_id || null,
+          budgetLine: item.budget_line || null,
+          quantity: item.quantity,
+          unitOfMeasure: item.unit_of_measure,
+          unitCost: item.unit_cost,
+          extendedAmount: quantity * unitCost,
+          revenueRom: item.revenue_rom,
+          costRom: item.cost_rom,
+          nonCommittedCost: item.non_committed_cost,
+          vendorId: item.vendor_id,
+          // formVendorId maps companies.id → vendors.id for form selectors
+          formVendorId: item.vendor_id ? (companyToVendorMap[item.vendor_id] || null) : null,
+          vendor: item.vendor || null,
+          contractId: item.contract_id,
+          commitmentId: item.commitment_id,
+          commitmentType: item.commitment_type,
+          commitmentLineItemId: item.commitment_line_item_id,
+          commitment: item.commitment_id ? commitmentMap[item.commitment_id] || null : null,
+          sortOrder: item.sort_order,
+          createdAt: item.created_at,
+          updatedAt: item.updated_at,
+        };
+      }),
       history: (changeEvent.change_event_history || []).map((entry: any) => ({
         id: entry.id,
         fieldName: entry.field_name,
@@ -217,6 +344,8 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     if (validatedData.reason !== undefined)
       updates.reason = validatedData.reason;
     if (validatedData.scope !== undefined) updates.scope = validatedData.scope;
+    if (validatedData.origin !== undefined)
+      updates.origin = validatedData.origin;
     if (validatedData.description !== undefined)
       updates.description = validatedData.description;
     if (validatedData.status !== undefined)
@@ -250,7 +379,22 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
           contract_id,
           sort_order,
           created_at,
-          updated_at
+          updated_at,
+          budget_line:budget_lines!budget_code_id(
+            id,
+            project_budget_code_id,
+            description,
+            cost_code:cost_codes!cost_code_id(
+              id,
+              title,
+              division_id,
+              division_title
+            )
+          ),
+          vendor:companies!vendor_id(
+            id,
+            name
+          )
         )
       `,
       )
@@ -305,22 +449,29 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         id: user.id,
         email: user.email,
       },
-      lineItems: (data.change_event_line_items || []).map((item: any) => ({
-        id: item.id,
-        description: item.description,
-        budgetCodeId: item.budget_code_id,
-        quantity: item.quantity,
-        unitOfMeasure: item.unit_of_measure,
-        unitCost: item.unit_cost,
-        revenueRom: item.revenue_rom,
-        costRom: item.cost_rom,
-        nonCommittedCost: item.non_committed_cost,
-        vendorId: item.vendor_id,
-        contractId: item.contract_id,
-        sortOrder: item.sort_order,
-        createdAt: item.created_at,
-        updatedAt: item.updated_at,
-      })),
+      lineItems: (data.change_event_line_items || []).map((item: any) => {
+        const quantity = item.quantity || 0;
+        const unitCost = item.unit_cost || 0;
+        return {
+          id: item.id,
+          description: item.description,
+          budgetCodeId: item.budget_code_id,
+          budgetLine: item.budget_line || null,
+          quantity: item.quantity,
+          unitOfMeasure: item.unit_of_measure,
+          unitCost: item.unit_cost,
+          extendedAmount: quantity * unitCost,
+          revenueRom: item.revenue_rom,
+          costRom: item.cost_rom,
+          nonCommittedCost: item.non_committed_cost,
+          vendorId: item.vendor_id,
+          vendor: item.vendor || null,
+          contractId: item.contract_id,
+          sortOrder: item.sort_order,
+          createdAt: item.created_at,
+          updatedAt: item.updated_at,
+        };
+      }),
       _links: {
         self: `/api/projects/${projectId}/change-events/${changeEventId}`,
       },

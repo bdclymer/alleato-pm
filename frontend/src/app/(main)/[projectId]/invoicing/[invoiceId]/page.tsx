@@ -38,7 +38,7 @@ import {
   SlideoverTitle,
 } from "@/components/ui/unified-slideover";
 import { StatusBadge } from "@/components/misc/status-badge";
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import { formatCurrency, formatDate, type OwnerInvoice } from "@/config/tables";
@@ -363,54 +363,44 @@ export default function InvoiceDetailPage() {
 
   if (isLoading) {
     return (
-      <>
-        <ProjectPageHeader title="Invoice Details" description="Loading..." />
-        <PageContainer>
-          <div className="flex justify-center items-center h-64">
-            <Text tone="muted">Loading invoice...</Text>
-          </div>
-        </PageContainer>
-      </>
+      <PageShell variant="detail" title="Invoice Details" onBack={() => router.back()}>
+        <div className="flex justify-center items-center h-64">
+          <Text tone="muted">Loading invoice...</Text>
+        </div>
+      </PageShell>
     );
   }
 
   if (error || !invoice) {
     return (
-      <>
-        <ProjectPageHeader
-          title="Invoice Details"
-          description="Error loading invoice"
-        />
-        <PageContainer>
-          <Card>
-            <CardContent className="p-6">
-              <div className="text-center">
-                <Text tone="destructive" className="mb-4">
-                  {error || "Invoice not found"}
-                </Text>
-                <Button onClick={handleBack}>
-                  <ArrowLeft />
-                  Back to Invoicing
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </PageContainer>
-      </>
+      <PageShell variant="detail" title="Invoice Details" onBack={() => router.back()}>
+        <Card>
+          <CardContent className="p-6">
+            <div className="text-center">
+              <Text tone="destructive" className="mb-4">
+                {error || "Invoice not found"}
+              </Text>
+              <Button onClick={handleBack}>
+                <ArrowLeft />
+                Back to Invoicing
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </PageShell>
     );
   }
 
   return (
     <>
-      <ProjectPageHeader
+      <PageShell
+        variant="detail"
         title={`Invoice ${invoice.invoice_number || invoice.id}`}
         description={`Contract #${invoice.contract_id}`}
+        statusBadge={<StatusBadge status={invoice.status} type="invoice" />}
+        onBack={() => router.back()}
         actions={
           <div className="flex gap-2">
-            <Button variant="ghost" size="sm" onClick={handleBack}>
-              <ArrowLeft />
-              Back
-            </Button>
             {invoice.status === "draft" && (
               <>
                 <Button variant="outline" size="sm" onClick={handleEdit}>
@@ -446,19 +436,12 @@ export default function InvoiceDetailPage() {
             )}
           </div>
         }
-      />
-
-      <PageContainer>
+      >
         <div className="space-y-6">
           {/* Invoice Header */}
           <Card>
             <CardHeader>
-              <div className="flex items-start justify-between">
-                <div>
-                  <CardTitle>Invoice Information</CardTitle>
-                </div>
-                <StatusBadge status={invoice.status} type="invoice" />
-              </div>
+              <CardTitle>Invoice Information</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -564,7 +547,7 @@ export default function InvoiceDetailPage() {
             </CardContent>
           </Card>
         </div>
-      </PageContainer>
+      </PageShell>
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

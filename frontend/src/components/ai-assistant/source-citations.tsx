@@ -61,6 +61,13 @@ function getSourceHref(source: SourceItem): string {
     metadata.doc_type ?? metadata.type ?? metadata.category ?? "",
   ).toLowerCase();
   const sourceName = String(metadata.source ?? "").toLowerCase();
+  const projectId =
+    typeof metadata.project_id === "number"
+      ? metadata.project_id
+      : Number(metadata.project_id);
+  const metadataId = String(
+    metadata.metadata_id ?? metadata.file_id ?? metadata.id ?? source.document_id ?? "",
+  ).trim();
 
   const meetingLike =
     docType.includes("meeting") ||
@@ -81,6 +88,24 @@ function getSourceHref(source: SourceItem): string {
 
     if (meetingIdCandidate) {
       return `/meetings/${meetingIdCandidate}`;
+    }
+  }
+
+  if (projectId && metadataId) {
+    if (docType.includes("rfi")) {
+      return `/${projectId}/rfis/${metadataId}`;
+    }
+    if (docType.includes("submittal")) {
+      return `/${projectId}/submittals/${metadataId}`;
+    }
+    if (docType.includes("change order")) {
+      return `/${projectId}/change-orders/prime/${metadataId}`;
+    }
+    if (docType.includes("change event")) {
+      return `/${projectId}/change-events/${metadataId}`;
+    }
+    if (docType.includes("project")) {
+      return `/${projectId}/home`;
     }
   }
 

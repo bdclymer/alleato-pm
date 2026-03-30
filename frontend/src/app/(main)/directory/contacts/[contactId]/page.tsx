@@ -1,11 +1,9 @@
 "use client";
-import { ProjectPageHeader } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
-
-import { PageContainer } from "@/components/layout/PageContainer";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Text } from "@/components/ui/text";
@@ -93,74 +91,50 @@ export default function ContactDetailsPage() {
 
   if (isLoading) {
     return (
-      <>
-        <ProjectPageHeader
-          title="Contact Details"
-          showProjectName={false}
-        />
-        <PageContainer>
-          <div className="space-y-6">
-            <Skeleton className="h-32 w-full" />
-            <Skeleton className="h-64 w-full" />
-          </div>
-        </PageContainer>
-      </>
+      <PageShell variant="detail" title="Contact Details" onBack={() => router.back()}>
+        <div className="space-y-6">
+          <Skeleton className="h-32 w-full" />
+          <Skeleton className="h-64 w-full" />
+        </div>
+      </PageShell>
     );
   }
 
   if (error || !contact) {
     return (
-      <>
-        <ProjectPageHeader
-          title="Contact Details"
-          showProjectName={false}
-        />
-        <PageContainer>
-          <div className="text-center py-12">
-            <Text tone="destructive">
-              {error?.message || "Contact not found"}
-            </Text>
-            <Button
-              variant="outline"
-              onClick={() => router.push("/directory/contacts")}
-              className="mt-4"
-            >
-              <ArrowLeft />
-              Back to Contacts
-            </Button>
-          </div>
-        </PageContainer>
-      </>
+      <PageShell variant="detail" title="Contact Details" onBack={() => router.back()}>
+        <div className="text-center py-12">
+          <Text tone="destructive">
+            {error?.message || "Contact not found"}
+          </Text>
+          <Button
+            variant="outline"
+            onClick={() => router.push("/directory/contacts")}
+            className="mt-4"
+          >
+            <ArrowLeft />
+            Back to Contacts
+          </Button>
+        </div>
+      </PageShell>
     );
   }
 
   const fullName = `${contact.first_name || ""} ${contact.last_name || ""}`.trim() || "Unnamed Contact";
 
   return (
-    <>
-      <ProjectPageHeader
-        title={fullName}
-        description={contact.email || "No email provided"}
-        showProjectName={false}
-        actions={
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => router.push("/directory/contacts")}
-            >
-              <ArrowLeft />
-              Back to Contacts
-            </Button>
-            <Button
-              className="bg-primary hover:bg-primary/90"
-            >
-              <Edit />
-              Edit Contact
-            </Button>
-          </div>
-        }
-      />
-      <PageContainer>
+    <PageShell
+      variant="detail"
+      title={fullName}
+      description={contact.email || "No email provided"}
+      onBack={() => router.back()}
+      actions={
+        <Button className="bg-primary hover:bg-primary/90">
+          <Edit />
+          Edit Contact
+        </Button>
+      }
+    >
         <div className="grid gap-6">
           {/* Contact Information Card */}
           <Card>
@@ -376,7 +350,6 @@ export default function ContactDetailsPage() {
             </CardContent>
           </Card>
         </div>
-      </PageContainer>
-    </>
+    </PageShell>
   );
 }

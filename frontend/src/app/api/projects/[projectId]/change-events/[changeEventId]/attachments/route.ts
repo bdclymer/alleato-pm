@@ -35,12 +35,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     // Get attachments
     const { data: attachments, error } = await supabase
       .from("change_event_attachments")
-      .select(
-        `
-        *,
-        uploader:users(id, email)
-      `,
-      )
+      .select("*")
       .eq("change_event_id", changeEventId)
       .order("uploaded_at", { ascending: false });
 

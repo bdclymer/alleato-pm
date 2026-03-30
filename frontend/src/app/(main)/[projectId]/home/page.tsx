@@ -6,6 +6,117 @@ import { ProjectCommandCenter as ProjectHomeClient } from "./project-command-cen
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
+interface TeamMember {
+  id: string;
+  role: string;
+  person_id: string;
+  first_name: string;
+  last_name: string;
+  full_name: string;
+  email: string;
+  company_name: string;
+  phone_office: string;
+  phone_mobile: string;
+}
+
+interface HomeAlerts {
+  hasPrimeContractWithoutFinancialMarkup: boolean;
+  changeOrdersWithoutChangeRequestCount: number;
+}
+
+interface DirectoryTeamMemberRow {
+  person_id: string;
+  role: string | null;
+  people: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string | null;
+    company: string | null;
+    phone_business: string | null;
+    phone_mobile: string | null;
+  };
+}
+
+function toStringValue(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function parseTeamMember(rawMember: unknown): Record<string, unknown> {
+  if (typeof rawMember === "string") {
+    try {
+      const parsed = JSON.parse(rawMember) as unknown;
+      if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+        return parsed as Record<string, unknown>;
+      }
+    } catch {
+      return { name: rawMember };
+    }
+    return { name: rawMember };
+  }
+
+  if (rawMember && typeof rawMember === "object" && !Array.isArray(rawMember)) {
+    return rawMember as Record<string, unknown>;
+  }
+
+  return {};
+}
+
+function mapProjectTeamMembers(rawTeamMembers: unknown): TeamMember[] {
+  if (!Array.isArray(rawTeamMembers)) return [];
+
+  return rawTeamMembers
+    .map((rawMember, index) => {
+      const parsed = parseTeamMember(rawMember);
+      const fullName = toStringValue(parsed.full_name) || toStringValue(parsed.name);
+      const [firstName = "", ...lastNameParts] = fullName.split(/\s+/).filter(Boolean);
+      const lastName = lastNameParts.join(" ");
+      const role = toStringValue(parsed.role) || toStringValue(parsed.title) || "Team Member";
+      const personId = toStringValue(parsed.person_id) || toStringValue(parsed.id);
+
+      const fallbackIdBase = personId || fullName || `member-${index}`;
+      const fallbackId = `project-team-${fallbackIdBase.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${index}`;
+
+      return {
+        id: personId || fallbackId,
+        role,
+        person_id: personId,
+        first_name: toStringValue(parsed.first_name) || firstName,
+        last_name: toStringValue(parsed.last_name) || lastName,
+        full_name: fullName || "Team Member",
+        email: toStringValue(parsed.email),
+        company_name: toStringValue(parsed.company) || toStringValue(parsed.company_name),
+        phone_office: toStringValue(parsed.phone_office) || toStringValue(parsed.office),
+        phone_mobile: toStringValue(parsed.phone_mobile) || toStringValue(parsed.phone) || toStringValue(parsed.mobile),
+      } satisfies TeamMember;
+    })
+    .filter((member) => member.full_name.length > 0);
+}
+
+function mapDirectoryTeamMembers(rawMembers: unknown): TeamMember[] {
+  if (!Array.isArray(rawMembers)) return [];
+
+  return (rawMembers as DirectoryTeamMemberRow[]).map((member) => {
+    const person = member.people;
+    const firstName = person?.first_name?.trim() || "";
+    const lastName = person?.last_name?.trim() || "";
+    const fullName = `${firstName} ${lastName}`.trim() || "Team Member";
+
+    return {
+      id: person?.id || member.person_id,
+      role: member.role?.trim() || "Team Member",
+      person_id: person?.id || member.person_id,
+      first_name: firstName,
+      last_name: lastName,
+      full_name: fullName,
+      email: person?.email || "",
+      company_name: person?.company || "",
+      phone_office: person?.phone_business || "",
+      phone_mobile: person?.phone_mobile || "",
+    };
+  });
+}
+
 export default async function ProjectHomePage({
   params,
 }: {
@@ -38,6 +149,10 @@ export default async function ProjectHomePage({
     changeEventsResult,
     scheduleResult,
     teamResult,
+    teamDirectoryResult,
+    verticalMarkupCountResult,
+    primeCosWithoutChangeRequestCountResult,
+    commitmentCosWithoutChangeRequestCountResult,
   ] = await Promise.all([
     // Fetch main project data
     supabase.from("projects").select("*").eq("id", numericProjectId).single(),
@@ -153,6 +268,36 @@ export default async function ProjectHomePage({
 
     // Fetch project team roster
     supabase.rpc("get_project_team", { p_project_id: numericProjectId }),
+
+    // Fetch active project directory memberships (source of truth for Home team)
+    supabase
+      .from("project_directory_memberships")
+      .select(
+        "person_id, role, people!inner(id, first_name, last_name, email, company, phone_business, phone_mobile)"
+      )
+      .eq("project_id", numericProjectId)
+      .eq("status", "active")
+      .limit(50),
+
+    // Count project-level financial markup settings
+    supabase
+      .from("vertical_markup")
+      .select("id", { count: "exact", head: true })
+      .eq("project_id", numericProjectId),
+
+    // Count prime contract change orders with no linked change request/event
+    supabase
+      .from("prime_contract_change_orders")
+      .select("id", { count: "exact", head: true })
+      .eq("project_id", numericProjectId)
+      .is("change_event_id", null),
+
+    // Count commitment change orders with no linked change request/event
+    supabase
+      .from("contract_change_orders")
+      .select("id, prime_contracts!inner(project_id)", { count: "exact", head: true })
+      .eq("prime_contracts.project_id", numericProjectId)
+      .is("change_event_id", null),
   ]);
 
   if (projectResult.error || !projectResult.data) {
@@ -186,8 +331,8 @@ export default async function ProjectHomePage({
   ];
   const rfis = rfisResult.data || [];
   const dailyLogs = dailyLogsResult.data || [];
-  // Cast to expected format since commitments_unified is a view
-  const commitments = ((commitmentsResult.data || []) as unknown) as Array<{
+  // Cast to expected format since commitments_unified is a view — deduplicate by id
+  const rawCommitments = ((commitmentsResult.data || []) as unknown) as Array<{
     id: string;
     project_id: number;
     number: string;
@@ -205,12 +350,51 @@ export default async function ProjectHomePage({
     updated_at: string;
     original_amount?: number;
   }>;
+  const seenCommitmentIds = new Set<string>();
+  const commitments = rawCommitments.filter((c) => {
+    if (seenCommitmentIds.has(c.id)) return false;
+    seenCommitmentIds.add(c.id);
+    return true;
+  });
+
+  // Fetch commitment SOV totals (sum of sov_line_items.scheduled_value)
+  const commitmentIds = commitments.map((c) => c.id);
+  let commitmentSovTotal = 0;
+  if (commitmentIds.length > 0) {
+    const { data: sovData } = await supabase
+      .from("sov_line_items")
+      .select("scheduled_value, schedule_of_values!inner(commitment_id)")
+      .in("schedule_of_values.commitment_id", commitmentIds);
+    if (sovData) {
+      commitmentSovTotal = sovData.reduce(
+        (sum, row) => sum + (row.scheduled_value ?? 0),
+        0
+      );
+    }
+  }
+
   const contracts = contractsResult.data || [];
+  const verticalMarkupCount = verticalMarkupCountResult.count || 0;
+  const homeAlerts: HomeAlerts = {
+    hasPrimeContractWithoutFinancialMarkup:
+      contracts.length > 0 && verticalMarkupCount === 0,
+    changeOrdersWithoutChangeRequestCount:
+      (primeCosWithoutChangeRequestCountResult.count || 0) +
+      (commitmentCosWithoutChangeRequestCountResult.count || 0),
+  };
   const contractLineItems = contractLineItemsResult.data || [];
   const budget = budgetResult.data || [];
   const changeEvents = changeEventsResult.data || [];
   const schedule = scheduleResult.data || [];
-  const team = teamResult.data || [];
+  const teamFromRpc = teamResult.data || [];
+  const teamFromDirectory = mapDirectoryTeamMembers(teamDirectoryResult.data || []);
+  const teamFromProject = mapProjectTeamMembers(project.team_members);
+  const team =
+    teamFromDirectory.length > 0
+      ? teamFromDirectory
+      : teamFromRpc.length > 0
+      ? teamFromRpc
+      : teamFromProject;
 
   return (
     <PageShell
@@ -228,12 +412,14 @@ export default async function ProjectHomePage({
         rfis={rfis}
         dailyLogs={dailyLogs}
         commitments={commitments}
+        commitmentSovTotal={commitmentSovTotal}
         contracts={contracts}
         contractLineItems={contractLineItems}
         budget={budget}
         changeEvents={changeEvents}
         schedule={schedule}
         team={team}
+        homeAlerts={homeAlerts}
       />
     </PageShell>
   );

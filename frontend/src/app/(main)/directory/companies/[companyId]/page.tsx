@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { createContact, updateContact } from "@/app/(main)/actions/table-actions";
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -529,44 +529,38 @@ export default function CompanyDetailsPage() {
 
   if (isLoading) {
     return (
-      <>
-        <ProjectPageHeader title="Company Details" description="Loading company information..." />
-        <PageContainer padding={false} className="px-4 sm:px-6 lg:px-8 pt-2 sm:pt-4 pb-6 sm:pb-8">
-          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
-            <div className="space-y-6">
-              <Skeleton className="h-6 w-40" />
-              <Skeleton className="h-56 w-full" />
-              <Skeleton className="h-56 w-full" />
-            </div>
-            <div className="space-y-6">
-              <Skeleton className="h-40 w-full" />
-              <Skeleton className="h-32 w-full" />
-            </div>
+      <PageShell variant="detail" title="Company Details" description="Loading company information..." onBack={() => router.back()}>
+        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="space-y-6">
+            <Skeleton className="h-6 w-40" />
+            <Skeleton className="h-56 w-full" />
+            <Skeleton className="h-56 w-full" />
           </div>
-        </PageContainer>
-      </>
+          <div className="space-y-6">
+            <Skeleton className="h-40 w-full" />
+            <Skeleton className="h-32 w-full" />
+          </div>
+        </div>
+      </PageShell>
     );
   }
 
   if (error || !data) {
     return (
-      <>
-        <ProjectPageHeader title="Company Details" description="Unable to load company details" />
-        <PageContainer padding={false} className="px-4 sm:px-6 lg:px-8 pt-2 sm:pt-4 pb-6 sm:pb-8">
-          <section className="space-y-4">
-            <SectionHeader title="Request failed" description="The company detail endpoint returned an error." />
-            <div className="rounded-md border border-border px-4 py-4">
-              <p className="text-sm text-destructive">{error || "Company not found"}</p>
-              <div className="mt-4">
-                <Button variant="outline" onClick={() => router.push("/directory/companies")}>
-                  <ArrowLeft />
-                  Back to Companies
-                </Button>
-              </div>
+      <PageShell variant="detail" title="Company Details" description="Unable to load company details" onBack={() => router.back()}>
+        <section className="space-y-4">
+          <SectionHeader title="Request failed" description="The company detail endpoint returned an error." />
+          <div className="rounded-md border border-border px-4 py-4">
+            <p className="text-sm text-destructive">{error || "Company not found"}</p>
+            <div className="mt-4">
+              <Button variant="outline" onClick={() => router.push("/directory/companies")}>
+                <ArrowLeft />
+                Back to Companies
+              </Button>
             </div>
-          </section>
-        </PageContainer>
-      </>
+          </div>
+        </section>
+      </PageShell>
     );
   }
 
@@ -592,25 +586,18 @@ export default function CompanyDetailsPage() {
   })();
 
   return (
-    <>
-      <ProjectPageHeader
-        title={company.name}
-        description={companyLocation || company.website || "Company details"}
-        actions={
-          <div className="flex flex-wrap gap-2">
-            <Button variant="outline" onClick={() => router.push("/directory/companies")}>
-              <ArrowLeft />
-              Back
-            </Button>
-            <Button variant="outline" onClick={() => setEditOpen(true)}>
-              <Pencil />
-              Edit Company
-            </Button>
-          </div>
-        }
-      />
-
-      <PageContainer padding={false} className="px-4 sm:px-6 lg:px-8 pt-2 sm:pt-4 pb-6 sm:pb-8">
+    <PageShell
+      variant="detail"
+      title={company.name}
+      description={companyLocation || company.website || "Company details"}
+      onBack={() => router.back()}
+      actions={
+        <Button variant="outline" onClick={() => setEditOpen(true)}>
+          <Pencil />
+          Edit Company
+        </Button>
+      }
+    >
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="space-y-8">
             <section className="space-y-4 border-b border-border pb-8">
@@ -852,8 +839,6 @@ export default function CompanyDetailsPage() {
             </section>
           </aside>
         </div>
-      </PageContainer>
-
       <Modal open={editOpen} onOpenChange={setEditOpen}>
         <ModalContent className="sm:max-w-xl">
           <ModalHeader>
@@ -1243,6 +1228,6 @@ export default function CompanyDetailsPage() {
           </ModalFooter>
         </ModalContent>
       </Modal>
-    </>
+    </PageShell>
   );
 }

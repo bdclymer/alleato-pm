@@ -6,7 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { Plus, ArrowRight, FolderOpen } from "lucide-react";
 import { toast } from "sonner";
 
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -89,19 +89,17 @@ export default function DrawingSetsPage() {
   };
 
   return (
-    <>
-      <ProjectPageHeader
-        title="Drawings"
-        description="View, manage, and upload all of your drawings from the Drawings log."
-        tabs={tabs(projectId)}
-        actions={
-          <Button size="sm" onClick={() => setShowCreateRow(true)}>
-            <Plus />
-            New Set
-          </Button>
-        }
-      />
-      <PageContainer>
+    <PageShell
+      variant="table"
+      title="Drawing Sets"
+      tabs={tabs(projectId)}
+      actions={
+        <Button size="sm" onClick={() => setShowCreateRow(true)}>
+          <Plus />
+          New Set
+        </Button>
+      }
+    >
         {/* Search */}
         <div className="mb-4">
           <Input
@@ -270,7 +268,6 @@ export default function DrawingSetsPage() {
             </TableBody>
           </Table>
         </div>
-      </PageContainer>
-    </>
+    </PageShell>
   );
 }

@@ -1,4 +1,4 @@
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import type { ReactElement } from "react";
 import path from "path";
 import { readdir } from "fs/promises";
@@ -47,11 +47,11 @@ export default async function DesignSystemPage(): Promise<ReactElement> {
   const uiComponents = await getUiComponents();
 
   return (
-    <PageContainer className="space-y-6">
-      <ProjectPageHeader
-        title="Design System"
-        description="Single source of truth for UI standards, tokens, and components."
-      />
+    <PageShell
+      variant="content"
+      title="Design System"
+      description="Single source of truth for UI standards, tokens, and components."
+    >
 
       <div className="space-y-6">
         <Card>
@@ -104,6 +104,6 @@ export default async function DesignSystemPage(): Promise<ReactElement> {
           </CardContent>
         </Card>
       </div>
-    </PageContainer>
+    </PageShell>
   );
 }

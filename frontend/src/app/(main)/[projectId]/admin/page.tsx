@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { Card } from "@/components/ui/card";
 
 export default function ProjectAdminPage() {
@@ -9,18 +9,12 @@ export default function ProjectAdminPage() {
   const projectId = params.projectId as string;
 
   return (
-    <>
-      <ProjectPageHeader
-        title="Admin"
-        description="Project administration settings"
-      />
-      <PageContainer>
-        <Card className="p-6">
-          <p className="text-muted-foreground">
-            Admin for project {projectId} - Coming soon
-          </p>
-        </Card>
-      </PageContainer>
-    </>
+    <PageShell variant="content" title="Admin" description="Project administration settings">
+      <Card className="p-6">
+        <p className="text-muted-foreground">
+          Admin for project {projectId} - Coming soon
+        </p>
+      </Card>
+    </PageShell>
   );
 }

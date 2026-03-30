@@ -272,29 +272,6 @@ function ExpandedNavGroup({
 }
 
 // =============================================================================
-// Dev tools trigger (sidebar footer)
-// =============================================================================
-
-function DevToolsTrigger({ isCollapsed }: { isCollapsed: boolean }) {
-  // Dynamically import the EnhancedDevPanel to avoid bundling in production
-  const [DevPanel, setDevPanel] = React.useState<React.ComponentType | null>(null)
-
-  React.useEffect(() => {
-    import("@/components/dev-tools/enhanced-dev-panel").then((mod) => {
-      setDevPanel(() => mod.EnhancedDevPanel)
-    })
-  }, [])
-
-  if (!DevPanel) return null
-
-  return (
-    <div className={cn("flex", isCollapsed ? "justify-center" : "px-1")}>
-      <DevPanel />
-    </div>
-  )
-}
-
-// =============================================================================
 // Main AppSidebar
 // =============================================================================
 
@@ -547,10 +524,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
       {/* ── Footer ── */}
       <SidebarFooter className={cn(isCollapsed ? "px-0 py-1.5" : "p-2")}>
-        {/* Dev tools — only in development mode */}
-        {process.env.NODE_ENV === "development" && (
-          <DevToolsTrigger isCollapsed={isCollapsed} />
-        )}
         {/* User menu — works in both collapsed and expanded */}
         {userData && <NavUser user={userData} />}
       </SidebarFooter>

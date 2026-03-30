@@ -147,17 +147,61 @@ export async function PATCH(
       );
     }
 
-    // Get budget code if provided
-    let budgetCode = existingItem.cost_code;
+    // Resolve budgetCodeId: could be budget_lines.id OR project_cost_codes.id
+    let resolvedBudgetCodeId = validatedData.budgetCodeId;
     if (validatedData.budgetCodeId) {
+      // First try budget_lines directly
       const { data: budgetLine } = await supabase
         .from('budget_lines')
-        .select('cost_code')
+        .select('id')
         .eq('id', validatedData.budgetCodeId)
         .single();
 
-      if (budgetLine) {
-        budgetCode = budgetLine.cost_code;
+      if (!budgetLine) {
+        // Not a budget_lines ID — try project_cost_codes and find matching budget_line
+        const { data: pcc } = await supabase
+          .from('project_cost_codes')
+          .select('id, cost_code_id, cost_type_id')
+          .eq('id', validatedData.budgetCodeId)
+          .single();
+
+        if (pcc) {
+          const { data: matchingBudgetLine } = await supabase
+            .from('budget_lines')
+            .select('id')
+            .eq('project_id', parseInt(projectId, 10))
+            .eq('cost_code_id', pcc.cost_code_id)
+            .eq('cost_type_id', pcc.cost_type_id)
+            .single();
+
+          if (matchingBudgetLine) {
+            resolvedBudgetCodeId = matchingBudgetLine.id;
+          }
+        }
+      }
+    }
+
+    // Resolve vendorId: could be companies.id OR vendors.id
+    let resolvedVendorId = validatedData.vendorId;
+    if (validatedData.vendorId) {
+      // First check if it's a valid companies.id
+      const { data: company } = await supabase
+        .from('companies')
+        .select('id')
+        .eq('id', validatedData.vendorId)
+        .single();
+
+      if (!company) {
+        // Not a companies ID — try vendors table and get company_id
+        const { data: vendor } = await supabase
+          .from('vendors')
+          .select('company_id')
+          .eq('id', validatedData.vendorId)
+          .single();
+
+        if (vendor?.company_id) {
+          resolvedVendorId = vendor.company_id;
+        }
       }
     }
 
@@ -167,7 +211,14 @@ export async function PATCH(
     };
 
     if (validatedData.description !== undefined) updates.description = validatedData.description;
-    if (validatedData.budgetCodeId !== undefined) updates.cost_code = budgetCode;
+    if (validatedData.budgetCodeId !== undefined) {
+      updates.budget_code_id = resolvedBudgetCodeId;
+    }
+    if (resolvedVendorId !== undefined && validatedData.vendorId !== undefined) updates.vendor_id = resolvedVendorId;
+    if (validatedData.contractId !== undefined) updates.contract_id = validatedData.contractId;
+    if (validatedData.commitmentId !== undefined) updates.commitment_id = validatedData.commitmentId;
+    if (validatedData.commitmentType !== undefined) updates.commitment_type = validatedData.commitmentType;
+    if (validatedData.commitmentLineItemId !== undefined) updates.commitment_line_item_id = validatedData.commitmentLineItemId;
     if (validatedData.quantity !== undefined) updates.quantity = validatedData.quantity;
     if (validatedData.unitOfMeasure !== undefined) updates.uom = validatedData.unitOfMeasure;
     if (validatedData.unitCost !== undefined) updates.unit_cost = validatedData.unitCost;

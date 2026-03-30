@@ -908,14 +908,40 @@ function CardContent({
     .slice(0, 2);
   const isDispatched = card.dispatch_status === "dispatched" || card.dispatch_status === "in_progress";
   const isCopied = copiedDispatch === card.id;
+  const isEditable = Boolean(onEdit);
+
+  const handleCardClick = useCallback(() => {
+    if (onEdit) onEdit();
+  }, [onEdit]);
+
+  const handleCardKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLDivElement>) => {
+      if (!onEdit) return;
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        onEdit();
+      }
+    },
+    [onEdit],
+  );
 
   return (
-    <div className={`rounded-lg border border-border bg-card ${density.cardPadding} shadow-xs hover:shadow-sm transition-shadow group`}>
+    <div
+      className={`rounded-lg border border-border bg-card ${density.cardPadding} shadow-xs hover:shadow-sm transition-shadow group ${
+        isEditable ? "cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" : ""
+      }`}
+      onClick={isEditable ? handleCardClick : undefined}
+      onKeyDown={isEditable ? handleCardKeyDown : undefined}
+      role={isEditable ? "button" : undefined}
+      tabIndex={isEditable ? 0 : undefined}
+      aria-label={isEditable ? `Edit ${card.title}` : undefined}
+    >
       <div className="flex items-start gap-1.5">
         <button
           {...dragProps}
           className="mt-0.5 text-muted-foreground/40 hover:text-muted-foreground cursor-grab active:cursor-grabbing shrink-0"
           aria-label="Drag card"
+          onClick={(event) => event.stopPropagation()}
         >
           <GripVertical className={isCompact ? "h-3 w-3" : "h-4 w-4"} />
         </button>
@@ -1002,6 +1028,7 @@ function CardContent({
                 variant="ghost"
                 size="icon"
                 className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
+                onClick={(event) => event.stopPropagation()}
               >
                 <MoreHorizontal />
               </Button>

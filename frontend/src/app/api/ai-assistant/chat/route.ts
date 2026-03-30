@@ -17,10 +17,64 @@ import {
 } from "@/lib/ai/orchestrator";
 import {
   assembleSystemPrompt,
+  type MemoryUsageSummary,
   runPostResponseTasks,
 } from "@/lib/ai/bot-core";
 
 export const maxDuration = 120;
+
+type ResponseQuality = {
+  confidence: "high" | "medium" | "low";
+  sourceQuality: "high" | "medium" | "low";
+  score: number;
+  reasons: string[];
+};
+
+function scoreResponseQuality(params: {
+  toolTrace: Array<Record<string, unknown>>;
+  content: string;
+}): ResponseQuality {
+  const reasons: string[] = [];
+  const trace = params.toolTrace;
+  const successfulToolCalls = trace.filter((t) => !t.error).length;
+  const failedToolCalls = trace.filter((t) => t.error).length;
+  const sourceRefsInText = (params.content.match(/\[Source:/g) ?? []).length;
+
+  let score = 50;
+  if (successfulToolCalls >= 3) {
+    score += 25;
+    reasons.push("multiple successful tool calls");
+  } else if (successfulToolCalls >= 1) {
+    score += 12;
+    reasons.push("at least one successful tool call");
+  } else {
+    reasons.push("no successful tool calls");
+  }
+
+  if (sourceRefsInText >= 2) {
+    score += 15;
+    reasons.push("multiple source citations");
+  } else if (sourceRefsInText === 1) {
+    score += 8;
+    reasons.push("single source citation");
+  } else {
+    reasons.push("no source citations in final response");
+  }
+
+  if (failedToolCalls > 0) {
+    score -= Math.min(20, failedToolCalls * 5);
+    reasons.push(`${failedToolCalls} tool call failure(s)`);
+  }
+
+  score = Math.max(0, Math.min(100, score));
+
+  const confidence: ResponseQuality["confidence"] =
+    score >= 80 ? "high" : score >= 60 ? "medium" : "low";
+  const sourceQuality: ResponseQuality["sourceQuality"] =
+    sourceRefsInText >= 2 ? "high" : sourceRefsInText === 1 ? "medium" : "low";
+
+  return { confidence, sourceQuality, score, reasons };
+}
 
 function extractTextFromParts(parts: UIMessage["parts"]): string {
   return parts
@@ -51,6 +105,7 @@ export async function POST(request: Request) {
 
   const supabase = createServiceClient();
   const toolTrace: Array<Record<string, unknown>> = [];
+  let memoryUsage: MemoryUsageSummary | undefined;
 
   // Token usage tracking — populated inside execute(), read in onFinish()
   let totalUsage: {
@@ -79,6 +134,7 @@ export async function POST(request: Request) {
     onTrace: (trace) => {
       toolTrace.push(trace);
     },
+    pinnedProjectId: selectedProjectId,
   });
   const lastUserContent = lastUserMessage
     ? extractTextFromParts(lastUserMessage.parts)
@@ -91,6 +147,9 @@ export async function POST(request: Request) {
     councilMode,
     sessionId,
     isFirstTurn: messages.length === 1,
+    onMemoryUsage: (usage) => {
+      memoryUsage = usage;
+    },
   });
   const stream = createUIMessageStream({
     execute: async ({ writer }) => {
@@ -117,6 +176,10 @@ export async function POST(request: Request) {
         if (msg.role === "assistant") {
           const content = extractTextFromParts(msg.parts);
           if (content.trim()) {
+            const responseQuality = scoreResponseQuality({
+              toolTrace,
+              content,
+            });
             await supabase.from("chat_history").insert({
               session_id: sessionId,
               user_id: user.id,
@@ -128,6 +191,23 @@ export async function POST(request: Request) {
                   model: STRATEGIST_MODEL,
                   architecture: "csuite",
                   councilMode: councilMode ?? false,
+                  memory_usage: memoryUsage
+                    ? {
+                        totalUsed: memoryUsage.totalUsed,
+                        preferencesUsed: memoryUsage.preferencesUsed,
+                        relevantUsed: memoryUsage.relevantUsed,
+                        teamUsed: memoryUsage.teamUsed,
+                        recentConversationsUsed: memoryUsage.recentConversationsUsed,
+                        memories: memoryUsage.memories.map((memory) => ({
+                          id: memory.id,
+                          type: memory.type,
+                          content:
+                            memory.content.length > 240
+                              ? `${memory.content.slice(0, 240)}...`
+                              : memory.content,
+                        })),
+                      }
+                    : null,
                   usage: totalUsage
                     ? {
                         inputTokens: totalUsage.inputTokens ?? 0,
@@ -135,6 +215,7 @@ export async function POST(request: Request) {
                         totalTokens: totalUsage.totalTokens ?? 0,
                       }
                     : null,
+                  response_quality: responseQuality,
                 }),
               ),
             });

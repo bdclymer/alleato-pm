@@ -1,9 +1,9 @@
 "use client";
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Save } from "lucide-react";
+import { Save } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -115,38 +115,22 @@ export default function CommitmentSettingsPage() {
   };
 
   return (
-    <PageContainer className="space-y-6">
-      <ProjectPageHeader
-        title="Commitment Settings"
-        breadcrumbs={[
-          { label: "Commitments", href: `/${projectId}/commitments` },
-          { label: "Settings" },
-        ]}
-        actions={
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() =>
-                router.push(`/${projectId}/commitments`)
-              }
-              className="gap-2"
-            >
-              <ArrowLeft />
-              Back
-            </Button>
-            <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={isSaving}
-              className="gap-2"
-            >
-              <Save />
-              Save Settings
-            </Button>
-          </div>
-        }
-      />
+    <PageShell
+      variant="content"
+      title="Commitment Settings"
+      onBack={() => router.back()}
+      actions={
+        <Button
+          size="sm"
+          onClick={handleSave}
+          disabled={isSaving}
+          className="gap-2"
+        >
+          <Save />
+          Save Settings
+        </Button>
+      }
+    >
 
       <div className="max-w-3xl space-y-6">
         <Tabs defaultValue="general">
@@ -419,6 +403,6 @@ export default function CommitmentSettingsPage() {
           </TabsContent>
         </Tabs>
       </div>
-    </PageContainer>
+    </PageShell>
   );
 }

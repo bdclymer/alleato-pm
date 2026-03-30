@@ -1,6 +1,9 @@
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+
+// Screenshots are sent as base64 data URLs which can be several MB
+export const maxBodySize = "10mb";
 import {
   ADMIN_FEEDBACK_BUCKET,
   ADMIN_FEEDBACK_REQUEST_TYPES,
@@ -313,7 +316,12 @@ export async function POST(request: Request) {
     );
 
     // Auto-match to a procore_tools row (URL path is strongest signal)
-    const matchedTool = await matchFeedbackToTool(title, payload.comment, payload.pagePath);
+    const matchedTool = await matchFeedbackToTool(
+      title,
+      payload.comment,
+      payload.pagePath,
+      payload.pageUrl,
+    );
     const toolContext = matchedTool ? resolveToolContext(matchedTool) : null;
     const agentContext = toolContext
       ? toJsonValue(contextToAgentPayload(toolContext))
@@ -667,7 +675,12 @@ export async function PUT(request: Request) {
       }
     } else {
       // Try auto-matching if no tool assigned (use URL path as primary signal)
-      const autoMatch = await matchFeedbackToTool(item.title, item.comment, item.page_path);
+      const autoMatch = await matchFeedbackToTool(
+        item.title,
+        item.comment,
+        item.page_path,
+        item.page_url,
+      );
       if (autoMatch) {
         sendToolContext = resolveToolContext(autoMatch);
       }

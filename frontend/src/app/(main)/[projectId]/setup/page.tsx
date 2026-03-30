@@ -1,4 +1,4 @@
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { ProjectSetupWizard } from "@/components/project-setup-wizard/project-setup-wizard";
 
 interface ProjectSetupPageProps {
@@ -12,14 +12,8 @@ export default async function ProjectSetupPage({
 }: ProjectSetupPageProps) {
   const { projectId } = await params;
   return (
-    <>
-      <ProjectPageHeader
-        title="Project Setup"
-        description="Configure your project settings and details"
-      />
-      <PageContainer maxWidth="lg">
-        <ProjectSetupWizard projectId={projectId} />
-      </PageContainer>
-    </>
+    <PageShell variant="content" title="Project Setup" description="Configure your project settings and details">
+      <ProjectSetupWizard projectId={projectId} />
+    </PageShell>
   );
 }

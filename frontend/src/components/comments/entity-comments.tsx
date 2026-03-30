@@ -176,7 +176,7 @@ function CommentWithPresence(
         <div className="relative">
           <Comment.Avatar userId={userId} />
           {isPresent && (
-            <span className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full border-2 border-background bg-green-500" />
+            <span className="absolute -bottom-px -right-px h-2 w-2 rounded-full border-[1.5px] border-background bg-green-500" />
           )}
         </div>
       }

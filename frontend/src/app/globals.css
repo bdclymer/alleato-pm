@@ -1558,6 +1558,12 @@
   gap: 0 !important;
 }
 
+.lb-thread-alleato:focus-within {
+  border: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
 .lb-thread-alleato .lb-comment {
   position: relative;
   padding: 0 !important;
@@ -1571,14 +1577,14 @@
 }
 
 .lb-thread-alleato .lb-avatar {
-  width: 40px !important;
-  height: 40px !important;
-  min-width: 40px !important;
-  min-height: 40px !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
   border-radius: 50% !important;
-  outline: 2px solid hsl(var(--primary) / 0.15) !important;
-  outline-offset: 1px !important;
-  font-size: 14px !important;
+  outline: none !important;
+  outline-offset: 0 !important;
+  font-size: 12px !important;
   font-weight: 600 !important;
   z-index: 2;
   position: relative;
@@ -1619,13 +1625,12 @@
   background: hsl(var(--muted) / 0.3) !important;
   border-radius: 12px !important;
   padding: 12px 16px !important;
-  border: 1px solid hsl(var(--border) / 0.4) !important;
-  transition: background 0.15s ease, border-color 0.15s ease;
+  border: none !important;
+  transition: background 0.15s ease;
 }
 
 .lb-thread-alleato .lb-comment:hover .lb-comment-content {
   background: hsl(var(--muted) / 0.5) !important;
-  border-color: hsl(var(--border) / 0.6) !important;
 }
 
 .lb-thread-alleato .lb-comment-actions {
