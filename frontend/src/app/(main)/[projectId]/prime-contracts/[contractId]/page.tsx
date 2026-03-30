@@ -2281,7 +2281,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
 
   return (
     <PageShell
-      variant="detail"
+      variant="dashboard"
       title={`${contract.title} - #${contract.contract_number || contract.id.slice(0, 8)}`}
       description={
         contract.contractor
@@ -3067,7 +3067,7 @@ lineItemsLoading={lineItemsLoading}
         {activeTab === "financial-markup" && (
           <div className="space-y-8">
             <section className="space-y-2">
-              <h3 className="text-lg font-semibold">Financial Markup</h3>
+              <h3 className="text-xl font-semibold">Financial Markup</h3>
               <p className="text-sm text-muted-foreground">
                 Add percentage-based markups (e.g., tax, overhead, profit, insurance) to contract values.
               </p>
@@ -3260,7 +3260,7 @@ lineItemsLoading={lineItemsLoading}
                                   className="h-8 text-right"
                                 />
                               ) : (
-                                <span className="text-sm text-foreground">{Number(markup.percentage).toFixed(3)}%</span>
+                                <span className="text-sm text-foreground">{Number(markup.percentage).toFixed(2)}%</span>
                               )}
                             </TableCell>
                             <TableCell className="px-3 py-2.5">
@@ -3443,12 +3443,12 @@ lineItemsLoading={lineItemsLoading}
                 <Skeleton className="h-20 w-full" />
               </div>
             ) : (
-              <div className="max-w-3xl space-y-0 bg-background">
-                <section className="px-6 py-5">
+              <div className="max-w-xl space-y-0 bg-background">
+                <section>
                   <h3 className="text-xl font-semibold tracking-tight">Advanced Settings</h3>
                 </section>
 
-                <section className="px-6 py-6">
+                <section className="py-6">
                   <h4 className="text-lg font-semibold text-foreground">Financial Markup</h4>
                   <div className="mt-4 flex items-center gap-3">
                     <Checkbox
@@ -3464,7 +3464,7 @@ lineItemsLoading={lineItemsLoading}
                   </div>
                 </section>
 
-                <section className="px-6 py-6">
+                <section className="py-4">
                   <h4 className="text-lg font-semibold text-foreground">Owner Invoices</h4>
                   <div className="mt-4 space-y-5">
                     <div className="flex items-center gap-3">
@@ -3494,7 +3494,7 @@ lineItemsLoading={lineItemsLoading}
                   </div>
                 </section>
 
-                <section className="px-6 py-6">
+                <section className="py-4">
                   <h4 className="text-lg font-semibold text-foreground">Stored Materials</h4>
                   <p className="mt-1 text-[15px] text-muted-foreground">
                     The Materials Presently Stored column amount is manually managed.
@@ -3525,7 +3525,7 @@ lineItemsLoading={lineItemsLoading}
                   </div>
                 </section>
 
-                <section className="px-6 py-6">
+                <section className="py-4">
                   <h4 className="text-lg font-semibold text-foreground">PDF Export</h4>
                   <p className="mt-1 text-[15px] text-muted-foreground">
                     Choose what items are displayed on exported invoice PDFs.
@@ -3544,7 +3544,7 @@ lineItemsLoading={lineItemsLoading}
                   </div>
                 </section>
 
-                <section className="px-6 py-6">
+                <section className="py-4">
                   <div className="flex items-center gap-2">
                     <h4 className="text-lg font-semibold text-foreground">Change Orders</h4>
                     <Tooltip>
@@ -3586,7 +3586,7 @@ lineItemsLoading={lineItemsLoading}
                   </div>
                 </section>
 
-                <section className="px-6 py-6">
+                <section className="py-4">
                   <h4 className="text-lg font-semibold text-foreground">Payments Received</h4>
                   <div className="mt-4 flex items-center gap-3">
                     <Checkbox id="enable-payments" checked disabled />
@@ -3596,7 +3596,7 @@ lineItemsLoading={lineItemsLoading}
                   </div>
                 </section>
 
-                <section className="flex justify-end px-6 py-5">
+                <section className="flex py-6">
                   <Button onClick={saveAdvancedSettings} disabled={advancedSettingsSaving || !advancedSettings}>
                     {advancedSettingsSaving ? "Saving..." : "Save Advanced Settings"}
                   </Button>

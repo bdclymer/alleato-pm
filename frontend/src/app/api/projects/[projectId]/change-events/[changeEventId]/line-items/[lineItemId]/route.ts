@@ -59,13 +59,18 @@ export async function GET(
       id: lineItem.id,
       changeEventId: lineItem.change_event_id,
       description: lineItem.description,
-      costCode: lineItem.cost_code,
+      budgetCodeId: lineItem.budget_code_id,
+      vendorId: lineItem.vendor_id,
+      contractId: lineItem.contract_id,
+      commitmentId: lineItem.commitment_id,
+      commitmentType: lineItem.commitment_type,
+      commitmentLineItemId: lineItem.commitment_line_item_id,
       quantity: lineItem.quantity,
-      unitOfMeasure: lineItem.uom,
+      unitOfMeasure: lineItem.unit_of_measure,
       unitCost: lineItem.unit_cost,
-      extendedAmount: (lineItem.quantity || 0) * (lineItem.unit_cost || 0),
-      romAmount: lineItem.rom_amount,
-      totalAmount: lineItem.final_amount,
+      costRom: lineItem.cost_rom,
+      revenueRom: lineItem.revenue_rom,
+      nonCommittedCost: lineItem.non_committed_cost,
       sortOrder: lineItem.sort_order || 0,
       createdAt: lineItem.created_at,
       updatedAt: lineItem.updated_at,
@@ -220,27 +225,11 @@ export async function PATCH(
     if (validatedData.commitmentType !== undefined) updates.commitment_type = validatedData.commitmentType;
     if (validatedData.commitmentLineItemId !== undefined) updates.commitment_line_item_id = validatedData.commitmentLineItemId;
     if (validatedData.quantity !== undefined) updates.quantity = validatedData.quantity;
-    if (validatedData.unitOfMeasure !== undefined) updates.uom = validatedData.unitOfMeasure;
+    if (validatedData.unitOfMeasure !== undefined) updates.unit_of_measure = validatedData.unitOfMeasure;
     if (validatedData.unitCost !== undefined) updates.unit_cost = validatedData.unitCost;
     if (validatedData.sortOrder !== undefined) updates.sort_order = validatedData.sortOrder;
-
-    // Calculate new amounts if quantity or unit cost changed
-    if (validatedData.quantity !== undefined || validatedData.unitCost !== undefined) {
-      const quantity = validatedData.quantity ?? existingItem.quantity ?? 0;
-      const unitCost = validatedData.unitCost ?? existingItem.unit_cost ?? 0;
-      const extendedAmount = quantity * unitCost;
-
-      updates.final_amount = extendedAmount;
-
-      if (validatedData.costRom !== undefined) {
-        updates.rom_amount = validatedData.costRom;
-      } else {
-        updates.rom_amount = extendedAmount;
-      }
-    }
-
+    if (validatedData.costRom !== undefined) updates.cost_rom = validatedData.costRom;
     if (validatedData.revenueRom !== undefined) updates.revenue_rom = validatedData.revenueRom;
-    if (validatedData.costRom !== undefined) updates.rom_amount = validatedData.costRom;
     if (validatedData.nonCommittedCost !== undefined) updates.non_committed_cost = validatedData.nonCommittedCost;
 
     // Update the line item
@@ -284,13 +273,18 @@ export async function PATCH(
       id: data.id,
       changeEventId: data.change_event_id,
       description: data.description,
-      costCode: data.cost_code,
+      budgetCodeId: data.budget_code_id,
+      vendorId: data.vendor_id,
+      contractId: data.contract_id,
+      commitmentId: data.commitment_id,
+      commitmentType: data.commitment_type,
+      commitmentLineItemId: data.commitment_line_item_id,
       quantity: data.quantity,
-      unitOfMeasure: data.uom,
+      unitOfMeasure: data.unit_of_measure,
       unitCost: data.unit_cost,
-      extendedAmount: (data.quantity || 0) * (data.unit_cost || 0),
-      romAmount: data.rom_amount,
-      totalAmount: data.final_amount,
+      costRom: data.cost_rom,
+      revenueRom: data.revenue_rom,
+      nonCommittedCost: data.non_committed_cost,
       sortOrder: data.sort_order,
       updatedAt: data.updated_at,
       _links: {

@@ -128,6 +128,12 @@ export default function NewChangeEventPage() {
                       : lineItem.revenueRom || undefined,
                   nonCommittedCost: lineItem.nonCommittedCost || undefined,
                   sortOrder: index,
+                  budgetCodeId: lineItem.budgetCode || undefined,
+                  vendorId: lineItem.vendor || undefined,
+                  contractId: lineItem.contract
+                    ? lineItem.contract.replace(/^(po-|sub-)/, "")
+                    : undefined,
+                  commitmentLineItemId: lineItem.commitmentLineItemId || undefined,
                 }),
               },
             ),

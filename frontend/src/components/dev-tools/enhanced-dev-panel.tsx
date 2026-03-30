@@ -38,6 +38,7 @@ import { createClient } from "@/lib/supabase/client"
 import { useParams, usePathname } from "next/navigation"
 import { toast } from "sonner"
 import { DeveloperFormConfigPanel } from "@/components/project/developer-form-config-panel"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 
 interface HealthCheck {
   name: string
@@ -60,6 +61,12 @@ interface ApiCall {
   duration: number
   timestamp: number
   error?: string
+}
+
+interface ColumnMappingRow {
+  visibleColumnName: string
+  actualColumnOrFormula: string
+  notes: string
 }
 
 function serializeConsoleArg(arg: unknown): string {
@@ -117,6 +124,49 @@ const CHECK_CONSTRAINT_VALUES = {
   companies_status: ["ACTIVE", "INACTIVE"],
 }
 
+const DATABASE_CATALOG_COLUMN_MAP: ColumnMappingRow[] = [
+  {
+    visibleColumnName: "Table Name",
+    actualColumnOrFormula: "table_name",
+    notes: "Physical table name in Postgres.",
+  },
+  {
+    visibleColumnName: "Schema",
+    actualColumnOrFormula: "schema_name",
+    notes: "Schema containing the table.",
+  },
+  {
+    visibleColumnName: "Category",
+    actualColumnOrFormula: "category",
+    notes: "Editable metadata field.",
+  },
+  {
+    visibleColumnName: "Row Count",
+    actualColumnOrFormula: "row_count",
+    notes: "Estimated row count from catalog metadata.",
+  },
+  {
+    visibleColumnName: "RLS Enabled",
+    actualColumnOrFormula: "rls_enabled",
+    notes: "Boolean rendered as enabled/disabled badge.",
+  },
+  {
+    visibleColumnName: "Primary Keys",
+    actualColumnOrFormula: "primary_keys",
+    notes: "String summary of PK columns.",
+  },
+  {
+    visibleColumnName: "Description",
+    actualColumnOrFormula: "table_comment",
+    notes: "Table comment/description.",
+  },
+  {
+    visibleColumnName: "Created At",
+    actualColumnOrFormula: "created_at",
+    notes: "Timestamp of catalog row creation.",
+  },
+]
+
 interface EnhancedDevPanelProps {
   variant?: "sidebar" | "footer"
 }
@@ -131,6 +181,9 @@ export function EnhancedDevPanel({ variant = "sidebar" }: EnhancedDevPanelProps)
   const [nextjsStatus, setNextjsStatus] = useState<"running" | "stopped" | "unknown">("unknown")
   const [isFooterOpen, setIsFooterOpen] = useState(false)
   const footerRef = useRef<HTMLDivElement>(null)
+  const [columnMappings, setColumnMappings] = useState<ColumnMappingRow[]>([])
+  const [detectedTableName, setDetectedTableName] = useState<string>("Unknown")
+  const [detectedPrimaryId, setDetectedPrimaryId] = useState<string>("N/A")
   const params = useParams()
   const pathname = usePathname()
   const supabase = createClient()
@@ -176,6 +229,60 @@ export function EnhancedDevPanel({ variant = "sidebar" }: EnhancedDevPanelProps)
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [variant, isFooterOpen])
+
+  useEffect(() => {
+    const paramsEntries = Object.entries(params ?? {})
+      .filter(([key, value]) => {
+        if (!value) return false
+        return key.toLowerCase().endsWith("id")
+      })
+      .map(([key, value]) => {
+        const normalized = Array.isArray(value) ? value[0] : value
+        return { key, value: String(normalized) }
+      })
+
+    const preferredPrimaryId =
+      paramsEntries.find((entry) => entry.key.toLowerCase() === "recordid") ??
+      paramsEntries.find((entry) => entry.key.toLowerCase() !== "projectid") ??
+      paramsEntries[0]
+
+    setDetectedPrimaryId(preferredPrimaryId ? `${preferredPrimaryId.key}: ${preferredPrimaryId.value}` : "N/A")
+
+    if (pathname === "/database") {
+      setDetectedTableName("database_tables_catalog")
+      setColumnMappings(DATABASE_CATALOG_COLUMN_MAP)
+      return
+    }
+
+    const adminTableMatch = pathname?.match(/^\/tables\/([^/]+)/)
+    if (adminTableMatch?.[1]) {
+      const tableName = decodeURIComponent(adminTableMatch[1])
+      setDetectedTableName(tableName)
+      setColumnMappings([])
+      return
+    }
+
+    const pathSegments = pathname?.split("/").filter(Boolean) ?? []
+    const lastSegment = pathSegments[pathSegments.length - 1]
+    if (lastSegment && !lastSegment.toLowerCase().endsWith("id")) {
+      setDetectedTableName(lastSegment.replaceAll("-", "_"))
+    } else {
+      setDetectedTableName("Unknown")
+    }
+
+    // Generic fallback: infer visible headers from the first table on screen.
+    const inferredHeaders = Array.from(document.querySelectorAll("table thead th"))
+      .map((element) => element.textContent?.trim() ?? "")
+      .filter((text) => text.length > 0 && text !== "Select")
+
+    setColumnMappings(
+      inferredHeaders.map((header) => ({
+        visibleColumnName: header,
+        actualColumnOrFormula: header.toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_+|_+$/g, ""),
+        notes: "Inferred from visible header text. Verify in source columns config.",
+      })),
+    )
+  }, [params, pathname, isFooterOpen])
 
   const runHealthChecks = async () => {
     setIsChecking(true)
@@ -367,8 +474,9 @@ export function EnhancedDevPanel({ variant = "sidebar" }: EnhancedDevPanelProps)
   if (process.env.NODE_ENV !== "development") return null
 
   const panelContent = (
-    <Tabs defaultValue="overview" className="mt-6">
-          <TabsList className="grid w-full grid-cols-4">
+    <Tabs defaultValue="column-map" className="mt-6">
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="column-map">Column Map</TabsTrigger>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="database">Database</TabsTrigger>
             <TabsTrigger value="errors">Errors</TabsTrigger>
@@ -378,6 +486,49 @@ export function EnhancedDevPanel({ variant = "sidebar" }: EnhancedDevPanelProps)
           <ScrollArea
             className={`${variant === "footer" ? "h-[min(70vh,640px)]" : "h-[calc(100vh-200px)]"} mt-4 pr-6`}
           >
+            {/* COLUMN MAP TAB */}
+            <TabsContent value="column-map" className="space-y-4">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="rounded-md border border-border bg-muted/40 p-3">
+                  <div className="text-xs text-muted-foreground">Table Being Displayed</div>
+                  <div className="mt-1 font-mono text-sm text-foreground">{detectedTableName}</div>
+                </div>
+                <div className="rounded-md border border-border bg-muted/40 p-3">
+                  <div className="text-xs text-muted-foreground">Primary ID</div>
+                  <div className="mt-1 font-mono text-sm text-foreground">{detectedPrimaryId}</div>
+                </div>
+              </div>
+
+              <div className="rounded-md border border-border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Visible Column Name</TableHead>
+                      <TableHead>Actual Column / Formula</TableHead>
+                      <TableHead>Notes</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {columnMappings.length > 0 ? (
+                      columnMappings.map((row) => (
+                        <TableRow key={`${row.visibleColumnName}-${row.actualColumnOrFormula}`}>
+                          <TableCell className="align-top">{row.visibleColumnName}</TableCell>
+                          <TableCell className="align-top font-mono text-xs">{row.actualColumnOrFormula}</TableCell>
+                          <TableCell className="align-top text-xs text-muted-foreground">{row.notes}</TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={3} className="text-sm text-muted-foreground">
+                          No visible table headers detected yet for this page.
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </TabsContent>
+
             {/* OVERVIEW TAB */}
             <TabsContent value="overview" className="space-y-4">
 
@@ -821,6 +972,7 @@ const supabase = createClient(url, key);
                 </p>
               )}
             </TabsContent>
+
           </ScrollArea>
     </Tabs>
   )
@@ -843,7 +995,7 @@ const supabase = createClient(url, key);
           )}
         </button>
         {isFooterOpen ? (
-          <div className="absolute bottom-full left-0 z-50 mb-1 w-[min(95vw,980px)] rounded-md border border-border bg-popover p-5 shadow-sm">
+          <div className="absolute bottom-full left-0 z-50 mb-1 w-[min(96vw,1500px)] rounded-md border border-border bg-popover p-5 shadow-sm">
             <div>
               <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
                 <Zap className="h-4 w-4" />

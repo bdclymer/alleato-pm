@@ -107,3 +107,94 @@ export interface ChangeEventRfqAttachment {
   uploaded_by: string;
   uploaded_at: string;
 }
+
+/* ── Detail page types ─────────────────────────────────────────────── */
+
+/** Enriched line item returned by the detail API (camelCase) */
+export interface ChangeEventDetailLineItem {
+  id: string;
+  description: string | null;
+  unitOfMeasure: string | null;
+  quantity: number | null;
+  unitCost: number | null;
+  costRom: number | null;
+  revenueRom: number | null;
+  nonCommittedCost: number | null;
+  changeEventId: string;
+  extendedAmount: number;
+  sortOrder: number;
+  contractId?: number | string | null;
+  vendorId?: string | null;
+  vendor?: { id: string; name: string } | null;
+  budgetCodeId?: string | null;
+  budgetLine?: {
+    id: string;
+    description: string | null;
+    cost_code?: {
+      id: string;
+      title: string | null;
+      division_id?: string | null;
+      division_title?: string | null;
+    } | null;
+  } | null;
+  commitmentId?: string | null;
+  commitmentType?: string | null;
+  commitmentLineItemId?: string | null;
+  commitment?: {
+    id: string;
+    contract_number: string;
+    title: string;
+  } | null;
+}
+
+export interface ChangeEventAttachment {
+  id: string;
+  fileName: string;
+  fileSize: number;
+  uploadedAt: string;
+  uploadedBy: unknown;
+  downloadUrl: string;
+}
+
+export interface ChangeEventHistoryEntry {
+  id: string;
+  changeEventId?: string;
+  action: string;
+  fieldName: string;
+  oldValue: string | null;
+  newValue: string | null;
+  changedBy: string | { id: string; email: string } | null;
+  changedAt: string;
+  description?: string;
+}
+
+export interface ChangeEventRelatedItem {
+  id: string;
+  relatedType: string;
+  relatedId: string;
+  relatedNumber: string | null;
+  relatedTitle: string;
+  relatedStatus: string | null;
+  relatedUrl: string;
+  createdAt: string;
+}
+
+export interface ChangeEventRelatedItemOption {
+  id: string;
+  relatedNumber: string | null;
+  relatedTitle: string;
+  relatedStatus: string | null;
+}
+
+/** Enriched change event returned by the detail API (mixed casing from API) */
+export interface ChangeEventDetail extends ChangeEvent {
+  lineItems?: ChangeEventDetailLineItem[];
+  attachments?: ChangeEventAttachment[];
+  history?: Array<Record<string, unknown>>;
+  lineItemRevenueSource?: string | null;
+  primeContractId?: number | string | null;
+  primeContract?: {
+    contract_number?: string;
+    title?: string;
+  } | null;
+}

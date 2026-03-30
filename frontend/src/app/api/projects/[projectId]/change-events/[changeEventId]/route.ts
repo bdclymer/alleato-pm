@@ -7,6 +7,55 @@ interface RouteParams {
   params: Promise<{ projectId: string; changeEventId: string }>;
 }
 
+interface VerticalMarkupRow {
+  percentage: number | null;
+  calculation_order: number | null;
+  compound: boolean | null;
+}
+
+function computeMarkupAdditions(
+  baseCost: number,
+  baseRevenue: number,
+  markups: VerticalMarkupRow[],
+): { cost: number; revenue: number } {
+  if (markups.length === 0) {
+    return { cost: 0, revenue: 0 };
+  }
+
+  const sortedMarkups = [...markups].sort(
+    (a, b) => (a.calculation_order ?? 0) - (b.calculation_order ?? 0),
+  );
+
+  let runningCostBase = baseCost;
+  let runningRevenueBase = baseRevenue;
+  let totalCostMarkup = 0;
+  let totalRevenueMarkup = 0;
+
+  for (const markup of sortedMarkups) {
+    const percentage = Number(markup.percentage || 0);
+    if (!Number.isFinite(percentage) || percentage <= 0) {
+      continue;
+    }
+
+    const rate = percentage / 100;
+    const costMarkup = runningCostBase * rate;
+    const revenueMarkup = runningRevenueBase * rate;
+
+    totalCostMarkup += costMarkup;
+    totalRevenueMarkup += revenueMarkup;
+
+    if (markup.compound) {
+      runningCostBase += costMarkup;
+      runningRevenueBase += revenueMarkup;
+    }
+  }
+
+  return {
+    cost: totalCostMarkup,
+    revenue: totalRevenueMarkup,
+  };
+}
+
 /**
  * GET /api/projects/[id]/change-events/[changeEventId]
  * Returns a single change event with full details including line items, attachments, and history
@@ -173,20 +222,35 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       }
     }
 
-    // Calculate totals from line items
+    const baseRevenueRom = lineItems.reduce(
+      (sum: number, item: any) => sum + (item.revenue_rom || 0),
+      0,
+    );
+    const baseCostRom = lineItems.reduce(
+      (sum: number, item: any) => sum + (item.cost_rom || 0),
+      0,
+    );
+    const baseNonCommittedCost = lineItems.reduce(
+      (sum: number, item: any) => sum + (item.non_committed_cost || 0),
+      0,
+    );
+
+    const { data: projectMarkups } = await supabase
+      .from("vertical_markup")
+      .select("percentage, calculation_order, compound")
+      .eq("project_id", parseInt(projectId, 10));
+
+    const markupAdditions = computeMarkupAdditions(
+      baseCostRom,
+      baseRevenueRom,
+      (projectMarkups || []) as VerticalMarkupRow[],
+    );
+
+    // Calculate totals from line items + project financial markup
     const totals = {
-      revenueRom: lineItems
-        .reduce((sum: number, item: any) => sum + (item.revenue_rom || 0), 0)
-        .toFixed(2),
-      costRom: lineItems
-        .reduce((sum: number, item: any) => sum + (item.cost_rom || 0), 0)
-        .toFixed(2),
-      nonCommittedCost: lineItems
-        .reduce(
-          (sum: number, item: any) => sum + (item.non_committed_cost || 0),
-          0,
-        )
-        .toFixed(2),
+      revenueRom: (baseRevenueRom + markupAdditions.revenue).toFixed(2),
+      costRom: (baseCostRom + markupAdditions.cost).toFixed(2),
+      nonCommittedCost: baseNonCommittedCost.toFixed(2),
       lineItemsCount: lineItems.length,
     };
 

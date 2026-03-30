@@ -3,20 +3,14 @@
 import * as React from "react";
 import type { ReactElement, ReactNode } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ChevronDown, Plus, Send } from "lucide-react";
+import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { useConfirmationDialog } from "@/components/common/ConfirmationDialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ChangeEventExpandedRow } from "@/components/domain/change-events/ChangeEventExpandedRow";
+import { ChangeEventSelectionBar } from "@/components/domain/change-events/ChangeEventSelectionBar";
 import {
   UnifiedTablePage,
   useUnifiedTableState,
@@ -46,6 +40,20 @@ const EMPTY_FILTERS: ChangeEventFilterState = {
   status: undefined,
   scope: undefined,
 };
+
+function formatDateValue(dateValue: string | null | undefined): string {
+  if (!dateValue) return "";
+  const parsed = new Date(dateValue);
+  if (Number.isNaN(parsed.getTime())) return "";
+  return parsed.toLocaleDateString();
+}
+
+function escapeCsvField(field: string): string {
+  if (field.includes(",") || field.includes('"') || field.includes("\n")) {
+    return `"${field.replace(/"/g, '""')}"`;
+  }
+  return field;
+}
 
 export default function ProjectChangeEventsPage(): ReactElement {
   const params = useParams<{ projectId: string }>();
@@ -106,8 +114,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
   const activeFilters = tableState.activeFilters as ChangeEventFilterState;
   const statusParam =
     searchParams.get("status") ??
-    (typeof activeFilters.status === "string" ? activeFilters.status : "") ??
-    "";
+    (typeof activeFilters.status === "string" ? activeFilters.status : "");
 
   // Fetch all change events (including deleted for recycle bin tab)
   const includeDeleted = activeTab === "recycle_bin";
@@ -375,20 +382,6 @@ export default function ProjectChangeEventsPage(): ReactElement {
   }, [activeFilters.scope, tabFilteredEvents, tableState.debouncedSearch]);
 
   const handleExport = React.useCallback(() => {
-    const formatDateValue = (dateValue: string | null | undefined): string => {
-      if (!dateValue) return "";
-      const parsed = new Date(dateValue);
-      if (Number.isNaN(parsed.getTime())) return "";
-      return parsed.toLocaleDateString();
-    };
-
-    const escapeCsvField = (field: string): string => {
-      if (field.includes(",") || field.includes('"') || field.includes("\n")) {
-        return `"${field.replace(/"/g, '""')}"`;
-      }
-      return field;
-    };
-
     const headers = ["#", "Title", "Status", "Scope", "Type", "Change Reason", "Origin", "Prime PCO", "Cost ROM", "Commitment", "Created"];
 
     const scopeDisplayMap: Record<string, string> = {
@@ -449,38 +442,41 @@ export default function ProjectChangeEventsPage(): ReactElement {
   const filteredItems = filteredEvents.length;
 
   // Procore-style tabs: Line Items | No Line Items | RFQs | Recycle Bin
-  const tabs = [
-    {
-      label: "Line Items",
-      href: `/${projectId}/change-events?tab=line_items`,
-      count: lineItemsCount,
-      isActive: activeTab === "line_items",
-      testId: "change-events-tab-line-items",
-      countTestId: "change-events-count-line-items",
-    },
-    {
-      label: "No Line Items",
-      href: `/${projectId}/change-events?tab=no_line_items`,
-      count: noLineItemsCount,
-      isActive: activeTab === "no_line_items",
-      testId: "change-events-tab-no-line-items",
-      countTestId: "change-events-count-no-line-items",
-    },
-    {
-      label: "RFQs",
-      href: `/${projectId}/change-events?tab=rfqs`,
-      count: rfqsCount,
-      isActive: activeTab === "rfqs",
-      testId: "change-events-tab-rfqs",
-      countTestId: "change-events-count-rfqs",
-    },
-    {
-      label: "Recycle Bin",
-      href: `/${projectId}/change-events?tab=recycle_bin`,
-      isActive: activeTab === "recycle_bin",
-      testId: "change-events-tab-recycle-bin",
-    },
-  ];
+  const tabs = React.useMemo(
+    () => [
+      {
+        label: "Line Items",
+        href: `/${projectId}/change-events?tab=line_items`,
+        count: lineItemsCount,
+        isActive: activeTab === "line_items",
+        testId: "change-events-tab-line-items",
+        countTestId: "change-events-count-line-items",
+      },
+      {
+        label: "No Line Items",
+        href: `/${projectId}/change-events?tab=no_line_items`,
+        count: noLineItemsCount,
+        isActive: activeTab === "no_line_items",
+        testId: "change-events-tab-no-line-items",
+        countTestId: "change-events-count-no-line-items",
+      },
+      {
+        label: "RFQs",
+        href: `/${projectId}/change-events?tab=rfqs`,
+        count: rfqsCount,
+        isActive: activeTab === "rfqs",
+        testId: "change-events-tab-rfqs",
+        countTestId: "change-events-count-rfqs",
+      },
+      {
+        label: "Recycle Bin",
+        href: `/${projectId}/change-events?tab=recycle_bin`,
+        isActive: activeTab === "recycle_bin",
+        testId: "change-events-tab-recycle-bin",
+      },
+    ],
+    [projectId, activeTab, lineItemsCount, noLineItemsCount, rfqsCount],
+  );
 
   // Grand Totals — sum monetary columns
   const grandTotals = React.useMemo(() => {
@@ -657,73 +653,11 @@ export default function ProjectChangeEventsPage(): ReactElement {
         ) : undefined,
       }}
       topContent={
-        <>
-          {tableState.selectedIds.length > 0 && (
-            <div className="flex items-center gap-1.5 px-4 py-2 bg-muted/40 border-b border-border">
-              <span className="mr-2 text-sm text-muted-foreground">
-                {tableState.selectedIds.length} item
-                {tableState.selectedIds.length === 1 ? "" : "s"} selected
-              </span>
-              <TooltipProvider>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="outline" size="sm" className="gap-1.5">
-                      Add to
-                      <ChevronDown />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="start">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <DropdownMenuItem
-                          className="cursor-not-allowed opacity-50"
-                          onSelect={(e) => e.preventDefault()}
-                        >
-                          Commitment
-                        </DropdownMenuItem>
-                      </TooltipTrigger>
-                      <TooltipContent>Coming soon — link change event to a commitment</TooltipContent>
-                    </Tooltip>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <DropdownMenuItem
-                          className="cursor-not-allowed opacity-50"
-                          onSelect={(e) => e.preventDefault()}
-                        >
-                          Commitment CO
-                        </DropdownMenuItem>
-                      </TooltipTrigger>
-                      <TooltipContent>Coming soon — create commitment change order</TooltipContent>
-                    </Tooltip>
-                    <DropdownMenuItem
-                      onSelect={() =>
-                        toast.info("Add to Prime Contract PCO — select a prime contract first")
-                      }
-                    >
-                      Prime Contract PCO
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TooltipProvider>
-
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5"
-                onClick={() => setShowRfqSheet(true)}
-              >
-                <Send />
-                Send Requests for Quote
-              </Button>
-            </div>
-          )}
-
-          {tableState.selectedIds.length === 0 && filteredEvents.length > 0 && (
-            <div className="flex items-center justify-end px-4 py-1.5 text-xs text-muted-foreground border-b border-border">
-              0 items selected
-            </div>
-          )}
-        </>
+        <ChangeEventSelectionBar
+          selectedCount={tableState.selectedIds.length}
+          hasItems={filteredEvents.length > 0}
+          onSendRfq={() => setShowRfqSheet(true)}
+        />
       }
       footerTotals={{
         label: "Grand Totals",

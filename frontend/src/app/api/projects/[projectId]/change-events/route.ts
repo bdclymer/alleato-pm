@@ -71,6 +71,55 @@ interface ChangeEventWithTotals extends ChangeEvent {
   commitment_title: string | null
 }
 
+interface VerticalMarkupRow {
+  percentage: number | null
+  calculation_order: number | null
+  compound: boolean | null
+}
+
+function computeMarkupAdditions(
+  baseCost: number,
+  baseRevenue: number,
+  markups: VerticalMarkupRow[]
+): { cost: number; revenue: number } {
+  if (markups.length === 0) {
+    return { cost: 0, revenue: 0 }
+  }
+
+  const sortedMarkups = [...markups].sort(
+    (a, b) => (a.calculation_order ?? 0) - (b.calculation_order ?? 0)
+  )
+
+  let runningCostBase = baseCost
+  let runningRevenueBase = baseRevenue
+  let totalCostMarkup = 0
+  let totalRevenueMarkup = 0
+
+  for (const markup of sortedMarkups) {
+    const percentage = Number(markup.percentage || 0)
+    if (!Number.isFinite(percentage) || percentage <= 0) {
+      continue
+    }
+
+    const rate = percentage / 100
+    const costMarkup = runningCostBase * rate
+    const revenueMarkup = runningRevenueBase * rate
+
+    totalCostMarkup += costMarkup
+    totalRevenueMarkup += revenueMarkup
+
+    if (markup.compound) {
+      runningCostBase += costMarkup
+      runningRevenueBase += revenueMarkup
+    }
+  }
+
+  return {
+    cost: totalCostMarkup,
+    revenue: totalRevenueMarkup,
+  }
+}
+
 /**
  * Generate next change event number for project
  * Format: "001", "002", "003", etc.
@@ -195,6 +244,11 @@ export async function GET(
     const events = data || []
     const eventIds = events.map((event: ChangeEvent) => event.id)
 
+    const { data: projectMarkups } = await (supabase as any)
+      .from('vertical_markup')
+      .select('percentage, calculation_order, compound')
+      .eq('project_id', parseInt(projectId, 10))
+
     // Batch fetch line-item level parity data for all rows on page.
     const { data: allLineItems } = eventIds.length
       ? await (supabase as any)
@@ -281,11 +335,23 @@ export async function GET(
         const contractInfo =
           lineItemAgg?.contractId ? contractMap.get(lineItemAgg.contractId) : undefined
 
+        const baseRevenueRom = lineItemAgg?.rom || 0
+        const baseCostRom = lineItemAgg?.costRom || 0
+        const baseNonCommitted = lineItemAgg ? lineItemAgg.total - lineItemAgg.costRom : 0
+        const markupAdditions = computeMarkupAdditions(
+          baseCostRom,
+          baseRevenueRom,
+          (projectMarkups || []) as VerticalMarkupRow[]
+        )
+        const revenueRomWithMarkup = baseRevenueRom + markupAdditions.revenue
+        const costRomWithMarkup = baseCostRom + markupAdditions.cost
+        const totalWithMarkup = costRomWithMarkup + baseNonCommitted
+
         return {
           ...event,
-          rom: (lineItemAgg?.rom || 0).toFixed(2),
-          total: (lineItemAgg?.total || 0).toFixed(2),
-          cost_rom: (lineItemAgg?.costRom || 0).toFixed(2),
+          rom: revenueRomWithMarkup.toFixed(2),
+          total: totalWithMarkup.toFixed(2),
+          cost_rom: costRomWithMarkup.toFixed(2),
           lineItemsCount: lineItemAgg?.count ?? event.change_event_line_items?.[0]?.count ?? 0,
           // Procore parity placeholders for Prime PCO fields remain null
           // until a canonical CE -> PCO table is implemented.

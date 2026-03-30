@@ -3,3 +3,8 @@ export { ChangeEventGeneralSection } from "./ChangeEventGeneralSection";
 export type { ChangeEventFormData } from "./ChangeEventForm";
 export { ChangeEventRfqForm } from "./ChangeEventRfqForm";
 export { ChangeEventRfqResponseForm } from "./ChangeEventRfqResponseForm";
+export { ChangeEventStatusActions } from "./ChangeEventStatusActions";
+export { ChangeEventGeneralInfoPanel } from "./ChangeEventGeneralInfoPanel";
+export { ChangeEventLineItemsTable } from "./ChangeEventLineItemsTable";
+export { ChangeEventHistoryTab } from "./ChangeEventHistoryTab";
+export { ChangeEventRelatedItemsTab } from "./ChangeEventRelatedItemsTab";

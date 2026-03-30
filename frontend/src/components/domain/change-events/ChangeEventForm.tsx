@@ -720,9 +720,15 @@ export function ChangeEventForm({
         current.costRom =
           Number(current.costQuantity || 0) *
           Number(current.costUnitCost || 0);
-        // Auto-populate non-committed cost when no commitment is selected
+      }
+      // Auto-populate non-committed cost (Cost ROM − Revenue ROM) when no commitment is selected
+      if (
+        key === "costQuantity" || key === "costUnitCost" ||
+        key === "revenueQuantity" || key === "revenueUnitCost"
+      ) {
         if (!current.contract) {
-          current.nonCommittedCost = current.costRom;
+          current.nonCommittedCost =
+            (Number(current.costRom) || 0) - (Number(current.revenueRom) || 0);
         }
       }
 
@@ -855,7 +861,7 @@ export function ChangeEventForm({
             costQuantity: costQty,
             costUnitCost: costUnit,
             costRom,
-            nonCommittedCost: costRom,
+            nonCommittedCost: costRom - (revenueQty * revenueUnit),
             revenueQuantity: revenueQty,
             revenueUnitCost: revenueUnit,
             revenueRom: revenueQty * revenueUnit,
@@ -1269,7 +1275,7 @@ export function ChangeEventForm({
                 </TableHeader>
                 <TableBody>
                   {formData.lineItems.map((item, index) => {
-                    const lineTotal = (item.costRom || 0) + (item.nonCommittedCost || 0);
+                    const lineTotal = (item.revenueRom || 0);
                     return (
                     <TableRow
                       key={`line-item-${index}`}
@@ -1510,7 +1516,7 @@ export function ChangeEventForm({
                         </InputGroup>
                       </TableCell>
 
-                      {/* Total (costRom + nonCommittedCost) */}
+                      {/* Total (Revenue ROM — amount billed to client) */}
                       <TableCell className="w-36 px-1 py-1.5 align-top">
                         <div
                           className={cn(
@@ -1560,7 +1566,7 @@ export function ChangeEventForm({
                     </TableCell>
                     {/* Grand total */}
                     <TableCell className="px-1.5 py-2 text-right text-sm font-semibold text-foreground">
-                      {formatCurrency(formData.lineItems.reduce((sum, i) => sum + (i.costRom || 0) + (i.nonCommittedCost || 0), 0))}
+                      {formatCurrency(formData.lineItems.reduce((sum, i) => sum + (i.revenueRom || 0), 0))}
                     </TableCell>
                     <TableCell className="px-1.5 py-2" />
                   </TableRow>
