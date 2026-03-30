@@ -139,7 +139,7 @@ export function CompanyEditDialog({
       onSuccess?.();
     } catch (error) {
       console.error("Error saving company:", error);
-      toast.error(error instanceof Error ? error.message : "An error occurred");
+      toast.error("Could not save company", { description: error instanceof Error ? error.message : "An unexpected error occurred" });
     } finally {
       setIsSubmitting(false);
     }

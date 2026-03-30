@@ -40,7 +40,7 @@ export function useUserPermissions(projectId: string | number) {
       const { data } = await response.json();
       setPermissions(data);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("Unknown error"));
+      setError(err instanceof Error ? err : new Error("an unexpected error occurred — please try again"));
       setPermissions(null);
     } finally {
       setIsLoading(false);
@@ -93,7 +93,7 @@ export function usePermissionTemplates() {
       const { data } = await response.json();
       setTemplates(data);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("Unknown error"));
+      setError(err instanceof Error ? err : new Error("an unexpected error occurred — please try again"));
       setTemplates([]);
     } finally {
       setIsLoading(false);
@@ -175,7 +175,7 @@ export function usePermissionOverrides(projectId: string | number) {
 
         return await response.json();
       } catch (err) {
-        const error = err instanceof Error ? err : new Error("Unknown error");
+        const error = err instanceof Error ? err : new Error("an unexpected error occurred — please try again");
         setError(error);
         throw error;
       } finally {
@@ -205,7 +205,7 @@ export function usePermissionOverrides(projectId: string | number) {
 
         return await response.json();
       } catch (err) {
-        const error = err instanceof Error ? err : new Error("Unknown error");
+        const error = err instanceof Error ? err : new Error("an unexpected error occurred — please try again");
         setError(error);
         throw error;
       } finally {

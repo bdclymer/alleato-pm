@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import type { ReactElement } from "react";
+import type { ReactElement, ReactNode } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { ChevronDown, Plus, Send } from "lucide-react";
 import { toast } from "sonner";
@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ChangeEventExpandedRow } from "@/components/domain/change-events/ChangeEventExpandedRow";
 import {
   UnifiedTablePage,
   useUnifiedTableState,
@@ -28,6 +29,7 @@ import {
   changeEventColumns,
   changeEventDefaultVisibleColumns,
   changeEventFilters,
+  formatMoney,
   renderChangeEventCard,
   renderChangeEventList,
   renderChangeEventRowActions,
@@ -45,9 +47,6 @@ const EMPTY_FILTERS: ChangeEventFilterState = {
   scope: undefined,
 };
 
-const getStatusKey = (status?: string | null): string =>
-  status?.toLowerCase().replace(/\s+/g, "_") ?? "unknown";
-
 export default function ProjectChangeEventsPage(): ReactElement {
   const params = useParams<{ projectId: string }>();
   const pathname = usePathname();
@@ -58,6 +57,9 @@ export default function ProjectChangeEventsPage(): ReactElement {
   const parsedProjectId = projectIdParamRaw ? parseInt(projectIdParamRaw, 10) : NaN;
   const hasValidProjectId = Number.isFinite(parsedProjectId) && parsedProjectId > 0;
   const projectId = hasValidProjectId ? parsedProjectId : 0;
+
+  // Tab state — matches Procore tabs: Line Items, No Line Items, RFQs, Recycle Bin
+  const activeTab = searchParams.get("tab") ?? "line_items";
 
   const initialStatus = searchParams.get("status") ?? "";
   const initialScope = searchParams.get("scope") ?? "";
@@ -107,8 +109,10 @@ export default function ProjectChangeEventsPage(): ReactElement {
     (typeof activeFilters.status === "string" ? activeFilters.status : "") ??
     "";
 
+  // Fetch all change events (including deleted for recycle bin tab)
+  const includeDeleted = activeTab === "recycle_bin";
   const {
-    changeEvents = [],
+    changeEvents: allChangeEvents = [],
     isLoading,
     error,
     refetch: refetchChangeEvents,
@@ -116,7 +120,62 @@ export default function ProjectChangeEventsPage(): ReactElement {
     status: statusParam || undefined,
     limit: 500,
     enabled: hasValidProjectId,
+    includeDeleted,
   });
+
+  // Separate active and deleted events
+  const activeEvents = React.useMemo(
+    () => allChangeEvents.filter((e) => !e.deleted_at),
+    [allChangeEvents],
+  );
+  const deletedEvents = React.useMemo(
+    () => allChangeEvents.filter((e) => e.deleted_at),
+    [allChangeEvents],
+  );
+
+  // Tab-filtered events
+  const tabFilteredEvents = React.useMemo(() => {
+    switch (activeTab) {
+      case "line_items":
+        return activeEvents.filter((e) => (e.lineItemsCount ?? 0) > 0);
+      case "no_line_items":
+        return activeEvents.filter((e) => (e.lineItemsCount ?? 0) === 0);
+      case "rfqs":
+        return activeEvents.filter((e) => e.rfq_title);
+      case "recycle_bin":
+        return deletedEvents;
+      default:
+        return activeEvents;
+    }
+  }, [activeTab, activeEvents, deletedEvents]);
+
+  // Tab counts
+  const lineItemsCount = React.useMemo(
+    () => activeEvents.filter((e) => (e.lineItemsCount ?? 0) > 0).length,
+    [activeEvents],
+  );
+  const noLineItemsCount = React.useMemo(
+    () => activeEvents.filter((e) => (e.lineItemsCount ?? 0) === 0).length,
+    [activeEvents],
+  );
+  const rfqsCount = React.useMemo(
+    () => activeEvents.filter((e) => e.rfq_title).length,
+    [activeEvents],
+  );
+
+  // Row expansion state
+  const [expandedIds, setExpandedIds] = React.useState<Set<string>>(new Set());
+  const handleToggleExpand = React.useCallback((id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
 
   const deleteDialog = useConfirmationDialog({
     title: "Delete Change Event",
@@ -228,7 +287,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
           throw new Error("Select a change event before sending an RFQ.");
         }
 
-        const selectedChangeEvent = changeEvents.find((event) => String(event.id) === selectedId);
+        const selectedChangeEvent = tabFilteredEvents.find((event) => String(event.id) === selectedId);
         if (!selectedChangeEvent) {
           throw new Error("Selected change event could not be found.");
         }
@@ -275,7 +334,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
         setIsCreatingRfq(false);
       }
     },
-    [changeEvents, projectId, tableState],
+    [tabFilteredEvents, projectId, tableState],
   );
 
   const handleFilterChange = React.useCallback(
@@ -291,12 +350,13 @@ export default function ProjectChangeEventsPage(): ReactElement {
     [tableState],
   );
 
+  // Apply search filter on top of tab-filtered events
   const filteredEvents = React.useMemo(() => {
     const searchTerm = tableState.debouncedSearch.trim().toLowerCase();
     const scopeFilter =
       typeof activeFilters.scope === "string" ? activeFilters.scope.toLowerCase() : "";
 
-    return changeEvents.filter((event) => {
+    return tabFilteredEvents.filter((event) => {
       if (scopeFilter && (event.scope ?? "").toLowerCase() !== scopeFilter) {
         return false;
       }
@@ -312,7 +372,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
         (event.reason ?? "").toLowerCase().includes(searchTerm)
       );
     });
-  }, [activeFilters.scope, changeEvents, tableState.debouncedSearch]);
+  }, [activeFilters.scope, tabFilteredEvents, tableState.debouncedSearch]);
 
   const handleExport = React.useCallback(() => {
     const formatDateValue = (dateValue: string | null | undefined): string => {
@@ -329,7 +389,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
       return field;
     };
 
-    const headers = ["#", "Title", "Status", "Scope", "Change Reason", "Created"];
+    const headers = ["#", "Title", "Status", "Scope", "Type", "Change Reason", "Origin", "Prime PCO", "Cost ROM", "Commitment", "Created"];
 
     const scopeDisplayMap: Record<string, string> = {
       tbd: "TBD",
@@ -350,10 +410,15 @@ export default function ProjectChangeEventsPage(): ReactElement {
       const title = event.title ?? "";
       const status = statusDisplayMap[(event.status ?? "").toLowerCase()] ?? (event.status ?? "");
       const scope = scopeDisplayMap[(event.scope ?? "").toLowerCase()] ?? (event.scope ?? "");
+      const type = event.type ?? "";
       const reason = event.reason ?? "";
+      const origin = event.origin ?? "";
+      const primePco = String(event.rom ?? 0);
+      const costRom = String(event.cost_rom ?? 0);
+      const commitment = String(event.commitment ?? 0);
       const createdAt = formatDateValue(event.created_at);
 
-      return [number, title, status, scope, reason, createdAt]
+      return [number, title, status, scope, type, reason, origin, primePco, costRom, commitment, createdAt]
         .map(escapeCsvField)
         .join(",");
     });
@@ -375,54 +440,66 @@ export default function ProjectChangeEventsPage(): ReactElement {
     );
   }, [filteredEvents]);
 
-  const tableColumns = React.useMemo(() => buildChangeEventTableColumns(), []);
+  const tableColumns = React.useMemo(
+    () => buildChangeEventTableColumns(expandedIds, handleToggleExpand),
+    [expandedIds, handleToggleExpand],
+  );
 
-  const totalItems = changeEvents.length;
+  const totalItems = tabFilteredEvents.length;
   const filteredItems = filteredEvents.length;
 
-  const statusCounts = React.useMemo(() => {
-    const counts: Record<string, number> = {};
-    changeEvents.forEach((event) => {
-      const key = getStatusKey(event.status);
-      counts[key] = (counts[key] ?? 0) + 1;
-    });
-    return counts;
-  }, [changeEvents]);
-
+  // Procore-style tabs: Line Items | No Line Items | RFQs | Recycle Bin
   const tabs = [
     {
-      label: "All Change Events",
-      href: `/${projectId}/change-events`,
-      count: totalItems,
-      isActive: !statusParam,
-      testId: "change-events-tab-all",
-      countTestId: "change-events-count-all",
+      label: "Line Items",
+      href: `/${projectId}/change-events?tab=line_items`,
+      count: lineItemsCount,
+      isActive: activeTab === "line_items",
+      testId: "change-events-tab-line-items",
+      countTestId: "change-events-count-line-items",
     },
     {
-      label: "Open",
-      href: `/${projectId}/change-events?status=open`,
-      count: statusCounts.open ?? 0,
-      isActive: statusParam === "open",
-      testId: "change-events-tab-open",
-      countTestId: "change-events-count-open",
+      label: "No Line Items",
+      href: `/${projectId}/change-events?tab=no_line_items`,
+      count: noLineItemsCount,
+      isActive: activeTab === "no_line_items",
+      testId: "change-events-tab-no-line-items",
+      countTestId: "change-events-count-no-line-items",
     },
     {
-      label: "Pending",
-      href: `/${projectId}/change-events?status=pending`,
-      count: (statusCounts.pending ?? 0) + (statusCounts.pending_approval ?? 0),
-      isActive: statusParam === "pending",
-      testId: "change-events-tab-pending",
-      countTestId: "change-events-count-pending",
+      label: "RFQs",
+      href: `/${projectId}/change-events?tab=rfqs`,
+      count: rfqsCount,
+      isActive: activeTab === "rfqs",
+      testId: "change-events-tab-rfqs",
+      countTestId: "change-events-count-rfqs",
     },
     {
-      label: "Approved",
-      href: `/${projectId}/change-events?status=approved`,
-      count: statusCounts.approved ?? 0,
-      isActive: statusParam === "approved",
-      testId: "change-events-tab-approved",
-      countTestId: "change-events-count-approved",
+      label: "Recycle Bin",
+      href: `/${projectId}/change-events?tab=recycle_bin`,
+      isActive: activeTab === "recycle_bin",
+      testId: "change-events-tab-recycle-bin",
     },
   ];
+
+  // Grand Totals — sum monetary columns
+  const grandTotals = React.useMemo(() => {
+    let revenuePrimePco = 0;
+    let costRom = 0;
+    let commitmentTotal = 0;
+
+    for (const event of filteredEvents) {
+      revenuePrimePco += Number(event.rom ?? 0);
+      costRom += Number(event.cost_rom ?? 0);
+      commitmentTotal += Number(event.commitment ?? 0);
+    }
+
+    return {
+      revenue_prime_pco: formatMoney(revenuePrimePco),
+      cost_rom: formatMoney(costRom),
+      commitment: formatMoney(commitmentTotal),
+    };
+  }, [filteredEvents]);
 
   const handleSelectAll = (checked: boolean) => {
     if (checked) {
@@ -442,6 +519,25 @@ export default function ProjectChangeEventsPage(): ReactElement {
 
   const isFiltered =
     Boolean(tableState.searchInput) || Boolean(activeFilters.status) || Boolean(activeFilters.scope);
+
+  // Render expanded row content — fetches line items + markups from API
+  const renderExpandedRow = React.useCallback(
+    (item: ChangeEvent, colSpan: number): ReactNode | null => {
+      if (!expandedIds.has(String(item.id))) return null;
+
+      return (
+        <ChangeEventExpandedRow
+          changeEventId={item.id}
+          projectId={projectId}
+          colSpan={colSpan}
+          onEditLineItem={(lineItemId) => {
+            router.push(`/${projectId}/change-events/${item.id}?edit=1&lineItem=${lineItemId}`);
+          }}
+        />
+      );
+    },
+    [expandedIds, projectId, router],
+  );
 
   if (!hasValidProjectId) {
     return (
@@ -474,64 +570,6 @@ export default function ProjectChangeEventsPage(): ReactElement {
 
   return (
     <>
-    {tableState.selectedIds.length > 0 && (
-      <div className="flex items-center gap-1.5 px-4 py-2 bg-muted/40 border-b border-border">
-        <span className="text-sm text-muted-foreground mr-2">
-          {tableState.selectedIds.length} selected
-        </span>
-        <TooltipProvider>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm" className="gap-1.5">
-                Add to
-                <ChevronDown />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <DropdownMenuItem
-                    className="opacity-50 cursor-not-allowed"
-                    onSelect={(e) => e.preventDefault()}
-                  >
-                    Commitment
-                  </DropdownMenuItem>
-                </TooltipTrigger>
-                <TooltipContent>Coming soon — link change event to a commitment</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <DropdownMenuItem
-                    className="opacity-50 cursor-not-allowed"
-                    onSelect={(e) => e.preventDefault()}
-                  >
-                    Commitment CO
-                  </DropdownMenuItem>
-                </TooltipTrigger>
-                <TooltipContent>Coming soon — create commitment change order</TooltipContent>
-              </Tooltip>
-              <DropdownMenuItem
-                onSelect={() =>
-                  toast.info("Add to Prime Contract PCO — select a prime contract first")
-                }
-              >
-                Prime Contract PCO
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </TooltipProvider>
-
-        <Button
-          variant="outline"
-          size="sm"
-          className="gap-1.5"
-          onClick={() => setShowRfqSheet(true)}
-        >
-          <Send />
-          Send Requests for Quote
-        </Button>
-      </div>
-    )}
     <UnifiedTablePage
       header={{
         title: "Change Events",
@@ -544,7 +582,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
             data-testid="change-events-new-button"
           >
             <Plus />
-            New Change Event
+            Create
           </Button>
         ),
       }}
@@ -570,7 +608,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
         visibleColumns: tableState.visibleColumns,
         onColumnVisibilityChange: tableState.setVisibleColumns,
         onExport: handleExport,
-        onBulkDelete: handleBulkDelete,
+        onBulkDelete: activeTab !== "recycle_bin" ? handleBulkDelete : undefined,
       }}
       data={{
         items: filteredEvents,
@@ -584,6 +622,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
         onRowClick: handleView,
         rowActions: (item) =>
           renderChangeEventRowActions(item, handleView, handleEdit, handleDelete),
+        renderExpandedRow,
       }}
       sorting={{
         sortBy: tableState.sortBy,
@@ -607,19 +646,107 @@ export default function ProjectChangeEventsPage(): ReactElement {
         list: (item) => renderChangeEventList(item, handleView),
       }}
       emptyState={{
-        title: "No change events found",
-        description: "Create your first change event to start tracking scope changes.",
+        title: activeTab === "recycle_bin" ? "Recycle bin is empty" : "No change events found",
+        description: activeTab === "recycle_bin"
+          ? "Deleted change events will appear here."
+          : "Create your first change event to start tracking scope changes.",
         filteredDescription: "Try adjusting your search or filters.",
         isFiltered,
-        action: (
+        action: activeTab !== "recycle_bin" ? (
           <Button size="sm" onClick={() => router.push(`/${projectId}/change-events/new`)}>
             Add change event
           </Button>
-        ),
+        ) : undefined,
+      }}
+      topContent={
+        <>
+          {tableState.selectedIds.length > 0 && (
+            <div className="flex items-center gap-1.5 px-4 py-2 bg-muted/40 border-b border-border">
+              <span className="mr-2 text-sm text-muted-foreground">
+                {tableState.selectedIds.length} item
+                {tableState.selectedIds.length === 1 ? "" : "s"} selected
+              </span>
+              <TooltipProvider>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="outline" size="sm" className="gap-1.5">
+                      Add to
+                      <ChevronDown />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="start">
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <DropdownMenuItem
+                          className="cursor-not-allowed opacity-50"
+                          onSelect={(e) => e.preventDefault()}
+                        >
+                          Commitment
+                        </DropdownMenuItem>
+                      </TooltipTrigger>
+                      <TooltipContent>Coming soon — link change event to a commitment</TooltipContent>
+                    </Tooltip>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <DropdownMenuItem
+                          className="cursor-not-allowed opacity-50"
+                          onSelect={(e) => e.preventDefault()}
+                        >
+                          Commitment CO
+                        </DropdownMenuItem>
+                      </TooltipTrigger>
+                      <TooltipContent>Coming soon — create commitment change order</TooltipContent>
+                    </Tooltip>
+                    <DropdownMenuItem
+                      onSelect={() =>
+                        toast.info("Add to Prime Contract PCO — select a prime contract first")
+                      }
+                    >
+                      Prime Contract PCO
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TooltipProvider>
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="gap-1.5"
+                onClick={() => setShowRfqSheet(true)}
+              >
+                <Send />
+                Send Requests for Quote
+              </Button>
+            </div>
+          )}
+
+          {tableState.selectedIds.length === 0 && filteredEvents.length > 0 && (
+            <div className="flex items-center justify-end px-4 py-1.5 text-xs text-muted-foreground border-b border-border">
+              0 items selected
+            </div>
+          )}
+        </>
+      }
+      footerTotals={{
+        label: "Grand Totals",
+        values: {
+          revenue_prime_pco: <span className="tabular-nums">{grandTotals.revenue_prime_pco}</span>,
+          cost_rom: <span className="tabular-nums">{grandTotals.cost_rom}</span>,
+          commitment: <span className="tabular-nums">{grandTotals.commitment}</span>,
+          // Placeholder dashes for non-monetary columns
+          status: <span>--</span>,
+          scope: <span>--</span>,
+          type: <span>--</span>,
+          reason: <span>--</span>,
+          origin: <span>--</span>,
+          prime_pco_title: <span>--</span>,
+          rfq_title: <span>--</span>,
+          commitment_title: <span>--</span>,
+        },
       }}
       features={{
         enableExport: true,
-        enableBulkDelete: true,
+        enableBulkDelete: activeTab !== "recycle_bin",
       }}
     />
     {deleteDialog.dialog}

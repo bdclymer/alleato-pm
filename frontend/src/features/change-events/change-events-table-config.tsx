@@ -1,6 +1,6 @@
 import * as React from "react";
 import type { ReactElement } from "react";
-import { Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ChevronRight, Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
 import type {
   ColumnConfig,
@@ -50,7 +50,7 @@ export const changeEventColumns: ColumnConfig[] = [
   { id: "type", label: "Type", defaultVisible: true },
   { id: "reason", label: "Change Reason", defaultVisible: true },
   { id: "origin", label: "Origin", defaultVisible: true },
-  { id: "prime_pco", label: "Prime PCO", defaultVisible: true },
+  { id: "revenue_prime_pco", label: "Prime PCO", defaultVisible: true },
   { id: "prime_pco_title", label: "Prime PCO Title", defaultVisible: true },
   { id: "cost_rom", label: "Cost ROM", defaultVisible: true },
   { id: "rfq_title", label: "RFQ Title", defaultVisible: true },
@@ -158,7 +158,7 @@ function formatMoney(value: number | string | null | undefined): string {
       : typeof value === "string"
         ? Number(value)
         : NaN;
-  if (!Number.isFinite(numeric)) return "-";
+  if (!Number.isFinite(numeric)) return "$0.00";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
@@ -166,15 +166,36 @@ function formatMoney(value: number | string | null | undefined): string {
   }).format(numeric);
 }
 
-export function buildChangeEventTableColumns(): TableColumn<ChangeEvent>[] {
+export function buildChangeEventTableColumns(
+  expandedIds?: Set<string>,
+  onToggleExpand?: (id: string) => void,
+): TableColumn<ChangeEvent>[] {
   return [
     {
       ...changeEventColumns[0],
       render: (item) => (
-        <div>
-          <span className="font-mono text-xs text-muted-foreground">{item.number || `CE-${item.id}`}</span>
-          {" "}
-          <span className="font-medium">{item.title}</span>
+        <div className="flex items-center gap-1.5">
+          {onToggleExpand && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleExpand(String(item.id));
+              }}
+              className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            >
+              <ChevronRight
+                className={`h-3.5 w-3.5 transition-transform ${
+                  expandedIds?.has(String(item.id)) ? "rotate-90" : ""
+                }`}
+              />
+            </button>
+          )}
+          <div>
+            <span className="font-mono text-xs text-muted-foreground">{item.number || `CE-${item.id}`}</span>
+            {" - "}
+            <span className="font-medium">{item.title}</span>
+          </div>
         </div>
       ),
       sortValue: (item) => `${item.number ?? ""} ${item.title}`,
@@ -196,45 +217,60 @@ export function buildChangeEventTableColumns(): TableColumn<ChangeEvent>[] {
     },
     {
       ...changeEventColumns[4],
-      render: (item) => <span className="line-clamp-1">{item.reason || "-"}</span>,
+      render: (item) => <span className="line-clamp-1">{item.reason || "--"}</span>,
       sortValue: (item) => item.reason ?? "",
     },
     {
       ...changeEventColumns[5],
-      render: (item) => <span>{item.origin || "-"}</span>,
+      render: (item) => <span>{item.origin || "--"}</span>,
       sortValue: (item) => item.origin ?? "",
     },
     {
+      // Revenue > Prime PCO (dollar amount)
       ...changeEventColumns[6],
-      render: (item) => <span>{item.prime_pco || "-"}</span>,
-      sortValue: (item) => item.prime_pco ?? "",
+      render: (item) => (
+        <span className="tabular-nums">{formatMoney(item.rom)}</span>
+      ),
+      sortValue: (item) => Number(item.rom ?? 0),
     },
     {
       ...changeEventColumns[7],
       render: (item) => (
-        <span className="line-clamp-1">{item.prime_pco_title || "-"}</span>
+        <span className="line-clamp-1">
+          {item.prime_pco_title
+            ? item.prime_pco_title
+            : item.prime_pco
+              ? `${item.prime_pco}`
+              : "--"}
+        </span>
       ),
-      sortValue: (item) => item.prime_pco_title ?? "",
+      sortValue: (item) => item.prime_pco_title ?? item.prime_pco ?? "",
     },
     {
+      // Cost > Cost ROM
       ...changeEventColumns[8],
-      render: (item) => <span>{formatMoney(item.cost_rom)}</span>,
+      render: (item) => (
+        <span className="tabular-nums">{formatMoney(item.cost_rom)}</span>
+      ),
       sortValue: (item) => Number(item.cost_rom ?? 0),
     },
     {
       ...changeEventColumns[9],
-      render: (item) => <span className="line-clamp-1">{item.rfq_title || "-"}</span>,
+      render: (item) => <span className="line-clamp-1">{item.rfq_title || "--"}</span>,
       sortValue: (item) => item.rfq_title ?? "",
     },
     {
+      // Cost > Commitment (dollar amount)
       ...changeEventColumns[10],
-      render: (item) => <span>{item.commitment || "-"}</span>,
-      sortValue: (item) => item.commitment ?? "",
+      render: (item) => (
+        <span className="tabular-nums">{formatMoney(item.commitment)}</span>
+      ),
+      sortValue: (item) => Number(item.commitment ?? 0),
     },
     {
       ...changeEventColumns[11],
       render: (item) => (
-        <span className="line-clamp-1">{item.commitment_title || "-"}</span>
+        <span className="line-clamp-1">{item.commitment_title || "--"}</span>
       ),
       sortValue: (item) => item.commitment_title ?? "",
     },
@@ -253,27 +289,42 @@ export function renderChangeEventRowActions(
   onDelete: (item: ChangeEvent) => void,
 ): ReactElement {
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
-          <MoreHorizontal />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => onView(item)}>
-          <Eye className="mr-2 h-4 w-4" />
-          View
-        </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => onEdit(item)}>
-          <Pencil className="mr-2 h-4 w-4" />
-          Edit
-        </DropdownMenuItem>
-        <DropdownMenuItem className="text-destructive" onClick={() => onDelete(item)}>
-          <Trash2 className="mr-2 h-4 w-4" />
-          Delete
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <div className="flex items-center gap-1">
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-7 gap-1.5 text-xs"
+        onClick={(e) => {
+          e.stopPropagation();
+          onEdit(item);
+        }}
+      >
+        <Pencil className="h-3.5 w-3.5" />
+        Edit
+      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => onView(item)}>
+            <Eye className="mr-2 h-4 w-4" />
+            View
+          </DropdownMenuItem>
+          <DropdownMenuItem className="text-destructive" onClick={() => onDelete(item)}>
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
   );
 }
 
@@ -315,3 +366,5 @@ export function renderChangeEventList(
     </div>
   );
 }
+
+export { formatMoney };

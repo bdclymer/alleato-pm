@@ -53,7 +53,7 @@ export function ForecastingTab({ projectId }: ForecastingTabProps) {
       const data = await response.json();
       setForecast(data);
     } catch (error) {
-      toast.error("Failed to load budget forecast");
+      toast.error("Could not load budget forecast — please refresh the page");
     } finally {
       setLoading(false);
     }

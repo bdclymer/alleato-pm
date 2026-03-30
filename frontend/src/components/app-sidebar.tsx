@@ -9,11 +9,16 @@ import { getBestAvatarUrl } from "@/lib/gravatar"
 import type { User } from "@supabase/supabase-js"
 import {
   Folder,
+  Bell,
+  CalendarDays,
   ChevronsLeft,
   ChevronsRight,
   DollarSign,
   List,
+  MessageSquare,
+  Phone,
   SlidersHorizontal,
+  Users,
 } from "lucide-react"
 
 import {
@@ -38,6 +43,7 @@ import { NavUser } from "@/components/nav/nav-user"
 import { ProjectSelector } from "@/components/header/project-selector"
 import { useHeaderNav } from "@/components/header/use-header-nav"
 import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
 
 // =============================================================================
 // Flyout panel that appears on hover in collapsed mode
@@ -305,6 +311,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const isVisuallyExpanded = isPinned || (isHovering && !isMobile)
   // On mobile, the sidebar renders inside a Sheet — always show expanded navigation
   const isCollapsed = isMobile ? false : !isVisuallyExpanded
+  const isTeamChatPage = pathname.startsWith("/team-chat")
 
   const handleMouseEnter = React.useCallback(() => {
     if (isPinned || isMobile) return
@@ -396,6 +403,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       .filter((group) => group.tools.length > 0)
   }, [filterTools])
 
+  const teamChatCollapsedShortcuts = React.useMemo(
+    () => [
+      { id: "activity", label: "Activity", icon: Bell },
+      { id: "chat", label: "Chat", icon: MessageSquare, active: true },
+      { id: "teams", label: "Teams", icon: Users },
+      { id: "calendar", label: "Calendar", icon: CalendarDays },
+      { id: "calls", label: "Calls", icon: Phone },
+    ],
+    []
+  )
+
   return (
     <Sidebar
       collapsible="icon"
@@ -475,6 +493,31 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         {isCollapsed ? (
           // Collapsed: group icons with hover flyouts
           <div className="flex flex-col items-center gap-1">
+            {isTeamChatPage ? (
+              <>
+                {teamChatCollapsedShortcuts.map((item) => {
+                  const Icon = item.icon
+                  return (
+                    <Button
+                      key={item.id}
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      title={item.label}
+                      className={cn(
+                        "h-9 w-9 rounded-lg text-sidebar-foreground/65",
+                        item.active
+                          ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                          : "hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
+                      )}
+                    >
+                      <Icon className="h-4 w-4" />
+                    </Button>
+                  )
+                })}
+                <div className="my-1 h-px w-7 bg-sidebar-border/70" />
+              </>
+            ) : null}
             {filteredGroups.map((group) => (
               <CollapsedGroupIcon
                 key={group.id}

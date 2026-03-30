@@ -63,7 +63,9 @@ interface DirectCostDetail {
   invoice_number: string | null;
   received_date: string | null;
   paid_date: string | null;
-  erp_status: string | null;
+  acumatica_ref_nbr: string | null;
+  acumatica_doc_type: string | null;
+  acumatica_sync_at: string | null;
   created_at: string;
   updated_at: string;
   vendor: { id: string; name: string } | null;
@@ -348,12 +350,24 @@ export default function DirectCostDetailPage({
                   </div>
                 )}
 
-                {directCost.erp_status && (
+                {directCost.acumatica_sync_at && (
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">
-                      ERP Status
+                      Acumatica
                     </p>
-                    <Badge variant="outline">{directCost.erp_status}</Badge>
+                    {directCost.acumatica_ref_nbr ? (
+                      <a
+                        href={`https://alleatogroup.acumatica.com/Main?ScreenId=PM304000&RefNbr=${encodeURIComponent(directCost.acumatica_ref_nbr)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary underline-offset-4 hover:underline"
+                      >
+                        {directCost.acumatica_doc_type ? `${directCost.acumatica_doc_type} ` : ""}
+                        {directCost.acumatica_ref_nbr}
+                      </a>
+                    ) : (
+                      <Badge variant="outline">Synced</Badge>
+                    )}
                   </div>
                 )}
 

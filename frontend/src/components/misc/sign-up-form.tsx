@@ -63,9 +63,9 @@ export function SignUpForm({
       router.push("/auth/sign-up-success");
     } catch (error: unknown) {
       const message =
-        error instanceof Error ? error.message : "An error occurred";
+        error instanceof Error ? error.message : "An unexpected error occurred";
       setError(message);
-      toast.error(message);
+      toast.error("Could not create account", { description: message });
     } finally {
       setIsLoading(false);
     }

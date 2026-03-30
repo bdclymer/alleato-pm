@@ -6,24 +6,19 @@ import { format, isPast } from "date-fns";
 import {
   AlertTriangle,
   ArrowRight,
-  BarChart3,
   Calendar,
   CheckCircle2,
   ChevronRight,
-  Circle,
   Clock,
-  FileText,
-  Layers,
   MapPin,
   TrendingDown,
-  TrendingUp,
   UserRound,
-  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBudgetData } from "@/hooks/use-budget-data";
 import { useCurrentUserName } from "@/hooks/use-current-user-name";
 import { StatusBadge, Skeleton } from "@/components/ds";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { RealtimeCursors } from "@/components/realtime-cursors";
 import { EditProjectSidebar } from "@/components/project/edit-project-sidebar";
@@ -37,12 +32,12 @@ type Project = Database["public"]["Tables"]["projects"]["Row"];
 type Task = Database["public"]["Tables"]["tasks"]["Row"];
 type Meeting = Database["public"]["Tables"]["document_metadata"]["Row"];
 // changeOrders merges prime_contract_change_orders + contract_change_orders (different shapes)
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type ChangeOrder = any;
 type RFI = Database["public"]["Tables"]["rfis"]["Row"];
 type Contract = Database["public"]["Tables"]["prime_contracts"]["Row"];
 type ContractLineItem = Database["public"]["Tables"]["contract_line_items"]["Row"];
 type ChangeEvent = Database["public"]["Tables"]["change_events"]["Row"];
+type ProjectTeamMember = Database["public"]["Functions"]["get_project_team"]["Returns"][number];
 
 interface Commitment {
   id: string;
@@ -74,6 +69,7 @@ interface ProjectCommandCenterProps {
   contractLineItems?: Pick<ContractLineItem, "contract_id" | "total_cost" | "quantity" | "unit_cost">[];
   changeEvents?: ChangeEvent[];
   schedule?: any[];
+  team?: ProjectTeamMember[];
   // unused but accepted for API compatibility
   dailyLogs?: any[];
   budget?: any[];
@@ -113,6 +109,14 @@ function truncateSentence(value: string, max = 110): string {
   return `${normalized.slice(0, max - 1).trimEnd()}…`;
 }
 
+function initials(value: string | null | undefined): string {
+  const normalized = (value ?? "").trim();
+  if (!normalized) return "TM";
+  const parts = normalized.split(/\s+/).filter(Boolean);
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return `${parts[0][0] ?? ""}${parts[parts.length - 1][0] ?? ""}`.toUpperCase();
+}
+
 /* ─────────────────────────────────────────────────────────────
    Sub-components
 ───────────────────────────────────────────────────────────── */
@@ -126,7 +130,7 @@ function SectionHeading({
 }) {
   return (
     <div className="flex items-center justify-between mb-3">
-      <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <span className="text-[11px] font-semibold uppercase tracking-wider text-primary">
         {children}
       </span>
       {action}
@@ -220,10 +224,9 @@ export function ProjectCommandCenter({
   rfis,
   commitments,
   contracts,
-  contractLineItems = [],
   changeEvents = [],
-  schedule = [],
   budget = [],
+  team = [],
 }: ProjectCommandCenterProps) {
   const projectId = String(project.id);
   const [isEditProjectSidebarOpen, setIsEditProjectSidebarOpen] = React.useState(false);
@@ -233,26 +236,6 @@ export function ProjectCommandCenter({
 
   /* ── Derived: Contract ─────────────────────────────── */
   const primaryContract = contracts[0] ?? null;
-  const primaryContractSovTotal = primaryContract
-    ? contractLineItems
-        .filter((line) => line.contract_id === primaryContract.id)
-        .reduce((sum, line) => {
-          const explicitTotal = line.total_cost ?? 0;
-          if (explicitTotal !== 0) return sum + explicitTotal;
-          const derivedTotal = (line.quantity ?? 0) * (line.unit_cost ?? 0);
-          return sum + derivedTotal;
-        }, 0)
-    : 0;
-  const contractValue =
-    primaryContractSovTotal > 0
-      ? primaryContractSovTotal
-      : (primaryContract?.revised_contract_value as number | null) ??
-        (primaryContract?.original_contract_value as number | null) ??
-        null;
-  const primeContractHref = primaryContract
-    ? `/${projectId}/prime-contracts/${primaryContract.id}`
-    : `/${projectId}/prime-contracts/new`;
-  const primeContractActionLabel = primaryContract ? "View" : "Create";
 
   /* ── Derived: Budget ───────────────────────────────── */
   const revisedBudget = grandTotals.revisedBudget || grandTotals.originalBudgetAmount;
@@ -263,20 +246,6 @@ export function ProjectCommandCenter({
   const spendPct = pct(costToDate, revisedBudget);
   const varianceTone: "success" | "danger" | "warning" =
     variance > 0 ? "success" : variance < 0 ? "danger" : "warning";
-  const budgetHref = `/${projectId}/budget`;
-  const budgetActionLabel = "View";
-  const hasCommitments = commitments.length > 0;
-  const commitmentsHref = hasCommitments
-    ? `/${projectId}/commitments`
-    : `/${projectId}/commitments/new?type=subcontract`;
-  const commitmentsActionLabel = hasCommitments ? "View" : "Create";
-
-  /* ── Derived: Approved change orders total ─────────── */
-  const approvedCOTotal = changeOrders
-    .filter((co: ChangeOrder) =>
-      ["approved", "executed"].includes((co.status ?? "").toLowerCase())
-    )
-    .reduce((sum: number, co: ChangeOrder) => sum + ((co.total_amount as number | null) ?? 0), 0);
 
   /* ── Derived: Change pipeline by status ────────────── */
   const ceByStatus = changeEvents.reduce<Record<string, number>>((acc, ce) => {
@@ -293,6 +262,34 @@ export function ProjectCommandCenter({
     ? `/${projectId}/change-events`
     : `/${projectId}/change-events/new`;
   const changeEventsActionLabel = hasChangeEvents ? "View All" : "Create Change Event";
+  const sortedChangeEvents = [...changeEvents]
+    .filter((ce) => !["closed", "rejected"].includes((ce.status ?? "").toLowerCase()))
+    .sort((a, b) => {
+      const aTime = new Date(a.updated_at ?? a.created_at).getTime();
+      const bTime = new Date(b.updated_at ?? b.created_at).getTime();
+      return bTime - aTime;
+    })
+    .slice(0, 6);
+  const potentialChangeOrders = [...changeOrders]
+    .filter((co: ChangeOrder) => Boolean(co?.pcco_number))
+    .sort((a: ChangeOrder, b: ChangeOrder) => {
+      const aTime = new Date(a?.updated_at ?? a?.created_at ?? 0).getTime();
+      const bTime = new Date(b?.updated_at ?? b?.created_at ?? 0).getTime();
+      return bTime - aTime;
+    })
+    .slice(0, 6);
+  const approvedChangeOrders = [...changeOrders]
+    .filter((co: ChangeOrder) => !co?.pcco_number)
+    .sort((a: ChangeOrder, b: ChangeOrder) => {
+      const aTime = new Date(a?.updated_at ?? a?.created_at ?? 0).getTime();
+      const bTime = new Date(b?.updated_at ?? b?.created_at ?? 0).getTime();
+      return bTime - aTime;
+    })
+    .slice(0, 6);
+  const hasPipelineData =
+    sortedChangeEvents.length > 0 ||
+    potentialChangeOrders.length > 0 ||
+    approvedChangeOrders.length > 0;
 
   /* ── Derived: RFIs ──────────────────────────────────── */
   const rfisOpen = rfis.filter((r) => r.status.toLowerCase() !== "closed");
@@ -315,21 +312,6 @@ export function ProjectCommandCenter({
     (t) => t.due_date && isPast(new Date(t.due_date))
   );
 
-  /* ── Derived: Schedule milestones ───────────────────── */
-  const milestones = schedule
-    .filter((s: any) => s.is_milestone)
-    .sort((a: any, b: any) => {
-      if (a.finish_date && b.finish_date)
-        return new Date(a.finish_date).getTime() - new Date(b.finish_date).getTime();
-      return 0;
-    })
-    .slice(0, 5);
-
-  const completedScheduleTasks = schedule.filter(
-    (s: any) => (s.status ?? "").toLowerCase() === "completed"
-  );
-  const schedulePct = pct(completedScheduleTasks.length, schedule.length || 1);
-
   /* ── Derived: Days to completion ───────────────────── */
   const completionDate =
     (primaryContract?.substantial_completion_date as string | null) ??
@@ -350,19 +332,6 @@ export function ProjectCommandCenter({
     .slice(0, 4);
 
   /* ── Module nav — only routes that actually exist ──── */
-  const modules = [
-    { label: "Budget", href: `/${projectId}/budget`, icon: BarChart3 },
-    { label: "Commitments", href: `/${projectId}/commitments`, icon: Layers },
-    { label: "Change Events", href: `/${projectId}/change-events`, icon: TrendingUp },
-    { label: "Change Orders", href: `/${projectId}/change-orders`, icon: FileText },
-    { label: "Prime Contracts", href: `/${projectId}/prime-contracts`, icon: FileText },
-    { label: "Schedule", href: `/${projectId}/schedule`, icon: Calendar },
-    { label: "RFIs", href: `/${projectId}/rfis`, icon: FileText },
-    { label: "Daily Log", href: `/${projectId}/daily-log`, icon: Clock },
-    { label: "Drawings", href: `/${projectId}/drawings`, icon: FileText },
-    { label: "Submittals", href: `/${projectId}/submittals`, icon: FileText },
-    { label: "Directory", href: `/${projectId}/directory`, icon: Users },
-  ];
 
   return (
     <div className="flex flex-col min-h-0">
@@ -371,7 +340,7 @@ export function ProjectCommandCenter({
       {/* ────────────────────────────────────────────────────
           IDENTITY BAND
       ──────────────────────────────────────────────────── */}
-      <div className="border-b border-border bg-card px-5 lg:px-7 py-4">
+      <div className="px-5 lg:px-7 py-4">
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div className="min-w-0">
             {jobNumber && (
@@ -437,160 +406,6 @@ export function ProjectCommandCenter({
 
 
       {/* ────────────────────────────────────────────────────
-          KPI RAIL
-      ──────────────────────────────────────────────────── */}
-      <div className="border-b border-border bg-background">
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 divide-x divide-border">
-          {/* Contract Value */}
-          <div className="relative px-5 py-4">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
-              Contract Value
-            </span>
-            <span className="text-xl font-semibold tabular-nums tracking-tight text-foreground">
-              {fmtFull(contractValue)}
-            </span>
-            {approvedCOTotal > 0 && (
-              <p className="text-xs text-muted-foreground mt-0.5">
-                +{fmtFull(approvedCOTotal)} in COs
-              </p>
-            )}
-            <Link
-              href={primeContractHref}
-              className="absolute right-5 top-4 inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
-            >
-              {primeContractActionLabel} <ChevronRight className="h-3 w-3" />
-            </Link>
-          </div>
-
-          {/* Budget */}
-          <div className="relative px-5 py-4">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
-              Budget
-            </span>
-            {budgetLoading ? (
-              <Skeleton className="h-7 w-20" />
-            ) : (
-              <>
-                <span className="text-xl font-semibold tabular-nums tracking-tight text-foreground">
-                  {fmtFull(revisedBudget)}
-                </span>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {spendPct}% spent
-                </p>
-              </>
-            )}
-            <Link
-              href={budgetHref}
-              className="absolute right-5 top-4 inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
-            >
-              {budgetActionLabel} <ChevronRight className="h-3 w-3" />
-            </Link>
-          </div>
-
-          {/* Cost to Date */}
-          <div className="px-5 py-4">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
-              Cost to Date
-            </span>
-            {budgetLoading ? (
-              <Skeleton className="h-7 w-20" />
-            ) : (
-              <>
-                <span className="text-xl font-semibold tabular-nums tracking-tight text-foreground">
-                  {fmtCompact(costToDate)}
-                </span>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  of {fmtCompact(revisedBudget)}
-                </p>
-              </>
-            )}
-          </div>
-
-          {/* Committed */}
-          <div className="relative px-5 py-4">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
-              Committed
-            </span>
-            {budgetLoading ? (
-              <Skeleton className="h-7 w-20" />
-            ) : (
-              <>
-                <span className="text-xl font-semibold tabular-nums tracking-tight text-foreground">
-                  {fmtCompact(committedCosts)}
-                </span>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {commitments.length} commitment{commitments.length !== 1 ? "s" : ""}
-                </p>
-              </>
-            )}
-            <Link
-              href={commitmentsHref}
-              className="absolute right-5 top-4 inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 transition-colors"
-            >
-              {commitmentsActionLabel} <ChevronRight className="h-3 w-3" />
-            </Link>
-          </div>
-
-          {/* Forecast Variance */}
-          <div className="px-5 py-4">
-            <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground block mb-1">
-              Forecast Variance
-            </span>
-            {budgetLoading ? (
-              <Skeleton className="h-7 w-20" />
-            ) : (
-              <>
-                <div className="flex items-baseline gap-1.5">
-                  <span
-                    className={cn(
-                      "text-xl font-semibold tabular-nums tracking-tight",
-                      varianceTone === "success"
-                        ? "text-green-600"
-                        : varianceTone === "danger"
-                        ? "text-red-600"
-                        : "text-foreground"
-                    )}
-                  >
-                    {variance > 0 ? "+" : ""}
-                    {fmtCompact(variance)}
-                  </span>
-                  {varianceTone === "success" ? (
-                    <TrendingDown className="h-3.5 w-3.5 text-green-500" />
-                  ) : varianceTone === "danger" ? (
-                    <TrendingUp className="h-3.5 w-3.5 text-red-500" />
-                  ) : null}
-                </div>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  ECAC {fmtCompact(ecac)}
-                </p>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* ────────────────────────────────────────────────────
-          MODULE NAV
-      ──────────────────────────────────────────────────── */}
-      <div className="border-b border-border bg-card px-5 lg:px-7 py-2.5 overflow-x-auto">
-        <div className="flex items-center gap-0.5 min-w-max">
-          {modules.map((mod) => {
-            const Icon = mod.icon;
-            return (
-              <Link
-                key={mod.href}
-                href={mod.href}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-              >
-                <Icon className="h-3.5 w-3.5" />
-                {mod.label}
-              </Link>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* ────────────────────────────────────────────────────
           BODY — 2-col layout
       ──────────────────────────────────────────────────── */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_320px] divide-y lg:divide-y-0 lg:divide-x divide-border">
@@ -603,7 +418,7 @@ export function ProjectCommandCenter({
               action={
                 <Link
                   href={`/${projectId}/budget`}
-                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
                 >
                   View Budget <ChevronRight className="h-3 w-3" />
                 </Link>
@@ -707,7 +522,7 @@ export function ProjectCommandCenter({
               action={
                 <Link
                   href={changeEventsHref}
-                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
                 >
                   {changeEventsActionLabel} <ChevronRight className="h-3 w-3" />
                 </Link>
@@ -716,39 +531,124 @@ export function ProjectCommandCenter({
               Change Pipeline
             </SectionHeading>
 
-            {changeEvents.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No change events</p>
+            {!hasPipelineData ? (
+              <p className="text-sm text-muted-foreground">No pipeline items</p>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div className="flex flex-wrap gap-2">
                   {ceDraft > 0 && <StatPill label="Draft" value={ceDraft} tone="neutral" />}
                   {cePending > 0 && <StatPill label="Open" value={cePending} tone="warning" />}
-                  {ceApproved > 0 && (
-                    <StatPill label="Approved" value={ceApproved} tone="success" />
-                  )}
-                  {ceRejected > 0 && (
-                    <StatPill label="Rejected" value={ceRejected} tone="danger" />
-                  )}
+                  {ceApproved > 0 && <StatPill label="Approved" value={ceApproved} tone="success" />}
+                  {ceRejected > 0 && <StatPill label="Rejected" value={ceRejected} tone="danger" />}
                 </div>
-                <div>
-                  {changeEvents
-                    .filter((ce) =>
-                      ["open", "pending", "draft"].includes(
-                        (ce.status ?? "").toLowerCase()
-                      )
-                    )
-                    .slice(0, 5)
-                    .map((ce) => (
-                      <ItemRow
-                        key={ce.id}
-                        dot={
-                          (ce.status ?? "").toLowerCase() === "open" ? "amber" : "muted"
-                        }
-                        title={ce.title ?? `Change Event #${ce.number}`}
-                        meta={(ce.type ?? "") + (ce.status ? ` · ${ce.status}` : "")}
-                        right={<StatusBadge status={ce.status ?? "Draft"} />}
-                      />
-                    ))}
+                <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                  <div className="rounded-md border border-border/70 bg-background">
+                    <div className="flex items-center justify-between border-b border-border/70 px-3 py-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        Change Events
+                      </p>
+                      <span className="text-xs text-muted-foreground">{sortedChangeEvents.length}</span>
+                    </div>
+                    <div className="p-2 space-y-2">
+                      {sortedChangeEvents.length === 0 ? (
+                        <p className="px-1 py-2 text-xs text-muted-foreground">No active change events</p>
+                      ) : (
+                        sortedChangeEvents.map((ce) => (
+                          <Link
+                            key={ce.id}
+                            href={`/${projectId}/change-events/${ce.id}`}
+                            className="block rounded-md border border-border/60 px-2.5 py-2 hover:bg-muted/50 transition-colors"
+                          >
+                            <p className="text-sm font-medium leading-snug truncate">
+                              {ce.title ?? `Change Event #${ce.number}`}
+                            </p>
+                            <p className="mt-1 text-xs text-muted-foreground truncate">
+                              {ce.number ? `#${ce.number} · ` : ""}{ce.type}
+                            </p>
+                            <div className="mt-2">
+                              <StatusBadge status={ce.status ?? "Open"} />
+                            </div>
+                          </Link>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="rounded-md border border-border/70 bg-background">
+                    <div className="flex items-center justify-between border-b border-border/70 px-3 py-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        Potential Change Orders
+                      </p>
+                      <span className="text-xs text-muted-foreground">{potentialChangeOrders.length}</span>
+                    </div>
+                    <div className="p-2 space-y-2">
+                      {potentialChangeOrders.length === 0 ? (
+                        <p className="px-1 py-2 text-xs text-muted-foreground">No potential change orders</p>
+                      ) : (
+                        potentialChangeOrders.map((co: ChangeOrder) => (
+                          <Link
+                            key={`pco-${co.id}`}
+                            href={`/${projectId}/change-orders/prime/${co.id}`}
+                            className="block rounded-md border border-border/60 px-2.5 py-2 hover:bg-muted/50 transition-colors"
+                          >
+                            <p className="text-sm font-medium leading-snug truncate">
+                              {co.title ?? "Untitled PCO"}
+                            </p>
+                            <p className="mt-1 text-xs text-muted-foreground truncate">
+                              {co.pcco_number ?? `PCO #${co.id}`}
+                            </p>
+                            <div className="mt-2 flex items-center justify-between gap-2">
+                              <StatusBadge status={co.status ?? "Proposed"} />
+                              <span className="text-xs tabular-nums text-muted-foreground">
+                                {fmtCompact(co.total_amount)}
+                              </span>
+                            </div>
+                          </Link>
+                        ))
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="rounded-md border border-border/70 bg-background">
+                    <div className="flex items-center justify-between border-b border-border/70 px-3 py-2">
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                        Change Orders
+                      </p>
+                      <span className="text-xs text-muted-foreground">{approvedChangeOrders.length}</span>
+                    </div>
+                    <div className="p-2 space-y-2">
+                      {approvedChangeOrders.length === 0 ? (
+                        <p className="px-1 py-2 text-xs text-muted-foreground">No change orders</p>
+                      ) : (
+                        approvedChangeOrders.map((co: ChangeOrder) => {
+                          const isCommitmentCo = Boolean(co.change_order_number);
+                          const coHref = isCommitmentCo
+                            ? `/${projectId}/change-orders/commitment/${co.id}`
+                            : `/${projectId}/change-orders/prime/${co.id}`;
+                          return (
+                          <Link
+                            key={`co-${co.id}`}
+                            href={coHref}
+                            className="block rounded-md border border-border/60 px-2.5 py-2 hover:bg-muted/50 transition-colors"
+                          >
+                            <p className="text-sm font-medium leading-snug truncate">
+                              {co.title ?? "Untitled CO"}
+                            </p>
+                            <p className="mt-1 text-xs text-muted-foreground truncate">
+                              {co.change_order_number ?? `CO #${co.id}`}
+                            </p>
+                            <div className="mt-2 flex items-center justify-between gap-2">
+                              <StatusBadge status={co.status ?? "Pending"} />
+                              <span className="text-xs tabular-nums text-muted-foreground">
+                                {fmtCompact(co.amount ?? co.total_amount)}
+                              </span>
+                            </div>
+                          </Link>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -756,64 +656,68 @@ export function ProjectCommandCenter({
 
           <Divider />
 
-          {/* SCHEDULE MILESTONES */}
+          {/* COMMITMENTS SUMMARY */}
           <section>
             <SectionHeading
               action={
                 <Link
-                  href={`/${projectId}/schedule`}
-                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  href={`/${projectId}/commitments`}
+                  className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
                 >
-                  View Schedule <ChevronRight className="h-3 w-3" />
+                  View All <ChevronRight className="h-3 w-3" />
                 </Link>
               }
             >
-              Milestones
+              Commitments
             </SectionHeading>
 
-            {milestones.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No milestones set</p>
+            {commitments.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No commitments</p>
             ) : (
-              <div>
-                <div className="flex items-center justify-between text-xs mb-2">
-                  <span className="text-muted-foreground">
-                    {completedScheduleTasks.length} of {schedule.length} tasks complete
-                  </span>
-                  <span className="tabular-nums font-medium">{schedulePct}%</span>
-                </div>
-                <ProgressBar value={schedulePct} />
-                <div className="mt-3">
-                  {milestones.map((m: any, i: number) => {
-                    const isCompleted =
-                      (m.status ?? "").toLowerCase() === "completed";
-                    const isOverdue =
-                      m.finish_date &&
-                      isPast(new Date(m.finish_date)) &&
-                      !isCompleted;
+              <div className="space-y-2">
+                <div className="flex flex-wrap gap-1.5">
+                  {(["subcontract", "purchase_order"] as const).map((type) => {
+                    const count = commitments.filter((c) => c.type === type).length;
+                    if (!count) return null;
                     return (
-                      <ItemRow
-                        key={m.id ?? i}
-                        dot={isCompleted ? "green" : isOverdue ? "red" : "muted"}
-                        title={m.name ?? `Milestone ${i + 1}`}
-                        meta={
-                          m.finish_date
-                            ? format(new Date(m.finish_date), "MMM d, yyyy")
-                            : undefined
-                        }
-                        right={
-                          isCompleted ? (
-                            <CheckCircle2 className="h-4 w-4 text-green-500" />
-                          ) : isOverdue ? (
-                            <span className="text-xs font-medium text-red-600">
-                              Overdue
-                            </span>
-                          ) : (
-                            <Circle className="h-4 w-4 text-muted-foreground/40" />
-                          )
-                        }
+                      <StatPill
+                        key={type}
+                        label={type === "subcontract" ? "Subcontracts" : "POs"}
+                        value={count}
+                        tone="neutral"
                       />
                     );
                   })}
+                  <StatPill
+                    label="Executed"
+                    value={commitments.filter((c) => c.executed).length}
+                    tone="success"
+                  />
+                </div>
+                <div>
+                  {commitments.slice(0, 4).map((c) => (
+                    <Link
+                      key={c.id}
+                      href={`/${projectId}/commitments/${c.id}`}
+                      className="flex items-start gap-2.5 py-2.5 border-b border-border/50 last:border-0 hover:bg-muted/50 -mx-2 px-2 rounded-md transition-colors"
+                    >
+                      <span
+                        className={cn(
+                          "mt-[5px] h-1.5 w-1.5 rounded-full shrink-0",
+                          c.executed ? "bg-green-500" : "bg-muted-foreground/30"
+                        )}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm truncate">{c.title ?? c.number}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {c.type === "subcontract" ? "Subcontract" : "PO"} · {c.status}
+                        </p>
+                      </div>
+                      <span className="text-xs tabular-nums text-muted-foreground shrink-0">
+                        {fmtCompact(c.contract_amount ?? c.original_amount)}
+                      </span>
+                    </Link>
+                  ))}
                 </div>
               </div>
             )}
@@ -827,7 +731,7 @@ export function ProjectCommandCenter({
               action={
                 <Link
                   href={`/${projectId}/meetings`}
-                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
                 >
                   View All <ChevronRight className="h-3 w-3" />
                 </Link>
@@ -851,27 +755,36 @@ export function ProjectCommandCenter({
                   const meetingDescription = meetingDescriptionSource
                     ? truncateSentence(meetingDescriptionSource)
                     : "Review agenda, decisions, and action items.";
+                  const meetingDateLabel = m.date
+                    ? format(new Date(m.date), "MMM d, yyyy")
+                    : null;
 
                   return (
-                  <Link
-                    key={m.id}
-                    href={`/${projectId}/meetings/${m.id}`}
-                    className="flex items-start gap-2.5 py-2.5 border-b border-border/50 last:border-0 hover:bg-muted/50 -mx-2 px-2 rounded-md transition-colors"
-                  >
-                    <span className="mt-[5px] h-1.5 w-1.5 rounded-full bg-muted-foreground/30 shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm truncate">{m.title ?? "Meeting"}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
-                        {meetingDescription}
-                      </p>
-                      {m.date && (
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {format(new Date(m.date), "MMM d, yyyy")}
+                    <Link
+                      key={m.id}
+                      href={`/${projectId}/meetings/${m.id}`}
+                      className="group flex items-start gap-3 py-2.5 border-b border-border/50 last:border-0 hover:bg-muted/50 -mx-2 px-2 rounded-md transition-colors"
+                    >
+                      <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                        <Calendar className="h-3.5 w-3.5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-start justify-between gap-3">
+                          <p className="text-sm font-medium leading-snug truncate">
+                            {m.title ?? "Meeting"}
+                          </p>
+                          {meetingDateLabel && (
+                            <span className="text-xs text-muted-foreground tabular-nums whitespace-nowrap">
+                              {meetingDateLabel}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                          {meetingDescription}
                         </p>
-                      )}
-                    </div>
-                    <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0 mt-0.5" />
-                  </Link>
+                      </div>
+                      <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/40 shrink-0 mt-1 group-hover:text-foreground/60 transition-colors" />
+                    </Link>
                   );
                 })}
               </div>
@@ -923,13 +836,62 @@ export function ProjectCommandCenter({
 
           <Divider />
 
+          {/* PROJECT TEAM */}
+          <section>
+            <SectionHeading
+              action={
+                <Link
+                  href={`/${projectId}/directory`}
+                  className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+                >
+                  View Team <ChevronRight className="h-3 w-3" />
+                </Link>
+              }
+            >
+              Project Team
+            </SectionHeading>
+
+            {team.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No team members assigned</p>
+            ) : (
+              <div>
+                {team.slice(0, 6).map((member) => {
+                  const displayName = member.full_name?.trim() || "Team Member";
+                  const avatarSrc = member.person_id
+                    ? `/api/avatar/${member.person_id}?projectId=${projectId}`
+                    : undefined;
+
+                  return (
+                    <div
+                      key={member.id}
+                      className="flex items-center gap-3 py-2.5 border-b border-border/50 last:border-0"
+                    >
+                      <Avatar className="h-8 w-8 rounded-full">
+                        <AvatarImage src={avatarSrc} alt={displayName} />
+                        <AvatarFallback className="text-xs">{initials(displayName)}</AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{displayName}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                          {member.role || "Team Member"}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+
+          <Divider />
+
           {/* OPEN RFIs */}
           <section>
             <SectionHeading
               action={
                 <Link
                   href={`/${projectId}/rfis`}
-                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
                 >
                   All RFIs <ChevronRight className="h-3 w-3" />
                 </Link>
@@ -1002,74 +964,6 @@ export function ProjectCommandCenter({
             </section>
           )}
 
-          {openTasks.length > 0 && <Divider />}
-
-          {/* COMMITMENTS SUMMARY */}
-          <section>
-            <SectionHeading
-              action={
-                <Link
-                  href={`/${projectId}/commitments`}
-                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                  View All <ChevronRight className="h-3 w-3" />
-                </Link>
-              }
-            >
-              Commitments
-            </SectionHeading>
-
-            {commitments.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No commitments</p>
-            ) : (
-              <div className="space-y-2">
-                <div className="flex flex-wrap gap-1.5">
-                  {(["subcontract", "purchase_order"] as const).map((type) => {
-                    const count = commitments.filter((c) => c.type === type).length;
-                    if (!count) return null;
-                    return (
-                      <StatPill
-                        key={type}
-                        label={type === "subcontract" ? "Subcontracts" : "POs"}
-                        value={count}
-                        tone="neutral"
-                      />
-                    );
-                  })}
-                  <StatPill
-                    label="Executed"
-                    value={commitments.filter((c) => c.executed).length}
-                    tone="success"
-                  />
-                </div>
-                <div>
-                  {commitments.slice(0, 4).map((c) => (
-                    <Link
-                      key={c.id}
-                      href={`/${projectId}/commitments/${c.id}`}
-                      className="flex items-start gap-2.5 py-2.5 border-b border-border/50 last:border-0 hover:bg-muted/50 -mx-2 px-2 rounded-md transition-colors"
-                    >
-                      <span
-                        className={cn(
-                          "mt-[5px] h-1.5 w-1.5 rounded-full shrink-0",
-                          c.executed ? "bg-green-500" : "bg-muted-foreground/30"
-                        )}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm truncate">{c.title ?? c.number}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
-                          {c.type === "subcontract" ? "Subcontract" : "PO"} · {c.status}
-                        </p>
-                      </div>
-                      <span className="text-xs tabular-nums text-muted-foreground shrink-0">
-                        {fmtCompact(c.contract_amount ?? c.original_amount)}
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            )}
-          </section>
         </div>
       </div>
 

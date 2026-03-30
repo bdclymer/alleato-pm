@@ -63,7 +63,7 @@ export function useCreateDrawingPin(projectId: string, drawingId: string) {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["drawing-pins", projectId, drawingId] });
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error("Could not create pin", { description: e.message }),
   });
 }
 
@@ -81,6 +81,6 @@ export function useDeleteDrawingPin(projectId: string, drawingId: string) {
       qc.invalidateQueries({ queryKey: ["drawing-pins", projectId, drawingId] });
       toast.success("Link removed");
     },
-    onError: (e: Error) => toast.error(e.message),
+    onError: (e: Error) => toast.error("Could not remove pin", { description: e.message }),
   });
 }

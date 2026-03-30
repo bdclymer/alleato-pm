@@ -73,7 +73,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     if (error) {
       return NextResponse.json(
-        { error: "Failed to fetch attachments", details: error.message },
+        { error: "Could not fetch attachments", details: error.message },
         { status: 400 },
       );
     }
@@ -102,7 +102,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     });
   } catch (error) {
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Internal server error", details: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 },
     );
   }
@@ -192,7 +192,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     if (uploadError) {
       return NextResponse.json(
-        { error: "Failed to upload file", details: uploadError.message },
+        { error: "Could not upload file", details: uploadError.message },
         { status: 400 },
       );
     }
@@ -223,7 +223,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
       return NextResponse.json(
         {
-          error: "Failed to create attachment record",
+          error: "Could not create attachment record",
           details: dbError.message,
         },
         { status: 400 },
@@ -275,7 +275,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Internal server error", details: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 },
     );
   }
@@ -349,7 +349,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     if (fetchError) {
       return NextResponse.json(
-        { error: "Failed to fetch attachments", details: fetchError.message },
+        { error: "Could not fetch attachments for deletion", details: fetchError.message },
         { status: 400 },
       );
     }
@@ -385,7 +385,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     if (deleteError) {
       return NextResponse.json(
-        { error: "Failed to delete attachments", details: deleteError.message },
+        { error: "Could not delete attachments", details: deleteError.message },
         { status: 400 },
       );
     }
@@ -404,7 +404,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     });
   } catch (error) {
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Internal server error", details: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 },
     );
   }

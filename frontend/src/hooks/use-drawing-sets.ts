@@ -17,7 +17,7 @@ export function useDrawingSets(projectId: string) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to fetch drawing sets");
+        throw new Error(error.error || `Server returned ${response.status} when loading drawing sets`);
       }
 
       return response.json();
@@ -50,7 +50,7 @@ export function useCreateDrawingSet(projectId: string) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to create drawing set");
+        throw new Error(error.error || `Server returned ${response.status} — the drawing set could not be created`);
       }
 
       return response.json();
@@ -62,7 +62,7 @@ export function useCreateDrawingSet(projectId: string) {
       toast.success("Drawing set created successfully");
     },
     onError: (error: Error) => {
-      toast.error("Failed to create drawing set", {
+      toast.error("Could not create drawing set", {
         description: error.message,
       });
     },
@@ -99,7 +99,7 @@ export function useUpdateDrawingSet(projectId: string) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to update drawing set");
+        throw new Error(error.error || `Server returned ${response.status} — the drawing set could not be updated`);
       }
 
       return response.json();
@@ -111,7 +111,7 @@ export function useUpdateDrawingSet(projectId: string) {
       toast.success("Drawing set updated successfully");
     },
     onError: (error: Error) => {
-      toast.error("Failed to update drawing set", {
+      toast.error("Could not update drawing set", {
         description: error.message,
       });
     },

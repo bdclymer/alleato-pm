@@ -152,7 +152,7 @@ export function useDirectory(
         );
       }
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("Unknown error"));
+      setError(err instanceof Error ? err : new Error("an unexpected error occurred — please try again"));
       if (typeof window !== "undefined") {
         const cached = window.localStorage.getItem(cacheKey);
         if (cached) {

@@ -1,109 +1,150 @@
 "use client";
 
-import { X, MessageSquare, Info } from "lucide-react";
+import { useMemo, useState } from "react";
+import { format, parseISO } from "date-fns";
+import { MessageSquare, Send, X } from "lucide-react";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Textarea } from "@/components/ui/textarea";
+import type { TeamChatMessage } from "./chat-main";
+import type { TeamChannel } from "./team-chat-data";
+
+export interface ThreadReply {
+  id: string;
+  content: string;
+  userName: string;
+  createdAt: string;
+}
 
 interface ChatRightPanelProps {
-  selectedMessageId: string | null;
+  channel: TeamChannel;
+  selectedMessage: TeamChatMessage | null;
+  threadReplies: ThreadReply[];
+  onAddThreadReply: (content: string) => void;
   onClose: () => void;
 }
 
 export function ChatRightPanel({
-  selectedMessageId,
+  channel,
+  selectedMessage,
+  threadReplies,
+  onAddThreadReply,
   onClose,
 }: ChatRightPanelProps) {
+  const [replyDraft, setReplyDraft] = useState("");
+
+  const selectedMessageTime = useMemo(() => {
+    if (!selectedMessage) {
+      return "";
+    }
+
+    return format(parseISO(selectedMessage.createdAt), "MMM d · h:mm a");
+  }, [selectedMessage]);
+
+  const handleSendReply = () => {
+    if (!replyDraft.trim() || !selectedMessage) {
+      return;
+    }
+
+    onAddThreadReply(replyDraft.trim());
+    setReplyDraft("");
+  };
+
   return (
-    <div className="w-80 h-full bg-[hsl(var(--chat-panel))] border-l border-[hsl(var(--chat-border))] flex flex-col">
-      {/* Header */}
-      <div className="h-14 border-b border-[hsl(var(--chat-border))] flex items-center justify-between px-4">
-        <h3 className="font-semibold text-[hsl(var(--chat-text))]">Details</h3>
+    <div className="flex h-full flex-col bg-background">
+      <div className="flex h-14 items-center justify-between border-b border-border px-4">
+        <div className="min-w-0">
+          <h3 className="truncate text-sm font-semibold text-foreground">Thread</h3>
+          <p className="truncate text-xs text-muted-foreground">#{channel.name}</p>
+        </div>
         <Button
           variant="ghost"
           size="icon"
           onClick={onClose}
-          className="text-[hsl(var(--chat-muted))] hover:text-[hsl(var(--chat-text))] hover:bg-[hsl(var(--chat-hover))]"
+          className="text-muted-foreground hover:text-foreground"
         >
           <X className="h-4 w-4" />
         </Button>
       </div>
 
-      {/* Tabs */}
-      <Tabs defaultValue="threads" className="flex-1 flex flex-col">
-        <TabsList className="w-full justify-start border-b border-[hsl(var(--chat-border))] rounded-none h-auto p-0 bg-transparent">
-          <TabsTrigger
-            value="threads"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[hsl(var(--chat-accent))] data-[state=active]:bg-transparent px-4 py-4"
-          >
-            <MessageSquare className="h-4 w-4 mr-2" />
-            Threads
-          </TabsTrigger>
-          <TabsTrigger
-            value="details"
-            className="rounded-none border-b-2 border-transparent data-[state=active]:border-[hsl(var(--chat-accent))] data-[state=active]:bg-transparent px-4 py-4"
-          >
-            <Info className="h-4 w-4 mr-2" />
-            Details
-          </TabsTrigger>
-        </TabsList>
+      <ScrollArea className="flex-1">
+        <div className="space-y-4 p-4">
+          {selectedMessage ? (
+            <>
+              <article className="space-y-2 rounded-md border border-border bg-muted/20 p-3">
+                <div className="flex items-center gap-2">
+                  <Avatar className="h-7 w-7 border border-border">
+                    <AvatarFallback className="text-[11px] font-semibold">
+                      {selectedMessage.user.name
+                        .split(" ")
+                        .map((part) => part[0])
+                        .join("")
+                        .toUpperCase()
+                        .slice(0, 2)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-semibold text-foreground">
+                      {selectedMessage.user.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{selectedMessageTime}</p>
+                  </div>
+                </div>
+                <p className="text-sm leading-relaxed text-foreground">{selectedMessage.content}</p>
+              </article>
 
-        <TabsContent value="threads" className="flex-1 mt-0">
-          <ScrollArea className="h-full">
-            <div className="p-4">
-              {selectedMessageId ? (
-                <div className="text-sm text-[hsl(var(--chat-muted))]">
-                  <p>Thread view for message: {selectedMessageId}</p>
-                  <p className="mt-2 text-xs">
-                    Thread replies will appear here.
+              <div className="space-y-3">
+                {threadReplies.length > 0 ? (
+                  threadReplies.map((reply) => (
+                    <article key={reply.id} className="space-y-1 rounded-md border border-border/80 p-3">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-sm font-semibold text-foreground">{reply.userName}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(parseISO(reply.createdAt), "h:mm a")}
+                        </p>
+                      </div>
+                      <p className="text-sm leading-relaxed text-foreground">{reply.content}</p>
+                    </article>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">
+                    No replies yet. Use this panel to continue the thread.
                   </p>
-                </div>
-              ) : (
-                <div className="text-center text-sm text-[hsl(var(--chat-muted))] mt-8">
-                  <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                  <p>Select a message to view its thread</p>
-                </div>
-              )}
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="mt-10 text-center">
+              <MessageSquare className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60" />
+              <p className="text-sm text-muted-foreground">
+                Select a message from the timeline to open its thread.
+              </p>
             </div>
-          </ScrollArea>
-        </TabsContent>
+          )}
+        </div>
+      </ScrollArea>
 
-        <TabsContent value="details" className="flex-1 mt-0">
-          <ScrollArea className="h-full">
-            <div className="p-4 space-y-6">
-              {/* Channel Info */}
-              <div>
-                <h4 className="text-sm font-semibold text-[hsl(var(--chat-text))] mb-2">
-                  About this channel
-                </h4>
-                <p className="text-sm text-[hsl(var(--chat-muted))]">
-                  Channel information and description will appear here.
-                </p>
-              </div>
-
-              {/* Pinned Items */}
-              <div>
-                <h4 className="text-sm font-semibold text-[hsl(var(--chat-text))] mb-2">
-                  Pinned Items
-                </h4>
-                <p className="text-sm text-[hsl(var(--chat-muted))]">
-                  No pinned messages yet.
-                </p>
-              </div>
-
-              {/* Members */}
-              <div>
-                <h4 className="text-sm font-semibold text-[hsl(var(--chat-text))] mb-2">
-                  Channel Members
-                </h4>
-                <p className="text-sm text-[hsl(var(--chat-muted))]">
-                  Member list will appear here.
-                </p>
-              </div>
-            </div>
-          </ScrollArea>
-        </TabsContent>
-      </Tabs>
+      <div className="border-t border-border p-3">
+        <Textarea
+          value={replyDraft}
+          onChange={(event) => setReplyDraft(event.target.value)}
+          placeholder={selectedMessage ? "Reply in thread" : "Select a message to reply"}
+          disabled={!selectedMessage}
+          rows={3}
+          className="min-h-20 resize-none border-border bg-muted/20"
+        />
+        <div className="mt-2 flex justify-end">
+          <Button
+            onClick={handleSendReply}
+            disabled={!selectedMessage || !replyDraft.trim()}
+            className="h-8 gap-1.5 px-3"
+          >
+            <Send className="h-3.5 w-3.5" />
+            Reply
+          </Button>
+        </div>
+      </div>
     </div>
   );
 }

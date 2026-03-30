@@ -41,7 +41,7 @@ export function useSpecifications(
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to fetch specifications");
+        throw new Error(error.error || `Server returned ${response.status} when loading specifications`);
       }
 
       return response.json();
@@ -63,7 +63,7 @@ export function useSpecification(projectId: string, sectionId: string) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to fetch specification");
+        throw new Error(error.error || `Server returned ${response.status} when loading specification details`);
       }
 
       return response.json();
@@ -108,7 +108,7 @@ export function useCreateSpecification(projectId: string) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to create specification");
+        throw new Error(error.error || `Server returned ${response.status} — the specification could not be created`);
       }
 
       return response.json();
@@ -120,7 +120,7 @@ export function useCreateSpecification(projectId: string) {
       toast.success("Specification created successfully");
     },
     onError: (error: Error) => {
-      toast.error("Failed to create specification", {
+      toast.error("Could not create specification", {
         description: error.message,
       });
     },
@@ -146,7 +146,7 @@ export function useUpdateSpecification(projectId: string, sectionId: string) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to update specification");
+        throw new Error(error.error || `Server returned ${response.status} — the specification could not be updated`);
       }
 
       return response.json();
@@ -161,7 +161,7 @@ export function useUpdateSpecification(projectId: string, sectionId: string) {
       toast.success("Specification updated successfully");
     },
     onError: (error: Error) => {
-      toast.error("Failed to update specification", {
+      toast.error("Could not update specification", {
         description: error.message,
       });
     },
@@ -185,7 +185,7 @@ export function useDeleteSpecification(projectId: string) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to delete specification");
+        throw new Error(error.error || `Server returned ${response.status} — the specification could not be deleted`);
       }
 
       return response.json();
@@ -197,7 +197,7 @@ export function useDeleteSpecification(projectId: string) {
       toast.success("Specification deleted successfully");
     },
     onError: (error: Error) => {
-      toast.error("Failed to delete specification", {
+      toast.error("Could not delete specification", {
         description: error.message,
       });
     },

@@ -643,8 +643,16 @@ function AddVendorDialog({
 // ─── Project Team Section ────────────────────────────────────────
 // Shows key roles as prominent cards (like the screenshot)
 
-function ProjectTeamSection({ projectId, manageRolesOpen, onManageRolesClose }: { projectId: string; manageRolesOpen?: boolean; onManageRolesClose?: () => void }) {
-  const { roles, isLoading, updateRoleMembers, createRole } =
+function ProjectTeamSection({
+  projectId,
+  manageRolesOpen,
+  onManageRolesOpenChange,
+}: {
+  projectId: string;
+  manageRolesOpen?: boolean;
+  onManageRolesOpenChange?: (open: boolean) => void;
+}) {
+  const { roles, isLoading, updateRoleMembers, createRole, deleteRole } =
     useProjectRoles(projectId);
   const [assignDialog, setAssignDialog] = React.useState<{
     open: boolean;
@@ -652,7 +660,7 @@ function ProjectTeamSection({ projectId, manageRolesOpen, onManageRolesClose }: 
   }>({ open: false, role: null });
   const createRoleOpen = manageRolesOpen ?? false;
   const setCreateRoleOpen = (open: boolean) => {
-    if (!open && onManageRolesClose) onManageRolesClose();
+    onManageRolesOpenChange?.(open);
   };
 
   if (isLoading) {
@@ -668,6 +676,20 @@ function ProjectTeamSection({ projectId, manageRolesOpen, onManageRolesClose }: 
   // Show roles that have members assigned as prominent team cards
   const assignedRoles = roles.filter((r) => r.members.length > 0);
   const emptyRoles = roles.filter((r) => r.members.length === 0);
+
+  const handleDeleteRole = async (role: ProjectRole) => {
+    const confirmed = window.confirm(
+      `Delete role "${role.role_name}"? This will remove all assignments for this role.`,
+    );
+    if (!confirmed) return;
+
+    try {
+      await deleteRole(role.id);
+      toast.success("Role deleted");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete role");
+    }
+  };
 
   if (roles.length === 0) {
     return (
@@ -693,41 +715,54 @@ function ProjectTeamSection({ projectId, manageRolesOpen, onManageRolesClose }: 
                   key={member.id}
                   className="rounded-lg bg-card p-5 space-y-3 relative group"
                 >
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute right-2 top-2 h-8 w-8"
+                        aria-label={`Role actions for ${role.role_name}`}
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => setAssignDialog({ open: true, role })}
+                      >
+                        <Pencil className="mr-2 h-3.5 w-3.5" />
+                        Edit assignment
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        onClick={() => handleDeleteRole(role)}
+                      >
+                        <Trash2 className="mr-2 h-3.5 w-3.5" />
+                        Delete role
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                   <div className="flex items-start gap-3">
                     <Avatar className="h-12 w-12 shrink-0">
                       <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
                         {initials(p?.first_name, p?.last_name)}
                       </AvatarFallback>
                     </Avatar>
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-0 space-y-0.5">
+                      <p className="text-xs font-medium text-primary uppercase tracking-wide">
+                        {role.role_name}
+                      </p>
                       <p className="text-sm font-semibold text-foreground truncate">
                         {p?.full_name ?? "Unknown"}
                       </p>
-                      <p className="text-xs font-medium text-primary uppercase tracking-wide mt-0.5">
-                        {role.role_name}
-                      </p>
+                      {p?.email && (
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Mail className="h-3 w-3 shrink-0" />
+                          <span className="truncate">{p.email}</span>
+                        </div>
+                      )}
                     </div>
-                    <StatusBadge status="Active" />
                   </div>
-                  {p?.email && (
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Mail className="h-3 w-3 shrink-0" />
-                      <span className="truncate">{p.email}</span>
-                    </div>
-                  )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="w-full"
-                    onClick={() =>
-                      p?.email
-                        ? (window.location.href = `mailto:${p.email}`)
-                        : undefined
-                    }
-                  >
-                    <Mail className="mr-1.5 h-3.5 w-3.5" />
-                    Message
-                  </Button>
                 </div>
               );
             })
@@ -739,19 +774,52 @@ function ProjectTeamSection({ projectId, manageRolesOpen, onManageRolesClose }: 
       {emptyRoles.length > 0 && (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mt-4">
           {emptyRoles.map((role) => (
-            <Button
+            <div
               key={role.id}
-              variant="ghost"
-              onClick={() => setAssignDialog({ open: true, role })}
-              className="h-auto rounded-lg border border-dashed border-border/70 p-5 text-left hover:border-border hover:bg-accent/50 transition-colors flex flex-col items-start gap-1"
+              className="relative rounded-lg border border-dashed border-border/70 p-5 hover:border-border hover:bg-accent/50 transition-colors"
             >
-              <p className="text-sm font-medium text-foreground">
-                {role.role_name}
-              </p>
-              <p className="text-xs text-muted-foreground">
-                + Assign someone
-              </p>
-            </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute right-2 top-2 h-8 w-8"
+                    aria-label={`Role actions for ${role.role_name}`}
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem
+                    onClick={() => setAssignDialog({ open: true, role })}
+                  >
+                    <Pencil className="mr-2 h-3.5 w-3.5" />
+                    Edit assignment
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    className="text-destructive"
+                    onClick={() => handleDeleteRole(role)}
+                  >
+                    <Trash2 className="mr-2 h-3.5 w-3.5" />
+                    Delete role
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button
+                variant="ghost"
+                onClick={() => setAssignDialog({ open: true, role })}
+                className="h-auto w-full justify-start px-0 py-0 pr-10 text-left hover:bg-transparent"
+              >
+                <span className="flex flex-col items-start gap-1">
+                <p className="text-sm font-medium text-foreground">
+                  {role.role_name}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  + Assign someone
+                </p>
+                </span>
+              </Button>
+            </div>
           ))}
         </div>
       )}
@@ -789,6 +857,46 @@ function ExternalMembersSection({ projectId }: { projectId: string }) {
   const [addOpen, setAddOpen] = React.useState(false);
   const [search, setSearch] = React.useState("");
   const [companyFilter, setCompanyFilter] = React.useState("all");
+  const [removingPersonId, setRemovingPersonId] = React.useState<string | null>(
+    null,
+  );
+
+  const handleRemoveMember = async (personId: string) => {
+    if (removingPersonId) return;
+
+    const confirmed = window.confirm(
+      "Remove this member from the project directory?",
+    );
+    if (!confirmed) return;
+
+    try {
+      setRemovingPersonId(personId);
+      const response = await fetch(
+        `/api/projects/${projectId}/directory/people/${personId}`,
+        { method: "DELETE" },
+      );
+
+      if (!response.ok) {
+        let errorMessage = "Failed to remove member";
+        try {
+          const data = await response.json();
+          if (typeof data?.error === "string" && data.error.trim().length > 0) {
+            errorMessage = data.error;
+          }
+        } catch {
+          // Preserve fallback for non-JSON error responses.
+        }
+        throw new Error(errorMessage);
+      }
+
+      await refetch();
+      toast.success("Member removed");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to remove member");
+    } finally {
+      setRemovingPersonId(null);
+    }
+  };
 
   // Get unique companies for filter
   const companies = React.useMemo(() => {
@@ -958,9 +1066,13 @@ function ExternalMembersSection({ projectId }: { projectId: string }) {
                             <Mail className="mr-2 h-3.5 w-3.5" />
                             Send Email
                           </DropdownMenuItem>
-                          <DropdownMenuItem className="text-destructive">
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            disabled={removingPersonId === person.id}
+                            onClick={() => void handleRemoveMember(person.id)}
+                          >
                             <UserX className="mr-2 h-3.5 w-3.5" />
-                            Remove
+                            {removingPersonId === person.id ? "Removing..." : "Remove"}
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -985,37 +1097,17 @@ function ExternalMembersSection({ projectId }: { projectId: string }) {
 
 // ─── Vendors Section ─────────────────────────────────────────────
 
-function VendorsSection({ projectId }: { projectId: string }) {
-  const { vendors, isLoading, error, addVendor, removeVendor } =
-    useProjectVendors(projectId);
-  const [addOpen, setAddOpen] = React.useState(false);
-
-  const existingVendorIds = vendors
-    .map((v) => v.vendor?.id)
-    .filter(Boolean) as string[];
-
-  const handleAdd = async (vendorId: string) => {
-    try {
-      await addVendor(vendorId);
-      toast.success("Vendor added to project");
-    } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to add vendor"
-      );
-    }
-  };
-
-  const handleRemove = async (id: string) => {
-    try {
-      await removeVendor(id);
-      toast.success("Vendor removed");
-    } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to remove vendor"
-      );
-    }
-  };
-
+function VendorsSection({
+  vendors,
+  isLoading,
+  error,
+  onAddVendorClick,
+}: {
+  vendors: ReturnType<typeof useProjectVendors>["vendors"];
+  isLoading: boolean;
+  error: Error | null;
+  onAddVendorClick: () => void;
+}) {
   if (isLoading) return <SectionSkeleton rows={3} />;
   if (error) {
     return (
@@ -1028,7 +1120,7 @@ function VendorsSection({ projectId }: { projectId: string }) {
       {vendors.length === 0 ? (
         <p className="py-6 text-center text-sm text-muted-foreground">
           No vendors yet.{" "}
-          <button type="button" onClick={() => setAddOpen(true)} className="text-primary hover:underline">
+          <button type="button" onClick={onAddVendorClick} className="text-primary hover:underline">
             Add one
           </button>
         </p>
@@ -1069,13 +1161,6 @@ function VendorsSection({ projectId }: { projectId: string }) {
           View All {vendors.length} Vendors
         </Button>
       )}
-
-      <AddVendorDialog
-        open={addOpen}
-        onOpenChange={setAddOpen}
-        existingVendorIds={existingVendorIds}
-        onAdd={handleAdd}
-      />
     </>
   );
 }
@@ -1090,7 +1175,8 @@ export default function ProjectDirectoryPage() {
   const [addMemberOpen, setAddMemberOpen] = React.useState(false);
   const [addVendorOpen, setAddVendorOpen] = React.useState(false);
   const [manageRolesOpen, setManageRolesOpen] = React.useState(false);
-  const { vendors, addVendor } = useProjectVendors(projectId);
+  const { vendors, isLoading: vendorsLoading, error: vendorsError, addVendor } =
+    useProjectVendors(projectId);
 
   const existingVendorIds = vendors
     .map((v) => v.vendor?.id)
@@ -1121,14 +1207,18 @@ export default function ProjectDirectoryPage() {
             action={{ label: "Manage Roles", onClick: () => setManageRolesOpen(true) }}
           />
           <div className="mt-4">
-            <ProjectTeamSection projectId={projectId} manageRolesOpen={manageRolesOpen} onManageRolesClose={() => setManageRolesOpen(false)} />
+            <ProjectTeamSection
+              projectId={projectId}
+              manageRolesOpen={manageRolesOpen}
+              onManageRolesOpenChange={setManageRolesOpen}
+            />
           </div>
         </section>
 
         {/* Section 2: External Members */}
         <section>
           <SectionHeader
-            title="External Members"
+            title="All Project Members"
             count={members.length}
             action={{ label: "+ Add", onClick: () => setAddMemberOpen(true) }}
           />
@@ -1146,7 +1236,12 @@ export default function ProjectDirectoryPage() {
           <p className="text-xs text-muted-foreground mt-0.5 mb-4">
             Subcontractors and suppliers associated with this project
           </p>
-          <VendorsSection projectId={projectId} />
+          <VendorsSection
+            vendors={vendors}
+            isLoading={vendorsLoading}
+            error={vendorsError}
+            onAddVendorClick={() => setAddVendorOpen(true)}
+          />
         </section>
       </Stack>
 

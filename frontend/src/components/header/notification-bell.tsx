@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { Bell, CheckCheck, Trash2, X } from "lucide-react";
 import {
   InboxNotification,
@@ -8,11 +9,10 @@ import {
 } from "@liveblocks/react-ui";
 import { Button } from "@/components/ui/button";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import type { InboxNotificationData } from "@liveblocks/client";
 import {
   ClientSideSuspense,
@@ -61,68 +61,64 @@ export function NotificationBell() {
   const [open, setOpen] = React.useState(false);
 
   return (
-    <>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="relative h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
-        aria-label="Notifications"
-        onClick={() => setOpen(true)}
-      >
-        <Bell />
-        <NotificationErrorBoundary>
-          <ClientSideSuspense fallback={null}>
-            <UnreadBadge />
-          </ClientSideSuspense>
-        </NotificationErrorBoundary>
-      </Button>
-
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent
-          side="right"
-          className="w-[420px] p-0 sm:max-w-[420px] flex flex-col"
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="relative h-8 w-8 p-0 text-muted-foreground hover:text-foreground"
+          aria-label="Notifications"
         >
-          <NotificationErrorBoundary
+          <Bell />
+          <NotificationErrorBoundary>
+            <ClientSideSuspense fallback={null}>
+              <UnreadBadge />
+            </ClientSideSuspense>
+          </NotificationErrorBoundary>
+        </Button>
+      </PopoverTrigger>
+
+      <PopoverContent
+        align="end"
+        sideOffset={12}
+        className="site-header-notification-popover relative w-96 rounded-2xl border border-border/70 bg-popover p-0 shadow-lg"
+      >
+        <span className="absolute -top-2 right-4 h-4 w-4 rotate-45 border-l border-t border-border/70 bg-popover" />
+        <NotificationErrorBoundary
+          fallback={
+            <div className="flex flex-col items-center justify-center py-16 text-center">
+              <Bell className="mb-3 h-10 w-10 text-muted-foreground/30" />
+              <p className="text-sm text-muted-foreground">
+                Notifications unavailable
+              </p>
+            </div>
+          }
+        >
+          <ClientSideSuspense
             fallback={
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <Bell className="mb-3 h-10 w-10 text-muted-foreground/30" />
-                <p className="text-sm text-muted-foreground">
-                  Notifications unavailable
-                </p>
+              <div className="flex flex-col">
+                <div className="border-b border-border/50 px-5 py-4 text-center">
+                  <h3 className="text-base font-semibold">Notifications</h3>
+                </div>
+                <div className="flex-1 space-y-2 p-3">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="flex items-start gap-3 rounded-lg p-3">
+                      <div className="h-10 w-10 animate-pulse rounded-full bg-muted" />
+                      <div className="flex-1 space-y-2">
+                        <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+                        <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             }
           >
-            <ClientSideSuspense
-              fallback={
-                <div className="flex flex-col">
-                  <SheetHeader className="border-b border-border/40 px-6 py-4">
-                    <SheetTitle className="text-base">
-                      Notifications
-                    </SheetTitle>
-                  </SheetHeader>
-                  <div className="flex-1 space-y-3 p-4">
-                    {[1, 2, 3].map((i) => (
-                      <div
-                        key={i}
-                        className="flex items-start gap-3 rounded-lg p-3"
-                      >
-                        <div className="h-8 w-8 animate-pulse rounded-full bg-muted" />
-                        <div className="flex-1 space-y-2">
-                          <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
-                          <div className="h-3 w-1/2 animate-pulse rounded bg-muted" />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              }
-            >
-              <NotificationSidebar onClose={() => setOpen(false)} />
-            </ClientSideSuspense>
-          </NotificationErrorBoundary>
-        </SheetContent>
-      </Sheet>
-    </>
+            <NotificationDropdown onClose={() => setOpen(false)} />
+          </ClientSideSuspense>
+        </NotificationErrorBoundary>
+      </PopoverContent>
+    </Popover>
   );
 }
 
@@ -189,7 +185,7 @@ function NotificationRow({
 
 // ── Sidebar content ─────────────────────────────────────────────────────────
 
-function NotificationSidebar({ onClose }: { onClose: () => void }) {
+function NotificationDropdown({ onClose }: { onClose: () => void }) {
   const { inboxNotifications, fetchMore, hasFetchedAll, isFetchingMore } =
     useInboxNotifications();
   const { count } = useUnreadInboxNotificationsCount();
@@ -207,40 +203,52 @@ function NotificationSidebar({ onClose }: { onClose: () => void }) {
   }, [inboxNotifications]);
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex max-h-96 flex-col">
       {/* Header */}
-      <SheetHeader className="flex-row items-center justify-between border-b border-border/40 px-6 py-4 space-y-0">
-        <div className="flex items-center gap-2">
-          <SheetTitle className="text-base">Notifications</SheetTitle>
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center border-b border-border/50 px-4 py-3.5">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <Bell className="h-4 w-4" />
           {count > 0 && (
-            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[11px] font-medium text-primary-foreground">
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1.5 text-[10px] font-medium text-primary-foreground">
               {count}
             </span>
           )}
         </div>
-        {uniqueNotifications.length > 0 && (
-          <div className="flex items-center gap-1">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-              onClick={() => markAllAsRead()}
-              title="Mark all as read"
-            >
-              <CheckCheck />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-              onClick={() => deleteAll()}
-              title="Delete all"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-        )}
-      </SheetHeader>
+        <h3 className="text-base font-semibold">Notifications</h3>
+        <div className="ml-auto flex items-center gap-1">
+          {uniqueNotifications.length > 0 && (
+            <>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                onClick={() => markAllAsRead()}
+                title="Mark all as read"
+              >
+                <CheckCheck className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                onClick={() => deleteAll()}
+                title="Delete all"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            </>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+            onClick={onClose}
+            title="Close"
+          >
+            <X className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
 
       {/* Notification list */}
       {uniqueNotifications.length === 0 ? (
@@ -257,16 +265,23 @@ function NotificationSidebar({ onClose }: { onClose: () => void }) {
         <div className="flex-1 overflow-y-auto">
           <InboxNotificationList>
             {uniqueNotifications.map((notification) => (
-              <NotificationRow
+              <div
                 key={notification.id}
-                notification={notification}
-              />
+                className="relative border-b border-border/45 last:border-b-0"
+              >
+                {!notification.readAt && (
+                  <span className="absolute inset-y-3 left-0 w-1 rounded-r-full bg-primary" />
+                )}
+                <div className={!notification.readAt ? "bg-muted/20" : undefined}>
+                  <NotificationRow notification={notification} />
+                </div>
+              </div>
             ))}
           </InboxNotificationList>
 
           {/* Load more */}
           {!hasFetchedAll && (
-            <div className="px-4 py-3 border-t border-border/40">
+            <div className="border-t border-border/50 px-4 py-3">
               <Button
                 variant="ghost"
                 size="sm"
@@ -285,6 +300,21 @@ function NotificationSidebar({ onClose }: { onClose: () => void }) {
               </Button>
             </div>
           )}
+        </div>
+      )}
+
+      {uniqueNotifications.length > 0 && (
+        <div className="border-t border-border/50 px-4 py-3">
+          <Button
+            asChild
+            variant="ghost"
+            size="sm"
+            className="w-full text-sm font-medium text-primary hover:text-primary"
+          >
+            <Link href="/team-chat" onClick={onClose}>
+              See all incoming activity
+            </Link>
+          </Button>
         </div>
       )}
     </div>

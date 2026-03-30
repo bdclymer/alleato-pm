@@ -194,7 +194,7 @@ export async function POST(
     console.error("Email send error:", error);
     return NextResponse.json(
       {
-        error: "Failed to send email",
+        error: "Could not send email",
         details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }

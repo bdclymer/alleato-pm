@@ -24,7 +24,7 @@ export function useSpecificationRevisions(
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to fetch revisions");
+        throw new Error(error.error || `Server returned ${response.status} when loading revisions`);
       }
 
       return response.json();
@@ -50,7 +50,7 @@ export function useSpecificationRevision(
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to fetch revision");
+        throw new Error(error.error || `Server returned ${response.status} when loading revision details`);
       }
 
       return response.json();
@@ -85,7 +85,7 @@ export function useAddRevision(projectId: string, sectionId: string) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to add revision");
+        throw new Error(error.error || `Server returned ${response.status} — the revision could not be added`);
       }
 
       return response.json();
@@ -103,7 +103,7 @@ export function useAddRevision(projectId: string, sectionId: string) {
       toast.success("Revision added successfully");
     },
     onError: (error: Error) => {
-      toast.error("Failed to add revision", {
+      toast.error("Could not add revision", {
         description: error.message,
       });
     },
@@ -127,7 +127,7 @@ export function useSetCurrentRevision(projectId: string, sectionId: string) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to set current revision");
+        throw new Error(error.error || `Server returned ${response.status} — could not set current revision`);
       }
 
       return response.json();
@@ -142,7 +142,7 @@ export function useSetCurrentRevision(projectId: string, sectionId: string) {
       toast.success("Current revision updated");
     },
     onError: (error: Error) => {
-      toast.error("Failed to update current revision", {
+      toast.error("Could not set current revision", {
         description: error.message,
       });
     },
@@ -166,7 +166,7 @@ export function useDeleteRevision(projectId: string, sectionId: string) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to delete revision");
+        throw new Error(error.error || `Server returned ${response.status} — the revision could not be deleted`);
       }
 
       return response.json();
@@ -178,7 +178,7 @@ export function useDeleteRevision(projectId: string, sectionId: string) {
       toast.success("Revision deleted successfully");
     },
     onError: (error: Error) => {
-      toast.error("Failed to delete revision", {
+      toast.error("Could not delete revision", {
         description: error.message,
       });
     },
@@ -207,7 +207,7 @@ export function useRevisionDownloadUrl(
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to get download URL");
+        throw new Error(error.error || `Server returned ${response.status} — could not generate download link`);
       }
 
       return response.json();

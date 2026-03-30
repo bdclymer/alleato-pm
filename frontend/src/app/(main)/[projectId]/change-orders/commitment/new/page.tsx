@@ -92,7 +92,7 @@ export default function NewCommitmentCOPage() {
       );
 
       if (!res.ok) {
-        const err = await res.json().catch(() => ({ error: "Unknown error" }));
+        const err = await res.json().catch(() => ({}));
         throw new Error(err.error || "Failed to create");
       }
 

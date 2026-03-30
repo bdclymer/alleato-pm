@@ -61,11 +61,13 @@ export function UnlockBudgetDialog({
         onOpenChange(false);
       } else {
         const error = await response.json();
-        toast.error(error.error || "Failed to unlock budget");
+        toast.error("Could not unlock budget", {
+          description: error.error || "The server returned an error — please try again",
+        });
       }
     } catch (error) {
-      toast.error("Failed to unlock budget", {
-        description: "An unexpected error occurred. Please try again.",
+      toast.error("Could not unlock budget", {
+        description: "An unexpected error occurred — please try again",
       });
     } finally {
       setUnlocking(false);

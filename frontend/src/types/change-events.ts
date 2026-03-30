@@ -34,6 +34,10 @@ export interface ChangeEvent {
   rfq_title?: string | null;
   commitment?: string | null;
   commitment_title?: string | null;
+  // Enrichment fields from API
+  lineItemsCount?: number;
+  rom?: string | number | null;
+  total?: string | number | null;
 }
 
 export interface ChangeEventLineItem {

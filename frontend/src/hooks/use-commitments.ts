@@ -166,9 +166,8 @@ export function useCommitments(
 
       setCommitments(mappedData);
     } catch (err) {
-      setError(
-        err instanceof Error ? err : new Error("Failed to fetch commitments"),
-      );
+      const detail = err instanceof Error ? err.message : "an unexpected error occurred";
+      setError(new Error(`Could not load commitments: ${detail}`));
     } finally {
       setIsLoading(false);
     }
@@ -230,9 +229,8 @@ export function useCommitments(
         await fetchCommitments();
         return mappedData;
       } catch (err) {
-        setError(
-          err instanceof Error ? err : new Error("Failed to create commitment"),
-        );
+        const detail = err instanceof Error ? err.message : "an unexpected error occurred";
+        setError(new Error(`Could not create commitment: ${detail}`));
         return null;
       }
     },

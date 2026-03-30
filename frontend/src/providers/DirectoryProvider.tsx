@@ -117,7 +117,7 @@ export function DirectoryProvider({
           loading: false,
         }));
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to fetch users");
+        setError(err instanceof Error ? `Could not load users: ${err.message}` : "Could not load users — please try again");
       }
     },
     [state.filters, directoryService, setError],
@@ -135,7 +135,7 @@ export function DirectoryProvider({
         }));
       } catch (err) {
         setError(
-          err instanceof Error ? err.message : "Failed to fetch companies",
+          err instanceof Error ? `Could not load companies: ${err.message}` : "Could not load companies — please try again",
         );
       }
     },
@@ -155,7 +155,7 @@ export function DirectoryProvider({
         return data;
       } catch (err) {
         setError(
-          err instanceof Error ? err.message : "Failed to fetch company",
+          err instanceof Error ? `Could not load company details: ${err.message}` : "Could not load company details — please try again",
         );
         return null;
       }
@@ -171,7 +171,7 @@ export function DirectoryProvider({
           `/api/projects/${projectId}/directory/groups?include_members=true`,
         );
         if (!response.ok) {
-          throw new Error("Failed to fetch distribution groups");
+          throw new Error(`Server returned ${response.status} when loading distribution groups`);
         }
         const groups = await response.json();
         setState((prev) => ({
@@ -182,8 +182,8 @@ export function DirectoryProvider({
       } catch (err) {
         setError(
           err instanceof Error
-            ? err.message
-            : "Failed to fetch distribution groups",
+            ? `Could not load distribution groups: ${err.message}`
+            : "Could not load distribution groups — please try again",
         );
       }
     },
@@ -205,7 +205,7 @@ export function DirectoryProvider({
         }));
         return person;
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to create user");
+        setError(err instanceof Error ? `Could not create user: ${err.message}` : "Could not create user — please try again");
         throw err;
       }
     },
@@ -232,7 +232,7 @@ export function DirectoryProvider({
         }));
         return updatedPerson;
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to update user");
+        setError(err instanceof Error ? `Could not update user: ${err.message}` : "Could not update user — please try again");
         throw err;
       }
     },
@@ -255,7 +255,7 @@ export function DirectoryProvider({
         }));
       } catch (err) {
         setError(
-          err instanceof Error ? err.message : "Failed to deactivate user",
+          err instanceof Error ? `Could not deactivate user: ${err.message}` : "Could not deactivate user — please try again",
         );
       }
     },
@@ -278,7 +278,7 @@ export function DirectoryProvider({
         }));
       } catch (err) {
         setError(
-          err instanceof Error ? err.message : "Failed to reactivate user",
+          err instanceof Error ? `Could not reactivate user: ${err.message}` : "Could not reactivate user — please try again",
         );
       }
     },

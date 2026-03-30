@@ -91,10 +91,10 @@ export function InviteDialog({
       onOpenChange(false);
       onSuccess?.();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "An error occurred";
+      const message = err instanceof Error ? err.message : "An unexpected error occurred";
       setError(message);
 
-      toast.error(`Failed to send invitation: ${message}`);
+      toast.error("Could not send invitation", { description: message });
     } finally {
       setSending(false);
     }

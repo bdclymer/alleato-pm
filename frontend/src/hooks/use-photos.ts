@@ -112,7 +112,7 @@ export function useCreatePhoto(projectId: number) {
       toast.success("Photo uploaded");
     },
     onError: (err: Error) => {
-      toast.error(err.message);
+      toast.error("Could not upload photo", { description: err.message });
     },
   });
 }
@@ -140,7 +140,7 @@ export function useUpdatePhoto(projectId: number, photoId: number) {
       toast.success("Photo updated");
     },
     onError: (err: Error) => {
-      toast.error(err.message);
+      toast.error("Could not update photo", { description: err.message });
     },
   });
 }
@@ -163,7 +163,7 @@ export function useDeletePhoto(projectId: number) {
       toast.success("Photo deleted");
     },
     onError: (err: Error) => {
-      toast.error(err.message);
+      toast.error("Could not delete photo", { description: err.message });
     },
   });
 }

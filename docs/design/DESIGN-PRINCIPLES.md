@@ -1,11 +1,10 @@
-# Design Principles — Superhuman-Inspired v2
+# Design Principles
 
-## Philosophy: Designed for Flow
+## Philosophy: Subtract, Don't Add
 
-Alleato is a construction project management platform. The UI should create an experience of **flow** — where the next action is always obvious, feedback is immediate, and nothing distracts from the task at hand.
+Alleato PM looks like **Linear meets Vercel Dashboard** — clean, minimal, confident. The #1 rule: **if you're about to add a visual element, ask whether removing something else would accomplish the same goal.** Borders, shadows, cards, icons, badges — every one must earn its place. When in doubt, leave it out.
 
-**We are:** Superhuman meets Linear meets Vercel. Invisible UI, rapid navigation, premium feel.
-**We are not:** Generic SaaS template. Material Design. Decorative for the sake of it.
+**The visual noise test:** After building a screen, mentally remove every border, card wrapper, and decorative element one at a time. If the layout still communicates the same information without it — delete it permanently.
 
 ## Three Principles for Flow
 
@@ -88,9 +87,7 @@ Tables should occupy the primary viewport. Maximize visible rows. Avoid unnecess
 
 ### Visual Weight
 
-Heavy elements include: cards, shadows, borders, padding, colors, backgrounds.
-
-Too many heavy elements = cognitive fatigue.
+Heavy elements include: cards, shadows, borders, padding, colors, backgrounds. Too many heavy elements = cognitive fatigue.
 
 **RULE:** Minimize heavy UI elements. Avoid shadows, thick borders, large cards, decorative containers.
 
@@ -171,14 +168,3 @@ Animation serves function, not decoration:
 - **Hover animations** provide haptic-like feedback that elements are interactive
 
 Timing: fast enough to feel instant (100-200ms), slow enough to be perceived (not 0ms).
-
-## When Creativity Is Welcome
-
-Not everything needs to be minimal. These moments benefit from personality:
-
-- **Empty states** — Help users understand value, add visual interest
-- **Success celebrations** — Project created, milestone achievements
-- **Onboarding flows** — First-time experiences
-- **Error pages** — 404, 500 pages
-
-For these, use the brand's indigo-purple accent. Everywhere else: clean, quiet, professional. Let the data speak.

@@ -84,12 +84,12 @@ export function useCommitmentsList(
       const response = await fetch(`/api/commitments?${params}`);
       if (!response.ok) {
         const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || "Failed to fetch commitments");
+        throw new Error(error.error || `Server returned ${response.status} when loading commitments`);
       }
       const data = await response.json();
       const parsed = commitmentListResponseSchema.safeParse(data);
       if (!parsed.success) {
-        throw new Error("Failed to parse commitments response");
+        throw new Error("Commitments data from the server was in an unexpected format — try refreshing the page");
       }
       return parsed.data;
     },
@@ -118,9 +118,9 @@ export function useCommitmentDetail(commitmentId: string) {
       const response = await fetch(`/api/commitments/${commitmentId}`);
       if (!response.ok) {
         if (response.status === 404) {
-          throw new Error("Commitment not found");
+          throw new Error("This commitment was not found — it may have been deleted");
         }
-        throw new Error("Failed to fetch commitment details");
+        throw new Error(`Server returned ${response.status} when loading commitment details`);
       }
       const data = await response.json();
       return data.data || data;
@@ -147,7 +147,7 @@ export function useCommitmentChangeOrdersQuery(commitmentId: string) {
       );
       if (!response.ok) {
         if (response.status === 404) return { data: [], meta: null };
-        throw new Error("Failed to fetch change orders");
+        throw new Error(`Server returned ${response.status} when loading change orders`);
       }
       return response.json();
     },
@@ -172,7 +172,7 @@ export function useCommitmentInvoicesQuery(commitmentId: string) {
       );
       if (!response.ok) {
         if (response.status === 404) return { summary: null, line_items: [] };
-        throw new Error("Failed to fetch invoice data");
+        throw new Error(`Server returned ${response.status} when loading invoice data`);
       }
       return response.json();
     },
@@ -199,7 +199,7 @@ export function useDeleteCommitment(projectId: string) {
       });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to delete commitment");
+        throw new Error(errorData.message || `Server returned ${response.status} — the commitment could not be deleted`);
       }
       return response.json();
     },
@@ -211,7 +211,7 @@ export function useDeleteCommitment(projectId: string) {
       toast.success("Commitment deleted successfully");
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      toast.error("Could not delete commitment", { description: error.message });
     },
   });
 }
@@ -259,7 +259,7 @@ export function useUpdateCommitmentInline() {
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Failed to update commitment");
+        throw new Error(errorData.error || `Server returned ${response.status} — the commitment could not be updated`);
       }
 
       return response.json();
@@ -344,7 +344,7 @@ export function useApproveChangeOrder(commitmentId: string) {
       );
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || "Failed to approve change order");
+        throw new Error(errorData.error || `Server returned ${response.status} — the change order could not be approved`);
       }
       return response.json();
     },
@@ -358,7 +358,7 @@ export function useApproveChangeOrder(commitmentId: string) {
       toast.success("Change order approved");
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      toast.error("Could not approve change order", { description: error.message });
     },
   });
 }

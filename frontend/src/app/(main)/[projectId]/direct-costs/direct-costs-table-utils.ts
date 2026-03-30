@@ -52,7 +52,7 @@ export const SUMMARY_COLUMNS = [
   { id: "cost_type", label: "Type", defaultVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
   { id: "total_amount", label: "Amount", defaultVisible: true },
-  { id: "erp_status", label: "ERP Status", defaultVisible: false },
+  { id: "erp_status", label: "ERP Status", defaultVisible: true },
   { id: "received_date", label: "Received", defaultVisible: false },
   { id: "paid_date", label: "Paid", defaultVisible: false },
   { id: "description", label: "Description", defaultVisible: false },

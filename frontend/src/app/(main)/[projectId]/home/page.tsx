@@ -37,6 +37,7 @@ export default async function ProjectHomePage({
     budgetResult,
     changeEventsResult,
     scheduleResult,
+    teamResult,
   ] = await Promise.all([
     // Fetch main project data
     supabase.from("projects").select("*").eq("id", numericProjectId).single(),
@@ -140,6 +141,7 @@ export default async function ProjectHomePage({
       .from("change_events")
       .select("*")
       .eq("project_id", numericProjectId)
+      .is("deleted_at", null)
       .order("created_at", { ascending: false }),
 
     // Fetch schedule tasks
@@ -148,6 +150,9 @@ export default async function ProjectHomePage({
       .select("*")
       .eq("project_id", numericProjectId)
       .order("start_date", { ascending: true }),
+
+    // Fetch project team roster
+    supabase.rpc("get_project_team", { p_project_id: numericProjectId }),
   ]);
 
   if (projectResult.error || !projectResult.data) {
@@ -164,7 +169,6 @@ export default async function ProjectHomePage({
   const linkedTasksRaw = tasksViaDocsResult.data || [];
   // Strip the joined document_metadata field so shape matches TaskRow
   const linkedTasks: TaskRow[] = linkedTasksRaw.map((row) => {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { document_metadata, ...task } = row as TaskRow & { document_metadata: unknown };
     return task;
   });
@@ -206,6 +210,7 @@ export default async function ProjectHomePage({
   const budget = budgetResult.data || [];
   const changeEvents = changeEventsResult.data || [];
   const schedule = scheduleResult.data || [];
+  const team = teamResult.data || [];
 
   return (
     <PageShell
@@ -228,6 +233,7 @@ export default async function ProjectHomePage({
         budget={budget}
         changeEvents={changeEvents}
         schedule={schedule}
+        team={team}
       />
     </PageShell>
   );

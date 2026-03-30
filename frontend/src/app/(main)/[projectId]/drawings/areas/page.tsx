@@ -76,7 +76,7 @@ export default function DrawingAreasPage() {
         />
         <PageContainer>
           <div className="text-center text-destructive p-6">
-            Error loading drawing areas: {error instanceof Error ? error.message : "Unknown error"}
+            Error loading drawing areas: {error instanceof Error ? error.message : "An unexpected error occurred — please try again"}
           </div>
         </PageContainer>
       </>

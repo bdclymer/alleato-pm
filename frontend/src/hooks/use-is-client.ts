@@ -84,7 +84,7 @@ export function useIsClient(): ClientStatus {
         setStatus({
           isClient: false,
           isLoading: false,
-          error: err instanceof Error ? err : new Error("Unknown error"),
+          error: err instanceof Error ? err : new Error("an unexpected error occurred — please try again"),
         });
       }
     }

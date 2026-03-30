@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { MessageSquare, Smile, MoreHorizontal } from "lucide-react";
+import { MessageSquare, Smile, ThumbsUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
@@ -18,109 +18,179 @@ interface MessageGroupProps {
   message: Message;
   isFirstInGroup: boolean;
   isOwnMessage: boolean;
+  isSelected?: boolean;
+  threadReplyCount?: number;
+  reactions?: Record<string, number>;
   onSelect?: () => void;
+  onReplyInThread?: () => void;
+  onAddReaction?: (emoji: string) => void;
+}
+
+function renderMentions(text: string) {
+  const mentionPattern = /(@[a-z0-9._-]+)/gi;
+  const parts = text.split(mentionPattern);
+
+  return parts.map((part, index) => {
+    if (part.match(mentionPattern)) {
+      return (
+        <span key={`${part}-${index}`} className="font-medium text-primary">
+          {part}
+        </span>
+      );
+    }
+
+    return <span key={`${part}-${index}`}>{part}</span>;
+  });
 }
 
 export function MessageGroup({
   message,
   isFirstInGroup,
   isOwnMessage,
+  isSelected = false,
+  threadReplyCount = 0,
+  reactions = {},
   onSelect,
+  onReplyInThread,
+  onAddReaction,
 }: MessageGroupProps) {
   const [isHovered, setIsHovered] = useState(false);
 
   const time = format(parseISO(message.createdAt), "h:mm a");
   const initials = message.user.name
     .split(" ")
-    .map((n) => n[0])
+    .map((namePart) => namePart[0])
     .join("")
     .toUpperCase()
     .slice(0, 2);
 
+  const reactionEntries = useMemo(() => Object.entries(reactions), [reactions]);
+
   return (
     <div
       className={cn(
-        "group relative px-4 py-1 hover:bg-[hsl(var(--chat-hover))] transition-colors",
-        isFirstInGroup && "mt-2",
+        "group relative rounded-md px-3 py-2 transition-colors",
+        isFirstInGroup ? "mt-2" : "mt-0.5",
+        isSelected ? "bg-primary/5" : "hover:bg-muted/60",
       )}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onClick={onSelect}
     >
-      <div className="flex gap-4">
-        {/* Avatar - only show for first message in group */}
-        <div className="w-9 shrink-0">
-          {isFirstInGroup && (
-            <Avatar className="h-9 w-9">
-              <AvatarFallback className="bg-[hsl(var(--chat-accent))] text-white text-sm font-medium">
+      <div className="flex gap-3">
+        <div className="w-8 shrink-0">
+          {isFirstInGroup ? (
+            <Avatar className="h-8 w-8 border border-border/80">
+              <AvatarFallback className="bg-muted text-[11px] font-semibold text-foreground">
                 {initials}
               </AvatarFallback>
             </Avatar>
-          )}
+          ) : null}
         </div>
 
-        {/* Message Content */}
-        <div className="flex-1 min-w-0">
-          {isFirstInGroup && (
-            <div className="flex items-baseline gap-2 mb-1">
+        <div className="min-w-0 flex-1">
+          {isFirstInGroup ? (
+            <div className="mb-0.5 flex items-baseline gap-2">
               <span
                 className={cn(
-                  "font-semibold text-sm",
-                  isOwnMessage
-                    ? "text-[hsl(var(--chat-accent))]"
-                    : "text-[hsl(var(--chat-text))]",
+                  "text-sm font-semibold",
+                  isOwnMessage ? "text-primary" : "text-foreground",
                 )}
               >
                 {message.user.name}
               </span>
-              <span className="text-xs text-[hsl(var(--chat-muted))]">
-                {time}
-              </span>
+              <span className="text-xs text-muted-foreground">{time}</span>
             </div>
-          )}
+          ) : null}
 
-          <div className="text-sm text-[hsl(var(--chat-text))] leading-relaxed break-words">
-            {message.content}
+          <div className="text-sm leading-relaxed text-foreground">
+            {renderMentions(message.content)}
           </div>
+
+          {threadReplyCount > 0 ? (
+            <Button
+              type="button"
+              variant="link"
+              size="sm"
+              onClick={(event) => {
+                event.stopPropagation();
+                onReplyInThread?.();
+              }}
+              className="mt-1 h-auto p-0 text-xs text-primary"
+            >
+              {threadReplyCount} {threadReplyCount === 1 ? "reply" : "replies"}
+            </Button>
+          ) : null}
+
+          {reactionEntries.length > 0 ? (
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+              {reactionEntries.map(([emoji, count]) => (
+                <Button
+                  key={`${message.id}-${emoji}`}
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onAddReaction?.(emoji);
+                  }}
+                  className="h-6 rounded-full px-2 text-xs text-foreground"
+                >
+                  <span>{emoji}</span>
+                  <span className="text-[11px] text-muted-foreground">{count}</span>
+                </Button>
+              ))}
+            </div>
+          ) : null}
         </div>
 
-        {/* Hover Actions */}
-        {isHovered && (
-          <div className="absolute top-0 right-4 -translate-y-1/2 flex items-center gap-1 bg-[hsl(var(--chat-panel-2))] border border-[hsl(var(--chat-border))] rounded-lg shadow-sm px-1 py-1">
+        {isHovered ? (
+          <div className="absolute right-3 top-0 flex -translate-y-1/2 items-center gap-1 rounded-md border border-border bg-background px-1 py-1 shadow-sm">
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-[hsl(var(--chat-muted))] hover:text-[hsl(var(--chat-text))] hover:bg-[hsl(var(--chat-hover))]"
+              className="h-7 w-7 text-muted-foreground hover:text-foreground"
               title="Reply in thread"
+              onClick={(event) => {
+                event.stopPropagation();
+                onReplyInThread?.();
+              }}
             >
-              <MessageSquare />
+              <MessageSquare className="h-4 w-4" />
             </Button>
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-[hsl(var(--chat-muted))] hover:text-[hsl(var(--chat-text))] hover:bg-[hsl(var(--chat-hover))]"
+              className="h-7 w-7 text-muted-foreground hover:text-foreground"
+              title="Add thumbs up"
+              onClick={(event) => {
+                event.stopPropagation();
+                onAddReaction?.("👍");
+              }}
+            >
+              <ThumbsUp className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-7 w-7 text-muted-foreground hover:text-foreground"
               title="Add reaction"
+              onClick={(event) => {
+                event.stopPropagation();
+                onAddReaction?.("❤️");
+              }}
             >
-              <Smile />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-7 w-7 text-[hsl(var(--chat-muted))] hover:text-[hsl(var(--chat-text))] hover:bg-[hsl(var(--chat-hover))]"
-              title="More actions"
-            >
-              <MoreHorizontal />
+              <Smile className="h-4 w-4" />
             </Button>
           </div>
-        )}
+        ) : null}
       </div>
 
-      {/* Time indicator for subsequent messages in group - show on hover */}
-      {!isFirstInGroup && isHovered && (
-        <div className="absolute left-14 top-1/2 -translate-y-1/2 text-xs text-[hsl(var(--chat-muted))]">
+      {!isFirstInGroup && isHovered ? (
+        <div className="absolute left-11 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground">
           {time}
         </div>
-      )}
+      ) : null}
     </div>
   );
 }

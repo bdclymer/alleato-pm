@@ -242,7 +242,7 @@ export function ChangeOrdersClient({
       toast.success("Change order deleted");
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Unknown error");
+      toast.error("Could not delete change order", { description: err instanceof Error ? err.message : "an unexpected error occurred" });
     }
   };
 
@@ -270,7 +270,7 @@ export function ChangeOrdersClient({
       toast.success("Change order deleted");
       router.refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Unknown error");
+      toast.error("Could not delete change order", { description: err instanceof Error ? err.message : "an unexpected error occurred" });
     }
   };
 

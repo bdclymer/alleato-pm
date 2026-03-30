@@ -73,7 +73,7 @@ export async function GET() {
   } catch (error) {
     return NextResponse.json(
       {
-        error: "Failed to fetch schema",
+        error: "Could not fetch schema",
         details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 },
@@ -221,7 +221,7 @@ export async function POST(request: Request) {
     if (sampleError) {
       return NextResponse.json(
         {
-          error: "Failed to fetch table data",
+          error: "Could not fetch table data",
           details: sampleError.message,
         },
         { status: 500 },
@@ -290,7 +290,7 @@ export async function POST(request: Request) {
   } catch (error) {
     return NextResponse.json(
       {
-        error: "Failed to fetch columns",
+        error: "Could not fetch columns",
         details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 },

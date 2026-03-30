@@ -53,7 +53,7 @@ export function useDirectoryPermissions(
       const { data } = await response.json();
       setUsers(data || []);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("Unknown error"));
+      setError(err instanceof Error ? err : new Error("an unexpected error occurred — please try again"));
     } finally {
       setIsLoading(false);
     }
@@ -88,7 +88,7 @@ export function useDirectoryPermissions(
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err : new Error("Unknown error"));
+          setError(err instanceof Error ? err : new Error("an unexpected error occurred — please try again"));
         }
       } finally {
         if (!cancelled) {

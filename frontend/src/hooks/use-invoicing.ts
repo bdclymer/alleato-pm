@@ -60,7 +60,7 @@ export function useOwnerInvoicesList(
       );
       if (!response.ok) {
         const error = await response.json().catch(() => ({}));
-        throw new Error(error.error || "Failed to fetch owner invoices");
+        throw new Error(error.error || `Server returned ${response.status} when loading invoices`);
       }
       const data = await response.json();
       return data.data ?? [];
@@ -90,7 +90,7 @@ export function useDeleteOwnerInvoice(projectId: string) {
       );
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to delete invoice");
+        throw new Error(errorData.message || `Server returned ${response.status} — the invoice could not be deleted`);
       }
       return response.json();
     },
@@ -99,7 +99,7 @@ export function useDeleteOwnerInvoice(projectId: string) {
       toast.success("Invoice deleted successfully");
     },
     onError: (error: Error) => {
-      toast.error(error.message);
+      toast.error("Could not delete invoice", { description: error.message });
     },
   });
 }

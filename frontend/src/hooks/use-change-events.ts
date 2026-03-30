@@ -87,9 +87,9 @@ export function useChangeEvents(
         if (!response.ok) {
           const errorPayload = await response
             .json()
-            .catch(() => ({ error: "Failed to fetch change events" }));
+            .catch(() => ({}));
           throw new Error(
-            errorPayload.error || "Failed to fetch change events",
+            errorPayload.error || `Server returned ${response.status} when loading change events`,
           );
         }
 
@@ -121,9 +121,8 @@ export function useChangeEvents(
 
       setChangeEvents(data || []);
     } catch (err) {
-      setError(
-        err instanceof Error ? err : new Error("Failed to fetch change events"),
-      );
+      const detail = err instanceof Error ? err.message : "an unexpected error occurred";
+      setError(new Error(`Could not load change events: ${detail}`));
     } finally {
       setIsLoading(false);
     }
@@ -160,8 +159,8 @@ export function useChangeEvents(
         if (!response.ok) {
           const errorData = await response
             .json()
-            .catch(() => ({ error: "Unknown error" }));
-          throw new Error(errorData.error || "Failed to create change event");
+            .catch(() => ({}));
+          throw new Error(errorData.error || `Server returned ${response.status}`);
         }
 
         const data = await response.json();
@@ -170,11 +169,8 @@ export function useChangeEvents(
         await fetchChangeEvents();
         return data;
       } catch (err) {
-        setError(
-          err instanceof Error
-            ? err
-            : new Error("Failed to create change event"),
-        );
+        const detail = err instanceof Error ? err.message : "an unexpected error occurred";
+        setError(new Error(`Could not create change event: ${detail}`));
         return null;
       }
     },

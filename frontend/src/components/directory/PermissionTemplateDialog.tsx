@@ -275,7 +275,7 @@ export function PermissionTemplateDialog({
       onSuccess?.();
     } catch (error) {
       console.error("Error saving template:", error);
-      toast.error(error instanceof Error ? error.message : "An error occurred");
+      toast.error("Could not save permission template", { description: error instanceof Error ? error.message : "An unexpected error occurred" });
     } finally {
       setIsSubmitting(false);
     }

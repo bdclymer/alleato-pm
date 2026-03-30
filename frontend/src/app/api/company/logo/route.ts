@@ -103,7 +103,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("[CompanyLogo] Upload failed", error);
     return NextResponse.json(
-      { error: "Failed to upload logo", details: error instanceof Error ? error.message : String(error) },
+      { error: "Could not upload logo", details: error instanceof Error ? error.message : String(error) },
       { status: 500 },
     );
   }

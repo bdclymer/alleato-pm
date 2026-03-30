@@ -74,7 +74,7 @@ export class InviteService {
         .eq("person_id", personId);
 
       if (updateError) {
-        return { success: false, error: "Failed to update invite status" };
+        return { success: false, error: `Could not update invite status: ${updateError.message}` };
       }
 
       // Send email
@@ -101,7 +101,7 @@ export class InviteService {
     } catch (error) {
       return {
         success: false,
-        error: "An unexpected error occurred",
+        error: `Could not send invite: ${error instanceof Error ? error.message : "An unexpected error occurred"}`,
       };
     }
   }
@@ -145,7 +145,7 @@ export class InviteService {
     } catch (error) {
       return {
         success: false,
-        error: "An unexpected error occurred",
+        error: `Could not resend invite: ${error instanceof Error ? error.message : "An unexpected error occurred"}`,
       };
     }
   }
@@ -211,7 +211,7 @@ export class InviteService {
           });
 
         if (authError) {
-          return { success: false, error: "Failed to create user account" };
+          return { success: false, error: `Could not create user account: ${authError.message}` };
         }
 
         // Create users_auth link
@@ -231,7 +231,7 @@ export class InviteService {
         .eq("id", membership.id);
 
       if (updateError) {
-        return { success: false, error: "Failed to update membership" };
+        return { success: false, error: `Could not update membership: ${updateError.message}` };
       }
 
       // Return success with redirect URL
@@ -242,7 +242,7 @@ export class InviteService {
     } catch (error) {
       return {
         success: false,
-        error: "An unexpected error occurred",
+        error: `Could not accept invite: ${error instanceof Error ? error.message : "An unexpected error occurred"}`,
       };
     }
   }
@@ -307,7 +307,7 @@ export class InviteService {
         .single();
 
       if (error || !person || !person.email) {
-        return { success: false, error: "Failed to get person details" };
+        return { success: false, error: `Could not get person details${error ? `: ${error.message}` : ""}` };
       }
 
       const membership = person.project_directory_memberships[0];
@@ -345,7 +345,7 @@ export class InviteService {
     } catch (error) {
       return {
         success: false,
-        error: "Failed to send email",
+        error: `Could not send invite email: ${error instanceof Error ? error.message : "Unknown error"}`,
       };
     }
   }

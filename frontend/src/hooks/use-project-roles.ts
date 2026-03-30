@@ -34,6 +34,7 @@ interface UseProjectRolesResult {
     memberPersonIds: string[],
   ) => Promise<void>;
   createRole: (roleName: string) => Promise<ProjectRole>;
+  deleteRole: (roleId: string) => Promise<void>;
 }
 
 export function useProjectRoles(projectId: string): UseProjectRolesResult {
@@ -58,7 +59,7 @@ export function useProjectRoles(projectId: string): UseProjectRolesResult {
       const { data } = await response.json();
       setRoles(data || []);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("Unknown error"));
+      setError(err instanceof Error ? err : new Error("an unexpected error occurred — please try again"));
     } finally {
       setIsLoading(false);
     }
@@ -91,7 +92,7 @@ export function useProjectRoles(projectId: string): UseProjectRolesResult {
         }
       } catch (err) {
         if (!cancelled) {
-          setError(err instanceof Error ? err : new Error("Unknown error"));
+          setError(err instanceof Error ? err : new Error("an unexpected error occurred — please try again"));
         }
       } finally {
         if (!cancelled) {
@@ -166,6 +167,32 @@ export function useProjectRoles(projectId: string): UseProjectRolesResult {
     [projectId, fetchRoles],
   );
 
+  const deleteRole = useCallback(
+    async (roleId: string) => {
+      const response = await fetch(`/api/projects/${projectId}/directory/roles`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role_id: roleId }),
+      });
+
+      if (!response.ok) {
+        let errorMessage = "Failed to delete role";
+        try {
+          const data = await response.json();
+          if (typeof data?.error === "string" && data.error.trim().length > 0) {
+            errorMessage = data.error;
+          }
+        } catch {
+          // Keep fallback message for non-JSON error responses.
+        }
+        throw new Error(errorMessage);
+      }
+
+      await fetchRoles();
+    },
+    [projectId, fetchRoles],
+  );
+
   return {
     roles,
     isLoading,
@@ -173,5 +200,6 @@ export function useProjectRoles(projectId: string): UseProjectRolesResult {
     refetch: fetchRoles,
     updateRoleMembers,
     createRole,
+    deleteRole,
   };
 }

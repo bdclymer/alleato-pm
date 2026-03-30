@@ -302,3 +302,69 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     );
   }
 }
+
+// DELETE /api/projects/[id]/directory/roles
+// Deletes a role from the project
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { projectId } = await params;
+    const projectIdNum = parseInt(projectId, 10);
+
+    const authResult = await verifyProjectAccess(projectIdNum);
+    if (isAuthError(authResult)) return authResult;
+    const supabase = authResult.serviceClient;
+
+    const body = await request.json();
+    const { role_id } = body;
+
+    if (!role_id) {
+      return NextResponse.json({ error: "role_id is required" }, { status: 400 });
+    }
+
+    const { data: role, error: roleError } = await supabase
+      .from("project_roles")
+      .select("id, project_id")
+      .eq("id", role_id)
+      .eq("project_id", projectIdNum)
+      .single();
+
+    if (roleError || !role) {
+      return NextResponse.json(
+        { error: "Role not found in this project" },
+        { status: 404 },
+      );
+    }
+
+    const { error: memberDeleteError } = await supabase
+      .from("project_role_members")
+      .delete()
+      .eq("project_role_id", role_id);
+
+    if (memberDeleteError) {
+      return NextResponse.json(
+        { error: `Failed to delete role members: ${memberDeleteError.message}` },
+        { status: 500 },
+      );
+    }
+
+    const { error: roleDeleteError } = await supabase
+      .from("project_roles")
+      .delete()
+      .eq("id", role_id)
+      .eq("project_id", projectIdNum);
+
+    if (roleDeleteError) {
+      return NextResponse.json(
+        { error: `Failed to delete role: ${roleDeleteError.message}` },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json(
+      { error: "An unexpected error occurred" },
+      { status: 500 },
+    );
+  }
+}

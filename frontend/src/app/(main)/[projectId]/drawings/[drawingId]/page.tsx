@@ -363,7 +363,7 @@ export default function DrawingDetailPage() {
             Drawing Not Found
           </h1>
           <p className="text-muted-foreground mb-6">
-            {error instanceof Error ? error.message : "Unknown error"}
+            {error instanceof Error ? error.message : "An unexpected error occurred — please try again"}
           </p>
           <Button onClick={() => router.push(`/${projectId}/drawings`)}>
             <ArrowLeft />

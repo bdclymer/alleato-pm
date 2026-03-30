@@ -114,7 +114,7 @@ export default function CommitmentsRecycleBinPage() {
       setDeletedCommitments((prev) => prev.filter((c) => c.id !== id));
       setActiveCount((prev) => prev + 1);
     } catch (err) {
-      toast.error(`Failed to restore: ${err instanceof Error ? err.message : "Unknown error"}`);
+      toast.error("Could not restore commitment", { description: err instanceof Error ? err.message : "an unexpected error occurred" });
     }
   }, []);
 

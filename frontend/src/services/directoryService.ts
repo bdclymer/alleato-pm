@@ -631,7 +631,7 @@ export class DirectoryService {
         results.push({
           email: userData.email || "",
           status: "error",
-          message: error instanceof Error ? error.message : "Unknown error",
+          message: error instanceof Error ? error.message : "an unexpected error occurred",
         });
         failed_count++;
       }

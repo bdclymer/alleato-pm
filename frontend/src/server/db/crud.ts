@@ -150,7 +150,7 @@ export async function listRows(
       },
     };
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
+    const message = err instanceof Error ? err.message : "an unexpected error occurred";
     return { success: false, error: message };
   }
 }
@@ -188,7 +188,7 @@ export async function getRow(
       data: result.data as Record<string, unknown>,
     };
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
+    const message = err instanceof Error ? err.message : "an unexpected error occurred";
     return { success: false, error: message };
   }
 }
@@ -241,7 +241,7 @@ export async function createRow(
       data: result.data as Record<string, unknown>,
     };
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
+    const message = err instanceof Error ? err.message : "an unexpected error occurred";
     return { success: false, error: message };
   }
 }
@@ -301,7 +301,7 @@ export async function updateRow(
       data: result.data as Record<string, unknown>,
     };
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
+    const message = err instanceof Error ? err.message : "an unexpected error occurred";
     return { success: false, error: message };
   }
 }
@@ -336,7 +336,7 @@ export async function deleteRow(
 
     return { success: true };
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
+    const message = err instanceof Error ? err.message : "an unexpected error occurred";
     return { success: false, error: message };
   }
 }
@@ -366,7 +366,7 @@ export async function duplicateRow(
     // Create the duplicate
     return createRow({ table, data: rowData });
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
+    const message = err instanceof Error ? err.message : "an unexpected error occurred";
     return { success: false, error: message };
   }
 }
@@ -407,7 +407,7 @@ export async function getRowCount(
 
     return { success: true, data: (result.count ?? 0) as number };
   } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
+    const message = err instanceof Error ? err.message : "an unexpected error occurred";
     return { success: false, error: message };
   }
 }

@@ -28,6 +28,7 @@ export type CommentableEntityType =
   | "direct-cost"
   | "correspondence"
   | "action-plan"
+  | "change-event"
   | "inspection"
   | "issue";
 

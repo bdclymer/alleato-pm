@@ -688,7 +688,7 @@ export class DirectCostService {
           );
         }
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Unknown error";
+        const message = err instanceof Error ? err.message : "an unexpected error occurred";
         failed.push({ id, error: message });
       }
     }
@@ -735,7 +735,7 @@ export class DirectCostService {
           await this.logAudit(id, "BULK_DELETE", { reason }, user.id);
         }
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Unknown error";
+        const message = err instanceof Error ? err.message : "an unexpected error occurred";
         failed.push({ id, error: message });
       }
     }

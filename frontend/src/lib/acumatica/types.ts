@@ -285,8 +285,10 @@ export interface FlatInvoice {
 export interface RawPayment {
   ReferenceNbr: AcuField<string>;
   Type?: AcuField<string>;
+  CustomerID?: AcuField<string>;
   Customer?: AcuField<string>;
   CustomerName?: AcuField<string>;
+  ApplicationDate?: AcuField<string>;
   Date: AcuField<string>;
   FinancialPeriod?: AcuField<string>;
   Status: AcuField<string>;
@@ -297,24 +299,28 @@ export interface RawPayment {
   Description?: AcuField<string>;
   CurrencyID?: AcuField<string>;
   ExternalRef?: AcuField<string>;
+  Hold?: boolean;
   LastModifiedDateTime?: AcuField<string>;
 }
 
 export interface FlatPayment {
   ReferenceNbr: string;
   Type?: string;
+  CustomerID?: string;
   Customer?: string;
   CustomerName?: string;
+  ApplicationDate?: string;
   Date: string;
   FinancialPeriod?: string;
   Status: string;
   PaymentAmount: number;
   AppliedToDocuments?: number;
-  PaymentMethod?: string;
+  PaymentMethod?: string | Record<string, never>;
   CashAccount?: string;
   Description?: string;
   CurrencyID?: string;
-  ExternalRef?: string;
+  ExternalRef?: string | Record<string, never>;
+  Hold?: boolean;
   LastModifiedDateTime?: string;
 }
 

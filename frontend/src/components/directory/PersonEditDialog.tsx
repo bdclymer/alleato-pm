@@ -251,10 +251,10 @@ export function PersonEditDialog({
       onOpenChange(false);
       onSuccess?.();
     } catch (err) {
-      const message = err instanceof Error ? err.message : "An error occurred";
+      const message = err instanceof Error ? err.message : "An unexpected error occurred";
       setError(message);
 
-      toast.error(`Failed to ${mode} person: ${message}`);
+      toast.error(`Could not ${mode} person`, { description: message });
     } finally {
       setSaving(false);
     }

@@ -1110,6 +1110,20 @@ const [isSovEditing, setIsSovEditing] = useState(false);
         `ERP sync complete: ${totalCreated} created, ${totalUpdated} updated` +
           (totalErrors > 0 ? ` (${totalErrors} errors)` : ""),
       );
+
+      // Re-fetch invoices and payments to show newly synced data
+      const [invListResp, payListResp] = await Promise.all([
+        fetch(`/api/projects/${projectId}/contracts/${contractId}/payment-applications`),
+        fetch(`/api/projects/${projectId}/contracts/${contractId}/payments`),
+      ]);
+      if (invListResp.ok) {
+        const invList = await invListResp.json();
+        setPaymentApplications(invList || []);
+      }
+      if (payListResp.ok) {
+        const payList = await payListResp.json();
+        setPayments(payList || []);
+      }
       router.refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "ERP sync failed");
@@ -1261,7 +1275,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
         error?: string;
         details?: string | Array<{ field: string; message: string }>;
       }): string => {
-        const base = errorData.error || "Unknown error";
+        const base = errorData.error || "an unexpected error occurred";
         if (!errorData.details) return base;
         const detail =
           typeof errorData.details === "string"

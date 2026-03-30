@@ -38,7 +38,9 @@ export default function MainLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const showAlleatoAIWidget = !pathname?.startsWith("/procore-docs");
+  const isTeamChatPage = pathname?.startsWith("/team-chat");
+  const showAlleatoAIWidget =
+    !pathname?.startsWith("/procore-docs") && !isTeamChatPage;
 
   return (
     <SidebarProvider defaultOpen={false}>
@@ -51,7 +53,7 @@ export default function MainLayout({
             {...feedbackTargetProps("app.main-content")}
           >
             {children}
-            <SiteFooter />
+            {!isTeamChatPage ? <SiteFooter /> : null}
           </main>
         </CreateProjectDevConfigProvider>
         <Overlays showChat={showAlleatoAIWidget} />

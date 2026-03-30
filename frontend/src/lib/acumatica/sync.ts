@@ -628,17 +628,12 @@ export async function syncARPayments(
 ): Promise<SyncResult> {
   const result: SyncResult = { created: 0, updated: 0, errors: [] };
 
-  const acuClient = createAcumaticaClient();
-  await acuClient.login();
-
-  const acuPayments = await acuClient.getPayments({ $top: 500 });
-
   const supabase = await createClient();
 
-  // Get the project's primary prime contract
+  // Get the project's primary prime contract and its associated company's customer_id
   const { data: primeContract } = await supabase
     .from("prime_contracts")
-    .select("id")
+    .select("id, contract_company_id")
     .eq("project_id", projectId)
     .limit(1)
     .single();
@@ -647,6 +642,36 @@ export async function syncARPayments(
     result.errors.push("No prime contract found for this project.");
     return result;
   }
+
+  // Resolve the Acumatica customer ID from the contract's company
+  let acumaticaCustomerId: string | null = null;
+  if (primeContract.contract_company_id) {
+    const { data: company } = await supabase
+      .from("companies")
+      .select("customer_id")
+      .eq("id", primeContract.contract_company_id)
+      .single();
+    acumaticaCustomerId = company?.customer_id ?? null;
+  }
+
+  if (!acumaticaCustomerId) {
+    result.errors.push(
+      "No Acumatica customer mapping found. Set customer_id on the contract company in the directory.",
+    );
+    return result;
+  }
+
+  const acuClient = createAcumaticaClient();
+  await acuClient.login();
+
+  const acuPayments = await acuClient.getPayments({ $top: 500 });
+
+  // Filter payments to this project's customer
+  const customerPayments = acuPayments.filter(
+    (p) =>
+      p.CustomerID === acumaticaCustomerId &&
+      (p.Status === "Released" || p.Status === "Closed" || p.Status === "Open"),
+  );
 
   // Load existing payments with acumatica_ref_nbr
   const { data: existingPayments, error: fetchError } = await supabase
@@ -667,17 +692,17 @@ export async function syncARPayments(
 
   const now = new Date().toISOString();
 
-  // Filter to released/closed payments (not voided)
-  const validPayments = acuPayments.filter(
-    (p) => p.Status === "Released" || p.Status === "Closed" || p.Status === "Open",
-  );
-
-  for (const payment of validPayments) {
+  for (const payment of customerPayments) {
     const refNbr = payment.ReferenceNbr;
-    const paymentDate = payment.Date ? payment.Date.split("T")[0] : now.split("T")[0];
+    // Acumatica returns ApplicationDate; fall back to Date
+    const rawDate = payment.ApplicationDate ?? payment.Date;
+    const paymentDate = rawDate ? rawDate.split("T")[0] : now.split("T")[0];
 
-    // Normalize payment method to match DB constraint
-    const rawMethod = (payment.PaymentMethod ?? "").toLowerCase().trim();
+    // PaymentMethod can be a string or an empty object — normalize safely
+    const rawMethod =
+      typeof payment.PaymentMethod === "string"
+        ? payment.PaymentMethod.toLowerCase().trim()
+        : "";
     let method = "other";
     if (rawMethod.includes("check")) method = "check";
     else if (rawMethod.includes("wire")) method = "wire";
@@ -685,12 +710,15 @@ export async function syncARPayments(
     else if (rawMethod.includes("credit")) method = "credit_card";
     else if (rawMethod === "cash") method = "cash";
 
+    const externalRef =
+      typeof payment.ExternalRef === "string" ? payment.ExternalRef : null;
+
     const fields = {
       amount: payment.PaymentAmount ?? 0,
       payment_date: paymentDate,
       payment_number: refNbr,
       method,
-      reference_number: payment.ExternalRef ?? null,
+      reference_number: externalRef,
       notes: payment.Description ?? null,
       acumatica_ref_nbr: refNbr,
       acumatica_doc_type: payment.Type ?? null,

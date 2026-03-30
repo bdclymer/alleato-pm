@@ -288,7 +288,7 @@ export class SchedulingService {
           success.push(id);
         }
       } catch (err) {
-        const message = err instanceof Error ? err.message : "Unknown error";
+        const message = err instanceof Error ? err.message : "an unexpected error occurred";
         failed.push({ id, error: message });
       }
     }

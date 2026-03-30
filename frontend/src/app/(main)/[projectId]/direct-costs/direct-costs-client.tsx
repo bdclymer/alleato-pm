@@ -57,7 +57,9 @@ export type DirectCostRow = {
   created_at: string;
   updated_at: string;
   vendor: { name: string } | null;
-  erp_status?: string | null;
+  acumatica_ref_nbr: string | null;
+  acumatica_doc_type: string | null;
+  acumatica_sync_at: string | null;
 };
 
 type DirectCostFilterState = Record<string, FilterValue>;
@@ -621,13 +623,29 @@ export function DirectCostsClient({
         label: "ERP Status",
         defaultVisible: false,
         render: (item: DirectCostRow) => {
-          const value = item.erp_status?.trim();
-          if (!value) {
+          if (!item.acumatica_sync_at) {
             return <span className="text-xs text-muted-foreground">Not synced</span>;
           }
-          return <Badge variant="outline">{value}</Badge>;
+          const refLabel = item.acumatica_ref_nbr
+            ? `${item.acumatica_doc_type ? `${item.acumatica_doc_type} ` : ""}${item.acumatica_ref_nbr}`
+            : "Synced";
+          const acumaticaUrl = item.acumatica_ref_nbr
+            ? `https://alleatogroup.acumatica.com/Main?ScreenId=PM304000&RefNbr=${encodeURIComponent(item.acumatica_ref_nbr)}`
+            : null;
+          return acumaticaUrl ? (
+            <a
+              href={acumaticaUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-primary underline-offset-4 hover:underline"
+            >
+              {refLabel}
+            </a>
+          ) : (
+            <Badge variant="outline">{refLabel}</Badge>
+          );
         },
-        sortValue: (item: DirectCostRow) => item.erp_status ?? "Not synced",
+        sortValue: (item: DirectCostRow) => item.acumatica_sync_at ?? "",
       },
       {
         id: "total_amount",

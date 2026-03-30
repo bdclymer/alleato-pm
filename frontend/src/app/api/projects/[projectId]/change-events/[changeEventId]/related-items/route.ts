@@ -1,0 +1,306 @@
+import { NextRequest, NextResponse } from "next/server";
+
+import { createClient } from "@/lib/supabase/server";
+
+interface RouteParams {
+  params: Promise<{ projectId: string; changeEventId: string }>;
+}
+
+const RELATED_ITEM_TYPES = [
+  "change_event",
+  "drawing",
+  "rfi",
+  "specification",
+  "submittal",
+] as const;
+
+type RelatedItemType = (typeof RELATED_ITEM_TYPES)[number];
+
+function isSupportedRelatedType(value: string): value is RelatedItemType {
+  return (RELATED_ITEM_TYPES as readonly string[]).includes(value);
+}
+
+function buildRelatedHref(projectId: number, type: RelatedItemType, id: string): string {
+  switch (type) {
+    case "change_event":
+      return `/${projectId}/change-events/${id}`;
+    case "drawing":
+      return `/${projectId}/drawings/${id}`;
+    case "rfi":
+      return `/${projectId}/rfis/${id}`;
+    case "specification":
+      return `/${projectId}/specifications/${id}`;
+    case "submittal":
+      return `/${projectId}/submittals/${id}`;
+    default:
+      return `/${projectId}`;
+  }
+}
+
+interface RelatedSourceRecord {
+  relatedNumber: string | null;
+  relatedTitle: string;
+  relatedStatus: string | null;
+}
+
+async function getRelatedSourceRecord(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  projectId: number,
+  changeEventId: string,
+  relatedType: RelatedItemType,
+  relatedId: string,
+): Promise<RelatedSourceRecord | null> {
+  switch (relatedType) {
+    case "change_event": {
+      if (relatedId === changeEventId) return null;
+      const { data, error } = await supabase
+        .from("change_events")
+        .select("id, number, title, status, deleted_at")
+        .eq("project_id", projectId)
+        .eq("id", relatedId)
+        .is("deleted_at", null)
+        .single();
+
+      if (error || !data) return null;
+      return {
+        relatedNumber: data.number,
+        relatedTitle: data.title,
+        relatedStatus: data.status,
+      };
+    }
+
+    case "rfi": {
+      const { data, error } = await supabase
+        .from("rfis")
+        .select("id, number, subject, status")
+        .eq("project_id", projectId)
+        .eq("id", relatedId)
+        .single();
+
+      if (error || !data) return null;
+      return {
+        relatedNumber: String(data.number),
+        relatedTitle: data.subject,
+        relatedStatus: data.status,
+      };
+    }
+
+    case "submittal": {
+      const { data, error } = await supabase
+        .from("submittals")
+        .select("id, submittal_number, title, status, deleted_at")
+        .eq("project_id", projectId)
+        .eq("id", relatedId)
+        .is("deleted_at", null)
+        .single();
+
+      if (error || !data) return null;
+      return {
+        relatedNumber: data.submittal_number,
+        relatedTitle: data.title,
+        relatedStatus: data.status,
+      };
+    }
+
+    case "drawing": {
+      const { data, error } = await supabase
+        .from("drawings")
+        .select("id, drawing_number, title")
+        .eq("project_id", projectId)
+        .eq("id", relatedId)
+        .single();
+
+      if (error || !data) return null;
+      return {
+        relatedNumber: data.drawing_number,
+        relatedTitle: data.title,
+        relatedStatus: null,
+      };
+    }
+
+    case "specification": {
+      const { data, error } = await supabase
+        .from("specifications")
+        .select("id, section_number, section_title, status")
+        .eq("project_id", projectId)
+        .eq("id", relatedId)
+        .single();
+
+      if (error || !data) return null;
+      return {
+        relatedNumber: data.section_number,
+        relatedTitle: data.section_title,
+        relatedStatus: data.status,
+      };
+    }
+  }
+}
+
+export async function GET(_: NextRequest, { params }: RouteParams) {
+  try {
+    const { projectId, changeEventId } = await params;
+    const parsedProjectId = Number.parseInt(projectId, 10);
+    if (Number.isNaN(parsedProjectId)) {
+      return NextResponse.json({ error: "Invalid project id" }, { status: 400 });
+    }
+
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("change_event_related_items")
+      .select("id, related_type, related_id, related_number, related_title, related_status, related_url, created_at")
+      .eq("project_id", parsedProjectId)
+      .eq("change_event_id", changeEventId)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      if (error.code === "42P01") {
+        return NextResponse.json({ data: [] });
+      }
+
+      return NextResponse.json(
+        { error: "Failed to fetch related items", details: error.message },
+        { status: 400 },
+      );
+    }
+
+    const response = (data || []).map((item) => {
+      const type = isSupportedRelatedType(item.related_type)
+        ? item.related_type
+        : "change_event";
+
+      return {
+        id: item.id,
+        relatedType: item.related_type,
+        relatedId: item.related_id,
+        relatedNumber: item.related_number,
+        relatedTitle: item.related_title,
+        relatedStatus: item.related_status,
+        relatedUrl:
+          item.related_url || buildRelatedHref(parsedProjectId, type, item.related_id),
+        createdAt: item.created_at,
+      };
+    });
+
+    return NextResponse.json({ data: response });
+  } catch {
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}
+
+export async function POST(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { projectId, changeEventId } = await params;
+    const parsedProjectId = Number.parseInt(projectId, 10);
+    if (Number.isNaN(parsedProjectId)) {
+      return NextResponse.json({ error: "Invalid project id" }, { status: 400 });
+    }
+
+    const supabase = await createClient();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = (await request.json()) as {
+      relatedType?: string;
+      relatedId?: string;
+    };
+
+    const relatedType = body.relatedType?.trim().toLowerCase();
+    const relatedId = body.relatedId?.trim();
+
+    if (!relatedType || !isSupportedRelatedType(relatedType)) {
+      return NextResponse.json({ error: "Invalid related item type" }, { status: 400 });
+    }
+
+    if (!relatedId) {
+      return NextResponse.json({ error: "Related item id is required" }, { status: 400 });
+    }
+
+    const { data: parentEvent, error: parentError } = await supabase
+      .from("change_events")
+      .select("id")
+      .eq("id", changeEventId)
+      .eq("project_id", parsedProjectId)
+      .is("deleted_at", null)
+      .single();
+
+    if (parentError || !parentEvent) {
+      return NextResponse.json({ error: "Change event not found" }, { status: 404 });
+    }
+
+    const sourceRecord = await getRelatedSourceRecord(
+      supabase,
+      parsedProjectId,
+      changeEventId,
+      relatedType,
+      relatedId,
+    );
+
+    if (!sourceRecord) {
+      return NextResponse.json(
+        { error: "Related record not found for this project" },
+        { status: 404 },
+      );
+    }
+
+    const { data, error } = await supabase
+      .from("change_event_related_items")
+      .insert({
+        project_id: parsedProjectId,
+        change_event_id: changeEventId,
+        related_type: relatedType,
+        related_id: relatedId,
+        related_number: sourceRecord.relatedNumber,
+        related_title: sourceRecord.relatedTitle,
+        related_status: sourceRecord.relatedStatus,
+        related_url: buildRelatedHref(parsedProjectId, relatedType, relatedId),
+        created_by: user.id,
+      })
+      .select("id, related_type, related_id, related_number, related_title, related_status, related_url, created_at")
+      .single();
+
+    if (error) {
+      if (error.code === "23505") {
+        return NextResponse.json(
+          { error: "This item is already linked" },
+          { status: 409 },
+        );
+      }
+
+      if (error.code === "42P01") {
+        return NextResponse.json(
+          { error: "Related items are unavailable until migrations are applied" },
+          { status: 503 },
+        );
+      }
+
+      return NextResponse.json(
+        { error: "Failed to link related item", details: error.message },
+        { status: 400 },
+      );
+    }
+
+    return NextResponse.json(
+      {
+        data: {
+          id: data.id,
+          relatedType: data.related_type,
+          relatedId: data.related_id,
+          relatedNumber: data.related_number,
+          relatedTitle: data.related_title,
+          relatedStatus: data.related_status,
+          relatedUrl: data.related_url,
+          createdAt: data.created_at,
+        },
+      },
+      { status: 201 },
+    );
+  } catch {
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}

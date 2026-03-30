@@ -38,7 +38,7 @@ export function useDrawings(projectId: string, filters?: DrawingFilters) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to fetch drawings");
+        throw new Error(error.error || `Server returned ${response.status} when loading drawings`);
       }
 
       const data = await response.json();
@@ -66,7 +66,7 @@ export function useDrawing(projectId: string, drawingId: string) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to fetch drawing");
+        throw new Error(error.error || `Server returned ${response.status} when loading drawing details`);
       }
 
       return response.json();
@@ -93,7 +93,7 @@ export function useCreateDrawing(projectId: string) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to create drawing");
+        throw new Error(error.error || `Server returned ${response.status} — the drawing could not be created`);
       }
 
       return response.json();
@@ -105,7 +105,7 @@ export function useCreateDrawing(projectId: string) {
       toast.success("Drawing created successfully");
     },
     onError: (error: Error) => {
-      toast.error("Failed to create drawing", {
+      toast.error("Could not create drawing", {
         description: error.message,
       });
     },
@@ -143,7 +143,7 @@ export function useUpdateDrawing(projectId: string) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to update drawing");
+        throw new Error(error.error || `Server returned ${response.status} — the drawing could not be updated`);
       }
 
       return response.json();
@@ -158,7 +158,7 @@ export function useUpdateDrawing(projectId: string) {
       toast.success("Drawing updated successfully");
     },
     onError: (error: Error) => {
-      toast.error("Failed to update drawing", {
+      toast.error("Could not update drawing", {
         description: error.message,
       });
     },
@@ -182,7 +182,7 @@ export function useDeleteDrawing(projectId: string) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || "Failed to delete drawing");
+        throw new Error(error.error || `Server returned ${response.status} — the drawing could not be deleted`);
       }
 
       return response.json();
@@ -194,7 +194,7 @@ export function useDeleteDrawing(projectId: string) {
       toast.success("Drawing deleted successfully");
     },
     onError: (error: Error) => {
-      toast.error("Failed to delete drawing", {
+      toast.error("Could not delete drawing", {
         description: error.message,
       });
     },

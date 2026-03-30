@@ -170,7 +170,7 @@ export function useCreateSubmittal(projectId: number) {
       toast.success("Submittal created");
     },
     onError: (err: Error) => {
-      toast.error(err.message);
+      toast.error("Could not create submittal", { description: err.message });
     },
   });
 }
@@ -198,7 +198,7 @@ export function useUpdateSubmittal(projectId: number, submittalId: string) {
       toast.success("Submittal updated");
     },
     onError: (err: Error) => {
-      toast.error(err.message);
+      toast.error("Could not update submittal", { description: err.message });
     },
   });
 }
@@ -221,7 +221,7 @@ export function useDeleteSubmittal(projectId: number) {
       toast.success("Submittal moved to Recycle Bin");
     },
     onError: (err: Error) => {
-      toast.error(err.message);
+      toast.error("Could not delete submittal", { description: err.message });
     },
   });
 }

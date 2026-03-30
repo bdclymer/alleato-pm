@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     if (projectError) {
       console.error("[financial-insights/cross-reference] Project lookup failed:", projectError);
       return NextResponse.json(
-        { error: "Failed to look up project" },
+        { error: `Could not look up project: ${projectError.message}` },
         { status: 500 },
       );
     }
@@ -92,7 +92,7 @@ export async function POST(request: NextRequest) {
     if (budgetError) {
       console.error("[financial-insights/cross-reference] Budget fetch failed:", budgetError);
       return NextResponse.json(
-        { error: "Failed to fetch Alleato budget data" },
+        { error: `Could not fetch Alleato budget data: ${budgetError.message}` },
         { status: 500 },
       );
     }

@@ -50,6 +50,9 @@ export default async function ProjectDirectCostsPage({
     created_at: row.created_at,
     updated_at: row.updated_at,
     vendor: row.vendor as { name: string } | null,
+    acumatica_ref_nbr: row.acumatica_ref_nbr,
+    acumatica_doc_type: row.acumatica_doc_type,
+    acumatica_sync_at: row.acumatica_sync_at,
   }));
 
   const budgetCodeIds = Array.from(

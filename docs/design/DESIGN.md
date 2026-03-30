@@ -194,6 +194,19 @@ body {
 h1, h2, h3 { letter-spacing: -0.01em; }
 ```
 
+### Line height standards
+
+- Body text / descriptions: `leading-relaxed` (1.625) or `leading-normal` (1.5)
+- Headings / titles: `leading-tight` (1.25)
+- Table cells: `leading-normal` (1.5)
+- Never remove line-height on multi-line text — tightening `leading` kills readability
+
+### Color contrast (WCAG AA minimum)
+
+- Normal text: 4.5:1 contrast ratio against background
+- Large text (18px+) / bold text (14px+ bold): 3:1
+- The semantic tokens (`text-foreground` on `bg-background`, `text-muted-foreground` on `bg-card`) already satisfy this — only check manually when using non-standard combinations
+
 ### Banned
 
 ```
@@ -528,9 +541,60 @@ import { Slideover } from "@/components/ui/unified-slideover";
 </Slideover>
 ```
 
-- **UnifiedModal** — create/edit, confirmations, focused tasks
-- **Slideover** — detail preview, side-by-side context panels
-- **AlertDialog** — destructive confirmations ONLY
+### Overlay decision matrix
+
+| Component | When to use | Size |
+|-----------|-------------|------|
+| `Modal` (`unified-modal`) | **Default for all new dialogs.** Forms, confirmations, detail previews. | `xs` / `sm` / `md` / `lg` / `xl` / `2xl` / `3xl` / `4xl` / `5xl` / `full` |
+| `Slideover` (`unified-slideover`) | Detail panels, side-by-side workflows, filters that stay open while the table is visible. | `xs` / `sm` / `md` / `lg` / `xl` / `full`, sides: `right` (default) / `left` / `top` / `bottom` |
+| `Dialog` (base shadcn) | Simple Yes/No confirmations (destructive actions). Keep content under 3 lines. | Fixed `max-w-md` |
+| `Sheet` (base shadcn) | Legacy use only. Prefer `Slideover` for new panels. | Fixed sizes |
+
+**Rules:**
+- Use `Modal` with `size="lg"` or `size="xl"` for create/edit forms, not `Sheet`
+- Use `Slideover` when the user needs to reference the background content while the panel is open
+- `Dialog` should contain only a heading, short description, Cancel + Confirm buttons — no forms
+- On mobile, `Modal` and `Slideover` automatically go full-screen — no extra handling needed
+
+```tsx
+{/* Create/edit form — use Modal */}
+<Modal open={open} onOpenChange={setOpen}>
+  <ModalContent size="xl">
+    <ModalHeader>
+      <ModalTitle>Create Contract</ModalTitle>
+    </ModalHeader>
+    {/* form content */}
+    <ModalFooter>
+      <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+      <Button type="submit">Create</Button>
+    </ModalFooter>
+  </ModalContent>
+</Modal>
+
+{/* Detail panel — use Slideover */}
+<Slideover open={open} onOpenChange={setOpen}>
+  <SlideoverContent size="lg">
+    <SlideoverHeader>
+      <SlideoverTitle>Contract Details</SlideoverTitle>
+    </SlideoverHeader>
+    {/* detail content */}
+  </SlideoverContent>
+</Slideover>
+
+{/* Destructive confirmation — use Dialog */}
+<Dialog open={open} onOpenChange={setOpen}>
+  <DialogContent>
+    <DialogHeader>
+      <DialogTitle>Delete commitment?</DialogTitle>
+    </DialogHeader>
+    <p className="text-sm text-muted-foreground">This action cannot be undone.</p>
+    <DialogFooter>
+      <Button variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+      <Button variant="destructive" onClick={handleDelete}>Delete</Button>
+    </DialogFooter>
+  </DialogContent>
+</Dialog>
+```
 
 ### Tabs
 
@@ -644,6 +708,17 @@ For editable line-item tables in forms (SOV, cost tables, invoice line items):
 
 See [forms/FORM-SYSTEM.md](./forms/FORM-SYSTEM.md) for RHF + Zod implementation.
 
+### Form rules
+
+1. **Labels above inputs** — never beside them on narrow screens
+2. **Required fields** marked with red asterisk (FormField handles this)
+3. **Error messages** below the field in red (FormField handles this)
+4. **Hint text** below the field in muted (FormField handles this)
+5. **Placeholder text** should be example values, not instructions ("$10,000" not "Enter amount")
+6. **Select defaults** — use a placeholder like "Select type..." not a pre-selected value
+7. **Never wrap individual form fields in cards** — let FormSection provide grouping
+8. **Date fields** use native date input or a date picker component, never a text input
+
 ---
 
 ## 12. Interaction Patterns (Keyboard-First)
@@ -666,6 +741,26 @@ Every table page supports keyboard navigation:
 | `G then D` | Go to Directory | Global |
 | `G then S` | Go to Schedule | Global |
 | `G then H` | Go to Home | Global |
+
+### Hover states
+
+```tsx
+{/* Row hover */}
+className="transition-colors hover:bg-muted"
+
+{/* Link hover */}
+className="text-muted-foreground transition-colors hover:text-foreground"
+
+{/* Button hover — handled by Button component variants */}
+```
+
+### Focus states
+
+Every interactive element needs `focus-visible` styling. The shadcn components handle this. If building custom interactive elements:
+
+```tsx
+className="focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+```
 
 ---
 
@@ -753,6 +848,95 @@ A `<Card>` is NOT justified for:
 
 ---
 
+## 14a. MetricCard vs KpiBlock — When to Use Each
+
+Two components display KPIs. They serve different contexts:
+
+| Component | When to use | Features |
+|-----------|-------------|----------|
+| `KpiBlock` / `KpiRow` (from `@/components/ds`) | Simple metrics in a horizontal row at the top of a detail or dashboard page. No interactivity. | Label, value, optional delta |
+| `MetricCard` (from `@/components/ui/metric-card`) | Richer metric cards that can be linked, have trend lines, multi-size variants, or need an action button. | `href`, `size`, `change` with trend icon, `action`, `subtitle` |
+| `SummaryCardGrid` (from `@/components/ui/summary-card-grid`) | Grid of summary cards at the top of table pages, when cards need change indicators. Auto-sizes columns. | `cols`, `change.direction`, `icon`, `onClick` |
+
+```tsx
+{/* Simple, quick row — use KpiRow */}
+<KpiRow metrics={[
+  { label: "Total Value", value: "$1.2M" },
+  { label: "Open Items", value: 14 },
+]} />
+
+{/* Richer card with trend and link — use MetricCard */}
+<MetricCard
+  label="Total Budget"
+  value={1250000}
+  format="currency"
+  size="md"
+  href="/budget"
+  change={{ value: 5.2, type: "positive", label: "vs last month" }}
+/>
+
+{/* Grid of cards at top of a table page — use SummaryCardGrid */}
+<SummaryCardGrid cards={[
+  { id: "total", label: "Total Value", value: "$125,000" },
+  { id: "pending", label: "Pending", value: 5, change: { value: 12, direction: "up" } },
+]} />
+```
+
+---
+
+## 14b. SectionCard — Collapsible Section Pattern
+
+Use `SectionCard` for collapsible grouped content on detail/dashboard pages (e.g., project home sections like "Prime Contracts", "Team", "Recent Activity").
+
+**Do NOT use** `SectionCard` inside form pages — use `FormSection` there instead.
+
+```tsx
+import { SectionCard } from "@/components/ui/section-card";
+
+{/* Basic collapsible section */}
+<SectionCard
+  title="Prime Contracts"
+  addHref={`/${projectId}/prime-contracts/new`}
+  viewAllHref={`/${projectId}/prime-contracts`}
+  defaultOpen={true}
+>
+  <SectionCard.Item
+    title="Contract #1042 — General Works"
+    subtitle="Acme Construction"
+    meta="$450,000"
+    badge={<StatusBadge status="Approved" />}
+    href={`/${projectId}/prime-contracts/1`}
+  />
+  <SectionCard.Item title="Contract #1043" meta="$120,000" />
+  <SectionCard.Empty
+    message="No contracts yet"
+    actionLabel="Create contract"
+    actionHref={`/${projectId}/prime-contracts/new`}
+  />
+</SectionCard>
+
+{/* Custom header actions */}
+<SectionCard
+  title="Team"
+  headerActions={<Button size="sm" variant="ghost">Manage</Button>}
+>
+  {/* content */}
+</SectionCard>
+```
+
+**SectionCard props:**
+- `title` — eyebrow-style heading (uppercase, brand color by default)
+- `addHref` / `onAdd` — shows `+` icon button in header
+- `viewAllHref` — shows "View All" link in header
+- `defaultOpen` / `open` / `onOpenChange` — collapse control
+- `hideCollapse` — removes the chevron toggle
+- `headerActions` — replaces default add/view-all with custom content
+- `brandTitle` — use brand color for title (default `true`)
+
+**SectionCard.Badge variants:** `default` | `brand` | `success` | `warning` | `error`
+
+---
+
 ## 15. Anti-Patterns (rejected in review)
 
 | Never do this | Do this instead |
@@ -777,6 +961,17 @@ A `<Card>` is NOT justified for:
 | Bot icon (`Bot` from lucide) in chat UI | Brand initial "A" in a circle |
 | `<User>` icon for user messages | Styled bubble or initials |
 | Borders around chat content sections | No border — render text directly |
+| Using `Sheet` for new create/edit forms | Use `Modal` with appropriate `size` prop |
+| Using `Dialog` for a form with many fields | Use `Modal size="xl"` instead |
+| Plain `<input type="number">` for financial fields | Use `NumberInput` (formats, selects on focus) |
+| Inline spinner with `<Loader2 className="animate-spin">` | `<Spinner />` component |
+| Building a combobox from scratch | `Command` inside `Popover` |
+| Tables on mobile without card view | Always provide `views.card` |
+| Hover-only actions | Must also work via tap/menu on mobile |
+| Horizontal scroll on mobile | Restructure content to fit |
+| Non-functional buttons/controls | Remove them entirely |
+| Raw `<h2>`, `<h3>` tags | `SectionHeader` or appropriate component |
+| `text-xs` for body content | `text-sm` minimum for readable text |
 
 ---
 
@@ -804,9 +999,307 @@ import { DataTablePage } from "...";
 import { GenericDataTable } from "...";
 ```
 
+### Extended component import catalog
+
+```tsx
+// Data Display (premium KPI & metric components)
+import { MetricCard, MetricGrid, MetricSummary } from "@/components/ui/metric-card";
+import { SummaryCardGrid } from "@/components/ui/summary-card-grid";
+import { SectionCard } from "@/components/ui/section-card";
+// SectionCard.Item, SectionCard.Empty, SectionCard.Badge
+
+// Overlays
+import { Modal, ModalContent, ModalHeader, ModalTitle, ModalFooter } from "@/components/ui/unified-modal";
+import { Slideover, SlideoverContent, SlideoverHeader, SlideoverTitle } from "@/components/ui/unified-slideover";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
+
+// Form Inputs (extended)
+import { NumberInput } from "@/components/ui/number-input";
+import { Switch } from "@/components/ui/switch";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Slider } from "@/components/ui/slider";
+
+// Feedback & Status
+import { Spinner } from "@/components/ui/spinner";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Progress } from "@/components/ui/progress";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+
+// Navigation & Disclosure
+import { Breadcrumb, BreadcrumbList, BreadcrumbItem, BreadcrumbLink, BreadcrumbPage, BreadcrumbSeparator } from "@/components/ui/breadcrumb";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+
+// Search & Comboboxes
+import { Command, CommandInput, CommandList, CommandItem, CommandEmpty, CommandGroup } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+
+// Avatars
+import { Avatar, AvatarImage, AvatarFallback, AvatarBadge, AvatarGroup, AvatarGroupCount } from "@/components/ui/avatar";
+
+// Base Primitives (shadcn)
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+```
+
 ---
 
-## 17. Enforcement
+## 17. Mobile Responsiveness
+
+### Breakpoint strategy
+
+```
+Mobile:  < 640px  (default styles, no prefix)
+Tablet:  640px+   (sm:)
+Desktop: 1024px+  (lg:)
+Wide:    1280px+  (xl:)
+```
+
+**Every component must work on mobile. This is not optional.**
+
+### Tables on mobile
+
+Tables MUST switch to a card layout on mobile. `UnifiedTablePage` handles this via the `views.card` prop:
+
+```tsx
+<UnifiedTablePage
+  toolbar={{
+    currentView: isMobile ? "card" : "table",
+    enabledViews: ["table", "card"],
+  }}
+  views={{
+    card: (item) => (
+      <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-foreground">{item.name}</span>
+          <StatusBadge status={item.status} />
+        </div>
+        <div className="grid grid-cols-2 gap-2 text-sm">
+          <div>
+            <span className="text-muted-foreground">Amount</span>
+            <span className="block font-medium">{formatCurrency(item.amount)}</span>
+          </div>
+          <div>
+            <span className="text-muted-foreground">Date</span>
+            <span className="block">{formatDate(item.date)}</span>
+          </div>
+        </div>
+      </div>
+    ),
+  }}
+/>
+```
+
+### Mobile card rules
+- Max 4-6 fields visible (show only the most important data)
+- Primary identifier and status always on the first row
+- Currency/numbers right-aligned within their grid cell
+- Truncate long text with `truncate` class
+- Cards separated by `space-y-3` (not borders between cards)
+- No hover states on mobile cards (tap targets only)
+
+### Responsive layout rules
+
+```tsx
+{/* Grid columns collapse on mobile */}
+<div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+
+{/* Form fields stack on mobile */}
+<div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+
+{/* Side-by-side becomes stacked */}
+<div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+
+{/* Page padding reduces on mobile — PageContainer handles: px-4 sm:px-6 lg:px-8 */}
+```
+
+### Mobile-specific rules
+
+1. **Touch targets:** Minimum 44x44px for all interactive elements on mobile
+2. **No hover-dependent UI:** Anything revealed on hover must also be accessible via tap/menu
+3. **No horizontal scroll:** Content must fit within viewport width. If a table can't fit, switch to card view
+4. **Bottom-anchored actions:** Primary action buttons should be easily reachable (near bottom of viewport)
+5. **Collapsible sections:** Long detail pages should use collapsible sections on mobile
+6. **Font sizes:** Never smaller than 12px on mobile. Body text should be 14px minimum
+7. **Padding:** Use `px-4` on mobile (not `px-2` — too cramped; not `px-6` — wastes space)
+8. **Modals on mobile:** Use full-screen sheets (`Sheet`) instead of centered dialogs on small screens
+9. **Toolbars:** Search and filters should collapse into a filter sheet/dropdown on mobile
+
+### Mobile detection pattern
+
+```tsx
+import { useMediaQuery } from "@/hooks/use-media-query";
+
+function MyPage() {
+  const isMobile = useMediaQuery("(max-width: 639px)");
+  const isTablet = useMediaQuery("(max-width: 1023px)");
+
+  return (
+    <UnifiedTablePage
+      toolbar={{
+        currentView: isMobile ? "card" : "table",
+      }}
+      views={{
+        card: isMobile ? (item) => <MobileCard item={item} /> : undefined,
+      }}
+    />
+  );
+}
+```
+
+### Unit selection guide
+
+| Unit | Use for | Never use for |
+|------|---------|---------------|
+| `rem` | Font sizes, spacing, layout dimensions | Component-relative sizing |
+| `em` | Padding/margin *relative to the component's own font size* | Global layout |
+| `%` | Widths relative to parent container | Font sizes |
+| `px` | Borders (1px), box-shadows, hairlines | Font sizes, spacing, widths |
+| `vw`/`vh` | Full-bleed hero sections, viewport-height panels | Body text, spacing |
+| `ch` | Text content max-width (`max-w-[65ch]`) | Anything non-text |
+
+**NEVER use `px` for font sizes or spacing** — it ignores the user's browser font-size preference.
+
+### Overflow-safe responsive grids
+
+```tsx
+{/* ❌ Can overflow: min-width set but no viewport guard */}
+<div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+
+{/* ✅ Overflow-safe: min(300px, 100%) prevents items wider than viewport */}
+<div className="grid gap-6" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(min(300px, 100%), 1fr))" }}>
+```
+
+### Fluid typography with clamp()
+
+For headings and display text that should scale smoothly across viewports without hard breakpoints:
+
+```css
+/* In globals.css or a utility class — for display headings only */
+font-size: clamp(1.25rem, 1rem + 1.5vw, 2rem); /* 20px → 32px */
+font-size: clamp(1rem, 0.9rem + 0.5vw, 1.125rem); /* 16px → 18px */
+```
+
+**Do not apply clamp to body text** — `text-sm` / `text-base` are intentionally fixed for readability predictability.
+
+### Test viewports (required)
+
+Before shipping any responsive UI, verify at these five widths:
+
+| Width | Device |
+|-------|--------|
+| **375px** | iPhone SE / small Android |
+| **414px** | iPhone Pro Max |
+| **768px** | iPad portrait |
+| **1024px** | Laptop |
+| **1440px** | Desktop |
+
+**Issues to check at each viewport:**
+- No horizontal scroll (zero tolerance)
+- No text overflow or clipping
+- No element overlap
+- Touch targets ≥ 44×44px with ≥ 8px gap between them
+- Font size ≥ 14px for all readable text
+- Primary actions reachable without scrolling excessively
+
+### Mobile pre-ship checklist
+
+- [ ] No horizontal scroll at 375px
+- [ ] Tables switch to card view on mobile
+- [ ] All touch targets ≥ 44×44px (buttons, links, row actions)
+- [ ] ≥ 8px spacing between adjacent interactive elements
+- [ ] Modals replaced with `Sheet` on mobile (no tiny centered dialogs)
+- [ ] Search/filters collapsed into sheet/dropdown (not exposed in toolbar)
+- [ ] Reading content has `max-w-[65ch]` or equivalent max-width
+- [ ] No hover-only UI (all interactions accessible via tap/menu)
+- [ ] Text never smaller than `text-sm` (14px)
+- [ ] Grids collapse to single column on mobile (`grid-cols-1`)
+- [ ] Page padding is `px-4` on mobile (handled by `PageContainer`)
+
+---
+
+## 18. Decision Flowchart
+
+**"What component should I use?"**
+
+```
+Need to display a list of entities?
+  → UnifiedTablePage
+
+Need a create/edit form?
+  → PageShell variant="form" + FormSection
+
+Need to show details of one entity?
+  → PageShell variant="detail" + Tabs + SectionHeader sections
+
+Need a dashboard/overview?
+  → PageShell variant="dashboard" + KpiRow + sections
+
+Need to show status?
+  → StatusBadge (in badges/tags)
+  → StatusDot (in table cells, minimal)
+  → StatusText (plain text, no color)
+
+Need metrics/KPIs?
+  → Simple row at top of page: KpiRow / KpiBlock
+  → Rich cards with trends/links: MetricCard / MetricGrid
+  → Grid of cards at top of table page: SummaryCardGrid
+
+Need a collapsible grouped section on a detail/dashboard page?
+  → SectionCard (compound: SectionCard.Item, SectionCard.Empty, SectionCard.Badge)
+
+Need an empty state?
+  → EmptyState component (with icon, title, description, action)
+
+Need a section title?
+  → SectionHeader (with optional count and action)
+
+Need a label above grouped content?
+  → Eyebrow component
+
+Need to wrap form content?
+  → FormSection (with title + description, handles borders)
+
+Need a modal / dialog?
+  → Create/edit form or complex content: Modal (unified-modal) with size prop
+  → Side panel / detail preview: Slideover (unified-slideover)
+  → Simple Yes/No confirmation: Dialog (base shadcn)
+
+Need a number/currency input?
+  → NumberInput (auto-selects on focus, formats on blur, currency prop)
+
+Need a loading indicator?
+  → Inline: Spinner component
+  → Page skeleton: Skeleton (pulse placeholders)
+  → Progress bar: Progress
+
+Need a searchable select / combobox?
+  → Command inside Popover
+
+Need collapsible content sections?
+  → Accordion (for FAQs, detail rows)
+  → SectionCard (for dashboard/detail page sections)
+
+Need avatars?
+  → Stacked initials: AvatarStack (from @/components/ds)
+  → Full-featured: Avatar + AvatarImage + AvatarFallback (from @/components/ui/avatar)
+  → With badge: AvatarBadge
+  → Multiple avatars: AvatarGroup + AvatarGroupCount
+```
+
+---
+
+## 19. Enforcement
 
 **ESLint errors that block the build:**
 - `design-system/no-hardcoded-colors`

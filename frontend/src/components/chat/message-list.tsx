@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
+import { format, isSameDay, isToday, isYesterday, parseISO } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageGroup } from "./message-group";
 import { DateDivider } from "./date-divider";
-import { format, isToday, isYesterday, isSameDay, parseISO } from "date-fns";
+import { MessageGroup } from "./message-group";
 
 interface Message {
   id: string;
@@ -16,7 +16,12 @@ interface Message {
 interface MessageListProps {
   messages: Message[];
   currentUsername: string;
-  onMessageSelect?: (messageId: string) => void;
+  selectedMessageId?: string | null;
+  threadReplyCountByMessage?: Record<string, number>;
+  reactionsByMessage?: Record<string, Record<string, number>>;
+  onMessageSelect?: (message: Message) => void;
+  onReplyInThread?: (message: Message) => void;
+  onAddReaction?: (messageId: string, emoji: string) => void;
 }
 
 interface GroupedMessage extends Message {
@@ -28,36 +33,38 @@ interface GroupedMessage extends Message {
 export function MessageList({
   messages,
   currentUsername,
+  selectedMessageId,
+  threadReplyCountByMessage = {},
+  reactionsByMessage = {},
   onMessageSelect,
+  onReplyInThread,
+  onAddReaction,
 }: MessageListProps) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const prevMessageCount = useRef(messages.length);
 
-  // Group messages and add date dividers
   const groupedMessages = useMemo(() => {
-    if (messages.length === 0) return [];
+    if (messages.length === 0) {
+      return [];
+    }
 
     const grouped: GroupedMessage[] = [];
     let currentDate: Date | null = null;
     let previousUser: string | null = null;
     let previousTime: Date | null = null;
 
-    messages.forEach((message, index) => {
+    messages.forEach((message) => {
       const messageDate = parseISO(message.createdAt);
       const messageTime = messageDate.getTime();
 
-      // Check if we need a date divider
       if (!currentDate || !isSameDay(currentDate, messageDate)) {
         currentDate = messageDate;
-        let dateLabel: string;
 
-        if (isToday(messageDate)) {
-          dateLabel = "Today";
-        } else if (isYesterday(messageDate)) {
-          dateLabel = "Yesterday";
-        } else {
-          dateLabel = format(messageDate, "MMMM d, yyyy");
-        }
+        const dateLabel = isToday(messageDate)
+          ? "Today"
+          : isYesterday(messageDate)
+            ? "Yesterday"
+            : format(messageDate, "MMMM d, yyyy");
 
         grouped.push({
           ...message,
@@ -65,50 +72,51 @@ export function MessageList({
           dateLabel,
           isFirstInGroup: true,
         });
+
         previousUser = message.user.name;
         previousTime = messageDate;
-      } else {
-        // Check if message should start a new group
-        // Group if same user and within 5 minutes
-        const timeDiff = previousTime
-          ? (messageTime - previousTime.getTime()) / 1000 / 60
-          : Infinity;
-        const isNewGroup = previousUser !== message.user.name || timeDiff > 5;
-
-        grouped.push({
-          ...message,
-          isFirstInGroup: isNewGroup,
-        });
-
-        if (isNewGroup) {
-          previousUser = message.user.name;
-        }
-        previousTime = messageDate;
+        return;
       }
+
+      const timeDiffInMinutes = previousTime
+        ? (messageTime - previousTime.getTime()) / 1000 / 60
+        : Number.POSITIVE_INFINITY;
+      const startsNewGroup = previousUser !== message.user.name || timeDiffInMinutes > 5;
+
+      grouped.push({
+        ...message,
+        isFirstInGroup: startsNewGroup,
+      });
+
+      if (startsNewGroup) {
+        previousUser = message.user.name;
+      }
+      previousTime = messageDate;
     });
 
     return grouped;
   }, [messages]);
 
-  // Auto-scroll to bottom on new messages
   useEffect(() => {
     if (messages.length > prevMessageCount.current && scrollRef.current) {
       const scrollElement = scrollRef.current.querySelector(
         "[data-radix-scroll-area-viewport]",
       );
+
       if (scrollElement) {
         scrollElement.scrollTop = scrollElement.scrollHeight;
       }
     }
+
     prevMessageCount.current = messages.length;
   }, [messages.length]);
 
   if (messages.length === 0) {
     return (
-      <div className="flex items-center justify-center h-full">
+      <div className="flex h-full items-center justify-center">
         <div className="text-center">
-          <p className="text-[hsl(var(--chat-muted))] text-sm">
-            No messages yet — start the conversation.
+          <p className="text-sm text-muted-foreground">
+            No messages yet. Start this conversation.
           </p>
         </div>
       </div>
@@ -117,17 +125,20 @@ export function MessageList({
 
   return (
     <ScrollArea ref={scrollRef} className="h-full">
-      <div className="px-4 py-4 space-y-2">
-        {groupedMessages.map((message, index) => (
+      <div className="space-y-0.5 px-3 py-4">
+        {groupedMessages.map((message) => (
           <div key={message.id}>
-            {message.showDate && (
-              <DateDivider label={message.dateLabel || ""} />
-            )}
+            {message.showDate ? <DateDivider label={message.dateLabel ?? ""} /> : null}
             <MessageGroup
               message={message}
-              isFirstInGroup={message.isFirstInGroup || false}
+              isFirstInGroup={message.isFirstInGroup ?? false}
               isOwnMessage={message.user.name === currentUsername}
-              onSelect={() => onMessageSelect?.(message.id)}
+              isSelected={selectedMessageId === message.id}
+              threadReplyCount={threadReplyCountByMessage[message.id] ?? 0}
+              reactions={reactionsByMessage[message.id]}
+              onSelect={() => onMessageSelect?.(message)}
+              onReplyInThread={() => onReplyInThread?.(message)}
+              onAddReaction={(emoji) => onAddReaction?.(message.id, emoji)}
             />
           </div>
         ))}

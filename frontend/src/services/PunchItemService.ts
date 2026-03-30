@@ -116,7 +116,7 @@ export class PunchItemService {
         data: null,
         error: {
           type: "UNKNOWN",
-          message: err instanceof Error ? err.message : "Unknown error",
+          message: err instanceof Error ? err.message : "an unexpected error occurred",
         },
       };
     }
@@ -159,7 +159,7 @@ export class PunchItemService {
         data: null,
         error: {
           type: "UNKNOWN",
-          message: err instanceof Error ? err.message : "Unknown error",
+          message: err instanceof Error ? err.message : "an unexpected error occurred",
         },
       };
     }
@@ -212,7 +212,7 @@ export class PunchItemService {
         data: null,
         error: {
           type: "UNKNOWN",
-          message: err instanceof Error ? err.message : "Unknown error",
+          message: err instanceof Error ? err.message : "an unexpected error occurred",
         },
       };
     }
@@ -263,7 +263,7 @@ export class PunchItemService {
         data: null,
         error: {
           type: "UNKNOWN",
-          message: err instanceof Error ? err.message : "Unknown error",
+          message: err instanceof Error ? err.message : "an unexpected error occurred",
         },
       };
     }

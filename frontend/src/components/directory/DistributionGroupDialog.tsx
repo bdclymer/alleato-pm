@@ -203,7 +203,7 @@ export function DistributionGroupDialog({
       onSuccess?.();
     } catch (error) {
       console.error("Error saving group:", error);
-      toast.error(error instanceof Error ? error.message : "An error occurred");
+      toast.error("Could not save distribution group", { description: error instanceof Error ? error.message : "An unexpected error occurred" });
     } finally {
       setIsSubmitting(false);
     }

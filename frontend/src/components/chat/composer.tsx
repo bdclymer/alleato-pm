@@ -1,107 +1,132 @@
 "use client";
 
-import { useState, useRef, KeyboardEvent } from "react";
-import { Paperclip, Send, Smile } from "lucide-react";
+import { useRef, useState, type KeyboardEvent } from "react";
+import { AtSign, Link2, Paperclip, Send, Smile, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
 
 interface ComposerProps {
   onSend: (content: string) => void;
   channelName: string;
   disabled?: boolean;
+  placeholder?: string;
+  submitLabel?: string;
 }
 
-export function Composer({ onSend, channelName, disabled }: ComposerProps) {
+export function Composer({
+  onSend,
+  channelName,
+  disabled,
+  placeholder,
+  submitLabel = "Send",
+}: ComposerProps) {
   const [message, setMessage] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSend = () => {
-    if (message.trim() && !disabled) {
-      onSend(message);
-      setMessage("");
-      if (textareaRef.current) {
-        textareaRef.current.style.height = "auto";
-      }
+    if (!message.trim() || disabled) {
+      return;
+    }
+
+    onSend(message.trim());
+    setMessage("");
+
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
     }
   };
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
+  const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
       handleSend();
     }
   };
 
-  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setMessage(e.target.value);
-    const textarea = e.target;
+  const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setMessage(event.target.value);
+    const textarea = event.target;
     textarea.style.height = "auto";
-    const newHeight = Math.min(textarea.scrollHeight, 150);
-    textarea.style.height = `${newHeight}px`;
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 176)}px`;
   };
 
   return (
-    <div className="border-t border-border bg-background px-4 py-4">
-      <div className="flex items-end gap-2">
-        {/* Attachment Button */}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="shrink-0 text-muted-foreground hover:text-foreground"
-          disabled={disabled}
-          title="Attach file"
-        >
-          <Paperclip />
-        </Button>
-
-        {/* Message Input */}
-        <div className="flex-1 relative">
-          <Textarea
-            ref={textareaRef}
-            value={message}
-            onChange={handleInput}
-            onKeyDown={handleKeyDown}
-            placeholder={`Message #${channelName}`}
-            disabled={disabled}
-            className="min-h-[40px] max-h-[150px] resize-none bg-background border-border pr-10"
-            rows={1}
-          />
-
-          {/* Emoji Button */}
+    <div className="border-t border-border bg-background px-3 py-3">
+      <div className="rounded-md border border-border bg-muted/20 p-2">
+        <div className="mb-2 flex items-center gap-1">
           <Button
             variant="ghost"
             size="icon"
-            className="absolute right-1 bottom-1 h-8 w-8 text-muted-foreground hover:text-foreground"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground"
             disabled={disabled}
-            title="Add emoji"
+            title="Attach file"
           >
-            <Smile />
+            <Paperclip className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            disabled={disabled}
+            title="Mentions"
+          >
+            <AtSign className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            disabled={disabled}
+            title="Emoji"
+          >
+            <Smile className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            disabled={disabled}
+            title="Insert link"
+          >
+            <Link2 className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            disabled={disabled}
+            title="Meet now"
+          >
+            <Video className="h-4 w-4" />
           </Button>
         </div>
 
-        {/* Send Button */}
-        <Button
-          onClick={handleSend}
-          disabled={!message.trim() || disabled}
-          size="icon"
-          className="shrink-0"
-        >
-          <Send />
-        </Button>
-      </div>
+        <Textarea
+          ref={textareaRef}
+          value={message}
+          onChange={handleInput}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder ?? `Post to ${channelName}`}
+          disabled={disabled}
+          className="min-h-20 max-h-44 resize-none border-0 bg-transparent px-1 py-1 text-sm shadow-none focus-visible:ring-0"
+          rows={2}
+        />
 
-      {/* Helper Text */}
-      <div className="mt-2 text-xs text-muted-foreground">
-        <span className="hidden sm:inline">
-          <kbd className="px-1.5 py-0.5 bg-muted border border-border rounded text-xs">
-            Enter
-          </kbd>{" "}
-          to send,{" "}
-          <kbd className="px-1.5 py-0.5 bg-muted border border-border rounded text-xs">
-            Shift + Enter
-          </kbd>{" "}
-          for new line
-        </span>
+        <div className="mt-2 flex items-center justify-between">
+          <p className="text-xs text-muted-foreground">
+            Enter to send · Shift + Enter for new line
+          </p>
+
+          <Button
+            onClick={handleSend}
+            disabled={!message.trim() || disabled}
+            className={cn("h-8 gap-1.5 px-3", !message.trim() && "opacity-60")}
+          >
+            <Send className="h-3.5 w-3.5" />
+            <span>{submitLabel}</span>
+          </Button>
+        </div>
       </div>
     </div>
   );

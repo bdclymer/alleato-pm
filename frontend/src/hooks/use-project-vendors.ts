@@ -48,7 +48,7 @@ export function useProjectVendors(projectId: string): UseProjectVendorsResult {
       const { data } = await res.json();
       setVendors(data ?? []);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("Unknown error"));
+      setError(err instanceof Error ? err : new Error("an unexpected error occurred — please try again"));
     } finally {
       setIsLoading(false);
     }
@@ -72,7 +72,7 @@ export function useProjectVendors(projectId: string): UseProjectVendorsResult {
         if (!cancelled) setVendors(data ?? []);
       } catch (err) {
         if (!cancelled)
-          setError(err instanceof Error ? err : new Error("Unknown error"));
+          setError(err instanceof Error ? err : new Error("an unexpected error occurred — please try again"));
       } finally {
         if (!cancelled) setIsLoading(false);
       }

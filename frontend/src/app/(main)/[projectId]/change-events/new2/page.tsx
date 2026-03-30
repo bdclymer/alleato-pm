@@ -140,7 +140,7 @@ export default function StandardFormPage() {
       router.refresh()
     } catch (error) {
       const message =
-        error instanceof Error ? error.message : "Something went wrong"
+        error instanceof Error ? error.message : "an unexpected error occurred"
       setError("root", { type: "server", message })
       toast.error(message)
     }

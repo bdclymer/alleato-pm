@@ -93,7 +93,8 @@ export function useUsers(options: UseUsersOptions = {}): UseUsersReturn {
 
       setUsers(data || []);
     } catch (err) {
-      setError(err instanceof Error ? err : new Error("Failed to fetch users"));
+      const detail = err instanceof Error ? err.message : "an unexpected error occurred";
+      setError(new Error(`Could not load users: ${detail}`));
     } finally {
       setIsLoading(false);
     }

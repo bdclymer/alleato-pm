@@ -176,7 +176,8 @@ export function useCommitmentChangeOrders(
           });
           return;
         }
-        throw new Error("Failed to fetch change orders");
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.error || `Server returned ${response.status}`);
       }
 
       const data = await response.json();
@@ -201,9 +202,8 @@ export function useCommitmentChangeOrders(
       setChangeOrders(orders);
       setTotals(calculateTotals(orders));
     } catch (err) {
-      setError(
-        err instanceof Error ? err : new Error("Failed to fetch change orders")
-      );
+      const detail = err instanceof Error ? err.message : "an unexpected error occurred";
+      setError(new Error(`Could not load change orders: ${detail}`));
     } finally {
       setIsLoading(false);
     }
@@ -232,7 +232,7 @@ export function useCommitmentChangeOrders(
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to create change order");
+          throw new Error(errorData.error || `Server returned ${response.status}`);
         }
 
         const data = await response.json();
@@ -256,11 +256,8 @@ export function useCommitmentChangeOrders(
           updated_at: String(data.updated_at || ""),
         };
       } catch (err) {
-        setError(
-          err instanceof Error
-            ? err
-            : new Error("Failed to create change order")
-        );
+        const detail = err instanceof Error ? err.message : "an unexpected error occurred";
+        setError(new Error(`Could not create change order: ${detail}`));
         return null;
       }
     },
@@ -287,7 +284,7 @@ export function useCommitmentChangeOrders(
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to update change order");
+          throw new Error(errorData.error || `Server returned ${response.status}`);
         }
 
         const result = await response.json();
@@ -312,11 +309,8 @@ export function useCommitmentChangeOrders(
           updated_at: String(data.updated_at || ""),
         };
       } catch (err) {
-        setError(
-          err instanceof Error
-            ? err
-            : new Error("Failed to update change order")
-        );
+        const detail = err instanceof Error ? err.message : "an unexpected error occurred";
+        setError(new Error(`Could not update change order: ${detail}`));
         return null;
       }
     },
@@ -336,18 +330,15 @@ export function useCommitmentChangeOrders(
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to delete change order");
+          throw new Error(errorData.error || `Server returned ${response.status}`);
         }
 
         // Refetch to update the list
         await fetchChangeOrders();
         return true;
       } catch (err) {
-        setError(
-          err instanceof Error
-            ? err
-            : new Error("Failed to delete change order")
-        );
+        const detail = err instanceof Error ? err.message : "an unexpected error occurred";
+        setError(new Error(`Could not delete change order: ${detail}`));
         return false;
       }
     },
@@ -369,7 +360,7 @@ export function useCommitmentChangeOrders(
 
         if (!response.ok) {
           const errorData = await response.json();
-          throw new Error(errorData.error || "Failed to approve change order");
+          throw new Error(errorData.error || `Server returned ${response.status}`);
         }
 
         const result = await response.json();
@@ -392,11 +383,8 @@ export function useCommitmentChangeOrders(
             : undefined,
         };
       } catch (err) {
-        setError(
-          err instanceof Error
-            ? err
-            : new Error("Failed to approve change order")
-        );
+        const detail = err instanceof Error ? err.message : "an unexpected error occurred";
+        setError(new Error(`Could not approve change order: ${detail}`));
         return { success: false };
       }
     },

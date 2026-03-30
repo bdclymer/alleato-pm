@@ -2,7 +2,10 @@
 
 This file provides guidance to Claude Code when working with code in this repository.
 
----
+## Must Reference
+
+- Design.md - **Read this before building any page or component.**
+- Patterns.md
 
 ## Project Overview
 
