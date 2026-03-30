@@ -153,7 +153,11 @@ export async function GET(_: NextRequest, { params }: RouteParams) {
       .order("created_at", { ascending: false });
 
     if (error) {
-      if (error.code === "42P01") {
+      if (
+        error.code === "42P01" ||
+        error.message?.includes("Could not find") ||
+        error.message?.includes("schema cache")
+      ) {
         return NextResponse.json({ data: [] });
       }
 
@@ -272,7 +276,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         );
       }
 
-      if (error.code === "42P01") {
+      if (
+        error.code === "42P01" ||
+        error.message?.includes("Could not find") ||
+        error.message?.includes("schema cache")
+      ) {
         return NextResponse.json(
           { error: "Related items are unavailable until migrations are applied" },
           { status: 503 },

@@ -36,7 +36,11 @@ export async function DELETE(_: Request, { params }: RouteParams) {
       .eq("change_event_id", changeEventId);
 
     if (error) {
-      if (error.code === "42P01") {
+      if (
+        error.code === "42P01" ||
+        error.message?.includes("Could not find") ||
+        error.message?.includes("schema cache")
+      ) {
         return NextResponse.json(
           { error: "Related items are unavailable until migrations are applied" },
           { status: 503 },
