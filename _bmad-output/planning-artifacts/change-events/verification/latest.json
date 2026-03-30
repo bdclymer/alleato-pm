@@ -1,8 +1,8 @@
 {
-  "run_id": "ce-finalization-20260322T153640Z",
+  "run_id": "ce-finalization-20260330T163012Z",
   "feature": "change-events",
-  "project_id": "562949954728542",
-  "git_sha": "f023290c",
-  "started_at": "2026-03-22T15:36:40Z",
-  "artifact_root": "_bmad-output/planning-artifacts/change-events/verification/runs/ce-finalization-20260322T153640Z"
+  "project_id": "562949955214671",
+  "git_sha": "9d212b2a4a010d43e9b7162c0d08af57300e2880",
+  "started_at": "2026-03-30T16:30:12Z",
+  "artifact_root": "_bmad-output/planning-artifacts/change-events/verification/runs/ce-finalization-20260330T163012Z"
 }

@@ -13,6 +13,7 @@ import { formatCurrency } from "@/config/tables";
 interface ChangeEventLineItemsTableProps {
   lineItems: ChangeEventDetailLineItem[];
   markupRows: VerticalMarkup[];
+  expectingRevenue?: boolean;
 }
 
 function formatBudgetCode(li: ChangeEventDetailLineItem): string {
@@ -37,6 +38,7 @@ function computeLatestCost(li: ChangeEventDetailLineItem): number {
 export function ChangeEventLineItemsTable({
   lineItems,
   markupRows,
+  expectingRevenue = true,
 }: ChangeEventLineItemsTableProps) {
   const lineItemSubtotals = useMemo(() => {
     return lineItems.reduce(
@@ -58,6 +60,8 @@ export function ChangeEventLineItemsTable({
   }, [lineItems]);
 
   const computedMarkups = useMemo(() => {
+    if (!expectingRevenue) return [];
+
     const sorted = [...markupRows].sort(
       (a, b) => a.calculation_order - b.calculation_order
     );
@@ -80,7 +84,7 @@ export function ChangeEventLineItemsTable({
         revenueAmount,
       };
     });
-  }, [markupRows, lineItemSubtotals]);
+  }, [expectingRevenue, markupRows, lineItemSubtotals]);
 
   const markupTotalCost = useMemo(
     () => computedMarkups.reduce((sum, m) => sum + m.costAmount, 0),

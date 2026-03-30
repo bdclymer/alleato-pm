@@ -1,0 +1,27 @@
+{
+  "run_id": "ce-finalization-20260330T163012Z",
+  "feature": "change-events",
+  "project_id": "562949955214671",
+  "mode": "full",
+  "git_sha": "9d212b2a4a010d43e9b7162c0d08af57300e2880",
+  "started_at": "2026-03-30T16:30:12Z",
+  "completed_at": null,
+  "prior_run_id": "ce-finalization-20260322T153640Z",
+  "prior_run_gaps_carried_forward": ["CE-001", "CE-005"],
+  "new_crawl_artifacts": [
+    ".claude/procore-manifests/change-events/add-to-workflow-research.md",
+    ".claude/procore-manifests/change-events/manifest-add-to-workflow.json",
+    ".claude/procore-manifests/change-events/screenshots/list-add-to-03-dropdown-open.png",
+    ".claude/procore-manifests/change-events/screenshots/step1-contracts-list.png"
+  ],
+  "phases": [
+    {"phase": "INIT_COMMAND", "state": "running", "started_at": "2026-03-30T16:30:12Z", "completed_at": null, "owner": "orchestrator", "result": null, "evidence": [], "errors": []},
+    {"phase": "DISCOVER", "state": "pending", "started_at": null, "completed_at": null, "owner": "parallel-subagents", "result": null, "evidence": [], "errors": []},
+    {"phase": "CAPTURE_SOURCE_OF_TRUTH", "state": "passed", "started_at": "2026-03-30T15:00:00Z", "completed_at": "2026-03-30T16:25:00Z", "owner": "crawler", "result": "New Add-To workflow fully crawled. Screenshots and manifest-add-to-workflow.json captured.", "evidence": [".claude/procore-manifests/change-events/add-to-workflow-research.md"], "errors": []},
+    {"phase": "RECONCILE_MANIFEST", "state": "pending", "started_at": null, "completed_at": null, "owner": "orchestrator", "result": null, "evidence": [], "errors": []},
+    {"phase": "GAP_ANALYZE", "state": "pending", "started_at": null, "completed_at": null, "owner": "parallel-subagents", "result": null, "evidence": [], "errors": []},
+    {"phase": "REMEDIATE", "state": "pending", "started_at": null, "completed_at": null, "owner": "fix-workers", "result": null, "evidence": [], "errors": []},
+    {"phase": "VERIFY_IMPLEMENTATION", "state": "pending", "started_at": null, "completed_at": null, "owner": "verifier", "result": null, "evidence": [], "errors": []},
+    {"phase": "FINALIZE_AND_REPORT", "state": "pending", "started_at": null, "completed_at": null, "owner": "orchestrator", "result": null, "evidence": [], "errors": []}
+  ]
+}

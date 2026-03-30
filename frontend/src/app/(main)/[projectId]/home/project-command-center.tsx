@@ -382,43 +382,43 @@ export function ProjectCommandCenter({
       {/* ────────────────────────────────────────────────────
           IDENTITY BAND
       ──────────────────────────────────────────────────── */}
-      <div className="px-5 lg:px-7 py-4">
-        <div className="flex items-start justify-between gap-4 flex-wrap">
-          <div className="min-w-0">
+      <div className="px-4 sm:px-5 lg:px-7 py-4">
+        <div className="flex items-start justify-between gap-3 sm:gap-4 flex-wrap">
+          <div className="min-w-0 flex-1">
             {jobNumber && (
               <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground mb-1.5">
                 Job # {jobNumber}
               </div>
             )}
-            <h1 className="text-xl font-semibold text-foreground leading-snug">
+            <h1 className="text-lg sm:text-xl font-semibold text-foreground leading-snug">
               {project.name ?? "Untitled Project"}
             </h1>
 
-            <div className="flex items-center gap-4 mt-3 text-sm text-muted-foreground flex-wrap">
+            <div className="flex items-center gap-3 sm:gap-4 mt-2 sm:mt-3 text-xs sm:text-sm text-muted-foreground flex-wrap">
               {project.client && (
                 <span className="inline-flex items-center gap-1.5">
-                  <UserRound className="h-4 w-4" />
+                  <UserRound className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   {project.client}
                 </span>
               )}
 
               {infoDate && (
                 <span className="inline-flex items-center gap-1.5">
-                  <Calendar className="h-4 w-4" />
-                  {format(new Date(infoDate), "MMMM d, yyyy")}
+                  <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                  {format(new Date(infoDate), "MMM d, yyyy")}
                 </span>
               )}
 
               {projectLocation && (
                 <span className="inline-flex items-center gap-1.5">
-                  <MapPin className="h-4 w-4" />
+                  <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   {projectLocation}
                 </span>
               )}
             </div>
           </div>
 
-          <div className="flex flex-col items-end gap-3 shrink-0">
+          <div className="flex flex-col items-end gap-2 sm:gap-3 shrink-0">
             <div className="flex items-center gap-2">
               <Button
                 variant="secondary"
@@ -435,7 +435,7 @@ export function ProjectCommandCenter({
                   <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">
                     Health
                   </div>
-                  <div className="text-2xl font-semibold tabular-nums tracking-tight">
+                  <div className="text-xl sm:text-2xl font-semibold tabular-nums tracking-tight">
                     {project.health_score}
                     <span className="text-sm font-normal text-muted-foreground">/100</span>
                   </div>
@@ -452,7 +452,7 @@ export function ProjectCommandCenter({
       ──────────────────────────────────────────────────── */}
       <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_320px] divide-y lg:divide-y-0 lg:divide-x divide-border">
         {/* ── LEFT: Main content ──────────────────────── */}
-        <div className="px-5 lg:px-7 py-5 space-y-6 min-w-0">
+        <div className="px-4 sm:px-5 lg:px-7 py-4 sm:py-5 space-y-5 sm:space-y-6 min-w-0">
 
           {/* FINANCIAL OVERVIEW */}
           <section>
@@ -621,7 +621,7 @@ export function ProjectCommandCenter({
                   {ceApproved > 0 && <StatPill label="Approved" value={ceApproved} tone="success" />}
                   {ceRejected > 0 && <StatPill label="Rejected" value={ceRejected} tone="danger" />}
                 </div>
-                <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
                   <div className="rounded-md border border-border/70 bg-background">
                     <div className="flex items-center justify-between border-b border-border/70 px-3 py-2">
                       <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -754,65 +754,105 @@ export function ProjectCommandCenter({
             {openTasks.length === 0 ? (
               <p className="text-sm text-muted-foreground">No open tasks</p>
             ) : (
-              <div className="overflow-x-auto rounded-md border border-border/70 bg-background">
-                <table className="w-full text-sm">
-                  <thead className="bg-muted/40">
-                    <tr className="border-b border-border/70">
-                      <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Title</th>
-                      <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Assigned To</th>
-                      <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Created</th>
-                      <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Status</th>
-                      <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Associated Meeting</th>
-                      <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Source</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {openTasks.map((task) => {
-                      const meeting = meetingsById.get(task.metadata_id);
-                      const hasMeetingLink = Boolean(meeting && meeting.type === "meeting");
+              <>
+                {/* Desktop table — hidden on small screens */}
+                <div className="hidden md:block overflow-x-auto rounded-md border border-border/70 bg-background">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/40">
+                      <tr className="border-b border-border/70">
+                        <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Title</th>
+                        <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Assigned To</th>
+                        <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Created</th>
+                        <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Status</th>
+                        <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Associated Meeting</th>
+                        <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Source</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {openTasks.map((task) => {
+                        const meeting = meetingsById.get(task.metadata_id);
+                        const hasMeetingLink = Boolean(meeting && meeting.type === "meeting");
 
-                      return (
-                        <tr key={task.id} className="border-b border-border/50 last:border-0">
-                          <td className="px-3 py-2.5 align-top">
-                            <p className="font-medium text-foreground">{task.description}</p>
-                          </td>
-                          <td className="px-3 py-2.5 align-top text-muted-foreground">
-                            {task.assignee_name?.trim() || "Unassigned"}
-                          </td>
-                          <td className="px-3 py-2.5 align-top text-muted-foreground tabular-nums">
+                        return (
+                          <tr key={task.id} className="border-b border-border/50 last:border-0">
+                            <td className="px-3 py-2.5 align-top">
+                              <p className="font-medium text-foreground">{task.description}</p>
+                            </td>
+                            <td className="px-3 py-2.5 align-top text-muted-foreground">
+                              {task.assignee_name?.trim() || "Unassigned"}
+                            </td>
+                            <td className="px-3 py-2.5 align-top text-muted-foreground tabular-nums">
+                              {format(new Date(task.created_at), "MMM d, yyyy")}
+                            </td>
+                            <td className="px-3 py-2.5 align-top">
+                              <StatusBadge status={task.status} />
+                            </td>
+                            <td className="px-3 py-2.5 align-top">
+                              {hasMeetingLink ? (
+                                <Link
+                                  href={`/${projectId}/meetings/${task.metadata_id}`}
+                                  className="text-primary hover:text-primary/80 transition-colors"
+                                >
+                                  {meeting?.title?.trim() || "Open meeting"}
+                                </Link>
+                              ) : (
+                                <span className="text-muted-foreground">—</span>
+                              )}
+                            </td>
+                            <td className="px-3 py-2.5 align-top text-muted-foreground">
+                              {formatTaskSource(task.source_system)}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile card list — visible only on small screens */}
+                <div className="md:hidden space-y-2">
+                  {openTasks.map((task) => {
+                    const meeting = meetingsById.get(task.metadata_id);
+                    const hasMeetingLink = Boolean(meeting && meeting.type === "meeting");
+
+                    return (
+                      <div
+                        key={task.id}
+                        className="rounded-md border border-border/70 bg-background p-3 space-y-2"
+                      >
+                        <div className="flex items-start justify-between gap-2">
+                          <p className="text-sm font-medium text-foreground leading-snug">
+                            {task.description}
+                          </p>
+                          <StatusBadge status={task.status} />
+                        </div>
+                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                          <span>{task.assignee_name?.trim() || "Unassigned"}</span>
+                          <span className="tabular-nums">
                             {format(new Date(task.created_at), "MMM d, yyyy")}
-                          </td>
-                          <td className="px-3 py-2.5 align-top">
-                            <StatusBadge status={task.status} />
-                          </td>
-                          <td className="px-3 py-2.5 align-top">
-                            {hasMeetingLink ? (
-                              <Link
-                                href={`/${projectId}/meetings/${task.metadata_id}`}
-                                className="text-primary hover:text-primary/80 transition-colors"
-                              >
-                                {meeting?.title?.trim() || "Open meeting"}
-                              </Link>
-                            ) : (
-                              <span className="text-muted-foreground">—</span>
-                            )}
-                          </td>
-                          <td className="px-3 py-2.5 align-top text-muted-foreground">
-                            {formatTaskSource(task.source_system)}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                          </span>
+                          <span>{formatTaskSource(task.source_system)}</span>
+                        </div>
+                        {hasMeetingLink && (
+                          <Link
+                            href={`/${projectId}/meetings/${task.metadata_id}`}
+                            className="text-xs text-primary hover:text-primary/80 transition-colors"
+                          >
+                            {meeting?.title?.trim() || "Open meeting"}
+                          </Link>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
             )}
           </section>
 
         </div>
 
         {/* ── RIGHT: Sidebar ──────────────────────────── */}
-        <div className="px-5 py-5 space-y-6 bg-muted/20">
+        <div className="px-4 sm:px-5 py-4 sm:py-5 space-y-5 sm:space-y-6 bg-muted/20">
 
           {/* ALERTS */}
           <section>

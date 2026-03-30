@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactElement } from "react";
+import React, { type ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { cn } from "@/lib/utils";
 
@@ -65,10 +65,9 @@ export function PageTabs({
                 : pathname === tab.href);
 
             return (
-              <>
+              <React.Fragment key={tab.href}>
                 {/* eslint-disable-next-line design-system/no-design-violations -- custom tab primitive */}
                 <button
-                  key={tab.href}
                   type="button"
                   onClick={() =>
                     onTabClick ? onTabClick(tab.href) : router.push(tab.href)
@@ -98,7 +97,7 @@ export function PageTabs({
                     </span>
                   )}
                 </button>
-              </>
+              </React.Fragment>
             );
           })}
         </div>

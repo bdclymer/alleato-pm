@@ -526,6 +526,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
           changeEventId={item.id}
           projectId={projectId}
           colSpan={colSpan}
+          expectingRevenue={item.expecting_revenue !== false}
           onEditLineItem={(lineItemId) => {
             router.push(`/${projectId}/change-events/${item.id}?edit=1&lineItem=${lineItemId}`);
           }}
@@ -657,6 +658,9 @@ export default function ProjectChangeEventsPage(): ReactElement {
           selectedCount={tableState.selectedIds.length}
           hasItems={filteredEvents.length > 0}
           onSendRfq={() => setShowRfqSheet(true)}
+          selectedChangeEventIds={tableState.selectedIds}
+          projectId={projectId}
+          onSuccess={refetchChangeEvents}
         />
       }
       footerTotals={{

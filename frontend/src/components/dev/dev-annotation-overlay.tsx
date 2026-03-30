@@ -14,7 +14,7 @@
  * How it works:
  * 1. Floating button appears bottom-right in dev mode
  * 2. Click opens panel — current route pre-filled
- * 3. Optionally capture screenshot (uses html2canvas)
+ * 3. Optionally capture screenshot (uses html-to-image)
  * 4. Submit creates annotation via POST /api/dev/annotate
  * 5. Badge shows count of unresolved annotations
  * 6. Panel shows all annotations + Claude Code's replies
@@ -80,15 +80,13 @@ export function DevAnnotationOverlay() {
   const captureScreenshot = async () => {
     setCapturing(true);
     try {
-      // Dynamically import html2canvas to avoid SSR issues
-      const html2canvas = (await import("html2canvas")).default;
-      const canvas = await html2canvas(document.body, {
-        scale: 0.5,
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
+      const { toPng } = await import("html-to-image");
+      const main = document.querySelector("main") ?? document.body;
+      const dataUrl = await toPng(main, {
+        pixelRatio: 0.5,
+        backgroundColor: "#ffffff",
       });
-      setScreenshotData(canvas.toDataURL("image/png"));
+      setScreenshotData(dataUrl);
     } catch {
       // Screenshot is optional — fail silently
     } finally {

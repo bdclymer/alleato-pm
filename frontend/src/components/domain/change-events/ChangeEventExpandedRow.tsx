@@ -51,6 +51,7 @@ interface ChangeEventExpandedRowProps {
   changeEventId: string | number;
   projectId: number;
   colSpan: number;
+  expectingRevenue?: boolean;
   onEditLineItem?: (lineItemId: string) => void;
 }
 
@@ -399,6 +400,7 @@ export function ChangeEventExpandedRow({
   changeEventId,
   projectId,
   colSpan,
+  expectingRevenue = true,
   onEditLineItem,
 }: ChangeEventExpandedRowProps) {
   const [lineItems, setLineItems] = React.useState<LineItem[]>([]);
@@ -459,7 +461,9 @@ export function ChangeEventExpandedRow({
       try {
         const [lineItemsRes, markupsRes] = await Promise.all([
           fetch(`/api/projects/${projectId}/change-events/${changeEventId}/line-items`),
-          fetch(`/api/projects/${projectId}/vertical-markup`).catch(() => null),
+          expectingRevenue
+            ? fetch(`/api/projects/${projectId}/vertical-markup`).catch(() => null)
+            : Promise.resolve(null),
         ]);
 
         if (cancelled) return;
@@ -482,7 +486,7 @@ export function ChangeEventExpandedRow({
 
     fetchData();
     return () => { cancelled = true; };
-  }, [projectId, changeEventId]);
+  }, [projectId, changeEventId, expectingRevenue]);
 
   const lineItemCostSubtotal = lineItems.reduce(
     (sum, li) => sum + (li.costRom ?? 0),
@@ -490,6 +494,7 @@ export function ChangeEventExpandedRow({
   );
 
   const computedMarkups = React.useMemo(() => {
+    if (!expectingRevenue) return [];
     if (markups.length === 0) return [];
 
     const sorted = [...markups].sort(
@@ -507,7 +512,7 @@ export function ChangeEventExpandedRow({
         markupType: m.markup_type,
       };
     });
-  }, [markups, lineItemCostSubtotal]);
+  }, [expectingRevenue, markups, lineItemCostSubtotal]);
 
   /* ── Loading / Empty states ── */
 

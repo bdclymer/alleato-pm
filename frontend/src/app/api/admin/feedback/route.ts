@@ -2,8 +2,9 @@ import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 
-// Screenshots are sent as base64 data URLs which can be several MB
-export const maxBodySize = "10mb";
+// Screenshots are sent as base64 data URLs which can be several MB.
+// App Router route handlers use the native Request API with no built-in
+// size limit. On Vercel, the payload limit is 4.5MB for serverless functions.
 import {
   ADMIN_FEEDBACK_BUCKET,
   ADMIN_FEEDBACK_REQUEST_TYPES,

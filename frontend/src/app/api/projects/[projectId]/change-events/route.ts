@@ -338,10 +338,11 @@ export async function GET(
         const baseRevenueRom = lineItemAgg?.rom || 0
         const baseCostRom = lineItemAgg?.costRom || 0
         const baseNonCommitted = lineItemAgg ? lineItemAgg.total - lineItemAgg.costRom : 0
+        const applyMarkup = event.expecting_revenue !== false
         const markupAdditions = computeMarkupAdditions(
           baseCostRom,
           baseRevenueRom,
-          (projectMarkups || []) as VerticalMarkupRow[]
+          applyMarkup ? ((projectMarkups || []) as VerticalMarkupRow[]) : []
         )
         const revenueRomWithMarkup = baseRevenueRom + markupAdditions.revenue
         const costRomWithMarkup = baseCostRom + markupAdditions.cost

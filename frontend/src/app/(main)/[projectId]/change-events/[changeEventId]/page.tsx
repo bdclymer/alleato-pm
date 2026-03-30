@@ -49,6 +49,7 @@ import { ChangeEventGeneralInfoPanel } from "@/components/domain/change-events/C
 import { ChangeEventLineItemsTable } from "@/components/domain/change-events/ChangeEventLineItemsTable";
 import { ChangeEventHistoryTab } from "@/components/domain/change-events/ChangeEventHistoryTab";
 import { ChangeEventRelatedItemsTab } from "@/components/domain/change-events/ChangeEventRelatedItemsTab";
+import { ChangeEventPrimeContractCOsTab } from "@/components/domain/change-events/ChangeEventPrimeContractCOsTab";
 import { EntityComments, EntityRoom } from "@/components/comments/entity-comments";
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
@@ -344,6 +345,9 @@ export default function ChangeEventDetailPage() {
           <TabsTrigger value="general" data-testid="change-event-tab-general">
             General
           </TabsTrigger>
+          <TabsTrigger value="prime-contract-cos">
+            Prime Contract Change Orders
+          </TabsTrigger>
           <TabsTrigger value="related-items">
             Related Items ({relatedItems.length})
           </TabsTrigger>
@@ -364,8 +368,16 @@ export default function ChangeEventDetailPage() {
             <ChangeEventLineItemsTable
               lineItems={lineItems}
               markupRows={markupRows}
+              expectingRevenue={changeEvent.expecting_revenue !== false}
             />
           </div>
+        </TabsContent>
+
+        <TabsContent value="prime-contract-cos">
+          <ChangeEventPrimeContractCOsTab
+            changeEventId={changeEventId}
+            projectId={projectId}
+          />
         </TabsContent>
 
         <TabsContent value="related-items">

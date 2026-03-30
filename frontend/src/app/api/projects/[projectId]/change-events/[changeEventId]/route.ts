@@ -240,10 +240,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       .select("percentage, calculation_order, compound")
       .eq("project_id", parseInt(projectId, 10));
 
+    const applyMarkup = changeEvent.expecting_revenue !== false;
     const markupAdditions = computeMarkupAdditions(
       baseCostRom,
       baseRevenueRom,
-      (projectMarkups || []) as VerticalMarkupRow[],
+      applyMarkup ? ((projectMarkups || []) as VerticalMarkupRow[]) : [],
     );
 
     // Calculate totals from line items + project financial markup

@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import html2canvas from "html2canvas";
+import { toPng } from "html-to-image";
 import { usePathname } from "next/navigation";
 import { Camera, ImagePlus, ListFilter, RefreshCw, Sparkles, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -70,18 +70,13 @@ function inferProjectId(pathname: string) {
 }
 
 async function captureTargetScreenshot(target: HTMLElement) {
-  const rect = target.getBoundingClientRect();
-  const pageX = rect.left + window.scrollX;
-  const pageY = rect.top + window.scrollY;
-  const padding = 32;
-  const maxWidth = Math.min(window.innerWidth - 32, 980);
-  const cropX = Math.max(0, pageX - padding);
-  const cropY = Math.max(0, pageY - padding);
-  const cropWidth = Math.min(
-    Math.max(rect.width + padding * 2, 320),
-    maxWidth,
-  );
-  const cropHeight = Math.max(rect.height + padding * 2, 220);
+  // Capture the target's closest meaningful container for surrounding context.
+  // Uses html-to-image (SVG foreignObject) instead of html2canvas because
+  // html2canvas v1 cannot parse modern CSS color functions (oklab, oklch)
+  // that are used by shadcn/ui and browser extensions.
+  const captureRoot =
+    (target.closest("main, section, [role='region'], [data-feedback-id]") as HTMLElement) ??
+    target;
 
   // Hide overlays (dialog, feedback widget) during capture
   const overlays = document.querySelectorAll(
@@ -96,20 +91,21 @@ async function captureTargetScreenshot(target: HTMLElement) {
   });
 
   try {
-    const canvas = await html2canvas(document.body, {
+    const dataUrl = await toPng(captureRoot, {
       backgroundColor: "#ffffff",
-      scale: Math.min(window.devicePixelRatio || 1, 2),
-      logging: false,
-      useCORS: true,
-      x: cropX,
-      y: cropY,
-      width: cropWidth,
-      height: cropHeight,
-      windowWidth: document.documentElement.scrollWidth,
-      windowHeight: document.documentElement.scrollHeight,
+      pixelRatio: Math.min(window.devicePixelRatio || 1, 2),
+      // Skip nodes that are hidden or belong to dev overlays
+      filter: (node: HTMLElement) => {
+        if (node.nodeType !== 1) return true;
+        const attr = node.getAttribute?.(ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE);
+        return attr !== "true";
+      },
     });
 
-    return canvas.toDataURL("image/png");
+    if (!dataUrl || dataUrl === "data:,") {
+      throw new Error("Capture produced an empty image");
+    }
+    return dataUrl;
   } finally {
     // Restore overlays
     hidden.forEach(({ el, prev }) => {
@@ -247,9 +243,11 @@ export function AdminFeedbackWidget() {
           setScreenshotDataUrl(dataUrl);
         }
       })
-      .catch(() => {
+      .catch((err) => {
+        console.error("[FeedbackWidget] Screenshot capture failed:", err);
         if (!isCancelled) {
           setScreenshotDataUrl(null);
+          toast.error("Auto-capture failed — upload a screenshot instead.");
         }
       })
       .finally(() => {

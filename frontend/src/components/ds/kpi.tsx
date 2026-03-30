@@ -41,7 +41,7 @@ export function KpiBlock({
         <span
           className={cn(
             "font-semibold tracking-tight text-foreground",
-            size === "prominent" ? "text-2xl" : "text-lg"
+            size === "prominent" ? "text-lg sm:text-2xl" : "text-base sm:text-lg"
           )}
         >
           {value}
@@ -90,14 +90,26 @@ export function KpiRow({ metrics }: { metrics: KpiBlockProps[] }) {
     <div className="overflow-hidden rounded-lg border border-border bg-card">
       <div
         className={cn(
-          "grid divide-x divide-border",
-          metrics.length === 4 && "grid-cols-4",
-          metrics.length === 3 && "grid-cols-3",
+          "grid",
+          // Mobile: 2-col grid with both x and y dividers
+          "grid-cols-2 divide-x divide-border",
+          // Desktop: full row
+          metrics.length === 4 && "md:grid-cols-4",
+          metrics.length === 3 && "md:grid-cols-3",
           metrics.length <= 2 && "grid-cols-2"
         )}
       >
         {metrics.map((metric, i) => (
-          <div key={i} className="px-6 py-4">
+          <div
+            key={i}
+            className={cn(
+              "px-4 py-3 sm:px-6 sm:py-4",
+              // On mobile 2-col layout, add top border to items in the second row
+              metrics.length > 2 && i >= 2 && "border-t border-border md:border-t-0",
+              // Reset left divider for first item in each mobile row
+              metrics.length > 2 && i === 2 && "[&]:border-l-0 md:[&]:border-l"
+            )}
+          >
             <KpiBlock {...metric} />
           </div>
         ))}

@@ -68,6 +68,57 @@ export async function GET(
       );
     }
 
+    // Batch reverse-map budget_lines.id → project_cost_codes.id
+    // and companies.id → vendors.id to pre-fill dropdowns on edit.
+    // Done as two bulk queries (not per-item) to avoid N+1.
+    const budgetCodeIds = [...new Set(
+      (lineItems || []).map(i => i.budget_code_id).filter(Boolean)
+    )] as string[];
+    const vendorIds = [...new Set(
+      (lineItems || []).map(i => i.vendor_id).filter(Boolean)
+    )] as string[];
+
+    // budget_lines.id → project_cost_codes.id
+    // Join budget_lines to project_cost_codes on (cost_code_id, cost_type_id, project_id)
+    const budgetLineToProjectCostCode = new Map<string, string>();
+    if (budgetCodeIds.length > 0) {
+      const { data: budgetLines } = await supabase
+        .from('budget_lines')
+        .select('id, cost_code_id, cost_type_id')
+        .in('id', budgetCodeIds);
+
+      if (budgetLines && budgetLines.length > 0) {
+        const { data: pccs } = await supabase
+          .from('project_cost_codes')
+          .select('id, cost_code_id, cost_type_id')
+          .eq('project_id', parseInt(projectId, 10));
+
+        if (pccs) {
+          for (const bl of budgetLines) {
+            const match = pccs.find(
+              p => p.cost_code_id === bl.cost_code_id && p.cost_type_id === bl.cost_type_id
+            );
+            if (match) budgetLineToProjectCostCode.set(bl.id, match.id);
+          }
+        }
+      }
+    }
+
+    // companies.id → vendors.id
+    const companyToVendor = new Map<string, string>();
+    if (vendorIds.length > 0) {
+      const { data: vendors } = await supabase
+        .from('vendors')
+        .select('id, company_id')
+        .in('company_id', vendorIds);
+
+      if (vendors) {
+        for (const v of vendors) {
+          if (v.company_id) companyToVendor.set(v.company_id, v.id);
+        }
+      }
+    }
+
     // Format response
     const formattedItems = (lineItems || []).map(item => {
       const quantity = item.quantity || 0;
@@ -78,11 +129,20 @@ export async function GET(
         id: item.id,
         changeEventId: item.change_event_id,
         budgetCodeId: item.budget_code_id,
+        projectBudgetCodeId: item.budget_code_id
+          ? (budgetLineToProjectCostCode.get(item.budget_code_id) ?? item.budget_code_id)
+          : undefined,
         budgetLine: item.budget_line || undefined,
         description: item.description,
         vendorId: item.vendor_id,
+        formVendorId: item.vendor_id
+          ? (companyToVendor.get(item.vendor_id) ?? item.vendor_id)
+          : undefined,
         vendor: item.vendor || undefined,
         contractId: item.contract_id,
+        commitmentId: item.commitment_id,
+        commitmentType: item.commitment_type,
+        commitmentLineItemId: item.commitment_line_item_id,
         quantity: item.quantity,
         unitOfMeasure: item.unit_of_measure,
         unitCost: item.unit_cost,

@@ -317,10 +317,25 @@ export default async function ProjectHomePage({
     const { document_metadata, ...task } = row as TaskRow & { document_metadata: unknown };
     return task;
   });
-  const mergedDirect = [...directTasks, ...directProjectIdTasks];
-  const seenIds = new Set(mergedDirect.map((t) => t.id));
-  const uniqueLinked = linkedTasks.filter((t) => !seenIds.has(t.id));
-  const tasks = [...mergedDirect, ...uniqueLinked].sort(
+  // Some rows can match multiple fetch paths (project_ids + project_id + metadata link).
+  // Normalize to one task per id before sorting so Home never renders duplicates.
+  const allTaskCandidates: TaskRow[] = [
+    ...directTasks,
+    ...directProjectIdTasks,
+    ...linkedTasks,
+  ];
+  const tasksById = new Map<string, TaskRow>();
+  for (const task of allTaskCandidates) {
+    const existing = tasksById.get(task.id);
+    if (!existing) {
+      tasksById.set(task.id, task);
+      continue;
+    }
+    if (new Date(task.created_at).getTime() > new Date(existing.created_at).getTime()) {
+      tasksById.set(task.id, task);
+    }
+  }
+  const tasks = Array.from(tasksById.values()).sort(
     (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
   );
 
