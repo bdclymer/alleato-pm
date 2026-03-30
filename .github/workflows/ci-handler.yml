@@ -1,0 +1,83 @@
+name: CI Failure Handler
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+  issues: write
+
+jobs:
+  handle-failure:
+    if: github.event.workflow_run.conclusion == 'failure'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      # Step 1: Detect if failure is flaky or a real bug
+      - name: Detect flaky vs real failure
+        id: detect
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            The CI workflow failed: ${{ github.event.workflow_run.html_url }}
+
+            Check the logs: gh run view ${{ github.event.workflow_run.id }} --log-failed
+
+            Determine if this is a flaky test failure by checking for:
+            - Timeout errors or race conditions
+            - Network errors
+            - Intermittent assertion failures
+            - Tests that passed in previous commits on the same code
+
+            Return JSON with:
+            - is_flaky: true if likely flaky, false if real bug
+            - confidence: 0-1 confidence level
+            - summary: one-sentence explanation
+          claude_args: |
+            --json-schema '{"type":"object","properties":{"is_flaky":{"type":"boolean"},"confidence":{"type":"number","minimum":0,"maximum":1},"summary":{"type":"string"}},"required":["is_flaky","confidence","summary"]}'
+
+      # Step 2a: If flaky and high confidence → retry
+      - name: Retry flaky tests
+        if: |
+          fromJSON(steps.detect.outputs.structured_output).is_flaky == true &&
+          fromJSON(steps.detect.outputs.structured_output).confidence >= 0.7
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          SUMMARY=$(echo '${{ steps.detect.outputs.structured_output }}' | jq -r '.summary')
+          CONFIDENCE=$(echo '${{ steps.detect.outputs.structured_output }}' | jq -r '.confidence')
+          echo "🔄 Flaky test detected (confidence: $CONFIDENCE) — $SUMMARY"
+          gh workflow run "${{ github.event.workflow_run.name }}" \
+            --ref "${{ github.event.workflow_run.head_branch }}"
+
+      # Step 2b: If real bug on a PR → attempt auto-fix
+      - name: Auto-fix real CI failure
+        if: |
+          fromJSON(steps.detect.outputs.structured_output).is_flaky == false &&
+          github.event.workflow_run.pull_requests[0] &&
+          !startsWith(github.event.workflow_run.head_branch, 'claude-auto-fix-ci-')
+        uses: anthropics/claude-code-action@v1
+        with:
+          prompt: |
+            /fix-ci
+            Failed CI Run: ${{ github.event.workflow_run.html_url }}
+            PR Number: ${{ github.event.workflow_run.pull_requests[0].number }}
+            Branch: ${{ github.event.workflow_run.head_branch }}
+            Repository: ${{ github.repository }}
+
+            Analysis: ${{ steps.detect.outputs.structured_output }}
+
+            Fix the failing tests or code, commit to a new branch, and open a PR.
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_args: |
+            --allowedTools "Edit,MultiEdit,Write,Read,Glob,Grep,LS,Bash(git:*),Bash(npm:*),Bash(npx:*),Bash(gh:*)"
