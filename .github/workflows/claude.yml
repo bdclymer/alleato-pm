@@ -64,12 +64,7 @@ jobs:
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          additional_permissions: |
-            Bash(git diff:*)
-            Bash(git log:*)
-            Bash(git show:*)
-          claude_args: '--max-turns 15'
+          claude_args: '--max-turns 15 --allowedTools "Bash(git diff:*),Bash(git log:*),Bash(git show:*)"'
           prompt: |
             Review this pull request for the Alleato PM codebase (Next.js 15 + Supabase construction management app).
 
@@ -105,14 +100,9 @@ jobs:
       - uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           trigger_phrase: '@claude'
           assignee_trigger: 'claude'
-          additional_permissions: |
-            Edit
-            Write
-            Bash(*)
-          claude_args: '--max-turns 50'
+          claude_args: '--max-turns 50 --allowedTools "Edit,Write,Bash(*)"'
         env:
           CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS: ''
 
@@ -161,12 +151,7 @@ jobs:
         if: steps.dedup.outputs.exists == 'false'
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          additional_permissions: |
-            Edit
-            Write
-            Bash(*)
-          claude_args: '--max-turns 50 --permission-mode bypassPermissions'
+          claude_args: '--max-turns 50 --permission-mode bypassPermissions --allowedTools "Edit,Write,Bash(*)"'
           prompt: |
             # Auto-resolve GitHub Issue #${{ github.event.issue.number }}
 
