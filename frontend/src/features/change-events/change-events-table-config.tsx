@@ -56,7 +56,7 @@ export const changeEventColumns: ColumnConfig[] = [
   { id: "rfq_title", label: "RFQ Title", defaultVisible: true },
   { id: "commitment", label: "Commitment", defaultVisible: true },
   { id: "commitment_title", label: "Commitment Title", defaultVisible: true },
-  { id: "created_at", label: "Created", defaultVisible: false },
+  { id: "created_at", label: "Created", defaultVisible: true },
 ];
 
 export const changeEventFilters: FilterConfig[] = [
