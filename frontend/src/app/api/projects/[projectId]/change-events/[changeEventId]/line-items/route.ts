@@ -223,7 +223,7 @@ export async function POST(
     }
 
     // Resolve budgetCodeId: could be budget_lines.id OR project_cost_codes.id
-    let resolvedBudgetCodeId = validatedData.budgetCodeId;
+    let resolvedBudgetCodeId: string | null = validatedData.budgetCodeId ?? null;
     if (validatedData.budgetCodeId) {
       // First try budget_lines directly
       const { data: budgetLine } = await supabase
@@ -258,8 +258,36 @@ export async function POST(
 
           if (matchingBudgetLine) {
             resolvedBudgetCodeId = matchingBudgetLine.id;
+          } else {
+            // Cost code exists but has no budget line — auto-create one
+            const { data: newBudgetLine, error: createError } = await supabase
+              .from('budget_lines')
+              .insert({
+                project_id: parseInt(projectId, 10),
+                cost_code_id: pcc.cost_code_id,
+                cost_type_id: pcc.cost_type_id,
+              })
+              .select('id')
+              .single();
+
+            if (newBudgetLine) {
+              resolvedBudgetCodeId = newBudgetLine.id;
+            } else {
+              console.error(
+                `[line-items POST] Failed to auto-create budget_line for project_cost_code ${validatedData.budgetCodeId}:`,
+                createError?.message,
+              );
+              return NextResponse.json(
+                { error: 'Failed to resolve budget code', details: `Could not create budget line for cost code. ${createError?.message || ''}` },
+                { status: 400 },
+              );
+            }
           }
-          // If no matching budget_line found, still allow — the budget_code_id may be nullable
+        } else {
+          return NextResponse.json(
+            { error: 'Invalid budget code', details: `ID ${validatedData.budgetCodeId} not found in budget_lines or project_cost_codes` },
+            { status: 400 },
+          );
         }
       }
     }

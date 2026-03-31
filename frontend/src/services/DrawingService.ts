@@ -530,7 +530,7 @@ export class DrawingService {
       // Generate file path
       const timestamp = Date.now();
       const sanitizedFilename = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-      const filePath = `drawings/${projectId}/${drawingId}/${timestamp}_${sanitizedFilename}`;
+      const filePath = `${projectId}/drawings/${drawingId}/${timestamp}_${sanitizedFilename}`;
 
       // Upload to storage
       const { data: uploadData, error: uploadError } =

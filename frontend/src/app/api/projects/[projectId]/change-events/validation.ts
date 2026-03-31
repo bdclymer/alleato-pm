@@ -64,6 +64,7 @@ export const ChangeEventStatus = createNormalizedEnum(
   {
     pending: "Pending Approval",
     pending_approval: "Pending Approval",
+    close: "Closed",
   },
 );
 export const ChangeEventOrigin = createNormalizedEnum(
@@ -107,7 +108,7 @@ export const createLineItemSchema = z.object({
   budgetCodeId: z.string().uuid().optional(),
   description: z.string(),
   vendorId: z.string().uuid().optional(),
-  contractId: z.string().uuid().optional(),
+  contractId: z.string().optional(),
   commitmentId: z.string().uuid().optional(),
   commitmentType: z.enum(["subcontract", "purchase_order"]).optional(),
   commitmentLineItemId: z.string().uuid().optional(),

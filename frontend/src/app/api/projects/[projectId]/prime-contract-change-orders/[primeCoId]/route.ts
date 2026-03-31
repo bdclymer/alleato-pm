@@ -8,6 +8,7 @@ interface RouteParams {
 
 /**
  * GET /api/projects/[projectId]/prime-contract-change-orders/[primeCoId]
+ * Returns the PCCO with related contract info and line items.
  */
 export async function GET(_request: NextRequest, { params }: RouteParams) {
   try {
@@ -20,6 +21,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 
     const supabase = await createClient();
 
+    // Fetch the PCCO
     const { data, error } = await supabase
       .from("prime_contract_change_orders")
       .select("*")
@@ -37,7 +39,29 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    return NextResponse.json(data);
+    // Fetch line items for this PCCO
+    const { data: lineItems } = await supabase
+      .from("pcco_line_items")
+      .select("*")
+      .eq("pcco_id", numericId)
+      .order("id", { ascending: true });
+
+    // Fetch contract info if linked
+    let contractInfo = null;
+    if (data.prime_contract_id) {
+      const { data: contract } = await supabase
+        .from("prime_contracts")
+        .select("id, contract_number, title, original_contract_value, revised_contract_value")
+        .eq("id", data.prime_contract_id)
+        .single();
+      contractInfo = contract;
+    }
+
+    return NextResponse.json({
+      ...data,
+      line_items: lineItems ?? [],
+      contract: contractInfo,
+    });
   } catch {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
@@ -68,9 +92,12 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     const body = await request.json();
 
+    // Strip out fields that shouldn't be directly updated
+    const { line_items: _li, contract: _c, id: _id, project_id: _pid, ...updateData } = body;
+
     const { data, error } = await supabase
       .from("prime_contract_change_orders")
-      .update(body)
+      .update(updateData)
       .eq("id", numericId)
       .eq("project_id", Number(projectId))
       .select("*")

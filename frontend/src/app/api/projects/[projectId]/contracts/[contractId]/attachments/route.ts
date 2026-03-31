@@ -195,7 +195,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const fileExt = file.name.split(".").pop();
     const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-    const storagePath = `prime-contracts/${contract.project_id}/${contractId}/${fileName}`;
+    const storagePath = `${contract.project_id}/prime-contracts/${contractId}/${fileName}`;
 
     const bucket = serviceClient.storage.from("project-files");
     const fileBuffer = await file.arrayBuffer();

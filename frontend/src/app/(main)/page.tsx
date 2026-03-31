@@ -19,8 +19,8 @@ import {
   Tag,
   Pencil,
   Trash2,
-  ExternalLink,
 } from "lucide-react";
+import { TbBrandOnedrive } from "react-icons/tb";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -880,7 +880,7 @@ export default function PortfolioPage() {
             aria-label="Open OneDrive folder"
             title="Open OneDrive folder"
           >
-            <ExternalLink className="w-4 h-4" />
+            <TbBrandOnedrive className="w-4 h-4" />
           </a>
         );
       },

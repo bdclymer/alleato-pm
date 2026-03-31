@@ -9,7 +9,7 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/header";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { LiveCursors } from "@/components/live-cursors/LiveCursors";
-import { AdminFeedbackWidget } from "@/components/admin-feedback/AdminFeedbackWidget";
+// AdminFeedbackWidget replaced by UnifiedFeedbackWidget in root layout
 import { feedbackTargetProps } from "@/lib/admin-feedback/constants";
 
 /** Floating overlays extracted to a single component to avoid mixed static/dynamic children key warnings. */
@@ -20,9 +20,7 @@ function Overlays({ showChat }: { showChat: boolean }) {
       <React.Suspense fallback={null}>
         <LiveCursors />
       </React.Suspense>
-      <React.Suspense fallback={null}>
-        <AdminFeedbackWidget />
-      </React.Suspense>
+      {/* AdminFeedbackWidget moved to UnifiedFeedbackWidget in root layout */}
     </>
   );
 }

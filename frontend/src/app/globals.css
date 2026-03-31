@@ -464,6 +464,22 @@
     @apply text-2xs font-semibold tracking-[0.15em] uppercase text-muted-foreground;
   }
 
+  .heading-small-caps {
+    @apply mb-2 text-xs font-medium text-muted-foreground;
+  }
+
+  .heading-section {
+    @apply text-sm font-semibold text-foreground;
+  }
+
+  .heading-micro {
+    @apply text-[11px] font-semibold text-foreground;
+  }
+
+  .heading-tiny-caps {
+    @apply text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground;
+  }
+
   .text-body {
     @apply text-sm text-muted-foreground leading-relaxed;
   }

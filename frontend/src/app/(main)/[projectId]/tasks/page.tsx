@@ -68,10 +68,17 @@ export default async function ProjectTasksPage({
     return task;
   });
 
-  const directTasks = [...tasksByProjectIds, ...tasksByProjectId];
-  const seenIds = new Set(directTasks.map((task) => task.id));
-  const uniqueLinkedTasks = linkedTasks.filter((task) => !seenIds.has(task.id));
-  const tasks = [...directTasks, ...uniqueLinkedTasks].sort(sortByCreatedAtDesc);
+  // Deduplicate across all three sources — a task can match multiple queries
+  // (e.g. project_id = 760 AND project_ids contains 760)
+  const seenIds = new Set<string>();
+  const allTasks: TaskRow[] = [];
+  for (const task of [...tasksByProjectIds, ...tasksByProjectId, ...linkedTasks]) {
+    if (!seenIds.has(task.id)) {
+      seenIds.add(task.id);
+      allTasks.push(task);
+    }
+  }
+  const tasks = allTasks.sort(sortByCreatedAtDesc);
 
   return (
     <>

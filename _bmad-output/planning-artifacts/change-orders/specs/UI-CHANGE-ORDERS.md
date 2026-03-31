@@ -24,7 +24,8 @@ interface ChangeOrdersListProps {
     packageId?: number;
   };
 }
-```markdown
+```
+
 #### Current Implementation Features
 - ✅ Basic data table with columns: Number, Title, Contract, Status, Amount, Due Date
 - ✅ Tab navigation (All, Pending, Approved, Draft)
@@ -44,6 +45,7 @@ interface ChangeOrdersListProps {
 - ❌ Add search functionality
 
 #### Layout Structure
+
 ```typescript
 ┌─────────────────────────────────────────────────────────────┐
 │                      Change Orders                         │
@@ -69,13 +71,15 @@ interface ChangeOrdersListProps {
 │ [← Prev] Page 1 of 3 [Next →]          25 per page [▼]     │
 └─────────────────────────────────────────────────────────────┘
 
-```typescript
+```
+
 ### 2. ChangeOrderCreateForm
 **File**: `frontend/src/app/(main)/[projectId]/change-orders/new/page.tsx`
 **Purpose**: Multi-step form for creating new change orders
 **Status**: 5% complete (stub only)
 
 #### Props Interface
+
 ```typescript
 interface ChangeOrderCreateFormProps {
   projectId: string;

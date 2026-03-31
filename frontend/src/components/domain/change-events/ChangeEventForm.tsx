@@ -1163,15 +1163,6 @@ export function ChangeEventForm({
               />
 
               <div className="md:col-span-3">
-                <TextareaField
-                  label="Description"
-                  rows={4}
-                  value={formData.description || ""}
-                  onChange={(e) => updateFormData({ description: e.target.value })}
-                  placeholder="Describe the change event"
-                />
-              </div>
-              <div className="md:col-span-3">
                 <div className="space-y-2">
                   <label className="text-sm font-medium leading-none">Expecting Revenue</label>
                   <div className="flex items-center gap-6">
@@ -1197,6 +1188,15 @@ export function ChangeEventForm({
                     </label>
                   </div>
                 </div>
+              </div>
+              <div className="md:col-span-3">
+                <TextareaField
+                  label="Description"
+                  rows={4}
+                  value={formData.description || ""}
+                  onChange={(e) => updateFormData({ description: e.target.value })}
+                  placeholder="Describe the change event"
+                />
               </div>
             </FormGrid>
           </FormSection>

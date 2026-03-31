@@ -57,6 +57,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         first_name: string;
         last_name: string;
         email: string;
+        phone_mobile: string | null;
+        phone_business: string | null;
         company_name: string | null;
       }
     >();
@@ -64,7 +66,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     if (personIds.length > 0) {
       const { data: people, error: peopleError } = await supabase
         .from("people")
-        .select("id, first_name, last_name, email, company:companies(id, name)")
+        .select("id, first_name, last_name, email, phone_mobile, phone_business, company:companies(id, name)")
         .in("id", personIds);
 
       if (peopleError) {
@@ -75,6 +77,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
             first_name: p.first_name || "",
             last_name: p.last_name || "",
             email: p.email || "",
+            phone_mobile: p.phone_mobile || null,
+            phone_business: p.phone_business || null,
             company_name: (p.company as { name?: string } | null)?.name || null,
           });
         });
@@ -98,6 +102,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
                   last_name: person.last_name,
                   full_name: `${person.first_name} ${person.last_name}`,
                   email: person.email,
+                  phone_mobile: person.phone_mobile,
+                  phone_business: person.phone_business,
                   company_name: person.company_name,
                 }
               : null,

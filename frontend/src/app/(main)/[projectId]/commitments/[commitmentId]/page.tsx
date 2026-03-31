@@ -3,8 +3,8 @@
 import { useCallback, useMemo, useState } from "react";
 import type * as React from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import Link from "next/link";
 import {
-  Building2,
   ChevronDown,
   Download,
   FileText,
@@ -26,7 +26,12 @@ import { DocumentDeliveryDialog } from "@/components/documents/DocumentDeliveryD
 import { EmptyState } from "@/components/ds/empty-state";
 import { KpiBlock } from "@/components/ds/kpi";
 import { StatusBadge } from "@/components/ds/status-badge";
-import { PageShell } from "@/components/layout";
+import {
+  ContentSectionStack,
+  LabelValueRow,
+  PageShell,
+  SectionRuleHeading,
+} from "@/components/layout";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { Button } from "@/components/ui/button";
 import {
@@ -246,37 +251,6 @@ function safeNumber(n: string | undefined): string | undefined {
 }
 
 // ---------------------------------------------------------------------------
-// Field display (view mode) — minimal label + value
-// ---------------------------------------------------------------------------
-
-function F({
-  label,
-  children,
-}: {
-  label: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="min-w-0">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <div className="mt-0.5 text-sm text-foreground">{children ?? <span className="text-muted-foreground/50">—</span>}</div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Section heading helper
-// ---------------------------------------------------------------------------
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/50">
-      {children}
-    </p>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // General tab — view only
 // ---------------------------------------------------------------------------
 
@@ -292,128 +266,156 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
   const displayStatus = commitment.status
     ? commitment.status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
     : "Draft";
-  const dash = <span className="text-muted-foreground/50">—</span>;
+  const scheduleOfValuesTotal = (commitment.line_items || []).reduce(
+    (sum, item) => sum + (Number(item.amount) || 0),
+    0,
+  );
+  const renderDateOrDash = (value?: string | null) =>
+    value ? formatDate(value) : <span className="text-muted-foreground/60">—</span>;
 
   return (
-    <div className="space-y-10">
-      {/* Vendor highlight card */}
-      {commitment.contract_company?.name && (
-        <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 px-4 py-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10">
-            <Building2 className="h-4 w-4 text-primary" />
-          </div>
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              {isPO ? "Vendor" : "Subcontractor"}
-            </p>
-            <p className="text-sm font-medium text-foreground">{commitment.contract_company.name}</p>
-          </div>
-          <div className="ml-auto">
-            <StatusBadge status={displayStatus} />
-          </div>
-        </div>
-      )}
+    <ContentSectionStack className="pb-20">
+      <section>
+        <div className="grid grid-cols-[minmax(0,1fr)_minmax(340px,420px)] gap-x-16 gap-y-10">
+          <div className="space-y-8">
+            <div className="grid grid-cols-2 gap-x-14 gap-y-8">
+              <div className="space-y-6">
+                <SectionRuleHeading label="Details" className="[&_span]:text-primary" />
+                <dl className="space-y-4 text-sm">
+                  <LabelValueRow label={isPO ? "PO #" : "Subcontract #"} missing={!safeNumber(commitment.number)}>
+                    {safeNumber(commitment.number) || "Not set"}
+                  </LabelValueRow>
+                  <LabelValueRow label="Title" missing={!commitment.title}>
+                    {commitment.title || "Not set"}
+                  </LabelValueRow>
+                  <LabelValueRow label="Status">
+                    <StatusBadge status={displayStatus} />
+                  </LabelValueRow>
+                  <LabelValueRow
+                    label={isPO ? "Vendor" : "Subcontractor"}
+                    missing={!commitment.contract_company?.name}
+                  >
+                    {commitment.contract_company?.name ? (
+                      commitment.contract_company_id ? (
+                        <Link
+                          href={`/directory/companies/${commitment.contract_company_id}`}
+                          className="text-primary hover:underline"
+                        >
+                          {commitment.contract_company.name}
+                        </Link>
+                      ) : (
+                        commitment.contract_company.name
+                      )
+                    ) : (
+                      "Not set"
+                    )}
+                  </LabelValueRow>
+                </dl>
+              </div>
 
-      {/* General Information */}
-      <div className="space-y-4">
-        <SectionLabel>General Information</SectionLabel>
-        <div className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
-          <F label="Title">{commitment.title || dash}</F>
-          <F label="Contract #">{safeNumber(commitment.number) || dash}</F>
-          {!commitment.contract_company?.name && (
-            <F label={isPO ? "Vendor" : "Subcontractor"}>{dash}</F>
-          )}
-          {!commitment.contract_company?.name && (
-            <F label="Status"><StatusBadge status={displayStatus} /></F>
-          )}
-          {commitment.retention_percentage !== undefined && commitment.retention_percentage !== 0 && (
-            <F label="Default Retainage %">{commitment.retention_percentage}%</F>
-          )}
-          {isPO && commitment.accounting_method && (
-            <F label="Accounting Method">
-              {commitment.accounting_method.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
-            </F>
-          )}
-        </div>
-        {commitment.description && (
-          <div>
-            <p className="text-xs text-muted-foreground">Description</p>
-            <p className="mt-0.5 text-sm leading-relaxed text-foreground">{commitment.description}</p>
+              <div className="space-y-6">
+                <SectionRuleHeading label="Contract Settings" className="[&_span]:text-primary" />
+                <dl className="space-y-4 text-sm">
+                  <LabelValueRow label="Retention">
+                    {commitment.retention_percentage ?? 0}%
+                  </LabelValueRow>
+                  <LabelValueRow label="Accounting Method">
+                    {commitment.accounting_method
+                      ? commitment.accounting_method
+                          .replace(/_/g, " ")
+                          .replace(/\b\w/g, (c) => c.toUpperCase())
+                      : "Not set"}
+                  </LabelValueRow>
+                  <LabelValueRow label="Assignee" missing={!commitment.assignee?.name}>
+                    {commitment.assignee?.name || "Not set"}
+                  </LabelValueRow>
+                  <LabelValueRow label="SOV Total">
+                    {formatCurrency(scheduleOfValuesTotal)}
+                  </LabelValueRow>
+                </dl>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <dl className="space-y-4 text-sm">
+                <LabelValueRow
+                  label="Description"
+                  missing={!commitment.description}
+                  valueClassName="leading-relaxed font-normal text-foreground"
+                >
+                  {commitment.description || "Not set"}
+                </LabelValueRow>
+                <LabelValueRow
+                  label="Inclusions"
+                  missing={!commitment.inclusions}
+                  valueClassName="leading-relaxed font-normal text-foreground whitespace-pre-wrap"
+                >
+                  {commitment.inclusions || "Not set"}
+                </LabelValueRow>
+                <LabelValueRow
+                  label="Exclusions"
+                  missing={!commitment.exclusions}
+                  valueClassName="leading-relaxed font-normal text-foreground whitespace-pre-wrap"
+                >
+                  {commitment.exclusions || "Not set"}
+                </LabelValueRow>
+              </dl>
+            </div>
           </div>
-        )}
-      </div>
+
+          <div className="space-y-4">
+            <div className="space-y-4">
+              <SectionRuleHeading label="Key Dates" className="[&_span]:text-primary" />
+              <div className="rounded-md border border-border bg-muted p-6">
+                <dl className="space-y-3 text-sm">
+                  {!isPO && (
+                    <LabelValueRow label="Start Date">
+                      {renderDateOrDash(commitment.start_date)}
+                    </LabelValueRow>
+                  )}
+                  <LabelValueRow label={isPO ? "Delivery Date" : "Estimated Completion"}>
+                    {renderDateOrDash(commitment.substantial_completion_date)}
+                  </LabelValueRow>
+                  <LabelValueRow label="Contract Date">
+                    {renderDateOrDash(commitment.executed_date)}
+                  </LabelValueRow>
+                  <LabelValueRow label="Signed Contract Received">
+                    {renderDateOrDash(commitment.signed_received_date)}
+                  </LabelValueRow>
+                </dl>
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <SectionRuleHeading label="Privacy" className="[&_span]:text-primary" />
+              <div className="rounded-md border border-border bg-muted p-6">
+                <dl className="space-y-3 text-sm">
+                  <LabelValueRow label="Visibility">
+                    {commitment.private ? "Private" : "Public"}
+                  </LabelValueRow>
+                  <LabelValueRow label="Non-Admin Can View SOV Items">
+                    {commitment.allow_non_admin_view_sov_items ? "Yes" : "No"}
+                  </LabelValueRow>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Schedule of Values */}
       <div className="space-y-4">
-        <SectionLabel>Schedule of Values</SectionLabel>
+        <SectionRuleHeading label="Schedule of Values" className="[&_span]:text-primary" />
         <ScheduleOfValuesTab
           lineItems={commitment.line_items || []}
           projectId={projectId}
           commitmentId={commitmentId}
           commitmentType={commitment.type}
+          showHeader={false}
           onImportComplete={onImportComplete}
         />
       </div>
-
-      {/* Inclusions & Exclusions */}
-      <div className="space-y-4">
-        <SectionLabel>Inclusions &amp; Exclusions</SectionLabel>
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          <div className="space-y-1.5">
-            <p className="text-xs text-muted-foreground">Inclusions</p>
-            {commitment.inclusions ? (
-              <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">
-                {commitment.inclusions}
-              </p>
-            ) : (
-              <p className="text-sm text-muted-foreground/50">—</p>
-            )}
-          </div>
-          <div className="space-y-1.5">
-            <p className="text-xs text-muted-foreground">Exclusions</p>
-            {commitment.exclusions ? (
-              <p className="text-sm leading-relaxed text-foreground whitespace-pre-wrap">
-                {commitment.exclusions}
-              </p>
-            ) : (
-              <p className="text-sm text-muted-foreground/50">—</p>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Contract Dates */}
-      <div className="space-y-4">
-        <SectionLabel>Contract Dates</SectionLabel>
-        <div className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
-          {!isPO && (
-            <F label="Start Date">
-              {commitment.start_date ? formatDate(commitment.start_date) : dash}
-            </F>
-          )}
-          <F label={isPO ? "Delivery Date" : "Estimated Completion Date"}>
-            {commitment.substantial_completion_date ? formatDate(commitment.substantial_completion_date) : dash}
-          </F>
-          <F label="Contract Date">
-            {commitment.executed_date ? formatDate(commitment.executed_date) : dash}
-          </F>
-          <F label="Signed Contract Received">
-            {commitment.signed_received_date ? formatDate(commitment.signed_received_date) : dash}
-          </F>
-        </div>
-      </div>
-
-      {/* Contract Privacy */}
-      <div className="space-y-4">
-        <SectionLabel>Contract Privacy</SectionLabel>
-        <div className="grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
-          <F label="Visibility">{commitment.private ? "Private" : "Public"}</F>
-          <F label="Non-Admin Can View SOV Items">
-            {commitment.allow_non_admin_view_sov_items ? "Yes" : "No"}
-          </F>
-        </div>
-      </div>
-    </div>
+    </ContentSectionStack>
   );
 }
 
@@ -579,7 +581,7 @@ export default function CommitmentDetailPage() {
   // ── Loading ──
   if (isLoading) {
     return (
-      <PageShell variant="detail" title="Commitment Details" description="Loading…" onBack={() => router.back()}>
+      <PageShell variant="dashboard" title="Commitment Details" description="Loading…" onBack={() => router.back()}>
         <div className="space-y-6">
           <Skeleton className="h-24 w-full rounded-lg" />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
@@ -598,7 +600,7 @@ export default function CommitmentDetailPage() {
   // ── Error ──
   if (error || !commitment) {
     return (
-      <PageShell variant="detail" title="Commitment Details" description="Not found" onBack={() => router.back()}>
+      <PageShell variant="dashboard" title="Commitment Details" description="Not found" onBack={() => router.back()}>
         <p className="text-sm text-destructive">{error || "Commitment not found"}</p>
       </PageShell>
     );
@@ -686,7 +688,7 @@ export default function CommitmentDetailPage() {
 
   return (
     <PageShell
-      variant="detail"
+      variant="dashboard"
       title={commitment.title || displayNumber || "Commitment"}
       description={description}
       actions={headerActions}
@@ -711,7 +713,7 @@ export default function CommitmentDetailPage() {
         onTabClick={(href) => setActiveTab(href)}
       />
 
-      <div className="pt-6">
+      <div className="pt-10">
         {activeTab === "general" && (
           <GeneralTab
             commitment={commitment}

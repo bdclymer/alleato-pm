@@ -59,6 +59,19 @@ export const changeEventColumns: ColumnConfig[] = [
   { id: "created_at", label: "Created", defaultVisible: true },
 ];
 
+const ORIGIN_FILTER_OPTIONS = [
+  { value: "Internal", label: "Internal" },
+  { value: "Owner", label: "Owner" },
+  { value: "Subcontractor", label: "Subcontractor" },
+  { value: "Architect", label: "Architect" },
+  { value: "Engineer", label: "Engineer" },
+];
+
+const EXPECTING_REVENUE_FILTER_OPTIONS = [
+  { value: "true", label: "Yes" },
+  { value: "false", label: "No" },
+];
+
 export const changeEventFilters: FilterConfig[] = [
   {
     id: "status",
@@ -77,6 +90,18 @@ export const changeEventFilters: FilterConfig[] = [
     label: "Type",
     type: "select",
     options: TYPE_FILTER_OPTIONS,
+  },
+  {
+    id: "origin",
+    label: "Origin",
+    type: "select",
+    options: ORIGIN_FILTER_OPTIONS,
+  },
+  {
+    id: "expecting_revenue",
+    label: "Expecting Revenue",
+    type: "select",
+    options: EXPECTING_REVENUE_FILTER_OPTIONS,
   },
 ];
 

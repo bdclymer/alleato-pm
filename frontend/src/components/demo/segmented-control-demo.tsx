@@ -13,7 +13,7 @@ export function SegmentedControl() {
       >
         {["Day", "Week", "Month", "Year"].map((label, index) => {
           return (
-            {/* eslint-disable-next-line design-system/no-design-violations -- animated segmented control requires raw button for AnimatedBackground */}
+            // eslint-disable-next-line design-system/no-design-violations -- animated segmented control requires raw button for AnimatedBackground
             <button
               key={index}
               data-id={label}

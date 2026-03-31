@@ -309,18 +309,20 @@ function ColumnHeader({
   visibleColumns,
   onToggleColumn,
   onStartResize,
+  className,
 }: {
   col: ColumnDef;
   width: number;
   visibleColumns: Set<ColumnKey>;
   onToggleColumn: (key: ColumnKey) => void;
   onStartResize: (delta: number) => void;
+  className?: string;
 }) {
   const [menuOpen, setMenuOpen] = React.useState(false);
 
   return (
     <div
-      className="relative flex items-center group select-none"
+      className={`relative flex items-center group select-none ${className ?? ""}`}
       style={{ width, minWidth: col.minWidth }}
       onContextMenu={(e) => {
         e.preventDefault();
@@ -337,13 +339,15 @@ function ColumnHeader({
 
       <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
         <DropdownMenuTrigger asChild>
-          <button
+          <Button
             type="button"
-            className="opacity-0 group-hover:opacity-100 flex-shrink-0 h-5 w-5 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-opacity"
+            variant="ghost"
+            size="icon"
+            className="opacity-0 group-hover:opacity-100 flex-shrink-0 h-5 w-5 rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-opacity"
             onClick={(e) => e.stopPropagation()}
           >
             <MoreVertical className="h-3.5 w-3.5" />
-          </button>
+          </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-48 max-h-72 overflow-y-auto">
           <DropdownMenuLabel className="text-xs">Toggle Columns</DropdownMenuLabel>
@@ -418,6 +422,41 @@ export function ChangeEventExpandedRow({
     }
     return widths as Record<ColumnKey, number>;
   });
+  const sharedScrollLeftRef = React.useRef(0);
+  const isSyncingScrollRef = React.useRef(false);
+  const scrollContainersRef = React.useRef<Map<string, HTMLDivElement>>(new Map());
+
+  const registerScrollContainer = React.useCallback(
+    (key: string) => (node: HTMLDivElement | null) => {
+      if (node) {
+        scrollContainersRef.current.set(key, node);
+        node.scrollLeft = sharedScrollLeftRef.current;
+        return;
+      }
+      scrollContainersRef.current.delete(key);
+    },
+    [],
+  );
+
+  const handleSharedHorizontalScroll = React.useCallback(
+    (sourceKey: string) => (event: React.UIEvent<HTMLDivElement>) => {
+      if (isSyncingScrollRef.current) return;
+
+      const source = event.currentTarget;
+      const nextScrollLeft = source.scrollLeft;
+      sharedScrollLeftRef.current = nextScrollLeft;
+      isSyncingScrollRef.current = true;
+
+      scrollContainersRef.current.forEach((container, key) => {
+        if (key !== sourceKey && container.scrollLeft !== nextScrollLeft) {
+          container.scrollLeft = nextScrollLeft;
+        }
+      });
+
+      isSyncingScrollRef.current = false;
+    },
+    [],
+  );
 
   const toggleColumn = React.useCallback((key: ColumnKey) => {
     setVisibleColumns((prev) => {
@@ -548,7 +587,11 @@ export function ChangeEventExpandedRow({
       {/* ── Group header row ── */}
       <TableRow className="bg-primary/15 hover:bg-primary/15 border-b border-primary/20">
         <TableCell colSpan={colSpan} className="py-0 px-0">
-          <div className="flex items-center px-8 gap-0 overflow-x-auto">
+          <div
+            ref={registerScrollContainer("group-header")}
+            onScroll={handleSharedHorizontalScroll("group-header")}
+            className="flex items-center px-8 gap-0 overflow-x-auto"
+          >
             {groupSpans.map((span, idx) => (
               <div
                 key={span.group}
@@ -568,8 +611,12 @@ export function ChangeEventExpandedRow({
       {/* ── Column header row ── */}
       <TableRow className="bg-primary/10 hover:bg-primary/10 border-b border-primary/20">
         <TableCell colSpan={colSpan} className="py-0 px-0">
-          <div className="flex items-center px-8 py-1.5 gap-0 overflow-x-auto">
-            {visibleCols.map((col) => (
+          <div
+            ref={registerScrollContainer("column-header")}
+            onScroll={handleSharedHorizontalScroll("column-header")}
+            className="flex items-center px-8 py-1.5 gap-0 overflow-x-auto"
+          >
+            {visibleCols.map((col, index) => (
               <ColumnHeader
                 key={col.key}
                 col={col}
@@ -577,6 +624,11 @@ export function ChangeEventExpandedRow({
                 visibleColumns={visibleColumns}
                 onToggleColumn={toggleColumn}
                 onStartResize={makeResizeHandler(col.key, columnWidths[col.key])}
+                className={
+                  index === 0
+                    ? "sticky left-0 z-20 bg-primary/10 pl-1 pr-2 border-r border-primary/15"
+                    : ""
+                }
               />
             ))}
             <div style={{ width: ACTIONS_WIDTH }} className="flex-shrink-0" />
@@ -591,12 +643,20 @@ export function ChangeEventExpandedRow({
           className="bg-primary/5 hover:bg-primary/10 border-b border-primary/10"
         >
           <TableCell colSpan={colSpan} className="py-0 px-0">
-            <div className="flex items-center px-8 py-2 gap-0 overflow-x-auto">
-              {visibleCols.map((col) => (
+            <div
+              ref={registerScrollContainer(`line-item-${li.id}`)}
+              onScroll={handleSharedHorizontalScroll(`line-item-${li.id}`)}
+              className="flex items-center px-8 py-2 gap-0 overflow-x-auto"
+            >
+              {visibleCols.map((col, index) => (
                 <div
                   key={col.key}
-                  className={`text-sm tabular-nums truncate pr-2 flex-shrink-0 ${
+                  className={`text-[11px] tabular-nums truncate pr-2 flex-shrink-0 ${
                     col.align === "right" ? "text-right" : ""
+                  } ${
+                    index === 0
+                      ? "sticky left-0 z-10 bg-primary/5 pl-1 border-r border-primary/10"
+                      : ""
                   }`}
                   style={{ width: columnWidths[col.key], minWidth: col.minWidth }}
                 >
@@ -639,12 +699,20 @@ export function ChangeEventExpandedRow({
               className="bg-primary/5 hover:bg-primary/10 border-b border-primary/10"
             >
               <TableCell colSpan={colSpan} className="py-0 px-0">
-                <div className="flex items-center px-8 py-2 gap-0 overflow-x-auto">
-                  {visibleCols.map((col) => (
+                <div
+                  ref={registerScrollContainer(`markup-${markup.id}`)}
+                  onScroll={handleSharedHorizontalScroll(`markup-${markup.id}`)}
+                  className="flex items-center px-8 py-2 gap-0 overflow-x-auto"
+                >
+                  {visibleCols.map((col, index) => (
                     <div
                       key={col.key}
-                      className={`text-sm tabular-nums truncate pr-2 flex-shrink-0 ${
+                      className={`text-[11px] tabular-nums truncate pr-2 flex-shrink-0 ${
                         col.align === "right" ? "text-right" : ""
+                      } ${
+                        index === 0
+                          ? "sticky left-0 z-10 bg-primary/5 pl-1 border-r border-primary/10"
+                          : ""
                       }`}
                       style={{ width: columnWidths[col.key], minWidth: col.minWidth }}
                     >

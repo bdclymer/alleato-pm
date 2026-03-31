@@ -43,9 +43,27 @@ function baseUrl(projectId: number, changeEventId: string) {
 async function parseError(res: Response, fallback: string): Promise<string> {
   try {
     const json = await res.json();
-    return json.error ?? json.message ?? fallback;
+    const base = json.error ?? json.message ?? fallback;
+
+    // Surface Zod validation details (array of {field, message})
+    if (Array.isArray(json.details)) {
+      const fieldErrors = json.details
+        .map((d: { field?: string; message?: string }) =>
+          d.field ? `${d.field}: ${d.message}` : d.message,
+        )
+        .filter(Boolean)
+        .join("; ");
+      if (fieldErrors) return `${base} — ${fieldErrors}`;
+    }
+
+    // Surface Supabase error details (string)
+    if (typeof json.details === "string" && json.details) {
+      return `${base} — ${json.details}`;
+    }
+
+    return base;
   } catch {
-    return fallback;
+    return `${fallback} (HTTP ${res.status})`;
   }
 }
 
@@ -287,7 +305,33 @@ export function useChangeEventDetail(
           throw new Error(msg);
         }
 
+        // Delete line items that were removed in the form
+        const formItemIds = new Set(
+          data.lineItems.filter((i) => i.id).map((i) => i.id),
+        );
+        const existingItemIds = lineItems
+          .filter((i) => i.id)
+          .map((i) => i.id);
+        const deletedIds = existingItemIds.filter(
+          (id) => !formItemIds.has(id),
+        );
+
+        for (const deletedId of deletedIds) {
+          const delRes = await fetch(
+            `${baseUrl(projectId, changeEventId)}/line-items/${deletedId}`,
+            { method: "DELETE" },
+          );
+          if (!delRes.ok && delRes.status !== 204) {
+            const msg = await parseError(
+              delRes,
+              "Failed to delete line item",
+            );
+            toast.error(msg);
+          }
+        }
+
         // Save line items
+        const lineItemFailures: string[] = [];
         for (const [index, item] of data.lineItems.entries()) {
           // Parse prefixed commitment IDs (form stores as "sub-{id}" or "po-{id}")
           let commitmentId: string | null = null;
@@ -314,14 +358,17 @@ export function useChangeEventDetail(
           if (item.nonCommittedCost != null) lineItemPayload.nonCommittedCost = item.nonCommittedCost;
           if (item.budgetCode) lineItemPayload.budgetCodeId = item.budgetCode;
           if (item.vendor) lineItemPayload.vendorId = item.vendor;
-          const resolvedContractId = commitmentId ?? contractValue;
-          if (resolvedContractId) lineItemPayload.contractId = resolvedContractId;
+          if (commitmentId) lineItemPayload.commitmentId = commitmentId;
           if (commitmentType) lineItemPayload.commitmentType = commitmentType;
           if (item.commitmentLineItemId) lineItemPayload.commitmentLineItemId = item.commitmentLineItemId;
 
+          const itemLabel = item.description
+            ? `"${item.description.slice(0, 40)}"`
+            : `#${index + 1}`;
+
           if (item.id) {
             // Update existing
-            await fetch(
+            const liRes = await fetch(
               `${baseUrl(projectId, changeEventId)}/line-items/${item.id}`,
               {
                 method: "PATCH",
@@ -329,9 +376,14 @@ export function useChangeEventDetail(
                 body: JSON.stringify(lineItemPayload),
               },
             );
+            if (!liRes.ok) {
+              const msg = await parseError(liRes, "Unknown error");
+              lineItemFailures.push(`Line item ${itemLabel}: ${msg}`);
+              console.error("Line item PATCH failed:", msg, lineItemPayload);
+            }
           } else {
             // Create new
-            await fetch(
+            const liRes = await fetch(
               `${baseUrl(projectId, changeEventId)}/line-items`,
               {
                 method: "POST",
@@ -339,6 +391,17 @@ export function useChangeEventDetail(
                 body: JSON.stringify(lineItemPayload),
               },
             );
+            if (!liRes.ok) {
+              const msg = await parseError(liRes, "Unknown error");
+              lineItemFailures.push(`Line item ${itemLabel}: ${msg}`);
+              console.error("Line item POST failed:", msg, lineItemPayload);
+            }
+          }
+        }
+
+        if (lineItemFailures.length > 0) {
+          for (const failure of lineItemFailures) {
+            toast.error(failure, { duration: 8000 });
           }
         }
 
@@ -372,7 +435,7 @@ export function useChangeEventDetail(
         throw err;
       }
     },
-    [projectId, changeEventId, fetchChangeEventDetails],
+    [projectId, changeEventId, lineItems, fetchChangeEventDetails],
   );
 
   /* ── Related item actions ─────────────────────────────────────── */

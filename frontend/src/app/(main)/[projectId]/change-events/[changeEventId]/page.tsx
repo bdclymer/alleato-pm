@@ -5,11 +5,15 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
   ArrowRight,
+  Check,
   Copy,
   Download,
+  FileCheck2,
   Mail,
   MoreHorizontal,
   Trash2,
+  X,
+  XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -44,12 +48,12 @@ import { useChangeEventDetail } from "@/hooks/use-change-event-detail";
 import { useVerticalMarkup } from "@/hooks/use-vertical-markup";
 import { ChangeEventConvertDialog } from "@/components/domain/change-events/ChangeEventConvertDialog";
 import { ChangeEventForm } from "@/components/domain/change-events/ChangeEventForm";
-import { ChangeEventStatusActions } from "@/components/domain/change-events/ChangeEventStatusActions";
 import { ChangeEventGeneralInfoPanel } from "@/components/domain/change-events/ChangeEventGeneralInfoPanel";
 import { ChangeEventLineItemsTable } from "@/components/domain/change-events/ChangeEventLineItemsTable";
 import { ChangeEventHistoryTab } from "@/components/domain/change-events/ChangeEventHistoryTab";
 import { ChangeEventRelatedItemsTab } from "@/components/domain/change-events/ChangeEventRelatedItemsTab";
 import { ChangeEventPrimeContractCOsTab } from "@/components/domain/change-events/ChangeEventPrimeContractCOsTab";
+import { ChangeEventApprovalWorkflow } from "@/components/domain/change-events/ChangeEventApprovalWorkflow";
 import { EntityComments, EntityRoom } from "@/components/comments/entity-comments";
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
@@ -90,6 +94,52 @@ export default function ChangeEventDetailPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showConvertDialog, setShowConvertDialog] = useState(false);
+  const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
+
+  const handleUploadAttachment = useCallback(async (file: File) => {
+    setIsUploadingAttachment(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch(
+        `/api/projects/${projectId}/change-events/${changeEventId}/attachments`,
+        { method: "POST", body: formData },
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.error || "Failed to upload attachment");
+        return;
+      }
+      toast.success("Attachment uploaded");
+      actions.refetch();
+    } catch {
+      toast.error("Failed to upload attachment");
+    } finally {
+      setIsUploadingAttachment(false);
+    }
+  }, [projectId, changeEventId, actions]);
+
+  const handleDeleteAttachment = useCallback(async (attachmentId: string) => {
+    try {
+      const res = await fetch(
+        `/api/projects/${projectId}/change-events/${changeEventId}/attachments`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ attachmentIds: [attachmentId] }),
+        },
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.error || "Failed to delete attachment");
+        return;
+      }
+      toast.success("Attachment deleted");
+      actions.refetch();
+    } catch {
+      toast.error("Failed to delete attachment");
+    }
+  }, [projectId, changeEventId, actions]);
 
   useProjectTitle(
     changeEvent
@@ -100,6 +150,8 @@ export default function ChangeEventDetailPage() {
   const canEdit = ["open", "rejected"].includes(
     (changeEvent?.status || "").toLowerCase(),
   );
+
+  const normalizedStatus = (changeEvent?.status || "").toLowerCase().replace(/\s+/g, "_");
 
   // Auto-enter edit mode from ?edit=1
   useEffect(() => {
@@ -173,6 +225,7 @@ export default function ChangeEventDetailPage() {
       type: changeEvent.type || undefined,
       changeReason: changeEvent.reason || undefined,
       scope: changeEvent.scope || undefined,
+      expectingRevenue: changeEvent.expectingRevenue ?? changeEvent.expecting_revenue ?? true,
       lineItemRevenueSource:
         changeEvent.lineItemRevenueSource || changeEvent.line_item_revenue_source || "",
       primeContractId:
@@ -249,7 +302,6 @@ export default function ChangeEventDetailPage() {
       <PageShell
         variant="dashboard"
         title={`Edit ${changeEvent.title}`}
-        statusBadge={<StatusBadge status={changeEvent.status ?? "Open"} />}
         actions={
           <Inline gap="sm">
             <Button variant="ghost" size="sm" onClick={handleBack}>
@@ -298,6 +350,36 @@ export default function ChangeEventDetailPage() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          {/* Status actions */}
+          {normalizedStatus === "open" && (
+            <DropdownMenuItem
+              onClick={() => actions.updateStatus("pending_approval")}
+              data-testid="change-event-submit-approval"
+            >
+              <FileCheck2 className="mr-2 h-4 w-4" />
+              Submit for Approval
+            </DropdownMenuItem>
+          )}
+          {(normalizedStatus === "pending_approval" ||
+            normalizedStatus === "pending") && (
+            <>
+              <DropdownMenuItem onClick={() => actions.updateStatus("approved")}>
+                <Check className="mr-2 h-4 w-4" />
+                Approve
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => actions.updateStatus("rejected")}>
+                <XCircle className="mr-2 h-4 w-4" />
+                Reject
+              </DropdownMenuItem>
+            </>
+          )}
+          {normalizedStatus !== "closed" && normalizedStatus !== "converted" && (
+            <DropdownMenuItem onClick={() => actions.updateStatus("closed")}>
+              <X className="mr-2 h-4 w-4" />
+              Close
+            </DropdownMenuItem>
+          )}
+          <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleExport}>
             <Download className="mr-2 h-4 w-4" />
             Export as CSV
@@ -331,15 +413,9 @@ export default function ChangeEventDetailPage() {
     <PageShell
       variant="dashboard"
       title={ceTitle}
-      statusBadge={<StatusBadge status={changeEvent.status ?? "Open"} />}
       actions={headerActions}
       onBack={handleBack}
     >
-      <ChangeEventStatusActions
-        status={changeEvent.status}
-        onStatusChange={actions.updateStatus}
-      />
-
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList variant="line">
           <TabsTrigger value="general" data-testid="change-event-tab-general">
@@ -358,55 +434,68 @@ export default function ChangeEventDetailPage() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="general">
-          <ChangeEventGeneralInfoPanel
-            changeEvent={changeEvent}
-            attachments={attachments}
-            projectId={projectId}
-          />
-          <div className="mt-8">
-            <ChangeEventLineItemsTable
-              lineItems={lineItems}
-              markupRows={markupRows}
-              expectingRevenue={changeEvent.expecting_revenue !== false}
+        <div className="pt-10">
+          <TabsContent value="general">
+            <ChangeEventGeneralInfoPanel
+              changeEvent={changeEvent}
+              attachments={attachments}
+              projectId={projectId}
+              onUploadAttachment={handleUploadAttachment}
+              onDeleteAttachment={handleDeleteAttachment}
+              isUploadingAttachment={isUploadingAttachment}
             />
-          </div>
-        </TabsContent>
+            <div className="mt-10">
+              <ChangeEventLineItemsTable
+                lineItems={lineItems}
+                markupRows={markupRows}
+                expectingRevenue={(changeEvent.expectingRevenue ?? changeEvent.expecting_revenue) !== false}
+              />
+            </div>
+            <div className="mt-10">
+              <ChangeEventApprovalWorkflow
+                changeEventId={changeEventId}
+                projectId={projectId}
+                currentStatus={changeEvent.status ?? "open"}
+                onStatusChange={actions.updateStatus}
+              />
+            </div>
+          </TabsContent>
 
-        <TabsContent value="prime-contract-cos">
-          <ChangeEventPrimeContractCOsTab
-            changeEventId={changeEventId}
-            projectId={projectId}
-          />
-        </TabsContent>
+          <TabsContent value="prime-contract-cos">
+            <ChangeEventPrimeContractCOsTab
+              changeEventId={changeEventId}
+              projectId={projectId}
+            />
+          </TabsContent>
 
-        <TabsContent value="related-items">
-          <ChangeEventRelatedItemsTab
-            relatedItems={relatedItems}
-            isLoading={false}
-            onFetchOptions={actions.fetchRelatedItemOptions}
-            onLink={actions.linkRelatedItem}
-            onUnlink={actions.unlinkRelatedItem}
-          />
-        </TabsContent>
+          <TabsContent value="related-items">
+            <ChangeEventRelatedItemsTab
+              relatedItems={relatedItems}
+              isLoading={false}
+              onFetchOptions={actions.fetchRelatedItemOptions}
+              onLink={actions.linkRelatedItem}
+              onUnlink={actions.unlinkRelatedItem}
+            />
+          </TabsContent>
 
-        <TabsContent value="comments">
-          <EntityRoom entityType="change-event" entityId={changeEventId}>
-            <EntityComments title="Comments" />
-          </EntityRoom>
-        </TabsContent>
+          <TabsContent value="comments">
+            <EntityRoom entityType="change-event" entityId={changeEventId}>
+              <EntityComments title="Comments" />
+            </EntityRoom>
+          </TabsContent>
 
-        <TabsContent value="emails">
-          <EmptyState
-            icon={<Mail />}
-            title="No emails"
-            description="Emails related to this change event will appear here."
-          />
-        </TabsContent>
+          <TabsContent value="emails">
+            <EmptyState
+              icon={<Mail />}
+              title="No emails"
+              description="Emails related to this change event will appear here."
+            />
+          </TabsContent>
 
-        <TabsContent value="history">
-          <ChangeEventHistoryTab entries={historyEntries} isLoading={false} />
-        </TabsContent>
+          <TabsContent value="history">
+            <ChangeEventHistoryTab entries={historyEntries} isLoading={false} />
+          </TabsContent>
+        </div>
       </Tabs>
 
       {/* Dialogs */}

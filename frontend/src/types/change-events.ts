@@ -191,6 +191,7 @@ export interface ChangeEventDetail extends ChangeEvent {
   lineItems?: ChangeEventDetailLineItem[];
   attachments?: ChangeEventAttachment[];
   history?: Array<Record<string, unknown>>;
+  expectingRevenue?: boolean;
   lineItemRevenueSource?: string | null;
   primeContractId?: number | string | null;
   primeContract?: {

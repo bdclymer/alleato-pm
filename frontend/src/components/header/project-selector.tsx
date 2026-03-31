@@ -20,7 +20,7 @@ import {
 
 interface Project {
   id: number;
-  name: string;
+  name: string | null;
   "job number": string | null;
 }
 
@@ -35,7 +35,7 @@ interface ProjectSelectorProps {
 }
 
 /** Deterministic pastel color from a string (project name initial) */
-function projectColor(name: string): string {
+function projectColor(name: string | null | undefined): string {
   const colors = [
     "bg-sky-100 text-sky-700",
     "bg-violet-100 text-violet-700",
@@ -46,6 +46,7 @@ function projectColor(name: string): string {
     "bg-indigo-100 text-indigo-700",
     "bg-orange-100 text-orange-700",
   ];
+  if (!name) return colors[0];
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = (hash * 31 + name.charCodeAt(i)) & 0xffff;
@@ -53,8 +54,9 @@ function projectColor(name: string): string {
   return colors[hash % colors.length];
 }
 
-function ProjectAvatar({ name, size = "md" }: { name: string; size?: "sm" | "md" }) {
+function ProjectAvatar({ name, size = "md" }: { name: string | null | undefined; size?: "sm" | "md" }) {
   const colorClass = projectColor(name);
+  const initial = name ? name.charAt(0).toUpperCase() : "?";
   return (
     <span
       className={cn(
@@ -63,7 +65,7 @@ function ProjectAvatar({ name, size = "md" }: { name: string; size?: "sm" | "md"
         colorClass
       )}
     >
-      {name.charAt(0).toUpperCase()}
+      {initial}
     </span>
   );
 }
@@ -145,7 +147,7 @@ export function ProjectSelector({
                     return (
                       <CommandItem
                         key={project.id}
-                        value={`${project.name}${project["job number"] ? ` ${project["job number"]}` : ""}`}
+                        value={`${project.name ?? ""}${project["job number"] ? ` ${project["job number"]}` : ""}`}
                         onSelect={() => {
                           onProjectSelect(project.id);
                           setOpen(false);
@@ -163,7 +165,7 @@ export function ProjectSelector({
                               isSelected ? "text-primary" : "text-foreground"
                             )}
                           >
-                            {project.name}
+                            {project.name ?? "Unnamed Project"}
                           </div>
                           {project["job number"] && (
                             <div className="truncate text-xs text-muted-foreground">

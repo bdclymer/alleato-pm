@@ -27,7 +27,6 @@ export async function GET() {
     `)
     .eq("source_system", "fireflies")
     .not("metadata_id", "is", null)
-    .or("project_id.not.is.null,project_ids.neq.{}")
     .order("created_at", { ascending: false });
 
   const interviewIds = (interviewMeetings ?? []).map((m) => m.id).filter(Boolean);

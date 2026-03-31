@@ -60,10 +60,12 @@ def _is_interview_meeting(metadata: Dict[str, Any]) -> bool:
 
 
 def _is_meeting_record(metadata: Dict[str, Any]) -> bool:
-    source = str(metadata.get("source") or "").strip().lower()
+    source = str(metadata.get("source") or metadata.get("source_type") or "").strip().lower()
     metadata_type = str(metadata.get("type") or "").strip().lower()
     category = str(metadata.get("category") or "").strip().lower()
     meeting_values = {"meeting", "transcript", "meeting_transcript"}
+    if metadata.get("fireflies_id"):
+        return True
     if source == "fireflies":
         return True
     return metadata_type in meeting_values or category in meeting_values
@@ -315,9 +317,17 @@ def run_extractor(metadata_id: str) -> Dict[str, Any]:
     tasks_to_persist = structured.tasks if is_meeting else []
     # Replace task set for this meeting to avoid stale rows from prior runs
     # (for example tasks created before project assignment existed).
-    client.table("tasks").delete().eq("metadata_id", metadata_id).eq(
-        "source_system", "fireflies"
-    ).execute()
+    # Guard deletion behind meeting classification so we never wipe existing
+    # Fireflies tasks for a row mis-tagged as a non-meeting document.
+    if is_meeting:
+        client.table("tasks").delete().eq("metadata_id", metadata_id).eq(
+            "source_system", "fireflies"
+        ).execute()
+    else:
+        logger.info(
+            "[Extractor] Skipping Fireflies task replacement for non-meeting metadata_id=%s",
+            metadata_id,
+        )
     for task in tasks_to_persist:
         _upsert_task(
             client,
@@ -412,5 +422,4 @@ def _upsert_task(
         data,
         on_conflict="metadata_id,description",
     ).execute()
-
 

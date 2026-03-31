@@ -2,12 +2,21 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
- * Agentation webhook receiver.
- * The Agentation toolbar POSTs annotation events here.
- * Each annotation becomes an initiative card on the Command Center board.
+ * Agentation webhook receiver + bidirectional status sync.
+ *
+ * POST — Receives annotation events from the Agentation toolbar.
+ *        Each annotation becomes an initiative card on the Command Center board.
+ *
+ * PATCH — Syncs MCP status changes back to admin_feedback_items.
+ *         Called by the agentation-watch skill when resolving/dismissing annotations.
  *
  * Uses service role client since webhooks arrive without user auth session.
  */
+
+// ---------------------------------------------------------------------------
+// POST — Create initiative cards from annotations
+// ---------------------------------------------------------------------------
+
 export async function POST(req: NextRequest) {
   const body = await req.json();
 
@@ -81,4 +90,89 @@ export async function POST(req: NextRequest) {
     { created: data?.length ?? 0, cards: data },
     { status: 201 },
   );
+}
+
+// ---------------------------------------------------------------------------
+// PATCH — Bidirectional status sync (MCP resolve/dismiss → admin_feedback_items)
+// ---------------------------------------------------------------------------
+
+export async function PATCH(req: NextRequest) {
+  const body = await req.json();
+  const {
+    agentationId,
+    status,
+    summary,
+  }: {
+    agentationId?: string;
+    status?: "resolved" | "dismissed" | "in_progress";
+    summary?: string;
+  } = body;
+
+  if (!agentationId) {
+    return NextResponse.json(
+      { error: "agentationId is required" },
+      { status: 400 },
+    );
+  }
+
+  const supabase = createServiceClient();
+
+  // Map MCP status → admin feedback status
+  const statusMap: Record<string, string> = {
+    resolved: "resolved",
+    dismissed: "closed",
+    in_progress: "in_progress",
+  };
+
+  const feedbackStatus = status ? statusMap[status] || "in_progress" : "in_progress";
+
+  // Find the feedback item by agentationId stored in metadata
+  const { data: items, error: findError } = await supabase
+    .from("admin_feedback_items")
+    .select("id, status")
+    .contains("metadata", { agentationId })
+    .limit(1);
+
+  if (findError) {
+    return NextResponse.json({ error: findError.message }, { status: 500 });
+  }
+
+  if (!items || items.length === 0) {
+    // No matching feedback item — that's fine, not all annotations go through
+    // the admin feedback pipeline (non-admin users, for example)
+    return NextResponse.json({ matched: false, message: "No matching feedback item found" });
+  }
+
+  const feedbackItem = items[0];
+
+  // Update the feedback item status
+  const { error: updateError } = await supabase
+    .from("admin_feedback_items")
+    .update({
+      status: feedbackStatus,
+      ...(summary ? { metadata: { agentationId, resolution_summary: summary } } : {}),
+    })
+    .eq("id", feedbackItem.id);
+
+  if (updateError) {
+    return NextResponse.json({ error: updateError.message }, { status: 500 });
+  }
+
+  // Also update the initiative card if one exists
+  const cardStatusMap: Record<string, string> = {
+    resolved: "done",
+    dismissed: "archived",
+    in_progress: "in_progress",
+  };
+
+  await supabase
+    .from("initiative_cards")
+    .update({ status: cardStatusMap[status || ""] || "in_progress" })
+    .eq("external_id", agentationId);
+
+  return NextResponse.json({
+    matched: true,
+    feedbackItemId: feedbackItem.id,
+    newStatus: feedbackStatus,
+  });
 }

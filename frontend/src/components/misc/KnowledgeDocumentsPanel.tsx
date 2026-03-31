@@ -149,7 +149,7 @@ function DocumentGrid({
           const active = activeDocumentIds.has(document.id);
           const fileVariant = getFileVariant(document.filename);
           return (
-            {/* eslint-disable-next-line design-system/no-design-violations -- knowledge document card button */}
+            // eslint-disable-next-line design-system/no-design-violations -- knowledge document card button
             <button
               type="button"
               key={document.id}

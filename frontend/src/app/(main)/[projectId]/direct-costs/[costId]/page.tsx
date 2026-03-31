@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { PageShell } from "@/components/layout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageShell, ContentSectionStack, SectionRuleHeading, LabelValueRow } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -240,131 +239,107 @@ export default function DirectCostDetailPage({
           </div>
         }
       >
-        <div className="space-y-6">
-          {/* Main Details */}
-          <Card>
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle>Cost Information</CardTitle>
-                <div className="flex gap-2">
+        <ContentSectionStack>
+          {/* Cost Information + Record Info */}
+          <section>
+            <div className="grid grid-cols-[minmax(0,1fr)_minmax(340px,420px)] gap-x-16 gap-y-10">
+              <div className="space-y-6">
+                <SectionRuleHeading label="Cost Information" className="[&_span]:text-primary" />
+                <div className="flex items-center gap-2">
                   <Badge variant="outline">{directCost.cost_type}</Badge>
                   <Badge variant={statusVariant(directCost.status)}>
                     {directCost.status}
                   </Badge>
                 </div>
-              </div>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Total Amount
-                  </p>
-                  <p className="mt-1 text-2xl font-semibold">
-                    {formatCurrency(directCost.total_amount)}
-                  </p>
-                </div>
-
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Date
-                  </p>
-                  <p className="mt-1">{formatDate(directCost.date)}</p>
-                </div>
-
-                {directCost.vendor && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Vendor
-                    </p>
-                    <p className="mt-1">{directCost.vendor.name}</p>
-                  </div>
-                )}
-
-                {directCost.employee && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Employee
-                    </p>
-                    <p className="mt-1">
+                <dl className="space-y-4 text-sm">
+                  <LabelValueRow label="Total Amount">
+                    <span className="text-2xl font-semibold">
+                      {formatCurrency(directCost.total_amount)}
+                    </span>
+                  </LabelValueRow>
+                  <LabelValueRow label="Date">
+                    {formatDate(directCost.date)}
+                  </LabelValueRow>
+                  {directCost.vendor ? (
+                    <LabelValueRow label="Vendor">
+                      {directCost.vendor.name}
+                    </LabelValueRow>
+                  ) : (
+                    <LabelValueRow label="Vendor" missing />
+                  )}
+                  {directCost.employee ? (
+                    <LabelValueRow label="Employee">
                       {directCost.employee.first_name}{" "}
                       {directCost.employee.last_name}
-                    </p>
-                  </div>
-                )}
-
-                {directCost.invoice_number && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Invoice Number
-                    </p>
-                    <p className="mt-1">{directCost.invoice_number}</p>
-                  </div>
-                )}
-
-                {directCost.received_date && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Received Date
-                    </p>
-                    <p className="mt-1">
+                    </LabelValueRow>
+                  ) : null}
+                  <LabelValueRow label="Invoice Number" missing={!directCost.invoice_number}>
+                    {directCost.invoice_number}
+                  </LabelValueRow>
+                  {directCost.received_date && (
+                    <LabelValueRow label="Received Date">
                       {formatDate(directCost.received_date)}
-                    </p>
-                  </div>
-                )}
-
-                {directCost.paid_date && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Paid Date
-                    </p>
-                    <p className="mt-1">{formatDate(directCost.paid_date)}</p>
-                  </div>
-                )}
-
-                {directCost.acumatica_sync_at && (
-                  <div>
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Acumatica
-                    </p>
-                    {directCost.acumatica_ref_nbr ? (
-                      <a
-                        href={`https://alleatogroup.acumatica.com/Main?ScreenId=PM304000&RefNbr=${encodeURIComponent(directCost.acumatica_ref_nbr)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-primary underline-offset-4 hover:underline"
-                      >
-                        {directCost.acumatica_doc_type ? `${directCost.acumatica_doc_type} ` : ""}
-                        {directCost.acumatica_ref_nbr}
-                      </a>
-                    ) : (
-                      <Badge variant="outline">Synced</Badge>
-                    )}
-                  </div>
-                )}
-
-                {directCost.description && (
-                  <div className="md:col-span-2 lg:col-span-3">
-                    <p className="text-sm font-medium text-muted-foreground">
-                      Description
-                    </p>
-                    <p className="mt-1">{directCost.description}</p>
-                  </div>
-                )}
+                    </LabelValueRow>
+                  )}
+                  {directCost.paid_date && (
+                    <LabelValueRow label="Paid Date">
+                      {formatDate(directCost.paid_date)}
+                    </LabelValueRow>
+                  )}
+                  {directCost.acumatica_sync_at && (
+                    <LabelValueRow label="Acumatica">
+                      {directCost.acumatica_ref_nbr ? (
+                        <a
+                          href={`https://alleatogroup.acumatica.com/Main?ScreenId=PM304000&RefNbr=${encodeURIComponent(directCost.acumatica_ref_nbr)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary underline-offset-4 hover:underline"
+                        >
+                          {directCost.acumatica_doc_type ? `${directCost.acumatica_doc_type} ` : ""}
+                          {directCost.acumatica_ref_nbr}
+                        </a>
+                      ) : (
+                        <Badge variant="outline">Synced</Badge>
+                      )}
+                    </LabelValueRow>
+                  )}
+                  {directCost.description && (
+                    <LabelValueRow label="Description">
+                      {directCost.description}
+                    </LabelValueRow>
+                  )}
+                </dl>
               </div>
-            </CardContent>
-          </Card>
+              <div className="space-y-8">
+                <div className="space-y-4">
+                  <SectionRuleHeading label="Record Information" className="[&_span]:text-primary" />
+                  <div className="rounded-md border border-border bg-muted p-6">
+                    <dl className="space-y-3 text-sm">
+                      <LabelValueRow label="Created">
+                        {formatDate(directCost.created_at, "MMM d, yyyy HH:mm")}
+                      </LabelValueRow>
+                      {directCost.updated_at &&
+                        directCost.updated_at !== directCost.created_at && (
+                          <LabelValueRow label="Last Updated">
+                            {formatDate(directCost.updated_at, "MMM d, yyyy HH:mm")}
+                          </LabelValueRow>
+                        )}
+                    </dl>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
 
           {/* Line Items */}
           {directCost.line_items && directCost.line_items.length > 0 && (
-            <Card>
-              <CardHeader>
-                <CardTitle>
-                  Line Items ({directCost.line_items.length})
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="border rounded-lg">
+            <section>
+              <div className="space-y-6">
+                <SectionRuleHeading
+                  label={`Line Items (${directCost.line_items.length})`}
+                  className="[&_span]:text-primary"
+                />
+                <div className="rounded-md border border-border">
                   <Table>
                     <TableHeader>
                       <TableRow>
@@ -373,9 +348,7 @@ export default function DirectCostDetailPage({
                         <TableHead className="text-right">Qty</TableHead>
                         <TableHead>UOM</TableHead>
                         <TableHead className="text-right">Unit Cost</TableHead>
-                        <TableHead className="text-right">
-                          Line Total
-                        </TableHead>
+                        <TableHead className="text-right">Line Total</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -418,41 +391,10 @@ export default function DirectCostDetailPage({
                     </TableFooter>
                   </Table>
                 </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Metadata */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Record Information</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div>
-                  <p className="font-medium text-muted-foreground">Created</p>
-                  <p className="mt-1">
-                    {formatDate(directCost.created_at, "MMM d, yyyy HH:mm")}
-                  </p>
-                </div>
-                {directCost.updated_at &&
-                  directCost.updated_at !== directCost.created_at && (
-                    <div>
-                      <p className="font-medium text-muted-foreground">
-                        Last Updated
-                      </p>
-                      <p className="mt-1">
-                        {formatDate(
-                          directCost.updated_at,
-                          "MMM d, yyyy HH:mm",
-                        )}
-                      </p>
-                    </div>
-                  )}
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            </section>
+          )}
+        </ContentSectionStack>
       </PageShell>
 
       {/* Delete Confirmation */}

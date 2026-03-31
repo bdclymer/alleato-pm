@@ -39,6 +39,7 @@ import { useParams, usePathname } from "next/navigation"
 import { toast } from "sonner"
 import { DeveloperFormConfigPanel } from "@/components/project/developer-form-config-panel"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { PageSchemaTab } from "./page-schema-tab"
 
 interface HealthCheck {
   name: string
@@ -474,8 +475,9 @@ export function EnhancedDevPanel({ variant = "sidebar" }: EnhancedDevPanelProps)
   if (process.env.NODE_ENV !== "development") return null
 
   const panelContent = (
-    <Tabs defaultValue="column-map" className="mt-6">
-          <TabsList className="grid w-full grid-cols-5">
+    <Tabs defaultValue="schema" className="mt-6">
+          <TabsList className="grid w-full grid-cols-6">
+            <TabsTrigger value="schema">Schema</TabsTrigger>
             <TabsTrigger value="column-map">Column Map</TabsTrigger>
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="database">Database</TabsTrigger>
@@ -486,6 +488,11 @@ export function EnhancedDevPanel({ variant = "sidebar" }: EnhancedDevPanelProps)
           <ScrollArea
             className={`${variant === "footer" ? "h-[min(70vh,640px)]" : "h-[calc(100vh-200px)]"} mt-4 pr-6`}
           >
+            {/* SCHEMA TAB — tables, API routes, field mappings */}
+            <TabsContent value="schema" className="space-y-4">
+              <PageSchemaTab pathname={pathname ?? ""} params={params as Record<string, string | string[] | undefined>} />
+            </TabsContent>
+
             {/* COLUMN MAP TAB */}
             <TabsContent value="column-map" className="space-y-4">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">

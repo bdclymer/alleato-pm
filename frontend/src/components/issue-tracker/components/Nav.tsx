@@ -44,7 +44,7 @@ export function Nav() {
         </button>
       </div>
       {pathname.startsWith("/issue/") ? (
-        {/* eslint-disable-next-line design-system/no-design-violations -- liveblocks nav toggle */}
+        // eslint-disable-next-line design-system/no-design-violations -- liveblocks nav toggle
         <button
           onClick={toggleInbox}
           className={classNames(

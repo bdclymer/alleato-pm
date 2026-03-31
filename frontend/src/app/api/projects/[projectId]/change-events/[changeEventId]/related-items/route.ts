@@ -12,6 +12,9 @@ const RELATED_ITEM_TYPES = [
   "rfi",
   "specification",
   "submittal",
+  "prime_contract_change_order",
+  "commitment_co",
+  "commitment",
 ] as const;
 
 type RelatedItemType = (typeof RELATED_ITEM_TYPES)[number];
@@ -32,6 +35,12 @@ function buildRelatedHref(projectId: number, type: RelatedItemType, id: string):
       return `/${projectId}/specifications/${id}`;
     case "submittal":
       return `/${projectId}/submittals/${id}`;
+    case "prime_contract_change_order":
+      return `/${projectId}/prime-contracts/change-orders/${id}`;
+    case "commitment_co":
+      return `/${projectId}/commitments/change-orders/${id}`;
+    case "commitment":
+      return `/${projectId}/commitments/${id}`;
     default:
       return `/${projectId}`;
   }

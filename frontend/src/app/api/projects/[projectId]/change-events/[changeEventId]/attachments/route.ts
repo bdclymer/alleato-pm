@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { createAttachmentSchema } from "../../validation";
 import { ZodError } from "zod";
@@ -14,10 +15,10 @@ interface RouteParams {
 export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { projectId, changeEventId } = await params;
-    const supabase = await createClient();
+    const serviceClient = createServiceClient();
 
     // Verify change event exists
-    const { data: changeEvent, error: eventError } = await supabase
+    const { data: changeEvent, error: eventError } = await serviceClient
       .from("change_events")
       .select("id")
       .eq("project_id", parseInt(projectId, 10))
@@ -32,8 +33,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Get attachments
-    const { data: attachments, error } = await supabase
+    // Get attachments (service client bypasses RLS on change_event_attachments)
+    const { data: attachments, error } = await serviceClient
       .from("change_event_attachments")
       .select("*")
       .eq("change_event_id", changeEventId)
@@ -54,7 +55,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       filePath: attachment.file_path,
       fileSize: attachment.file_size,
       mimeType: attachment.mime_type,
-      uploadedBy: attachment.uploader,
+      uploadedBy: attachment.uploaded_by,
       uploadedAt: attachment.uploaded_at,
       downloadUrl: `/api/projects/${projectId}/change-events/${changeEventId}/attachments/${attachment.id}/download`,
       _links: {
@@ -86,6 +87,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { projectId, changeEventId } = await params;
     const supabase = await createClient();
+    const serviceClient = createServiceClient();
 
     // Get current user
     const {
@@ -133,12 +135,14 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Upload file to Supabase Storage
     const fileExt = file.name.split(".").pop();
     const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-    const storagePath = `change-events/${projectId}/${changeEventId}/${fileName}`;
+    const storagePath = `${projectId}/change-events/${changeEventId}/${fileName}`;
 
-    const { error: uploadError } = await supabase.storage
+    const fileBuffer = await file.arrayBuffer();
+    const contentType = file.type?.trim() || "application/octet-stream";
+    const { error: uploadError } = await serviceClient.storage
       .from("project-files")
-      .upload(storagePath, file, {
-        contentType: file.type,
+      .upload(storagePath, fileBuffer, {
+        contentType,
         upsert: false,
       });
 
@@ -149,8 +153,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Create attachment record
-    const { data: attachment, error: dbError } = await supabase
+    // Create attachment record (service client bypasses RLS)
+    const { data: attachment, error: dbError } = await serviceClient
       .from("change_event_attachments")
       .insert({
         change_event_id: changeEventId,
@@ -166,7 +170,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     if (dbError) {
       // Clean up uploaded file
-      await supabase.storage.from("project-files").remove([storagePath]);
+      await serviceClient.storage.from("project-files").remove([storagePath]);
 
       return NextResponse.json(
         {
@@ -178,7 +182,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // Update change event modification timestamp
-    await supabase
+    await serviceClient
       .from("change_events")
       .update({
         updated_at: new Date().toISOString(),
@@ -187,7 +191,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       .eq("id", changeEventId);
 
     // Create audit log entry
-    await supabase.from("change_event_history").insert({
+    await serviceClient.from("change_event_history").insert({
       change_event_id: changeEventId,
       field_name: "attachment_added",
       new_value: attachmentData.fileName,
@@ -198,7 +202,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Get public URL for the file
     const {
       data: { publicUrl },
-    } = supabase.storage.from("project-files").getPublicUrl(storagePath);
+    } = serviceClient.storage.from("project-files").getPublicUrl(storagePath);
 
     // Format response
     const response = {
@@ -252,6 +256,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { projectId, changeEventId } = await params;
     const supabase = await createClient();
+    const serviceClient = createServiceClient();
     const body = await request.json();
 
     // Get current user
@@ -265,7 +270,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     // Verify change event exists
-    const { data: changeEvent, error: eventError } = await supabase
+    const { data: changeEvent, error: eventError } = await serviceClient
       .from("change_events")
       .select("id")
       .eq("project_id", parseInt(projectId, 10))
@@ -289,7 +294,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     // Get attachment details before deletion
-    const { data: attachments, error: fetchError } = await supabase
+    const { data: attachments, error: fetchError } = await serviceClient
       .from("change_event_attachments")
       .select("id, file_path, file_name")
       .in("id", body.attachmentIds)
@@ -305,16 +310,17 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     // Delete from storage
     const filePaths = (attachments || []).map((a) => a.file_path);
     if (filePaths.length > 0) {
-      const { error: storageError } = await supabase.storage
+      const { error: storageError } = await serviceClient.storage
         .from("project-files")
         .remove(filePaths);
 
       if (storageError) {
-        }
+        console.error("Storage cleanup error:", storageError.message);
+      }
     }
 
     // Delete database records
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await serviceClient
       .from("change_event_attachments")
       .delete()
       .in("id", body.attachmentIds)
@@ -328,7 +334,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     // Update change event modification timestamp
-    await supabase
+    await serviceClient
       .from("change_events")
       .update({
         updated_at: new Date().toISOString(),
@@ -346,7 +352,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }));
 
     if (auditEntries.length > 0) {
-      await supabase.from("change_event_history").insert(auditEntries);
+      await serviceClient.from("change_event_history").insert(auditEntries);
     }
 
     return NextResponse.json({

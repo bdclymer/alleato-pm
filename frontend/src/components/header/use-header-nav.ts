@@ -42,6 +42,8 @@ const globalMeetingTitleCache = new Map<string, string>();
 const primeContractTitleCache = new Map<string, string>();
 const companyTitleCache = new Map<string, string>();
 const commitmentTitleCache = new Map<string, string>();
+const changeEventTitleCache = new Map<string, string>();
+const primeCoTitleCache = new Map<string, string>();
 
 const TABLE_ROUTE_ALIASES: Record<string, string> = {
   tasks: "tasks",
@@ -64,6 +66,8 @@ export function useHeaderNav(): UseHeaderNavReturn {
   );
   const [companyTitle, setCompanyTitle] = useState<string | null>(null);
   const [commitmentTitle, setCommitmentTitle] = useState<string | null>(null);
+  const [changeEventTitle, setChangeEventTitle] = useState<string | null>(null);
+  const [primeCoTitle, setPrimeCoTitle] = useState<string | null>(null);
 
   // Extract project ID from URL path or query parameters
   const projectId = useMemo(() => {
@@ -155,6 +159,17 @@ export function useHeaderNav(): UseHeaderNavReturn {
       segments[2] !== "new" &&
       segments[2] !== "recycle-bin" &&
       segments[2] !== "settings";
+    const isChangeEventDetailRoute =
+      segments.length >= 3 &&
+      /^\d+$/.test(segments[0]) &&
+      segments[1] === "change-events" &&
+      segments[2] !== "new";
+    const isPrimeCoDetailRoute =
+      segments.length >= 4 &&
+      /^\d+$/.test(segments[0]) &&
+      segments[1] === "change-orders" &&
+      segments[2] === "prime" &&
+      segments[3] !== "new";
     const isGlobalCompanyDetailRoute =
       segments.length >= 3 &&
       segments[0] === "directory" &&
@@ -186,6 +201,10 @@ export function useHeaderNav(): UseHeaderNavReturn {
         label = primeContractTitle || "Prime Contract";
       } else if (isCommitmentDetailRoute && index === 2) {
         label = commitmentTitle || "Commitment";
+      } else if (isChangeEventDetailRoute && index === 2) {
+        label = changeEventTitle || "Change Event";
+      } else if (isPrimeCoDetailRoute && index === 3) {
+        label = primeCoTitle || "Prime CO";
       } else if (isGlobalCompanyDetailRoute && index === 2) {
         label = companyTitle || "Company";
       } else if (isProjectCompanyDetailRoute && index === 3) {
@@ -237,7 +256,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
     });
 
     return crumbs;
-  }, [pathname, companyTitle, currentProject, meetingTitle, globalMeetingTitle, primeContractTitle, commitmentTitle]);
+  }, [pathname, companyTitle, currentProject, meetingTitle, globalMeetingTitle, primeContractTitle, commitmentTitle, changeEventTitle, primeCoTitle]);
   useEffect(() => {
     const segments = pathname?.split("/").filter(Boolean) ?? [];
     const isMeetingDetailRoute =
@@ -446,6 +465,123 @@ export function useHeaderNav(): UseHeaderNavReturn {
     return () => {
       isActive = false;
     };
+  }, [pathname]);
+
+  // Fetch title for change event detail routes
+  useEffect(() => {
+    const segments = pathname?.split("/").filter(Boolean) ?? [];
+    const isChangeEventDetailRoute =
+      segments.length >= 3 &&
+      /^\d+$/.test(segments[0]) &&
+      segments[1] === "change-events" &&
+      segments[2] !== "new";
+
+    if (!isChangeEventDetailRoute) {
+      setChangeEventTitle(null);
+      return;
+    }
+
+    const changeEventId = segments[2];
+    const cacheKey = `${segments[0]}:${changeEventId}`;
+    const cachedTitle = changeEventTitleCache.get(cacheKey);
+    if (cachedTitle) {
+      setChangeEventTitle(cachedTitle);
+      return;
+    }
+
+    let isActive = true;
+    const fetchChangeEventTitle = async () => {
+      try {
+        const response = await fetch(
+          `/api/projects/${segments[0]}/change-events/${changeEventId}`,
+        );
+        if (!response.ok) return;
+
+        const contentType = response.headers.get("content-type") || "";
+        if (!contentType.includes("application/json")) return;
+
+        const data = await response.json();
+        const title =
+          typeof data?.title === "string" && data.title.length > 0
+            ? data.title
+            : typeof data?.number === "string" && data.number.length > 0
+              ? data.number
+              : null;
+
+        if (isActive) {
+          if (title) {
+            changeEventTitleCache.set(cacheKey, title);
+            setChangeEventTitle(title);
+          } else {
+            setChangeEventTitle(null);
+          }
+        }
+      } catch {
+        // Best-effort only; fallback label remains
+      }
+    };
+
+    fetchChangeEventTitle();
+    return () => {
+      isActive = false;
+    };
+  }, [pathname]);
+
+  // Fetch title for prime CO detail routes ([projectId]/change-orders/prime/[primeCoId])
+  useEffect(() => {
+    const segments = pathname?.split("/").filter(Boolean) ?? [];
+    const isPrimeCoRoute =
+      segments.length >= 4 &&
+      /^\d+$/.test(segments[0]) &&
+      segments[1] === "change-orders" &&
+      segments[2] === "prime" &&
+      segments[3] !== "new";
+
+    if (!isPrimeCoRoute) {
+      setPrimeCoTitle(null);
+      return;
+    }
+
+    const primeCoId = segments[3];
+    const cacheKey = `${segments[0]}:${primeCoId}`;
+    const cached = primeCoTitleCache.get(cacheKey);
+    if (cached) {
+      setPrimeCoTitle(cached);
+      return;
+    }
+
+    let isActive = true;
+    const fetchTitle = async () => {
+      try {
+        const response = await fetch(
+          `/api/projects/${segments[0]}/prime-contract-change-orders/${primeCoId}`,
+        );
+        if (!response.ok) return;
+        const contentType = response.headers.get("content-type") || "";
+        if (!contentType.includes("application/json")) return;
+        const data = await response.json();
+        const title =
+          (typeof data?.pcco_number === "string" && data.pcco_number.length > 0
+            ? data.pcco_number
+            : null) ||
+          (typeof data?.title === "string" && data.title.length > 0
+            ? data.title
+            : null);
+        if (isActive) {
+          if (title) {
+            primeCoTitleCache.set(cacheKey, title);
+            setPrimeCoTitle(title);
+          } else {
+            setPrimeCoTitle(null);
+          }
+        }
+      } catch {
+        // Best-effort only
+      }
+    };
+
+    fetchTitle();
+    return () => { isActive = false; };
   }, [pathname]);
 
   useEffect(() => {

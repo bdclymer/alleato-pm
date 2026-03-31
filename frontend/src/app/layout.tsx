@@ -11,7 +11,7 @@ import { AgentationThemeSync } from "@/components/dev/AgentationThemeSync";
 import { DevAnnotationOverlay } from "@/components/dev/dev-annotation-overlay";
 import { DesignViolationOverlay } from "@/components/dev/design-violation-overlay";
 import { Providers } from "./Providers";
-import { Agentation } from "agentation";
+import { UnifiedFeedbackWidget } from "@/components/dev/UnifiedFeedbackWidget";
 import "./globals.css";
 import "@liveblocks/react-ui/styles.css";
 import "@liveblocks/react-ui/styles/dark/media-query.css";
@@ -73,7 +73,7 @@ export default function RootLayout({
         {process.env.NODE_ENV === "development" && (
           <>
             <AgentationThemeSync />
-            <Agentation />
+            <UnifiedFeedbackWidget />
             <DesignViolationOverlay />
             {/* DevAnnotationOverlay disabled — Agentation MCP already handles this workflow */}
             {/* <DevAnnotationOverlay /> */}

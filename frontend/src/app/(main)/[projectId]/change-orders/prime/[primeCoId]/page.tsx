@@ -2,22 +2,33 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Check, Edit, FileUp, MoreHorizontal, Paperclip, Trash2, X } from "lucide-react";
+import {
+  ArrowLeft,
+  Check,
+  Edit,
+  FileUp,
+  Link2,
+  List,
+  MoreHorizontal,
+  Paperclip,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { StatusBadge } from "@/components/ds";
-import { PageShell } from "@/components/layout";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { EmptyState, StatusBadge } from "@/components/ds";
+import { KpiRow } from "@/components/ds/kpi";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+  ContentSectionStack,
+  LabelValueRow,
+  PageShell,
+  SectionRuleHeading,
+} from "@/components/layout";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +37,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Form,
   FormControl,
@@ -46,22 +64,60 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 
 // ---------------------------------------------------------------------------
-// Types & schema
+// Types
 // ---------------------------------------------------------------------------
+
+interface LineItem {
+  id: number;
+  pcco_id: number;
+  pco_id: number | null;
+  description: string | null;
+  quantity: number | null;
+  unit_cost: number | null;
+  line_amount: number | null;
+  cost_code: string | null;
+  uom: string | null;
+  created_at: string | null;
+}
+
+interface ContractInfo {
+  id: string;
+  contract_number: string;
+  title: string | null;
+  original_contract_value: number | null;
+  revised_contract_value: number | null;
+}
 
 interface PrimeCO {
   id: number;
   pcco_number: string | null;
-  title: string | null;
+  title: string;
+  description: string | null;
   status: string | null;
   total_amount: number | null;
-  contract_id: number | null;
+  contract_id: string | null;
   prime_contract_id: string | null;
-  executed: boolean;
+  executed: boolean | null;
+  revision: number | null;
+  change_reason: string | null;
+  is_private: boolean | null;
+  schedule_impact: number | null;
+  field_change: boolean | null;
+  reference: string | null;
+  paid_in_full: boolean | null;
+  signed_co_received_date: string | null;
+  request_received_from: string | null;
+  location: string | null;
+  due_date: string | null;
+  invoiced_date: string | null;
+  created_by: string | null;
+  contract_company: string | null;
   submitted_at: string | null;
   approved_at: string | null;
   created_at: string | null;
   project_id: number | null;
+  line_items: LineItem[];
+  contract: ContractInfo | null;
 }
 
 interface PrimeContractOption {
@@ -70,12 +126,30 @@ interface PrimeContractOption {
   title: string | null;
 }
 
+// ---------------------------------------------------------------------------
+// Edit schema
+// ---------------------------------------------------------------------------
+
 const editSchema = z.object({
   pcco_number: z.string().min(1, "Number is required"),
   title: z.string().min(1, "Title is required"),
+  description: z.string().nullable().optional(),
   status: z.string().min(1, "Status is required"),
   total_amount: z.number(),
   prime_contract_id: z.string().nullable().optional(),
+  revision: z.number().nullable().optional(),
+  change_reason: z.string().nullable().optional(),
+  is_private: z.boolean().optional(),
+  schedule_impact: z.number().nullable().optional(),
+  field_change: z.boolean().optional(),
+  reference: z.string().nullable().optional(),
+  paid_in_full: z.boolean().optional(),
+  signed_co_received_date: z.string().nullable().optional(),
+  request_received_from: z.string().nullable().optional(),
+  location: z.string().nullable().optional(),
+  due_date: z.string().nullable().optional(),
+  executed: z.boolean().optional(),
+  contract_company: z.string().nullable().optional(),
 });
 
 type FormData = z.infer<typeof editSchema>;
@@ -84,12 +158,15 @@ type FormData = z.infer<typeof editSchema>;
 // Helpers
 // ---------------------------------------------------------------------------
 
-function formatCurrency(amount: number | null): string {
+function formatCurrency(amount: number | null | undefined): string {
   if (amount == null) return "$0.00";
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(amount);
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(amount);
 }
 
-function formatDate(dateStr: string | null): string {
+function formatDate(dateStr: string | null | undefined): string {
   if (!dateStr) return "—";
   return new Date(dateStr).toLocaleDateString("en-US", {
     year: "numeric",
@@ -97,6 +174,32 @@ function formatDate(dateStr: string | null): string {
     day: "numeric",
   });
 }
+
+const STATUS_OPTIONS = [
+  "draft",
+  "proposed",
+  "approved",
+  "rejected",
+  "executed",
+  "void",
+];
+
+function statusLabel(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+const CHANGE_REASONS = [
+  "Client Request",
+  "Design Error",
+  "Design Omission",
+  "Field Condition",
+  "Owner Request",
+  "Regulatory Requirement",
+  "Scope Change",
+  "Unforeseen Condition",
+  "Value Engineering",
+  "Other",
+];
 
 // ---------------------------------------------------------------------------
 // Page
@@ -114,7 +217,9 @@ export default function PrimeContractCODetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [primeContracts, setPrimeContracts] = useState<PrimeContractOption[]>([]);
+  const [primeContracts, setPrimeContracts] = useState<PrimeContractOption[]>(
+    [],
+  );
 
   // Attachments
   interface Attachment {
@@ -131,11 +236,32 @@ export default function PrimeContractCODetailPage() {
 
   const form = useForm<FormData>({
     resolver: zodResolver(editSchema),
+    defaultValues: {
+      pcco_number: "",
+      title: "",
+      description: "",
+      status: "draft",
+      total_amount: 0,
+      prime_contract_id: null,
+      revision: 0,
+      change_reason: null,
+      is_private: false,
+      schedule_impact: null,
+      field_change: false,
+      reference: null,
+      paid_in_full: false,
+      signed_co_received_date: null,
+      request_received_from: null,
+      location: null,
+      due_date: null,
+      executed: false,
+      contract_company: null,
+    },
   });
 
   const apiBase = `/api/projects/${projectId}/prime-contract-change-orders/${primeCoId}`;
 
-  // Fetch attachments
+  // ---- Fetch attachments ---------------------------------------------------
   const fetchAttachments = useCallback(async () => {
     setAttachmentsLoading(true);
     setAttachmentsError(null);
@@ -146,8 +272,9 @@ export default function PrimeContractCODetailPage() {
       setAttachments(json.data ?? []);
     } catch (err) {
       console.error("Failed to fetch attachments:", err);
-      setAttachmentsError(err instanceof Error ? err.message : "Failed to fetch attachments");
-      // Keep existing attachments; don't reset to [] on transient failures
+      setAttachmentsError(
+        err instanceof Error ? err.message : "Failed to fetch attachments",
+      );
     } finally {
       setAttachmentsLoading(false);
     }
@@ -173,7 +300,6 @@ export default function PrimeContractCODetailPage() {
       } catch (err) {
         toast.error(err instanceof Error ? err.message : "Upload failed");
       }
-      // Reset the input so the same file can be re-uploaded
       e.target.value = "";
     },
     [apiBase, fetchAttachments],
@@ -186,7 +312,9 @@ export default function PrimeContractCODetailPage() {
           method: "DELETE",
         });
         if (!res.ok) {
-          const err = await res.json().catch(() => ({ error: "Delete failed" }));
+          const err = await res
+            .json()
+            .catch(() => ({ error: "Delete failed" }));
           throw new Error(err.error || "Delete failed");
         }
         toast.success("Attachment deleted");
@@ -198,7 +326,7 @@ export default function PrimeContractCODetailPage() {
     [apiBase, fetchAttachments],
   );
 
-  // Fetch data
+  // ---- Fetch data ----------------------------------------------------------
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -239,12 +367,27 @@ export default function PrimeContractCODetailPage() {
     form.reset({
       pcco_number: co.pcco_number || "",
       title: co.title || "",
-      status: co.status || "Proposed",
+      description: co.description || "",
+      status: co.status || "draft",
       total_amount: co.total_amount ?? 0,
       prime_contract_id: co.prime_contract_id ?? null,
+      revision: co.revision ?? 0,
+      change_reason: co.change_reason ?? null,
+      is_private: co.is_private ?? false,
+      schedule_impact: co.schedule_impact ?? null,
+      field_change: co.field_change ?? false,
+      reference: co.reference ?? null,
+      paid_in_full: co.paid_in_full ?? false,
+      signed_co_received_date: co.signed_co_received_date ?? null,
+      request_received_from: co.request_received_from ?? null,
+      location: co.location ?? null,
+      due_date: co.due_date ?? null,
+      executed: co.executed ?? false,
+      contract_company: co.contract_company ?? null,
     });
   }, [co, form]);
 
+  // ---- Handlers ------------------------------------------------------------
   const handleBack = useCallback(() => {
     router.push(`/${projectId}/change-orders?tab=prime`);
   }, [router, projectId]);
@@ -259,10 +402,18 @@ export default function PrimeContractCODetailPage() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to update");
+        throw new Error(
+          (err as { error?: string }).error || "Failed to update",
+        );
       }
       const updated = await res.json();
-      setCo(updated);
+      // Re-fetch full data to get line_items and contract
+      const fullRes = await fetch(apiBase);
+      if (fullRes.ok) {
+        setCo(await fullRes.json());
+      } else {
+        setCo({ ...co!, ...updated });
+      }
       setIsEditing(false);
       toast.success("Change order updated");
     } catch (err) {
@@ -273,7 +424,8 @@ export default function PrimeContractCODetailPage() {
   };
 
   const handleDelete = useCallback(async () => {
-    if (!co || !confirm(`Delete change order ${co.pcco_number}?`)) return;
+    if (!co || !confirm(`Delete change order ${co.pcco_number || co.title}?`))
+      return;
     try {
       const res = await fetch(apiBase, { method: "DELETE" });
       if (!res.ok) {
@@ -296,7 +448,7 @@ export default function PrimeContractCODetailPage() {
         throw new Error(err.error || "Failed to approve");
       }
       const updated = await res.json();
-      setCo(updated);
+      setCo((prev) => (prev ? { ...prev, ...updated } : prev));
       toast.success("Change order approved");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to approve");
@@ -322,7 +474,7 @@ export default function PrimeContractCODetailPage() {
         throw new Error(err.error || "Failed to reject");
       }
       const updated = await res.json();
-      setCo(updated);
+      setCo((prev) => (prev ? { ...prev, ...updated } : prev));
       setShowRejectDialog(false);
       setRejectionReason("");
       toast.success("Change order rejected");
@@ -331,10 +483,10 @@ export default function PrimeContractCODetailPage() {
     }
   }, [co, apiBase, rejectionReason]);
 
-  // --- Loading state ---------------------------------------------------------
+  // ---- Loading state -------------------------------------------------------
   if (isLoading) {
     return (
-      <PageShell variant="detail" title="Loading..." description="Loading change order details">
+      <PageShell variant="detail" title="Loading...">
         <div className="space-y-6">
           <Skeleton className="h-10 w-full max-w-md" />
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -346,14 +498,16 @@ export default function PrimeContractCODetailPage() {
     );
   }
 
-  // --- Error state -----------------------------------------------------------
+  // ---- Error state ---------------------------------------------------------
   if (error || !co) {
     return (
-      <PageShell variant="detail" title="Error" description="Failed to load change order" onBack={handleBack}>
-        <div className="text-center text-destructive">{error || "Not found"}</div>
+      <PageShell variant="detail" title="Error" onBack={handleBack}>
+        <div className="text-center text-destructive">
+          {error || "Not found"}
+        </div>
         <div className="mt-4 flex justify-center">
           <Button onClick={handleBack}>
-            <ArrowLeft />
+            <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Change Orders
           </Button>
         </div>
@@ -361,40 +515,53 @@ export default function PrimeContractCODetailPage() {
     );
   }
 
-  // --- Edit mode -------------------------------------------------------------
+  // ---- Edit mode -----------------------------------------------------------
   if (isEditing) {
     return (
       <PageShell
         variant="form"
         title={`Edit ${co.pcco_number || `PCCO #${co.id}`}`}
-        description="Update prime contract change order"
         onBack={() => setIsEditing(false)}
         actions={
           <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setIsEditing(false)} disabled={isSaving}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsEditing(false)}
+              disabled={isSaving}
+            >
               Cancel
             </Button>
-            <Button size="sm" onClick={form.handleSubmit(handleSave)} disabled={isSaving}>
+            <Button
+              size="sm"
+              onClick={form.handleSubmit(handleSave)}
+              disabled={isSaving}
+            >
               {isSaving ? "Saving..." : "Save Changes"}
             </Button>
           </div>
         }
       >
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(handleSave)} className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Details</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+          <form
+            onSubmit={form.handleSubmit(handleSave)}
+            className="space-y-8"
+          >
+            {/* General Information */}
+            <section className="space-y-6">
+              <SectionRuleHeading
+                label="General Information"
+                className="[&_span]:text-primary"
+              />
+              <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2">
                 <FormField
                   control={form.control}
                   name="pcco_number"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>PCCO Number *</FormLabel>
+                      <FormLabel>#</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. 000514" />
+                        <Input {...field} placeholder="e.g. 002" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -402,12 +569,18 @@ export default function PrimeContractCODetailPage() {
                 />
                 <FormField
                   control={form.control}
-                  name="title"
+                  name="revision"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Title *</FormLabel>
+                      <FormLabel>Revision</FormLabel>
                       <FormControl>
-                        <Textarea {...field} rows={3} />
+                        <Input
+                          type="number"
+                          value={field.value ?? 0}
+                          onChange={(e) =>
+                            field.onChange(parseInt(e.target.value) || 0)
+                          }
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -415,22 +588,17 @@ export default function PrimeContractCODetailPage() {
                 />
                 <FormField
                   control={form.control}
-                  name="status"
+                  name="contract_company"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Status</FormLabel>
-                      <Select onValueChange={field.onChange} value={field.value}>
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="Proposed">Proposed</SelectItem>
-                          <SelectItem value="Approved">Approved</SelectItem>
-                          <SelectItem value="Rejected">Rejected</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <FormLabel>Contract Company</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          value={field.value ?? ""}
+                          placeholder="e.g. Vargo, LLC"
+                        />
+                      </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -440,9 +608,11 @@ export default function PrimeContractCODetailPage() {
                   name="prime_contract_id"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Prime Contract</FormLabel>
+                      <FormLabel>Contract</FormLabel>
                       <Select
-                        onValueChange={(val) => field.onChange(val === "__none__" ? null : val)}
+                        onValueChange={(val) =>
+                          field.onChange(val === "__none__" ? null : val)
+                        }
                         value={field.value ?? "__none__"}
                       >
                         <FormControl>
@@ -465,6 +635,104 @@ export default function PrimeContractCODetailPage() {
                 />
                 <FormField
                   control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Title *</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="status"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Status</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {STATUS_OPTIONS.map((s) => (
+                            <SelectItem key={s} value={s}>
+                              {statusLabel(s)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="change_reason"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Change Reason</FormLabel>
+                      <Select
+                        onValueChange={(val) =>
+                          field.onChange(val === "__none__" ? null : val)
+                        }
+                        value={field.value ?? "__none__"}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select reason" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="__none__">None</SelectItem>
+                          {CHANGE_REASONS.map((r) => (
+                            <SelectItem key={r} value={r}>
+                              {r}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Description</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          {...field}
+                          value={field.value ?? ""}
+                          rows={4}
+                          placeholder="Describe the change..."
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </section>
+
+            {/* Financial & Schedule */}
+            <section className="space-y-6">
+              <SectionRuleHeading
+                label="Financial & Schedule"
+                className="[&_span]:text-primary"
+              />
+              <div className="grid grid-cols-1 gap-x-8 gap-y-5 md:grid-cols-2">
+                <FormField
+                  control={form.control}
                   name="total_amount"
                   render={({ field }) => (
                     <FormItem>
@@ -474,25 +742,217 @@ export default function PrimeContractCODetailPage() {
                           type="number"
                           step="0.01"
                           value={field.value}
-                          onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
+                          onChange={(e) =>
+                            field.onChange(parseFloat(e.target.value) || 0)
+                          }
                         />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
-              </CardContent>
-            </Card>
+                <FormField
+                  control={form.control}
+                  name="schedule_impact"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Schedule Impact (days)</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="number"
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(
+                              e.target.value
+                                ? parseInt(e.target.value)
+                                : null,
+                            )
+                          }
+                          placeholder="days"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="request_received_from"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Request Received From</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          value={field.value ?? ""}
+                          placeholder="Person or company"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="location"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Location</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          value={field.value ?? ""}
+                          placeholder="Location"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="reference"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Reference</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          value={field.value ?? ""}
+                          placeholder="Reference #"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="due_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Due Date</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="date"
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(e.target.value || null)
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="signed_co_received_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Signed CO Received Date</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="date"
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(e.target.value || null)
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </section>
+
+            {/* Flags */}
+            <section className="space-y-6">
+              <SectionRuleHeading
+                label="Flags"
+                className="[&_span]:text-primary"
+              />
+              <div className="grid grid-cols-2 gap-x-8 gap-y-4 md:grid-cols-4">
+                <FormField
+                  control={form.control}
+                  name="is_private"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center gap-2 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value ?? false}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="font-normal">Private</FormLabel>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="executed"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center gap-2 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value ?? false}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="font-normal">Executed</FormLabel>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="field_change"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center gap-2 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value ?? false}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="font-normal">
+                        Field Change
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="paid_in_full"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center gap-2 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value ?? false}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <FormLabel className="font-normal">
+                        Paid In Full
+                      </FormLabel>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </section>
           </form>
         </Form>
       </PageShell>
     );
   }
 
-  // --- View mode -------------------------------------------------------------
+  // ---- View mode -----------------------------------------------------------
   const pageTitle = co.pcco_number
-    ? `${co.pcco_number} — ${co.title || "Untitled"}`
+    ? `PCO for ${co.pcco_number} — ${co.title || "Untitled"}`
     : co.title || "Untitled Prime Contract CO";
+
+  const lineItemsTotal =
+    co.line_items?.reduce((sum, li) => sum + (li.line_amount ?? 0), 0) ?? 0;
 
   return (
     <>
@@ -502,30 +962,38 @@ export default function PrimeContractCODetailPage() {
         statusBadge={
           <div className="flex items-center gap-2">
             <StatusBadge status={co.status || "Unknown"} />
-            {co.executed && <StatusBadge status="Executed" />}
+            {co.is_private && (
+              <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+                Private
+              </span>
+            )}
           </div>
         }
         onBack={handleBack}
         actions={
           <div className="flex items-center gap-2">
-            {co.status === "Proposed" && (
+            {(co.status === "proposed" || co.status === "draft") && (
               <>
                 <Button
                   variant="destructive"
                   size="sm"
                   onClick={() => setShowRejectDialog(true)}
                 >
-                  <X className="mr-2 h-4 w-4" />
+                  <X className="mr-1 h-4 w-4" />
                   Reject
                 </Button>
                 <Button size="sm" onClick={handleApprove}>
-                  <Check />
+                  <Check className="mr-1 h-4 w-4" />
                   Approve
                 </Button>
               </>
             )}
-            <Button variant="default" size="sm" onClick={() => setIsEditing(true)}>
-              <Edit />
+            <Button
+              variant="default"
+              size="sm"
+              onClick={() => setIsEditing(true)}
+            >
+              <Edit className="mr-1 h-4 w-4" />
               Edit
             </Button>
             <DropdownMenu>
@@ -535,6 +1003,15 @@ export default function PrimeContractCODetailPage() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem asChild>
+                  <a
+                    href={`/api/projects/${projectId}/prime-contract-change-orders/export?status=${co.status}`}
+                    download
+                  >
+                    Export CSV
+                  </a>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={handleDelete}
                   className="text-destructive focus:text-destructive"
@@ -548,123 +1025,282 @@ export default function PrimeContractCODetailPage() {
         }
       >
         {/* KPI row */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Amount</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(co.total_amount)}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Executed</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2 text-lg font-medium">
-                {co.executed ? (
-                  <>
-                    <Check className="h-5 w-5 text-green-600" /> Yes
-                  </>
-                ) : (
-                  "No"
-                )}
-              </div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Created</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-lg font-medium">{formatDate(co.created_at)}</div>
-            </CardContent>
-          </Card>
-        </div>
+        <KpiRow
+          metrics={[
+            { label: "Amount", value: formatCurrency(co.total_amount) },
+            { label: "Executed", value: co.executed ? "Yes" : "No" },
+            { label: "Created", value: formatDate(co.created_at) },
+          ]}
+        />
 
-        {/* Details */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">PCCO Number</span>
-              <span className="text-sm font-medium">{co.pcco_number || "—"}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Title</span>
-              <span className="max-w-md text-right text-sm">{co.title || "—"}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Status</span>
-              <StatusBadge status={co.status || "Unknown"} />
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Amount</span>
-              <span className="text-sm font-medium">{formatCurrency(co.total_amount)}</span>
-            </div>
-            {co.submitted_at && (
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Submitted</span>
-                <span className="text-sm">{formatDate(co.submitted_at)}</span>
-              </div>
-            )}
-            {co.approved_at && (
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Approved</span>
-                <span className="text-sm">{formatDate(co.approved_at)}</span>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Attachments */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle className="text-base">
-              <span className="flex items-center gap-2">
-                <Paperclip className="h-4 w-4" />
-                Attachments
-              </span>
-            </CardTitle>
-            <Button variant="outline" size="sm" asChild>
-              <label className="cursor-pointer">
-                <FileUp />
-                Upload File
-                <input
-                  type="file"
-                  className="hidden"
-                  onChange={handleFileUpload}
-                  aria-label="Upload attachment"
+        <ContentSectionStack>
+          {/* ── General Information ─────────────────────────────────── */}
+          <section>
+            <div className="grid grid-cols-[minmax(0,1fr)_minmax(340px,420px)] gap-x-16 gap-y-10">
+              <div className="space-y-6">
+                <SectionRuleHeading
+                  label="General Information"
+                  className="[&_span]:text-primary"
                 />
-              </label>
-            </Button>
-          </CardHeader>
-          <CardContent>
+                <dl className="space-y-4 text-sm">
+                  <LabelValueRow label="#">
+                    {co.pcco_number || "—"}
+                  </LabelValueRow>
+                  <LabelValueRow label="Revision">
+                    {co.revision ?? 0}
+                  </LabelValueRow>
+                  <LabelValueRow label="Contract Company">
+                    {co.contract_company || "—"}
+                  </LabelValueRow>
+                  <LabelValueRow label="Contract">
+                    {co.contract ? (
+                      <button
+                        type="button"
+                        className="inline-flex items-center gap-1 text-primary hover:underline"
+                        onClick={() =>
+                          router.push(
+                            `/${projectId}/prime-contracts/${co.contract!.id}`,
+                          )
+                        }
+                      >
+                        <Link2 className="h-3 w-3" />
+                        {co.contract.contract_number} —{" "}
+                        {co.contract.title || "Prime"}
+                      </button>
+                    ) : (
+                      "—"
+                    )}
+                  </LabelValueRow>
+                  <LabelValueRow label="Title">
+                    {co.title || "—"}
+                  </LabelValueRow>
+                  <LabelValueRow label="Status">
+                    <StatusBadge status={co.status || "Unknown"} />
+                  </LabelValueRow>
+                  <LabelValueRow label="Change Reason">
+                    {co.change_reason || "—"}
+                  </LabelValueRow>
+                  <LabelValueRow label="Private">
+                    {co.is_private ? "Yes" : "No"}
+                  </LabelValueRow>
+                  {co.description && (
+                    <LabelValueRow
+                      label="Description"
+                      valueClassName="leading-relaxed font-normal text-foreground whitespace-pre-wrap"
+                    >
+                      {co.description}
+                    </LabelValueRow>
+                  )}
+                </dl>
+              </div>
+
+              {/* Key Dates sidebar */}
+              <div className="space-y-4">
+                <SectionRuleHeading
+                  label="Key Dates"
+                  className="[&_span]:text-primary"
+                />
+                <dl className="space-y-3 text-sm">
+                  <LabelValueRow label="Created">
+                    {formatDate(co.created_at)}
+                  </LabelValueRow>
+                  {co.created_by && (
+                    <LabelValueRow label="Created By">
+                      {co.created_by}
+                    </LabelValueRow>
+                  )}
+                  {co.submitted_at && (
+                    <LabelValueRow label="Submitted">
+                      {formatDate(co.submitted_at)}
+                    </LabelValueRow>
+                  )}
+                  {co.approved_at && (
+                    <LabelValueRow label="Approved">
+                      {formatDate(co.approved_at)}
+                    </LabelValueRow>
+                  )}
+                  {co.due_date && (
+                    <LabelValueRow label="Due Date">
+                      {formatDate(co.due_date)}
+                    </LabelValueRow>
+                  )}
+                  {co.signed_co_received_date && (
+                    <LabelValueRow label="Signed CO Received">
+                      {formatDate(co.signed_co_received_date)}
+                    </LabelValueRow>
+                  )}
+                  {co.invoiced_date && (
+                    <LabelValueRow label="Invoiced">
+                      {formatDate(co.invoiced_date)}
+                    </LabelValueRow>
+                  )}
+                </dl>
+              </div>
+            </div>
+          </section>
+
+          {/* ── Details & Flags ─────────────────────────────────────── */}
+          <section className="space-y-6">
+            <SectionRuleHeading
+              label="Details"
+              className="[&_span]:text-primary"
+            />
+            <dl className="space-y-4 text-sm">
+              <LabelValueRow label="Amount">
+                {formatCurrency(co.total_amount)}
+              </LabelValueRow>
+              <LabelValueRow label="Executed">
+                {co.executed ? "Yes" : "No"}
+              </LabelValueRow>
+              <LabelValueRow label="Schedule Impact">
+                {co.schedule_impact != null
+                  ? `${co.schedule_impact} days`
+                  : "—"}
+              </LabelValueRow>
+              <LabelValueRow label="Field Change">
+                {co.field_change ? "Yes" : "No"}
+              </LabelValueRow>
+              <LabelValueRow label="Request Received From">
+                {co.request_received_from || "—"}
+              </LabelValueRow>
+              <LabelValueRow label="Location">
+                {co.location || "—"}
+              </LabelValueRow>
+              <LabelValueRow label="Reference">
+                {co.reference || "—"}
+              </LabelValueRow>
+              <LabelValueRow label="Paid In Full">
+                {co.paid_in_full ? "Yes" : "No"}
+              </LabelValueRow>
+            </dl>
+          </section>
+
+          {/* ── Line Items ─────────────────────────────────────────── */}
+          <section className="space-y-4">
+            <SectionRuleHeading
+              label="Line Items"
+              className="[&_span]:text-primary"
+            />
+            {co.line_items && co.line_items.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b text-left text-muted-foreground">
+                      <th className="pb-2 font-medium">#</th>
+                      <th className="pb-2 font-medium">Description</th>
+                      <th className="pb-2 font-medium">Cost Code</th>
+                      <th className="pb-2 text-right font-medium">Qty</th>
+                      <th className="pb-2 font-medium">UOM</th>
+                      <th className="pb-2 text-right font-medium">
+                        Unit Cost
+                      </th>
+                      <th className="pb-2 text-right font-medium">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {co.line_items.map((item, idx) => (
+                      <tr key={item.id} className="border-b last:border-0">
+                        <td className="py-2 text-muted-foreground">
+                          {idx + 1}
+                        </td>
+                        <td className="py-2">{item.description || "—"}</td>
+                        <td className="py-2">{item.cost_code || "—"}</td>
+                        <td className="py-2 text-right">
+                          {item.quantity ?? "—"}
+                        </td>
+                        <td className="py-2">{item.uom || "—"}</td>
+                        <td className="py-2 text-right">
+                          {item.unit_cost != null
+                            ? formatCurrency(item.unit_cost)
+                            : "—"}
+                        </td>
+                        <td className="py-2 text-right">
+                          {formatCurrency(item.line_amount)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="font-medium">
+                      <td colSpan={6} className="pt-2">
+                        Total
+                      </td>
+                      <td className="pt-2 text-right">
+                        {formatCurrency(lineItemsTotal)}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            ) : (
+              <EmptyState
+                icon={<List />}
+                title="No line items"
+                description="Add cost line items to this change order"
+              />
+            )}
+          </section>
+
+          {/* ── Attachments ────────────────────────────────────────── */}
+          <section className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex flex-1 items-center gap-2">
+                <Paperclip className="h-4 w-4 text-muted-foreground" />
+                <SectionRuleHeading
+                  label="Attachments"
+                  className="flex-1 [&_span]:text-primary"
+                />
+              </div>
+              {attachments.length > 0 && (
+                <Button variant="outline" size="sm" asChild>
+                  <label className="cursor-pointer">
+                    <FileUp className="mr-1 h-4 w-4" />
+                    Upload File
+                    <input
+                      type="file"
+                      className="hidden"
+                      onChange={handleFileUpload}
+                      aria-label="Upload attachment"
+                    />
+                  </label>
+                </Button>
+              )}
+            </div>
             {attachmentsLoading ? (
               <Skeleton className="h-16 w-full" />
             ) : attachmentsError ? (
               <p className="text-sm text-destructive">{attachmentsError}</p>
             ) : attachments.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No attachments</p>
+              <EmptyState
+                icon={<Paperclip />}
+                title="No attachments"
+                description="Upload files related to this change order"
+                action={{
+                  label: "Upload File",
+                  onClick: () =>
+                    document
+                      .getElementById("attachment-upload-empty")
+                      ?.click(),
+                }}
+              />
             ) : (
               <div className="space-y-2">
                 {attachments.map((att) => (
                   <div
                     key={att.id}
-                    className="flex items-center justify-between rounded-md border px-4 py-2"
+                    className="flex items-center justify-between rounded-md border border-border px-4 py-2"
                   >
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">{att.fileName}</p>
+                      <p className="truncate text-sm font-medium">
+                        {att.fileName}
+                      </p>
                       <p className="text-xs text-muted-foreground">
                         {att.fileSize < 1024
                           ? `${att.fileSize} B`
                           : att.fileSize < 1024 * 1024
                             ? `${(att.fileSize / 1024).toFixed(1)} KB`
                             : `${(att.fileSize / (1024 * 1024)).toFixed(1)} MB`}
-                        {" \u00b7 "}
+                        {" · "}
                         {formatDate(att.uploadedAt)}
                       </p>
                     </div>
@@ -680,8 +1316,16 @@ export default function PrimeContractCODetailPage() {
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+            {/* Hidden input for empty-state upload action */}
+            <input
+              id="attachment-upload-empty"
+              type="file"
+              className="hidden"
+              onChange={handleFileUpload}
+              aria-label="Upload attachment"
+            />
+          </section>
+        </ContentSectionStack>
       </PageShell>
 
       {/* Rejection dialog */}

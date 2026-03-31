@@ -227,7 +227,7 @@ function Section({
     <div className={cn("", className)}>
       {title && (
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-sm font-semibold text-foreground">{title}</h2>
+          <h2 className="heading-section">{title}</h2>
           {action}
         </div>
       )}
@@ -364,7 +364,7 @@ function DirectorySubSection({
 
   return (
     <div>
-      <p className="text-xs font-medium text-muted-foreground mb-2">{title}</p>
+      <p className="heading-small-caps">{title}</p>
       <div className="space-y-0.5">
         {allDisplayed.map((member, i) => (
           <div
@@ -534,7 +534,7 @@ function RoleBasedTeamSection({ projectId }: { projectId: number }) {
 
   return (
     <div>
-      <p className="text-xs font-medium text-muted-foreground mb-2">Project Team</p>
+      <p className="heading-small-caps">Project Team</p>
       {isLoading ? (
         <div className="space-y-1">
           {[0, 1, 2].map((i) => (
@@ -703,7 +703,7 @@ function AiWidget({ projectId }: { projectId: number }) {
                   <span className="text-[11px] font-bold text-primary">A</span>
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-foreground">Project Assistant</p>
+                  <p className="heading-section">Project Assistant</p>
                   <p className="text-xs text-muted-foreground">Powered by project data</p>
                 </div>
               </div>
@@ -762,7 +762,7 @@ function ProjectToolsSidebar({ projectId }: { projectId: number }) {
     <aside className="xl:sticky xl:top-6 xl:self-start">
       <div className="space-y-4 border-l border-border/70 pl-4">
         <div>
-          <h2 className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+          <h2 className="heading-tiny-caps">
             Tools
           </h2>
           <p className="mt-0.5 text-[10px] text-muted-foreground/80">
@@ -772,7 +772,7 @@ function ProjectToolsSidebar({ projectId }: { projectId: number }) {
 
         {groupedTools.map((group) => (
           <section key={group.id} className="space-y-1.5">
-            <h3 className="text-[11px] font-semibold text-foreground">{group.label}</h3>
+            <h3 className="heading-micro">{group.label}</h3>
             <div className="space-y-0.5">
               {group.tools.map((tool) => {
                 const href = tool.path.startsWith("/")

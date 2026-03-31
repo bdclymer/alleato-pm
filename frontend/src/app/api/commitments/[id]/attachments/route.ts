@@ -181,7 +181,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     // Upload file to Supabase Storage
     const fileExt = file.name.split(".").pop();
     const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-    const storagePath = `commitments/${commitment.project_id}/${commitmentId}/${fileName}`;
+    const storagePath = `${commitment.project_id}/commitments/${commitmentId}/${fileName}`;
 
     const { error: uploadError } = await serviceClient.storage
       .from("project-files")

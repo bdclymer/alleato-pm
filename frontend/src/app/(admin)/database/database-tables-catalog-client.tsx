@@ -25,11 +25,16 @@ const PAGE_DESCRIPTION = "Catalog of tables in the public schema";
 const columns: ColumnConfig[] = [
   { id: "table_name", label: "Table Name", alwaysVisible: true },
   { id: "schema_name", label: "Schema", defaultVisible: true },
+  { id: "schema", label: "Schema Definition", defaultVisible: true },
   { id: "category", label: "Category", defaultVisible: true },
+  { id: "status", label: "Status", defaultVisible: true },
   { id: "row_count", label: "Row Count", defaultVisible: true },
   { id: "rls_enabled", label: "RLS Enabled", defaultVisible: true },
   { id: "primary_keys", label: "Primary Keys", defaultVisible: true },
+  { id: "fk_columns", label: "FK Columns", defaultVisible: true },
   { id: "table_comment", label: "Description", defaultVisible: true },
+  { id: "notes", label: "Notes", defaultVisible: true },
+  { id: "tools", label: "Tools", defaultVisible: true },
   { id: "created_at", label: "Created At", defaultVisible: false },
 ];
 
@@ -125,6 +130,14 @@ function buildTableColumns(
       csvValue: (item) => item.category || "",
     },
     {
+      ...col("status"),
+      render: (item) => (
+        <CellText value={item.status} emptyLabel="-" className="block max-w-[12rem] truncate" />
+      ),
+      sortValue: (item) => item.status || "",
+      csvValue: (item) => item.status || "",
+    },
+    {
       ...col("row_count"),
       render: (item) => <CellText value={item.row_count === null ? null : String(item.row_count)} emptyLabel="-" />,
       sortValue: (item) => item.row_count ?? -1,
@@ -164,6 +177,18 @@ function buildTableColumns(
       csvValue: (item) => item.primary_keys || "",
     },
     {
+      ...col("fk_columns"),
+      render: (item) => (
+        <CellText
+          value={item.fk_columns}
+          emptyLabel="-"
+          className="block max-w-[20rem] truncate font-mono text-xs"
+        />
+      ),
+      sortValue: (item) => item.fk_columns || "",
+      csvValue: (item) => item.fk_columns || "",
+    },
+    {
       ...col("table_comment"),
       editable: true,
       editValue: (item) => item.table_comment ?? "",
@@ -179,6 +204,42 @@ function buildTableColumns(
       csvValue: (item) => item.table_comment || "",
     },
     {
+      ...col("notes"),
+      render: (item) => (
+        <CellText
+          value={item.notes}
+          emptyLabel="-"
+          className="block max-w-[20rem] truncate"
+        />
+      ),
+      sortValue: (item) => item.notes || "",
+      csvValue: (item) => item.notes || "",
+    },
+    {
+      ...col("tools"),
+      render: (item) => (
+        <CellText
+          value={item.tools}
+          emptyLabel="-"
+          className="block max-w-[20rem] truncate"
+        />
+      ),
+      sortValue: (item) => item.tools || "",
+      csvValue: (item) => item.tools || "",
+    },
+    {
+      ...col("schema"),
+      render: (item) => (
+        <CellText
+          value={item.schema}
+          emptyLabel="-"
+          className="block max-w-[24rem] truncate font-mono text-xs"
+        />
+      ),
+      sortValue: (item) => item.schema || "",
+      csvValue: (item) => item.schema || "",
+    },
+    {
       ...col("created_at"),
       render: (item) => <TableDateValue value={item.created_at} emptyLabel="-" />,
       sortValue: (item) => (item.created_at ? new Date(item.created_at).getTime() : 0),
@@ -191,11 +252,16 @@ function toCsv(rows: DatabaseTableCatalogRow[]) {
   const headers = [
     "table_name",
     "schema_name",
+    "schema",
     "category",
+    "status",
     "row_count",
     "rls_enabled",
     "primary_keys",
+    "fk_columns",
     "table_comment",
+    "notes",
+    "tools",
     "created_at",
   ];
 
@@ -210,11 +276,16 @@ function toCsv(rows: DatabaseTableCatalogRow[]) {
     [
       row.table_name,
       row.schema_name,
+      row.schema || "",
       row.category || "",
+      row.status || "",
       row.row_count === null ? "" : String(row.row_count),
       row.rls_enabled === null ? "" : String(row.rls_enabled),
       row.primary_keys || "",
+      row.fk_columns || "",
       row.table_comment || "",
+      row.notes || "",
+      row.tools || "",
       row.created_at || "",
     ]
       .map(escape)
@@ -350,7 +421,18 @@ export function DatabaseTablesCatalogClient({
     if (!search) return baseRows;
 
     return baseRows.filter((row) =>
-      [row.table_name, row.schema_name, row.category || "", row.table_comment || ""]
+      [
+        row.table_name,
+        row.schema_name,
+        row.schema || "",
+        row.category || "",
+        row.status || "",
+        row.primary_keys || "",
+        row.fk_columns || "",
+        row.table_comment || "",
+        row.notes || "",
+        row.tools || "",
+      ]
         .join(" ")
         .toLowerCase()
         .includes(search),

@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/ds";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import { FileText } from "lucide-react";
 
 interface PrimeContract {
@@ -41,6 +42,7 @@ export function AddToPrimePCODialog({
   projectId,
   onSuccess,
 }: AddToPrimePCODialogProps) {
+  const router = useRouter();
   const [contracts, setContracts] = useState<PrimeContract[]>([]);
   const [isLoadingContracts, setIsLoadingContracts] = useState(false);
   const [selectedContractId, setSelectedContractId] = useState<string>("");
@@ -115,6 +117,12 @@ export function AddToPrimePCODialog({
       );
       onSuccess();
       onClose();
+
+      // Navigate to the newly created PCO detail page
+      const pcos = result?.pcos as { changeEventId: string; pcoId: number }[] | undefined;
+      if (pcos && pcos.length > 0) {
+        router.push(`/${projectId}/change-orders/prime/${pcos[0].pcoId}`);
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create PCOs");
     } finally {

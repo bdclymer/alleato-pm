@@ -5,7 +5,7 @@
   "packageManager": "pnpm@10.13.1",
   "scripts": {
     "postinstall": "rm -rf .next 2>/dev/null || true",
-    "dev": "next dev --turbopack",
+    "dev": "rm -rf .next && next dev --turbopack",
     "dev:clean": "rm -rf .next && next dev --turbopack",
     "build": "NODE_OPTIONS='--max-old-space-size=7168' next build",
     "start": "next start",
@@ -133,7 +133,7 @@
     "@vercel/blob": "^2.3.0",
     "@vercel/functions": "^3.4.3",
     "@xyflow/react": "^12.10.0",
-    "agentation": "^2.2.1",
+    "agentation": "^3.0.2",
     "ai": "^6.0.105",
     "ansi-to-react": "^6.2.6",
     "bcrypt-ts": "^8.0.1",

@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { StatusBadge } from "@/components/ds";
-import { PageShell } from "@/components/layout";
+import { ContentSectionStack, LabelValueRow, PageShell, SectionRuleHeading } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -561,83 +561,63 @@ export default function CommitmentCODetailPage() {
           </div>
         }
       >
-        {/* KPI row */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">Amount</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{formatCurrency(co.amount)}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Requested Date
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-lg font-medium">{formatDate(co.requested_date)}</div>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Approved Date
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-lg font-medium">{formatDate(co.approved_date)}</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Details */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">CO Number</span>
-              <span className="text-sm font-medium">{co.change_order_number || "—"}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Description</span>
-              <span className="max-w-md text-right text-sm">{co.description || "—"}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Status</span>
-              <StatusBadge status={statusLabel(co.status)} />
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Amount</span>
-              <span className="text-sm font-medium">{formatCurrency(co.amount)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Requested Date</span>
-              <span className="text-sm">{formatDate(co.requested_date)}</span>
-            </div>
-            {co.approved_date && (
-              <div className="flex justify-between">
-                <span className="text-sm text-muted-foreground">Approved Date</span>
-                <span className="text-sm">{formatDate(co.approved_date)}</span>
+        <ContentSectionStack>
+          {/* Details + Key Dates */}
+          <section>
+            <div className="grid grid-cols-[minmax(0,1fr)_minmax(340px,420px)] gap-x-16 gap-y-10">
+              <div className="space-y-6">
+                <SectionRuleHeading label="Details" className="[&_span]:text-primary" />
+                <dl className="space-y-4 text-sm">
+                  <LabelValueRow label="CO Number">
+                    {co.change_order_number || "—"}
+                  </LabelValueRow>
+                  <LabelValueRow label="Description" valueClassName="leading-relaxed font-normal text-foreground whitespace-pre-wrap">
+                    {co.description || "—"}
+                  </LabelValueRow>
+                  <LabelValueRow label="Status">
+                    <StatusBadge status={statusLabel(co.status)} />
+                  </LabelValueRow>
+                  <LabelValueRow label="Amount">
+                    {formatCurrency(co.amount)}
+                  </LabelValueRow>
+                  <LabelValueRow label="Requested Date">
+                    {formatDate(co.requested_date)}
+                  </LabelValueRow>
+                  {co.approved_date && (
+                    <LabelValueRow label="Approved Date">
+                      {formatDate(co.approved_date)}
+                    </LabelValueRow>
+                  )}
+                </dl>
               </div>
-            )}
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Created</span>
-              <span className="text-sm">{formatDate(co.created_at)}</span>
+              <div className="space-y-8">
+                <div className="space-y-4">
+                  <SectionRuleHeading label="Key Dates" className="[&_span]:text-primary" />
+                  <div className="rounded-md border border-border bg-muted p-6">
+                    <dl className="space-y-3 text-sm">
+                      <LabelValueRow label="Created">
+                        {formatDate(co.created_at)}
+                      </LabelValueRow>
+                      {co.requested_date && (
+                        <LabelValueRow label="Requested">
+                          {formatDate(co.requested_date)}
+                        </LabelValueRow>
+                      )}
+                      {co.approved_date && (
+                        <LabelValueRow label="Approved">
+                          {formatDate(co.approved_date)}
+                        </LabelValueRow>
+                      )}
+                    </dl>
+                  </div>
+                </div>
+              </div>
             </div>
-          </CardContent>
-        </Card>
+          </section>
 
-        {/* Line Items */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Line Items</CardTitle>
-          </CardHeader>
-          <CardContent>
+          {/* Line Items */}
+          <section className="space-y-4">
+            <SectionRuleHeading label="Line Items" className="[&_span]:text-primary" />
             {lineItemsLoading ? (
               <Skeleton className="h-20 w-full" />
             ) : lineItems.length === 0 ? (
@@ -670,15 +650,11 @@ export default function CommitmentCODetailPage() {
                 </table>
               </div>
             )}
-          </CardContent>
-        </Card>
+          </section>
 
-        {/* Attachments */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Attachments</CardTitle>
-          </CardHeader>
-          <CardContent>
+          {/* Attachments */}
+          <section className="space-y-4">
+            <SectionRuleHeading label="Attachments" className="[&_span]:text-primary" />
             <div className="mb-4">
               <Button
                 variant="outline"
@@ -707,7 +683,7 @@ export default function CommitmentCODetailPage() {
                 {attachments.map((att) => (
                   <div
                     key={att.id}
-                    className="flex items-center justify-between rounded-md border px-3 py-2"
+                    className="flex items-center justify-between rounded-md border border-border px-3 py-2"
                   >
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium">{att.fileName}</p>
@@ -729,20 +705,16 @@ export default function CommitmentCODetailPage() {
                 ))}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </section>
 
-        {/* Rejection reason */}
-        {co.rejection_reason && (
-          <Card className="border-destructive">
-            <CardHeader>
-              <CardTitle className="text-base text-destructive">Rejection Reason</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm">{co.rejection_reason}</p>
-            </CardContent>
-          </Card>
-        )}
+          {/* Rejection reason */}
+          {co.rejection_reason && (
+            <section className="space-y-4">
+              <SectionRuleHeading label="Rejection Reason" className="[&_span]:text-destructive" />
+              <p className="text-sm text-foreground">{co.rejection_reason}</p>
+            </section>
+          )}
+        </ContentSectionStack>
       </PageShell>
 
       {/* Rejection dialog */}

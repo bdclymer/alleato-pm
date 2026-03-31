@@ -89,7 +89,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const fileExt = file.name.split(".").pop();
     const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
-    const storagePath = `cco-attachments/${projectId}/${commitmentCoId}/${fileName}`;
+    const storagePath = `${projectId}/cco-attachments/${commitmentCoId}/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
       .from("project-files")

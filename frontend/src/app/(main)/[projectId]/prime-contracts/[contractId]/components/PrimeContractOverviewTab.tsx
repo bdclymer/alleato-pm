@@ -415,11 +415,9 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
 
       {/* ─── Schedule of Values ─── */}
       <section>
-        <div className="flex items-center justify-between">
-          <h3 className="text-base font-semibold">Schedule of Values</h3>
-          <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-            {displayedSovItems.filter((item) => !item.is_group_header).length} active line items
-          </span>
+        <SectionRuleHeading label="Schedule of Values" className="[&_span]:text-primary" />
+
+        <div className="mt-4 flex items-center justify-end">
           <div className="flex items-center gap-2">
             {isSovEditing ? (
               <>
@@ -506,6 +504,12 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                         <TableHead className="min-w-64 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
                           Description
                         </TableHead>
+                        <TableHead className="w-20 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                          Qty
+                        </TableHead>
+                        <TableHead className="w-16 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                          UOM
+                        </TableHead>
                         <TableHead className="w-40 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
                           Amount
                         </TableHead>
@@ -530,17 +534,15 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                               {({ attributes, listeners }) => (
                                 <>
                               <TableCell className="w-10 px-1 py-1">
-                                {isSovEditing && (
-                                  <div
-                                    className="mt-1 cursor-grab rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted active:cursor-grabbing"
-                                    {...attributes}
-                                    {...listeners}
-                                  >
-                                    <GripVertical className="h-4 w-4" />
-                                  </div>
-                                )}
+                                <div
+                                  className="mt-1 cursor-grab rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted active:cursor-grabbing"
+                                  {...attributes}
+                                  {...listeners}
+                                >
+                                  <GripVertical className="h-4 w-4" />
+                                </div>
                               </TableCell>
-                              <TableCell colSpan={5} className="px-1 py-1">
+                              <TableCell colSpan={7} className="px-1 py-1">
                                 {isSovEditing ? (
                                   <Input
                                     value={item.group_name || item.description || ""}
@@ -607,15 +609,14 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                             {({ attributes, listeners }) => (
                               <>
                             <TableCell className="w-10 px-1 py-1 align-top">
-                              {isSovEditing ? (
-                                <div
-                                  className="mt-1 cursor-grab rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted active:cursor-grabbing"
-                                  {...attributes}
-                                  {...listeners}
-                                >
-                                  <GripVertical className="h-4 w-4" />
-                                </div>
-                              ) : null}
+                              <div
+                                className="mt-1 cursor-grab rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted active:cursor-grabbing"
+                                {...attributes}
+                                {...listeners}
+                                aria-label="Drag to reorder line item"
+                              >
+                                <GripVertical className="h-4 w-4" />
+                              </div>
                             </TableCell>
                             <TableCell className="min-w-72 px-1 py-1 align-top">
                               {isSovEditing ? (
@@ -654,6 +655,45 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                                 />
                               ) : (
                                 <div className="pt-2 text-xs leading-tight">{item.description || "--"}</div>
+                              )}
+                            </TableCell>
+                            <TableCell className="w-20 px-1 py-1 align-top">
+                              {isSovEditing ? (
+                                <Input
+                                  type="number"
+                                  min="0"
+                                  step="1"
+                                  className="h-10 text-right"
+                                  placeholder="1"
+                                  value={item.quantity ?? ""}
+                                  onChange={(e) =>
+                                    onUpdateSovLine(item.id, {
+                                      quantity: e.target.value === "" ? undefined : Number(e.target.value),
+                                    })
+                                  }
+                                />
+                              ) : (
+                                <div className="pt-2 text-right text-xs tabular-nums">
+                                  {item.quantity ?? 1}
+                                </div>
+                              )}
+                            </TableCell>
+                            <TableCell className="w-16 px-1 py-1 align-top">
+                              {isSovEditing ? (
+                                <Input
+                                  className="h-10"
+                                  placeholder="EA"
+                                  value={item.unit_of_measure ?? ""}
+                                  onChange={(e) =>
+                                    onUpdateSovLine(item.id, {
+                                      unit_of_measure: e.target.value || null,
+                                    })
+                                  }
+                                />
+                              ) : (
+                                <div className="pt-2 text-xs text-muted-foreground">
+                                  {item.unit_of_measure || "EA"}
+                                </div>
                               )}
                             </TableCell>
                             <TableCell className="w-40 px-1 py-1 align-top">

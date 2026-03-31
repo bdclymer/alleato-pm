@@ -257,6 +257,16 @@ const [isSovEditing, setIsSovEditing] = useState(false);
   const [rejectingCoId, setRejectingCoId] = useState<string | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [isRejectingCo, setIsRejectingCo] = useState(false);
+  const [editingCo, setEditingCo] = useState<PrimeContractCO | null>(null);
+  const [editCoForm, setEditCoForm] = useState<ChangeOrderFormState>({
+    change_order_number: "",
+    description: "",
+    amount: "",
+    status: "pending",
+  });
+  const [isUpdatingCo, setIsUpdatingCo] = useState(false);
+  const [deletingCo, setDeletingCo] = useState<PrimeContractCO | null>(null);
+  const [isDeletingCo, setIsDeletingCo] = useState(false);
   const [isDocumentDialogOpen, setIsDocumentDialogOpen] = useState(false);
   const [documentDialogTab, setDocumentDialogTab] = useState<"download" | "email">(
     "download",
@@ -1486,6 +1496,12 @@ const [isSovEditing, setIsSovEditing] = useState(false);
 
     // Use budget_code_id (the real FK) directly from each line item.
     // Fall back to reverse-mapping cost_code_id → budget code only for legacy rows.
+    const nextDraftBudgetCodeIds = buildSovDraftBudgetCodeIds(lineItems);
+    setSovDraftBudgetCodeIds(nextDraftBudgetCodeIds);
+    setIsSovEditing(true);
+  };
+
+  const buildSovDraftBudgetCodeIds = (items: ContractLineItem[]) => {
     const budgetCodeIdByCostCodeId = new Map<string, string>();
     budgetCodes.forEach((budgetCode) => {
       const costCodeId = budgetCode.legacyCostCodeId;
@@ -1495,22 +1511,19 @@ const [isSovEditing, setIsSovEditing] = useState(false);
     });
 
     const nextDraftBudgetCodeIds: Record<string, string> = {};
-    lineItems.forEach((item) => {
+    items.forEach((item) => {
       // Primary: use the stored budget_code_id FK
       if (item.budget_code_id) {
         nextDraftBudgetCodeIds[item.id] = item.budget_code_id;
-        return;
-      }
-      // Fallback: reverse-map from cost_code_id (for legacy data)
-      if (item.cost_code_id != null) {
+      } else if (item.cost_code_id != null) {
+        // Fallback: reverse-map from cost_code_id (for legacy data)
         const budgetCodeId = budgetCodeIdByCostCodeId.get(String(item.cost_code_id));
         if (budgetCodeId) {
           nextDraftBudgetCodeIds[item.id] = budgetCodeId;
         }
       }
     });
-    setSovDraftBudgetCodeIds(nextDraftBudgetCodeIds);
-    setIsSovEditing(true);
+    return nextDraftBudgetCodeIds;
   };
 
   const handleCancelSovEdit = () => {
@@ -1655,15 +1668,30 @@ const [isSovEditing, setIsSovEditing] = useState(false);
   };
 
   const handleReorderSovLines = (oldIndex: number, newIndex: number) => {
-    if (!isSovEditing) {
+    if (oldIndex < 0 || newIndex < 0 || oldIndex === newIndex) {
       return;
     }
 
-    setSovDraftItems((prev) =>
-      oldIndex < 0 || newIndex < 0 || oldIndex >= prev.length || newIndex >= prev.length
-        ? prev
-        : normalizeSovDraftItems(arrayMove(prev, oldIndex, newIndex)),
-    );
+    if (!isSovEditing) {
+      const seededDraftItems = normalizeSovDraftItems(
+        lineItems.map((item) => ({ ...item })),
+      );
+      if (oldIndex >= seededDraftItems.length || newIndex >= seededDraftItems.length) {
+        return;
+      }
+
+      setSovDraftItems(normalizeSovDraftItems(arrayMove(seededDraftItems, oldIndex, newIndex)));
+      setSovDraftBudgetCodeIds(buildSovDraftBudgetCodeIds(lineItems));
+      setIsSovEditing(true);
+      return;
+    }
+
+    setSovDraftItems((prev) => {
+      if (oldIndex >= prev.length || newIndex >= prev.length) {
+        return prev;
+      }
+      return normalizeSovDraftItems(arrayMove(prev, oldIndex, newIndex));
+    });
   };
 
   const handleSaveSovEdit = async () => {
@@ -1926,6 +1954,77 @@ const [isSovEditing, setIsSovEditing] = useState(false);
       toast.error("Failed to create change order");
     } finally {
       setIsSubmittingCo(false);
+    }
+  };
+
+  const handleStartEditCo = (co: PrimeContractCO) => {
+    setEditingCo(co);
+    setEditCoForm({
+      change_order_number: co.change_order_number || "",
+      description: co.description || "",
+      amount: String(co.amount ?? ""),
+      status: "pending",
+    });
+  };
+
+  const handleUpdateCo = async () => {
+    if (!editingCo) return;
+    if (!editCoForm.change_order_number || !editCoForm.description || !editCoForm.amount) {
+      toast.error("CO number, description, and amount are required");
+      return;
+    }
+    setIsUpdatingCo(true);
+    try {
+      const response = await fetch(
+        `/api/projects/${projectId}/contracts/${contractId}/change-orders/${editingCo.id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            change_order_number: editCoForm.change_order_number,
+            description: editCoForm.description,
+            amount: parseFloat(editCoForm.amount),
+          }),
+        },
+      );
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        toast.error(err.error || "Failed to update change order");
+        return;
+      }
+      const updated = await response.json();
+      setChangeOrders((prev) =>
+        prev.map((co) => (co.id === editingCo.id ? { ...co, ...updated } : co)),
+      );
+      setEditingCo(null);
+      toast.success("Change order updated");
+    } catch {
+      toast.error("Failed to update change order");
+    } finally {
+      setIsUpdatingCo(false);
+    }
+  };
+
+  const handleDeleteCo = async () => {
+    if (!deletingCo) return;
+    setIsDeletingCo(true);
+    try {
+      const response = await fetch(
+        `/api/projects/${projectId}/contracts/${contractId}/change-orders/${deletingCo.id}`,
+        { method: "DELETE" },
+      );
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        toast.error(err.error || "Failed to delete change order");
+        return;
+      }
+      setChangeOrders((prev) => prev.filter((co) => co.id !== deletingCo.id));
+      setDeletingCo(null);
+      toast.success("Change order deleted");
+    } catch {
+      toast.error("Failed to delete change order");
+    } finally {
+      setIsDeletingCo(false);
     }
   };
 
@@ -2528,6 +2627,15 @@ lineItemsLoading={lineItemsLoading}
                                 size="icon"
                                 variant="ghost"
                                 className="h-7 w-7"
+                                onClick={() => handleStartEditCo(co)}
+                                title="Edit"
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7"
                                 onClick={() => void downloadPrimeContractChangeOrderPdf(co)}
                                 title="Download PDF"
                                 aria-label={`Download ${co.change_order_number || "change order"} PDF`}
@@ -2559,6 +2667,15 @@ lineItemsLoading={lineItemsLoading}
                                   </Button>
                                 </>
                               )}
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-7 w-7 text-destructive hover:text-destructive"
+                                onClick={() => setDeletingCo(co)}
+                                title="Delete"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -3638,6 +3755,16 @@ lineItemsLoading={lineItemsLoading}
         setLineItemToDelete={setLineItemToDelete}
         isDeletingLineItem={isDeletingLineItem}
         handleDeleteLineItem={handleDeleteLineItem}
+        editingCo={editingCo}
+        setEditingCo={setEditingCo}
+        editCoForm={editCoForm}
+        setEditCoForm={setEditCoForm}
+        isUpdatingCo={isUpdatingCo}
+        handleUpdateCo={handleUpdateCo}
+        deletingCo={deletingCo}
+        setDeletingCo={setDeletingCo}
+        isDeletingCo={isDeletingCo}
+        handleDeleteCo={handleDeleteCo}
       />
       {contract ? (
         <DocumentDeliveryDialog

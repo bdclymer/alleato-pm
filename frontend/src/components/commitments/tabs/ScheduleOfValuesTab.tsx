@@ -36,6 +36,7 @@ interface ScheduleOfValuesTabProps {
   projectId: number;
   commitmentId: string;
   commitmentType?: "subcontract" | "purchase_order" | string;
+  showHeader?: boolean;
   onImportComplete?: () => void | Promise<void>;
   onLineItemsChange?: (items: LineItem[]) => void;
   isLoading?: boolean;
@@ -47,6 +48,7 @@ export function ScheduleOfValuesTab({
   projectId,
   commitmentId,
   commitmentType,
+  showHeader = true,
   onImportComplete,
   onLineItemsChange,
   isLoading = false,
@@ -273,7 +275,7 @@ export function ScheduleOfValuesTab({
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <SectionHeader title="Schedule of Values" />
+        {showHeader ? <SectionHeader title="Schedule of Values" /> : null}
         <Skeleton className="h-10 w-full" />
         <Skeleton className="h-10 w-full" />
         <Skeleton className="h-10 w-full" />
@@ -284,7 +286,7 @@ export function ScheduleOfValuesTab({
   if (error) {
     return (
       <div className="space-y-4">
-        <SectionHeader title="Schedule of Values" />
+        {showHeader ? <SectionHeader title="Schedule of Values" /> : null}
         <Text tone="destructive">{error}</Text>
       </div>
     );
@@ -293,7 +295,7 @@ export function ScheduleOfValuesTab({
   if (!items.length) {
     return (
       <div className="space-y-4">
-        <SectionHeader title="Schedule of Values" />
+        {showHeader ? <SectionHeader title="Schedule of Values" /> : null}
         <div className="text-center py-8">
           <Text tone="muted" size="sm">
             No SOV line items for this commitment
@@ -321,12 +323,9 @@ export function ScheduleOfValuesTab({
 
   return (
     <div className="space-y-6">
-      <SectionHeader title="Schedule of Values" />
+      {showHeader ? <SectionHeader title="Schedule of Values" /> : null}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Text size="sm" tone="muted">
-              Manage line items for this commitment
-            </Text>
             {hasUnsavedChanges && (
               <Badge variant="outline" className="text-amber-600 border-amber-600">
                 <AlertCircle className="h-3 w-3 mr-1" />

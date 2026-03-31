@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       __drizzle_migrations: {
@@ -10574,7 +10599,6 @@ export type Database = {
           approved_at: string | null
           billing_date: string | null
           billing_period_id: string | null
-          contract_id: string | null
           created_at: string | null
           due_date: string | null
           gross_amount: number | null
@@ -10597,7 +10621,6 @@ export type Database = {
           approved_at?: string | null
           billing_date?: string | null
           billing_period_id?: string | null
-          contract_id?: string | null
           created_at?: string | null
           due_date?: string | null
           gross_amount?: number | null
@@ -10620,7 +10643,6 @@ export type Database = {
           approved_at?: string | null
           billing_date?: string | null
           billing_period_id?: string | null
-          contract_id?: string | null
           created_at?: string | null
           due_date?: string | null
           gross_amount?: number | null
@@ -10642,20 +10664,6 @@ export type Database = {
             columns: ["billing_period_id"]
             isOneToOne: false
             referencedRelation: "billing_periods"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "owner_invoices_contract_id_fkey"
-            columns: ["contract_id"]
-            isOneToOne: false
-            referencedRelation: "prime_contract_financial_summary"
-            referencedColumns: ["contract_id"]
-          },
-          {
-            foreignKeyName: "owner_invoices_contract_id_fkey"
-            columns: ["contract_id"]
-            isOneToOne: false
-            referencedRelation: "prime_contracts"
             referencedColumns: ["id"]
           },
           {
@@ -11096,13 +11104,28 @@ export type Database = {
         Row: {
           acumatica_external_key: string | null
           approved_at: string | null
+          change_reason: string | null
+          contract_company: string | null
           contract_id: string | null
           created_at: string | null
+          created_by: string | null
+          description: string | null
+          due_date: string | null
           executed: boolean | null
+          field_change: boolean | null
           id: number
+          invoiced_date: string | null
+          is_private: boolean | null
+          location: string | null
+          paid_in_full: boolean | null
           pcco_number: string | null
           prime_contract_id: string | null
           project_id: number | null
+          reference: string | null
+          request_received_from: string | null
+          revision: number | null
+          schedule_impact: number | null
+          signed_co_received_date: string | null
           status: string | null
           submitted_at: string | null
           title: string
@@ -11111,13 +11134,28 @@ export type Database = {
         Insert: {
           acumatica_external_key?: string | null
           approved_at?: string | null
+          change_reason?: string | null
+          contract_company?: string | null
           contract_id?: string | null
           created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
           executed?: boolean | null
+          field_change?: boolean | null
           id?: number
+          invoiced_date?: string | null
+          is_private?: boolean | null
+          location?: string | null
+          paid_in_full?: boolean | null
           pcco_number?: string | null
           prime_contract_id?: string | null
           project_id?: number | null
+          reference?: string | null
+          request_received_from?: string | null
+          revision?: number | null
+          schedule_impact?: number | null
+          signed_co_received_date?: string | null
           status?: string | null
           submitted_at?: string | null
           title: string
@@ -11126,13 +11164,28 @@ export type Database = {
         Update: {
           acumatica_external_key?: string | null
           approved_at?: string | null
+          change_reason?: string | null
+          contract_company?: string | null
           contract_id?: string | null
           created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
           executed?: boolean | null
+          field_change?: boolean | null
           id?: number
+          invoiced_date?: string | null
+          is_private?: boolean | null
+          location?: string | null
+          paid_in_full?: boolean | null
           pcco_number?: string | null
           prime_contract_id?: string | null
           project_id?: number | null
+          reference?: string | null
+          request_received_from?: string | null
+          revision?: number | null
+          schedule_impact?: number | null
+          signed_co_received_date?: string | null
           status?: string | null
           submitted_at?: string | null
           title?: string
@@ -21892,6 +21945,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       billing_period_status: ["open", "closed", "approved"],

@@ -8,7 +8,7 @@ import {
   LayoutGrid,
   Table2,
   List,
-  Filter,
+  SlidersHorizontal,
   Columns3,
   Download,
   Trash2,
@@ -212,7 +212,7 @@ function FilterFields({
   const inputFilters = filters.filter((filter) => filter.type === "date" || filter.type === "number");
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2">
       {selectFilters.map((filter) => {
         const currentValue =
           typeof activeFilters[filter.id] === "string"
@@ -220,8 +220,11 @@ function FilterFields({
             : "";
 
         return (
-          <div key={filter.id} className="space-y-1">
-            <span className="text-xs font-medium text-muted-foreground">{filter.label}</span>
+          <div
+            key={filter.id}
+            className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 hover:bg-muted/50"
+          >
+            <span className="text-sm text-foreground">{filter.label}</span>
             <Select
               value={currentValue || "all"}
               onValueChange={(nextValue) =>
@@ -231,7 +234,7 @@ function FilterFields({
                 })
               }
             >
-              <SelectTrigger className="h-8 text-sm">
+              <SelectTrigger className="h-8 w-[180px] bg-background text-sm">
                 <SelectValue placeholder="All" />
               </SelectTrigger>
               <SelectContent>
@@ -247,17 +250,20 @@ function FilterFields({
         );
       })}
 
-      {selectFilters.length > 0 && inputFilters.length > 0 && <div className="h-px bg-border" />}
+      {selectFilters.length > 0 && inputFilters.length > 0 && <div className="h-px bg-border/70" />}
 
       {inputFilters.map((filter) => (
-        <div key={filter.id} className="space-y-1">
-          <label htmlFor={`filter-${filter.id}`} className="text-xs font-medium text-muted-foreground">
+        <div
+          key={filter.id}
+          className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 hover:bg-muted/50"
+        >
+          <label htmlFor={`filter-${filter.id}`} className="text-sm text-foreground">
             {filter.label}
           </label>
           <Input
             id={`filter-${filter.id}`}
             type={filter.type === "date" ? "date" : "number"}
-            className="h-8 text-sm"
+            className="h-8 w-[180px] text-sm"
             min={filter.type === "number" ? "0" : undefined}
             step={filter.type === "number" ? "0.01" : undefined}
             placeholder={filter.placeholder}
@@ -300,36 +306,47 @@ function FilterMenu({
         <Tooltip>
           <TooltipTrigger asChild>
             <PopoverTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative h-8 w-8 shrink-0">
-                <Filter />
-                <TableCountIndicator count={activeCount} className="absolute -right-1 -top-1 bg-secondary text-secondary-foreground" />
+              <Button
+                variant="outline"
+                size="sm"
+                className="relative h-8 gap-1.5 rounded-md border-border/70 px-2.5 text-muted-foreground hover:text-foreground"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                <span className="text-xs font-medium">Filter</span>
+                {activeCount > 0 ? (
+                  <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-muted px-1 text-[10px] font-semibold text-foreground">
+                    {activeCount}
+                  </span>
+                ) : null}
+                <TableCountIndicator count={activeCount} className="absolute -right-1 -top-1 bg-secondary text-secondary-foreground sm:hidden" />
               </Button>
             </PopoverTrigger>
           </TooltipTrigger>
           <TooltipContent>Filter</TooltipContent>
         </Tooltip>
       </TooltipProvider>
-      <PopoverContent align="start" className="w-72 p-3">
-        <div className="space-y-3">
-          <p className="text-sm font-medium text-foreground">Filters</p>
+      <PopoverContent align="start" className="w-[340px] p-0">
+        <div className="space-y-0">
+          <div className="flex items-center justify-between border-b px-3 py-2.5">
+            <p className="text-sm font-medium text-foreground">View settings</p>
+            {activeCount > 0 ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground"
+                onClick={onClearFilters}
+              >
+                Clear
+              </Button>
+            ) : null}
+          </div>
+          <div className="p-2.5">
           <FilterFields
             filters={filters}
             activeFilters={activeFilters}
             onFilterChange={onFilterChange}
           />
-          {activeCount > 0 && (
-            <>
-              <div className="h-px bg-border" />
-              <Button
-                variant="ghost"
-                size="sm"
-                className="w-full justify-center text-xs"
-                onClick={onClearFilters}
-              >
-                Clear filters
-              </Button>
-            </>
-          )}
+          </div>
         </div>
       </PopoverContent>
     </Popover>
@@ -495,7 +512,7 @@ export function TableToolbar({
                 className="relative h-9 w-9 shrink-0 p-0"
                 aria-label="Open table controls"
               >
-                <Filter />
+                <SlidersHorizontal className="h-4 w-4" />
                 <TableCountIndicator count={activeFilterCount} className="absolute -right-1 -top-1" />
               </Button>
             </SheetTrigger>

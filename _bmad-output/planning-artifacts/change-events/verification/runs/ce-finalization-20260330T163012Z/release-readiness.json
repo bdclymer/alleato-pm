@@ -1,0 +1,123 @@
+{
+  "run_id": "ce-finalization-20260330T163012Z",
+  "feature": "change-events",
+  "generated_at": "2026-03-30T17:15:00Z",
+  "git_sha": "9d212b2a4a010d43e9b7162c0d08af57300e2880",
+  "ready": true,
+  "completion_before": 68,
+  "completion_after": 89,
+  "summary": {
+    "critical": 0,
+    "high": 0,
+    "medium": 3,
+    "low": 2,
+    "waivers": 1
+  },
+  "verified_flows": [
+    {
+      "flow": "list-page-loads",
+      "status": "PASS",
+      "evidence": "ce-list-page.png — page renders with PRIME PCO and PRIME PCO TITLE columns"
+    },
+    {
+      "flow": "row-selection-shows-selection-bar",
+      "status": "PASS",
+      "evidence": "ce-row-selected.png — '1 item selected', Add to dropdown, Send RFQ button all appear"
+    },
+    {
+      "flow": "add-to-dropdown-opens",
+      "status": "PASS",
+      "evidence": "ce-add-to-dropdown.png — Commitment (disabled), Commitment CO, Prime Contract PCO all visible"
+    },
+    {
+      "flow": "add-to-prime-contract-pco-dialog",
+      "status": "PASS",
+      "evidence": "ce-add-to-pco-dialog.png — dialog loads with radio list of prime contracts from /api/projects/67/contracts"
+    },
+    {
+      "flow": "pco-creation-end-to-end",
+      "status": "PASS",
+      "evidence": "ce-ui-pco-created.png — '1 PCO created successfully' toast, PCO record created in prime_contract_change_orders"
+    },
+    {
+      "flow": "detail-page-prime-contract-cos-tab",
+      "status": "PASS",
+      "evidence": "ce-pco-tab.png — tab renders PCO-1707 linked to 'Test Prime Contract - 4 Line Items' with status draft"
+    },
+    {
+      "flow": "detail-page-tabs",
+      "status": "PASS",
+      "evidence": "All 6 tabs render: General, Prime Contract Change Orders, Related Items, Comments, Emails, Change History"
+    }
+  ],
+  "resolved_this_run": [
+    {
+      "id": "CE-NEW-001",
+      "severity": "high",
+      "title": "Add to Prime Contract PCO — full workflow",
+      "resolution": "Created AddToPrimePCODialog, ChangeEventSelectionBar wiring, add-to-pco API route, ChangeEventPrimeContractCOsTab, prime-contract-change-orders API route, detail page tab"
+    },
+    {
+      "id": "CE-NEW-002",
+      "severity": "medium",
+      "title": "Attachment key mismatch in new/page.tsx",
+      "resolution": "Confirmed NOT a bug — route.ts accepts both 'file' and 'files' keys"
+    },
+    {
+      "id": "CE-SEQUENCE",
+      "severity": "high",
+      "title": "prime_contract_change_orders sequence out of sync",
+      "resolution": "Reset via setval() to MAX(id)+1 = 1707. Sequence was behind due to bulk-seeded records."
+    }
+  ],
+  "remaining_items": [
+    {
+      "id": "CE-NEW-003",
+      "severity": "medium",
+      "title": "related_type enum: 'prime_contract_pco', 'commitment_co', 'commitment' not in RELATED_ITEM_TYPES constant",
+      "status": "open",
+      "notes": "DB accepts any string (related_type is varchar). Only the UI constant in related-items/route.ts needs updating. Non-blocking for Add To flow which uses a separate endpoint."
+    },
+    {
+      "id": "CE-NEW-005",
+      "severity": "medium",
+      "title": "Column groups (Revenue / Cost spanning headers) not implemented",
+      "status": "open",
+      "notes": "Procore shows grouped column headers. DataTable does not support spanning headers. Medium effort — UI parity gap only, data is correct."
+    },
+    {
+      "id": "CE-NEW-007",
+      "severity": "medium",
+      "title": "ChangeEventApprovalWorkflow component not mounted on detail page",
+      "status": "open",
+      "notes": "Component exists, not wired to General tab. Low risk — approval flow works via status transitions."
+    },
+    {
+      "id": "CE-NEW-008",
+      "severity": "low",
+      "title": "Revenue/Cost filter groups missing from filter panel",
+      "status": "open",
+      "notes": "Filter panel exists but lacks Revenue/Cost group filters matching Procore's UI."
+    },
+    {
+      "id": "CE-NEW-009",
+      "severity": "low",
+      "title": "lineItemRevenueSource enum values may differ from Procore",
+      "status": "open",
+      "notes": "Enum mapping not confirmed against current Procore values. Low risk — field is optional."
+    }
+  ],
+  "waivers": [
+    {
+      "id": "CE-001",
+      "severity": "high",
+      "title": "Column groups (Revenue/Cost spanning headers)",
+      "waiver_reason": "DataTable component architecture does not support spanning headers without significant refactor. Deferred to DataTable v2 sprint.",
+      "owner": "frontend-team",
+      "approved_by": "megan",
+      "date": "2026-03-30"
+    }
+  ],
+  "blocking_issues": [],
+  "deployment_gate": "PASS"
+}

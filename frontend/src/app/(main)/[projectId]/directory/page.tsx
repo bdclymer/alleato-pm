@@ -16,6 +16,7 @@ import {
   Download,
   ChevronRight,
   SlidersHorizontal,
+  Phone,
 } from "lucide-react";
 import {
   PageShell,
@@ -704,69 +705,78 @@ function ProjectTeamSection({
 
   return (
     <>
-      {/* Assigned team member cards */}
+      {/* Team members table */}
       {assignedRoles.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {assignedRoles.map((role) =>
-            role.members.map((member) => {
-              const p = member.person;
-              return (
-                <div
-                  key={member.id}
-                  className="rounded-lg bg-card p-5 space-y-3 relative group"
-                >
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute right-2 top-2 h-8 w-8"
-                        aria-label={`Role actions for ${role.role_name}`}
-                      >
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem
-                        onClick={() => setAssignDialog({ open: true, role })}
-                      >
-                        <Pencil className="mr-2 h-3.5 w-3.5" />
-                        Edit assignment
-                      </DropdownMenuItem>
-                      <DropdownMenuItem
-                        className="text-destructive"
-                        onClick={() => handleDeleteRole(role)}
-                      >
-                        <Trash2 className="mr-2 h-3.5 w-3.5" />
-                        Delete role
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                  <div className="flex items-start gap-3">
-                    <Avatar className="h-12 w-12 shrink-0">
-                      <AvatarFallback className="bg-primary/10 text-primary text-sm font-semibold">
-                        {initials(p?.first_name, p?.last_name)}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="min-w-0 space-y-0.5">
-                      <p className="text-xs font-medium text-primary uppercase tracking-wide">
+        <div className="rounded-lg border border-border overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-12" />
+                <TableHead>Name</TableHead>
+                <TableHead className="hidden md:table-cell">Role</TableHead>
+                <TableHead className="hidden md:table-cell">Email</TableHead>
+                <TableHead className="hidden lg:table-cell">Phone</TableHead>
+                <TableHead className="w-12" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {assignedRoles.flatMap((role) =>
+                role.members.map((member) => {
+                  const p = member.person;
+                  const phone = p?.phone_mobile || p?.phone_business;
+                  return (
+                    <TableRow key={member.id}>
+                      <TableCell className="w-12 pr-0">
+                        <Avatar className="h-8 w-8 shrink-0">
+                          <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                            {initials(p?.first_name, p?.last_name)}
+                          </AvatarFallback>
+                        </Avatar>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm font-medium text-foreground">
+                          {p?.full_name ?? "Unknown"}
+                        </span>
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
                         {role.role_name}
-                      </p>
-                      <p className="text-sm font-semibold text-foreground truncate">
-                        {p?.full_name ?? "Unknown"}
-                      </p>
-                      {p?.email && (
-                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                          <Mail className="h-3 w-3 shrink-0" />
-                          <span className="truncate">{p.email}</span>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              );
-            })
-          )}
+                      </TableCell>
+                      <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+                        {p?.email ?? "—"}
+                      </TableCell>
+                      <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+                        {phone ?? "—"}
+                      </TableCell>
+                      <TableCell>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem
+                              onClick={() => setAssignDialog({ open: true, role })}
+                            >
+                              <Pencil className="mr-2 h-3.5 w-3.5" />
+                              Edit assignment
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              className="text-destructive"
+                              onClick={() => handleDeleteRole(role)}
+                            >
+                              <Trash2 className="mr-2 h-3.5 w-3.5" />
+                              Delete role
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
         </div>
       )}
 
@@ -986,69 +996,55 @@ function ExternalMembersSection({ projectId }: { projectId: string }) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name & Profile</TableHead>
-              <TableHead className="hidden md:table-cell">Company</TableHead>
-              <TableHead className="hidden md:table-cell">Role</TableHead>
-              <TableHead className="hidden lg:table-cell">Access Level</TableHead>
+              <TableHead className="w-12" />
+              <TableHead>Name</TableHead>
+              <TableHead className="hidden md:table-cell">Role / Job Title</TableHead>
+              <TableHead className="hidden md:table-cell">Email</TableHead>
+              <TableHead className="hidden lg:table-cell">Phone</TableHead>
               <TableHead className="w-12">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-sm text-muted-foreground">
+                <TableCell colSpan={6} className="text-center py-8 text-sm text-muted-foreground">
                   No members match your search.
                 </TableCell>
               </TableRow>
             ) : (
               filtered.map((person) => {
                 const isEmployee = person.person_type === "employee";
-                const status = memberStatusLabel(person.membership);
+                const phone = person.phone_mobile || person.phone_business;
 
                 return (
                   <TableRow key={person.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-3">
-                        <Avatar className="h-9 w-9 shrink-0">
-                          <AvatarFallback
-                            className={cn(
-                              "text-xs font-medium",
-                              isEmployee
-                                ? "bg-primary/10 text-primary"
-                                : "bg-muted text-muted-foreground"
-                            )}
-                          >
-                            {initials(person.first_name, person.last_name)}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">
-                            {person.first_name} {person.last_name}
-                          </p>
-                          {person.email && (
-                            <p className="text-xs text-muted-foreground truncate">
-                              {person.email}
-                            </p>
+                    <TableCell className="w-12 pr-0">
+                      <Avatar className="h-8 w-8 shrink-0">
+                        <AvatarFallback
+                          className={cn(
+                            "text-xs font-medium",
+                            isEmployee
+                              ? "bg-primary/10 text-primary"
+                              : "bg-muted text-muted-foreground"
                           )}
-                        </div>
-                      </div>
+                        >
+                          {initials(person.first_name, person.last_name)}
+                        </AvatarFallback>
+                      </Avatar>
+                    </TableCell>
+                    <TableCell>
+                      <span className="text-sm font-medium text-foreground">
+                        {person.first_name} {person.last_name}
+                      </span>
                     </TableCell>
                     <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                      {person.company?.name ?? "—"}
+                      {person.job_title ?? "—"}
                     </TableCell>
-                    <TableCell className="hidden md:table-cell">
-                      {person.job_title ? (
-                        <Badge variant="secondary" className="text-xs font-medium uppercase tracking-wide">
-                          {person.job_title}
-                        </Badge>
-                      ) : (
-                        <span className="text-sm text-muted-foreground">—</span>
-                      )}
+                    <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+                      {person.email ?? "—"}
                     </TableCell>
-                    <TableCell className="hidden lg:table-cell">
-                      <div className="flex items-center gap-1.5">
-                        <StatusBadge status={status} />
-                      </div>
+                    <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+                      {phone ?? "—"}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
@@ -1102,12 +1098,32 @@ function VendorsSection({
   isLoading,
   error,
   onAddVendorClick,
+  onRemoveVendor,
 }: {
   vendors: ReturnType<typeof useProjectVendors>["vendors"];
   isLoading: boolean;
   error: Error | null;
   onAddVendorClick: () => void;
+  onRemoveVendor: (id: string) => Promise<void>;
 }) {
+  const [removingId, setRemovingId] = React.useState<string | null>(null);
+
+  const handleRemove = async (pv: (typeof vendors)[0]) => {
+    const name = pv.vendor?.name ?? "this vendor";
+    const confirmed = window.confirm(`Remove "${name}" from this project?`);
+    if (!confirmed) return;
+
+    try {
+      setRemovingId(pv.id);
+      await onRemoveVendor(pv.id);
+      toast.success(`${name} removed`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to remove vendor");
+    } finally {
+      setRemovingId(null);
+    }
+  };
+
   if (isLoading) return <SectionSkeleton rows={3} />;
   if (error) {
     return (
@@ -1115,53 +1131,138 @@ function VendorsSection({
     );
   }
 
+  if (vendors.length === 0) {
+    return (
+      <p className="py-6 text-center text-sm text-muted-foreground">
+        No vendors yet.{" "}
+        <button type="button" onClick={onAddVendorClick} className="text-primary hover:underline">
+          Add one
+        </button>
+      </p>
+    );
+  }
+
   return (
-    <>
-      {vendors.length === 0 ? (
-        <p className="py-6 text-center text-sm text-muted-foreground">
-          No vendors yet.{" "}
-          <button type="button" onClick={onAddVendorClick} className="text-primary hover:underline">
-            Add one
-          </button>
-        </p>
-      ) : (
-        <div className="space-y-0 divide-y divide-border">
-          {vendors.slice(0, 5).map((pv) => {
+    <div className="rounded-lg border border-border overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Name</TableHead>
+            <TableHead className="hidden md:table-cell">Class</TableHead>
+            <TableHead className="hidden lg:table-cell">Location</TableHead>
+            <TableHead className="w-12" />
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {vendors.map((pv) => {
             const v = pv.vendor;
+            const location = v?.city && v?.state ? `${v.city}, ${v.state}` : (v?.city ?? v?.state ?? "—");
             return (
-              <div
-                key={pv.id}
-                className="flex items-center gap-3 py-3 px-1 group cursor-pointer hover:bg-accent/50 rounded-md transition-colors"
-              >
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-muted">
-                  <Building2 className="h-4 w-4 text-muted-foreground" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium text-foreground truncate">
-                    {v?.name ?? "—"}
-                  </p>
-                  <p className="text-xs text-muted-foreground truncate">
-                    {[v?.vendor_class, v?.city && v?.state ? `${v.city}, ${v.state}` : null]
-                      .filter(Boolean)
-                      .join(" · ") || "Subcontractor"}
-                  </p>
-                </div>
-                <StatusBadge
-                  status={v?.is_active ? "Active" : "Inactive"}
-                />
-                <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
-              </div>
+              <TableRow key={pv.id}>
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted">
+                      <Package className="h-3.5 w-3.5 text-muted-foreground" />
+                    </div>
+                    <span className="text-sm font-medium text-foreground truncate">
+                      {v?.name ?? "—"}
+                    </span>
+                  </div>
+                </TableCell>
+                <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+                  {v?.vendor_class ?? "—"}
+                </TableCell>
+                <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
+                  {location}
+                </TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <MoreHorizontal />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        className="text-destructive"
+                        disabled={removingId === pv.id}
+                        onClick={() => void handleRemove(pv)}
+                      >
+                        <Trash2 className="mr-2 h-3.5 w-3.5" />
+                        {removingId === pv.id ? "Removing..." : "Remove"}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
             );
           })}
-        </div>
-      )}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
 
-      {vendors.length > 5 && (
-        <Button variant="ghost" size="sm" className="w-full mt-2 text-xs font-semibold uppercase tracking-wide text-primary">
-          View All {vendors.length} Vendors
-        </Button>
-      )}
-    </>
+// ─── Companies Section ──────────────────────────────────────────
+
+function CompaniesSection({ members }: { members: PersonWithDetails[] }) {
+  const companies = React.useMemo(() => {
+    const map = new Map<string, { id: string; name: string; memberCount: number }>();
+    for (const m of members) {
+      if (m.company?.id && m.company?.name) {
+        const existing = map.get(m.company.id);
+        if (existing) {
+          existing.memberCount++;
+        } else {
+          map.set(m.company.id, {
+            id: m.company.id,
+            name: m.company.name,
+            memberCount: 1,
+          });
+        }
+      }
+    }
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
+  }, [members]);
+
+  if (companies.length === 0) {
+    return (
+      <p className="py-6 text-center text-sm text-muted-foreground">
+        No companies found.
+      </p>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-border overflow-hidden">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Company</TableHead>
+            <TableHead className="hidden md:table-cell">Members</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {companies.map((c) => (
+            <TableRow key={c.id}>
+              <TableCell>
+                <div className="flex items-center gap-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted">
+                    <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+                  </div>
+                  <span className="text-sm font-medium text-foreground">
+                    {c.name}
+                  </span>
+                </div>
+              </TableCell>
+              <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
+                {c.memberCount} {c.memberCount === 1 ? "member" : "members"}
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </div>
   );
 }
 
@@ -1175,7 +1276,7 @@ export default function ProjectDirectoryPage() {
   const [addMemberOpen, setAddMemberOpen] = React.useState(false);
   const [addVendorOpen, setAddVendorOpen] = React.useState(false);
   const [manageRolesOpen, setManageRolesOpen] = React.useState(false);
-  const { vendors, isLoading: vendorsLoading, error: vendorsError, addVendor } =
+  const { vendors, isLoading: vendorsLoading, error: vendorsError, addVendor, removeVendor } =
     useProjectVendors(projectId);
 
   const existingVendorIds = vendors
@@ -1215,7 +1316,33 @@ export default function ProjectDirectoryPage() {
           </div>
         </section>
 
-        {/* Section 2: External Members */}
+        {/* Section 2: Companies (left) + Vendors (right) — two columns */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <section>
+            <SectionHeader title="Companies" />
+            <div className="mt-4">
+              <CompaniesSection members={members} />
+            </div>
+          </section>
+
+          <section>
+            <SectionHeader
+              title="Vendors"
+              action={{ label: "+ Add", onClick: () => setAddVendorOpen(true) }}
+            />
+            <div className="mt-4">
+              <VendorsSection
+                vendors={vendors}
+                isLoading={vendorsLoading}
+                error={vendorsError}
+                onAddVendorClick={() => setAddVendorOpen(true)}
+                onRemoveVendor={removeVendor}
+              />
+            </div>
+          </section>
+        </div>
+
+        {/* Section 3: All Project Members */}
         <section>
           <SectionHeader
             title="All Project Members"
@@ -1225,23 +1352,6 @@ export default function ProjectDirectoryPage() {
           <div className="mt-4">
             <ExternalMembersSection projectId={projectId} />
           </div>
-        </section>
-
-        {/* Section 3: Vendors */}
-        <section>
-          <SectionHeader
-            title="Vendors"
-            action={{ label: "+ Add", onClick: () => setAddVendorOpen(true) }}
-          />
-          <p className="text-xs text-muted-foreground mt-0.5 mb-4">
-            Subcontractors and suppliers associated with this project
-          </p>
-          <VendorsSection
-            vendors={vendors}
-            isLoading={vendorsLoading}
-            error={vendorsError}
-            onAddVendorClick={() => setAddVendorOpen(true)}
-          />
         </section>
       </Stack>
 

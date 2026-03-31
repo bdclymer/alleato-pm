@@ -1346,6 +1346,13 @@ export function UnifiedTablePage<T>({
                               }}
                             />
                             )
+                          ) : process.env.NODE_ENV === "development" ? (
+                            <span className="group/devhint relative">
+                              {column.render(item)}
+                              <span className="pointer-events-none absolute -top-7 left-0 z-50 hidden rounded bg-black px-1.5 py-0.5 font-mono text-[10px] text-yellow-300 whitespace-nowrap group-hover/devhint:block">
+                                {column.id}
+                              </span>
+                            </span>
                           ) : (
                             column.render(item)
                           )}

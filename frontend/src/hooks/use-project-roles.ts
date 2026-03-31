@@ -12,6 +12,8 @@ export interface RoleMember {
     last_name: string;
     full_name: string;
     email: string;
+    phone_mobile: string | null;
+    phone_business: string | null;
     company_name: string | null;
   } | null;
 }

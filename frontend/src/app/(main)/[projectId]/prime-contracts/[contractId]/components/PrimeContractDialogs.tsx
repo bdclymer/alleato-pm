@@ -18,6 +18,7 @@ import type {
   ChangeOrderFormState,
   ContractLineItem,
   LineItemFormState,
+  PrimeContractCO,
 } from "../types";
 
 interface PrimeContractDialogsProps {
@@ -52,6 +53,16 @@ interface PrimeContractDialogsProps {
   setLineItemToDelete: Dispatch<SetStateAction<ContractLineItem | null>>;
   isDeletingLineItem: boolean;
   handleDeleteLineItem: () => Promise<void>;
+  editingCo: PrimeContractCO | null;
+  setEditingCo: Dispatch<SetStateAction<PrimeContractCO | null>>;
+  editCoForm: ChangeOrderFormState;
+  setEditCoForm: Dispatch<SetStateAction<ChangeOrderFormState>>;
+  isUpdatingCo: boolean;
+  handleUpdateCo: () => Promise<void>;
+  deletingCo: PrimeContractCO | null;
+  setDeletingCo: Dispatch<SetStateAction<PrimeContractCO | null>>;
+  isDeletingCo: boolean;
+  handleDeleteCo: () => Promise<void>;
 }
 
 export function PrimeContractDialogs(props: PrimeContractDialogsProps) {
@@ -87,6 +98,16 @@ export function PrimeContractDialogs(props: PrimeContractDialogsProps) {
     setLineItemToDelete,
     isDeletingLineItem,
     handleDeleteLineItem,
+    editingCo,
+    setEditingCo,
+    editCoForm,
+    setEditCoForm,
+    isUpdatingCo,
+    handleUpdateCo,
+    deletingCo,
+    setDeletingCo,
+    isDeletingCo,
+    handleDeleteCo,
   } = props;
 
   return (
@@ -361,6 +382,86 @@ export function PrimeContractDialogs(props: PrimeContractDialogsProps) {
               disabled={isDeletingLineItem}
             >
               {isDeletingLineItem ? "Deleting..." : "Delete"}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Edit Change Order Dialog */}
+      <Modal open={!!editingCo} onOpenChange={(open) => { if (!open) setEditingCo(null); }}>
+        <ModalContent className="sm:max-w-md">
+          <ModalHeader>
+            <ModalTitle>Edit Change Order</ModalTitle>
+            <ModalDescription>
+              Update change order {editingCo?.change_order_number || ""}.
+            </ModalDescription>
+          </ModalHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="edit-co-number">
+                CO Number <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="edit-co-number"
+                value={editCoForm.change_order_number}
+                onChange={(e) => setEditCoForm((prev) => ({ ...prev, change_order_number: e.target.value }))}
+                placeholder="Enter change order number"
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-co-description">
+                Description <span className="text-destructive">*</span>
+              </Label>
+              <Textarea
+                id="edit-co-description"
+                value={editCoForm.description}
+                onChange={(e) => setEditCoForm((prev) => ({ ...prev, description: e.target.value }))}
+                placeholder="Describe the change order..."
+                rows={3}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="edit-co-amount">
+                Amount <span className="text-destructive">*</span>
+              </Label>
+              <Input
+                id="edit-co-amount"
+                type="number"
+                step="0.01"
+                value={editCoForm.amount}
+                onChange={(e) => setEditCoForm((prev) => ({ ...prev, amount: e.target.value }))}
+                placeholder="0.00"
+              />
+            </div>
+          </div>
+          <ModalFooter>
+            <Button variant="outline" onClick={() => setEditingCo(null)} disabled={isUpdatingCo}>
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateCo} disabled={isUpdatingCo}>
+              {isUpdatingCo ? "Saving..." : "Save Changes"}
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Delete Change Order Confirmation */}
+      <Modal open={!!deletingCo} onOpenChange={(open) => { if (!open) setDeletingCo(null); }}>
+        <ModalContent className="sm:max-w-md">
+          <ModalHeader>
+            <ModalTitle>Delete Change Order</ModalTitle>
+            <ModalDescription>
+              Are you sure you want to delete change order{" "}
+              <strong>{deletingCo?.change_order_number || ""}</strong>?
+              This action cannot be undone.
+            </ModalDescription>
+          </ModalHeader>
+          <ModalFooter>
+            <Button variant="outline" onClick={() => setDeletingCo(null)} disabled={isDeletingCo}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteCo} disabled={isDeletingCo}>
+              {isDeletingCo ? "Deleting..." : "Delete"}
             </Button>
           </ModalFooter>
         </ModalContent>
