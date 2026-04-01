@@ -3,24 +3,13 @@
 import { use, useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import {
-  Trash2,
-  FileSpreadsheet,
-  Download,
-  MoreHorizontal,
-} from "lucide-react";
+import { Trash2, FileSpreadsheet } from "lucide-react";
 import { toast } from "sonner";
 import { PageShell } from "@/components/layout";
 import { StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmptyState } from "@/components/ds";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   usePaymentApplication,
   usePaymentApplicationLineItems,
@@ -29,10 +18,9 @@ import {
   usePopulateSOV,
   useDeletePaymentApplication,
 } from "@/hooks/use-payment-applications";
-import { InvoiceGeneralInfo } from "@/components/domain/invoices/InvoiceGeneralInfo";
-import { InvoiceSummaryPreview } from "@/components/domain/invoices/InvoiceSummaryPreview";
-import { InvoiceScheduleOfValues } from "@/components/domain/invoices/InvoiceScheduleOfValues";
-import { InvoiceAttachments } from "@/components/domain/invoices/InvoiceAttachments";
+import { InvoiceGeneralSettings } from "@/components/domain/invoices/InvoiceGeneralSettings";
+import { InvoiceG702Summary } from "@/components/domain/invoices/InvoiceG702Summary";
+import { InvoiceG703Detail } from "@/components/domain/invoices/InvoiceG703Detail";
 import type {
   PaymentApplication,
   PaymentApplicationLineItem,
@@ -47,20 +35,22 @@ interface BillingPeriod {
   period_number: number;
 }
 
+function formatStatusDisplay(status: string): string {
+  return status
+    .replace(/_/g, " ")
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
 export default function InvoiceDetailPage({
   params,
 }: {
-  params: Promise<{
-    projectId: string;
-    contractId: string;
-    invoiceId: string;
-  }>;
+  params: Promise<{ projectId: string; contractId: string; invoiceId: string }>;
 }) {
   const { projectId, contractId, invoiceId } = use(params);
   const router = useRouter();
   const numericProjectId = parseInt(projectId, 10);
 
-  const [activeTab, setActiveTab] = useState("general");
+  const [activeTab, setActiveTab] = useState("summary");
   const [contract, setContract] = useState<Contract | null>(null);
   const [billingPeriods, setBillingPeriods] = useState<BillingPeriod[]>([]);
   const [previousPaymentDue, setPreviousPaymentDue] = useState(0);
@@ -117,8 +107,7 @@ export default function InvoiceDetailPage({
         );
         if (res.ok) {
           const data = await res.json();
-          const periods = Array.isArray(data) ? data : (data?.items ?? []);
-          setBillingPeriods(periods);
+          setBillingPeriods(data);
         }
       } catch {
         // Billing periods fetch failed silently
@@ -137,6 +126,7 @@ export default function InvoiceDetailPage({
         if (!res.ok) return;
         const applications: PaymentApplication[] = await res.json();
 
+        // Sum net_amount of all approved applications with a lower number
         const currentNumber = invoice?.application_number ?? "";
         const previousTotal = applications
           .filter(
@@ -179,37 +169,28 @@ export default function InvoiceDetailPage({
     if (!confirm("Are you sure you want to delete this invoice?")) return;
     try {
       await deleteMutation.mutateAsync(invoiceId);
-      router.push(`/${projectId}/prime-contracts/${contractId}`);
+      router.push(
+        `/${projectId}/prime-contracts/${contractId}`,
+      );
     } catch {
       toast.error("Failed to delete invoice");
     }
   }, [deleteMutation, invoiceId, projectId, contractId, router]);
 
-  // Page title
+  // Page title and subtitle
   const pageTitle = invoice
     ? `Invoice #${invoice.application_number}`
     : "Invoice";
-
-  // Contract summary for G702
-  const contractSummary = useMemo(
-    () =>
-      contract
-        ? {
-            original_contract_value: contract.original_contract_value,
-            revised_contract_value: contract.revised_contract_value,
-            title: contract.title,
-            contract_number: contract.contract_number,
-            start_date: contract.start_date,
-          }
-        : {
-            original_contract_value: 0,
-            revised_contract_value: 0,
-            title: "",
-            contract_number: null,
-            start_date: null,
-          },
-    [contract],
-  );
+  const pageSubtitle = useMemo(() => {
+    if (!invoice?.period_from || !invoice?.period_to) return undefined;
+    try {
+      const from = format(new Date(invoice.period_from), "MM/dd/yy");
+      const to = format(new Date(invoice.period_to), "MM/dd/yy");
+      return `${from} - ${to}`;
+    } catch {
+      return undefined;
+    }
+  }, [invoice]);
 
   if (invoiceLoading) {
     return (
@@ -241,75 +222,66 @@ export default function InvoiceDetailPage({
     );
   }
 
+  const contractSummary = contract
+    ? {
+        original_contract_value: contract.original_contract_value,
+        revised_contract_value: contract.revised_contract_value,
+        title: contract.title,
+        contract_number: contract.contract_number,
+        start_date: contract.start_date,
+      }
+    : {
+        original_contract_value: 0,
+        revised_contract_value: 0,
+        title: "",
+        contract_number: null,
+        start_date: null,
+      };
+
   return (
     <PageShell
       variant="detail"
       title={pageTitle}
+      description={pageSubtitle}
       onBack={() =>
         router.push(`/${projectId}/prime-contracts/${contractId}`)
       }
       actions={
-        <div className="flex flex-wrap items-center gap-2">
-          <StatusBadge
-            status={invoice.status
-              .replace(/_/g, " ")
-              .replace(/\b\w/g, (c) => c.toUpperCase())}
-          />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="sm">
-                <Download className="mr-1.5 h-3.5 w-3.5" />
-                Export
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>Export as PDF</DropdownMenuItem>
-              <DropdownMenuItem>Export as CSV</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon-sm">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem
-                className="text-destructive focus:text-destructive"
-                onClick={handleDelete}
-              >
-                <Trash2 className="mr-2 h-3.5 w-3.5" />
-                Delete Invoice
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+        <div className="flex items-center gap-2">
+          <StatusBadge status={formatStatusDisplay(invoice.status)} />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDelete}
+            className="text-destructive hover:text-destructive"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
       }
     >
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="general">General</TabsTrigger>
-          <TabsTrigger value="emails">Emails</TabsTrigger>
+          <TabsTrigger value="summary">Summary</TabsTrigger>
+          <TabsTrigger value="detail">Detail</TabsTrigger>
           <TabsTrigger value="change-history">Change History</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="general" className="space-y-8 mt-6">
-          {/* Section 1: General Information */}
-          <InvoiceGeneralInfo
+        <TabsContent value="summary" className="space-y-8 mt-6">
+          <InvoiceGeneralSettings
             invoice={invoice}
             onUpdate={handleUpdate}
             billingPeriods={billingPeriods}
           />
-
-          {/* Section 2: Summary Preview (Collapsible G702) */}
-          <InvoiceSummaryPreview
+          <InvoiceG702Summary
             invoice={invoice}
             lineItems={lineItems}
             contract={contractSummary}
             previousPaymentDue={previousPaymentDue}
           />
+        </TabsContent>
 
-          {/* Section 3: Schedule of Values (G703) */}
+        <TabsContent value="detail" className="mt-6">
           {lineItemsLoading ? (
             <div className="flex items-center justify-center py-12">
               <div className="text-sm text-muted-foreground">
@@ -329,21 +301,12 @@ export default function InvoiceDetailPage({
               }}
             />
           ) : (
-            <InvoiceScheduleOfValues
+            <InvoiceG703Detail
               lineItems={lineItems}
               onSave={handleSaveLineItems}
               isReadOnly={invoice.status === "approved"}
             />
           )}
-
-          {/* Section 4: Attachments */}
-          <InvoiceAttachments />
-        </TabsContent>
-
-        <TabsContent value="emails" className="mt-6">
-          <div className="py-12 text-center text-sm text-muted-foreground">
-            Email tracking coming soon.
-          </div>
         </TabsContent>
 
         <TabsContent value="change-history" className="mt-6">

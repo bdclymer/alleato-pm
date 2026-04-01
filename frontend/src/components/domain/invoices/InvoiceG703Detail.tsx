@@ -213,7 +213,7 @@ export function InvoiceG703Detail({
               <th className="px-3 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">
                 Budget Code
               </th>
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground min-w-48">
+              <th className="px-3 py-2 text-left font-medium text-muted-foreground min-w-[180px]">
                 B: Description
               </th>
               <th className="px-3 py-2 text-right font-medium text-muted-foreground whitespace-nowrap">
