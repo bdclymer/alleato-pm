@@ -229,6 +229,7 @@ export default async function ProjectHomePage({
       .from("commitments_unified")
       .select("*")
       .eq("project_id", numericProjectId)
+      .is("deleted_at", null)
       .order("created_at", { ascending: false }),
 
     // Fetch prime contracts
@@ -372,17 +373,17 @@ export default async function ProjectHomePage({
     return true;
   });
 
-  // Fetch commitment SOV totals (sum of sov_line_items.scheduled_value)
-  const commitmentIds = commitments.map((c) => c.id);
+  // Fetch commitment SOV totals (sum of schedule_of_values.total_amount per commitment)
+  const commitmentIds = commitments.map((c) => c.id).filter(Boolean) as string[];
   let commitmentSovTotal = 0;
   if (commitmentIds.length > 0) {
     const { data: sovData } = await supabase
-      .from("sov_line_items")
-      .select("scheduled_value, schedule_of_values!inner(commitment_id)")
-      .in("schedule_of_values.commitment_id", commitmentIds);
+      .from("schedule_of_values")
+      .select("total_amount, commitment_id")
+      .in("commitment_id", commitmentIds);
     if (sovData) {
       commitmentSovTotal = sovData.reduce(
-        (sum, row) => sum + (row.scheduled_value ?? 0),
+        (sum, row) => sum + (row.total_amount ?? 0),
         0
       );
     }
