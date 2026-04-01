@@ -9,7 +9,6 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,7 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Textarea } from "@/components/ui/textarea";
 
 interface CreateInvoiceDialogProps {
   open: boolean;
@@ -30,12 +29,11 @@ interface CreateInvoiceDialogProps {
     billing_period_id?: string;
     period_from?: string;
     period_to?: string;
+    billing_date?: string;
     status: string;
+    notes?: string;
     amount: number;
     retention_amount: number;
-    prefill_sov?: boolean;
-    prefill_retainage?: boolean;
-    include_backup?: boolean;
   }) => Promise<void>;
   nextInvoiceNumber: number;
   billingPeriods: Array<{
@@ -45,7 +43,6 @@ interface CreateInvoiceDialogProps {
     name: string | null;
     period_number: number;
   }>;
-  contractTitle?: string;
 }
 
 export function CreateInvoiceDialog({
@@ -54,48 +51,51 @@ export function CreateInvoiceDialog({
   onSubmit,
   nextInvoiceNumber,
   billingPeriods,
-  contractTitle,
 }: CreateInvoiceDialogProps) {
   const [applicationNumber, setApplicationNumber] = useState(
-    String(nextInvoiceNumber),
+    String(nextInvoiceNumber).padStart(3, "0"),
   );
   const [billingPeriodId, setBillingPeriodId] = useState<string>("");
-  const [prefillSOV, setPrefillSOV] = useState(false);
-  const [prefillRetainage, setPrefillRetainage] = useState(false);
-  const [includeBackup, setIncludeBackup] = useState(false);
+  const [periodFrom, setPeriodFrom] = useState("");
+  const [periodTo, setPeriodTo] = useState("");
+  const [billingDate, setBillingDate] = useState("");
+  const [status, setStatus] = useState("draft");
+  const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Reset form when dialog opens
   useEffect(() => {
     if (open) {
-      setApplicationNumber(String(nextInvoiceNumber));
-      setPrefillSOV(false);
-      setPrefillRetainage(false);
-      setIncludeBackup(false);
-
-      // Auto-select current/most recent billing period
-      if (billingPeriods.length > 0) {
-        const today = new Date().toISOString().split("T")[0];
-        const current = billingPeriods.find(
-          (bp) => bp.start_date <= today && bp.end_date >= today,
-        );
-        setBillingPeriodId(current?.id ?? billingPeriods[billingPeriods.length - 1].id);
-      } else {
-        setBillingPeriodId("");
-      }
+      setApplicationNumber(String(nextInvoiceNumber).padStart(3, "0"));
+      setBillingPeriodId("");
+      setPeriodFrom("");
+      setPeriodTo("");
+      setBillingDate("");
+      setStatus("draft");
+      setNotes("");
     }
-  }, [open, nextInvoiceNumber, billingPeriods]);
+  }, [open, nextInvoiceNumber]);
+
+  // Auto-fill dates when billing period is selected
+  useEffect(() => {
+    if (!billingPeriodId) return;
+    const period = billingPeriods.find((bp) => bp.id === billingPeriodId);
+    if (period) {
+      setPeriodFrom(period.start_date);
+      setPeriodTo(period.end_date);
+    }
+  }, [billingPeriodId, billingPeriods]);
 
   const formatPeriodLabel = (bp: {
     start_date: string;
     end_date: string;
+    name: string | null;
+    period_number: number;
   }) => {
-    const start = format(new Date(bp.start_date), "M/d/yy");
-    const end = format(new Date(bp.end_date), "M/d/yy");
+    const start = format(new Date(bp.start_date), "MM/dd/yy");
+    const end = format(new Date(bp.end_date), "MM/dd/yy");
     return `${start} - ${end}`;
   };
-
-  const selectedPeriod = billingPeriods.find((bp) => bp.id === billingPeriodId);
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -103,14 +103,13 @@ export function CreateInvoiceDialog({
       await onSubmit({
         application_number: applicationNumber,
         billing_period_id: billingPeriodId || undefined,
-        period_from: selectedPeriod?.start_date,
-        period_to: selectedPeriod?.end_date,
-        status: "draft",
+        period_from: periodFrom || undefined,
+        period_to: periodTo || undefined,
+        billing_date: billingDate || undefined,
+        status,
+        notes: notes || undefined,
         amount: 0,
         retention_amount: 0,
-        prefill_sov: prefillSOV,
-        prefill_retainage: prefillRetainage,
-        include_backup: includeBackup,
       });
       onOpenChange(false);
     } finally {
@@ -120,98 +119,96 @@ export function CreateInvoiceDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md">
+      <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Create Invoice</DialogTitle>
-          <DialogDescription>
-            You can edit information in the invoice after it&apos;s created.
-          </DialogDescription>
+          <DialogTitle>New Invoice / Payment Application</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-5 py-2">
-          {/* Invoice No. — required */}
-          <div className="space-y-2">
-            <Label htmlFor="invoice-number">
-              Invoice No. <span className="text-destructive">*</span>
-            </Label>
-            <Input
-              id="invoice-number"
-              className="max-w-xs"
-              value={applicationNumber}
-              onChange={(e) => setApplicationNumber(e.target.value)}
-            />
+        <div className="space-y-4 py-2">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="billing-period">Commitment Billing Period</Label>
+              <Select value={billingPeriodId} onValueChange={setBillingPeriodId}>
+                <SelectTrigger id="billing-period">
+                  <SelectValue placeholder="Select period..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {billingPeriods.map((bp) => (
+                    <SelectItem key={bp.id} value={bp.id}>
+                      {formatPeriodLabel(bp)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="invoice-number">Invoice #</Label>
+              <Input
+                id="invoice-number"
+                value={applicationNumber}
+                onChange={(e) => setApplicationNumber(e.target.value)}
+              />
+            </div>
           </div>
 
-          {/* Billing Period */}
-          <div className="space-y-2">
-            <Label htmlFor="billing-period">Billing Period</Label>
-            <Select value={billingPeriodId} onValueChange={setBillingPeriodId}>
-              <SelectTrigger id="billing-period" className="max-w-xs">
-                <SelectValue placeholder="Select period..." />
-              </SelectTrigger>
-              <SelectContent>
-                {billingPeriods.map((bp) => (
-                  <SelectItem key={bp.id} value={bp.id}>
-                    {formatPeriodLabel(bp)}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="period-start">Period Start</Label>
+              <Input
+                id="period-start"
+                type="date"
+                value={periodFrom}
+                onChange={(e) => setPeriodFrom(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="period-end">Period End</Label>
+              <Input
+                id="period-end"
+                type="date"
+                value={periodTo}
+                onChange={(e) => setPeriodTo(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="billing-date">Billing Date</Label>
+              <Input
+                id="billing-date"
+                type="date"
+                value={billingDate}
+                onChange={(e) => setBillingDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="invoice-status">Status</Label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger id="invoice-status">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="under_review">Under Review</SelectItem>
+                  <SelectItem value="revise_and_resubmit">
+                    Revise and Resubmit
                   </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+                  <SelectItem value="approved">Approved</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
-          {/* Pre-fill checkboxes */}
-          <div className="space-y-3">
-            <div className="flex items-start gap-2">
-              <Checkbox
-                id="prefill-sov"
-                checked={prefillSOV}
-                onCheckedChange={(checked) => {
-                  setPrefillSOV(checked === true);
-                  if (!checked) setPrefillRetainage(false);
-                }}
-              />
-              <Label
-                htmlFor="prefill-sov"
-                className="text-sm font-normal leading-snug cursor-pointer"
-              >
-                Pre-fill the Schedule of Values with costs from the selected
-                billing period
-              </Label>
-            </div>
-
-            <div className="flex items-start gap-2 pl-6">
-              <Checkbox
-                id="prefill-retainage"
-                checked={prefillRetainage}
-                disabled={!prefillSOV}
-                onCheckedChange={(checked) =>
-                  setPrefillRetainage(checked === true)
-                }
-              />
-              <Label
-                htmlFor="prefill-retainage"
-                className="text-sm font-normal leading-snug cursor-pointer"
-              >
-                Also pre-fill with retainage from the selected billing period
-              </Label>
-            </div>
-
-            <div className="flex items-start gap-2">
-              <Checkbox
-                id="include-backup"
-                checked={includeBackup}
-                onCheckedChange={(checked) =>
-                  setIncludeBackup(checked === true)
-                }
-              />
-              <Label
-                htmlFor="include-backup"
-                className="text-sm font-normal leading-snug cursor-pointer"
-              >
-                Include backup from direct costs and invoices in the selected
-                billing period
-              </Label>
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="invoice-notes">Notes</Label>
+            <Textarea
+              id="invoice-notes"
+              placeholder="Optional notes..."
+              rows={3}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+            />
           </div>
         </div>
 
@@ -227,7 +224,7 @@ export function CreateInvoiceDialog({
             onClick={handleSubmit}
             disabled={isSubmitting || !applicationNumber}
           >
-            {isSubmitting ? "Creating..." : "Create"}
+            {isSubmitting ? "Creating..." : "Create Invoice"}
           </Button>
         </DialogFooter>
       </DialogContent>

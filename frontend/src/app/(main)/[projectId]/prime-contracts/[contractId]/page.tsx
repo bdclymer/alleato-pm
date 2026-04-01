@@ -435,11 +435,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
     if (activeTab === "invoices") {
       fetch(`/api/projects/${projectId}/billing-periods`)
         .then((r) => r.json())
-        .then((data) => {
-          // API returns { items: [...], total } or raw array
-          const periods = Array.isArray(data) ? data : (data?.items ?? []);
-          setBillingPeriods(periods);
-        })
+        .then((data) => setBillingPeriods(Array.isArray(data) ? data : []))
         .catch(() => {});
     }
   }, [activeTab, projectId]);
@@ -470,33 +466,13 @@ const [isSovEditing, setIsSovEditing] = useState(false);
     billing_period_id?: string;
     period_from?: string;
     period_to?: string;
+    billing_date?: string;
     status: string;
+    notes?: string;
     amount: number;
     retention_amount: number;
-    prefill_sov?: boolean;
-    prefill_retainage?: boolean;
-    include_backup?: boolean;
   }) => {
-    const invoice = await createPaymentApp.mutateAsync({
-      application_number: data.application_number,
-      billing_period_id: data.billing_period_id,
-      period_from: data.period_from,
-      period_to: data.period_to,
-      status: data.status,
-      amount: data.amount,
-      retention_amount: data.retention_amount,
-    });
-    // If pre-fill SOV was checked, auto-populate line items
-    if (data.prefill_sov && invoice?.id) {
-      try {
-        await fetch(
-          `/api/projects/${projectId}/contracts/${contractId}/payment-applications/${invoice.id}/populate-sov`,
-          { method: "POST" },
-        );
-      } catch {
-        // SOV population is best-effort — user can populate manually
-      }
-    }
+    await createPaymentApp.mutateAsync(data);
     toast.success("Invoice created successfully");
   };
 
@@ -2415,7 +2391,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
       }
       onBack={() => router.back()}
       actions={
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="default" size="sm">
