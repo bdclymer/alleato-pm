@@ -1,29 +1,26 @@
 "use client";
 
 /**
- * UnifiedFeedbackWidget — Dev-only Agentation toolbar for AI-assisted development.
- *
- * This is the DEVELOPMENT pipeline. Annotations go to the Agentation MCP server
- * for Claude to pick up and fix directly. They do NOT auto-submit to the client
- * feedback inbox.
- *
- * To escalate a dev annotation to the client feedback inbox (e.g., for tracking),
- * use the "Escalate to Inbox" button that appears after each annotation.
+ * UnifiedFeedbackWidget — Combines Agentation's annotation toolbar (superior
+ * element detection, React component tree, MCP agent sync, layout mode) with
+ * our existing admin feedback backend (screenshots, Supabase persistence,
+ * GitHub issue creation).
  *
  * Flow:
  * 1. User creates annotation via Agentation toolbar → MCP syncs automatically
- * 2. `onAnnotationAdd` fires → we auto-capture a screenshot
- * 3. Screenshot toast shows with option to "Escalate to Inbox"
- * 4. Only if escalated: POST to /api/admin/feedback → GitHub issue → inbox
- * 5. Otherwise: annotation stays in MCP only for dev workflow
+ * 2. `onAnnotationAdd` fires → we auto-capture a screenshot of the area
+ * 3. Annotation + screenshot are POSTed to /api/admin/feedback
+ * 4. Backend saves to admin_feedback_items + creates GitHub issue
+ * 5. When agent resolves via MCP, status syncs back to feedback item
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Agentation } from "agentation";
 import { toPng } from "html-to-image";
 import { usePathname } from "next/navigation";
-import { Camera, ExternalLink, Upload, X } from "lucide-react";
+import { Camera, Upload, X } from "lucide-react";
 import { toast } from "sonner";
+import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 import { ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE } from "@/lib/admin-feedback/constants";
 import { Button } from "@/components/ui/button";
 
@@ -140,7 +137,6 @@ type ScreenshotToastProps = {
   onUpload: (file: File) => void;
   onRetake: () => void;
   onDismiss: () => void;
-  onEscalate: () => void;
   isCapturing: boolean;
 };
 
@@ -149,56 +145,28 @@ function ScreenshotToast({
   onUpload,
   onRetake,
   onDismiss,
-  onEscalate,
   isCapturing,
 }: ScreenshotToastProps) {
   const fileRef = useRef<HTMLInputElement>(null);
 
   return (
     <div
-      className="fixed bottom-20 right-5 z-[10000] flex flex-col gap-2 rounded-lg border border-border bg-card px-4 py-3 shadow-sm animate-in slide-in-from-right-5"
+      className="fixed bottom-20 right-5 z-[10000] flex items-center gap-3 rounded-lg border border-border bg-card px-4 py-3 shadow-sm animate-in slide-in-from-right-5"
       {...{ [ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE]: "true" }}
     >
-      <div className="flex items-center gap-3">
-        {isCapturing ? (
-          <p className="text-sm text-muted-foreground">Capturing screenshot...</p>
-        ) : screenshotUrl ? (
-          <>
-            <img
-              src={screenshotUrl}
-              alt="Captured"
-              className="h-10 w-14 rounded border border-border object-cover"
-            />
-            <p className="text-sm text-foreground">Annotation sent to MCP</p>
-            <div className="flex items-center gap-1">
-              <Button variant="ghost" size="sm" onClick={onRetake}>
-                <Camera className="h-3.5 w-3.5" />
-              </Button>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) onUpload(file);
-                  e.target.value = "";
-                }}
-              />
-              <Button variant="ghost" size="sm" onClick={() => fileRef.current?.click()}>
-                <Upload className="h-3.5 w-3.5" />
-              </Button>
-              <Button variant="ghost" size="sm" onClick={onDismiss}>
-                <X className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          </>
-        ) : (
-          <>
-            <p className="text-sm text-muted-foreground">Annotation sent to MCP (no screenshot)</p>
+      {isCapturing ? (
+        <p className="text-sm text-muted-foreground">Capturing screenshot...</p>
+      ) : screenshotUrl ? (
+        <>
+          <img
+            src={screenshotUrl}
+            alt="Captured"
+            className="h-10 w-14 rounded border border-border object-cover"
+          />
+          <p className="text-sm text-foreground">Screenshot attached</p>
+          <div className="flex items-center gap-1">
             <Button variant="ghost" size="sm" onClick={onRetake}>
-              <Camera className="h-3.5 w-3.5 mr-1" />
-              Capture
+              <Camera className="h-3.5 w-3.5" />
             </Button>
             <input
               ref={fileRef}
@@ -212,26 +180,40 @@ function ScreenshotToast({
               }}
             />
             <Button variant="ghost" size="sm" onClick={() => fileRef.current?.click()}>
-              <Upload className="h-3.5 w-3.5 mr-1" />
-              Upload
+              <Upload className="h-3.5 w-3.5" />
             </Button>
             <Button variant="ghost" size="sm" onClick={onDismiss}>
               <X className="h-3.5 w-3.5" />
             </Button>
-          </>
-        )}
-      </div>
-
-      {/* Escalate to client feedback inbox */}
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={onEscalate}
-        className="w-full text-xs"
-      >
-        <ExternalLink className="mr-1.5 h-3 w-3" />
-        Escalate to Feedback Inbox
-      </Button>
+          </div>
+        </>
+      ) : (
+        <>
+          <p className="text-sm text-muted-foreground">No screenshot captured</p>
+          <Button variant="ghost" size="sm" onClick={onRetake}>
+            <Camera className="h-3.5 w-3.5 mr-1" />
+            Capture
+          </Button>
+          <input
+            ref={fileRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) onUpload(file);
+              e.target.value = "";
+            }}
+          />
+          <Button variant="ghost" size="sm" onClick={() => fileRef.current?.click()}>
+            <Upload className="h-3.5 w-3.5 mr-1" />
+            Upload
+          </Button>
+          <Button variant="ghost" size="sm" onClick={onDismiss}>
+            <X className="h-3.5 w-3.5" />
+          </Button>
+        </>
+      )}
     </div>
   );
 }
@@ -242,6 +224,7 @@ function ScreenshotToast({
 
 export function UnifiedFeedbackWidget() {
   const pathname = usePathname();
+  const { profile, isLoading } = useCurrentUserProfile();
 
   // Screenshot state for the current annotation being enriched
   const [pendingAnnotation, setPendingAnnotation] = useState<AgentationAnnotation | null>(null);
@@ -249,24 +232,24 @@ export function UnifiedFeedbackWidget() {
   const [isCapturing, setIsCapturing] = useState(false);
   const dismissTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Auto-dismiss screenshot toast after 10s — does NOT submit to inbox
-  // (annotations only go to MCP by default; user must explicitly escalate)
+  const isAdmin = !isLoading && profile?.isAdmin === true;
+
+  // Auto-dismiss screenshot toast after 8s
   useEffect(() => {
     if (pendingAnnotation && !isCapturing) {
       dismissTimerRef.current = setTimeout(() => {
-        // Just dismiss — annotation is already in MCP
+        submitAnnotation(pendingAnnotation, screenshotDataUrl);
         setPendingAnnotation(null);
         setScreenshotDataUrl(null);
-      }, 10000);
+      }, 8000);
 
       return () => {
         if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
       };
     }
-  }, [pendingAnnotation, isCapturing]);
+  }, [pendingAnnotation, isCapturing, screenshotDataUrl]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /** Escalate annotation to the feedback inbox (admin feedback backend + GitHub) */
-  const escalateToInbox = useCallback(
+  const submitAnnotation = useCallback(
     async (annotation: AgentationAnnotation, screenshot: string | null) => {
       try {
         const response = await fetch("/api/admin/feedback", {
@@ -286,6 +269,7 @@ export function UnifiedFeedbackWidget() {
               id: null,
               selector: annotation.elementPath || "body",
               text: annotation.selectedText || annotation.comment?.slice(0, 160) || null,
+              // Agentation's element field is the full React tree, extract just the last tag
               tagName: annotation.element?.split(" ").pop()?.replace(/[<>"]/g, "") || null,
               domPath: annotation.elementPath || null,
               rect: annotation.boundingBox
@@ -300,7 +284,7 @@ export function UnifiedFeedbackWidget() {
             metadata: {
               pathname,
               userAgent: navigator.userAgent,
-              source: "agentation-escalated",
+              source: "agentation",
               agentationId: annotation.id,
               intent: annotation.intent,
               kind: annotation.kind,
@@ -311,15 +295,13 @@ export function UnifiedFeedbackWidget() {
         });
 
         if (response.ok) {
-          toast.success("Escalated to feedback inbox + GitHub issue created");
-          console.log("[UnifiedFeedback] Annotation escalated to feedback inbox");
+          // Don't toast — agentation already shows its own confirmation
+          console.log("[UnifiedFeedback] Annotation synced to admin feedback backend");
         } else {
-          toast.error("Failed to escalate — check console");
-          console.error("[UnifiedFeedback] Escalation failed:", await response.text());
+          console.error("[UnifiedFeedback] Backend sync failed:", await response.text());
         }
       } catch (err) {
-        toast.error("Failed to escalate annotation");
-        console.error("[UnifiedFeedback] Escalation error:", err);
+        console.error("[UnifiedFeedback] Backend sync error:", err);
       }
     },
     [pathname],
@@ -327,7 +309,10 @@ export function UnifiedFeedbackWidget() {
 
   const handleAnnotationAdd = useCallback(
     async (annotation: AgentationAnnotation) => {
-      // Capture screenshot for all dev users (not just admins) — useful for escalation
+      // If not admin, skip the backend sync (MCP still works)
+      if (!isAdmin) return;
+
+      // Set pending annotation and start screenshot capture
       setPendingAnnotation(annotation);
       setIsCapturing(true);
 
@@ -336,7 +321,7 @@ export function UnifiedFeedbackWidget() {
       setScreenshotDataUrl(screenshot);
       setIsCapturing(false);
     },
-    [],
+    [isAdmin],
   );
 
   const handleRetake = useCallback(async () => {
@@ -367,19 +352,12 @@ export function UnifiedFeedbackWidget() {
 
   const handleDismiss = useCallback(() => {
     if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
-    // Just dismiss — annotation is already in MCP, no inbox submission
-    setPendingAnnotation(null);
-    setScreenshotDataUrl(null);
-  }, []);
-
-  const handleEscalate = useCallback(() => {
-    if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current);
     if (pendingAnnotation) {
-      escalateToInbox(pendingAnnotation, screenshotDataUrl);
+      submitAnnotation(pendingAnnotation, screenshotDataUrl);
     }
     setPendingAnnotation(null);
     setScreenshotDataUrl(null);
-  }, [pendingAnnotation, screenshotDataUrl, escalateToInbox]);
+  }, [pendingAnnotation, screenshotDataUrl, submitAnnotation]);
 
   return (
     <>
@@ -388,14 +366,13 @@ export function UnifiedFeedbackWidget() {
         onAnnotationAdd={handleAnnotationAdd as (annotation: unknown) => void}
       />
 
-      {/* Screenshot toast — annotation is already in MCP; option to escalate to inbox */}
+      {/* Screenshot capture toast — shows briefly after each annotation */}
       {pendingAnnotation && (
         <ScreenshotToast
           screenshotUrl={screenshotDataUrl}
           onUpload={handleUpload}
           onRetake={handleRetake}
           onDismiss={handleDismiss}
-          onEscalate={handleEscalate}
           isCapturing={isCapturing}
         />
       )}

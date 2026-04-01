@@ -12,7 +12,6 @@ import { DevAnnotationOverlay } from "@/components/dev/dev-annotation-overlay";
 import { DesignViolationOverlay } from "@/components/dev/design-violation-overlay";
 import { Providers } from "./Providers";
 import { UnifiedFeedbackWidget } from "@/components/dev/UnifiedFeedbackWidget";
-import { ClientFeedbackWidget } from "@/components/feedback/ClientFeedbackWidget";
 import "./globals.css";
 import "@liveblocks/react-ui/styles.css";
 import "@liveblocks/react-ui/styles/dark/media-query.css";
@@ -71,9 +70,6 @@ export default function RootLayout({
           </ThemeProvider>
         </QueryProvider>
         <Toaster />
-        {/* Client feedback widget — production-safe, all authenticated users */}
-        <ClientFeedbackWidget />
-        {/* Dev-only tools — Agentation MCP, design violations, etc. */}
         {process.env.NODE_ENV === "development" && (
           <>
             <AgentationThemeSync />
