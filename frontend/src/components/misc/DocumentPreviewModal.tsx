@@ -21,7 +21,7 @@ export function DocumentPreviewModal({
 
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-black/50 px-4 py-10">
-      <div className="relative flex h-full w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-slate-200/40 bg-background shadow-2xl ring-1 ring-slate-200/40 dark:border-slate-700/60 dark:bg-slate-950/90 dark:ring-slate-800/60">
+      <div className="relative flex h-full w-full max-w-5xl flex-col overflow-hidden rounded-3xl border border-slate-200/40 bg-background shadow-sm ring-1 ring-slate-200/40 dark:border-slate-700/60 dark:bg-slate-950/90 dark:ring-slate-800/60">
         <header className="flex items-start justify-between gap-4 border-b border-slate-200/50 bg-background/90 px-6 py-4 dark:border-slate-800/60 dark:bg-slate-900/80">
           <div>
             <p className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">

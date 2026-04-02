@@ -8,7 +8,7 @@ import {
   CreatePurchaseOrderForm,
   CreateSubcontractForm,
 } from "@/components/domain/contracts";
-import { ProjectFormPageLayout } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useCommitmentDetail } from "@/hooks/use-commitments-query";
 import type { CreateSubcontractInput, SovLineItem } from "@/lib/schemas/create-subcontract-schema";
@@ -283,10 +283,10 @@ export default function EditCommitmentPage() {
 
   if (isLoading || attachmentsLoading) {
     return (
-      <ProjectFormPageLayout
+      <PageShell
+        variant="form"
         title={title}
         description={description}
-        maxWidth="3xl"
         onBack={handleCancel}
         backLabel="Cancel"
       >
@@ -298,15 +298,15 @@ export default function EditCommitmentPage() {
             </div>
           ))}
         </div>
-      </ProjectFormPageLayout>
+      </PageShell>
     );
   }
 
   return (
-    <ProjectFormPageLayout
+    <PageShell
+      variant="form"
       title={title}
       description={description}
-      maxWidth="3xl"
       onBack={handleCancel}
       backLabel="Cancel"
     >
@@ -327,6 +327,6 @@ export default function EditCommitmentPage() {
           mode="edit"
         />
       )}
-    </ProjectFormPageLayout>
+    </PageShell>
   );
 }

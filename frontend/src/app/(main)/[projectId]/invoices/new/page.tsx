@@ -19,7 +19,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { CalendarIcon, ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { CalendarIcon, Plus, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -34,7 +34,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useContracts } from "@/hooks/use-contracts";
 import { useCommitments } from "@/hooks/use-commitments";
-import { ProjectFormPageLayout } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { FormSection } from "@/components/forms";
 import { FormActions } from "@/components/forms/FormActions";
 
@@ -265,22 +265,11 @@ export default function NewInvoicePage() {
   };
 
   return (
-    <ProjectFormPageLayout
+    <PageShell
+      variant="form"
       title="New Invoice"
       description="Create a new invoice for billing"
-      maxWidth="xl"
-      headerActions={
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.back()}
-          className="gap-2"
-        >
-          <ArrowLeft />
-          Back
-        </Button>
-      }
-      contentClassName="space-y-6"
+      onBack={() => router.back()}
     >
       <div className="max-w-none mx-0">
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -800,6 +789,6 @@ export default function NewInvoicePage() {
         />
         </form>
       </div>
-    </ProjectFormPageLayout>
+    </PageShell>
   );
 }

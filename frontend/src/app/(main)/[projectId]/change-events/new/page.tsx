@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Sparkles } from "lucide-react";
 
-import { ProjectFormPageLayout } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { ChangeEventForm } from "@/components/domain/change-events/ChangeEventForm";
 import type { ChangeEventFormData } from "@/components/domain/change-events/ChangeEventForm";
 import { Button } from "@/components/ui/button";
@@ -209,11 +209,12 @@ export default function NewChangeEventPage() {
     ) : undefined;
 
   return (
-    <ProjectFormPageLayout
+    <PageShell
+      variant="form"
       title="Create Change Event"
       description="Document a potential change to project scope, schedule, or budget."
-      maxWidth="3xl"
-      headerActions={headerActions}
+      onBack={handleCancel}
+      actions={headerActions}
     >
       <ChangeEventForm
         initialData={initialData}
@@ -223,6 +224,6 @@ export default function NewChangeEventPage() {
         mode="create"
         projectId={projectId}
       />
-    </ProjectFormPageLayout>
+    </PageShell>
   );
 }

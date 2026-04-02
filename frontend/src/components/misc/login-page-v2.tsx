@@ -150,7 +150,7 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
         {[...Array(10)].map((_, i) => (
           <div
             key={i}
-            className="bld-particle absolute w-[2px] h-[2px] bg-white/10 rounded-full"
+            className="bld-particle absolute w-[2px] h-[2px] bg-card/10 rounded-full"
             style={{
               left: `${10 + Math.random() * 80}%`,
               bottom: "0%",
@@ -232,7 +232,7 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     disabled={isLoading}
-                    className="bg-white/[0.06] border-white/[0.08] text-white placeholder:text-slate-500 focus:ring-1 focus:ring-[#DB802D]/50 focus:border-[#DB802D]/50 transition-all"
+                    className="bg-card/[0.06] border-white/[0.08] text-white placeholder:text-slate-500 focus:ring-1 focus:ring-[#DB802D]/50 focus:border-[#DB802D]/50 transition-all"
                   />
                 </motion.div>
 
@@ -262,7 +262,7 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     disabled={isLoading}
-                    className="bg-white/[0.06] border-white/[0.08] text-white placeholder:text-slate-500 focus:ring-1 focus:ring-[#DB802D]/50 focus:border-[#DB802D]/50 transition-all"
+                    className="bg-card/[0.06] border-white/[0.08] text-white placeholder:text-slate-500 focus:ring-1 focus:ring-[#DB802D]/50 focus:border-[#DB802D]/50 transition-all"
                   />
                 </motion.div>
 
@@ -276,7 +276,7 @@ export function LoginPageV2({ redirectTo }: LoginPageV2Props) {
                   <Button
                     type="submit"
                     disabled={isLoading}
-                    className="w-full h-11 bg-[#DB802D] hover:bg-[#c47228] text-white font-medium shadow-lg shadow-[#DB802D]/20 transition-all hover:shadow-[#DB802D]/30"
+                    className="w-full h-11 bg-[#DB802D] hover:bg-[#c47228] text-white font-medium shadow-sm shadow-[#DB802D]/20 transition-all hover:shadow-[#DB802D]/30"
                   >
                     {isLoading ? "Signing in..." : "Sign in"}
                   </Button>

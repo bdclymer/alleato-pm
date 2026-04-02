@@ -4,10 +4,10 @@ import { useRouter, useParams } from "next/navigation"
 import { useForm } from "react-hook-form"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { z } from "zod"
-import { ArrowLeft } from "lucide-react"
+// ArrowLeft removed - handled by PageShell onBack
 import { toast } from "sonner"
 
-import { ProjectFormPageLayout } from "@/components/layout"
+import { PageShell } from "@/components/layout"
 import { Button } from "@/components/ui/button"
 import { Form } from "@/components/ui/form"
 
@@ -151,22 +151,12 @@ export default function StandardFormPage() {
   }
 
   return (
-    <ProjectFormPageLayout
-        title="Create New Item"
-        description="Example template showing every standard form field pattern"
-      maxWidth="lg"
-      headerActions={
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={handleCancel}
-          className="w-full sm:w-auto"
-        >
-          <ArrowLeft />
-          Back to List
-        </Button>
-      }
+    <PageShell
+      variant="form"
+      title="Create New Item"
+      description="Example template showing every standard form field pattern"
+      onBack={handleCancel}
+      backLabel="Back to List"
     >
       <Form {...form}>
         <form noValidate onSubmit={handleSubmit(onSubmit)} className="space-y-8">
@@ -353,6 +343,6 @@ export default function StandardFormPage() {
             />
         </form>
       </Form>
-    </ProjectFormPageLayout>
+    </PageShell>
   )
 }

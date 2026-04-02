@@ -158,7 +158,7 @@ function LinkPin({
       {/* Flag pin shape */}
       <div
         className={cn(
-          "flex items-center gap-1 px-1.5 py-0.5 rounded shadow-md text-white text-[10px] font-semibold transition-all",
+          "flex items-center gap-1 px-1.5 py-0.5 rounded shadow-sm text-white text-[10px] font-semibold transition-all",
           highlighted ? "scale-110 ring-2 ring-white" : ""
         )}
         style={{ backgroundColor: pinColor, minWidth: 24 }}

@@ -4,12 +4,10 @@ import { useRouter, useParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft } from "lucide-react";
 import { z } from "zod";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
-import { ProjectFormPageLayout } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { Form, FormGrid, FormSection } from "@/components/forms";
 import { FormActions } from "@/components/forms/FormActions";
 import { DevAutoFillButton } from "@/hooks/use-dev-autofill";
@@ -123,21 +121,12 @@ export default function NewInvoicePage() {
   }
 
   return (
-    <ProjectFormPageLayout
+    <PageShell
+      variant="form"
       title="Create Owner Invoice"
       description="Add a new owner invoice for this project"
-      maxWidth="lg"
-      innerClassName="mx-auto w-full max-w-2xl"
-      headerActions={
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => router.push(`/${projectId}/invoicing`)}
-        >
-          <ArrowLeft />
-          Back to Invoicing
-        </Button>
-      }
+      onBack={() => router.push(`/${projectId}/invoicing`)}
+      backLabel="Back to Invoicing"
     >
       <Form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <FormSection
@@ -218,6 +207,6 @@ export default function NewInvoicePage() {
           <DevAutoFillButton formType="invoice" onAutoFill={handleDevAutoFill} />
         </FormActions>
       </Form>
-    </ProjectFormPageLayout>
+    </PageShell>
   );
 }

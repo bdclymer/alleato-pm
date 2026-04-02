@@ -198,7 +198,7 @@ export default function TablesDirectoryPage() {
                   <TableCell>
                     <Badge
                       variant="outline"
-                      className={categoryColors[table.category] || "bg-gray-100 text-gray-800"}
+                      className={categoryColors[table.category] || "bg-muted text-foreground"}
                     >
                       {table.category}
                     </Badge>

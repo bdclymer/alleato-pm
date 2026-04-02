@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   draft: {
     label: "Draft",
-    className: "bg-gray-100 text-gray-700 hover:bg-gray-100",
+    className: "bg-muted text-muted-foreground hover:bg-muted",
   },
   work_required: {
     label: "Work Required",
@@ -24,7 +24,7 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
 const PRIORITY_CONFIG: Record<string, { label: string; className: string }> = {
   low: {
     label: "Low",
-    className: "bg-gray-100 text-gray-600 hover:bg-gray-100",
+    className: "bg-muted text-muted-foreground hover:bg-muted",
   },
   medium: {
     label: "Medium",

@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 
-import { ProjectFormPageLayout } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { FormGrid, FormSection } from "@/components/forms";
 import { FormActions } from "@/components/forms/FormActions";
 import { FormServerError } from "@/components/forms/FormServerError";
@@ -13,7 +13,6 @@ import { RHFNumberField } from "@/components/forms/fields/RHFNumberField";
 import { RHFSelectField } from "@/components/forms/fields/RHFSelectField";
 import { RHFTextField } from "@/components/forms/fields/RHFTextField";
 import { RHFTextareaField } from "@/components/forms/fields/RHFTextareaField";
-import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { useCreateMeeting } from "@/hooks/use-meetings";
 
@@ -91,21 +90,12 @@ export default function ScheduleMeetingPage() {
   });
 
   return (
-    <ProjectFormPageLayout
+    <PageShell
+      variant="form"
       title="Schedule Meeting"
       description="Schedule a future meeting and generate AI-powered meeting prep."
       onBack={() => router.push(`/${projectId}/meetings`)}
       backLabel="Back to Meetings"
-      maxWidth="md"
-      headerActions={
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.push(`/${projectId}/meetings`)}
-        >
-          Back to Meetings
-        </Button>
-      }
     >
       <Form {...form}>
         <form onSubmit={handleSubmit} className="space-y-8">
@@ -175,6 +165,6 @@ export default function ScheduleMeetingPage() {
           />
         </form>
       </Form>
-    </ProjectFormPageLayout>
+    </PageShell>
   );
 }

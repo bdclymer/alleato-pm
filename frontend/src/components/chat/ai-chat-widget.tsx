@@ -56,7 +56,7 @@ export function AIChatWidget() {
               {!isMinimized && (
                 <button
                   onClick={minimizeWidget}
-                  className="p-1.5 hover:bg-white/15 rounded-lg transition-colors"
+                  className="p-1.5 hover:bg-card/15 rounded-lg transition-colors"
                   aria-label="Minimize"
                 >
                   <Shrink className="w-4 h-4" />
@@ -64,7 +64,7 @@ export function AIChatWidget() {
               )}
               <button
                 onClick={closeWidget}
-                className="p-1.5 hover:bg-white/15 rounded-lg transition-colors"
+                className="p-1.5 hover:bg-card/15 rounded-lg transition-colors"
                 aria-label="Close"
               >
                 <X className="w-4 h-4" />

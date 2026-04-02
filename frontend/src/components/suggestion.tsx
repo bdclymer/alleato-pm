@@ -27,7 +27,7 @@ export const Suggestion = ({
       {isExpanded ? (
         <motion.div
           animate={{ opacity: 1, y: -20 }}
-          className="absolute -right-12 z-50 flex w-56 flex-col gap-4 rounded-2xl border bg-background p-4 font-sans text-sm shadow-xl md:-right-16"
+          className="absolute -right-12 z-50 flex w-56 flex-col gap-4 rounded-2xl border bg-background p-4 font-sans text-sm shadow-sm md:-right-16"
           exit={{ opacity: 0, y: -10 }}
           initial={{ opacity: 0, y: -10 }}
           key={suggestion.id}
@@ -40,7 +40,7 @@ export const Suggestion = ({
               <div className="font-medium">Assistant</div>
             </div>
             <button
-              className="cursor-pointer text-gray-500 text-xs"
+              className="cursor-pointer text-muted-foreground text-xs"
               onClick={() => {
                 setIsExpanded(false);
               }}

@@ -137,7 +137,7 @@ export function DevAnnotationOverlay() {
         {/* eslint-disable-next-line design-system/no-design-violations -- dev-only floating widget */}
         <button
           onClick={() => setOpen((v) => !v)}
-          className="relative flex items-center gap-1.5 bg-zinc-900 text-white text-xs font-medium px-3 py-2 rounded-full shadow-lg border border-zinc-700 hover:bg-zinc-800 transition-colors"
+          className="relative flex items-center gap-1.5 bg-zinc-900 text-white text-xs font-medium px-3 py-2 rounded-full shadow-sm border border-zinc-700 hover:bg-zinc-800 transition-colors"
           title="Dev annotation bridge"
         >
           <span className="text-base">🤖</span>
@@ -152,7 +152,7 @@ export function DevAnnotationOverlay() {
 
       {/* Panel */}
       {open && (
-        <div className="fixed bottom-16 right-4 z-[9999] w-96 bg-background border border-border rounded-xl shadow-2xl flex flex-col overflow-hidden max-h-[70vh]">
+        <div className="fixed bottom-16 right-4 z-[9999] w-96 bg-background border border-border rounded-xl shadow-sm flex flex-col overflow-hidden max-h-[70vh]">
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/50">
             <div className="flex items-center gap-2">

@@ -1,3 +1,9 @@
+/**
+ * @deprecated ProjectFormPageLayout is deprecated. Use PageShell from "@/components/layout" instead.
+ * This file is kept to avoid breaking imports from files that haven't been migrated yet.
+ * Use: <PageShell variant="form" title="..." onBack={() => router.back()}> for form pages.
+ */
+
 "use client";
 
 import * as React from "react";

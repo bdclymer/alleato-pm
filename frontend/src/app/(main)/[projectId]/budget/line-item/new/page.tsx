@@ -26,7 +26,7 @@ import {
   ModalTitle,
 } from "@/components/ui/unified-modal";
 import { BudgetItemDeleteDialog } from "@/components/budget/BudgetItemDeleteDialog";
-import { ProjectFormPageLayout } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { FormSection } from "@/components/forms";
 import { FormActions } from "@/components/forms/FormActions";
 import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
@@ -428,12 +428,12 @@ export default function NewBudgetLineItemPage() {
   );
 
   return (
-    <ProjectFormPageLayout
+    <PageShell
+      variant="form"
       title="Create Budget Line Items"
       description="Add one or more line items to the project budget."
       onBack={() => router.push(`/${projectId}/budget`)}
       backLabel="Back to Budget"
-      maxWidth="xl"
     >
       <form onSubmit={handleSubmit} className="space-y-8">
         <FormSection
@@ -762,6 +762,6 @@ export default function NewBudgetLineItemPage() {
             : "this line item"
         }
       />
-    </ProjectFormPageLayout>
+    </PageShell>
   );
 }

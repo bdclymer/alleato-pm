@@ -13,7 +13,7 @@ export function BentoGridSection() {
       </div>
 
       {/* Bento Grid */}
-      <div className="grid grid-cols-12 gap-px bg-border rounded-xl overflow-hidden shadow-md mb-4">
+      <div className="grid grid-cols-12 gap-px bg-border rounded-xl overflow-hidden shadow-sm mb-4">
 
         {/* Row 1 */}
 

@@ -80,7 +80,7 @@ module.exports = {
             className: 'w-full px-3 py-2 border rounded-md',
             placeholder: 'Enter your API key',
           }),
-          React.createElement('p', { className: 'text-xs text-gray-500 mt-1' },
+          React.createElement('p', { className: 'text-xs text-muted-foreground mt-1' },
             'Get your free API key from openweathermap.org'
           )
         ),
@@ -188,7 +188,7 @@ function WeatherWidget({ api }) {
     return React.createElement('div', { className: 'flex items-center justify-center h-full' },
       React.createElement('div', { className: 'text-center' },
         React.createElement('div', { className: 'animate-spin h-6 w-6 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-2' }),
-        React.createElement('p', { className: 'text-sm text-gray-500' }, 'Loading weather...')
+        React.createElement('p', { className: 'text-sm text-muted-foreground' }, 'Loading weather...')
       )
     );
   }
@@ -204,7 +204,7 @@ function WeatherWidget({ api }) {
   }
   
   if (!weather || weather.length === 0) {
-    return React.createElement('div', { className: 'p-4 text-center text-gray-500' },
+    return React.createElement('div', { className: 'p-4 text-center text-muted-foreground' },
       React.createElement('p', { className: 'text-sm' }, 'No project locations found'),
       React.createElement('p', { className: 'text-xs mt-1' }, 'Add locations to your projects to see weather data')
     );
@@ -214,14 +214,14 @@ function WeatherWidget({ api }) {
     weather.map((item, index) => 
       React.createElement('div', { 
         key: item.projectId, 
-        className: 'flex items-center justify-between p-2 bg-gray-50 rounded-lg' 
+        className: 'flex items-center justify-between p-2 bg-muted rounded-lg' 
       },
         React.createElement('div', { className: 'flex-1 min-w-0' },
           React.createElement('p', { 
             className: 'text-sm font-medium truncate',
             title: item.projectName 
           }, item.projectName),
-          React.createElement('p', { className: 'text-xs text-gray-500 capitalize' }, 
+          React.createElement('p', { className: 'text-xs text-muted-foreground capitalize' }, 
             item.description
           )
         ),
@@ -237,7 +237,7 @@ function WeatherWidget({ api }) {
         )
       )
     ),
-    React.createElement('div', { className: 'text-xs text-gray-400 text-center' },
+    React.createElement('div', { className: 'text-xs text-muted-foreground text-center' },
       'Last updated: ', new Date().toLocaleTimeString()
     )
   );
@@ -351,9 +351,9 @@ function WeatherForecast({ projectId, api }) {
             day.forecasts.slice(0, 4).map((forecast, i) => 
               React.createElement('div', { 
                 key: i, 
-                className: 'text-center p-2 bg-gray-50 rounded' 
+                className: 'text-center p-2 bg-muted rounded' 
               },
-                React.createElement('div', { className: 'text-sm text-gray-600 mb-1' },
+                React.createElement('div', { className: 'text-sm text-muted-foreground mb-1' },
                   new Date(forecast.dt_txt).toLocaleTimeString('en-US', {
                     hour: 'numeric',
                     hour12: true,
@@ -367,7 +367,7 @@ function WeatherForecast({ projectId, api }) {
                 React.createElement('div', { className: 'text-lg font-bold' },
                   `${Math.round(forecast.main.temp)}°`
                 ),
-                React.createElement('div', { className: 'text-xs text-gray-500 capitalize' },
+                React.createElement('div', { className: 'text-xs text-muted-foreground capitalize' },
                   forecast.weather[0].description
                 )
               )

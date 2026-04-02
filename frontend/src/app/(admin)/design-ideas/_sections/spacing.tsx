@@ -136,7 +136,7 @@ export function SpacingSection() {
             <code className="font-mono text-[11px] bg-muted px-1.5 py-0.5 rounded">
               shadow-sm
             </code>{" "}
-            are permitted — no shadow-md, shadow-lg, or shadow-xl.
+            are permitted — no shadow-sm, shadow-sm, or shadow-sm.
           </p>
         </div>
       </div>

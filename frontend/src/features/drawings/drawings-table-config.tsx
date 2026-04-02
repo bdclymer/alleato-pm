@@ -240,7 +240,7 @@ function DrawingGridCard({ item, onClick }: DrawingGridCardProps) {
   return (
     <button
       type="button"
-      className="w-full cursor-pointer rounded-lg border border-border text-left transition-shadow hover:shadow-md overflow-hidden bg-card"
+      className="w-full cursor-pointer rounded-lg border border-border text-left transition-shadow hover:shadow-sm overflow-hidden bg-card"
       onClick={() => onClick(item)}
     >
       {/* Landscape PDF thumbnail (11 × 8.5) */}

@@ -89,7 +89,7 @@ export function DrawingAreaSelector({
       <div key={area.id} className="w-full">
         <div
           className={cn(
-            "flex items-center gap-2 p-2 rounded-md hover:bg-gray-50 cursor-pointer transition-colors group",
+            "flex items-center gap-2 p-2 rounded-md hover:bg-muted cursor-pointer transition-colors group",
             paddingClass,
             isSelected && "bg-blue-50 border border-blue-200"
           )}
@@ -99,7 +99,7 @@ export function DrawingAreaSelector({
           <Button
             variant="ghost"
             size="sm"
-            className="h-6 w-6 p-0 hover:bg-gray-100"
+            className="h-6 w-6 p-0 hover:bg-muted"
             onClick={(e) => {
               e.stopPropagation();
               if (hasChildren) {
@@ -128,7 +128,7 @@ export function DrawingAreaSelector({
                 <Folder className="h-4 w-4 text-blue-600" />
               )
             ) : (
-              <Folder className="h-4 w-4 text-gray-500" />
+              <Folder className="h-4 w-4 text-muted-foreground" />
             )}
           </div>
 
@@ -136,7 +136,7 @@ export function DrawingAreaSelector({
           <div className="flex-1 min-w-0">
             <span className={cn(
               "text-sm font-medium truncate",
-              isSelected ? "text-blue-900" : "text-gray-900"
+              isSelected ? "text-blue-900" : "text-foreground"
             )}>
               {area.name}
             </span>
@@ -153,7 +153,7 @@ export function DrawingAreaSelector({
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 hover:bg-gray-200"
+                className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 hover:bg-muted"
                 onClick={(e) => e.stopPropagation()}
               >
                 <Plus />
@@ -205,9 +205,9 @@ export function DrawingAreaSelector({
         <div className="space-y-2">
           {[1, 2, 3].map(i => (
             <div key={i} className="flex items-center gap-2 p-2">
-              <div className="h-4 w-4 bg-gray-200 rounded animate-pulse" />
-              <div className="h-4 w-24 bg-gray-200 rounded animate-pulse" />
-              <div className="ml-auto h-4 w-6 bg-gray-200 rounded animate-pulse" />
+              <div className="h-4 w-4 bg-muted rounded animate-pulse" />
+              <div className="h-4 w-24 bg-muted rounded animate-pulse" />
+              <div className="ml-auto h-4 w-6 bg-muted rounded animate-pulse" />
             </div>
           ))}
         </div>
@@ -234,16 +234,16 @@ export function DrawingAreaSelector({
           {/* All drawings option */}
           <div
             className={cn(
-              "flex items-center gap-2 p-2 rounded-md hover:bg-gray-50 cursor-pointer transition-colors",
+              "flex items-center gap-2 p-2 rounded-md hover:bg-muted cursor-pointer transition-colors",
               !selectedAreaId && "bg-blue-50 border border-blue-200"
             )}
             onClick={() => onSelectArea(null)}
           >
             <div className="h-6 w-6" />
-            <Folder className="h-4 w-4 text-gray-500" />
+            <Folder className="h-4 w-4 text-muted-foreground" />
             <span className={cn(
               "text-sm font-medium",
-              !selectedAreaId ? "text-blue-900" : "text-gray-900"
+              !selectedAreaId ? "text-blue-900" : "text-foreground"
             )}>
               All Drawings
             </span>

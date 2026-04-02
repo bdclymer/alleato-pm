@@ -102,7 +102,7 @@ export function DrawingAreaCard({
 
           <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
             <div>
-              <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="name" className="block text-sm font-medium text-muted-foreground mb-1">
                 Name *
               </label>
               <Input
@@ -119,7 +119,7 @@ export function DrawingAreaCard({
             </div>
 
             <div>
-              <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="description" className="block text-sm font-medium text-muted-foreground mb-1">
                 Description
               </label>
               <Textarea
@@ -138,10 +138,10 @@ export function DrawingAreaCard({
 
             {parentArea && (
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-muted-foreground mb-1">
                   Parent Area
                 </label>
-                <div className="p-2 bg-gray-50 rounded-md text-sm text-gray-600">
+                <div className="p-2 bg-muted rounded-md text-sm text-muted-foreground">
                   {parentArea.name}
                 </div>
               </div>

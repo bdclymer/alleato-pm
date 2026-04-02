@@ -21,7 +21,7 @@ type Violation = {
 
 const TYPE_LABELS: Record<string, string> = {
   wrong_button: "Wrong button",
-  bg_white: "bg-white",
+  bg_white: "bg-card",
   card_trap: "Card trap",
   wrong_text_hierarchy: "Text hierarchy",
   hardcoded_color: "Hardcoded color",

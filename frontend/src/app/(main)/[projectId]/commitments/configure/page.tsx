@@ -1,5 +1,5 @@
 "use client";
-import { ProjectFormPageLayout } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -232,13 +232,12 @@ export default function CommitmentConfigurePage() {
   const dayOptions = Array.from({ length: 31 }, (_, i) => i + 1);
 
   return (
-    <ProjectFormPageLayout
+    <PageShell
+      variant="content"
       title="Commitment Settings"
       description="Configure commitment defaults, workflows, billing, and permissions."
       onBack={() => router.push(`/${projectId}/commitments`)}
-      backLabel="Back"
-      maxWidth="2xl"
-      headerActions={
+      actions={
         <Button
           size="sm"
           onClick={handleSave}
@@ -249,7 +248,6 @@ export default function CommitmentConfigurePage() {
           Update
         </Button>
       }
-      contentClassName="space-y-8"
     >
       <div className="space-y-8">
         <nav className="flex flex-wrap gap-2 border-b border-border/70 pb-4">
@@ -1032,6 +1030,6 @@ export default function CommitmentConfigurePage() {
           </div>
         </main>
       </div>
-    </ProjectFormPageLayout>
+    </PageShell>
   );
 }

@@ -290,7 +290,7 @@ export default function ProcoreDocsPage() {
   // ---------------------------------------------------------------------------
 
   return (
-    <PageShell variant="content" showHeader={false}>
+    <PageShell variant="content" title="Procore Documentation" showHeader={false}>
       <div className="px-6 pb-10 lg:px-10">
         {/* ─── Hero header ─── */}
         <div className="mb-8">

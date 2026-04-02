@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { PageContainer, PageTabs } from "@/components/layout";
+import { PageContainer, PageTabs, PageShell } from "@/components/layout";
 import { PageHeader } from "@/components/layout/page-header-unified";
 import {
   SummaryCardGrid,
@@ -290,12 +290,14 @@ export { DataTablePageSkeleton };
  */
 export default function DataTableTemplatePage() {
   return (
-    <DataTablePage
+    <PageShell
+      variant="table"
       title="Template: Data Table"
       description="This is a reference template for building data table pages"
-      columns={[]}
-      data={[]}
-      emptyMessage="This is a template page — copy the DataTablePage component to build your own."
-    />
+    >
+      <div className="text-center py-12 text-muted-foreground text-sm">
+        This is a template page — copy the DataTablePage component to build your own.
+      </div>
+    </PageShell>
   );
 }

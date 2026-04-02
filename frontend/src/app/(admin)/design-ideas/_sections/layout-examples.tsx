@@ -46,7 +46,7 @@ function LinkGrid({ links }: { links: LayoutLink[] }) {
         <Link
           key={link.href}
           href={link.href}
-          className="group flex items-start gap-3 rounded-lg bg-card p-4 shadow-sm transition-all hover:shadow-md hover:bg-muted"
+          className="group flex items-start gap-3 rounded-lg bg-card p-4 shadow-sm transition-all hover:shadow-sm hover:bg-muted"
         >
           <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground group-hover:text-primary" />
           <div>

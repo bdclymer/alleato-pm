@@ -1,7 +1,7 @@
 import * as React from "react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { PageLayout } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { MessageResponse } from "@/components/ai-elements/message";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -51,7 +51,7 @@ export default async function SupportArticlePage({ params }: Props) {
   if (!article) notFound();
 
   return (
-    <PageLayout title={article.title} maxWidth="2xl">
+    <PageShell variant="content" title={article.title}>
       <Breadcrumb className="mb-4">
         <BreadcrumbList>
           <BreadcrumbItem>
@@ -156,7 +156,7 @@ export default async function SupportArticlePage({ params }: Props) {
           ))}
         </div>
       )}
-    </PageLayout>
+    </PageShell>
   );
 }
 

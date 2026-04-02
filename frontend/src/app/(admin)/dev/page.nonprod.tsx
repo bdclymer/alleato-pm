@@ -68,7 +68,7 @@ export default function DevToolsPage() {
             return (
               <Card
                 key={tool.href}
-                className="hover:shadow-lg transition-shadow"
+                className="hover:shadow-sm transition-shadow"
               >
                 {" "}
                 <CardHeader>

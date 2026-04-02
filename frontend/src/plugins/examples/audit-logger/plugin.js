@@ -186,7 +186,7 @@ function AuditLogViewer({ logs, projectId }) {
     React.createElement('h3', { className: 'text-lg font-semibold' }, 'Audit Logs'),
     React.createElement('div', { className: 'max-h-96 overflow-y-auto' },
       logs.length === 0 
-        ? React.createElement('p', { className: 'text-gray-500' }, 'No audit logs found')
+        ? React.createElement('p', { className: 'text-muted-foreground' }, 'No audit logs found')
         : logs.map((log, index) => 
             React.createElement('div', { 
               key: index, 
@@ -194,15 +194,15 @@ function AuditLogViewer({ logs, projectId }) {
             },
               React.createElement('div', { className: 'flex justify-between' },
                 React.createElement('span', { className: 'font-medium' }, log.action),
-                React.createElement('span', { className: 'text-sm text-gray-500' }, 
+                React.createElement('span', { className: 'text-sm text-muted-foreground' }, 
                   new Date(log.timestamp).toLocaleString()
                 )
               ),
-              React.createElement('div', { className: 'text-sm text-gray-600' },
+              React.createElement('div', { className: 'text-sm text-muted-foreground' },
                 'By: ', log.user
               ),
               log.changes && React.createElement('pre', { 
-                className: 'mt-1 text-xs bg-gray-100 p-2 rounded overflow-x-auto' 
+                className: 'mt-1 text-xs bg-muted p-2 rounded overflow-x-auto' 
               }, JSON.stringify(log.changes, null, 2))
             )
           )
@@ -236,7 +236,7 @@ function AuditSummaryWidget({ api }) {
   return React.createElement('div', { className: 'p-4' },
     React.createElement('div', { className: 'mb-4' },
       React.createElement('div', { className: 'text-2xl font-bold' }, summary.totalEvents),
-      React.createElement('div', { className: 'text-sm text-gray-500' }, 'Total audit events this month')
+      React.createElement('div', { className: 'text-sm text-muted-foreground' }, 'Total audit events this month')
     ),
     React.createElement('div', { className: 'space-y-2' },
       React.createElement('h4', { className: 'font-medium text-sm' }, 'Recent Activity'),
@@ -246,7 +246,7 @@ function AuditSummaryWidget({ api }) {
           className: 'text-xs flex justify-between' 
         },
           React.createElement('span', {}, event.action),
-          React.createElement('span', { className: 'text-gray-500' }, event.time)
+          React.createElement('span', { className: 'text-muted-foreground' }, event.time)
         )
       )
     )

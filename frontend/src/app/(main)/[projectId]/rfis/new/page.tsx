@@ -2,9 +2,9 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { ArrowLeft, Save, Send } from "lucide-react";
+import { Save } from "lucide-react";
 
-import { ProjectFormPageLayout } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -86,21 +86,12 @@ export default function NewRfiPage() {
   const handleCreateOpen = () => submitRfi("open");
 
   return (
-    <ProjectFormPageLayout
-        title="New RFI"
-        description="Create a new Request for Information"
-      maxWidth="lg"
-      headerActions={
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => router.push(`/${projectId}/rfis`)}
-          className="gap-2"
-        >
-          <ArrowLeft />
-          Back to RFIs
-        </Button>
-      }
+    <PageShell
+      variant="form"
+      title="New RFI"
+      description="Create a new Request for Information"
+      onBack={() => router.push(`/${projectId}/rfis`)}
+      backLabel="Back to RFIs"
     >
       <Form {...form}>
         <form className="space-y-8">
@@ -313,6 +304,6 @@ export default function NewRfiPage() {
           </FormActions>
         </form>
       </Form>
-    </ProjectFormPageLayout>
+    </PageShell>
   );
 }

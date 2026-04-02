@@ -375,7 +375,7 @@ function MorphingDialogBasicThree() {
           style={{
             borderRadius: "24px",
           }}
-          className="relative h-auto w-[600px] border border-border bg-background shadow-2xl"
+          className="relative h-auto w-[600px] border border-border bg-background shadow-sm"
         >
           <div className="relative p-8">
             <div className="mb-6">

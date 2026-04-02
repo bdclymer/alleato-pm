@@ -6,7 +6,7 @@ import {
   CreatePurchaseOrderForm,
   CreateSubcontractForm,
 } from "@/components/domain/contracts";
-import { ProjectFormPageLayout } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import type { CreatePurchaseOrderInput } from "@/lib/schemas/create-purchase-order-schema";
 import type { CreateSubcontractInput } from "@/lib/schemas/create-subcontract-schema";
 
@@ -250,16 +250,15 @@ export default function NewCommitmentPage() {
         : "New Commitment";
 
   return (
-    <ProjectFormPageLayout
+    <PageShell
+      variant="form"
       title={title}
       description={
         type === "subcontract"
           ? "Create a new subcontract commitment"
           : "Create a new purchase order commitment"
       }
-      maxWidth="3xl"
       onBack={() => router.back()}
-      backLabel="Back"
     >
       {type === "purchase_order" ? (
         <CreatePurchaseOrderForm
@@ -274,6 +273,6 @@ export default function NewCommitmentPage() {
           onCancel={handleCancel}
         />
       )}
-    </ProjectFormPageLayout>
+    </PageShell>
   );
 }

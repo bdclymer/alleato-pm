@@ -15,7 +15,7 @@ export function MasterDetailSection() {
       </div>
 
       {/* Demo Grid */}
-      <div className="grid grid-cols-[280px_1fr] gap-px bg-border rounded-xl overflow-hidden min-h-[320px] shadow-md mb-4">
+      <div className="grid grid-cols-[280px_1fr] gap-px bg-border rounded-xl overflow-hidden min-h-[320px] shadow-sm mb-4">
 
         {/* Left — Master Pane */}
         <div className="bg-card">

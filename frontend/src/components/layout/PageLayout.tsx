@@ -1,3 +1,9 @@
+/**
+ * @deprecated PageLayout is deprecated. Use PageShell from "@/components/layout" instead.
+ * This file is kept to avoid breaking imports from files that haven't been migrated yet.
+ * Use: <PageShell variant="content" title="..."> for content pages.
+ */
+
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { PageContainer, type PageContainerProps } from "./PageContainer";
@@ -17,20 +23,7 @@ interface PageLayoutProps {
   children: React.ReactNode;
 }
 
-/**
- * PageLayout — wraps PageHeader and page content inside a single PageContainer
- * so both share the same horizontal padding and max-width, ensuring perfect alignment.
- *
- * Use this for any non-table page that would otherwise compose PageHeader + PageContainer
- * separately (which causes the header to be full-width while content is inset).
- *
- * @example
- * ```tsx
- * <PageLayout title="Procore Documentation" description="Browse docs and ask the AI">
- *   <div className="grid ...">...</div>
- * </PageLayout>
- * ```
- */
+/** @deprecated Use PageShell instead */
 export function PageLayout({
   title,
   description,

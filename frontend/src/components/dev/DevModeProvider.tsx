@@ -76,7 +76,7 @@ function DevModePanel() {
   const { dataSources, highlightedSource, setHighlightedSource, toggle } = useDevMode();
 
   return (
-    <div className="fixed bottom-4 right-4 z-[9999] w-96 max-h-[60vh] overflow-auto bg-yellow-50 border-2 border-yellow-400 rounded-lg shadow-2xl">
+    <div className="fixed bottom-4 right-4 z-[9999] w-96 max-h-[60vh] overflow-auto bg-yellow-50 border-2 border-yellow-400 rounded-lg shadow-sm">
       <div className="sticky top-0 bg-yellow-200 px-4 py-2 flex items-center justify-between">
         <span className="font-bold text-yellow-900 text-sm">
           DEV MODE: Data Sources ({dataSources.length})
@@ -102,7 +102,7 @@ function DevModePanel() {
               className={`p-2 rounded text-xs ${
                 highlightedSource === source.id
                   ? 'bg-yellow-300 ring-2 ring-yellow-500'
-                  : 'bg-white'
+                  : 'bg-card'
               }`}
               onMouseEnter={() => setHighlightedSource(source.id)}
               onMouseLeave={() => setHighlightedSource(null)}

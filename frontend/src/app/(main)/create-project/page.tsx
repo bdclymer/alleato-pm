@@ -6,7 +6,7 @@ import { CircleHelp } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { ProjectFormPageLayout } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { useDevAutoFill } from "@/hooks/use-dev-autofill";
 import {
@@ -55,17 +55,13 @@ const getFileName = (value: unknown) =>
 
 export default function CreateProjectPage() {
   return (
-    <ProjectFormPageLayout
+    <PageShell
+      variant="form"
       title="Create Project"
       description="Set up core project details, location, and delivery defaults."
-      maxWidth="xl"
-      breadcrumbs={[
-        { label: "Portfolio", href: "/" },
-        { label: "Create Project" },
-      ]}
     >
       <CreateProjectForm />
-    </ProjectFormPageLayout>
+    </PageShell>
   );
 }
 

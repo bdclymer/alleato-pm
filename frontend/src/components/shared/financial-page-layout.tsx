@@ -1,3 +1,9 @@
+/**
+ * @deprecated FinancialPageLayout is deprecated. Use PageShell from "@/components/layout" instead.
+ * This file is kept to avoid breaking imports from files that haven't been migrated yet.
+ * Use: <PageShell variant="table" title="..."> for financial table pages.
+ */
+
 "use client";
 
 import React, { ReactNode } from "react";

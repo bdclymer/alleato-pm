@@ -7,7 +7,7 @@ export function KpiBlocksSection() {
         <span className="font-mono text-[11px] font-medium text-muted-foreground/40 w-6 shrink-0">12</span>
         <div>
           <h2 className="text-xl font-semibold tracking-[-0.02em] text-foreground">KPI / Metric Blocks — Light Mode</h2>
-          <p className="mt-1 text-[13px] text-muted-foreground/60">Same anatomy, but the container gets shadow-md to float off the canvas</p>
+          <p className="mt-1 text-[13px] text-muted-foreground/60">Same anatomy, but the container gets shadow-sm to float off the canvas</p>
         </div>
       </div>
 
@@ -42,7 +42,7 @@ export function KpiBlocksSection() {
             ✓ Right — Full-context with shadow
           </div>
 
-          <div className="grid grid-cols-3 gap-px bg-border rounded-xl overflow-hidden shadow-md">
+          <div className="grid grid-cols-3 gap-px bg-border rounded-xl overflow-hidden shadow-sm">
             {/* Cell 1: Revenue */}
             <div className="bg-card p-6">
               <div className="text-[10px] font-bold uppercase tracking-[0.09em] text-muted-foreground/60 mb-3">
@@ -87,7 +87,7 @@ export function KpiBlocksSection() {
           </div>
 
           <p className="text-xs text-muted-foreground/60 mt-4 pt-3 border-t border-border leading-[1.6]">
-            White cells with shadow-md. Three text tiers per cell. The 1px gap grid reads as a unified lifted panel.
+            White cells with shadow-sm. Three text tiers per cell. The 1px gap grid reads as a unified lifted panel.
           </p>
         </div>
       </div>

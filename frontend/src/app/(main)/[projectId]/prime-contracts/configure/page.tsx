@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ProjectFormPageLayout } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { FormSection } from "@/components/forms";
 import { ToggleField } from "@/components/forms";
 
@@ -84,11 +84,11 @@ export default function PrimeContractsConfigurePage() {
   ) => setSettings((prev) => (prev ? { ...prev, [key]: value } : prev));
 
   return (
-    <ProjectFormPageLayout
+    <PageShell
+      variant="content"
       title="Configure Prime Contracts"
       description="Project-level settings for how prime contracts behave"
-      maxWidth="md"
-      headerActions={
+      actions={
         <Button size="sm" onClick={handleSave} disabled={saving || loading}>
           {saving ? "Saving..." : "Save Settings"}
         </Button>
@@ -238,6 +238,6 @@ export default function PrimeContractsConfigurePage() {
       ) : (
         <p className="text-muted-foreground">Failed to load settings.</p>
       )}
-    </ProjectFormPageLayout>
+    </PageShell>
   );
 }

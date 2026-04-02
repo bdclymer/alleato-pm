@@ -282,7 +282,7 @@ export function SimpleRagChat({
           >
             <span
               className={cn(
-                "pointer-events-none inline-block h-4 w-4 rounded-full bg-white shadow-sm transform transition-transform duration-200 mt-0.5",
+                "pointer-events-none inline-block h-4 w-4 rounded-full bg-card shadow-sm transform transition-transform duration-200 mt-0.5",
                 councilMode ? "translate-x-4" : "translate-x-0.5",
               )}
             />

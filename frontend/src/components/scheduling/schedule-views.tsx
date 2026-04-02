@@ -712,7 +712,7 @@ function DraggableTaskCard({ task, onTaskClick, onUpdateTask, visibleFields }: D
       {...listeners}
       className={cn(
         "border border-border shadow-sm cursor-grab active:cursor-grabbing hover:bg-accent/30 transition-colors duration-150 group",
-        isDragging && "opacity-90 scale-[1.02] rotate-1 shadow-md ring-2 ring-primary"
+        isDragging && "opacity-90 scale-[1.02] rotate-1 shadow-sm ring-2 ring-primary"
       )}
       onClick={() => onTaskClick(task)}
     >

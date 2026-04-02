@@ -81,7 +81,7 @@ export function NotificationBell() {
       <PopoverContent
         align="end"
         sideOffset={12}
-        className="site-header-notification-popover relative w-96 rounded-2xl border border-border/70 bg-popover p-0 shadow-lg"
+        className="site-header-notification-popover relative w-96 rounded-2xl border border-border/70 bg-popover p-0 shadow-sm"
       >
         <span className="absolute -top-2 right-4 h-4 w-4 rotate-45 border-l border-t border-border/70 bg-popover" />
         <NotificationErrorBoundary

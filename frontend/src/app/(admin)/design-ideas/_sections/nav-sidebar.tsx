@@ -17,7 +17,7 @@ export function NavSidebarSection() {
       </div>
 
       {/* Nav Demo */}
-      <div className="grid grid-cols-[220px_1fr] gap-px bg-border rounded-xl overflow-hidden min-h-[380px] shadow-md mb-4">
+      <div className="grid grid-cols-[220px_1fr] gap-px bg-border rounded-xl overflow-hidden min-h-[380px] shadow-sm mb-4">
 
         {/* Left Sidebar */}
         <div className="bg-card p-4 px-2">

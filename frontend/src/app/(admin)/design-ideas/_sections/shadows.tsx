@@ -36,8 +36,8 @@ export function ShadowsSection() {
         </div>
 
         {/* Shadow MD */}
-        <div className="bg-card rounded-lg p-5 shadow-md">
-          <div className="h-16 bg-card rounded-md shadow-md mb-4" />
+        <div className="bg-card rounded-lg p-5 shadow-sm">
+          <div className="h-16 bg-card rounded-md shadow-sm mb-4" />
           <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60 mb-1">Shadow MD</div>
           <div className="font-mono text-[10px] text-muted-foreground/40 mb-2 leading-[1.6]">
             0 4px 6px rgba(0,0,0,.06){"\n"}0 2px 4px rgba(0,0,0,.04)
@@ -46,8 +46,8 @@ export function ShadowsSection() {
         </div>
 
         {/* Shadow LG */}
-        <div className="bg-card rounded-lg p-5 shadow-lg">
-          <div className="h-16 bg-card rounded-md shadow-lg mb-4" />
+        <div className="bg-card rounded-lg p-5 shadow-sm">
+          <div className="h-16 bg-card rounded-md shadow-sm mb-4" />
           <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60 mb-1">Shadow LG</div>
           <div className="font-mono text-[10px] text-muted-foreground/40 mb-2 leading-[1.6]">
             0 10px 15px rgba(0,0,0,.07){"\n"}0 4px 6px rgba(0,0,0,.04)

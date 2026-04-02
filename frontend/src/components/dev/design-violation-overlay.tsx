@@ -19,7 +19,7 @@ type ViolationType =
 
 const VIOLATION_LABELS: Record<ViolationType, string> = {
   wrong_button:          "Wrong button style",
-  bg_white:              "bg-white (use bg-card)",
+  bg_white:              "bg-card (use bg-card)",
   card_trap:             "Card trap",
   wrong_text_hierarchy:  "Wrong text hierarchy",
   hardcoded_color:       "Hardcoded color",
@@ -304,7 +304,7 @@ export function DesignViolationOverlay() {
         onMouseDown={handleMouseDown}
         title="Click to open panel, right-click any element to flag violations"
         style={{ left: pos.x, top: pos.y }}
-        className="fixed z-[9998] w-8 h-8 rounded-full bg-zinc-900 border border-zinc-700 shadow-lg flex items-center justify-center cursor-grab active:cursor-grabbing select-none hover:bg-zinc-800 transition-colors"
+        className="fixed z-[9998] w-8 h-8 rounded-full bg-zinc-900 border border-zinc-700 shadow-sm flex items-center justify-center cursor-grab active:cursor-grabbing select-none hover:bg-zinc-800 transition-colors"
       >
         <span className="text-base leading-none">🎨</span>
         {totalBadge > 0 && (
@@ -319,7 +319,7 @@ export function DesignViolationOverlay() {
         <div
           ref={panelRef}
           style={panelStyle}
-          className="w-80 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[60vh]"
+          className="w-80 bg-zinc-900 border border-zinc-700 rounded-xl shadow-sm overflow-hidden flex flex-col max-h-[60vh]"
         >
           {/* Panel header */}
           <div className="px-4 py-3 border-b border-zinc-700 bg-zinc-800 flex items-center justify-between">
@@ -431,7 +431,7 @@ export function DesignViolationOverlay() {
 
       {/* Toast */}
       {toast && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[9999] bg-green-700 text-white text-xs font-medium px-3 py-2 rounded-lg shadow-lg">
+        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[9999] bg-green-700 text-white text-xs font-medium px-3 py-2 rounded-lg shadow-sm">
           ✓ {toast}
         </div>
       )}
@@ -442,7 +442,7 @@ export function DesignViolationOverlay() {
           <div className="fixed inset-0 z-[9998]" onClick={() => setMenu(null)} />
           <div
             ref={menuRef}
-            className="fixed z-[9999] w-72 bg-zinc-900 border border-zinc-700 rounded-xl shadow-2xl overflow-hidden"
+            className="fixed z-[9999] w-72 bg-zinc-900 border border-zinc-700 rounded-xl shadow-sm overflow-hidden"
             style={{ left: menu.x, top: menu.y }}
           >
             {/* Header */}

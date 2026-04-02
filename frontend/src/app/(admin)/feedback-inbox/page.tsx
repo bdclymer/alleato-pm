@@ -1228,7 +1228,7 @@ function ToolContextSection({ item }: { item: FeedbackItem }) {
           </button>
 
           {showDropdown && (
-            <div className="absolute left-0 top-full z-50 mt-1 max-h-60 w-56 overflow-y-auto rounded-md border border-border bg-popover p-1 shadow-md">
+            <div className="absolute left-0 top-full z-50 mt-1 max-h-60 w-56 overflow-y-auto rounded-md border border-border bg-popover p-1 shadow-sm">
               {tools.map((tool) => (
                 <button
                   key={tool.id}

@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { PageShell } from "@/components/layout";
 import {
   Sparkles,
   Zap,
@@ -562,20 +563,8 @@ export default function UpdatesPage() {
   const totalEntries = RELEASES.reduce((sum, r) => sum + r.entries.length, 0);
 
   return (
-    <div className="px-8 py-8 max-w-5xl">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2 mb-1">
-          <Sparkles className="h-5 w-5 text-muted-foreground" />
-          <h1 className="text-xl font-semibold tracking-tight">
-            What&apos;s New
-          </h1>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          A running log of features added, improved, and fixed across all areas
-          of the platform.
-        </p>
-      </div>
+    <PageShell variant="content" title="What's New" description="A running log of features added, improved, and fixed across all areas of the platform.">
+    <div>
 
       {/* Stats row */}
       <div className="flex items-center gap-6 mb-8 p-4 rounded-lg bg-muted/40 border border-border">
@@ -696,5 +685,6 @@ export default function UpdatesPage() {
         })}
       </div>
     </div>
+    </PageShell>
   );
 }

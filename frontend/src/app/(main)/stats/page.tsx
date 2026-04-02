@@ -132,7 +132,7 @@ function MeetingCard({
   return (
     <Link href={`/meetings/${meeting.id}`}>
       <Card
-        className={`group hover:shadow-md hover:border-primary/20 transition-all cursor-pointer ${compact ? "p-4" : ""}`}
+        className={`group hover:shadow-sm hover:border-primary/20 transition-all cursor-pointer ${compact ? "p-4" : ""}`}
       >
         <CardHeader className={compact ? "p-0 pb-2" : "pb-4"}>
           <div className="flex items-start justify-between gap-2">

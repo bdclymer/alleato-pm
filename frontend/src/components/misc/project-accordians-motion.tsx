@@ -80,7 +80,7 @@ export function InsightsSection() {
         <AnimatePresence>
           {hoveredIndex !== null && (
             <motion.div
-              className="fixed pointer-events-none z-50 w-[200px] md:w-[300px] rounded-lg overflow-hidden shadow-2xl hidden md:block"
+              className="fixed pointer-events-none z-50 w-[200px] md:w-[300px] rounded-lg overflow-hidden shadow-sm hidden md:block"
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{
                 opacity: 1,

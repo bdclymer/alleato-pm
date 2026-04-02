@@ -82,7 +82,7 @@ function InboxNotifications() {
 
   if (!inboxNotifications.length) {
     return (
-      <div className="text-center text-sm font-medium text-gray-600 p-4 flex justify-center items-center h-full">
+      <div className="text-center text-sm font-medium text-muted-foreground p-4 flex justify-center items-center h-full">
         You have no notifications
       </div>
     );

@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 
-import { ProjectFormPageLayout } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { Form, FormGrid, FormSection } from "@/components/forms";
 import { FormActions } from "@/components/forms/FormActions";
 import { TextField } from "@/components/forms/TextField";
@@ -99,12 +99,12 @@ export default function NewEstimatePage() {
   const errors = form.formState.errors;
 
   return (
-    <ProjectFormPageLayout
+    <PageShell
+      variant="form"
       title="New Estimate"
       description="Create a new project estimate and quantity takeoff"
       onBack={() => router.back()}
       backLabel="Back to Estimates"
-      maxWidth="xl"
     >
       <Form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <FormSection title="Basic Information">
@@ -293,6 +293,6 @@ export default function NewEstimatePage() {
           isSubmitting={form.formState.isSubmitting}
         />
       </Form>
-    </ProjectFormPageLayout>
+    </PageShell>
   );
 }

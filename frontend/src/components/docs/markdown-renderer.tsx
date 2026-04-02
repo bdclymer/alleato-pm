@@ -190,7 +190,7 @@ export function MarkdownRenderer({
               <img
                 src={src}
                 alt={alt || ""}
-                className="max-w-full h-auto rounded-lg shadow-lg mb-4"
+                className="max-w-full h-auto rounded-lg shadow-sm mb-4"
                 loading="lazy"
                 {...props}
               />
