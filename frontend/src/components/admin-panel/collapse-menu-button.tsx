@@ -40,6 +40,7 @@ interface CollapseMenuButtonProps {
   active: boolean;
   submenus: Submenu[];
   isOpen: boolean | undefined;
+  onLinkClick?: () => void;
 }
 
 export function CollapseMenuButton({
@@ -47,7 +48,8 @@ export function CollapseMenuButton({
   label,
   active,
   submenus,
-  isOpen
+  isOpen,
+  onLinkClick
 }: CollapseMenuButtonProps) {
   const pathname = usePathname();
   const isSubmenuActive = submenus.some((submenu) =>
@@ -110,7 +112,7 @@ export function CollapseMenuButton({
             className="w-full justify-start h-6 mb-0.5 text-xs pl-4"
             asChild
           >
-            <Link href={href}>
+            <Link href={href} onClick={onLinkClick}>
               <p
                 className={cn(
                   "max-w-[170px] truncate text-xs",
@@ -169,6 +171,7 @@ export function CollapseMenuButton({
                 "bg-secondary"
               }`}
               href={href}
+              onClick={onLinkClick}
             >
               <p className="max-w-[180px] truncate text-xs">{label}</p>
             </Link>

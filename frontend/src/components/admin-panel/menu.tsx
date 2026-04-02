@@ -19,9 +19,10 @@ import {
 interface MenuProps {
   isOpen: boolean | undefined;
   projectId?: string;
+  onLinkClick?: () => void;
 }
 
-export function Menu({ isOpen, projectId }: MenuProps) {
+export function Menu({ isOpen, projectId, onLinkClick }: MenuProps) {
   const pathname = usePathname();
   const menuList = getMenuList(pathname, projectId);
 
@@ -69,7 +70,7 @@ export function Menu({ isOpen, projectId }: MenuProps) {
                               className="w-full justify-start h-7 mb-0.5 text-xs"
                               asChild
                             >
-                              <Link href={href}>
+                              <Link href={href} onClick={onLinkClick}>
                                 <p
                                   className={cn(
                                     "max-w-[200px] truncate text-xs",
@@ -103,6 +104,7 @@ export function Menu({ isOpen, projectId }: MenuProps) {
                         }
                         submenus={submenus}
                         isOpen={isOpen}
+                        onLinkClick={onLinkClick}
                       />
                     </div>
                   )

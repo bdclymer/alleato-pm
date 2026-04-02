@@ -346,6 +346,18 @@ export type { TextProps } from "@/components/ui/text";
 export { TransitionPanel } from "@/components/ui/transition-panel";
 export type { TransitionPanelProps } from "@/components/ui/transition-panel";
 
+// Responsive Dialog (Dialog on desktop, Drawer on mobile)
+export {
+  ResponsiveDialog,
+  ResponsiveDialogTrigger,
+  ResponsiveDialogContent,
+  ResponsiveDialogHeader,
+  ResponsiveDialogTitle,
+  ResponsiveDialogDescription,
+  ResponsiveDialogFooter,
+  ResponsiveDialogClose,
+} from "@/components/ui/responsive-dialog";
+
 // Unified Modal (Radix-based, sized variants)
 export {
   Modal,

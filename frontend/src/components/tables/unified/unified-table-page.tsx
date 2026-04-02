@@ -35,6 +35,7 @@ import {
 import { TableToolbar, type ColumnConfig, type FilterConfig, type ViewMode } from "./table-toolbar";
 import { Button } from "@/components/ui/button";
 import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, ChevronsLeft, ChevronsRight, EyeOff, Inbox, MoreHorizontal, Pin, PinOff, Trash2, X } from "lucide-react";
+import { MobileCardList } from "./mobile-card-list";
 
 interface TabItem {
   label: string;
@@ -940,53 +941,17 @@ export function UnifiedTablePage<T>({
 
       {/* Mobile card view */}
       {showTable && shouldRenderTableView && (
-        <div className={cn("sm:hidden", data.isFetching && "opacity-70")}>
-          <div className="divide-y divide-border">
-            {paginatedItems.map((item) => {
-              const rowId = table.getRowId(item);
-              const isActive = table.activeRowId === rowId;
-              // Use first column (alwaysVisible / name) as title, rest as details
-              const titleCol = orderedVisibleColumns[0];
-              const detailCols = orderedVisibleColumns.slice(1, 4);
-              const titleContent = titleCol
-                ? React.Children.toArray(titleCol.render(item))
-                : null;
-              return (
-                <div
-                  key={rowId}
-                  role="button"
-                  tabIndex={0}
-                  className={cn(
-                    "w-full text-left px-4 py-3 cursor-pointer transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border/70",
-                    isActive ? "bg-muted" : "active:bg-muted/60",
-                  )}
-                  onClick={() => activateRow(item)}
-                  onKeyDown={(event) => {
-                    if (event.key !== "Enter" && event.key !== " ") return;
-                    event.preventDefault();
-                    activateRow(item);
-                  }}
-                >
-                  {titleCol && (
-                    <div className="text-sm font-medium truncate">{titleContent}</div>
-                  )}
-                  {detailCols.length > 0 && (
-                    <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                      {detailCols.map((col) => (
-                        <span key={col.id} className="inline-flex items-center gap-1 truncate max-w-[10rem]">
-                          <span className="text-muted-foreground/60">{col.label}:</span>
-                          <span className="text-foreground/80">
-                            {React.Children.toArray(col.render(item))}
-                          </span>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
+        <MobileCardList
+          items={paginatedItems}
+          columns={orderedVisibleColumns}
+          getRowId={table.getRowId}
+          activeRowId={table.activeRowId}
+          onRowClick={table.onRowClick ? activateRow : undefined}
+          isFetching={data.isFetching}
+          rowActions={table.rowActions}
+          onDelete={table.onDelete ? handleDeleteIntent : undefined}
+          hasRowActions={hasRowActions}
+        />
       )}
 
       {/* Desktop table view */}
@@ -1348,13 +1313,6 @@ export function UnifiedTablePage<T>({
                               }}
                             />
                             )
-                          ) : process.env.NODE_ENV === "development" ? (
-                            <span className="group/devhint relative">
-                              {column.render(item)}
-                              <span className="pointer-events-none absolute -top-7 left-0 z-50 hidden rounded bg-black px-1.5 py-0.5 font-mono text-[10px] text-yellow-300 whitespace-nowrap group-hover/devhint:block">
-                                {column.id}
-                              </span>
-                            </span>
                           ) : (
                             column.render(item)
                           )}

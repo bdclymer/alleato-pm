@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { MenuIcon, PanelsTopLeft } from "lucide-react";
 
@@ -12,11 +15,13 @@ import {
 } from "@/components/ui/sheet";
 
 export function SheetMenu() {
+  const [open, setOpen] = useState(false);
+
   return (
-    <Sheet>
+    <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger className="lg:hidden" asChild>
-        <Button className="h-8" variant="outline" size="icon">
-          <MenuIcon size={20} />
+        <Button className="h-10 w-10" variant="outline" size="icon">
+          <MenuIcon size={24} />
         </Button>
       </SheetTrigger>
       <SheetContent className="sm:w-72 px-4 h-full flex flex-col" side="left">
@@ -26,13 +31,17 @@ export function SheetMenu() {
             variant="link"
             asChild
           >
-            <Link href="/dashboard" className="flex items-center gap-2">
+            <Link
+              href="/dashboard"
+              className="flex items-center gap-2"
+              onClick={() => setOpen(false)}
+            >
               <PanelsTopLeft />
               <SheetTitle className="font-bold text-lg">Brand</SheetTitle>
             </Link>
           </Button>
         </SheetHeader>
-        <Menu isOpen />
+        <Menu isOpen onLinkClick={() => setOpen(false)} />
       </SheetContent>
     </Sheet>
   );
