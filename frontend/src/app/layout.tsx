@@ -12,6 +12,7 @@ import { DevAnnotationOverlay } from "@/components/dev/dev-annotation-overlay";
 import { DesignViolationOverlay } from "@/components/dev/design-violation-overlay";
 import { Providers } from "./Providers";
 import { UnifiedFeedbackWidget } from "@/components/dev/UnifiedFeedbackWidget";
+import { AdminFeedbackWidget } from "@/components/admin-feedback/AdminFeedbackWidget";
 import "./globals.css";
 import "@liveblocks/react-ui/styles.css";
 import "@liveblocks/react-ui/styles/dark/media-query.css";
@@ -70,13 +71,12 @@ export default function RootLayout({
           </ThemeProvider>
         </QueryProvider>
         <Toaster />
+        <AdminFeedbackWidget />
         {process.env.NODE_ENV === "development" && (
           <>
             <AgentationThemeSync />
             <UnifiedFeedbackWidget />
             <DesignViolationOverlay />
-            {/* DevAnnotationOverlay disabled — Agentation MCP already handles this workflow */}
-            {/* <DevAnnotationOverlay /> */}
           </>
         )}
       </body>

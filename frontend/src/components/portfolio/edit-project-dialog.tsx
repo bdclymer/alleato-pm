@@ -2,11 +2,11 @@
 
 import * as React from "react";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -411,14 +411,58 @@ export function EditProjectDialog({
     }
   };
 
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="w-full max-w-6xl sm:max-w-6xl p-0 gap-0">
-        <DialogHeader className="border-b px-6 py-4">
-          <DialogTitle>Edit Project</DialogTitle>
-        </DialogHeader>
+  const [width, setWidth] = React.useState(720);
+  const isResizing = React.useRef(false);
 
-        <form onSubmit={handleSubmit} className="flex max-h-screen flex-col">
+  const handleResizeStart = React.useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      isResizing.current = true;
+      const startX = e.clientX;
+      const startWidth = width;
+
+      const onMouseMove = (moveEvent: MouseEvent) => {
+        if (!isResizing.current) return;
+        const delta = startX - moveEvent.clientX;
+        const newWidth = Math.max(560, Math.min(startWidth + delta, 1200));
+        setWidth(newWidth);
+      };
+
+      const onMouseUp = () => {
+        isResizing.current = false;
+        document.removeEventListener("mousemove", onMouseMove);
+        document.removeEventListener("mouseup", onMouseUp);
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+      };
+
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+      document.addEventListener("mousemove", onMouseMove);
+      document.addEventListener("mouseup", onMouseUp);
+    },
+    [width],
+  );
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="right"
+        showCloseButton={false}
+        className="p-0 gap-0 sm:max-w-none"
+        style={{ width: `${width}px` }}
+      >
+        {/* Resize handle */}
+        <div
+          className="absolute left-0 top-0 bottom-0 w-1 cursor-col-resize hover:bg-primary/20 active:bg-primary/30 z-10"
+          onMouseDown={handleResizeStart}
+        />
+
+        <SheetHeader className="border-b px-6 py-4">
+          <SheetTitle>Edit Project</SheetTitle>
+        </SheetHeader>
+
+        <form onSubmit={handleSubmit} className="flex flex-1 min-h-0 flex-col">
           <div className="flex-1 overflow-y-auto px-6 py-6 space-y-8">
 
             {/* General Information */}
@@ -833,7 +877,7 @@ export function EditProjectDialog({
             </div>
           </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 }

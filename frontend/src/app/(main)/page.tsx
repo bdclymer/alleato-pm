@@ -28,6 +28,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   UnifiedTablePage,
   useUnifiedTableState,
   type ColumnConfig,
@@ -245,17 +250,25 @@ function EditableCell({
     );
   }
 
+  const displayText = displayValue ?? (value || "-");
+
   return (
-    <span
-      className="cursor-text rounded px-1 py-0.5 hover:bg-muted/60 transition-colors"
-      onClick={(e) => {
-        e.stopPropagation();
-        setEditing(true);
-      }}
-      title="Click to edit"
-    >
-      {displayValue ?? (value || "-")}
-    </span>
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <span
+          className="cursor-text rounded px-1 py-0.5 hover:bg-muted/60 transition-colors"
+          onClick={(e) => {
+            e.stopPropagation();
+            setEditing(true);
+          }}
+        >
+          {displayText}
+        </span>
+      </TooltipTrigger>
+      <TooltipContent side="bottom" collisionPadding={8}>
+        {displayText}
+      </TooltipContent>
+    </Tooltip>
   );
 }
 
