@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { format } from "date-fns";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { cn, formatCurrency } from "@/lib/utils";
 import type {
@@ -23,13 +24,60 @@ interface InvoiceSummaryPreviewProps {
   previousPaymentDue: number;
 }
 
-interface G702Line {
+function formatDate(dateStr: string | null): string {
+  if (!dateStr) return "—";
+  try {
+    return format(new Date(dateStr), "MMMM d, yyyy");
+  } catch {
+    return "—";
+  }
+}
+
+function LineRow({
+  number,
+  label,
+  value,
+  indent,
+  highlight,
+  bold,
+}: {
   number: string;
   label: string;
-  value: number;
+  value?: number;
   indent?: boolean;
   highlight?: boolean;
   bold?: boolean;
+}) {
+  return (
+    <tr
+      className={cn(
+        "border-b border-border",
+        highlight && "bg-primary/5",
+        bold && "font-semibold",
+      )}
+    >
+      <td className="w-10 py-2 pr-2 text-right text-xs text-muted-foreground tabular-nums align-top">
+        {number}
+      </td>
+      <td
+        className={cn(
+          "py-2 text-sm text-foreground",
+          indent && "pl-6",
+          highlight && "font-semibold",
+        )}
+      >
+        {label}
+      </td>
+      <td
+        className={cn(
+          "py-2 pl-4 text-right text-sm tabular-nums text-foreground w-36",
+          highlight && "font-semibold",
+        )}
+      >
+        {value !== undefined ? formatCurrency(value) : ""}
+      </td>
+    </tr>
+  );
 }
 
 export function InvoiceSummaryPreview({
@@ -90,76 +138,6 @@ export function InvoiceSummaryPreview({
       ? totalScheduledValue - completedAndStored
       : contractSumToDate;
 
-  const lines: G702Line[] = [
-    {
-      number: "1",
-      label: "Original Contract Sum",
-      value: originalContractSum,
-    },
-    {
-      number: "2",
-      label: "Net change by change orders",
-      value: netChangeByCOs,
-    },
-    {
-      number: "3",
-      label: "Contract sum to date (line 1 ± 2)",
-      value: contractSumToDate,
-    },
-    {
-      number: "4",
-      label:
-        "Total completed and stored to date (Column G on detail sheet)",
-      value: completedAndStored,
-    },
-    {
-      number: "5",
-      label: "Retainage",
-      value: -1, // placeholder — sub-items follow
-    },
-    {
-      number: "5a",
-      label: `${retainageWorkPct}% of completed work`,
-      value: totalRetainageWork,
-      indent: true,
-    },
-    {
-      number: "5b",
-      label: `${retainageMaterialsPct}% of stored material`,
-      value: totalRetainageMaterials,
-      indent: true,
-    },
-    {
-      number: "",
-      label:
-        "Total retainage (Line 5a + 5b or total in column I of detail sheet)",
-      value: totalRetainage,
-      bold: true,
-    },
-    {
-      number: "6",
-      label: "Total earned less retainage (Line 4 less Line 5 Total)",
-      value: totalEarnedLessRetainage,
-    },
-    {
-      number: "7",
-      label:
-        "Less previous certificates for payment (Line 6 from prior certificate)",
-      value: previousPaymentDue,
-    },
-    {
-      number: "8",
-      label: "Current payment due",
-      value: currentPaymentDue,
-      highlight: true,
-    },
-    {
-      number: "9",
-      label: "Balance to finish, including retainage",
-      value: balanceToFinish,
-    },
-  ];
-
   return (
     <section>
       <button
@@ -173,135 +151,203 @@ export function InvoiceSummaryPreview({
           <ChevronRight className="h-4 w-4 text-muted-foreground" />
         )}
         <h3 className="text-base font-semibold text-foreground">
-          Summary Preview
+          Application for Payment
         </h3>
       </button>
 
       {isExpanded && (
-        <div className="mt-4 space-y-6">
-          {/* G702 — Contractor's Application for Payment */}
-          <div>
-            <p className="text-xs text-muted-foreground italic mb-3">
-              Application is made for payment, as shown below, in connection
-              with the Contract. Continuation sheet is attached.
-            </p>
-
-            <div className="space-y-0">
-              {lines.map((line, idx) => {
-                // Line 5 header — label only, no value
-                if (line.number === "5" && line.value === -1) {
-                  return (
-                    <div
-                      key={`line-${idx}`}
-                      className="flex items-baseline justify-between py-1.5"
-                    >
-                      <div className="flex items-baseline gap-3">
-                        <span className="w-6 text-xs text-muted-foreground tabular-nums">
-                          5
-                        </span>
-                        <span className="text-sm text-foreground">
-                          Retainage
-                        </span>
-                      </div>
-                    </div>
-                  );
-                }
-
-                return (
-                  <div
-                    key={`line-${idx}`}
-                    className={cn(
-                      "flex items-baseline justify-between py-1.5",
-                      line.highlight &&
-                        "bg-primary/5 rounded px-2 -mx-2 font-semibold",
-                      line.bold && "font-semibold",
-                    )}
-                  >
-                    <div className="flex items-baseline gap-3">
-                      <span className="w-6 text-xs text-muted-foreground tabular-nums">
-                        {line.number}
-                      </span>
-                      <span
-                        className={cn(
-                          "text-sm text-foreground",
-                          line.indent && "ml-4",
-                        )}
-                      >
-                        {line.label}
-                      </span>
-                    </div>
-                    <span className="text-sm tabular-nums text-foreground ml-4 shrink-0">
-                      {formatCurrency(line.value)}
-                    </span>
-                  </div>
-                );
-              })}
+        <div className="mt-4">
+          {/* ── AIA G702 Document ────────────────────────────────────── */}
+          <div className="rounded-lg border border-border bg-card overflow-hidden">
+            {/* Document header */}
+            <div className="border-b border-border bg-muted/50 px-6 py-4">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h4 className="text-sm font-semibold uppercase tracking-wider text-foreground">
+                    Application and Certificate for Payment
+                  </h4>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    AIA Document G702
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-xs text-muted-foreground">
+                    Application No.
+                  </p>
+                  <p className="text-sm font-semibold tabular-nums text-foreground">
+                    {invoice.application_number}
+                  </p>
+                </div>
+              </div>
             </div>
-          </div>
 
-          {/* Change Order Summary */}
-          <div>
-            <h4 className="text-sm font-semibold text-foreground mb-2">
-              Change Order Summary
-            </h4>
-            <div className="overflow-hidden rounded-lg border border-border">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="bg-muted">
-                    <th className="px-4 py-2 text-left font-medium text-muted-foreground">
-                      Change Order Summary
-                    </th>
-                    <th className="px-4 py-2 text-right font-medium text-muted-foreground w-32">
-                      Additions
-                    </th>
-                    <th className="px-4 py-2 text-right font-medium text-muted-foreground w-32">
-                      Deductions
-                    </th>
-                  </tr>
-                </thead>
+            {/* Project / contract metadata row */}
+            <div className="grid grid-cols-3 divide-x divide-border border-b border-border text-xs">
+              <div className="px-4 py-2.5">
+                <span className="text-muted-foreground uppercase tracking-wider">
+                  Project
+                </span>
+                <p className="mt-0.5 text-sm font-medium text-foreground truncate">
+                  {contract.title}
+                </p>
+              </div>
+              <div className="px-4 py-2.5">
+                <span className="text-muted-foreground uppercase tracking-wider">
+                  Contract No.
+                </span>
+                <p className="mt-0.5 text-sm font-medium text-foreground">
+                  {contract.contract_number ?? "—"}
+                </p>
+              </div>
+              <div className="px-4 py-2.5">
+                <span className="text-muted-foreground uppercase tracking-wider">
+                  Period To
+                </span>
+                <p className="mt-0.5 text-sm font-medium text-foreground">
+                  {formatDate(invoice.period_to)}
+                </p>
+              </div>
+            </div>
+
+            {/* ── Line items table ─────────────────────────────────── */}
+            <div className="px-6 py-4">
+              <p className="mb-3 text-xs italic text-muted-foreground">
+                Application is made for payment, as shown below, in connection
+                with the Contract. Continuation sheet, AIA Document G703, is
+                attached.
+              </p>
+
+              <table className="w-full">
                 <tbody>
-                  <tr className="border-t border-border">
-                    <td className="px-4 py-2 text-foreground">
-                      Total changes approved in previous months by Owner/Client
-                    </td>
-                    <td className="px-4 py-2 text-right tabular-nums">
-                      $0.00
-                    </td>
-                    <td className="px-4 py-2 text-right tabular-nums">
-                      $0.00
-                    </td>
-                  </tr>
-                  <tr className="border-t border-border">
-                    <td className="px-4 py-2 text-foreground">
-                      Total approved this Month
-                    </td>
-                    <td className="px-4 py-2 text-right tabular-nums">
-                      {formatCurrency(Math.max(0, netChangeByCOs))}
-                    </td>
-                    <td className="px-4 py-2 text-right tabular-nums">
-                      {formatCurrency(Math.abs(Math.min(0, netChangeByCOs)))}
-                    </td>
-                  </tr>
-                  <tr className="border-t border-border font-semibold">
-                    <td className="px-4 py-2">Totals</td>
-                    <td className="px-4 py-2 text-right tabular-nums">
-                      {formatCurrency(Math.max(0, netChangeByCOs))}
-                    </td>
-                    <td className="px-4 py-2 text-right tabular-nums">
-                      {formatCurrency(Math.abs(Math.min(0, netChangeByCOs)))}
-                    </td>
-                  </tr>
-                  <tr className="border-t border-border bg-muted font-semibold">
-                    <td className="px-4 py-2">Net changes by change order</td>
-                    <td
-                      className="px-4 py-2 text-right tabular-nums"
-                      colSpan={2}
-                    >
-                      {formatCurrency(netChangeByCOs)}
-                    </td>
-                  </tr>
+                  <LineRow
+                    number="1"
+                    label="Original Contract Sum"
+                    value={originalContractSum}
+                  />
+                  <LineRow
+                    number="2"
+                    label="Net change by Change Orders"
+                    value={netChangeByCOs}
+                  />
+                  <LineRow
+                    number="3"
+                    label="Contract Sum to Date (Line 1 ± 2)"
+                    value={contractSumToDate}
+                    bold
+                  />
+                  <LineRow
+                    number="4"
+                    label="Total Completed & Stored to Date (Column G on G703)"
+                    value={completedAndStored}
+                  />
+                  <LineRow number="5" label="Retainage" />
+                  <LineRow
+                    number="5a"
+                    label={`${retainageWorkPct}% of Completed Work`}
+                    value={totalRetainageWork}
+                    indent
+                  />
+                  <LineRow
+                    number="5b"
+                    label={`${retainageMaterialsPct}% of Stored Material`}
+                    value={totalRetainageMaterials}
+                    indent
+                  />
+                  <LineRow
+                    number=""
+                    label="Total Retainage (Lines 5a + 5b or Column I Total on G703)"
+                    value={totalRetainage}
+                    bold
+                  />
+                  <LineRow
+                    number="6"
+                    label="Total Earned Less Retainage (Line 4 Less Line 5 Total)"
+                    value={totalEarnedLessRetainage}
+                  />
+                  <LineRow
+                    number="7"
+                    label="Less Previous Certificates for Payment (Line 6 from prior Certificate)"
+                    value={previousPaymentDue}
+                  />
+                  <LineRow
+                    number="8"
+                    label="Current Payment Due"
+                    value={currentPaymentDue}
+                    highlight
+                  />
+                  <LineRow
+                    number="9"
+                    label="Balance to Finish, Including Retainage (Line 3 less Line 6)"
+                    value={balanceToFinish}
+                  />
                 </tbody>
               </table>
+            </div>
+
+            {/* ── Change Order Summary ─────────────────────────────── */}
+            <div className="border-t border-border">
+              <div className="px-6 py-4">
+                <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  Change Order Summary
+                </h4>
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="pb-2 text-left text-xs font-medium text-muted-foreground">
+                        Description
+                      </th>
+                      <th className="pb-2 text-right text-xs font-medium text-muted-foreground w-28">
+                        Additions
+                      </th>
+                      <th className="pb-2 text-right text-xs font-medium text-muted-foreground w-28">
+                        Deductions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b border-border">
+                      <td className="py-2 text-foreground">
+                        Total changes approved in previous months by Owner
+                      </td>
+                      <td className="py-2 text-right tabular-nums">$0.00</td>
+                      <td className="py-2 text-right tabular-nums">$0.00</td>
+                    </tr>
+                    <tr className="border-b border-border">
+                      <td className="py-2 text-foreground">
+                        Total approved this month
+                      </td>
+                      <td className="py-2 text-right tabular-nums">
+                        {formatCurrency(Math.max(0, netChangeByCOs))}
+                      </td>
+                      <td className="py-2 text-right tabular-nums">
+                        {formatCurrency(Math.abs(Math.min(0, netChangeByCOs)))}
+                      </td>
+                    </tr>
+                    <tr className="border-b border-border font-semibold">
+                      <td className="py-2">Totals</td>
+                      <td className="py-2 text-right tabular-nums">
+                        {formatCurrency(Math.max(0, netChangeByCOs))}
+                      </td>
+                      <td className="py-2 text-right tabular-nums">
+                        {formatCurrency(Math.abs(Math.min(0, netChangeByCOs)))}
+                      </td>
+                    </tr>
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t-2 border-border font-semibold">
+                      <td className="pt-2 text-foreground">
+                        Net changes by Change Order
+                      </td>
+                      <td
+                        className="pt-2 text-right tabular-nums"
+                        colSpan={2}
+                      >
+                        {formatCurrency(netChangeByCOs)}
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
             </div>
           </div>
         </div>

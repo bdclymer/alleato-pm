@@ -972,27 +972,11 @@ export default function PrimeContractCODetailPage() {
   return (
     <>
       <PageShell
-        variant="detail"
+        variant="dashboard"
         title={pageTitle}
         onBack={handleBack}
         actions={
           <div className="flex items-center gap-2">
-            {(co.status === "proposed" || co.status === "draft") && (
-              <>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => setShowRejectDialog(true)}
-                >
-                  <X className="mr-1 h-4 w-4" />
-                  Reject
-                </Button>
-                <Button size="sm" onClick={handleApprove}>
-                  <Check className="mr-1 h-4 w-4" />
-                  Approve
-                </Button>
-              </>
-            )}
             <Button
               variant="default"
               size="sm"

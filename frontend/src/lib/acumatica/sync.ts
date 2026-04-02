@@ -1077,6 +1077,10 @@ function mapOutboundInvoiceStatus(status: string | null | undefined): string {
   return "On Hold";
 }
 
+function escapeODataString(value: string): string {
+  return value.replace(/'/g, "''");
+}
+
 function isProjectPermissionOrContextError(error: unknown): boolean {
   const message = error instanceof Error ? error.message : String(error);
   return (
@@ -1097,11 +1101,22 @@ function isAcumaticaOperationFailedError(error: unknown): boolean {
 async function upsertInvoiceWithProjectFallback(
   acuClient: ReturnType<typeof createAcumaticaClient>,
   payload: Record<string, unknown>,
+  options?: {
+    allowProjectFallback?: boolean;
+    allowHeaderOnlyFallback?: boolean;
+  },
 ): Promise<Record<string, unknown>> {
+  const allowProjectFallback = options?.allowProjectFallback ?? true;
+  const allowHeaderOnlyFallback = options?.allowHeaderOnlyFallback ?? true;
+
   try {
     return await acuClient.upsertInvoice(payload);
   } catch (error) {
-    if (isProjectPermissionOrContextError(error) && "Project" in payload) {
+    if (
+      allowProjectFallback &&
+      isProjectPermissionOrContextError(error) &&
+      "Project" in payload
+    ) {
       // Some tenants reject header-level Project in AR Invoice create/update context
       // even when the project exists. Retry once without Project so sync can proceed.
       const fallbackPayload = { ...payload };
@@ -1109,7 +1124,11 @@ async function upsertInvoiceWithProjectFallback(
       return acuClient.upsertInvoice(fallbackPayload);
     }
 
-    if (isAcumaticaOperationFailedError(error) && "Details" in payload) {
+    if (
+      allowHeaderOnlyFallback &&
+      isAcumaticaOperationFailedError(error) &&
+      "Details" in payload
+    ) {
       // Acumatica may throw an internal Operation failed/NullReferenceException
       // for some sparse line payloads. Retry with a header-only invoice payload.
       const fallbackPayload = { ...payload };
@@ -1654,6 +1673,19 @@ export async function exportPaymentApplicationsToAcumatica(
       .filter((ref): ref is string => Boolean(ref)),
   );
 
+  const acuProjectTasks = await acuClient.getProjectTasks({
+    $filter: `ProjectID eq '${escapeODataString(project.acumatica_project_id)}'`,
+    $top: 50,
+  });
+  const defaultProjectTaskCode =
+    acuProjectTasks
+      .find((task) => task.Status === "Active" && typeof task.ProjectTaskID === "string")
+      ?.ProjectTaskID?.trim() ||
+    acuProjectTasks
+      .find((task) => typeof task.ProjectTaskID === "string")
+      ?.ProjectTaskID?.trim() ||
+    "PROJECT";
+
   for (const application of applications ?? []) {
     const customerId = customerByContractId.get(application.contract_id);
     if (!customerId) {
@@ -1671,22 +1703,37 @@ export async function exportPaymentApplicationsToAcumatica(
 
     const referenceNbr =
       application.application_number?.trim() || `PAYAPP-${application.id}`;
+    const description = `Payment Application ${referenceNbr}`;
     const grossAmount = application.amount ?? 0;
     const netAmount = application.net_amount ?? grossAmount;
     const detailDescription =
-      application.notes?.trim() || `Payment Application ${referenceNbr}`;
+      application.notes?.trim() || description;
+
+    const escapedCustomer = escapeODataString(customerId);
+    const escapedDescription = escapeODataString(description);
+    const candidateInvoices = await acuClient.getInvoices({
+      $filter: `Type eq 'Invoice' and Customer eq '${escapedCustomer}' and Description eq '${escapedDescription}'`,
+      $top: 200,
+    });
+
+    const existingAcumaticaInvoiceRef = candidateInvoices
+      .filter((invoice) => typeof invoice.ReferenceNbr === "string")
+      .sort((a, b) =>
+        String(b.LastModifiedDateTime ?? "").localeCompare(
+          String(a.LastModifiedDateTime ?? ""),
+        ),
+      )[0]?.ReferenceNbr;
 
     const payload: Record<string, unknown> = {
       Type: acuField("Invoice"),
-      ReferenceNbr: acuField(referenceNbr),
+      ReferenceNbr: acuField(existingAcumaticaInvoiceRef ?? referenceNbr),
       Customer: acuField(customerId),
+      Project: acuField(project.acumatica_project_id),
       Date: acuField(toIsoDate(application.period_from ?? undefined)),
       DueDate: acuField(toIsoDate(application.period_to ?? application.period_from ?? undefined)),
-      Description: acuField(`Payment Application ${referenceNbr}`),
+      Description: acuField(description),
       Amount: acuField(grossAmount),
       Status: acuField(mapOutboundInvoiceStatus(application.status)),
-      // Keep payment-application export header-only by default.
-      // AR line details can trigger tenant-specific API import failures.
       ...(netAmount > 0
         ? {
             Details: [
@@ -1694,6 +1741,8 @@ export async function exportPaymentApplicationsToAcumatica(
                 LineNbr: acuField(1),
                 TransactionDescription: acuField(detailDescription),
                 ExtendedPrice: acuField(netAmount),
+                Project: acuField(project.acumatica_project_id),
+                ProjectTaskID: acuField(defaultProjectTaskCode),
               },
             ],
           }
@@ -1701,17 +1750,22 @@ export async function exportPaymentApplicationsToAcumatica(
     };
 
     try {
-      const existed = existingRefs.has(referenceNbr);
-      await upsertInvoiceWithProjectFallback(acuClient, payload);
-      existingRefs.add(referenceNbr);
+      const existed = Boolean(existingAcumaticaInvoiceRef) || existingRefs.has(referenceNbr);
+      await upsertInvoiceWithProjectFallback(acuClient, payload, {
+        allowProjectFallback: false,
+      });
+      existingRefs.add(existingAcumaticaInvoiceRef ?? referenceNbr);
 
       if (existed) result.updated++;
       else result.created++;
     } catch (error) {
+      const baseMessage =
+        error instanceof Error ? error.message : String(error);
+      const message = isProjectPermissionOrContextError(error)
+        ? `${baseMessage}. Project '${project.acumatica_project_id}' could not be applied on AR Invoice for customer '${customerId}'. Verify Acumatica AR/PM project-customer configuration.`
+        : baseMessage;
       result.errors.push(
-        `Payment application ${referenceNbr}: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
+        `Payment application ${referenceNbr}: ${message}`,
       );
     }
   }
