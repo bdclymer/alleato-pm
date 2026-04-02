@@ -73,6 +73,8 @@ const config = [
       'design-system/require-semantic-colors': 'warn',
       'design-system/no-design-violations': 'error',
       'design-system/require-page-shell': 'warn',
+      'design-system/no-oversized-shadows': 'error',
+      'design-system/no-raw-button': 'warn',  // warn until existing 159 files are fixed
     },
   },
 ]
