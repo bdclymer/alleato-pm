@@ -11,13 +11,48 @@ interface RouteParams {
   }>;
 }
 
+/**
+ * GET /api/projects/[projectId]/contracts/[contractId]/payment-applications/[applicationId]
+ * Fetch a single payment application with billing period data
+ */
+export async function GET(_request: NextRequest, { params }: RouteParams) {
+  try {
+    const { projectId, contractId, applicationId } = await params;
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+      .from("prime_contract_payment_applications")
+      .select("*, billing_period:billing_periods(*)")
+      .eq("id", applicationId)
+      .eq("contract_id", contractId)
+      .eq("project_id", parseInt(projectId, 10))
+      .single();
+
+    if (error || !data) {
+      return NextResponse.json(
+        { error: "Payment application not found" },
+        { status: 404 },
+      );
+    }
+
+    return NextResponse.json(data);
+  } catch {
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 },
+    );
+  }
+}
+
 const updatePaymentApplicationSchema = z.object({
   application_number: z.string().min(1).optional(),
   amount: z.number().min(0).optional(),
   retention_amount: z.number().min(0).optional(),
   status: z
-    .enum(["draft", "submitted", "approved", "rejected"])
+    .enum(["draft", "under_review", "revise_and_resubmit", "approved"])
     .optional(),
+  billing_period_id: z.string().uuid().nullable().optional(),
+  billing_date: z.string().nullable().optional(),
   period_from: z.string().nullable().optional(),
   period_to: z.string().nullable().optional(),
   submitted_at: z.string().nullable().optional(),

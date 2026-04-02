@@ -1,16 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  ChevronDown,
-  Search,
-} from "lucide-react";
+
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+
 import type { TeamChannel } from "./team-chat-data";
 
 interface ChatSidebarProps {
@@ -22,34 +21,16 @@ interface ChatSidebarProps {
 type Filter = "all" | "unread" | "channels";
 
 export function ChatSidebar({ channels, activeChannel, onChannelSelect }: ChatSidebarProps) {
-  const [searchQuery, setSearchQuery] = useState("");
-  const [activeFilter, setActiveFilter] = useState<Filter>("all");
+  const [activeFilter] = useState<Filter>("all");
+  const [collapsed, setCollapsed] = useState(false);
 
   const filteredChannels = useMemo(() => {
-    const normalized = searchQuery.trim().toLowerCase();
-
     return channels.filter((channel) => {
-      const matchesQuery =
-        normalized.length === 0 ||
-        channel.name.toLowerCase().includes(normalized) ||
-        channel.topic.toLowerCase().includes(normalized) ||
-        channel.preview.toLowerCase().includes(normalized);
-
-      if (!matchesQuery) {
-        return false;
-      }
-
-      if (activeFilter === "unread") {
-        return channel.unread > 0;
-      }
-
-      if (activeFilter === "channels") {
-        return channel.section !== "direct";
-      }
-
+      if (activeFilter === "unread") return channel.unread > 0;
+      if (activeFilter === "channels") return channel.section !== "direct";
       return true;
     });
-  }, [activeFilter, channels, searchQuery]);
+  }, [activeFilter, channels]);
 
   const sections: Array<{ key: TeamChannel["section"]; label: string }> = [
     { key: "favorites", label: "Favorites" },
@@ -57,68 +38,93 @@ export function ChatSidebar({ channels, activeChannel, onChannelSelect }: ChatSi
     { key: "direct", label: "Chats" },
   ];
 
+  if (collapsed) {
+    return (
+      <div className="flex h-full w-12 flex-col border-r border-border bg-muted/40">
+        {/* Expand toggle */}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="mx-auto mt-2 h-8 w-8 shrink-0 text-muted-foreground hover:text-foreground"
+          onClick={() => setCollapsed(false)}
+          title="Expand sidebar"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </Button>
+
+        <ScrollArea className="flex-1">
+          <div className="flex flex-col items-center gap-1 px-1 py-2">
+            {filteredChannels.map((channel) => {
+              const isActive = activeChannel === channel.id;
+              const initials = channel.name
+                .split(" ")
+                .map((p) => p[0])
+                .join("")
+                .slice(0, 2)
+                .toUpperCase();
+
+              return (
+                <button
+                  key={channel.id}
+                  type="button"
+                  onClick={() => onChannelSelect(channel.id)}
+                  title={channel.name}
+                  className={cn(
+                    "relative flex h-8 w-8 items-center justify-center rounded-md transition-colors",
+                    isActive
+                      ? "bg-background text-foreground shadow-sm"
+                      : "text-muted-foreground hover:bg-background/80 hover:text-foreground",
+                  )}
+                >
+                  {channel.section === "direct" ? (
+                    <Avatar className="h-6 w-6 border border-border">
+                      <AvatarFallback className="text-[9px] font-semibold">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                  ) : (
+                    <span className="text-sm font-medium text-muted-foreground">#</span>
+                  )}
+                  {channel.unread > 0 && (
+                    <span className="absolute -right-0.5 -top-0.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-primary-foreground leading-none">
+                      {channel.unread > 9 ? "9+" : channel.unread}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </ScrollArea>
+      </div>
+    );
+  }
+
   return (
-    <div className="flex h-full w-80 border-r border-border bg-muted/40">
+    <div className="flex h-full w-72 border-r border-border bg-muted/40">
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="border-b border-border px-4 py-3">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-foreground">Chat</h2>
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="h-7 gap-1 px-1 text-xs text-muted-foreground hover:text-foreground"
-            >
-              Customize
-              <ChevronDown className="h-3.5 w-3.5" />
-            </Button>
-          </div>
-
-          <div className="mt-3 flex items-center gap-2">
-            {(["all", "unread", "channels"] as Filter[]).map((filterKey) => (
-              <Button
-                key={filterKey}
-                type="button"
-                onClick={() => setActiveFilter(filterKey)}
-                variant="ghost"
-                size="sm"
-                className={cn(
-                  "h-7 rounded-full px-2.5 text-xs",
-                  activeFilter === filterKey
-                    ? "bg-primary/10 text-primary"
-                    : "bg-background text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {filterKey === "all"
-                  ? "Chats"
-                  : filterKey === "unread"
-                    ? "Unread"
-                    : "Channels"}
-              </Button>
-            ))}
-          </div>
-
-          <div className="relative mt-3">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={searchQuery}
-              onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Search chats and channels"
-              className="h-9 border-border bg-background pl-9 text-sm"
-            />
-          </div>
+        {/* Collapse toggle */}
+        <div className="flex items-center justify-end px-2 pt-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            onClick={() => setCollapsed(true)}
+            title="Collapse sidebar"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
         </div>
 
         <ScrollArea className="flex-1">
-          <div className="space-y-5 px-3 py-3">
+          <div className="space-y-5 px-3 py-2">
             {sections.map((section) => {
               const sectionChannels = filteredChannels.filter(
                 (channel) => channel.section === section.key,
               );
 
-              if (sectionChannels.length === 0) {
-                return null;
-              }
+              if (sectionChannels.length === 0) return null;
 
               return (
                 <section key={section.key} className="space-y-1.5">

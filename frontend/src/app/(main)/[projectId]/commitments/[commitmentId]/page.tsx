@@ -366,38 +366,34 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
           <div className="space-y-4">
             <div className="space-y-4">
               <SectionRuleHeading label="Key Dates" className="[&_span]:text-primary" />
-              <div className="rounded-md border border-border bg-muted p-6">
-                <dl className="space-y-3 text-sm">
-                  {!isPO && (
-                    <LabelValueRow label="Start Date">
-                      {renderDateOrDash(commitment.start_date)}
-                    </LabelValueRow>
-                  )}
-                  <LabelValueRow label={isPO ? "Delivery Date" : "Estimated Completion"}>
-                    {renderDateOrDash(commitment.substantial_completion_date)}
+              <dl className="space-y-3 text-sm">
+                {!isPO && (
+                  <LabelValueRow label="Start Date">
+                    {renderDateOrDash(commitment.start_date)}
                   </LabelValueRow>
-                  <LabelValueRow label="Contract Date">
-                    {renderDateOrDash(commitment.executed_date)}
-                  </LabelValueRow>
-                  <LabelValueRow label="Signed Contract Received">
-                    {renderDateOrDash(commitment.signed_received_date)}
-                  </LabelValueRow>
-                </dl>
-              </div>
+                )}
+                <LabelValueRow label={isPO ? "Delivery Date" : "Estimated Completion"}>
+                  {renderDateOrDash(commitment.substantial_completion_date)}
+                </LabelValueRow>
+                <LabelValueRow label="Contract Date">
+                  {renderDateOrDash(commitment.executed_date)}
+                </LabelValueRow>
+                <LabelValueRow label="Signed Contract Received">
+                  {renderDateOrDash(commitment.signed_received_date)}
+                </LabelValueRow>
+              </dl>
             </div>
 
             <div className="space-y-4">
               <SectionRuleHeading label="Privacy" className="[&_span]:text-primary" />
-              <div className="rounded-md border border-border bg-muted p-6">
-                <dl className="space-y-3 text-sm">
-                  <LabelValueRow label="Visibility">
-                    {commitment.private ? "Private" : "Public"}
-                  </LabelValueRow>
-                  <LabelValueRow label="Non-Admin Can View SOV Items">
-                    {commitment.allow_non_admin_view_sov_items ? "Yes" : "No"}
-                  </LabelValueRow>
-                </dl>
-              </div>
+              <dl className="space-y-3 text-sm">
+                <LabelValueRow label="Visibility">
+                  {commitment.private ? "Private" : "Public"}
+                </LabelValueRow>
+                <LabelValueRow label="Non-Admin Can View SOV Items">
+                  {commitment.allow_non_admin_view_sov_items ? "Yes" : "No"}
+                </LabelValueRow>
+              </dl>
             </div>
           </div>
         </div>

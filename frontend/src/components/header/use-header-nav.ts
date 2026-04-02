@@ -44,6 +44,7 @@ const companyTitleCache = new Map<string, string>();
 const commitmentTitleCache = new Map<string, string>();
 const changeEventTitleCache = new Map<string, string>();
 const primeCoTitleCache = new Map<string, string>();
+const invoiceTitleCache = new Map<string, string>();
 
 const TABLE_ROUTE_ALIASES: Record<string, string> = {
   tasks: "tasks",
@@ -68,6 +69,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
   const [commitmentTitle, setCommitmentTitle] = useState<string | null>(null);
   const [changeEventTitle, setChangeEventTitle] = useState<string | null>(null);
   const [primeCoTitle, setPrimeCoTitle] = useState<string | null>(null);
+  const [invoiceTitle, setInvoiceTitle] = useState<string | null>(null);
 
   // Extract project ID from URL path or query parameters
   const projectId = useMemo(() => {
@@ -170,6 +172,12 @@ export function useHeaderNav(): UseHeaderNavReturn {
       segments[1] === "change-orders" &&
       segments[2] === "prime" &&
       segments[3] !== "new";
+    const isInvoiceDetailRoute =
+      segments.length >= 5 &&
+      /^\d+$/.test(segments[0]) &&
+      segments[1] === "prime-contracts" &&
+      segments[3] === "invoices" &&
+      segments[4] !== "new";
     const isGlobalCompanyDetailRoute =
       segments.length >= 3 &&
       segments[0] === "directory" &&
@@ -205,6 +213,8 @@ export function useHeaderNav(): UseHeaderNavReturn {
         label = changeEventTitle || "Change Event";
       } else if (isPrimeCoDetailRoute && index === 3) {
         label = primeCoTitle || "Prime CO";
+      } else if (isInvoiceDetailRoute && index === 4) {
+        label = invoiceTitle || "Invoice";
       } else if (isGlobalCompanyDetailRoute && index === 2) {
         label = companyTitle || "Company";
       } else if (isProjectCompanyDetailRoute && index === 3) {
@@ -256,7 +266,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
     });
 
     return crumbs;
-  }, [pathname, companyTitle, currentProject, meetingTitle, globalMeetingTitle, primeContractTitle, commitmentTitle, changeEventTitle, primeCoTitle]);
+  }, [pathname, companyTitle, currentProject, meetingTitle, globalMeetingTitle, primeContractTitle, commitmentTitle, changeEventTitle, primeCoTitle, invoiceTitle]);
   useEffect(() => {
     const segments = pathname?.split("/").filter(Boolean) ?? [];
     const isMeetingDetailRoute =
@@ -582,6 +592,71 @@ export function useHeaderNav(): UseHeaderNavReturn {
 
     fetchTitle();
     return () => { isActive = false; };
+  }, [pathname]);
+
+  // Fetch title for invoice detail routes ([projectId]/prime-contracts/[contractId]/invoices/[invoiceId])
+  useEffect(() => {
+    const segments = pathname?.split("/").filter(Boolean) ?? [];
+    const isInvoiceRoute =
+      segments.length >= 5 &&
+      /^\d+$/.test(segments[0]) &&
+      segments[1] === "prime-contracts" &&
+      segments[3] === "invoices" &&
+      segments[4] !== "new";
+
+    if (!isInvoiceRoute) {
+      setInvoiceTitle(null);
+      return;
+    }
+
+    const projectId = segments[0];
+    const contractId = segments[2];
+    const invoiceId = segments[4];
+    const cacheKey = `${projectId}:${contractId}:${invoiceId}`;
+    const cached = invoiceTitleCache.get(cacheKey);
+    if (cached) {
+      setInvoiceTitle(cached);
+      return;
+    }
+
+    let isActive = true;
+    const fetchTitle = async () => {
+      try {
+        const response = await fetch(
+          `/api/projects/${projectId}/contracts/${contractId}/payment-applications/${invoiceId}`,
+        );
+        // Note: page URL uses "invoices/[id]" but API route uses "payment-applications/[id]"
+        if (!response.ok) return;
+        const contentType = response.headers.get("content-type") || "";
+        if (!contentType.includes("application/json")) return;
+        const data = await response.json();
+        const appNumber =
+          typeof data?.application_number === "string" &&
+          data.application_number.length > 0
+            ? `Invoice #${data.application_number}`
+            : null;
+        const title =
+          appNumber ||
+          (typeof data?.title === "string" && data.title.length > 0
+            ? data.title
+            : null);
+        if (isActive) {
+          if (title) {
+            invoiceTitleCache.set(cacheKey, title);
+            setInvoiceTitle(title);
+          } else {
+            setInvoiceTitle(null);
+          }
+        }
+      } catch {
+        // Best-effort only
+      }
+    };
+
+    fetchTitle();
+    return () => {
+      isActive = false;
+    };
   }, [pathname]);
 
   useEffect(() => {

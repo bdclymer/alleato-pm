@@ -46,8 +46,8 @@ export function PageTabs({
       : "px-4 sm:px-6 lg:px-8";
   const navClasses =
     variant === "inline"
-      ? "-mb-px flex overflow-x-auto"
-      : "-mb-px flex overflow-x-auto border-b border-border";
+      ? "-mb-px flex overflow-x-auto scrollbar-hide"
+      : "-mb-px flex overflow-x-auto scrollbar-hide border-b border-border";
   const buttonClasses =
     variant === "inline"
       ? "group inline-flex items-center gap-2 whitespace-nowrap border-b-2 px-0.5 pb-2.5 pt-1.5 text-sm transition-colors"

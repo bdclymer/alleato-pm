@@ -3,6 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "packageManager": "pnpm@10.13.1",
+  "pnpm": {
+    "patchedDependencies": {
+      "agentation@3.0.2": "patches/agentation@3.0.2.patch"
+    }
+  },
   "scripts": {
     "postinstall": "rm -rf .next 2>/dev/null || true",
     "dev": "rm -rf .next && next dev --turbopack",

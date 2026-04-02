@@ -1,15 +1,19 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import {
   Camera,
+  Clock,
+  FolderOpen,
+  Image,
+  Map,
   Search,
   Star,
   StarOff,
   Trash2,
-  X,
   Upload,
+  X,
 } from "lucide-react";
 
 import { PageShell } from "@/components/layout";
@@ -29,7 +33,13 @@ import {
   Skeleton,
   EmptyState,
 } from "@/components/ds";
-import { usePhotos, useUpdatePhoto, useDeletePhoto } from "@/hooks/use-photos";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  usePhotos,
+  useUpdatePhoto,
+  useDeletePhoto,
+  useUploadPhotos,
+} from "@/hooks/use-photos";
 import type { PhotoSummary } from "@/hooks/use-photos";
 import { PhotoUploadDialog } from "@/features/photos/photo-upload-dialog";
 import {
@@ -37,6 +47,7 @@ import {
   formatFileSize,
   formatPhotoDate,
 } from "@/features/photos/photos-grid-config";
+import { cn } from "@/lib/utils";
 
 export default function ProjectPhotosPage() {
   const params = useParams<{ projectId: string }>();
@@ -46,10 +57,12 @@ export default function ProjectPhotosPage() {
   const [album, setAlbum] = useState("__all__");
   const [uploadOpen, setUploadOpen] = useState(false);
   const [lightboxPhoto, setLightboxPhoto] = useState<PhotoSummary | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
 
   const albumFilter = album === "__all__" ? undefined : album;
   const { data: photos, isLoading } = usePhotos(projectId, albumFilter);
   const deletePhoto = useDeletePhoto(projectId);
+  const uploadPhotos = useUploadPhotos(projectId);
 
   const filteredPhotos = (photos ?? []).filter((photo) => {
     if (!search) return true;
@@ -69,6 +82,51 @@ export default function ProjectPhotosPage() {
     [deletePhoto],
   );
 
+  // ─── Drag-and-drop handlers ────────────────────────────────────────────────
+  const dragCounter = useRef(0);
+
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current += 1;
+    if (e.dataTransfer.types.includes("Files")) {
+      setIsDragging(true);
+    }
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current -= 1;
+    if (dragCounter.current === 0) {
+      setIsDragging(false);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragCounter.current = 0;
+      setIsDragging(false);
+
+      const files = Array.from(e.dataTransfer.files).filter((f) =>
+        f.type.startsWith("image/"),
+      );
+      if (files.length > 0) {
+        // Upload directly — no form required.
+        // Title is derived from filename; user can edit details after.
+        uploadPhotos.mutate(files);
+      }
+    },
+    [uploadPhotos],
+  );
+
   return (
     <PageShell
       variant="dashboard"
@@ -80,90 +138,194 @@ export default function ProjectPhotosPage() {
         </Button>
       }
     >
-      {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search photos..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
-          {search && (
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              onClick={() => setSearch("")}
-              className="absolute right-2.5 top-1/2 -translate-y-1/2 size-6 text-muted-foreground hover:text-foreground"
-            >
-              <X className="size-4" />
-            </Button>
-          )}
-        </div>
+      <Tabs defaultValue="photos" className="space-y-4">
+        <TabsList variant="line">
+          <TabsTrigger value="photos">
+            <Image className="mr-1.5 size-4" />
+            Photos
+          </TabsTrigger>
+          <TabsTrigger value="map">
+            <Map className="mr-1.5 size-4" />
+            Map
+          </TabsTrigger>
+          <TabsTrigger value="timeline">
+            <Clock className="mr-1.5 size-4" />
+            Timeline
+          </TabsTrigger>
+          <TabsTrigger value="albums">
+            <FolderOpen className="mr-1.5 size-4" />
+            Albums
+          </TabsTrigger>
+          <TabsTrigger value="recycle-bin">
+            <Trash2 className="mr-1.5 size-4" />
+            Recycle Bin
+          </TabsTrigger>
+        </TabsList>
 
-        <Select value={album} onValueChange={setAlbum}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder="All Albums" />
-          </SelectTrigger>
-          <SelectContent>
-            {ALBUM_OPTIONS.map((opt) => (
-              <SelectItem key={opt.value} value={opt.value}>
-                {opt.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+        {/* ─── Photos Tab (main) ──────────────────────────────────────── */}
+        <TabsContent value="photos">
+          <div
+            className="space-y-4"
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
+            onDragOver={handleDragOver}
+            onDrop={handleDrop}
+          >
+            {/* Drag-and-drop overlay */}
+            {isDragging && (
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
+                <div className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-primary bg-primary/5 px-12 py-10">
+                  <Upload className="size-10 text-primary" />
+                  <p className="text-lg font-medium text-foreground">
+                    Drop images to upload
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    Photos will be uploaded instantly — add details after
+                  </p>
+                </div>
+              </div>
+            )}
 
-      {/* Loading state */}
-      {isLoading && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="space-y-2">
-              <Skeleton className="aspect-video w-full rounded-lg" />
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-3 w-1/2" />
+            {/* Upload progress banner */}
+            {uploadPhotos.isPending && (
+              <div className="flex items-center gap-2 rounded-lg bg-primary/10 px-4 py-2.5 text-sm text-primary">
+                <div className="size-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                Uploading photos...
+              </div>
+            )}
+
+            {/* Toolbar */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="relative flex-1 min-w-[200px] max-w-sm">
+                <Search className="absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search photos..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-9"
+                />
+                {search && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setSearch("")}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 size-6 text-muted-foreground hover:text-foreground"
+                  >
+                    <X className="size-4" />
+                  </Button>
+                )}
+              </div>
+
+              <Select value={album} onValueChange={setAlbum}>
+                <SelectTrigger className="w-[160px]">
+                  <SelectValue placeholder="All Albums" />
+                </SelectTrigger>
+                <SelectContent>
+                  {ALBUM_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
-          ))}
-        </div>
-      )}
 
-      {/* Empty state */}
-      {!isLoading && filteredPhotos.length === 0 && (
-        <EmptyState
-          icon={<Camera />}
-          title="No photos yet"
-          description={
-            search || albumFilter
-              ? "No photos match your current filters. Try adjusting your search or album selection."
-              : "Upload project photos to document progress, inspections, and more."
-          }
-          action={
-            !search && !albumFilter
-              ? {
-                  label: "Upload Photo",
-                  onClick: () => setUploadOpen(true),
-                }
-              : undefined
-          }
-        />
-      )}
+            {/* Loading state */}
+            {isLoading && (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="space-y-2">
+                    <Skeleton className="aspect-video w-full rounded-lg" />
+                    <Skeleton className="h-4 w-3/4" />
+                    <Skeleton className="h-3 w-1/2" />
+                  </div>
+                ))}
+              </div>
+            )}
 
-      {/* Photo grid */}
-      {!isLoading && filteredPhotos.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filteredPhotos.map((photo) => (
-            <PhotoCard
-              key={photo.id}
-              photo={photo}
-              projectId={projectId}
-              onClick={() => setLightboxPhoto(photo)}
-            />
-          ))}
-        </div>
-      )}
+            {/* Empty state with drop zone */}
+            {!isLoading && filteredPhotos.length === 0 && (
+              <div
+                className={cn(
+                  "rounded-lg border-2 border-dashed transition-colors",
+                  isDragging
+                    ? "border-primary bg-primary/5"
+                    : "border-transparent",
+                )}
+              >
+                <EmptyState
+                  icon={<Camera />}
+                  title="No photos yet"
+                  description={
+                    search || albumFilter
+                      ? "No photos match your current filters. Try adjusting your search or album selection."
+                      : "Drag and drop images here, or click Upload Photo to get started."
+                  }
+                  action={
+                    !search && !albumFilter
+                      ? {
+                          label: "Upload Photo",
+                          onClick: () => setUploadOpen(true),
+                        }
+                      : undefined
+                  }
+                />
+              </div>
+            )}
+
+            {/* Photo grid */}
+            {!isLoading && filteredPhotos.length > 0 && (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {filteredPhotos.map((photo) => (
+                  <PhotoCard
+                    key={photo.id}
+                    photo={photo}
+                    projectId={projectId}
+                    onClick={() => setLightboxPhoto(photo)}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        </TabsContent>
+
+        {/* ─── Map Tab ────────────────────────────────────────────────── */}
+        <TabsContent value="map">
+          <EmptyState
+            icon={<Map />}
+            title="Map View"
+            description="View geotagged photos on a project map. Photos with location data will appear as pins."
+          />
+        </TabsContent>
+
+        {/* ─── Timeline Tab ───────────────────────────────────────────── */}
+        <TabsContent value="timeline">
+          <EmptyState
+            icon={<Clock />}
+            title="Timeline View"
+            description="Browse photos chronologically to track project progress over time."
+          />
+        </TabsContent>
+
+        {/* ─── Albums Tab ─────────────────────────────────────────────── */}
+        <TabsContent value="albums">
+          <EmptyState
+            icon={<FolderOpen />}
+            title="Albums"
+            description="Organize photos into albums for easy browsing. Create albums to group related photos together."
+          />
+        </TabsContent>
+
+        {/* ─── Recycle Bin Tab ─────────────────────────────────────────── */}
+        <TabsContent value="recycle-bin">
+          <EmptyState
+            icon={<Trash2 />}
+            title="Recycle Bin"
+            description="Deleted photos are kept here for 30 days before permanent removal."
+          />
+        </TabsContent>
+      </Tabs>
 
       {/* Upload dialog */}
       <PhotoUploadDialog

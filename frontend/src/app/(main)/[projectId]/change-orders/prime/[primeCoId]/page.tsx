@@ -20,12 +20,12 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { EmptyState, StatusBadge } from "@/components/ds";
-import { KpiRow } from "@/components/ds/kpi";
 import {
   ContentSectionStack,
   LabelValueRow,
   PageShell,
   SectionRuleHeading,
+  SummaryValueRow,
 } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -61,6 +61,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 
 // ---------------------------------------------------------------------------
@@ -953,22 +959,21 @@ export default function PrimeContractCODetailPage() {
 
   const lineItemsTotal =
     co.line_items?.reduce((sum, li) => sum + (li.line_amount ?? 0), 0) ?? 0;
+  const changeOrderAmount = Number(co.total_amount) || 0;
+  const changeOrderStatus = (co.status || "").toLowerCase();
+  const approvedAmount = changeOrderStatus === "approved" ? changeOrderAmount : 0;
+  const pendingAmount = ["draft", "proposed", "pending"].includes(changeOrderStatus)
+    ? changeOrderAmount
+    : 0;
+  const varianceAmount = changeOrderAmount - lineItemsTotal;
+  const renderDateOrDash = (value: string | null | undefined) =>
+    value ? formatDate(value) : <span className="text-muted-foreground/60">—</span>;
 
   return (
     <>
       <PageShell
         variant="detail"
         title={pageTitle}
-        statusBadge={
-          <div className="flex items-center gap-2">
-            <StatusBadge status={co.status || "Unknown"} />
-            {co.is_private && (
-              <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
-                Private
-              </span>
-            )}
-          </div>
-        }
         onBack={handleBack}
         actions={
           <div className="flex items-center gap-2">
@@ -1024,308 +1029,373 @@ export default function PrimeContractCODetailPage() {
           </div>
         }
       >
-        {/* KPI row */}
-        <KpiRow
-          metrics={[
-            { label: "Amount", value: formatCurrency(co.total_amount) },
-            { label: "Executed", value: co.executed ? "Yes" : "No" },
-            { label: "Created", value: formatDate(co.created_at) },
-          ]}
-        />
+        <Tabs defaultValue="general">
+          <TabsList variant="line" className="-mb-px mb-6 w-full justify-start">
+            <TabsTrigger value="general">
+              General
+            </TabsTrigger>
+            <TabsTrigger value="related">
+              Related Items (0)
+            </TabsTrigger>
+            <TabsTrigger value="emails">
+              Emails (0)
+            </TabsTrigger>
+            <TabsTrigger value="history">
+              Change History
+            </TabsTrigger>
+          </TabsList>
 
-        <ContentSectionStack>
-          {/* ── General Information ─────────────────────────────────── */}
-          <section>
-            <div className="grid grid-cols-[minmax(0,1fr)_minmax(340px,420px)] gap-x-16 gap-y-10">
-              <div className="space-y-6">
-                <SectionRuleHeading
-                  label="General Information"
-                  className="[&_span]:text-primary"
-                />
-                <dl className="space-y-4 text-sm">
-                  <LabelValueRow label="#">
-                    {co.pcco_number || "—"}
-                  </LabelValueRow>
-                  <LabelValueRow label="Revision">
-                    {co.revision ?? 0}
-                  </LabelValueRow>
-                  <LabelValueRow label="Contract Company">
-                    {co.contract_company || "—"}
-                  </LabelValueRow>
-                  <LabelValueRow label="Contract">
-                    {co.contract ? (
-                      <button
-                        type="button"
-                        className="inline-flex items-center gap-1 text-primary hover:underline"
-                        onClick={() =>
-                          router.push(
-                            `/${projectId}/prime-contracts/${co.contract!.id}`,
-                          )
-                        }
-                      >
-                        <Link2 className="h-3 w-3" />
-                        {co.contract.contract_number} —{" "}
-                        {co.contract.title || "Prime"}
-                      </button>
-                    ) : (
-                      "—"
-                    )}
-                  </LabelValueRow>
-                  <LabelValueRow label="Title">
-                    {co.title || "—"}
-                  </LabelValueRow>
-                  <LabelValueRow label="Status">
-                    <StatusBadge status={co.status || "Unknown"} />
-                  </LabelValueRow>
-                  <LabelValueRow label="Change Reason">
-                    {co.change_reason || "—"}
-                  </LabelValueRow>
-                  <LabelValueRow label="Private">
-                    {co.is_private ? "Yes" : "No"}
-                  </LabelValueRow>
-                  {co.description && (
-                    <LabelValueRow
-                      label="Description"
-                      valueClassName="leading-relaxed font-normal text-foreground whitespace-pre-wrap"
-                    >
-                      {co.description}
-                    </LabelValueRow>
-                  )}
-                </dl>
-              </div>
+          <TabsContent value="general">
+            <ContentSectionStack>
+              {/* ── General Section: Three-column layout parity with prime contract detail ── */}
+              <section>
+                <div className="grid grid-cols-[minmax(0,1fr)_minmax(340px,420px)] gap-x-16 gap-y-10">
+                  <div className="space-y-8">
+                    <div className="grid grid-cols-2 gap-x-14 gap-y-8">
+                      <div className="space-y-6">
+                        <SectionRuleHeading
+                          label="Details"
+                          className="[&_span]:text-primary"
+                        />
+                        <dl className="space-y-4 text-sm">
+                          <LabelValueRow label="#">
+                            {co.pcco_number || "—"}
+                          </LabelValueRow>
+                          <LabelValueRow label="Title">
+                            {co.title || "—"}
+                          </LabelValueRow>
+                          <LabelValueRow label="Status">
+                            <StatusBadge status={co.status || "Unknown"} />
+                          </LabelValueRow>
+                          <LabelValueRow label="Contract Company">
+                            {co.contract_company || "—"}
+                          </LabelValueRow>
+                          <LabelValueRow label="Contract">
+                            {co.contract ? (
+                              <button
+                                type="button"
+                                className="inline-flex items-center gap-1 text-primary hover:underline"
+                                onClick={() =>
+                                  router.push(
+                                    `/${projectId}/prime-contracts/${co.contract!.id}`,
+                                  )
+                                }
+                              >
+                                <Link2 className="h-3 w-3" />
+                                {co.contract.contract_number} —{" "}
+                                {co.contract.title || "Prime"}
+                              </button>
+                            ) : (
+                              "—"
+                            )}
+                          </LabelValueRow>
+                        </dl>
+                      </div>
 
-              {/* Key Dates sidebar */}
-              <div className="space-y-4">
-                <SectionRuleHeading
-                  label="Key Dates"
-                  className="[&_span]:text-primary"
-                />
-                <dl className="space-y-3 text-sm">
-                  <LabelValueRow label="Created">
-                    {formatDate(co.created_at)}
-                  </LabelValueRow>
-                  {co.created_by && (
-                    <LabelValueRow label="Created By">
-                      {co.created_by}
-                    </LabelValueRow>
-                  )}
-                  {co.submitted_at && (
-                    <LabelValueRow label="Submitted">
-                      {formatDate(co.submitted_at)}
-                    </LabelValueRow>
-                  )}
-                  {co.approved_at && (
-                    <LabelValueRow label="Approved">
-                      {formatDate(co.approved_at)}
-                    </LabelValueRow>
-                  )}
-                  {co.due_date && (
-                    <LabelValueRow label="Due Date">
-                      {formatDate(co.due_date)}
-                    </LabelValueRow>
-                  )}
-                  {co.signed_co_received_date && (
-                    <LabelValueRow label="Signed CO Received">
-                      {formatDate(co.signed_co_received_date)}
-                    </LabelValueRow>
-                  )}
-                  {co.invoiced_date && (
-                    <LabelValueRow label="Invoiced">
-                      {formatDate(co.invoiced_date)}
-                    </LabelValueRow>
-                  )}
-                </dl>
-              </div>
-            </div>
-          </section>
-
-          {/* ── Details & Flags ─────────────────────────────────────── */}
-          <section className="space-y-6">
-            <SectionRuleHeading
-              label="Details"
-              className="[&_span]:text-primary"
-            />
-            <dl className="space-y-4 text-sm">
-              <LabelValueRow label="Amount">
-                {formatCurrency(co.total_amount)}
-              </LabelValueRow>
-              <LabelValueRow label="Executed">
-                {co.executed ? "Yes" : "No"}
-              </LabelValueRow>
-              <LabelValueRow label="Schedule Impact">
-                {co.schedule_impact != null
-                  ? `${co.schedule_impact} days`
-                  : "—"}
-              </LabelValueRow>
-              <LabelValueRow label="Field Change">
-                {co.field_change ? "Yes" : "No"}
-              </LabelValueRow>
-              <LabelValueRow label="Request Received From">
-                {co.request_received_from || "—"}
-              </LabelValueRow>
-              <LabelValueRow label="Location">
-                {co.location || "—"}
-              </LabelValueRow>
-              <LabelValueRow label="Reference">
-                {co.reference || "—"}
-              </LabelValueRow>
-              <LabelValueRow label="Paid In Full">
-                {co.paid_in_full ? "Yes" : "No"}
-              </LabelValueRow>
-            </dl>
-          </section>
-
-          {/* ── Line Items ─────────────────────────────────────────── */}
-          <section className="space-y-4">
-            <SectionRuleHeading
-              label="Line Items"
-              className="[&_span]:text-primary"
-            />
-            {co.line_items && co.line_items.length > 0 ? (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b text-left text-muted-foreground">
-                      <th className="pb-2 font-medium">#</th>
-                      <th className="pb-2 font-medium">Description</th>
-                      <th className="pb-2 font-medium">Cost Code</th>
-                      <th className="pb-2 text-right font-medium">Qty</th>
-                      <th className="pb-2 font-medium">UOM</th>
-                      <th className="pb-2 text-right font-medium">
-                        Unit Cost
-                      </th>
-                      <th className="pb-2 text-right font-medium">Amount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {co.line_items.map((item, idx) => (
-                      <tr key={item.id} className="border-b last:border-0">
-                        <td className="py-2 text-muted-foreground">
-                          {idx + 1}
-                        </td>
-                        <td className="py-2">{item.description || "—"}</td>
-                        <td className="py-2">{item.cost_code || "—"}</td>
-                        <td className="py-2 text-right">
-                          {item.quantity ?? "—"}
-                        </td>
-                        <td className="py-2">{item.uom || "—"}</td>
-                        <td className="py-2 text-right">
-                          {item.unit_cost != null
-                            ? formatCurrency(item.unit_cost)
-                            : "—"}
-                        </td>
-                        <td className="py-2 text-right">
-                          {formatCurrency(item.line_amount)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr className="font-medium">
-                      <td colSpan={6} className="pt-2">
-                        Total
-                      </td>
-                      <td className="pt-2 text-right">
-                        {formatCurrency(lineItemsTotal)}
-                      </td>
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
-            ) : (
-              <EmptyState
-                icon={<List />}
-                title="No line items"
-                description="Add cost line items to this change order"
-              />
-            )}
-          </section>
-
-          {/* ── Attachments ────────────────────────────────────────── */}
-          <section className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex flex-1 items-center gap-2">
-                <Paperclip className="h-4 w-4 text-muted-foreground" />
-                <SectionRuleHeading
-                  label="Attachments"
-                  className="flex-1 [&_span]:text-primary"
-                />
-              </div>
-              {attachments.length > 0 && (
-                <Button variant="outline" size="sm" asChild>
-                  <label className="cursor-pointer">
-                    <FileUp className="mr-1 h-4 w-4" />
-                    Upload File
-                    <input
-                      type="file"
-                      className="hidden"
-                      onChange={handleFileUpload}
-                      aria-label="Upload attachment"
-                    />
-                  </label>
-                </Button>
-              )}
-            </div>
-            {attachmentsLoading ? (
-              <Skeleton className="h-16 w-full" />
-            ) : attachmentsError ? (
-              <p className="text-sm text-destructive">{attachmentsError}</p>
-            ) : attachments.length === 0 ? (
-              <EmptyState
-                icon={<Paperclip />}
-                title="No attachments"
-                description="Upload files related to this change order"
-                action={{
-                  label: "Upload File",
-                  onClick: () =>
-                    document
-                      .getElementById("attachment-upload-empty")
-                      ?.click(),
-                }}
-              />
-            ) : (
-              <div className="space-y-2">
-                {attachments.map((att) => (
-                  <div
-                    key={att.id}
-                    className="flex items-center justify-between rounded-md border border-border px-4 py-2"
-                  >
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium">
-                        {att.fileName}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        {att.fileSize < 1024
-                          ? `${att.fileSize} B`
-                          : att.fileSize < 1024 * 1024
-                            ? `${(att.fileSize / 1024).toFixed(1)} KB`
-                            : `${(att.fileSize / (1024 * 1024)).toFixed(1)} MB`}
-                        {" · "}
-                        {formatDate(att.uploadedAt)}
-                      </p>
+                      <div className="space-y-6">
+                        <SectionRuleHeading
+                          label="Attributes"
+                          className="[&_span]:text-primary"
+                        />
+                        <dl className="space-y-4 text-sm">
+                          <LabelValueRow label="Revision">
+                            {co.revision ?? 0}
+                          </LabelValueRow>
+                          <LabelValueRow label="Change Reason">
+                            {co.change_reason || "—"}
+                          </LabelValueRow>
+                          <LabelValueRow label="Executed">
+                            {co.executed ? "Yes" : "No"}
+                          </LabelValueRow>
+                          <LabelValueRow label="Private">
+                            {co.is_private ? "Yes" : "No"}
+                          </LabelValueRow>
+                          <LabelValueRow label="Field Change">
+                            {co.field_change ? "Yes" : "No"}
+                          </LabelValueRow>
+                          <LabelValueRow label="Paid In Full">
+                            {co.paid_in_full ? "Yes" : "No"}
+                          </LabelValueRow>
+                        </dl>
+                      </div>
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      aria-label={`Delete attachment ${att.fileName}`}
-                      onClick={() => handleDeleteAttachment(att.id)}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
+
+                    <div className="space-y-4">
+                      <dl className="space-y-4 text-sm">
+                        <LabelValueRow
+                          label="Description"
+                          missing={!co.description}
+                          valueClassName="leading-relaxed font-normal text-foreground whitespace-pre-wrap"
+                        >
+                          {co.description || "Not set"}
+                        </LabelValueRow>
+                        <LabelValueRow label="Request Received From">
+                          {co.request_received_from || "—"}
+                        </LabelValueRow>
+                        <LabelValueRow label="Location">
+                          {co.location || "—"}
+                        </LabelValueRow>
+                        <LabelValueRow label="Reference">
+                          {co.reference || "—"}
+                        </LabelValueRow>
+                      </dl>
+                    </div>
                   </div>
-                ))}
-              </div>
-            )}
-            {/* Hidden input for empty-state upload action */}
-            <input
-              id="attachment-upload-empty"
-              type="file"
-              className="hidden"
-              onChange={handleFileUpload}
-              aria-label="Upload attachment"
+
+                  <div className="space-y-8">
+                    <div className="space-y-4">
+                      <SectionRuleHeading
+                        label="Financial Summary"
+                        className="[&_span]:text-primary"
+                      />
+                      <div className="rounded-md border border-border bg-muted p-6">
+                        <dl className="space-y-3 text-sm">
+                          <SummaryValueRow
+                            label="Change Order Amount"
+                            value={formatCurrency(changeOrderAmount)}
+                          />
+                          <SummaryValueRow
+                            label="Line Items Total"
+                            value={formatCurrency(lineItemsTotal)}
+                          />
+                          <SummaryValueRow
+                            label="Variance"
+                            value={formatCurrency(varianceAmount)}
+                          />
+                          <SummaryValueRow
+                            label="Approved Amount"
+                            value={formatCurrency(approvedAmount)}
+                          />
+                          <SummaryValueRow
+                            label="Pending Amount"
+                            value={formatCurrency(pendingAmount)}
+                          />
+                          <SummaryValueRow
+                            label="Schedule Impact"
+                            value={
+                              co.schedule_impact != null
+                                ? `${co.schedule_impact} days`
+                                : "—"
+                            }
+                            bold
+                            border
+                          />
+                        </dl>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <SectionRuleHeading
+                        label="Key Dates"
+                        className="[&_span]:text-primary"
+                      />
+                      <div className="rounded-md border border-border bg-muted p-6">
+                        <dl className="space-y-3 text-sm">
+                          <LabelValueRow label="Date Created">
+                            {renderDateOrDash(co.created_at)}
+                          </LabelValueRow>
+                          <LabelValueRow label="Created By">
+                            {co.created_by || "—"}
+                          </LabelValueRow>
+                          <LabelValueRow label="Submitted">
+                            {renderDateOrDash(co.submitted_at)}
+                          </LabelValueRow>
+                          <LabelValueRow label="Approved">
+                            {renderDateOrDash(co.approved_at)}
+                          </LabelValueRow>
+                          <LabelValueRow label="Due Date">
+                            {renderDateOrDash(co.due_date)}
+                          </LabelValueRow>
+                          <LabelValueRow label="Invoiced Date">
+                            {renderDateOrDash(co.invoiced_date)}
+                          </LabelValueRow>
+                          <LabelValueRow label="Signed CO Received Date">
+                            {renderDateOrDash(co.signed_co_received_date)}
+                          </LabelValueRow>
+                        </dl>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </section>
+
+              {/* ── Line Items ────────────────────────────────────── */}
+              <section className="space-y-4">
+                <SectionRuleHeading
+                  label="Line Items"
+                  className="[&_span]:text-primary"
+                />
+                {co.line_items && co.line_items.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b text-left text-muted-foreground">
+                          <th className="pb-2 font-medium">#</th>
+                          <th className="pb-2 font-medium">Description</th>
+                          <th className="pb-2 font-medium">Cost Code</th>
+                          <th className="pb-2 text-right font-medium">Qty</th>
+                          <th className="pb-2 font-medium">UOM</th>
+                          <th className="pb-2 text-right font-medium">
+                            Unit Cost
+                          </th>
+                          <th className="pb-2 text-right font-medium">Amount</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {co.line_items.map((item, idx) => (
+                          <tr key={item.id} className="border-b last:border-0">
+                            <td className="py-2 text-muted-foreground">
+                              {idx + 1}
+                            </td>
+                            <td className="py-2">{item.description || "—"}</td>
+                            <td className="py-2">{item.cost_code || "—"}</td>
+                            <td className="py-2 text-right">
+                              {item.quantity ?? "—"}
+                            </td>
+                            <td className="py-2">{item.uom || "—"}</td>
+                            <td className="py-2 text-right">
+                              {item.unit_cost != null
+                                ? formatCurrency(item.unit_cost)
+                                : "—"}
+                            </td>
+                            <td className="py-2 text-right">
+                              {formatCurrency(item.line_amount)}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                      <tfoot>
+                        <tr className="font-medium">
+                          <td colSpan={6} className="pt-2">
+                            Total
+                          </td>
+                          <td className="pt-2 text-right">
+                            {formatCurrency(lineItemsTotal)}
+                          </td>
+                        </tr>
+                      </tfoot>
+                    </table>
+                  </div>
+                ) : (
+                  <EmptyState
+                    icon={<List />}
+                    title="No line items"
+                    description="Add cost line items to this change order"
+                  />
+                )}
+              </section>
+
+              {/* ── Attachments ───────────────────────────────────── */}
+              <section className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex flex-1 items-center gap-2">
+                    <Paperclip className="h-4 w-4 text-muted-foreground" />
+                    <SectionRuleHeading
+                      label="Attachments"
+                      className="flex-1 [&_span]:text-primary"
+                    />
+                  </div>
+                  {attachments.length > 0 && (
+                    <Button variant="outline" size="sm" asChild>
+                      <label className="cursor-pointer">
+                        <FileUp className="mr-1 h-4 w-4" />
+                        Upload File
+                        <input
+                          type="file"
+                          className="hidden"
+                          onChange={handleFileUpload}
+                          aria-label="Upload attachment"
+                        />
+                      </label>
+                    </Button>
+                  )}
+                </div>
+                {attachmentsLoading ? (
+                  <Skeleton className="h-16 w-full" />
+                ) : attachmentsError ? (
+                  <p className="text-sm text-destructive">{attachmentsError}</p>
+                ) : attachments.length === 0 ? (
+                  <EmptyState
+                    icon={<Paperclip />}
+                    title="No attachments"
+                    description="Upload files related to this change order"
+                    action={{
+                      label: "Upload File",
+                      onClick: () =>
+                        document
+                          .getElementById("attachment-upload-empty")
+                          ?.click(),
+                    }}
+                  />
+                ) : (
+                  <div className="space-y-2">
+                    {attachments.map((att) => (
+                      <div
+                        key={att.id}
+                        className="flex items-center justify-between rounded-md border border-border px-4 py-2"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">
+                            {att.fileName}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {att.fileSize < 1024
+                              ? `${att.fileSize} B`
+                              : att.fileSize < 1024 * 1024
+                                ? `${(att.fileSize / 1024).toFixed(1)} KB`
+                                : `${(att.fileSize / (1024 * 1024)).toFixed(1)} MB`}
+                            {" · "}
+                            {formatDate(att.uploadedAt)}
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          aria-label={`Delete attachment ${att.fileName}`}
+                          onClick={() => handleDeleteAttachment(att.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {/* Hidden input for empty-state upload action */}
+                <input
+                  id="attachment-upload-empty"
+                  type="file"
+                  className="hidden"
+                  onChange={handleFileUpload}
+                  aria-label="Upload attachment"
+                />
+              </section>
+            </ContentSectionStack>
+          </TabsContent>
+
+          <TabsContent value="related">
+            <EmptyState
+              icon={<List />}
+              title="No related items"
+              description="Related change events and PCOs will appear here"
             />
-          </section>
-        </ContentSectionStack>
+          </TabsContent>
+
+          <TabsContent value="emails">
+            <EmptyState
+              icon={<Paperclip />}
+              title="No emails"
+              description="Emails linked to this change order will appear here"
+            />
+          </TabsContent>
+
+          <TabsContent value="history">
+            <EmptyState
+              icon={<List />}
+              title="No change history"
+              description="A log of changes to this record will appear here"
+            />
+          </TabsContent>
+        </Tabs>
       </PageShell>
 
       {/* Rejection dialog */}

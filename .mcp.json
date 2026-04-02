@@ -11,7 +11,9 @@
     "agentation": {
       "command": "npx",
       "args": [
-        "agentation-mcp"
+        "-y",
+        "agentation-mcp",
+        "server"
       ]
     },
     "fireflies-docs": {

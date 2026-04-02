@@ -21,7 +21,16 @@ export interface PaymentApplication {
   contract_id: string;
   project_id: number;
   application_number: string;
-  status: "draft" | "submitted" | "approved" | "rejected";
+  status: "draft" | "under_review" | "revise_and_resubmit" | "approved";
+  billing_period_id: string | null;
+  billing_date: string | null;
+  billing_period?: {
+    id: string;
+    start_date: string;
+    end_date: string;
+    name: string | null;
+    period_number: number;
+  } | null;
   amount: number;
   retention_amount: number;
   net_amount: number;
@@ -32,6 +41,34 @@ export interface PaymentApplication {
   approved_at: string | null;
   approved_by: string | null;
   notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface PaymentApplicationLineItem {
+  id: string;
+  payment_application_id: string;
+  sov_item_id: number | null;
+  change_order_id: string | null;
+  item_number: string;
+  budget_code: string | null;
+  description: string;
+  scheduled_value: number;
+  work_completed_previous: number;
+  work_completed_this_period: number;
+  materials_stored: number;
+  total_completed: number;
+  percent_complete: number;
+  balance_to_finish: number;
+  retainage_previous_work: number;
+  retainage_previous_materials: number;
+  retainage_this_period_work_pct: number;
+  retainage_this_period_work: number;
+  retainage_this_period_materials_pct: number;
+  retainage_this_period_materials: number;
+  retainage_released_work: number;
+  retainage_released_materials: number;
+  sort_order: number;
   created_at: string;
   updated_at: string;
 }

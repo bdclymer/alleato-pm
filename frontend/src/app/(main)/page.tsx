@@ -988,6 +988,7 @@ export default function PortfolioPage() {
       header={{
         title: "Portfolio",
         description: "All projects across your organization",
+        variant: "compact",
         actions: (
           <Button size="sm" onClick={handleCreateProject}>
             <Plus />

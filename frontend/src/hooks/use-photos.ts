@@ -145,6 +145,44 @@ export function useUpdatePhoto(projectId: number, photoId: number) {
   });
 }
 
+/**
+ * Upload one or more image files directly (no form required).
+ * Files are uploaded to Supabase storage and photo records are created
+ * automatically with a title derived from the filename.
+ */
+export function useUploadPhotos(projectId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (files: File[]): Promise<PhotoSummary[]> => {
+      const formData = new FormData();
+      for (const file of files) {
+        formData.append("files", file);
+      }
+      const res = await fetch(`/api/projects/${projectId}/photos/upload`, {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? `HTTP ${res.status}`);
+      }
+      const result = await res.json();
+      return result.photos;
+    },
+    onSuccess: (_data, files) => {
+      qc.invalidateQueries({ queryKey: photoKeys.all(projectId) });
+      toast.success(
+        files.length === 1
+          ? "Photo uploaded"
+          : `${files.length} photos uploaded`,
+      );
+    },
+    onError: (err: Error) => {
+      toast.error("Could not upload photos", { description: err.message });
+    },
+  });
+}
+
 export function useDeletePhoto(projectId: number) {
   const qc = useQueryClient();
   return useMutation({

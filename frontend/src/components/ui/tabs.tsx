@@ -30,7 +30,7 @@ const tabsListVariants = cva(
   {
     variants: {
       variant: {
-        default: "bg-muted",
+        default: "bg-primary/10",
         line: "gap-4 md:gap-6 bg-transparent border-b border-border p-0 h-auto",
       },
     },
@@ -71,6 +71,7 @@ function TabsTrigger({
         "group-data-[variant=default]/tabs-list:focus-visible:ring-[3px]",
         // Line variant — matches PageTabs exactly: border-b-2 underline, primary color, semibold
         "group-data-[variant=line]/tabs-list:border-b-2 group-data-[variant=line]/tabs-list:border-b-transparent group-data-[variant=line]/tabs-list:rounded-none group-data-[variant=line]/tabs-list:bg-transparent group-data-[variant=line]/tabs-list:px-1.5 group-data-[variant=line]/tabs-list:pb-3 group-data-[variant=line]/tabs-list:pt-3 group-data-[variant=line]/tabs-list:h-auto group-data-[variant=line]/tabs-list:flex-none",
+        "group-data-[variant=line]/tabs-list:text-foreground/60 group-data-[variant=line]/tabs-list:hover:text-foreground",
         "group-data-[variant=line]/tabs-list:data-[state=active]:border-b-primary group-data-[variant=line]/tabs-list:data-[state=active]:text-primary group-data-[variant=line]/tabs-list:data-[state=active]:font-semibold group-data-[variant=line]/tabs-list:data-[state=active]:bg-transparent group-data-[variant=line]/tabs-list:data-[state=active]:shadow-none",
         "group-data-[variant=line]/tabs-list:after:hidden",
         // Vertical orientation

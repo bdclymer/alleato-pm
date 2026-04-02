@@ -12,10 +12,12 @@ const createPaymentApplicationSchema = z.object({
   amount: z.number().min(0, "Amount must be non-negative"),
   retention_amount: z.number().min(0).default(0),
   status: z
-    .enum(["draft", "submitted", "approved", "rejected"])
+    .enum(["draft", "under_review", "revise_and_resubmit", "approved"])
     .default("draft"),
   period_from: z.string().nullable().optional(),
   period_to: z.string().nullable().optional(),
+  billing_period_id: z.string().uuid().nullable().optional(),
+  billing_date: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
 });
 
@@ -30,7 +32,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const { data, error } = await supabase
       .from("prime_contract_payment_applications")
-      .select("*")
+      .select("*, billing_period:billing_periods(*)")
       .eq("contract_id", contractId)
       .eq("project_id", parseInt(projectId, 10))
       .order("application_number", { ascending: true });
@@ -98,6 +100,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         status: validatedData.status,
         period_from: validatedData.period_from ?? null,
         period_to: validatedData.period_to ?? null,
+        billing_period_id: validatedData.billing_period_id ?? null,
+        billing_date: validatedData.billing_date ?? null,
         notes: validatedData.notes ?? null,
       })
       .select()

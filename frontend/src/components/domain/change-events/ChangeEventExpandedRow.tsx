@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ChevronDown, MoreVertical, Pencil } from "lucide-react";
+import { ArrowUpDown, ChevronDown, MoreVertical, Pencil } from "lucide-react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -84,6 +84,7 @@ type ColumnGroup = "detail" | "revenue" | "cost" | "overUnder" | "budgetMod";
 interface ColumnDef {
   key: ColumnKey;
   label: string;
+  icon?: React.ComponentType<{ className?: string }>;
   group: ColumnGroup;
   defaultWidth: number;
   minWidth: number;
@@ -111,9 +112,9 @@ const COLUMNS: ColumnDef[] = [
   // Revenue
   { key: "revQty", label: "Qty", group: "revenue", defaultWidth: 55, minWidth: 40, align: "right" },
   { key: "revUnitCost", label: "Unit Cost", group: "revenue", defaultWidth: 85, minWidth: 60, align: "right" },
-  { key: "revenueRom", label: "Revenue ROM", group: "revenue", defaultWidth: 100, minWidth: 70, align: "right" },
+  { key: "revenueRom", label: "Rev ROM", group: "revenue", defaultWidth: 100, minWidth: 70, align: "right" },
   { key: "primePco", label: "Prime PCO", group: "revenue", defaultWidth: 90, minWidth: 60, align: "right" },
-  { key: "latestPrice", label: "Latest Price", group: "revenue", defaultWidth: 95, minWidth: 60, align: "right" },
+  { key: "latestPrice", label: "Latest $", group: "revenue", defaultWidth: 95, minWidth: 60, align: "right" },
   // Cost
   { key: "costQty", label: "Qty", group: "cost", defaultWidth: 55, minWidth: 40, align: "right" },
   { key: "costUnitCost", label: "Unit Cost", group: "cost", defaultWidth: 85, minWidth: 60, align: "right" },
@@ -123,7 +124,7 @@ const COLUMNS: ColumnDef[] = [
   { key: "nonCommitted", label: "Non-Committed", group: "cost", defaultWidth: 105, minWidth: 70, align: "right" },
   { key: "latestCost", label: "Latest Cost", group: "cost", defaultWidth: 90, minWidth: 60, align: "right" },
   // Over/Under
-  { key: "overUnder", label: "Over/Under", group: "overUnder", defaultWidth: 95, minWidth: 60, align: "right" },
+  { key: "overUnder", label: "Over/Under", icon: ArrowUpDown, group: "overUnder", defaultWidth: 95, minWidth: 60, align: "right" },
   // Budget Modification
   { key: "budgetMod", label: "Budget Mod", group: "budgetMod", defaultWidth: 95, minWidth: 60, align: "right" },
 ];
@@ -330,11 +331,15 @@ function ColumnHeader({
       }}
     >
       <span
-        className={`flex-1 text-xs font-medium text-muted-foreground truncate ${
-          col.align === "right" ? "text-right" : ""
+        className={`flex-1 text-xs font-medium text-muted-foreground truncate flex items-center ${
+          col.align === "right" ? "justify-end" : ""
         }`}
       >
-        {col.label}
+        {col.icon ? (
+          <col.icon className="h-3.5 w-3.5" />
+        ) : (
+          col.label
+        )}
       </span>
 
       <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
@@ -585,7 +590,7 @@ export function ChangeEventExpandedRow({
   return (
     <>
       {/* ── Group header row ── */}
-      <TableRow className="bg-primary/15 hover:bg-primary/15 border-b border-primary/20">
+      <TableRow className="bg-muted/40 hover:bg-muted/40 border-b border-border/60">
         <TableCell colSpan={colSpan} className="py-0 px-0">
           <div
             ref={registerScrollContainer("group-header")}
@@ -609,7 +614,7 @@ export function ChangeEventExpandedRow({
       </TableRow>
 
       {/* ── Column header row ── */}
-      <TableRow className="bg-primary/10 hover:bg-primary/10 border-b border-primary/20">
+      <TableRow className="bg-muted/25 hover:bg-muted/25 border-b border-border/60">
         <TableCell colSpan={colSpan} className="py-0 px-0">
           <div
             ref={registerScrollContainer("column-header")}
@@ -626,7 +631,7 @@ export function ChangeEventExpandedRow({
                 onStartResize={makeResizeHandler(col.key, columnWidths[col.key])}
                 className={
                   index === 0
-                    ? "sticky left-0 z-20 bg-primary/10 pl-1 pr-2 border-r border-primary/15"
+                    ? "sticky left-0 z-20 bg-muted/25 pl-1 pr-2 border-r border-border/40"
                     : ""
                 }
               />
@@ -637,10 +642,14 @@ export function ChangeEventExpandedRow({
       </TableRow>
 
       {/* ── Line Items ── */}
-      {lineItems.map((li) => (
+      {lineItems.map((li, rowIndex) => {
+        const isEven = rowIndex % 2 === 0;
+        const rowBg = isEven ? "bg-background" : "bg-muted/15";
+        const stickyBg = isEven ? "bg-background" : "bg-muted/15";
+        return (
         <TableRow
           key={li.id}
-          className="bg-primary/5 hover:bg-primary/10 border-b border-primary/10"
+          className={`${rowBg} hover:bg-muted/30 border-b border-border/40`}
         >
           <TableCell colSpan={colSpan} className="py-0 px-0">
             <div
@@ -655,7 +664,7 @@ export function ChangeEventExpandedRow({
                     col.align === "right" ? "text-right" : ""
                   } ${
                     index === 0
-                      ? "sticky left-0 z-10 bg-primary/5 pl-1 border-r border-primary/10"
+                      ? `sticky left-0 z-10 ${stickyBg} pl-1 border-r border-border/40`
                       : ""
                   }`}
                   style={{ width: columnWidths[col.key], minWidth: col.minWidth }}
@@ -680,12 +689,13 @@ export function ChangeEventExpandedRow({
             </div>
           </TableCell>
         </TableRow>
-      ))}
+        );
+      })}
 
       {/* ── Markup section ── */}
       {computedMarkups.length > 0 && (
         <>
-          <TableRow className="bg-primary/10 hover:bg-primary/10 border-b border-primary/20">
+          <TableRow className="bg-muted/30 hover:bg-muted/30 border-b border-border/60">
             <TableCell colSpan={colSpan} className="py-1.5 px-8">
               <div className="flex items-center gap-1.5">
                 <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
@@ -693,10 +703,14 @@ export function ChangeEventExpandedRow({
               </div>
             </TableCell>
           </TableRow>
-          {computedMarkups.map((markup) => (
+          {computedMarkups.map((markup, markupIndex) => {
+            const isEven = markupIndex % 2 === 0;
+            const rowBg = isEven ? "bg-background" : "bg-muted/15";
+            const stickyBg = isEven ? "bg-background" : "bg-muted/15";
+            return (
             <TableRow
               key={markup.id}
-              className="bg-primary/5 hover:bg-primary/10 border-b border-primary/10"
+              className={`${rowBg} hover:bg-muted/30 border-b border-border/40`}
             >
               <TableCell colSpan={colSpan} className="py-0 px-0">
                 <div
@@ -711,7 +725,7 @@ export function ChangeEventExpandedRow({
                         col.align === "right" ? "text-right" : ""
                       } ${
                         index === 0
-                          ? "sticky left-0 z-10 bg-primary/5 pl-1 border-r border-primary/10"
+                          ? `sticky left-0 z-10 ${stickyBg} pl-1 border-r border-border/40`
                           : ""
                       }`}
                       style={{ width: columnWidths[col.key], minWidth: col.minWidth }}
@@ -733,7 +747,8 @@ export function ChangeEventExpandedRow({
                 </div>
               </TableCell>
             </TableRow>
-          ))}
+            );
+          })}
         </>
       )}
     </>

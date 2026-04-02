@@ -1,12 +1,18 @@
 "use client";
 
+import { useState } from "react";
 import type {
   ChangeEventDetail,
   ChangeEventAttachment,
 } from "@/types/change-events";
 import { StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
-import { FileText, Plus, Trash2 } from "lucide-react";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { ChevronRight, FileText, Plus, Trash2 } from "lucide-react";
 import {
   ContentSectionStack,
   LabelValueRow,
@@ -42,6 +48,8 @@ export function ChangeEventGeneralInfoPanel({
   const lineItemRevenueSource =
     changeEvent.line_item_revenue_source ?? changeEvent.lineItemRevenueSource;
   const totals = (changeEvent as any).totals ?? { revenueRom: "0", costRom: "0", nonCommittedCost: "0" };
+
+  const [descOpen, setDescOpen] = useState(false);
 
   return (
     <ContentSectionStack>
@@ -176,18 +184,27 @@ export function ChangeEventGeneralInfoPanel({
               </div>
             </div>
 
-            {/* Description below the 2-col grid */}
-            <div className="space-y-4">
-              <dl className="space-y-4 text-sm">
-                <LabelValueRow
-                  label="Description"
-                  missing={!changeEvent.description}
-                  valueClassName="leading-relaxed font-normal text-foreground whitespace-pre-wrap"
+            {/* Description — collapsible, collapsed by default */}
+            <Collapsible open={descOpen} onOpenChange={setDescOpen}>
+              <CollapsibleTrigger asChild>
+                <button
+                  type="button"
+                  className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                 >
+                  <ChevronRight
+                    className={`h-3.5 w-3.5 shrink-0 transition-transform duration-200 ${
+                      descOpen ? "rotate-90" : ""
+                    }`}
+                  />
+                  Description
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="pt-3 text-sm leading-relaxed text-foreground whitespace-pre-wrap">
                   {changeEvent.description || "Not set"}
-                </LabelValueRow>
-              </dl>
-            </div>
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
           </div>
 
           {/* Right sidebar: Totals */}

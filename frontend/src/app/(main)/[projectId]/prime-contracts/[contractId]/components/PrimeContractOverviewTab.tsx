@@ -208,10 +208,10 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
     <ContentSectionStack className="pb-20">
       {/* ─── General section: 3-column layout matching Procore ─── */}
       <section>
-        <div className="grid grid-cols-[minmax(0,1fr)_minmax(340px,420px)] gap-x-16 gap-y-10">
+        <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(340px,420px)] gap-x-16 gap-y-10">
           {/* Left column with inner rows */}
           <div className="space-y-8">
-            <div className="grid grid-cols-2 gap-x-14 gap-y-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-14 gap-y-8">
               {/* Details */}
               <div className="space-y-6">
                 <SectionRuleHeading label="Details" className="[&_span]:text-primary" />

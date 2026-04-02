@@ -1,0 +1,245 @@
+/**
+ * ============================================================================
+ * PCO DETAIL API ROUTE
+ * ============================================================================
+ *
+ * GET   /api/projects/[projectId]/pcos/[pcoId] - Get single PCO with relations
+ * PATCH /api/projects/[projectId]/pcos/[pcoId] - Update PCO fields
+ *
+ * No DELETE — PCOs are never deleted, only voided via status change.
+ */
+
+import { createClient } from "@/lib/supabase/server";
+import { NextRequest, NextResponse } from "next/server";
+
+interface RouteParams {
+  params: Promise<{ projectId: string; pcoId: string }>;
+}
+
+/**
+ * GET /api/projects/[projectId]/pcos/[pcoId]
+ * Returns a single PCO with versions, grouped change events, and line items
+ */
+export async function GET(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { projectId, pcoId } = await params;
+    const numericProjectId = parseInt(projectId, 10);
+    const numericPcoId = parseInt(pcoId, 10);
+
+    if (isNaN(numericProjectId) || isNaN(numericPcoId)) {
+      return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+    }
+
+    const supabase = await createClient();
+
+    // Fetch PCO with related data
+    const { data: pco, error } = await supabase
+      .from("potential_change_orders")
+      .select("*")
+      .eq("project_id", numericProjectId)
+      .eq("id", numericPcoId)
+      .single();
+
+    if (error || !pco) {
+      return NextResponse.json(
+        { error: "PCO not found" },
+        { status: 404 }
+      );
+    }
+
+    // Fetch versions
+    const { data: versions } = await supabase
+      .from("pco_versions")
+      .select("*")
+      .eq("pco_id", numericPcoId)
+      .order("version", { ascending: false });
+
+    // Fetch grouped change events with their change_event details
+    const { data: pcoChangeEvents } = await supabase
+      .from("pco_change_events")
+      .select(
+        `
+        id,
+        pco_id,
+        change_event_id,
+        estimated_amount,
+        sort_order,
+        added_at,
+        added_by_id
+      `
+      )
+      .eq("pco_id", numericPcoId)
+      .order("sort_order", { ascending: true });
+
+    // Fetch full change event details for grouped events
+    const changeEventIds = (pcoChangeEvents || []).map(
+      (pce: any) => pce.change_event_id
+    );
+    let changeEventsMap: Record<string, any> = {};
+    if (changeEventIds.length > 0) {
+      const { data: changeEvents } = await supabase
+        .from("change_events")
+        .select("id, number, title, type, status, scope")
+        .in("id", changeEventIds);
+
+      for (const ce of changeEvents || []) {
+        changeEventsMap[ce.id] = ce;
+      }
+    }
+
+    const groupedChangeEvents = (pcoChangeEvents || []).map((pce: any) => ({
+      ...pce,
+      changeEvent: changeEventsMap[pce.change_event_id] || null,
+    }));
+
+    // Fetch line items
+    const { data: lineItems } = await supabase
+      .from("pco_line_items")
+      .select("*")
+      .eq("pco_id", numericPcoId)
+      .order("id", { ascending: true });
+
+    // Fetch timeline events
+    const { data: timeline } = await supabase
+      .from("timeline_events")
+      .select("*")
+      .eq("parent_type", "PCO")
+      .eq("parent_id", numericPcoId.toString())
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    return NextResponse.json({
+      ...pco,
+      versions: versions || [],
+      groupedChangeEvents,
+      lineItems: lineItems || [],
+      timeline: timeline || [],
+      _links: {
+        self: `/api/projects/${projectId}/pcos/${pcoId}`,
+        changeEvents: `/api/projects/${projectId}/pcos/${pcoId}/change-events`,
+        lineItems: `/api/projects/${projectId}/pcos/${pcoId}/line-items`,
+        submit: `/api/projects/${projectId}/pcos/${pcoId}/submit`,
+        clientDecision: `/api/projects/${projectId}/pcos/${pcoId}/client-decision`,
+      },
+    });
+  } catch (error) {
+    console.error("PCO detail error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}
+
+/**
+ * PATCH /api/projects/[projectId]/pcos/[pcoId]
+ * Updates PCO fields (partial update)
+ */
+export async function PATCH(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { projectId, pcoId } = await params;
+    const numericProjectId = parseInt(projectId, 10);
+    const numericPcoId = parseInt(pcoId, 10);
+
+    if (isNaN(numericProjectId) || isNaN(numericPcoId)) {
+      return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
+    }
+
+    const supabase = await createClient();
+    const body = await request.json();
+
+    // Get current user
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Verify PCO exists
+    const { data: existing, error: fetchError } = await supabase
+      .from("potential_change_orders")
+      .select("*")
+      .eq("project_id", numericProjectId)
+      .eq("id", numericPcoId)
+      .single();
+
+    if (fetchError || !existing) {
+      return NextResponse.json(
+        { error: "PCO not found" },
+        { status: 404 }
+      );
+    }
+
+    // Build update object from allowed fields
+    const allowedFields = [
+      "title",
+      "description",
+      "type",
+      "status",
+      "estimated_value",
+      "approved_value",
+      "markup_percentage",
+      "schedule_impact_days",
+      "schedule_impact_description",
+      "rfq_required",
+      "rfq_status",
+      "annotation",
+      "annotation_note",
+      "root_cause",
+      "prime_change_order_id",
+    ];
+
+    const updates: Record<string, any> = {
+      updated_at: new Date().toISOString(),
+    };
+
+    for (const field of allowedFields) {
+      if (body[field] !== undefined) {
+        updates[field] = body[field];
+      }
+    }
+
+    const { data, error } = await supabase
+      .from("potential_change_orders")
+      .update(updates)
+      .eq("id", numericPcoId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error("Failed to update PCO:", error);
+      return NextResponse.json(
+        { error: "Failed to update PCO", details: error.message },
+        { status: 400 }
+      );
+    }
+
+    // Write timeline event
+    const changedFields = Object.keys(updates).filter(
+      (k) => k !== "updated_at"
+    );
+    if (changedFields.length > 0) {
+      await supabase.from("timeline_events").insert({
+        project_id: numericProjectId,
+        parent_type: "PCO",
+        parent_id: numericPcoId.toString(),
+        event_type: "UPDATED",
+        actor_id: user.id,
+        summary: `PCO updated: ${changedFields.join(", ")}`,
+        metadata: { changed_fields: changedFields },
+        created_at: new Date().toISOString(),
+      });
+    }
+
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error("PCO update error:", error);
+    return NextResponse.json(
+      { error: "Internal server error" },
+      { status: 500 }
+    );
+  }
+}

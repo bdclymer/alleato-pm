@@ -15,6 +15,7 @@ import { PageHeader } from "./page-header-unified";
 //   <PageShell variant="table"     title="Commitments" actions={<Button>+ New</Button>}>...</PageShell>
 //   <PageShell variant="form"      title="Create Contract" onBack={() => router.back()}>...</PageShell>
 //   <PageShell variant="detail"    title="Contract #1042" statusBadge={<StatusBadge status="Draft" />}>...</PageShell>
+//   <PageShell variant="detailWide" title="Contract #1042">...</PageShell>
 //   <PageShell variant="content"   title="About">...</PageShell>
 //
 // Variants:
@@ -22,10 +23,17 @@ import { PageHeader } from "./page-header-unified";
 //   table     — full-width, tight padding. Use for data table pages (UnifiedTablePage goes inside).
 //   form      — max-w-5xl centered, space-y-8. Use for create/edit forms. Includes optional back button.
 //   detail    — max-w-6xl centered. Use for record detail pages (tabs, line items).
+//   detailWide — max-w-screen-2xl centered. Use when detail pages need more canvas without going full dashboard width.
 //   content   — max-w-4xl centered. Use for document/settings/read-heavy pages.
 // ─────────────────────────────────────────────────────────────────────────────
 
-export type PageShellVariant = "dashboard" | "table" | "form" | "detail" | "content";
+export type PageShellVariant =
+  | "dashboard"
+  | "table"
+  | "form"
+  | "detail"
+  | "detailWide"
+  | "content";
 
 export interface PageShellProps {
   variant: PageShellVariant;
@@ -60,6 +68,7 @@ const variantConfig: Record<
   table:     { containerMaxWidth: "full", spacing: "space-y-4" },
   form:      { containerMaxWidth: "full", contentMaxWidth: "max-w-5xl",  spacing: "space-y-8" },
   detail:    { containerMaxWidth: "full", contentMaxWidth: "max-w-6xl",  spacing: "space-y-6" },
+  detailWide:{ containerMaxWidth: "full", contentMaxWidth: "max-w-screen-2xl",  spacing: "space-y-6" },
   content:   { containerMaxWidth: "full", contentMaxWidth: "max-w-4xl",  spacing: "space-y-8" },
 };
 

@@ -241,7 +241,7 @@ function Sidebar({
             ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+1rem+2px)]"
             : "group-data-[collapsible=icon]:w-[var(--sidebar-width-icon)] group-data-[side=left]:border-r group-data-[side=right]:border-l",
           // Hover-expand: container goes to full width while gap stays at icon width
-          "group-data-[hover-expanded=true]:w-[var(--sidebar-width)] group-data-[hover-expanded=true]:shadow-lg group-data-[hover-expanded=true]:z-30",
+          "group-data-[hover-expanded=true]:w-[var(--sidebar-width)] group-data-[hover-expanded=true]:shadow-lg group-data-[hover-expanded=true]:z-50",
           className
         )}
       >

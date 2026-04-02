@@ -88,6 +88,7 @@ export interface UnifiedTablePageProps<T> {
     title: string;
     description?: string;
     actions?: ReactNode;
+    variant?: "default" | "compact";
   };
   tabs?: TabItem[];
   toolbar: {
@@ -873,6 +874,7 @@ export function UnifiedTablePage<T>({
     <PageHeader
       title={header.title}
       description={header.description}
+      variant={header.variant}
       className="px-0 sm:px-0 lg:px-0"
       actions={
         toolbarInlineWithHeader ? (

@@ -1,0 +1,2 @@
+patchedDependencies:
+  agentation@3.0.2: patches/agentation@3.0.2.patch

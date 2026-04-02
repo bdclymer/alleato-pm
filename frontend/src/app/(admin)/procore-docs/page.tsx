@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 
 import { MessageResponse } from "@/components/ai-elements/message";
+import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -289,8 +290,8 @@ export default function ProcoreDocsPage() {
   // ---------------------------------------------------------------------------
 
   return (
-    <div>
-      <div className="mx-auto max-w-5xl px-6 py-10 lg:px-10">
+    <PageShell variant="content" showHeader={false}>
+      <div className="px-6 pb-10 lg:px-10">
         {/* ─── Hero header ─── */}
         <div className="mb-8">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
@@ -429,14 +430,14 @@ export default function ProcoreDocsPage() {
                   className="group relative h-auto rounded-lg border border-border/50 bg-background p-5 text-left transition-all hover:border-border hover:bg-accent/30 flex flex-col items-start whitespace-normal"
                 >
                   <div className="mb-3 flex items-center gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-muted text-foreground transition-colors group-hover:bg-primary/10 group-hover:text-primary">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
                       {card.icon}
                     </div>
                     <h3 className="text-sm font-semibold text-foreground">
                       {card.title}
                     </h3>
                   </div>
-                  <p className="text-xs text-muted-foreground leading-relaxed">
+                  <p className="w-full text-xs text-muted-foreground leading-relaxed">
                     {card.description}
                   </p>
                   <ChevronRight className="absolute right-4 top-5 h-4 w-4 text-muted-foreground/30 transition-all group-hover:text-muted-foreground group-hover:translate-x-0.5" />
@@ -720,6 +721,6 @@ export default function ProcoreDocsPage() {
           </div>
         </SheetContent>
       </Sheet>
-    </div>
+    </PageShell>
   );
 }

@@ -11,6 +11,12 @@ This file provides guidance to Claude Code when working with code in this reposi
 
 Alleato-Procore is a construction project management platform built as a Next.js 15 frontend with Supabase backend. It mirrors Procore's functionality with tools for budgets, contracts, change orders, directory management, scheduling, and more.
 
+## Agentation Watch Mode
+
+When I say "watch mode", call agentation_watch_annotations in a loop.
+For each annotation: acknowledge it, make the fix, then resolve it with a summary.
+Continue watching until I say stop or timeout is reached.
+
 ### Tech Stack
 
 - **Frontend:** Next.js 15, React 19, TypeScript, Tailwind CSS
@@ -346,4 +352,4 @@ Use `agent-browser` for web automation:
 
 ## Documentation
 
-All docs go in `docs/`. `docs-ai/` is deprecated. Save documentation in the `docs/` folder with appropriate subdirectory.
+All docs go in `docs/`. Save documentation in the `docs/` folder with appropriate subdirectory.

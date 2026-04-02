@@ -18,6 +18,7 @@ import {
   X,
   AlertTriangle,
   RefreshCw,
+  Upload,
   Trash2,
 } from "lucide-react";
 
@@ -58,6 +59,10 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
+import { useQueryClient } from "@tanstack/react-query";
+import { usePaymentApplications, useCreatePaymentApplication, useDeletePaymentApplication, paymentApplicationKeys } from "@/hooks/use-payment-applications";
+import { CreateInvoiceDialog } from "@/components/domain/invoices/CreateInvoiceDialog";
+import { StatusBadge } from "@/components/ds";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { PrimeContractOverviewTab } from "./components/PrimeContractOverviewTab";
 import { PrimeContractDialogs } from "./components/PrimeContractDialogs";
@@ -70,7 +75,7 @@ import type {
   ContractAttachment,
   ContractLineItem,
   ContractTab,
-  InvoiceFormState,
+
   LineItemFormState,
   Payment,
   PaymentApplication,
@@ -149,21 +154,16 @@ export default function ProjectContractDetailPage() {
   const [lineItemsLoading, setLineItemsLoading] = useState(false);
   const [changeOrders, setChangeOrders] = useState<PrimeContractCO[]>([]);
   const [changeOrdersLoading, setChangeOrdersLoading] = useState(false);
-  // Invoice / Payment state
-  const [paymentApplications, setPaymentApplications] = useState<PaymentApplication[]>([]);
-  const [paymentsLoading, setPaymentsLoading] = useState(false);
+  // Invoice / Payment state (React Query for invoices)
+  const { data: paymentApplications = [], isLoading: paymentsLoading } = usePaymentApplications(Number(projectId), contractId);
+  const createPaymentApp = useCreatePaymentApplication(Number(projectId), contractId);
+  const deletePaymentApp = useDeletePaymentApplication(Number(projectId), contractId);
+  const queryClient = useQueryClient();
+  const [billingPeriods, setBillingPeriods] = useState<Array<{ id: string; start_date: string; end_date: string; name: string | null; period_number: number }>>([]);
   const [payments, setPayments] = useState<Payment[]>([]);
   const [paymentsReceivedLoading, setPaymentsReceivedLoading] = useState(false);
   const [showAddInvoiceDialog, setShowAddInvoiceDialog] = useState(false);
   const [showAddPaymentDialog, setShowAddPaymentDialog] = useState(false);
-  const [invoiceForm, setInvoiceForm] = useState<InvoiceFormState>({
-    application_number: "",
-    amount: "",
-    retention_amount: "",
-    period_from: "",
-    period_to: "",
-    notes: "",
-  });
   const [paymentForm, setPaymentForm] = useState<PaymentFormState>({
     amount: "",
     payment_date: "",
@@ -173,7 +173,6 @@ export default function ProjectContractDetailPage() {
     reference_number: "",
     notes: "",
   });
-  const [isSubmittingInvoice, setIsSubmittingInvoice] = useState(false);
   const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
   const [verticalMarkups, setVerticalMarkups] = useState<VerticalMarkup[]>([]);
   const [savedVerticalMarkups, setSavedVerticalMarkups] = useState<VerticalMarkup[]>([]);
@@ -272,6 +271,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
     "download",
   );
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     const fetchContract = async () => {
@@ -430,26 +430,19 @@ const [isSovEditing, setIsSovEditing] = useState(false);
     fetchChangeOrders();
   }, [contract, contractId, projectId]);
 
-  // Fetch payment applications (invoices) when on invoices tab
+  // Fetch billing periods when on invoices tab
   useEffect(() => {
-    if (activeTab !== "invoices" || !contract) return;
-    const fetchPaymentApplications = async () => {
-      try {
-        setPaymentsLoading(true);
-        const response = await fetch(
-          `/api/projects/${projectId}/contracts/${contractId}/payment-applications`,
-        );
-        if (!response.ok) return;
-        const data = await response.json();
-        setPaymentApplications(data || []);
-      } catch (err) {
-        console.error("Failed to load payment applications:", err);
-      } finally {
-        setPaymentsLoading(false);
-      }
-    };
-    fetchPaymentApplications();
-  }, [activeTab, contract, contractId, projectId]);
+    if (activeTab === "invoices") {
+      fetch(`/api/projects/${projectId}/billing-periods`)
+        .then((r) => r.json())
+        .then((data) => {
+          // API returns { items: [...], total } or raw array
+          const periods = Array.isArray(data) ? data : (data?.items ?? []);
+          setBillingPeriods(periods);
+        })
+        .catch(() => {});
+    }
+  }, [activeTab, projectId]);
 
   // Fetch payments received when on payments tab
   useEffect(() => {
@@ -472,72 +465,44 @@ const [isSovEditing, setIsSovEditing] = useState(false);
     fetchPayments();
   }, [activeTab, contract, contractId, projectId]);
 
-  const handleCreateInvoice = async () => {
-    if (!invoiceForm.application_number || !invoiceForm.amount) return;
-    try {
-      setIsSubmittingInvoice(true);
-      const response = await fetch(
-        `/api/projects/${projectId}/contracts/${contractId}/payment-applications`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            application_number: invoiceForm.application_number,
-            amount: parseFloat(invoiceForm.amount),
-            retention_amount: invoiceForm.retention_amount
-              ? parseFloat(invoiceForm.retention_amount)
-              : 0,
-            period_from: invoiceForm.period_from || null,
-            period_to: invoiceForm.period_to || null,
-            notes: invoiceForm.notes || null,
-          }),
-        },
-      );
-      if (!response.ok) {
-        const err = await response.json();
-        toast.error(err.error || "Failed to create invoice");
-        return;
+  const handleCreateInvoiceSubmit = async (data: {
+    application_number: string;
+    billing_period_id?: string;
+    period_from?: string;
+    period_to?: string;
+    status: string;
+    amount: number;
+    retention_amount: number;
+    prefill_sov?: boolean;
+    prefill_retainage?: boolean;
+    include_backup?: boolean;
+  }) => {
+    const invoice = await createPaymentApp.mutateAsync({
+      application_number: data.application_number,
+      billing_period_id: data.billing_period_id,
+      period_from: data.period_from,
+      period_to: data.period_to,
+      status: data.status,
+      amount: data.amount,
+      retention_amount: data.retention_amount,
+    });
+    // If pre-fill SOV was checked, auto-populate line items
+    if (data.prefill_sov && invoice?.id) {
+      try {
+        await fetch(
+          `/api/projects/${projectId}/contracts/${contractId}/payment-applications/${invoice.id}/populate-sov`,
+          { method: "POST" },
+        );
+      } catch {
+        // SOV population is best-effort — user can populate manually
       }
-      const newApp = await response.json();
-      setPaymentApplications((prev) => [...prev, newApp]);
-      setShowAddInvoiceDialog(false);
-      setInvoiceForm({
-        application_number: "",
-        amount: "",
-        retention_amount: "",
-        period_from: "",
-        period_to: "",
-        notes: "",
-      });
-      toast.success("Invoice created successfully");
-      // Refresh contract to update invoiced_amount
-      const contractRes = await fetch(
-        `/api/projects/${projectId}/contracts/${contractId}`,
-      );
-      if (contractRes.ok) setContract(await contractRes.json());
-    } catch {
-      toast.error("Failed to create invoice");
-    } finally {
-      setIsSubmittingInvoice(false);
     }
+    toast.success("Invoice created successfully");
   };
 
   const handleDeleteInvoice = async (applicationId: string) => {
     if (!confirm("Delete this invoice? This cannot be undone.")) return;
-    const response = await fetch(
-      `/api/projects/${projectId}/contracts/${contractId}/payment-applications/${applicationId}`,
-      { method: "DELETE" },
-    );
-    if (!response.ok) {
-      toast.error("Failed to delete invoice");
-      return;
-    }
-    setPaymentApplications((prev) => prev.filter((a) => a.id !== applicationId));
-    toast.success("Invoice deleted");
-    const contractRes = await fetch(
-      `/api/projects/${projectId}/contracts/${contractId}`,
-    );
-    if (contractRes.ok) setContract(await contractRes.json());
+    await deletePaymentApp.mutateAsync(applicationId);
   };
 
   const handleCreatePayment = async () => {
@@ -1121,14 +1086,10 @@ const [isSovEditing, setIsSovEditing] = useState(false);
       );
 
       // Re-fetch invoices and payments to show newly synced data
-      const [invListResp, payListResp] = await Promise.all([
-        fetch(`/api/projects/${projectId}/contracts/${contractId}/payment-applications`),
-        fetch(`/api/projects/${projectId}/contracts/${contractId}/payments`),
-      ]);
-      if (invListResp.ok) {
-        const invList = await invListResp.json();
-        setPaymentApplications(invList || []);
-      }
+      queryClient.invalidateQueries({
+        queryKey: paymentApplicationKeys.list(Number(projectId), contractId),
+      });
+      const payListResp = await fetch(`/api/projects/${projectId}/contracts/${contractId}/payments`);
       if (payListResp.ok) {
         const payList = await payListResp.json();
         setPayments(payList || []);
@@ -1138,6 +1099,69 @@ const [isSovEditing, setIsSovEditing] = useState(false);
       toast.error(err instanceof Error ? err.message : "ERP sync failed");
     } finally {
       setIsSyncing(false);
+    }
+  };
+
+  // ─── Acumatica Export (App → ERP) ─────────────────────────────────────────
+
+  const handleErpExport = async () => {
+    setIsExporting(true);
+    try {
+      const response = await fetch("/api/sync/acumatica/export", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          projectId: Number(projectId),
+          contractId,
+          entities: ["paymentApplications", "invoices"],
+        }),
+      });
+
+      const body = await response.json();
+      if (!response.ok) {
+        throw new Error(body.error ?? "Acumatica export failed");
+      }
+
+      const paymentApplicationsResult = body.results?.paymentApplications as
+        | {
+            created?: number;
+            updated?: number;
+            skipped?: number;
+            errors?: string[];
+          }
+        | undefined;
+      const invoicesResult = body.results?.invoices as
+        | {
+            created?: number;
+            updated?: number;
+            skipped?: number;
+            errors?: string[];
+          }
+        | undefined;
+
+      const totalCreated =
+        (paymentApplicationsResult?.created ?? 0) + (invoicesResult?.created ?? 0);
+      const totalUpdated =
+        (paymentApplicationsResult?.updated ?? 0) + (invoicesResult?.updated ?? 0);
+      const totalSkipped =
+        (paymentApplicationsResult?.skipped ?? 0) + (invoicesResult?.skipped ?? 0);
+      const errors = [
+        ...(paymentApplicationsResult?.errors ?? []),
+        ...(invoicesResult?.errors ?? []),
+      ];
+
+      toast.success(
+        `ERP export complete: ${totalCreated} created, ${totalUpdated} updated, ${totalSkipped} skipped` +
+          (errors.length > 0 ? ` (${errors.length} errors)` : ""),
+      );
+
+      if (errors.length > 0) {
+        toast.error(errors.slice(0, 2).join(" | "));
+      }
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "ERP export failed");
+    } finally {
+      setIsExporting(false);
     }
   };
 
@@ -2380,7 +2404,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
 
   return (
     <PageShell
-      variant="dashboard"
+      variant="detailWide"
       title={`${contract.title} - #${contract.contract_number || contract.id.slice(0, 8)}`}
       description={
         contract.contractor
@@ -2391,7 +2415,7 @@ const [isSovEditing, setIsSovEditing] = useState(false);
       }
       onBack={() => router.back()}
       actions={
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="default" size="sm">
@@ -2452,6 +2476,16 @@ const [isSovEditing, setIsSovEditing] = useState(false);
             title="Sync invoices & payments from Acumatica"
           >
             <RefreshCw className={isSyncing ? "animate-spin" : undefined} />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            disabled={isExporting}
+            onClick={handleErpExport}
+            aria-label="Export to Acumatica"
+            title="Export invoices & payment applications to Acumatica"
+          >
+            <Upload className={isExporting ? "animate-pulse" : undefined} />
           </Button>
           <Button
             variant="outline"
@@ -2704,10 +2738,15 @@ lineItemsLoading={lineItemsLoading}
             <div className="bg-background">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h3 className="text-lg font-semibold">Invoices</h3>
+                  <h3 className="text-lg font-semibold">
+                    Invoices (Payment Applications){" "}
+                    <span className="text-muted-foreground font-normal text-sm">
+                      ({paymentApplications.length})
+                    </span>
+                  </h3>
                   <p className="text-sm text-muted-foreground">
-                    {paymentApplications.length} invoice{paymentApplications.length === 1 ? "" : "s"} •{" "}
-                    Total invoiced: {formatCurrency(
+                    Total invoiced:{" "}
+                    {formatCurrency(
                       paymentApplications
                         .filter((a) => a.status === "approved")
                         .reduce((sum, a) => sum + a.amount, 0),
@@ -2716,38 +2755,50 @@ lineItemsLoading={lineItemsLoading}
                 </div>
                 <Button size="sm" onClick={() => setShowAddInvoiceDialog(true)}>
                   <Plus />
-                  New Invoice
+                  Create Invoice
                 </Button>
               </div>
 
               {paymentsLoading ? (
-                <div className="text-center py-8 text-muted-foreground">
-                  <p>Loading invoices...</p>
+                <div className="space-y-2">
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
+                  <Skeleton className="h-10 w-full" />
                 </div>
               ) : paymentApplications.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
                   <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
                   <p>No invoices yet</p>
-                  <p className="text-xs mt-2">Create an invoice to track payment applications</p>
+                  <p className="text-xs mt-2">
+                    Create an invoice to track payment applications
+                  </p>
                 </div>
               ) : (
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Application #</TableHead>
-                      <TableHead>Period</TableHead>
-                      <TableHead className="text-right">Amount</TableHead>
-                      <TableHead className="text-right">Retention</TableHead>
-                      <TableHead className="text-right">Net</TableHead>
+                      <TableHead>Invoice #</TableHead>
+                      <TableHead>Billing Period</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead>Submitted</TableHead>
+                      <TableHead className="text-right">Amount</TableHead>
+                      <TableHead className="text-right">Retainage</TableHead>
+                      <TableHead className="text-right">Payment Due</TableHead>
+                      <TableHead className="text-right">% Complete</TableHead>
                       <TableHead></TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {paymentApplications.map((app) => (
-                      <TableRow key={app.id}>
-                        <TableCell className="font-medium">
+                      <TableRow
+                        key={app.id}
+                        className="cursor-pointer"
+                        onClick={() =>
+                          router.push(
+                            `/${projectId}/prime-contracts/${contractId}/invoices/${app.id}`,
+                          )
+                        }
+                      >
+                        <TableCell className="font-medium text-primary">
                           {app.application_number}
                         </TableCell>
                         <TableCell className="text-sm text-muted-foreground">
@@ -2756,6 +2807,11 @@ lineItemsLoading={lineItemsLoading}
                             : app.period_from
                               ? `From ${new Date(app.period_from).toLocaleDateString()}`
                               : "--"}
+                        </TableCell>
+                        <TableCell>
+                          <StatusBadge
+                            status={app.status.replace(/_/g, " ")}
+                          />
                         </TableCell>
                         <TableCell className="text-right">
                           {formatCurrency(app.amount)}
@@ -2766,26 +2822,14 @@ lineItemsLoading={lineItemsLoading}
                             : "--"}
                         </TableCell>
                         <TableCell className="text-right">
-                          {formatCurrency(app.net_amount ?? app.amount - app.retention_amount)}
+                          {formatCurrency(
+                            app.net_amount ??
+                              app.amount - app.retention_amount,
+                          )}
                         </TableCell>
-                        <TableCell>
-                          <Badge
-                            variant={
-                              app.status === "approved"
-                                ? "default"
-                                : app.status === "submitted"
-                                  ? "secondary"
-                                  : app.status === "rejected"
-                                    ? "destructive"
-                                    : "outline"
-                            }
-                          >
-                            {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-sm">
-                          {app.submitted_at
-                            ? new Date(app.submitted_at).toLocaleDateString()
+                        <TableCell className="text-right">
+                          {contract && contract.revised_contract_amount > 0
+                            ? `${((app.amount / contract.revised_contract_amount) * 100).toFixed(1)}%`
                             : "--"}
                         </TableCell>
                         <TableCell>
@@ -2793,9 +2837,12 @@ lineItemsLoading={lineItemsLoading}
                             variant="ghost"
                             size="sm"
                             className="text-destructive hover:text-destructive"
-                            onClick={() => handleDeleteInvoice(app.id)}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteInvoice(app.id);
+                            }}
                           >
-                            <X className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </TableCell>
                       </TableRow>
@@ -2803,133 +2850,48 @@ lineItemsLoading={lineItemsLoading}
                   </TableBody>
                   <tfoot>
                     <TableRow className="bg-muted font-medium">
-                      <TableCell colSpan={2}>Total</TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(paymentApplications.reduce((s, a) => s + a.amount, 0))}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {formatCurrency(paymentApplications.reduce((s, a) => s + a.retention_amount, 0))}
-                      </TableCell>
+                      <TableCell colSpan={3}>Total</TableCell>
                       <TableCell className="text-right">
                         {formatCurrency(
                           paymentApplications.reduce(
-                            (s, a) => s + (a.net_amount ?? a.amount - a.retention_amount),
+                            (s, a) => s + a.amount,
                             0,
                           ),
                         )}
                       </TableCell>
-                      <TableCell colSpan={3}></TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(
+                          paymentApplications.reduce(
+                            (s, a) => s + a.retention_amount,
+                            0,
+                          ),
+                        )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        {formatCurrency(
+                          paymentApplications.reduce(
+                            (s, a) =>
+                              s +
+                              (a.net_amount ??
+                                a.amount - a.retention_amount),
+                            0,
+                          ),
+                        )}
+                      </TableCell>
+                      <TableCell colSpan={2}></TableCell>
                     </TableRow>
                   </tfoot>
                 </Table>
               )}
             </div>
 
-            {/* Add Invoice Dialog */}
-            <Modal open={showAddInvoiceDialog} onOpenChange={setShowAddInvoiceDialog}>
-              <ModalContent className="max-w-lg">
-                <ModalHeader>
-                  <ModalTitle>New Invoice / Payment Application</ModalTitle>
-                  <ModalDescription>
-                    Create a payment application for this prime contract.
-                  </ModalDescription>
-                </ModalHeader>
-                <div className="space-y-4 py-2">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="app-number">Application Number *</Label>
-                      <Input
-                        id="app-number"
-                        placeholder="e.g. 001"
-                        value={invoiceForm.application_number}
-                        onChange={(e) =>
-                          setInvoiceForm((f) => ({ ...f, application_number: e.target.value }))
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="app-amount">Amount *</Label>
-                      <Input
-                        id="app-amount"
-                        type="number"
-                        placeholder="0.00"
-                        value={invoiceForm.amount}
-                        onChange={(e) =>
-                          setInvoiceForm((f) => ({ ...f, amount: e.target.value }))
-                        }
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="app-retention">Retention Amount</Label>
-                    <Input
-                      id="app-retention"
-                      type="number"
-                      placeholder="0.00"
-                      value={invoiceForm.retention_amount}
-                      onChange={(e) =>
-                        setInvoiceForm((f) => ({ ...f, retention_amount: e.target.value }))
-                      }
-                    />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="app-period-from">Period From</Label>
-                      <Input
-                        id="app-period-from"
-                        type="date"
-                        value={invoiceForm.period_from}
-                        onChange={(e) =>
-                          setInvoiceForm((f) => ({ ...f, period_from: e.target.value }))
-                        }
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="app-period-to">Period To</Label>
-                      <Input
-                        id="app-period-to"
-                        type="date"
-                        value={invoiceForm.period_to}
-                        onChange={(e) =>
-                          setInvoiceForm((f) => ({ ...f, period_to: e.target.value }))
-                        }
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="app-notes">Notes</Label>
-                    <Textarea
-                      id="app-notes"
-                      placeholder="Optional notes..."
-                      rows={3}
-                      value={invoiceForm.notes}
-                      onChange={(e) =>
-                        setInvoiceForm((f) => ({ ...f, notes: e.target.value }))
-                      }
-                    />
-                  </div>
-                </div>
-                <ModalFooter>
-                  <Button
-                    variant="outline"
-                    onClick={() => setShowAddInvoiceDialog(false)}
-                    disabled={isSubmittingInvoice}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleCreateInvoice}
-                    disabled={
-                      isSubmittingInvoice ||
-                      !invoiceForm.application_number ||
-                      !invoiceForm.amount
-                    }
-                  >
-                    {isSubmittingInvoice ? "Creating..." : "Create Invoice"}
-                  </Button>
-                </ModalFooter>
-              </ModalContent>
-            </Modal>
+            <CreateInvoiceDialog
+              open={showAddInvoiceDialog}
+              onOpenChange={setShowAddInvoiceDialog}
+              onSubmit={handleCreateInvoiceSubmit}
+              nextInvoiceNumber={paymentApplications.length + 1}
+              billingPeriods={billingPeriods}
+            />
           </div>
         )}
 

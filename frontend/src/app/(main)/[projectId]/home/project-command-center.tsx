@@ -5,7 +5,6 @@ import Link from "next/link";
 import { format, isPast } from "date-fns";
 import {
   AlertTriangle,
-  ArrowRight,
   Calendar,
   CheckCircle2,
   ChevronRight,
@@ -123,12 +122,6 @@ function formatTaskSource(sourceSystem: string | null | undefined): string {
     .join(" ");
 }
 
-function truncateSentence(value: string, max = 110): string {
-  const normalized = value.replace(/\s+/g, " ").trim();
-  if (normalized.length <= max) return normalized;
-  return `${normalized.slice(0, max - 1).trimEnd()}…`;
-}
-
 function initials(value: string | null | undefined): string {
   const normalized = (value ?? "").trim();
   if (!normalized) return "TM";
@@ -159,7 +152,7 @@ function SectionHeading({
 }
 
 function Divider() {
-  return <hr className="border-border my-5" />;
+  return <hr className="border-border my-8" />;
 }
 
 interface StatPillProps {
@@ -169,18 +162,18 @@ interface StatPillProps {
 }
 function StatPill({ label, value, tone = "neutral" }: StatPillProps) {
   return (
-    <div
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium",
-        tone === "danger" && "bg-red-50 text-red-700",
-        tone === "warning" && "bg-amber-50 text-amber-700",
-        tone === "success" && "bg-green-50 text-green-700",
-        tone === "neutral" && "bg-muted text-muted-foreground"
-      )}
-    >
-      <span className="text-[10px] uppercase tracking-wider opacity-70">{label}</span>
-      <span className="font-semibold">{value}</span>
-    </div>
+    <span className="inline-flex items-baseline gap-1.5 rounded border border-border bg-card px-2.5 py-1 text-xs">
+      <span
+        className={cn(
+          "font-semibold tabular-nums",
+          tone === "danger" && "text-destructive",
+          (tone === "warning" || tone === "success" || tone === "neutral") && "text-foreground"
+        )}
+      >
+        {value}
+      </span>
+      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</span>
+    </span>
   );
 }
 
@@ -201,33 +194,6 @@ function ProgressBar({ value, tone = "neutral" }: ProgressBarProps) {
         )}
         style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
       />
-    </div>
-  );
-}
-
-interface ItemRowProps {
-  dot?: "red" | "amber" | "green" | "muted";
-  title: string;
-  meta?: string;
-  right?: React.ReactNode;
-}
-function ItemRow({ dot = "muted", title, meta, right }: ItemRowProps) {
-  return (
-    <div className="flex items-start gap-2.5 py-2.5 border-b border-border/50 last:border-0">
-      <span
-        className={cn(
-          "mt-[5px] h-1.5 w-1.5 rounded-full shrink-0",
-          dot === "red" && "bg-red-500",
-          dot === "amber" && "bg-amber-400",
-          dot === "green" && "bg-green-500",
-          dot === "muted" && "bg-muted-foreground/30"
-        )}
-      />
-      <div className="flex-1 min-w-0">
-        <p className="text-sm leading-snug truncate">{title}</p>
-        {meta && <p className="text-xs text-muted-foreground mt-0.5">{meta}</p>}
-      </div>
-      {right && <div className="shrink-0">{right}</div>}
     </div>
   );
 }
@@ -273,12 +239,6 @@ export function ProjectCommandCenter({
   /* ── Derived: Prime Contract value ────────────────── */
   const primeContractValue = contractLineItems.reduce(
     (sum, li) => sum + (li.total_cost ?? 0),
-    0
-  );
-
-  /* ── Derived: Commitments total ───────────────────── */
-  const commitmentsTotal = commitments.reduce(
-    (sum, c) => sum + (c.contract_amount ?? c.original_amount ?? 0),
     0
   );
 
@@ -546,12 +506,10 @@ export function ProjectCommandCenter({
                 {variance !== 0 && (
                   <div
                     className={cn(
-                      "flex items-center gap-2 rounded-md px-3 py-2 text-sm",
-                      varianceTone === "success"
-                        ? "bg-green-50 text-green-700"
-                        : varianceTone === "danger"
-                        ? "bg-red-50 text-red-700"
-                        : "bg-amber-50 text-amber-700"
+                      "flex items-center gap-2 rounded-md border px-3 py-2 text-sm",
+                      varianceTone === "danger"
+                        ? "border-destructive/20 bg-destructive/5 text-destructive"
+                        : "border-border bg-muted text-foreground"
                     )}
                   >
                     {varianceTone === "success" ? (
@@ -617,7 +575,6 @@ export function ProjectCommandCenter({
               <div className="space-y-4">
                 <div className="flex flex-wrap gap-2">
                   {ceDraft > 0 && <StatPill label="Draft" value={ceDraft} tone="neutral" />}
-                  {cePending > 0 && <StatPill label="Open" value={cePending} tone="warning" />}
                   {ceApproved > 0 && <StatPill label="Approved" value={ceApproved} tone="success" />}
                   {ceRejected > 0 && <StatPill label="Rejected" value={ceRejected} tone="danger" />}
                 </div>
@@ -645,9 +602,6 @@ export function ProjectCommandCenter({
                             <p className="mt-1 text-xs text-muted-foreground truncate">
                               {ce.number ? `#${ce.number} · ` : ""}{ce.type}
                             </p>
-                            <div className="mt-2">
-                              <StatusBadge status={ce.status ?? "Open"} />
-                            </div>
                           </Link>
                         ))
                       )}
@@ -779,7 +733,14 @@ export function ProjectCommandCenter({
                               <p className="font-medium text-foreground">{task.description}</p>
                             </td>
                             <td className="px-3 py-2.5 align-top text-muted-foreground">
-                              {task.assignee_name?.trim() || "Unassigned"}
+                              <div className="flex items-center gap-2">
+                                <Avatar className="h-6 w-6">
+                                  <AvatarFallback className="text-[10px] bg-muted">
+                                    {(task.assignee_name?.trim() || "?").split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+                                  </AvatarFallback>
+                                </Avatar>
+                                <span>{task.assignee_name?.trim() || "Unassigned"}</span>
+                              </div>
                             </td>
                             <td className="px-3 py-2.5 align-top text-muted-foreground tabular-nums">
                               {format(new Date(task.created_at), "MMM d, yyyy")}
@@ -827,7 +788,14 @@ export function ProjectCommandCenter({
                           <StatusBadge status={task.status} />
                         </div>
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                          <span>{task.assignee_name?.trim() || "Unassigned"}</span>
+                          <span className="inline-flex items-center gap-1.5">
+                            <Avatar className="h-5 w-5">
+                              <AvatarFallback className="text-[9px] bg-muted">
+                                {(task.assignee_name?.trim() || "?").split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            {task.assignee_name?.trim() || "Unassigned"}
+                          </span>
                           <span className="tabular-nums">
                             {format(new Date(task.created_at), "MMM d, yyyy")}
                           </span>

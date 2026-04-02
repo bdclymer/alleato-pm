@@ -153,7 +153,7 @@ export function PageHeader({
         <div className="py-4">
           <div className="flex items-center justify-between">
             <Inline gap="md" align="center">
-              {titleContent || <Heading level={2}>{title}</Heading>}
+              {titleContent || <Heading level={5} as="h2">{title}</Heading>}
               {statusBadge}
             </Inline>
             {actions && <Inline gap="sm">{actions}</Inline>}
@@ -192,7 +192,7 @@ export function PageHeader({
         ) : null}
 
         {/* Title and Actions */}
-        <div className="flex items-center justify-between gap-2 pt-3 pb-4 min-w-0">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-3 pb-4 min-w-0">
           <div className="min-w-0 flex-1 overflow-hidden">
             {/* Project Name */}
             {shouldShowProjectName && (
@@ -215,7 +215,7 @@ export function PageHeader({
               titleContent
             ) : (
               <Inline gap="md" align="center">
-                <h1 className="text-3xl sm:text-3xl lg:text-4xl font-semibold truncate">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold sm:truncate break-words">
                   {title}
                 </h1>
                 {statusBadge}
@@ -226,7 +226,7 @@ export function PageHeader({
 
           {/* Actions */}
           {(actions || showExportButton) && (
-            <div className="flex shrink-0 items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {showExportButton && (onExportCSV || onExportPDF) && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>

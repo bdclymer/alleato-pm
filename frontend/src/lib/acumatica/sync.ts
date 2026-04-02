@@ -1077,6 +1077,50 @@ function mapOutboundInvoiceStatus(status: string | null | undefined): string {
   return "On Hold";
 }
 
+function isProjectPermissionOrContextError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return (
+    message.includes("Project '") &&
+    message.includes("cannot be found in the system")
+  );
+}
+
+function isAcumaticaOperationFailedError(error: unknown): boolean {
+  const message = error instanceof Error ? error.message : String(error);
+  return (
+    message.includes("PXInvalidOperationException") ||
+    message.includes("Operation failed") ||
+    message.includes("NullReferenceException")
+  );
+}
+
+async function upsertInvoiceWithProjectFallback(
+  acuClient: ReturnType<typeof createAcumaticaClient>,
+  payload: Record<string, unknown>,
+): Promise<Record<string, unknown>> {
+  try {
+    return await acuClient.upsertInvoice(payload);
+  } catch (error) {
+    if (isProjectPermissionOrContextError(error) && "Project" in payload) {
+      // Some tenants reject header-level Project in AR Invoice create/update context
+      // even when the project exists. Retry once without Project so sync can proceed.
+      const fallbackPayload = { ...payload };
+      delete fallbackPayload.Project;
+      return acuClient.upsertInvoice(fallbackPayload);
+    }
+
+    if (isAcumaticaOperationFailedError(error) && "Details" in payload) {
+      // Acumatica may throw an internal Operation failed/NullReferenceException
+      // for some sparse line payloads. Retry with a header-only invoice payload.
+      const fallbackPayload = { ...payload };
+      delete fallbackPayload.Details;
+      return acuClient.upsertInvoice(fallbackPayload);
+    }
+
+    throw error;
+  }
+}
+
 /**
  * Export project commitments (subcontracts + purchase orders) from the app to Acumatica.
  */
@@ -1495,6 +1539,187 @@ export async function exportChangeOrdersToAcumatica(
 }
 
 /**
+ * Export prime contract payment applications from the app to Acumatica AR Invoices.
+ *
+ * Optional `contractId` limits export to a single prime contract.
+ */
+export async function exportPaymentApplicationsToAcumatica(
+  projectId: number,
+  contractId?: string,
+): Promise<ExportSyncResult> {
+  const result: ExportSyncResult = { created: 0, updated: 0, skipped: 0, errors: [] };
+  const supabase = await createClient();
+  const acuClient = createAcumaticaClient();
+  await acuClient.login();
+
+  const { data: project } = await supabase
+    .from("projects")
+    .select("acumatica_project_id")
+    .eq("id", projectId)
+    .single();
+
+  if (!project?.acumatica_project_id) {
+    result.errors.push("Project has no acumatica_project_id mapping.");
+    return result;
+  }
+
+  let contractsQuery = supabase
+    .from("prime_contracts")
+    .select("id, client_id, contract_company_id")
+    .eq("project_id", projectId);
+
+  if (contractId) {
+    contractsQuery = contractsQuery.eq("id", contractId);
+  }
+
+  const { data: primeContracts, error: contractsError } = await contractsQuery;
+  if (contractsError) {
+    result.errors.push(`Failed loading prime contracts: ${contractsError.message}`);
+    return result;
+  }
+
+  const contractIds = (primeContracts ?? []).map((c) => c.id);
+  if (!contractIds.length) {
+    result.skipped++;
+    return result;
+  }
+
+  const companyIds = Array.from(
+    new Set(
+      (primeContracts ?? [])
+        .flatMap((c) => [c.client_id, c.contract_company_id])
+        .filter(Boolean) as string[],
+    ),
+  );
+
+  const customerByCompanyId = new Map<string, string>();
+  if (companyIds.length) {
+    const { data: companies, error: companiesError } = await supabase
+      .from("companies")
+      .select("id, customer_id")
+      .in("id", companyIds);
+
+    if (companiesError) {
+      result.errors.push(`Failed loading company mappings: ${companiesError.message}`);
+      return result;
+    }
+
+    for (const company of companies ?? []) {
+      if (company.customer_id) {
+        customerByCompanyId.set(company.id, company.customer_id);
+      }
+    }
+  }
+
+  const customerByContractId = new Map<string, string>();
+  for (const contract of primeContracts ?? []) {
+    const customerId =
+      (contract.client_id && customerByCompanyId.get(contract.client_id)) ||
+      (contract.contract_company_id &&
+        customerByCompanyId.get(contract.contract_company_id)) ||
+      null;
+
+    if (customerId) {
+      customerByContractId.set(contract.id, customerId);
+    }
+  }
+
+  const { data: applications, error: applicationsError } = await supabase
+    .from("prime_contract_payment_applications")
+    .select(
+      "id, contract_id, application_number, amount, net_amount, retention_amount, status, period_from, period_to, notes",
+    )
+    .in("contract_id", contractIds)
+    .order("application_number", { ascending: true });
+
+  if (applicationsError) {
+    result.errors.push(`Failed loading payment applications: ${applicationsError.message}`);
+    return result;
+  }
+
+  const { data: ownerInvoices, error: ownerInvoicesError } = await supabase
+    .from("owner_invoices")
+    .select("acumatica_ref_nbr")
+    .in("prime_contract_id", contractIds)
+    .not("acumatica_ref_nbr", "is", null);
+
+  if (ownerInvoicesError) {
+    result.errors.push(`Failed loading existing Acumatica invoice refs: ${ownerInvoicesError.message}`);
+    return result;
+  }
+
+  const existingRefs = new Set(
+    (ownerInvoices ?? [])
+      .map((invoice) => invoice.acumatica_ref_nbr)
+      .filter((ref): ref is string => Boolean(ref)),
+  );
+
+  for (const application of applications ?? []) {
+    const customerId = customerByContractId.get(application.contract_id);
+    if (!customerId) {
+      result.errors.push(
+        `Payment application ${application.application_number}: no Acumatica customer mapping found for its prime contract company.`,
+      );
+      continue;
+    }
+
+    const status = (application.status ?? "").toLowerCase();
+    if (status === "draft" || status === "rejected") {
+      result.skipped++;
+      continue;
+    }
+
+    const referenceNbr =
+      application.application_number?.trim() || `PAYAPP-${application.id}`;
+    const grossAmount = application.amount ?? 0;
+    const netAmount = application.net_amount ?? grossAmount;
+    const detailDescription =
+      application.notes?.trim() || `Payment Application ${referenceNbr}`;
+
+    const payload: Record<string, unknown> = {
+      Type: acuField("Invoice"),
+      ReferenceNbr: acuField(referenceNbr),
+      Customer: acuField(customerId),
+      Date: acuField(toIsoDate(application.period_from ?? undefined)),
+      DueDate: acuField(toIsoDate(application.period_to ?? application.period_from ?? undefined)),
+      Description: acuField(`Payment Application ${referenceNbr}`),
+      Amount: acuField(grossAmount),
+      Status: acuField(mapOutboundInvoiceStatus(application.status)),
+      // Keep payment-application export header-only by default.
+      // AR line details can trigger tenant-specific API import failures.
+      ...(netAmount > 0
+        ? {
+            Details: [
+              {
+                LineNbr: acuField(1),
+                TransactionDescription: acuField(detailDescription),
+                ExtendedPrice: acuField(netAmount),
+              },
+            ],
+          }
+        : {}),
+    };
+
+    try {
+      const existed = existingRefs.has(referenceNbr);
+      await upsertInvoiceWithProjectFallback(acuClient, payload);
+      existingRefs.add(referenceNbr);
+
+      if (existed) result.updated++;
+      else result.created++;
+    } catch (error) {
+      result.errors.push(
+        `Payment application ${referenceNbr}: ${
+          error instanceof Error ? error.message : String(error)
+        }`,
+      );
+    }
+  }
+
+  return result;
+}
+
+/**
  * Export owner invoices from the app to Acumatica AR Invoices.
  */
 export async function exportOwnerInvoicesToAcumatica(
@@ -1612,7 +1837,6 @@ export async function exportOwnerInvoicesToAcumatica(
       Type: acuField(docType),
       ReferenceNbr: acuField(referenceNbr),
       Customer: acuField(customerId),
-      Project: acuField(project.acumatica_project_id),
       Date: acuField(toIsoDate(invoice.billing_date ?? invoice.period_start)),
       DueDate: acuField(toIsoDate(invoice.due_date ?? invoice.period_end)),
       Description: acuField(`Owner Invoice ${invoice.invoice_number ?? referenceNbr}`),
@@ -1623,7 +1847,7 @@ export async function exportOwnerInvoicesToAcumatica(
 
     try {
       const existed = !!invoice.acumatica_ref_nbr;
-      const response = await acuClient.upsertInvoice(payload);
+      const response = await upsertInvoiceWithProjectFallback(acuClient, payload);
       const returnedRef =
         typeof response.ReferenceNbr === "string" ? response.ReferenceNbr : referenceNbr;
       const returnedType =

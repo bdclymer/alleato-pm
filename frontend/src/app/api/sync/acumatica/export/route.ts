@@ -4,16 +4,23 @@ import {
   exportChangeOrdersToAcumatica,
   exportCommitmentsToAcumatica,
   exportOwnerInvoicesToAcumatica,
+  exportPaymentApplicationsToAcumatica,
   exportPrimeContractsToAcumatica,
 } from "@/lib/acumatica/sync";
 
-type ExportEntity = "commitments" | "primeContracts" | "changeOrders" | "invoices";
+type ExportEntity =
+  | "commitments"
+  | "primeContracts"
+  | "changeOrders"
+  | "invoices"
+  | "paymentApplications";
 
 const ALL_ENTITIES: ExportEntity[] = [
   "commitments",
   "primeContracts",
   "changeOrders",
   "invoices",
+  "paymentApplications",
 ];
 
 /**
@@ -24,7 +31,8 @@ const ALL_ENTITIES: ExportEntity[] = [
  * Body:
  * {
  *   projectId: number,
- *   entities?: Array<"commitments" | "primeContracts" | "changeOrders" | "invoices">
+ *   contractId?: string,
+ *   entities?: Array<"commitments" | "primeContracts" | "changeOrders" | "invoices" | "paymentApplications">
  * }
  */
 export async function POST(request: Request) {
@@ -38,7 +46,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body: { projectId?: number; entities?: ExportEntity[] };
+  let body: { projectId?: number; contractId?: string; entities?: ExportEntity[] };
   try {
     body = await request.json();
   } catch {
@@ -46,6 +54,7 @@ export async function POST(request: Request) {
   }
 
   const projectId = body.projectId;
+  const contractId = body.contractId;
   if (!projectId || typeof projectId !== "number") {
     return NextResponse.json(
       { error: "projectId (number) is required" },
@@ -75,10 +84,17 @@ export async function POST(request: Request) {
     if (entities.includes("invoices")) {
       results.invoices = await exportOwnerInvoicesToAcumatica(projectId);
     }
+    if (entities.includes("paymentApplications")) {
+      results.paymentApplications = await exportPaymentApplicationsToAcumatica(
+        projectId,
+        contractId,
+      );
+    }
 
     return NextResponse.json({
       success: true,
       projectId,
+      contractId: contractId ?? null,
       entities,
       results,
       syncedAt: new Date().toISOString(),
@@ -88,4 +104,3 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
-
