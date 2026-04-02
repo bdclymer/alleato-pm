@@ -267,6 +267,21 @@ Not allowed for line-items sections:
 
 Primary design reference: `docs/design/DESIGN.md`
 
+### 9. Global Primitive Consistency (MANDATORY)
+
+Design fixes must be applied at the shared primitive/component level when the issue originates there.
+
+Required behavior:
+- If the defect comes from a shared primitive (`components/ui/*`, shared layout/table primitives), fix that primitive globally.
+- Do not apply page-level or feature-level visual overrides to compensate for primitive defects unless explicitly requested.
+- If a local override is temporarily necessary, document it inline with a TODO and open a follow-up task to move it to the primitive.
+- Never bypass design-system lint rules using force flags (`--force`, `--no-verify`) to push style drift.
+
+Decision rule:
+- First determine whether the styling is owned by a primitive or a page.
+- Primitive-owned issue -> global fix.
+- Page-owned issue -> local fix aligned to tokens and shared patterns.
+
 ---
 
 ## Development Commands

@@ -11,6 +11,7 @@
  */
 import { useState, useEffect, useCallback, useRef } from "react";
 import { usePathname } from "next/navigation";
+import { Button } from "@/components/ui/button";
 
 type ViolationType =
   | "wrong_button" | "bg_white" | "card_trap" | "wrong_text_hierarchy"
@@ -81,7 +82,7 @@ export function DesignViolationOverlay() {
   const [viewportHeight, setViewportHeight] = useState<number>(0);
   const menuRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
-  const widgetRef = useRef<HTMLButtonElement>(null);
+  const widgetRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ startX: number; startY: number; origX: number; origY: number } | null>(null);
   const isDragging = useRef(false);
 
@@ -289,6 +290,7 @@ export function DesignViolationOverlay() {
   const panelStyle: React.CSSProperties = {
     position: "fixed",
     zIndex: 9999,
+    maxHeight: "60vh",
     // Place panel above widget if near bottom, below if near top
     ...(pos.y > 400
       ? { bottom: Math.max(8, viewportHeight - pos.y + 8), left: pos.x }
@@ -298,54 +300,61 @@ export function DesignViolationOverlay() {
   return (
     <>
       {/* Draggable icon widget */}
-      {/* eslint-disable-next-line design-system/no-design-violations -- dev-only draggable widget */}
-      <button
+      <div
         ref={widgetRef}
-        onMouseDown={handleMouseDown}
-        title="Click to open panel, right-click any element to flag violations"
-        style={{ left: pos.x, top: pos.y }}
-        className="fixed z-[9998] w-8 h-8 rounded-full bg-zinc-900 border border-zinc-700 shadow-sm flex items-center justify-center cursor-grab active:cursor-grabbing select-none hover:bg-zinc-800 transition-colors"
+        className="fixed"
+        style={{ left: pos.x, top: pos.y, zIndex: 9998 }}
       >
-        <span className="text-base leading-none">🎨</span>
-        {totalBadge > 0 && (
-          <span className="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center leading-none">
-            {totalBadge > 9 ? "9+" : totalBadge}
-          </span>
-        )}
-      </button>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon-sm"
+          onMouseDown={handleMouseDown}
+          title="Click to open panel, right-click any element to flag violations"
+          className="relative rounded-full border-border bg-background text-foreground shadow-sm hover:bg-muted cursor-grab active:cursor-grabbing select-none"
+        >
+          <span className="text-base leading-none">🎨</span>
+          {totalBadge > 0 && (
+            <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center leading-none">
+              {totalBadge > 9 ? "9+" : totalBadge}
+            </span>
+          )}
+        </Button>
+      </div>
 
       {/* Panel (opens on click) */}
       {panelOpen && (
         <div
           ref={panelRef}
+          className="w-80 bg-background border border-border rounded-xl shadow-sm overflow-hidden flex flex-col"
           style={panelStyle}
-          className="w-80 bg-zinc-900 border border-zinc-700 rounded-xl shadow-sm overflow-hidden flex flex-col max-h-[60vh]"
         >
           {/* Panel header */}
-          <div className="px-4 py-3 border-b border-zinc-700 bg-zinc-800 flex items-center justify-between">
+          <div className="px-4 py-3 border-b border-border bg-muted/50 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-sm">🎨</span>
-              <span className="text-xs font-semibold text-white">Design Violations</span>
+              <span className="text-xs font-semibold text-foreground">Design Violations</span>
               {totalBadge > 0 && (
-                <span className="bg-red-500/20 text-red-400 text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
+                <span className="bg-destructive/10 text-destructive text-[10px] font-semibold px-1.5 py-0.5 rounded-full">
                   {totalBadge} open
                 </span>
               )}
             </div>
-            {/* eslint-disable-next-line design-system/no-design-violations -- dev-only panel */}
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon-sm"
               onClick={() => setPanelOpen(false)}
-              className="text-zinc-400 hover:text-white text-lg leading-none"
+              className="rounded-full text-muted-foreground hover:text-foreground"
             >
               ×
-            </button>
+            </Button>
           </div>
 
           {/* Quick flag form */}
-          <div className="px-4 py-3 border-b border-zinc-700 space-y-2">
+          <div className="px-4 py-3 border-b border-border space-y-2">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] text-zinc-500 font-mono truncate flex-1">
+              <span className="text-[10px] text-muted-foreground font-mono truncate flex-1">
                 {pathname}
               </span>
             </div>
@@ -353,7 +362,7 @@ export function DesignViolationOverlay() {
               placeholder="Describe the design issue..."
               value={panelNotes}
               onChange={e => setPanelNotes(e.target.value)}
-              className="w-full text-xs bg-zinc-800 border border-zinc-600 rounded-md px-2.5 py-2 text-zinc-200 placeholder-zinc-500 resize-none focus:outline-none focus:border-indigo-500"
+              className="w-full text-xs bg-background border border-input rounded-md px-2.5 py-2 text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:border-ring"
               rows={3}
             />
             <div className="flex items-center gap-2">
@@ -361,51 +370,52 @@ export function DesignViolationOverlay() {
                 aria-label="Violation type"
                 value={panelType}
                 onChange={e => setPanelType(e.target.value as ViolationType)}
-                className="flex-1 text-[11px] bg-zinc-800 border border-zinc-600 rounded-md px-2 py-1.5 text-zinc-300 focus:outline-none focus:border-indigo-500"
+                className="flex-1 text-[11px] bg-background border border-input rounded-md px-2 py-1.5 text-foreground focus:outline-none focus:border-ring"
               >
                 {(Object.entries(VIOLATION_LABELS) as [ViolationType, string][]).map(([type, label]) => (
                   <option key={type} value={type}>{label}</option>
                 ))}
               </select>
-              {/* eslint-disable-next-line design-system/no-design-violations -- dev-only panel */}
-              <button
+              <Button
                 type="button"
+                variant="default"
+                size="sm"
                 onClick={handlePanelSubmit}
                 disabled={!panelNotes.trim() || panelSubmitting}
-                className="bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-medium px-3 py-1.5 rounded-md transition-colors"
+                className="h-8 px-3 text-xs font-medium disabled:cursor-not-allowed"
               >
                 {panelSubmitting ? "..." : "Flag"}
-              </button>
+              </Button>
             </div>
           </div>
 
           {/* Hint */}
-          <div className="px-4 py-2 border-b border-zinc-700/50">
-            <p className="text-[10px] text-zinc-500">
+          <div className="px-4 py-2 border-b border-border/50">
+            <p className="text-[10px] text-muted-foreground">
               Tip: Right-click any element to flag it with its CSS selector auto-captured.
             </p>
           </div>
 
           {/* Recent violations */}
-          <div className="flex-1 overflow-y-auto divide-y divide-zinc-800">
+          <div className="flex-1 overflow-y-auto divide-y divide-border">
             {violations.length === 0 ? (
-              <div className="px-4 py-6 text-center text-xs text-zinc-500">
+              <div className="px-4 py-6 text-center text-xs text-muted-foreground">
                 No violations flagged yet.
               </div>
             ) : (
               violations.map(v => (
-                <div key={v.id} className="px-4 py-2.5 hover:bg-zinc-800/50 transition-colors">
+                <div key={v.id} className="px-4 py-2.5 hover:bg-muted/50 transition-colors">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0 flex-1">
-                      <p className="text-[11px] text-zinc-300 leading-snug line-clamp-2">
+                      <p className="text-[11px] text-foreground leading-snug line-clamp-2">
                         {v.notes || v.element_description || v.violation_type}
                       </p>
                       <div className="flex items-center gap-1.5 mt-1">
-                        <span className="text-[10px] text-zinc-500 font-mono truncate">
+                        <span className="text-[10px] text-muted-foreground font-mono truncate">
                           {v.route}
                         </span>
-                        <span className="text-[10px] text-zinc-600">·</span>
-                        <span className="text-[10px] text-zinc-500">
+                        <span className="text-[10px] text-muted-foreground/60">·</span>
+                        <span className="text-[10px] text-muted-foreground">
                           {timeAgo(v.created_at)}
                         </span>
                       </div>
@@ -413,10 +423,10 @@ export function DesignViolationOverlay() {
                     <span
                       className={`shrink-0 text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${
                         v.status === "fixed"
-                          ? "bg-green-900/50 text-green-400"
+                          ? "bg-primary/10 text-primary"
                           : v.status === "in_progress"
-                          ? "bg-amber-900/50 text-amber-400"
-                          : "bg-red-900/50 text-red-400"
+                          ? "bg-muted text-muted-foreground"
+                          : "bg-destructive/10 text-destructive"
                       }`}
                     >
                       {v.status}
@@ -431,7 +441,10 @@ export function DesignViolationOverlay() {
 
       {/* Toast */}
       {toast && (
-        <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[9999] bg-green-700 text-white text-xs font-medium px-3 py-2 rounded-lg shadow-sm">
+        <div
+          className="fixed bottom-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground text-xs font-medium px-3 py-2 rounded-lg shadow-sm"
+          style={{ zIndex: 9999 }}
+        >
           ✓ {toast}
         </div>
       )}
@@ -439,19 +452,19 @@ export function DesignViolationOverlay() {
       {/* Right-click context menu */}
       {menu && (
         <>
-          <div className="fixed inset-0 z-[9998]" onClick={() => setMenu(null)} />
+          <div className="fixed inset-0" style={{ zIndex: 9998 }} onClick={() => setMenu(null)} />
           <div
             ref={menuRef}
-            className="fixed z-[9999] w-72 bg-zinc-900 border border-zinc-700 rounded-xl shadow-sm overflow-hidden"
-            style={{ left: menu.x, top: menu.y }}
+            className="fixed w-72 bg-background border border-border rounded-xl shadow-sm overflow-hidden"
+            style={{ left: menu.x, top: menu.y, zIndex: 9999 }}
           >
             {/* Header */}
-            <div className="px-3 py-2.5 border-b border-zinc-700 bg-zinc-800">
+            <div className="px-3 py-2.5 border-b border-border bg-muted/50">
               <div className="flex items-center gap-1.5 mb-0.5">
                 <span className="text-sm">🎨</span>
-                <span className="text-xs font-semibold text-white">Flag design violation</span>
+                <span className="text-xs font-semibold text-foreground">Flag design violation</span>
               </div>
-              <p className="text-[10px] text-zinc-400 font-mono truncate">{menu.label}</p>
+              <p className="text-[10px] text-muted-foreground font-mono truncate">{menu.label}</p>
             </div>
 
             {/* Violation type checkboxes */}
@@ -459,47 +472,51 @@ export function DesignViolationOverlay() {
               {(Object.entries(VIOLATION_LABELS) as [ViolationType, string][]).map(([type, label]) => (
                 <label
                   key={type}
-                  className="flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer hover:bg-zinc-800 transition-colors"
+                  className="flex items-center gap-2 px-2 py-1.5 rounded-md cursor-pointer hover:bg-muted transition-colors"
                 >
                   <input
                     type="checkbox"
                     checked={selected.includes(type)}
                     onChange={() => toggleType(type)}
-                    className="w-3.5 h-3.5 accent-indigo-500"
+                    className="w-3.5 h-3.5 accent-primary"
                   />
-                  <span className="text-xs text-zinc-200">{label}</span>
+                  <span className="text-xs text-foreground">{label}</span>
                 </label>
               ))}
             </div>
 
             {/* Notes */}
-            <div className="px-3 pb-2 border-t border-zinc-700 pt-2">
+            <div className="px-3 pb-2 border-t border-border pt-2">
               <textarea
                 placeholder="Notes (optional)..."
                 value={notes}
                 onChange={e => setNotes(e.target.value)}
-                className="w-full text-[11px] bg-zinc-800 border border-zinc-600 rounded-md px-2 py-1.5 text-zinc-200 placeholder-zinc-500 resize-none focus:outline-none focus:border-indigo-500"
+                className="w-full text-[11px] bg-background border border-input rounded-md px-2 py-1.5 text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:border-ring"
                 rows={2}
               />
             </div>
 
             {/* Actions */}
             <div className="px-3 pb-3 flex items-center gap-2">
-              {/* eslint-disable-next-line design-system/no-design-violations -- dev-only context menu */}
-              <button
+              <Button
+                type="button"
+                variant="default"
+                size="sm"
                 onClick={handleSubmit}
                 disabled={selected.length === 0 || submitting}
-                className="flex-1 bg-indigo-600 hover:bg-indigo-500 disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs font-medium py-1.5 rounded-lg transition-colors"
+                className="h-8 flex-1 px-3 text-xs font-medium disabled:cursor-not-allowed"
               >
                 {submitting ? "Flagging..." : `Flag${selected.length > 0 ? ` (${selected.length})` : ""}`}
-              </button>
-              {/* eslint-disable-next-line design-system/no-design-violations -- dev-only context menu */}
-              <button
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
                 onClick={() => setMenu(null)}
-                className="px-3 py-1.5 text-xs text-zinc-400 hover:text-white transition-colors"
+                className="h-8 px-3 text-xs text-muted-foreground hover:text-foreground"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </div>
         </>

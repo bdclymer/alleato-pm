@@ -265,11 +265,19 @@ class AcumaticaFinancialSyncService:
                 results.append(result.as_dict())
             except Exception as exc:
                 logger.exception("[AcumaticaSync] %s failed", entity)
+                started_at = _now_iso()
                 self._update_sync_state(
                     entity,
                     status="failed",
-                    last_started_at=_now_iso(),
+                    last_started_at=started_at,
                     last_error=str(exc),
+                )
+                self._record_sync_run(
+                    entity_name=entity,
+                    status="failed",
+                    started_at=started_at,
+                    finished_at=_now_iso(),
+                    error_message=str(exc),
                 )
                 errors.append(f"{entity}: {exc}")
 
@@ -297,6 +305,15 @@ class AcumaticaFinancialSyncService:
             last_cursor=result.cursor,
             last_error=None,
             last_stats=result.as_dict(),
+        )
+        self._record_sync_run(
+            entity_name=entity_name,
+            status="success",
+            started_at=started_at,
+            finished_at=_now_iso(),
+            result=result,
+            cursor=result.cursor,
+            stats=result.as_dict(),
         )
         return result
 
@@ -337,6 +354,36 @@ class AcumaticaFinancialSyncService:
         payload["last_stats"] = last_stats
 
         self.supabase.table("acumatica_sync_state").upsert(payload).execute()
+
+    def _record_sync_run(
+        self,
+        *,
+        entity_name: str,
+        status: str,
+        started_at: str,
+        finished_at: Optional[str] = None,
+        result: Optional[EntitySyncResult] = None,
+        cursor: Optional[str] = None,
+        error_message: Optional[str] = None,
+        stats: Optional[Dict[str, Any]] = None,
+    ) -> None:
+        payload: Dict[str, Any] = {
+            "entity_name": entity_name,
+            "status": status,
+            "started_at": started_at,
+            "finished_at": finished_at,
+            "cursor": cursor if cursor is not None else (result.cursor if result else None),
+            "fetched": result.fetched if result else None,
+            "upserted": result.upserted if result else None,
+            "projected": result.projected if result else None,
+            "skipped": result.skipped if result else None,
+            "errors": result.errors if result else None,
+            "error_message": error_message,
+            "stats": stats if stats is not None else (result.as_dict() if result else None),
+            "created_at": _now_iso(),
+        }
+
+        self.supabase.table("acumatica_sync_runs").insert(payload).execute()
 
     def _load_project_map(self) -> Dict[str, Dict[str, Any]]:
         response = self.supabase.table("projects").select("*").execute()

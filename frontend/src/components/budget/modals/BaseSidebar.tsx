@@ -4,6 +4,8 @@ import { ReactNode } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
+import { Drawer, DrawerContent } from "@/components/ui/drawer";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 
 interface BaseSidebarProps {
@@ -31,12 +33,46 @@ export function BaseSidebar({
   children,
   size = "lg",
 }: BaseSidebarProps) {
+  const isMobile = useIsMobile();
   const sizeClasses = {
     sm: "sm:max-w-md",
     md: "sm:max-w-lg",
     lg: "sm:max-w-xl",
     xl: "sm:max-w-2xl",
   };
+
+  const sidebarHeader = (
+    <div className="bg-card px-4 py-4 sm:px-8 sm:py-6 flex-shrink-0 border-b border-border">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">{title}</h2>
+          {subtitle && (
+            <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
+          )}
+        </div>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onClose}
+          className="text-muted-foreground"
+          aria-label="Close"
+        >
+          <X className="h-5 w-5" />
+        </Button>
+      </div>
+    </div>
+  );
+
+  if (isMobile) {
+    return (
+      <Drawer open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
+        <DrawerContent className="max-h-[92dvh] min-h-[72dvh] p-0 flex flex-col bg-background">
+          {sidebarHeader}
+          {children}
+        </DrawerContent>
+      </Drawer>
+    );
+  }
 
   return (
     <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
@@ -45,26 +81,7 @@ export function BaseSidebar({
         showCloseButton={false}
         className={cn("w-full p-0 flex flex-col bg-background", sizeClasses[size])}
       >
-        {/* Header */}
-        <div className="bg-card px-8 py-6 flex-shrink-0">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-lg font-semibold text-foreground">{title}</h2>
-              {subtitle && (
-                <p className="text-sm text-muted-foreground mt-0.5">{subtitle}</p>
-              )}
-            </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={onClose}
-              className="text-muted-foreground"
-              aria-label="Close"
-            >
-              <X className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
+        {sidebarHeader}
 
         {/* Content */}
         {children}
@@ -101,7 +118,8 @@ export function SidebarFooter({
   return (
     <div
       className={cn(
-        "border-t border-border bg-muted px-8 py-6 flex-shrink-0",
+        "border-t border-border bg-muted px-4 py-4 sm:px-8 sm:py-6 flex-shrink-0",
+        "pb-[calc(1rem+env(safe-area-inset-bottom))] sm:pb-6",
         className,
       )}
     >
@@ -123,7 +141,7 @@ export function SidebarTabs({
   onTabChange: (tabId: string) => void;
 }) {
   return (
-    <div className="px-8 py-2 bg-transparent flex-shrink-0">
+    <div className="px-4 py-2 sm:px-8 bg-transparent flex-shrink-0">
       <div className="flex gap-2">
         {tabs.map((tab) => (
           <Button

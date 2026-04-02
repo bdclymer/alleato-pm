@@ -53,21 +53,20 @@ export function BaseModal({
       <DialogContent
         showCloseButton={false}
         className={cn(
-          "relative p-0 gap-0 overflow-hidden",
+          "relative p-0 gap-0 overflow-hidden border border-border/80",
           sizeClasses[size],
-          "w-[98vw] sm:w-full",
-          "max-h-[92vh] flex flex-col",
-          "rounded-2xl bg-card shadow-sm",
+          "w-full sm:w-full",
+          "h-[92dvh] sm:h-auto max-h-[92dvh] flex flex-col",
+          "rounded-t-2xl rounded-b-none sm:rounded-2xl bg-card shadow-sm",
+          "!top-auto !left-0 !translate-x-0 !translate-y-0 !bottom-0 sm:!top-[50%] sm:!left-[50%] sm:!translate-x-[-50%] sm:!translate-y-[-50%]",
           "transition-transform duration-200",
           className,
         )}
       >
-        <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-orange-500 via-amber-400 to-orange-500 opacity-90" />
-
         {/* Header */}
-        <DialogHeader className="bg-slate-900/95 text-white px-6 py-4 flex-shrink-0 border-b border-white/10 shadow-sm">
+        <DialogHeader className="bg-background px-4 py-4 sm:px-6 sm:py-5 flex-shrink-0 border-b border-border">
           <div className="flex items-center justify-between gap-4">
-            <DialogTitle className="text-lg font-semibold tracking-tight text-white">
+            <DialogTitle className="text-base sm:text-lg font-semibold tracking-tight text-foreground">
               {title}
             </DialogTitle>
             {showCloseButton && (
@@ -75,7 +74,7 @@ export function BaseModal({
                 variant="ghost"
                 size="icon"
                 onClick={onClose}
-                className="rounded-full border border-white/10 bg-background/5 h-8 w-8 text-white hover:border-white/30 hover:bg-background/10 transition-all"
+                className="h-8 w-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
                 aria-label="Close modal"
               >
                 <X className="h-4 w-4" />
@@ -85,7 +84,7 @@ export function BaseModal({
         </DialogHeader>
 
         {/* Content - Scrollable */}
-        <div className="flex-1 overflow-y-auto bg-gradient-to-b from-white to-slate-50">
+        <div className="flex-1 overflow-y-auto bg-background">
           {children}
         </div>
       </DialogContent>
@@ -105,8 +104,9 @@ export function ModalFooter({ children, className }: ModalFooterProps) {
   return (
     <div
       className={cn(
-        "px-6 py-4 bg-slate-50/90 border-t border-slate-200",
+        "px-4 py-4 sm:px-6 sm:py-4 bg-muted/40 border-t border-border",
         "flex flex-col sm:flex-row sm:items-center sm:justify-end gap-4",
+        "pb-[calc(1rem+env(safe-area-inset-bottom))] sm:pb-4",
         "flex-shrink-0",
         className,
       )}
@@ -125,5 +125,5 @@ interface ModalBodyProps {
 }
 
 export function ModalBody({ children, className }: ModalBodyProps) {
-  return <div className={cn("px-6 py-4", className)}>{children}</div>;
+  return <div className={cn("px-4 py-4 sm:px-6 sm:py-5", className)}>{children}</div>;
 }

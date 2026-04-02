@@ -36,6 +36,7 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PageShell } from "@/components/layout";
 import {
   Tooltip,
   TooltipContent,
@@ -71,7 +72,7 @@ const DrawingViewerWithComments = dynamic(
     ssr: false,
     loading: () => (
       <div className="flex items-center justify-center h-full">
-        <div className="h-6 w-6 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+        <div className="h-6 w-6 border-2 border-foreground/40 border-t-foreground rounded-full animate-spin" />
       </div>
     ),
   }
@@ -97,8 +98,14 @@ const ANNOTATION_TOOLS: { tool: AnnotationTool; icon: React.ReactNode; label: st
 ];
 
 const PRESET_COLORS = [
-  "#ef4444", "#f97316", "#eab308", "#22c55e",
-  "#3b82f6", "#8b5cf6", "#000000", "#ffffff",
+  "hsl(var(--status-error))",
+  "hsl(var(--status-warning))",
+  "hsl(var(--chart-3))",
+  "hsl(var(--status-success))",
+  "hsl(var(--status-info))",
+  "hsl(var(--chart-4))",
+  "hsl(var(--foreground))",
+  "hsl(var(--background))",
 ];
 
 const LOCAL_ANNOTATION_FILTERS: { key: LocalAnnotationType; label: string }[] = [
@@ -141,7 +148,7 @@ function LinkPin({
   highlighted: boolean;
 }) {
   const config = PIN_TYPE_CONFIG[pin.pin_type];
-  const pinColor = pin.color ?? config?.color ?? "#3b82f6";
+  const pinColor = pin.color ?? config?.color ?? "hsl(var(--status-info))";
 
   return (
     <div
@@ -159,7 +166,7 @@ function LinkPin({
       <div
         className={cn(
           "flex items-center gap-1 px-1.5 py-0.5 rounded shadow-sm text-white text-[10px] font-semibold transition-all",
-          highlighted ? "scale-110 ring-2 ring-white" : ""
+          highlighted ? "scale-110 ring-2 ring-foreground" : ""
         )}
         style={{ backgroundColor: pinColor, minWidth: 24 }}
       >
@@ -200,7 +207,7 @@ export default function DrawingViewerPage() {
 
   // Annotation/tool state
   const [activeTool, setActiveTool] = useState<AnnotationTool>("select");
-  const [annotationColor, setAnnotationColor] = useState("#ef4444");
+  const [annotationColor, setAnnotationColor] = useState("hsl(var(--status-error))");
 
   // Link pin state
   const [pendingLinkPos, setPendingLinkPos] = useState<{ x: number; y: number; page: number } | null>(null);
@@ -444,9 +451,9 @@ export default function DrawingViewerPage() {
 
   if (error) {
     return (
-      <div className="h-screen bg-zinc-900 flex items-center justify-center text-white">
+      <div className="h-screen bg-background flex items-center justify-center text-foreground">
         <div className="text-center">
-          <p className="text-zinc-400 mb-4">{error instanceof Error ? error.message : "Drawing not found"}</p>
+          <p className="text-muted-foreground mb-4">{error instanceof Error ? error.message : "Drawing not found"}</p>
           <Button variant="outline" onClick={handleClose}>Back to Drawings</Button>
         </div>
       </div>
@@ -456,11 +463,17 @@ export default function DrawingViewerPage() {
   const rev = drawing?.current_revision;
 
   return (
-    <TooltipProvider>
-      <div className="h-screen overflow-hidden flex flex-col bg-zinc-900 text-white">
+    <PageShell
+      variant="table"
+      showHeader={false}
+      className="h-screen overflow-hidden bg-background text-foreground !px-0 !py-0"
+      contentClassName="h-full"
+    >
+      <TooltipProvider>
+        <div className="h-screen overflow-hidden flex flex-col bg-background text-foreground">
 
         {/* ── Top bar ──────────────────────────────────────────────────────── */}
-        <div className="h-11 shrink-0 flex items-center justify-between px-2 bg-zinc-800 border-b border-zinc-700">
+        <div className="h-11 shrink-0 flex items-center justify-between px-2 bg-card border-b border-border">
 
           {/* Left: prev/next + drawing info */}
           <div className="flex items-center gap-1 min-w-0">
@@ -468,7 +481,7 @@ export default function DrawingViewerPage() {
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost" size="sm"
-                  className="h-7 w-7 p-0 text-zinc-300 hover:text-white hover:bg-zinc-700 disabled:opacity-30"
+                  className="h-7 w-7 p-0 text-foreground/80 hover:text-white hover:bg-muted disabled:opacity-30"
                   disabled={!prevDrawing}
                   onClick={() => prevDrawing && navigateToDrawing(prevDrawing.id)}
                 >
@@ -482,7 +495,7 @@ export default function DrawingViewerPage() {
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost" size="sm"
-                  className="h-7 w-7 p-0 text-zinc-300 hover:text-white hover:bg-zinc-700 disabled:opacity-30"
+                  className="h-7 w-7 p-0 text-foreground/80 hover:text-white hover:bg-muted disabled:opacity-30"
                   disabled={!nextDrawing}
                   onClick={() => nextDrawing && navigateToDrawing(nextDrawing.id)}
                 >
@@ -492,7 +505,7 @@ export default function DrawingViewerPage() {
               <TooltipContent side="bottom">{nextDrawing ? `Next: ${nextDrawing.title}` : "No next drawing"}</TooltipContent>
             </Tooltip>
 
-            <div className="w-px h-4 bg-zinc-600 mx-1" />
+            <div className="w-px h-4 bg-muted mx-1" />
 
             {drawing ? (
               <DropdownMenu>
@@ -500,13 +513,13 @@ export default function DrawingViewerPage() {
                   <Button
                     type="button"
                     variant="ghost"
-                    className="flex items-center gap-1.5 px-2 py-1 rounded text-sm font-medium text-white hover:bg-zinc-700 transition-colors max-w-56 h-auto"
+                    className="flex items-center gap-1.5 px-2 py-1 rounded text-sm font-medium text-foreground hover:bg-muted transition-colors max-w-56 h-auto"
                   >
                     {drawing.drawing_number && (
-                      <span className="text-zinc-400 text-xs shrink-0">{drawing.drawing_number}</span>
+                      <span className="text-muted-foreground text-xs shrink-0">{drawing.drawing_number}</span>
                     )}
                     <span className="truncate">{drawing.title}</span>
-                    <ChevronLeft className="h-3 w-3 rotate-[-90deg] text-zinc-400 shrink-0" />
+                    <ChevronLeft className="h-3 w-3 rotate-[-90deg] text-muted-foreground shrink-0" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="max-h-64 overflow-y-auto">
@@ -523,20 +536,20 @@ export default function DrawingViewerPage() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <div className="h-5 w-40 bg-zinc-700 rounded animate-pulse" />
+              <div className="h-5 w-40 bg-muted rounded animate-pulse" />
             )}
 
             {rev && (
               <>
-                <div className="w-px h-4 bg-zinc-600 mx-1" />
-                <span className="text-xs text-zinc-400 shrink-0">Rev {rev.revision_number}</span>
+                <div className="w-px h-4 bg-muted mx-1" />
+                <span className="text-xs text-muted-foreground shrink-0">Rev {rev.revision_number}</span>
               </>
             )}
 
             {pageInfo.total > 1 && (
               <>
-                <div className="w-px h-4 bg-zinc-600 mx-1" />
-                <span className="text-xs text-zinc-400 shrink-0">
+                <div className="w-px h-4 bg-muted mx-1" />
+                <span className="text-xs text-muted-foreground shrink-0">
                   Page {pageInfo.current} / {pageInfo.total}
                 </span>
               </>
@@ -549,7 +562,7 @@ export default function DrawingViewerPage() {
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost" size="sm"
-                  className="h-7 w-7 p-0 text-zinc-300 hover:text-white hover:bg-zinc-700"
+                  className="h-7 w-7 p-0 text-foreground/80 hover:text-white hover:bg-muted"
                   onClick={handleDownload}
                 >
                   <Download />
@@ -558,7 +571,7 @@ export default function DrawingViewerPage() {
               <TooltipContent side="bottom">Download</TooltipContent>
             </Tooltip>
 
-            <div className="w-px h-4 bg-zinc-600 mx-1" />
+            <div className="w-px h-4 bg-muted mx-1" />
 
             {(
               [
@@ -576,14 +589,14 @@ export default function DrawingViewerPage() {
                     className={cn(
                       "h-7 w-7 p-0 relative transition-colors",
                       activePanel === panel
-                        ? "bg-zinc-600 text-white"
-                        : "text-zinc-300 hover:text-white hover:bg-zinc-700"
+                        ? "bg-muted text-white"
+                        : "text-foreground/80 hover:text-white hover:bg-muted"
                     )}
                     onClick={() => togglePanel(panel)}
                   >
                     {icon}
                     {panel === "links" && pins.length > 0 && (
-                      <span className="absolute -top-0.5 -right-0.5 h-3 w-3 bg-blue-500 rounded-full text-[7px] font-bold flex items-center justify-center">
+                      <span className="absolute -top-0.5 -right-0.5 h-3 w-3 bg-primary rounded-full text-[7px] font-bold flex items-center justify-center">
                         {pins.length}
                       </span>
                     )}
@@ -593,13 +606,13 @@ export default function DrawingViewerPage() {
               </Tooltip>
             ))}
 
-            <div className="w-px h-4 bg-zinc-600 mx-1" />
+            <div className="w-px h-4 bg-muted mx-1" />
 
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost" size="sm"
-                  className="h-7 w-7 p-0 text-zinc-300 hover:text-white hover:bg-zinc-700"
+                  className="h-7 w-7 p-0 text-foreground/80 hover:text-white hover:bg-muted"
                   onClick={handleClose}
                 >
                   <X className="h-4 w-4" />
@@ -620,7 +633,7 @@ export default function DrawingViewerPage() {
         >
 
           {/* ── Left sidebar ─────────────────────────────────────────────── */}
-          <div className="w-14 shrink-0 flex flex-col items-center py-3 gap-1 bg-zinc-800 border-r border-zinc-700">
+          <div className="w-14 shrink-0 flex flex-col items-center py-3 gap-1 bg-card border-r border-border">
             {ANNOTATION_TOOLS.map(({ tool, icon, label }) => (
               <Tooltip key={tool}>
                 <TooltipTrigger asChild>
@@ -632,9 +645,9 @@ export default function DrawingViewerPage() {
                       "w-10 h-10 flex flex-col items-center justify-center gap-0.5 rounded-md transition-colors text-xs p-0",
                       activeTool === tool
                         ? tool === "link"
-                          ? "bg-green-600 text-white"
-                          : "bg-blue-600 text-white"
-                        : "text-zinc-400 hover:text-white hover:bg-zinc-700"
+                          ? "bg-status-success text-white"
+                          : "bg-primary text-white"
+                        : "text-muted-foreground hover:text-white hover:bg-muted"
                     )}
                   >
                     {icon}
@@ -648,7 +661,7 @@ export default function DrawingViewerPage() {
             {/* Color swatches — only for drawing tools */}
             {activeTool !== "select" && activeTool !== "comment" && activeTool !== "link" && (
               <>
-                <div className="w-8 h-px bg-zinc-700 my-1" />
+                <div className="w-8 h-px bg-muted my-1" />
                 <div className="flex flex-col items-center gap-1">
                   {PRESET_COLORS.map((c) => (
                     <Button
@@ -658,7 +671,7 @@ export default function DrawingViewerPage() {
                       onClick={() => setAnnotationColor(c)}
                       className={cn(
                         "h-5 w-5 rounded-full border-2 transition-transform p-0 min-w-0",
-                        annotationColor === c ? "border-white scale-110" : "border-transparent hover:scale-110"
+                        annotationColor === c ? "border-foreground scale-110" : "border-transparent hover:scale-110"
                       )}
                       style={{ backgroundColor: c }}
                       title={c}
@@ -671,8 +684,8 @@ export default function DrawingViewerPage() {
             {/* Link mode hint */}
             {activeTool === "link" && (
               <>
-                <div className="w-8 h-px bg-zinc-700 my-1" />
-                <p className="text-[9px] text-zinc-500 text-center px-1 leading-tight">
+                <div className="w-8 h-px bg-muted my-1" />
+                <p className="text-[9px] text-muted-foreground/80 text-center px-1 leading-tight">
                   Click on drawing to place a link pin
                 </p>
               </>
@@ -680,7 +693,7 @@ export default function DrawingViewerPage() {
 
             {/* Zoom + rotate at bottom */}
             <div className="mt-auto pb-1 flex flex-col items-center gap-1">
-              <div className="w-8 h-px bg-zinc-700 mb-1" />
+              <div className="w-8 h-px bg-muted mb-1" />
               {[
                 { action: zoomIn, icon: <ZoomIn className="h-4 w-4" />, label: "Zoom in" },
                 { action: zoomOut, icon: <ZoomOut className="h-4 w-4" />, label: "Zoom out" },
@@ -693,7 +706,7 @@ export default function DrawingViewerPage() {
                       type="button"
                       variant="ghost"
                       onClick={action}
-                      className="w-10 h-10 flex flex-col items-center justify-center gap-0.5 rounded-md transition-colors text-zinc-400 hover:text-white hover:bg-zinc-700 p-0"
+                      className="w-10 h-10 flex flex-col items-center justify-center gap-0.5 rounded-md transition-colors text-muted-foreground hover:text-white hover:bg-muted p-0"
                     >
                       {icon}
                       <span className="text-[9px] leading-none">{label.split(" ")[0]}</span>
@@ -706,10 +719,10 @@ export default function DrawingViewerPage() {
           </div>
 
           {/* ── PDF viewer ───────────────────────────────────────────────── */}
-          <div className="flex-1 overflow-hidden bg-zinc-900 min-w-0">
+          <div className="flex-1 overflow-hidden bg-background min-w-0">
             {isLoading && (
               <div className="flex items-center justify-center h-full">
-                <div className="h-6 w-6 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                <div className="h-6 w-6 border-2 border-foreground/40 border-t-foreground rounded-full animate-spin" />
               </div>
             )}
             {signedFileUrl && (
@@ -731,12 +744,12 @@ export default function DrawingViewerPage() {
                 linkPinsOverlay={linkPinsOverlay}
                 showCommentPins={visibleLayers.comments}
                 visibleAnnotationTypes={visibleLocalAnnotationTypes}
-                className="h-full border-none rounded-none bg-zinc-900"
+                className="h-full border-none rounded-none bg-background"
               />
             )}
             {!isLoading && !signedFileUrl && drawing?.current_revision?.file_url && (
               <div className="flex items-center justify-center h-full">
-                <div className="h-6 w-6 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                <div className="h-6 w-6 border-2 border-foreground/40 border-t-foreground rounded-full animate-spin" />
               </div>
             )}
           </div>
@@ -744,7 +757,7 @@ export default function DrawingViewerPage() {
           {/* ── Right sidebar ────────────────────────────────────────────── */}
           {activePanel && (
             <div
-              className="relative shrink-0 flex flex-col bg-zinc-800 border-l border-zinc-700 overflow-hidden"
+              className="relative shrink-0 flex flex-col bg-card border-l border-border overflow-hidden"
               style={{
                 width: isRightPanelExpanded
                   ? "calc(100% - 3.5rem)"
@@ -761,17 +774,17 @@ export default function DrawingViewerPage() {
                 }}
                 className={cn(
                   "absolute inset-y-0 left-0 z-20 flex w-3 -translate-x-1/2 items-center justify-center rounded-none h-auto p-0",
-                  "text-zinc-500 hover:text-zinc-300",
-                  isResizingRightPanel && "text-zinc-200"
+                  "text-muted-foreground/80 hover:text-foreground/80",
+                  isResizingRightPanel && "text-foreground"
                 )}
               >
-                <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-zinc-700/80" />
-                <GripVertical className="relative h-4 w-4 rounded bg-zinc-800" />
+                <span className="absolute inset-y-0 left-1/2 w-px -translate-x-1/2 bg-accent/80" />
+                <GripVertical className="relative h-4 w-4 rounded bg-card" />
               </Button>
 
               {/* Panel header */}
-              <div className="h-10 shrink-0 flex items-center justify-between px-3 border-b border-zinc-700">
-                <span className="text-sm font-medium text-white capitalize">
+              <div className="h-10 shrink-0 flex items-center justify-between px-3 border-b border-border">
+                <span className="text-sm font-medium text-foreground capitalize">
                   {activePanel === "activity" ? "Activity"
                     : activePanel === "filter" ? "Filter"
                     : activePanel === "info" ? "Info"
@@ -783,7 +796,7 @@ export default function DrawingViewerPage() {
                     type="button"
                     variant="ghost"
                     onClick={handleRightPanelExpandToggle}
-                    className="h-6 w-6 flex items-center justify-center rounded text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors p-0"
+                    className="h-6 w-6 flex items-center justify-center rounded text-muted-foreground hover:text-white hover:bg-muted transition-colors p-0"
                     aria-label={isRightPanelExpanded ? "Restore sidebar width" : "Expand sidebar"}
                   >
                     {isRightPanelExpanded ? (
@@ -796,7 +809,7 @@ export default function DrawingViewerPage() {
                     type="button"
                     variant="ghost"
                     onClick={() => setActivePanel(null)}
-                    className="h-6 w-6 flex items-center justify-center rounded text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors p-0"
+                    className="h-6 w-6 flex items-center justify-center rounded text-muted-foreground hover:text-white hover:bg-muted transition-colors p-0"
                   >
                     <X className="h-3.5 w-3.5" />
                   </Button>
@@ -806,8 +819,8 @@ export default function DrawingViewerPage() {
               {/* ── Links panel ─────────────────────────────────────────── */}
               {activePanel === "links" && (
                 <div className="flex-1 flex flex-col overflow-hidden">
-                  <div className="px-3 py-2 border-b border-zinc-700 flex items-center justify-between">
-                    <span className="text-xs text-zinc-400">
+                  <div className="px-3 py-2 border-b border-border flex items-center justify-between">
+                    <span className="text-xs text-muted-foreground">
                       {pins.length} link{pins.length !== 1 ? "s" : ""} on this drawing
                     </span>
                     <Tooltip>
@@ -816,7 +829,7 @@ export default function DrawingViewerPage() {
                           type="button"
                           variant="ghost"
                           onClick={() => setActiveTool("link")}
-                          className="h-6 w-6 flex items-center justify-center rounded text-zinc-400 hover:text-white hover:bg-zinc-700 transition-colors p-0"
+                          className="h-6 w-6 flex items-center justify-center rounded text-muted-foreground hover:text-white hover:bg-muted transition-colors p-0"
                         >
                           <Plus className="h-3.5 w-3.5" />
                         </Button>
@@ -838,13 +851,13 @@ export default function DrawingViewerPage() {
               {activePanel === "filter" && (
                 <div className="flex-1 overflow-y-auto px-3 py-3 space-y-5">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs uppercase tracking-wider text-zinc-500">Visibility</span>
+                    <span className="text-xs uppercase tracking-wider text-muted-foreground/80">Visibility</span>
                     <div className="flex items-center gap-1">
                       <Button
                         type="button"
                         variant="ghost"
                         onClick={() => setAllFilters(true)}
-                        className="rounded px-2 py-1 text-[11px] text-zinc-300 hover:bg-zinc-700 h-auto"
+                        className="rounded px-2 py-1 text-[11px] text-foreground/80 hover:bg-muted h-auto"
                       >
                         Show all
                       </Button>
@@ -852,7 +865,7 @@ export default function DrawingViewerPage() {
                         type="button"
                         variant="ghost"
                         onClick={() => setAllFilters(false)}
-                        className="rounded px-2 py-1 text-[11px] text-zinc-300 hover:bg-zinc-700 h-auto"
+                        className="rounded px-2 py-1 text-[11px] text-foreground/80 hover:bg-muted h-auto"
                       >
                         Hide all
                       </Button>
@@ -860,7 +873,7 @@ export default function DrawingViewerPage() {
                   </div>
 
                   <div className="space-y-2">
-                    <p className="text-xs uppercase tracking-wider text-zinc-500">Layers</p>
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground/80">Layers</p>
                     {[
                       { key: "comments" as const, label: "Comments" },
                       { key: "links" as const, label: "Linked items" },
@@ -871,53 +884,53 @@ export default function DrawingViewerPage() {
                         type="button"
                         variant="ghost"
                         onClick={() => toggleLayer(item.key)}
-                        className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left hover:bg-zinc-700/60 h-auto"
+                        className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left hover:bg-accent/60 h-auto"
                       >
-                        <span className="text-sm text-zinc-200">{item.label}</span>
+                        <span className="text-sm text-foreground">{item.label}</span>
                         {visibleLayers[item.key] ? (
-                          <Eye className="h-4 w-4 text-zinc-400" />
+                          <Eye className="h-4 w-4 text-muted-foreground" />
                         ) : (
-                          <EyeOff className="h-4 w-4 text-zinc-500" />
+                          <EyeOff className="h-4 w-4 text-muted-foreground/80" />
                         )}
                       </Button>
                     ))}
                   </div>
 
                   <div className="space-y-2">
-                    <p className="text-xs uppercase tracking-wider text-zinc-500">Drawn markup</p>
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground/80">Drawn markup</p>
                     {LOCAL_ANNOTATION_FILTERS.map((item) => (
                       <Button
                         key={item.key}
                         type="button"
                         variant="ghost"
                         onClick={() => toggleLocalAnnotation(item.key)}
-                        className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left hover:bg-zinc-700/60 h-auto"
+                        className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left hover:bg-accent/60 h-auto"
                       >
-                        <span className="text-sm text-zinc-200">{item.label}</span>
+                        <span className="text-sm text-foreground">{item.label}</span>
                         {visibleLocalAnnotations[item.key] ? (
-                          <Eye className="h-4 w-4 text-zinc-400" />
+                          <Eye className="h-4 w-4 text-muted-foreground" />
                         ) : (
-                          <EyeOff className="h-4 w-4 text-zinc-500" />
+                          <EyeOff className="h-4 w-4 text-muted-foreground/80" />
                         )}
                       </Button>
                     ))}
                   </div>
 
                   <div className="space-y-2">
-                    <p className="text-xs uppercase tracking-wider text-zinc-500">Linked item types</p>
+                    <p className="text-xs uppercase tracking-wider text-muted-foreground/80">Linked item types</p>
                     {PIN_FILTERS.map((item) => (
                       <Button
                         key={item.key}
                         type="button"
                         variant="ghost"
                         onClick={() => togglePinType(item.key)}
-                        className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left hover:bg-zinc-700/60 h-auto"
+                        className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left hover:bg-accent/60 h-auto"
                       >
-                        <span className="text-sm text-zinc-200">{item.label}</span>
+                        <span className="text-sm text-foreground">{item.label}</span>
                         {visiblePinTypes[item.key] ? (
-                          <Eye className="h-4 w-4 text-zinc-400" />
+                          <Eye className="h-4 w-4 text-muted-foreground" />
                         ) : (
-                          <EyeOff className="h-4 w-4 text-zinc-500" />
+                          <EyeOff className="h-4 w-4 text-muted-foreground/80" />
                         )}
                       </Button>
                     ))}
@@ -931,10 +944,10 @@ export default function DrawingViewerPage() {
                   {drawing ? (
                     <>
                       <div>
-                        <p className="text-[10px] uppercase tracking-wider text-zinc-500 mb-1">Drawing</p>
-                        <p className="text-sm font-medium text-white">{drawing.title}</p>
+                        <p className="text-[10px] uppercase tracking-wider text-muted-foreground/80 mb-1">Drawing</p>
+                        <p className="text-sm font-medium text-foreground">{drawing.title}</p>
                         {drawing.drawing_number && (
-                          <p className="text-xs text-zinc-400 mt-0.5">{drawing.drawing_number}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">{drawing.drawing_number}</p>
                         )}
                       </div>
                       <div className="space-y-2">
@@ -951,8 +964,8 @@ export default function DrawingViewerPage() {
                           .filter((row) => row.value)
                           .map((row) => (
                             <div key={row.label} className="flex justify-between gap-2">
-                              <span className="text-xs text-zinc-500 shrink-0">{row.label}</span>
-                              <span className="text-xs text-zinc-300 text-right truncate">{row.value}</span>
+                              <span className="text-xs text-muted-foreground/80 shrink-0">{row.label}</span>
+                              <span className="text-xs text-foreground/80 text-right truncate">{row.value}</span>
                             </div>
                           ))}
                       </div>
@@ -960,7 +973,7 @@ export default function DrawingViewerPage() {
                   ) : (
                     <div className="space-y-2">
                       {[...Array(6)].map((_, i) => (
-                        <div key={i} className="h-4 bg-zinc-700 rounded animate-pulse" />
+                        <div key={i} className="h-4 bg-muted rounded animate-pulse" />
                       ))}
                     </div>
                   )}
@@ -970,40 +983,41 @@ export default function DrawingViewerPage() {
               {/* ── Search panel ───────────────────────────────────────── */}
               {activePanel === "search" && (
                 <div className="flex-1 flex flex-col overflow-hidden">
-                  <div className="p-2 border-b border-zinc-700">
+                  <div className="p-2 border-b border-border">
                     <Input
                       autoFocus
                       placeholder="Search drawings…"
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="h-8 bg-zinc-700 border-zinc-600 text-white placeholder:text-zinc-400 text-sm focus-visible:ring-zinc-500"
+                      className="h-8 bg-muted border-border/80 text-foreground placeholder:text-muted-foreground text-sm focus-visible:ring-ring"
                     />
                   </div>
                   <div className="flex-1 overflow-y-auto">
                     {filteredDrawings.length === 0 ? (
                       <div className="flex flex-col items-center justify-center py-8 px-3 text-center">
-                        <FileText className="h-8 w-8 text-zinc-600 mb-2" />
-                        <p className="text-xs text-zinc-500">No drawings match your search</p>
+                        <FileText className="h-8 w-8 text-muted-foreground/60 mb-2" />
+                        <p className="text-xs text-muted-foreground/80">No drawings match your search</p>
                       </div>
                     ) : (
                       filteredDrawings.map((d) => (
-                        <button
+                        <Button
                           key={d.id}
                           type="button"
+                          variant="ghost"
                           onClick={() => navigateToDrawing(d.id)}
                           className={cn(
-                            "w-full text-left px-3 py-2 flex items-start gap-2 hover:bg-zinc-700 transition-colors border-b border-zinc-700/50",
-                            d.id === drawingId && "bg-zinc-700/60"
+                            "w-full justify-start px-3 py-2 flex items-start gap-2 hover:bg-muted transition-colors border-b border-border/50",
+                            d.id === drawingId && "bg-accent/60"
                           )}
                         >
-                          <FileText className="h-3.5 w-3.5 text-zinc-500 mt-0.5 shrink-0" />
+                          <FileText className="h-3.5 w-3.5 text-muted-foreground/80 mt-0.5 shrink-0" />
                           <div className="min-w-0">
                             {d.drawingNumber && (
-                              <p className="text-[10px] text-zinc-500 leading-none mb-0.5">{d.drawingNumber}</p>
+                              <p className="text-[10px] text-muted-foreground/80 leading-none mb-0.5">{d.drawingNumber}</p>
                             )}
-                            <p className="text-xs text-zinc-200 truncate">{d.title}</p>
+                            <p className="text-xs text-foreground truncate">{d.title}</p>
                           </div>
-                        </button>
+                        </Button>
                       ))
                     )}
                   </div>
@@ -1019,16 +1033,17 @@ export default function DrawingViewerPage() {
             </div>
           )}
         </div>
-      </div>
+        </div>
 
-      {/* Link pin modal */}
-      <LinkPinModal
-        open={linkModalOpen}
-        onOpenChange={setLinkModalOpen}
-        projectId={projectId}
-        pendingPosition={pendingLinkPos}
-        onConfirm={handleLinkConfirm}
-      />
-    </TooltipProvider>
+        {/* Link pin modal */}
+        <LinkPinModal
+          open={linkModalOpen}
+          onOpenChange={setLinkModalOpen}
+          projectId={projectId}
+          pendingPosition={pendingLinkPos}
+          onConfirm={handleLinkConfirm}
+        />
+      </TooltipProvider>
+    </PageShell>
   );
 }

@@ -256,7 +256,7 @@ function EditableCell({
     <Tooltip>
       <TooltipTrigger asChild>
         <span
-          className="cursor-text rounded px-1 py-0.5 hover:bg-muted/60 transition-colors"
+          className="cursor-text rounded px-1 py-0.5 transition-colors"
           onClick={(e) => {
             e.stopPropagation();
             setEditing(true);
@@ -296,7 +296,7 @@ function ProjectCard({
 
   return (
     <div
-      className="group cursor-pointer rounded-lg border border-border bg-background p-4 transition-colors hover:border-primary/30"
+      className="group cursor-pointer rounded-lg border border-border p-4 transition-colors hover:border-primary/30"
       onClick={onClick}
     >
       <div className="flex items-start justify-between gap-3">
@@ -376,7 +376,7 @@ function ProjectListItem({
 }) {
   return (
     <div
-      className="group flex cursor-pointer items-center gap-4 rounded-md border border-transparent px-3 py-2.5 transition-colors hover:bg-muted/50"
+      className="group flex cursor-pointer items-center gap-4 rounded-md border border-transparent px-3 py-2.5 transition-colors"
       onClick={onClick}
     >
       <div className="min-w-0 flex-1">
@@ -889,7 +889,7 @@ export default function PortfolioPage() {
             target="_blank"
             rel="noopener noreferrer"
             onClick={(e) => e.stopPropagation()}
-            className="inline-flex items-center justify-center p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            className="inline-flex items-center justify-center p-1.5 rounded-md text-muted-foreground hover:text-foreground transition-colors"
             aria-label="Open OneDrive folder"
             title="Open OneDrive folder"
           >

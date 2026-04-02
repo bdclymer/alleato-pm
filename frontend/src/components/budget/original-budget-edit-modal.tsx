@@ -14,12 +14,16 @@ import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatDistanceToNow } from "date-fns";
-import { cn } from "@/lib/utils";
 import {
   BaseSidebar,
   SidebarBody,
   SidebarFooter,
 } from "@/components/budget/modals/BaseSidebar";
+import {
+  BUDGET_PRIMARY_TABS_LIST_CLASS,
+  BUDGET_PRIMARY_TABS_TRIGGER_CLASS,
+  budgetRadioCardClass,
+} from "@/components/budget/modals/style-tokens";
 
 interface HistoryEntry {
   id: string;
@@ -247,17 +251,17 @@ export function OriginalBudgetEditModal({
         onValueChange={(value) => setActiveTab(value as "original" | "history")}
         className="flex h-full flex-col gap-0"
       >
-        <div className="px-8 pt-1">
-          <TabsList className="h-auto gap-6 !bg-transparent !p-0 !shadow-none">
+        <div className="px-4 sm:px-8 pt-1">
+          <TabsList variant="line" className={BUDGET_PRIMARY_TABS_LIST_CLASS}>
             <TabsTrigger
               value="original"
-              className="rounded-none border-0 !bg-transparent px-0 py-2 text-sm font-medium text-muted-foreground shadow-none data-[state=active]:!bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+              className={BUDGET_PRIMARY_TABS_TRIGGER_CLASS}
             >
               Original Budget
             </TabsTrigger>
             <TabsTrigger
               value="history"
-              className="rounded-none border-0 !bg-transparent px-0 py-2 text-sm font-medium text-muted-foreground shadow-none data-[state=active]:!bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none"
+              className={BUDGET_PRIMARY_TABS_TRIGGER_CLASS}
             >
               History
             </TabsTrigger>
@@ -318,12 +322,7 @@ export function OriginalBudgetEditModal({
                 >
                   <label
                     htmlFor="budget-calc-manual"
-                    className={cn(
-                      "flex cursor-pointer items-start gap-3 rounded-lg border p-4 transition-colors",
-                      calculationMethod === "manual"
-                        ? "border-primary bg-primary/5"
-                        : "border-border bg-background",
-                    )}
+                    className={budgetRadioCardClass(calculationMethod === "manual")}
                   >
                     <RadioGroupItem
                       id="budget-calc-manual"
@@ -339,12 +338,7 @@ export function OriginalBudgetEditModal({
                   </label>
                   <label
                     htmlFor="budget-calc-calculated"
-                    className={cn(
-                      "flex cursor-pointer items-start gap-3 rounded-lg border p-4 transition-colors",
-                      calculationMethod === "calculated"
-                        ? "border-primary bg-primary/5"
-                        : "border-border bg-background",
-                    )}
+                    className={budgetRadioCardClass(calculationMethod === "calculated")}
                   >
                     <RadioGroupItem
                       id="budget-calc-calculated"

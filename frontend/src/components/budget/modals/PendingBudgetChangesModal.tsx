@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { BaseSidebar, SidebarBody, SidebarFooter } from "./BaseSidebar";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Clock } from "lucide-react";
+import { Info } from "lucide-react";
 
 interface PendingChangeOrder {
   id: string;
@@ -94,7 +94,7 @@ export function PendingBudgetChangesModal({
 
   const getStatusBadge = (status: string) => {
     return (
-      <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full border bg-yellow-100 text-yellow-800 border-yellow-200">
+      <span className="inline-flex items-center rounded-full border border-border bg-muted px-2 py-1 text-xs font-semibold text-foreground">
         {status.replace("pending_", "").replace(/_/g, " ").toUpperCase()}
       </span>
     );
@@ -112,18 +112,18 @@ export function PendingBudgetChangesModal({
     >
       {/* Content */}
       <SidebarBody className="bg-background">
-        <div className="p-6 space-y-4">
+        <div className="p-4 sm:p-6 space-y-4">
           {/* Total Summary */}
-          <div className="rounded-xl border border-border shadow-sm p-4 bg-gradient-to-br from-yellow-50 via-white to-white">
+          <div className="rounded-xl border border-border p-4 bg-muted/30">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-foreground">Total Pending Changes</p>
+                <p className="text-sm text-muted-foreground">Total Pending Changes</p>
                 <p className="text-2xl font-bold text-foreground mt-1">
                   {formatCurrency(totalAmount)}
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-sm text-foreground">Count</p>
+                <p className="text-sm text-muted-foreground">Count</p>
                 <p className="text-2xl font-bold text-foreground mt-1">
                   {changeOrders.length}
                 </p>
@@ -132,12 +132,12 @@ export function PendingBudgetChangesModal({
           </div>
 
           {/* Description Box */}
-          <div className="rounded-lg bg-yellow-50 border border-yellow-200 p-4">
+          <div className="rounded-lg bg-muted/40 border border-border p-4">
             <div className="flex items-start gap-4">
-              <Clock className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-yellow-900">
-                <p className="font-semibold">About Pending Budget Changes</p>
-                <p className="mt-1">
+              <Info className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+              <div className="text-sm text-foreground">
+                <p className="font-semibold text-foreground">About Pending Budget Changes</p>
+                <p className="mt-1 text-muted-foreground">
                   These are change orders from your prime contract that are
                   pending approval. They will be included in projected budget
                   calculations but not in the revised budget until approved.
@@ -147,9 +147,9 @@ export function PendingBudgetChangesModal({
           </div>
 
           {/* Change Orders Table */}
-          <div className="overflow-x-auto scrollbar-hide rounded-xl border border-border shadow-sm bg-background">
+          <div className="overflow-x-auto scrollbar-hide rounded-xl border border-border bg-background">
             <table className="w-full text-sm">
-              <thead className="bg-muted border-b border-border">
+              <thead className="bg-muted/50 border-b border-border">
                 <tr>
                   <th className="text-left px-4 py-4 font-semibold text-foreground">
                     CO Number
@@ -171,7 +171,7 @@ export function PendingBudgetChangesModal({
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-border">
+                <tbody className="divide-y divide-border">
                 {loading ? (
                   <tr>
                     <td
@@ -194,7 +194,7 @@ export function PendingBudgetChangesModal({
                   changeOrders.map((co) => (
                     <tr
                       key={co.id}
-                      className="hover:bg-yellow-50/40 transition-colors"
+                      className="hover:bg-muted/40 transition-colors"
                     >
                       <td className="px-4 py-4 font-medium text-blue-600">
                         {co.changeOrderNumber}
@@ -212,7 +212,7 @@ export function PendingBudgetChangesModal({
                       <td
                         className={cn(
                           "px-4 py-4 text-right font-semibold tabular-nums",
-                          co.amount < 0 ? "text-red-600" : "text-yellow-600",
+                          co.amount < 0 ? "text-destructive" : "text-foreground",
                         )}
                       >
                         {formatCurrency(co.amount)}

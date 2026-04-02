@@ -4,7 +4,7 @@ Scheduled analysis engine — runs periodic jobs via APScheduler.
 Currently registered jobs:
   - Fireflies sync: every 15 min, fetches new transcripts and ingests via pipeline
   - Daily digest: 6 PM daily, aggregates meetings into executive briefing
-  - Acumatica financial sync: periodic incremental ERP import into Supabase
+  - Acumatica financial sync: daily incremental ERP import into Supabase
   - Microsoft Graph sync: periodic incremental sync of Outlook/Teams/OneDrive
 
 Future jobs (Phase 2+):
@@ -68,16 +68,18 @@ def init_scheduler() -> None:
     )
 
     if os.getenv("ACUMATICA_FINANCIAL_SYNC_ENABLED", "true").lower() not in ("0", "false", "no"):
-        sync_interval_hours = max(1, int(os.getenv("ACUMATICA_FINANCIAL_SYNC_INTERVAL_HOURS", "4")))
-        sync_minute = int(os.getenv("ACUMATICA_FINANCIAL_SYNC_MINUTE", "15"))
+        # Default cadence: once daily at 00:15 UTC.
+        # Override with ACUMATICA_FINANCIAL_SYNC_CRON (5-field crontab).
+        sync_cron = os.getenv("ACUMATICA_FINANCIAL_SYNC_CRON", "15 0 * * *")
         scheduler.add_job(
             run_acumatica_financial_sync_job,
-            CronTrigger(hour=f"*/{sync_interval_hours}", minute=sync_minute),
+            CronTrigger.from_crontab(sync_cron),
             id="acumatica_financial_sync",
             name="Acumatica Financial Sync",
             replace_existing=True,
             max_instances=1,
         )
+        logger.info("[Scheduler] Acumatica financial sync cron: %s (UTC)", sync_cron)
 
     # Microsoft Graph sync (Outlook + Teams + OneDrive) — hourly by default
     # Auto-enable when Graph credentials are configured (unless explicitly disabled)

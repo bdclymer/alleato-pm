@@ -54,7 +54,8 @@
     "quality": "npm run typecheck && npm run lint",
     "quality:fix": "npm run typecheck && npm run lint:fix",
     "log:ts-errors": "npx tsx scripts/log-typescript-errors.ts",
-    "audit:table-layouts": "node scripts/audit-table-layouts.mjs"
+    "audit:table-layouts": "node scripts/audit-table-layouts.mjs",
+    "audit:modals": "node scripts/audit-modals.mjs"
   },
   "dependencies": {
     "@ai-sdk/devtools": "^0.0.15",

@@ -40,6 +40,47 @@ const APP_BASE_URL =
   process.env.NEXT_PUBLIC_APP_URL ??
   "https://app.alleato.com";
 
+const COLORS = {
+  pageBackground: "hsl(var(--muted-subtle))",
+  surface: "hsl(var(--background))",
+  surfaceAlt: "hsl(var(--surface-alt))",
+  border: "hsl(var(--border))",
+  foreground: "hsl(var(--foreground))",
+  mutedForeground: "hsl(var(--muted-foreground))",
+  mutedForegroundSoft: "hsl(var(--muted-foreground) / 0.7)",
+  primary: "hsl(var(--primary))",
+  primaryForeground: "hsl(var(--primary-foreground))",
+  destructive: "hsl(var(--destructive))",
+  warning: "hsl(var(--status-warning))",
+  success: "hsl(var(--status-success))",
+  mutedSurface: "hsl(var(--muted))",
+  warningSurface: "hsl(var(--status-warning) / 0.14)",
+  warningForeground: "hsl(var(--status-warning))",
+};
+
+const SPACE = {
+  x1: "var(--space-1)",
+  x2: "var(--space-2)",
+  x3: "var(--space-3)",
+  x4: "var(--space-4)",
+  x6: "var(--space-6)",
+  x8: "var(--space-8)",
+  x1Half: "calc(var(--space-1) / 2)",
+  x1AndHalf: "calc(var(--space-1) + var(--space-1) / 2)",
+  x2AndHalf: "calc(var(--space-2) + var(--space-1) / 2)",
+  x4AndOne: "calc(var(--space-4) + var(--space-1))",
+};
+
+const RADIUS = {
+  sm: "calc(var(--radius) / 2)",
+  md: "var(--radius)",
+  lg: "var(--radius-lg)",
+};
+
+const SHADOWS = {
+  subtle: "var(--shadow-subtle)",
+};
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 /** Resolve user profiles from Supabase for email/name display. */
@@ -127,8 +168,8 @@ function EmailTemplate({
         {/* Inline preview text (invisible) */}
         <style>{`
           .preview { display: none; max-height: 0; overflow: hidden; }
-          body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #f4f4f5; }
-          a { color: #8A71BD; }
+          body { margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: ${COLORS.pageBackground}; }
+          a { color: ${COLORS.primary}; }
         `}</style>
       </head>
       <body>
@@ -142,7 +183,7 @@ function EmailTemplate({
           width="100%"
           cellPadding="0"
           cellSpacing="0"
-          style={{ backgroundColor: "#f4f4f5", padding: "32px 0" }}
+          style={{ backgroundColor: COLORS.pageBackground, padding: `${SPACE.x8} 0` }}
         >
           <tbody>
             <tr>
@@ -154,10 +195,10 @@ function EmailTemplate({
                   style={{
                     maxWidth: 600,
                     width: "100%",
-                    backgroundColor: "#ffffff",
-                    borderRadius: 12,
+                    backgroundColor: COLORS.surface,
+                    borderRadius: RADIUS.lg,
                     overflow: "hidden",
-                    boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+                    boxShadow: SHADOWS.subtle,
                   }}
                 >
                   {/* Header */}
@@ -165,13 +206,13 @@ function EmailTemplate({
                     <tr>
                       <td
                         style={{
-                          backgroundColor: "#8A71BD",
-                          padding: "20px 32px",
+                          backgroundColor: COLORS.primary,
+                          padding: `${SPACE.x4AndOne} ${SPACE.x8}`,
                         }}
                       >
                         <span
                           style={{
-                            color: "#ffffff",
+                            color: COLORS.primaryForeground,
                             fontSize: 18,
                             fontWeight: 700,
                             letterSpacing: "-0.3px",
@@ -186,12 +227,12 @@ function EmailTemplate({
                   {/* Body */}
                   <tbody>
                     <tr>
-                      <td style={{ padding: "32px 32px 8px" }}>
+                      <td style={{ padding: `${SPACE.x8} ${SPACE.x8} ${SPACE.x2}` }}>
                         <p
                           style={{
                             margin: 0,
                             fontSize: 13,
-                            color: "#6F7075",
+                            color: COLORS.mutedForeground,
                             fontWeight: 500,
                           }}
                         >
@@ -200,25 +241,25 @@ function EmailTemplate({
                       </td>
                     </tr>
                     <tr>
-                      <td style={{ padding: "4px 32px 24px" }}>
+                      <td style={{ padding: `${SPACE.x1} ${SPACE.x8} ${SPACE.x6}` }}>
                         {children}
                       </td>
                     </tr>
 
                     {/* CTA */}
                     <tr>
-                      <td style={{ padding: "0 32px 32px" }}>
+                      <td style={{ padding: `0 ${SPACE.x8} ${SPACE.x8}` }}>
                         <a
                           href={roomUrl}
                           style={{
                             display: "inline-block",
-                            backgroundColor: "#8A71BD",
-                            color: "#ffffff",
+                            backgroundColor: COLORS.primary,
+                            color: COLORS.primaryForeground,
                             textDecoration: "none",
                             fontSize: 14,
                             fontWeight: 600,
-                            padding: "10px 20px",
-                            borderRadius: 8,
+                            padding: `${SPACE.x2AndHalf} ${SPACE.x4AndOne}`,
+                            borderRadius: RADIUS.md,
                           }}
                         >
                           View in Alleato →
@@ -232,20 +273,20 @@ function EmailTemplate({
                     <tr>
                       <td
                         style={{
-                          borderTop: "1px solid #E6E6EC",
-                          padding: "16px 32px",
+                          borderTop: `1px solid ${COLORS.border}`,
+                          padding: `${SPACE.x4} ${SPACE.x8}`,
                         }}
                       >
                         <p
                           style={{
                             margin: 0,
                             fontSize: 12,
-                            color: "#9ca3af",
+                            color: COLORS.mutedForegroundSoft,
                           }}
                         >
                           You received this because you have notifications
                           enabled in{" "}
-                          <a href={APP_BASE_URL} style={{ color: "#8A71BD" }}>
+                          <a href={APP_BASE_URL} style={{ color: COLORS.primary }}>
                             Alleato
                           </a>
                           .
@@ -267,7 +308,7 @@ function EmailTemplate({
 
 const commentComponents = {
   Paragraph: ({ children }: { children: React.ReactNode }) => (
-    <p style={{ margin: "8px 0", fontSize: 14, color: "#1D1D22", lineHeight: 1.6 }}>
+    <p style={{ margin: `${SPACE.x2} 0`, fontSize: 14, color: COLORS.foreground, lineHeight: 1.6 }}>
       {children}
     </p>
   ),
@@ -278,7 +319,7 @@ const commentComponents = {
     element: { id: string };
     user?: { name?: string };
   }) => (
-    <strong style={{ color: "#8A71BD" }}>
+    <strong style={{ color: COLORS.primary }}>
       @{user?.name ?? element.id}
     </strong>
   ),
@@ -289,7 +330,7 @@ const commentComponents = {
     element?: { text?: string };
     href: string;
   }) => (
-    <a href={href} style={{ color: "#8A71BD", textDecoration: "underline" }}>
+    <a href={href} style={{ color: COLORS.primary, textDecoration: "underline" }}>
       {element?.text ?? href}
     </a>
   ),
@@ -349,28 +390,28 @@ export async function sendThreadNotificationEmail(
       <div>
         <p
           style={{
-            margin: "0 0 12px",
+            margin: `0 0 ${SPACE.x3}`,
             fontSize: 15,
             fontWeight: 600,
-            color: "#1D1D22",
+            color: COLORS.foreground,
           }}
         >
           You were mentioned in a comment
         </p>
         <div
           style={{
-            background: "#FAFCFF",
-            border: "1px solid #E6E6EC",
-            borderRadius: 8,
-            padding: "12px 16px",
+            background: COLORS.surfaceAlt,
+            border: `1px solid ${COLORS.border}`,
+            borderRadius: RADIUS.md,
+            padding: `${SPACE.x3} ${SPACE.x4}`,
           }}
         >
           <p
             style={{
-              margin: "0 0 6px",
+              margin: `0 0 ${SPACE.x1AndHalf}`,
               fontSize: 12,
               fontWeight: 600,
-              color: "#6F7075",
+              color: COLORS.mutedForeground,
             }}
           >
             {comment.author.info?.name ?? "Someone"}
@@ -387,31 +428,31 @@ export async function sendThreadNotificationEmail(
       <div>
         <p
           style={{
-            margin: "0 0 16px",
+            margin: `0 0 ${SPACE.x4}`,
             fontSize: 15,
             fontWeight: 600,
-            color: "#1D1D22",
+            color: COLORS.foreground,
           }}
         >
           {comments.length} new comment{comments.length !== 1 ? "s" : ""} since you last visited
         </p>
-        <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: SPACE.x2 }}>
           {comments.map((comment, i) => (
             <div
               key={i}
               style={{
-                background: "#FAFCFF",
-                border: "1px solid #E6E6EC",
-                borderRadius: 8,
-                padding: "12px 16px",
+                background: COLORS.surfaceAlt,
+                border: `1px solid ${COLORS.border}`,
+                borderRadius: RADIUS.md,
+                padding: `${SPACE.x3} ${SPACE.x4}`,
               }}
             >
               <p
                 style={{
-                  margin: "0 0 6px",
+                  margin: `0 0 ${SPACE.x1AndHalf}`,
                   fontSize: 12,
                   fontWeight: 600,
-                  color: "#6F7075",
+                  color: COLORS.mutedForeground,
                 }}
               >
                 {comment.author.info?.name ?? "Someone"}
@@ -493,28 +534,28 @@ export async function sendTextMentionNotificationEmail(
       <div>
         <p
           style={{
-            margin: "0 0 12px",
+            margin: `0 0 ${SPACE.x3}`,
             fontSize: 15,
             fontWeight: 600,
-            color: "#1D1D22",
+            color: COLORS.foreground,
           }}
         >
           You were mentioned in a document
         </p>
         <div
           style={{
-            background: "#FAFCFF",
-            border: "1px solid #E6E6EC",
-            borderRadius: 8,
-            padding: "12px 16px",
+            background: COLORS.surfaceAlt,
+            border: `1px solid ${COLORS.border}`,
+            borderRadius: RADIUS.md,
+            padding: `${SPACE.x3} ${SPACE.x4}`,
           }}
         >
           <p
             style={{
-              margin: "0 0 6px",
+              margin: `0 0 ${SPACE.x1AndHalf}`,
               fontSize: 12,
               fontWeight: 600,
-              color: "#6F7075",
+              color: COLORS.mutedForeground,
             }}
           >
             {emailData.mention.author?.info?.name ?? "Someone"}
@@ -614,20 +655,24 @@ function buildCustomEmailContent(
     case "$criticalIssue": {
       const d = data as unknown as CriticalIssueData;
       const severityColor =
-        d.severity === "critical" ? "#dc2626" : d.severity === "high" ? "#ea580c" : "#d97706";
+        d.severity === "critical"
+          ? COLORS.destructive
+          : d.severity === "high"
+            ? COLORS.warning
+            : COLORS.primary;
       return {
         subject: d.title ?? "Critical issue requires attention",
         bodyContent: (
           <div>
-            <div style={{ marginBottom: 12 }}>
-              <span style={{ background: severityColor, color: "#fff", fontSize: 11, fontWeight: 700, padding: "2px 8px", borderRadius: 4, textTransform: "uppercase" as const, letterSpacing: "0.05em" }}>
+            <div style={{ marginBottom: SPACE.x3 }}>
+              <span style={{ background: severityColor, color: COLORS.primaryForeground, fontSize: 11, fontWeight: 700, padding: `${SPACE.x1Half} ${SPACE.x2}`, borderRadius: RADIUS.sm, textTransform: "uppercase" as const, letterSpacing: "0.05em" }}>
                 {d.severity ?? "high"}
               </span>
             </div>
-            <p style={{ margin: "0 0 8px", fontSize: 15, fontWeight: 600, color: "#1D1D22" }}>{d.title}</p>
-            <p style={{ margin: "0 0 16px", fontSize: 14, color: "#6F7075", lineHeight: 1.6 }}>{d.message}</p>
+            <p style={{ margin: `0 0 ${SPACE.x2}`, fontSize: 15, fontWeight: 600, color: COLORS.foreground }}>{d.title}</p>
+            <p style={{ margin: `0 0 ${SPACE.x4}`, fontSize: 14, color: COLORS.mutedForeground, lineHeight: 1.6 }}>{d.message}</p>
             {(d.entityType || d.projectName) && (
-              <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>
+              <p style={{ margin: 0, fontSize: 12, color: COLORS.mutedForegroundSoft }}>
                 {[d.projectName, d.entityType].filter(Boolean).join(" · ")}
               </p>
             )}
@@ -640,7 +685,7 @@ function buildCustomEmailContent(
     case "$deadline": {
       const d = data as unknown as DeadlineData;
       const isOverdue = d.daysRemaining < 0;
-      const urgencyColor = isOverdue ? "#dc2626" : d.daysRemaining <= 3 ? "#ea580c" : "#d97706";
+      const urgencyColor = isOverdue ? COLORS.destructive : d.daysRemaining <= 3 ? COLORS.warning : COLORS.primary;
       const dueLabel = isOverdue
         ? `Overdue by ${Math.abs(d.daysRemaining)} day${Math.abs(d.daysRemaining) !== 1 ? "s" : ""}`
         : `Due in ${d.daysRemaining} day${d.daysRemaining !== 1 ? "s" : ""}`;
@@ -648,15 +693,15 @@ function buildCustomEmailContent(
         subject: d.title ?? `Deadline: ${dueLabel}`,
         bodyContent: (
           <div>
-            <p style={{ margin: "0 0 8px", fontSize: 15, fontWeight: 600, color: "#1D1D22" }}>{d.title}</p>
-            <p style={{ margin: "0 0 4px", fontSize: 14, color: urgencyColor, fontWeight: 600 }}>{dueLabel}</p>
+            <p style={{ margin: `0 0 ${SPACE.x2}`, fontSize: 15, fontWeight: 600, color: COLORS.foreground }}>{d.title}</p>
+            <p style={{ margin: `0 0 ${SPACE.x1}`, fontSize: 14, color: urgencyColor, fontWeight: 600 }}>{dueLabel}</p>
             {d.dueDate && (
-              <p style={{ margin: "0 0 16px", fontSize: 13, color: "#6F7075" }}>
+              <p style={{ margin: `0 0 ${SPACE.x4}`, fontSize: 13, color: COLORS.mutedForeground }}>
                 Due: {new Date(d.dueDate).toLocaleDateString("en-US", { dateStyle: "long" as const })}
               </p>
             )}
             {(d.entityType || d.projectName) && (
-              <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>
+              <p style={{ margin: 0, fontSize: 12, color: COLORS.mutedForegroundSoft }}>
                 {[d.projectName, d.entityType].filter(Boolean).join(" · ")}
               </p>
             )}
@@ -672,14 +717,14 @@ function buildCustomEmailContent(
         subject: d.title ?? `Status changed: ${d.oldStatus} → ${d.newStatus}`,
         bodyContent: (
           <div>
-            <p style={{ margin: "0 0 12px", fontSize: 15, fontWeight: 600, color: "#1D1D22" }}>{d.title}</p>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-              <span style={{ fontSize: 13, color: "#6F7075", textDecoration: "line-through" }}>{d.oldStatus}</span>
-              <span style={{ fontSize: 13, color: "#6F7075" }}>→</span>
-              <span style={{ fontSize: 13, fontWeight: 700, color: "#1D1D22", background: "#E6E6EC", padding: "2px 8px", borderRadius: 4 }}>{d.newStatus}</span>
+            <p style={{ margin: `0 0 ${SPACE.x3}`, fontSize: 15, fontWeight: 600, color: COLORS.foreground }}>{d.title}</p>
+            <div style={{ display: "flex", alignItems: "center", gap: SPACE.x2, marginBottom: SPACE.x4 }}>
+              <span style={{ fontSize: 13, color: COLORS.mutedForeground, textDecoration: "line-through" }}>{d.oldStatus}</span>
+              <span style={{ fontSize: 13, color: COLORS.mutedForeground }}>→</span>
+              <span style={{ fontSize: 13, fontWeight: 700, color: COLORS.foreground, background: COLORS.mutedSurface, padding: `${SPACE.x1Half} ${SPACE.x2}`, borderRadius: RADIUS.sm }}>{d.newStatus}</span>
             </div>
             {(d.changedBy || d.projectName || d.entityType) && (
-              <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>
+              <p style={{ margin: 0, fontSize: 12, color: COLORS.mutedForegroundSoft }}>
                 {[d.changedBy && `Changed by ${d.changedBy}`, d.projectName, d.entityType].filter(Boolean).join(" · ")}
               </p>
             )}
@@ -696,15 +741,15 @@ function buildCustomEmailContent(
         subject: d.title ?? `Budget alert: ${alertLabels[d.alertType] ?? d.alertType}`,
         bodyContent: (
           <div>
-            <p style={{ margin: "0 0 8px", fontSize: 15, fontWeight: 600, color: "#1D1D22" }}>{d.title}</p>
-            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-              <span style={{ background: "#FEF3C7", color: "#92400E", fontSize: 12, fontWeight: 600, padding: "2px 8px", borderRadius: 4 }}>
+            <p style={{ margin: `0 0 ${SPACE.x2}`, fontSize: 15, fontWeight: 600, color: COLORS.foreground }}>{d.title}</p>
+            <div style={{ display: "flex", alignItems: "center", gap: SPACE.x2, marginBottom: SPACE.x4 }}>
+              <span style={{ background: COLORS.warningSurface, color: COLORS.warningForeground, fontSize: 12, fontWeight: 600, padding: `${SPACE.x1Half} ${SPACE.x2}`, borderRadius: RADIUS.sm }}>
                 {alertLabels[d.alertType] ?? d.alertType}
               </span>
-              {d.amount != null && <span style={{ fontSize: 13, color: "#1D1D22", fontWeight: 600 }}>${d.amount.toLocaleString()}</span>}
-              {d.percentage != null && <span style={{ fontSize: 13, color: "#6F7075" }}>{d.percentage}%</span>}
+              {d.amount != null && <span style={{ fontSize: 13, color: COLORS.foreground, fontWeight: 600 }}>${d.amount.toLocaleString()}</span>}
+              {d.percentage != null && <span style={{ fontSize: 13, color: COLORS.mutedForeground }}>{d.percentage}%</span>}
             </div>
-            {d.projectName && <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>{d.projectName}</p>}
+            {d.projectName && <p style={{ margin: 0, fontSize: 12, color: COLORS.mutedForegroundSoft }}>{d.projectName}</p>}
           </div>
         ),
       };
@@ -714,26 +759,26 @@ function buildCustomEmailContent(
     case "$weeklyDigest": {
       const d = data as unknown as WeeklyDigestData;
       const stats = [
-        d.newIssues > 0 && { label: "New issues", value: d.newIssues, color: "#dc2626" },
-        d.resolvedIssues > 0 && { label: "Resolved", value: d.resolvedIssues, color: "#16a34a" },
-        d.pendingApprovals > 0 && { label: "Pending approvals", value: d.pendingApprovals, color: "#d97706" },
-        d.upcomingDeadlines > 0 && { label: "Upcoming deadlines", value: d.upcomingDeadlines, color: "#7c3aed" },
+        d.newIssues > 0 && { label: "New issues", value: d.newIssues, color: COLORS.destructive },
+        d.resolvedIssues > 0 && { label: "Resolved", value: d.resolvedIssues, color: COLORS.success },
+        d.pendingApprovals > 0 && { label: "Pending approvals", value: d.pendingApprovals, color: COLORS.warning },
+        d.upcomingDeadlines > 0 && { label: "Upcoming deadlines", value: d.upcomingDeadlines, color: COLORS.primary },
       ].filter(Boolean) as { label: string; value: number; color: string }[];
       return {
         subject: d.title ?? "Your weekly project digest",
         bodyContent: (
           <div>
-            <p style={{ margin: "0 0 8px", fontSize: 15, fontWeight: 600, color: "#1D1D22" }}>{d.title}</p>
-            {d.summary && <p style={{ margin: "0 0 20px", fontSize: 14, color: "#6F7075", lineHeight: 1.6 }}>{d.summary}</p>}
+            <p style={{ margin: `0 0 ${SPACE.x2}`, fontSize: 15, fontWeight: 600, color: COLORS.foreground }}>{d.title}</p>
+            {d.summary && <p style={{ margin: `0 0 ${SPACE.x4AndOne}`, fontSize: 14, color: COLORS.mutedForeground, lineHeight: 1.6 }}>{d.summary}</p>}
             {stats.length > 0 && (
-              <table width="100%" cellPadding="0" cellSpacing="0" style={{ marginBottom: 16 }}>
+              <table width="100%" cellPadding="0" cellSpacing="0" style={{ marginBottom: SPACE.x4 }}>
                 <tbody>
                   <tr>
                     {stats.map((s) => (
-                      <td key={s.label} style={{ padding: "0 4px 0 0", verticalAlign: "top" }}>
-                        <div style={{ background: "#FAFCFF", border: "1px solid #E6E6EC", borderRadius: 8, padding: "10px 14px" }}>
+                      <td key={s.label} style={{ padding: `0 ${SPACE.x1} 0 0`, verticalAlign: "top" }}>
+                        <div style={{ background: COLORS.surfaceAlt, border: `1px solid ${COLORS.border}`, borderRadius: RADIUS.md, padding: `${SPACE.x2AndHalf} ${SPACE.x3}` }}>
                           <p style={{ margin: 0, fontSize: 20, fontWeight: 700, color: s.color }}>{s.value}</p>
-                          <p style={{ margin: 0, fontSize: 11, color: "#6F7075" }}>{s.label}</p>
+                          <p style={{ margin: 0, fontSize: 11, color: COLORS.mutedForeground }}>{s.label}</p>
                         </div>
                       </td>
                     ))}
@@ -741,7 +786,7 @@ function buildCustomEmailContent(
                 </tbody>
               </table>
             )}
-            {d.projectName && <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>{d.projectName}</p>}
+            {d.projectName && <p style={{ margin: 0, fontSize: 12, color: COLORS.mutedForegroundSoft }}>{d.projectName}</p>}
           </div>
         ),
       };
@@ -754,9 +799,9 @@ function buildCustomEmailContent(
         subject: d.title ?? "You've been assigned an item",
         bodyContent: (
           <div>
-            <p style={{ margin: "0 0 8px", fontSize: 15, fontWeight: 600, color: "#1D1D22" }}>{d.title}</p>
-            {d.assignedBy && <p style={{ margin: "0 0 16px", fontSize: 14, color: "#6F7075" }}>Assigned by <strong style={{ color: "#1D1D22" }}>{d.assignedBy}</strong></p>}
-            {(d.projectName || d.entityType) && <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>{[d.projectName, d.entityType].filter(Boolean).join(" · ")}</p>}
+            <p style={{ margin: `0 0 ${SPACE.x2}`, fontSize: 15, fontWeight: 600, color: COLORS.foreground }}>{d.title}</p>
+            {d.assignedBy && <p style={{ margin: `0 0 ${SPACE.x4}`, fontSize: 14, color: COLORS.mutedForeground }}>Assigned by <strong style={{ color: COLORS.foreground }}>{d.assignedBy}</strong></p>}
+            {(d.projectName || d.entityType) && <p style={{ margin: 0, fontSize: 12, color: COLORS.mutedForegroundSoft }}>{[d.projectName, d.entityType].filter(Boolean).join(" · ")}</p>}
           </div>
         ),
       };
@@ -769,9 +814,9 @@ function buildCustomEmailContent(
         subject: d.title ?? "Your approval is requested",
         bodyContent: (
           <div>
-            <p style={{ margin: "0 0 8px", fontSize: 15, fontWeight: 600, color: "#1D1D22" }}>{d.title}</p>
-            {d.requestedBy && <p style={{ margin: "0 0 16px", fontSize: 14, color: "#6F7075" }}>Requested by <strong style={{ color: "#1D1D22" }}>{d.requestedBy}</strong></p>}
-            {(d.projectName || d.entityType) && <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>{[d.projectName, d.entityType].filter(Boolean).join(" · ")}</p>}
+            <p style={{ margin: `0 0 ${SPACE.x2}`, fontSize: 15, fontWeight: 600, color: COLORS.foreground }}>{d.title}</p>
+            {d.requestedBy && <p style={{ margin: `0 0 ${SPACE.x4}`, fontSize: 14, color: COLORS.mutedForeground }}>Requested by <strong style={{ color: COLORS.foreground }}>{d.requestedBy}</strong></p>}
+            {(d.projectName || d.entityType) && <p style={{ margin: 0, fontSize: 12, color: COLORS.mutedForegroundSoft }}>{[d.projectName, d.entityType].filter(Boolean).join(" · ")}</p>}
           </div>
         ),
       };
@@ -784,21 +829,21 @@ function buildCustomEmailContent(
         subject: d.title ?? `RFI #${d.rfiNumber}: Action required`,
         bodyContent: (
           <div>
-            <p style={{ margin: "0 0 8px", fontSize: 15, fontWeight: 600, color: "#1D1D22" }}>
+            <p style={{ margin: `0 0 ${SPACE.x2}`, fontSize: 15, fontWeight: 600, color: COLORS.foreground }}>
               {d.title ?? `RFI #${d.rfiNumber} — ${d.rfiSubject}`}
             </p>
             {d.newHolder && (
-              <p style={{ margin: "0 0 4px", fontSize: 14, color: "#6F7075" }}>
-                Now assigned to <strong style={{ color: "#1D1D22" }}>{d.newHolder}</strong>
+              <p style={{ margin: `0 0 ${SPACE.x1}`, fontSize: 14, color: COLORS.mutedForeground }}>
+                Now assigned to <strong style={{ color: COLORS.foreground }}>{d.newHolder}</strong>
               </p>
             )}
             {d.previousHolder && (
-              <p style={{ margin: "0 0 16px", fontSize: 13, color: "#9ca3af" }}>
+              <p style={{ margin: `0 0 ${SPACE.x4}`, fontSize: 13, color: COLORS.mutedForegroundSoft }}>
                 Previously held by {d.previousHolder}
               </p>
             )}
             {d.projectName && (
-              <p style={{ margin: 0, fontSize: 12, color: "#9ca3af" }}>{d.projectName}</p>
+              <p style={{ margin: 0, fontSize: 12, color: COLORS.mutedForegroundSoft }}>{d.projectName}</p>
             )}
           </div>
         ),
@@ -813,8 +858,8 @@ function buildCustomEmailContent(
         subject: title,
         bodyContent: (
           <div>
-            <p style={{ margin: "0 0 8px", fontSize: 15, fontWeight: 600, color: "#1D1D22" }}>{title}</p>
-            {message && <p style={{ margin: 0, fontSize: 14, color: "#6F7075", lineHeight: 1.6 }}>{message}</p>}
+            <p style={{ margin: `0 0 ${SPACE.x2}`, fontSize: 15, fontWeight: 600, color: COLORS.foreground }}>{title}</p>
+            {message && <p style={{ margin: 0, fontSize: 14, color: COLORS.mutedForeground, lineHeight: 1.6 }}>{message}</p>}
           </div>
         ),
       };

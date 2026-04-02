@@ -9,6 +9,11 @@ import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
 import { TrendingUp, BarChart3, Calculator } from "lucide-react";
+import {
+  BUDGET_PRIMARY_TABS_LIST_CLASS,
+  BUDGET_PRIMARY_TABS_TRIGGER_CLASS,
+  budgetRadioCardClass,
+} from "./style-tokens";
 
 interface ForecastToCompleteModalProps {
   open: boolean;
@@ -143,15 +148,25 @@ export function ForecastToCompleteModal({
       size="lg"
     >
       <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1 min-h-0">
-        <div className="px-8 flex-shrink-0">
-          <TabsList>
-            <TabsTrigger value="forecast">Forecast</TabsTrigger>
-            <TabsTrigger value="history">History</TabsTrigger>
+        <div className="px-4 sm:px-8 flex-shrink-0">
+          <TabsList variant="line" className={BUDGET_PRIMARY_TABS_LIST_CLASS}>
+            <TabsTrigger
+              value="forecast"
+              className={BUDGET_PRIMARY_TABS_TRIGGER_CLASS}
+            >
+              Forecast
+            </TabsTrigger>
+            <TabsTrigger
+              value="history"
+              className={BUDGET_PRIMARY_TABS_TRIGGER_CLASS}
+            >
+              History
+            </TabsTrigger>
           </TabsList>
         </div>
 
         <SidebarBody>
-          <TabsContent value="forecast" className="px-8 py-4 space-y-4">
+          <TabsContent value="forecast" className="px-4 py-4 sm:px-8 space-y-4">
             {/* Budget Summary */}
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -182,12 +197,7 @@ export function ForecastToCompleteModal({
                     <label
                       key={method.value}
                       htmlFor={method.value}
-                      className={cn(
-                        "flex items-center gap-2 rounded-md px-2 py-1.5 cursor-pointer transition-colors",
-                        forecastMethod === method.value
-                          ? "bg-muted"
-                          : "hover:bg-muted/50",
-                      )}
+                      className={budgetRadioCardClass(forecastMethod === method.value)}
                     >
                       <RadioGroupItem value={method.value} id={method.value} />
                       <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
@@ -253,7 +263,7 @@ export function ForecastToCompleteModal({
             </div>
           </TabsContent>
 
-          <TabsContent value="history" className="px-8 py-5">
+          <TabsContent value="history" className="px-4 py-5 sm:px-8">
             <p className="text-sm text-muted-foreground text-center py-12">
               Forecast history coming soon.
             </p>

@@ -69,12 +69,12 @@ const config = [
 
       // Design System Enforcement — errors (block builds to prevent design drift)
       'design-system/no-hardcoded-colors': 'error',
-      'design-system/no-arbitrary-spacing': 'warn',
-      'design-system/require-semantic-colors': 'warn',
+      'design-system/no-arbitrary-spacing': 'error',
+      'design-system/require-semantic-colors': 'error',
       'design-system/no-design-violations': 'error',
-      'design-system/require-page-shell': 'warn',
+      'design-system/require-page-shell': 'error',
       'design-system/no-oversized-shadows': 'error',
-      'design-system/no-raw-button': 'warn',  // warn until existing 159 files are fixed
+      'design-system/no-raw-button': 'error',
     },
   },
 ]
