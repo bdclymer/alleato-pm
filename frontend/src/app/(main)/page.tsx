@@ -265,7 +265,7 @@ function EditableCell({
           {displayText}
         </span>
       </TooltipTrigger>
-      <TooltipContent side="bottom" collisionPadding={8}>
+      <TooltipContent side="top" collisionPadding={8}>
         {displayText}
       </TooltipContent>
     </Tooltip>
