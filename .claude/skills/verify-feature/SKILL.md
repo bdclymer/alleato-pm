@@ -77,15 +77,48 @@ Wait for both sub-agents to complete before continuing.
 
 ## Phase 2: Define Success Criteria Before Testing
 
-**Write this down before opening the browser.**
+> 🛑 **HARD GATE — ENFORCED BY HOOK**
+>
+> A PreToolUse hook (`.claude/hooks/verify-feature-gate.py`) blocks every
+> `agent-browser` command with exit code 2 until you write
+> `verify-output/{feature-slug}/success-criteria.md`.
+>
+> Do not attempt to skip this. The hook will stop you and you will lose time.
 
-For each user flow and sub-feature, explicitly state:
+**Write `verify-output/{feature-slug}/success-criteria.md` before opening the browser.** This is a required deliverable, not a suggestion.
+
+The file must contain, for each user flow AND for every form field:
+
+### Per flow
 - **Action**: What the user does (including sub-actions like "add a line item with budget code X")
 - **Expected outcome**: Specific, observable result
 - **DB check**: Exact SQL that verifies EVERY field that should have been saved
 - **Quality bar**: What distinguishes pass from fail
 
-The research phase should have returned a complete field inventory. Use it to build an explicit checklist for Phase 4.
+### Per form field — explicitly classify each one
+- **Type**: User input vs. **derived/calculated** vs. **read-only display** vs. server-generated (auto number, timestamp, etc.)
+- **Source of truth**: If derived, what is it computed from? (e.g., "non_committed_cost = budget_line.committed_cost - sum(line_item_actuals)")
+- **Editable in UI?**: Yes / No / Conditionally
+- **Expected DB value**: For your test data, what should land in the DB column?
+
+> ⚠️ **The non-committed-cost lesson (2026-04-06):**
+> Non-committed cost on change events is a *derived* field, not user input.
+> A previous verification run skipped this classification, typed `0` into
+> the field, then labeled the resulting `9500` as "Critical silent data
+> corruption" in a formal report. It wasn't a bug. The system was working
+> correctly. The lesson: **a value not matching what you typed is only a
+> bug if the field was supposed to be user-editable in the first place.**
+> Classify every field BEFORE you test it.
+
+If you don't know whether a field is input or derived, **stop and find out**:
+1. Read the form component source
+2. Read the API route that handles the POST/PATCH
+3. Check `.claude/procore-manifests/{tool-slug}/manifest.json` if it exists
+4. Spawn a research sub-agent if needed
+
+Do not guess. Do not "test and see what happens." Document expected behavior first.
+
+The research phase from Phase 1 should have returned a complete field inventory. Use it to build an explicit checklist for Phase 4.
 
 ---
 
