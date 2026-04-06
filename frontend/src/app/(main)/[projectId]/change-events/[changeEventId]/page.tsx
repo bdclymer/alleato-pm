@@ -37,8 +37,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Inline } from "@/components/ui/inline";
-import { Text } from "@/components/ui/text";
+import { Inline } from "@/components/layout/inline";
+import { Text } from "@/components/ds/text";
 import { PageShell } from "@/components/layout";
 import { StatusBadge, EmptyState } from "@/components/ds";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
@@ -499,13 +499,13 @@ export default function ChangeEventDetailPage() {
       </Tabs>
 
       {/* Dialogs */}
-      {showConvertDialog && (
-        <ChangeEventConvertDialog
-          changeEvent={changeEvent}
-          projectId={projectId}
-          onClose={() => setShowConvertDialog(false)}
-        />
-      )}
+      <ChangeEventConvertDialog
+        open={showConvertDialog}
+        onOpenChange={setShowConvertDialog}
+        changeEventId={changeEventId}
+        projectId={projectId}
+        lineItems={lineItems}
+      />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
         <AlertDialogContent>

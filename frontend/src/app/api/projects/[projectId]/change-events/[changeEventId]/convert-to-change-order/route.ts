@@ -1,15 +1,17 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{ projectId: string; changeEventId: string }>;
 }
 
 // Schema for conversion request (matching frontend expectations)
+// target_contract_id can be a UUID string (most contract tables) or an integer
 const convertSchema = z.object({
   type: z.enum(["commitment", "prime"]), // Type of change order
-  target_contract_id: z.number().int().positive(), // Contract ID to link to
+  target_contract_id: z.union([z.string().min(1), z.number().int().positive()]),
 });
 
 /**
@@ -70,34 +72,30 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // 2. Check if already converted (prevent double conversion)
-    // Check both tables since the CO could be either type
-    const [primeCheck, commitmentCheck] = await Promise.all([
-      supabase
-        .from("prime_contract_change_orders")
-        .select("id")
-        .eq("change_event_id", changeEventId)
-        .maybeSingle(),
-      supabase
-        .from("contract_change_orders")
-        .select("id")
-        .eq("change_event_id", changeEventId)
-        .maybeSingle(),
-    ]);
+    // Linkage is tracked in change_event_related_items (no FK column on the CO tables)
+    const { data: existingLink, error: linkCheckError } = await supabase
+      .from("change_event_related_items")
+      .select("id, related_id, related_type")
+      .eq("change_event_id", changeEventId)
+      .in("related_type", [
+        "prime_contract_change_order",
+        "contract_change_order",
+      ])
+      .maybeSingle();
 
-    if (primeCheck.error || commitmentCheck.error) {
+    if (linkCheckError) {
       return NextResponse.json(
-        { error: "Failed to check conversion status", details: (primeCheck.error || commitmentCheck.error)?.message },
+        { error: "Failed to check conversion status", details: linkCheckError.message },
         { status: 500 },
       );
     }
 
-    const existingCO = primeCheck.data || commitmentCheck.data;
-    if (existingCO) {
+    if (existingLink) {
       return NextResponse.json(
         {
           error: "Change event already converted",
           details: "A change order already exists for this change event",
-          changeOrderId: existingCO.id,
+          changeOrderId: existingLink.related_id,
         },
         { status: 409 },
       );
@@ -105,12 +103,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     // 3. Verify the contract exists and belongs to this project
     // Check either prime_contracts or commitments table based on type
-    let contract: { id: number; contract_number: string } | null = null;
+    let contract: { id: string | number; contract_number: string } | null = null;
 
     if (validatedData.type === "prime") {
       const { data, error: contractError } = await supabase
         .from("prime_contracts")
-        .select("id, number")
+        .select("id, contract_number")
         .eq("id", validatedData.target_contract_id)
         .eq("project_id", numericProjectId)
         .single();
@@ -121,22 +119,22 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           { status: 404 },
         );
       }
-      contract = { id: data.id, contract_number: data.number };
+      contract = { id: data.id, contract_number: data.contract_number };
     } else {
       const { data, error: contractError } = await supabase
-        .from("commitments")
-        .select("id, number")
+        .from("commitments_unified")
+        .select("id, contract_number, project_id")
         .eq("id", validatedData.target_contract_id)
         .eq("project_id", numericProjectId)
         .single();
 
-      if (contractError || !data) {
+      if (contractError || !data || !data.id || !data.contract_number) {
         return NextResponse.json(
           { error: "Commitment not found or does not belong to this project" },
           { status: 404 },
         );
       }
-      contract = { id: data.id, contract_number: data.number };
+      contract = { id: data.id, contract_number: data.contract_number };
     }
 
     // 4. Calculate total amount from change event line items
@@ -172,8 +170,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         .from("prime_contract_change_orders")
         .insert({
           project_id: numericProjectId,
-          contract_id: validatedData.target_contract_id,
-          change_event_id: changeEventId,
+          contract_id: String(validatedData.target_contract_id),
+          prime_contract_id: String(validatedData.target_contract_id),
           pcco_number: coNumber,
           title: changeEvent.title,
           description: changeEvent.description,
@@ -191,6 +189,18 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         );
       }
       newChangeOrderId = newCO.id;
+
+      // Track linkage in change_event_related_items
+      await supabase.from("change_event_related_items").insert({
+        project_id: numericProjectId,
+        change_event_id: changeEventId,
+        related_type: "prime_contract_change_order",
+        related_id: String(newCO.id),
+        related_number: coNumber,
+        related_title: changeEvent.title,
+        related_status: "draft",
+        created_by: user.id,
+      });
     } else {
       // Commitment change order
       const { data: existingCOs } = await supabase
@@ -211,13 +221,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       const { data: newCO, error: createError } = await supabase
         .from("contract_change_orders")
         .insert({
-          contract_id: validatedData.target_contract_id,
-          change_event_id: changeEventId,
+          contract_id: String(validatedData.target_contract_id),
           change_order_number: coNumber,
           description: changeEvent.title,
           amount: totalAmount,
-          status: "draft",
-          created_by: user.id,
+          status: "pending",
+          requested_date: new Date().toISOString().split("T")[0],
         })
         .select()
         .single();
@@ -229,6 +238,18 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         );
       }
       newChangeOrderId = newCO.id;
+
+      // Track linkage in change_event_related_items
+      await supabase.from("change_event_related_items").insert({
+        project_id: numericProjectId,
+        change_event_id: changeEventId,
+        related_type: "contract_change_order",
+        related_id: String(newCO.id),
+        related_number: coNumber,
+        related_title: changeEvent.title,
+        related_status: "draft",
+        created_by: user.id,
+      });
     }
 
     // 8. Update the change event status to indicate conversion
@@ -281,9 +302,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     console.error("Change event conversion error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

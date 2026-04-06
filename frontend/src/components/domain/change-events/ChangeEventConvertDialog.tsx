@@ -16,7 +16,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { FileCheck, ArrowRight } from "lucide-react";
-import { Text } from "@/components/ui/text";
+import { Text } from "@/components/ds/text";
 
 interface ChangeEventConvertDialogProps {
   open: boolean;
@@ -36,7 +36,7 @@ export function ChangeEventConvertDialog({
   onOpenChange,
   changeEventId,
   projectId,
-  lineItems,
+  lineItems = [],
 }: ChangeEventConvertDialogProps) {
   const router = useRouter();
   const [isConverting, setIsConverting] = useState(false);
@@ -132,9 +132,7 @@ export function ChangeEventConvertDialog({
           },
           body: JSON.stringify({
             type: conversionType,
-            target_contract_id: targetContractId
-              ? parseInt(targetContractId)
-              : null,
+            target_contract_id: targetContractId || null,
           }),
         }
       );
@@ -250,7 +248,7 @@ export function ChangeEventConvertDialog({
           </div>
 
           {/* Conversion Note */}
-          <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg text-sm">
+          <div className="bg-muted p-4 rounded-lg text-sm">
             <Text as="div" size="sm" className="flex items-start gap-2">
               <FileCheck className="h-4 w-4 mt-0.5 flex-shrink-0" />
               <span>
