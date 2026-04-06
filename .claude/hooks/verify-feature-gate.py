@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-verify-feature-gate.py — PreToolUse hook for verify-feature skill enforcement.
+verify-feature-gate.py — Hook for verify-feature skill enforcement.
 
-Two gates, both fail-closed (exit 2 with instructions):
+THREE gates, all fail-closed (exit 2 with instructions):
 
 GATE 1 — agent-browser blocked unless success-criteria.md exists.
   Phase 2 of the skill requires documenting expected behavior BEFORE
@@ -11,15 +11,28 @@ GATE 1 — agent-browser blocked unless success-criteria.md exists.
   false positive on 2026-04-06 was caused by this).
 
 GATE 2 — Writing/editing report.md in verify-output/ blocked unless
-videos/ contains at least one .webm recording.
+  videos/ contains at least one .webm recording.
   The skill requires per-flow video evidence in Phase 4. Reports without
   video evidence cannot be reviewed by the user, and the pattern of
   "wrote a report, no evidence to back it up" repeated across two
   consecutive verification runs.
 
-Both gates inspect the tool input, find the most recently modified
-verify-output session directory, and check the relevant deliverable.
-If the gate condition is not met, exit 2 with a clear instruction.
+GATE 3 — Writing/editing report.md blocked unless every screenshot in
+  the session has been opened with the Read tool.
+  Phase 4e says to read result screenshots before claiming a flow
+  succeeded. On 2026-04-06 a PCCO conversion screenshot was a giant 404
+  page, and I claimed the flow succeeded based only on the URL — never
+  looked at the image. The user caught the 404 by re-watching the video.
+  Same failure mode as GATE 1 and GATE 2: the artifact existed but the
+  cognitive review step was skipped.
+
+  Implementation: a PostToolUse hook records every Read tool call on a
+  screenshot path to .viewed-screenshots.txt inside the session dir.
+  GATE 3 then checks that every .png in screenshots/ is listed.
+
+The script handles all three gates by routing on tool input keys:
+- {"command": ...}     — Bash, GATE 1
+- {"file_path": ...}   — Write/Edit (GATE 2 + GATE 3) or Read (record view)
 """
 import sys
 import json
@@ -148,19 +161,149 @@ final state is better than no evidence.
     return 2
 
 
+def gate_3_report_requires_screenshot_review(file_path: str) -> int:
+    """Block writing/editing report.md until every screenshot has been Read'd."""
+    if not file_path:
+        return 0
+
+    abs_path = os.path.abspath(file_path)
+    if "verify-output" not in abs_path or not abs_path.endswith("report.md"):
+        return 0
+
+    session = os.path.dirname(abs_path)
+    screenshots_dir = os.path.join(session, "screenshots")
+
+    if not os.path.isdir(screenshots_dir):
+        return 0  # No screenshots to review
+
+    # Find all PNG screenshots
+    all_screenshots = sorted(
+        f for f in os.listdir(screenshots_dir) if f.lower().endswith(".png")
+    )
+    if not all_screenshots:
+        return 0  # No screenshots — nothing to review
+
+    # Load the viewed-screenshots log
+    viewed_log = os.path.join(session, ".viewed-screenshots.txt")
+    viewed: set[str] = set()
+    if os.path.exists(viewed_log):
+        with open(viewed_log, "r") as f:
+            viewed = {line.strip() for line in f if line.strip()}
+
+    # Find unreviewed screenshots
+    unreviewed = [s for s in all_screenshots if s not in viewed]
+    if not unreviewed:
+        return 0
+
+    feature = os.path.basename(session.rstrip("/"))
+    listing = "\n".join(
+        f"  Read: {os.path.join(screenshots_dir, s)}" for s in unreviewed[:20]
+    )
+    extra = f"\n  ... and {len(unreviewed) - 20} more" if len(unreviewed) > 20 else ""
+
+    msg = f"""BLOCKED by verify-feature-gate hook (GATE 3: screenshot review).
+
+You are about to write {abs_path}, but {len(unreviewed)} screenshot(s) in
+{screenshots_dir} have NOT been opened with the Read tool yet.
+
+Phase 4e of the verify-feature skill REQUIRES reading every result
+screenshot before claiming a flow succeeded. On 2026-04-06 a PCCO
+conversion screenshot was a giant 404 page, and the verification report
+claimed the flow succeeded — based only on the URL string and the API
+response code. The user caught the 404 by re-watching the video.
+
+A screenshot exists, but the screenshot wasn't reviewed = same failure
+class as a missing screenshot. The Read tool actually loads the image
+into your conversation context so you can see it. Saving it to disk
+without reading it does not count.
+
+Unreviewed screenshots ({len(unreviewed)}):
+
+{listing}{extra}
+
+To proceed:
+
+1. Use the Read tool on each unreviewed screenshot listed above
+2. For each one, look at what's actually in the image — does it match
+   what you claim happened in that flow? Is it the right page? Are there
+   error messages, 404s, validation failures that contradict your story?
+3. If anything contradicts your draft report, go fix the report (or the
+   underlying code) before continuing
+4. Then retry the report write
+
+If you have screenshots from exploration that aren't relevant to any
+finding, delete them from {screenshots_dir} — only keep evidence you
+actually need to defend.
+"""
+    print(msg, file=sys.stderr)
+    return 2
+
+
+def record_screenshot_view(file_path: str) -> int:
+    """PostToolUse: when Read is called on a screenshot in verify-output, log it."""
+    if not file_path:
+        return 0
+
+    abs_path = os.path.abspath(file_path)
+    if "verify-output" not in abs_path or not abs_path.lower().endswith(".png"):
+        return 0
+    if "screenshots" not in abs_path:
+        return 0
+
+    # screenshots/ is one level under the session dir
+    screenshots_dir = os.path.dirname(abs_path)
+    session = os.path.dirname(screenshots_dir)
+    if os.path.basename(screenshots_dir) != "screenshots":
+        return 0
+
+    viewed_log = os.path.join(session, ".viewed-screenshots.txt")
+    filename = os.path.basename(abs_path)
+
+    # Read existing entries to avoid duplicates
+    existing: set[str] = set()
+    if os.path.exists(viewed_log):
+        with open(viewed_log, "r") as f:
+            existing = {line.strip() for line in f if line.strip()}
+
+    if filename not in existing:
+        with open(viewed_log, "a") as f:
+            f.write(filename + "\n")
+
+    return 0
+
+
 def main() -> int:
     try:
         data = json.load(sys.stdin)
     except json.JSONDecodeError:
         return 0
 
+    # Hook event type — passed via env var by Claude Code
+    hook_event = os.environ.get("CLAUDE_HOOK_EVENT", "")
+    tool_name = data.get("tool_name", "") or os.environ.get("CLAUDE_TOOL_NAME", "")
+
     # Bash tool: check command for agent-browser (GATE 1)
     if "command" in data:
         return gate_1_browser_requires_criteria(data.get("command", ""))
 
-    # Write/Edit tool: check file_path for report.md (GATE 2)
+    # Read/Write/Edit tool: file_path key
     if "file_path" in data:
-        return gate_2_report_requires_videos(data.get("file_path", ""))
+        file_path = data.get("file_path", "")
+
+        # PostToolUse on Read: record the view (regardless of tool name detection)
+        # We detect this by checking if the file is being written or read.
+        # PreToolUse fires BEFORE the tool runs; PostToolUse fires AFTER.
+        # For Read tool, we want to record on PostToolUse so the file was
+        # actually loaded. The hook event env var tells us which.
+        if hook_event == "PostToolUse":
+            return record_screenshot_view(file_path)
+
+        # PreToolUse on Write/Edit: enforce GATE 2 then GATE 3
+        # (only enforce on report.md; other writes pass through)
+        gate_2_result = gate_2_report_requires_videos(file_path)
+        if gate_2_result != 0:
+            return gate_2_result
+        return gate_3_report_requires_screenshot_review(file_path)
 
     return 0
 

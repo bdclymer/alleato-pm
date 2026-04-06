@@ -77,13 +77,17 @@ Wait for both sub-agents to complete before continuing.
 
 ## Phase 2: Define Success Criteria Before Testing
 
-> 🛑 **HARD GATE — ENFORCED BY HOOK**
+> 🛑 **HARD GATE — ENFORCED BY HOOK (3 GATES)**
 >
-> A PreToolUse hook (`.claude/hooks/verify-feature-gate.py`) blocks every
-> `agent-browser` command with exit code 2 until you write
-> `verify-output/{feature-slug}/success-criteria.md`.
+> `.claude/hooks/verify-feature-gate.py` enforces three gates with exit code 2:
 >
-> Do not attempt to skip this. The hook will stop you and you will lose time.
+> - **GATE 1:** `agent-browser` blocked until `verify-output/<feature>/success-criteria.md` exists (Phase 2)
+> - **GATE 2:** writing `verify-output/<feature>/report.md` blocked until `videos/` contains ≥1 `.webm` (Phase 4 recording)
+> - **GATE 3:** writing `report.md` blocked until every `.png` in `screenshots/` has been opened with the Read tool (Phase 4e screenshot review)
+>
+> Do not attempt to skip these. They will stop you and you will lose time.
+> All three exist because each was added after a specific failure on the
+> change-events verification on 2026-04-06.
 
 **Write `verify-output/{feature-slug}/success-criteria.md` before opening the browser.** This is a required deliverable, not a suggestion.
 

@@ -85,6 +85,15 @@
             "command": "if echo \"$TOOL_INPUT\" | grep -q 'supabase/migrations'; then echo '⚠️ Migration file changed — run `npm run db:types` to regenerate database types'; fi"
           }
         ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "CLAUDE_HOOK_EVENT=PostToolUse echo \"$TOOL_INPUT\" | CLAUDE_HOOK_EVENT=PostToolUse python3 /Users/meganharrison/Documents/alleato-pm/.claude/hooks/verify-feature-gate.py"
+          }
+        ]
       }
     ]
   }
