@@ -145,9 +145,13 @@ export function ChangeEventConvertDialog({
       toast.success("Successfully converted to change order");
       onOpenChange(false);
 
-      // Navigate to the new change order
+      // Navigate to the new change order. PCCOs and CCOs live under
+      // different sub-routes — there is no /change-orders/[id] route.
       if (result.change_order_id) {
-        router.push(`/${projectId}/change-orders/${result.change_order_id}`);
+        const subPath = conversionType === "prime" ? "prime" : "commitment";
+        router.push(
+          `/${projectId}/change-orders/${subPath}/${result.change_order_id}`,
+        );
       }
     } catch {
       toast.error("Failed to convert to change order");
