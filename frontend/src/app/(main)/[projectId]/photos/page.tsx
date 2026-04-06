@@ -8,6 +8,7 @@ import {
   FolderOpen,
   Image,
   Map,
+  Plus,
   Search,
   Star,
   StarOff,
@@ -139,7 +140,8 @@ export default function ProjectPhotosPage() {
       }
     >
       <Tabs defaultValue="photos" className="space-y-4">
-        <TabsList variant="line">
+        <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
+        <TabsList variant="line" className="w-max min-w-full">
           <TabsTrigger value="photos">
             <Image className="mr-1.5 size-4" />
             Photos
@@ -161,6 +163,7 @@ export default function ProjectPhotosPage() {
             Recycle Bin
           </TabsTrigger>
         </TabsList>
+        </div>
 
         {/* ─── Photos Tab (main) ──────────────────────────────────────── */}
         <TabsContent value="photos">
@@ -326,6 +329,16 @@ export default function ProjectPhotosPage() {
           />
         </TabsContent>
       </Tabs>
+
+      {/* Mobile FAB — always accessible on mobile when scrolled past header */}
+      <Button
+        size="icon"
+        onClick={() => setUploadOpen(true)}
+        className="fixed bottom-6 right-4 z-40 size-14 rounded-full shadow-sm sm:hidden"
+        aria-label="Upload photo"
+      >
+        <Plus className="size-6" />
+      </Button>
 
       {/* Upload dialog */}
       <PhotoUploadDialog
