@@ -4656,6 +4656,7 @@ export type Database = {
           type: string
           updated_at: string
           updated_by: string | null
+          workflow_stage: string | null
         }
         Insert: {
           created_at?: string
@@ -4679,6 +4680,7 @@ export type Database = {
           type: string
           updated_at?: string
           updated_by?: string | null
+          workflow_stage?: string | null
         }
         Update: {
           created_at?: string
@@ -4702,6 +4704,7 @@ export type Database = {
           type?: string
           updated_at?: string
           updated_by?: string | null
+          workflow_stage?: string | null
         }
         Relationships: [
           {
@@ -6805,6 +6808,59 @@ export type Database = {
           status?: string | null
         }
         Relationships: []
+      }
+      dev_panel_comments: {
+        Row: {
+          author_email: string | null
+          author_id: string | null
+          author_name: string
+          content: string
+          created_at: string
+          feature: string
+          id: string
+          mentions: string[]
+          page_url: string | null
+          parent_id: string | null
+          resolved: boolean
+          updated_at: string
+        }
+        Insert: {
+          author_email?: string | null
+          author_id?: string | null
+          author_name: string
+          content: string
+          created_at?: string
+          feature: string
+          id?: string
+          mentions?: string[]
+          page_url?: string | null
+          parent_id?: string | null
+          resolved?: boolean
+          updated_at?: string
+        }
+        Update: {
+          author_email?: string | null
+          author_id?: string | null
+          author_name?: string
+          content?: string
+          created_at?: string
+          feature?: string
+          id?: string
+          mentions?: string[]
+          page_url?: string | null
+          parent_id?: string | null
+          resolved?: boolean
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dev_panel_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "dev_panel_comments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       direct_cost_line_items: {
         Row: {
@@ -12267,6 +12323,109 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      permission_audit_log: {
+        Row: {
+          action: string
+          changed_by: string | null
+          created_at: string
+          id: string
+          module: string | null
+          new_level: string | null
+          old_level: string | null
+          person_id: string
+          project_id: number
+          template_id: string | null
+        }
+        Insert: {
+          action: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          module?: string | null
+          new_level?: string | null
+          old_level?: string | null
+          person_id: string
+          project_id: number
+          template_id?: string | null
+        }
+        Update: {
+          action?: string
+          changed_by?: string | null
+          created_at?: string
+          id?: string
+          module?: string | null
+          new_level?: string | null
+          old_level?: string | null
+          person_id?: string
+          project_id?: number
+          template_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "permission_audit_log_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permission_audit_log_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "permission_audit_log_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permission_audit_log_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permission_audit_log_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "permission_audit_log_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permission_audit_log_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permission_audit_log_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "permission_audit_log_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "permission_templates"
             referencedColumns: ["id"]
           },
         ]
@@ -20652,6 +20811,93 @@ export type Database = {
           },
           {
             foreignKeyName: "user_email_notifications_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_module_permissions: {
+        Row: {
+          id: string
+          level: string
+          module: string
+          person_id: string
+          project_id: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          level: string
+          module: string
+          person_id: string
+          project_id: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          level?: string
+          module?: string
+          person_id?: string
+          project_id?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_module_permissions_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_module_permissions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "user_module_permissions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_module_permissions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_module_permissions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "user_module_permissions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_module_permissions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_module_permissions_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
