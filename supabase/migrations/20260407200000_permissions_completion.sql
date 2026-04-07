@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS public.user_module_permissions (
   person_id    UUID    NOT NULL REFERENCES public.people(id)   ON DELETE CASCADE,
   module       TEXT    NOT NULL,
   level        TEXT    NOT NULL CHECK (level IN ('none','read','write','admin')),
-  updated_by   UUID    REFERENCES auth.users(id),
+  updated_by   UUID    REFERENCES auth.users(id) ON DELETE SET NULL,
   updated_at   TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (project_id, person_id, module)
 );
@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS public.permission_audit_log (
   id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   project_id   INTEGER NOT NULL REFERENCES public.projects(id) ON DELETE CASCADE,
   person_id    UUID    NOT NULL REFERENCES public.people(id)   ON DELETE CASCADE,
-  changed_by   UUID    REFERENCES auth.users(id),
+  changed_by   UUID    REFERENCES auth.users(id) ON DELETE SET NULL,
   action       TEXT    NOT NULL,
   module       TEXT,
   old_level    TEXT,
@@ -79,7 +79,21 @@ CREATE POLICY "pal_select" ON public.permission_audit_log
 
 CREATE POLICY "pal_insert" ON public.permission_audit_log
   FOR INSERT TO authenticated
-  WITH CHECK (true);
+  WITH CHECK (
+    project_id IN (
+      SELECT pdm.project_id
+      FROM public.project_directory_memberships pdm
+      JOIN public.users_auth ua ON ua.person_id = pdm.person_id
+      WHERE ua.auth_user_id = auth.uid() AND pdm.status = 'active'
+    )
+    OR EXISTS (
+      SELECT 1 FROM public.user_profiles
+      WHERE id = auth.uid() AND is_admin = true
+    )
+  );
+
+CREATE INDEX IF NOT EXISTS idx_pal_project_person
+  ON public.permission_audit_log (project_id, person_id);
 
 -- ----------------------------------------------------------------------------
 -- 3. Fix RLS on permission_templates — restrict mutations to app admins
@@ -126,7 +140,8 @@ CREATE POLICY "pt_delete" ON public.permission_templates
 -- 4. Seed default system permission templates
 -- ----------------------------------------------------------------------------
 INSERT INTO public.permission_templates (name, description, scope, is_system, rules_json)
-VALUES
+SELECT name, description, scope, is_system, rules_json
+FROM (VALUES
   (
     'Owner / Client',
     'Read-only access to all modules. Suitable for project owners and clients.',
@@ -162,4 +177,8 @@ VALUES
     true,
     '{"directory":["read"],"budget":["read"],"contracts":["read"],"documents":["read"],"schedule":["read"],"submittals":["read"],"rfis":["read"],"change_orders":["read"]}'::jsonb
   )
-ON CONFLICT DO NOTHING;
+) AS v(name, description, scope, is_system, rules_json)
+WHERE NOT EXISTS (
+  SELECT 1 FROM public.permission_templates pt
+  WHERE pt.name = v.name AND pt.is_system = true
+);
