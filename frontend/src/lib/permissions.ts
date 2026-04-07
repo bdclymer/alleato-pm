@@ -408,7 +408,6 @@ export async function removePermissionOverride(
 // ---------------------------------------------------------------------------
 
 async function logPermissionChange(
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   supabase: any,
   entry: {
     project_id: number;
@@ -457,6 +456,14 @@ export async function getPermissionAuditLog(
     return [];
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (data ?? []) as any;
+  return (data ?? []) as Array<{
+    id: string;
+    action: string;
+    module: string | null;
+    old_level: string | null;
+    new_level: string | null;
+    created_at: string;
+    person: { first_name: string; last_name: string; email: string } | null;
+    template: { name: string } | null;
+  }>;
 }

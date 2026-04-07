@@ -264,7 +264,7 @@ function TemplateCard({
   }
 
   return (
-    <div className="rounded-lg border border-border bg-card p-4 space-y-3">
+    <div className="rounded-lg bg-muted p-4 space-y-3">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-medium text-foreground">{template.name}</p>

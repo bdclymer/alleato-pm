@@ -172,7 +172,7 @@ function MemberRow({
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <CollapsibleTrigger asChild>
-        <div className="flex items-center justify-between px-4 py-3 rounded-lg border border-border bg-card cursor-pointer hover:bg-muted/50 transition-colors">
+        <div className="flex items-center justify-between px-4 py-3 rounded-lg bg-muted cursor-pointer hover:bg-muted/70 transition-colors">
           <div className="flex items-center gap-3 min-w-0">
             <div className="h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-sm font-medium shrink-0">
               {member.first_name?.[0]}
@@ -200,7 +200,7 @@ function MemberRow({
       </CollapsibleTrigger>
 
       <CollapsibleContent>
-        <div className="px-4 py-4 border border-t-0 border-border rounded-b-lg bg-card space-y-4">
+        <div className="px-4 py-4 rounded-b-lg bg-muted/50 space-y-4">
           <div className="flex items-center gap-3">
             <span className="text-sm text-muted-foreground w-36 shrink-0">
               Permission template
