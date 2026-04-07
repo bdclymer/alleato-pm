@@ -103,6 +103,25 @@ export const changeEventFilters: FilterConfig[] = [
     type: "select",
     options: EXPECTING_REVENUE_FILTER_OPTIONS,
   },
+  {
+    id: "over_under",
+    label: "Over/Under",
+    type: "select",
+    options: [
+      { value: "over", label: "Over Budget" },
+      { value: "under", label: "Under Budget" },
+    ],
+  },
+  {
+    id: "budget",
+    label: "Budget",
+    type: "text",
+  },
+  {
+    id: "budget_code_segments",
+    label: "Budget Code Segments",
+    type: "text",
+  },
 ];
 
 export const changeEventDefaultVisibleColumns = changeEventColumns

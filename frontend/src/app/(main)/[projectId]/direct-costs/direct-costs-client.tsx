@@ -285,7 +285,6 @@ export function DirectCostsClient({
         item.description ?? "",
         item.invoice_number ?? "",
         item.status,
-        item.erp_status ?? "",
         item.cost_type,
         item.date,
         dateDisplay,

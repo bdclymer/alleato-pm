@@ -42,6 +42,8 @@ import {
 
 const EMPTY_FILTERS: Record<string, FilterValue> = {
   status: undefined,
+  executed: undefined,
+  client_name: undefined,
 };
 
 type FilterState = Record<string, FilterValue>;
@@ -58,8 +60,12 @@ export default function ProjectContractsPage(): ReactElement {
   useProjectTitle("Prime Contracts");
 
   const initialStatus = searchParams.get("status") ?? "";
+  const initialExecuted = searchParams.get("executed") ?? "";
+  const initialClientName = searchParams.get("client_name") ?? "";
   const initialFilters: FilterState = {
     status: initialStatus || undefined,
+    executed: initialExecuted || undefined,
+    client_name: initialClientName || undefined,
   };
 
   const tableState = useUnifiedTableState({
@@ -183,10 +189,32 @@ export default function ProjectContractsPage(): ReactElement {
   const activeFilters = tableState.activeFilters as FilterState;
 
   const statusFilter = activeFilters.status as ContractStatus | undefined;
+  const executedFilter = activeFilters.executed as string | undefined;
+  const clientNameFilter = activeFilters.client_name as string | undefined;
   const searchTerm = tableState.debouncedSearch.trim().toLowerCase();
+
+  // Build dynamic client_name filter options from loaded data
+  const dynamicFilters = React.useMemo(() => {
+    const uniqueClientNames = Array.from(
+      new Set(contracts.map((c) => c.client?.name).filter((n): n is string => Boolean(n)))
+    ).sort();
+
+    return [
+      ...primeContractFilters,
+      {
+        id: "client_name",
+        label: "Owner/Client",
+        type: "select" as const,
+        options: uniqueClientNames.map((name) => ({ value: name, label: name })),
+      },
+    ];
+  }, [contracts]);
 
   const filteredContracts = contracts.filter((contract) => {
     if (statusFilter && contract.status !== statusFilter) return false;
+    if (executedFilter === "yes" && !contract.executed) return false;
+    if (executedFilter === "no" && contract.executed) return false;
+    if (clientNameFilter && contract.client?.name !== clientNameFilter) return false;
     if (!searchTerm) return true;
 
     const fields = [
@@ -241,6 +269,8 @@ export default function ProjectContractsPage(): ReactElement {
     tableState.setActiveFilters(nextFilters);
     tableState.setSearchParams({
       status: typeof nextFilters.status === "string" ? nextFilters.status : null,
+      executed: typeof nextFilters.executed === "string" ? nextFilters.executed : null,
+      client_name: typeof nextFilters.client_name === "string" ? nextFilters.client_name : null,
       page: "1",
     });
     tableState.setPage(1);
@@ -377,7 +407,7 @@ export default function ProjectContractsPage(): ReactElement {
     }
   };
 
-  const isFiltered = Boolean(tableState.searchInput) || Boolean(activeFilters.status);
+  const isFiltered = Boolean(tableState.searchInput) || Boolean(activeFilters.status) || Boolean(activeFilters.executed) || Boolean(activeFilters.client_name);
 
   return (
     <>
@@ -421,7 +451,7 @@ export default function ProjectContractsPage(): ReactElement {
             tableState.setCurrentView(view);
             tableState.setSearchParams({ view });
           },
-          filters: primeContractFilters,
+          filters: dynamicFilters,
           activeFilters,
           onFilterChange: handleFilterChange,
           onClearFilters: () => handleFilterChange(EMPTY_FILTERS),

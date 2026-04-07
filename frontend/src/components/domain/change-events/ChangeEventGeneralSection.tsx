@@ -1,9 +1,9 @@
 "use client";
 
 import { FormSection } from "@/components/forms/FormSection";
+import { RichTextField } from "@/components/forms/RichTextField";
 import { SelectField } from "@/components/forms/SelectField";
 import { TextField } from "@/components/forms/TextField";
-import { TextareaField } from "@/components/forms/TextareaField";
 import type { ChangeEventFormData } from "./ChangeEventForm";
 
 interface ChangeEventGeneralSectionProps {
@@ -152,13 +152,11 @@ export function ChangeEventGeneralSection({
         title="Details"
         description="Add supporting narrative for this change event."
       >
-        <TextareaField
+        <RichTextField
           label="Description"
-          name="description"
           value={data.description || ""}
-          onChange={(e) => onChange({ description: e.target.value })}
+          onChange={(value) => onChange({ description: value })}
           placeholder="Detailed description of the change event..."
-          rows={4}
           fullWidth
         />
       </FormSection>

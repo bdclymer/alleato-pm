@@ -62,7 +62,7 @@ export function ChangeEventConvertDialog({
         // Fetch both prime contracts and commitments in parallel
         const [primeContractsRes, commitmentsRes] = await Promise.all([
           fetch(`/api/projects/${projectId}/contracts`),
-          fetch(`/api/commitments?project_id=${projectId}`),
+          fetch(`/api/commitments?projectId=${projectId}&limit=500`),
         ]);
 
         const allContracts: typeof contracts = [];
@@ -88,7 +88,7 @@ export function ChangeEventConvertDialog({
           // Handle both array and paginated response
           const commitments = Array.isArray(commitmentsData)
             ? commitmentsData
-            : commitmentsData.items || [];
+            : commitmentsData.data || commitmentsData.items || [];
 
           commitments.forEach((commitment: any) => {
             allContracts.push({

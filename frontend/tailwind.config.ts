@@ -28,6 +28,18 @@ export default {
          COLOR SYSTEM — Superhuman-inspired tokens
          ================================================================= */
       colors: {
+        /* Vristo template colors — used by (dashboard) route components */
+        "white-light": "#e0e6ed",
+        "white-dark": "#888ea8",
+        "dark": { DEFAULT: "#3b3f5c", light: "#eaeaec" },
+        "danger": { DEFAULT: "hsl(var(--destructive))", foreground: "hsl(var(--destructive-foreground))" },
+        "primary-light": "#eaf1ff",
+        "secondary-light": "#ebe4f7",
+        "success-light": "#ddf5f0",
+        "danger-light": "#fff5f5",
+        "warning-light": "#fff9ed",
+        "info-light": "#e7f7ff",
+
         /* Core UI Colors */
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
@@ -154,6 +166,7 @@ export default {
       fontFamily: {
         sans: ["var(--font-sans)", "system-ui", "-apple-system", "BlinkMacSystemFont", "Segoe UI", "Roboto", "sans-serif"],
         mono: ["var(--font-mono)", "ui-monospace", "SFMono-Regular", "Consolas", "Monaco", "Liberation Mono", "monospace"],
+        nunito: ["Nunito", "sans-serif"], // Vristo template font
       },
       fontSize: {
         "2xs": ["0.625rem", { lineHeight: "0.75rem" }], // 10px

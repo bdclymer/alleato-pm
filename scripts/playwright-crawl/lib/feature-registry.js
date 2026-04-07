@@ -156,21 +156,21 @@ export const FEATURES = {
       {
         id: 'list-purchase-orders',
         type: 'list',
-        url: `${BASE}/contracts/purchase_orders`,
-        waitFor: '.ag-root, table',
+        url: `${BASE}/contracts/commitments/purchase_order_contracts`,
+        waitFor: '.ag-root, table, [class*="commitment"]',
         description: 'Purchase Orders (Subcontracts) list view',
       },
       {
         id: 'list-purchase-order-change-orders',
         type: 'list',
-        url: `${BASE}/contracts/purchase_order_change_orders`,
+        url: `${BASE}/contracts/commitments/purchase_order_change_orders`,
         waitFor: '.ag-root, table',
         description: 'Purchase Order Change Orders list view',
       },
       {
         id: 'create-form',
         type: 'create-form',
-        url: `${BASE}/contracts/purchase_orders`,
+        url: `${BASE}/contracts/commitments/purchase_order_contracts`,
         selector: 'button:has-text("Create Subcontract"), button:has-text("Create Purchase Order"), [data-cy*="create"]',
         waitFor: 'form, [role="dialog"]',
         description: 'Create Commitment form',
@@ -178,7 +178,7 @@ export const FEATURES = {
       {
         id: 'detail',
         type: 'detail',
-        url: `${BASE}/contracts/purchase_orders`,
+        url: `${BASE}/contracts/commitments/purchase_order_contracts`,
         selector: '.ag-row:first-child, tr[class*="row"]:first-child a',
         waitFor: '[class*="detail"]',
         description: 'Commitment detail page',
@@ -200,17 +200,17 @@ export const FEATURES = {
       {
         id: 'list',
         type: 'list',
-        url: `https://us02.procore.com/${PROJECT}/project/budget`,
-        waitFor: '.ag-root, table',
+        url: `https://us02.procore.com/${PROJECT}/project/budgeting`,
+        waitFor: '.ag-root, table, [class*="budget"]',
         description: 'Budget main view',
       },
       {
-        id: 'detail-budget-detail',
-        type: 'detail',
-        url: `https://us02.procore.com/${PROJECT}/project/budget`,
-        selector: '.ag-row:first-child .ag-cell:first-child',
-        waitFor: '[class*="detail"], .ag-root',
-        description: 'Budget detail view',
+        id: 'create-form',
+        type: 'create-form',
+        url: `https://us02.procore.com/${PROJECT}/project/budgeting`,
+        selector: 'button:has-text("Edit Budget"), button:has-text("Create"), [data-cy*="create"]',
+        waitFor: 'form, [role="dialog"], .ag-root',
+        description: 'Budget edit / create form',
       },
     ],
   },
@@ -221,14 +221,14 @@ export const FEATURES = {
       {
         id: 'list',
         type: 'list',
-        url: `${BASE}/direct_costs`,
-        waitFor: '.ag-root, table',
+        url: `https://us02.procore.com/${PROJECT}/project/direct_costs`,
+        waitFor: '.ag-root, table, [class*="direct"]',
         description: 'Direct Costs list view',
       },
       {
         id: 'create-form',
         type: 'create-form',
-        url: `${BASE}/direct_costs`,
+        url: `https://us02.procore.com/${PROJECT}/project/direct_costs`,
         selector: 'button:has-text("Create Direct Cost"), [data-cy*="create"]',
         waitFor: 'form, [role="dialog"]',
         description: 'Create Direct Cost form',
@@ -236,7 +236,7 @@ export const FEATURES = {
       {
         id: 'detail',
         type: 'detail',
-        url: `${BASE}/direct_costs`,
+        url: `https://us02.procore.com/${PROJECT}/project/direct_costs`,
         selector: '.ag-row:first-child, tr[class*="row"]:first-child a',
         waitFor: '[class*="detail"]',
         description: 'Direct Cost detail page',
@@ -383,6 +383,119 @@ export const FEATURES = {
       },
     ],
   },
+  'submittals': {
+    name: 'Submittals',
+    states: [
+      {
+        id: 'list',
+        type: 'list',
+        url: `${BASE}/submittals`,
+        waitFor: '.ag-root, table, [class*="submittal"]',
+        description: 'Submittals list view',
+      },
+      {
+        id: 'create-form',
+        type: 'create-form',
+        url: `${BASE}/submittals`,
+        selector: 'button:has-text("Create Submittal"), button:has-text("New Submittal"), [data-cy*="create"]',
+        waitFor: 'form, [role="dialog"]',
+        description: 'Create Submittal form',
+      },
+      {
+        id: 'detail',
+        type: 'detail',
+        url: `${BASE}/submittals`,
+        selector: '.ag-row:first-child, tr[class*="row"]:first-child a',
+        waitFor: '[class*="detail"], [class*="submittal"]',
+        description: 'Submittal detail page',
+      },
+    ],
+  },
+
+  'photos': {
+    name: 'Photos',
+    states: [
+      {
+        id: 'list',
+        type: 'list',
+        url: `${BASE}/photos/timeline`,
+        waitFor: '[class*="photo"], [class*="image"], [class*="timeline"], .ag-root',
+        description: 'Photos timeline view',
+      },
+      {
+        id: 'upload-form',
+        type: 'create-form',
+        url: `${BASE}/photos/timeline`,
+        selector: 'button:has-text("Upload"), button:has-text("Add Photos"), [data-cy*="upload"]',
+        waitFor: 'form, [role="dialog"], input[type="file"]',
+        description: 'Upload Photos form',
+      },
+    ],
+  },
+
+  'daily-log': {
+    name: 'Daily Log',
+    states: [
+      {
+        id: 'list',
+        type: 'list',
+        url: `https://us02.procore.com/${PROJECT}/project/daily_log`,
+        waitFor: '.ag-root, table, [class*="daily"], [class*="log"]',
+        description: 'Daily Log list view',
+      },
+      {
+        id: 'detail',
+        type: 'detail',
+        url: `https://us02.procore.com/${PROJECT}/project/daily_log`,
+        selector: '.ag-row:first-child, tr[class*="row"]:first-child a, [class*="log-entry"]:first-child',
+        waitFor: '[class*="detail"], [class*="daily"], form',
+        description: 'Daily Log entry detail',
+      },
+    ],
+  },
+
+  'directory': {
+    name: 'Directory',
+    states: [
+      {
+        id: 'list',
+        type: 'list',
+        url: `${BASE}/directory/users`,
+        waitFor: '.ag-root, table, [class*="directory"], [class*="user"]',
+        description: 'Directory list view',
+      },
+      {
+        id: 'create-form',
+        type: 'create-form',
+        url: `${BASE}/directory/users`,
+        selector: 'button:has-text("Add Person"), button:has-text("Create"), button:has-text("Invite"), [data-cy*="create"]',
+        waitFor: 'form, [role="dialog"]',
+        description: 'Add Person/Company form',
+      },
+    ],
+  },
+
+  'documents': {
+    name: 'Documents',
+    states: [
+      {
+        id: 'list',
+        type: 'list',
+        url: `${BASE}/documents`,
+        waitFor: '.ag-root, table, [class*="document"]',
+        description: 'Documents list view',
+      },
+      {
+        id: 'upload-form',
+        type: 'create-form',
+        url: `${BASE}/documents`,
+        selector: 'button:has-text("Upload"), button:has-text("New Folder"), [data-cy*="upload"]',
+        waitFor: 'form, [role="dialog"], input[type="file"]',
+        description: 'Upload Document form',
+      },
+    ],
+  },
+
 };
 
 export function getFeature(name) {

@@ -1,17 +1,17 @@
 "use client";
 
 import * as React from "react";
-import { useForm, useWatch } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm, useWatch } from "react-hook-form";
+import { useCompanyContacts } from "@/hooks/use-company-contacts";
+import { useProjectUsers } from "@/hooks/use-project-users";
 import {
   CreateSubcontractSchema,
+  type AccountingMethodValues,
   type CreateSubcontractInput,
   type SovLineItem,
-  AccountingMethodValues,
 } from "@/lib/schemas/create-subcontract-schema";
-import { useProjectUsers } from "@/hooks/use-project-users";
-import { useCompanyContacts } from "@/hooks/use-company-contacts";
-import type { BudgetCode, VendorOption, AttachmentItem } from "./types";
+import type { AttachmentItem, BudgetCode, VendorOption } from "./types";
 
 interface UseSubcontractFormStateOptions {
   projectId: number;
@@ -127,16 +127,14 @@ export function useSubcontractFormState({
   );
 
   // --- Invoice contacts ---
-  const selectedVendor = React.useMemo(
-    () => vendorOptions.find((o) => o.value === contractCompanyId),
-    [vendorOptions, contractCompanyId],
-  );
-  const selectedVendorCompanyId = selectedVendor?.companyId ?? null;
-  const { options: invoiceContactOptions, isLoading: isLoadingContacts } =
-    useCompanyContacts({
-      companyId: selectedVendorCompanyId ?? undefined,
-      enabled: !!selectedVendorCompanyId,
-    });
+  const {
+    options: invoiceContactOptions,
+    isLoading: isLoadingContacts,
+    refetch: refetchContacts,
+  } = useCompanyContacts({
+    vendorId: contractCompanyId || undefined,
+    enabled: !!contractCompanyId,
+  });
 
   React.useEffect(() => {
     if (!contractCompanyId) setValue("invoiceContactIds", []);
@@ -301,6 +299,8 @@ export function useSubcontractFormState({
     isLoadingUsers,
     invoiceContactOptions,
     isLoadingContacts,
+    refetchContacts,
+    vendorId: contractCompanyId || null,
     handleAttachmentListChange,
     handleFilesSelected,
   };

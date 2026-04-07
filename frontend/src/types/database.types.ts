@@ -4312,7 +4312,7 @@ export type Database = {
             foreignKeyName: "change_event_line_items_vendor_id_fkey"
             columns: ["vendor_id"]
             isOneToOne: false
-            referencedRelation: "companies"
+            referencedRelation: "vendors"
             referencedColumns: ["id"]
           },
         ]
@@ -5822,22 +5822,7 @@ export type Database = {
           status?: string
           updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "contract_change_orders_contract_id_fkey"
-            columns: ["contract_id"]
-            isOneToOne: false
-            referencedRelation: "prime_contract_financial_summary"
-            referencedColumns: ["contract_id"]
-          },
-          {
-            foreignKeyName: "contract_change_orders_contract_id_fkey"
-            columns: ["contract_id"]
-            isOneToOne: false
-            referencedRelation: "prime_contracts"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       contract_documents: {
         Row: {
@@ -20977,6 +20962,42 @@ export type Database = {
             columns: ["person_id"]
             isOneToOne: true
             referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vendor_contacts: {
+        Row: {
+          created_at: string
+          id: string
+          person_id: string
+          vendor_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          person_id: string
+          vendor_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          person_id?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vendor_contacts_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vendor_contacts_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "vendors"
             referencedColumns: ["id"]
           },
         ]

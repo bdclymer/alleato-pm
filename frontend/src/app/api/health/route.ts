@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { apiErrorResponse } from "@/lib/api-error";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://127.0.0.1:8000";
 
@@ -27,6 +26,18 @@ export async function GET(req: NextRequest) {
       timestamp: new Date().toISOString(),
     });
   } catch (error) {
-    return apiErrorResponse(error);
+    const message =
+      error instanceof Error ? error.message : "Failed to check backend status";
+
+    return NextResponse.json(
+      {
+        status: "error",
+        backend: false,
+        openai_configured: false,
+        timestamp: new Date().toISOString(),
+        error: message,
+      },
+      { status: 503 },
+    );
   }
 }

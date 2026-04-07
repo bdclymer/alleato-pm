@@ -21,8 +21,19 @@ export function BackendStatusIndicator() {
   useEffect(() => {
     const checkHealth = async () => {
       try {
-        const response = await fetch("/api/health");
+        const response = await fetch("/api/health", {
+          cache: "no-store",
+        });
         const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(
+            typeof data?.error === "string"
+              ? data.error
+              : "Failed to check backend status",
+          );
+        }
+
         setHealth(data);
       } catch (error) {
         setHealth({
@@ -30,7 +41,10 @@ export function BackendStatusIndicator() {
           backend: false,
           openai_configured: false,
           timestamp: new Date().toISOString(),
-          error: "Failed to check backend status",
+          error:
+            error instanceof Error
+              ? error.message
+              : "Failed to check backend status",
         });
       }
     };

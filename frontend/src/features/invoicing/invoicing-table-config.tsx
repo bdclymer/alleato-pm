@@ -46,6 +46,8 @@ export interface OwnerInvoice {
   total_contract_amount?: number | null;
   // Vendor/company
   vendor_name?: string | null;
+  // ERP sync
+  acumatica_ref_nbr?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -94,6 +96,7 @@ export const invoiceColumns: ColumnConfig[] = [
   { id: "contract", label: "Contract", defaultVisible: true },
   { id: "total_contract_amount", label: "Total Contract Amount", defaultVisible: false },
   { id: "percent_complete", label: "% Complete", defaultVisible: true },
+  { id: "erp_status", label: "ERP Status", defaultVisible: false },
 ];
 
 export const invoiceDefaultVisibleColumns = invoiceColumns
@@ -268,6 +271,16 @@ export function buildInvoiceTableColumns(
       ),
       sortable: true,
       sortValue: (invoice) => invoice.percent_complete ?? 0,
+    },
+    {
+      id: "erp_status",
+      label: "ERP Status",
+      defaultVisible: false,
+      render: (invoice) => (
+        <span className="tabular-nums text-sm text-muted-foreground">
+          {invoice.acumatica_ref_nbr ?? "—"}
+        </span>
+      ),
     },
   ];
 }

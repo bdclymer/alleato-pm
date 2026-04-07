@@ -1,3 +1,7 @@
+/**
+ * @deprecated Use the canonical route at /api/commitments/[commitmentId]/change-orders/[changeOrderId] instead.
+ * This route is kept for backward compatibility with existing integrations.
+ */
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { NextRequest, NextResponse } from "next/server";

@@ -212,7 +212,7 @@ function FilterFields({
   onFilterChange: (filters: Record<string, FilterValue>) => void;
 }): ReactElement {
   const selectFilters = filters.filter((filter) => filter.type === "select" && filter.options);
-  const inputFilters = filters.filter((filter) => filter.type === "date" || filter.type === "number");
+  const inputFilters = filters.filter((filter) => filter.type === "date" || filter.type === "number" || filter.type === "text");
 
   return (
     <div className="space-y-2">
@@ -265,7 +265,7 @@ function FilterFields({
           </label>
           <Input
             id={`filter-${filter.id}`}
-            type={filter.type === "date" ? "date" : "number"}
+            type={filter.type === "date" ? "date" : filter.type === "number" ? "number" : "text"}
             className="h-8 w-[180px] text-sm"
             min={filter.type === "number" ? "0" : undefined}
             step={filter.type === "number" ? "0.01" : undefined}

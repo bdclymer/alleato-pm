@@ -54,7 +54,7 @@ export async function GET(
             division_title
           )
         ),
-        vendor:companies!vendor_id(
+        vendor:vendors!vendor_id(
           id,
           name
         )
@@ -102,20 +102,7 @@ export async function GET(
       }
     }
 
-    // companies.id → vendors.id
-    const companyToVendor = new Map<string, string>();
-    if (vendorIds.length > 0) {
-      const { data: vendors } = await supabase
-        .from('vendors')
-        .select('id, company_id')
-        .in('company_id', vendorIds);
-
-      if (vendors) {
-        for (const v of vendors) {
-          if (v.company_id) companyToVendor.set(v.company_id, v.id);
-        }
-      }
-    }
+    // vendor_id now directly stores vendors.id — no remap needed.
 
     // Format response
     const formattedItems = (lineItems || []).map(item => {
@@ -133,9 +120,7 @@ export async function GET(
         budgetLine: item.budget_line || undefined,
         description: item.description,
         vendorId: item.vendor_id,
-        formVendorId: item.vendor_id
-          ? (companyToVendor.get(item.vendor_id) ?? item.vendor_id)
-          : undefined,
+        formVendorId: item.vendor_id ?? undefined,
         vendor: item.vendor || undefined,
         contractId: item.contract_id,
         commitmentId: item.commitment_id,
@@ -287,29 +272,8 @@ export async function POST(
       }
     }
 
-    // Resolve vendorId: could be companies.id OR vendors.id
-    let resolvedVendorId = validatedData.vendorId;
-    if (validatedData.vendorId) {
-      // First check if it's a valid companies.id
-      const { data: company } = await supabase
-        .from('companies')
-        .select('id')
-        .eq('id', validatedData.vendorId)
-        .single();
-
-      if (!company) {
-        // Not a companies ID — try vendors table and get company_id
-        const { data: vendor } = await supabase
-          .from('vendors')
-          .select('company_id')
-          .eq('id', validatedData.vendorId)
-          .single();
-
-        if (vendor?.company_id) {
-          resolvedVendorId = vendor.company_id;
-        }
-      }
-    }
+    // vendor_id FK targets vendors(id) directly — store as-is.
+    const resolvedVendorId = validatedData.vendorId;
 
     // Calculate extended amount for cost_rom if not provided
     const quantity = validatedData.quantity || 0;
@@ -348,7 +312,7 @@ export async function POST(
             division_title
           )
         ),
-        vendor:companies!vendor_id(
+        vendor:vendors!vendor_id(
           id,
           name
         )

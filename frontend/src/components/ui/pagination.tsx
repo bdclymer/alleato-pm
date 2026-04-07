@@ -123,13 +123,13 @@ function SimplePaginationButton({
 }) {
   return (
     <Button
-      variant={isActive ? "default" : "ghost"}
+      variant="ghost"
       size="sm"
       aria-label={`Go to page ${page}`}
       aria-current={isActive ? "page" : undefined}
       className={cn(
-        "h-8 min-w-8 px-2 text-xs font-medium",
-        !isActive && "text-muted-foreground",
+        "size-8 rounded-full p-0 text-xs font-medium text-violet-700 hover:bg-violet-200 hover:text-violet-800",
+        isActive ? "bg-violet-200 text-violet-900" : "bg-violet-100",
       )}
       onClick={() => onPageChange(page)}
     >

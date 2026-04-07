@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, Edit, Trash2, Download, Check, Send } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, Download, Check, Send, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -296,6 +296,27 @@ export default function InvoiceDetailPage() {
     }
   };
 
+  const handleRevise = async () => {
+    if (!invoice) return;
+
+    try {
+      const response = await fetch(
+        `/api/projects/${projectId}/invoicing/owner/${invoiceId}/revise`,
+        { method: "POST" },
+      );
+
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message || "Failed to request revision");
+      }
+
+      toast.success("Invoice returned for revision");
+      fetchInvoice();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to request revision");
+    }
+  };
+
   const handleApprove = async () => {
     if (!invoice) return;
 
@@ -417,6 +438,12 @@ export default function InvoiceDetailPage() {
               <Button size="sm" onClick={handleApprove}>
                 <Check />
                 Approve
+              </Button>
+            )}
+            {invoice.status === "under_review" && (
+              <Button variant="outline" size="sm" onClick={handleRevise}>
+                <RotateCcw />
+                Revise &amp; Resubmit
               </Button>
             )}
             <Button variant="outline" size="sm" onClick={handleExportPDF}>

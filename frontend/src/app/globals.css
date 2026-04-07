@@ -2,6 +2,7 @@
 @import "@liveblocks/react-lexical/styles.css";
 @import "../components/issue-tracker/styles/liveblocks-issue-tracker.css";
 @import "tailwindcss";
+@import "../../styles/tailwind.css";
 
 @config "../../tailwind.config.ts";
 @custom-variant dark (&:is(.dark *));

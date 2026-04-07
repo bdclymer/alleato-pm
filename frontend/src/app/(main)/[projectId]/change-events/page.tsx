@@ -39,6 +39,9 @@ type ChangeEventFilterState = Record<string, FilterValue>;
 const EMPTY_FILTERS: ChangeEventFilterState = {
   status: undefined,
   scope: undefined,
+  over_under: undefined,
+  budget: undefined,
+  budget_code_segments: undefined,
 };
 
 function formatDateValue(dateValue: string | null | undefined): string {
@@ -362,10 +365,35 @@ export default function ProjectChangeEventsPage(): ReactElement {
     const searchTerm = tableState.debouncedSearch.trim().toLowerCase();
     const scopeFilter =
       typeof activeFilters.scope === "string" ? activeFilters.scope.toLowerCase() : "";
+    const overUnderFilter =
+      typeof activeFilters.over_under === "string" ? activeFilters.over_under : "";
+    const budgetFilter =
+      typeof activeFilters.budget === "string" ? activeFilters.budget.toLowerCase() : "";
+    const budgetCodeFilter =
+      typeof activeFilters.budget_code_segments === "string"
+        ? activeFilters.budget_code_segments.toLowerCase()
+        : "";
 
     return tabFilteredEvents.filter((event) => {
       if (scopeFilter && (event.scope ?? "").toLowerCase() !== scopeFilter) {
         return false;
+      }
+
+      if (overUnderFilter) {
+        const costRom = Number(event.cost_rom ?? 0);
+        const rom = Number(event.rom ?? 0);
+        if (overUnderFilter === "over" && costRom <= rom) return false;
+        if (overUnderFilter === "under" && costRom >= rom) return false;
+      }
+
+      if (budgetFilter) {
+        // budget_code text field not yet on ChangeEvent — no-op filter until enriched
+        void budgetFilter;
+      }
+
+      if (budgetCodeFilter) {
+        // budget_code_segments text field not yet on ChangeEvent — no-op filter until enriched
+        void budgetCodeFilter;
       }
 
       if (!searchTerm) {
@@ -379,7 +407,14 @@ export default function ProjectChangeEventsPage(): ReactElement {
         (event.reason ?? "").toLowerCase().includes(searchTerm)
       );
     });
-  }, [activeFilters.scope, tabFilteredEvents, tableState.debouncedSearch]);
+  }, [
+    activeFilters.scope,
+    activeFilters.over_under,
+    activeFilters.budget,
+    activeFilters.budget_code_segments,
+    tabFilteredEvents,
+    tableState.debouncedSearch,
+  ]);
 
   const handleExport = React.useCallback(() => {
     const headers = ["#", "Title", "Status", "Scope", "Type", "Change Reason", "Origin", "Prime PCO", "Cost ROM", "Commitment", "Created"];
@@ -514,7 +549,12 @@ export default function ProjectChangeEventsPage(): ReactElement {
   };
 
   const isFiltered =
-    Boolean(tableState.searchInput) || Boolean(activeFilters.status) || Boolean(activeFilters.scope);
+    Boolean(tableState.searchInput) ||
+    Boolean(activeFilters.status) ||
+    Boolean(activeFilters.scope) ||
+    Boolean(activeFilters.over_under) ||
+    Boolean(activeFilters.budget) ||
+    Boolean(activeFilters.budget_code_segments);
 
   // Render expanded row content — fetches line items + markups from API
   const renderExpandedRow = React.useCallback(
@@ -680,6 +720,13 @@ export default function ProjectChangeEventsPage(): ReactElement {
           commitment_title: <span>--</span>,
         },
       }}
+      columnGroups={[
+        { label: "", columnIds: ["number_title"] },
+        { label: "Change Event", columnIds: ["status", "scope", "type", "reason", "origin"] },
+        { label: "Revenue", columnIds: ["revenue_prime_pco", "prime_pco_title"] },
+        { label: "Cost", columnIds: ["cost_rom", "rfq_title", "commitment", "commitment_title"] },
+        { label: "", columnIds: ["created_at"] },
+      ]}
       features={{
         enableExport: true,
         enableBulkDelete: activeTab !== "recycle_bin",

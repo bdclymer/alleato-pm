@@ -1,23 +1,23 @@
 "use client";
 
 import * as React from "react";
-import { FormProvider } from "react-hook-form";
-import { Button } from "@/components/ui/button";
 import { AlertCircle, Loader2, Wand2 } from "lucide-react";
+import { FormProvider } from "react-hook-form";
+import { FileUploadField } from "@/components/forms/FileUploadField";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import type {
   CreateSubcontractInput,
   SovLineItem,
 } from "@/lib/schemas/create-subcontract-schema";
-import { FileUploadField } from "@/components/forms/FileUploadField";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
-  GeneralInfoSection,
-  SovSection,
-  InclusionsExclusionsSection,
   ContractDatesSection,
-  PrivacySection,
-  InvoiceContactsSection,
   CreateBudgetCodeModal,
+  GeneralInfoSection,
+  InclusionsExclusionsSection,
+  InvoiceContactsSection,
+  PrivacySection,
+  SovSection,
 } from "./subcontract-form";
 import { useSubcontractFormState } from "./subcontract-form/useSubcontractFormState";
 
@@ -61,6 +61,8 @@ export function CreateSubcontractForm({
     isLoadingUsers,
     invoiceContactOptions,
     isLoadingContacts,
+    refetchContacts,
+    vendorId,
     handleAttachmentListChange,
     handleFilesSelected,
   } = useSubcontractFormState({ projectId, initialData, mode: mode ?? "create" });
@@ -169,7 +171,7 @@ export function CreateSubcontractForm({
             <InclusionsExclusionsSection isSubmitting={isSubmitting} />
             <ContractDatesSection isSubmitting={isSubmitting} />
             <PrivacySection isSubmitting={isSubmitting} userOptions={userOptions} isLoadingUsers={isLoadingUsers} />
-            <InvoiceContactsSection isSubmitting={isSubmitting} invoiceContactOptions={invoiceContactOptions} isLoadingContacts={isLoadingContacts} />
+            <InvoiceContactsSection isSubmitting={isSubmitting} invoiceContactOptions={invoiceContactOptions} isLoadingContacts={isLoadingContacts} vendorId={vendorId} refetchContacts={refetchContacts} />
           </div>
 
           <div className="mt-10 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">

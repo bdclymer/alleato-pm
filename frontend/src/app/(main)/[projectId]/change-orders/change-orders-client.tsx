@@ -259,7 +259,7 @@ export function ChangeOrdersClient({
     }
     try {
       const res = await fetch(
-        `/api/projects/${projectId}/contracts/${co.contract_id}/change-orders/${co.id}`,
+        `/api/commitments/${co.contract_id}/change-orders/${co.id}`,
         { method: "DELETE" },
       );
       if (!res.ok) {

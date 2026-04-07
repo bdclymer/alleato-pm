@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronRight, ChevronsUpDown, Inbox, Menu } from "lucide-react";
+import { ChevronRight, ChevronsUpDown, GitCompare, Inbox, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useProjectPermissions } from "@/hooks/use-project-permissions";
@@ -25,9 +25,29 @@ import { useHeaderNav } from "./use-header-nav";
 import { ProjectSelector } from "./project-selector";
 import { NotificationBell } from "./notification-bell";
 import { CommentsSidebar } from "./comments-sidebar";
-import { ProcoreCompareSidebar } from "./procore-compare-sidebar";
+import { useProcorePanelStore } from "@/lib/stores/procore-panel-store";
 import { LiveAvatarStack } from "./live-avatar-stack";
 import { feedbackTargetProps } from "@/lib/admin-feedback/constants";
+
+function ProcoreReferenceToggle() {
+  const { open, toggle } = useProcorePanelStore();
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      aria-label="Toggle Procore reference panel"
+      aria-pressed={open ? "true" : "false"}
+      className={cn(
+        "inline-flex h-8 w-8 items-center justify-center rounded-md transition-colors",
+        open
+          ? "bg-primary/10 text-primary hover:bg-primary/20"
+          : "text-muted-foreground hover:bg-accent hover:text-foreground",
+      )}
+    >
+      <GitCompare className="h-4 w-4" />
+    </button>
+  );
+}
 
 /**
  * Top header — breadcrumbs left, tools + project selector right.
@@ -112,9 +132,7 @@ export function SiteHeader() {
           <React.Suspense fallback={null}>
             <CommentsSidebar />
           </React.Suspense>
-          <React.Suspense fallback={null}>
-            <ProcoreCompareSidebar />
-          </React.Suspense>
+          <ProcoreReferenceToggle />
           <Link
             href="/feedback-inbox"
             className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"

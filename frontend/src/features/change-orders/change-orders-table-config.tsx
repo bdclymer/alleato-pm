@@ -26,9 +26,12 @@ export interface PrimeContractCO {
   title: string | null;
   status: string | null;
   total_amount: number | null;
-  contract_id: number | null;
+  contract_id: string | null;
   prime_contract_id: string | null;
   executed: boolean;
+  revision: number | null;
+  contract_company: string | null;
+  due_date: string | null;
   submitted_at: string | null;
   approved_at: string | null;
   created_at: string | null;
@@ -42,6 +45,7 @@ export interface CommitmentCO {
   status: string | null;
   amount: number | null;
   contract_id: string | null;
+  contract_type: string | null;
   requested_by: string | null;
   requested_date: string | null;
   approved_by: string | null;
@@ -80,11 +84,15 @@ function statusLabel(status: string | null | undefined): string {
 // ---------------------------------------------------------------------------
 
 export const primeColumns: ColumnConfig[] = [
-  { id: "pcco_number", label: "Number", alwaysVisible: true },
+  { id: "pcco_number", label: "#", alwaysVisible: true },
   { id: "title", label: "Title", defaultVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
   { id: "amount", label: "Amount", defaultVisible: true },
+  { id: "revision", label: "Revision", defaultVisible: false },
+  { id: "contract_company", label: "Contract Company", defaultVisible: true },
+  { id: "due_date", label: "Due Date", defaultVisible: false },
   { id: "executed", label: "Executed" },
+  { id: "submitted_at", label: "Submitted", defaultVisible: false },
   { id: "created_at", label: "Created", defaultVisible: true },
 ];
 
@@ -93,27 +101,32 @@ export const primeDefaultVisibleColumns = primeColumns
   .map((c) => c.id);
 
 export function buildPrimeTableColumns(): TableColumn<PrimeContractCO>[] {
+  const col = (id: string): ColumnConfig => {
+    const found = primeColumns.find((c) => c.id === id);
+    if (!found) throw new Error(`Column config not found: ${id}`);
+    return found;
+  };
   return [
     {
-      ...primeColumns[0],
-      width: 100,
+      ...col("pcco_number"),
+      width: 80,
       render: (item) => <span className="font-medium">{item.pcco_number || "-"}</span>,
       sortValue: (item) => item.pcco_number ?? "",
     },
     {
-      ...primeColumns[1],
-      width: 360,
-      render: (item) => <TruncatedCell value={item.title} maxWidth={360} />,
+      ...col("title"),
+      width: 320,
+      render: (item) => <TruncatedCell value={item.title} maxWidth={320} />,
       sortValue: (item) => item.title ?? "",
     },
     {
-      ...primeColumns[2],
+      ...col("status"),
       width: 120,
       render: (item) => <StatusBadge status={statusLabel(item.status)} />,
       sortValue: (item) => item.status ?? "",
     },
     {
-      ...primeColumns[3],
+      ...col("amount"),
       width: 130,
       render: (item) => (
         <span className="tabular-nums">{formatCurrency(item.total_amount)}</span>
@@ -121,7 +134,31 @@ export function buildPrimeTableColumns(): TableColumn<PrimeContractCO>[] {
       sortValue: (item) => item.total_amount ?? 0,
     },
     {
-      ...primeColumns[4],
+      ...col("revision"),
+      width: 90,
+      render: (item) => (
+        <span className="text-muted-foreground">{item.revision ?? "-"}</span>
+      ),
+      sortValue: (item) => item.revision ?? 0,
+    },
+    {
+      ...col("contract_company"),
+      width: 180,
+      render: (item) => (
+        <TruncatedCell value={item.contract_company} maxWidth={180} />
+      ),
+      sortValue: (item) => item.contract_company ?? "",
+    },
+    {
+      ...col("due_date"),
+      width: 120,
+      render: (item) => (
+        <span className="text-muted-foreground">{formatDate(item.due_date)}</span>
+      ),
+      sortValue: (item) => (item.due_date ? new Date(item.due_date).getTime() : 0),
+    },
+    {
+      ...col("executed"),
       width: 100,
       render: (item) =>
         item.executed ? (
@@ -132,7 +169,16 @@ export function buildPrimeTableColumns(): TableColumn<PrimeContractCO>[] {
       sortValue: (item) => (item.executed ? 1 : 0),
     },
     {
-      ...primeColumns[5],
+      ...col("submitted_at"),
+      width: 120,
+      render: (item) => (
+        <span className="text-muted-foreground">{formatDate(item.submitted_at)}</span>
+      ),
+      sortValue: (item) =>
+        item.submitted_at ? new Date(item.submitted_at).getTime() : 0,
+    },
+    {
+      ...col("created_at"),
       width: 120,
       render: (item) => (
         <span className="text-muted-foreground">{formatDate(item.created_at)}</span>
@@ -171,10 +217,11 @@ export function buildPrimeFilters(): FilterConfig[] {
 // ---------------------------------------------------------------------------
 
 export const commitmentColumns: ColumnConfig[] = [
-  { id: "change_order_number", label: "Number", alwaysVisible: true },
+  { id: "change_order_number", label: "#", alwaysVisible: true },
   { id: "description", label: "Description", defaultVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
   { id: "amount", label: "Amount", defaultVisible: true },
+  { id: "contract_type", label: "Contract Type", defaultVisible: true },
   { id: "requested_date", label: "Requested Date", defaultVisible: true },
   { id: "approved_date", label: "Approved Date", defaultVisible: false },
   { id: "created_at", label: "Created", defaultVisible: true },
@@ -185,29 +232,34 @@ export const commitmentDefaultVisibleColumns = commitmentColumns
   .map((c) => c.id);
 
 export function buildCommitmentTableColumns(): TableColumn<CommitmentCO>[] {
+  const col = (id: string): ColumnConfig => {
+    const found = commitmentColumns.find((c) => c.id === id);
+    if (!found) throw new Error(`Column config not found: ${id}`);
+    return found;
+  };
   return [
     {
-      ...commitmentColumns[0],
-      width: 100,
+      ...col("change_order_number"),
+      width: 80,
       render: (item) => (
         <span className="font-medium">{item.change_order_number || "-"}</span>
       ),
       sortValue: (item) => item.change_order_number ?? "",
     },
     {
-      ...commitmentColumns[1],
-      width: 360,
-      render: (item) => <TruncatedCell value={item.description} maxWidth={360} />,
+      ...col("description"),
+      width: 320,
+      render: (item) => <TruncatedCell value={item.description} maxWidth={320} />,
       sortValue: (item) => item.description ?? "",
     },
     {
-      ...commitmentColumns[2],
+      ...col("status"),
       width: 120,
       render: (item) => <StatusBadge status={statusLabel(item.status)} />,
       sortValue: (item) => item.status ?? "",
     },
     {
-      ...commitmentColumns[3],
+      ...col("amount"),
       width: 130,
       render: (item) => (
         <span className="tabular-nums">{formatCurrency(item.amount)}</span>
@@ -215,7 +267,19 @@ export function buildCommitmentTableColumns(): TableColumn<CommitmentCO>[] {
       sortValue: (item) => item.amount ?? 0,
     },
     {
-      ...commitmentColumns[4],
+      ...col("contract_type"),
+      width: 140,
+      render: (item) => (
+        <span className="text-muted-foreground">
+          {item.contract_type
+            ? item.contract_type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
+            : "-"}
+        </span>
+      ),
+      sortValue: (item) => item.contract_type ?? "",
+    },
+    {
+      ...col("requested_date"),
       width: 130,
       render: (item) => (
         <span className="text-muted-foreground">{formatDate(item.requested_date)}</span>
@@ -224,7 +288,7 @@ export function buildCommitmentTableColumns(): TableColumn<CommitmentCO>[] {
         item.requested_date ? new Date(item.requested_date).getTime() : 0,
     },
     {
-      ...commitmentColumns[5],
+      ...col("approved_date"),
       width: 130,
       render: (item) => (
         <span className="text-muted-foreground">{formatDate(item.approved_date)}</span>
@@ -233,7 +297,7 @@ export function buildCommitmentTableColumns(): TableColumn<CommitmentCO>[] {
         item.approved_date ? new Date(item.approved_date).getTime() : 0,
     },
     {
-      ...commitmentColumns[6],
+      ...col("created_at"),
       width: 120,
       render: (item) => (
         <span className="text-muted-foreground">{formatDate(item.created_at)}</span>

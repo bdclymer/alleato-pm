@@ -142,11 +142,10 @@ export const directCostStatusOptions: FilterOption[] = [
     column: "status",
     title: "Status",
     options: [
-      { label: "Draft", value: "draft" },
-      { label: "Pending Approval", value: "pending_approval" },
-      { label: "Approved", value: "approved" },
-      { label: "Paid", value: "paid" },
-      { label: "Void", value: "void" },
+      { label: "Draft", value: "Draft" },
+      { label: "Pending", value: "Pending" },
+      { label: "Revise and Resubmit", value: "Revise and Resubmit" },
+      { label: "Approved", value: "Approved" },
     ],
   },
 ];
@@ -198,11 +197,9 @@ export function getDirectCostsSummaryCards(
       }
 
       // Count by status
-      if (cost.status === "approved") {
+      if (cost.status === "Approved") {
         acc.approved += amount;
-      } else if (cost.status === "paid") {
-        acc.paid += amount;
-      } else if (cost.status === "pending_approval") {
+      } else if (cost.status === "Pending") {
         acc.pending += amount;
       }
 
@@ -216,7 +213,6 @@ export function getDirectCostsSummaryCards(
       equipment: 0,
       other: 0,
       approved: 0,
-      paid: 0,
       pending: 0,
     },
   );
@@ -236,11 +232,6 @@ export function getDirectCostsSummaryCards(
       id: "approved",
       label: "Approved",
       value: formatCurrencyValue(totals.approved),
-    },
-    {
-      id: "paid",
-      label: "Paid",
-      value: formatCurrencyValue(totals.paid),
     },
   ];
 }

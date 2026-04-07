@@ -7,6 +7,7 @@ import { CreateProjectDevConfigProvider } from "@/components/project/create-proj
 import { AIChatWidgetLazy } from "@/components/chat/ai-chat-widget-lazy";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/header";
+import { ProcoreReferencePanel } from "@/components/header/procore-reference-panel";
 import { SiteFooter } from "@/components/layout/site-footer";
 import { LiveCursors } from "@/components/live-cursors/LiveCursors";
 // AdminFeedbackWidget replaced by UnifiedFeedbackWidget in root layout
@@ -46,13 +47,16 @@ export default function MainLayout({
       <SidebarInset className="overflow-hidden">
         <CreateProjectDevConfigProvider>
           <SiteHeader />
-          <main
-            className="flex flex-1 flex-col overflow-auto min-w-0"
-            {...feedbackTargetProps("app.main-content")}
-          >
-            {children}
-            {!isTeamChatPage ? <SiteFooter /> : null}
-          </main>
+          <div className="flex flex-1 overflow-hidden min-h-0">
+            <main
+              className="flex flex-1 flex-col overflow-auto min-w-0"
+              {...feedbackTargetProps("app.main-content")}
+            >
+              {children}
+              {!isTeamChatPage ? <SiteFooter /> : null}
+            </main>
+            <ProcoreReferencePanel />
+          </div>
         </CreateProjectDevConfigProvider>
         <Overlays showChat={showAlleatoAIWidget} />
       </SidebarInset>

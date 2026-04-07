@@ -3,8 +3,8 @@
 import {
   FormGrid,
   FormSection,
+  RichTextField,
   SelectField,
-  TextareaField,
   TextField,
 } from "@/components/forms";
 import type {
@@ -138,11 +138,10 @@ export function GeneralInfoSection({
           </div>
         </div>
         <div className="md:col-span-3">
-          <TextareaField
+          <RichTextField
             label="Description"
-            rows={4}
             value={formData.description || ""}
-            onChange={(e) => updateFormData({ description: e.target.value })}
+            onChange={(value) => updateFormData({ description: value })}
             placeholder="Describe the change event"
           />
         </div>

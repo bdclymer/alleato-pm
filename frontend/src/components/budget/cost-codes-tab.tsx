@@ -151,6 +151,8 @@ function SelectedOverviewTab({
   costTypes: CostCodeType[];
   selectedSet: Set<SelectionKey>;
 }) {
+  const [expandedDivisions, setExpandedDivisions] = useState<Set<string>>(new Set());
+
   // Build a map: cost_code_id -> list of cost type codes selected
   const codeToTypes = useMemo(() => {
     const map = new Map<string, string[]>();
@@ -175,6 +177,18 @@ function SelectedOverviewTab({
     return Object.entries(groups).sort(([a], [b]) => a.localeCompare(b));
   }, [selectedCodes]);
 
+  const toggleDivision = (division: string) => {
+    setExpandedDivisions((prev) => {
+      const next = new Set(prev);
+      if (next.has(division)) {
+        next.delete(division);
+      } else {
+        next.add(division);
+      }
+      return next;
+    });
+  };
+
   if (selectedSet.size === 0) {
     return (
       <div className="py-12 text-center text-muted-foreground">
@@ -193,41 +207,57 @@ function SelectedOverviewTab({
         To edit, use the cost type tabs.
       </p>
       <div className="space-y-3">
-        {grouped.map(([division, codes]) => (
-          <div key={division}>
-            <h4 className="text-sm font-medium text-foreground px-2 py-1.5 bg-muted/50 rounded-md">
-              {division}
-              <span className="text-muted-foreground font-normal ml-2">
-                ({codes.length} code{codes.length !== 1 ? "s" : ""})
-              </span>
-            </h4>
-            <div className="mt-1 space-y-0.5">
-              {codes.map((code) => {
-                const types = codeToTypes.get(code.id) || [];
-                return (
-                  <div
-                    key={code.id}
-                    className="flex items-center justify-between py-1.5 px-3 text-sm"
-                  >
-                    <span>
-                      <span className="font-medium text-foreground">{code.id}</span>
-                      {code.title && (
-                        <span className="text-muted-foreground"> — {code.title}</span>
-                      )}
-                    </span>
-                    <div className="flex gap-1">
-                      {types.sort().map((t) => (
-                        <Badge key={t} variant="secondary" className="text-xs px-1.5 py-0">
-                          {t}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                );
-              })}
+        {grouped.map(([division, codes]) => {
+          const isExpanded = expandedDivisions.has(division);
+          return (
+            <div key={division}>
+              <button
+                type="button"
+                className="w-full flex items-center gap-2 px-2 py-1.5 bg-muted/50 rounded-md hover:bg-muted/80 transition-colors text-left"
+                onClick={() => toggleDivision(division)}
+              >
+                {isExpanded ? (
+                  <ChevronDown className="h-4 w-4 shrink-0 text-muted-foreground" />
+                ) : (
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
+                )}
+                <span className="text-sm font-medium text-foreground flex-1">
+                  {division}
+                </span>
+                <span className="text-xs text-muted-foreground font-normal">
+                  ({codes.length} code{codes.length !== 1 ? "s" : ""})
+                </span>
+              </button>
+              {isExpanded && (
+                <div className="mt-1 space-y-0.5">
+                  {codes.map((code) => {
+                    const types = codeToTypes.get(code.id) || [];
+                    return (
+                      <div
+                        key={code.id}
+                        className="flex items-center justify-between py-1.5 px-3 text-sm"
+                      >
+                        <span>
+                          <span className="font-medium text-foreground">{code.id}</span>
+                          {code.title && (
+                            <span className="text-muted-foreground"> — {code.title}</span>
+                          )}
+                        </span>
+                        <div className="flex gap-1">
+                          {types.sort().map((t) => (
+                            <Badge key={t} variant="secondary" className="text-xs px-1.5 py-0">
+                              {t}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

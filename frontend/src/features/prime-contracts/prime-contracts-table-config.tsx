@@ -1,6 +1,6 @@
 import * as React from "react";
 import type { ReactElement } from "react";
-import { ChevronDown, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ChevronDown, Lock, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { StatusBadge } from "@/components/ds";
@@ -18,7 +18,7 @@ import type {
 } from "@/components/tables/unified";
 import type { PrimeContract } from "@/lib/validation/prime-contracts";
 
-const STATUS_LABELS: Record<
+export const STATUS_LABELS: Record<
   NonNullable<PrimeContract["status"]>,
   string
 > = {
@@ -44,6 +44,8 @@ export const primeContractColumns: ColumnConfig[] = [
   { id: "invoiced_amount", label: "Invoiced", defaultVisible: true },
   { id: "payments_received", label: "Payments", defaultVisible: false },
   { id: "remaining_balance", label: "Balance", defaultVisible: false },
+  { id: "percent_paid", label: "% Paid", defaultVisible: false },
+  { id: "is_private", label: "Private", defaultVisible: false },
   { id: "start_date", label: "Start Date", defaultVisible: false },
   { id: "end_date", label: "End Date", defaultVisible: false },
 ];
@@ -57,6 +59,15 @@ export const primeContractFilters: FilterConfig[] = [
       value,
       label,
     })),
+  },
+  {
+    id: "executed",
+    label: "Executed",
+    type: "select",
+    options: [
+      { value: "yes", label: "Yes" },
+      { value: "no", label: "No" },
+    ],
   },
 ];
 
@@ -183,12 +194,31 @@ export function buildPrimeContractTableColumns(): TableColumn<PrimeContract>[] {
     },
     {
       ...primeContractColumns[13],
+      render: (item) => (
+        <span>{item.percent_paid != null ? `${item.percent_paid.toFixed(1)}%` : "—"}</span>
+      ),
+      csvValue: (item) => (item.percent_paid != null ? `${item.percent_paid.toFixed(1)}%` : ""),
+      sortValue: (item) => item.percent_paid ?? 0,
+    },
+    {
+      ...primeContractColumns[14],
+      render: (item) =>
+        item.is_private ? (
+          <Lock className="h-4 w-4 text-muted-foreground" />
+        ) : (
+          <span className="text-muted-foreground">—</span>
+        ),
+      csvValue: (item) => (item.is_private ? "Yes" : "No"),
+      sortValue: (item) => (item.is_private ? 1 : 0),
+    },
+    {
+      ...primeContractColumns[15],
       render: (item) => <span>{formatDate(item.start_date)}</span>,
       csvValue: (item) => item.start_date ?? "",
       sortValue: (item) => sortValueForDate(item.start_date),
     },
     {
-      ...primeContractColumns[14],
+      ...primeContractColumns[16],
       render: (item) => <span>{formatDate(item.end_date)}</span>,
       csvValue: (item) => item.end_date ?? "",
       sortValue: (item) => sortValueForDate(item.end_date),

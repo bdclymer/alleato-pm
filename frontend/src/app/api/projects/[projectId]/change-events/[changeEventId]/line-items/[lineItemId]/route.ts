@@ -213,29 +213,8 @@ export async function PATCH(
       }
     }
 
-    // Resolve vendorId: could be companies.id OR vendors.id
-    let resolvedVendorId = validatedData.vendorId;
-    if (validatedData.vendorId) {
-      // First check if it's a valid companies.id
-      const { data: company } = await supabase
-        .from('companies')
-        .select('id')
-        .eq('id', validatedData.vendorId)
-        .single();
-
-      if (!company) {
-        // Not a companies ID — try vendors table and get company_id
-        const { data: vendor } = await supabase
-          .from('vendors')
-          .select('company_id')
-          .eq('id', validatedData.vendorId)
-          .single();
-
-        if (vendor?.company_id) {
-          resolvedVendorId = vendor.company_id;
-        }
-      }
-    }
+    // vendor_id FK targets vendors(id) directly — store as-is.
+    const resolvedVendorId = validatedData.vendorId;
 
     // Build update object
     const updates: any = {

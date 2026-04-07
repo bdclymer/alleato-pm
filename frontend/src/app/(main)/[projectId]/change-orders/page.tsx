@@ -10,7 +10,8 @@ export default async function ProjectChangeOrdersPage({
   const { projectId } = await params;
   const { numericProjectId, supabase } = await getProjectInfo(projectId);
 
-  const [primeResponse, commitmentResponse] = await Promise.all([
+  // contract_change_orders has no FK to project — must resolve via contract IDs
+  const [primeResponse, contractIdsResponse] = await Promise.all([
     supabase
       .from("prime_contract_change_orders")
       .select("*")
@@ -18,19 +19,28 @@ export default async function ProjectChangeOrdersPage({
       .order("created_at", { ascending: false }),
 
     supabase
-      .from("contract_change_orders")
-      .select(`
-        *,
-        prime_contracts!inner(project_id)
-      `)
-      .eq("prime_contracts.project_id", numericProjectId)
-      .order("created_at", { ascending: false }),
+      .from("financial_contracts")
+      .select("id")
+      .eq("project_id", numericProjectId),
   ]);
 
-  if (primeResponse.error || commitmentResponse.error) {
-    const error = primeResponse.error || commitmentResponse.error;
-    console.error("Error loading change orders:", error);
+  if (primeResponse.error) {
+    console.error("Error loading prime contract change orders:", primeResponse.error);
     return <ChangeOrdersClient projectId={projectId} primeCOs={[]} commitmentCOs={[]} />;
+  }
+
+  const contractIds = (contractIdsResponse.data || []).map((c) => c.id);
+
+  const commitmentResponse = contractIds.length > 0
+    ? await supabase
+        .from("contract_change_orders")
+        .select("*")
+        .in("contract_id", contractIds)
+        .order("created_at", { ascending: false })
+    : { data: [], error: null };
+
+  if (commitmentResponse.error) {
+    console.error("Error loading commitment change orders:", commitmentResponse.error);
   }
 
   const primeCOs: PrimeContractCO[] = (primeResponse.data || []).map((co) => ({
@@ -42,6 +52,9 @@ export default async function ProjectChangeOrdersPage({
     contract_id: co.contract_id,
     prime_contract_id: co.prime_contract_id ?? null,
     executed: co.executed ?? false,
+    revision: co.revision ?? null,
+    contract_company: co.contract_company ?? null,
+    due_date: co.due_date ?? null,
     submitted_at: co.submitted_at,
     approved_at: co.approved_at,
     created_at: co.created_at,
@@ -55,6 +68,7 @@ export default async function ProjectChangeOrdersPage({
     status: co.status,
     amount: co.amount,
     contract_id: co.contract_id,
+    contract_type: co.contract_type ?? null,
     requested_by: co.requested_by,
     requested_date: co.requested_date,
     approved_by: co.approved_by,

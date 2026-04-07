@@ -201,6 +201,7 @@ export interface UnifiedTablePageProps<T> {
     containerClassName?: string;
   };
   features?: UnifiedTableFeatures;
+  columnGroups?: Array<{ label: string; columnIds: string[] }>;
 }
 
 export function UnifiedTablePage<T>({
@@ -219,6 +220,7 @@ export function UnifiedTablePage<T>({
   sidePanel,
   layout,
   features,
+  columnGroups,
 }: UnifiedTablePageProps<T>): ReactElement {
   const resolvedFeatures: Required<UnifiedTableFeatures> = {
     enableSearch: features?.enableSearch ?? true,
@@ -974,6 +976,35 @@ export function UnifiedTablePage<T>({
           >
             <Table>
               <TableHeader className={cn((table.stickyHeader !== false) && "sticky top-0 z-20 bg-background")}>
+                {columnGroups && columnGroups.length > 0 && (
+                  <TableRow className="border-b-0">
+                    {hasRowSelection && (
+                      <TableHead
+                        style={{ width: selectionColumnWidth, minWidth: selectionColumnWidth, maxWidth: selectionColumnWidth }}
+                        className="bg-muted/40"
+                      />
+                    )}
+                    {columnGroups.map((group) => {
+                      const visibleCount = group.columnIds.filter((id) =>
+                        orderedVisibleColumns.some((col) => col.id === id),
+                      ).length;
+                      if (visibleCount === 0) return null;
+                      return (
+                        <TableHead
+                          key={`group-${group.label}-${group.columnIds.join("-")}`}
+                          colSpan={visibleCount}
+                          className={cn(
+                            "text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground bg-muted/40 py-1.5 border-b border-border",
+                            !group.label && "bg-muted/20",
+                          )}
+                        >
+                          {group.label}
+                        </TableHead>
+                      );
+                    })}
+                    {hasRowActions && <TableHead className="w-12.5 bg-muted/40" />}
+                  </TableRow>
+                )}
                 <TableRow>
                   {hasRowSelection && (
                     <TableHead

@@ -106,7 +106,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
               division_title
             )
           ),
-          vendor:companies!vendor_id(
+          vendor:vendors!vendor_id(
             id,
             name
           )
@@ -454,7 +454,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
               division_title
             )
           ),
-          vendor:companies!vendor_id(
+          vendor:vendors!vendor_id(
             id,
             name
           )

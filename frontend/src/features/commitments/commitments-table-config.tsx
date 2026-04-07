@@ -40,6 +40,7 @@ export const commitmentColumns: ColumnConfig[] = [
   { id: "executed", label: "Executed", defaultVisible: false },
   { id: "is_private", label: "Private", defaultVisible: false },
   { id: "created_at", label: "Created", defaultVisible: false },
+  { id: "contract_company", label: "Contract Company", defaultVisible: true },
 ];
 
 export const commitmentFilters: FilterConfig[] = [
@@ -118,6 +119,12 @@ export function buildCommitmentTableColumns(
       render: (item) => <span className="font-medium">{item.number}</span>,
       csvValue: (item) => item.number,
       sortValue: (item) => item.number,
+    },
+    {
+      ...commitmentColumns[20],
+      render: (item) => <span>{item.contract_company?.name ?? "-"}</span>,
+      csvValue: (item) => item.contract_company?.name ?? "",
+      sortValue: (item) => item.contract_company?.name ?? "",
     },
     {
       ...commitmentColumns[1],

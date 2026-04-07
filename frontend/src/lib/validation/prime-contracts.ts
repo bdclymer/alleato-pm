@@ -47,6 +47,8 @@ export const primeContractSchema = z
     invoiced_amount: z.number().nullable().optional(),
     payments_received: z.number().nullable().optional(),
     remaining_balance: z.number().nullable().optional(),
+    is_private: z.boolean().nullable().optional(),
+    percent_paid: z.number().nullable().optional(),
   })
   .passthrough();
 

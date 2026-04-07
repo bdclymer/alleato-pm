@@ -3,6 +3,7 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
@@ -33,8 +34,19 @@ import {
   UnifiedTablePage,
   useUnifiedTableState,
   type FilterValue,
+  type FilterConfig,
 } from "@/components/tables/unified";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { StatusBadge } from "@/components/misc/status-badge";
 import { KpiRow } from "@/components/ds";
+import { PageShell } from "@/components/layout";
 import {
   useOwnerInvoicesList,
   useDeleteOwnerInvoice,
@@ -43,12 +55,28 @@ import {
   buildInvoiceTableColumns,
   invoiceColumns,
   invoiceDefaultVisibleColumns,
-  invoiceFilters,
   renderInvoiceCard,
   renderInvoiceList,
   renderInvoiceRowActions,
   type OwnerInvoice,
 } from "@/features/invoicing/invoicing-table-config";
+
+// =============================================================================
+// Types
+// =============================================================================
+
+interface SubcontractorInvoiceRow {
+  id: string | null;
+  contract_number: string | null;
+  title: string | null;
+  status: string | null;
+  company_name: string | null;
+  total_contract_amount: number;
+  total_billed_to_date: number;
+  percent_billed: number;
+  contract_date: string | null;
+  created_at: string | null;
+}
 
 // =============================================================================
 // Constants
@@ -57,6 +85,8 @@ import {
 const EMPTY_FILTERS: Record<string, FilterValue> = {
   billing_period_id: undefined,
   prime_contract_id: undefined,
+  status: undefined,
+  contract_company: undefined,
 };
 
 type FilterState = Record<string, FilterValue>;
@@ -83,6 +113,8 @@ export default function ProjectInvoicingPage(): ReactElement {
   const initialFilters: FilterState = {
     billing_period_id: searchParams.get("billing_period_id") ?? undefined,
     prime_contract_id: searchParams.get("prime_contract_id") ?? undefined,
+    status: undefined,
+    contract_company: undefined,
   };
 
   // ─── Table State ───────────────────────────────────────────────────────────
@@ -136,6 +168,19 @@ export default function ProjectInvoicingPage(): ReactElement {
 
   const deleteInvoice = useDeleteOwnerInvoice(projectId);
 
+  // ─── Subcontractor invoices ───────────────────────────────────────────────
+
+  const { data: subcontractorInvoices = [], isLoading: isSubLoading } = useQuery<SubcontractorInvoiceRow[]>({
+    queryKey: ["subcontractor-invoices", projectId],
+    queryFn: async () => {
+      const resp = await fetch(`/api/projects/${projectId}/invoicing/subcontractor`);
+      if (!resp.ok) throw new Error("Failed to load subcontractor invoices");
+      const json = await resp.json();
+      return json.data as SubcontractorInvoiceRow[];
+    },
+    enabled: activeTab === "subcontractor",
+  });
+
   // ─── Acumatica Sync ──────────────────────────────────────────────────────
 
   const handleErpSync = React.useCallback(async () => {
@@ -162,44 +207,6 @@ export default function ProjectInvoicingPage(): ReactElement {
   }, [projectId, router]);
 
   // ─── Client-side filtering / sorting ───────────────────────────────────────
-
-  const invoices = React.useMemo(() => {
-    let items = rawInvoices;
-
-    // Search filter (client-side)
-    const search = tableState.debouncedSearch.toLowerCase().trim();
-    if (search) {
-      items = items.filter((inv) => {
-        const num = inv.invoice_number?.toLowerCase() ?? "";
-        const id = `inv-${inv.id}`;
-        return num.includes(search) || id.includes(search);
-      });
-    }
-
-    return items;
-  }, [rawInvoices, tableState.debouncedSearch]);
-
-  const tableColumns = buildInvoiceTableColumns(handleView, handleEdit);
-
-  const sortedInvoices = React.useMemo(() => {
-    if (!tableState.sortBy) return invoices;
-    const col = tableColumns.find((c) => c.id === tableState.sortBy);
-    const getSortValue = col?.sortValue;
-    if (!getSortValue) return invoices;
-
-    return [...invoices].sort((a, b) => {
-      const va = getSortValue(a);
-      const vb = getSortValue(b);
-      if (va == null && vb == null) return 0;
-      if (va == null) return tableState.sortDirection === "asc" ? -1 : 1;
-      if (vb == null) return tableState.sortDirection === "asc" ? 1 : -1;
-      if (typeof va === "number" && typeof vb === "number") {
-        return tableState.sortDirection === "asc" ? va - vb : vb - va;
-      }
-      const cmp = String(va).localeCompare(String(vb));
-      return tableState.sortDirection === "asc" ? cmp : -cmp;
-    });
-  }, [invoices, tableColumns, tableState.sortBy, tableState.sortDirection]);
 
   // ─── Handlers ──────────────────────────────────────────────────────────────
 
@@ -236,20 +243,75 @@ export default function ProjectInvoicingPage(): ReactElement {
     tableState.setPage(1);
   }
 
-  function handleTabChange(tab: string) {
-    if (tab === "subcontractor" || tab === "billing-periods") {
-      toast.info(`${tab === "subcontractor" ? "Subcontractor invoices" : "Billing periods"} coming soon`);
-      return;
+  // ─── Client-side filtering ─────────────────────────────────────────────────
+
+  // Status + company filter (applied after server-side filters)
+  const filteredInvoices = React.useMemo(() => {
+    let items = rawInvoices;
+
+    const statusFilter = typeof activeFilters.status === "string" ? activeFilters.status : undefined;
+    if (statusFilter) {
+      items = items.filter((inv) => inv.status === statusFilter);
     }
-    tableState.setSearchParams({ tab: null });
-  }
+
+    const companyFilter = typeof activeFilters.contract_company === "string"
+      ? activeFilters.contract_company.toLowerCase()
+      : undefined;
+    if (companyFilter) {
+      items = items.filter((inv) =>
+        inv.vendor_name?.toLowerCase().includes(companyFilter) ?? false,
+      );
+    }
+
+    return items;
+  }, [rawInvoices, activeFilters.status, activeFilters.contract_company]);
+
+  const invoices = React.useMemo(() => {
+    let items = filteredInvoices;
+
+    // Search filter (client-side)
+    const search = tableState.debouncedSearch.toLowerCase().trim();
+    if (search) {
+      items = items.filter((inv) => {
+        const num = inv.invoice_number?.toLowerCase() ?? "";
+        const id = `inv-${inv.id}`;
+        return num.includes(search) || id.includes(search);
+      });
+    }
+
+    return items;
+  }, [filteredInvoices, tableState.debouncedSearch]);
+
+  const tableColumns = buildInvoiceTableColumns(handleView, handleEdit);
+
+  const sortedInvoices = React.useMemo(() => {
+    if (!tableState.sortBy) return invoices;
+    const col = tableColumns.find((c) => c.id === tableState.sortBy);
+    const getSortValue = col?.sortValue;
+    if (!getSortValue) return invoices;
+
+    return [...invoices].sort((a, b) => {
+      const va = getSortValue(a);
+      const vb = getSortValue(b);
+      if (va == null && vb == null) return 0;
+      if (va == null) return tableState.sortDirection === "asc" ? -1 : 1;
+      if (vb == null) return tableState.sortDirection === "asc" ? 1 : -1;
+      if (typeof va === "number" && typeof vb === "number") {
+        return tableState.sortDirection === "asc" ? va - vb : vb - va;
+      }
+      const cmp = String(va).localeCompare(String(vb));
+      return tableState.sortDirection === "asc" ? cmp : -cmp;
+    });
+  }, [invoices, tableColumns, tableState.sortBy, tableState.sortDirection]);
 
   // ─── Derived ───────────────────────────────────────────────────────────────
 
   const isFiltered =
     Boolean(tableState.searchInput) ||
     Boolean(activeFilters.billing_period_id) ||
-    Boolean(activeFilters.prime_contract_id);
+    Boolean(activeFilters.prime_contract_id) ||
+    Boolean(activeFilters.status) ||
+    Boolean(activeFilters.contract_company);
 
   const totalItems = sortedInvoices.length;
 
@@ -277,6 +339,42 @@ export default function ProjectInvoicingPage(): ReactElement {
       { label: "Paid", value: fmt(paid) },
     ];
   }, [rawInvoices]);
+
+  // ─── Augmented filters (base + status + company) ──────────────────────────
+
+  const augmentedFilters: FilterConfig[] = [
+    {
+      id: "billing_period_id",
+      label: "Billing Period",
+      type: "select",
+      options: [],
+    },
+    {
+      id: "prime_contract_id",
+      label: "Prime Contract",
+      type: "select",
+      options: [],
+    },
+    {
+      id: "status",
+      label: "Invoice Status",
+      type: "select",
+      options: [
+        { value: "draft", label: "Draft" },
+        { value: "submitted", label: "Submitted" },
+        { value: "under_review", label: "Under Review" },
+        { value: "approved", label: "Approved" },
+        { value: "paid", label: "Paid" },
+        { value: "void", label: "Void" },
+        { value: "revise_and_resubmit", label: "Revise & Resubmit" },
+      ],
+    },
+    {
+      id: "contract_company",
+      label: "Contract Company",
+      type: "text",
+    },
+  ];
 
   // ─── Tabs ──────────────────────────────────────────────────────────────────
 
@@ -322,7 +420,71 @@ export default function ProjectInvoicingPage(): ReactElement {
     </DropdownMenu>
   );
 
+  // ─── Subcontractor table render ────────────────────────────────────────────
+
+  const subcontractorTable = (
+    <div className="px-6 py-4 space-y-4">
+      <div className="flex items-center justify-between">
+        <p className="text-sm text-muted-foreground">
+          {isSubLoading ? "Loading…" : `${subcontractorInvoices.length} subcontract${subcontractorInvoices.length !== 1 ? "s" : ""}`}
+        </p>
+      </div>
+      {isSubLoading ? (
+        <p className="text-sm text-muted-foreground py-8 text-center">Loading subcontractor invoices…</p>
+      ) : subcontractorInvoices.length === 0 ? (
+        <p className="text-sm text-muted-foreground py-8 text-center">No subcontractor invoices found.</p>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Contract #</TableHead>
+              <TableHead>Title</TableHead>
+              <TableHead>Company</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Contract Amount</TableHead>
+              <TableHead className="text-right">Billed to Date</TableHead>
+              <TableHead className="text-right">% Billed</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {subcontractorInvoices.map((row) => (
+              <TableRow key={row.id ?? row.contract_number}>
+                <TableCell className="font-medium">{row.contract_number ?? "—"}</TableCell>
+                <TableCell>{row.title ?? "—"}</TableCell>
+                <TableCell>{row.company_name ?? "—"}</TableCell>
+                <TableCell>
+                  {row.status ? <StatusBadge status={row.status} /> : "—"}
+                </TableCell>
+                <TableCell className="text-right tabular-nums">
+                  {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(row.total_contract_amount)}
+                </TableCell>
+                <TableCell className="text-right tabular-nums">
+                  {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(row.total_billed_to_date)}
+                </TableCell>
+                <TableCell className="text-right tabular-nums">{row.percent_billed}%</TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+    </div>
+  );
+
   // ─── Render ────────────────────────────────────────────────────────────────
+
+  if (activeTab === "subcontractor") {
+    return (
+      <PageShell
+        variant="table"
+        title="Invoicing"
+        description="Manage owner invoices and billing periods"
+        actions={createButton}
+        tabs={tabs}
+      >
+        {subcontractorTable}
+      </PageShell>
+    );
+  }
 
   return (
     <>
@@ -352,7 +514,7 @@ export default function ProjectInvoicingPage(): ReactElement {
             tableState.setCurrentView(view);
             tableState.setSearchParams({ view });
           },
-          filters: invoiceFilters,
+          filters: augmentedFilters,
           activeFilters,
           onFilterChange: handleFilterChange,
           onClearFilters: () => handleFilterChange(EMPTY_FILTERS),

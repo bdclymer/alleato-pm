@@ -129,24 +129,26 @@ async function generateChangeEventNumber(
   supabase: any,
   projectId: number
 ): Promise<string> {
-  // Get the highest number from existing change events
-  const { data: lastEvent } = await supabase
+  // Get all existing (non-deleted) change event numbers and compute max numerically.
+  // String ordering is unsafe with mixed formats like "CE-001" and "009".
+  const { data: existing } = await supabase
     .from('change_events')
     .select('number')
     .eq('project_id', projectId)
-    .order('number', { ascending: false })
-    .limit(1)
-    .single()
+    .is('deleted_at', null)
 
-  let nextNumber = 1
-
-  if (lastEvent?.number) {
-    // Extract numeric part from format like "CE-001" or "001"
-    const match = lastEvent.number.match(/\d+/)
+  let maxNumber = 0
+  for (const row of existing ?? []) {
+    if (!row?.number) continue
+    // Use the trailing integer to handle "CE-001", "001", "9", etc.
+    const match = String(row.number).match(/(\d+)\s*$/)
     if (match) {
-      nextNumber = parseInt(match[0], 10) + 1
+      const n = parseInt(match[1], 10)
+      if (Number.isFinite(n) && n > maxNumber) maxNumber = n
     }
   }
+
+  const nextNumber = maxNumber + 1
 
   // Format as 3-digit padded number
   return nextNumber.toString().padStart(3, '0')

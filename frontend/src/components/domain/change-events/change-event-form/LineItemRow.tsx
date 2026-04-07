@@ -242,14 +242,27 @@ export function LineItemRow({
 
       {/* Non-committed cost */}
       <TableCell className="w-44 px-1 py-1.5 align-top">
-        <MoneyField
-          inline
-          label="Non-committed Cost"
-          value={item.nonCommittedCost ?? undefined}
-          onChange={(val) => updateLineItem(index, "nonCommittedCost", val ?? 0)}
-          showCurrency={false}
-          className="h-9 min-w-[120px]"
-        />
+        {item.contract ? (
+          <MoneyField
+            inline
+            label="Non-committed Cost"
+            value={item.nonCommittedCost ?? undefined}
+            onChange={(val) => updateLineItem(index, "nonCommittedCost", val ?? 0)}
+            showCurrency={false}
+            className="h-9 min-w-[120px]"
+          />
+        ) : (
+          <div
+            className={cn(
+              "pt-2 text-right text-sm font-semibold",
+              (item.nonCommittedCost ?? 0) !== 0
+                ? "text-foreground"
+                : "text-muted-foreground",
+            )}
+          >
+            {formatCurrency(item.nonCommittedCost ?? 0)}
+          </div>
+        )}
       </TableCell>
 
       {/* Total */}

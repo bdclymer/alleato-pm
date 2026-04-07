@@ -1,0 +1,44 @@
+{
+  "run_id": "2026-04-07",
+  "feature": "commitments",
+  "generated_at": "2026-04-07",
+  "tasks": [
+    {
+      "task_id": "T-001",
+      "gap_id": "GAP-001",
+      "priority": "high",
+      "title": "Add Contract Company column to commitments list table",
+      "description": "Add a 'contract_company' column entry to commitmentColumns array and buildCommitmentTableColumns function. Data is already fetched (item.contract_company?.name used in card view). Insert after 'number' column.",
+      "file": "frontend/src/features/commitments/commitments-table-config.tsx",
+      "effort": "small"
+    },
+    {
+      "task_id": "T-002",
+      "gap_id": "GAP-002",
+      "priority": "medium",
+      "title": "Wire AttachmentsTab into commitment detail page",
+      "description": "Import AttachmentsTab from '@/components/commitments/tabs/AttachmentsTab' and add it to the detail page render logic. Add 'Attachments' tab entry to PageTabs array. The API route already exists at /api/commitments/[id]/attachments.",
+      "file": "frontend/src/app/(main)/[projectId]/commitments/[commitmentId]/page.tsx",
+      "effort": "small"
+    },
+    {
+      "task_id": "T-003",
+      "gap_id": "GAP-003",
+      "priority": "low",
+      "title": "Fix 3 column label strings to match Procore",
+      "description": "Update labels: 'Original Amount' → 'Original Contract Amount', 'Revised Amount' → 'Revised Contract Amount', 'Remaining Balance' → 'Remaining Balance Outstanding'",
+      "file": "frontend/src/features/commitments/commitments-table-config.tsx",
+      "lines": [29, 33, 38],
+      "effort": "trivial"
+    },
+    {
+      "task_id": "T-004",
+      "gap_id": "GAP-004",
+      "priority": "low",
+      "title": "Migrate commitment APIs to project-scoped routes (optional)",
+      "description": "Move /api/commitments/* to /api/projects/[projectId]/commitments/* for consistency with other financial tools. Low urgency — functional as-is.",
+      "file": "frontend/src/app/api/commitments/",
+      "effort": "large"
+    }
+  ]
+}

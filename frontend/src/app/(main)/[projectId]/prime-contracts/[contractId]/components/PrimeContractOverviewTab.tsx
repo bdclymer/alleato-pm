@@ -7,6 +7,7 @@ import {
   Rows3,
   Trash2,
 } from "lucide-react";
+import Link from "next/link";
 import { useMemo, type ReactNode } from "react";
 import {
   DndContext,
@@ -73,6 +74,7 @@ interface PrimeContractOverviewTabProps {
   exclusionsList: string[];
   formatStatusLabel: (status: Contract["status"]) => string;
   formatCurrency: (value: number | null | undefined) => string;
+  onEditGeneralInfo?: () => void;
   lineItemsLoading: boolean;
   lineItems: ContractLineItem[];
   budgetCodes: BudgetCode[];
@@ -129,6 +131,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
     onReorderSovLines,
     onRequestCreateBudgetCode,
     onDeleteSovLine,
+    onEditGeneralInfo,
   } = props;
   const ownerName = contract.contract_company?.name || contract.client?.name;
   const displayedSovItems = isSovEditing ? sovDraftItems : lineItems;
@@ -210,7 +213,19 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-14 gap-y-8">
               {/* Details */}
               <div className="space-y-6">
-                <SectionRuleHeading label="Details" className="[&_span]:text-primary" />
+                <div className="flex items-center justify-between">
+                  <SectionRuleHeading label="Details" className="[&_span]:text-primary" />
+                  {onEditGeneralInfo && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs text-primary"
+                      onClick={onEditGeneralInfo}
+                    >
+                      Edit
+                    </Button>
+                  )}
+                </div>
                 <dl className="space-y-4 text-sm">
                   <LabelValueRow label="Contract #">
                     {contract.contract_number || "Not set"}
@@ -305,7 +320,14 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                     {contract.architect_engineer?.name || "Not set"}
                   </LabelValueRow>
                   <LabelValueRow label="Owner" missing={!ownerName}>
-                    {ownerName || "Not set"}
+                    {ownerName && (contract.contract_company?.id || contract.client?.id) ? (
+                      <Link
+                        href={`/directory/vendors/${contract.contract_company?.id || contract.client?.id}`}
+                        className="text-primary hover:underline"
+                      >
+                        {ownerName}
+                      </Link>
+                    ) : (ownerName || "Not set")}
                   </LabelValueRow>
                   <LabelValueRow label="Default Retainage">
                     {contract.retention_percentage ?? 0}%

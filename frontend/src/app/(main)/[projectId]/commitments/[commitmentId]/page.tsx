@@ -1,14 +1,12 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type * as React from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import {
   ChevronDown,
   Download,
   FileText,
-  History,
   Mail,
   Pencil,
   Plus,
@@ -18,13 +16,16 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { AdvancedSettingsTab } from "@/components/commitments/tabs/AdvancedSettingsTab";
+import { AttachmentsTab } from "@/components/commitments/tabs/AttachmentsTab";
+import { ChangeHistoryTab } from "@/components/commitments/tabs/ChangeHistoryTab";
 import { ChangeOrdersTab } from "@/components/commitments/tabs/ChangeOrdersTab";
+import { EmailsTab } from "@/components/commitments/tabs/EmailsTab";
 import { InvoicesTab } from "@/components/commitments/tabs/InvoicesTab";
+import { PaymentsIssuedTab } from "@/components/commitments/tabs/PaymentsIssuedTab";
 import { RfqsTab } from "@/components/commitments/tabs/RfqsTab";
 import { ScheduleOfValuesTab } from "@/components/commitments/tabs/ScheduleOfValuesTab";
 import { SubcontractorSovTab } from "@/components/commitments/tabs/SubcontractorSovTab";
 import { DocumentDeliveryDialog } from "@/components/documents/DocumentDeliveryDialog";
-import { EmptyState } from "@/components/ds/empty-state";
 import { KpiBlock } from "@/components/ds/kpi";
 import { StatusBadge } from "@/components/ds/status-badge";
 import {
@@ -527,20 +528,6 @@ function FinancialKpiStrip({ commitment }: { commitment: CommitmentDetail }) {
 }
 
 // ---------------------------------------------------------------------------
-// Stub tab for features coming soon
-// ---------------------------------------------------------------------------
-
-function ComingSoonTab({ icon, label }: { icon: React.ReactNode; label: string }) {
-  return (
-    <EmptyState
-      icon={icon}
-      title={`${label} coming soon`}
-      description="This feature is under development and will be available shortly."
-    />
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Main page
 // ---------------------------------------------------------------------------
 
@@ -621,6 +608,7 @@ export default function CommitmentDetailPage() {
       "emails",
       "history",
       "advanced-settings",
+      "attachments",
     ]);
     if (allowedTabs.has(tab)) {
       setActiveTab(tab);
@@ -813,6 +801,7 @@ export default function CommitmentDetailPage() {
           { label: "Payments Issued", href: "payments", isActive: activeTab === "payments" },
           { label: "Emails", href: "emails", isActive: activeTab === "emails" },
           { label: "Change History", href: "history", isActive: activeTab === "history" },
+          { label: "Attachments", href: "attachments", isActive: activeTab === "attachments" },
           { label: "Advanced Settings", href: "advanced-settings", isActive: activeTab === "advanced-settings" },
         ]}
         onTabClick={(href) => setActiveTab(href)}
@@ -863,24 +852,19 @@ export default function CommitmentDetailPage() {
         )}
 
         {activeTab === "payments" && (
-          <ComingSoonTab
-            icon={<Receipt className="h-5 w-5 text-muted-foreground" />}
-            label="Payments Issued"
-          />
+          <PaymentsIssuedTab commitmentId={commitment.id} />
         )}
 
         {activeTab === "emails" && (
-          <ComingSoonTab
-            icon={<Mail className="h-5 w-5 text-muted-foreground" />}
-            label="Emails"
-          />
+          <EmailsTab commitmentId={commitment.id} projectId={projectId} />
         )}
 
         {activeTab === "history" && (
-          <ComingSoonTab
-            icon={<History className="h-5 w-5 text-muted-foreground" />}
-            label="Change History"
-          />
+          <ChangeHistoryTab commitmentId={commitment.id} />
+        )}
+
+        {activeTab === "attachments" && (
+          <AttachmentsTab commitmentId={commitment.id} />
         )}
 
         {activeTab === "advanced-settings" && (

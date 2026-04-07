@@ -1,7 +1,7 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
 import { useCallback, useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 export interface CompanyContact {
   id: string;
@@ -20,6 +20,9 @@ export interface CompanyContactOption {
 }
 
 interface UseCompanyContactsOptions {
+  /** Filter contacts assigned to this specific vendor (preferred) */
+  vendorId?: string;
+  /** Legacy: filter by company_id on the people table */
   companyId?: string;
   search?: string;
   limit?: number;
@@ -35,21 +38,20 @@ interface UseCompanyContactsReturn {
 }
 
 /**
- * Hook for fetching contacts belonging to a specific company.
- * Used for invoice contacts selection in commitment forms.
- * Only fetches when companyId is provided and enabled is true.
+ * Hook for fetching contacts belonging to a specific vendor via vendor_contacts join table.
+ * Falls back to company_id filter if vendorId is not provided.
  */
 export function useCompanyContacts(
   options: UseCompanyContactsOptions = {},
 ): UseCompanyContactsReturn {
-  const { companyId, search, limit = 100, enabled = true } = options;
+  const { vendorId, companyId, search, limit = 100, enabled = true } = options;
   const [contacts, setContacts] = useState<CompanyContact[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
 
   const fetchContacts = useCallback(async () => {
-    // Only fetch if we have a company ID and the hook is enabled
-    if (!enabled || !companyId) {
+    const hasFilter = !!vendorId || !!companyId;
+    if (!enabled || !hasFilter) {
       setContacts([]);
       return;
     }
@@ -60,28 +62,52 @@ export function useCompanyContacts(
     try {
       const supabase = createClient();
 
-      let query = supabase
-        .from("people")
-        .select(
-          "id, first_name, last_name, email, phone_business, job_title, company_id",
-        )
-        .eq("company_id", companyId)
-        .order("last_name", { ascending: true })
-        .limit(limit);
+      if (vendorId) {
+        // Query via vendor_contacts join table for exact vendor assignment
+        let query = supabase
+          .from("vendor_contacts")
+          .select(
+            "people!vendor_contacts_person_id_fkey(id, first_name, last_name, email, phone_business, job_title, company_id)",
+          )
+          .eq("vendor_id", vendorId)
+          .limit(limit);
 
-      if (search) {
-        query = query.or(
-          `first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%`,
-        );
+        if (search) {
+          query = query.or(
+            `people.first_name.ilike.%${search}%,people.last_name.ilike.%${search}%,people.email.ilike.%${search}%`,
+          );
+        }
+
+        const { data, error: queryError } = await query;
+
+        if (queryError) throw new Error(queryError.message);
+
+        const people = (data || [])
+          .map((row) => (row as Record<string, unknown>).people)
+          .filter(Boolean) as CompanyContact[];
+
+        setContacts(people);
+      } else if (companyId) {
+        // Legacy: filter directly on people.company_id
+        let query = supabase
+          .from("people")
+          .select(
+            "id, first_name, last_name, email, phone_business, job_title, company_id",
+          )
+          .eq("company_id", companyId)
+          .order("last_name", { ascending: true })
+          .limit(limit);
+
+        if (search) {
+          query = query.or(
+            `first_name.ilike.%${search}%,last_name.ilike.%${search}%,email.ilike.%${search}%`,
+          );
+        }
+
+        const { data, error: queryError } = await query;
+        if (queryError) throw new Error(queryError.message);
+        setContacts((data || []) as CompanyContact[]);
       }
-
-      const { data, error: queryError } = await query;
-
-      if (queryError) {
-        throw new Error(queryError.message);
-      }
-
-      setContacts((data || []) as CompanyContact[]);
     } catch (err) {
       setError(
         err instanceof Error
@@ -91,13 +117,12 @@ export function useCompanyContacts(
     } finally {
       setIsLoading(false);
     }
-  }, [companyId, search, limit, enabled]);
+  }, [vendorId, companyId, search, limit, enabled]);
 
   useEffect(() => {
     fetchContacts();
   }, [fetchContacts]);
 
-  // Transform contacts to options for dropdowns
   const contactOptions: CompanyContactOption[] = contacts.map((contact) => {
     const fullName = [contact.first_name, contact.last_name]
       .filter(Boolean)
