@@ -2,19 +2,31 @@
 
 import { useParams } from "next/navigation";
 import { PageShell } from "@/components/layout";
-import { Card } from "@/components/ui/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MembersTab } from "./_components/members-tab";
+import { AuditLogTab } from "./_components/audit-log-tab";
 
 export default function ProjectAdminPage() {
-  const params = useParams();
-  const projectId = params.projectId as string;
+  const { projectId } = useParams<{ projectId: string }>();
 
   return (
-    <PageShell variant="content" title="Admin" description="Project administration settings">
-      <Card className="p-6">
-        <p className="text-muted-foreground">
-          Admin for project {projectId} - Coming soon
-        </p>
-      </Card>
+    <PageShell
+      variant="content"
+      title="Project Admin"
+      description="Manage member permissions for this project."
+    >
+      <Tabs defaultValue="members">
+        <TabsList>
+          <TabsTrigger value="members">Members</TabsTrigger>
+          <TabsTrigger value="audit">Audit Log</TabsTrigger>
+        </TabsList>
+        <TabsContent value="members" className="mt-6">
+          <MembersTab projectId={projectId} />
+        </TabsContent>
+        <TabsContent value="audit" className="mt-6">
+          <AuditLogTab projectId={projectId} />
+        </TabsContent>
+      </Tabs>
     </PageShell>
   );
 }
