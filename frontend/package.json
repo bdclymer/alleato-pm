@@ -55,7 +55,10 @@
     "quality:fix": "npm run typecheck && npm run lint:fix",
     "log:ts-errors": "npx tsx scripts/log-typescript-errors.ts",
     "audit:table-layouts": "node scripts/audit-table-layouts.mjs",
-    "audit:modals": "node scripts/audit-modals.mjs"
+    "audit:modals": "node scripts/audit-modals.mjs",
+    "design:ratchet": "node scripts/design-system/check-ratchet.mjs",
+    "design:ratchet:update-baseline": "node scripts/design-system/check-ratchet.mjs --write-baseline",
+    "design:no-new-disables": "node scripts/design-system/check-no-new-disables.mjs"
   },
   "dependencies": {
     "@ai-sdk/devtools": "^0.0.15",

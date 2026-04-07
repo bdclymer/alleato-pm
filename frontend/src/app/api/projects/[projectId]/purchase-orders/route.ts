@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { CreatePurchaseOrderSchema } from "@/lib/schemas/create-purchase-order-schema";
+import { apiErrorResponse } from "@/lib/api-error";
 
 /**
  * GET /api/projects/[id]/purchase-orders
@@ -38,10 +39,7 @@ export async function GET(
 
     return NextResponse.json({ data });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -180,9 +178,6 @@ export async function POST(
       message: "Purchase order created successfully",
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

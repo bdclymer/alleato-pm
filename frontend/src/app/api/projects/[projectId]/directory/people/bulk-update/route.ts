@@ -6,6 +6,7 @@ import {
   DirectoryAdminService,
   type DirectoryBulkUpdatePayload,
 } from "@/services/directoryAdminService";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
@@ -58,12 +59,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ data: result });
   } catch (error) {
     console.error("[DirectoryBulkUpdate] Failed", error);
-    return NextResponse.json(
-      {
-        error: "Failed to process bulk update",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

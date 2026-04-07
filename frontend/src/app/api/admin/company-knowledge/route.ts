@@ -2,17 +2,30 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 /**
+ * Helper to verify admin access. Returns { supabase, user } or a Response.
+ * OWASP A01:2021 - Broken Access Control: admin-only endpoint
+ */
+async function requireAdminAuth() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+  }
+  const { data: profile } = await supabase.from("user_profiles").select("is_admin").eq("id", user.id).single();
+  if (!profile?.is_admin) {
+    return { error: NextResponse.json({ error: "Admin access required" }, { status: 403 }) };
+  }
+  return { supabase, user };
+}
+
+/**
  * GET /api/admin/company-knowledge
  * Fetch all knowledge articles (paginated).
  */
 export async function GET(request: Request) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireAdminAuth();
+  if ("error" in auth) return auth.error;
+  const { supabase } = auth;
 
   const url = new URL(request.url);
   const category = url.searchParams.get("category");
@@ -48,13 +61,9 @@ export async function GET(request: Request) {
  * Create a new knowledge article.
  */
 export async function POST(request: Request) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireAdminAuth();
+  if ("error" in auth) return auth.error;
+  const { supabase, user } = auth;
 
   const body = await request.json();
 
@@ -84,13 +93,9 @@ export async function POST(request: Request) {
  * Update an existing knowledge article (pass `id` in body).
  */
 export async function PATCH(request: Request) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireAdminAuth();
+  if ("error" in auth) return auth.error;
+  const { supabase } = auth;
 
   const body = await request.json();
   const { id, ...updates } = body;
@@ -121,13 +126,9 @@ export async function PATCH(request: Request) {
  * Soft-delete (deactivate) a knowledge article.
  */
 export async function DELETE(request: Request) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  const auth = await requireAdminAuth();
+  if ("error" in auth) return auth.error;
+  const { supabase } = auth;
 
   const url = new URL(request.url);
   const id = url.searchParams.get("id");

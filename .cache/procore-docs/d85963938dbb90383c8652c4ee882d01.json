@@ -1,6 +1,0 @@
-{
-  "success": true,
-  "markdown": "#  Who can view bids within a free Procore account? \n##### Limited Release\n[Free Procore accounts](https://v2.support.procore.com/product-manuals/free-procore-account/tutorials/create-a-free-procore-company-account) are currently only available in the United States and Canada.\n##  Background \nThe Bid Board section in a Procore Construction Network account allows users to view all bids that they have been invited to without needing to log into separate companies in Procore.\n##  Answer \nIndividuals can view a bid within the Procore Construction Network as long as their company is invited; they do not need to be personally listed as a recipient to access the Planroom.\n## See Also\n  * [How do permissions work for free Procore accounts?](https://v2.support.procore.com/faq-how-do-permissions-work-for-free-procore-accounts)\n  * [What changes when companies upgrade to paid accounts?](https://v2.support.procore.com/faq-what-changes-when-companies-upgrade-to-paid-accounts)\n  * [How can I tell if I have a free or paid Procore company account?](https://v2.support.procore.com/faq-how-can-i-tell-if-i-have-a-free-or-paid-procore-account)\n\n\n",
-  "title": "Who can view bids within a free Procore account?",
-  "description": "An overview of who can view bids in a Procore Construction Network account."
-}

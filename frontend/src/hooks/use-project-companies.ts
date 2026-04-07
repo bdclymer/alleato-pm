@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import type {
   ProjectCompany,
   CompanyCreateDTO,
@@ -154,6 +155,9 @@ export function useCreateProjectCompany(projectId: string) {
         queryKey: ["project-companies", projectId],
       });
     },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to create company");
+    },
   });
 }
 
@@ -202,6 +206,9 @@ export function useUpdateProjectCompany(projectId: string) {
         queryKey: ["project-company", projectId, companyId],
       });
     },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update company");
+    },
   });
 }
 
@@ -233,6 +240,9 @@ export function useDeleteProjectCompany(projectId: string) {
       queryClient.invalidateQueries({
         queryKey: ["project-companies", projectId],
       });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to delete company");
     },
   });
 }

@@ -2,144 +2,156 @@ import * as React from "react"
 import { cn } from "@/lib/utils"
 import { Input } from "@/components/ui/input"
 
-interface NumberInputProps extends Omit<React.ComponentProps<"input">, "type" | "onFocus"> {
+interface NumberInputProps extends Omit<React.ComponentProps<"input">, "type" | "onFocus" | "onChange"> {
   onFocus?: (e: React.FocusEvent<HTMLInputElement>) => void;
+  onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   autoSelectOnFocus?: boolean;
   clearZeroOnFocus?: boolean;
+  /** Format with thousand separators on blur. Default true. */
   formatOnBlur?: boolean;
-  currency?: boolean;
+  /** Number of decimal places to show on blur. Default 2. Set to 0 for integers. */
+  decimals?: number;
 }
 
 /**
- * Enhanced number input component designed for budget/financial data entry
+ * Enhanced number input for non-currency numeric data entry (quantities, sq ft, etc.)
+ *
+ * For currency/money inputs, use MoneyField instead.
+ *
  * Features:
- * - Auto-selects content on focus for easy replacement
- * - Clears placeholder zeros when user clicks
- * - Formats currency values on blur
- * - Optimized for fast data entry workflows
+ * - Typing: raw numeric string, no formatting mid-keystroke
+ * - Blur: thousand separators via Intl.NumberFormat (e.g. 150,000.00)
+ * - Focus: raw number for clean editing, auto-select all
+ * - Right-aligned, tabular-nums
+ * - onChange still fires with e.target.value as a raw numeric string (same contract)
  */
 function NumberInput({
   className,
   onFocus,
+  onChange,
   autoSelectOnFocus = true,
   clearZeroOnFocus = true,
   formatOnBlur = true,
-  currency = false,
+  decimals = 2,
   onBlur,
-  onChange,
   value,
   placeholder = "Enter amount",
   step = "0.01",
+  ref,
   ...props
-}: NumberInputProps) {
-  const [isFocused, setIsFocused] = React.useState(false);
-  const [displayValue, setDisplayValue] = React.useState<string>(
-    value === undefined || value === null ? "" : String(value),
-  );
+}: NumberInputProps & { ref?: React.Ref<HTMLInputElement> }) {
+  const [displayValue, setDisplayValue] = React.useState<string>("")
+  const isFocusedRef = React.useRef(false)
+  const internalRef = React.useRef<HTMLInputElement>(null)
 
-  const stripToNumeric = React.useCallback((raw: string) => {
-    const cleaned = raw.replace(/[^\d.]/g, "");
-    const [whole, ...rest] = cleaned.split(".");
-    if (rest.length === 0) return whole;
-    return `${whole}.${rest.join("").slice(0, 2)}`;
-  }, []);
+  // Merge external ref with internal ref
+  const setRefs = React.useCallback((node: HTMLInputElement | null) => {
+    internalRef.current = node
+    if (typeof ref === "function") ref(node)
+    else if (ref) (ref as React.MutableRefObject<HTMLInputElement | null>).current = node
+  }, [ref])
 
-  const formatCurrency = React.useCallback((raw: string) => {
-    if (!raw) return "";
-    const numeric = Number.parseFloat(raw);
-    if (Number.isNaN(numeric)) return raw;
-    return new Intl.NumberFormat("en-US", {
-      style: "currency",
-      currency: "USD",
-    }).format(numeric);
-  }, []);
+  // Strip to valid numeric characters
+  const sanitize = (raw: string): string => {
+    let cleaned = raw.replace(/[^\d.\-]/g, "")
+    // Only one decimal point
+    const dotIndex = cleaned.indexOf(".")
+    if (dotIndex !== -1) {
+      cleaned = cleaned.slice(0, dotIndex + 1) + cleaned.slice(dotIndex + 1).replace(/\./g, "")
+    }
+    // Only leading minus
+    if (cleaned.includes("-")) {
+      const negative = cleaned.startsWith("-")
+      cleaned = cleaned.replace(/-/g, "")
+      if (negative) cleaned = "-" + cleaned
+    }
+    return cleaned
+  }
 
+  // Format for display with thousand separators
+  const formatForDisplay = (raw: string): string => {
+    if (!raw || raw === "-") return raw
+    const num = parseFloat(raw)
+    if (isNaN(num)) return raw
+    return num.toLocaleString("en-US", {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    })
+  }
+
+  // Sync display from prop value (only when not focused)
   React.useEffect(() => {
-    if (!currency) return;
-    const next = value === undefined || value === null ? "" : String(value);
-    if (isFocused) {
-      setDisplayValue(stripToNumeric(next));
+    if (isFocusedRef.current) return
+    const strVal = value === undefined || value === null ? "" : String(value)
+    if (formatOnBlur && strVal) {
+      setDisplayValue(formatForDisplay(strVal))
     } else {
-      setDisplayValue(formatCurrency(stripToNumeric(next)));
+      setDisplayValue(strVal)
     }
-  }, [currency, formatCurrency, isFocused, stripToNumeric, value]);
+  }, [value, formatOnBlur, decimals])
 
-  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-    const target = e.target as HTMLInputElement;
-    if (currency) {
-      setIsFocused(true);
-      const raw = stripToNumeric(target.value);
-      setDisplayValue(raw);
-      target.value = raw;
-    }
-
-    if (autoSelectOnFocus) {
-      // Select all text for easy replacement
-      target.select();
-    } else if (clearZeroOnFocus) {
-      // Clear common placeholder values
-      const val = target.value;
-      if (val === "0" || val === "0.00" || val === "0.0") {
-        target.value = "";
-      }
-    }
-
-    // Call the original onFocus handler if provided
-    onFocus?.(e);
-  };
-
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    if (currency) {
-      const raw = stripToNumeric(e.target.value);
-      setIsFocused(false);
-      if (formatOnBlur) {
-        const formatted = formatCurrency(raw);
-        setDisplayValue(formatted);
-        e.target.value = formatted;
-      } else {
-        setDisplayValue(raw);
-        e.target.value = raw;
-      }
-    } else if (formatOnBlur && value) {
-      const numValue = parseFloat(String(value));
-      if (!isNaN(numValue)) {
-        // Format to 2 decimal places if it's a valid number
-        e.target.value = numValue.toFixed(2);
-      }
-    }
-
-    // Call the original onBlur handler if provided
-    onBlur?.(e);
-  };
+  // Fire onChange with a synthetic-like event carrying the raw numeric string
+  const fireChange = (rawValue: string) => {
+    if (!onChange || !internalRef.current) return
+    const syntheticEvent = {
+      target: { ...internalRef.current, value: rawValue },
+      currentTarget: { ...internalRef.current, value: rawValue },
+    } as React.ChangeEvent<HTMLInputElement>
+    onChange(syntheticEvent)
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!currency) {
-      onChange?.(e);
-      return;
+    const cleaned = sanitize(e.target.value)
+    setDisplayValue(cleaned)
+    fireChange(cleaned)
+  }
+
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
+    isFocusedRef.current = true
+    // Switch to raw number for clean editing
+    const raw = sanitize(String(value ?? ""))
+    setDisplayValue(raw)
+
+    if (autoSelectOnFocus) {
+      requestAnimationFrame(() => e.target.select())
+    } else if (clearZeroOnFocus) {
+      if (raw === "0" || raw === "0.00" || raw === "0.0") {
+        setDisplayValue("")
+      }
     }
 
-    const raw = stripToNumeric(e.target.value);
-    setDisplayValue(raw);
-    const nextEvent = {
-      ...e,
-      target: { ...e.target, value: raw },
-      currentTarget: { ...e.currentTarget, value: raw },
-    } as React.ChangeEvent<HTMLInputElement>;
-    onChange?.(nextEvent);
-  };
+    onFocus?.(e)
+  }
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    isFocusedRef.current = false
+    if (formatOnBlur) {
+      const raw = sanitize(e.target.value)
+      setDisplayValue(raw ? formatForDisplay(raw) : "")
+    }
+    onBlur?.(e)
+  }
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault()
+    const pasted = e.clipboardData.getData("text")
+    const cleaned = sanitize(pasted.replace(/[,\s]/g, ""))
+    setDisplayValue(cleaned)
+    fireChange(cleaned)
+  }
 
   return (
     <Input
-      type={currency ? "text" : "number"}
-      inputMode={currency ? "decimal" : undefined}
-      step={step}
-      value={currency ? displayValue : value}
+      ref={setRefs}
+      type="text"
+      inputMode="numeric"
+      value={displayValue}
       placeholder={placeholder}
       onFocus={handleFocus}
       onBlur={handleBlur}
       onChange={handleChange}
+      onPaste={handlePaste}
       className={cn(
-        // Enhanced styling for better UX
         "tabular-nums text-right !bg-transparent",
         "focus:ring-2 focus:ring-brand/20 focus:border-brand",
         "transition-all duration-200",

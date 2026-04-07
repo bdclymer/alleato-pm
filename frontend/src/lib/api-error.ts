@@ -3,7 +3,13 @@
  * Prevents leaking internal details (table names, constraints, etc.) to clients.
  */
 export function classifyError(error: unknown): { message: string; status: number } {
-  const msg = error instanceof Error ? error.message : String(error);
+  // Handle Error instances, Supabase PostgrestError objects (plain objects with .message), and strings
+  const msg =
+    error instanceof Error
+      ? error.message
+      : typeof error === "object" && error !== null && "message" in error
+        ? String((error as { message: unknown }).message)
+        : String(error);
 
   // Duplicate records
   if (msg.includes("duplicate key") || msg.includes("unique constraint")) {
@@ -12,6 +18,10 @@ export function classifyError(error: unknown): { message: string; status: number
 
   // Foreign key violations
   if (msg.includes("violates foreign key") || msg.includes("foreign key constraint")) {
+    // Distinguish between INSERT/UPDATE (missing reference) and DELETE (still referenced)
+    if (msg.includes("is still referenced") || msg.includes("update or delete on table")) {
+      return { message: "Cannot delete: this record is still referenced by other records. Remove related items first.", status: 409 };
+    }
     return { message: "Referenced record not found.", status: 400 };
   }
 
@@ -60,8 +70,12 @@ export function classifyError(error: unknown): { message: string; status: number
     return { message: "Record not found.", status: 404 };
   }
 
-  // Default: generic server error (never expose raw message)
-  return { message: "An unexpected error occurred. Please try again.", status: 500 };
+  // Include the raw message in dev so errors are diagnosable
+  const isDev = process.env.NODE_ENV === "development";
+  const fallback = isDev
+    ? `Server error: ${msg.slice(0, 200)}`
+    : "An unexpected error occurred. Please try again.";
+  return { message: fallback, status: 500 };
 }
 
 /**

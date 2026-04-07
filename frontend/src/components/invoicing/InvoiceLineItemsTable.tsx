@@ -6,7 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Text } from "@/components/ui/text";
+import { Text } from "@/components/ds/text";
 import { formatCurrency, type OwnerInvoiceLineItem } from "@/config/tables";
 
 interface InvoiceLineItemsTableProps {

@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 export async function GET() {
   const supabase = await createClient();
@@ -10,7 +11,7 @@ export async function GET() {
     .order("sort_order", { ascending: true });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return apiErrorResponse(error);
   }
 
   return NextResponse.json(data);
@@ -55,7 +56,7 @@ export async function POST(req: NextRequest) {
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return apiErrorResponse(error);
   }
 
   return NextResponse.json(data, { status: 201 });
@@ -78,7 +79,7 @@ export async function PATCH(req: NextRequest) {
     const results = await Promise.all(updates);
     const failed = results.find((r) => r.error);
     if (failed?.error) {
-      return NextResponse.json({ error: failed.error.message }, { status: 500 });
+      return apiErrorResponse(failed.error);
     }
 
     return NextResponse.json({ success: true });

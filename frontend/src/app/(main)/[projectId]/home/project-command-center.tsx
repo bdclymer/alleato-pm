@@ -74,6 +74,12 @@ interface ProjectCommandCenterProps {
     hasPrimeContractWithoutFinancialMarkup: boolean;
     changeOrdersWithoutChangeRequestCount: number;
   };
+  pendingSsovReviews?: Array<{
+    commitmentId: string;
+    commitmentNumber: string;
+    commitmentTitle: string;
+    submittedAt: string | null;
+  }>;
   // unused but accepted for API compatibility
   dailyLogs?: any[];
   budget?: any[];
@@ -105,21 +111,6 @@ function fmtFull(value: number | null | undefined): string {
 function pct(numerator: number, denominator: number): number {
   if (!denominator) return 0;
   return Math.min(100, Math.round((numerator / denominator) * 100));
-}
-
-function formatTaskSource(sourceSystem: string | null | undefined): string {
-  const normalized = (sourceSystem ?? "").trim().toLowerCase();
-  if (!normalized) return "Unknown";
-  if (normalized.includes("fireflies")) return "Fireflies";
-  if (normalized.includes("manual")) return "Manual";
-  if (normalized.includes("ai")) return "AI";
-  if (normalized.includes("import")) return "Imported";
-  if (normalized.includes("api")) return "API";
-  return normalized
-    .split(/[_\-\s]+/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
 }
 
 function initials(value: string | null | undefined): string {
@@ -162,7 +153,7 @@ interface StatPillProps {
 }
 function StatPill({ label, value, tone = "neutral" }: StatPillProps) {
   return (
-    <span className="inline-flex items-baseline gap-1.5 rounded border border-border bg-card px-2.5 py-1 text-xs">
+    <span className="inline-flex items-baseline gap-1.5 rounded border border-border bg-muted/40 px-2.5 py-1 text-xs">
       <span
         className={cn(
           "font-semibold tabular-nums",
@@ -187,9 +178,9 @@ function ProgressBar({ value, tone = "neutral" }: ProgressBarProps) {
       <div
         className={cn(
           "h-full rounded-full transition-all",
-          tone === "danger" && "bg-red-500",
-          tone === "warning" && "bg-amber-400",
-          tone === "success" && "bg-green-500",
+          tone === "danger" && "bg-destructive",
+          tone === "warning" && "bg-amber-500 dark:bg-amber-400",
+          tone === "success" && "bg-emerald-500 dark:bg-emerald-400",
           tone === "neutral" && "bg-primary"
         )}
         style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
@@ -216,6 +207,7 @@ export function ProjectCommandCenter({
   budget = [],
   team = [],
   homeAlerts,
+  pendingSsovReviews = [],
 }: ProjectCommandCenterProps) {
   const projectId = String(project.id);
   const [isEditProjectSidebarOpen, setIsEditProjectSidebarOpen] = React.useState(false);
@@ -312,6 +304,7 @@ export function ProjectCommandCenter({
     homeAlerts?.hasPrimeContractWithoutFinancialMarkup ?? false;
   const hasHomeAlerts =
     showPrimeContractMarkupAlert || changeOrdersWithoutChangeRequestCount > 0;
+  const hasPendingSsovReviews = pendingSsovReviews.length > 0;
 
   /* ── Derived: Days to completion ───────────────────── */
   const completionDate =
@@ -331,8 +324,6 @@ export function ProjectCommandCenter({
       return 0;
     })
     .slice(0, 4);
-  const meetingsById = new Map(meetings.map((meeting) => [meeting.id, meeting]));
-
   /* ── Module nav — only routes that actually exist ──── */
 
   return (
@@ -346,7 +337,7 @@ export function ProjectCommandCenter({
         <div className="flex items-start justify-between gap-3 sm:gap-4 flex-wrap">
           <div className="min-w-0 flex-1">
             {jobNumber && (
-              <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground mb-1.5">
+              <div className="text-xs font-semibold uppercase tracking-normal text-muted-foreground mb-1.5">
                 Job # {jobNumber}
               </div>
             )}
@@ -688,135 +679,6 @@ export function ProjectCommandCenter({
             )}
           </section>
 
-          <Divider />
-
-          {/* TASKS */}
-          <section>
-            <SectionHeading
-              action={
-                <Link
-                  href={`/${projectId}/tasks`}
-                  className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
-                >
-                  View All <ChevronRight className="h-3 w-3" />
-                </Link>
-              }
-            >
-              Tasks
-            </SectionHeading>
-
-            {openTasks.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No open tasks</p>
-            ) : (
-              <>
-                {/* Desktop table — hidden on small screens */}
-                <div className="hidden md:block overflow-x-auto rounded-md border border-border/70 bg-background">
-                  <table className="w-full text-sm">
-                    <thead className="bg-muted/40">
-                      <tr className="border-b border-border/70">
-                        <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Title</th>
-                        <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Assigned To</th>
-                        <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Created</th>
-                        <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Status</th>
-                        <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Associated Meeting</th>
-                        <th className="px-3 py-2 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Source</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {openTasks.map((task) => {
-                        const meeting = meetingsById.get(task.metadata_id);
-                        const hasMeetingLink = Boolean(meeting && meeting.type === "meeting");
-
-                        return (
-                          <tr key={task.id} className="border-b border-border/50 last:border-0">
-                            <td className="px-3 py-2.5 align-top">
-                              <p className="font-medium text-foreground">{task.description}</p>
-                            </td>
-                            <td className="px-3 py-2.5 align-top text-muted-foreground">
-                              <div className="flex items-center gap-2">
-                                <Avatar className="h-6 w-6">
-                                  <AvatarFallback className="text-[10px] bg-muted">
-                                    {(task.assignee_name?.trim() || "?").split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
-                                  </AvatarFallback>
-                                </Avatar>
-                                <span>{task.assignee_name?.trim() || "Unassigned"}</span>
-                              </div>
-                            </td>
-                            <td className="px-3 py-2.5 align-top text-muted-foreground tabular-nums">
-                              {format(new Date(task.created_at), "MMM d, yyyy")}
-                            </td>
-                            <td className="px-3 py-2.5 align-top">
-                              <StatusBadge status={task.status} />
-                            </td>
-                            <td className="px-3 py-2.5 align-top">
-                              {hasMeetingLink ? (
-                                <Link
-                                  href={`/${projectId}/meetings/${task.metadata_id}`}
-                                  className="text-primary hover:text-primary/80 transition-colors"
-                                >
-                                  {meeting?.title?.trim() || "Open meeting"}
-                                </Link>
-                              ) : (
-                                <span className="text-muted-foreground">—</span>
-                              )}
-                            </td>
-                            <td className="px-3 py-2.5 align-top text-muted-foreground">
-                              {formatTaskSource(task.source_system)}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Mobile card list — visible only on small screens */}
-                <div className="md:hidden space-y-2">
-                  {openTasks.map((task) => {
-                    const meeting = meetingsById.get(task.metadata_id);
-                    const hasMeetingLink = Boolean(meeting && meeting.type === "meeting");
-
-                    return (
-                      <div
-                        key={task.id}
-                        className="rounded-md border border-border/70 bg-background p-3 space-y-2"
-                      >
-                        <div className="flex items-start justify-between gap-2">
-                          <p className="text-sm font-medium text-foreground leading-snug">
-                            {task.description}
-                          </p>
-                          <StatusBadge status={task.status} />
-                        </div>
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                          <span className="inline-flex items-center gap-1.5">
-                            <Avatar className="h-5 w-5">
-                              <AvatarFallback className="text-[9px] bg-muted">
-                                {(task.assignee_name?.trim() || "?").split(" ").map((n) => n[0]).join("").slice(0, 2).toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            {task.assignee_name?.trim() || "Unassigned"}
-                          </span>
-                          <span className="tabular-nums">
-                            {format(new Date(task.created_at), "MMM d, yyyy")}
-                          </span>
-                          <span>{formatTaskSource(task.source_system)}</span>
-                        </div>
-                        {hasMeetingLink && (
-                          <Link
-                            href={`/${projectId}/meetings/${task.metadata_id}`}
-                            className="text-xs text-primary hover:text-primary/80 transition-colors"
-                          >
-                            {meeting?.title?.trim() || "Open meeting"}
-                          </Link>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </>
-            )}
-          </section>
-
         </div>
 
         {/* ── RIGHT: Sidebar ──────────────────────────── */}
@@ -827,7 +689,7 @@ export function ProjectCommandCenter({
             <SectionHeading>Alerts</SectionHeading>
 
             {!hasHomeAlerts ? (
-              <div className="flex items-center gap-2 rounded-md px-3 py-2.5 bg-green-50 text-green-700 text-sm">
+              <div className="flex items-center gap-2 rounded-md px-3 py-2.5 bg-status-success/10 text-status-success text-sm">
                 <CheckCircle2 className="h-4 w-4 shrink-0" />
                 <span>No financial or change-order alerts</span>
               </div>
@@ -836,30 +698,30 @@ export function ProjectCommandCenter({
                 {showPrimeContractMarkupAlert && (
                   <Link
                     href={`/${projectId}/prime-contracts`}
-                    className="flex items-center justify-between rounded-md px-3 py-2.5 bg-red-50 hover:bg-red-100 transition-colors"
+                    className="flex items-center justify-between rounded-md px-3 py-2.5 bg-destructive/10 hover:bg-destructive/15 transition-colors"
                   >
                     <div className="flex items-center gap-2">
-                      <AlertTriangle className="h-3.5 w-3.5 text-red-600 shrink-0" />
-                      <span className="text-sm font-medium text-red-700">
+                      <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />
+                      <span className="text-sm font-medium text-destructive">
                         Prime contract created without financial markup
                       </span>
                     </div>
-                    <ChevronRight className="h-3.5 w-3.5 text-red-500" />
+                    <ChevronRight className="h-3.5 w-3.5 text-destructive" />
                   </Link>
                 )}
                 {changeOrdersWithoutChangeRequestCount > 0 && (
                   <Link
                     href={`/${projectId}/change-orders`}
-                    className="flex items-center justify-between rounded-md px-3 py-2.5 bg-red-50 hover:bg-red-100 transition-colors"
+                    className="flex items-center justify-between rounded-md px-3 py-2.5 bg-destructive/10 hover:bg-destructive/15 transition-colors"
                   >
                     <div className="flex items-center gap-2">
-                      <AlertTriangle className="h-3.5 w-3.5 text-red-600 shrink-0" />
-                      <span className="text-sm font-medium text-red-700">
+                      <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />
+                      <span className="text-sm font-medium text-destructive">
                         {changeOrdersWithoutChangeRequestCount} change order
                         {changeOrdersWithoutChangeRequestCount !== 1 ? "s" : ""} without change request
                       </span>
                     </div>
-                    <ChevronRight className="h-3.5 w-3.5 text-red-500" />
+                    <ChevronRight className="h-3.5 w-3.5 text-destructive" />
                   </Link>
                 )}
               </div>
@@ -872,32 +734,69 @@ export function ProjectCommandCenter({
           <section>
             <SectionHeading>Action Required</SectionHeading>
 
-            {rfisOverdue.length === 0 && overdueTasks.length === 0 ? (
-              <div className="flex items-center gap-2 rounded-md px-3 py-2.5 bg-green-50 text-green-700 text-sm">
+            {rfisOverdue.length === 0 && overdueTasks.length === 0 && !hasPendingSsovReviews ? (
+              <div className="flex items-center gap-2 rounded-md px-3 py-2.5 bg-status-success/10 text-status-success text-sm">
                 <CheckCircle2 className="h-4 w-4 shrink-0" />
                 <span>No overdue items</span>
               </div>
             ) : (
               <div className="space-y-1.5">
+                {hasPendingSsovReviews && (
+                  <Link
+                    href={`/${projectId}/commitments`}
+                    className="flex items-center justify-between rounded-md px-3 py-2.5 bg-status-warning/10 hover:bg-status-warning/15 transition-colors"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-3.5 w-3.5 text-status-warning shrink-0" />
+                      <span className="text-sm font-medium text-status-warning">
+                        {pendingSsovReviews.length} subcontractor SOV
+                        {pendingSsovReviews.length !== 1 ? "s" : ""} awaiting review
+                      </span>
+                    </div>
+                    <ChevronRight className="h-3.5 w-3.5 text-status-warning" />
+                  </Link>
+                )}
+                {hasPendingSsovReviews && (
+                  <div className="rounded-md border border-border/70 bg-background">
+                    {pendingSsovReviews.slice(0, 3).map((item) => (
+                      <Link
+                        key={item.commitmentId}
+                        href={`/${projectId}/commitments/${item.commitmentId}?tab=subcontractor-sov`}
+                        className="flex items-start justify-between gap-2 px-3 py-2.5 border-b border-border/60 last:border-b-0 hover:bg-muted/40 transition-colors"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">
+                            {item.commitmentNumber ? `${item.commitmentNumber} · ` : ""}
+                            {item.commitmentTitle}
+                          </p>
+                          <p className="text-xs text-muted-foreground mt-0.5">
+                            Submitted {item.submittedAt ? format(new Date(item.submittedAt), "MMM d, yyyy") : "recently"}
+                          </p>
+                        </div>
+                        <StatusBadge status="Under Review" />
+                      </Link>
+                    ))}
+                  </div>
+                )}
                 {rfisOverdue.length > 0 && (
                   <Link
                     href={`/${projectId}/rfis`}
-                    className="flex items-center justify-between rounded-md px-3 py-2.5 bg-red-50 hover:bg-red-100 transition-colors"
+                    className="flex items-center justify-between rounded-md px-3 py-2.5 bg-destructive/10 hover:bg-destructive/15 transition-colors"
                   >
                     <div className="flex items-center gap-2">
-                      <AlertTriangle className="h-3.5 w-3.5 text-red-600 shrink-0" />
-                      <span className="text-sm font-medium text-red-700">
+                      <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />
+                      <span className="text-sm font-medium text-destructive">
                         {rfisOverdue.length} overdue RFI
                         {rfisOverdue.length !== 1 ? "s" : ""}
                       </span>
                     </div>
-                    <ChevronRight className="h-3.5 w-3.5 text-red-500" />
+                    <ChevronRight className="h-3.5 w-3.5 text-destructive" />
                   </Link>
                 )}
                 {overdueTasks.length > 0 && (
-                  <div className="flex items-center gap-2 rounded-md px-3 py-2.5 bg-amber-50">
-                    <Clock className="h-3.5 w-3.5 text-amber-600 shrink-0" />
-                    <span className="text-sm font-medium text-amber-700">
+                  <div className="flex items-center gap-2 rounded-md px-3 py-2.5 bg-status-warning/10">
+                    <Clock className="h-3.5 w-3.5 text-status-warning shrink-0" />
+                    <span className="text-sm font-medium text-status-warning">
                       {overdueTasks.length} overdue task
                       {overdueTasks.length !== 1 ? "s" : ""}
                     </span>
@@ -988,7 +887,7 @@ export function ProjectCommandCenter({
                       <span
                         className={cn(
                           "mt-[5px] h-1.5 w-1.5 rounded-full shrink-0",
-                          overdue ? "bg-red-500" : "bg-amber-400"
+                          overdue ? "bg-destructive" : "bg-amber-500 dark:bg-amber-400"
                         )}
                       />
                       <div className="flex-1 min-w-0">

@@ -1,6 +1,0 @@
-{
-  "success": true,
-  "markdown": "#  User Guide Procore Connect For Drawings \nTable of Contents \n##  Publish Drawings to your Upstream Project \nWhen projects are connected, any published drawings in your upstream project are automatically copied to the downstream project. Just follow the standard steps in your project to:\n  1. [Upload Drawings](https://v2.support.procore.com/product-manuals/drawings-project/tutorials/upload-drawings)\n  2. [Review and Confirm Drawings](https://v2.support.procore.com/product-manuals/drawings-project/tutorials/review-and-confirm-drawings)\n  3. [Publish Drawings](https://v2.support.procore.com/product-manuals/drawings-project/tutorials/publish-drawings)\n\n\n[ ](https://v2.support.procore.com/process-guides/user-guide-procore-connect-for-drawings/approve-or-reject-connections-if-review-is-required/)\n[ Initiate a Project Connection ](https://v2.support.procore.com/process-guides/user-guide-procore-connect-for-drawings/initiate-a-project-connection/)\n",
-  "title": "User Guide Procore Connect For Drawings - Publish Drawings to your Upstream Project",
-  "description": "| Publish Drawings to your Upstream Project"
-}

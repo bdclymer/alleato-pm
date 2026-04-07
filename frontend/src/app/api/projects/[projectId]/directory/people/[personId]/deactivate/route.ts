@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { DirectoryService } from "@/services/directoryService";
 import { PermissionService } from "@/services/permissionService";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{ projectId: string; personId: string }>;
@@ -52,9 +53,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       message: "Person deactivated successfully",
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

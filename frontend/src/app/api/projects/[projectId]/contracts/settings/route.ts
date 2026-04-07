@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { apiErrorResponse } from "@/lib/api-error";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { ZodError } from "zod";
@@ -59,8 +60,8 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     return NextResponse.json(
       data ?? { ...DEFAULT_SETTINGS, project_id: parseInt(projectId, 10) },
     );
-  } catch {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (error) {
+    return apiErrorResponse(error);
   }
 }
 
@@ -110,6 +111,6 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         { status: 400 },
       );
     }
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }

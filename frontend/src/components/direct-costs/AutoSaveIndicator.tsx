@@ -3,7 +3,7 @@
 import { CheckCircle2, CloudOff, Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
-import { Text } from '@/components/ui/text'
+import { Text } from '@/components/ds/text'
 import {
   Tooltip,
   TooltipContent,

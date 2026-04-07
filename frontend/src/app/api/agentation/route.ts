@@ -1,5 +1,6 @@
 import { createServiceClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 /**
  * Agentation webhook receiver + bidirectional status sync.
@@ -83,7 +84,7 @@ export async function POST(req: NextRequest) {
     .select();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return apiErrorResponse(error);
   }
 
   return NextResponse.json(

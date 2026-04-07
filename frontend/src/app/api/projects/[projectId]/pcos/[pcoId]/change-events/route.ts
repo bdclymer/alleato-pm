@@ -10,6 +10,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{ projectId: string; pcoId: string }>;
@@ -37,10 +38,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     if (error) {
       console.error("Failed to fetch PCO change events:", error);
-      return NextResponse.json(
-        { error: "Failed to fetch change events", details: error.message },
-        { status: 400 }
-      );
+      return apiErrorResponse(error);
     }
 
     // Fetch full change event details
@@ -66,11 +64,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({ data: result });
   } catch (error) {
-    console.error("PCO change events list error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -179,10 +173,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     if (error) {
       console.error("Failed to group change event:", error);
-      return NextResponse.json(
-        { error: "Failed to group change event", details: error.message },
-        { status: 400 }
-      );
+      return apiErrorResponse(error);
     }
 
     // Write timeline event
@@ -199,11 +190,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json(data, { status: 201 });
   } catch (error) {
-    console.error("PCO group CE error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -277,10 +264,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    console.error("PCO ungroup CE error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return apiErrorResponse(error);
   }
 }

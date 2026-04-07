@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import type { CloneBudgetViewRequest } from "@/types/budget-views";
+import { apiErrorResponse } from "@/lib/api-error";
 
 // POST /api/projects/[id]/budget/views/[viewId]/clone
 // Clone an existing budget view
@@ -35,10 +36,7 @@ export async function POST(
     });
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to clone budget view", details: error.message },
-        { status: 500 },
-      );
+      return apiErrorResponse(error);
     }
 
     // Fetch the cloned view
@@ -73,9 +71,6 @@ export async function POST(
 
     return NextResponse.json({ view: viewWithSortedColumns }, { status: 201 });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
@@ -111,10 +112,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     const payload = await buildRfqPayload(numericProjectId);
     return NextResponse.json({ data: payload });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to load RFQs", details: error instanceof Error ? error.message : String(error) },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -206,10 +204,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       },
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to create RFQ", details: error instanceof Error ? error.message : String(error) },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 

@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{
@@ -61,10 +62,7 @@ export async function GET(
       .range(from, to);
 
     if (error) {
-      return NextResponse.json(
-        { error: 'Failed to fetch history', details: error.message },
-        { status: 400 }
-      );
+      return apiErrorResponse(error);
     }
 
     // Format history entries
@@ -105,10 +103,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return apiErrorResponse(error);
   }
 }
 

@@ -68,7 +68,7 @@ export function NumberField({
           value={value ?? ""}
           onChange={handleChange}
           className={cn(
-            error && "border-red-300",
+            error && "border-destructive",
             prefix && "pl-8",
             suffix && "pr-12",
             className,

@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { updateLineItemSchema } from '../../../validation';
 import { ZodError } from 'zod';
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{
@@ -82,10 +83,7 @@ export async function GET(
 
     return NextResponse.json(response);
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -270,10 +268,7 @@ export async function PATCH(
       .single();
 
     if (error) {
-      return NextResponse.json(
-        { error: 'Failed to update line item', details: error.message },
-        { status: 400 }
-      );
+      return apiErrorResponse(error);
     }
 
     // Update change event modification timestamp
@@ -337,10 +332,7 @@ export async function PATCH(
       );
     }
 
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -410,10 +402,7 @@ export async function DELETE(
       .eq('id', lineItemId);
 
     if (error) {
-      return NextResponse.json(
-        { error: 'Failed to delete line item', details: error.message },
-        { status: 400 }
-      );
+      return apiErrorResponse(error);
     }
 
     // Update change event modification timestamp
@@ -438,9 +427,6 @@ export async function DELETE(
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return apiErrorResponse(error);
   }
 }

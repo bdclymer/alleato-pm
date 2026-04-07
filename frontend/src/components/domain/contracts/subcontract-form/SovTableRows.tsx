@@ -5,11 +5,7 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@/components/ui/input-group";
+import { MoneyField } from "@/components/forms/MoneyField";
 import {
   Select,
   SelectContent,
@@ -200,44 +196,30 @@ export function SovLineItemRow({
                 </Select>
               </td>
               <td className="w-48 px-1 py-1.5">
-                <InputGroup className="h-10 overflow-hidden bg-transparent">
-                  <InputGroupAddon>$</InputGroupAddon>
-                  <InputGroupInput
-                    type="number"
-                    step="0.01"
-                    value={line.unitCost ?? ""}
-                    onChange={(e) => onUpdate(index, { unitCost: parseFloat(e.target.value) || 0 })}
-                    className="h-10 bg-transparent text-right"
-                    data-testid="sov-line-unit-cost"
-                  />
-                </InputGroup>
+                <MoneyField
+                  inline
+                  label="Unit Cost"
+                  value={line.unitCost ?? undefined}
+                  onChange={(val) => onUpdate(index, { unitCost: val ?? 0 })}
+                  showCurrency={false}
+                  className="h-10"
+                  data-testid="sov-line-unit-cost"
+                />
               </td>
             </>
           )}
           <td className="w-48 px-1 py-1.5">
-            <InputGroup className="h-10 overflow-hidden bg-transparent">
-              <InputGroupAddon>$</InputGroupAddon>
-              {accountingMethod === "unit_quantity" ? (
-                <InputGroupInput
-                  type="number"
-                  step="0.01"
-                  value={line.amount || ""}
-                  className="h-10 bg-transparent text-right"
-                  data-testid="sov-line-amount"
-                  disabled
-                  readOnly
-                />
-              ) : (
-                <InputGroupInput
-                  type="number"
-                  step="0.01"
-                  value={line.amount || ""}
-                  onChange={(e) => onUpdate(index, { amount: parseFloat(e.target.value) || 0 })}
-                  className="h-10 bg-transparent text-right"
-                  data-testid="sov-line-amount"
-                />
-              )}
-            </InputGroup>
+            <MoneyField
+              inline
+              label="Amount"
+              value={line.amount || undefined}
+              onChange={(val) => onUpdate(index, { amount: val ?? 0 })}
+              showCurrency={false}
+              className="h-10"
+              disabled={accountingMethod === "unit_quantity"}
+              readOnly={accountingMethod === "unit_quantity"}
+              data-testid="sov-line-amount"
+            />
           </td>
           <td className="px-1 py-1.5 pt-3 text-right text-sm">
             {formatCurrency(line.billedToDate || 0)}

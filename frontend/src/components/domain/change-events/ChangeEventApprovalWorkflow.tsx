@@ -165,11 +165,11 @@ export function ChangeEventApprovalWorkflow({
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "approved":
-        return <CheckCircle2 className="h-5 w-5 text-green-600" />;
+        return <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />;
       case "rejected":
-        return <XCircle className="h-5 w-5 text-red-600" />;
+        return <XCircle className="h-5 w-5 text-destructive" />;
       default:
-        return <Clock className="h-5 w-5 text-yellow-600" />;
+        return <Clock className="h-5 w-5 text-amber-600 dark:text-amber-400" />;
     }
   };
 
@@ -285,7 +285,7 @@ export function ChangeEventApprovalWorkflow({
 
         {/* Current User Approval Action */}
         {canApprove && (
-          <div className="rounded-lg border bg-blue-50 p-4 dark:bg-blue-950">
+          <div className="rounded-lg border bg-primary/5 p-4 dark:bg-primary/10">
             <h4 className="mb-2 font-medium">Your Response Required</h4>
             <p className="mb-4 text-sm text-muted-foreground">
               Review this change event and provide your approval decision.

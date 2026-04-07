@@ -132,14 +132,16 @@ function SortableHeader({
 
   return (
     <TableHead className={className}>
-      <button
+      <Button
         type="button"
-        className="flex items-center gap-1 hover:text-foreground transition-colors"
+        variant="ghost"
+        size="sm"
+        className="h-auto px-0 py-0 text-sm font-medium hover:bg-transparent hover:text-foreground"
         onClick={() => onToggle(field)}
       >
         {label}
         <Icon className={cn("h-3 w-3", isActive ? "text-foreground" : "text-muted-foreground/50")} />
-      </button>
+      </Button>
     </TableHead>
   );
 }
@@ -153,8 +155,8 @@ const statusConfig: Record<
   { label: string; variant: "default" | "secondary" | "outline" | "success" | "destructive"; icon: typeof Circle; iconColor: string }
 > = {
   not_started: { label: "Not Started", variant: "outline", icon: Circle, iconColor: "text-muted-foreground" },
-  in_progress: { label: "In Progress", variant: "default", icon: Clock, iconColor: "text-[hsl(var(--status-info))]" },
-  complete: { label: "Complete", variant: "success", icon: CheckCircle2, iconColor: "text-[hsl(var(--status-success))]" },
+  in_progress: { label: "In Progress", variant: "default", icon: Clock, iconColor: "text-info" },
+  complete: { label: "Complete", variant: "success", icon: CheckCircle2, iconColor: "text-success" },
 };
 
 const formatDate = (date: string | null): string => {
@@ -270,7 +272,7 @@ function TaskRow({
         onContextMenu={handleContextMenu}
       >
         {/* Selection Checkbox */}
-        <TableCell className="w-[40px]" onClick={(e) => e.stopPropagation()}>
+        <TableCell className="w-10" onClick={(e) => e.stopPropagation()}>
           <Checkbox
             checked={isSelected}
             onCheckedChange={handleToggleSelect}
@@ -279,7 +281,7 @@ function TaskRow({
         </TableCell>
 
         {/* Task Name with Hierarchy */}
-        <TableCell className="min-w-[200px]">
+        <TableCell className="min-w-52">
           <div
             className="flex items-center gap-1"
             style={{ paddingLeft: `${indentPx}px` }}
@@ -307,7 +309,7 @@ function TaskRow({
 
             {/* Milestone Icon */}
             {task.is_milestone && (
-              <Flag className="h-4 w-4 text-[hsl(var(--status-warning))] mr-1" />
+              <Flag className="mr-1 h-4 w-4 text-warning" />
             )}
 
             {/* Task Name (Editable) */}
@@ -342,28 +344,28 @@ function TaskRow({
         </TableCell>
 
         {/* Start Date */}
-        <TableCell className="w-[120px]">
+        <TableCell className="w-36">
           <span className="text-sm text-muted-foreground">
             {formatDate(task.start_date)}
           </span>
         </TableCell>
 
         {/* Finish Date */}
-        <TableCell className="w-[120px]">
+        <TableCell className="w-36">
           <span className="text-sm text-muted-foreground">
             {formatDate(task.finish_date)}
           </span>
         </TableCell>
 
         {/* Duration */}
-        <TableCell className="w-[80px]">
+        <TableCell className="w-20">
           <span className="text-sm text-muted-foreground">
             {task.duration_days !== null ? `${task.duration_days}d` : "-"}
           </span>
         </TableCell>
 
         {/* Progress */}
-        <TableCell className="w-[100px]">
+        <TableCell className="w-36">
           {(() => {
             const StatusIcon = statusConfig[task.status].icon;
             return (
@@ -376,14 +378,14 @@ function TaskRow({
         </TableCell>
 
         {/* Status */}
-        <TableCell className="w-[120px]">
+        <TableCell className="w-32">
           <Badge variant={statusConfig[task.status].variant}>
             {statusConfig[task.status].label}
           </Badge>
         </TableCell>
 
         {/* Actions */}
-        <TableCell className="w-[60px]" onClick={(e) => e.stopPropagation()}>
+        <TableCell className="w-10" onClick={(e) => e.stopPropagation()}>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
@@ -550,7 +552,7 @@ export function TaskTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead className="w-[40px]">
+            <TableHead className="w-10">
               <Checkbox
                 checked={isAllSelected}
                 onCheckedChange={handleSelectAll}
@@ -564,13 +566,13 @@ export function TaskTable({
                 }}
               />
             </TableHead>
-            <SortableHeader label="Task Name" field="name" sort={sort} onToggle={toggleSort} className="min-w-[200px]" />
-            <SortableHeader label="Start" field="start_date" sort={sort} onToggle={toggleSort} className="w-[120px]" />
-            <SortableHeader label="Finish" field="finish_date" sort={sort} onToggle={toggleSort} className="w-[120px]" />
-            <SortableHeader label="Duration" field="duration_days" sort={sort} onToggle={toggleSort} className="w-[80px]" />
-            <SortableHeader label="Progress" field="percent_complete" sort={sort} onToggle={toggleSort} className="w-[140px]" />
-            <SortableHeader label="Status" field="status" sort={sort} onToggle={toggleSort} className="w-[120px]" />
-            <TableHead className="w-[60px]"></TableHead>
+            <SortableHeader label="Task Name" field="name" sort={sort} onToggle={toggleSort} className="min-w-52" />
+            <SortableHeader label="Start" field="start_date" sort={sort} onToggle={toggleSort} className="w-36" />
+            <SortableHeader label="Finish" field="finish_date" sort={sort} onToggle={toggleSort} className="w-36" />
+            <SortableHeader label="Duration" field="duration_days" sort={sort} onToggle={toggleSort} className="w-20" />
+            <SortableHeader label="Progress" field="percent_complete" sort={sort} onToggle={toggleSort} className="w-36" />
+            <SortableHeader label="Status" field="status" sort={sort} onToggle={toggleSort} className="w-32" />
+            <TableHead className="w-10"></TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>

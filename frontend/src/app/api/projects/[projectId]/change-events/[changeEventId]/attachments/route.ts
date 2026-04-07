@@ -3,6 +3,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { createAttachmentSchema } from "../../validation";
 import { ZodError } from "zod";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{ projectId: string; changeEventId: string }>;
@@ -41,10 +42,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       .order("uploaded_at", { ascending: false });
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to fetch attachments", details: error.message },
-        { status: 400 },
-      );
+      return apiErrorResponse(error);
     }
 
     // Format response
@@ -72,10 +70,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       },
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -241,10 +236,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -359,9 +351,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       message: `${attachments?.length || 0} attachment(s) deleted successfully`,
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { DrawingSetService } from "@/services/DrawingSetService";
+import { apiErrorResponse } from "@/lib/api-error";
 
 /**
  * PATCH /api/projects/[projectId]/drawing-sets/[setId]
@@ -29,10 +30,7 @@ export async function PATCH(
     const result = await service.update(setId, body);
 
     if (result.error) {
-      return NextResponse.json(
-        { error: result.error.message },
-        { status: 500 },
-      );
+      return apiErrorResponse(result.error);
     }
 
     return NextResponse.json(result.data);
@@ -81,10 +79,7 @@ export async function POST(
     const result = await service.archive(setId);
 
     if (result.error) {
-      return NextResponse.json(
-        { error: result.error.message },
-        { status: 500 },
-      );
+      return apiErrorResponse(result.error);
     }
 
     return NextResponse.json(result.data);

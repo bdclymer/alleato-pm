@@ -1,6 +1,0 @@
-{
-  "success": true,
-  "markdown": "#  Are accounting approvers notified when data is awaiting acceptance in the ERP Integrations tool? \n##  Answer \nYes. Procore sends a daily automated email notification to all designated accounting approvers (see [What is the Accounting Approver role?](https://v2.support.procore.com/faq-what-is-the-accounting-approver-role)) on a project. Sent during off-peak hours, the report alerts approvers which data is waiting in the ERP Integrations tool for review and requires an 'Accept' or 'Reject' response.\n_Note:_ If an accounting approver initially submits a 'Reject' response, the system will NOT send an immediate automated email notification after the corrected information is sent to the ERP Integrations tool.\n## See Also\n  * [What is the accounting approver role?](https://v2.support.procore.com/faq-what-is-the-accounting-approver-role)\n  * [Why is my Procore project missing from the ERP Integrations tool?](https://v2.support.procore.com/faq-why-is-my-procore-project-missing-from-the-erp-integrations-tool)\n  * [What do the ERP icons mean?](https://v2.support.procore.com/faq-what-do-the-erp-icons-mean)\n\n\n",
-  "title": "Are accounting approvers notified when data is awaiting acceptance in the ERP Integrations tool?",
-  "description": ""
-}

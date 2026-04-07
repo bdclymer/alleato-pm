@@ -1,5 +1,6 @@
 import clsx from "clsx";
 
+import { Button } from "@/components/ui/button";
 import type { KnowledgeDocument } from "../../hooks/useKnowledgeDocuments";
 import type { CitationRecord } from "../../hooks/useThreadCitations";
 
@@ -32,22 +33,22 @@ export function KnowledgeDocumentsPanel({
 
   return (
     <div className="flex h-full flex-col rounded-xl bg-card shadow-sm">
-      <div className="border-b border-slate-200/60 px-6 py-4 dark:border-slate-800/60">
+      <div className="border-b border-border px-6 py-4">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h2 className="text-xl font-semibold text-slate-800 dark:text-slate-100">
+            <h2 className="text-xl font-semibold text-foreground">
               Knowledge library
             </h2>
-            <p className="mt-2 max-w-2xl text-sm text-slate-600 dark:text-slate-300">
+            <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
               Browse your configured knowledge sources. Documents cited in the
               latest assistant response are highlighted.
             </p>
           </div>
-          <span className="rounded-full bg-slate-100 px-4 py-1 text-xs font-medium uppercase tracking-wide text-slate-600 dark:bg-slate-800/70 dark:text-slate-300">
+          <span className="rounded-full bg-muted px-4 py-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
             {loadingDocuments ? "Loading…" : `${documents.length} files`}
           </span>
         </div>
-        <p className="mt-4 text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+        <p className="mt-4 text-xs font-medium uppercase tracking-wide text-muted-foreground">
           {statusMessage}
         </p>
       </div>
@@ -66,8 +67,8 @@ export function KnowledgeDocumentsPanel({
       </div>
 
       {citations.length > 0 ? (
-        <aside className="border-t border-slate-200/60 bg-slate-50/60 px-6 py-4 text-sm text-slate-600 dark:border-slate-800/60 dark:bg-slate-900/80 dark:text-slate-300">
-          <p className="font-medium text-slate-700 dark:text-slate-200">
+        <aside className="border-t border-border bg-muted/60 px-6 py-4 text-sm text-muted-foreground">
+          <p className="font-medium text-foreground">
             Latest sources
           </p>
           <ul className="mt-2 space-y-1">
@@ -76,10 +77,10 @@ export function KnowledgeDocumentsPanel({
                 key={`${citation.document_id}-${citation.annotation_index ?? "na"}`}
                 className="flex flex-wrap items-baseline gap-2"
               >
-                <span className="font-medium text-slate-700 dark:text-slate-100">
+                <span className="font-medium text-foreground">
                   {citation.title}
                 </span>
-                <span className="text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                <span className="text-xs uppercase tracking-wide text-muted-foreground">
                   {citation.filename}
                 </span>
               </li>
@@ -125,7 +126,7 @@ function DocumentGrid({
 }) {
   if (loading) {
     return (
-      <div className="grid h-full place-items-center bg-gradient-to-br from-slate-50/70 via-white to-slate-100/80 text-slate-500 dark:from-slate-900/40 dark:via-slate-900/20 dark:to-slate-900/60">
+      <div className="grid h-full place-items-center bg-muted/30 text-muted-foreground">
         <span className="text-sm font-medium">Loading documents…</span>
       </div>
     );
@@ -133,7 +134,7 @@ function DocumentGrid({
 
   if (documents.length === 0) {
     return (
-      <div className="grid h-full place-items-center bg-slate-50/50 text-sm text-slate-500 dark:bg-slate-900/40 dark:text-slate-400">
+      <div className="grid h-full place-items-center bg-muted/20 text-sm text-muted-foreground">
         No documents available.
       </div>
     );
@@ -149,15 +150,15 @@ function DocumentGrid({
           const active = activeDocumentIds.has(document.id);
           const fileVariant = getFileVariant(document.filename);
           return (
-            // eslint-disable-next-line design-system/no-design-violations -- knowledge document card button
-            <button
+            <Button
               type="button"
               key={document.id}
+              variant="ghost"
               className={clsx(
-                "group flex h-full min-h-[260px] flex-col justify-between overflow-hidden rounded-xl bg-card p-4 text-left shadow-sm transition-all duration-200 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+                "group flex h-full min-h-[260px] flex-col justify-between overflow-hidden rounded-xl !bg-card p-4 text-left shadow-sm transition-all duration-200 hover:!bg-card focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
                 active
-                  ? "border-blue-500/70 ring-2 ring-blue-400/60"
-                  : "border-slate-200/70 dark:ring-0",
+                  ? "border-primary/70 ring-2 ring-primary/30"
+                  : "border-border",
               )}
               onClick={() => onSelectDocument(document)}
             >
@@ -171,17 +172,17 @@ function DocumentGrid({
                   >
                     {fileVariant.label}
                   </span>
-                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400 break-words">
+                  <p className="break-words text-xs font-medium text-muted-foreground">
                     {document.filename}
                   </p>
                 </div>
                 <div className="flex flex-1 flex-col space-y-2">
-                  <h3 className="text-base font-semibold leading-snug text-slate-800 transition-colors group-hover:text-blue-600 dark:text-slate-100 dark:group-hover:text-blue-300 break-words">
+                  <h3 className="break-words text-base font-semibold leading-snug text-foreground transition-colors group-hover:text-primary">
                     {document.title}
                   </h3>
                   {document.description ? (
                     <p
-                      className="text-sm leading-snug text-slate-600 dark:text-slate-300 line-clamp-3 break-words"
+                      className="line-clamp-3 break-words text-sm leading-snug text-muted-foreground"
                       style={{
                         display: "-webkit-box",
                         WebkitBoxOrient: "vertical",
@@ -198,13 +199,13 @@ function DocumentGrid({
                 className={clsx(
                   "mt-6 inline-flex w-fit items-center self-start rounded-full px-4 py-1 text-xs font-medium",
                   active
-                    ? "bg-blue-100 text-blue-700 dark:bg-blue-900/60 dark:text-blue-200"
-                    : "bg-slate-100 text-slate-600 dark:bg-slate-800/60 dark:text-slate-300",
+                    ? "bg-primary/10 text-primary"
+                    : "bg-muted text-muted-foreground",
                 )}
               >
                 {active ? "Cited in latest response" : "Not yet cited"}
               </span>
-            </button>
+            </Button>
           );
         })}
       </div>
@@ -236,16 +237,15 @@ function getFileVariant(filename: string): {
   const styles: Record<FileVariant, { label: string; badge: string }> = {
     pdf: {
       label: "PDF",
-      badge: "bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-200",
+      badge: "bg-status-warning/10 text-status-warning",
     },
     html: {
       label: "HTML",
-      badge: "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-200",
+      badge: "bg-status-info/10 text-status-info",
     },
     default: {
       label: "FILE",
-      badge:
-        "bg-slate-100 text-slate-600 dark:bg-slate-800/60 dark:text-slate-200",
+      badge: "bg-muted text-muted-foreground",
     },
   };
 

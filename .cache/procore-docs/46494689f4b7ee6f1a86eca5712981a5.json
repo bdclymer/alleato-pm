@@ -1,6 +1,0 @@
-{
-  "success": true,
-  "markdown": "#  How can I email a submittal so people can reply through email? \n##  Answer \nIf you want to email a submittal to other Procore users, you can open a submittal in view mode and click the **Email** button. This initiates a new communication thread for the submittal item. When you click the Email button, the system lets you designate your desired recipients. In addition, the system captures all email exchanges in a communication thread in the Email tab of the submittal. For details, see [Forward a Submittal by Email](https://v2.support.procore.com/product-manuals/submittals-project/tutorials/forward-a-submittal-by-email).\n## See Also\n  * [Who receives an email when a submittal is created or updated?](https://v2.support.procore.com/faq-who-receives-an-email-when-a-submittal-is-created-or-updated)\n  * [Why can't I turn OFF the 'Action Required' emails sent from the Submittals tool?](https://v2.support.procore.com/faq-why-cant-i-turn-off-the-action-required-emails-from-the-submittals-tool)\n  * [What can I ask Assist?](https://v2.support.procore.com/faq-what-can-i-ask-assist)\n\n\n",
-  "title": "How can I email a submittal so people can reply through email?",
-  "description": ""
-}

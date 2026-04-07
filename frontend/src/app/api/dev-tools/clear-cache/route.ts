@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { exec } from "child_process"
 import { promisify } from "util"
+import { apiErrorResponse } from "@/lib/api-error";
 
 const execAsync = promisify(exec)
 
@@ -22,13 +23,6 @@ export async function POST() {
       message: "Cache cleared. Please refresh the page and wait for rebuild.",
     })
   } catch (error) {
-    console.error("Error clearing cache:", error)
-    return NextResponse.json(
-      {
-        success: false,
-        message: error instanceof Error ? error.message : "Failed to clear cache",
-      },
-      { status: 500 }
-    )
+    return apiErrorResponse(error)
   }
 }

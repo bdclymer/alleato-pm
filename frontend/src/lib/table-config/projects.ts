@@ -53,11 +53,11 @@ export const projectsTableConfig: TablePageConfig<Project> = {
       header: "Phase",
       format: "badge",
       badgeColors: {
-        Planning: "bg-blue-100 text-blue-800",
-        "Pre-Construction": "bg-yellow-100 text-yellow-800",
-        Construction: "bg-orange-100 text-orange-800",
-        Closeout: "bg-purple-100 text-purple-800",
-        Complete: "bg-green-100 text-green-800",
+        Planning: "bg-primary/10 text-primary",
+        "Pre-Construction": "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+        Construction: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
+        Closeout: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
+        Complete: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
       },
     },
     {

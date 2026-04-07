@@ -31,11 +31,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { NumberInput } from '@/components/ui/number-input'
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from '@/components/ui/input-group'
+import { MoneyField } from '@/components/forms/MoneyField'
 import {
   Select,
   SelectContent,
@@ -73,7 +69,7 @@ import {
   AlertCircle,
   CheckCircle2,
 } from 'lucide-react'
-import { Text } from '@/components/ui/text'
+import { Text } from '@/components/ds/text'
 import {
   DirectCostCreate,
   DirectCostUpdate,
@@ -299,21 +295,18 @@ function SortableLineItemRow({
           render={({ field }) => (
             <FormItem>
               <FormControl>
-                <InputGroup className={cn(
-                  !!errors && typeof errors === 'object' && errors !== null && 'unit_cost' in errors && 'border-destructive'
-                )}>
-                  <InputGroupAddon>$</InputGroupAddon>
-                  <InputGroupInput
-                    type="number"
-                    step="0.01"
-                    className="h-10 text-right"
-                    {...field}
-                    value={field.value ?? ''}
-                    onChange={(e) => field.onChange(e.target.value === '' ? 0 : Number(e.target.value))}
-                    onFocus={(e) => e.target.select()}
-                    placeholder="Enter amount"
-                  />
-                </InputGroup>
+                <MoneyField
+                  inline
+                  label="Unit Cost"
+                  value={typeof field.value === 'number' ? field.value : undefined}
+                  onChange={(val) => field.onChange(val ?? 0)}
+                  showCurrency={false}
+                  className={cn(
+                    'h-10',
+                    !!errors && typeof errors === 'object' && errors !== null && 'unit_cost' in errors && 'border-destructive'
+                  )}
+                  placeholder="Enter amount"
+                />
               </FormControl>
               <FormMessage className="text-xs" />
             </FormItem>

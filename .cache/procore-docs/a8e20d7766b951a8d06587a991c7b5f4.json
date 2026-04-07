@@ -1,6 +1,0 @@
-{
-  "success": true,
-  "markdown": "#  User Guide Procore Connect For Drawings \nTable of Contents \n##  Initiate a Project Connection \n  1. Navigate to the project's **Connection Manager** tool.\n  2. Click **Connect** Upstream.\n  3. Select the upstream company and project.  \n_Note:_ If you are connecting to a project within the _same_ company, look for the 'Current Company' section in the 'Upstream Company' dropdown to select your company's name.\n  4. Click **Next**.\n  5. Review the considerations, then click **Next**.\n  6. Click **Connect** to initiate the project connection.\n\n\nIf the upstream company chose to automatically approve connections, your projects automatically connect. If the upstream company's settings require manual review for accepting or rejecting connections, Procore sends a request to the upstream company for review.\n[ ](https://v2.support.procore.com/process-guides/user-guide-procore-connect-for-drawings/publish-drawings-to-your-upstream-project/)\n[ Publish Drawings to your Downstream Project ](https://v2.support.procore.com/process-guides/user-guide-procore-connect-for-drawings/publish-drawings-to-your-downstream-project/)\n",
-  "title": "User Guide Procore Connect For Drawings - Initiate a Project Connection",
-  "description": "| Initiate a Project Connection"
-}

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{ projectId: string; rfqId: string }>;
@@ -54,10 +55,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       },
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to load RFQ", details: error instanceof Error ? error.message : String(error) },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -126,10 +124,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json({ data: updated });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to update RFQ", details: error instanceof Error ? error.message : String(error) },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -186,9 +181,6 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to delete RFQ", details: error instanceof Error ? error.message : String(error) },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

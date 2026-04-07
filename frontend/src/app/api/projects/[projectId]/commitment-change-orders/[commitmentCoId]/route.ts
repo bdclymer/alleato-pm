@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{ projectId: string; commitmentCoId: string }>;
@@ -31,16 +32,13 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       if (error.code === "PGRST116") {
         return NextResponse.json({ error: "Not found" }, { status: 404 });
       }
-      return NextResponse.json(
-        { error: "Failed to fetch", details: error.message },
-        { status: 400 },
-      );
+      return apiErrorResponse(error);
     }
 
     // Strip the joined prime_contracts object before returning
     const { prime_contracts: _pc, ...coData } = data;
     return NextResponse.json(coData);
-  } catch {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (error) {
+    return apiErrorResponse(error);
   }
 }

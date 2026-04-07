@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
-import { NumberInput } from "@/components/ui/number-input";
+import { MoneyField } from "@/components/forms/MoneyField";
 import { Plus, HelpCircle, Sparkles, Search, ChevronRight, ChevronDown, Trash2 } from "lucide-react";
 import { FormGrid, FormGridRow } from "@/components/forms";
 import {
@@ -1109,15 +1109,17 @@ export function ContractForm({
                         />
                       </td>
                       <td className="px-1 py-2 align-middle">
-                        <NumberInput
-                          currency
-                          value={item.amount || ""}
-                          onChange={(e) =>
+                        <MoneyField
+                          inline
+                          label="Amount"
+                          value={item.amount || undefined}
+                          onChange={(val) =>
                             updateSOVLine(item.id, {
-                              amount: parseFloat(e.target.value) || 0,
+                              amount: val ?? 0,
                             })
                           }
-                          className="h-8 border-border bg-muted text-right font-medium"
+                          showCurrency={false}
+                          className="h-8"
                           data-testid="sov-line-amount"
                           readOnly={
                             formData.accountingMethod === "unit_quantity"

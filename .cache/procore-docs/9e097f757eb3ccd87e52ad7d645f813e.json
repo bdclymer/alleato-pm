@@ -1,6 +1,0 @@
-{
-  "success": true,
-  "markdown": "#  Change Companies in Procore's Navigation Bar \n##  Background \nIf you are a Procore user who has access permission to multiple Procore company accounts, you can switch between company accounts from Procore's navigation bar. This includes navigating back to your company's homepage.\n##  Steps \n  1. Open the **Select a Project** menu. At the bottom of the menu, next to **Current Company** , click **Change**.   \n\n  2. Type the name of the company you want to access.  \n\n  3. Select the company from the list to be directed to the company's homepage.\n\n\n## See Also\n  * [What changes when companies upgrade to paid accounts?](https://v2.support.procore.com/faq-what-changes-when-companies-upgrade-to-paid-accounts)\n  * [Navigate Procore's Tools](https://v2.support.procore.com/product-manuals/login-and-account-management/tutorials/navigate-procores-tools)\n  * [What is App Management?](https://v2.support.procore.com/faq-what-is-app-management)\n\n\n",
-  "title": "Change Companies in Procore's Navigation Bar",
-  "description": "How to change companies in Procore's navigation bar."
-}

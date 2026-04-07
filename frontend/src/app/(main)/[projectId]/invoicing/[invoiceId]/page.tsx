@@ -43,7 +43,7 @@ import { PageShell } from "@/components/layout";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import { formatCurrency, formatDate, type OwnerInvoice } from "@/config/tables";
 import { Separator } from "@/components/ui/separator";
-import { Text } from "@/components/ui/text";
+import { Text } from "@/components/ds/text";
 import { FormGrid, FormSection } from "@/components/forms";
 import { FormActions } from "@/components/forms/FormActions";
 import { RHFDateField } from "@/components/forms/fields/RHFDateField";

@@ -23,8 +23,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Text } from "@/components/ui/text";
-import { Stack } from "@/components/ui/stack";
+import { Text } from "@/components/ds/text";
+import { Stack } from "@/components/layout/stack";
 import { Spinner } from "@/components/ui/spinner";
 import { EmptyState, SectionHeader } from "@/components/ds";
 import { Link2, Trash2 } from "lucide-react";

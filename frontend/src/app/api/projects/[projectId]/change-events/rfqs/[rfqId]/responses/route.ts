@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 type SupabaseClient = Awaited<ReturnType<typeof createClient>>;
 
@@ -54,21 +55,15 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       .order("created_at", { ascending: false });
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to load responses", details: error.message },
-        { status: 400 },
-      );
+      return apiErrorResponse(error);
     }
 
     return NextResponse.json({ data: data ?? [] });
   } catch (error) {
     if (error instanceof Error && error.message === "RFQ not found") {
-      return NextResponse.json({ error: error.message }, { status: 404 });
+      return apiErrorResponse(error);
     }
-    return NextResponse.json(
-      { error: "Failed to load responses", details: error instanceof Error ? error.message : String(error) },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -166,11 +161,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ data: response });
   } catch (error) {
     if (error instanceof Error && error.message === "RFQ not found") {
-      return NextResponse.json({ error: error.message }, { status: 404 });
+      return apiErrorResponse(error);
     }
-    return NextResponse.json(
-      { error: "Failed to submit response", details: error instanceof Error ? error.message : String(error) },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

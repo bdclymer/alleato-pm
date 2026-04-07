@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
 import { PermissionService } from "@/services/permissionService";
 import { DirectoryAdminService } from "@/services/directoryAdminService";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
@@ -50,12 +51,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ data: result });
   } catch (error) {
     console.error("[DirectoryBulkInvite] Failed", error);
-    return NextResponse.json(
-      {
-        error: "Failed to send invitations",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

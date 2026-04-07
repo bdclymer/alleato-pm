@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { apiErrorResponse } from "@/lib/api-error";
 
 type RouteParams = { params: Promise<{ sessionId: string }> };
 
@@ -43,10 +44,7 @@ export async function GET(
     .order("created_at", { ascending: true });
 
   if (error) {
-    return NextResponse.json(
-      { error: "Failed to fetch messages", details: error.message },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 
   return NextResponse.json({ messages: data ?? [] });

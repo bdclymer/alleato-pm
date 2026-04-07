@@ -49,7 +49,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = "/pdf.worker.min.js";
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
-type AnnotationTool = "select" | "pen" | "rectangle" | "arrow" | "text" | "eraser" | "comment";
+type AnnotationTool = "select" | "pen" | "rectangle" | "arrow" | "text" | "eraser" | "comment" | "link";
 
 interface Point { x: number; y: number }
 
@@ -188,12 +188,14 @@ function renderAnnotations(
       }
       ctx.stroke();
     } else if (ann.type === "rectangle" && ann.start && ann.end) {
-      ctx.strokeRect(
-        ann.start.x,
-        ann.start.y,
-        ann.end.x - ann.start.x,
-        ann.end.y - ann.start.y
-      );
+      const rx = ann.start.x;
+      const ry = ann.start.y;
+      const rw = ann.end.x - ann.start.x;
+      const rh = ann.end.y - ann.start.y;
+      ctx.globalAlpha = 0.25;
+      ctx.fillRect(rx, ry, rw, rh);
+      ctx.globalAlpha = 1;
+      ctx.strokeRect(rx, ry, rw, rh);
     } else if (ann.type === "arrow" && ann.start && ann.end) {
       drawArrow(ctx, ann.start, ann.end);
     } else if (ann.type === "text" && ann.position && ann.text) {
@@ -410,6 +412,27 @@ export function DrawingViewer({
     }
   }, []);
 
+  // ── annotation: eraser helper ──
+  const eraseAtPoint = (pt: Point) => {
+    setAnnotations((prev) =>
+      prev.filter((ann) => {
+        if (ann.page !== pageNumber) return true;
+        if (ann.points) {
+          return !ann.points.some((p) => Math.hypot(p.x - pt.x, p.y - pt.y) < 16);
+        }
+        if (ann.start && ann.end) {
+          const midX = (ann.start.x + ann.end.x) / 2;
+          const midY = (ann.start.y + ann.end.y) / 2;
+          return Math.hypot(midX - pt.x, midY - pt.y) > 30;
+        }
+        if (ann.position) {
+          return Math.hypot(ann.position.x - pt.x, ann.position.y - pt.y) > 30;
+        }
+        return true;
+      })
+    );
+  };
+
   // ── annotation: canvas mouse handlers ──
   const handleCanvasMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     if (resolvedTool === "select") return;
@@ -417,7 +440,7 @@ export function DrawingViewer({
     if (!canvas) return;
     const pt = getCanvasPoint(e, canvas);
 
-    if (resolvedTool === "comment") {
+    if (resolvedTool === "comment" || resolvedTool === "link") {
       const xPct = (pt.x / canvas.width) * 100;
       const yPct = (pt.y / canvas.height) * 100;
       onCommentClick?.(xPct, yPct, pageNumber);
@@ -430,23 +453,8 @@ export function DrawingViewer({
     }
 
     if (resolvedTool === "eraser") {
-      setAnnotations((prev) =>
-        prev.filter((ann) => {
-          if (ann.page !== pageNumber) return true;
-          if (ann.points) {
-            return !ann.points.some((p) => Math.hypot(p.x - pt.x, p.y - pt.y) < 12);
-          }
-          if (ann.start && ann.end) {
-            const midX = (ann.start.x + ann.end.x) / 2;
-            const midY = (ann.start.y + ann.end.y) / 2;
-            return Math.hypot(midX - pt.x, midY - pt.y) > 30;
-          }
-          if (ann.position) {
-            return Math.hypot(ann.position.x - pt.x, ann.position.y - pt.y) > 30;
-          }
-          return true;
-        })
-      );
+      eraseAtPoint(pt);
+      setIsDrawing(true);
       return;
     }
 
@@ -474,11 +482,17 @@ export function DrawingViewer({
   };
 
   const handleCanvasMouseMove = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawing || !inProgress) return;
+    if (!isDrawing) return;
     const canvas = annotationCanvasRef.current;
     if (!canvas) return;
     const pt = getCanvasPoint(e, canvas);
 
+    if (resolvedTool === "eraser") {
+      eraseAtPoint(pt);
+      return;
+    }
+
+    if (!inProgress) return;
     if (inProgress.type === "pen") {
       setInProgress((prev) =>
         prev ? { ...prev, points: [...(prev.points ?? []), pt] } : prev
@@ -489,8 +503,10 @@ export function DrawingViewer({
   };
 
   const handleCanvasMouseUp = () => {
-    if (!isDrawing || !inProgress) return;
+    if (!isDrawing) return;
     setIsDrawing(false);
+    if (resolvedTool === "eraser") return;
+    if (!inProgress) return;
     setAnnotations((prev) => [...prev, inProgress]);
     setInProgress(null);
   };
@@ -533,13 +549,13 @@ export function DrawingViewer({
   const resolvedColor = controlledColor ?? annotationColor;
   const resolvedStrokeWidth = controlledStrokeWidth ?? strokeWidth;
 
-  const annotationMode = resolvedTool !== "select" && resolvedTool !== "comment";
+  const annotationMode = resolvedTool !== "select" && resolvedTool !== "comment" && resolvedTool !== "link";
 
   // ── canvas cursor ──
   const canvasCursor =
     resolvedTool === "select"
       ? "default"
-      : resolvedTool === "comment"
+      : resolvedTool === "comment" || resolvedTool === "link"
       ? "crosshair"
       : resolvedTool === "eraser"
       ? "cell"

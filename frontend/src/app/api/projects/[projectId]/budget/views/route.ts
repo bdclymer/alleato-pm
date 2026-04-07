@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import type { CreateBudgetViewRequest } from "@/types/budget-views";
+import { apiErrorResponse } from "@/lib/api-error";
 
 // GET /api/projects/[id]/budget/views
 // Fetch all budget views for a project
@@ -78,14 +79,7 @@ export async function GET(
 
     return NextResponse.json({ views: viewsWithSortedColumns });
   } catch (error) {
-    console.error("Budget views API error:", error);
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : "Unknown error"
-      },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -210,13 +204,6 @@ export async function POST(
       { status: 201 },
     );
   } catch (error) {
-    console.error("Budget views POST API error:", error);
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : "Unknown error"
-      },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

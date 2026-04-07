@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 export async function GET(request: Request) {
   try {
@@ -22,13 +23,10 @@ export async function GET(request: Request) {
     if (status) query = query.eq("status", status);
 
     const { data, error } = await query;
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    if (error) return apiErrorResponse(error);
     return NextResponse.json(data || []);
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error", message: error instanceof Error ? error.message : "Unknown" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -47,12 +45,9 @@ export async function POST(request: Request) {
       .select("id, name, type, status, website, address, city, state, created_at")
       .single();
 
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
+    if (error) return apiErrorResponse(error);
     return NextResponse.json(data, { status: 201 });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error", message: error instanceof Error ? error.message : "Unknown" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

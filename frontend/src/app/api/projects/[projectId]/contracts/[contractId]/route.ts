@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { apiErrorResponse, classifyError } from "@/lib/api-error";
 import { NextRequest, NextResponse } from "next/server";
 import { updateContractSchema } from "../validation";
 import { ZodError } from "zod";
@@ -120,10 +121,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json(enrichedContract);
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    console.error("[GET /contracts/:id]", error);
+    return apiErrorResponse(error);
   }
 }
 
@@ -222,10 +221,8 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    console.error("[PUT /contracts/:id]", error);
+    return apiErrorResponse(error);
   }
 }
 
@@ -274,9 +271,11 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       .eq("project_id", parseInt(projectId, 10));
 
     if (error) {
+      console.error("[DELETE /contracts/:id] Supabase error:", error);
+      const classified = classifyError(error);
       return NextResponse.json(
-        { error: "Failed to delete contract", details: error.message },
-        { status: 400 },
+        { error: classified.message },
+        { status: classified.status },
       );
     }
 
@@ -298,9 +297,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       { status: 200 },
     );
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    console.error("[DELETE /contracts/:id]", error);
+    return apiErrorResponse(error);
   }
 }

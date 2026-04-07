@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 /**
  * PUT /api/projects/[projectId]/budget-codes/bulk
@@ -147,9 +148,6 @@ export async function PUT(
       deactivated: toDeactivate.length,
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

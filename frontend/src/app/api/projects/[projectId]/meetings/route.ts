@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 // GET: List meetings for a project
 export async function GET(
@@ -36,15 +37,12 @@ export async function GET(
     const { data, error } = await query;
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return apiErrorResponse(error);
     }
 
     return NextResponse.json({ data: data || [] });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -104,14 +102,11 @@ export async function POST(
       .single();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return apiErrorResponse(error);
     }
 
     return NextResponse.json({ data }, { status: 201 });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return apiErrorResponse(error);
   }
 }

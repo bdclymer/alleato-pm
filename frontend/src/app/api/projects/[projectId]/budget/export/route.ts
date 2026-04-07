@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
+import { apiErrorResponse } from "@/lib/api-error";
 
 // Cost types that count towards Job to Date (all approved)
 const JTD_COST_TYPES = [
@@ -548,12 +549,6 @@ export async function GET(
       });
     }
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to export budget",
-        details: error instanceof Error ? error.stack : undefined,
-      },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

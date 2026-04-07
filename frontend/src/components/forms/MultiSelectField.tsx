@@ -80,7 +80,7 @@ export function MultiSelectField({
             aria-expanded={open}
             className={cn(
               "w-full justify-between",
-              error && "border-red-300",
+              error && "border-destructive",
               className,
             )}
             disabled={disabled}

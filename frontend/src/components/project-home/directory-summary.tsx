@@ -4,7 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { SectionCard } from "@/components/ui/section-card";
+import { SectionCard } from "@/components/ds/section-card";
 import {
   Users,
   Building2,

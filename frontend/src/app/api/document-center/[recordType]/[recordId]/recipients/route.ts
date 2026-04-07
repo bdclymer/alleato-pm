@@ -5,6 +5,7 @@ import {
   getDocumentBundle,
   type DocumentRecordType,
 } from "@/lib/documents/record-documents";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{
@@ -48,11 +49,6 @@ export async function GET(request: Request, { params }: RouteParams) {
       recipients: bundle.recipients,
     });
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to load recipients",
-      },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

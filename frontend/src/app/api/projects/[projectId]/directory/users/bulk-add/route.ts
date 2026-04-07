@@ -4,6 +4,7 @@ import {
   DirectoryService,
   type PersonCreateDTO,
 } from "@/services/directoryService";
+import { apiErrorResponse } from "@/lib/api-error";
 
 export async function POST(
   request: NextRequest,
@@ -61,11 +62,6 @@ export async function POST(
 
     return NextResponse.json(result, { status: 201 });
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Internal server error",
-      },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

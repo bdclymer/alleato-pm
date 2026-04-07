@@ -38,6 +38,7 @@ import { createChangeEventSchema, changeEventQuerySchema } from './validation'
 import { ZodError } from 'zod'
 import type { Database } from '@/types/database.types'
 import type { PaginatedResponse } from '@/app/api/types'
+import { apiErrorResponse } from "@/lib/api-error";
 
 /**
  * Helper to get the appropriate Supabase client based on auth method
@@ -235,10 +236,7 @@ export async function GET(
     const { data, error, count } = await query
 
     if (error) {
-      return NextResponse.json(
-        { error: 'Failed to fetch change events', details: error.message },
-        { status: 400 }
-      )
+      return apiErrorResponse(error);
     }
 
     const events = data || []
@@ -393,10 +391,7 @@ export async function GET(
       )
     }
 
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return apiErrorResponse(error);
   }
 }
 
@@ -493,10 +488,7 @@ export async function POST(
       .single()
 
     if (error) {
-      return NextResponse.json(
-        { error: 'Failed to create change event', details: error.message },
-        { status: 400 }
-      )
+      return apiErrorResponse(error);
     }
 
     // Create audit log entry
@@ -554,9 +546,6 @@ export async function POST(
       )
     }
 
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return apiErrorResponse(error);
   }
 }

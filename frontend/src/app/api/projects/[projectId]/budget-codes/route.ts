@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 type BudgetCodeResponse = {
   budgetCodes: Array<{
@@ -150,10 +151,7 @@ export async function GET(
 
     return NextResponse.json({ budgetCodes });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -297,9 +295,6 @@ export async function POST(
 
     return NextResponse.json({ budgetCode });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

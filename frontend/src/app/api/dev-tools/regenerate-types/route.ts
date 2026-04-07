@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { exec } from "child_process"
 import { promisify } from "util"
 import path from "path"
+import { apiErrorResponse } from "@/lib/api-error";
 
 const execAsync = promisify(exec)
 
@@ -36,13 +37,6 @@ export async function POST() {
       message: "Types regenerated successfully",
     })
   } catch (error) {
-    console.error("Error regenerating types:", error)
-    return NextResponse.json(
-      {
-        success: false,
-        message: error instanceof Error ? error.message : "Failed to regenerate types",
-      },
-      { status: 500 }
-    )
+    return apiErrorResponse(error)
   }
 }

@@ -17,7 +17,7 @@ import { PageContainer } from "@/components/layout";
 import { EmptyState } from "@/components/ds";
 import { PageHeader } from "@/components/layout/page-header-unified";
 import { SectionHeader } from "@/components/ds/section-header";
-import { MetricCard } from "@/components/ui/metric-card";
+import { MetricCard } from "@/components/ds/metric-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,

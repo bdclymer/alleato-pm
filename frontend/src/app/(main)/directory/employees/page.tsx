@@ -7,7 +7,7 @@ import { Mail, Phone } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 import { PageShell } from "@/components/layout";
-import { Text } from "@/components/ui/text";
+import { Text } from "@/components/ds/text";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";

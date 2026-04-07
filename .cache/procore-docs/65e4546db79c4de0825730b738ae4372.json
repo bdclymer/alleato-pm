@@ -1,6 +1,0 @@
-{
-  "success": true,
-  "markdown": "#  Can I delete a Sage 300 CRE cost code, cost type, or vendor from Procore? \n##  Answer \nNo. Cost codes cannot be deleted in Procore or the hh2 cloud service. Instead, cost codes must always be deleted in Sage 300 CRE. Currently, there is a known limitation in the hh2 cloud service that prevents cost codes that have synced between Procore and Sage 300 CRE from being removed after deletion in Sage.\n## See Also\n  * [Sage 300 CRE® Common Error Messages and Resolutions](https://v2.support.procore.com/faq-common-error-messages-resolutions-subpage)\n  * [How do I resolve the \"A commitment with code already exists\" Error when Exporting to ERP](https://v2.support.procore.com/faq-how-to-resolve-commitment-with-code-already-exists-sage-300)\n  * [How do I export cost forecast data from a Procore budget to ERP](https://v2.support.procore.com/faq-how-do-i-export-cost-forecast-data-from-a-procore-budget-to-erp)\n\n\n",
-  "title": "Can I delete a Sage 300 CRE cost code, cost type, or vendor from Procore?",
-  "description": ""
-}

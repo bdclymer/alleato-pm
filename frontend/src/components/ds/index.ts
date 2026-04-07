@@ -256,8 +256,8 @@ export {
 export type { ChartConfig } from "@/components/ui/chart";
 
 // Container
-export { Container } from "@/components/ui/container";
-export type { ContainerProps } from "@/components/ui/container";
+export { Container } from "@/components/layout/container";
+export type { ContainerProps } from "@/components/layout/container";
 
 // Drawer
 export {
@@ -274,8 +274,8 @@ export {
 } from "@/components/ui/drawer";
 
 // Heading
-export { Heading } from "@/components/ui/heading";
-export type { HeadingProps } from "@/components/ui/heading";
+export { Heading } from "./heading";
+export type { HeadingProps } from "./heading";
 
 // Hover Card
 export {
@@ -285,8 +285,8 @@ export {
 } from "@/components/ui/hover-card";
 
 // Inline
-export { Inline } from "@/components/ui/inline";
-export type { InlineProps } from "@/components/ui/inline";
+export { Inline } from "@/components/layout/inline";
+export type { InlineProps } from "@/components/layout/inline";
 
 // Input Group
 export {
@@ -299,7 +299,7 @@ export {
 } from "@/components/ui/input-group";
 
 // Metric Card
-export { MetricCard, MetricGrid, MetricSummary } from "@/components/ui/metric-card";
+export { MetricCard, MetricGrid, MetricSummary } from "./metric-card";
 
 // Number Input
 export { NumberInput } from "@/components/ui/number-input";
@@ -318,29 +318,29 @@ export {
 } from "@/components/ui/pagination";
 
 // Section Card
-export { SectionCard } from "@/components/ui/section-card";
+export { SectionCard } from "./section-card";
 export type {
   SectionCardProps,
   SectionCardEmptyProps,
   SectionCardItemProps,
   SectionCardBadgeProps,
-} from "@/components/ui/section-card";
+} from "./section-card";
 
 // Stack
-export { Stack } from "@/components/ui/stack";
-export type { StackProps } from "@/components/ui/stack";
+export { Stack } from "@/components/layout/stack";
+export type { StackProps } from "@/components/layout/stack";
 
 // Summary Card Grid
 export {
   SummaryCardGrid,
   formatCurrencyValue,
   formatNumberValue,
-} from "@/components/ui/summary-card-grid";
-export type { SummaryCard } from "@/components/ui/summary-card-grid";
+} from "./summary-card-grid";
+export type { SummaryCard } from "./summary-card-grid";
 
 // Text
-export { Text } from "@/components/ui/text";
-export type { TextProps } from "@/components/ui/text";
+export { Text } from "./text";
+export type { TextProps } from "./text";
 
 // Transition Panel
 export { TransitionPanel } from "@/components/ui/transition-panel";

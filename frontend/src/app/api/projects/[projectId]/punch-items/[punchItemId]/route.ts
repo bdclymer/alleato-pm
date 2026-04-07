@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { PunchItemService } from "@/services/PunchItemService";
+import { apiErrorResponse } from "@/lib/api-error";
 
 /**
  * GET /api/projects/[projectId]/punch-items/[punchItemId]
@@ -27,10 +28,7 @@ export async function GET(
   const result = await service.getById(numericProjectId, punchItemId);
 
   if (result.error) {
-    return NextResponse.json(
-      { error: result.error.message },
-      { status: result.error.type === "NOT_FOUND" ? 404 : 500 },
-    );
+    return apiErrorResponse(result.error);
   }
 
   return NextResponse.json(result.data);
@@ -69,10 +67,7 @@ export async function PATCH(
     );
 
     if (result.error) {
-      return NextResponse.json(
-        { error: result.error.message },
-        { status: result.error.type === "NOT_FOUND" ? 404 : 500 },
-      );
+      return apiErrorResponse(result.error);
     }
 
     return NextResponse.json(result.data);
@@ -113,10 +108,7 @@ export async function DELETE(
   );
 
   if (result.error) {
-    return NextResponse.json(
-      { error: result.error.message },
-      { status: result.error.type === "NOT_FOUND" ? 404 : 500 },
-    );
+    return apiErrorResponse(result.error);
   }
 
   return NextResponse.json({ success: true });

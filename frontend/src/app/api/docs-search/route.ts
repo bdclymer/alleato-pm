@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 const MAX_RESULTS = 6;
 
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
       .limit(MAX_RESULTS);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return apiErrorResponse(error);
     }
 
     const hits = (data ?? []).map((record) => ({
@@ -44,9 +45,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ hits });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

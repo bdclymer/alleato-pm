@@ -1,6 +1,0 @@
-{
-  "success": true,
-  "markdown": "#  Drawing Revisions \n#### Summary\nAs part of the Procore Analytics Project Management Report, the Drawings Revision report page shows detailed information about each drawing revision in each project. Drawings can be selected from the 'Drawing Revision Report' list and previewed directly in the report page under the 'Drawing' visual.\n#### Sample Report Page\n![Procore Analytics Drawing Revisions](https://images.ctfassets.net/plvbd9i6qkpm/85301318b5741fa5d800bfcd37ac0302/7188de6730f62555b15a1cd2dde5af3a/procore-analytics-drawing-revisions.png?fm=webp)\n_This sample report page was created using mock data for demonstration purposes only._\n## See Also\n  * [Project Management Report](https://v2.support.procore.com/reference-project-management-report)\n  * [Insights Pilot Questions](https://v2.support.procore.com/faq-insights-pilot-questions)\n  * [Which fields can Procore automatically populate when uploading drawings?](https://v2.support.procore.com/faq-which-fields-can-procore-automatically-populate-when-uploading-drawings)\n\n\n",
-  "title": "Drawing Revisions",
-  "description": "View sample Drawing Revisions data from the Project Management Report available with Procore Analytics."
-}

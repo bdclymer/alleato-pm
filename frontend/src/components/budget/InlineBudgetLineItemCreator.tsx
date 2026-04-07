@@ -4,6 +4,7 @@ import * as React from "react";
 import { Plus, X, Check, Search, ChevronDown, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MoneyField } from "@/components/forms/MoneyField";
 import {
   Select,
   SelectContent,
@@ -557,21 +558,14 @@ export function InlineBudgetLineItemCreator({
                 {/* Unit Cost */}
                 <div className="col-span-2">
                   <Label className="text-xs">Unit Cost</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    value={row.unitCost}
-                    onChange={(e) => handleRowChange(index, "unitCost", e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault();
-                        addRow();
-                      }
-                    }}
-                    placeholder="0.00"
+                  <MoneyField
+                    label="Unit Cost"
+                    value={row.unitCost ? parseFloat(String(row.unitCost)) : undefined}
+                    onChange={(val) => handleRowChange(index, "unitCost", String(val ?? ""))}
+                    inline
+                    showCurrency={false}
                     className="h-9"
                     disabled={isCreating}
-                    tabIndex={index * 5 + 3}
                   />
                 </div>
 
@@ -579,27 +573,16 @@ export function InlineBudgetLineItemCreator({
                 <div className="col-span-2">
                   <Label className="text-xs">Amount*</Label>
                   <div className="flex items-center gap-1">
-                    <div className="relative w-full">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
-                        $
-                      </span>
-                      <Input
-                        type="text"
-                        value={formatCurrency(row.amount)}
-                        onChange={(e) => {
-                          const value = e.target.value.replace(/[^0-9.]/g, '');
-                          handleRowChange(index, "amount", value);
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            addRow();
-                          }
-                        }}
-                        placeholder="0.00"
-                        className="h-9 font-medium pl-6"
+                    <div className="w-full">
+                      <MoneyField
+                        label="Amount"
+                        value={row.amount ? parseFloat(String(row.amount)) : undefined}
+                        onChange={(val) => handleRowChange(index, "amount", String(val ?? ""))}
+                        inline
+                        showCurrency={false}
+                        allowNegative
+                        className="h-9 font-medium"
                         disabled={isCreating}
-                        tabIndex={index * 5 + 4}
                       />
                     </div>
                     {rows.length > 1 && (

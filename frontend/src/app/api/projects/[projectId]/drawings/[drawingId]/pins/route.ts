@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { apiErrorResponse } from "@/lib/api-error";
 
 type Params = { params: Promise<{ projectId: string; drawingId: string }> };
 
@@ -22,7 +23,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
     .eq("drawing_id", drawingId)
     .order("created_at", { ascending: true }) as any);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiErrorResponse(error);
   return NextResponse.json({ pins: data });
 }
 
@@ -59,6 +60,6 @@ export async function POST(req: NextRequest, { params }: Params) {
     .select()
     .single()) as any;
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiErrorResponse(error);
   return NextResponse.json({ pin: data }, { status: 201 });
 }

@@ -25,25 +25,13 @@ interface ChangeOrder {
 interface ApprovedCOsModalProps {
   open: boolean;
   onClose: () => void;
-  costCode: string;
   budgetLineId: string;
   projectId: string;
 }
 
-/**
- * ApprovedCOsModal - Shows approved change orders from prime contract
- *
- * Features:
- * - Displays approved change orders only
- * - Shows change order details and amounts
- * - Links to source contracts
- * - Mobile responsive layout
- * - Matches Procore design patterns
- */
 export function ApprovedCOsModal({
   open,
   onClose,
-  costCode,
   budgetLineId,
   projectId,
 }: ApprovedCOsModalProps) {
@@ -70,7 +58,6 @@ export function ApprovedCOsModal({
       }
     } catch (error) {
       console.error("Failed to fetch approved change orders:", error);
-      // Intentionally swallowed: modal shows empty state on error
     } finally {
       setLoading(false);
     }
@@ -110,25 +97,22 @@ export function ApprovedCOsModal({
       open={open}
       onClose={onClose}
       title="Approved Change Orders"
-      subtitle={costCode}
       size="xl"
     >
-      {/* Tabs */}
       <SidebarTabs
         tabs={tabs}
         activeTab={activeTab}
         onTabChange={(id) => setActiveTab(id as "approved" | "history")}
       />
 
-      {/* Content */}
       <SidebarBody className="bg-background">
         {activeTab === "approved" ? (
-          <div className="p-6 space-y-4">
+          <div className="p-4 sm:p-6 space-y-4">
             {/* Total Summary */}
-            <div className="rounded-lg shadow-xs p-4 bg-muted">
+            <div className="rounded-lg border border-border p-4 bg-muted/30">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-foreground">
+                  <p className="text-sm text-muted-foreground">
                     Total Approved Change Orders
                   </p>
                   <p className="text-2xl font-bold text-foreground mt-1">
@@ -136,7 +120,7 @@ export function ApprovedCOsModal({
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-foreground">Count</p>
+                  <p className="text-sm text-muted-foreground">Count</p>
                   <p className="text-2xl font-bold text-foreground mt-1">
                     {changeOrders.length}
                   </p>
@@ -144,12 +128,14 @@ export function ApprovedCOsModal({
               </div>
             </div>
 
-            {/* Description Box */}
-            <div className="rounded-lg bg-muted border border-border p-4">
+            {/* Info Box */}
+            <div className="rounded-lg bg-muted/40 border border-border p-4">
               <div className="flex items-start gap-4">
                 <FileText className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-foreground">
-                  <p className="font-semibold">About Approved COs</p>
+                <div className="text-sm">
+                  <p className="font-semibold text-foreground">
+                    About Approved COs
+                  </p>
                   <p className="mt-1 text-muted-foreground">
                     These are change orders from your prime contract that have
                     been approved and impact this budget line. Only approved
@@ -160,26 +146,26 @@ export function ApprovedCOsModal({
             </div>
 
             {/* Change Orders Table */}
-            <div className="overflow-x-auto scrollbar-hide rounded-lg border border-border shadow-xs bg-background">
+            <div className="overflow-x-auto scrollbar-hide rounded-lg border border-border bg-background">
               <table className="w-full text-sm">
-                <thead className="bg-muted border-b border-border">
+                <thead className="bg-muted/50 border-b border-border">
                   <tr>
-                    <th className="text-left px-4 py-4 font-semibold text-foreground">
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">
                       CO Number
                     </th>
-                    <th className="text-left px-4 py-4 font-semibold text-foreground">
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">
                       Description
                     </th>
-                    <th className="text-left px-4 py-4 font-semibold text-foreground">
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">
                       Contract
                     </th>
-                    <th className="text-right px-4 py-4 font-semibold text-foreground">
+                    <th className="text-right px-4 py-3 font-semibold text-foreground">
                       Amount
                     </th>
-                    <th className="text-left px-4 py-4 font-semibold text-foreground">
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">
                       Approved Date
                     </th>
-                    <th className="text-left px-4 py-4 font-semibold text-foreground">
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">
                       Approved By
                     </th>
                   </tr>
@@ -209,30 +195,32 @@ export function ApprovedCOsModal({
                         key={co.id}
                         className="hover:bg-muted/50 transition-colors"
                       >
-                        <td className="px-4 py-4 font-medium text-primary">
+                        <td className="px-4 py-3 font-medium text-primary">
                           {co.changeOrderNumber}
                         </td>
                         <td
-                          className="px-4 py-4 text-foreground max-w-xs truncate"
+                          className="px-4 py-3 text-foreground max-w-xs truncate"
                           title={co.description}
                         >
                           {co.description}
                         </td>
-                        <td className="px-4 py-4 text-foreground text-xs">
+                        <td className="px-4 py-3 text-foreground text-xs">
                           {co.contractNumber}
                         </td>
                         <td
                           className={cn(
-                            "px-4 py-4 text-right font-semibold tabular-nums",
-                            co.amount < 0 ? "text-red-600" : "text-green-600",
+                            "px-4 py-3 text-right font-semibold tabular-nums",
+                            co.amount < 0
+                              ? "text-destructive"
+                              : "text-foreground",
                           )}
                         >
                           {formatCurrency(co.amount)}
                         </td>
-                        <td className="px-4 py-4 text-foreground">
+                        <td className="px-4 py-3 text-foreground">
                           {formatDate(co.approvedDate)}
                         </td>
-                        <td className="px-4 py-4 text-foreground text-xs">
+                        <td className="px-4 py-3 text-foreground text-xs">
                           {co.approvedBy || "-"}
                         </td>
                       </tr>
@@ -243,20 +231,19 @@ export function ApprovedCOsModal({
             </div>
           </div>
         ) : (
-          <div className="p-6 space-y-4">
-            <p className="text-sm text-foreground">
+          <div className="p-4 sm:p-6 space-y-4">
+            <p className="text-sm text-muted-foreground">
               View the complete history of all change orders (approved,
               rejected, and voided) for this cost code.
             </p>
 
-            <div className="rounded-lg border border-border bg-muted p-6 text-center">
+            <div className="rounded-lg border border-border bg-muted/30 p-6 text-center">
               <p className="text-muted-foreground">History view coming soon</p>
             </div>
           </div>
         )}
       </SidebarBody>
 
-      {/* Footer */}
       <SidebarFooter>
         <div className="flex items-center justify-end">
           <Button variant="outline" onClick={onClose}>

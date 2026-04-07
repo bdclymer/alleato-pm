@@ -4,6 +4,7 @@ import {
 } from "@/lib/schemas/budget";
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 // Valid status transitions for the modification workflow
 const VALID_TRANSITIONS: Record<string, string[]> = {
@@ -164,10 +165,7 @@ export async function GET(
       modifications,
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -355,10 +353,7 @@ export async function POST(
       message: "Budget modification created as draft",
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -511,10 +506,7 @@ export async function PATCH(
       message: actionMessages[action],
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -610,9 +602,6 @@ export async function DELETE(
       message: "Budget modification deleted successfully",
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

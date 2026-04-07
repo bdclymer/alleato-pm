@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { DrawingService } from "@/services/DrawingService";
 import type { DrawingFilters } from "@/services/DrawingService";
+import { apiErrorResponse } from "@/lib/api-error";
 
 /**
  * GET /api/projects/[projectId]/drawings
@@ -43,10 +44,7 @@ export async function GET(
   const result = await service.list(projectId, filters);
 
   if (result.error) {
-    return NextResponse.json(
-      { error: result.error.message },
-      { status: result.error.type === "NOT_FOUND" ? 404 : 500 },
-    );
+    return apiErrorResponse(result.error);
   }
 
   return NextResponse.json(result.data);
@@ -114,10 +112,7 @@ export async function POST(
     if (createResult.error) {
       const statusCode =
         createResult.error.type === "DUPLICATE_DRAWING_NUMBER" ? 409 : 500;
-      return NextResponse.json(
-        { error: createResult.error.message },
-        { status: statusCode },
-      );
+      return apiErrorResponse(createResult.error);
     }
 
     const drawing = createResult.data;
@@ -131,10 +126,7 @@ export async function POST(
 
       const statusCode =
         uploadResult.error.type === "FILE_TOO_LARGE" ? 400 : 500;
-      return NextResponse.json(
-        { error: uploadResult.error.message },
-        { status: statusCode },
-      );
+      return apiErrorResponse(uploadResult.error);
     }
 
     // Step 3: Create the first revision with the uploaded file
@@ -158,20 +150,14 @@ export async function POST(
       // Rollback: delete the drawing and file if revision creation fails
       await service.delete(projectId, drawing.id);
 
-      return NextResponse.json(
-        { error: revisionResult.error.message },
-        { status: 500 },
-      );
+      return apiErrorResponse(revisionResult.error);
     }
 
     // Fetch the complete drawing with revision
     const finalResult = await service.getById(projectId, drawing.id);
 
     if (finalResult.error) {
-      return NextResponse.json(
-        { error: finalResult.error.message },
-        { status: 500 },
-      );
+      return apiErrorResponse(finalResult.error);
     }
 
     return NextResponse.json(finalResult.data, { status: 201 });

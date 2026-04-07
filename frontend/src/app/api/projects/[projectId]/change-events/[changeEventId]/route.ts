@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { updateChangeEventSchema } from "../validation";
 import { ZodError } from "zod";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{ projectId: string; changeEventId: string }>;
@@ -353,10 +354,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json(response);
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -466,10 +464,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       .single();
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to update change event", details: error.message },
-        { status: 400 },
-      );
+      return apiErrorResponse(error);
     }
 
     // Create audit log entries for changed fields
@@ -556,10 +551,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         { status: 400 },
       );
     }
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -627,10 +619,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       .eq("id", changeEventId);
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to delete change event", details: error.message },
-        { status: 400 },
-      );
+      return apiErrorResponse(error);
     }
 
     // Create audit log entry
@@ -645,9 +634,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
 
     return new NextResponse(null, { status: 204 });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

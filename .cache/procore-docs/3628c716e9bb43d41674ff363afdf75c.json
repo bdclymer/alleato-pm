@@ -1,6 +1,0 @@
-{
-  "success": true,
-  "markdown": "#  RFI Insights \n#### Summary\nAs part of the Procore Analytics Project Management Report, the RFI Insights report page tracks key metrics covering overall RFI progress and can be utilized as an RFI dashboard. The 'RFI Closure Metrics' visual shows the number of RFIs, average days to respond, and average days to close for each responsible contractor.\n#### Sample Report Page\n![Procore Analytics Rfi Insights](https://images.ctfassets.net/plvbd9i6qkpm/bd935083880a0e36fe3f0cd8b8d264e4/04e83ce9c591ff893188534d91c630f1/procore-analytics-rfi-insights.png?fm=webp)\n_This sample report page was created using mock data for demonstration purposes only._\n## See Also\n  * [Insights Pilot Questions](https://v2.support.procore.com/faq-insights-pilot-questions)\n  * [Project Management Report](https://v2.support.procore.com/reference-project-management-report)\n  * [How are Procore Insights different from Procore Reports or Procore Analytics?](https://v2.support.procore.com/faq-how-are-procore-insights-different-from-procore-reports-or-procore-analytics)\n\n\n",
-  "title": "RFI Insights",
-  "description": "View sample RFI Insights data from the Project Management Report available with Procore Analytics."
-}

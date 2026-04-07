@@ -4,6 +4,7 @@ import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
 import { PermissionService } from "@/services/permissionService";
 import { DirectoryAdminService } from "@/services/directoryAdminService";
 import type { DirectoryTemplateType } from "@/services/directoryAdminService";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{ projectId: string; templateType: string }>;
@@ -49,12 +50,6 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     });
   } catch (error) {
     console.error("[DirectoryTemplate] Failed", error);
-    return NextResponse.json(
-      {
-        error: "Failed to generate template",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

@@ -21,7 +21,7 @@
       ]
     },
     {
-      "file": "frontend/src/app/api/commitments/[id]/route.ts",
+      "file": "frontend/src/app/api/commitments/[commitmentId]/route.ts",
       "tables": [
         "commitments"
       ]
@@ -139,7 +139,7 @@
     {
       "table": "commitments",
       "files": [
-        "frontend/src/app/api/commitments/[id]/route.ts"
+        "frontend/src/app/api/commitments/[commitmentId]/route.ts"
       ]
     },
     {

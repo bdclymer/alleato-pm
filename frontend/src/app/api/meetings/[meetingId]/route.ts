@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 // GET: Fetch meeting title by ID (used for global breadcrumb resolution)
 export async function GET(
@@ -26,7 +27,7 @@ export async function GET(
     }
 
     return NextResponse.json({ title: data.title });
-  } catch {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (error) {
+    return apiErrorResponse(error);
   }
 }

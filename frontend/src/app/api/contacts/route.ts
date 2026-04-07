@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { apiErrorResponse } from "@/lib/api-error";
 
 /**
  * Lists all contacts from the global contacts table.
@@ -45,10 +46,7 @@ export async function GET(request: NextRequest) {
     const { data, error, count } = await query;
 
     if (error) {
-      return NextResponse.json(
-        { error: 'Failed to fetch contacts', details: error.message },
-        { status: 500 }
-      );
+      return apiErrorResponse(error);
     }
 
     return NextResponse.json({
@@ -61,10 +59,7 @@ export async function GET(request: NextRequest) {
       }
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -113,23 +108,11 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
-      return NextResponse.json(
-        { error: 'Failed to create contact', details: error.message },
-        { status: 400 }
-      );
+      return apiErrorResponse(error);
     }
 
     return NextResponse.json(data, { status: 201 });
   } catch (error) {
-    if (error instanceof Error) {
-      return NextResponse.json(
-        { error: 'Internal server error', message: error.message },
-        { status: 500 }
-      );
-    }
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return apiErrorResponse(error);
   }
 }

@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
+import { apiErrorResponse } from "@/lib/api-error";
 
 type ProjectCompanyRow = Database["public"]["Tables"]["project_companies"]["Row"];
 type CompanyRow = Database["public"]["Tables"]["companies"]["Row"];
@@ -46,7 +47,29 @@ export async function GET(request: NextRequest) {
     }
 
     if (company_type) {
-      query = query.eq("company_type", company_type);
+      const { data: matchingCompaniesByType, error: companyTypeError } = await supabase
+        .from("companies")
+        .select("id")
+        .ilike("type", company_type);
+
+      if (companyTypeError) {
+        return NextResponse.json(
+          { error: "Failed to filter companies by type", details: companyTypeError.message },
+          { status: 500 },
+        );
+      }
+
+      const matchingCompanyIds = (matchingCompaniesByType || [])
+        .map((row) => row.id)
+        .filter(Boolean);
+
+      if (matchingCompanyIds.length > 0) {
+        query = query.or(
+          `company_type.eq.${company_type},company_id.in.(${matchingCompanyIds.join(",")})`,
+        );
+      } else {
+        query = query.eq("company_type", company_type);
+      }
     }
 
     if (search) {
@@ -66,8 +89,15 @@ export async function GET(request: NextRequest) {
         .map((row) => row.id)
         .filter(Boolean);
 
+      const inList =
+        matchingIds.length > 0
+          ? matchingIds
+              .map((id) => `"${String(id).replace(/"/g, '\\"')}"`)
+              .join(",")
+          : null;
+
       const searchFilters = [
-        matchingIds.length ? `company_id.in.(${matchingIds.join(",")})` : null,
+        inList ? `company_id.in.(${inList})` : null,
         `business_phone.ilike.%${search}%`,
         `email_address.ilike.%${search}%`,
         `erp_vendor_id.ilike.%${search}%`,
@@ -111,10 +141,7 @@ export async function GET(request: NextRequest) {
     const { data, error, count } = await query;
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to fetch project companies", details: error.message },
-        { status: 500 },
-      );
+      return apiErrorResponse(error);
     }
 
     const projectCompanies = (data || []) as ProjectCompanyRow[];
@@ -144,10 +171,7 @@ export async function GET(request: NextRequest) {
       ]);
 
       if (companiesResult.error) {
-        return NextResponse.json(
-          { error: "Failed to fetch company details", details: companiesResult.error.message },
-          { status: 500 },
-        );
+        return apiErrorResponse(companiesResult.error);
       }
 
       companyInfoMap = new Map(

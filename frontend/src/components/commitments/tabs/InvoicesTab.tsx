@@ -13,7 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Text } from "@/components/ui/text";
+import { Text } from "@/components/ds/text";
 import { Progress } from "@/components/ui/progress";
 import { DataTable } from "@/components/tables/DataTable";
 import { formatCurrency } from "@/config/tables";

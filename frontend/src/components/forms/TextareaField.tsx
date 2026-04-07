@@ -35,7 +35,7 @@ export function TextareaField({
       fullWidth={fullWidth}
     >
       <Textarea
-        className={cn(error && "border-red-300", className)}
+        className={cn(error && "border-destructive", className)}
         aria-invalid={!!error}
         aria-describedby={error ? `${textareaId}-error` : undefined}
         id={textareaId}

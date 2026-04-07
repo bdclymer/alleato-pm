@@ -20,24 +20,13 @@ interface PendingChangeOrder {
 interface PendingBudgetChangesModalProps {
   open: boolean;
   onClose: () => void;
-  costCode: string;
   budgetLineId: string;
   projectId: string;
 }
 
-/**
- * PendingBudgetChangesModal - Shows pending change orders
- *
- * Features:
- * - Displays pending change orders from prime contract
- * - Multiple pending statuses (In Review, Pricing, Proceeding, etc.)
- * - Mobile responsive layout
- * - Matches Procore design patterns
- */
 export function PendingBudgetChangesModal({
   open,
   onClose,
-  costCode,
   budgetLineId,
   projectId,
 }: PendingBudgetChangesModalProps) {
@@ -60,11 +49,7 @@ export function PendingBudgetChangesModal({
         setChangeOrders(data.changeOrders || []);
       }
     } catch (error) {
-
       console.error("Failed to fetch pending budget changes:", error);
-
-      // Intentionally swallowed: modal shows empty state on error
-
     } finally {
       setLoading(false);
     }
@@ -107,17 +92,17 @@ export function PendingBudgetChangesModal({
       open={open}
       onClose={onClose}
       title="Pending Budget Changes"
-      subtitle={costCode}
       size="xl"
     >
-      {/* Content */}
       <SidebarBody className="bg-background">
         <div className="p-4 sm:p-6 space-y-4">
           {/* Total Summary */}
-          <div className="rounded-xl border border-border p-4 bg-muted/30">
+          <div className="rounded-lg border border-border p-4 bg-muted/30">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Total Pending Changes</p>
+                <p className="text-sm text-muted-foreground">
+                  Total Pending Changes
+                </p>
                 <p className="text-2xl font-bold text-foreground mt-1">
                   {formatCurrency(totalAmount)}
                 </p>
@@ -131,12 +116,14 @@ export function PendingBudgetChangesModal({
             </div>
           </div>
 
-          {/* Description Box */}
+          {/* Info Box */}
           <div className="rounded-lg bg-muted/40 border border-border p-4">
             <div className="flex items-start gap-4">
               <Info className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
-              <div className="text-sm text-foreground">
-                <p className="font-semibold text-foreground">About Pending Budget Changes</p>
+              <div className="text-sm">
+                <p className="font-semibold text-foreground">
+                  About Pending Budget Changes
+                </p>
                 <p className="mt-1 text-muted-foreground">
                   These are change orders from your prime contract that are
                   pending approval. They will be included in projected budget
@@ -147,31 +134,31 @@ export function PendingBudgetChangesModal({
           </div>
 
           {/* Change Orders Table */}
-          <div className="overflow-x-auto scrollbar-hide rounded-xl border border-border bg-background">
+          <div className="overflow-x-auto scrollbar-hide rounded-lg border border-border bg-background">
             <table className="w-full text-sm">
               <thead className="bg-muted/50 border-b border-border">
                 <tr>
-                  <th className="text-left px-4 py-4 font-semibold text-foreground">
+                  <th className="text-left px-4 py-3 font-semibold text-foreground">
                     CO Number
                   </th>
-                  <th className="text-left px-4 py-4 font-semibold text-foreground">
+                  <th className="text-left px-4 py-3 font-semibold text-foreground">
                     Description
                   </th>
-                  <th className="text-left px-4 py-4 font-semibold text-foreground">
+                  <th className="text-left px-4 py-3 font-semibold text-foreground">
                     Status
                   </th>
-                  <th className="text-left px-4 py-4 font-semibold text-foreground">
+                  <th className="text-left px-4 py-3 font-semibold text-foreground">
                     Contract
                   </th>
-                  <th className="text-right px-4 py-4 font-semibold text-foreground">
+                  <th className="text-right px-4 py-3 font-semibold text-foreground">
                     Amount
                   </th>
-                  <th className="text-left px-4 py-4 font-semibold text-foreground">
+                  <th className="text-left px-4 py-3 font-semibold text-foreground">
                     Requested
                   </th>
                 </tr>
               </thead>
-                <tbody className="divide-y divide-border">
+              <tbody className="divide-y divide-border">
                 {loading ? (
                   <tr>
                     <td
@@ -194,30 +181,32 @@ export function PendingBudgetChangesModal({
                   changeOrders.map((co) => (
                     <tr
                       key={co.id}
-                      className="hover:bg-muted/40 transition-colors"
+                      className="hover:bg-muted/50 transition-colors"
                     >
-                      <td className="px-4 py-4 font-medium text-blue-600">
+                      <td className="px-4 py-3 font-medium text-primary">
                         {co.changeOrderNumber}
                       </td>
                       <td
-                        className="px-4 py-4 text-foreground max-w-xs truncate"
+                        className="px-4 py-3 text-foreground max-w-xs truncate"
                         title={co.description}
                       >
                         {co.description}
                       </td>
-                      <td className="px-4 py-4">{getStatusBadge(co.status)}</td>
-                      <td className="px-4 py-4 text-foreground text-xs">
+                      <td className="px-4 py-3">{getStatusBadge(co.status)}</td>
+                      <td className="px-4 py-3 text-foreground text-xs">
                         {co.contractNumber}
                       </td>
                       <td
                         className={cn(
-                          "px-4 py-4 text-right font-semibold tabular-nums",
-                          co.amount < 0 ? "text-destructive" : "text-foreground",
+                          "px-4 py-3 text-right font-semibold tabular-nums",
+                          co.amount < 0
+                            ? "text-destructive"
+                            : "text-foreground",
                         )}
                       >
                         {formatCurrency(co.amount)}
                       </td>
-                      <td className="px-4 py-4 text-foreground">
+                      <td className="px-4 py-3 text-foreground">
                         {formatDate(co.requestedDate)}
                       </td>
                     </tr>
@@ -229,7 +218,6 @@ export function PendingBudgetChangesModal({
         </div>
       </SidebarBody>
 
-      {/* Footer */}
       <SidebarFooter>
         <div className="flex items-center justify-end">
           <Button variant="outline" onClick={onClose}>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 // POST /api/projects/[projectId]/invoicing/owner/[invoiceId]/revise
 // Request revision of an invoice (UNDER REVIEW → REVISE AND RESUBMIT)
@@ -70,7 +71,7 @@ export async function POST(
       data: updated,
       message: "Invoice returned for revision",
     });
-  } catch {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (error) {
+    return apiErrorResponse(error);
   }
 }

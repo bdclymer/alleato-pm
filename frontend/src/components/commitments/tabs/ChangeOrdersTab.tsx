@@ -4,13 +4,14 @@ import { useState, useEffect, useMemo, memo } from 'react'
 import { toast } from 'sonner'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { DataTable } from '@/components/tables/DataTable'
-import { Text } from '@/components/ui/text'
-import { Stack } from '@/components/ui/stack'
+import { Text } from '@/components/ds/text'
+import { EmptyState } from '@/components/ds/empty-state'
+import { SummaryCardGrid } from '@/components/ds/summary-card-grid'
 import { formatCurrency } from '@/config/tables'
 import { formatDate } from '@/lib/table-config/formatters'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ColumnDef } from '@tanstack/react-table'
-import { ArrowUpDown, ExternalLink, CheckCircle, Clock, FileEdit, TrendingUp } from 'lucide-react'
+import { ArrowUpDown, ExternalLink, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/misc/status-badge'
 import Link from 'next/link'
@@ -120,8 +121,8 @@ export const ChangeOrdersTab = memo(function ChangeOrdersTab({ commitmentId, pro
       ),
       cell: ({ row }) => (
         <Link
-          href={`/${projectId}/change-orders/${row.original.id}`}
-          className="text-primary hover:underline flex items-center gap-1"
+          href={`/${projectId}/change-orders/commitment/${row.original.id}`}
+          className="flex items-center gap-1 text-primary hover:underline"
         >
           {row.original.number}
           <ExternalLink className="h-3 w-3" />
@@ -198,68 +199,17 @@ export const ChangeOrdersTab = memo(function ChangeOrdersTab({ commitmentId, pro
     )
   }
 
-  // Summary cards component
-  const SummaryCards = () => (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-      <Card>
-        <CardContent className="pt-4">
-          <Stack gap="xs">
-            <div className="flex items-center gap-2">
-              <CheckCircle className="h-4 w-4 text-green-600" />
-              <Text size="sm" tone="muted">Approved</Text>
-            </div>
-            <Text size="lg" weight="bold" className="text-green-600">
-              {formatCurrency(totals.approved)}
-            </Text>
-          </Stack>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent className="pt-4">
-          <Stack gap="xs">
-            <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-amber-600" />
-              <Text size="sm" tone="muted">Pending</Text>
-            </div>
-            <Text size="lg" weight="bold" className="text-amber-600">
-              {formatCurrency(totals.pending)}
-            </Text>
-          </Stack>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent className="pt-4">
-          <Stack gap="xs">
-            <div className="flex items-center gap-2">
-              <FileEdit className="h-4 w-4 text-muted-foreground" />
-              <Text size="sm" tone="muted">Draft</Text>
-            </div>
-            <Text size="lg" weight="bold" className="text-muted-foreground">
-              {formatCurrency(totals.draft)}
-            </Text>
-          </Stack>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardContent className="pt-4">
-          <Stack gap="xs">
-            <div className="flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-blue-600" />
-              <Text size="sm" tone="muted">Total</Text>
-            </div>
-            <Text size="lg" weight="bold" className="text-blue-600">
-              {formatCurrency(totals.total)}
-            </Text>
-          </Stack>
-        </CardContent>
-      </Card>
-    </div>
-  )
+  const summaryCards = [
+    { id: 'approved', label: 'Approved', value: formatCurrency(totals.approved) },
+    { id: 'pending', label: 'Pending', value: formatCurrency(totals.pending) },
+    { id: 'draft', label: 'Draft', value: formatCurrency(totals.draft) },
+    { id: 'total', label: 'Total', value: formatCurrency(totals.total) },
+  ]
 
   if (changeOrders.length === 0) {
     return (
-      <div className="space-y-4">
-        <SummaryCards />
+      <div className="space-y-6">
+        <SummaryCardGrid cards={summaryCards} columns={4} size="sm" />
         <Card>
           <CardHeader>
             <CardTitle>Change Orders</CardTitle>
@@ -268,11 +218,11 @@ export const ChangeOrdersTab = memo(function ChangeOrdersTab({ commitmentId, pro
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-8">
-              <Text tone="muted" size="sm">
-                Change orders will appear here when created.
-              </Text>
-            </div>
+            <EmptyState
+              icon={<FileText className="h-5 w-5" />}
+              title="No change orders yet"
+              description="Change orders will appear here when created."
+            />
           </CardContent>
         </Card>
       </div>
@@ -280,8 +230,8 @@ export const ChangeOrdersTab = memo(function ChangeOrdersTab({ commitmentId, pro
   }
 
   return (
-    <div className="space-y-4">
-      <SummaryCards />
+    <div className="space-y-6">
+      <SummaryCardGrid cards={summaryCards} columns={4} size="sm" />
       <Card>
         <CardHeader>
           <CardTitle>Change Orders ({changeOrders.length})</CardTitle>

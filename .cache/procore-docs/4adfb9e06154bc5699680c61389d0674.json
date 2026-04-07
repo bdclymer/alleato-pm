@@ -1,6 +1,0 @@
-{
-  "success": true,
-  "markdown": "#  Can I upload drawings with the same revision? \n##  Background \nWhile it is best practice to _not_ have duplicate drawing revision names or numbers in Procore, there might be situations where you need to enter the same drawing revision in order to match what was received from the design team.\n##  Answer \nYes. You can upload drawings with the same revision name or number. However, at least one of the following fields must be unique when reviewing and confirming the drawings:\n  * Drawing Date\n  * Received Date\n  * Drawing Set\n\n\n## See Also\n  * [Why are my drawing comparisons failing?](https://v2.support.procore.com/faq-why-are-my-drawing-comparisons-failing)\n  * [What is a Drawing Set?](https://v2.support.procore.com/faq-what-is-a-drawing-set)\n  * [Document Management: General FAQ](https://v2.support.procore.com/faq-document-management-general-faq)\n\n\n",
-  "title": "Can I upload drawings with the same revision?",
-  "description": ""
-}

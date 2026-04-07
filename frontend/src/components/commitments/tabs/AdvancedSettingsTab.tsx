@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Text } from "@/components/ui/text";
+import { Text } from "@/components/ds/text";
 
 interface CommitmentAdvancedSettings {
   // Invoicing Settings

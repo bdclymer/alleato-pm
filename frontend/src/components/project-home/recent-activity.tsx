@@ -29,11 +29,11 @@ const activityIconMap: Record<string, LucideIcon> = {
 };
 
 const activityColorMap: Record<string, string> = {
-  rfi: "bg-blue-100 text-blue-600",
-  submittal: "bg-green-100 text-green-600",
-  "daily-log": "bg-purple-100 text-purple-600",
-  "change-order": "bg-orange-100 text-orange-600",
-  invoice: "bg-yellow-100 text-yellow-600",
+  rfi: "bg-primary/10 text-primary",
+  submittal: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+  "daily-log": "bg-purple-500/10 text-purple-600 dark:text-purple-400",
+  "change-order": "bg-orange-500/10 text-orange-600 dark:text-orange-400",
+  invoice: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
   document: "bg-muted text-foreground",
 };
 

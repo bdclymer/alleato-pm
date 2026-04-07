@@ -128,6 +128,7 @@ function ExpandableSearch({
                 size="icon"
                 className="h-8 w-8"
                 onClick={() => setIsExpanded(true)}
+                aria-label="Search"
               >
                 <Search />
               </Button>
@@ -148,6 +149,7 @@ function ExpandableSearch({
             }}
             placeholder={placeholder}
             className="h-8 w-[200px] pl-8 pr-8 text-sm"
+            aria-label="Search table"
           />
           {value && (
             <Button
@@ -158,6 +160,7 @@ function ExpandableSearch({
                 onChange("");
                 inputRef.current?.focus();
               }}
+              aria-label="Clear search"
             >
               <X className="h-3 w-3" />
             </Button>
@@ -372,7 +375,7 @@ function ColumnToggle({
         <Tooltip>
           <TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label="Toggle columns">
                 <Columns3 className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -489,6 +492,7 @@ export function TableToolbar({
                 onChange={(event) => onSearchChange(event.target.value)}
                 placeholder={searchPlaceholder}
                 className="h-9 pl-8 pr-8 text-sm"
+                aria-label="Search table"
               />
               {searchValue ? (
                 <Button
@@ -530,6 +534,7 @@ export function TableToolbar({
                       onChange={(event) => onSearchChange(event.target.value)}
                       placeholder={searchPlaceholder}
                       className="h-9 pl-8 pr-8 text-sm"
+                      aria-label="Search table"
                     />
                     {searchValue ? (
                       <Button
@@ -693,6 +698,7 @@ export function TableToolbar({
                     size="icon"
                     className="h-8 w-8 shrink-0"
                     onClick={onExport}
+                    aria-label="Export"
                   >
                     <Download />
                   </Button>

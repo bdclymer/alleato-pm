@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 interface Company {
   id: string;
@@ -120,6 +121,9 @@ export function useCreateCompany() {
         queryKey: ["all-companies"],
       });
     },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to create company");
+    },
   });
 }
 
@@ -160,6 +164,9 @@ export function useUpdateCompany() {
         queryKey: ["all-companies"],
       });
     },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update company");
+    },
   });
 }
 
@@ -191,6 +198,9 @@ export function useDeleteCompany() {
       queryClient.invalidateQueries({
         queryKey: ["all-companies"],
       });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to delete company");
     },
   });
 }

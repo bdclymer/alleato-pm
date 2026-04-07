@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getApiRouteUser } from "@/lib/supabase/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 // This route proxies requests to the Python backend RAG ChatKit endpoint
 // NOTE: This is NOT a ChatKit-compatible API - it's a generic proxy to /rag-chatkit
@@ -186,9 +187,6 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(
-      { error: "Internal Server Error", message: error.message },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

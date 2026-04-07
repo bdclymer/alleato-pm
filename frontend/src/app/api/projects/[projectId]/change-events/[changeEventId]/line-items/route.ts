@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { createLineItemSchema, updateLineItemSchema } from '../../validation';
 import { ZodError } from 'zod';
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{
@@ -62,10 +63,7 @@ export async function GET(
       .order('sort_order', { ascending: true });
 
     if (error) {
-      return NextResponse.json(
-        { error: 'Failed to fetch line items', details: error.message },
-        { status: 400 }
-      );
+      return apiErrorResponse(error);
     }
 
     // Batch reverse-map budget_lines.id → project_cost_codes.id
@@ -167,10 +165,7 @@ export async function GET(
       },
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -361,10 +356,7 @@ export async function POST(
       .single();
 
     if (error) {
-      return NextResponse.json(
-        { error: 'Failed to create line item', details: error.message },
-        { status: 400 }
-      );
+      return apiErrorResponse(error);
     }
 
     // Update change event modification timestamp
@@ -416,10 +408,7 @@ export async function POST(
       );
     }
 
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -497,9 +486,6 @@ export async function PUT(
 
     return NextResponse.json({ message: 'Line items reordered successfully' });
   } catch (error) {
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return apiErrorResponse(error);
   }
 }

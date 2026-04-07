@@ -5,7 +5,7 @@ import {
   SummaryCardGrid,
   formatCurrencyValue,
   formatNumberValue,
-} from "@/components/ui/summary-card-grid";
+} from "@/components/ds/summary-card-grid";
 import {
   DollarSign,
   FileText,

@@ -1524,7 +1524,7 @@
   border: 1px solid hsl(var(--border)) !important;
   border-radius: 12px !important;
   background: hsl(var(--background)) !important;
-  box-shadow: 0 10px 30px -16px rgb(0 0 0 / 0.25) !important;
+  box-shadow: none !important;
 }
 
 .lb-composer [contenteditable="true"],
@@ -1552,9 +1552,7 @@
 .lb-composer:focus-within,
 .lb-thread:focus-within {
   border-color: hsl(var(--ring)) !important;
-  box-shadow:
-    0 0 0 3px hsl(var(--ring) / 0.2),
-    0 10px 30px -16px rgb(0 0 0 / 0.25) !important;
+  box-shadow: 0 0 0 3px hsl(var(--ring) / 0.2) !important;
 }
 
 @media (max-width: 768px) {
@@ -1683,9 +1681,9 @@
   border: 1px solid hsl(var(--border) / 0.6) !important;
   border-radius: 14px !important;
   background: hsl(var(--background)) !important;
-  box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.04) !important;
+  box-shadow: none !important;
   padding: 4px !important;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  transition: border-color 0.2s ease;
 }
 
 .lb-composer-alleato:focus-within {

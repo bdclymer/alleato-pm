@@ -74,7 +74,7 @@ export function SimplifiedHeader({
   const [selectedTool, setSelectedTool] = useState(currentTool);
 
   return (
-    <header className="h-14 bg-[#2d2d2d] text-white flex items-center justify-between px-6 border-b border-gray-700">
+    <header className="h-14 bg-card text-card-foreground flex items-center justify-between px-6 border-b border-border">
       {/* Left: Logo */}
       <div className="flex items-center gap-8">
         <Link href="/" className="text-sm font-bold tracking-wider">
@@ -94,7 +94,7 @@ export function SimplifiedHeader({
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="h-7 px-2 text-white hover:bg-gray-700 flex items-center gap-2"
+                  className="h-7 px-2 text-card-foreground hover:bg-muted flex items-center gap-2"
                 >
                   <span className="text-sm">{selectedProject}</span>
                   <ChevronDown />
@@ -131,7 +131,7 @@ export function SimplifiedHeader({
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="h-7 px-2 text-white hover:bg-gray-700 flex items-center gap-2"
+                  className="h-7 px-2 text-card-foreground hover:bg-muted flex items-center gap-2"
                 >
                   <span className="text-sm">{selectedTool}</span>
                   <ChevronDown />
@@ -168,7 +168,7 @@ export function SimplifiedHeader({
         <Button
           variant="ghost"
           size="icon"
-          className="h-9 w-9 text-white hover:bg-gray-700 rounded-full"
+          className="h-9 w-9 text-card-foreground hover:bg-muted rounded-full"
         >
           <Search />
         </Button>
@@ -176,7 +176,7 @@ export function SimplifiedHeader({
         <Button
           variant="ghost"
           size="icon"
-          className="h-9 w-9 text-white hover:bg-gray-700 rounded-full"
+          className="h-9 w-9 text-card-foreground hover:bg-muted rounded-full"
         >
           <MessageSquare />
         </Button>
@@ -184,7 +184,7 @@ export function SimplifiedHeader({
         <Button
           variant="ghost"
           size="icon"
-          className="h-9 w-9 text-white hover:bg-gray-700 rounded-full"
+          className="h-9 w-9 text-card-foreground hover:bg-muted rounded-full"
         >
           <HelpCircle />
         </Button>
@@ -192,7 +192,7 @@ export function SimplifiedHeader({
         <Button
           variant="ghost"
           size="icon"
-          className="h-9 w-9 text-white hover:bg-gray-700 rounded-full"
+          className="h-9 w-9 text-card-foreground hover:bg-muted rounded-full"
         >
           <Bell />
         </Button>

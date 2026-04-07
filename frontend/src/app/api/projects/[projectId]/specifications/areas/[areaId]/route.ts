@@ -5,6 +5,7 @@ import {
   specificationAreaSchema,
   type SpecificationAreaFormData,
 } from "@/lib/schemas/specification-schemas";
+import { apiErrorResponse } from "@/lib/api-error";
 
 /**
  * GET /api/projects/[projectId]/specifications/areas/[areaId]
@@ -29,10 +30,7 @@ export async function GET(
   const result = await service.getArea(projectId, areaId);
 
   if (result.error) {
-    return NextResponse.json(
-      { error: result.error.message },
-      { status: result.error.type === "NOT_FOUND" ? 404 : 500 },
-    );
+    return apiErrorResponse(result.error);
   }
 
   return NextResponse.json(result.data);
@@ -69,7 +67,7 @@ export async function PATCH(
 
     if (result.error) {
       const statusCode = result.error.type === "NOT_FOUND" ? 404 : 409;
-      return NextResponse.json({ error: result.error.message }, { status: statusCode });
+      return apiErrorResponse(result.error);
     }
 
     return NextResponse.json(result.data);
@@ -107,7 +105,7 @@ export async function DELETE(
   const result = await service.deleteArea(projectId, areaId);
 
   if (result.error) {
-    return NextResponse.json({ error: result.error.message }, { status: 500 });
+    return apiErrorResponse(result.error);
   }
 
   return NextResponse.json({ success: true }, { status: 200 });

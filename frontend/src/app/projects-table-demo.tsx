@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Search, Menu, Bell, Globe, FileText, Users, Settings, CheckCircle, X, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface Project {
   id: string;
@@ -631,12 +632,15 @@ export default function ProjectsTableDemo() {
           <div className="top-bar-actions">
             {/* Search Dropdown */}
             <div className="search-dropdown-wrapper">
-              <button
+              <Button
+                type="button"
                 className={`search-trigger ${searchOpen ? 'active' : ''}`}
+                variant="ghost"
+                size="icon"
                 onClick={() => setSearchOpen(!searchOpen)}
               >
                 <Search size={20} />
-              </button>
+              </Button>
               {searchOpen && (
                 <div className="search-dropdown">
                   <input
@@ -727,9 +731,9 @@ export default function ProjectsTableDemo() {
             <aside className="right-panel">
               <div className="panel-header">
                 <h3 className="panel-title">Project Details</h3>
-                <button className="panel-close" onClick={() => setSelectedProject(null)}>
+                <Button type="button" className="panel-close" variant="ghost" size="icon" onClick={() => setSelectedProject(null)}>
                   <X size={20} />
-                </button>
+                </Button>
               </div>
               <div className="panel-content">
                 <div className="panel-section">
@@ -766,17 +770,17 @@ export default function ProjectsTableDemo() {
 
         {/* Pagination */}
         <div className="pagination-bar">
-          <button className="page-btn">
+          <Button type="button" className="page-btn" variant="ghost" size="icon">
             <ChevronLeft size={16} />
-          </button>
-          <button className="page-btn">1</button>
-          <button className="page-btn active">2</button>
-          <button className="page-btn">3</button>
+          </Button>
+          <Button type="button" className="page-btn" variant="ghost" size="icon">1</Button>
+          <Button type="button" className="page-btn active" variant="ghost" size="icon">2</Button>
+          <Button type="button" className="page-btn" variant="ghost" size="icon">3</Button>
           <span className="page-dots">•••</span>
-          <button className="page-btn">10</button>
-          <button className="page-btn">
+          <Button type="button" className="page-btn" variant="ghost" size="icon">10</Button>
+          <Button type="button" className="page-btn" variant="ghost" size="icon">
             <ChevronRight size={16} />
-          </button>
+          </Button>
         </div>
       </main>
     </div>

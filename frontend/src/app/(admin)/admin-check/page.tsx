@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle, RefreshCw, Shield } from "lucide-react";
-import { Text } from "@/components/ui/text";
+import { Text } from "@/components/ds/text";
 
 interface AdminCheckResponse {
   authenticated: boolean;

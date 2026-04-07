@@ -1,6 +1,0 @@
-{
-  "success": true,
-  "markdown": "#  Why can’t I deactivate a Cost Type, Cost Code or Sub Job in WBS? \n##  Answer \nOnly **Custom Segments** can be deactivated. Cost type, Cost Code and Sub Job are not custom segments and cannot be deactivated. See [What are segments and segment items?](https://v2.support.procore.com/faq-what-are-segments-and-segment-items)\n## See Also\n  * [What granular permissions are available for the Project level Admin tool?](https://v2.support.procore.com/faq-what-granular-permissions-are-available-for-the-project-level-admin-tool)\n  * [What is a budget code in Procore's WBS?](https://v2.support.procore.com/faq-what-is-a-budget-code-in-procores-wbs)\n  * [Why can't I create WBS custom segments?](https://v2.support.procore.com/faq-why-cant-i-create-wbs-custom-segments)\n\n\n",
-  "title": "Why can’t I deactivate a Cost Type, Cost Code or Sub Job in WBS?",
-  "description": "Explains why a Cost Type, Cost Code, or Sub Job cannot be deactivated in WBS."
-}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { DirectoryService } from "@/services/directoryService";
+import { apiErrorResponse } from "@/lib/api-error";
 
 export async function GET(
   request: NextRequest,
@@ -36,12 +37,7 @@ export async function GET(
       { status: 200 },
     );
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Internal server error",
-      },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -92,11 +88,6 @@ export async function PATCH(
       { status: 200 },
     );
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Internal server error",
-      },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

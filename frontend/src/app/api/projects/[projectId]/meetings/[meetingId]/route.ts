@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 // GET: Get a single meeting
 export async function GET(
@@ -25,15 +26,12 @@ export async function GET(
       if (error.code === "PGRST116") {
         return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
       }
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return apiErrorResponse(error);
     }
 
     return NextResponse.json({ data });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -76,15 +74,12 @@ export async function PUT(
       if (error.code === "PGRST116") {
         return NextResponse.json({ error: "Meeting not found" }, { status: 404 });
       }
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return apiErrorResponse(error);
     }
 
     return NextResponse.json({ data });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -115,14 +110,11 @@ export async function DELETE(
       .eq("project_id", parseInt(projectId, 10));
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return apiErrorResponse(error);
     }
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return apiErrorResponse(error);
   }
 }

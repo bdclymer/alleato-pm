@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 /**
  * GET /api/projects/[projectId]/drawings/[drawingId]/download
@@ -73,7 +74,6 @@ export async function GET(
       expiresAt: new Date(Date.now() + 3600 * 1000).toISOString(),
     });
   } catch (error) {
-    console.error("Drawing download error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return apiErrorResponse(error);
   }
 }

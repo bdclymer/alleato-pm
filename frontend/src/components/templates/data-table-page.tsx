@@ -6,7 +6,7 @@ import { PageHeader } from "@/components/layout/page-header-unified";
 import {
   SummaryCardGrid,
   type SummaryCard,
-} from "@/components/ui/summary-card-grid";
+} from "@/components/ds/summary-card-grid";
 import { DataTableResponsive } from "@/components/tables";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

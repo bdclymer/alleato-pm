@@ -41,6 +41,7 @@ const meetingTitleCache = new Map<string, string>();
 const globalMeetingTitleCache = new Map<string, string>();
 const primeContractTitleCache = new Map<string, string>();
 const companyTitleCache = new Map<string, string>();
+const vendorTitleCache = new Map<string, string>();
 const commitmentTitleCache = new Map<string, string>();
 const changeEventTitleCache = new Map<string, string>();
 const primeCoTitleCache = new Map<string, string>();
@@ -66,6 +67,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
     null,
   );
   const [companyTitle, setCompanyTitle] = useState<string | null>(null);
+  const [vendorTitle, setVendorTitle] = useState<string | null>(null);
   const [commitmentTitle, setCommitmentTitle] = useState<string | null>(null);
   const [changeEventTitle, setChangeEventTitle] = useState<string | null>(null);
   const [primeCoTitle, setPrimeCoTitle] = useState<string | null>(null);
@@ -183,6 +185,11 @@ export function useHeaderNav(): UseHeaderNavReturn {
       segments[0] === "directory" &&
       segments[1] === "companies" &&
       segments[2] !== "new";
+    const isGlobalVendorDetailRoute =
+      segments.length >= 3 &&
+      segments[0] === "directory" &&
+      segments[1] === "vendors" &&
+      segments[2] !== "new";
     const isProjectCompanyDetailRoute =
       segments.length >= 4 &&
       /^\d+$/.test(segments[0]) &&
@@ -217,6 +224,8 @@ export function useHeaderNav(): UseHeaderNavReturn {
         label = invoiceTitle || "Invoice";
       } else if (isGlobalCompanyDetailRoute && index === 2) {
         label = companyTitle || "Company";
+      } else if (isGlobalVendorDetailRoute && index === 2) {
+        label = vendorTitle || "Vendor";
       } else if (isProjectCompanyDetailRoute && index === 3) {
         label = companyTitle || "Company";
       } else {
@@ -266,7 +275,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
     });
 
     return crumbs;
-  }, [pathname, companyTitle, currentProject, meetingTitle, globalMeetingTitle, primeContractTitle, commitmentTitle, changeEventTitle, primeCoTitle, invoiceTitle]);
+  }, [pathname, companyTitle, vendorTitle, currentProject, meetingTitle, globalMeetingTitle, primeContractTitle, commitmentTitle, changeEventTitle, primeCoTitle, invoiceTitle]);
   useEffect(() => {
     const segments = pathname?.split("/").filter(Boolean) ?? [];
     const isMeetingDetailRoute =
@@ -318,6 +327,63 @@ export function useHeaderNav(): UseHeaderNavReturn {
     };
 
     fetchMeetingTitle();
+    return () => {
+      isActive = false;
+    };
+  }, [pathname]);
+
+  useEffect(() => {
+    const segments = pathname?.split("/").filter(Boolean) ?? [];
+    const isGlobalVendorDetailRoute =
+      segments.length >= 3 &&
+      segments[0] === "directory" &&
+      segments[1] === "vendors" &&
+      segments[2] !== "new";
+
+    if (!isGlobalVendorDetailRoute) {
+      setVendorTitle(null);
+      return;
+    }
+
+    const vendorId = segments[2];
+    if (!vendorId) {
+      setVendorTitle(null);
+      return;
+    }
+
+    const cachedTitle = vendorTitleCache.get(vendorId);
+    if (cachedTitle) {
+      setVendorTitle(cachedTitle);
+      return;
+    }
+
+    let isActive = true;
+    const fetchVendorTitle = async () => {
+      try {
+        const response = await fetch(`/api/directory/vendors/${vendorId}`);
+        if (!response.ok) return;
+
+        const contentType = response.headers.get("content-type") || "";
+        if (!contentType.includes("application/json")) return;
+
+        const data = await response.json();
+        const title =
+          (typeof data?.name === "string" && data.name.length > 0 ? data.name : null);
+
+        if (isActive) {
+          if (title) {
+            vendorTitleCache.set(vendorId, title);
+            setVendorTitle(title);
+          } else {
+            setVendorTitle(null);
+          }
+        }
+      } catch {
+        // Best-effort only; fallback label remains
+      }
+    };
+
+    fetchVendorTitle();
     return () => {
       isActive = false;
     };

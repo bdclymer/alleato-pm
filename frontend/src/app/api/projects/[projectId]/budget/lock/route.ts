@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 // POST /api/projects/[id]/budget/lock - Lock the budget
 export async function POST(
@@ -57,10 +58,7 @@ export async function POST(
       .select();
 
     if (error) {
-      return NextResponse.json(
-        { error: `Failed to lock budget: ${error.message}` },
-        { status: 500 },
-      );
+      return apiErrorResponse(error);
     }
 
     // Check if any rows were updated (RLS might have blocked it)
@@ -86,10 +84,7 @@ export async function POST(
       },
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -169,10 +164,7 @@ export async function DELETE(
       .select();
 
     if (error) {
-      return NextResponse.json(
-        { error: `Failed to unlock budget: ${error.message}` },
-        { status: 500 },
-      );
+      return apiErrorResponse(error);
     }
 
     // Check if any rows were updated (RLS might have blocked it)
@@ -199,10 +191,7 @@ export async function DELETE(
       },
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -240,9 +229,6 @@ export async function GET(
       lockedBy: project.budget_locked_by,
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

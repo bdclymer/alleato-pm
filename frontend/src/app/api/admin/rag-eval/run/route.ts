@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 
 /**
  * POST /api/admin/rag-eval/run
@@ -7,6 +8,17 @@ import { NextRequest } from "next/server";
  * On Vercel, it returns 503 since there's no Python venv available.
  */
 export async function POST(request: NextRequest) {
+  // OWASP A01:2021 - Broken Access Control: require authenticated admin
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const { data: profile } = await supabase.from("user_profiles").select("is_admin").eq("id", user.id).single();
+  if (!profile?.is_admin) {
+    return Response.json({ error: "Admin access required" }, { status: 403 });
+  }
+
   // This route requires a local Python venv and backend scripts.
   // It cannot function on Vercel.
   if (process.env.VERCEL) {

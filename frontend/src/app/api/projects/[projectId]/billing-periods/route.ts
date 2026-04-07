@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 type RouteContext = { params: Promise<{ projectId: string }> };
 
@@ -34,10 +35,7 @@ export async function GET(
       .order("start_date", { ascending: false });
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to fetch billing periods", details: error.message },
-        { status: 500 },
-      );
+      return apiErrorResponse(error);
     }
 
     const items = (data ?? []).map((bp) => ({
@@ -108,10 +106,7 @@ export async function POST(
       .single();
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to create billing period", details: error.message },
-        { status: 500 },
-      );
+      return apiErrorResponse(error);
     }
 
     return NextResponse.json({ item: data }, { status: 201 });

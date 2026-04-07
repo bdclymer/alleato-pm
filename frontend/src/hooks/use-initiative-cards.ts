@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 
 export interface Employee {
   id: string;
@@ -69,6 +70,9 @@ export function useCreateCard() {
       return res.json();
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to create card");
+    },
   });
 }
 
@@ -88,6 +92,9 @@ export function useUpdateCard() {
       return res.json();
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update card");
+    },
   });
 }
 
@@ -102,6 +109,9 @@ export function useDeleteCard() {
       return res.json();
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to delete card");
+    },
   });
 }
 
@@ -120,6 +130,9 @@ export function useReorderCards() {
       return res.json();
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to reorder cards");
+    },
   });
 }
 
@@ -139,5 +152,8 @@ export function useDispatchCard() {
       }>;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to dispatch card");
+    },
   });
 }

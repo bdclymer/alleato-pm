@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { apiErrorResponse } from "@/lib/api-error";
 
 /**
  * GET /api/users
@@ -21,10 +22,7 @@ export async function GET() {
       .order("full_name", { ascending: true });
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to fetch users", details: error.message },
-        { status: 500 },
-      );
+      return apiErrorResponse(error);
     }
 
     return NextResponse.json({ users: data ?? [] });

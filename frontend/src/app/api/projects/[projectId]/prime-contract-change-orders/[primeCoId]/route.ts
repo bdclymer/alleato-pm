@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{ projectId: string; primeCoId: string }>;
@@ -33,10 +34,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       if (error.code === "PGRST116") {
         return NextResponse.json({ error: "Not found" }, { status: 404 });
       }
-      return NextResponse.json(
-        { error: "Failed to fetch", details: error.message },
-        { status: 400 },
-      );
+      return apiErrorResponse(error);
     }
 
     // Fetch line items for this PCCO
@@ -62,8 +60,8 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       line_items: lineItems ?? [],
       contract: contractInfo,
     });
-  } catch {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (error) {
+    return apiErrorResponse(error);
   }
 }
 
@@ -104,15 +102,12 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       .single();
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to update", details: error.message },
-        { status: 400 },
-      );
+      return apiErrorResponse(error);
     }
 
     return NextResponse.json(data);
-  } catch {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (error) {
+    return apiErrorResponse(error);
   }
 }
 
@@ -146,14 +141,11 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
       .eq("project_id", Number(projectId));
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to delete", details: error.message },
-        { status: 400 },
-      );
+      return apiErrorResponse(error);
     }
 
     return NextResponse.json({ message: "Deleted successfully" });
-  } catch {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (error) {
+    return apiErrorResponse(error);
   }
 }

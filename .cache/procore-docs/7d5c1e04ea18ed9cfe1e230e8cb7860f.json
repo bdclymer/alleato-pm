@@ -1,6 +1,0 @@
-{
-  "success": true,
-  "markdown": "#  How do I delete line items in approved change orders? \nIf you have approved any other change orders since creating the change order you want to edit, you will need to change their status to 'Draft'. You can then set the change order you want to edit to 'Draft' and make any additional edits.\n## See Also\n  * [What is the 'Enable Always Editable Schedule of Values' setting?](https://v2.support.procore.com/faq-what-is-the-enable-always-editable-schedule-of-values-setting)\n  * [How does Procore automatically complete amounts on an owner invoice? (Beta)](https://v2.support.procore.com/faq-how-does-procore-automatically-complete-amounts-on-an-owner-invoice)\n  * [Which budget views should I add to my Procore projects?](https://v2.support.procore.com/faq-which-budget-views-should-i-add-to-my-projects)\n\n\n",
-  "title": "How do I delete line items in approved change orders?",
-  "description": ""
-}

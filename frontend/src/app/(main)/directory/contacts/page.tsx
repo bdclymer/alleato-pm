@@ -573,6 +573,8 @@ export default function DirectoryContactsPage(): ReactElement {
     Boolean(tableState.searchInput) ||
     Boolean(activeFilters.type) ||
     Boolean(activeFilters.is_admin);
+  const totalPages = Math.max(1, Math.ceil(tableData.length / tableState.perPage));
+  const currentPage = Math.min(tableState.page, totalPages);
 
   const handleFilterChange = (nextFilters: ContactFilterState) => {
     tableState.setActiveFilters(nextFilters);
@@ -913,6 +915,23 @@ export default function DirectoryContactsPage(): ReactElement {
               Add Contact
             </Button>
           ),
+        }}
+        pagination={{
+          page: currentPage,
+          totalPages,
+          perPage: tableState.perPage,
+          clientSide: true,
+          onPageChange: (nextPage) => {
+            tableState.setPage(nextPage);
+            tableState.setSearchParams({ page: String(nextPage) });
+          },
+          onPerPageChange: (nextPerPage) => {
+            const parsed = Number(nextPerPage);
+            if (!Number.isFinite(parsed) || parsed <= 0) return;
+            tableState.setPerPage(parsed);
+            tableState.setSearchParams({ per_page: String(parsed), page: "1" });
+            tableState.setPage(1);
+          },
         }}
         features={{
           enableExport: true,

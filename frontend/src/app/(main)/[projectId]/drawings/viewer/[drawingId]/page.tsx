@@ -98,14 +98,14 @@ const ANNOTATION_TOOLS: { tool: AnnotationTool; icon: React.ReactNode; label: st
 ];
 
 const PRESET_COLORS = [
-  "hsl(var(--status-error))",
-  "hsl(var(--status-warning))",
-  "hsl(var(--chart-3))",
-  "hsl(var(--status-success))",
-  "hsl(var(--status-info))",
-  "hsl(var(--chart-4))",
-  "hsl(var(--foreground))",
-  "hsl(var(--background))",
+  "#ef4444", // red
+  "#f97316", // orange
+  "#eab308", // yellow
+  "#22c55e", // green
+  "#3b82f6", // blue
+  "#8b5cf6", // purple
+  "#000000", // black
+  "#ffffff", // white
 ];
 
 const LOCAL_ANNOTATION_FILTERS: { key: LocalAnnotationType; label: string }[] = [
@@ -203,11 +203,14 @@ export default function DrawingViewerPage() {
   const { data: pins = [] } = useDrawingPins(projectId, drawingId);
   const createPin = useCreateDrawingPin(projectId, drawingId);
 
-  const [signedFileUrl, setSignedFileUrl] = useState<string | null>(null);
+  // Use the proxy URL directly — avoids Supabase signed-URL range-request 400s
+  const proxyFileUrl = drawing?.current_revision?.file_url
+    ? `/api/projects/${projectId}/drawings/${drawingId}/pdf-proxy`
+    : null;
 
   // Annotation/tool state
   const [activeTool, setActiveTool] = useState<AnnotationTool>("select");
-  const [annotationColor, setAnnotationColor] = useState("hsl(var(--status-error))");
+  const [annotationColor, setAnnotationColor] = useState("#ef4444");
 
   // Link pin state
   const [pendingLinkPos, setPendingLinkPos] = useState<{ x: number; y: number; page: number } | null>(null);
@@ -259,14 +262,6 @@ export default function DrawingViewerPage() {
 
   // Page info
   const [pageInfo, setPageInfo] = useState({ current: 1, total: 0 });
-
-  useEffect(() => {
-    if (!drawing?.current_revision?.file_url) return;
-    fetch(`/api/projects/${projectId}/drawings/${drawingId}/download`)
-      .then((r) => (r.ok ? r.json() : null))
-      .then((data) => { if (data?.downloadUrl) setSignedFileUrl(data.downloadUrl); })
-      .catch(() => {});
-  }, [drawing, projectId, drawingId]);
 
   // Prev/next drawing navigation
   const drawings = drawingsData?.drawings ?? [];
@@ -410,9 +405,7 @@ export default function DrawingViewerPage() {
     </>
   );
 
-  // The tool passed to DrawingViewer — "link" maps to "comment" in the canvas
-  // (both use the canvas click handler, but we intercept "link" clicks above)
-  const viewerTool = activeTool === "link" ? "comment" : activeTool;
+  const viewerTool = activeTool;
 
   const toggleLayer = (key: keyof typeof visibleLayers) => {
     setVisibleLayers((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -647,7 +640,7 @@ export default function DrawingViewerPage() {
                         ? tool === "link"
                           ? "bg-status-success text-white"
                           : "bg-primary text-white"
-                        : "text-muted-foreground hover:text-white hover:bg-muted"
+                        : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
                     )}
                   >
                     {icon}
@@ -706,7 +699,7 @@ export default function DrawingViewerPage() {
                       type="button"
                       variant="ghost"
                       onClick={action}
-                      className="w-10 h-10 flex flex-col items-center justify-center gap-0.5 rounded-md transition-colors text-muted-foreground hover:text-white hover:bg-muted p-0"
+                      className="w-10 h-10 flex flex-col items-center justify-center gap-0.5 rounded-md transition-colors text-muted-foreground hover:bg-primary/10 hover:text-primary p-0"
                     >
                       {icon}
                       <span className="text-[9px] leading-none">{label.split(" ")[0]}</span>
@@ -725,15 +718,15 @@ export default function DrawingViewerPage() {
                 <div className="h-6 w-6 border-2 border-foreground/40 border-t-foreground rounded-full animate-spin" />
               </div>
             )}
-            {signedFileUrl && (
+            {proxyFileUrl && (
               <DrawingViewerWithComments
                 drawingId={drawingId}
-                fileUrl={signedFileUrl}
+                fileUrl={proxyFileUrl}
                 fileName={drawing?.title || "Drawing"}
                 drawingNumber={drawing?.drawing_number ?? undefined}
                 title={drawing?.title ?? undefined}
                 showToolbar={false}
-                controlledTool={viewerTool as "select" | "pen" | "rectangle" | "arrow" | "text" | "eraser" | "comment"}
+                controlledTool={viewerTool as "select" | "pen" | "rectangle" | "arrow" | "text" | "eraser" | "comment" | "link"}
                 controlledColor={annotationColor}
                 controlledScale={viewScale}
                 onScaleChange={setViewScale}
@@ -747,7 +740,7 @@ export default function DrawingViewerPage() {
                 className="h-full border-none rounded-none bg-background"
               />
             )}
-            {!isLoading && !signedFileUrl && drawing?.current_revision?.file_url && (
+            {!isLoading && !proxyFileUrl && drawing?.current_revision?.file_url && (
               <div className="flex items-center justify-center h-full">
                 <div className="h-6 w-6 border-2 border-foreground/40 border-t-foreground rounded-full animate-spin" />
               </div>

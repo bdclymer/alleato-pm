@@ -130,29 +130,34 @@ export function DevAnnotationOverlay() {
       {/* Floating trigger button */}
       <div className="fixed bottom-4 right-4 z-[9999] flex flex-col items-end gap-2">
         {repliedCount > 0 && !open && (
-          <div className="bg-blue-600 text-white text-xs rounded-full px-2 py-0.5 animate-pulse">
+          <div className="border border-status-info/20 bg-status-info/10 text-status-info text-xs rounded-full px-2 py-0.5 animate-pulse">
             {repliedCount} reply{repliedCount > 1 ? " replies" : ""} from Claude
           </div>
         )}
-        {/* eslint-disable-next-line design-system/no-design-violations -- dev-only floating widget */}
-        <button
+        <Button
+          type="button"
+          variant="secondary"
+          size="sm"
           onClick={() => setOpen((v) => !v)}
-          className="relative flex items-center gap-1.5 bg-zinc-900 text-white text-xs font-medium px-3 py-2 rounded-full shadow-sm border border-zinc-700 hover:bg-zinc-800 transition-colors"
+          className="relative flex items-center gap-1.5 rounded-full border border-border bg-foreground px-3 py-2 text-xs font-medium text-background shadow-sm transition-colors hover:bg-foreground/90"
           title="Dev annotation bridge"
         >
           <span className="text-base">🤖</span>
           <span>Dev Bridge</span>
           {openCount > 0 && (
-            <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+            <span className="absolute -top-1.5 -right-1.5 border border-status-warning/20 bg-status-warning/10 text-status-warning text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
               {openCount}
             </span>
           )}
-        </button>
+        </Button>
       </div>
 
       {/* Panel */}
       {open && (
-        <div className="fixed bottom-16 right-4 z-[9999] w-96 bg-background border border-border rounded-xl shadow-sm flex flex-col overflow-hidden max-h-[70vh]">
+        <div
+          className="fixed bottom-16 right-4 z-[9999] w-96 bg-background border border-border rounded-xl shadow-sm flex flex-col overflow-hidden"
+          style={{ maxHeight: "70vh" }}
+        >
           {/* Header */}
           <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted/50">
             <div className="flex items-center gap-2">
@@ -161,32 +166,38 @@ export function DevAnnotationOverlay() {
                 {pathname}
               </span>
             </div>
-            {/* eslint-disable-next-line design-system/no-design-violations -- dev-only panel close */}
-            <button
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
               onClick={() => setOpen(false)}
-              className="text-muted-foreground hover:text-foreground text-lg leading-none"
+              className="h-6 w-6 text-muted-foreground hover:text-foreground"
             >
               ×
-            </button>
+            </Button>
           </div>
 
           {/* Tabs */}
           <div className="flex border-b border-border">
-            {/* eslint-disable-next-line design-system/no-design-violations -- dev-only tab control */}
-            <button
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => setTab("new")}
-              className={`flex-1 text-xs py-2 font-medium transition-colors ${
+              className={`flex-1 rounded-none border-b-2 px-0 text-xs font-medium transition-colors ${
                 tab === "new"
                   ? "text-foreground border-b-2 border-primary"
                   : "text-muted-foreground hover:text-foreground"
               }`}
             >
               + New annotation
-            </button>
-            {/* eslint-disable-next-line design-system/no-design-violations -- dev-only tab control */}
-            <button
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
               onClick={() => setTab("history")}
-              className={`flex-1 text-xs py-2 font-medium transition-colors relative ${
+              className={`relative flex-1 rounded-none border-b-2 px-0 text-xs font-medium transition-colors ${
                 tab === "history"
                   ? "text-foreground border-b-2 border-primary"
                   : "text-muted-foreground hover:text-foreground"
@@ -194,11 +205,11 @@ export function DevAnnotationOverlay() {
             >
               History
               {repliedCount > 0 && (
-                <span className="absolute top-1 right-4 bg-blue-500 text-white text-[9px] font-bold w-3.5 h-3.5 rounded-full flex items-center justify-center">
+                <span className="absolute top-1 right-4 border border-status-info/20 bg-status-info/10 text-status-info text-[9px] font-bold w-3.5 h-3.5 rounded-full flex items-center justify-center">
                   {repliedCount}
                 </span>
               )}
-            </button>
+            </Button>
           </div>
 
           {/* New annotation tab */}
@@ -208,26 +219,31 @@ export function DevAnnotationOverlay() {
                 placeholder="Describe the issue or what you want Claude Code to look at..."
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                className="resize-none text-sm min-h-[100px]"
+                className="resize-none text-sm"
+                style={{ minHeight: 100 }}
                 autoFocus
               />
               <div className="flex items-center justify-between">
-                {/* eslint-disable-next-line design-system/no-design-violations -- dev-only action */}
-                <button
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
                   onClick={captureScreenshot}
                   disabled={capturing}
-                  className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 transition-colors"
+                  className="h-auto px-0 text-xs text-muted-foreground hover:text-foreground"
                 >
                   {capturing ? "Capturing..." : screenshotData ? "✓ Screenshot captured" : "📷 Add screenshot"}
-                </button>
+                </Button>
                 {screenshotData && (
-                  // eslint-disable-next-line design-system/no-design-violations -- dev-only action
-                  <button
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
                     onClick={() => setScreenshotData(null)}
-                    className="text-xs text-destructive hover:underline"
+                    className="h-auto px-0 text-xs text-destructive hover:underline"
                   >
                     Remove
-                  </button>
+                  </Button>
                 )}
               </div>
               {screenshotData && (
@@ -266,10 +282,10 @@ export function DevAnnotationOverlay() {
                     <span
                       className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full flex-shrink-0 ${
                         a.status === "replied"
-                          ? "bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300"
+                          ? "bg-status-info/10 text-status-info dark:bg-status-info/20 dark:text-status-info"
                           : a.status === "resolved"
-                          ? "bg-green-100 text-green-700 dark:bg-green-900/50 dark:text-green-300"
-                          : "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-300"
+                          ? "bg-status-success/10 text-status-success dark:bg-status-success/20 dark:text-status-success"
+                          : "bg-status-warning/10 text-status-warning dark:bg-status-warning/20 dark:text-status-warning"
                       }`}
                     >
                       {a.status}
@@ -282,9 +298,9 @@ export function DevAnnotationOverlay() {
                     </span>
                   </div>
                   {a.ai_reply && (
-                    <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-lg p-2.5 mt-1">
+                    <div className="bg-status-info/10 dark:bg-status-info/15 border border-status-info/20 dark:border-status-info/30 rounded-lg p-2.5 mt-1">
                       <div className="flex items-center gap-1 mb-1">
-                        <span className="text-[10px] font-medium text-blue-600 dark:text-blue-400">
+                        <span className="text-[10px] font-medium text-status-info">
                           Claude Code
                         </span>
                         <span className="text-[10px] text-muted-foreground">

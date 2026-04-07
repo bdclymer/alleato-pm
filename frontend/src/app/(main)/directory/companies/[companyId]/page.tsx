@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Calendar, Check, ChevronsUpDown, FolderOpen, Pencil, Plus, Users } from "lucide-react";
+import { ArrowLeft, Calendar, Check, ChevronsUpDown, FolderOpen, MoreHorizontal, Plus, Users } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
   Modal,
   ModalContent,
@@ -24,6 +25,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Command,
   CommandEmpty,
@@ -351,6 +358,14 @@ export default function CompanyDetailsPage() {
     setProjects(payload.data || []);
   }, []);
 
+  const openAddContactModal = React.useCallback(async () => {
+    setAddContactOpen(true);
+    setContactMode("existing");
+    setContactQuery("");
+    setContactComboboxOpen(false);
+    await loadAvailableContacts();
+  }, [loadAvailableContacts]);
+
   async function handleSaveCompany() {
     if (!data?.company.id || !companyForm.name.trim()) {
       toast.error("Company name is required");
@@ -592,30 +607,44 @@ export default function CompanyDetailsPage() {
       description={companyLocation || company.website || "Company details"}
       onBack={() => router.back()}
       actions={
-        <Button variant="outline" onClick={() => setEditOpen(true)}>
-          <Pencil />
-          Edit Company
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" aria-label="Company actions">
+              <MoreHorizontal />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onSelect={() => setEditOpen(true)}>
+              Edit Company
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => void openAddContactModal()}>
+              Add Contact
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       }
     >
         <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
           <div className="space-y-8">
-            <section className="space-y-4 border-b border-border pb-8">
+            <section className="space-y-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <Badge variant={statusVariant(company.status)}>{company.status || "Unknown"}</Badge>
+                {company.type ? <Badge variant="outline">{company.type}</Badge> : null}
+              </div>
+            </section>
+
+            <section className="space-y-4">
               <div className="flex flex-wrap items-start justify-between gap-4">
-                <SectionHeader title="Contacts" description="People linked to this company." />
+                <SectionHeader title="Company Contacts" />
                 <Button
                   size="sm"
-                  variant="outline"
-                  onClick={async () => {
-                    setAddContactOpen(true);
-                    setContactMode("existing");
-                    setContactQuery("");
-                    setContactComboboxOpen(false);
-                    await loadAvailableContacts();
-                  }}
+                  variant="ghost"
+                  onClick={() => void openAddContactModal()}
+                  className="h-8 w-8 p-0"
+                  aria-label="Add Contact"
+                  title="Add Contact"
                 >
                   <Plus />
-                  Add Contact
                 </Button>
               </div>
               {contacts.length === 0 ? (
@@ -658,7 +687,7 @@ export default function CompanyDetailsPage() {
               )}
             </section>
 
-            <section className="space-y-4 border-b border-border pb-8">
+            <section className="space-y-4">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <SectionHeader title="Projects" description="Projects where this company is involved." />
                 <Button
@@ -677,72 +706,44 @@ export default function CompanyDetailsPage() {
               {associatedProjects.length === 0 ? (
                 <EmptyState message="No projects associated with this company." />
               ) : (
-                <div className="overflow-hidden rounded-md border border-border">
-                  <ul className="divide-y divide-border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Project</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Number</TableHead>
+                      <TableHead className="text-right">State</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {associatedProjects.map((project) => (
-                      <li key={project.id} className="space-y-2 px-4 py-4">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-sm font-medium text-foreground">{project.name || `Project ${project.id}`}</p>
-                          <Badge variant={statusVariant(project.company_status)}>
-                            {project.company_status || "Unknown"}
-                          </Badge>
-                          {project.archived ? <Badge variant="outline">Archived</Badge> : null}
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          #{project.project_number || "-"} • {project.state || "No status"}
-                        </p>
-                      </li>
+                      <TableRow key={project.id}>
+                        <TableCell>
+                          <Link
+                            href={`/${project.id}/home`}
+                            className="font-medium text-primary underline-offset-4 hover:underline"
+                          >
+                            {project.name || `Project ${project.id}`}
+                          </Link>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Badge variant={statusVariant(project.company_status)}>
+                              {project.company_status || "Unknown"}
+                            </Badge>
+                            {project.archived ? <Badge variant="outline">Archived</Badge> : null}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">#{project.project_number || "-"}</TableCell>
+                        <TableCell className="text-right text-muted-foreground">{project.state || "No status"}</TableCell>
+                      </TableRow>
                     ))}
-                  </ul>
-                </div>
-              )}
-            </section>
-            <section className="space-y-4 border-b border-border pb-8">
-              <SectionHeader
-                title="Meetings"
-                description="Recent meetings grouped by associated project."
-              />
-              {meetingsByProject.length === 0 ? (
-                <EmptyState message="No meetings found for this company's projects." />
-              ) : (
-                <div className="space-y-4">
-                  {meetingsByProject.map(({ project, items }) => (
-                    <div key={project?.id || items[0]?.project_id || "unknown"} className="overflow-hidden rounded-md border border-border">
-                      <div className="flex items-center justify-between border-b border-border bg-muted/20 px-4 py-2">
-                        <p className="text-sm font-medium text-foreground">
-                          {project?.name || items[0]?.project_name || "Unknown project"}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          #{project?.project_number || items[0]?.project_number || "-"}
-                        </p>
-                      </div>
-                      <ul className="divide-y divide-border">
-                        {items.slice(0, 6).map((meeting) => (
-                          <li key={meeting.id} className="space-y-1 px-4 py-3">
-                            <div className="flex items-center gap-2">
-                              <Link
-                                href={`/${meeting.project_id}/meetings/${meeting.id}`}
-                                className="text-sm font-medium text-foreground underline-offset-4 hover:underline"
-                              >
-                                {meeting.title || "Untitled meeting"}
-                              </Link>
-                              <Badge variant={statusVariant(meeting.status)}>{meeting.status || "Unknown"}</Badge>
-                              {meeting.category ? <Badge variant="outline">{meeting.category}</Badge> : null}
-                            </div>
-                            <p className="text-sm text-muted-foreground">
-                              {formatDate(meeting.date)}
-                              {meeting.participants ? ` • ${meeting.participants}` : ""}
-                            </p>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
+                  </TableBody>
+                </Table>
               )}
             </section>
 
-            <section className="space-y-4 pb-2">
+            <section className="space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <SectionHeader title="Invoices" description="Invoice activity across associated projects." />
                 <div className="flex items-center gap-2">
@@ -771,24 +772,85 @@ export default function CompanyDetailsPage() {
                   }
                 />
               ) : (
-                <div className="overflow-hidden rounded-md border border-border">
-                  <ul className="divide-y divide-border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Invoice</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Contract</TableHead>
+                      <TableHead>Project</TableHead>
+                      <TableHead className="text-right">Period</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {filteredInvoices.map((invoice) => (
-                      <li key={invoice.id} className="space-y-2 px-4 py-4">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <p className="text-sm font-medium text-foreground">{invoice.invoice_number || `Invoice ${invoice.id}`}</p>
+                      <TableRow key={invoice.id}>
+                        <TableCell className="font-medium">{invoice.invoice_number || `Invoice ${invoice.id}`}</TableCell>
+                        <TableCell>
                           <Badge variant={statusVariant(invoice.status)}>{invoice.status || "Unknown"}</Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground">
-                          Contract {invoice.contract_number || invoice.contract_id}: {invoice.contract_title || "Untitled"}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {invoice.project_name || "Unknown project"} ({invoice.project_number || "-"}) • {formatDate(invoice.period_start)} to {formatDate(invoice.period_end)}
-                        </p>
-                      </li>
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {invoice.contract_number || invoice.contract_id}: {invoice.contract_title || "Untitled"}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">
+                          {invoice.project_name || "Unknown project"} ({invoice.project_number || "-"})
+                        </TableCell>
+                        <TableCell className="text-right text-muted-foreground">
+                          {formatDate(invoice.period_start)} to {formatDate(invoice.period_end)}
+                        </TableCell>
+                      </TableRow>
                     ))}
-                  </ul>
-                </div>
+                  </TableBody>
+                </Table>
+              )}
+            </section>
+
+            <section className="space-y-4">
+              <SectionHeader
+                title="Meetings"
+                description="Recent meetings grouped by associated project."
+              />
+              {meetingsByProject.length === 0 ? (
+                <EmptyState message="No meetings found for this company's projects." />
+              ) : (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Meeting</TableHead>
+                      <TableHead>Project</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="text-right">Date</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {meetingsByProject.flatMap(({ project, items }) =>
+                      items.slice(0, 6).map((meeting) => (
+                        <TableRow key={meeting.id}>
+                          <TableCell>
+                            <Link
+                              href={`/${meeting.project_id}/meetings/${meeting.id}`}
+                              className="font-medium text-primary underline-offset-4 hover:underline"
+                            >
+                              {meeting.title || "Untitled meeting"}
+                            </Link>
+                          </TableCell>
+                          <TableCell className="text-muted-foreground">
+                            {project?.name || meeting.project_name || "Unknown project"}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-2">
+                              <Badge variant={statusVariant(meeting.status)}>{meeting.status || "Unknown"}</Badge>
+                              {meeting.category ? <Badge variant="outline">{meeting.category}</Badge> : null}
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right text-muted-foreground">
+                            {formatDate(meeting.date)}
+                          </TableCell>
+                        </TableRow>
+                      )),
+                    )}
+                  </TableBody>
+                </Table>
               )}
             </section>
           </div>
@@ -796,13 +858,8 @@ export default function CompanyDetailsPage() {
           <aside className="space-y-6 lg:sticky lg:top-4 lg:self-start">
             <section className="space-y-4">
               <SectionHeader title="Overview" description="Core company profile and contact information." />
-              <div className="rounded-md border border-border p-4">
+              <div>
                 <dl className="space-y-4">
-                  <DetailField
-                    label="Status"
-                    value={<Badge variant={statusVariant(company.status)}>{company.status || "Unknown"}</Badge>}
-                  />
-                  <DetailField label="Type" value={company.type || "-"} />
                   <DetailField label="Address" value={company.address || "-"} />
                   <DetailField
                     label="Website"
@@ -827,7 +884,7 @@ export default function CompanyDetailsPage() {
 
             <section className="space-y-4">
               <SectionHeader title="Summary" description="Record counts." />
-              <div className="rounded-md border border-border px-4 py-2">
+              <div className="px-0 py-0">
                 <CompactStatRow title="Contacts" value={summary.contact_count} icon={<Users className="h-4 w-4" />} />
                 <div className="border-t border-border" />
                 <CompactStatRow title="Projects" value={summary.project_count} icon={<FolderOpen className="h-4 w-4" />} />

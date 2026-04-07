@@ -12,11 +12,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Container } from "@/components/ui/container";
-import { Stack } from "@/components/ui/stack";
-import { Inline } from "@/components/ui/inline";
-import { Heading } from "@/components/ui/heading";
-import { Text } from "@/components/ui/text";
+import { Container } from "@/components/layout/container";
+import { Stack } from "@/components/layout/stack";
+import { Inline } from "@/components/layout/inline";
+import { Heading } from "@/components/ds/heading";
+import { Text } from "@/components/ds/text";
 import {
   Breadcrumb,
   BreadcrumbItem as UiBreadcrumbItem,

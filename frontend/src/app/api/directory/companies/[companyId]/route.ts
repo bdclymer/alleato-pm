@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{ companyId: string }>;
@@ -37,19 +38,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
           { status: 404 }
         );
       }
-      return NextResponse.json(
-        { error: "Failed to fetch company", details: error.message },
-        { status: 500 }
-      );
+      return apiErrorResponse(error);
     }
 
     return NextResponse.json(company);
   } catch (error) {
-    console.error("Unexpected error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -109,19 +103,12 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
           { status: 409 }
         );
       }
-      return NextResponse.json(
-        { error: "Failed to update company", details: error.message },
-        { status: 500 }
-      );
+      return apiErrorResponse(error);
     }
 
     return NextResponse.json(company);
   } catch (error) {
-    console.error("Unexpected error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -180,10 +167,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
           { status: 404 }
         );
       }
-      return NextResponse.json(
-        { error: "Failed to delete company", details: error.message },
-        { status: 500 }
-      );
+      return apiErrorResponse(error);
     }
 
     return NextResponse.json(
@@ -191,10 +175,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       { status: 200 }
     );
   } catch (error) {
-    console.error("Unexpected error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return apiErrorResponse(error);
   }
 }

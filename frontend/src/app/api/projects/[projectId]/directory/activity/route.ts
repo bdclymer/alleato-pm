@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
 import { PermissionService } from "@/services/permissionService";
 import { DirectoryAdminService } from "@/services/directoryAdminService";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
@@ -49,12 +50,6 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ data: log });
   } catch (error) {
     console.error("[DirectoryActivity] Failed to load log", error);
-    return NextResponse.json(
-      {
-        error: "Failed to load activity log",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

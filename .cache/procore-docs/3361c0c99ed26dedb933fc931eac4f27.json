@@ -1,6 +1,0 @@
-{
-  "success": true,
-  "markdown": "#  How do I filter out 'Recycled' items from a custom RFIs report? \n##  Answer \nIf you have created a custom report where RFIs from the Recycle Bin are showing in a custom RFIs report, you can edit the report and then remove the checkmark from the 'Recycled' box associated with the **Status** filter.\n## See Also\n  * [What visual types can I create with 360 Reporting Visuals and Dashboards? (Beta)](https://v2.support.procore.com/faq-what-visual-types-can-i-create-with-360-reporting-visuals-and-dashboards)\n  * [What types of questions can I ask Assist?](https://v2.support.procore.com/faq-what-types-of-questions-can-i-ask-assist)\n  * [What gets copied over to a new project from a project template?](https://v2.support.procore.com/faq-what-gets-copied-over-to-a-new-project-when-applying-a-project-template)\n\n\n",
-  "title": "How do I filter out 'Recycled' items from a custom RFIs report?",
-  "description": ""
-}

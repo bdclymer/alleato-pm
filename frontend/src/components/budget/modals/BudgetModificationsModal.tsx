@@ -39,7 +39,6 @@ interface BudgetModification {
 interface BudgetModificationsModalProps {
   open: boolean;
   onClose: () => void;
-  costCode: string;
   budgetLineId: string;
   projectId: string;
   onModificationChanged?: () => void;
@@ -47,13 +46,9 @@ interface BudgetModificationsModalProps {
 
 type StatusFilter = "all" | "approved" | "pending" | "draft" | "void";
 
-/**
- * BudgetModificationsModal - Shows budget modifications with workflow actions
- */
 export function BudgetModificationsModal({
   open,
   onClose,
-  costCode,
   budgetLineId,
   projectId,
   onModificationChanged,
@@ -77,7 +72,6 @@ export function BudgetModificationsModal({
       }
     } catch (error) {
       console.error("Failed to fetch budget modifications:", error);
-      // Intentionally swallowed: modal shows empty state on error
     } finally {
       setLoading(false);
     }
@@ -112,10 +106,8 @@ export function BudgetModificationsModal({
       const result = await response.json();
       toast.success(result.message);
 
-      // Refresh the list
       await fetchModifications();
 
-      // Notify parent if budget totals may have changed
       if (action === "approve" || action === "void") {
         onModificationChanged?.();
       }
@@ -153,27 +145,13 @@ export function BudgetModificationsModal({
   };
 
   const getStatusBadge = (status: string) => {
-    const statusConfig = {
-      approved: "bg-green-100 text-green-800 border-green-200",
-      pending: "bg-yellow-100 text-yellow-800 border-yellow-200",
-      draft: "bg-muted text-foreground border-border",
-      void: "bg-red-100 text-red-800 border-red-200",
-    };
-
     return (
-      <span
-        className={cn(
-          "inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full border",
-          statusConfig[status as keyof typeof statusConfig] ||
-            statusConfig.draft,
-        )}
-      >
+      <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full border border-border bg-muted text-foreground">
         {status.toUpperCase()}
       </span>
     );
   };
 
-  // Get available actions based on status
   const getAvailableActions = (
     status: string,
   ): Array<{
@@ -221,7 +199,6 @@ export function BudgetModificationsModal({
     }
   };
 
-  // Calculate totals for approved modifications only (what affects the budget)
   const approvedTotal = modifications
     .filter((m) => m.status === "approved")
     .reduce((sum, m) => sum + m.amount, 0);
@@ -240,37 +217,36 @@ export function BudgetModificationsModal({
       open={open}
       onClose={onClose}
       title="Budget Modifications"
-      subtitle={costCode}
       size="xl"
     >
-      {/* Tabs */}
       <SidebarTabs
         tabs={tabs}
         activeTab={activeTab}
         onTabChange={(id) => setActiveTab(id as "summary" | "details")}
       />
 
-      {/* Content */}
       <SidebarBody className="bg-background">
         {activeTab === "summary" ? (
-          <div className="p-6 space-y-4">
+          <div className="p-4 sm:p-6 space-y-4">
             {/* Totals Summary */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="rounded-xl border border-green-200 shadow-sm p-4 bg-gradient-to-br from-green-50 via-white to-white">
-                <p className="text-sm text-foreground">Approved</p>
-                <p className="text-xl font-bold text-green-700 mt-1">
+              <div className="rounded-lg border border-border p-4 bg-muted/30">
+                <p className="text-sm text-muted-foreground">Approved</p>
+                <p className="text-2xl font-bold text-foreground mt-1">
                   {formatCurrency(approvedTotal)}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   Affects budget totals
                 </p>
               </div>
-              <div className="rounded-xl border border-yellow-200 shadow-sm p-4 bg-gradient-to-br from-yellow-50 via-white to-white">
-                <p className="text-sm text-foreground">Pending</p>
-                <p className="text-xl font-bold text-yellow-700 mt-1">
+              <div className="rounded-lg border border-border p-4 bg-muted/30">
+                <p className="text-sm text-muted-foreground">Pending</p>
+                <p className="text-2xl font-bold text-foreground mt-1">
                   {formatCurrency(pendingTotal)}
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">Awaiting approval</p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Awaiting approval
+                </p>
               </div>
             </div>
 
@@ -290,7 +266,7 @@ export function BudgetModificationsModal({
                   variant={statusFilter === status ? "default" : "ghost"}
                   onClick={() => setStatusFilter(status)}
                   className={cn(
-                    "px-4 py-1.5 text-sm font-medium rounded-full transition-all h-auto",
+                    "px-4 py-1.5 text-xs font-medium rounded-full transition-all h-auto",
                     statusFilter === status
                       ? "bg-primary text-primary-foreground"
                       : "bg-muted text-foreground hover:bg-muted",
@@ -304,7 +280,7 @@ export function BudgetModificationsModal({
             </div>
 
             {/* Modifications List */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               {loading ? (
                 <div className="text-center py-10 text-muted-foreground">
                   <Loader2 className="h-6 w-6 animate-spin mx-auto mb-2" />
@@ -326,13 +302,13 @@ export function BudgetModificationsModal({
                   return (
                     <div
                       key={mod.id}
-                      className="rounded-xl border border-border shadow-sm bg-background transition-shadow"
+                      className="rounded-lg border border-border bg-background transition-shadow"
                     >
                       <div className="p-4">
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
-                              <span className="font-semibold text-blue-600">
+                              <span className="font-semibold text-primary">
                                 {mod.number}
                               </span>
                               {getStatusBadge(mod.status)}
@@ -351,8 +327,8 @@ export function BudgetModificationsModal({
                               className={cn(
                                 "text-lg font-bold tabular-nums",
                                 mod.amount < 0
-                                  ? "text-red-600"
-                                  : "text-green-600",
+                                  ? "text-destructive"
+                                  : "text-foreground",
                               )}
                             >
                               {formatCurrency(mod.amount)}
@@ -368,7 +344,6 @@ export function BudgetModificationsModal({
                             <span>Created: {formatDate(mod.createdAt)}</span>
                           </div>
 
-                          {/* Action Buttons */}
                           {actions.length > 0 && (
                             <div className="flex items-center gap-2">
                               {actions.map(
@@ -401,8 +376,8 @@ export function BudgetModificationsModal({
             </div>
           </div>
         ) : (
-          <div className="p-6 space-y-4">
-            <p className="text-sm text-foreground">
+          <div className="p-4 sm:p-6 space-y-4">
+            <p className="text-sm text-muted-foreground">
               Detailed line-item breakdown of budget modifications.
             </p>
 
@@ -412,7 +387,7 @@ export function BudgetModificationsModal({
                 Loading...
               </div>
             ) : modifications.length === 0 ? (
-              <div className="rounded-xl border border-border bg-muted p-6 text-center">
+              <div className="rounded-lg border border-border bg-muted/30 p-6 text-center">
                 <p className="text-muted-foreground">No modifications found</p>
               </div>
             ) : (
@@ -420,12 +395,12 @@ export function BudgetModificationsModal({
                 {modifications.map((mod) => (
                   <div
                     key={mod.id}
-                    className="rounded-xl border border-border shadow-sm bg-background"
+                    className="rounded-lg border border-border bg-background"
                   >
                     <div className="p-4 border-b border-border">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <span className="font-semibold text-blue-600">
+                          <span className="font-semibold text-primary">
                             {mod.number}
                           </span>
                           {getStatusBadge(mod.status)}
@@ -433,43 +408,46 @@ export function BudgetModificationsModal({
                         <span
                           className={cn(
                             "font-bold tabular-nums",
-                            mod.amount < 0 ? "text-red-600" : "text-green-600",
+                            mod.amount < 0
+                              ? "text-destructive"
+                              : "text-foreground",
                           )}
                         >
                           {formatCurrency(mod.amount)}
                         </span>
                       </div>
-                      <p className="text-sm text-foreground mt-1">{mod.title}</p>
+                      <p className="text-sm text-foreground mt-1">
+                        {mod.title}
+                      </p>
                     </div>
 
-                    {/* Line Items */}
-                    <div className="p-4">
+                    <div className="overflow-x-auto scrollbar-hide rounded-b-lg border-t border-border bg-background">
                       <table className="w-full text-sm">
-                        <thead>
-                          <tr className="text-left text-muted-foreground text-xs">
-                            <th className="pb-2">Cost Code</th>
-                            <th className="pb-2">Description</th>
-                            <th className="pb-2 text-right">Amount</th>
+                        <thead className="bg-muted/50 border-b border-border">
+                          <tr>
+                            <th className="text-left px-4 py-3 font-semibold text-foreground">Cost Code</th>
+                            <th className="text-left px-4 py-3 font-semibold text-foreground">Description</th>
+                            <th className="text-right px-4 py-3 font-semibold text-foreground">Amount</th>
                           </tr>
                         </thead>
-                        <tbody>
+                        <tbody className="divide-y divide-border">
                           {mod.lines.map((line) => (
                             <tr
                               key={line.id}
-                              className="border-t border-border"
+                              className="hover:bg-muted/50 transition-colors"
                             >
-                              <td className="py-2 font-medium">
+                              <td className="px-4 py-3 font-medium text-foreground">
                                 {line.costCodeId}
                               </td>
-                              <td className="py-2 text-foreground">
+                              <td className="px-4 py-3 text-foreground">
                                 {line.description || line.costCodeTitle || "-"}
                               </td>
                               <td
                                 className={cn(
-                                  "py-2 text-right font-medium tabular-nums",
+                                  "px-4 py-3 text-right font-semibold tabular-nums",
                                   line.amount < 0
-                                    ? "text-red-600"
-                                    : "text-green-600",
+                                    ? "text-destructive"
+                                    : "text-foreground",
                                 )}
                               >
                                 {formatCurrency(line.amount)}
@@ -487,7 +465,6 @@ export function BudgetModificationsModal({
         )}
       </SidebarBody>
 
-      {/* Footer */}
       <SidebarFooter>
         <div className="flex items-center justify-end">
           <Button variant="outline" onClick={onClose}>

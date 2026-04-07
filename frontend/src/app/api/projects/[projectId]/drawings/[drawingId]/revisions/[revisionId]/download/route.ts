@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteContext {
   params: Promise<{ 
@@ -34,7 +35,7 @@ export async function GET(
       if (error.code === 'PGRST116') {
         return NextResponse.json({ error: "Revision not found" }, { status: 404 });
       }
-      return NextResponse.json({ error: error.message }, { status: 400 });
+      return apiErrorResponse(error);
     }
 
     // Get signed URL for file download
@@ -64,10 +65,6 @@ export async function GET(
     });
 
   } catch (error) {
-    console.error('Drawing download error:', error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return apiErrorResponse(error);
   }
 }

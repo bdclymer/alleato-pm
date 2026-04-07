@@ -150,6 +150,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Calendar } from "@/components/ui/calendar";
 import { NumberInput } from "@/components/ui/number-input";
+import { MoneyField } from "@/components/forms/MoneyField";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -664,12 +665,11 @@ export default function DesignSystemComponentsPage() {
       {/* SECTION 1: Layout Components */}
       {/* ================================================================== */}
       <Separator />
-      <div id="section-layout" className="scroll-mt-20">
+      <div id="section-layout" className="scroll-mt-20 space-y-6">
         <SectionHeader title="1. Layout Components" />
-      </div>
 
       {/* PageShell */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         <h3 className="text-base font-semibold text-foreground">PageShell</h3>
         <p className="text-sm text-muted-foreground">
           The one entry point for all page layouts. Every new page must use one of these variants.
@@ -872,14 +872,14 @@ export default function DesignSystemComponentsPage() {
           Horizontal scrolling: use <code className="rounded bg-muted px-1 py-0.5 font-mono">ScrollBar orientation=&quot;horizontal&quot;</code>.
         </p>
       </div>
+      </div>{/* end section-layout */}
 
       {/* ================================================================== */}
       {/* SECTION 2: Status Components */}
       {/* ================================================================== */}
       <Separator />
-      <div id="section-status" className="scroll-mt-20">
+      <div id="section-status" className="scroll-mt-20 space-y-6">
         <SectionHeader title="2. Status Components" />
-      </div>
 
       {/* StatusBadge */}
       <div className="space-y-3">
@@ -920,13 +920,14 @@ export default function DesignSystemComponentsPage() {
         </div>
       </div>
 
+      </div>{/* end section-status */}
+
       {/* ================================================================== */}
       {/* SECTION 3: Data Display */}
       {/* ================================================================== */}
       <Separator />
-      <div id="section-data" className="scroll-mt-20">
+      <div id="section-data" className="scroll-mt-20 space-y-6">
         <SectionHeader title="3. Data Display" />
-      </div>
 
       {/* KpiRow */}
       <div className="space-y-3">
@@ -1105,13 +1106,14 @@ export default function DesignSystemComponentsPage() {
         </HoverCard>
       </div>
 
+      </div>{/* end section-data */}
+
       {/* ================================================================== */}
       {/* SECTION 4: Feedback & States */}
       {/* ================================================================== */}
       <Separator />
-      <div id="section-feedback" className="scroll-mt-20">
+      <div id="section-feedback" className="scroll-mt-20 space-y-6">
         <SectionHeader title="4. Feedback & States" />
-      </div>
 
       {/* EmptyState */}
       <div className="space-y-3">
@@ -1187,16 +1189,17 @@ export default function DesignSystemComponentsPage() {
         </div>
       </div>
 
+      </div>{/* end section-feedback */}
+
       {/* ================================================================== */}
       {/* SECTION 5: Form Components */}
       {/* ================================================================== */}
       <Separator />
-      <div id="section-forms" className="scroll-mt-20">
+      <div id="section-forms" className="scroll-mt-20 space-y-6">
         <SectionHeader title="5. Form Components" />
-      </div>
 
       {/* Buttons */}
-      <div className="space-y-4">
+      <div className="space-y-3">
         <h3 className="text-base font-semibold text-foreground">Button — All Variants &amp; Sizes</h3>
 
         {/* Variant grid */}
@@ -1446,28 +1449,29 @@ export default function DesignSystemComponentsPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="demo-currency">Currency Mode</Label>
-            <NumberInput
-              id="demo-currency"
-              placeholder="$0.00"
-              currency
-              value="245000"
+            <Label htmlFor="demo-currency">Currency (MoneyField)</Label>
+            <MoneyField
+              label="Currency Demo"
+              inline
+              value={245000}
+              showCurrency={false}
             />
           </div>
         </div>
         <p className="text-xs text-muted-foreground">
-          Props: <code className="rounded bg-muted px-1 py-0.5 font-mono">currency</code> enables format-on-blur,{" "}
-          <code className="rounded bg-muted px-1 py-0.5 font-mono">autoSelectOnFocus</code> selects all text on click.
+          Currency inputs use <code className="rounded bg-muted px-1 py-0.5 font-mono">MoneyField</code> exclusively.{" "}
+          <code className="rounded bg-muted px-1 py-0.5 font-mono">NumberInput</code> is for non-currency numbers only.
         </p>
       </div>
+
+      </div>{/* end section-forms */}
 
       {/* ================================================================== */}
       {/* SECTION 6: Overlays */}
       {/* ================================================================== */}
       <Separator />
-      <div id="section-overlays" className="scroll-mt-20">
+      <div id="section-overlays" className="scroll-mt-20 space-y-6">
         <SectionHeader title="6. Overlays" />
-      </div>
 
       <div className="flex flex-wrap gap-3">
         {/* Dialog */}
@@ -1585,13 +1589,14 @@ export default function DesignSystemComponentsPage() {
         Tooltip = hover hint text.
       </p>
 
+      </div>{/* end section-overlays */}
+
       {/* ================================================================== */}
       {/* SECTION 7: Navigation */}
       {/* ================================================================== */}
       <Separator />
-      <div id="section-navigation" className="scroll-mt-20">
+      <div id="section-navigation" className="scroll-mt-20 space-y-6">
         <SectionHeader title="7. Navigation" />
-      </div>
 
       {/* Tabs (shadcn) */}
       <div className="space-y-3">
@@ -1720,13 +1725,14 @@ export default function DesignSystemComponentsPage() {
         </Command>
       </div>
 
+      </div>{/* end section-navigation */}
+
       {/* ================================================================== */}
       {/* SECTION 8: Cards */}
       {/* ================================================================== */}
       <Separator />
-      <div id="section-cards" className="scroll-mt-20">
+      <div id="section-cards" className="scroll-mt-20 space-y-6">
         <SectionHeader title="8. Cards" />
-      </div>
 
       <Card>
         <CardHeader>
@@ -1740,19 +1746,20 @@ export default function DesignSystemComponentsPage() {
             Card content goes here. Use Card for grouping related information.
           </p>
         </CardContent>
-        <CardFooter className="flex justify-end gap-2">
+      <CardFooter className="flex justify-end gap-2">
           <Button variant="outline" size="sm">Cancel</Button>
           <Button size="sm">Save</Button>
         </CardFooter>
       </Card>
 
+      </div>{/* end section-cards */}
+
       {/* ================================================================== */}
       {/* SECTION 9: Table Cell Primitives */}
       {/* ================================================================== */}
       <Separator />
-      <div id="section-cells" className="scroll-mt-20">
+      <div id="section-cells" className="scroll-mt-20 space-y-6">
         <SectionHeader title="9. Table Cell Primitives" />
-      </div>
 
       <p className="text-sm text-muted-foreground">
         Use these in column <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">render</code> functions.
@@ -1837,13 +1844,14 @@ export default function DesignSystemComponentsPage() {
         </table>
       </div>
 
+      </div>{/* end section-cells */}
+
       {/* ================================================================== */}
       {/* SECTION 10: Missing Components */}
       {/* ================================================================== */}
       <Separator />
-      <div id="section-missing" className="scroll-mt-20">
+      <div id="section-missing" className="scroll-mt-20 space-y-6">
         <SectionHeader title="10. Missing Components (Not Yet Built)" />
-      </div>
 
       <div className="rounded-md bg-destructive/5 p-6">
         <div className="mb-4 flex items-center gap-2 text-destructive">
@@ -1911,6 +1919,7 @@ export default function DesignSystemComponentsPage() {
           ))}
         </div>
       </div>
+      </div>{/* end section-missing */}
     </PageShell>
   );
 }

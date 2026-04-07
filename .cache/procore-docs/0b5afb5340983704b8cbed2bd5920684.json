@@ -1,6 +1,0 @@
-{
-  "success": true,
-  "markdown": "#  How does Procore calculate the Over/Under value in Change Events? \n##  Answer \nThe Over/Under column on a change event displays the difference between the most firmest revenue value (Latest Price) and the firmest cost value (Latest Cost) for a particular line item. The calculation for the Over/Under column is: (**Latest Price - Latest Cost**) = Over/Under\n## See Also\n  * [What is the Procore Analytics Risk Report?](https://v2.support.procore.com/faq-what-is-the-procore-analytics-risk-report)\n  * [What are Procore's standard budget views?](https://v2.support.procore.com/faq-what-are-procores-standard-budget-views)\n  * [What is the 'Budget ROM' column in Procore's Budget tool?](https://v2.support.procore.com/faq-what-is-the-budget-rom-column-in-procores-budget-tool)\n\n\n",
-  "title": "How does Procore calculate the Over/Under value in Change Events?",
-  "description": "How does Procore calculate the Over/Under value in Change Events?"
-}

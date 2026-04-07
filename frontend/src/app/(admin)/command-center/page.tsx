@@ -24,6 +24,7 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { PageShell } from "@/components/layout";
 import {
   Dialog,
   DialogContent,
@@ -224,7 +225,7 @@ function ExpandableSearch({
         onChange={(e) => onChange(e.target.value)}
         onBlur={() => { if (!value) setIsExpanded(false); }}
         placeholder={placeholder}
-        className="h-8 w-[200px] pl-8 pr-8 text-sm"
+        className="h-8 w-48 pl-8 pr-8 text-sm"
       />
       {value && (
         <Button
@@ -520,9 +521,10 @@ export default function CommandCenterPage() {
   const densityConfig = DENSITY_CONFIG[density];
 
   return (
-    <div className="flex flex-col h-full">
+    <PageShell variant="dashboard" showHeader={false} className="h-full" contentClassName="space-y-0">
+      <div className="flex flex-col h-full">
       {/* Header — Notion-style: title left, icon toolbar + primary action right */}
-      <div className="bg-background px-6 py-3 max-w-[1600px] mx-auto w-full">
+      <div className="bg-background px-6 py-3 mx-auto w-full max-w-screen-2xl">
         <div className="flex items-center justify-between">
           <div className="min-w-0">
             <h1 className="text-xl font-semibold text-foreground">Command Center</h1>
@@ -557,9 +559,15 @@ export default function CommandCenterPage() {
                   <div className="px-3 py-2.5 border-b border-border flex items-center justify-between">
                     <span className="text-sm font-medium">Filters</span>
                     {hasActiveFilters && (
-                      <button type="button" onClick={clearFilters} className="text-xs text-muted-foreground hover:text-foreground">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="xs"
+                        onClick={clearFilters}
+                        className="h-auto px-0 text-xs text-muted-foreground hover:text-foreground"
+                      >
                         Clear all
-                      </button>
+                      </Button>
                     )}
                   </div>
                   <div className="p-3 space-y-4 max-h-80 overflow-y-auto">
@@ -624,9 +632,11 @@ export default function CommandCenterPage() {
                       <p className="text-xs font-medium text-muted-foreground mb-1.5">Density</p>
                       <div className="flex gap-1">
                         {(["compact", "default", "spacious"] as Density[]).map((d) => (
-                          <button
+                          <Button
                             key={d}
                             type="button"
+                            variant={density === d ? "secondary" : "ghost"}
+                            size="xs"
                             onClick={() => setDensity(d)}
                             className={`flex-1 rounded-md px-2 py-1.5 text-xs font-medium transition-colors ${
                               density === d
@@ -635,7 +645,7 @@ export default function CommandCenterPage() {
                             }`}
                           >
                             {d.charAt(0).toUpperCase() + d.slice(1)}
-                          </button>
+                          </Button>
                         ))}
                       </div>
                     </div>
@@ -670,7 +680,7 @@ export default function CommandCenterPage() {
       </div>
 
       {/* Board */}
-      <div className="flex-1 overflow-x-auto flex max-w-[1600px] mx-auto w-full">
+      <div className="flex-1 w-full max-w-screen-2xl mx-auto overflow-x-auto flex">
         {isLoading ? (
           <div className="flex items-center justify-center flex-1 text-muted-foreground">
             Loading command center...
@@ -704,7 +714,7 @@ export default function CommandCenterPage() {
             </div>
             <DragOverlay>
               {activeCard ? (
-                <div className="w-[300px] rotate-2">
+                <div className="w-72 rotate-2">
                   <CardContent card={activeCard} density={densityConfig} visibleFields={visibleFields} />
                 </div>
               ) : null}
@@ -733,7 +743,8 @@ export default function CommandCenterPage() {
           onClose={() => setEditingCard(null)}
         />
       )}
-    </div>
+      </div>
+    </PageShell>
   );
 }
 
@@ -765,7 +776,7 @@ function KanbanColumn({
   onDispatchCard: (id: string) => void;
 }) {
   return (
-    <div className={`flex-1 min-w-[280px] flex flex-col ${column.accent}`}>
+    <div className={`flex-1 min-w-72 flex flex-col ${column.accent}`}>
       <div className="flex items-center justify-between px-4 pt-3 pb-2">
         <div className="flex items-center gap-2">
           {column.icon}
@@ -803,12 +814,14 @@ function KanbanColumn({
           </div>
         </SortableContext>
         {cards.length === 0 && (
-          <button
+          <Button
+            type="button"
+            variant="ghost"
             onClick={onAddCard}
-            className="w-full rounded-lg border border-dashed border-border/60 p-6 text-center text-sm text-muted-foreground hover:border-border hover:bg-muted/30 transition-colors cursor-pointer"
+            className="h-auto w-full rounded-lg border border-dashed border-border/60 p-6 text-center text-sm text-muted-foreground hover:border-border hover:bg-muted/30"
           >
             {column.emptyText}
-          </button>
+          </Button>
         )}
       </div>
     </div>
@@ -927,7 +940,7 @@ function CardContent({
 
   return (
     <div
-      className={`rounded-lg border border-border bg-card ${density.cardPadding} shadow-xs hover:shadow-sm transition-shadow group ${
+      className={`rounded-lg border border-border/60 bg-muted/20 ${density.cardPadding} shadow-xs hover:shadow-sm transition-shadow group ${
         isEditable ? "cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-ring" : ""
       }`}
       onClick={isEditable ? handleCardClick : undefined}
@@ -937,14 +950,17 @@ function CardContent({
       aria-label={isEditable ? `Edit ${card.title}` : undefined}
     >
       <div className="flex items-start gap-1.5">
-        <button
+        <Button
+          asChild
+          variant="ghost"
+          size="icon-xs"
           {...dragProps}
-          className="mt-0.5 text-muted-foreground/40 hover:text-muted-foreground cursor-grab active:cursor-grabbing shrink-0"
-          aria-label="Drag card"
-          onClick={(event) => event.stopPropagation()}
+          className="mt-1 text-muted-foreground/40 hover:text-muted-foreground cursor-grab active:cursor-grabbing shrink-0"
         >
-          <GripVertical className={isCompact ? "h-3 w-3" : "h-4 w-4"} />
-        </button>
+          <span aria-label="Drag card" onClick={(event) => event.stopPropagation()}>
+            <GripVertical className={isCompact ? "h-3 w-3" : "h-4 w-4"} />
+          </span>
+        </Button>
 
         <div className="flex-1 min-w-0">
           {/* Source badge — priority is shown as dot on the title line */}
@@ -960,7 +976,7 @@ function CardContent({
           {/* Title with priority dot */}
           <p className={`${density.titleClass} font-medium text-foreground leading-snug ${isCompact ? "line-clamp-1" : "line-clamp-2"} flex items-start gap-1.5`}>
             {visibleFields.has("priority") && (
-              <span className={`mt-[5px] h-2 w-2 shrink-0 rounded-full ${priority.dot}`} title={priority.label} />
+              <span className={`mt-1 h-2 w-2 shrink-0 rounded-full ${priority.dot}`} title={priority.label} />
             )}
             <span>{card.title}</span>
           </p>
@@ -993,7 +1009,7 @@ function CardContent({
                   </span>
                 )}
                 {isDispatched && (
-                  <span className="inline-flex items-center gap-0.5 text-[10px] text-violet-600">
+                  <span className="inline-flex items-center gap-0.5 text-[10px] text-status-info">
                     <Bot className="h-3 w-3" />
                     {card.dispatch_status === "in_progress" ? "Running" : "Sent"}
                   </span>
@@ -1044,7 +1060,7 @@ function CardContent({
                 <DropdownMenuItem onClick={onDispatch}>
                   {isCopied ? (
                     <>
-                      <Check className="h-3.5 w-3.5 mr-2 text-emerald-600" />
+                      <Check className="h-3.5 w-3.5 mr-2 text-status-success" />
                       Copied to clipboard
                     </>
                   ) : (
@@ -1152,7 +1168,7 @@ function CardFormDialog({
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[520px]">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
@@ -1209,22 +1225,25 @@ function CardFormDialog({
                   autoComplete="off"
                 />
                 {assigneeId && !showAssigneeDropdown && (
-                  <button
+                  <Button
                     type="button"
+                    variant="ghost"
+                    size="icon-xs"
                     className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
                     onClick={() => { setAssigneeId(""); setAssigneeSearch(""); }}
                     title="Clear assignee"
                   >
                     <X className="h-3 w-3" />
-                  </button>
+                  </Button>
                 )}
               </div>
               {showAssigneeDropdown && filteredEmployees.length > 0 && (
                 <div className="absolute z-50 top-full left-0 right-0 mt-1 rounded-md border border-border bg-popover shadow-sm max-h-48 overflow-y-auto">
                   {/* Claude Code option at top */}
-                  <button
+                  <Button
                     type="button"
-                    className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted text-left"
+                    variant="ghost"
+                    className="h-auto w-full justify-start px-3 py-2 text-sm hover:bg-muted text-left"
                     onMouseDown={(e) => e.preventDefault()}
                     onClick={() => {
                       setAssigneeId("claude-code");
@@ -1232,20 +1251,21 @@ function CardFormDialog({
                       setShowAssigneeDropdown(false);
                     }}
                   >
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-500/10 text-violet-600 text-xs font-semibold shrink-0">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-status-info/10 text-status-info text-xs font-semibold shrink-0">
                       <Bot className="h-3.5 w-3.5" />
                     </span>
                     <div className="min-w-0">
                       <p className="font-medium text-foreground">Claude Code</p>
                       <p className="text-xs text-muted-foreground">AI agent — dispatches as dev task</p>
                     </div>
-                  </button>
+                  </Button>
                   <div className="border-t border-border" />
                   {filteredEmployees.map((emp) => (
-                    <button
+                    <Button
                       key={emp.id}
                       type="button"
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-muted text-left"
+                      variant="ghost"
+                      className="h-auto w-full justify-start px-3 py-2 text-sm hover:bg-muted text-left"
                       onMouseDown={(e) => e.preventDefault()}
                       onClick={() => {
                         setAssigneeId(emp.id);
@@ -1260,7 +1280,7 @@ function CardFormDialog({
                         <p className="font-medium text-foreground">{emp.first_name} {emp.last_name}</p>
                         <p className="text-xs text-muted-foreground truncate">{emp.job_title || emp.email}</p>
                       </div>
-                    </button>
+                    </Button>
                   ))}
                 </div>
               )}

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
+import { apiErrorResponse } from "@/lib/api-error";
 
 type Company = Database["public"]["Tables"]["companies"]["Row"];
 type Contact = Database["public"]["Tables"]["people"]["Row"];
@@ -131,40 +132,19 @@ export async function GET(_request: Request, { params }: RouteParams) {
       ]);
 
     if (contactsResult.error) {
-      return NextResponse.json(
-        { error: "Failed to fetch company contacts", details: contactsResult.error.message },
-        { status: 500 },
-      );
+      return apiErrorResponse(contactsResult.error);
     }
 
     if (projectCompaniesResult.error) {
-      return NextResponse.json(
-        {
-          error: "Failed to fetch company projects",
-          details: projectCompaniesResult.error.message,
-        },
-        { status: 500 },
-      );
+      return apiErrorResponse(projectCompaniesResult.error);
     }
 
     if (subcontractsResult.error) {
-      return NextResponse.json(
-        {
-          error: "Failed to fetch company subcontracts",
-          details: subcontractsResult.error.message,
-        },
-        { status: 500 },
-      );
+      return apiErrorResponse(subcontractsResult.error);
     }
 
     if (purchaseOrdersResult.error) {
-      return NextResponse.json(
-        {
-          error: "Failed to fetch company purchase orders",
-          details: purchaseOrdersResult.error.message,
-        },
-        { status: 500 },
-      );
+      return apiErrorResponse(purchaseOrdersResult.error);
     }
 
     const projectCompanies = projectCompaniesResult.data || [];
@@ -377,10 +357,6 @@ export async function GET(_request: Request, { params }: RouteParams) {
       },
     });
   } catch (error) {
-    console.error("Unexpected error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

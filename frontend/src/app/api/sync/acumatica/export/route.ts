@@ -70,29 +70,45 @@ export async function POST(request: Request) {
       : ALL_ENTITIES;
 
   try {
+    const runId = crypto.randomUUID();
+    const auditContext = { runId, userId: user.id };
     const results: Partial<Record<ExportEntity, unknown>> = {};
 
     if (entities.includes("commitments")) {
-      results.commitments = await exportCommitmentsToAcumatica(projectId);
+      results.commitments = await exportCommitmentsToAcumatica(
+        projectId,
+        auditContext,
+      );
     }
     if (entities.includes("primeContracts")) {
-      results.primeContracts = await exportPrimeContractsToAcumatica(projectId);
+      results.primeContracts = await exportPrimeContractsToAcumatica(
+        projectId,
+        auditContext,
+      );
     }
     if (entities.includes("changeOrders")) {
-      results.changeOrders = await exportChangeOrdersToAcumatica(projectId);
+      results.changeOrders = await exportChangeOrdersToAcumatica(
+        projectId,
+        auditContext,
+      );
     }
     if (entities.includes("invoices")) {
-      results.invoices = await exportOwnerInvoicesToAcumatica(projectId);
+      results.invoices = await exportOwnerInvoicesToAcumatica(
+        projectId,
+        auditContext,
+      );
     }
     if (entities.includes("paymentApplications")) {
       results.paymentApplications = await exportPaymentApplicationsToAcumatica(
         projectId,
         contractId,
+        auditContext,
       );
     }
 
     return NextResponse.json({
       success: true,
+      runId,
       projectId,
       contractId: contractId ?? null,
       entities,

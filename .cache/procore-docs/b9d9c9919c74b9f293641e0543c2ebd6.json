@@ -1,6 +1,0 @@
-{
-  "success": true,
-  "markdown": "#  Owner Financial Management User Guide \nTable of Contents \n##  Payments \nOnce owner invoices and subcontractor invoices are approved and completed, you can create payments in Procore to keep a record of payments received.\n  * Track draw requests made on the Commitments side. When you consistently update the **Payments Issued** tab, the 'Paid To Date' column on your budget reports are automatically updated to reflect those changes.\n    * [Add a New Payment to the Payments Issued Tab of a Commitment](https://v2.support.procore.com/product-manuals/invoicing-project/tutorials/add-a-new-payment-to-the-payments-issued-tab-of-a-commitment)\n\n\nFor more information, see the [Commitments](https://v2.support.procore.com/product-manuals/commitments-project/) and the [Prime Contract](https://v2.support.procore.com/product-manuals/prime-contracts-project/).\n[ ](https://v2.support.procore.com/process-guides/owner-financial-management-user-guide/owner-invoices--subcontractor-invoices/)\n",
-  "title": "Owner Financial Management User Guide - Payments",
-  "description": "Owners can use this guide to learn how to set up and use Procore's Project Financials tools to streamline your financial business processes across your project's lifecycle. | Payments"
-}

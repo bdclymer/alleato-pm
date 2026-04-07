@@ -1,6 +1,0 @@
-{
-  "success": true,
-  "markdown": "#  Budget Detail \n#### Sample Report Page\n![Procore Analytics Financials Budget Budget Detail](https://images.ctfassets.net/plvbd9i6qkpm/e00a3439d1d250fb88533efc3663afea/a44f7961b95469bb3ce5dabab8ac00f6/procore-analytics-financials-budget-budget-detail.png?fm=webp)\n_This sample report page was created using mock data for demonstration purposes only._\n## See Also\n  * [Financials Budget Report](https://v2.support.procore.com/reference-financials-budget-report)\n  * [Financials Budget Report (Custom)](https://v2.support.procore.com/reference-financials-budget-report-custom)\n  * [How do I export cost forecast data from a Procore budget to CMiC](https://v2.support.procore.com/faq-how-do-i-export-cost-forecast-data-from-a-procore-budget-to-cmic)\n\n\n",
-  "title": "Budget Detail",
-  "description": "View sample Budget Detail data from the Financials Budget Report available with Procore Analytics."
-}

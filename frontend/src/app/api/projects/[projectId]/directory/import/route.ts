@@ -7,6 +7,7 @@ import {
   type DirectoryImportOptions,
   type DirectoryTemplateType,
 } from "@/services/directoryAdminService";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
@@ -73,12 +74,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ success: true, data: result });
   } catch (error) {
     console.error("[DirectoryImport] Failed", error);
-    return NextResponse.json(
-      {
-        error: "Failed to import directory data",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

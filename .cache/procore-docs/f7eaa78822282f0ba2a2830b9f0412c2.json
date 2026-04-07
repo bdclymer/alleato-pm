@@ -1,6 +1,0 @@
-{
-  "success": true,
-  "markdown": "#  Resize the Column Width in the RFIs Log \n##  Background \nYou can resize the columns in the RFIs tool so it displays data in a way that is relevant to you and your project.\n##  Things to Consider \n  * [Required User Permissions](https://v2.support.procore.com/product-manuals/rfi-project/permissions)\n\n\n##  Demo \n![Resize Column Width](https://images.ctfassets.net/plvbd9i6qkpm/9c198875ceb617190b4dac27011dc65d/db6d54ee9e26844c1d4dee9d79e4b0bf/resize-column-width.gif?fm=webp)\n##  Steps \n  1. Navigate to the project's **RFIs** tool.\n  2. Click the **Items** or **Recycle Bin** tab.\n  3. Select a column to resize.\n  4. Hover near the right edge of the column.\n  5. Click and hold the mouse to place the column in adjustable mode.\n  6. Drag the mouse as follows:\n     * Drag right to expand the column.\n     * Drag left to minimize the column.\n\n\n## See Also\n  * [RFIs - Permissions](https://v2.support.procore.com/product-manuals/rfi-project/permissions)\n  * [What can I ask Assist?](https://v2.support.procore.com/faq-what-can-i-ask-assist)\n  * [What data can Assist access?](https://v2.support.procore.com/faq-what-data-can-assist-access)\n\n\n",
-  "title": "Resize the Column Width in the RFIs Log",
-  "description": "How to resize the column width in the RFIs tool."
-}

@@ -17,13 +17,13 @@ import {
 import { useProjectUsers } from "@/hooks/use-project-users";
 
 import { PageShell } from "@/components/layout";
-import { Text } from "@/components/ui/text";
+import { Text } from "@/components/ds/text";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DataTable } from "@/components/tables/DataTable";
-import { MetricCard } from "@/components/ui/metric-card";
+import { MetricCard } from "@/components/ds/metric-card";
 import {
   DropdownMenu,
   DropdownMenuContent,

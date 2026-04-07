@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import { ChevronDown, ChevronRight, Plus, Edit2, Trash2, Folder, FolderOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { SectionCard } from "@/components/ui/section-card";
+import { SectionCard } from "@/components/ds/section-card";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,

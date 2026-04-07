@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
@@ -22,15 +23,12 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       .order("created_at", { ascending: false });
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to fetch", details: error.message },
-        { status: 400 },
-      );
+      return apiErrorResponse(error);
     }
 
     return NextResponse.json(data);
-  } catch {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (error) {
+    return apiErrorResponse(error);
   }
 }
 
@@ -69,14 +67,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       .single();
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to create", details: error.message },
-        { status: 400 },
-      );
+      return apiErrorResponse(error);
     }
 
     return NextResponse.json(data, { status: 201 });
-  } catch {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (error) {
+    return apiErrorResponse(error);
   }
 }

@@ -1,6 +1,0 @@
-{
-  "success": true,
-  "markdown": "#  Submittal Approvers \n#### Summary\nAs part of the Procore Analytics Project Management Report, the Submittal Approvers report page shows information about each step in each submittal's workflow.\n#### Sample Report Page\n![Procore Analytics Submittal Approvers](https://images.ctfassets.net/plvbd9i6qkpm/8dc43039c79d39f0be67d466e61660ba/5f6f398420ca37e7d52969505e117ca4/procore-analytics-submittal-approvers.png?fm=webp)\n_This sample report page was created using mock data for demonstration purposes only._\n## See Also\n  * [Project Management Report](https://v2.support.procore.com/reference-project-management-report)\n  * [Submittal Insights](https://v2.support.procore.com/reference-submittal-insights)\n  * [Submittals](https://v2.support.procore.com/reference-submittals)\n\n\n",
-  "title": "Submittal Approvers",
-  "description": "View sample Submittal Approvers data from the Project Management Report available with Procore Analytics."
-}

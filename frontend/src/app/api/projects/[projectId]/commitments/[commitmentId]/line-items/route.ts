@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{ projectId: string; commitmentId: string }>;
@@ -97,15 +98,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       commitmentType: unifiedData.commitment_type,
     });
   } catch (error) {
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to fetch line items",
-      },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 

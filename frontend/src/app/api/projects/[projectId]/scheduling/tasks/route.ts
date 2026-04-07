@@ -15,6 +15,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { SchedulingService } from "@/lib/services/scheduling-service";
 import { ScheduleTaskListParams, ScheduleTaskCreate } from "@/types/scheduling";
+import { apiErrorResponse } from "@/lib/api-error";
 
 // =============================================================================
 // GET - Fetch Schedule Tasks
@@ -222,25 +223,8 @@ export async function POST(
         );
       }
 
-      // Validation errors
-      if (message.includes("check constraint") || message.includes("invalid input")) {
-        return NextResponse.json(
-          {
-            error: `Invalid task data: ${error.message}`,
-            code: "VALIDATION_ERROR"
-          },
-          { status: 400 }
-        );
-      }
-
-      // Return the actual error message for debugging
-      return NextResponse.json(
-        {
-          error: error.message,
-          code: "UNKNOWN_ERROR"
-        },
-        { status: 500 }
-      );
+      // All other errors (validation, unknown, etc.)
+      return apiErrorResponse(error);
     }
 
     return NextResponse.json(

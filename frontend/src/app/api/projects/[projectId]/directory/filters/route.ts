@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { PermissionService } from "@/services/permissionService";
 import { DirectoryPreferencesService } from "@/services/directoryPreferencesService";
 import type { DirectoryFilters } from "@/components/directory/DirectoryFilters";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
@@ -36,13 +37,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ data: filters });
   } catch (error) {
     console.error("[DirectoryFilters] Failed to list filters", error);
-    return NextResponse.json(
-      {
-        error: "Failed to load saved filters",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -93,13 +88,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ data: savedFilter });
   } catch (error) {
     console.error("[DirectoryFilters] Failed to save filter", error);
-    return NextResponse.json(
-      {
-        error: "Failed to save filter",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -139,12 +128,6 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[DirectoryFilters] Failed to delete filter", error);
-    return NextResponse.json(
-      {
-        error: "Failed to delete filter",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

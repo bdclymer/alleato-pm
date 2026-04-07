@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 /**
  * GET /api/directory/companies
@@ -74,10 +75,7 @@ export async function GET(request: NextRequest) {
 
     if (error) {
       console.error("Error fetching companies:", error);
-      return NextResponse.json(
-        { error: "Failed to fetch companies", details: error.message },
-        { status: 500 }
-      );
+      return apiErrorResponse(error);
     }
 
     // Calculate pagination metadata
@@ -180,13 +178,7 @@ export async function POST(request: NextRequest) {
           { status: 409 }
         );
       }
-      return NextResponse.json(
-        {
-          error: "Failed to create company",
-          details: error.message,
-        },
-        { status: 500 }
-      );
+      return apiErrorResponse(error);
     }
 
     return NextResponse.json(company, { status: 201 });

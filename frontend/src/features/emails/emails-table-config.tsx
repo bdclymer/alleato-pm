@@ -157,7 +157,7 @@ export function renderEmailRowActions(
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="icon" className="h-8 w-8">
+        <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Row actions">
           <MoreHorizontal />
         </Button>
       </DropdownMenuTrigger>

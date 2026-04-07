@@ -13,11 +13,27 @@ async function forwardToSupabaseAPI(
     );
   }
 
-  // Authenticate the request
+  // Authenticate the request and verify admin role.
+  // OWASP A01:2021 - Broken Access Control: Supabase Management API
+  // access is restricted to verified admin users only.
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Verify the user has admin privileges before proxying to the Management API
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("is_admin")
+    .eq("id", user.id)
+    .single();
+
+  if (!profile?.is_admin) {
+    return NextResponse.json(
+      { message: "Admin access required to use the Supabase Management API proxy." },
+      { status: 403 },
+    );
   }
 
   const { path } = params;
@@ -28,19 +44,6 @@ async function forwardToSupabaseAPI(
   url.hostname = "api.supabase.com";
   url.port = "443";
   url.pathname = apiPath;
-
-  const projectRef = path[2];
-
-  // Implement your permission check here (e.g. check if the user is a member of the project)
-  // In this example, everyone can access all projects
-  const userHasPermissionForProject = Boolean(projectRef);
-
-  if (!userHasPermissionForProject) {
-    return NextResponse.json(
-      { message: "You do not have permission to access this project." },
-      { status: 403 },
-    );
-  }
 
   try {
     const forwardHeaders: HeadersInit = {

@@ -35,9 +35,9 @@ export function CriticalIssueNotification(
       .data as unknown as CriticalIssueData;
 
   const severityColors: Record<string, string> = {
-    critical: "text-red-600",
-    high: "text-orange-600",
-    medium: "text-yellow-600",
+    critical: "text-destructive",
+    high: "text-orange-600 dark:text-orange-400",
+    medium: "text-amber-600 dark:text-amber-400",
   };
 
   return (
@@ -45,9 +45,9 @@ export function CriticalIssueNotification(
       {...props}
       title={title}
       aside={
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-destructive/10">
           <AlertTriangle
-            className={`h-4 w-4 ${severityColors[severity] ?? "text-red-600"}`}
+            className={`h-4 w-4 ${severityColors[severity] ?? "text-destructive"}`}
           />
         </div>
       }
@@ -77,10 +77,10 @@ export function DeadlineNotification(
 
   const isOverdue = daysRemaining < 0;
   const urgencyColor = isOverdue
-    ? "text-red-600 bg-red-100"
+    ? "text-destructive bg-destructive/10"
     : daysRemaining <= 3
-      ? "text-orange-600 bg-orange-100"
-      : "text-yellow-600 bg-yellow-100";
+      ? "text-orange-600 dark:text-orange-400 bg-orange-500/10"
+      : "text-amber-600 dark:text-amber-400 bg-amber-500/10";
 
   return (
     <InboxNotification.Custom
@@ -127,8 +127,8 @@ export function StatusChangeNotification(
       {...props}
       title={title}
       aside={
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
-          <ArrowRightLeft className="h-4 w-4 text-blue-600" />
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+          <ArrowRightLeft className="h-4 w-4 text-primary" />
         </div>
       }
     >
@@ -177,8 +177,8 @@ export function BudgetAlertNotification(
       {...props}
       title={title}
       aside={
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-100">
-          <DollarSign className="h-4 w-4 text-amber-600" />
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500/10">
+          <DollarSign className="h-4 w-4 text-amber-600 dark:text-amber-400" />
         </div>
       }
     >
@@ -221,8 +221,8 @@ export function WeeklyDigestNotification(
       {...props}
       title={title}
       aside={
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100">
-          <BarChart3 className="h-4 w-4 text-indigo-600" />
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+          <BarChart3 className="h-4 w-4 text-primary" />
         </div>
       }
     >
@@ -272,8 +272,8 @@ export function AssignmentNotification(
       {...props}
       title={title}
       aside={
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-green-100">
-          <UserPlus className="h-4 w-4 text-green-600" />
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/10">
+          <UserPlus className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
         </div>
       }
     >
@@ -307,8 +307,8 @@ export function ApprovalRequestNotification(
       {...props}
       title={title}
       aside={
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-100">
-          <CheckCircle2 className="h-4 w-4 text-purple-600" />
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-purple-500/10">
+          <CheckCircle2 className="h-4 w-4 text-purple-600 dark:text-purple-400" />
         </div>
       }
     >
@@ -342,8 +342,8 @@ export function BallInCourtNotification(
       {...props}
       title={title}
       aside={
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-100">
-          <Users className="h-4 w-4 text-blue-600" />
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+          <Users className="h-4 w-4 text-primary" />
         </div>
       }
     >

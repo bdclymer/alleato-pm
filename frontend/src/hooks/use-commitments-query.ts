@@ -362,3 +362,50 @@ export function useApproveChangeOrder(commitmentId: string) {
     },
   });
 }
+
+// =============================================================================
+// Legacy Compatibility — useCommitments (dropdown-friendly)
+// =============================================================================
+
+export interface CommitmentOption {
+  value: string;
+  label: string;
+  commitmentNumber?: string;
+  type?: string;
+  amount?: number;
+}
+
+/**
+ * Drop-in replacement for the old useState-based useCommitments hook.
+ * Returns `options` for use in dropdown selects and `isLoading`.
+ */
+export function useCommitments(projectId?: string) {
+  const query = useCommitmentsList(projectId || "", {
+    limit: 100,
+  });
+
+  const commitments = query.data?.data || [];
+
+  const options: CommitmentOption[] = commitments.map((c: CommitmentListItem) => {
+    const typeLabel = c.type === "purchase_order" ? "PO" : "SC";
+    const companyName = c.contract_company?.name || "";
+    const label = c.number
+      ? `${c.number} - ${c.title || companyName || "Untitled"}`
+      : `${typeLabel} #${c.id}`;
+
+    return {
+      value: c.id,
+      label,
+      commitmentNumber: c.number || undefined,
+      type: c.type || undefined,
+      amount: c.revised_contract_amount ?? c.original_amount ?? undefined,
+    };
+  });
+
+  return {
+    commitments,
+    options,
+    isLoading: query.isLoading,
+    error: query.error ?? null,
+  };
+}

@@ -13,6 +13,13 @@ interface FormFieldProps {
   fullWidth?: boolean;
 }
 
+const FormFieldContext = React.createContext<string | undefined>(undefined);
+
+/** Returns the auto-generated input id from the nearest FormField. */
+export function useFormFieldId(): string | undefined {
+  return React.useContext(FormFieldContext);
+}
+
 export function FormField({
   label,
   children,
@@ -22,17 +29,21 @@ export function FormField({
   className,
   fullWidth = false,
 }: FormFieldProps) {
+  const inputId = React.useId();
+
   return (
-    <div className={cn(fullWidth ? "sm:col-span-2" : "", className)}>
-      <div className="block text-sm font-medium text-foreground">
-        {label}
-        {required && <span className="ml-1 text-destructive">*</span>}
+    <FormFieldContext.Provider value={inputId}>
+      <div className={cn(fullWidth ? "sm:col-span-2" : "", className)}>
+        <label htmlFor={inputId} className="block text-sm font-medium text-foreground">
+          {label}
+          {required && <span className="ml-1 text-destructive">*</span>}
+        </label>
+        <div className="mt-1">
+          {children}
+          {hint && !error && <p className="mt-2 text-sm text-muted-foreground">{hint}</p>}
+          {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
+        </div>
       </div>
-      <div className="mt-1">
-        {children}
-        {hint && !error && <p className="mt-2 text-sm text-muted-foreground">{hint}</p>}
-        {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
-      </div>
-    </div>
+    </FormFieldContext.Provider>
   );
 }

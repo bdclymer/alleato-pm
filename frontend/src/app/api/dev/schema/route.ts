@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 /**
  * DEV ONLY: Get Supabase table schemas for table page generator.
@@ -71,13 +72,7 @@ export async function GET() {
           : `Found ${knownTables.length} accessible tables (via probing).`,
     });
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: "Could not fetch schema",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -288,12 +283,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ columns });
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: "Could not fetch columns",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

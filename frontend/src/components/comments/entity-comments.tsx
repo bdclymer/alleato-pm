@@ -118,6 +118,7 @@ function ThreadList() {
 function CustomThread({ thread }: { thread: ThreadData }) {
   const room = useRoom();
   const [open, setOpen] = useState(!thread.resolved);
+  const [showReply, setShowReply] = useState(false);
 
   // Build a permalink for copying
   const parsed = getIssueIdFromRoom(room.id);
@@ -149,15 +150,35 @@ function CustomThread({ thread }: { thread: ThreadData }) {
   }
 
   return (
-    <Thread
-      thread={thread}
-      className="lb-thread-alleato"
-      onResolvedChange={(resolved) => {
-        if (resolved) setOpen(false);
-      }}
-      components={{ Comment: CommentWithPresence }}
-      indentCommentContent={false}
-    />
+    <div>
+      <Thread
+        thread={thread}
+        className="lb-thread-alleato"
+        showComposer={false}
+        onResolvedChange={(resolved) => {
+          if (resolved) setOpen(false);
+        }}
+        components={{ Comment: CommentWithPresence }}
+        indentCommentContent={false}
+      />
+      {showReply ? (
+        <div className="mt-2 pl-10">
+          <Composer
+            threadId={thread.id}
+            className="lb-composer-alleato"
+            onComposerSubmit={() => setShowReply(false)}
+          />
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setShowReply(true)}
+          className="mt-1 pl-10 text-xs text-muted-foreground/60 hover:text-primary transition-colors"
+        >
+          Reply
+        </button>
+      )}
+    </div>
   );
 }
 

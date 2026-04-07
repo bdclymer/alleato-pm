@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
+import { MoneyField } from "@/components/forms/MoneyField";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -712,32 +713,30 @@ export function BudgetLineItemForm({
                       </td>
 
                       <td className="px-4 py-4">
-                        <NumberInput
-                          step="0.01"
-                          value={row.unitCost}
-                          onChange={(e) =>
-                            handleRowChange(row.id, "unitCost", e.target.value)
+                        <MoneyField
+                          label="Unit cost"
+                          value={row.unitCost ? parseFloat(String(row.unitCost)) : undefined}
+                          onChange={(val) =>
+                            handleRowChange(row.id, "unitCost", String(val ?? ""))
                           }
-                          placeholder="Unit cost"
+                          inline
+                          showCurrency={false}
                           className="h-9"
-                          clearZeroOnFocus={true}
-                          currency={true}
                         />
                       </td>
 
                       <td className="px-4 py-4">
                         <div className="space-y-2">
-                          <NumberInput
-                            step="0.01"
-                            value={row.amount}
-                            onChange={(e) =>
-                              handleRowChange(row.id, "amount", e.target.value)
+                          <MoneyField
+                            label="Amount"
+                            value={row.amount ? parseFloat(String(row.amount)) : undefined}
+                            onChange={(val) =>
+                              handleRowChange(row.id, "amount", String(val ?? ""))
                             }
-                            placeholder="$0.00"
+                            inline
+                            showCurrency={false}
+                            allowNegative
                             className="h-9 font-medium"
-                            clearZeroOnFocus={true}
-                            autoSelectOnFocus={true}
-                            currency={true}
                           />
                           {negativeAmountRows.has(row.id) && (
                             <Alert className="bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-950/20 dark:border-amber-900 dark:text-amber-200">

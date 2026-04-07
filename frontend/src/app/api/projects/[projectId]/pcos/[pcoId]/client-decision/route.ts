@@ -11,6 +11,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{ projectId: string; pcoId: string }>;
@@ -157,10 +158,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           : "Revision requested — PCO returned to DRAFT",
     });
   } catch (error) {
-    console.error("PCO client decision error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return apiErrorResponse(error);
   }
 }

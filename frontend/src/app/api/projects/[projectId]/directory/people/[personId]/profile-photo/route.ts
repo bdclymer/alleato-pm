@@ -3,6 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
 import { PermissionService } from "@/services/permissionService";
 import { createClient } from "@/lib/supabase/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 const ALLOWED_MIME_TYPES = new Set([
   "image/png",
@@ -90,12 +91,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("[DirectoryAvatarUpload] Failed", error);
-    return NextResponse.json(
-      {
-        error: "Failed to upload profile photo",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

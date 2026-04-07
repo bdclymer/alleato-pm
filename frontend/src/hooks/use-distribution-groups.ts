@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import type {
   DistributionGroupWithMembers,
   GroupCreateDTO,
@@ -86,6 +87,9 @@ export function useCreateGroup(projectId: string) {
         queryKey: ["distribution-groups", projectId],
       });
     },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to create group");
+    },
   });
 }
 
@@ -122,6 +126,9 @@ export function useUpdateGroup(projectId: string) {
         queryKey: ["distribution-group", projectId, groupId],
       });
     },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update group");
+    },
   });
 }
 
@@ -146,6 +153,9 @@ export function useDeleteGroup(projectId: string) {
       queryClient.invalidateQueries({
         queryKey: ["distribution-groups", projectId],
       });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to delete group");
     },
   });
 }
@@ -179,6 +189,9 @@ export function useUpdateGroupMembers(projectId: string, groupId: string) {
       queryClient.invalidateQueries({
         queryKey: ["distribution-group", projectId, groupId],
       });
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to update group members");
     },
   });
 }

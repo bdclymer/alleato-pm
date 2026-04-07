@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 // POST /api/projects/[projectId]/invoicing/owner/[invoiceId]/submit
 // Submit an invoice for approval
@@ -88,9 +89,6 @@ export async function POST(
       message: "Invoice submitted successfully",
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

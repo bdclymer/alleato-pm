@@ -14,6 +14,7 @@ import { createClient as createAuthClient } from "@/lib/supabase/server";
 import { createClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
 import { getLanguageModel } from "@/lib/ai/providers";
+import { apiErrorResponse } from "@/lib/api-error";
 
 const PROCORE_DOCS_MODEL = "gpt-4o-mini";
 
@@ -314,12 +315,6 @@ Please use your expertise to:
 
     return NextResponse.json(response);
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: "An error occurred while processing your request",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

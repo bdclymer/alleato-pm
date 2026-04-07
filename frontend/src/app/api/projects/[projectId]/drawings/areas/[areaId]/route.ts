@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { DrawingAreaService } from "@/services/DrawingAreaService";
+import { apiErrorResponse } from "@/lib/api-error";
 
 /**
  * PATCH /api/projects/[projectId]/drawing-areas/[areaId]
@@ -36,10 +37,7 @@ export async function PATCH(
             ? 400
             : 500;
 
-      return NextResponse.json(
-        { error: result.error.message },
-        { status: statusCode },
-      );
+      return apiErrorResponse(result.error);
     }
 
     return NextResponse.json(result.data);
@@ -77,10 +75,7 @@ export async function DELETE(
   const result = await service.delete(areaId);
 
   if (result.error) {
-    return NextResponse.json(
-      { error: result.error.message },
-      { status: 500 },
-    );
+    return apiErrorResponse(result.error);
   }
 
   return NextResponse.json(result.data, { status: 200 });

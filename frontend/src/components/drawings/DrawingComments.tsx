@@ -1,9 +1,11 @@
 "use client";
 
-import { RoomProvider, ClientSideSuspense, useThreads } from "@liveblocks/react/suspense";
-import { Thread, Composer } from "@liveblocks/react-ui";
-import { Skeleton } from "@/components/ui/skeleton";
+import { useState } from "react";
+import type { ThreadData } from "@liveblocks/client";
+import { ClientSideSuspense, RoomProvider, useThreads } from "@liveblocks/react/suspense";
+import { Composer, Thread } from "@liveblocks/react-ui";
 import { MessageSquare } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 // ---------------------------------------------------------------------------
 // Room wrapper — scopes threads to a specific drawing
@@ -53,11 +55,47 @@ function CommentsInner() {
         </div>
       ) : (
         threads.map((thread) => (
-          <Thread key={thread.id} thread={thread} />
+          <DrawingThread key={thread.id} thread={thread} />
         ))
       )}
 
-      <Composer className="mt-4" />
+      <Composer className="lb-composer-alleato mt-4" />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Individual thread with minimal reply link
+// ---------------------------------------------------------------------------
+
+function DrawingThread({ thread }: { thread: ThreadData }) {
+  const [showReply, setShowReply] = useState(false);
+
+  return (
+    <div>
+      <Thread
+        thread={thread}
+        className="lb-thread-alleato"
+        showComposer={false}
+        indentCommentContent={false}
+      />
+      {showReply ? (
+        <div className="mt-2 pl-10">
+          <Composer
+            threadId={thread.id}
+            className="lb-composer-alleato"
+            onComposerSubmit={() => setShowReply(false)}
+          />
+        </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setShowReply(true)}
+          className="mt-1 pl-10 text-xs text-muted-foreground/60 hover:text-primary transition-colors"
+        >
+          Reply
+        </button>
+      )}
     </div>
   );
 }

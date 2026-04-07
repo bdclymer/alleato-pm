@@ -21,6 +21,7 @@ import {
   Sparkles,
   BarChart3,
   Inbox,
+  ArrowLeftRight,
   type LucideIcon,
 } from "lucide-react";
 import { PageShell } from "@/components/layout";
@@ -73,6 +74,12 @@ const sections: AdminSection[] = [
         href: "/site-map",
         description: "All routes and page audit status",
         icon: MapIcon,
+      },
+      {
+        label: "Acumatica Sync Logs",
+        href: "/acumatica-sync-logs",
+        description: "Created/updated/skipped/error export audit trail",
+        icon: ArrowLeftRight,
       },
     ],
   },

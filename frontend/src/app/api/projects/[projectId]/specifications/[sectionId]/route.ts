@@ -6,6 +6,7 @@ import {
   editSpecificationSchema,
   type EditSpecificationFormData,
 } from "@/lib/schemas/specification-schemas";
+import { apiErrorResponse } from "@/lib/api-error";
 
 /**
  * GET /api/projects/[projectId]/specifications/[sectionId]
@@ -27,10 +28,7 @@ export async function GET(
   const result = await service.getById(projectId, sectionId);
 
   if (result.error) {
-    return NextResponse.json(
-      { error: result.error.message },
-      { status: result.error.type === "NOT_FOUND" ? 404 : 500 },
-    );
+    return apiErrorResponse(result.error);
   }
 
   return NextResponse.json(result.data);
@@ -70,7 +68,7 @@ export async function PATCH(
             ? 409
             : 500;
 
-      return NextResponse.json({ error: result.error.message }, { status: statusCode });
+      return apiErrorResponse(result.error);
     }
 
     return NextResponse.json(result.data);
@@ -108,10 +106,7 @@ export async function DELETE(
   const result = await service.delete(projectId, sectionId);
 
   if (result.error) {
-    return NextResponse.json(
-      { error: result.error.message },
-      { status: result.error.type === "NOT_FOUND" ? 404 : 500 },
-    );
+    return apiErrorResponse(result.error);
   }
 
   return NextResponse.json({ success: true }, { status: 200 });

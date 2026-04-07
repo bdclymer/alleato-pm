@@ -271,14 +271,15 @@ export default function ProjectContractsPage(): ReactElement {
 
       if (!response.ok) {
         const data = await response.json().catch(() => ({}));
-        toast.error(data.error || "Failed to delete contract");
+        toast.error(data.error || `Failed to delete contract (HTTP ${response.status})`);
         return;
       }
 
       setContracts((prev) => prev.filter((item) => item.id !== contractToDelete.id));
       toast.success(`Contract "${contractToDelete.title}" deleted successfully`);
     } catch (err) {
-      toast.error("Failed to delete contract");
+      const message = err instanceof Error ? err.message : "Unknown error";
+      toast.error(`Failed to delete contract: ${message}`);
     } finally {
       setIsDeleting(false);
       setDeleteDialogOpen(false);

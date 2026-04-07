@@ -385,7 +385,7 @@ export function MeetingsDataTable({
                 <ChevronDown />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-[200px]">
+            <DropdownMenuContent align="end" style={{ width: 200 }}>
               <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {COLUMNS.map((column) => (
@@ -421,7 +421,8 @@ export function MeetingsDataTable({
                 <TableRow>
                   {visibleColumns.has("title") && (
                     <TableHead
-                      className="w-[300px] cursor-pointer select-none"
+                      className="cursor-pointer select-none"
+                      style={{ width: 300 }}
                       onClick={() => handleSort("title")}
                     >
                       <div className="flex items-center">
@@ -432,7 +433,8 @@ export function MeetingsDataTable({
                   )}
                   {visibleColumns.has("date") && (
                     <TableHead
-                      className="w-[140px] cursor-pointer select-none"
+                      className="cursor-pointer select-none"
+                      style={{ width: 140 }}
                       onClick={() => handleSort("date")}
                     >
                       <div className="flex items-center">
@@ -443,7 +445,8 @@ export function MeetingsDataTable({
                   )}
                   {visibleColumns.has("type") && (
                     <TableHead
-                      className="w-[120px] cursor-pointer select-none"
+                      className="cursor-pointer select-none"
+                      style={{ width: 120 }}
                       onClick={() => handleSort("type")}
                     >
                       <div className="flex items-center">
@@ -454,7 +457,8 @@ export function MeetingsDataTable({
                   )}
                   {visibleColumns.has("category") && (
                     <TableHead
-                      className="w-[140px] cursor-pointer select-none"
+                      className="cursor-pointer select-none"
+                      style={{ width: 140 }}
                       onClick={() => handleSort("category")}
                     >
                       <div className="flex items-center">
@@ -465,7 +469,8 @@ export function MeetingsDataTable({
                   )}
                   {visibleColumns.has("source") && (
                     <TableHead
-                      className="w-[200px] cursor-pointer select-none"
+                      className="cursor-pointer select-none"
+                      style={{ width: 200 }}
                       onClick={() => handleSort("source")}
                     >
                       <div className="flex items-center">
@@ -476,7 +481,8 @@ export function MeetingsDataTable({
                   )}
                   {visibleColumns.has("url") && (
                     <TableHead
-                      className="w-[200px] cursor-pointer select-none"
+                      className="cursor-pointer select-none"
+                      style={{ width: 200 }}
                       onClick={() => handleSort("url")}
                     >
                       <div className="flex items-center">
@@ -487,7 +493,8 @@ export function MeetingsDataTable({
                   )}
                   {visibleColumns.has("project") && (
                     <TableHead
-                      className="w-[150px] cursor-pointer select-none"
+                      className="cursor-pointer select-none"
+                      style={{ width: 150 }}
                       onClick={() => handleSort("project")}
                     >
                       <div className="flex items-center">
@@ -496,7 +503,7 @@ export function MeetingsDataTable({
                       </div>
                     </TableHead>
                   )}
-                  <TableHead className="text-right w-[120px]">
+                  <TableHead className="text-right" style={{ width: 120 }}>
                     Actions
                   </TableHead>
                 </TableRow>
@@ -518,8 +525,8 @@ export function MeetingsDataTable({
                       className="cursor-pointer hover:bg-muted/50"
                       onClick={() => handleRowClick(meeting.id)}
                     >
-                      {visibleColumns.has("title") && (
-                        <TableCell className="max-w-[300px]">
+                  {visibleColumns.has("title") && (
+                        <TableCell style={{ maxWidth: 300 }}>
                           <div className="font-medium truncate">
                             {meeting.title || "Untitled Meeting"}
                           </div>
@@ -570,11 +577,8 @@ export function MeetingsDataTable({
                           )}
                         </TableCell>
                       )}
-                      {visibleColumns.has("source") && (
-                        <TableCell
-                          className="max-w-[200px] cursor-text"
-                          onClick={handleCellEdit(meeting)}
-                        >
+                  {visibleColumns.has("source") && (
+                        <TableCell style={{ maxWidth: 200 }} onClick={handleCellEdit(meeting)}>
                           {meeting.source ? (
                             <div
                               className="text-sm text-muted-foreground truncate"
@@ -587,11 +591,8 @@ export function MeetingsDataTable({
                           )}
                         </TableCell>
                       )}
-                      {visibleColumns.has("url") && (
-                        <TableCell
-                          className="max-w-[200px] cursor-text"
-                          onClick={handleCellEdit(meeting)}
-                        >
+                  {visibleColumns.has("url") && (
+                        <TableCell style={{ maxWidth: 200 }} onClick={handleCellEdit(meeting)}>
                           {meeting.url ? (
                             <div
                               className="text-sm text-muted-foreground truncate"
@@ -612,7 +613,8 @@ export function MeetingsDataTable({
                           {meeting.project ? (
                             <Badge
                               variant={getProjectVariant(meeting.project)}
-                              className="font-normal truncate max-w-[140px]"
+                              className="font-normal truncate"
+                              style={{ maxWidth: 140 }}
                             >
                               {meeting.project}
                             </Badge>
@@ -681,13 +683,16 @@ export function MeetingsDataTable({
         </div>
       </div>
 
-      {/* Edit Dialog */}
+        {/* Edit Dialog */}
       {editingMeeting && (
         <Modal
           open={!!editingMeeting}
           onOpenChange={() => setEditingMeeting(null)}
         >
-          <ModalContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <ModalContent
+            className="max-w-2xl overflow-y-auto"
+            style={{ maxHeight: "80vh" }}
+          >
             <ModalHeader>
               <ModalTitle>Edit Meeting</ModalTitle>
               <ModalDescription>

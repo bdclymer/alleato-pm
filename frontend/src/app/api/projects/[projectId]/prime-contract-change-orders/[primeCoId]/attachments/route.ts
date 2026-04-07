@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{ projectId: string; primeCoId: string }>;
@@ -39,10 +40,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       .order("uploaded_at", { ascending: false });
 
     if (error) {
-      return NextResponse.json(
-        { error: "Failed to fetch attachments", details: error.message },
-        { status: 400 },
-      );
+      return apiErrorResponse(error);
     }
 
     const formatted = (attachments || []).map((a) => ({
@@ -55,11 +53,8 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     }));
 
     return NextResponse.json({ data: formatted });
-  } catch {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+  } catch (error) {
+    return apiErrorResponse(error);
   }
 }
 
@@ -150,10 +145,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       },
       { status: 201 },
     );
-  } catch {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+  } catch (error) {
+    return apiErrorResponse(error);
   }
 }

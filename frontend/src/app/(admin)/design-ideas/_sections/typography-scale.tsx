@@ -14,8 +14,8 @@ export function TypographyScaleSection() {
       {/* Typography Demo Panel */}
       <div className="bg-card rounded-xl p-8 shadow-sm">
         {/* Row 1: Eyebrow / Section Label */}
-        <div className="flex items-baseline gap-4 py-[10px] border-b border-border">
-          <div className="font-mono text-[10px] text-muted-foreground/40 w-[140px] shrink-0 leading-[1.6] whitespace-pre-line">
+        <div className="flex items-baseline gap-4 py-2 border-b border-border">
+          <div className="font-mono text-[10px] text-muted-foreground/40 shrink-0 leading-[1.6] whitespace-pre-line" style={{ width: "140px" }}>
             {"11px / 700\n0.08em tracking\nuppercase\nrgba(0,0,0,0.38)"}
           </div>
           <div className="text-[11px] font-bold uppercase tracking-[0.08em] text-muted-foreground/60">
@@ -24,8 +24,8 @@ export function TypographyScaleSection() {
         </div>
 
         {/* Row 2: Page Title */}
-        <div className="flex items-baseline gap-4 py-[10px] border-b border-border">
-          <div className="font-mono text-[10px] text-muted-foreground/40 w-[140px] shrink-0 leading-[1.6] whitespace-pre-line">
+        <div className="flex items-baseline gap-4 py-2 border-b border-border">
+          <div className="font-mono text-[10px] text-muted-foreground/40 shrink-0 leading-[1.6] whitespace-pre-line" style={{ width: "140px" }}>
             {"32px / 700\n-0.03em tracking\nlh: 1.1\nrgba(0,0,0,0.88)"}
           </div>
           <div className="text-[32px] font-bold tracking-[-0.03em] text-foreground leading-[1.1]">
@@ -34,8 +34,8 @@ export function TypographyScaleSection() {
         </div>
 
         {/* Row 3: Section Heading */}
-        <div className="flex items-baseline gap-4 py-[10px] border-b border-border">
-          <div className="font-mono text-[10px] text-muted-foreground/40 w-[140px] shrink-0 leading-[1.6] whitespace-pre-line">
+        <div className="flex items-baseline gap-4 py-2 border-b border-border">
+          <div className="font-mono text-[10px] text-muted-foreground/40 shrink-0 leading-[1.6] whitespace-pre-line" style={{ width: "140px" }}>
             {"20px / 600\n-0.02em tracking\nlh: 1.2\nrgba(0,0,0,0.88)"}
           </div>
           <div className="text-xl font-semibold tracking-[-0.02em] text-foreground">
@@ -44,8 +44,8 @@ export function TypographyScaleSection() {
         </div>
 
         {/* Row 4: Subsection Title */}
-        <div className="flex items-baseline gap-4 py-[10px] border-b border-border">
-          <div className="font-mono text-[10px] text-muted-foreground/40 w-[140px] shrink-0 leading-[1.6] whitespace-pre-line">
+        <div className="flex items-baseline gap-4 py-2 border-b border-border">
+          <div className="font-mono text-[10px] text-muted-foreground/40 shrink-0 leading-[1.6] whitespace-pre-line" style={{ width: "140px" }}>
             {"14px / 600\n0em tracking\nlh: 1.4\nrgba(0,0,0,0.88)"}
           </div>
           <div className="text-sm font-semibold text-foreground">
@@ -54,8 +54,8 @@ export function TypographyScaleSection() {
         </div>
 
         {/* Row 5: Body Text */}
-        <div className="flex items-baseline gap-4 py-[10px] border-b border-border">
-          <div className="font-mono text-[10px] text-muted-foreground/40 w-[140px] shrink-0 leading-[1.6] whitespace-pre-line">
+        <div className="flex items-baseline gap-4 py-2 border-b border-border">
+          <div className="font-mono text-[10px] text-muted-foreground/40 shrink-0 leading-[1.6] whitespace-pre-line" style={{ width: "140px" }}>
             {"14px / 400\n0em tracking\nlh: 1.6\nrgba(0,0,0,0.55)"}
           </div>
           <div className="text-sm text-muted-foreground leading-[1.6]">
@@ -64,8 +64,8 @@ export function TypographyScaleSection() {
         </div>
 
         {/* Row 6: Caption */}
-        <div className="flex items-baseline gap-4 py-[10px]">
-          <div className="font-mono text-[10px] text-muted-foreground/40 w-[140px] shrink-0 leading-[1.6] whitespace-pre-line">
+        <div className="flex items-baseline gap-4 py-2">
+          <div className="font-mono text-[10px] text-muted-foreground/40 shrink-0 leading-[1.6] whitespace-pre-line" style={{ width: "140px" }}>
             {"12px / 400\n0em tracking\nlh: 1.5\nrgba(0,0,0,0.38)"}
           </div>
           <div className="text-xs text-muted-foreground/60 leading-[1.5]">

@@ -25,6 +25,7 @@ import { useHeaderNav } from "./use-header-nav";
 import { ProjectSelector } from "./project-selector";
 import { NotificationBell } from "./notification-bell";
 import { CommentsSidebar } from "./comments-sidebar";
+import { ProcoreCompareSidebar } from "./procore-compare-sidebar";
 import { LiveAvatarStack } from "./live-avatar-stack";
 import { feedbackTargetProps } from "@/lib/admin-feedback/constants";
 
@@ -110,6 +111,9 @@ export function SiteHeader() {
           </React.Suspense>
           <React.Suspense fallback={null}>
             <CommentsSidebar />
+          </React.Suspense>
+          <React.Suspense fallback={null}>
+            <ProcoreCompareSidebar />
           </React.Suspense>
           <Link
             href="/feedback-inbox"
@@ -241,7 +245,7 @@ function ToolsGroup({
               </p>
               {subTools.map((tool) => (
                 <ToolItem
-                  key={tool.name}
+                  key={`${tool.path}:${tool.name}`}
                   tool={tool}
                   projectId={projectId}
                   isActive={tool.name === activeToolName}
@@ -267,7 +271,7 @@ function ToolsGroup({
       </p>
       {group.tools.map((tool) => (
         <ToolItem
-          key={tool.name}
+          key={`${tool.path}:${tool.name}`}
           tool={tool}
           projectId={projectId}
           isActive={tool.name === activeToolName}

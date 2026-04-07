@@ -4,6 +4,7 @@ import type {
   BudgetDetailLineItem,
   DetailType,
 } from "@/components/budget/budget-details-table";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface BudgetDetailParams {
   params: Promise<{
@@ -557,9 +558,6 @@ export async function GET(
       count: details.length,
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

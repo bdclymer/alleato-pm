@@ -171,7 +171,7 @@ export function RichTextField({
       <div
         className={cn(
           "rounded-md border",
-          error && "border-red-300",
+          error && "border-destructive",
           disabled && "opacity-50",
           className,
         )}

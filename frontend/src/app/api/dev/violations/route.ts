@@ -8,6 +8,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { apiErrorResponse } from "@/lib/api-error";
 
 export async function POST(req: Request) {
   const supabase = await createClient();
@@ -54,7 +55,7 @@ export async function POST(req: Request) {
     .select("id, violation_type, route, status")
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiErrorResponse(error);
   return NextResponse.json({ success: true, violation: data });
 }
 
@@ -74,7 +75,7 @@ export async function GET(req: Request) {
   }
 
   const { data, error } = await query;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiErrorResponse(error);
   return NextResponse.json({ violations: data ?? [], total: data?.length ?? 0 });
 }
 
@@ -100,6 +101,6 @@ export async function PATCH(req: Request) {
     .select("id, status, violation_type, route")
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiErrorResponse(error);
   return NextResponse.json({ success: true, violation: data });
 }

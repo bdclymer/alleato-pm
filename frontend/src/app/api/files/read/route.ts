@@ -3,32 +3,58 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { createClient } from "@/lib/supabase/server";
 
+/**
+ * Allowed directory prefixes relative to the project root.
+ * Only files within these directories can be read.
+ * OWASP A01:2021 - Broken Access Control / OWASP A03:2021 - Injection (path traversal)
+ */
+const ALLOWED_DIRECTORIES = [
+  "docs",
+  "frontend/src",
+  "frontend/public",
+];
+
 export async function GET(request: NextRequest) {
-  const supabase = await createClient();
-  const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const searchParams = request.nextUrl.searchParams;
-  const filePath = searchParams.get('path');
-
-  if (!filePath) {
-    return NextResponse.json(
-      { error: 'Path parameter is required' },
-      { status: 400 }
-    );
-  }
-
   try {
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const searchParams = request.nextUrl.searchParams;
+    const filePath = searchParams.get('path');
+
+    if (!filePath) {
+      return NextResponse.json(
+        { error: 'Path parameter is required' },
+        { status: 400 }
+      );
+    }
+
     // Get the project root (remove frontend from cwd)
     const projectRoot = process.cwd().replace('/frontend', '');
-    const fullPath = path.join(projectRoot, filePath);
 
-    // Security: ensure the path is within the project directory
-    if (!fullPath.startsWith(projectRoot)) {
+    // Use path.resolve to canonicalize and prevent traversal (e.g. ../../etc/passwd)
+    const fullPath = path.resolve(projectRoot, filePath);
+
+    // Verify the resolved path is within the project root
+    if (!fullPath.startsWith(projectRoot + path.sep) && fullPath !== projectRoot) {
       return NextResponse.json(
-        { error: 'Invalid path' },
+        { error: 'Access denied: path is outside the project directory' },
+        { status: 403 }
+      );
+    }
+
+    // Verify the resolved path is within one of the allowed directories
+    const relativePath = path.relative(projectRoot, fullPath);
+    const isInAllowedDir = ALLOWED_DIRECTORIES.some(
+      (dir) => relativePath === dir || relativePath.startsWith(dir + path.sep)
+    );
+
+    if (!isInAllowedDir) {
+      return NextResponse.json(
+        { error: `Access denied: only files within ${ALLOWED_DIRECTORIES.join(", ")} are accessible` },
         { status: 403 }
       );
     }
@@ -38,6 +64,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { error: 'File not found' },
         { status: 404 }
+      );
+    }
+
+    // Ensure it is a file, not a directory or symlink target outside allowed paths
+    const stat = fs.statSync(fullPath);
+    if (!stat.isFile()) {
+      return NextResponse.json(
+        { error: 'Path is not a file' },
+        { status: 400 }
       );
     }
 

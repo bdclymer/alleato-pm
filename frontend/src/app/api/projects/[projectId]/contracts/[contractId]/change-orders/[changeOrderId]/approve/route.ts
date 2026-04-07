@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { apiErrorResponse } from "@/lib/api-error";
 import { NextRequest, NextResponse } from "next/server";
 import { approveChangeOrderSchema } from "../../validation";
 import { ZodError } from "zod";
@@ -160,9 +161,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import type { ChangeEventHistoryEntry } from "@/types/change-events";
-import { Text } from "@/components/ui/text";
+import { Text } from "@/components/ds/text";
 import { Badge } from "@/components/ui/badge";
 import { Spinner } from "@/components/ui/spinner";
 import { EmptyState } from "@/components/ds";

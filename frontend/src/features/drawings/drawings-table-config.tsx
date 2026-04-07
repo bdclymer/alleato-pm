@@ -271,8 +271,21 @@ function DrawingGridCard({ item, onClick }: DrawingGridCardProps) {
           {item.title || "Untitled"}
         </p>
         <p className="text-xs text-muted-foreground truncate mt-0.5">
-          {item.drawingNumber}
-          {item.revisionNumber ? ` · Rev ${item.revisionNumber}` : ""}
+          {(() => {
+            const normalize = (s: string) => s.replace(/[-_]/g, " ").trim().toLowerCase();
+            const numberDiffersFromTitle =
+              item.drawingNumber && normalize(item.drawingNumber) !== normalize(item.title);
+            return (
+              <>
+                {numberDiffersFromTitle ? item.drawingNumber : null}
+                {numberDiffersFromTitle && item.revisionNumber
+                  ? ` · Rev ${item.revisionNumber}`
+                  : item.revisionNumber
+                  ? `Rev ${item.revisionNumber}`
+                  : null}
+              </>
+            );
+          })()}
         </p>
       </div>
     </button>

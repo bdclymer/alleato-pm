@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { apiErrorResponse } from "@/lib/api-error";
 
 type RouteParams = { params: Promise<{ sessionId: string }> };
 
@@ -33,10 +34,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     .eq("user_id", user.id);
 
   if (error) {
-    return NextResponse.json(
-      { error: "Failed to update conversation", details: error.message },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 
   return NextResponse.json({ success: true });
@@ -65,10 +63,7 @@ export async function DELETE(
     .eq("user_id", user.id);
 
   if (error) {
-    return NextResponse.json(
-      { error: "Failed to delete conversation", details: error.message },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 
   return NextResponse.json({ success: true });

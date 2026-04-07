@@ -1,6 +1,0 @@
-{
-  "success": true,
-  "markdown": "#  Payee User Guide \nTable of Contents \n##  Submit an Invoice \nIf you are ready to submit the invoice for review, you may do so now. If you want to submit the invoice at a later time, you have the option to save the invoice. Do one of the following:\n  * If you are NOT ready to submit the invoice, click **Save**. This sets the invoice's status to _Draft._\n  * If you are ready to submit your invoice to the payor for review, click **Send**. This automatically sets the invoice's status to _Under Review_. Unless an invoice administrator changes the status to _Revise & Resubmit_, you will NOT be permitted to edit the invoice after you submit it.\n\n\n#####  Note\nTo learn more, see [What are the default statuses for Procore invoices? ](https://v2.support.procore.com/faq-what-are-the-default-statuses-for-procore-invoices)\n[ ](https://v2.support.procore.com/process-guides/payee-user-guide/esign-procore-pay-invoice/)\n[ Overview ](https://v2.support.procore.com/process-guides/payee-user-guide/manage-lien-waivers-overview/)\n",
-  "title": "Payee User Guide - Submit an Invoice",
-  "description": "| Submit an Invoice"
-}

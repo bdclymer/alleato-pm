@@ -3,7 +3,7 @@
 import type { ChangeEventDetailLineItem } from "@/types/change-events";
 import type { VerticalMarkup } from "@/hooks/use-vertical-markup";
 import { useMemo, useState } from "react";
-import { Text } from "@/components/ui/text";
+import { Text } from "@/components/ds/text";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { SectionHeader } from "@/components/ds";

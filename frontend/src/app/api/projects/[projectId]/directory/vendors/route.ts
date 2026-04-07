@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
@@ -41,7 +42,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       .order("added_at", { ascending: false });
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return apiErrorResponse(error);
     }
 
     return NextResponse.json({ data: data ?? [] });
@@ -86,7 +87,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           { status: 409 },
         );
       }
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return apiErrorResponse(error);
     }
 
     return NextResponse.json({ data }, { status: 201 });
@@ -122,7 +123,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       .eq("project_id", projectIdNum);
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return apiErrorResponse(error);
     }
 
     return NextResponse.json({ success: true });

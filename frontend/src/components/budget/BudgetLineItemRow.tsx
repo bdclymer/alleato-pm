@@ -2,7 +2,7 @@ import * as React from "react";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Inline } from "@/components/ui/inline";
+import { Inline } from "@/components/layout/inline";
 import { UomSelect } from "./UomSelect";
 import { BudgetItemDeleteDialog } from "./BudgetItemDeleteDialog";
 import { BudgetCodeSelector } from "@/app/(main)/[projectId]/budget/setup/components";

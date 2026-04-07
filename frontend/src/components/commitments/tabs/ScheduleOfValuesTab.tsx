@@ -5,11 +5,12 @@ import { ArrowDown, ArrowUp, Plus, Trash2, Save, AlertCircle } from "lucide-reac
 import { toast } from "sonner";
 
 import { SectionHeader } from "@/components/ds";
-import { Text } from "@/components/ui/text";
+import { Text } from "@/components/ds/text";
 import { formatCurrency } from "@/config/tables";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MoneyField } from "@/components/forms/MoneyField";
 import {
   Select,
   SelectContent,
@@ -111,21 +112,21 @@ export function ScheduleOfValuesTab({
   const updateItem = (
     id: string,
     field: keyof LineItem,
-    value: string,
+    value: string | number | undefined,
   ) => {
     setItems((prev) =>
       prev.map((item) => {
         if (item.id !== id) return item;
 
         if (field === "amount" || field === "billed_to_date") {
-          return { ...item, [field]: value === "" ? null : Number(value), isDirty: true };
+          return { ...item, [field]: value === undefined ? null : Number(value), isDirty: true };
         }
 
         if (field === "line_number") {
           return { ...item, line_number: value === "" ? null : Number(value), isDirty: true };
         }
 
-        return { ...item, [field]: value, isDirty: true };
+        return { ...item, [field]: typeof value === "string" ? value : "", isDirty: true };
       }),
     );
     setHasUnsavedChanges(true);
@@ -365,8 +366,8 @@ export function ScheduleOfValuesTab({
             <thead className="bg-muted">
               <tr>
                 <th className="px-4 py-4 text-left font-medium">#</th>
-                <th className="px-4 py-4 text-left font-medium">Description</th>
                 <th className="px-4 py-4 text-left font-medium">Budget Code</th>
+                <th className="px-4 py-4 text-left font-medium">Description</th>
                 <th className="px-4 py-4 text-right font-medium">Amount</th>
                 <th className="px-4 py-4 text-right font-medium">Billed to Date</th>
                 <th className="px-4 py-4 text-right font-medium">Remaining</th>
@@ -388,13 +389,6 @@ export function ScheduleOfValuesTab({
                         className="w-20"
                         value={item.line_number ?? ""}
                         onChange={(e) => updateItem(item.id, "line_number", e.target.value)}
-                      />
-                    </td>
-                    <td className="px-4 py-2 min-w-[200px]">
-                      <Input
-                        aria-label={`Description ${index + 1}`}
-                        value={item.description ?? ""}
-                        onChange={(e) => updateItem(item.id, "description", e.target.value)}
                       />
                     </td>
                     <td className="px-4 py-2 whitespace-nowrap min-w-[200px]">
@@ -426,22 +420,29 @@ export function ScheduleOfValuesTab({
                         </SelectContent>
                       </Select>
                     </td>
-                    <td className="px-4 py-2 text-right">
+                    <td className="px-4 py-2 min-w-[200px]">
                       <Input
-                        aria-label={`Amount ${index + 1}`}
-                        type="number"
-                        className="text-right"
-                        value={item.amount ?? ""}
-                        onChange={(e) => updateItem(item.id, "amount", e.target.value)}
+                        aria-label={`Description ${index + 1}`}
+                        value={item.description ?? ""}
+                        onChange={(e) => updateItem(item.id, "description", e.target.value)}
                       />
                     </td>
                     <td className="px-4 py-2 text-right">
-                      <Input
-                        aria-label={`Billed to date ${index + 1}`}
-                        type="number"
-                        className="text-right"
-                        value={item.billed_to_date ?? ""}
-                        onChange={(e) => updateItem(item.id, "billed_to_date", e.target.value)}
+                      <MoneyField
+                        label={`Amount ${index + 1}`}
+                        inline
+                        showCurrency={false}
+                        value={item.amount ?? undefined}
+                        onChange={(value) => updateItem(item.id, "amount", value)}
+                      />
+                    </td>
+                    <td className="px-4 py-2 text-right">
+                      <MoneyField
+                        label={`Billed to date ${index + 1}`}
+                        inline
+                        showCurrency={false}
+                        value={item.billed_to_date ?? undefined}
+                        onChange={(value) => updateItem(item.id, "billed_to_date", value)}
                       />
                     </td>
                     <td className="px-4 py-2 text-right">{formatCurrency(remaining)}</td>
@@ -497,4 +498,3 @@ export function ScheduleOfValuesTab({
     </div>
   );
 }
-

@@ -1,6 +1,0 @@
-{
-  "success": true,
-  "markdown": "#  Invoice Administrator Guide \nTable of Contents \n##  What is a sub-tier subcontractor? \nA _sub-tier_ is any subcontractor (for example, a subcontractor, supplier, or vendor) who furnishes materials, supplies, or services connected to the first-tier subcontractor's obligations on a commitment. In Procore Pay, a _first-tier_ subcontractor is the 'Contract Company' who enters into a commitment contract with a General Contractor. Both first-tier and sub-tier contractors might hire additional sub-tiers (for example, third-tier, fourth-tier, and so on).\n[ ](https://v2.support.procore.com/process-guides/invoice-administrator-guide/request-to-unlock-signed-unconditional-waivers/)\n[ Enable Sub-Tier Waivers on a Subcontractor Invoice ](https://v2.support.procore.com/process-guides/invoice-administrator-guide/enable-sub-tier-waivers-on-a-subcontractor-invoice/)\n",
-  "title": "Invoice Administrator Guide - What is a sub-tier subcontractor?",
-  "description": "This guide shows users with invoice administrators how to manage Procore Pay features with the Invoice Management tools in Procore. | What is a sub-tier subcontractor?"
-}

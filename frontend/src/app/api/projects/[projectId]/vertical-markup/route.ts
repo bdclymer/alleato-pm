@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 const ALLOWED_MARKUP_TYPES = ["insurance", "bond", "fee", "overhead", "custom"] as const;
 
@@ -62,10 +63,7 @@ export async function GET(
       markups: data || [],
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -153,10 +151,7 @@ export async function POST(
         );
       }
       console.error("Vertical markup insert error:", error);
-      return NextResponse.json(
-        { error: error.message || "Failed to create vertical markup" },
-        { status: 500 },
-      );
+      return apiErrorResponse(error);
     }
 
     return NextResponse.json({
@@ -164,10 +159,7 @@ export async function POST(
       data,
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -295,10 +287,7 @@ export async function PUT(
       markups: data,
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -352,9 +341,6 @@ export async function DELETE(
       message: "Vertical markup deleted successfully",
     });
   } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

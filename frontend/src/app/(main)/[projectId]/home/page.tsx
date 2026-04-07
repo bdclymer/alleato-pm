@@ -24,6 +24,13 @@ interface HomeAlerts {
   changeOrdersWithoutChangeRequestCount: number;
 }
 
+interface PendingSsovReview {
+  commitmentId: string;
+  commitmentNumber: string;
+  commitmentTitle: string;
+  submittedAt: string | null;
+}
+
 interface DirectoryTeamMemberRow {
   person_id: string;
   role: string | null;
@@ -373,6 +380,25 @@ export default async function ProjectHomePage({
     return true;
   });
 
+  const { data: pendingSsovRows } = await (supabase as any)
+    .from("subcontractor_sov_submissions")
+    .select("commitment_id, submitted_at")
+    .eq("project_id", numericProjectId)
+    .eq("status", "under_review")
+    .order("submitted_at", { ascending: true });
+
+  const pendingSsovReviews: PendingSsovReview[] = (pendingSsovRows || []).map(
+    (row: { commitment_id: string; submitted_at: string | null }) => {
+      const commitment = commitments.find((item) => item.id === row.commitment_id);
+      return {
+        commitmentId: row.commitment_id,
+        commitmentNumber: commitment?.number || "",
+        commitmentTitle: commitment?.title || "Commitment",
+        submittedAt: row.submitted_at || null,
+      };
+    },
+  );
+
   // Fetch commitment SOV totals (sum of schedule_of_values.total_amount per commitment)
   const commitmentIds = commitments.map((c) => c.id).filter(Boolean) as string[];
   let commitmentSovTotal = 0;
@@ -436,6 +462,7 @@ export default async function ProjectHomePage({
         schedule={schedule}
         team={team}
         homeAlerts={homeAlerts}
+        pendingSsovReviews={pendingSsovReviews}
       />
     </PageShell>
   );

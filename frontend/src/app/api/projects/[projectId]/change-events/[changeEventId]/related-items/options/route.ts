@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{ projectId: string; changeEventId: string }>;
@@ -72,10 +73,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
         const { data, error } = await query;
         if (error) {
-          return NextResponse.json(
-            { error: "Failed to fetch change event options", details: error.message },
-            { status: 400 },
-          );
+          return apiErrorResponse(error);
         }
 
         options = (data || []).map((item) => ({
@@ -101,10 +99,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
         const { data, error } = await query;
         if (error) {
-          return NextResponse.json(
-            { error: "Failed to fetch RFI options", details: error.message },
-            { status: 400 },
-          );
+          return apiErrorResponse(error);
         }
 
         options = (data || []).map((item) => ({
@@ -140,10 +135,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
         const { data, error } = await query;
         if (error) {
-          return NextResponse.json(
-            { error: "Failed to fetch submittal options", details: error.message },
-            { status: 400 },
-          );
+          return apiErrorResponse(error);
         }
 
         options = (data || []).map((item) => ({
@@ -169,10 +161,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
         const { data, error } = await query;
         if (error) {
-          return NextResponse.json(
-            { error: "Failed to fetch drawing options", details: error.message },
-            { status: 400 },
-          );
+          return apiErrorResponse(error);
         }
 
         options = (data || []).map((item) => ({
@@ -198,10 +187,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
         const { data, error } = await query;
         if (error) {
-          return NextResponse.json(
-            { error: "Failed to fetch specification options", details: error.message },
-            { status: 400 },
-          );
+          return apiErrorResponse(error);
         }
 
         options = (data || []).map((item) => ({
@@ -215,7 +201,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ data: options.sort(optionSort) });
-  } catch {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (error) {
+    return apiErrorResponse(error);
   }
 }

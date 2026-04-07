@@ -454,6 +454,8 @@ export default function DistributionGroupsPage(): ReactElement {
 
   const tabs = getDirectoryTabs(pathname);
   const isFiltered = Boolean(tableState.searchInput);
+  const totalPages = Math.max(1, Math.ceil(groups.length / tableState.perPage));
+  const currentPage = Math.min(tableState.page, totalPages);
 
   return (
     <>
@@ -553,9 +555,10 @@ export default function DistributionGroupsPage(): ReactElement {
           isFiltered,
         }}
         pagination={{
-          page: tableState.page,
-          totalPages: 1,
+          page: currentPage,
+          totalPages,
           perPage: tableState.perPage,
+          clientSide: true,
           onPageChange: (nextPage) => {
             tableState.setPage(nextPage);
             tableState.setSearchParams({ page: String(nextPage) });

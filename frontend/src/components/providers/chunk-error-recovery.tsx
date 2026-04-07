@@ -1,0 +1,150 @@
+"use client";
+
+import { Component, type ReactNode } from "react";
+
+/**
+ * ChunkLoadErrorRecovery
+ *
+ * Catches "Failed to load chunk" / "Loading chunk failed" errors that happen
+ * after a new deployment invalidates old static assets, and auto-reloads the
+ * page once. If the reload already happened (tracked via sessionStorage), it
+ * falls through to the normal Next.js error boundary so the user isn't stuck
+ * in a reload loop.
+ *
+ * Also installs a global window error handler for chunk errors that slip past
+ * React error boundaries (e.g., dynamic imports in event handlers).
+ */
+
+const RELOAD_KEY = "chunk-error-reload";
+const RELOAD_COOLDOWN_MS = 10_000; // Don't auto-reload more than once per 10s
+
+function isChunkLoadError(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const msg = error.message.toLowerCase();
+  return (
+    msg.includes("loading chunk") ||
+    msg.includes("failed to load chunk") ||
+    msg.includes("failed to fetch dynamically imported module") ||
+    msg.includes("importing a module script failed") ||
+    // Next.js specific chunk patterns
+    msg.includes("loading css chunk") ||
+    msg.includes("_next/static")
+  );
+}
+
+function shouldAutoReload(): boolean {
+  try {
+    const last = sessionStorage.getItem(RELOAD_KEY);
+    if (!last) return true;
+    return Date.now() - Number(last) > RELOAD_COOLDOWN_MS;
+  } catch {
+    // sessionStorage blocked (incognito, etc.) — allow one reload
+    return true;
+  }
+}
+
+function markReload(): void {
+  try {
+    sessionStorage.setItem(RELOAD_KEY, String(Date.now()));
+  } catch {
+    // Ignore — worst case we reload twice
+  }
+}
+
+interface Props {
+  children: ReactNode;
+}
+
+interface State {
+  hasChunkError: boolean;
+}
+
+export class ChunkLoadErrorRecovery extends Component<Props, State> {
+  state: State = { hasChunkError: false };
+
+  private globalHandler = (event: ErrorEvent) => {
+    if (isChunkLoadError(event.error) && shouldAutoReload()) {
+      event.preventDefault();
+      markReload();
+      window.location.reload();
+    }
+  };
+
+  private rejectionHandler = (event: PromiseRejectionEvent) => {
+    if (isChunkLoadError(event.reason) && shouldAutoReload()) {
+      event.preventDefault();
+      markReload();
+      window.location.reload();
+    }
+  };
+
+  componentDidMount() {
+    window.addEventListener("error", this.globalHandler);
+    window.addEventListener("unhandledrejection", this.rejectionHandler);
+  }
+
+  componentWillUnmount() {
+    window.removeEventListener("error", this.globalHandler);
+    window.removeEventListener("unhandledrejection", this.rejectionHandler);
+  }
+
+  static getDerivedStateFromError(error: Error): State | null {
+    if (isChunkLoadError(error)) {
+      return { hasChunkError: true };
+    }
+    // Not a chunk error — let Next.js error boundary handle it
+    return null;
+  }
+
+  componentDidCatch(error: Error) {
+    if (isChunkLoadError(error) && shouldAutoReload()) {
+      markReload();
+      window.location.reload();
+      return;
+    }
+    // Re-throw non-chunk errors so Next.js error.tsx picks them up
+    throw error;
+  }
+
+  render() {
+    if (this.state.hasChunkError) {
+      // This only shows if auto-reload already happened (cooldown active)
+      return (
+        <div className="flex h-screen flex-col items-center justify-center gap-4 p-8">
+          <div className="rounded-full bg-primary/10 p-4">
+            <svg
+              className="h-6 w-6 text-primary"
+              fill="none"
+              viewBox="0 0 24 24"
+              strokeWidth={1.5}
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182"
+              />
+            </svg>
+          </div>
+          <h2 className="text-xl font-semibold text-foreground">
+            New version available
+          </h2>
+          <p className="text-muted-foreground text-center max-w-md">
+            The app has been updated. Please refresh to load the latest version.
+          </p>
+          <button
+            onClick={() => {
+              markReload();
+              window.location.reload();
+            }}
+            className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+          >
+            Refresh Now
+          </button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}

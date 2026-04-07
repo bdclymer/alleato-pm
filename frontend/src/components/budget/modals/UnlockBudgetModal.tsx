@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { AlertTriangle } from "lucide-react";
 
 interface UnlockBudgetModalProps {
-  isOpen: boolean;
+  open: boolean;
   onClose: () => void;
   onConfirm: () => Promise<void>;
 }
@@ -19,7 +19,7 @@ interface UnlockBudgetModalProps {
  * - Mobile responsive
  */
 export function UnlockBudgetModal({
-  isOpen,
+  open,
   onClose,
   onConfirm,
 }: UnlockBudgetModalProps) {
@@ -30,21 +30,21 @@ export function UnlockBudgetModal({
 
   return (
     <BaseModal
-      isOpen={isOpen}
+      isOpen={open}
       onClose={onClose}
       title="Unlock the Budget"
       size="md"
     >
       <ModalBody className="py-6 bg-background">
-        <div className="rounded-xl border border-amber-200 bg-amber-50/80 px-4 py-4 shadow-sm flex items-start gap-4">
+        <div className="rounded-lg border border-border bg-muted/40 p-4 flex items-start gap-4">
           <div className="flex-shrink-0">
-            <AlertTriangle className="h-6 w-6 text-orange-500" />
+            <AlertTriangle className="h-6 w-6 text-destructive" />
           </div>
           <div className="flex-1">
-            <p className="font-semibold text-amber-900">
+            <p className="font-semibold text-foreground">
               Unlocking the Budget will preserve your Budget Modifications.
             </p>
-            <p className="text-amber-800 text-sm mt-1">
+            <p className="text-muted-foreground text-sm mt-1">
               You can edit Original Budget amounts after unlocking. Lock again
               anytime.
             </p>
@@ -56,10 +56,7 @@ export function UnlockBudgetModal({
         <Button variant="outline" onClick={onClose}>
           Cancel
         </Button>
-        <Button
-          onClick={handleConfirm}
-          className="bg-orange-500 hover:bg-orange-600 text-white"
-        >
+        <Button onClick={handleConfirm}>
           Preserve and Unlock
         </Button>
       </ModalFooter>

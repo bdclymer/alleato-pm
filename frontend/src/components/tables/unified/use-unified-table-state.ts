@@ -89,7 +89,7 @@ export function useUnifiedTableState({
     defaults.sortDirection ??
     "asc";
 
-  const [searchInput, setSearchInput] = React.useState(initialSearch);
+  const [searchInput, setSearchInputState] = React.useState(initialSearch);
   const [debouncedSearch, setDebouncedSearch] = React.useState(initialSearch);
   const [currentView, setCurrentView] = React.useState<ViewMode>(initialView);
   const [activeFilters, setActiveFilters] = React.useState<Record<string, FilterValue>>(
@@ -121,6 +121,13 @@ export function useUnifiedTableState({
     initialSortDirection === "desc" ? "desc" : "asc",
   );
   const lastSearchParamsRef = React.useRef<string>(searchParams.toString());
+  const pendingSearchParamRef = React.useRef<string | null>(null);
+  const lastSearchInputAtRef = React.useRef<number>(0);
+
+  const setSearchInput = React.useCallback((value: string) => {
+    lastSearchInputAtRef.current = Date.now();
+    setSearchInputState(value);
+  }, []);
 
   const detailParam = searchParams.get("detail");
 
@@ -163,6 +170,7 @@ export function useUnifiedTableState({
       }
       paramsCopy.set("page", "1");
       const queryString = paramsCopy.toString();
+      pendingSearchParamRef.current = debouncedSearch;
       router.replace(queryString ? `${pathname}?${queryString}` : pathname);
       lastSearchParamsRef.current = queryString;
       setPage(1);
@@ -188,8 +196,28 @@ export function useUnifiedTableState({
       defaults.sortDirection ??
       "asc";
 
+    // Ignore stale router updates while a newer search param write is in-flight.
+    // This prevents search input from bouncing between old/new values on rapid typing.
+    if (
+      pendingSearchParamRef.current !== null &&
+      nextSearch !== pendingSearchParamRef.current
+    ) {
+      return;
+    }
+
+    if (pendingSearchParamRef.current === nextSearch) {
+      pendingSearchParamRef.current = null;
+    }
+
+    // While user is actively typing, ignore URL search echoes that can arrive out-of-order.
+    // This prevents the search field from bouncing between stale/new values.
+    const userIsTyping = Date.now() - lastSearchInputAtRef.current < 1000;
+    if (userIsTyping && nextSearch !== searchInput) {
+      return;
+    }
+
     setCurrentView((prev: ViewMode) => (prev === nextView ? prev : nextView));
-    setSearchInput((prev: string) => (prev === nextSearch ? prev : nextSearch));
+    setSearchInputState((prev: string) => (prev === nextSearch ? prev : nextSearch));
     setDebouncedSearch((prev: string) => (prev === nextSearch ? prev : nextSearch));
 
     const normalizedPage =
@@ -204,7 +232,16 @@ export function useUnifiedTableState({
     setSortDirection((prev) =>
       prev === nextSortDirection ? prev : nextSortDirection === "desc" ? "desc" : "asc",
     );
-  }, [defaults.page, defaults.perPage, defaults.search, defaults.sortBy, defaults.sortDirection, resolveView, searchParams]);
+  }, [
+    defaults.page,
+    defaults.perPage,
+    defaults.search,
+    defaults.sortBy,
+    defaults.sortDirection,
+    resolveView,
+    searchInput,
+    searchParams,
+  ]);
 
   return {
     searchInput,

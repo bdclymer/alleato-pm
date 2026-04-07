@@ -40,6 +40,7 @@ import { toast } from "sonner";
 import { PageHeader, PageContainer, FormContainer } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MoneyField } from "@/components/forms/MoneyField";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Form,
@@ -322,17 +323,12 @@ export default function StandardFormPage() {
                     <FormItem>
                       <FormLabel>Amount</FormLabel>
                       <FormControl>
-                        <Input
-                          type="number"
-                          inputMode="decimal"
-                          step="0.01"
-                          min="0"
-                          placeholder="0.00"
-                          value={field.value ?? ""}
-                          onChange={(e) => field.onChange(e.target.value)}
-                          onBlur={field.onBlur}
-                          name={field.name}
-                          ref={field.ref}
+                        <MoneyField
+                          inline
+                          label="Amount"
+                          value={typeof field.value === "number" ? field.value : undefined}
+                          onChange={(val) => field.onChange(val ?? 0)}
+                          showCurrency={false}
                         />
                       </FormControl>
 

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 
 /**
  * GET /api/admin/rag-eval/results
@@ -6,6 +7,17 @@ import { NextResponse } from "next/server";
  * Only works in local development (reads files from repo root).
  */
 export async function GET() {
+  // OWASP A01:2021 - Broken Access Control: require authenticated admin
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const { data: profile } = await supabase.from("user_profiles").select("is_admin").eq("id", user.id).single();
+  if (!profile?.is_admin) {
+    return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+  }
+
   if (process.env.VERCEL) {
     return NextResponse.json(
       { error: "RAG eval results are only available in local development" },

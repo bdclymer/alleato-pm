@@ -1,6 +1,0 @@
-{
-  "success": true,
-  "markdown": "#  What happens to existing submittals when 'Dynamic Approver Due Dates' is enabled? \n##  Answer \nAfter the 'Dynamic Approver Due Dates' setting is enabled, the due dates on existing submittals with open workflows (i.e., those with 'Pending' responses) will be automatically updated when the Ball-In-Court responsibilities shift to the next steps in the workflows. The system will adjust the due dates on existing submittals with open workflows based on the default number of days entered in the Submittals Configure Settings page. Users who have been granted the permissions to edit a submittal can also update the number of 'Days to Respond/Submit' on any 'Pending' steps in the submittal's workflow.\n## See Also\n  * [Best Practices: Submittal Project Configurations](https://v2.support.procore.com/reference-best-practices-submittal-project-configurations)\n  * [What gets copied over to a new project from a project template?](https://v2.support.procore.com/faq-what-gets-copied-over-to-a-new-project-when-applying-a-project-template)\n  * [What are dynamic approver due dates?](https://v2.support.procore.com/faq-what-are-dynamic-approver-due-dates)\n\n\n",
-  "title": "What happens to existing submittals when 'Dynamic Approver Due Dates' is enabled?",
-  "description": ""
-}

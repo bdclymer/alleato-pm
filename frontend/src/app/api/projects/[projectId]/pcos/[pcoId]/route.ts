@@ -11,6 +11,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{ projectId: string; pcoId: string }>;
@@ -123,11 +124,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       },
     });
   } catch (error) {
-    console.error("PCO detail error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -211,10 +208,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     if (error) {
       console.error("Failed to update PCO:", error);
-      return NextResponse.json(
-        { error: "Failed to update PCO", details: error.message },
-        { status: 400 }
-      );
+      return apiErrorResponse(error);
     }
 
     // Write timeline event
@@ -236,10 +230,6 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json(data);
   } catch (error) {
-    console.error("PCO update error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return apiErrorResponse(error);
   }
 }

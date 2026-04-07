@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{ projectId: string; primeCoId: string; attachmentId: string }>;
@@ -59,10 +60,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ message: "Attachment deleted successfully" });
-  } catch {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+  } catch (error) {
+    return apiErrorResponse(error);
   }
 }

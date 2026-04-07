@@ -87,13 +87,14 @@ export function AppHeader({
             type="search"
             placeholder="Search..."
             className="w-[300px] pl-10"
+            aria-label="Global search"
           />
         </div>
       </div>
 
       <div className="flex items-center gap-4">
         {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative">
+        <Button variant="ghost" size="icon" className="relative" aria-label="Notifications">
           <IconBell />
           <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-destructive" />
         </Button>

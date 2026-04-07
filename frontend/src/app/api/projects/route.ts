@@ -161,6 +161,13 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (error) {
+      console.error("[POST /api/projects] Supabase insert failed:", {
+        message: error.message,
+        details: error.details,
+        hint: error.hint,
+        code: error.code,
+        payloadKeys: Object.keys(projectData),
+      });
       return apiErrorResponse(error);
     }
 

@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -123,21 +124,21 @@ const STATUS_OPTIONS: { value: DisplayStatus; label: string }[] = [
 const STATUS_META: Record<DisplayStatus, { icon: typeof Circle; className: string; dotClassName: string; label: string; showInList?: boolean }> = {
   open: {
     icon: Circle,
-    className: "text-amber-600 dark:text-amber-400",
-    dotClassName: "bg-amber-500",
+    className: "text-status-warning",
+    dotClassName: "bg-status-warning",
     label: "Open",
   },
   in_progress: {
     icon: Loader2,
-    className: "text-purple-600 dark:text-purple-400",
-    dotClassName: "bg-purple-500 animate-pulse",
+    className: "text-status-info",
+    dotClassName: "bg-status-info animate-pulse",
     label: "In Progress",
     showInList: true,
   },
   resolved: {
     icon: ShieldCheck,
-    className: "text-green-600 dark:text-green-400",
-    dotClassName: "bg-green-500",
+    className: "text-status-success",
+    dotClassName: "bg-status-success",
     label: "Resolved",
     showInList: true,
   },
@@ -156,17 +157,17 @@ const REQUEST_TYPE_META: Record<
 > = {
   change_request: {
     icon: Wrench,
-    className: "text-violet-600 dark:text-violet-400",
+    className: "text-status-info",
     shortLabel: "Change",
   },
   bug: {
     icon: XCircle,
-    className: "text-red-600 dark:text-red-400",
+    className: "text-status-error",
     shortLabel: "Bug",
   },
   question: {
     icon: MessageSquare,
-    className: "text-blue-600 dark:text-blue-400",
+    className: "text-status-info",
     shortLabel: "Question",
   },
   copy: {
@@ -448,11 +449,13 @@ function CommentInput({
       {showMentions && filteredUsers.length > 0 && (
         <div className="absolute bottom-full left-0 right-0 mb-1 max-h-40 overflow-y-auto rounded-lg border border-border bg-popover shadow-sm z-10">
           {filteredUsers.map((user, i) => (
-            <button
+            <Button
               key={user.id}
               type="button"
+              variant="ghost"
+              size="default"
               className={cn(
-                "flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors",
+                "h-auto w-full justify-start gap-2 rounded-none px-3 py-2 text-left text-sm font-normal",
                 i === mentionIndex ? "bg-muted" : "hover:bg-muted/50",
               )}
               onMouseDown={(e) => {
@@ -470,7 +473,7 @@ function CommentInput({
               <span className="truncate text-xs text-muted-foreground">
                 {user.email}
               </span>
-            </button>
+            </Button>
           ))}
         </div>
       )}
@@ -478,20 +481,21 @@ function CommentInput({
       {/* Screenshot preview */}
       {screenshotDataUrl && (
         <div className="mb-2 relative inline-block">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src={screenshotDataUrl}
             alt="Comment screenshot"
             className="h-24 max-w-48 rounded-lg border border-border object-cover"
           />
-          <button
+          <Button
             type="button"
+            variant="destructive"
+            size="icon-xs"
             onClick={() => setScreenshotDataUrl(null)}
-            className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-destructive-foreground shadow-sm transition-colors hover:bg-destructive/90"
+            className="absolute -right-1.5 -top-1.5 h-5 w-5 rounded-full shadow-sm transition-colors hover:bg-destructive/90"
             aria-label="Remove screenshot"
           >
             <XCircle className="h-3 w-3" />
-          </button>
+          </Button>
         </div>
       )}
 
@@ -513,14 +517,16 @@ function CommentInput({
           className="w-full resize-none border-0 bg-transparent px-3 pt-3 pb-2 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
         />
         <div className="flex items-center justify-between border-t border-border/50 px-3 py-2">
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="xs"
             onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="h-7 items-center gap-1.5 px-2 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
           >
             <ImageIcon className="h-3.5 w-3.5" />
             Attach image
-          </button>
+          </Button>
           <div className="flex items-center gap-2">
             <span className="text-[10px] text-muted-foreground">
               <kbd className="rounded border border-border px-1 py-0.5 text-[9px]">&#8984;Enter</kbd>
@@ -685,7 +691,6 @@ function CommentsSection({
                   rel="noopener noreferrer"
                   className="mt-1.5 inline-block"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={comment.screenshot_url}
                     alt="Comment screenshot"
@@ -785,7 +790,6 @@ function GitHubActivitySection({ issueNumber }: { issueNumber: number }) {
       <div className="space-y-4">
         {comments.map((comment) => (
           <div key={comment.id} className="flex gap-2.5">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={comment.user.avatar_url}
               alt={comment.user.login}
@@ -797,7 +801,7 @@ function GitHubActivitySection({ issueNumber }: { issueNumber: number }) {
                   {comment.user.login}
                 </span>
                 {isBotComment(comment) && (
-                  <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 font-medium text-purple-600 dark:text-purple-400 border-purple-300 dark:border-purple-700">
+                  <Badge variant="outline" className="h-4 px-1.5 py-0 text-[9px] font-medium text-status-info border-status-info/30 dark:border-status-info/50">
                     Claude Code
                   </Badge>
                 )}
@@ -900,7 +904,6 @@ function ListItemContextMenu({
 
   return (
     <>
-      {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
       <div onContextMenu={handleContextMenu} className="contents">
         {children}
       </div>
@@ -912,79 +915,93 @@ function ListItemContextMenu({
           style={{ top: contextPos.y, left: contextPos.x }}
         >
           {!isResolved && (
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="default"
               className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-foreground hover:bg-muted transition-colors"
               onClick={() => handleAction("resolve")}
             >
               <ShieldCheck className="h-3.5 w-3.5" />
               Resolve
-            </button>
+            </Button>
           )}
 
           {isResolved && (
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="default"
               className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-foreground hover:bg-muted transition-colors"
               onClick={() => handleAction("reopen")}
             >
               <Circle className="h-3.5 w-3.5" />
               Re-open
-            </button>
+            </Button>
           )}
 
           <div className="my-1 h-px bg-border" />
 
           {!item.github_issue_number && (
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="default"
               className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-foreground hover:bg-muted transition-colors"
               onClick={() => handleAction("send_to_github")}
             >
               <GitBranch className="h-3.5 w-3.5" />
               Create Issue
-            </button>
+            </Button>
           )}
 
           {item.github_issue_url && (
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="default"
               className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-foreground hover:bg-muted transition-colors"
               onClick={() => handleAction("view_github")}
             >
               <ExternalLink className="h-3.5 w-3.5" />
               View in GitHub
-            </button>
+            </Button>
           )}
 
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="default"
             className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-foreground hover:bg-muted transition-colors"
             onClick={() => handleAction("copy_link")}
           >
             <Copy className="h-3.5 w-3.5" />
             Copy link
-          </button>
+          </Button>
 
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="default"
             className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-foreground hover:bg-muted transition-colors"
             onClick={() => handleAction("copy_id")}
           >
             <Hash className="h-3.5 w-3.5" />
             Copy ID
-          </button>
+          </Button>
 
           <div className="my-1 h-px bg-border" />
 
-          <button
+          <Button
             type="button"
-            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-destructive hover:bg-destructive/10 transition-colors"
+            variant="ghost"
+            size="default"
+            className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs text-status-error hover:bg-status-error/10 transition-colors"
             onClick={() => handleAction("delete")}
           >
             <Trash2 className="h-3.5 w-3.5" />
             Delete
-          </button>
+          </Button>
         </div>
       )}
     </>
@@ -1216,47 +1233,53 @@ function ToolContextSection({ item }: { item: FeedbackItem }) {
       {/* Tool assignment */}
       <div className="flex items-center gap-2 mb-3">
         <div className="relative" ref={dropdownRef}>
-          <button
+          <Button
             type="button"
+            variant="outline"
+            size="xs"
             onClick={() => setShowDropdown(!showDropdown)}
             disabled={loading}
-            className="inline-flex items-center gap-1.5 rounded-md border border-border bg-background px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-foreground transition-colors"
           >
             <Wrench className="h-3 w-3 text-muted-foreground" />
             {assignedTool ? assignedTool.name : "Assign tool"}
             <ChevronDown className="h-3 w-3 text-muted-foreground" />
-          </button>
+          </Button>
 
           {showDropdown && (
             <div className="absolute left-0 top-full z-50 mt-1 max-h-60 w-56 overflow-y-auto rounded-md border border-border bg-popover p-1 shadow-sm">
               {tools.map((tool) => (
-                <button
+                <Button
                   key={tool.id}
                   type="button"
+                  variant="ghost"
+                  size="default"
                   onClick={() => handleAssign(tool.id)}
                   className={cn(
-                    "flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-xs transition-colors hover:bg-muted",
+                    "h-auto w-full justify-start gap-2 rounded-sm px-2 py-1.5 text-left text-xs font-normal transition-colors hover:bg-muted",
                     tool.id === assignedToolId && "bg-primary/10 text-primary",
                   )}
                 >
                   <span className="truncate">{tool.name}</span>
                   <span className="ml-auto text-[10px] text-muted-foreground">{tool.category}</span>
-                </button>
+                </Button>
               ))}
             </div>
           )}
         </div>
 
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="xs"
           onClick={handleAutoMatch}
           disabled={loading}
-          className="inline-flex items-center gap-1 rounded-md border border-border bg-background px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-1 px-2 py-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground hover:bg-muted"
           title="Auto-detect tool from feedback content"
         >
           {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Play className="h-3 w-3" />}
           Auto-match
-        </button>
+        </Button>
       </div>
 
       {/* Resolved context */}
@@ -1301,11 +1324,13 @@ function ToolContextSection({ item }: { item: FeedbackItem }) {
 
           {/* Crawl button */}
           <div className="pt-2">
-            <button
+            <Button
               type="button"
+              variant="secondary"
+              size="xs"
               onClick={handleCrawl}
               disabled={crawling}
-              className="inline-flex items-center gap-1.5 rounded-md bg-primary/10 px-2.5 py-1.5 text-xs font-medium text-primary hover:bg-primary/20 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/20"
             >
               {crawling ? (
                 <Loader2 className="h-3 w-3 animate-spin" />
@@ -1313,7 +1338,7 @@ function ToolContextSection({ item }: { item: FeedbackItem }) {
                 <Play className="h-3 w-3" />
               )}
               {crawling ? "Crawling Procore..." : "Crawl Procore"}
-            </button>
+            </Button>
           </div>
         </div>
       )}
@@ -1358,14 +1383,16 @@ function FeedbackDetail({
     <div className="mx-auto max-w-4xl space-y-6 px-6 py-6 lg:px-10 lg:py-8">
       {/* Mobile back button */}
       {onBack && (
-        <button
+        <Button
           type="button"
+          variant="ghost"
+          size="sm"
           onClick={onBack}
-          className="mb-2 flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground lg:hidden"
+          className="mb-2 gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground lg:hidden"
         >
           <ArrowLeft className="h-4 w-4" />
           Back
-        </button>
+        </Button>
       )}
 
       {/* Header + Actions */}
@@ -1376,9 +1403,11 @@ function FeedbackDetail({
               {item.title}
             </h2>
             <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
-              <button
+              <Button
                 type="button"
-                className="inline-flex items-center gap-1 rounded px-1 -mx-1 font-mono text-[11px] text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                variant="ghost"
+                size="xs"
+                className="inline-flex items-center gap-1 rounded px-1 -mx-1 font-mono text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                 onClick={() => {
                   navigator.clipboard.writeText(item.id);
                   toast.success("ID copied to clipboard");
@@ -1387,7 +1416,7 @@ function FeedbackDetail({
               >
                 <Hash className="h-3 w-3" />
                 {item.id.slice(0, 8)}
-              </button>
+              </Button>
               <span className="text-border">·</span>
               <span>
                 {REQUEST_TYPE_LABELS[item.request_type] ?? item.request_type}
@@ -1397,8 +1426,8 @@ function FeedbackDetail({
                   <span className="text-border">·</span>
                   <span className={cn(
                     "font-medium",
-                    item.severity === "high" && "text-red-600 dark:text-red-400",
-                    item.severity === "medium" && "text-amber-600 dark:text-amber-400",
+                    item.severity === "high" && "text-status-error",
+                    item.severity === "medium" && "text-status-warning",
                     item.severity === "low" && "text-muted-foreground",
                   )}>
                     {item.severity.charAt(0).toUpperCase() + item.severity.slice(1)} priority
@@ -1420,9 +1449,9 @@ function FeedbackDetail({
 
           {/* Delete in corner */}
           <Button
-            size="sm"
+            size="icon-sm"
             variant="ghost"
-            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 h-8 w-8 p-0 shrink-0"
+            className="shrink-0 text-muted-foreground hover:text-status-error hover:bg-status-error/10"
             onClick={() => {
               if (window.confirm("Delete this feedback item? This cannot be undone.")) {
                 onDelete(item.id);
@@ -1443,10 +1472,10 @@ function FeedbackDetail({
               onChange={(e) => onUpdateStatus(item.id, e.target.value as DisplayStatus)}
               disabled={updatingId === item.id}
               className={cn(
-                "h-7 appearance-none rounded-md pl-2 pr-7 text-xs font-medium border-0 cursor-pointer transition-colors focus:outline-none focus:ring-1 focus:ring-ring",
-                displayStatus === "resolved" && "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400",
-                displayStatus === "open" && "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400",
-                displayStatus === "in_progress" && "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400",
+                "h-7 appearance-none rounded-md border-0 pl-2 pr-7 text-xs font-medium cursor-pointer transition-colors focus:outline-none focus:ring-1 focus:ring-ring",
+                displayStatus === "resolved" && "bg-status-success/15 text-status-success",
+                displayStatus === "open" && "bg-status-warning/15 text-status-warning",
+                displayStatus === "in_progress" && "bg-status-info/15 text-status-info",
               )}
             >
               {STATUS_OPTIONS.map((opt) => (
@@ -1494,7 +1523,6 @@ function FeedbackDetail({
         {/* Screenshot */}
         {item.screenshot_url && (
           <div className="mt-3 overflow-hidden rounded-lg border border-border">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={item.screenshot_url}
               alt="Feedback screenshot"
@@ -1790,17 +1818,15 @@ export default function FeedbackInboxPage() {
   }
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
-      {/* ---- Top bar ---- */}
-      <div className="flex items-center justify-between border-b border-border px-6 py-3">
-        <div className="flex items-center gap-3">
-          <MessageSquare className="h-4 w-4 text-muted-foreground" />
-          <h1 className="text-sm font-semibold text-foreground">Feedback</h1>
-          {total > 0 && (
-            <span className="text-xs text-muted-foreground">{total}</span>
-          )}
-        </div>
-        <div className="hidden lg:flex items-center gap-3">
+    <PageShell
+      variant="detailWide"
+      title="Feedback Inbox"
+      description="Review feedback, assign tools, and sync issues to GitHub."
+      actions={
+        <div className="hidden items-center gap-4 lg:flex">
+          <span className="text-xs text-muted-foreground">
+            {total} {total === 1 ? "item" : "items"}
+          </span>
           <p className="text-[10px] text-muted-foreground">
             <kbd className="rounded border border-border px-1 py-0.5 text-[9px]">&uarr;&darr;</kbd> navigate
             <span className="mx-1.5 text-border">|</span>
@@ -1809,11 +1835,11 @@ export default function FeedbackInboxPage() {
             <kbd className="rounded border border-border px-1 py-0.5 text-[9px]">g</kbd> github
           </p>
         </div>
-      </div>
-
+      }
+    >
+      <div className="flex h-full min-h-0 flex-col">
       <div className="flex flex-1 min-h-0">
         {/* ---- Left: list panel ---- */}
-        {/* eslint-disable-next-line react/forbid-dom-props */}
         <div
           ref={listPanelRef}
           className={cn(
@@ -1882,12 +1908,14 @@ export default function FeedbackInboxPage() {
                     onSendToGitHub={sendToGitHub}
                     onDelete={deleteItem}
                   >
-                    <button
+                    <Button
                       type="button"
                       data-feedback-item
+                      variant="ghost"
+                      size="default"
                       onClick={() => selectItem(item.id)}
                       className={cn(
-                        "group flex w-full cursor-pointer items-start gap-3 border-b border-border px-4 py-3 text-left transition-colors",
+                        "group h-auto w-full items-start justify-start gap-3 rounded-none border-b border-border px-4 py-3 text-left transition-colors",
                         isSelected
                           ? "bg-primary/8 border-l-2 border-l-primary"
                           : "hover:bg-muted border-l-2 border-l-transparent",
@@ -1909,7 +1937,7 @@ export default function FeedbackInboxPage() {
                             {item.title}
                           </span>
                           {item.severity === "high" && (
-                            <span className="shrink-0 text-[10px] font-semibold text-red-600 dark:text-red-400">
+                            <span className="shrink-0 text-[10px] font-semibold text-status-error">
                               HIGH
                             </span>
                           )}
@@ -1976,7 +2004,7 @@ export default function FeedbackInboxPage() {
                       <span className="shrink-0 pt-0.5 text-[10px] text-muted-foreground">
                         {relativeTime(item.created_at)}
                       </span>
-                    </button>
+                    </Button>
                   </ListItemContextMenu>
                 );
               })}
@@ -1984,7 +2012,6 @@ export default function FeedbackInboxPage() {
         </div>
 
         {/* ---- Resize handle ---- */}
-        {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
         <div
           className="hidden lg:flex items-center justify-center w-1.5 cursor-col-resize group hover:bg-muted/50 active:bg-muted transition-colors shrink-0"
           onMouseDown={handleMouseDown}
@@ -2034,6 +2061,7 @@ export default function FeedbackInboxPage() {
           </div>
         )}
       </div>
-    </div>
+      </div>
+    </PageShell>
   );
 }

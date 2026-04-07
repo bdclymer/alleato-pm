@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { BaseSidebar, SidebarBody, SidebarFooter } from "./BaseSidebar";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
+import { MoneyField } from "@/components/forms/MoneyField";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { cn } from "@/lib/utils";
@@ -18,7 +18,6 @@ import {
 interface ForecastToCompleteModalProps {
   open: boolean;
   onClose: () => void;
-  costCode: string;
   budgetLineId: string;
   projectId: string;
   currentData?: {
@@ -50,7 +49,7 @@ const METHODS = [
   {
     value: "monitored" as const,
     label: "Monitored",
-    description: "Projected Budget − Projected Costs.",
+    description: "Projected Budget \u2212 Projected Costs.",
     icon: TrendingUp,
   },
 ];
@@ -58,15 +57,14 @@ const METHODS = [
 export function ForecastToCompleteModal({
   open,
   onClose,
-  costCode,
   budgetLineId,
   currentData,
   onSave,
 }: ForecastToCompleteModalProps) {
   const [activeTab, setActiveTab] = useState("forecast");
-  const [forecastMethod, setForecastMethod] = useState<"lump_sum" | "manual" | "monitored">(
-    currentData?.forecastMethod || "lump_sum",
-  );
+  const [forecastMethod, setForecastMethod] = useState<
+    "lump_sum" | "manual" | "monitored"
+  >(currentData?.forecastMethod || "lump_sum");
   const [forecastAmount, setForecastAmount] = useState<string>(
     currentData?.forecastAmount?.toString() || "0",
   );
@@ -113,20 +111,14 @@ export function ForecastToCompleteModal({
 
   const handleClose = () => {
     if (hasChanges) {
-      if (confirm("You have unsaved changes. Are you sure you want to close?")) {
+      if (
+        confirm("You have unsaved changes. Are you sure you want to close?")
+      ) {
         onClose();
       }
     } else {
       onClose();
     }
-  };
-
-  const formatInputCurrency = (value: string): string => {
-    const num = parseFloat(value);
-    if (isNaN(num)) return "";
-    const [whole, decimal] = value.split(".");
-    const formattedWhole = parseInt(whole || "0", 10).toLocaleString("en-US");
-    return decimal !== undefined ? `${formattedWhole}.${decimal}` : formattedWhole;
   };
 
   const formatCurrency = (value: number): string => {
@@ -144,10 +136,13 @@ export function ForecastToCompleteModal({
       open={open}
       onClose={handleClose}
       title="Forecast To Complete"
-      subtitle={costCode}
       size="lg"
     >
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col flex-1 min-h-0">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="flex flex-col flex-1 min-h-0"
+      >
         <div className="px-4 sm:px-8 flex-shrink-0">
           <TabsList variant="line" className={BUDGET_PRIMARY_TABS_LIST_CLASS}>
             <TabsTrigger
@@ -166,29 +161,42 @@ export function ForecastToCompleteModal({
         </div>
 
         <SidebarBody>
-          <TabsContent value="forecast" className="px-4 py-4 sm:px-8 space-y-4">
+          <TabsContent
+            value="forecast"
+            className="px-4 py-4 sm:px-8 space-y-4"
+          >
             {/* Budget Summary */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-xs font-medium text-muted-foreground">Projected Budget</p>
-                <p className="text-lg font-semibold text-foreground mt-0.5">
-                  {formatCurrency(projectedBudget)}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs font-medium text-muted-foreground">Projected Costs</p>
-                <p className="text-lg font-semibold text-foreground mt-0.5">
-                  {formatCurrency(projectedCosts)}
-                </p>
+            <div className="rounded-lg border border-border p-4 bg-muted/30">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">
+                    Projected Budget
+                  </p>
+                  <p className="text-2xl font-bold text-foreground mt-1">
+                    {formatCurrency(projectedBudget)}
+                  </p>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm text-muted-foreground">
+                    Projected Costs
+                  </p>
+                  <p className="text-2xl font-bold text-foreground mt-1">
+                    {formatCurrency(projectedCosts)}
+                  </p>
+                </div>
               </div>
             </div>
 
             {/* Forecast Method */}
             <div>
-              <Label className="text-xs font-medium text-muted-foreground">Forecast Method</Label>
+              <Label className="text-xs font-medium text-muted-foreground">
+                Forecast Method
+              </Label>
               <RadioGroup
                 value={forecastMethod}
-                onValueChange={(v) => setForecastMethod(v as typeof forecastMethod)}
+                onValueChange={(v) =>
+                  setForecastMethod(v as typeof forecastMethod)
+                }
                 className="mt-2 space-y-0.5"
               >
                 {METHODS.map((method) => {
@@ -197,12 +205,18 @@ export function ForecastToCompleteModal({
                     <label
                       key={method.value}
                       htmlFor={method.value}
-                      className={budgetRadioCardClass(forecastMethod === method.value)}
+                      className={budgetRadioCardClass(
+                        forecastMethod === method.value,
+                      )}
                     >
                       <RadioGroupItem value={method.value} id={method.value} />
                       <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                      <span className="text-sm font-medium text-foreground">{method.label}</span>
-                      <span className="text-xs text-muted-foreground">{method.description}</span>
+                      <span className="text-sm font-medium text-foreground">
+                        {method.label}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {method.description}
+                      </span>
                     </label>
                   );
                 })}
@@ -212,49 +226,56 @@ export function ForecastToCompleteModal({
             {/* Amount Input */}
             {(forecastMethod === "lump_sum" || forecastMethod === "manual") && (
               <div>
-                <Label htmlFor="forecastAmount" className="text-sm font-medium text-foreground">
+                <Label
+                  htmlFor="forecastAmount"
+                  className="text-sm font-medium text-foreground"
+                >
                   Forecast Amount
                 </Label>
-                <div className="relative mt-1">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">$</span>
-                  <Input
-                    id="forecastAmount"
-                    type="text"
-                    inputMode="decimal"
-                    value={formatInputCurrency(forecastAmount)}
-                    onChange={(e) => {
-                      const raw = e.target.value.replace(/[^0-9.]/g, "");
-                      setForecastAmount(raw);
-                    }}
-                    placeholder="0.00"
-                    className="pl-7 tabular-nums"
+                <div className="mt-1">
+                  <MoneyField
+                    label="Forecast Amount"
+                    value={
+                      forecastAmount ? parseFloat(forecastAmount) : undefined
+                    }
+                    onChange={(val) => setForecastAmount(String(val ?? ""))}
+                    inline
+                    showCurrency={false}
                   />
                 </div>
               </div>
             )}
 
             {/* Calculations */}
-            <div className="rounded-lg bg-muted/50 px-4 py-3 space-y-2">
+            <div className="rounded-lg bg-muted/40 border border-border p-4 space-y-2">
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Forecast To Complete</span>
+                <span className="text-sm text-muted-foreground">
+                  Forecast To Complete
+                </span>
                 <span className="text-sm font-semibold text-foreground tabular-nums">
                   {formatCurrency(calculatedForecast)}
                 </span>
               </div>
               <div className="border-t border-border" />
               <div className="flex justify-between items-center">
-                <span className="text-sm text-muted-foreground">Est. Cost at Completion</span>
+                <span className="text-sm text-muted-foreground">
+                  Est. Cost at Completion
+                </span>
                 <span className="text-sm font-semibold text-foreground tabular-nums">
                   {formatCurrency(estimatedCostAtCompletion)}
                 </span>
               </div>
               <div className="border-t border-border" />
               <div className="flex justify-between items-center">
-                <span className="text-sm font-medium text-foreground">Projected Over / Under</span>
+                <span className="text-sm font-medium text-foreground">
+                  Projected Over / Under
+                </span>
                 <span
                   className={cn(
                     "text-sm font-bold tabular-nums",
-                    projectedOverUnder < 0 ? "text-destructive" : "text-foreground",
+                    projectedOverUnder < 0
+                      ? "text-destructive"
+                      : "text-foreground",
                   )}
                 >
                   {formatCurrency(projectedOverUnder)}

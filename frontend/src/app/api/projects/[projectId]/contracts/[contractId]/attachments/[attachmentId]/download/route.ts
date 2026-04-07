@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { apiErrorResponse } from "@/lib/api-error";
 import { NextResponse } from "next/server";
 
 interface RouteParams {
@@ -77,7 +78,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
     }
 
     return NextResponse.redirect(redirectTo);
-  } catch {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (error) {
+    return apiErrorResponse(error);
   }
 }

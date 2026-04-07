@@ -1,11 +1,15 @@
-import { createServiceClient } from "@/lib/supabase/service";
+import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    // Use service client since table_metadata is public reference data
-    // that should be accessible regardless of auth status
-    const supabase = createServiceClient();
+    // Use authenticated client — table_metadata requires a logged-in user.
+    // OWASP A01:2021 - Broken Access Control: removed unauthenticated service client.
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const { data, error } = await supabase
       .from("table_metadata")

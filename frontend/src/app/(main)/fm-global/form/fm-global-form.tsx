@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { Text } from "@/components/ui/text";
+import { Text } from "@/components/ds/text";
 
 /**
  * Form state for FM Global specs input.

@@ -1037,6 +1037,51 @@ export interface ExportSyncResult {
   errors: string[];
 }
 
+export interface AcumaticaOutboundAuditContext {
+  runId?: string;
+  userId?: string | null;
+}
+
+type OutboundAuditOperation = "create" | "update" | "skip" | "error";
+
+interface OutboundAuditLogRow {
+  run_id: string;
+  triggered_by_user_id: string | null;
+  project_id: number;
+  contract_id: string | null;
+  entity_name: string;
+  source_table: string;
+  source_record_id: string;
+  source_reference: string | null;
+  acumatica_entity: string;
+  acumatica_reference: string | null;
+  acumatica_doc_type: string | null;
+  operation: OutboundAuditOperation;
+  success: boolean;
+  error_message: string | null;
+  request_payload: Record<string, unknown> | null;
+  response_payload: Record<string, unknown> | null;
+}
+
+async function flushOutboundAuditLogs(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  rows: OutboundAuditLogRow[],
+): Promise<void> {
+  if (!rows.length) return;
+
+  const CHUNK_SIZE = 200;
+  for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
+    const chunk = rows.slice(i, i + CHUNK_SIZE);
+    const { error } = await (supabase as any)
+      .from("acumatica_outbound_audit_logs")
+      .insert(chunk);
+    if (error) {
+      console.error("[acumatica-outbound-audit] insert failed:", error.message);
+      return;
+    }
+  }
+}
+
 type AcumaticaPayloadValue = string | number | boolean | null | undefined;
 
 function acuField(value: AcumaticaPayloadValue) {
@@ -1145,11 +1190,14 @@ async function upsertInvoiceWithProjectFallback(
  */
 export async function exportCommitmentsToAcumatica(
   projectId: number,
+  auditContext?: AcumaticaOutboundAuditContext,
 ): Promise<ExportSyncResult> {
   const result: ExportSyncResult = { created: 0, updated: 0, skipped: 0, errors: [] };
   const supabase = await createClient();
   const acuClient = createAcumaticaClient();
   await acuClient.login();
+  const runId = auditContext?.runId ?? crypto.randomUUID();
+  const auditLogs: OutboundAuditLogRow[] = [];
 
   const { data: project } = await supabase
     .from("projects")
@@ -1282,12 +1330,45 @@ export async function exportCommitmentsToAcumatica(
 
       if (existed) result.updated++;
       else result.created++;
+      auditLogs.push({
+        run_id: runId,
+        triggered_by_user_id: auditContext?.userId ?? null,
+        project_id: projectId,
+        contract_id: null,
+        entity_name: "commitments",
+        source_table: "subcontracts",
+        source_record_id: sc.id,
+        source_reference: sc.contract_number ?? null,
+        acumatica_entity: "Subcontract",
+        acumatica_reference: returnedNbr,
+        acumatica_doc_type: null,
+        operation: existed ? "update" : "create",
+        success: true,
+        error_message: null,
+        request_payload: payload,
+        response_payload: response,
+      });
     } catch (error) {
-      result.errors.push(
-        `Subcontract ${sc.contract_number}: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-      );
+      const message = error instanceof Error ? error.message : String(error);
+      result.errors.push(`Subcontract ${sc.contract_number}: ${message}`);
+      auditLogs.push({
+        run_id: runId,
+        triggered_by_user_id: auditContext?.userId ?? null,
+        project_id: projectId,
+        contract_id: null,
+        entity_name: "commitments",
+        source_table: "subcontracts",
+        source_record_id: sc.id,
+        source_reference: sc.contract_number ?? null,
+        acumatica_entity: "Subcontract",
+        acumatica_reference: sc.acumatica_external_key ?? externalKey,
+        acumatica_doc_type: null,
+        operation: "error",
+        success: false,
+        error_message: message,
+        request_payload: payload,
+        response_payload: null,
+      });
     }
   }
 
@@ -1325,15 +1406,49 @@ export async function exportCommitmentsToAcumatica(
 
       if (existed) result.updated++;
       else result.created++;
+      auditLogs.push({
+        run_id: runId,
+        triggered_by_user_id: auditContext?.userId ?? null,
+        project_id: projectId,
+        contract_id: null,
+        entity_name: "commitments",
+        source_table: "purchase_orders",
+        source_record_id: po.id,
+        source_reference: po.contract_number ?? null,
+        acumatica_entity: "PurchaseOrder",
+        acumatica_reference: returnedNbr,
+        acumatica_doc_type: "RegularOrder",
+        operation: existed ? "update" : "create",
+        success: true,
+        error_message: null,
+        request_payload: payload,
+        response_payload: response,
+      });
     } catch (error) {
-      result.errors.push(
-        `Purchase order ${po.contract_number}: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-      );
+      const message = error instanceof Error ? error.message : String(error);
+      result.errors.push(`Purchase order ${po.contract_number}: ${message}`);
+      auditLogs.push({
+        run_id: runId,
+        triggered_by_user_id: auditContext?.userId ?? null,
+        project_id: projectId,
+        contract_id: null,
+        entity_name: "commitments",
+        source_table: "purchase_orders",
+        source_record_id: po.id,
+        source_reference: po.contract_number ?? null,
+        acumatica_entity: "PurchaseOrder",
+        acumatica_reference: po.acumatica_external_key ?? externalKey,
+        acumatica_doc_type: "RegularOrder",
+        operation: "error",
+        success: false,
+        error_message: message,
+        request_payload: payload,
+        response_payload: null,
+      });
     }
   }
 
+  await flushOutboundAuditLogs(supabase, auditLogs);
   return result;
 }
 
@@ -1342,11 +1457,14 @@ export async function exportCommitmentsToAcumatica(
  */
 export async function exportPrimeContractsToAcumatica(
   projectId: number,
+  auditContext?: AcumaticaOutboundAuditContext,
 ): Promise<ExportSyncResult> {
   const result: ExportSyncResult = { created: 0, updated: 0, skipped: 0, errors: [] };
   const supabase = await createClient();
   const acuClient = createAcumaticaClient();
   await acuClient.login();
+  const runId = auditContext?.runId ?? crypto.randomUUID();
+  const auditLogs: OutboundAuditLogRow[] = [];
 
   const [{ data: primeContracts, error: contractsError }, { data: project }] =
     await Promise.all([
@@ -1424,15 +1542,49 @@ export async function exportPrimeContractsToAcumatica(
 
       if (project?.acumatica_project_id) result.updated++;
       else result.created++;
+      auditLogs.push({
+        run_id: runId,
+        triggered_by_user_id: auditContext?.userId ?? null,
+        project_id: projectId,
+        contract_id: contract.id,
+        entity_name: "primeContracts",
+        source_table: "prime_contracts",
+        source_record_id: contract.id,
+        source_reference: contract.contract_number ?? null,
+        acumatica_entity: "Project",
+        acumatica_reference: returnedProjectId,
+        acumatica_doc_type: null,
+        operation: project?.acumatica_project_id ? "update" : "create",
+        success: true,
+        error_message: null,
+        request_payload: payload,
+        response_payload: response,
+      });
     } catch (error) {
-      result.errors.push(
-        `Prime contract ${contract.contract_number}: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-      );
+      const message = error instanceof Error ? error.message : String(error);
+      result.errors.push(`Prime contract ${contract.contract_number}: ${message}`);
+      auditLogs.push({
+        run_id: runId,
+        triggered_by_user_id: auditContext?.userId ?? null,
+        project_id: projectId,
+        contract_id: contract.id,
+        entity_name: "primeContracts",
+        source_table: "prime_contracts",
+        source_record_id: contract.id,
+        source_reference: contract.contract_number ?? null,
+        acumatica_entity: "Project",
+        acumatica_reference: projectCode,
+        acumatica_doc_type: null,
+        operation: "error",
+        success: false,
+        error_message: message,
+        request_payload: payload,
+        response_payload: null,
+      });
     }
   }
 
+  await flushOutboundAuditLogs(supabase, auditLogs);
   return result;
 }
 
@@ -1441,11 +1593,14 @@ export async function exportPrimeContractsToAcumatica(
  */
 export async function exportChangeOrdersToAcumatica(
   projectId: number,
+  auditContext?: AcumaticaOutboundAuditContext,
 ): Promise<ExportSyncResult> {
   const result: ExportSyncResult = { created: 0, updated: 0, skipped: 0, errors: [] };
   const supabase = await createClient();
   const acuClient = createAcumaticaClient();
   await acuClient.login();
+  const runId = auditContext?.runId ?? crypto.randomUUID();
+  const auditLogs: OutboundAuditLogRow[] = [];
 
   const { data: project } = await supabase
     .from("projects")
@@ -1513,10 +1668,45 @@ export async function exportChangeOrdersToAcumatica(
 
       if (existed) result.updated++;
       else result.created++;
+      auditLogs.push({
+        run_id: runId,
+        triggered_by_user_id: auditContext?.userId ?? null,
+        project_id: projectId,
+        contract_id: null,
+        entity_name: "changeOrders",
+        source_table: "prime_contract_change_orders",
+        source_record_id: String(co.id),
+        source_reference: co.pcco_number ?? null,
+        acumatica_entity: "ChangeOrder",
+        acumatica_reference: returnedRef,
+        acumatica_doc_type: null,
+        operation: existed ? "update" : "create",
+        success: true,
+        error_message: null,
+        request_payload: payload,
+        response_payload: response,
+      });
     } catch (error) {
-      result.errors.push(
-        `Prime CO ${referenceNbr}: ${error instanceof Error ? error.message : String(error)}`,
-      );
+      const message = error instanceof Error ? error.message : String(error);
+      result.errors.push(`Prime CO ${referenceNbr}: ${message}`);
+      auditLogs.push({
+        run_id: runId,
+        triggered_by_user_id: auditContext?.userId ?? null,
+        project_id: projectId,
+        contract_id: null,
+        entity_name: "changeOrders",
+        source_table: "prime_contract_change_orders",
+        source_record_id: String(co.id),
+        source_reference: co.pcco_number ?? null,
+        acumatica_entity: "ChangeOrder",
+        acumatica_reference: referenceNbr,
+        acumatica_doc_type: null,
+        operation: "error",
+        success: false,
+        error_message: message,
+        request_payload: payload,
+        response_payload: null,
+      });
     }
   }
 
@@ -1545,15 +1735,49 @@ export async function exportChangeOrdersToAcumatica(
 
       if (existed) result.updated++;
       else result.created++;
+      auditLogs.push({
+        run_id: runId,
+        triggered_by_user_id: auditContext?.userId ?? null,
+        project_id: projectId,
+        contract_id: co.contract_id,
+        entity_name: "changeOrders",
+        source_table: "contract_change_orders",
+        source_record_id: co.id,
+        source_reference: co.change_order_number ?? null,
+        acumatica_entity: "ChangeOrder",
+        acumatica_reference: returnedRef,
+        acumatica_doc_type: null,
+        operation: existed ? "update" : "create",
+        success: true,
+        error_message: null,
+        request_payload: payload,
+        response_payload: response,
+      });
     } catch (error) {
-      result.errors.push(
-        `Commitment CO ${referenceNbr}: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-      );
+      const message = error instanceof Error ? error.message : String(error);
+      result.errors.push(`Commitment CO ${referenceNbr}: ${message}`);
+      auditLogs.push({
+        run_id: runId,
+        triggered_by_user_id: auditContext?.userId ?? null,
+        project_id: projectId,
+        contract_id: co.contract_id,
+        entity_name: "changeOrders",
+        source_table: "contract_change_orders",
+        source_record_id: co.id,
+        source_reference: co.change_order_number ?? null,
+        acumatica_entity: "ChangeOrder",
+        acumatica_reference: referenceNbr,
+        acumatica_doc_type: null,
+        operation: "error",
+        success: false,
+        error_message: message,
+        request_payload: payload,
+        response_payload: null,
+      });
     }
   }
 
+  await flushOutboundAuditLogs(supabase, auditLogs);
   return result;
 }
 
@@ -1565,11 +1789,14 @@ export async function exportChangeOrdersToAcumatica(
 export async function exportPaymentApplicationsToAcumatica(
   projectId: number,
   contractId?: string,
+  auditContext?: AcumaticaOutboundAuditContext,
 ): Promise<ExportSyncResult> {
   const result: ExportSyncResult = { created: 0, updated: 0, skipped: 0, errors: [] };
   const supabase = await createClient();
   const acuClient = createAcumaticaClient();
   await acuClient.login();
+  const runId = auditContext?.runId ?? crypto.randomUUID();
+  const auditLogs: OutboundAuditLogRow[] = [];
 
   const { data: project } = await supabase
     .from("projects")
@@ -1689,15 +1916,50 @@ export async function exportPaymentApplicationsToAcumatica(
   for (const application of applications ?? []) {
     const customerId = customerByContractId.get(application.contract_id);
     if (!customerId) {
-      result.errors.push(
-        `Payment application ${application.application_number}: no Acumatica customer mapping found for its prime contract company.`,
-      );
+      const message = `Payment application ${application.application_number}: no Acumatica customer mapping found for its prime contract company.`;
+      result.errors.push(message);
+      auditLogs.push({
+        run_id: runId,
+        triggered_by_user_id: auditContext?.userId ?? null,
+        project_id: projectId,
+        contract_id: application.contract_id,
+        entity_name: "paymentApplications",
+        source_table: "prime_contract_payment_applications",
+        source_record_id: application.id,
+        source_reference: application.application_number ?? null,
+        acumatica_entity: "Invoice",
+        acumatica_reference: null,
+        acumatica_doc_type: "Invoice",
+        operation: "error",
+        success: false,
+        error_message: message,
+        request_payload: null,
+        response_payload: null,
+      });
       continue;
     }
 
     const status = (application.status ?? "").toLowerCase();
     if (status === "draft" || status === "rejected") {
       result.skipped++;
+      auditLogs.push({
+        run_id: runId,
+        triggered_by_user_id: auditContext?.userId ?? null,
+        project_id: projectId,
+        contract_id: application.contract_id,
+        entity_name: "paymentApplications",
+        source_table: "prime_contract_payment_applications",
+        source_record_id: application.id,
+        source_reference: application.application_number ?? null,
+        acumatica_entity: "Invoice",
+        acumatica_reference: null,
+        acumatica_doc_type: "Invoice",
+        operation: "skip",
+        success: true,
+        error_message: `Skipped due to status '${status}'.`,
+        request_payload: null,
+        response_payload: null,
+      });
       continue;
     }
 
@@ -1751,13 +2013,35 @@ export async function exportPaymentApplicationsToAcumatica(
 
     try {
       const existed = Boolean(existingAcumaticaInvoiceRef) || existingRefs.has(referenceNbr);
-      await upsertInvoiceWithProjectFallback(acuClient, payload, {
+      const response = await upsertInvoiceWithProjectFallback(acuClient, payload, {
         allowProjectFallback: false,
       });
-      existingRefs.add(existingAcumaticaInvoiceRef ?? referenceNbr);
+      const returnedRef =
+        typeof response.ReferenceNbr === "string"
+          ? response.ReferenceNbr
+          : existingAcumaticaInvoiceRef ?? referenceNbr;
+      existingRefs.add(returnedRef);
 
       if (existed) result.updated++;
       else result.created++;
+      auditLogs.push({
+        run_id: runId,
+        triggered_by_user_id: auditContext?.userId ?? null,
+        project_id: projectId,
+        contract_id: application.contract_id,
+        entity_name: "paymentApplications",
+        source_table: "prime_contract_payment_applications",
+        source_record_id: application.id,
+        source_reference: application.application_number ?? null,
+        acumatica_entity: "Invoice",
+        acumatica_reference: returnedRef,
+        acumatica_doc_type: "Invoice",
+        operation: existed ? "update" : "create",
+        success: true,
+        error_message: null,
+        request_payload: payload,
+        response_payload: response,
+      });
     } catch (error) {
       const baseMessage =
         error instanceof Error ? error.message : String(error);
@@ -1767,9 +2051,28 @@ export async function exportPaymentApplicationsToAcumatica(
       result.errors.push(
         `Payment application ${referenceNbr}: ${message}`,
       );
+      auditLogs.push({
+        run_id: runId,
+        triggered_by_user_id: auditContext?.userId ?? null,
+        project_id: projectId,
+        contract_id: application.contract_id,
+        entity_name: "paymentApplications",
+        source_table: "prime_contract_payment_applications",
+        source_record_id: application.id,
+        source_reference: application.application_number ?? null,
+        acumatica_entity: "Invoice",
+        acumatica_reference: existingAcumaticaInvoiceRef ?? referenceNbr,
+        acumatica_doc_type: "Invoice",
+        operation: "error",
+        success: false,
+        error_message: message,
+        request_payload: payload,
+        response_payload: null,
+      });
     }
   }
 
+  await flushOutboundAuditLogs(supabase, auditLogs);
   return result;
 }
 
@@ -1778,11 +2081,14 @@ export async function exportPaymentApplicationsToAcumatica(
  */
 export async function exportOwnerInvoicesToAcumatica(
   projectId: number,
+  auditContext?: AcumaticaOutboundAuditContext,
 ): Promise<ExportSyncResult> {
   const result: ExportSyncResult = { created: 0, updated: 0, skipped: 0, errors: [] };
   const supabase = await createClient();
   const acuClient = createAcumaticaClient();
   await acuClient.login();
+  const runId = auditContext?.runId ?? crypto.randomUUID();
+  const auditLogs: OutboundAuditLogRow[] = [];
 
   const [{ data: project }, { data: primeContracts }] = await Promise.all([
     supabase
@@ -1918,14 +2224,48 @@ export async function exportOwnerInvoicesToAcumatica(
 
       if (existed) result.updated++;
       else result.created++;
+      auditLogs.push({
+        run_id: runId,
+        triggered_by_user_id: auditContext?.userId ?? null,
+        project_id: projectId,
+        contract_id: invoice.prime_contract_id,
+        entity_name: "invoices",
+        source_table: "owner_invoices",
+        source_record_id: String(invoice.id),
+        source_reference: invoice.invoice_number ?? null,
+        acumatica_entity: "Invoice",
+        acumatica_reference: returnedRef,
+        acumatica_doc_type: returnedType,
+        operation: existed ? "update" : "create",
+        success: true,
+        error_message: null,
+        request_payload: payload,
+        response_payload: response,
+      });
     } catch (error) {
-      result.errors.push(
-        `Owner invoice ${referenceNbr}: ${
-          error instanceof Error ? error.message : String(error)
-        }`,
-      );
+      const message = error instanceof Error ? error.message : String(error);
+      result.errors.push(`Owner invoice ${referenceNbr}: ${message}`);
+      auditLogs.push({
+        run_id: runId,
+        triggered_by_user_id: auditContext?.userId ?? null,
+        project_id: projectId,
+        contract_id: invoice.prime_contract_id,
+        entity_name: "invoices",
+        source_table: "owner_invoices",
+        source_record_id: String(invoice.id),
+        source_reference: invoice.invoice_number ?? null,
+        acumatica_entity: "Invoice",
+        acumatica_reference: referenceNbr,
+        acumatica_doc_type: docType,
+        operation: "error",
+        success: false,
+        error_message: message,
+        request_payload: payload,
+        response_payload: null,
+      });
     }
   }
 
+  await flushOutboundAuditLogs(supabase, auditLogs);
   return result;
 }

@@ -5,6 +5,7 @@ import { Plus, X, Search, ChevronDown, ChevronRight, AlertTriangle } from "lucid
 import { AnimatePresence, motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { NumberInput } from "@/components/ui/number-input";
+import { MoneyField } from "@/components/forms/MoneyField";
 import {
   Select,
   SelectContent,
@@ -732,29 +733,26 @@ export function BudgetLineItemCreatorModal({
                             </td>
 
                             <td className="py-2 pr-3 align-middle">
-                              <NumberInput
-                                step="0.01"
-                                value={row.unitCost}
-                                onChange={(e) => handleRowChange(index, "unitCost", e.target.value)}
-                                placeholder="$0.00"
+                              <MoneyField
+                                label="Unit cost"
+                                value={row.unitCost ? parseFloat(String(row.unitCost)) : undefined}
+                                onChange={(val) => handleRowChange(index, "unitCost", String(val ?? ""))}
+                                inline
+                                showCurrency={false}
                                 className="h-8 bg-muted/30 border-border/60"
                                 disabled={isCreating}
-                                clearZeroOnFocus={true}
-                                currency={true}
                               />
                             </td>
 
                             <td className="py-2 pr-2 align-top pt-3">
-                              <NumberInput
-                                step="0.01"
-                                value={row.amount}
-                                placeholder="$0.00"
+                              <MoneyField
+                                label="Amount"
+                                value={row.amount ? parseFloat(String(row.amount)) : undefined}
+                                onChange={() => {}}
+                                inline
+                                showCurrency={false}
                                 className="h-8 font-medium bg-muted/20 border-border/50 text-muted-foreground cursor-default"
                                 disabled={isCreating}
-                                readOnly
-                                clearZeroOnFocus={false}
-                                autoSelectOnFocus={false}
-                                currency={true}
                               />
                               {negativeAmountRows.has(index) && (
                                 <p className="text-xs text-amber-600 dark:text-amber-400 mt-1 flex items-center gap-1">

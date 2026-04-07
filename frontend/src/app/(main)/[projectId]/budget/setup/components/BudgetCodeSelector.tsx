@@ -164,8 +164,9 @@ export function BudgetCodeSelector({
               sortedDivisions.map((division) => (
                 <div key={division}>
                   {/* Division Header */}
-                  <div
-                    className="flex items-center w-full px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted cursor-pointer"
+                  <button
+                    type="button"
+                    className="flex items-center w-full px-4 py-2 text-sm font-semibold text-foreground hover:bg-muted cursor-pointer bg-transparent border-0"
                     onClick={(e) => toggleDivision(division, e)}
                   >
                     {expandedDivisions.has(division) ? (
@@ -177,7 +178,7 @@ export function BudgetCodeSelector({
                     <span className="ml-2 text-xs text-muted-foreground">
                       ({groupedCostCodes[division].length})
                     </span>
-                  </div>
+                  </button>
 
                   {/* Division Items */}
                   {expandedDivisions.has(division) &&
@@ -187,10 +188,11 @@ export function BudgetCodeSelector({
                       const isSelected = selectedLabel === displayLabel;
 
                       return (
-                        <div
+                        <button
+                          type="button"
                           key={code.id}
                           className={cn(
-                            "relative flex cursor-pointer select-none items-center pl-8 pr-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground",
+                            "relative flex w-full cursor-pointer select-none items-center pl-8 pr-4 py-2 text-sm hover:bg-accent hover:text-accent-foreground bg-transparent border-0 text-left",
                             isSelected && "bg-accent",
                           )}
                           onClick={() => handleSelect(code)}
@@ -202,7 +204,7 @@ export function BudgetCodeSelector({
                             )}
                           />
                           {displayLabel}
-                        </div>
+                        </button>
                       );
                     })}
                 </div>
@@ -212,13 +214,14 @@ export function BudgetCodeSelector({
 
           {/* Create New Button */}
           <div className="border-t">
-            <div
-              className="flex items-center cursor-pointer px-4 py-2 text-sm text-primary hover:bg-accent"
+            <button
+              type="button"
+              className="flex w-full items-center cursor-pointer px-4 py-2 text-sm text-primary hover:bg-accent bg-transparent border-0 text-left"
               onClick={handleCreateNew}
             >
               <Plus className="mr-2 h-4 w-4" />
               Create New Budget Code
-            </div>
+            </button>
           </div>
         </div>
       </PopoverContent>

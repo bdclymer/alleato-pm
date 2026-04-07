@@ -12,6 +12,7 @@ const noDesignViolations = require('./rules/no-design-violations');
 const requirePageShell = require('./rules/require-page-shell');
 const noOversizedShadows = require('./rules/no-oversized-shadows');
 const noRawButton = require('./rules/no-raw-button');
+const requireMoneyField = require('./rules/require-money-field');
 
 module.exports = {
   rules: {
@@ -22,6 +23,7 @@ module.exports = {
     'require-page-shell': requirePageShell,
     'no-oversized-shadows': noOversizedShadows,
     'no-raw-button': noRawButton,
+    'require-money-field': requireMoneyField,
   },
   configs: {
     recommended: {
@@ -34,6 +36,7 @@ module.exports = {
         'design-system/require-page-shell': 'warn',
         'design-system/no-oversized-shadows': 'error',
         'design-system/no-raw-button': 'error',
+        'design-system/require-money-field': 'error',
       },
     },
     strict: {
@@ -45,6 +48,7 @@ module.exports = {
         'design-system/require-page-shell': 'error',
         'design-system/no-oversized-shadows': 'error',
         'design-system/no-raw-button': 'error',
+        'design-system/require-money-field': 'error',
       },
     },
   },

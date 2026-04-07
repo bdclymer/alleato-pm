@@ -101,7 +101,7 @@ export function DateField({
           placeholder={placeholder}
           disabled={disabled}
           aria-label={label}
-          className={cn(error && "border-red-300")}
+          className={cn(error && "border-destructive")}
         />
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>

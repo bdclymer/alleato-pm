@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { PermissionService } from "@/services/permissionService";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{ companyId: string }>;
@@ -73,10 +74,7 @@ export async function POST(request: Request, { params }: RouteParams) {
       .single();
 
     if (error) {
-      return NextResponse.json(
-        { error: "insert_failed", message: error.message },
-        { status: 500 },
-      );
+      return apiErrorResponse(error);
     }
 
     return NextResponse.json(

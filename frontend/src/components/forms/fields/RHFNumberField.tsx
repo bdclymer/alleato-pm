@@ -51,7 +51,6 @@ export function RHFNumberField<TFieldValues extends FieldValues>({
           <FormControl>
             <Input
               type="number"
-              inputMode="decimal"
               name={field.name}
               ref={field.ref}
               value={field.value ?? ""}

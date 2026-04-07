@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import type * as React from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
@@ -10,18 +10,19 @@ import {
   FileText,
   History,
   Mail,
-  MessageSquare,
   Pencil,
   Plus,
   Receipt,
 } from "lucide-react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
 import { AdvancedSettingsTab } from "@/components/commitments/tabs/AdvancedSettingsTab";
 import { ChangeOrdersTab } from "@/components/commitments/tabs/ChangeOrdersTab";
 import { InvoicesTab } from "@/components/commitments/tabs/InvoicesTab";
+import { RfqsTab } from "@/components/commitments/tabs/RfqsTab";
 import { ScheduleOfValuesTab } from "@/components/commitments/tabs/ScheduleOfValuesTab";
+import { SubcontractorSovTab } from "@/components/commitments/tabs/SubcontractorSovTab";
 import { DocumentDeliveryDialog } from "@/components/documents/DocumentDeliveryDialog";
 import { EmptyState } from "@/components/ds/empty-state";
 import { KpiBlock } from "@/components/ds/kpi";
@@ -34,6 +35,11 @@ import {
 } from "@/components/layout";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { Button } from "@/components/ui/button";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -263,6 +269,8 @@ interface GeneralTabProps {
 
 function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: GeneralTabProps) {
   const isPO = commitment.type === "purchase_order";
+  const [isInclusionsOpen, setIsInclusionsOpen] = useState(false);
+  const [isExclusionsOpen, setIsExclusionsOpen] = useState(false);
   const displayStatus = commitment.status
     ? commitment.status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
     : "Draft";
@@ -272,13 +280,15 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
   );
   const renderDateOrDash = (value?: string | null) =>
     value ? formatDate(value) : <span className="text-muted-foreground/60">—</span>;
+  const inclusionText = commitment.inclusions?.trim() || "";
+  const exclusionText = commitment.exclusions?.trim() || "";
 
   return (
     <ContentSectionStack className="pb-20">
       <section>
         <div className="grid grid-cols-[minmax(0,1fr)_minmax(340px,420px)] gap-x-16 gap-y-10">
-          <div className="space-y-8">
-            <div className="grid grid-cols-2 gap-x-14 gap-y-8">
+          <div className="space-y-10">
+            <div className="grid grid-cols-2 gap-x-20 gap-y-8">
               <div className="space-y-6">
                 <SectionRuleHeading label="Details" className="[&_span]:text-primary" />
                 <dl className="space-y-4 text-sm">
@@ -288,17 +298,24 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
                   <LabelValueRow label="Title" missing={!commitment.title}>
                     {commitment.title || "Not set"}
                   </LabelValueRow>
+                  <LabelValueRow
+                    label="Description"
+                    missing={!commitment.description}
+                    valueClassName="leading-relaxed font-normal text-foreground"
+                  >
+                    {commitment.description || "Not set"}
+                  </LabelValueRow>
                   <LabelValueRow label="Status">
                     <StatusBadge status={displayStatus} />
                   </LabelValueRow>
                   <LabelValueRow
-                    label={isPO ? "Vendor" : "Subcontractor"}
+                    label="Invoice Contact"
                     missing={!commitment.contract_company?.name}
                   >
                     {commitment.contract_company?.name ? (
                       commitment.contract_company_id ? (
                         <Link
-                          href={`/directory/companies/${commitment.contract_company_id}`}
+                          href={`/directory/vendors/${encodeURIComponent(commitment.contract_company_id)}`}
                           className="text-primary hover:underline"
                         >
                           {commitment.contract_company.name}
@@ -337,27 +354,63 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
             </div>
 
             <div className="space-y-4">
+              <SectionRuleHeading label="Inclusions and Exclusions" className="[&_span]:text-primary" />
               <dl className="space-y-4 text-sm">
                 <LabelValueRow
-                  label="Description"
-                  missing={!commitment.description}
-                  valueClassName="leading-relaxed font-normal text-foreground"
-                >
-                  {commitment.description || "Not set"}
-                </LabelValueRow>
-                <LabelValueRow
                   label="Inclusions"
-                  missing={!commitment.inclusions}
-                  valueClassName="leading-relaxed font-normal text-foreground whitespace-pre-wrap"
+                  missing={!inclusionText}
+                  valueClassName="font-normal text-foreground"
                 >
-                  {commitment.inclusions || "Not set"}
+                  {inclusionText ? (
+                    <Collapsible open={isInclusionsOpen} onOpenChange={setIsInclusionsOpen} className="w-full">
+                      <CollapsibleTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="link"
+                          size="xs"
+                          className="h-auto p-0 text-xs font-medium"
+                        >
+                          {isInclusionsOpen ? "Hide inclusions" : "Show inclusions"}
+                          <ChevronDown
+                            className={`h-3.5 w-3.5 transition-transform ${isInclusionsOpen ? "rotate-180" : ""}`}
+                          />
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="pt-2 whitespace-pre-wrap leading-relaxed">
+                        {inclusionText}
+                      </CollapsibleContent>
+                    </Collapsible>
+                  ) : (
+                    "Not set"
+                  )}
                 </LabelValueRow>
                 <LabelValueRow
                   label="Exclusions"
-                  missing={!commitment.exclusions}
-                  valueClassName="leading-relaxed font-normal text-foreground whitespace-pre-wrap"
+                  missing={!exclusionText}
+                  valueClassName="font-normal text-foreground"
                 >
-                  {commitment.exclusions || "Not set"}
+                  {exclusionText ? (
+                    <Collapsible open={isExclusionsOpen} onOpenChange={setIsExclusionsOpen} className="w-full">
+                      <CollapsibleTrigger asChild>
+                        <Button
+                          type="button"
+                          variant="link"
+                          size="xs"
+                          className="h-auto p-0 text-xs font-medium"
+                        >
+                          {isExclusionsOpen ? "Hide exclusions" : "Show exclusions"}
+                          <ChevronDown
+                            className={`h-3.5 w-3.5 transition-transform ${isExclusionsOpen ? "rotate-180" : ""}`}
+                          />
+                        </Button>
+                      </CollapsibleTrigger>
+                      <CollapsibleContent className="pt-2 whitespace-pre-wrap leading-relaxed">
+                        {exclusionText}
+                      </CollapsibleContent>
+                    </Collapsible>
+                  ) : (
+                    "Not set"
+                  )}
                 </LabelValueRow>
               </dl>
             </div>
@@ -493,6 +546,7 @@ function ComingSoonTab({ icon, label }: { icon: React.ReactNode; label: string }
 
 export default function CommitmentDetailPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const params = useParams();
   const projectId = parseInt(params.projectId as string);
   const commitmentId = params.commitmentId as string;
@@ -504,6 +558,7 @@ export default function CommitmentDetailPage() {
     "download" | "email"
   >("download");
   const [activeTab, setActiveTab] = useState("general");
+  const [subcontractorSovCount, setSubcontractorSovCount] = useState<number>(0);
 
   const {
     data: rawData,
@@ -517,6 +572,28 @@ export default function CommitmentDetailPage() {
     return normalizeCommitment(rawData);
   }, [rawData]);
 
+  const fetchSubcontractorSovCount = useCallback(async () => {
+    if (!commitmentId || !projectId) return;
+    try {
+      const response = await fetch(
+        `/api/projects/${projectId}/commitments/${commitmentId}/subcontractor-sov`,
+      );
+      if (!response.ok) return;
+      const payload = (await response.json()) as {
+        data?: { lineItems?: Array<{ id: string }> };
+      };
+      setSubcontractorSovCount(payload.data?.lineItems?.length ?? 0);
+    } catch {
+      // no-op
+    }
+  }, [commitmentId, projectId]);
+
+  useEffect(() => {
+    if (commitment?.type === "subcontract") {
+      void fetchSubcontractorSovCount();
+    }
+  }, [commitment?.type, fetchSubcontractorSovCount]);
+
   const error = queryError
     ? queryError instanceof Error
       ? queryError.message
@@ -528,6 +605,27 @@ export default function CommitmentDetailPage() {
   useProjectTitle(
     commitment ? `${commitment.number} — ${commitment.title}` : "Loading…",
   );
+
+  useEffect(() => {
+    const tab = searchParams.get("tab");
+    if (!tab) return;
+
+    const allowedTabs = new Set([
+      "general",
+      "sov",
+      "subcontractor-sov",
+      "change-orders",
+      "rfqs",
+      "invoices",
+      "payments",
+      "emails",
+      "history",
+      "advanced-settings",
+    ]);
+    if (allowedTabs.has(tab)) {
+      setActiveTab(tab);
+    }
+  }, [searchParams]);
 
   const handleDelete = useCallback(async () => {
     if (
@@ -603,6 +701,7 @@ export default function CommitmentDetailPage() {
   }
 
   const sovLabel = isPO ? "PO SOV" : "SC SOV";
+  const showSubcontractorSovTab = !isPO;
 
   const headerActions = (
     <>
@@ -653,8 +752,9 @@ export default function CommitmentDetailPage() {
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
-              setActiveTab("invoices");
-              toast.info("Navigate to Invoices tab to create an invoice");
+              router.push(
+                `/${projectId}/invoices/new?contractType=commitment&commitmentId=${commitmentId}`,
+              );
             }}
           >
             <Receipt className="mr-2 h-4 w-4" />
@@ -698,6 +798,15 @@ export default function CommitmentDetailPage() {
         tabs={[
           { label: "General", href: "general", isActive: activeTab === "general" },
           { label: sovLabel, href: "sov", isActive: activeTab === "sov" },
+          ...(showSubcontractorSovTab
+            ? [
+                {
+                  label: `Subcontractor SOV (${subcontractorSovCount})`,
+                  href: "subcontractor-sov",
+                  isActive: activeTab === "subcontractor-sov",
+                },
+              ]
+            : []),
           { label: "Change Orders", href: "change-orders", isActive: activeTab === "change-orders" },
           { label: "RFQs", href: "rfqs", isActive: activeTab === "rfqs" },
           { label: "Invoices", href: "invoices", isActive: activeTab === "invoices" },
@@ -709,7 +818,7 @@ export default function CommitmentDetailPage() {
         onTabClick={(href) => setActiveTab(href)}
       />
 
-      <div className="pt-10">
+      <div className="pt-6">
         {activeTab === "general" && (
           <GeneralTab
             commitment={commitment}
@@ -729,6 +838,15 @@ export default function CommitmentDetailPage() {
           />
         )}
 
+        {activeTab === "subcontractor-sov" && showSubcontractorSovTab && (
+          <SubcontractorSovTab
+            projectId={projectId}
+            commitmentId={commitment.id}
+            onSubmitted={fetchSubcontractorSovCount}
+            onCountChange={setSubcontractorSovCount}
+          />
+        )}
+
         {activeTab === "change-orders" && (
           <ChangeOrdersTab
             commitmentId={commitment.id}
@@ -737,10 +855,7 @@ export default function CommitmentDetailPage() {
         )}
 
         {activeTab === "rfqs" && (
-          <ComingSoonTab
-            icon={<MessageSquare className="h-5 w-5 text-muted-foreground" />}
-            label="RFQs"
-          />
+          <RfqsTab commitmentId={commitment.id} projectId={projectId} />
         )}
 
         {activeTab === "invoices" && (

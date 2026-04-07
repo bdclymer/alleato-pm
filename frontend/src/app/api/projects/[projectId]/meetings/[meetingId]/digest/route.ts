@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 // GET: Get the post-meeting digest for a specific meeting
 export async function GET(
@@ -24,7 +25,7 @@ export async function GET(
       .maybeSingle();
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return apiErrorResponse(error);
     }
 
     if (!data) {
@@ -35,10 +36,7 @@ export async function GET(
     }
 
     return NextResponse.json({ data });
-  } catch {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+  } catch (error) {
+    return apiErrorResponse(error);
   }
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { apiErrorResponse } from "@/lib/api-error";
 
 const MAX_IMAGE_SIZE_BYTES = 2 * 1024 * 1024;
 const BUCKET_NAME = "company-logos";
@@ -102,9 +103,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ logoUrl: publicUrl });
   } catch (error) {
     console.error("[CompanyLogo] Upload failed", error);
-    return NextResponse.json(
-      { error: "Could not upload logo", details: error instanceof Error ? error.message : String(error) },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

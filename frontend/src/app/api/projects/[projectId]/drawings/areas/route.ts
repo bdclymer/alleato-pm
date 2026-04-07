@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { DrawingAreaService } from "@/services/DrawingAreaService";
+import { apiErrorResponse } from "@/lib/api-error";
 
 /**
  * GET /api/projects/[projectId]/drawing-areas
@@ -26,10 +27,7 @@ export async function GET(
   const result = await service.list(projectId);
 
   if (result.error) {
-    return NextResponse.json(
-      { error: result.error.message },
-      { status: 500 },
-    );
+    return apiErrorResponse(result.error);
   }
 
   return NextResponse.json(result.data);
@@ -64,10 +62,7 @@ export async function POST(
       const statusCode =
         result.error.type === "INVALID_INPUT" ? 400 : 500;
 
-      return NextResponse.json(
-        { error: result.error.message },
-        { status: statusCode },
-      );
+      return apiErrorResponse(result.error);
     }
 
     return NextResponse.json(result.data, { status: 201 });

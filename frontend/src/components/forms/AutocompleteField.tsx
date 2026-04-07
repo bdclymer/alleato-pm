@@ -101,7 +101,7 @@ export function AutocompleteField({
             disabled={disabled}
             className={cn(
               "w-full justify-between",
-              error && "border-red-300",
+              error && "border-destructive",
               className,
             )}
             {...(!value && { "data-placeholder-style": "" })}

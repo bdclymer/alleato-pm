@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
 import { createClient } from '@/lib/supabase/server';
+import { apiErrorResponse } from "@/lib/api-error";
 import {
   DirectCostExportSchema,
   type DirectCostWithLineItems,
@@ -116,13 +117,7 @@ export async function POST(
       { status: 400 }
     );
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: 'Failed to export direct costs',
-        details: error instanceof Error ? error.message : 'Unknown error',
-      },
-      { status: 500 }
-    );
+    return apiErrorResponse(error);
   }
 }
 

@@ -50,7 +50,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Text } from "@/components/ui/text";
+import { Text } from "@/components/ds/text";
 import type { Database } from "@/types/database.types";
 import { ContactDetailsSheet } from "./contact-details-sheet";
 

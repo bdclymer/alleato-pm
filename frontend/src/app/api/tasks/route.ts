@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 export async function GET() {
   const supabase = await createClient();
@@ -37,10 +38,7 @@ export async function GET() {
   const { data, error } = await query;
 
   if (error) {
-    return NextResponse.json(
-      { error: error.message },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 
   const tasks = (data ?? []).map((task) => {

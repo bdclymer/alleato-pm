@@ -19,6 +19,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
@@ -84,10 +85,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     if (error) {
       console.error("Failed to fetch PCOs:", error);
-      return NextResponse.json(
-        { error: "Failed to fetch PCOs", details: error.message },
-        { status: 400 }
-      );
+      return apiErrorResponse(error);
     }
 
     const pcos = (data || []).map((pco: any) => ({
@@ -101,11 +99,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       meta: { total: count || 0 },
     });
   } catch (error) {
-    console.error("PCO list error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -188,10 +182,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     if (error) {
       console.error("Failed to create PCO:", error);
-      return NextResponse.json(
-        { error: "Failed to create PCO", details: error.message },
-        { status: 400 }
-      );
+      return apiErrorResponse(error);
     }
 
     // Write timeline event
@@ -207,10 +198,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json(data, { status: 201 });
   } catch (error) {
-    console.error("PCO create error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return apiErrorResponse(error);
   }
 }

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { MoneyField } from "@/components/forms/MoneyField";
 import {
   Select,
   SelectContent,
@@ -107,9 +108,6 @@ export function OriginalBudgetEditModal({
     (lineItem.originalBudgetAmount ?? 0).toString(),
   );
 
-  // Focus state for currency inputs - show raw value when focused, formatted when blurred
-  const [unitCostFocused, setUnitCostFocused] = useState(false);
-  const [originalBudgetFocused, setOriginalBudgetFocused] = useState(false);
 
   const hasChanges =
     (parseFloat(unitQty) || 1) !== (lineItem.unitQty ?? 1) ||
@@ -229,7 +227,7 @@ export function OriginalBudgetEditModal({
     return value;
   };
 
-  const formatCurrencyInput = (value: string) => {
+  const formatCurrencyDisplay = (value: string) => {
     const num = parseFloat(value);
     if (isNaN(num)) return "$0.00";
     return `$${num.toLocaleString("en-US", {
@@ -411,19 +409,12 @@ export function OriginalBudgetEditModal({
                     >
                       Unit Cost
                     </Label>
-                    <Input
-                      id="budget-unit-cost"
-                      type="text"
-                      value={
-                        unitCostFocused ? unitCost : formatCurrencyInput(unitCost)
-                      }
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/[^0-9.]/g, "");
-                        setUnitCost(value);
-                      }}
-                      onFocus={() => setUnitCostFocused(true)}
-                      onBlur={() => setUnitCostFocused(false)}
-                      placeholder="0.00"
+                    <MoneyField
+                      label="Unit Cost"
+                      value={unitCost ? parseFloat(unitCost) : undefined}
+                      onChange={(val) => setUnitCost(String(val ?? ""))}
+                      inline
+                      showCurrency={false}
                       className="mt-1"
                       disabled={calculationMethod === "manual"}
                     />
@@ -435,21 +426,12 @@ export function OriginalBudgetEditModal({
                     >
                       Original Budget
                     </Label>
-                    <Input
-                      id="budget-original-amount"
-                      type="text"
-                      value={
-                        originalBudgetFocused
-                          ? originalBudget
-                          : formatCurrencyInput(originalBudget)
-                      }
-                      onChange={(e) => {
-                        const value = e.target.value.replace(/[^0-9.]/g, "");
-                        setOriginalBudget(value);
-                      }}
-                      onFocus={() => setOriginalBudgetFocused(true)}
-                      onBlur={() => setOriginalBudgetFocused(false)}
-                      placeholder="0.00"
+                    <MoneyField
+                      label="Original Budget"
+                      value={originalBudget ? parseFloat(originalBudget) : undefined}
+                      onChange={(val) => setOriginalBudget(String(val ?? ""))}
+                      inline
+                      showCurrency={false}
                       className="mt-1 bg-muted/50 font-semibold"
                       disabled={calculationMethod === "calculated"}
                     />
@@ -459,8 +441,8 @@ export function OriginalBudgetEditModal({
                 {calculationMethod === "calculated" && (
                   <div className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-foreground">
                     <span className="font-medium">Formula:</span>{" "}
-                    {unitQty || "0"} × {formatCurrencyInput(unitCost)} ={" "}
-                    {formatCurrencyInput(originalBudget)}
+                    {unitQty || "0"} × {formatCurrencyDisplay(unitCost)} ={" "}
+                    {formatCurrencyDisplay(originalBudget)}
                   </div>
                 )}
               </>

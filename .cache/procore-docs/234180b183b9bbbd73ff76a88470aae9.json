@@ -1,6 +1,0 @@
-{
-  "success": true,
-  "markdown": "#  Why don’t I see invoices for the projects I am assigned to? \n### Answer\nYou cannot see the invoices for your projects because your role does not have the required permission. Only users with the designated \"invoice review\" project role can view these invoices. Check with your Direct Cost tool admin to understand what project role has been selected for invoice review, and ensure that you have been assigned that role on your projects. \n## See Also\n  * [How do 360 Reporting permissions work?](https://v2.support.procore.com/faq-how-do-360-reporting-permissions-work)\n  * [Insights Pilot Questions](https://v2.support.procore.com/faq-insights-pilot-questions)\n  * [What can I ask Assist?](https://v2.support.procore.com/faq-what-can-i-ask-assist)\n\n\n",
-  "title": "Why don’t I see invoices for the projects I am assigned to?",
-  "description": "Procore Support"
-}

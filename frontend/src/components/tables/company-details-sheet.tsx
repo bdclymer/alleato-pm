@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
-import { Text } from "@/components/ui/text";
+import { Text } from "@/components/ds/text";
 import {
   Sheet,
   SheetClose,

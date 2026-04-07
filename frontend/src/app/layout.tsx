@@ -13,6 +13,7 @@ import { DesignViolationOverlay } from "@/components/dev/design-violation-overla
 import { Providers } from "./Providers";
 import { UnifiedFeedbackWidget } from "@/components/dev/UnifiedFeedbackWidget";
 import { AdminFeedbackWidget } from "@/components/admin-feedback/AdminFeedbackWidget";
+import { ChunkLoadErrorRecovery } from "@/components/providers/chunk-error-recovery";
 import "./globals.css";
 import "@liveblocks/react-ui/styles.css";
 import "@liveblocks/react-ui/styles/dark/media-query.css";
@@ -49,6 +50,7 @@ export default function RootLayout({
         className="font-sans antialiased text-foreground"
         suppressHydrationWarning
       >
+        <ChunkLoadErrorRecovery>
         <QueryProvider>
           <ThemeProvider
             attribute="class"
@@ -70,6 +72,7 @@ export default function RootLayout({
             </Suspense>
           </ThemeProvider>
         </QueryProvider>
+        </ChunkLoadErrorRecovery>
         <Toaster />
         <AdminFeedbackWidget />
         {process.env.NODE_ENV === "development" && (

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { SpecificationRevisionService } from "@/services/SpecificationRevisionService";
+import { apiErrorResponse } from "@/lib/api-error";
 
 /**
  * GET /api/projects/[projectId]/specifications/[sectionId]/revisions/[revisionId]/download
@@ -27,10 +28,7 @@ export async function GET(
   const result = await service.getDownloadUrl(revisionId);
 
   if (result.error) {
-    return NextResponse.json(
-      { error: result.error.message },
-      { status: result.error.type === "NOT_FOUND" ? 404 : 500 },
-    );
+    return apiErrorResponse(result.error);
   }
 
   // Return signed URL

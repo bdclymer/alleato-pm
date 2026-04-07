@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { v4 as uuidv4 } from "uuid";
+import { apiErrorResponse } from "@/lib/api-error";
 
 /**
  * POST /api/documents/upload
@@ -151,10 +152,6 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Upload error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

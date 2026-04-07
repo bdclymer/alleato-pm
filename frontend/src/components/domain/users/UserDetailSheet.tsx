@@ -3,7 +3,7 @@
 import * as React from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Text } from "@/components/ui/text";
+import { Text } from "@/components/ds/text";
 import { Separator } from "@/components/ui/separator";
 import {
   Sheet,

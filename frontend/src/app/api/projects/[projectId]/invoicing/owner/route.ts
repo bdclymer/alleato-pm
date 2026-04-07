@@ -1,5 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 // POST /api/projects/[projectId]/invoicing/owner
 // Create a new owner invoice for a project
@@ -77,11 +78,8 @@ export async function POST(
     }
 
     return NextResponse.json({ data: invoice }, { status: 201 });
-  } catch {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+  } catch (error) {
+    return apiErrorResponse(error);
   }
 }
 
@@ -126,7 +124,7 @@ export async function GET(
         `
         *,
         owner_invoice_line_items(*),
-        prime_contracts!inner(id, project_id, contract_number, title, contract_amount)
+        prime_contracts!inner(id, project_id, contract_number, title, original_contract_value, revised_contract_value)
       `,
       )
       .eq("prime_contracts.project_id", projectIdNum)
@@ -163,7 +161,12 @@ export async function GET(
 
       const pc = Array.isArray(invoice.prime_contracts)
         ? invoice.prime_contracts[0]
-        : invoice.prime_contracts as { contract_number: string | null; title: string | null; contract_amount: number | null } | null;
+        : invoice.prime_contracts as {
+            contract_number: string | null;
+            title: string | null;
+            original_contract_value: number | null;
+            revised_contract_value: number | null;
+          } | null;
 
       const { prime_contracts: _pc, ...invoiceData } = invoice;
 
@@ -171,7 +174,7 @@ export async function GET(
         ...invoiceData,
         contract_number: pc?.contract_number ?? null,
         contract_title: pc?.title ?? null,
-        total_contract_amount: pc?.contract_amount ?? null,
+        total_contract_amount: pc?.revised_contract_value ?? pc?.original_contract_value ?? null,
         gross_amount: invoice.gross_amount ?? gross_amount,
         net_amount: invoice.net_amount ?? net_amount,
         paid_amount: invoice.paid_amount ?? null,
@@ -181,10 +184,7 @@ export async function GET(
     });
 
     return NextResponse.json({ data: invoicesWithTotals });
-  } catch {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+  } catch (error) {
+    return apiErrorResponse(error);
   }
 }

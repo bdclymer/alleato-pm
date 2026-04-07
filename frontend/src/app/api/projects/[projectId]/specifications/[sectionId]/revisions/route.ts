@@ -6,6 +6,7 @@ import {
   addRevisionSchema,
   type AddRevisionFormData,
 } from "@/lib/schemas/specification-schemas";
+import { apiErrorResponse } from "@/lib/api-error";
 
 /**
  * GET /api/projects/[projectId]/specifications/[sectionId]/revisions
@@ -27,10 +28,7 @@ export async function GET(
   const result = await service.listRevisions(projectId, sectionId);
 
   if (result.error) {
-    return NextResponse.json(
-      { error: result.error.message },
-      { status: result.error.type === "NOT_FOUND" ? 404 : 500 },
-    );
+    return apiErrorResponse(result.error);
   }
 
   return NextResponse.json(result.data);
@@ -82,7 +80,7 @@ export async function POST(
             ? 404
             : 500;
 
-      return NextResponse.json({ error: result.error.message }, { status: statusCode });
+      return apiErrorResponse(result.error);
     }
 
     return NextResponse.json(result.data, { status: 201 });

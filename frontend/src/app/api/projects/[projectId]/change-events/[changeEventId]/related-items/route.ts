@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{ projectId: string; changeEventId: string }>;
@@ -170,10 +171,7 @@ export async function GET(_: NextRequest, { params }: RouteParams) {
         return NextResponse.json({ data: [] });
       }
 
-      return NextResponse.json(
-        { error: "Failed to fetch related items", details: error.message },
-        { status: 400 },
-      );
+      return apiErrorResponse(error);
     }
 
     const response = (data || []).map((item) => {
@@ -195,8 +193,8 @@ export async function GET(_: NextRequest, { params }: RouteParams) {
     });
 
     return NextResponse.json({ data: response });
-  } catch {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (error) {
+    return apiErrorResponse(error);
   }
 }
 
@@ -296,10 +294,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         );
       }
 
-      return NextResponse.json(
-        { error: "Failed to link related item", details: error.message },
-        { status: 400 },
-      );
+      return apiErrorResponse(error);
     }
 
     return NextResponse.json(
@@ -317,7 +312,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       },
       { status: 201 },
     );
-  } catch {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (error) {
+    return apiErrorResponse(error);
   }
 }

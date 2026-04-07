@@ -29,16 +29,6 @@ interface JobToDateCostDetailModalProps {
   projectId: string;
 }
 
-/**
- * JobToDateCostDetailModal - Shows approved direct costs
- *
- * Features:
- * - Displays approved direct costs (invoices, expenses, payroll)
- * - Filtered to status: Approved only
- * - Shows vendor and invoice details
- * - Mobile responsive layout
- * - Matches Procore design patterns
- */
 export function JobToDateCostDetailModal({
   open,
   onClose,
@@ -66,11 +56,7 @@ export function JobToDateCostDetailModal({
         setCosts(data.costs || []);
       }
     } catch (error) {
-
       console.error("Failed to fetch job to date cost details:", error);
-
-      // Intentionally swallowed: modal shows empty state on error
-
     } finally {
       setLoading(false);
     }
@@ -100,7 +86,6 @@ export function JobToDateCostDetailModal({
 
   const totalAmount = costs.reduce((sum, cost) => sum + cost.amount, 0);
 
-  // Group by cost type for breakdown
   const costsByType = costs.reduce(
     (acc, cost) => {
       const type = cost.costType || "Uncategorized";
@@ -124,25 +109,22 @@ export function JobToDateCostDetailModal({
       open={open}
       onClose={onClose}
       title="Job to Date Cost Detail"
-      subtitle={costCode}
       size="xl"
     >
-      {/* Tabs */}
       <SidebarTabs
         tabs={tabs}
         activeTab={activeTab}
         onTabChange={(id) => setActiveTab(id as "costs" | "breakdown")}
       />
 
-      {/* Content */}
       <SidebarBody className="bg-background">
         {activeTab === "costs" ? (
-          <div className="p-6 space-y-4">
+          <div className="p-4 sm:p-6 space-y-4">
             {/* Total Summary */}
-            <div className="rounded-xl border border-border shadow-sm p-4 bg-gradient-to-br from-blue-50 via-white to-white">
+            <div className="rounded-lg border border-border p-4 bg-muted/30">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-foreground">
+                  <p className="text-sm text-muted-foreground">
                     Total Job to Date Costs
                   </p>
                   <p className="text-2xl font-bold text-foreground mt-1">
@@ -150,7 +132,7 @@ export function JobToDateCostDetailModal({
                   </p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm text-foreground">Transactions</p>
+                  <p className="text-sm text-muted-foreground">Transactions</p>
                   <p className="text-2xl font-bold text-foreground mt-1">
                     {costs.length}
                   </p>
@@ -158,42 +140,44 @@ export function JobToDateCostDetailModal({
               </div>
             </div>
 
-            {/* Description Box */}
-            <div className="rounded-lg bg-blue-50 border border-blue-200 p-4">
+            {/* Info Box */}
+            <div className="rounded-lg bg-muted/40 border border-border p-4">
               <div className="flex items-start gap-4">
-                <DollarSign className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-blue-900">
-                  <p className="font-semibold">About Job to Date Costs</p>
-                  <p className="mt-1">
-                    These are approved direct costs including invoices,
-                    expenses, payroll, and subcontractor invoices that have been
-                    incurred and approved for this cost code.
+                <DollarSign className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-0.5" />
+                <div className="text-sm">
+                  <p className="font-semibold text-foreground">
+                    About Job to Date Costs
+                  </p>
+                  <p className="mt-1 text-muted-foreground">
+                    These are approved direct costs including invoices, expenses,
+                    payroll, and subcontractor invoices that have been incurred
+                    and approved for this cost code.
                   </p>
                 </div>
               </div>
             </div>
 
             {/* Costs Table */}
-            <div className="overflow-x-auto scrollbar-hide rounded-xl border border-border shadow-sm bg-background">
+            <div className="overflow-x-auto scrollbar-hide rounded-lg border border-border bg-background">
               <table className="w-full text-sm">
-                <thead className="bg-muted border-b border-border">
+                <thead className="bg-muted/50 border-b border-border">
                   <tr>
-                    <th className="text-left px-4 py-4 font-semibold text-foreground">
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">
                       Description
                     </th>
-                    <th className="text-left px-4 py-4 font-semibold text-foreground">
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">
                       Type
                     </th>
-                    <th className="text-left px-4 py-4 font-semibold text-foreground">
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">
                       Vendor
                     </th>
-                    <th className="text-left px-4 py-4 font-semibold text-foreground">
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">
                       Invoice #
                     </th>
-                    <th className="text-right px-4 py-4 font-semibold text-foreground">
+                    <th className="text-right px-4 py-3 font-semibold text-foreground">
                       Amount
                     </th>
-                    <th className="text-left px-4 py-4 font-semibold text-foreground">
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">
                       Date
                     </th>
                   </tr>
@@ -221,29 +205,29 @@ export function JobToDateCostDetailModal({
                     costs.map((cost) => (
                       <tr
                         key={cost.id}
-                        className="hover:bg-blue-50/40 transition-colors"
+                        className="hover:bg-muted/50 transition-colors"
                       >
                         <td
-                          className="px-4 py-4 text-foreground max-w-xs truncate"
+                          className="px-4 py-3 text-foreground max-w-xs truncate"
                           title={cost.description || "-"}
                         >
                           {cost.description || "-"}
                         </td>
-                        <td className="px-4 py-4 text-foreground text-xs">
-                          <span className="inline-flex items-center px-2 py-1 rounded-full bg-muted text-muted-foreground font-medium">
+                        <td className="px-4 py-3 text-foreground text-xs">
+                          <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full border border-border bg-muted text-foreground">
                             {cost.costType || "Other"}
                           </span>
                         </td>
-                        <td className="px-4 py-4 text-foreground text-xs">
+                        <td className="px-4 py-3 text-foreground text-xs">
                           {cost.vendor || "-"}
                         </td>
-                        <td className="px-4 py-4 text-foreground text-xs font-mono">
+                        <td className="px-4 py-3 text-foreground text-xs font-mono">
                           {cost.invoiceNumber || "-"}
                         </td>
-                        <td className="px-4 py-4 text-right font-semibold tabular-nums text-foreground">
+                        <td className="px-4 py-3 text-right font-semibold tabular-nums text-foreground">
                           {formatCurrency(cost.amount)}
                         </td>
-                        <td className="px-4 py-4 text-foreground">
+                        <td className="px-4 py-3 text-foreground">
                           {formatDate(cost.incurredDate)}
                         </td>
                       </tr>
@@ -254,25 +238,25 @@ export function JobToDateCostDetailModal({
             </div>
           </div>
         ) : (
-          <div className="p-6 space-y-4">
-            <p className="text-sm text-foreground">
+          <div className="p-4 sm:p-6 space-y-4">
+            <p className="text-sm text-muted-foreground">
               Cost breakdown by type for this budget line.
             </p>
 
-            <div className="overflow-x-auto scrollbar-hide rounded-xl border border-border shadow-sm bg-background">
+            <div className="overflow-x-auto scrollbar-hide rounded-lg border border-border bg-background">
               <table className="w-full text-sm">
-                <thead className="bg-muted border-b border-border">
+                <thead className="bg-muted/50 border-b border-border">
                   <tr>
-                    <th className="text-left px-4 py-4 font-semibold text-foreground">
+                    <th className="text-left px-4 py-3 font-semibold text-foreground">
                       Cost Type
                     </th>
-                    <th className="text-right px-4 py-4 font-semibold text-foreground">
+                    <th className="text-right px-4 py-3 font-semibold text-foreground">
                       Count
                     </th>
-                    <th className="text-right px-4 py-4 font-semibold text-foreground">
+                    <th className="text-right px-4 py-3 font-semibold text-foreground">
                       Total Amount
                     </th>
-                    <th className="text-right px-4 py-4 font-semibold text-foreground">
+                    <th className="text-right px-4 py-3 font-semibold text-foreground">
                       % of Total
                     </th>
                   </tr>
@@ -281,18 +265,18 @@ export function JobToDateCostDetailModal({
                   {Object.entries(costsByType).map(([type, data]) => (
                     <tr
                       key={type}
-                      className="hover:bg-blue-50/40 transition-colors"
+                      className="hover:bg-muted/50 transition-colors"
                     >
-                      <td className="px-4 py-4 font-medium text-foreground">
+                      <td className="px-4 py-3 font-medium text-foreground">
                         {type}
                       </td>
-                      <td className="px-4 py-4 text-right text-foreground">
+                      <td className="px-4 py-3 text-right text-foreground">
                         {data.count}
                       </td>
-                      <td className="px-4 py-4 text-right font-semibold tabular-nums text-foreground">
+                      <td className="px-4 py-3 text-right font-semibold tabular-nums text-foreground">
                         {formatCurrency(data.total)}
                       </td>
-                      <td className="px-4 py-4 text-right text-foreground">
+                      <td className="px-4 py-3 text-right text-foreground">
                         {totalAmount > 0
                           ? ((data.total / totalAmount) * 100).toFixed(1)
                           : "0.0"}
@@ -307,7 +291,6 @@ export function JobToDateCostDetailModal({
         )}
       </SidebarBody>
 
-      {/* Footer */}
       <SidebarFooter>
         <div className="flex items-center justify-end">
           <Button variant="outline" onClick={onClose}>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { PunchItemService } from "@/services/PunchItemService";
 import type { PunchItemFilters } from "@/services/PunchItemService";
+import { apiErrorResponse } from "@/lib/api-error";
 
 /**
  * GET /api/projects/[projectId]/punch-items
@@ -43,10 +44,7 @@ export async function GET(
   const result = await service.list(numericProjectId, filters);
 
   if (result.error) {
-    return NextResponse.json(
-      { error: result.error.message },
-      { status: 500 },
-    );
+    return apiErrorResponse(result.error);
   }
 
   return NextResponse.json(result.data);
@@ -86,10 +84,7 @@ export async function POST(
     const result = await service.create(numericProjectId, body, user.id);
 
     if (result.error) {
-      return NextResponse.json(
-        { error: result.error.message },
-        { status: 500 },
-      );
+      return apiErrorResponse(result.error);
     }
 
     return NextResponse.json(result.data, { status: 201 });

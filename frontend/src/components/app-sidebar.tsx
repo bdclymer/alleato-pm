@@ -105,7 +105,7 @@ function SidebarFlyout({
 
             return isExternal ? (
               <a
-                key={tool.name}
+                key={`${tool.path}:${tool.name}`}
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -115,7 +115,7 @@ function SidebarFlyout({
               </a>
             ) : (
               <Link
-                key={tool.name}
+                key={`${tool.path}:${tool.name}`}
                 href={href}
                 className={linkClass}
               >
@@ -249,7 +249,7 @@ function ExpandedNavGroup({
 
         return isExternal ? (
           <a
-            key={tool.name}
+            key={`${tool.path}:${tool.name}`}
             href={href}
             target="_blank"
             rel="noopener noreferrer"
@@ -259,7 +259,7 @@ function ExpandedNavGroup({
           </a>
         ) : (
           <Link
-            key={tool.name}
+            key={`${tool.path}:${tool.name}`}
             href={href}
             className={linkClass}
           >

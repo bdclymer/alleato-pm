@@ -7,6 +7,7 @@ import {
   type DocumentRecordType,
 } from "@/lib/documents/record-documents";
 import { renderPdfFromHtml } from "@/lib/documents/pdf";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{
@@ -57,11 +58,6 @@ export async function GET(request: Request, { params }: RouteParams) {
       },
     });
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to generate PDF",
-      },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

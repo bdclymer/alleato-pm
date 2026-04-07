@@ -168,10 +168,17 @@ function CreateProjectForm() {
       });
 
       if (!response.ok) {
-        const error = await response
-          .json()
-          .catch(() => ({ error: "Unable to create project" }));
-        throw new Error(error.error || "Unable to create project");
+        const contentType = response.headers.get("content-type") ?? "";
+        let errorMessage = `Server returned ${response.status}`;
+        if (contentType.includes("application/json")) {
+          const body = await response.json().catch(() => null);
+          if (body?.error) errorMessage = body.error;
+        } else {
+          const text = await response.text().catch(() => "");
+          if (text) errorMessage = text.slice(0, 200);
+        }
+        console.error("[CreateProject] API error:", response.status, errorMessage);
+        throw new Error(errorMessage);
       }
 
       const project = await response.json();

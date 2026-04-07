@@ -12,11 +12,11 @@ interface TaskRowProps {
 }
 
 const statusColors = {
-  todo: "bg-neutral-400",
-  in_progress: "bg-blue-500",
-  in_review: "bg-purple-500",
-  done: "bg-green-500",
-  blocked: "bg-red-500",
+  todo: "bg-muted-foreground",
+  in_progress: "bg-primary",
+  in_review: "bg-purple-500 dark:bg-purple-400",
+  done: "bg-emerald-500 dark:bg-emerald-400",
+  blocked: "bg-destructive",
 };
 
 const statusLabels = {
@@ -31,8 +31,8 @@ export function TaskRow({ task, onToggle }: TaskRowProps) {
   return (
     <div
       className={cn(
-        "flex items-center gap-4 h-9 px-4 -mx-4 rounded border-b border-neutral-100 last:border-0",
-        "transition-colors duration-150 hover:bg-neutral-50",
+        "flex items-center gap-4 h-9 px-4 -mx-4 rounded border-b border-border last:border-0",
+        "transition-colors duration-150 hover:bg-muted",
         "group"
       )}
     >
@@ -56,7 +56,7 @@ export function TaskRow({ task, onToggle }: TaskRowProps) {
       <span
         className={cn(
           "text-sm font-medium flex-1 truncate",
-          task.status === "done" ? "text-neutral-400 line-through" : "text-neutral-700"
+          task.status === "done" ? "text-muted-foreground line-through" : "text-foreground"
         )}
       >
         {task.title}
@@ -64,14 +64,14 @@ export function TaskRow({ task, onToggle }: TaskRowProps) {
 
       {/* Assignee */}
       {task.assignee && (
-        <span className="text-xs text-neutral-500 shrink-0">
+        <span className="text-xs text-muted-foreground shrink-0">
           {task.assignee}
         </span>
       )}
 
       {/* Due Date */}
       {task.due_date && (
-        <span className="text-xs text-neutral-500 shrink-0">
+        <span className="text-xs text-muted-foreground shrink-0">
           {format(new Date(task.due_date), "MMM d")}
         </span>
       )}

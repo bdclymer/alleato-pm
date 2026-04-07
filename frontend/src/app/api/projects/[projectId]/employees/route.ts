@@ -2,6 +2,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 /**
  * GET /api/projects/[projectId]/employees
@@ -33,18 +34,11 @@ export async function GET(
 
     if (error) {
       console.error("Error fetching employees:", error);
-      return NextResponse.json(
-        { error: "Failed to fetch employees", details: error.message },
-        { status: 500 },
-      );
+      return apiErrorResponse(error);
     }
 
     return NextResponse.json(data || []);
   } catch (error) {
-    console.error("Error in employees API:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

@@ -1,6 +1,0 @@
-{
-  "success": true,
-  "markdown": "#  Manually Create Divisions \n##  Things to Consider \n  * [Required User ](https://v2.support.procore.com/product-manuals/specifications-project/permissions)[Permissions](https://v2.support.procore.com/product-manuals/specifications-project/permissions)\n\n\n##  Steps \n  1. Navigate to the project's **Specifications** tool.\n  2. Click **+Create Division**.\n  3. Enter a number for the division.  \n_Note:_ You cannot specify a number that is currently associated with another division.\n  4. Enter a description for the division.\n  5. Click **Create**.\n\n\n## See Also\n  * [Specifications - Permissions](https://v2.support.procore.com/product-manuals/specifications-project/permissions)\n  * [Manually Create Specification Sections](https://v2.support.procore.com/product-manuals/specifications-project/tutorials/manually-create-spec-sections)\n  * [What if my specification sections or divisions start in the middle of a page?](https://v2.support.procore.com/faq-what-if-my-spec-sections-or-divisions-start-in-the-middle-of-a-page)\n\n\n",
-  "title": "Manually Create Divisions",
-  "description": "How to create a new division in the Specifications tool."
-}

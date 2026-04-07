@@ -1,6 +1,0 @@
-{
-  "success": true,
-  "markdown": "#  Change Orders \nTable of Contents \n##  Diagrams \n###  Change Order Tiers \nThe steps that you use to create a change order depend on the change order tier setting configured on the Procore project tool used to create the original contract.\n###  Prime Contract Change Order Tiers \n![Diagram Change Orders - Prime Contract Change Orders](https://images.ctfassets.net/plvbd9i6qkpm/4q923YCTlS8Gpm69iCkL8w/0a3f6fc2ebc936c5fad4b64e8cb5b2ef/Change_Orders_-_Prime_Contract_Change_Orders.png?fm=webp)\n###  Commitment Change Order Tiers \n![Diagram Change Orders - Commitment Change Orders](https://images.ctfassets.net/plvbd9i6qkpm/31XuUL10nsr6HGVxR4kvCn/8b9a86e6445e84e1dbf81a650b498f00/Change_Orders_-_Commitment_Change_Orders.png?fm=webp)\n",
-  "title": "Diagrams",
-  "description": "This page includes the standard workflow diagrams for actions in or related to the project's Change Orders tool."
-}

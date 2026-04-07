@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { TableToolbar, type ColumnConfig, type FilterConfig, type ViewMode } from "./table-toolbar";
 import { Button } from "@/components/ui/button";
-import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, ChevronsLeft, ChevronsRight, EyeOff, Inbox, MoreHorizontal, Pin, PinOff, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, EyeOff, Inbox, MoreHorizontal, PanelRightClose, PanelRightOpen, Pin, PinOff, Trash2, X } from "lucide-react";
 import { MobileCardList } from "./mobile-card-list";
 
 interface TabItem {
@@ -188,7 +188,7 @@ export interface UnifiedTablePageProps<T> {
     collapsible?: boolean;
     /** Show drag handle for resizing (default: true) */
     resizable?: boolean;
-    /** Keep panel sticky to viewport on desktop (default: true) */
+    /** Keep panel sticky to viewport on desktop (default: false) */
     sticky?: boolean;
     /** localStorage key suffix for persisting width/collapsed state */
     storageKey?: string;
@@ -334,7 +334,7 @@ export function UnifiedTablePage<T>({
   const panelMaxWidth = sidePanel?.maxWidth ?? 640;
   const panelCollapsible = sidePanel?.collapsible !== false;
   const panelResizable = sidePanel?.resizable !== false;
-  const panelSticky = sidePanel?.sticky !== false;
+  const panelSticky = sidePanel?.sticky === true;
 
   const [panelCollapsed, setPanelCollapsed] = React.useState(false);
   const [panelWidth, setPanelWidth] = React.useState(panelDefaultWidth);
@@ -992,6 +992,7 @@ export function UnifiedTablePage<T>({
                         <Checkbox
                           checked={allSelected ? true : someSelected ? "indeterminate" : false}
                           onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
+                          aria-label="Select all rows"
                         />
                       </div>
                     </TableHead>
@@ -1017,6 +1018,15 @@ export function UnifiedTablePage<T>({
                               isSortable && "cursor-pointer select-none group/th",
                               isPinnedLeft && "shadow-[2px_0_0_hsl(var(--border))]",
                             )}
+                          aria-sort={
+                            isSortable
+                              ? sorting?.sortBy === column.id
+                                ? sorting.sortDirection === "asc"
+                                  ? "ascending"
+                                  : "descending"
+                                : "none"
+                              : undefined
+                          }
                           style={columnStyle}
                           draggable={resolvedFeatures.enableColumnReorder}
                           onDragStart={() => setDraggedColumnId(column.id)}
@@ -1197,6 +1207,13 @@ export function UnifiedTablePage<T>({
                     }}
                     onDragEnd={() => setDraggedRowId(null)}
                     onClick={() => activateRow(item)}
+                    tabIndex={table.onRowClick ? 0 : undefined}
+                    onKeyDown={table.onRowClick ? (event) => {
+                      if (event.key === "Enter" || event.key === " ") {
+                        event.preventDefault();
+                        activateRow(item);
+                      }
+                    } : undefined}
                   >
                     {hasRowSelection && (
                       <TableCell
@@ -1218,6 +1235,7 @@ export function UnifiedTablePage<T>({
                             onCheckedChange={(checked) =>
                               handleSelectRow(table.getRowId(item), Boolean(checked))
                             }
+                            aria-label="Select row"
                           />
                         </div>
                       </TableCell>
@@ -1323,7 +1341,7 @@ export function UnifiedTablePage<T>({
                         {table.rowActions ? table.rowActions(item) : table.onDelete ? (
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                              <Button variant="ghost" size="icon" className="h-8 w-8" aria-label="Row actions">
                                 <MoreHorizontal />
                               </Button>
                             </DropdownMenuTrigger>
@@ -1496,7 +1514,7 @@ export function UnifiedTablePage<T>({
                     aria-hidden="true"
                   />
                 )}
-                <div className="flex-1 flex flex-col min-h-0">
+                <div className="flex-1 flex flex-col min-h-0 px-4">
                   {sidePanel.content}
                 </div>
               </aside>
@@ -1509,9 +1527,10 @@ export function UnifiedTablePage<T>({
                   className={cn(
                     "hidden lg:flex items-center justify-center",
                     "fixed z-20 top-1/2 -translate-y-1/2",
-                    "h-7 w-5 rounded-md bg-muted border border-border shadow-sm",
-                    "text-muted-foreground hover:text-foreground hover:bg-accent",
-                    "transition-colors cursor-pointer",
+                    "h-10 w-5 bg-transparent border-0 outline-none",
+                    "text-muted-foreground",
+                    "cursor-pointer transition-colors",
+                    "opacity-0 hover:opacity-100 focus-visible:opacity-100",
                   )}
                   style={{
                     left: panelToggleLeft ?? undefined,
@@ -1524,11 +1543,13 @@ export function UnifiedTablePage<T>({
                   }}
                   aria-label={panelCollapsed ? "Expand panel" : "Collapse panel"}
                 >
-                  {panelCollapsed ? (
-                    <ChevronsLeft className="h-3.5 w-3.5" />
-                  ) : (
-                    <ChevronsRight className="h-3.5 w-3.5" />
-                  )}
+                  <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-background border border-border/80 shadow-sm">
+                    {panelCollapsed ? (
+                      <PanelRightOpen className="h-3 w-3" />
+                    ) : (
+                      <PanelRightClose className="h-3 w-3" />
+                    )}
+                  </span>
                 </button>
               )}
             </div>
@@ -1548,6 +1569,7 @@ export function UnifiedTablePage<T>({
               size="icon"
               className="h-8 w-8"
               onClick={() => table.onRowClick?.(null as unknown as T)}
+              aria-label="Close details"
             >
               <X className="h-4 w-4" />
             </Button>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { apiErrorResponse } from "@/lib/api-error";
 
 type Params = { params: Promise<{ projectId: string; drawingId: string; pinId: string }> };
 
@@ -20,6 +21,6 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
     .delete()
     .eq("id", pinId)) as any;
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiErrorResponse(error);
   return NextResponse.json({ success: true });
 }

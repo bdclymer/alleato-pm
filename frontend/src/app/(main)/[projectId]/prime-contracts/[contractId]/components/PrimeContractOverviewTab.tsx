@@ -38,11 +38,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@/components/ui/input-group";
+import { MoneyField } from "@/components/forms/MoneyField";
 import { Input } from "@/components/ui/input";
 import {
   Table,
@@ -698,33 +694,26 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                             </TableCell>
                             <TableCell className="w-40 px-1 py-1 align-top">
                               {isSovEditing ? (
-                                <InputGroup>
-                                  <InputGroupAddon>$</InputGroupAddon>
-                                  <InputGroupInput
-                                    type="number"
-                                    min="0"
-                                    step="0.01"
-                                    className="h-10 text-right"
-                                    placeholder="0.00"
-                                    value={lineTotal === 0 ? "" : lineTotal}
-                                    onChange={(event) =>
-                                      {
-                                        if (event.target.value === "") {
-                                          onUpdateSovLine(item.id, { unit_cost: 0 });
-                                          return;
-                                        }
-                                        const nextAmount = Number(event.target.value);
-                                        const quantity = Number(item.quantity);
-                                        const normalizedQuantity =
-                                          quantity > 0 ? quantity : 1;
-                                        onUpdateSovLine(item.id, {
-                                          quantity: normalizedQuantity,
-                                          unit_cost: nextAmount / normalizedQuantity,
-                                        });
-                                      }
+                                <MoneyField
+                                  inline
+                                  label="Amount"
+                                  value={lineTotal === 0 ? undefined : lineTotal}
+                                  onChange={(val) => {
+                                    if (val === undefined || val === 0) {
+                                      onUpdateSovLine(item.id, { unit_cost: 0 });
+                                      return;
                                     }
-                                  />
-                                </InputGroup>
+                                    const quantity = Number(item.quantity);
+                                    const normalizedQuantity =
+                                      quantity > 0 ? quantity : 1;
+                                    onUpdateSovLine(item.id, {
+                                      quantity: normalizedQuantity,
+                                      unit_cost: val / normalizedQuantity,
+                                    });
+                                  }}
+                                  showCurrency={false}
+                                  className="h-10"
+                                />
                               ) : (
                                 <div className="pt-2 text-right text-xs tabular-nums">
                                   {formatCurrency(lineTotal)}

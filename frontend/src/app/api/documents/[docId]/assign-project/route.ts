@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 const ALLOWED_FIELDS = new Set([
   "title",
@@ -48,10 +49,7 @@ export async function PATCH(
     .eq("id", docId);
 
   if (error) {
-    return NextResponse.json(
-      { error: error.message },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 
   return NextResponse.json({ success: true });

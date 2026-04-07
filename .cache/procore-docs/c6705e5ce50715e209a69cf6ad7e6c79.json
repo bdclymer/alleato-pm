@@ -1,6 +1,0 @@
-{
-  "success": true,
-  "markdown": "#  Download a vCard for a User Account in the Project Directory \n##  Things to Consider \n  * [Required User Permissions](https://v2.support.procore.com/product-manuals/directory-project/permissions)\n  * vCards are available to download for all users in the Directory tool, whether or not they have logged into Procore.\n\n\n##  Steps \n  1. Navigate to the Project level **Directory** tool.\n  2. Click **Users**.\n  3. Click the user's **avatar** to download the VCF file with the user's information.  \n![Download Directory Vcard](https://images.ctfassets.net/plvbd9i6qkpm/9efff3c40b5466f71529fa85290a5921/48513e9593c4304eccb79b80261961a4/download-directory-vcard.png?fm=webp)\n\n\n## See Also\n  * [Directory (Project) - Permissions](https://v2.support.procore.com/product-manuals/directory-project/permissions)\n  * [What granular permissions are available for the company's Resource Planning tool?](https://v2.support.procore.com/faq-what-granular-permissions-are-available-for-the-companys-resource-planning-tool)\n  * [Best Practices: Submittal Imports](https://v2.support.procore.com/reference-best-practices-submittal-imports)\n\n\n",
-  "title": "Download a vCard for a User Account in the Project Directory",
-  "description": "How to download a vCard for a contact record from the Company or Project level Directory tool."
-}

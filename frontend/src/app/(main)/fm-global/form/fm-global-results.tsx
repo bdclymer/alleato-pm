@@ -6,7 +6,7 @@ import { Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Text } from "@/components/ui/text";
+import { Text } from "@/components/ds/text";
 import type { FmGlobalMatchView, FmGlobalSubmissionResponse } from "@/types/fm-global";
 
 interface FmGlobalResultsProps {

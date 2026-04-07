@@ -33,6 +33,36 @@ export async function POST() {
       );
     }
 
+    // OWASP A01:2021 - Broken Access Control:
+    // Only allow if the requesting user is already an admin OR if there are
+    // zero admins in the database (initial setup / bootstrap scenario).
+    const { data: existingAdmins, error: adminCheckError } = await supabase
+      .from("user_profiles")
+      .select("id")
+      .eq("is_admin", true)
+      .limit(1);
+
+    if (adminCheckError) {
+      return NextResponse.json(
+        { error: `Failed to check admin status: ${adminCheckError.message}` },
+        { status: 500 },
+      );
+    }
+
+    const hasExistingAdmins = existingAdmins && existingAdmins.length > 0;
+
+    if (hasExistingAdmins) {
+      // There are existing admins — only an existing admin can promote others
+      const isRequestingUserAdmin = existingAdmins.some((a) => a.id === user.id);
+      if (!isRequestingUserAdmin) {
+        return NextResponse.json(
+          { error: "Only an existing admin can grant admin privileges. Contact a current admin." },
+          { status: 403 },
+        );
+      }
+    }
+    // If no admins exist, this is initial setup — allow the first admin to self-promote
+
     // Upsert user_profiles with is_admin = true
     const { data, error } = await supabase
       .from("user_profiles")
@@ -56,7 +86,9 @@ export async function POST() {
 
     return NextResponse.json({
       success: true,
-      message: `User ${user.email} is now an app admin`,
+      message: hasExistingAdmins
+        ? `Admin ${user.email} confirmed admin privileges`
+        : `User ${user.email} is now the initial admin (no previous admins existed)`,
       user_id: user.id,
       profile: data,
     });

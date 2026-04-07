@@ -23,7 +23,7 @@ interface BudgetLineItem {
 }
 
 interface CreateBudgetLineItemsModalProps {
-  isOpen: boolean;
+  open: boolean;
   onClose: () => void;
   onSave: (items: BudgetLineItem[]) => Promise<void>;
   availableCostCodes?: Array<{ code: string; description: string }>;
@@ -41,7 +41,7 @@ interface CreateBudgetLineItemsModalProps {
  * - Mobile responsive table
  */
 export function CreateBudgetLineItemsModal({
-  isOpen,
+  open,
   onClose,
   onSave,
   availableCostCodes = [],
@@ -126,13 +126,13 @@ export function CreateBudgetLineItemsModal({
 
   return (
     <BaseModal
-      isOpen={isOpen}
+      isOpen={open}
       onClose={handleClose}
       title="Create Budget Line Items"
       size="xl"
     >
-      <ModalBody className="min-h-[420px] space-y-6 bg-background">
-        <div className="rounded-xl border border-border bg-muted px-4 py-4 shadow-sm flex items-center justify-between gap-4 flex-wrap">
+      <ModalBody className="min-h-96 space-y-6 bg-background">
+        <div className="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border bg-muted/30 p-4">
           <div>
             <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">
               Batch Creation
@@ -141,7 +141,7 @@ export function CreateBudgetLineItemsModal({
               Add one or many lines with clean, mobile-first cards.
             </p>
           </div>
-          <div className="hidden sm:flex items-center gap-2 text-xs font-semibold text-orange-600 bg-orange-50 border border-orange-100 px-4 py-1 rounded-full">
+          <div className="hidden items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-4 py-1 text-xs font-semibold text-primary sm:flex">
             {items.length || 0} line{items.length === 1 ? "" : "s"}
           </div>
         </div>
@@ -163,7 +163,7 @@ export function CreateBudgetLineItemsModal({
               </p>
               <Button
                 onClick={addLine}
-                className="bg-orange-500 hover:bg-orange-600 text-white"
+                className="bg-primary text-primary-foreground hover:bg-primary/90"
                 size="lg"
               >
                 <Plus />
@@ -175,27 +175,27 @@ export function CreateBudgetLineItemsModal({
           // Table with line items
           <div className="space-y-4">
             {/* Mobile: Cards, Desktop: Table */}
-            <div className="hidden sm:block overflow-x-auto rounded-xl border border-border shadow-sm bg-background">
+            <div className="hidden overflow-x-auto rounded-lg border border-border bg-background sm:block">
               <table className="w-full text-sm">
-                <thead className="bg-muted border-b border-border">
+                <thead className="bg-muted/50 border-b border-border">
                   <tr>
-                    <th className="text-left px-4 py-4 font-semibold text-foreground w-[45%]">
-                      Budget Code <span className="text-red-500">*</span>
+                    <th className="w-1/2 px-4 py-4 text-left font-semibold text-foreground">
+                      Budget Code <span className="text-destructive">*</span>
                     </th>
-                    <th className="text-right px-4 py-4 font-semibold text-foreground w-[25%]">
-                      Qty <span className="text-red-500">*</span>
+                    <th className="w-1/4 px-4 py-4 text-right font-semibold text-foreground">
+                      Qty <span className="text-destructive">*</span>
                     </th>
-                    <th className="text-left px-4 py-4 font-semibold text-foreground w-[25%]">
+                    <th className="w-1/4 px-4 py-4 text-left font-semibold text-foreground">
                       UOM
                     </th>
-                    <th className="px-4 py-4 w-[5%]"></th>
+                    <th className="w-12 px-4 py-4"></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
                   {items.map((item, index) => (
                     <tr
                       key={item.id}
-                      className="hover:bg-orange-50/40 transition-colors"
+                      className="transition-colors hover:bg-muted/40"
                     >
                       <td className="px-4 py-4">
                         <Select
@@ -205,7 +205,7 @@ export function CreateBudgetLineItemsModal({
                           }
                         >
                           <SelectTrigger
-                            className={cn(!item.costCode && "border-red-300")}
+                            className={cn(!item.costCode && "border-destructive")}
                           >
                             <SelectValue placeholder="Select Cost Code" />
                           </SelectTrigger>
@@ -234,7 +234,7 @@ export function CreateBudgetLineItemsModal({
                           placeholder="0.00"
                           className={cn(
                             "text-right",
-                            !item.quantity && "border-red-300",
+                            !item.quantity && "border-destructive",
                           )}
                         />
                       </td>
@@ -279,7 +279,7 @@ export function CreateBudgetLineItemsModal({
               {items.map((item, index) => (
                 <div
                   key={item.id}
-                  className="border border-border rounded-xl p-4 space-y-4 shadow-sm bg-background/90"
+                  className="border border-border rounded-lg p-4 space-y-4 bg-background"
                 >
                   <div className="flex justify-between items-start">
                     <span className="text-sm font-semibold text-foreground">
@@ -354,7 +354,7 @@ export function CreateBudgetLineItemsModal({
               <Button
                 onClick={addLine}
                 variant="outline"
-                className="w-full sm:w-auto border-orange-200 text-orange-700 hover:bg-orange-50"
+                className="w-full sm:w-auto border-primary/20 text-primary hover:bg-primary/10"
               >
                 <Plus />
                 Add Line
@@ -368,16 +368,16 @@ export function CreateBudgetLineItemsModal({
         <Button variant="outline" onClick={handleClose} disabled={isSaving}>
           Close
         </Button>
-        <Button
-          onClick={handleSave}
-          disabled={!isValid || isSaving}
-          className={cn(
-            "transition-colors",
-            isValid
-              ? "bg-orange-500 hover:bg-orange-600 text-white"
-              : "bg-gray-300 text-muted-foreground cursor-not-allowed",
-          )}
-        >
+          <Button
+            onClick={handleSave}
+            disabled={!isValid || isSaving}
+            className={cn(
+              "transition-colors",
+              isValid
+              ? "bg-primary hover:bg-primary/90 text-primary-foreground"
+              : "bg-muted text-muted-foreground cursor-not-allowed",
+            )}
+          >
           {isSaving ? "Creating..." : "Create"}
         </Button>
       </ModalFooter>

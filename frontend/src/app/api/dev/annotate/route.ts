@@ -16,6 +16,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { apiErrorResponse } from "@/lib/api-error";
 
 // POST — create annotation from overlay
 export async function POST(req: Request) {
@@ -66,7 +67,7 @@ export async function POST(req: Request) {
     .select("id, route, comment, status, created_at")
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiErrorResponse(error);
   return NextResponse.json({ success: true, annotation: data });
 }
 
@@ -84,7 +85,7 @@ export async function GET(req: Request) {
     .order("created_at", { ascending: true })
     .limit(50);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiErrorResponse(error);
   return NextResponse.json({ annotations: data ?? [] });
 }
 
@@ -109,6 +110,6 @@ export async function PATCH(req: Request) {
     .select("id, status, ai_replied_at")
     .single();
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return apiErrorResponse(error);
   return NextResponse.json({ success: true, annotation: data });
 }

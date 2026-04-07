@@ -1,6 +1,0 @@
-{
-  "success": true,
-  "markdown": "#  View the Change History of an RFI \n##  Things to Consider \n  * [Required User Permissions](https://v2.support.procore.com/product-manuals/rfi-project/permissions)\n\n\n##  Steps \n  1. Navigate to the project's **RFIs** tool.\n  2. Locate the desired RFI in the list. Click **View**.\n  3. Click the **Change History** tab.\n\n\n## See Also\n  * [Revise an RFI](https://v2.support.procore.com/product-manuals/rfi-project/tutorials/revise-an-rfi)\n  * [RFIs - Permissions](https://v2.support.procore.com/product-manuals/rfi-project/permissions)\n  * [View the Distribution History of a Custom RFI Report](https://v2.support.procore.com/product-manuals/rfi-project/tutorials/view-the-distribution-history-of-a-custom-rfi-report)\n\n\n",
-  "title": "View the Change History of an RFI",
-  "description": "How to view the change history of an RFI in the project's RFIs tool."
-}

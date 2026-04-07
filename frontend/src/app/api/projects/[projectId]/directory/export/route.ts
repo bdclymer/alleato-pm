@@ -7,6 +7,7 @@ import {
   type DirectoryExportColumn,
 } from "@/services/directoryAdminService";
 import type { DirectoryFilters } from "@/services/directoryService";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
@@ -107,12 +108,6 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     });
   } catch (error) {
     console.error("[DirectoryExport] Failed", error);
-    return NextResponse.json(
-      {
-        error: "Failed to export directory data",
-        details: error instanceof Error ? error.message : String(error),
-      },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

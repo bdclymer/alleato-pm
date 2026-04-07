@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Text } from "@/components/ui/text";
+import { Text } from "@/components/ds/text";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useDropzone } from "react-dropzone";

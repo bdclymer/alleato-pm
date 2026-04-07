@@ -9,15 +9,15 @@ const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   },
   work_required: {
     label: "Work Required",
-    className: "bg-orange-100 text-orange-700 hover:bg-orange-100",
+    className: "bg-orange-500/10 text-orange-600 dark:text-orange-400 hover:bg-orange-500/10",
   },
   initiated: {
     label: "Initiated",
-    className: "bg-blue-100 text-blue-700 hover:bg-blue-100",
+    className: "bg-primary/10 text-primary hover:bg-primary/10",
   },
   closed: {
     label: "Closed",
-    className: "bg-green-100 text-green-700 hover:bg-green-100",
+    className: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10",
   },
 };
 
@@ -28,11 +28,11 @@ const PRIORITY_CONFIG: Record<string, { label: string; className: string }> = {
   },
   medium: {
     label: "Medium",
-    className: "bg-yellow-100 text-yellow-700 hover:bg-yellow-100",
+    className: "bg-amber-500/10 text-amber-600 dark:text-amber-400 hover:bg-amber-500/10",
   },
   high: {
     label: "High",
-    className: "bg-red-100 text-red-700 hover:bg-red-100",
+    className: "bg-destructive/10 text-destructive hover:bg-destructive/10",
   },
 };
 

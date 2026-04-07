@@ -1,6 +1,0 @@
-{
-  "success": true,
-  "markdown": "#  Configure Advanced Settings for a Change Event \n##  Background \n##  Things to Consider \n  * **Required User Permissions** :\n  * **Additional Information** :\n\n\n##  Prerequisites \n##  Demo \n[Insert an animated GIF, video, or screencapture as appropriate. Otherwise, delete this section.]\n##  Steps \n  1. Navigate to the project's **Change Events** tool.\n  2. Open the change event that you want to configure advanced settings for.\n\n\n##  Next Steps \n  * [If applicable, insert a link to the next step in the workflow. Otherwise, delete this section.]\n\n\n## See Also\n  * [Configure Settings: Change Events](https://v2.support.procore.com/product-manuals/change-events-project/tutorials/configure-advanced-settings-change-events)\n  * [Change Events - Permissions](https://v2.support.procore.com/product-manuals/change-events-project/permissions)\n  * [How are financial line items and budget codes updated across change objects?](https://v2.support.procore.com/faq-how-are-financial-line-items-and-budget-codes-updated-across-change-objects)\n\n\n",
-  "title": "Configure Advanced Settings for a Change Event",
-  "description": ""
-}

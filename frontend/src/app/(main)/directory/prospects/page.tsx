@@ -490,6 +490,8 @@ export default function DirectoryProspectsPage(): ReactElement {
     Boolean(activeFilters.status) ||
     Boolean(activeFilters.lead_source) ||
     Boolean(activeFilters.industry);
+  const totalPages = Math.max(1, Math.ceil(filteredProspects.length / tableState.perPage));
+  const currentPage = Math.min(tableState.page, totalPages);
 
   // Side panel: resolve selected prospect from URL param, fall back to first item
   const selectedProspectId = searchParams.get("detail");
@@ -619,6 +621,23 @@ export default function DirectoryProspectsPage(): ReactElement {
         description: "No prospects have been added yet.",
         filteredDescription: "Try adjusting your search or filters.",
         isFiltered,
+      }}
+      pagination={{
+        page: currentPage,
+        totalPages,
+        perPage: tableState.perPage,
+        clientSide: true,
+        onPageChange: (nextPage) => {
+          tableState.setPage(nextPage);
+          tableState.setSearchParams({ page: String(nextPage) });
+        },
+        onPerPageChange: (nextPerPage) => {
+          const parsed = Number(nextPerPage);
+          if (!Number.isFinite(parsed) || parsed <= 0) return;
+          tableState.setPerPage(parsed);
+          tableState.setSearchParams({ per_page: String(parsed), page: "1" });
+          tableState.setPage(1);
+        },
       }}
       features={{
         enableExport: false,

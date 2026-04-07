@@ -13,7 +13,7 @@ import { CompanyFormDialog } from "@/components/domain/companies/CompanyFormDial
 import { PageHeader } from "@/components/layout/page-header-unified";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageTabs } from "@/components/layout/PageTabs";
-import { Text } from "@/components/ui/text";
+import { Text } from "@/components/ds/text";
 import {
   GenericEditableTable,
   type EditableColumn,

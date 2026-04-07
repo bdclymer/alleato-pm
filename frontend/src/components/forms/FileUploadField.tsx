@@ -145,7 +145,7 @@ export function FileUploadField({
               ? "relative rounded-md border border-dashed px-4 py-3 text-left"
               : "relative rounded-lg border-2 border-dashed p-6 text-center",
             dragActive && "border-primary bg-primary/5",
-            error && "border-red-300",
+            error && "border-destructive",
             disabled && "opacity-50 cursor-not-allowed",
             className,
           )}

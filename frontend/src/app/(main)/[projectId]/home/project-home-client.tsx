@@ -573,7 +573,7 @@ function RoleBasedTeamSection({ projectId }: { projectId: number }) {
                         </div>
                         <Button
                           variant="ghost"
-                          className="h-6 w-6 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 text-muted-foreground/40 hover:text-red-500 hover:bg-red-50 transition-all flex-shrink-0 p-0"
+                          className="h-6 w-6 flex items-center justify-center rounded opacity-0 group-hover:opacity-100 text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-all flex-shrink-0 p-0"
                           title={`Remove ${member.full_name} from ${role.role_name}`}
                           onClick={(e) => handleUnassign(role.id, e)}
                         >
@@ -654,10 +654,10 @@ function SignalChip({
   const classes = cn(
     "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-opacity hover:opacity-80 cursor-pointer",
     severity === "critical"
-      ? "bg-red-50 text-red-700"
+      ? "bg-destructive/10 text-destructive"
       : severity === "warning"
-      ? "bg-amber-50 text-amber-700"
-      : "bg-blue-50 text-blue-700"
+      ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+      : "bg-primary/10 text-primary"
   );
 
   const icon =
@@ -688,8 +688,8 @@ function AiWidget({ projectId }: { projectId: number }) {
         aria-label="Open AI assistant"
       >
         <span className="relative flex h-2 w-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-green-500" />
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 dark:bg-emerald-500 opacity-75" />
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500 dark:bg-emerald-400" />
         </span>
         Ask AI
       </Button>
@@ -982,9 +982,9 @@ export function ProjectHomeClient({
                 <span
                   className={cn(
                     "h-2.5 w-2.5 rounded-full flex-shrink-0",
-                    projectHealth === "good" && "bg-green-500",
-                    projectHealth === "warn" && "bg-amber-500",
-                    projectHealth === "bad" && "bg-red-500"
+                    projectHealth === "good" && "bg-emerald-500 dark:bg-emerald-400",
+                    projectHealth === "warn" && "bg-amber-500 dark:bg-amber-400",
+                    projectHealth === "bad" && "bg-destructive"
                   )}
                   title={projectHealth === "good" ? "On track" : projectHealth === "warn" ? "Needs attention" : "At risk"}
                 />
@@ -1052,12 +1052,12 @@ export function ProjectHomeClient({
                     const isOverdue = task.due_date && new Date(task.due_date) < new Date();
                     return (
                       <div key={task.id} className="flex items-start gap-2.5 py-1.5">
-                        <div className={cn("h-4 w-4 rounded-full border-2 flex-shrink-0 mt-0.5", task.priority === "urgent" || task.priority === "critical" ? "border-red-400" : task.priority === "high" ? "border-amber-400" : "border-border")} />
+                        <div className={cn("h-4 w-4 rounded-full border-2 flex-shrink-0 mt-0.5", task.priority === "urgent" || task.priority === "critical" ? "border-destructive/60" : task.priority === "high" ? "border-amber-400 dark:border-amber-500" : "border-border")} />
                         <div className="min-w-0 flex-1">
                           <p className="text-sm text-foreground leading-snug line-clamp-2">{task.description}</p>
                           <div className="flex items-center gap-2 mt-0.5">
                             {task.assignee_name && <span className="text-xs text-muted-foreground truncate">{task.assignee_name}</span>}
-                            {task.due_date && <span className={cn("text-xs tabular-nums", isOverdue ? "text-red-500" : "text-muted-foreground")}>{format(new Date(task.due_date), "MMM d")}</span>}
+                            {task.due_date && <span className={cn("text-xs tabular-nums", isOverdue ? "text-destructive" : "text-muted-foreground")}>{format(new Date(task.due_date), "MMM d")}</span>}
                           </div>
                         </div>
                       </div>
@@ -1108,7 +1108,7 @@ export function ProjectHomeClient({
             {activityItems.length > 0 ? (
               <div className="space-y-3">
                 {activityItems.map((item, i) => {
-                  const dotColor = { blue: "bg-primary", green: "bg-green-500", amber: "bg-amber-500", red: "bg-red-500" }[item.color];
+                  const dotColor = { blue: "bg-primary", green: "bg-emerald-500 dark:bg-emerald-400", amber: "bg-amber-500 dark:bg-amber-400", red: "bg-destructive" }[item.color];
                   const inner = (
                     <div className="flex items-start gap-3">
                       <div className={cn("h-1.5 w-1.5 rounded-full mt-2 flex-shrink-0", dotColor)} />

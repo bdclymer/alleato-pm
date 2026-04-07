@@ -29,10 +29,10 @@ interface FlagStats {
 const BATCH_SIZE = 10;
 
 export async function POST(request: Request) {
-  const authHeader = request.headers.get("authorization");
-  const cronSecret = process.env.CRON_SECRET;
-
-  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+  // OWASP A07:2021 - Identification and Authentication Failures:
+  // Always require CRON_SECRET; never skip validation when env var is unset.
+  const cronSecret = request.headers.get("authorization")?.replace("Bearer ", "");
+  if (!process.env.CRON_SECRET || cronSecret !== process.env.CRON_SECRET) {
     return new Response("Unauthorized", { status: 401 });
   }
 

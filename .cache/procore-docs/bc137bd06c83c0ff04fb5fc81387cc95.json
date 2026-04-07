@@ -1,6 +1,0 @@
-{
-  "success": true,
-  "markdown": "#  Resource Tracking And Unit Quantity Based Budget Setup Guide \nTable of Contents \n##  Add Tools to Project \n  1. Navigate to the project's **Admin** tool.\n  2. Under 'Project Settings', click **Tool Settings**. \n  3. Move the **toggle** ![Icon Toggle On](https://images.ctfassets.net/plvbd9i6qkpm/5432baecee81bc2745e77688cd124644/7b30429a4c1524f8ad61245b0caddc16/icon-toggle-on.png?fm=webp&h=16) to 'Active' to add the following tools to your project:\n     * Timesheets\n     * _Optional:_ Daily Log with the Timecard Log\n\n\n[ ](https://v2.support.procore.com/process-guides/resource-tracking-and-unit-quantity-based-budget-setup-guide/assign-default-cost-type/)\n[ Enable Labor Productivity ](https://v2.support.procore.com/process-guides/resource-tracking-and-unit-quantity-based-budget-setup-guide/enable-labor-productivity/)\n",
-  "title": "Resource Tracking And Unit Quantity Based Budget Setup Guide - Add Tools to Project",
-  "description": "| Add Tools to Project"
-}

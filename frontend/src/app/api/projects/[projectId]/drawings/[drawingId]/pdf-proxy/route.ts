@@ -1,0 +1,85 @@
+import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
+import { NextRequest, NextResponse } from "next/server";
+
+/**
+ * GET /api/projects/[projectId]/drawings/[drawingId]/pdf-proxy
+ *
+ * Proxies the drawing PDF through Next.js so that react-pdf (PDF.js) can make
+ * HTTP Range requests without hitting Supabase signed-URL CORS/range restrictions
+ * that cause a 400 "Unexpected server response" error.
+ */
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ projectId: string; drawingId: string }> },
+) {
+  const supabase = await createClient();
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    return new NextResponse("Unauthorized", { status: 401 });
+  }
+
+  const { drawingId } = await params;
+  const serviceClient = createServiceClient();
+
+  // Get current revision file path
+  const { data: drawing, error: drawingError } = await serviceClient
+    .from("drawings")
+    .select("current_revision:drawing_revisions!fk_drawings_current_revision(file_url)")
+    .eq("id", drawingId)
+    .single();
+
+  if (drawingError || !drawing?.current_revision) {
+    return new NextResponse("Drawing not found", { status: 404 });
+  }
+
+  const fileUrl = (drawing.current_revision as { file_url: string }).file_url;
+  if (!fileUrl) {
+    return new NextResponse("No file available", { status: 404 });
+  }
+
+  // Extract storage path from the public URL and create a fresh signed URL
+  let fetchUrl = fileUrl;
+  try {
+    const parsed = new URL(fileUrl);
+    const pathParts = parsed.pathname.split("/object/public/project-files/");
+    if (pathParts.length === 2) {
+      const storagePath = pathParts[1];
+      const { data: signedData } = await serviceClient.storage
+        .from("project-files")
+        .createSignedUrl(storagePath, 300); // 5 min — only needs to last for this request
+      if (signedData?.signedUrl) {
+        fetchUrl = signedData.signedUrl;
+      }
+    }
+  } catch {
+    // Fall back to public URL
+  }
+
+  // Forward Range header so PDF.js chunked loading works
+  const rangeHeader = request.headers.get("range");
+  const upstreamHeaders: HeadersInit = { Accept: "application/pdf, */*" };
+  if (rangeHeader) {
+    upstreamHeaders["Range"] = rangeHeader;
+  }
+
+  const upstream = await fetch(fetchUrl, { headers: upstreamHeaders });
+
+  const responseHeaders = new Headers();
+  responseHeaders.set("Content-Type", upstream.headers.get("Content-Type") || "application/pdf");
+  responseHeaders.set("Accept-Ranges", "bytes");
+  // Allow react-pdf to cache in browser
+  responseHeaders.set("Cache-Control", "private, max-age=300");
+
+  const contentLength = upstream.headers.get("Content-Length");
+  if (contentLength) responseHeaders.set("Content-Length", contentLength);
+
+  const contentRange = upstream.headers.get("Content-Range");
+  if (contentRange) responseHeaders.set("Content-Range", contentRange);
+
+  return new NextResponse(upstream.body, {
+    status: upstream.status,
+    headers: responseHeaders,
+  });
+}

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 const ALLOWED_FIELDS = new Set(["category", "primary_keys", "table_comment"]);
 
@@ -49,10 +50,7 @@ export async function PATCH(
     .single();
 
   if (error) {
-    return NextResponse.json(
-      { error: "Failed to update row", details: error.message },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 
   return NextResponse.json({ success: true, data });

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{
@@ -47,14 +48,11 @@ export async function DELETE(_: Request, { params }: RouteParams) {
         );
       }
 
-      return NextResponse.json(
-        { error: "Failed to remove related item", details: error.message },
-        { status: 400 },
-      );
+      return apiErrorResponse(error);
     }
 
     return new NextResponse(null, { status: 204 });
-  } catch {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  } catch (error) {
+    return apiErrorResponse(error);
   }
 }

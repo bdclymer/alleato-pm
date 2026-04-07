@@ -6,11 +6,7 @@ import { cn } from "@/lib/utils";
 import { formatCurrency } from "@/lib/table-config/formatters";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  InputGroup,
-  InputGroupAddon,
-  InputGroupInput,
-} from "@/components/ui/input-group";
+import { MoneyField } from "@/components/forms/MoneyField";
 import {
   Select,
   SelectContent,
@@ -158,20 +154,14 @@ export function LineItemRow({
 
       {/* Cost: Unit Cost */}
       <TableCell className="w-56 px-1 py-1.5 align-top">
-        <InputGroup>
-          <InputGroupAddon>$</InputGroupAddon>
-          <InputGroupInput
-            type="number"
-            step="0.01"
-            className="h-9 min-w-[120px] text-right"
-            value={item.costUnitCost ?? ""}
-            onChange={(e) =>
-              updateLineItem(index, "costUnitCost", Number(e.target.value) || 0)
-            }
-            onFocus={(e) => e.target.select()}
-            placeholder="0.00"
-          />
-        </InputGroup>
+        <MoneyField
+          inline
+          label="Cost Unit Cost"
+          value={item.costUnitCost ?? undefined}
+          onChange={(val) => updateLineItem(index, "costUnitCost", val ?? 0)}
+          showCurrency={false}
+          className="h-9 min-w-[120px]"
+        />
       </TableCell>
 
       {/* Cost ROM (computed) */}
@@ -228,20 +218,14 @@ export function LineItemRow({
 
       {/* Revenue: Unit Cost */}
       <TableCell className="w-56 px-1 py-1.5 align-top">
-        <InputGroup>
-          <InputGroupAddon>$</InputGroupAddon>
-          <InputGroupInput
-            type="number"
-            step="0.01"
-            className="h-9 min-w-[120px] text-right"
-            value={item.revenueUnitCost ?? ""}
-            onChange={(e) =>
-              updateLineItem(index, "revenueUnitCost", Number(e.target.value) || 0)
-            }
-            onFocus={(e) => e.target.select()}
-            placeholder="0.00"
-          />
-        </InputGroup>
+        <MoneyField
+          inline
+          label="Revenue Unit Cost"
+          value={item.revenueUnitCost ?? undefined}
+          onChange={(val) => updateLineItem(index, "revenueUnitCost", val ?? 0)}
+          showCurrency={false}
+          className="h-9 min-w-[120px]"
+        />
       </TableCell>
 
       {/* Revenue ROM (computed) */}
@@ -258,20 +242,14 @@ export function LineItemRow({
 
       {/* Non-committed cost */}
       <TableCell className="w-44 px-1 py-1.5 align-top">
-        <InputGroup>
-          <InputGroupAddon>$</InputGroupAddon>
-          <InputGroupInput
-            type="number"
-            step="0.01"
-            className="h-9 min-w-[120px] text-right"
-            value={item.nonCommittedCost ?? ""}
-            onChange={(e) =>
-              updateLineItem(index, "nonCommittedCost", Number(e.target.value) || 0)
-            }
-            onFocus={(e) => e.target.select()}
-            placeholder="0.00"
-          />
-        </InputGroup>
+        <MoneyField
+          inline
+          label="Non-committed Cost"
+          value={item.nonCommittedCost ?? undefined}
+          onChange={(val) => updateLineItem(index, "nonCommittedCost", val ?? 0)}
+          showCurrency={false}
+          className="h-9 min-w-[120px]"
+        />
       </TableCell>
 
       {/* Total */}

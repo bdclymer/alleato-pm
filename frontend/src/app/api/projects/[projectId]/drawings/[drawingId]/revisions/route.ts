@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { DrawingService } from "@/services/DrawingService";
+import { apiErrorResponse } from "@/lib/api-error";
 
 /**
  * GET /api/projects/[projectId]/drawings/[drawingId]/revisions
@@ -26,10 +27,7 @@ export async function GET(
   const result = await service.listRevisions(drawingId);
 
   if (result.error) {
-    return NextResponse.json(
-      { error: result.error.message },
-      { status: 500 },
-    );
+    return apiErrorResponse(result.error);
   }
 
   return NextResponse.json(result.data);
@@ -84,10 +82,7 @@ export async function POST(
     if (uploadResult.error) {
       const statusCode =
         uploadResult.error.type === "FILE_TOO_LARGE" ? 400 : 500;
-      return NextResponse.json(
-        { error: uploadResult.error.message },
-        { status: statusCode },
-      );
+      return apiErrorResponse(uploadResult.error);
     }
 
     // Step 2: Create the revision
@@ -111,10 +106,7 @@ export async function POST(
     if (revisionResult.error) {
       // Clean up uploaded file if revision creation fails
       // Note: File path cleanup could be added here if needed
-      return NextResponse.json(
-        { error: revisionResult.error.message },
-        { status: 500 },
-      );
+      return apiErrorResponse(revisionResult.error);
     }
 
     return NextResponse.json(revisionResult.data, { status: 201 });

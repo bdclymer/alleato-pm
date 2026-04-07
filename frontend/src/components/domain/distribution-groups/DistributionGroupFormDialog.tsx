@@ -30,7 +30,7 @@ import { useCreateGroup } from "@/hooks/use-distribution-groups";
 import { useProjectUsers } from "@/hooks/use-project-users";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Text } from "@/components/ui/text";
+import { Text } from "@/components/ds/text";
 
 const distributionGroupSchema = z.object({
   name: z

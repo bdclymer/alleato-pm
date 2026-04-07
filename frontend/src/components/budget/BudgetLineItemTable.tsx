@@ -1,9 +1,9 @@
 import * as React from "react";
 import { Plus, FileSpreadsheet } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Stack } from "@/components/ui/stack";
-import { Inline } from "@/components/ui/inline";
-import { Text } from "@/components/ui/text";
+import { Stack } from "@/components/layout/stack";
+import { Inline } from "@/components/layout/inline";
+import { Text } from "@/components/ds/text";
 import { EmptyState } from "@/components/ds";
 import { BudgetLineItemRow } from "./BudgetLineItemRow";
 import { BudgetLineItemCard } from "./BudgetLineItemCard";

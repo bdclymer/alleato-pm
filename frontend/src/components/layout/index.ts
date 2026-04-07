@@ -41,6 +41,16 @@ export {
   SummaryValueRow,
 } from "./spacing";
 
+// ── Layout Primitives ────────────────────────────────────────────────────────
+export { Container } from "./container";
+export type { ContainerProps } from "./container";
+
+export { Stack } from "./stack";
+export type { StackProps } from "./stack";
+
+export { Inline } from "./inline";
+export type { InlineProps } from "./inline";
+
 // ── Shell-level components (not page-level, don't use inside pages) ───────────
 export { AppHeader } from "./AppHeader";
 export { default as Footer } from "./Footer";

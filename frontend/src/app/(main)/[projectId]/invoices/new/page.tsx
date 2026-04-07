@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,7 +33,7 @@ import {
 } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useContracts } from "@/hooks/use-contracts";
-import { useCommitments } from "@/hooks/use-commitments";
+import { useCommitments } from "@/hooks/use-commitments-query";
 import { PageShell } from "@/components/layout";
 import { FormSection } from "@/components/forms";
 import { FormActions } from "@/components/forms/FormActions";
@@ -56,8 +56,15 @@ interface LineItem {
 export default function NewInvoicePage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const projectId = params.projectId as string;
   const [loading, setLoading] = useState(false);
+  const initialContractType =
+    searchParams.get("contractType") === "commitment" ? "commitment" : "prime";
+  const initialContractId =
+    searchParams.get("commitmentId") ??
+    searchParams.get("contractId") ??
+    "";
 
   // Data hooks for contracts and commitments
   const { options: contractOptions, isLoading: contractsLoading } =
@@ -68,8 +75,8 @@ export default function NewInvoicePage() {
   // Form state
   const [invoiceData, setInvoiceData] = useState({
     invoiceNumber: "",
-    contractId: "",
-    contractType: "prime", // prime or commitment
+    contractId: initialContractId,
+    contractType: initialContractType, // prime or commitment
     billingPeriod: "",
     invoiceDate: new Date(),
     dueDate: null as Date | null,
@@ -556,37 +563,37 @@ export default function NewInvoicePage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead className="min-w-[100px]">
+                        <TableHead className="min-w-24">
                           Cost Code
                         </TableHead>
-                        <TableHead className="min-w-[200px]">
+                        <TableHead className="min-w-48">
                           Description
                         </TableHead>
-                        <TableHead className="min-w-[120px] text-right">
+                        <TableHead className="min-w-32 text-right">
                           Contract
                         </TableHead>
-                        <TableHead className="min-w-[120px] text-right">
+                        <TableHead className="min-w-32 text-right">
                           Previously
                         </TableHead>
-                        <TableHead className="min-w-[120px] text-right">
+                        <TableHead className="min-w-32 text-right">
                           This Month
                         </TableHead>
-                        <TableHead className="min-w-[80px] text-right">
+                        <TableHead className="min-w-20 text-right">
                           %
                         </TableHead>
-                        <TableHead className="min-w-[120px] text-right">
+                        <TableHead className="min-w-32 text-right">
                           Total
                         </TableHead>
-                        <TableHead className="min-w-[80px] text-right">
+                        <TableHead className="min-w-20 text-right">
                           % Complete
                         </TableHead>
-                        <TableHead className="min-w-[100px] text-right">
+                        <TableHead className="min-w-24 text-right">
                           Retention
                         </TableHead>
-                        <TableHead className="min-w-[120px] text-right">
+                        <TableHead className="min-w-32 text-right">
                           Net Due
                         </TableHead>
-                        <TableHead className="w-[50px]"></TableHead>
+                        <TableHead className="w-12"></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -603,7 +610,7 @@ export default function NewInvoicePage() {
                                 )
                               }
                               placeholder="01-000"
-                              className="min-w-[80px]"
+                              className="min-w-20"
                             />
                           </TableCell>
                           <TableCell>
@@ -617,7 +624,7 @@ export default function NewInvoicePage() {
                                 )
                               }
                               placeholder="Work description"
-                              className="min-w-[150px]"
+                              className="min-w-40"
                             />
                           </TableCell>
                           <TableCell>
@@ -632,7 +639,7 @@ export default function NewInvoicePage() {
                                   e.target.value,
                                 )
                               }
-                              className="text-right min-w-[100px]"
+                              className="text-right min-w-24"
                             />
                           </TableCell>
                           <TableCell>
@@ -647,7 +654,7 @@ export default function NewInvoicePage() {
                                   e.target.value,
                                 )
                               }
-                              className="text-right min-w-[100px]"
+                              className="text-right min-w-24"
                             />
                           </TableCell>
                           <TableCell>
@@ -662,7 +669,7 @@ export default function NewInvoicePage() {
                                   e.target.value,
                                 )
                               }
-                              className="text-right min-w-[100px]"
+                              className="text-right min-w-24"
                             />
                           </TableCell>
                           <TableCell className="text-right">

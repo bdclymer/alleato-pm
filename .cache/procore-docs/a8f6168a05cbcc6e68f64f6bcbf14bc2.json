@@ -1,6 +1,0 @@
-{
-  "success": true,
-  "markdown": "#  Budget Snapshot Comparison \n#### Sample Report Page\n![Procore Analytics Financials Budget Budget Snapshot Comparison](https://images.ctfassets.net/plvbd9i6qkpm/70a6f1917ddcea4e16463b93a2d30eb4/1a86050e1416f370f36478094f8720bd/procore-analytics-financials-budget-budget-snapshot-comparison.png?fm=webp)\n_This sample report page was created using mock data for demonstration purposes only._\n## See Also\n  * [Financials Budget Report](https://v2.support.procore.com/reference-financials-budget-report)\n  * [Financials Budget Report (Custom)](https://v2.support.procore.com/reference-financials-budget-report-custom)\n  * [What is the difference between an ad-hoc snapshot and a project status snapshot?](https://v2.support.procore.com/faq-what-is-the-difference-between-an-ad-hoc-snapshot-and-a-project-status-snapshot)\n\n\n",
-  "title": "Budget Snapshot Comparison",
-  "description": "View sample Budget Snapshot Comparison data from the Financials Budget Report available with Procore Analytics."
-}

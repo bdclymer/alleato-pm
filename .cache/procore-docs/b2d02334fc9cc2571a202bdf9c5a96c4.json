@@ -1,6 +1,0 @@
-{
-  "success": true,
-  "markdown": "#  Project Management Report - RFIs \n#### Summary\nAs part of the Procore Analytics Project Management Report, the RFIs report page includes basic information about all RFIs for every project.\n#### Sample Report Page\n![Procore Analytics Rfis](https://images.ctfassets.net/plvbd9i6qkpm/83eca34f356721f66b2148b2729cde94/cd63bcbbaf8dd2f66605566932edff62/procore-analytics-rfis.png?fm=webp)\n_This sample report page was created using mock data for demonstration purposes only._\n## See Also\n  * [Project Trending](https://v2.support.procore.com/reference-project-trending)\n  * [Project Management Report](https://v2.support.procore.com/reference-project-management-report)\n  * [RFI Insights](https://v2.support.procore.com/reference-rfi-insights)\n\n\n",
-  "title": "Project Management Report - RFIs",
-  "description": "View sample RFIs data from the Project Management Report available with Procore Analytics."
-}

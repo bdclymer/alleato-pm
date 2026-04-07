@@ -1,4 +1,5 @@
 import { ArrowUpRight, Eye, Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   TableDateValue,
   TableRowActionsMenu,
@@ -80,7 +81,7 @@ export function buildTasksTableColumns(): TableColumn<TasksRow>[] {
         return {
           ...column,
           render: (item) => (
-            <div className="flex max-w-[540px] items-center gap-2 min-w-0" title={item.description ?? ""}>
+            <div className="flex max-w-xl min-w-0 items-center gap-2" title={item.description ?? ""}>
               <TableStatusDot status={item.status} />
               <span className="text-sm font-medium text-foreground truncate">
                 {item.description || "Untitled Task"}
@@ -94,7 +95,7 @@ export function buildTasksTableColumns(): TableColumn<TasksRow>[] {
         return {
           ...column,
           render: (item) => (
-            <span className="text-sm text-foreground block max-w-[180px] truncate">
+            <span className="block max-w-44 text-sm text-foreground truncate">
               {item.assignee_name || "Unassigned"}
             </span>
           ),
@@ -105,7 +106,7 @@ export function buildTasksTableColumns(): TableColumn<TasksRow>[] {
         return {
           ...column,
           render: (item) => (
-            <span className="text-sm text-foreground block max-w-[220px] truncate">
+            <span className="block max-w-56 text-sm text-foreground truncate">
               {item.project_name || "Unlinked"}
             </span>
           ),
@@ -120,7 +121,7 @@ export function buildTasksTableColumns(): TableColumn<TasksRow>[] {
             return (
               <a
                 href={`/meetings/${item.metadata_id}`}
-                className="text-sm text-foreground hover:text-primary underline-offset-2 hover:underline block max-w-[280px] truncate"
+                className="block max-w-72 text-sm text-foreground underline-offset-2 hover:text-primary hover:underline truncate"
                 onClick={(event) => event.stopPropagation()}
                 title={item.meeting_title || "Open source meeting"}
               >
@@ -135,7 +136,7 @@ export function buildTasksTableColumns(): TableColumn<TasksRow>[] {
         return {
           ...column,
           render: (item) => (
-            <span className="text-sm text-muted-foreground block max-w-[180px] truncate">
+            <span className="block max-w-44 text-sm text-muted-foreground truncate">
               {item.assignee_email || "—"}
             </span>
           ),
@@ -208,23 +209,28 @@ export function renderTasksCard(
   onView: (item: TasksRow) => void,
 ) {
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
+      size="sm"
       onClick={() => onView(item)}
-      className="w-full rounded-lg border border-border bg-card p-4 text-left hover:bg-muted/50 transition-colors"
+      className="h-auto w-full flex-col items-start justify-start rounded-lg border border-border bg-background p-4 text-left font-normal hover:bg-muted/50"
     >
       <div className="flex items-center gap-2">
         <TableStatusDot status={item.status} />
-        <p className="font-medium text-sm truncate max-w-[260px]">{item.description || "Untitled Task"}</p>
+        <p className="max-w-64 truncate text-sm font-medium">{item.description || "Untitled Task"}</p>
       </div>
       {item.project_name && (
-        <p className="text-xs text-muted-foreground/70 truncate max-w-[240px]">{item.project_name}</p>
+        <p className="max-w-60 truncate text-xs text-muted-foreground/70">{item.project_name}</p>
       )}
       <div className="flex items-center justify-between pt-2">
-        <TableTagBadge label={item.priority} variant={item.priority?.toLowerCase().includes("high") ? "default" : "secondary"} />
+        <TableTagBadge
+          label={item.priority}
+          variant={item.priority?.toLowerCase().includes("high") ? "default" : "secondary"}
+        />
         <TableDateValue value={item.due_date} />
       </div>
-    </button>
+    </Button>
   );
 }
 
@@ -233,25 +239,30 @@ export function renderTasksList(
   onView: (item: TasksRow) => void,
 ) {
   return (
-    <button
+    <Button
       type="button"
+      variant="ghost"
+      size="sm"
       onClick={() => onView(item)}
-      className="flex w-full items-center justify-between rounded-md px-4 py-3 hover:bg-muted/50 transition-colors"
+      className="h-auto w-full items-center justify-between rounded-md px-4 py-3 text-left font-normal hover:bg-muted/50"
     >
       <div className="space-y-1">
         <div className="flex items-center gap-2">
           <TableStatusDot status={item.status} />
-          <span className="font-medium text-sm truncate max-w-[260px]">{item.description || "Untitled Task"}</span>
+          <span className="max-w-64 truncate text-sm font-medium">{item.description || "Untitled Task"}</span>
         </div>
         {item.project_name && (
-          <span className="text-xs text-muted-foreground/70 truncate max-w-[220px]">{item.project_name}</span>
+          <span className="max-w-56 truncate text-xs text-muted-foreground/70">{item.project_name}</span>
         )}
       </div>
       <div className="flex items-center gap-2">
-        <TableTagBadge label={item.priority} variant={item.priority?.toLowerCase().includes("high") ? "default" : "secondary"} />
+        <TableTagBadge
+          label={item.priority}
+          variant={item.priority?.toLowerCase().includes("high") ? "default" : "secondary"}
+        />
         <TableDateValue value={item.due_date} />
       </div>
-    </button>
+    </Button>
   );
 }
 

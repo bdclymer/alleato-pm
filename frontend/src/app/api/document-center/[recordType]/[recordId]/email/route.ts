@@ -10,6 +10,7 @@ import {
   renderDocumentHtml,
   type DocumentRecordType,
 } from "@/lib/documents/record-documents";
+import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
   params: Promise<{
@@ -119,11 +120,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       recipients: recipients.map((recipient) => recipient.email.trim()),
     });
   } catch (error) {
-    return NextResponse.json(
-      {
-        error: error instanceof Error ? error.message : "Failed to send email",
-      },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

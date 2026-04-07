@@ -32,7 +32,7 @@ import { ChangeEventRfqForm } from "@/components/domain/change-events/ChangeEven
 import type { ChangeEventRfqFormValues } from "@/components/domain/change-events/ChangeEventRfqForm";
 import { PageShell } from "@/components/layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Text } from "@/components/ui/text";
+import { Text } from "@/components/ds/text";
 
 type ChangeEventFilterState = Record<string, FilterValue>;
 

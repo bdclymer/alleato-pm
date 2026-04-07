@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import type { ReactElement } from "react";
+import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowUpRight,
@@ -9,7 +10,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Mail,
-  MapPin,
   Phone,
   Plus,
   RefreshCw,
@@ -91,14 +91,6 @@ function normalizeVendorField(value: string | null | undefined): string {
   return trimmed;
 }
 
-function normalizeSearchText(value: string | null | undefined): string {
-  return normalizeVendorField(value)
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
 type VendorFieldType = "text" | "boolean" | "date" | "email" | "phone";
 
 const vendorPreviewFields: Array<{
@@ -112,9 +104,6 @@ const vendorPreviewFields: Array<{
   { key: "vendor_class", label: "Vendor Class" },
   { key: "acumatica_vendor_id", label: "Acumatica Vendor ID" },
   { key: "acumatica_sync_at", label: "Acumatica Sync At", type: "date" },
-  { key: "contact_name", label: "Contact Name" },
-  { key: "contact_email", label: "Contact Email", type: "email" },
-  { key: "contact_phone", label: "Contact Phone", type: "phone" },
   { key: "address", label: "Address" },
   { key: "city", label: "City" },
   { key: "state", label: "State" },
@@ -179,7 +168,15 @@ function buildVendorTableColumns(): TableColumn<Vendor>[] {
   return [
     {
       ...vendorColumns[0],
-      render: (item) => <span className="font-medium">{item.name}</span>,
+      render: (item) => (
+        <Link
+          href={`/directory/vendors/${encodeURIComponent(item.id)}`}
+          className="font-medium text-primary hover:underline"
+          onClick={(event) => event.stopPropagation()}
+        >
+          {item.name}
+        </Link>
+      ),
       sortValue: (item) => item.name,
     },
     {
@@ -279,7 +276,7 @@ function VendorPreviewPane({
 
   const email = normalizeVendorField(vendor.contact_email);
   const phone = normalizeVendorField(vendor.contact_phone);
-  const location = [vendor.city, vendor.state].filter(Boolean).join(", ");
+  const contactName = normalizeVendorField(vendor.contact_name);
 
   return (
     <div className="flex flex-col h-full">
@@ -311,15 +308,16 @@ function VendorPreviewPane({
           </span>
         </div>
         <div className="flex items-center gap-1">
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-5 w-5"
-            onClick={() => window.open(`/directory/vendors/${vendor.id}`, "_blank")}
-            aria-label="Open full page"
-            title="Open full page"
-          >
-            <ArrowUpRight />
+          <Button size="icon" variant="ghost" className="h-5 w-5" asChild>
+            <a
+              href={`/directory/vendors/${encodeURIComponent(vendor.id)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="Open full page"
+              title="Open full page"
+            >
+              <ArrowUpRight />
+            </a>
           </Button>
           <Button
             size="icon"
@@ -354,12 +352,15 @@ function VendorPreviewPane({
         </div>
 
         {/* Contact section */}
-        {(email || phone) && (
+        {(contactName || email || phone) && (
           <div className="px-5 pb-4">
             <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
               Contact
             </p>
-            <div className="space-y-2">
+            <div className="rounded-md border border-border/60 bg-background px-3 py-3 space-y-2">
+              {contactName && (
+                <div className="text-sm font-medium leading-tight">{contactName}</div>
+              )}
               {phone && (
                 <div className="flex items-center gap-2 text-sm">
                   <Phone className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
@@ -374,29 +375,25 @@ function VendorPreviewPane({
                   </a>
                 </div>
               )}
-              {location && (
-                <div className="flex items-center gap-2 text-sm">
-                  <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                  <span>{location}</span>
-                </div>
-              )}
             </div>
           </div>
         )}
 
         {/* Full vendor field set */}
         <div className="px-5 pb-5">
-          <dl className="space-y-3 text-sm">
+          <div className="space-y-3 text-sm">
             {vendorPreviewFields.map((field) => (
               <div
                 key={String(field.key)}
-                className="grid grid-cols-[minmax(120px,140px),1fr] items-start gap-x-2"
+                className="flex items-start justify-between gap-3"
               >
-                <dt className="text-muted-foreground">{field.label}</dt>
-                <dd className="min-w-0 break-words text-right">{formatVendorFieldValue(vendor, field)}</dd>
+                <span className="w-36 shrink-0 text-foreground/80">{field.label}</span>
+                <div className="min-w-0 flex-1 text-right break-words">
+                  {formatVendorFieldValue(vendor, field)}
+                </div>
               </div>
             ))}
-          </dl>
+          </div>
         </div>
       </div>
     </div>
@@ -407,6 +404,7 @@ export default function DirectoryVendorsPage(): ReactElement {
   const pathname = usePathname();
   const router = useRouter();
   const searchParams = useSearchParams();
+  const initialSearch = searchParams.get("search") ?? "";
 
   const initialFilters: VendorFilterState = {
     is_active: searchParams.get("is_active") || undefined,
@@ -433,26 +431,122 @@ export default function DirectoryVendorsPage(): ReactElement {
   });
 
   const [vendors, setVendors] = React.useState<Vendor[]>([]);
+  const [searchInput, setSearchInput] = React.useState(initialSearch);
+  const [debouncedSearch, setDebouncedSearch] = React.useState(initialSearch);
+  const [pagination, setPagination] = React.useState({
+    page: 1,
+    per_page: 50,
+    total: 0,
+    total_pages: 1,
+  });
   const [isLoading, setIsLoading] = React.useState(true);
+  const [isFetching, setIsFetching] = React.useState(false);
+  const [hasLoadedOnce, setHasLoadedOnce] = React.useState(false);
   const [error, setError] = React.useState<Error | null>(null);
   const [isSyncing, setIsSyncing] = React.useState(false);
+  const latestRequestIdRef = React.useRef(0);
+  const abortControllerRef = React.useRef<AbortController | null>(null);
+  const activeFilters = tableState.activeFilters as VendorFilterState;
+
+  React.useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      setDebouncedSearch(searchInput);
+    }, 250);
+    return () => window.clearTimeout(timeout);
+  }, [searchInput]);
 
   const fetchVendors = React.useCallback(async () => {
-    try {
-      setIsLoading(true);
-      const supabase = createClient();
-      const { data, error: fetchError } = await supabase
-        .from("vendors")
-        .select("*")
-        .order("name", { ascending: true });
+    const requestId = ++latestRequestIdRef.current;
+    abortControllerRef.current?.abort();
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
-      if (fetchError) throw fetchError;
-      setVendors(data || []);
+    try {
+      if (hasLoadedOnce) {
+        setIsFetching(true);
+      } else {
+        setIsLoading(true);
+      }
+      setError(null);
+      const params = new URLSearchParams({
+        page: String(tableState.page),
+        per_page: String(tableState.perPage),
+        sort: tableState.sortBy ?? "name",
+        sort_dir: tableState.sortDirection,
+      });
+
+      if (debouncedSearch.trim()) {
+        params.set("search", debouncedSearch.trim());
+      }
+
+      if (typeof activeFilters.is_active === "string" && activeFilters.is_active) {
+        params.set("is_active", activeFilters.is_active);
+      }
+      if (typeof activeFilters.vendor_class === "string" && activeFilters.vendor_class) {
+        params.set("vendor_class", activeFilters.vendor_class);
+      }
+      if (typeof activeFilters.payment_method === "string" && activeFilters.payment_method) {
+        params.set("payment_method", activeFilters.payment_method);
+      }
+
+      const response = await fetch(`/api/directory/vendors?${params.toString()}`, {
+        signal: controller.signal,
+      });
+      const payload = (await response.json()) as {
+        data?: Vendor[];
+        pagination?: { page: number; per_page: number; total: number; total_pages: number };
+        error?: string;
+      };
+
+      // Ignore stale responses from older, slower requests.
+      if (requestId !== latestRequestIdRef.current) {
+        return;
+      }
+
+      if (!response.ok) {
+        throw new Error(payload.error || "Failed to load vendors");
+      }
+
+      setVendors(payload.data || []);
+      setHasLoadedOnce(true);
+      setPagination(
+        payload.pagination || {
+          page: tableState.page,
+          per_page: tableState.perPage,
+          total: payload.data?.length || 0,
+          total_pages: 1,
+        },
+      );
     } catch (fetchError) {
+      if (fetchError instanceof DOMException && fetchError.name === "AbortError") {
+        return;
+      }
+      if (requestId !== latestRequestIdRef.current) {
+        return;
+      }
       setError(fetchError as Error);
     } finally {
-      setIsLoading(false);
+      if (requestId === latestRequestIdRef.current) {
+        setIsLoading(false);
+        setIsFetching(false);
+      }
     }
+  }, [
+    activeFilters.is_active,
+    activeFilters.payment_method,
+    activeFilters.vendor_class,
+    debouncedSearch,
+    tableState.page,
+    tableState.perPage,
+    tableState.sortBy,
+    tableState.sortDirection,
+    hasLoadedOnce,
+  ]);
+
+  React.useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+    };
   }, []);
 
   React.useEffect(() => {
@@ -496,8 +590,6 @@ export default function DirectoryVendorsPage(): ReactElement {
     });
   }, [searchParams, tableState.setActiveFilters]);
 
-  const activeFilters = tableState.activeFilters as VendorFilterState;
-
   // Derive filter options from data
   const filterOptions = React.useMemo(() => {
     const classes = Array.from(new Set(vendors.map((v) => v.vendor_class).filter(Boolean)));
@@ -532,66 +624,18 @@ export default function DirectoryVendorsPage(): ReactElement {
     [filterOptions],
   );
 
-  // Client-side filtering
-  const filteredVendors = React.useMemo(() => {
-    const search = normalizeSearchText(tableState.debouncedSearch);
-    const searchTokens = search ? search.split(" ") : [];
-    const activeFilter = typeof activeFilters.is_active === "string" ? activeFilters.is_active : "";
-    const classFilter = typeof activeFilters.vendor_class === "string" ? activeFilters.vendor_class : "";
-    const methodFilter = typeof activeFilters.payment_method === "string" ? activeFilters.payment_method : "";
-
-    return vendors.filter((v) => {
-      if (activeFilter) {
-        const isActive = activeFilter === "true";
-        if (v.is_active !== isActive) return false;
-      }
-      if (classFilter && (v.vendor_class || "").toLowerCase() !== classFilter.toLowerCase()) return false;
-      if (methodFilter && (v.payment_method || "").toLowerCase() !== methodFilter.toLowerCase()) return false;
-      if (!search) return true;
-
-      const searchable = normalizeSearchText(
-        [
-          v.name,
-          v.legal_name,
-          v.contact_name,
-          v.contact_email,
-          v.contact_phone,
-          v.city,
-          v.state,
-          v.address,
-          v.zip_code,
-          v.vendor_class,
-          v.payment_method,
-          v.terms,
-          v.tax_id,
-          v.acumatica_vendor_id,
-        ]
-          .filter(Boolean)
-          .join(" "),
-      );
-
-      const compactSearchable = searchable.replace(/\s+/g, "");
-      const compactSearch = search.replace(/\s+/g, "");
-      if (compactSearch && compactSearchable.includes(compactSearch)) {
-        return true;
-      }
-
-      return searchTokens.every((token) => searchable.includes(token));
-    });
-  }, [vendors, activeFilters, tableState.debouncedSearch]);
-
   const tableColumns = React.useMemo(() => buildVendorTableColumns(), []);
   const tabs = getDirectoryTabs(pathname);
   const selectedVendorId = searchParams.get("detail");
   const selectedVendor =
     (selectedVendorId
-      ? filteredVendors.find((vendor) => vendor.id === selectedVendorId)
+      ? vendors.find((vendor) => vendor.id === selectedVendorId)
       : null) ??
-    filteredVendors[0] ??
+    vendors[0] ??
     null;
   const activeVendorId = selectedVendor?.id ?? null;
   const isFiltered =
-    Boolean(tableState.searchInput) ||
+    Boolean(searchInput) ||
     Boolean(activeFilters.is_active) ||
     Boolean(activeFilters.vendor_class) ||
     Boolean(activeFilters.payment_method);
@@ -627,7 +671,7 @@ export default function DirectoryVendorsPage(): ReactElement {
 
   const handleSelectAll = (checked: boolean) => {
     tableState.setSelectedIds(
-      checked ? filteredVendors.map((v) => v.id) : [],
+      checked ? vendors.map((v) => v.id) : [],
     );
   };
 
@@ -652,11 +696,11 @@ export default function DirectoryVendorsPage(): ReactElement {
       }}
       tabs={tabs}
       toolbar={{
-        totalItems: vendors.length,
-        filteredItems: filteredVendors.length,
+        totalItems: pagination.total,
+        filteredItems: pagination.total,
         selectedCount: tableState.selectedIds.length,
-        searchValue: tableState.searchInput,
-        onSearchChange: tableState.setSearchInput,
+        searchValue: searchInput,
+        onSearchChange: setSearchInput,
         searchPlaceholder: "Search name, contact, email, city, Acumatica ID...",
         currentView: tableState.currentView,
         onViewChange: (view) => {
@@ -692,9 +736,9 @@ export default function DirectoryVendorsPage(): ReactElement {
         ),
       }}
       data={{
-        items: filteredVendors,
+        items: vendors,
         isLoading,
-        isFetching: false,
+        isFetching,
         error: error ?? undefined,
       }}
       table={{
@@ -709,7 +753,7 @@ export default function DirectoryVendorsPage(): ReactElement {
         content: (
           <VendorPreviewPane
             vendor={selectedVendor}
-            vendors={filteredVendors}
+            vendors={vendors}
             onSelectVendor={(id) => tableState.setSearchParams({ detail: id })}
             onClose={() => tableState.setSearchParams({ detail: null })}
           />
@@ -721,7 +765,8 @@ export default function DirectoryVendorsPage(): ReactElement {
         onSortChange: (sortBy, direction) => {
           tableState.setSortBy(sortBy);
           tableState.setSortDirection(direction);
-          tableState.setSearchParams({ sort: sortBy, sort_dir: direction });
+          tableState.setSearchParams({ sort: sortBy, sort_dir: direction, page: "1" });
+          tableState.setPage(1);
         },
       }}
       selection={{
@@ -738,6 +783,22 @@ export default function DirectoryVendorsPage(): ReactElement {
       features={{
         enableExport: false,
         enableBulkDelete: true,
+      }}
+      pagination={{
+        page: tableState.page,
+        totalPages: pagination.total_pages,
+        perPage: tableState.perPage,
+        onPageChange: (nextPage) => {
+          tableState.setPage(nextPage);
+          tableState.setSearchParams({ page: String(nextPage) });
+        },
+        onPerPageChange: (nextPerPage) => {
+          const parsed = Number(nextPerPage);
+          if (!Number.isFinite(parsed) || parsed <= 0) return;
+          tableState.setPerPage(parsed);
+          tableState.setSearchParams({ per_page: String(parsed), page: "1" });
+          tableState.setPage(1);
+        },
       }}
     />
   );

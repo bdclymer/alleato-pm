@@ -18,13 +18,12 @@ import {
 } from "@dnd-kit/sortable";
 import { Button } from "@/components/ui/button";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Plus } from "lucide-react";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ChevronDown } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -196,10 +195,20 @@ export function SovSection({
 
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-semibold text-foreground">Line Items</h3>
-          <Select onValueChange={(v) => { if (v === "add_group") addGroup(); }}>
-            <SelectTrigger className="w-36"><SelectValue placeholder="Add Group" /></SelectTrigger>
-            <SelectContent><SelectItem value="add_group">Add Group</SelectItem></SelectContent>
-          </Select>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button type="button" variant="outline" size="sm" className="h-9 gap-1.5">
+                Options
+                <ChevronDown className="h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={addGroup}>Add Group</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => csvInputRef.current?.click()}>
+                Import from CSV
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <div
@@ -270,6 +279,25 @@ export function SovSection({
                 </tbody>
                 <tfoot>
                   <tr>
+                    <td className="px-1 pt-2 pb-1" />
+                    <td
+                      colSpan={accountingMethod === "unit_quantity" ? 8 : 5}
+                      className="px-1 pt-2 pb-1"
+                    >
+                      <Button
+                        type="button"
+                        variant="link"
+                        className="h-auto p-0 text-sm font-medium"
+                        onClick={addSOVLine}
+                        disabled={isSubmitting}
+                        data-testid="sov-add-line-link"
+                      >
+                        Add Line Item
+                      </Button>
+                    </td>
+                    <td className="px-1 pt-2 pb-1" />
+                  </tr>
+                  <tr>
                     <td className="px-1 py-2" />
                     <td colSpan={accountingMethod === "unit_quantity" ? 5 : 2} className="px-1 py-3 text-xs font-semibold text-foreground">Totals</td>
                     <td className="px-1 py-2 text-right text-sm font-semibold text-foreground" data-testid="sov-total-amount">{formatCurrency(totals.amount)}</td>
@@ -281,20 +309,6 @@ export function SovSection({
               </table>
             </SortableContext>
           </DndContext>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3 pt-4">
-          <Button type="button" onClick={addSOVLine} disabled={isSubmitting} className="h-10 gap-2 px-4" data-testid="sov-add-line-footer">
-            <Plus />
-            Add Line Item
-          </Button>
-          <Select onValueChange={(v) => { if (v === "csv") csvInputRef.current?.click(); }}>
-            <SelectTrigger className="w-24"><SelectValue placeholder="Import" /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="csv">CSV</SelectItem>
-              <SelectItem value="excel">Excel</SelectItem>
-            </SelectContent>
-          </Select>
         </div>
       </div>
     </section>

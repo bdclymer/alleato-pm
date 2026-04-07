@@ -39,7 +39,7 @@ export function TextField({
     >
       <Input
         type="text"
-        className={cn(error && "border-red-300", className)}
+        className={cn(error && "border-destructive", className)}
         aria-invalid={!!error}
         aria-describedby={error ? `${inputId}-error` : undefined}
         id={inputId}

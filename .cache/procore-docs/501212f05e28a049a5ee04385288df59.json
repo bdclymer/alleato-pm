@@ -1,6 +1,0 @@
-{
-  "success": true,
-  "markdown": "#  About Change Events \nTable of Contents \n##  Considerations \n### Prerequisites\n#####  Important\n  * The Budget Changes feature requires any existing Budget Modifications data to be migrated to a new format. It also requires API endpoint updates for any companies using custom integrations.\n\n\n[ Overview ](https://v2.support.procore.com/process-guides/about-change-events/)\n",
-  "title": "About Change Events - Considerations",
-  "description": "| Considerations"
-}

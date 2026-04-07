@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import type { UpdateBudgetViewRequest } from "@/types/budget-views";
+import { apiErrorResponse } from "@/lib/api-error";
 
 // GET /api/projects/[id]/budget/views/[viewId]
 // Fetch a single budget view
@@ -42,15 +43,7 @@ export async function GET(
         );
       }
 
-      return NextResponse.json(
-        {
-          error: "Failed to fetch budget view",
-          details: error.message,
-          code: error.code,
-          hint: error.hint
-        },
-        { status: 500 },
-      );
+      return apiErrorResponse(error);
     }
 
     if (!view) {
@@ -69,14 +62,7 @@ export async function GET(
 
     return NextResponse.json({ view: viewWithSortedColumns });
   } catch (error) {
-    console.error("Budget view GET API error:", error);
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : "Unknown error"
-      },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -225,14 +211,7 @@ export async function PATCH(
 
     return NextResponse.json({ view: viewWithSortedColumns });
   } catch (error) {
-    console.error("Budget view GET API error:", error);
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : "Unknown error"
-      },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -293,13 +272,6 @@ export async function DELETE(
 
     return NextResponse.json({ success: true });
   } catch (error) {
-    console.error("Budget view GET API error:", error);
-    return NextResponse.json(
-      {
-        error: "Internal server error",
-        details: error instanceof Error ? error.message : "Unknown error"
-      },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

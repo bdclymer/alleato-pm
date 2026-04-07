@@ -28,9 +28,8 @@ export {
 export { useContacts, type Contact, type ContactOption } from "../use-contacts";
 export {
   useCommitments,
-  type Commitment,
   type CommitmentOption,
-} from "../use-commitments";
+} from "../use-commitments-query";
 export {
   useChangeEvents,
   useProjectChangeEvents,

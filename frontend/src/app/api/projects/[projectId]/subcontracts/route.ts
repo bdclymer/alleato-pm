@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { CreateSubcontractSchema } from "@/lib/schemas/create-subcontract-schema";
 import { mapFormToInsert } from "@/lib/db/subcontracts";
+import { apiErrorResponse } from "@/lib/api-error";
 
 /**
  * GET /api/projects/[id]/subcontracts
@@ -42,11 +43,7 @@ export async function GET(
 
     return NextResponse.json({ data });
   } catch (error) {
-    console.error("Unexpected error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }
 
@@ -236,13 +233,6 @@ export async function POST(
       message: "Subcontract created successfully",
     });
   } catch (error) {
-    console.error("[Subcontracts API] Unexpected error:", error);
-    return NextResponse.json(
-      {
-        error: "Internal server error - an unexpected error occurred",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 },
-    );
+    return apiErrorResponse(error);
   }
 }

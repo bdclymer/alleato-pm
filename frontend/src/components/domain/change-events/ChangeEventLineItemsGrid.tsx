@@ -48,7 +48,7 @@ import {
   AlertCircle,
   CheckCircle2,
 } from 'lucide-react'
-import { Text } from '@/components/ui/text'
+import { Text } from '@/components/ds/text'
 import { formatCurrency } from '@/lib/table-config/formatters'
 import { cn } from '@/lib/utils'
 

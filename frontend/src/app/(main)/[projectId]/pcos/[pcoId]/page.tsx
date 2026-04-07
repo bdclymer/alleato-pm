@@ -5,7 +5,7 @@ import { toast } from "sonner";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Text } from "@/components/ui/text";
+import { Text } from "@/components/ds/text";
 import { PageShell } from "@/components/layout";
 import { usePCO, useSubmitPCO } from "@/hooks/use-pcos";
 import { useProjectTitle } from "@/hooks/useProjectTitle";

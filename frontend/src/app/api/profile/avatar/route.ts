@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { apiErrorResponse } from "@/lib/api-error";
 
 const MAX_IMAGE_SIZE_BYTES = 5 * 1024 * 1024;
 const PROFILE_IMAGES_BUCKET = "profile-images";
@@ -319,10 +320,6 @@ export async function DELETE() {
 
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
-    console.error("[ProfileAvatar] Remove failed", error);
-    return jsonError(500, {
-      error: "Failed to remove profile image",
-      details: error instanceof Error ? error.message : String(error),
-    });
+    return apiErrorResponse(error);
   }
 }

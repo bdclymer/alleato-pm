@@ -8,6 +8,7 @@ import {
   buildMeetingPrepSystemPrompt,
   buildMeetingPrepUserMessage,
 } from "@/lib/ai/prompts/meeting-prep";
+import { apiErrorResponse } from "@/lib/api-error";
 
 const MODEL_ID = "anthropic/claude-sonnet-4.5";
 
@@ -156,7 +157,7 @@ export async function POST(_request: Request, { params }: RouteParams) {
     }
 
     if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
+      return apiErrorResponse(error);
     }
 
     return NextResponse.json({ data });

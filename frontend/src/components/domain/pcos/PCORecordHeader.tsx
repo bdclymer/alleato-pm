@@ -2,7 +2,7 @@
 
 import { Pencil, Send, ArrowRight, Clock } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Inline } from "@/components/ui/inline";
+import { Inline } from "@/components/layout/inline";
 import { StatusBadge } from "@/components/ds";
 import type { PCO } from "@/hooks/use-pcos";
 

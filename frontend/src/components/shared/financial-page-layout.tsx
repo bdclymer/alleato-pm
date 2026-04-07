@@ -58,7 +58,7 @@ export function FinancialPageLayout({
             {headerActions}
             <Button
               size="sm"
-              className="bg-orange-500 hover:bg-orange-600"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground"
               onClick={handleCreateClick}
             >
               {createButtonLabel}

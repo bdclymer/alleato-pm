@@ -13,6 +13,11 @@ export async function GET() {
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  // OWASP A01:2021 - Broken Access Control: admin-only endpoint
+  const { data: profile } = await supabase.from("user_profiles").select("is_admin").eq("id", user.id).single();
+  if (!profile?.is_admin) {
+    return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+  }
 
   const { data, error } = await supabase
     .from("company_context")
@@ -38,6 +43,10 @@ export async function PUT(request: Request) {
   } = await supabase.auth.getUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const { data: putProfile } = await supabase.from("user_profiles").select("is_admin").eq("id", user.id).single();
+  if (!putProfile?.is_admin) {
+    return NextResponse.json({ error: "Admin access required" }, { status: 403 });
   }
 
   const body = await request.json();
