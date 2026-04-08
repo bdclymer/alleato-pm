@@ -1,14 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { Database, FileText, LayoutList } from "lucide-react";
+import { Database, ExternalLink, FileText, LayoutList } from "lucide-react";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { stateLabel } from "@/lib/procore-route-map";
+import { appRouteForState, stateLabel } from "@/lib/procore-route-map";
 
 // ---------------------------------------------------------------------------
 // Supabase table mapping — tool slug → relevant tables
@@ -323,6 +323,12 @@ function PageDetail({ state, feature }: { state: ManifestState; feature: string 
 export function OverviewTab({ feature }: { feature: string }) {
   const [data, setData] = React.useState<SpecData | null>(null);
   const [loading, setLoading] = React.useState(true);
+  const [lastProjectId, setLastProjectId] = React.useState<number | null>(null);
+
+  React.useEffect(() => {
+    const stored = localStorage.getItem("last-project-id");
+    if (stored && /^\d+$/.test(stored)) setLastProjectId(Number(stored));
+  }, []);
 
   React.useEffect(() => {
     setLoading(true);
@@ -390,7 +396,7 @@ export function OverviewTab({ feature }: { feature: string }) {
                 className="rounded-lg border border-border/50 bg-background px-4"
               >
                 <AccordionTrigger className="py-3 text-sm font-medium hover:no-underline">
-                  <div className="flex items-center gap-3 text-left">
+                  <div className="flex items-center gap-3 text-left min-w-0 flex-1">
                     <FileText className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50" />
                     <span>{stateLabel(id)}</span>
                     {state.description && state.description !== stateLabel(id) && (
@@ -398,6 +404,23 @@ export function OverviewTab({ feature }: { feature: string }) {
                         — {state.description}
                       </span>
                     )}
+                    {(() => {
+                      const route = appRouteForState(feature, id, lastProjectId);
+                      if (!route) return null;
+                      return (
+                        <a
+                          href={route}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="ml-auto mr-2 flex shrink-0 items-center gap-1 rounded px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
+                          title={lastProjectId ? `Open in app (project ${lastProjectId})` : "Open in app"}
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                          Open
+                        </a>
+                      );
+                    })()}
                   </div>
                 </AccordionTrigger>
                 <AccordionContent className="pb-4">

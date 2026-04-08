@@ -69,6 +69,97 @@ export function stateLabel(stateId: string): string {
   return overrides[stateId] ?? stateId.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+/**
+ * Maps feature slug + state ID → our app route.
+ * Uses `:projectId` as a placeholder — callers should replace it with a real project ID.
+ * Returns null if no route is known for that state.
+ */
+const APP_ROUTES: Record<string, Record<string, string>> = {
+  "budget": {
+    "budget-details": "/:projectId/budget",
+    "budget-modifications": "/:projectId/budget?tab=modifications",
+    "forecasting": "/:projectId/budget?tab=forecasting",
+    "cost-codes": "/:projectId/budget?tab=cost-codes",
+    "project-status-snapshots": "/:projectId/budget?tab=snapshots",
+    "change-history": "/:projectId/budget?tab=history",
+    "settings": "/:projectId/budget?tab=settings",
+    "list": "/:projectId/budget",
+  },
+  "change-events": {
+    "list": "/:projectId/change-events",
+    "create-form": "/:projectId/change-events/new",
+    "detail": "/:projectId/change-events",
+    "detail-line-items": "/:projectId/change-events",
+  },
+  "change-orders": {
+    "list": "/:projectId/change-orders",
+    "list-purchase-orders": "/:projectId/change-orders?tab=purchase-orders",
+    "list-purchase-order-change-orders": "/:projectId/change-orders?tab=po-change-orders",
+    "create-form": "/:projectId/change-orders/new",
+    "detail": "/:projectId/change-orders",
+  },
+  "commitments": {
+    "list": "/:projectId/commitments",
+    "create-form": "/:projectId/commitments/new",
+    "detail": "/:projectId/commitments",
+    "detail-schedule-of-values": "/:projectId/commitments",
+    "detail-change-orders": "/:projectId/commitments",
+    "detail-payments": "/:projectId/commitments",
+  },
+  "direct-costs": {
+    "list": "/:projectId/direct-costs",
+    "create-form": "/:projectId/direct-costs/new",
+    "detail": "/:projectId/direct-costs",
+  },
+  "invoicing": {
+    "list-owner": "/:projectId/invoicing?tab=owner",
+    "list-subcontractor": "/:projectId/invoicing?tab=subcontractor",
+    "po-invoices-list": "/:projectId/invoicing?tab=po",
+    "create-form": "/:projectId/invoicing/new",
+    "upload-form": "/:projectId/invoicing/upload",
+  },
+  "prime-contracts": {
+    "list": "/:projectId/prime-contracts",
+    "create-form": "/:projectId/prime-contracts/new",
+    "detail": "/:projectId/prime-contracts",
+    "detail-schedule-of-values": "/:projectId/prime-contracts",
+    "detail-change-orders": "/:projectId/prime-contracts",
+    "detail-payments": "/:projectId/prime-contracts",
+  },
+  "rfis": {
+    "list": "/:projectId/rfis",
+    "create-form": "/:projectId/rfis/new",
+    "detail": "/:projectId/rfis",
+  },
+  "submittals": {
+    "list": "/:projectId/submittals",
+    "create-form": "/:projectId/submittals/new",
+    "detail": "/:projectId/submittals",
+  },
+  "directory": {
+    "list": "/directory/companies",
+    "create-form": "/directory/companies",
+  },
+  "daily-log": {
+    "list": "/:projectId/daily-log",
+    "create-form": "/:projectId/daily-log/new",
+  },
+  "meetings": {
+    "list": "/:projectId/meetings",
+    "create-form": "/:projectId/meetings/new",
+    "detail": "/:projectId/meetings",
+  },
+};
+
+export function appRouteForState(feature: string, stateId: string, projectId?: number | null): string | null {
+  const featureRoutes = APP_ROUTES[feature];
+  if (!featureRoutes) return null;
+  const route = featureRoutes[stateId];
+  if (!route) return null;
+  if (projectId) return route.replace(":projectId", String(projectId));
+  return route; // caller can display as-is (no projectId substituted)
+}
+
 /** Builds screenshot URLs for a feature from its manifest state IDs. */
 export function screenshotsForFeature(feature: string, stateIds: string[]): ProcoreScreenshot[] {
   return stateIds.map((stateId) => ({

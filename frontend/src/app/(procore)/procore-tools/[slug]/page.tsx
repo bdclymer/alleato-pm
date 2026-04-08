@@ -1,3 +1,6 @@
+import fs from "node:fs/promises";
+import path from "node:path";
+
 import { AppWindow, ArrowLeft, Building2, GraduationCap } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -19,15 +22,23 @@ function statusVariant(status: string | null): "default" | "secondary" | "outlin
   return "outline";
 }
 
+async function readScenariosMarkdown(slug: string): Promise<string | null> {
+  try {
+    const filePath = path.join(process.cwd(), "..", "docs", "testing", `${slug}-scenarios.md`);
+    return await fs.readFile(filePath, "utf-8");
+  } catch {
+    return null;
+  }
+}
+
 export default async function ProcoreToolDetailPage({ params }: Props) {
   const { slug } = await params;
   const supabase = await createClient();
 
-  const { data: tool } = await supabase
-    .from("procore_tools")
-    .select("*")
-    .eq("slug", `/${slug}`)
-    .maybeSingle();
+  const [{ data: tool }, scenariosMarkdown] = await Promise.all([
+    supabase.from("procore_tools").select("*").eq("slug", `/${slug}`).maybeSingle(),
+    readScenariosMarkdown(slug),
+  ]);
 
   if (!tool) {
     notFound();
@@ -95,6 +106,7 @@ export default async function ProcoreToolDetailPage({ params }: Props) {
       <ToolDetailTabs
         slug={slug}
         description={tool.description ?? null}
+        scenariosMarkdown={scenariosMarkdown}
       />
     </PageShell>
   );

@@ -55,6 +55,13 @@ export function ProjectProvider({ children }: { children: React.ReactNode }) {
     return null;
   }, [pathname, searchParams]);
 
+  // Persist last visited project ID so dev-panel tools can link to project pages
+  useEffect(() => {
+    if (projectIdFromUrl) {
+      localStorage.setItem("last-project-id", String(projectIdFromUrl));
+    }
+  }, [projectIdFromUrl]);
+
   // Fetch project details when URL changes
   useEffect(() => {
     async function fetchProject() {

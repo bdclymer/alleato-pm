@@ -1,23 +1,13 @@
 # Change Events — Guided Test Scenarios
 
-**Generated:** 2026-04-07
-**Tool:** change-events
-**Audience:** Non-technical testers — no construction knowledge required
-**Test Runner UI:** http://localhost:3000/testing (select "Change Events")
-**Test Project:** Project 67 — Vermillion Rise Warehouse
-**Login:** test1@mail.com / test12026!!!
+- **Generated:** 2026-04-07
+- **Tool:** change-events
+- **Audience:** Non-technical testers — no construction knowledge required
+- **Test Runner UI:** http://localhost:3000/testing (select "Change Events")
+- **Test Project:** Project 767 — Alleato AI
+- **Login:** test1@mail.com / test12026!!!
 
-> A **change event** is a record of a potential cost or scope change on a construction project.
-> It tracks what changed, why, and how much it might cost or add to revenue.
-
----
-
-## How to Use
-
-1. Open the test runner at http://localhost:3000/testing and select **Change Events**, OR follow steps manually below
-2. For each scenario: follow the numbered steps, then check whether the expected result matches what you see
-3. Mark: ✅ Pass | ❌ Fail | ⏭️ Skip
-4. For failures, note what you actually saw
+A **change event** is a record of a potential cost or scope change on a construction project. It tracks what changed, why, and how much it might cost or add to revenue.
 
 ---
 

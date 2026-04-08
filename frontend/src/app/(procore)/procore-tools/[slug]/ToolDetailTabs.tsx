@@ -2,23 +2,25 @@
 
 import * as React from "react";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { OverviewTab } from "@/components/dev-panel/OverviewTab";
-import { SpecTab } from "@/components/dev-panel/SpecTab";
-import { ScreenshotsPageTab } from "@/components/dev-panel/ScreenshotsPageTab";
-import { GapsTab } from "@/components/dev-panel/GapsTab";
-import { FeedbackTab } from "@/components/dev-panel/FeedbackTab";
 import { ChatTab } from "@/components/dev-panel/ChatTab";
+import { FeedbackTab } from "@/components/dev-panel/FeedbackTab";
+import { GapsTab } from "@/components/dev-panel/GapsTab";
+import { OverviewTab } from "@/components/dev-panel/OverviewTab";
+import { ScreenshotsPageTab } from "@/components/dev-panel/ScreenshotsPageTab";
+import { SpecTab } from "@/components/dev-panel/SpecTab";
+import { TestScenariosTab } from "@/components/dev-panel/TestScenariosTab";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Props {
   slug: string;
   description: string | null;
+  scenariosMarkdown: string | null;
 }
 
-// Height used only for constrained tabs (spec, gaps, feedback, chat)
+// Height used only for constrained tabs (spec, gaps, feedback, chat, scenarios)
 const CONSTRAINED_HEIGHT = "h-[calc(100vh-320px)] min-h-[480px]";
 
-export function ToolDetailTabs({ slug, description }: Props) {
+export function ToolDetailTabs({ slug, description, scenariosMarkdown }: Props) {
   return (
     <div className="mt-4">
       {description && (
@@ -33,6 +35,14 @@ export function ToolDetailTabs({ slug, description }: Props) {
           <TabsTrigger value="screenshots">Screenshots</TabsTrigger>
           <TabsTrigger value="spec">Spec</TabsTrigger>
           <TabsTrigger value="gaps">Gap Analysis</TabsTrigger>
+          <TabsTrigger value="scenarios">
+            Test Scenarios
+            {scenariosMarkdown && (
+              <span className="ml-1.5 rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary leading-none">
+                ✓
+              </span>
+            )}
+          </TabsTrigger>
           <TabsTrigger value="feedback">Feedback</TabsTrigger>
           <TabsTrigger value="chat">Ask AI</TabsTrigger>
         </TabsList>
@@ -54,6 +64,10 @@ export function ToolDetailTabs({ slug, description }: Props) {
 
           <TabsContent value="gaps" className="h-full m-0">
             <GapsTab feature={slug} />
+          </TabsContent>
+
+          <TabsContent value="scenarios" className="h-full m-0">
+            <TestScenariosTab markdown={scenariosMarkdown} slug={slug} />
           </TabsContent>
 
           <TabsContent value="feedback" className="h-full m-0">
