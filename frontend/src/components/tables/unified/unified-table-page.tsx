@@ -135,8 +135,14 @@ export interface UnifiedTablePageProps<T> {
     autoFocusOnLoad?: boolean;
     stickyHeader?: boolean;
     onRowOrderChange?: (orderedRowIds: string[]) => void;
+    /** Density preset. "compact" applies tighter padding and smaller text. */
+    density?: "default" | "compact";
     /** Render an expandable sub-row below a table row. Return null to skip. */
-    renderExpandedRow?: (item: T, colSpan: number) => ReactNode | null;
+    renderExpandedRow?: (
+      item: T,
+      colSpan: number,
+      context?: { columns: Array<{ id: string; width?: number }>; hasSelection: boolean; hasActions: boolean },
+    ) => ReactNode | null;
   };
   sorting?: {
     sortBy: string | null;
@@ -961,7 +967,7 @@ export function UnifiedTablePage<T>({
         <div className={cn("hidden sm:block", data.isFetching && "opacity-70")}>
           <div
             className={cn(
-              "overflow-x-auto focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border/70",
+              "overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border/70 border border-border rounded-md",
               sidePanel
                 ? "mx-0 pl-0"
                 : isFullBleedTable
@@ -974,7 +980,7 @@ export function UnifiedTablePage<T>({
             ref={tableScrollRef}
             style={resolvedFeatures.enableVirtualization ? { maxHeight: 640, overflowY: "auto" } : undefined}
           >
-            <Table>
+            <Table className={cn(table.density === "compact" && "compact-table")}>
               <TableHeader className={cn((table.stickyHeader !== false) && "sticky top-0 z-20 bg-background")}>
                 {columnGroups && columnGroups.length > 0 && (
                   <TableRow className="border-b-0">
@@ -994,7 +1000,7 @@ export function UnifiedTablePage<T>({
                           key={`group-${group.label}-${group.columnIds.join("-")}`}
                           colSpan={visibleCount}
                           className={cn(
-                            "text-center text-xs font-semibold uppercase tracking-wider text-muted-foreground bg-muted/40 py-1.5 border-b border-border",
+                            "text-left text-[10px] font-semibold text-foreground/80 bg-muted/40 py-0 px-2 leading-tight border-b border-l border-border normal-case",
                             !group.label && "bg-muted/20",
                           )}
                         >
@@ -1005,7 +1011,7 @@ export function UnifiedTablePage<T>({
                     {hasRowActions && <TableHead className="w-12.5 bg-muted/40" />}
                   </TableRow>
                 )}
-                <TableRow>
+                <TableRow className="bg-muted/40">
                   {hasRowSelection && (
                     <TableHead
                       className="px-2"
@@ -1016,7 +1022,7 @@ export function UnifiedTablePage<T>({
                         position: "sticky",
                         left: 0,
                         zIndex: 3,
-                        background: "hsl(var(--background))",
+                        background: "hsl(var(--muted) / 0.4)",
                       }}
                     >
                       <div className="flex items-center justify-center">
@@ -1034,9 +1040,13 @@ export function UnifiedTablePage<T>({
                       const width = columnWidths[column.id] ?? column.width;
                       const isPinnedLeft = columnPinning.left.includes(column.id);
                       const pinnedStyle = getPinnedStyle(column.id);
+                      // Header row uses bg-muted/40 — override pinned background to match
+                      const headerPinnedStyle = pinnedStyle
+                        ? { ...pinnedStyle, background: "hsl(var(--muted) / 0.4)" }
+                        : undefined;
                       const columnStyle =
-                        width || pinnedStyle
-                          ? ({ width, minWidth: columnWidths[column.id] ?? undefined, maxWidth: column.width && !columnWidths[column.id] ? column.width : undefined, ...pinnedStyle } as React.CSSProperties)
+                        width || headerPinnedStyle
+                          ? ({ width, minWidth: columnWidths[column.id] ?? undefined, maxWidth: column.width && !columnWidths[column.id] ? column.width : undefined, ...headerPinnedStyle } as React.CSSProperties)
                           : undefined;
                       const hasContextActions =
                         isSortable || isHideable || resolvedFeatures.enableColumnPinning;
@@ -1076,6 +1086,12 @@ export function UnifiedTablePage<T>({
                               handleSortClick(column.id);
                             }
                           }}
+                          onContextMenu={(e) => {
+                            if (!isHideable) return;
+                            e.preventDefault();
+                            const btn = e.currentTarget.querySelector<HTMLButtonElement>("button[type='button']");
+                            btn?.click();
+                          }}
                         >
                           {hasContextActions ? (
                             <DropdownMenu>
@@ -1083,8 +1099,9 @@ export function UnifiedTablePage<T>({
                                 <button
                                   type="button"
                                   className={cn(
-                                    "flex items-center gap-1.5 bg-transparent border-0 p-0 font-semibold text-xs uppercase tracking-wider cursor-pointer",
-                                    "text-muted-foreground",
+                                    "flex items-center gap-1.5 bg-transparent border-0 p-0 font-medium cursor-pointer normal-case",
+                                    table.density === "compact" ? "text-[10px]" : "text-[11px]",
+                                    "text-foreground/80",
                                     headerAlignment === "left" ? "justify-start" : "justify-center",
                                   )}
                                   onContextMenu={(event) => {
@@ -1171,7 +1188,7 @@ export function UnifiedTablePage<T>({
                             </div>
                           )}
                           <div
-                            className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize select-none"
+                            className="absolute right-0 top-0 h-full w-1.5 cursor-col-resize select-none hover:bg-border active:bg-primary/40 transition-colors"
                             onMouseDown={(event) => handleColumnResizeStart(event, column.id)}
                             aria-hidden="true"
                           />
@@ -1294,6 +1311,8 @@ export function UnifiedTablePage<T>({
                             setEditingValue(inlineEdits[cellKey] ?? column.editValue(item));
                           }}
                           className={cn(
+                            table.density === "compact" &&
+                              "!py-0 text-[10px] leading-none [&_*]:!text-[10px] [&_*]:!leading-none",
                             resolvedFeatures.enableInlineEditing && column.editable && column.editValue
                               ? "cursor-text hover:bg-muted/60 transition-colors"
                               : "",
@@ -1394,6 +1413,11 @@ export function UnifiedTablePage<T>({
                     table.renderExpandedRow?.(
                       item,
                       orderedVisibleColumns.length + (hasRowSelection ? 1 : 0) + (hasRowActions ? 1 : 0),
+                      {
+                        columns: orderedVisibleColumns.map((c) => ({ id: c.id, width: columnWidths[c.id] ?? c.width })),
+                        hasSelection: hasRowSelection,
+                        hasActions: hasRowActions,
+                      },
                     )}
                   </React.Fragment>
                 ))}
@@ -1487,7 +1511,7 @@ export function UnifiedTablePage<T>({
   const leftPaneContent = (
     <>
       {aboveTableContent}
-      <div className="border-t border-border">
+      <div>
         {tableAreaContent}
       </div>
     </>
@@ -1525,7 +1549,7 @@ export function UnifiedTablePage<T>({
                   : undefined
               }
             >
-              <div className="min-w-0 border-t border-border">{tableAreaContent}</div>
+              <div className="min-w-0">{tableAreaContent}</div>
 
               {/* Side panel with resize handle */}
               <aside

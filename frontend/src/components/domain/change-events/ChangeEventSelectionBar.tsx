@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-import { ChevronDown, Send } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
 import { AddToPrimePCODialog } from "@/components/domain/change-events/AddToPrimePCODialog";
@@ -37,10 +37,7 @@ export function ChangeEventSelectionBar({
   if (selectedCount > 0) {
     return (
       <>
-        <div className="flex items-center gap-1.5 px-4 py-2 bg-muted/40 border-b border-border">
-          <span className="mr-2 text-sm text-muted-foreground">
-            {selectedCount} item{selectedCount === 1 ? "" : "s"} selected
-          </span>
+        <div className="flex items-center gap-1.5 py-2 bg-muted/40 border-b border-border">
           <TooltipProvider>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -79,9 +76,8 @@ export function ChangeEventSelectionBar({
             </DropdownMenu>
           </TooltipProvider>
 
-          <Button variant="outline" size="sm" className="gap-1.5" onClick={onSendRfq}>
-            <Send />
-            Send Requests for Quote
+          <Button variant="outline" size="sm" onClick={onSendRfq}>
+            Send RFQ
           </Button>
         </div>
 
@@ -95,14 +91,6 @@ export function ChangeEventSelectionBar({
           }}
         />
       </>
-    );
-  }
-
-  if (hasItems) {
-    return (
-      <div className="flex items-center justify-end px-4 py-1.5 text-xs text-muted-foreground border-b border-border">
-        0 items selected
-      </div>
     );
   }
 

@@ -986,24 +986,26 @@ const supabase = createClient(url, key);
 
   if (variant === "footer") {
     return (
-      <div ref={footerRef} className="relative">
+      <div ref={footerRef} className="w-full">
         {/* eslint-disable-next-line design-system/no-design-violations -- footer dev tools toggle */}
-        <button
-          type="button"
-          onClick={() => setIsFooterOpen((prev) => !prev)}
-          className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
-        >
-          Developer Tools
-          <ChevronUp className={`h-3 w-3 transition-transform ${isFooterOpen ? "" : "rotate-180"}`} />
-          {errorCount > 0 && (
-            <span className="ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
-              {errorCount}
-            </span>
-          )}
-        </button>
-        {isFooterOpen ? (
-          <div className="absolute bottom-full left-0 z-50 mb-1 w-[min(96vw,1500px)] rounded-md border border-border bg-popover p-5 shadow-sm">
-            <div>
+        <div className="flex items-center px-4 py-3 sm:px-6 lg:px-8">
+          <button
+            type="button"
+            onClick={() => setIsFooterOpen((prev) => !prev)}
+            className="inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
+          >
+            Developer Tools
+            <ChevronUp className={`h-3 w-3 transition-transform ${isFooterOpen ? "" : "rotate-180"}`} />
+            {errorCount > 0 && (
+              <span className="ml-1 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
+                {errorCount}
+              </span>
+            )}
+          </button>
+        </div>
+        {isFooterOpen && (
+          <div className="border-t border-border bg-popover px-4 py-6 sm:px-6 lg:px-8">
+            <div className="mb-4">
               <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
                 <Zap className="h-4 w-4" />
                 Developer Tools
@@ -1014,7 +1016,7 @@ const supabase = createClient(url, key);
             </div>
             {panelContent}
           </div>
-        ) : null}
+        )}
       </div>
     )
   }

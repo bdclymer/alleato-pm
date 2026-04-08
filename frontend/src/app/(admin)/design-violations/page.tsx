@@ -1,8 +1,19 @@
 "use client";
-import { useState, useEffect, useCallback } from "react";
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
-import { Badge } from "@/components/ui/badge";
+import { useCallback, useEffect, useState } from "react";
+
+import Image from "next/image";
+
+import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 type Violation = {
   id: string;
@@ -32,12 +43,20 @@ const TYPE_LABELS: Record<string, string> = {
   other: "Other",
 };
 
-const STATUS_COLORS: Record<string, string> = {
-  open: "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-400",
-  in_progress: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400",
-  fixed: "bg-green-50 text-green-700 border-green-200 dark:bg-green-950/40 dark:text-green-400",
-  wont_fix: "bg-zinc-100 text-zinc-500 border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400",
+const STATUS_DOT: Record<string, string> = {
+  open: "bg-red-500",
+  in_progress: "bg-amber-500",
+  fixed: "bg-green-500",
+  wont_fix: "bg-zinc-400",
 };
+
+const FILTER_TABS = [
+  { value: "open", label: "Open" },
+  { value: "in_progress", label: "In progress" },
+  { value: "fixed", label: "Fixed" },
+  { value: "wont_fix", label: "Won't fix" },
+  { value: "all", label: "All" },
+];
 
 export default function DesignViolationsPage() {
   const [violations, setViolations] = useState<Violation[]>([]);
@@ -61,21 +80,15 @@ export default function DesignViolationsPage() {
 
   useEffect(() => { fetchViolations(); }, [fetchViolations]);
 
-  async function updateStatus(id: string, status: string, fixedInFile?: string) {
+  async function updateStatus(id: string, status: string) {
     await fetch("/api/dev/violations", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, status, fixedInFile }),
+      body: JSON.stringify({ id, status }),
     });
     setSelected(null);
     fetchViolations();
   }
-
-  // Group by route for easy scanning
-  const grouped = violations.reduce<Record<string, Violation[]>>((acc, v) => {
-    (acc[v.route] = acc[v.route] || []).push(v);
-    return acc;
-  }, {});
 
   const stats = {
     open: violations.filter(v => v.status === "open").length,
@@ -84,149 +97,142 @@ export default function DesignViolationsPage() {
   };
 
   return (
-    <>
-      <ProjectPageHeader
-        title="Design Violations"
-        description="Flagged design system violations — right-click any element in dev mode to flag"
-        actions={
-          <div className="flex items-center gap-2 text-sm">
-            {stats.open > 0 && <span className="text-red-600 font-medium">{stats.open} open</span>}
-            {stats.in_progress > 0 && <span className="text-amber-600 font-medium">{stats.in_progress} in progress</span>}
-            {stats.fixed > 0 && <span className="text-green-600 font-medium">{stats.fixed} fixed</span>}
-          </div>
-        }
-      />
-      <PageContainer>
-        {/* Filter tabs */}
-        <div className="flex items-center gap-1 mb-6 border-b border-border pb-3">
-          {["open", "in_progress", "fixed", "wont_fix", "all"].map(s => (
-            <Button
-              key={s}
-              variant={filter === s ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setFilter(s)}
-              className={`px-3 py-1.5 text-sm rounded-md transition-colors ${
-                filter === s
-                  ? "bg-primary text-primary-foreground font-medium"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
-              }`}
-            >
-              {s === "wont_fix" ? "Won't fix" : s === "in_progress" ? "In progress" : s.charAt(0).toUpperCase() + s.slice(1)}
-            </Button>
-          ))}
+    <PageShell
+      variant="table"
+      title="Design Violations"
+      description="Flagged design system violations — right-click any element in dev mode to flag"
+      actions={
+        <div className="flex items-center gap-3 text-sm">
+          {stats.open > 0 && <span className="text-red-600 font-medium">{stats.open} open</span>}
+          {stats.in_progress > 0 && <span className="text-amber-600 font-medium">{stats.in_progress} in progress</span>}
+          {stats.fixed > 0 && <span className="text-green-600 font-medium">{stats.fixed} fixed</span>}
         </div>
+      }
+    >
+      <Tabs value={filter} onValueChange={(v) => { setFilter(v); setSelected(null); }}>
+        <TabsList>
+          {FILTER_TABS.map(t => (
+            <TabsTrigger key={t.value} value={t.value} className="text-xs">
+              {t.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
 
-        {loading && <p className="text-sm text-muted-foreground">Loading...</p>}
+      {loading && <p className="text-sm text-muted-foreground py-4">Loading...</p>}
 
-        {!loading && violations.length === 0 && (
-          <div className="text-center py-16">
-            <div className="text-4xl mb-3">🎨</div>
-            <p className="text-sm font-medium text-foreground">No violations</p>
-            <p className="text-xs text-muted-foreground mt-1">
-              Right-click any element in dev mode to flag a design violation
-            </p>
-          </div>
-        )}
+      {!loading && violations.length === 0 && (
+        <div className="text-center py-16">
+          <div className="text-4xl mb-3">🎨</div>
+          <p className="text-sm font-medium text-foreground">No violations</p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Right-click any element in dev mode to flag a design violation
+          </p>
+        </div>
+      )}
 
-        {/* Grouped by route */}
-        <div className="space-y-6">
-          {Object.entries(grouped).map(([route, items]) => (
-            <div key={route}>
-              <div className="flex items-center gap-2 mb-2">
-                <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">
-                  {route}
-                </span>
-                <span className="text-xs text-muted-foreground">{items.length} item{items.length > 1 ? "s" : ""}</span>
-              </div>
-              <div className="border border-border rounded-lg overflow-hidden divide-y divide-border">
-                {items.map(v => (
-                  <div
+      {!loading && violations.length > 0 && (
+        <div className="rounded-md border border-border">
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-muted/40">
+                <TableHead className="w-4" />
+                <TableHead>Type</TableHead>
+                <TableHead>Route</TableHead>
+                <TableHead className="max-w-80">Description</TableHead>
+                <TableHead>Priority</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead className="w-40">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {violations.map(v => (
+                <>
+                  <TableRow
                     key={v.id}
-                    className="flex items-start gap-3 px-4 py-3 hover:bg-muted/50 cursor-pointer transition-colors"
+                    className="cursor-pointer hover:bg-muted/50"
                     onClick={() => setSelected(selected?.id === v.id ? null : v)}
                   >
-                    {/* Status dot */}
-                    <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${
-                      v.status === "open" ? "bg-red-500" :
-                      v.status === "in_progress" ? "bg-amber-500" :
-                      v.status === "fixed" ? "bg-green-500" : "bg-zinc-400"
-                    }`} />
-
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded border ${STATUS_COLORS[v.status]}`}>
-                          {v.status === "wont_fix" ? "Won't fix" : v.status.replace("_", " ")}
-                        </span>
-                        <span className="text-xs font-medium text-foreground">
-                          {TYPE_LABELS[v.violation_type] ?? v.violation_type}
-                        </span>
-                        {v.priority === "high" && (
-                          <span className="text-[10px] text-red-600 font-medium">HIGH</span>
+                    <TableCell className="py-2">
+                      <div className={`w-2 h-2 rounded-full ${STATUS_DOT[v.status] ?? "bg-zinc-400"}`} />
+                    </TableCell>
+                    <TableCell className="py-2 text-xs font-medium">
+                      {TYPE_LABELS[v.violation_type] ?? v.violation_type}
+                    </TableCell>
+                    <TableCell className="py-2">
+                      <span className="font-mono text-[11px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                        {v.route}
+                      </span>
+                    </TableCell>
+                    <TableCell className="py-2 text-xs text-muted-foreground max-w-80 truncate">
+                      {v.element_description ?? v.notes ?? "—"}
+                    </TableCell>
+                    <TableCell className="py-2">
+                      {v.priority === "high" && (
+                        <span className="text-[10px] text-red-600 font-semibold">HIGH</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="py-2 text-[11px] text-muted-foreground">
+                      {new Date(v.created_at).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell className="py-2">
+                      <div className="flex items-center gap-1.5">
+                        {v.status === "open" && (
+                          <>
+                            <Button size="xs" variant="outline" onClick={(e) => { e.stopPropagation(); updateStatus(v.id, "in_progress"); }}>
+                              Start
+                            </Button>
+                            <Button size="xs" variant="ghost" onClick={(e) => { e.stopPropagation(); updateStatus(v.id, "wont_fix"); }}>
+                              Skip
+                            </Button>
+                          </>
+                        )}
+                        {v.status === "in_progress" && (
+                          <Button size="xs" onClick={(e) => { e.stopPropagation(); updateStatus(v.id, "fixed"); }}>
+                            Mark fixed
+                          </Button>
+                        )}
+                        {(v.status === "fixed" || v.status === "wont_fix") && (
+                          <Button size="xs" variant="outline" onClick={(e) => { e.stopPropagation(); updateStatus(v.id, "open"); }}>
+                            Re-open
+                          </Button>
                         )}
                       </div>
-                      {v.element_description && (
-                        <p className="text-xs text-muted-foreground mt-0.5 truncate">{v.element_description}</p>
-                      )}
-                      {v.notes && (
-                        <p className="text-xs text-foreground mt-1 italic">"{v.notes}"</p>
-                      )}
-                    </div>
-
-                    <span className="text-[10px] text-muted-foreground flex-shrink-0">
-                      {new Date(v.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Expanded detail for selected item */}
-              {selected && items.find(i => i.id === selected.id) && (
-                <div className="mt-2 border border-border rounded-lg p-4 bg-muted/30 space-y-3">
-                  {selected.element_selector && (
-                    <div>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Selector</p>
-                      <code className="text-xs font-mono text-foreground bg-muted px-2 py-1 rounded block">
-                        {selected.element_selector}
-                      </code>
-                    </div>
+                    </TableCell>
+                  </TableRow>
+                  {selected?.id === v.id && (
+                    <TableRow key={`${v.id}-detail`}>
+                      <TableCell colSpan={7} className="bg-muted/30 py-3 px-4">
+                        <div className="space-y-2">
+                          {v.element_selector && (
+                            <div>
+                              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Selector</p>
+                              <code className="text-xs font-mono text-foreground bg-muted px-2 py-1 rounded block">
+                                {v.element_selector}
+                              </code>
+                            </div>
+                          )}
+                          {v.notes && v.notes !== v.element_description && (
+                            <p className="text-xs text-foreground italic">"{v.notes}"</p>
+                          )}
+                          {v.screenshot_url && (
+                            <div className="relative h-40 rounded border border-border overflow-hidden">
+                              <Image src={v.screenshot_url} alt="Screenshot" fill className="object-cover" />
+                            </div>
+                          )}
+                          {v.fixed_in_file && (
+                            <p className="text-xs font-mono text-muted-foreground">Fixed in: {v.fixed_in_file}</p>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
                   )}
-                  {selected.screenshot_url && (
-                    <img src={selected.screenshot_url} alt="Screenshot" className="rounded border border-border max-h-40 object-cover" />
-                  )}
-                  {selected.fixed_in_file && (
-                    <div>
-                      <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Fixed in</p>
-                      <code className="text-xs font-mono text-foreground">{selected.fixed_in_file}</code>
-                    </div>
-                  )}
-                  <div className="flex items-center gap-2 pt-1">
-                    {selected.status === "open" && (
-                      <>
-                        <Button size="sm" variant="outline" onClick={() => updateStatus(selected.id, "in_progress")}>
-                          Mark in progress
-                        </Button>
-                        <Button size="sm" variant="outline" onClick={() => updateStatus(selected.id, "wont_fix")}>
-                          Won't fix
-                        </Button>
-                      </>
-                    )}
-                    {selected.status === "in_progress" && (
-                      <Button size="sm" onClick={() => updateStatus(selected.id, "fixed")}>
-                        Mark fixed
-                      </Button>
-                    )}
-                    {(selected.status === "fixed" || selected.status === "wont_fix") && (
-                      <Button size="sm" variant="outline" onClick={() => updateStatus(selected.id, "open")}>
-                        Re-open
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          ))}
+                </>
+              ))}
+            </TableBody>
+          </Table>
         </div>
-      </PageContainer>
-    </>
+      )}
+    </PageShell>
   );
 }

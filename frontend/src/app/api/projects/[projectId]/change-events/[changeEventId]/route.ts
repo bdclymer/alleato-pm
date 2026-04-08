@@ -292,6 +292,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       reason: changeEvent.reason,
       scope: changeEvent.scope,
       status: changeEvent.status,
+      workflowStage: (changeEvent as any).workflow_stage ?? null,
       origin: changeEvent.origin,
       description: changeEvent.description,
       expectingRevenue: changeEvent.expecting_revenue,

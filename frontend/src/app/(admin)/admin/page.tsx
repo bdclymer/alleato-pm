@@ -1,31 +1,32 @@
 "use client";
 
 import Link from "next/link";
+
 import {
-  LayoutDashboard,
-  Terminal,
-  Palette,
-  HardHat,
-  FileText,
-  Database,
-  BookOpen,
-  Component,
-  PaintBucket,
   AlertTriangle,
+  ArrowLeftRight,
+  BarChart3,
+  BookOpen,
+  Building2,
+  Component,
+  Database,
+  FileText,
+  FlaskConical,
+  HardHat,
+  Inbox,
+  LayoutDashboard,
   MapIcon,
   Newspaper,
+  Palette,
   Settings,
-  Building2,
-  Table2,
-  FlaskConical,
   Sparkles,
-  BarChart3,
-  Inbox,
-  ArrowLeftRight,
+  Table2,
+  Terminal,
   type LucideIcon,
 } from "lucide-react";
-import { PageShell } from "@/components/layout";
+
 import { SectionHeader } from "@/components/ds";
+import { PageShell } from "@/components/layout";
 
 // ── Section data ────────────────────────────────────────────────────────────
 
@@ -55,6 +56,12 @@ const sections: AdminSection[] = [
         label: "Feedback Inbox",
         href: "/feedback-inbox",
         description: "Client feedback and issue triage",
+        icon: Inbox,
+      },
+      {
+        label: "Annotation Inbox",
+        href: "/annotation-inbox",
+        description: "Agentation annotation queue and replies",
         icon: Inbox,
       },
       {
@@ -110,12 +117,6 @@ const sections: AdminSection[] = [
         icon: Component,
       },
       {
-        label: "Style Guide",
-        href: "/style-guide",
-        description: "Typography, colors, spacing tokens",
-        icon: PaintBucket,
-      },
-      {
         label: "Design System",
         href: "/design-system-update",
         description: "System overview and updates",
@@ -163,12 +164,6 @@ const sections: AdminSection[] = [
         icon: Database,
       },
       {
-        label: "Table Explorer",
-        href: "/tables",
-        description: "Generic table browser",
-        icon: Table2,
-      },
-      {
         label: "RAG Eval",
         href: "/rag-eval",
         description: "RAG pipeline evaluation",
@@ -211,7 +206,7 @@ const sections: AdminSection[] = [
 
 export default function AdminDashboardPage() {
   return (
-    <PageShell variant="content" title="Admin Dashboard">
+    <PageShell variant="dashboard" title="Admin Dashboard">
       {sections.map((section) => (
         <section key={section.title}>
           <SectionHeader title={section.title} count={section.links.length} />

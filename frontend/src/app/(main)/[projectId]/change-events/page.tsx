@@ -558,7 +558,11 @@ export default function ProjectChangeEventsPage(): ReactElement {
 
   // Render expanded row content — fetches line items + markups from API
   const renderExpandedRow = React.useCallback(
-    (item: ChangeEvent, colSpan: number): ReactNode | null => {
+    (
+      item: ChangeEvent,
+      colSpan: number,
+      context?: { columns: Array<{ id: string; width?: number }>; hasSelection: boolean; hasActions: boolean },
+    ): ReactNode | null => {
       if (!expandedIds.has(String(item.id))) return null;
 
       return (
@@ -566,6 +570,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
           changeEventId={item.id}
           projectId={projectId}
           colSpan={colSpan}
+          context={context}
           expectingRevenue={item.expecting_revenue !== false}
           onEditLineItem={(lineItemId) => {
             router.push(`/${projectId}/change-events/${item.id}?edit=1&lineItem=${lineItemId}`);
@@ -652,6 +657,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
         error,
       }}
       table={{
+        density: "compact",
         columns: tableColumns,
         getRowId: (item) => String(item.id),
         onRowClick: handleView,
@@ -693,16 +699,6 @@ export default function ProjectChangeEventsPage(): ReactElement {
           </Button>
         ) : undefined,
       }}
-      topContent={
-        <ChangeEventSelectionBar
-          selectedCount={tableState.selectedIds.length}
-          hasItems={filteredEvents.length > 0}
-          onSendRfq={() => setShowRfqSheet(true)}
-          selectedChangeEventIds={tableState.selectedIds}
-          projectId={projectId}
-          onSuccess={refetchChangeEvents}
-        />
-      }
       footerTotals={{
         label: "Grand Totals",
         values: {
@@ -736,17 +732,19 @@ export default function ProjectChangeEventsPage(): ReactElement {
     {bulkDeleteDialog.dialog}
     <Sheet open={showRfqSheet} onOpenChange={setShowRfqSheet}>
       <SheetContent className="w-full sm:max-w-2xl overflow-y-auto">
-        <SheetHeader className="mb-6">
+        <SheetHeader>
           <SheetTitle>Send Requests for Quote</SheetTitle>
         </SheetHeader>
-        {selectedChangeEvents.length > 0 && selectedChangeEvents[0] !== undefined && (
-          <ChangeEventRfqForm
-            changeEvent={selectedChangeEvents[0]}
-            isSubmitting={isCreatingRfq}
-            onSubmit={handleSendRfq}
-            onCancel={() => setShowRfqSheet(false)}
-          />
-        )}
+        <div className="px-8 pb-8">
+          {selectedChangeEvents.length > 0 && selectedChangeEvents[0] !== undefined && (
+            <ChangeEventRfqForm
+              changeEvent={selectedChangeEvents[0]}
+              isSubmitting={isCreatingRfq}
+              onSubmit={handleSendRfq}
+              onCancel={() => setShowRfqSheet(false)}
+            />
+          )}
+        </div>
       </SheetContent>
     </Sheet>
     </>

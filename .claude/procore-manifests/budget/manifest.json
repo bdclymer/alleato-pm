@@ -111,6 +111,48 @@
       "_capture_note": "",
       "domFile": "dom/list.html"
     },
+    "budget-details": {
+      "id": "budget-details",
+      "description": "Budget Details tab — ERP Job Cost Detail view with budget codes and cost types",
+      "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/budgets",
+      "screenshot": "screenshots/budget-details.png"
+    },
+    "budget-modifications": {
+      "id": "budget-modifications",
+      "description": "Budget in unlocked state showing Budget Modifications column — inline editing workflow",
+      "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/budgets",
+      "screenshot": "screenshots/budget-modifications.png"
+    },
+    "cost-codes": {
+      "id": "cost-codes",
+      "description": "Cost Code / Cost Type Assignments — project admin view for managing cost codes",
+      "url": "https://us02.procore.com/562949954728542/project/admin",
+      "screenshot": "screenshots/cost-codes.png"
+    },
+    "forecasting": {
+      "id": "forecasting",
+      "description": "Forecasting tab — configure forecasting views and forecast to complete",
+      "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/budgets",
+      "screenshot": "screenshots/forecasting.png"
+    },
+    "project-status-snapshots": {
+      "id": "project-status-snapshots",
+      "description": "Project Status Snapshots tab — create and compare budget snapshots over time",
+      "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/budgets",
+      "screenshot": "screenshots/project-status-snapshots.png"
+    },
+    "change-history": {
+      "id": "change-history",
+      "description": "Change History tab — full audit log of all budget changes",
+      "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/budgets",
+      "screenshot": "screenshots/change-history.png"
+    },
+    "settings": {
+      "id": "settings",
+      "description": "Budget Settings — formatting, forecasting options, and budget modification permissions",
+      "url": "https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/budgets",
+      "screenshot": "screenshots/settings.png"
+    },
     "create-form": {
       "id": "create-form",
       "description": "Budget edit / create form",

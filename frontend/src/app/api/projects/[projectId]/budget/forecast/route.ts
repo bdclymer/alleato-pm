@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 interface ForecastParams {
@@ -21,43 +20,32 @@ interface ForecastParams {
 export async function GET(request: NextRequest, { params }: ForecastParams) {
   try {
     const { projectId } = await params;
-    const supabase = await createClient();
+    const origin = request.nextUrl.origin;
+    const budgetResponse = await fetch(`${origin}/api/projects/${projectId}/budget`, {
+      headers: {
+        cookie: request.headers.get("cookie") ?? "",
+      },
+      cache: "no-store",
+    });
 
-    // Check authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    // Fetch budget summary data
-    const { data: budgetLines, error: budgetError } = await supabase
-      .from("budget_lines")
-      .select(
-        `
-        id,
-        cost_code_id,
-        original_amount,
-        revised_budget,
-        direct_costs,
-        committed_costs,
-        cost_codes (
-          code,
-          name
-        )
-      `,
-      )
-      .eq("project_id", parseInt(projectId, 10));
-
-    if (budgetError) {
+    if (!budgetResponse.ok) {
       return NextResponse.json(
         { error: "Failed to fetch budget data" },
-        { status: 500 },
+        { status: budgetResponse.status },
       );
     }
+
+    const budgetData = (await budgetResponse.json()) as {
+      lineItems?: Array<{
+        originalBudgetAmount?: number;
+        revisedBudget?: number;
+        projectedBudget?: number;
+        projectedCosts?: number;
+        projectedOverUnder?: number;
+        costCode?: string;
+        costCodeDescription?: string;
+      }>;
+    };
 
     // Calculate forecasts
     let totalProjectedBudget = 0;
@@ -73,35 +61,23 @@ export async function GET(request: NextRequest, { params }: ForecastParams) {
       projectedVariance: number;
     }> = [];
 
-    budgetLines?.forEach((line) => {
-      const original = Number(line.original_amount) || 0;
-      const revised = Number(line.revised_budget) || original;
-      const directCosts = Number(line.direct_costs) || 0;
-      const committedCosts = Number(line.committed_costs) || 0;
-
-      // Projected budget = revised budget (includes approved changes)
-      const projectedBudget = revised;
-
-      // Projected costs = direct + committed costs
-      const projectedCosts = directCosts + committedCosts;
-
-      // Variance = projected budget - projected costs
-      const projectedVariance = projectedBudget - projectedCosts;
+    (budgetData.lineItems ?? []).forEach((line) => {
+      const original = Number(line.originalBudgetAmount) || 0;
+      const revised = Number(line.revisedBudget) || original;
+      const projectedBudget = Number(line.projectedBudget) || revised;
+      const projectedCosts = Number(line.projectedCosts) || 0;
+      const projectedVariance =
+        Number(line.projectedOverUnder) || projectedBudget - projectedCosts;
 
       totalOriginalBudget += original;
       totalRevisedBudget += revised;
       totalProjectedBudget += projectedBudget;
       totalProjectedCosts += projectedCosts;
 
-      const costCode = line.cost_codes as unknown as {
-        code: string;
-        name: string;
-      } | null;
-
-      if (costCode) {
+      if (line.costCode) {
         forecastByCostCode.push({
-          costCode: costCode.code,
-          costCodeName: costCode.name,
+          costCode: line.costCode,
+          costCodeName: line.costCodeDescription || "",
           projectedBudget,
           projectedCosts,
           projectedVariance,

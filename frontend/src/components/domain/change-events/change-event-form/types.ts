@@ -145,7 +145,7 @@ export const TYPE_OPTIONS = [
 
 export const CHANGE_REASON_OPTIONS = [
   { value: "allowance", label: "Allowance" },
-  { value: "backcharge", label: "Backcharge" },
+  { value: "back_charge", label: "Back Charge" },
   { value: "client_request", label: "Client Request" },
   { value: "design_development", label: "Design Development" },
   { value: "existing_condition", label: "Existing Condition" },

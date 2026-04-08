@@ -385,15 +385,15 @@
   /* Placeholder color — single source of truth */
   input::placeholder,
   textarea::placeholder {
-    color: hsl(var(--muted-foreground) / 0.6);
+    color: hsl(var(--muted-foreground));
   }
 
   [data-placeholder] {
-    color: hsl(var(--muted-foreground) / 0.6);
+    color: hsl(var(--muted-foreground));
   }
 
   [role="combobox"][data-placeholder-style] {
-    color: hsl(var(--muted-foreground) / 0.6);
+    color: hsl(var(--muted-foreground));
   }
 
   /* Contenteditable readability */

@@ -26,9 +26,11 @@ Usage:
 
 import argparse
 import asyncio
+import hashlib
 import json
 import logging
 import os
+import re
 import sys
 import time
 from dataclasses import asdict, dataclass, field
@@ -472,6 +474,140 @@ def get_clients():
     return create_client(url, key, options), OpenAI(api_key=openai_key)
 
 
+def _normalize_text(value: str) -> str:
+    return re.sub(r"\s+", " ", re.sub(r"[^a-z0-9/\-_ ]+", " ", (value or "").lower())).strip()
+
+
+def _fingerprint(parts: List[Any]) -> str:
+    payload = "|".join(_normalize_text(str(part or "")) for part in parts if part)
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()[:32]
+
+
+def _extract_keywords(text: str, limit: int = 8) -> List[str]:
+    stopwords = {
+        "the", "and", "for", "with", "that", "this", "from", "have", "what",
+        "when", "were", "been", "they", "them", "into", "onto", "your",
+        "about", "there", "their", "would", "could", "should", "after",
+        "before", "more", "than", "just", "over", "under", "does", "did",
+        "done", "using", "used", "user", "users", "agent", "eval", "failure",
+    }
+    words = [
+        word for word in _normalize_text(text).split(" ")
+        if len(word) >= 4 and word not in stopwords
+    ]
+    deduped: List[str] = []
+    for word in words:
+        if word not in deduped:
+            deduped.append(word)
+        if len(deduped) >= limit:
+            break
+    return deduped
+
+
+def _build_eval_failure_prompt(result: "EvalResult") -> str:
+    prevention_parts = [
+        f"For {result.category} scenarios like '{result.scenario_name}', ground the answer in live project data instead of generic advice.",
+    ]
+    if result.scores.missed_items:
+        prevention_parts.append(
+            "Do not miss these required points: " + "; ".join(result.scores.missed_items[:4]) + "."
+        )
+    prevention_parts.append(
+        "Make the response concrete, cite specific facts when available, and surface uncertainty explicitly when data is missing."
+    )
+    return " ".join(prevention_parts)
+
+
+def _embed_learning(openai_client: OpenAI, text: str) -> Optional[List[float]]:
+    try:
+        response = openai_client.embeddings.create(
+            model="text-embedding-3-large",
+            dimensions=3072,
+            input=text[:8000],
+        )
+        return response.data[0].embedding
+    except Exception as exc:
+        logger.warning(f"Failed to embed eval failure learning: {exc}")
+        return None
+
+
+def upsert_eval_failure_learning(supabase, openai_client: OpenAI, result: "EvalResult") -> None:
+    if result.scores.passed:
+        return
+
+    learning_key = _fingerprint([
+        "eval_failure",
+        result.category,
+        result.scenario_name,
+        *result.scores.missed_items[:3],
+    ])
+    title = f"Eval failure: {result.scenario_name}"
+    symptoms = "\n".join(
+        part for part in [
+            f"Judge reasoning: {result.scores.reasoning}",
+            "Missed items: " + "; ".join(result.scores.missed_items) if result.scores.missed_items else None,
+            f"Query: {result.query}",
+        ]
+        if part
+    )
+    prevention_prompt = _build_eval_failure_prompt(result)
+    scope_tags = _extract_keywords(
+        " ".join(
+            [result.category, result.scenario_name, result.query, *result.scores.missed_items]
+        )
+    )
+    embedding = _embed_learning(
+        openai_client,
+        "\n\n".join([title, symptoms, prevention_prompt, " ".join(scope_tags)]),
+    )
+
+    existing_result = (
+        supabase.table("agent_learnings")
+        .select("id, occurrences, confidence, evidence")
+        .eq("learning_key", learning_key)
+        .limit(1)
+        .execute()
+    )
+    existing = (existing_result.data or [None])[0]
+    occurrences = int((existing or {}).get("occurrences", 0)) + 1
+    confidence = max(float((existing or {}).get("confidence", 0.0)), max(0.55, 1.0 - result.scores.score))
+    evidence = list((existing or {}).get("evidence", []) or [])
+    evidence.append({
+        "scenario_id": result.scenario_id,
+        "scenario_name": result.scenario_name,
+        "category": result.category,
+        "score": result.scores.score,
+        "missed_items": result.scores.missed_items,
+        "reasoning": result.scores.reasoning,
+    })
+    evidence = evidence[-10:]
+
+    payload = {
+        "learning_key": learning_key,
+        "title": title,
+        "source": "eval_failure",
+        "status": "active",
+        "problem_signature": f"{result.category} {result.scenario_name} {' '.join(result.scores.missed_items[:3])}",
+        "symptoms": symptoms,
+        "root_cause": result.scores.reasoning,
+        "fix_pattern": None,
+        "prevention_prompt": prevention_prompt,
+        "scope_tags": scope_tags,
+        "page_path": None,
+        "tool_id": None,
+        "project_id": None,
+        "occurrences": occurrences,
+        "confidence": confidence,
+        "evidence": evidence,
+        "last_seen_at": time.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "activated_at": time.strftime("%Y-%m-%dT%H:%M:%SZ"),
+    }
+    if embedding:
+        payload["embedding"] = json.dumps(embedding)
+
+    supabase.table("agent_learnings").upsert(payload, on_conflict="learning_key").execute()
+
+
 # ---------------------------------------------------------------------------
 # Agent invocation
 # ---------------------------------------------------------------------------
@@ -786,6 +922,7 @@ def save_results(
                             "category": r.category,
                         }),
                     }).execute()
+                    upsert_eval_failure_learning(supabase, openai_client, r)
                 logger.info(f"Results saved to eval_runs (run_id: {run_id})")
         except Exception as e:
             logger.warning(f"Failed to save to DB (tables may not exist yet): {e}")

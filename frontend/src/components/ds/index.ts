@@ -31,6 +31,16 @@ export { DataTable } from "./data-table";
 export type { TableColumn, DataTableProps } from "./data-table";
 export { EmptyState } from "./empty-state";
 export { Eyebrow } from "./eyebrow";
+export { PageBadge } from "./page-badge";
+
+// Detail page primitives
+export { BackButton } from "./BackButton";
+export { InfoAlert } from "./InfoAlert";
+export { DetailField, DetailFieldGrid } from "./DetailField";
+export { ConfirmDeleteDialog } from "./ConfirmDeleteDialog";
+export { DetailActions } from "./DetailActions";
+export { EditModeActions } from "./EditModeActions";
+export { SplitButton } from "./SplitButton";
 
 // ---------------------------------------------------------------------------
 // Approved shadcn/ui Primitives (re-exported for single import path)

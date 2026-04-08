@@ -438,6 +438,30 @@ export function useChangeEventDetail(
     [projectId, changeEventId, lineItems, fetchChangeEventDetails],
   );
 
+  const deleteLineItem = useCallback(
+    async (lineItemId: string) => {
+      try {
+        const res = await fetch(
+          `${baseUrl(projectId, changeEventId)}/line-items/${lineItemId}`,
+          { method: "DELETE" },
+        );
+        if (!res.ok) {
+          const msg = await parseError(res, "Failed to delete line item");
+          toast.error(msg);
+          throw new Error(msg);
+        }
+        setLineItems((prev) => prev.filter((li) => li.id !== lineItemId));
+        toast.success("Line item deleted");
+      } catch (err) {
+        if (!(err instanceof Error && err.message.startsWith("Failed to delete"))) {
+          toast.error("Failed to delete line item");
+        }
+        throw err;
+      }
+    },
+    [projectId, changeEventId],
+  );
+
   /* ── Related item actions ─────────────────────────────────────── */
 
   const fetchRelatedItemOptions = useCallback(
@@ -548,6 +572,7 @@ export function useChangeEventDetail(
       refetch,
       updateStatus,
       deleteChangeEvent,
+      deleteLineItem,
       submitEdit,
       fetchRelatedItemOptions,
       linkRelatedItem,

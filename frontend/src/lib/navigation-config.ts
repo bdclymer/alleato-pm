@@ -573,6 +573,14 @@ export const adminSettingsTools: HeaderNavigationTool[] = [
     adminOnly: true,
   },
   {
+    name: "Annotation Inbox",
+    path: "/annotation-inbox",
+    requiresProject: false,
+    icon: MessageCircle,
+    description: "Agentation annotation triage",
+    adminOnly: true,
+  },
+  {
     name: "Settings",
     path: "settings/plugins",
     requiresProject: false,
@@ -610,6 +618,14 @@ export const adminSettingsTools: HeaderNavigationTool[] = [
     requiresProject: false,
     icon: Wrench,
     description: "Procore tool modules and implementation status",
+    adminOnly: true,
+  },
+  {
+    name: "Tools",
+    path: "/tools",
+    requiresProject: false,
+    icon: Wrench,
+    description: "Browse all Alleato tools by category",
     adminOnly: true,
   },
 ];

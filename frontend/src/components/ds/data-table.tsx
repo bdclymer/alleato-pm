@@ -52,13 +52,13 @@ export function DataTable<T extends { id: string | number }>({
   return (
     <div className={cn("w-full overflow-x-auto", className)}>
       <table className="w-full">
-        <thead className="bg-muted/40">
+        <thead className="bg-primary/5">
           <tr className="border-b border-border">
             {columns.map((col) => (
               <th
                 key={col.key}
                 className={cn(
-                  "py-2.5 px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground",
+                  "py-2 px-3 text-[11px] font-medium text-foreground/70",
                   col.align === "right" ? "text-right" : "text-left",
                   col.width
                 )}

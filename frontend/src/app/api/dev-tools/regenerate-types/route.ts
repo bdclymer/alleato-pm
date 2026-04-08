@@ -26,15 +26,16 @@ export async function POST() {
       )
     }
 
-    // Run the types generation command
+    // Run types generation + Dev Tools FK sync
     const typesPath = path.join(process.cwd(), "src/types/database.types.ts")
-    const command = `npx supabase gen types typescript --project-id "${projectId}" --schema public > "${typesPath}"`
+    const fkSyncScript = path.join(process.cwd(), "..", "scripts", "dev-tools", "generate-page-schema-fk-map.mjs")
+    const command = `npx supabase gen types typescript --project-id "${projectId}" --schema public > "${typesPath}" && node "${fkSyncScript}"`
 
     await execAsync(command)
 
     return NextResponse.json({
       success: true,
-      message: "Types regenerated successfully",
+      message: "Types regenerated and Dev Tools schema FK targets synced successfully",
     })
   } catch (error) {
     return apiErrorResponse(error)

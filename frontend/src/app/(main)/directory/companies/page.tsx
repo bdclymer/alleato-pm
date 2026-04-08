@@ -47,6 +47,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { StatusBadge } from "@/components/ds";
 
 interface CompanyRow {
   id: string;
@@ -301,20 +302,15 @@ function CompanyPreviewPane({
       <div className="flex-1 overflow-y-auto">
         {/* Company header */}
         <div className="px-5 pt-5 pb-4">
-          <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-              <Building2 className="h-5 w-5" />
-            </div>
-            <div className="min-w-0 flex-1">
-              <h3 className="text-sm font-semibold leading-tight truncate">{displayName}</h3>
-              <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                {typeLabel && (
-                  <CellBadge value={company.company_type} colorMap={TYPE_COLORS} />
-                )}
-                {company.status && (
-                  <CellBadge value={company.status} colorMap={STATUS_COLORS} />
-                )}
-              </div>
+          <div className="min-w-0">
+            <h3 className="text-sm font-semibold leading-tight truncate">{displayName}</h3>
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+              {typeLabel && (
+                <StatusBadge status={typeLabel} />
+              )}
+              {company.status && (
+                <CellBadge value={company.status} colorMap={STATUS_COLORS} />
+              )}
             </div>
           </div>
         </div>
@@ -351,23 +347,6 @@ function CompanyPreviewPane({
             </div>
           </div>
         )}
-
-        {/* Stats section */}
-        <div className="px-5 pb-4">
-          <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
-            Overview
-          </p>
-          <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-md bg-background p-3">
-              <p className="text-lg font-semibold">{company.contact_count}</p>
-              <p className="text-xs text-muted-foreground">Contacts</p>
-            </div>
-            <div className="rounded-md bg-background p-3">
-              <p className="text-lg font-semibold">{company.project_count}</p>
-              <p className="text-xs text-muted-foreground">Projects</p>
-            </div>
-          </div>
-        </div>
 
         {/* Additional details */}
         {(company.erp_vendor_id || company.created_at) && (

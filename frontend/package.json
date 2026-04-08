@@ -299,6 +299,7 @@
     "@types/sortablejs": "^1.15.9",
     "@typescript-eslint/eslint-plugin": "^8.54.0",
     "@typescript-eslint/parser": "^8.54.0",
+    "agentation-mcp": "^1.2.0",
     "allure-commandline": "^2.36.0",
     "allure-playwright": "^3.4.5",
     "axe-playwright": "^2.2.2",

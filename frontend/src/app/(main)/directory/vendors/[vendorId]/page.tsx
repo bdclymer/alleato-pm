@@ -7,9 +7,8 @@ import { ArrowLeft, Check, Mail, MoreVertical, Phone } from "lucide-react";
 
 import type { Database } from "@/types/database.types";
 import { createClient } from "@/lib/supabase/client";
-import { PageShell } from "@/components/layout";
+import { LabelValueRow, PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { StatusBadge } from "@/components/ds";
 import {
@@ -74,10 +73,9 @@ function getContactInitials(contact: Contact): string {
 
 function DetailField({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="space-y-1">
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-      <div className="text-sm text-foreground">{value}</div>
-    </div>
+    <LabelValueRow label={label}>
+      <span className="text-sm text-foreground">{value}</span>
+    </LabelValueRow>
   );
 }
 
@@ -92,6 +90,12 @@ export default function VendorDetailPage() {
   const [contacts, setContacts] = React.useState<Contact[]>([]);
   const [availableContacts, setAvailableContacts] = React.useState<Contact[]>([]);
   const [isLoadingContacts, setIsLoadingContacts] = React.useState(false);
+
+  type CommitmentRow = { id: string; number: string; title: string | null; status: string; contract_amount: number | null; type: string; project_id: number; projects: { id: number; name: string } | null };
+  type DirectCostRow = { id: string; description: string | null; total_amount: number; date: string; invoice_number: string | null; status: string; project_id: number; projects: { id: number; name: string } | null };
+  const [commitments, setCommitments] = React.useState<CommitmentRow[]>([]);
+  const [vendorDirectCosts, setVendorDirectCosts] = React.useState<DirectCostRow[]>([]);
+  const [isLoadingProjects, setIsLoadingProjects] = React.useState(false);
   const [addContactComboboxOpen, setAddContactComboboxOpen] = React.useState(false);
   const [addContactModalOpen, setAddContactModalOpen] = React.useState(false);
   const [contactQuery, setContactQuery] = React.useState("");
@@ -186,6 +190,39 @@ export default function VendorDetailPage() {
     void loadContacts(vendor.company_id);
     void loadAvailableContacts(vendor.company_id);
   }, [loadAvailableContacts, loadContacts, vendor?.company_id]);
+
+  React.useEffect(() => {
+    if (!vendor) return;
+    let isActive = true;
+    const load = async () => {
+      setIsLoadingProjects(true);
+      try {
+        const supabase = createClient();
+        const [{ data: subs }, { data: costs }] = await Promise.all([
+          vendor.company_id
+            ? supabase
+                .from("subcontracts")
+                .select("id, number, title, status, contract_amount, type, project_id, projects(id, name)")
+                .eq("contract_company_id", vendor.company_id)
+                .order("created_at", { ascending: false })
+            : Promise.resolve({ data: [] }),
+          supabase
+            .from("direct_costs")
+            .select("id, description, total_amount, date, invoice_number, status, project_id, projects(id, name)")
+            .eq("vendor_id", vendorId)
+            .order("date", { ascending: false })
+            .limit(20),
+        ]);
+        if (!isActive) return;
+        setCommitments((subs ?? []) as CommitmentRow[]);
+        setVendorDirectCosts((costs ?? []) as DirectCostRow[]);
+      } finally {
+        if (isActive) setIsLoadingProjects(false);
+      }
+    };
+    void load();
+    return () => { isActive = false; };
+  }, [vendor, vendorId]);
 
   if (isLoading) {
     return (
@@ -313,7 +350,7 @@ export default function VendorDetailPage() {
 
   return (
     <PageShell
-      variant="detail"
+      variant="detailWide"
       title={vendor.name}
       description={location || normalizeVendorField(vendor.legal_name) || "Vendor details"}
       onBack={() => router.push("/directory/vendors")}
@@ -332,7 +369,6 @@ export default function VendorDetailPage() {
           <div className="space-y-3">
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <StatusBadge status={vendor.is_active ? "Active" : "Inactive"} />
-              {vendor.vendor_class ? <Badge variant="outline">{vendor.vendor_class}</Badge> : null}
             </div>
           </div>
 
@@ -361,7 +397,23 @@ export default function VendorDetailPage() {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <DetailField label="Legal Name" value={normalizeVendorField(vendor.legal_name) || "-"} />
-            <DetailField label="Acumatica Vendor ID" value={normalizeVendorField(vendor.acumatica_vendor_id) || "-"} />
+            <DetailField
+              label="Acumatica Vendor ID"
+              value={
+                normalizeVendorField(vendor.acumatica_vendor_id) ? (
+                  <a
+                    href={`https://alleatogroup.acumatica.com/Main?ScreenId=AP303000&AcctCD=${encodeURIComponent(vendor.acumatica_vendor_id ?? "")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline font-mono text-sm"
+                  >
+                    {vendor.acumatica_vendor_id}
+                  </a>
+                ) : (
+                  "-"
+                )
+              }
+            />
             <DetailField label="Payment Method" value={normalizeVendorField(vendor.payment_method) || "-"} />
             <DetailField label="Terms" value={normalizeVendorField(vendor.terms) || "-"} />
             <DetailField label="Tax ID" value={normalizeVendorField(vendor.tax_id) || "-"} />
@@ -381,7 +433,7 @@ export default function VendorDetailPage() {
             </div>
           ) : null}
 
-          <section className="space-y-3">
+          <section className="mt-8 space-y-3">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-foreground">Company Contacts</h3>
               <Popover
@@ -434,7 +486,6 @@ export default function VendorDetailPage() {
                               )}
                             />
                             {contact.first_name} {contact.last_name}
-                            {contact.email ? ` • ${contact.email}` : ""}
                           </CommandItem>
                         ))}
                       </CommandGroup>
@@ -503,6 +554,89 @@ export default function VendorDetailPage() {
                   </div>
                 ))}
               </div>
+            )}
+          </section>
+          {/* Projects & Activity */}
+          <section className="mt-8 space-y-6">
+            <h3 className="text-sm font-semibold text-foreground">Projects & Activity</h3>
+
+            {isLoadingProjects ? (
+              <div className="space-y-2">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+              </div>
+            ) : (
+              <>
+                {/* Commitments */}
+                <div className="space-y-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Commitments ({commitments.length})
+                  </p>
+                  {commitments.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No commitments found.</p>
+                  ) : (
+                    <div className="divide-y divide-border rounded-md border border-border overflow-hidden">
+                      {commitments.map((c) => (
+                        <Link
+                          key={c.id}
+                          href={`/${c.project_id}/commitments/${c.id}`}
+                          className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors"
+                        >
+                          <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-muted-foreground">
+                            {c.type === "purchase_order" ? "PO" : "SC"}
+                          </span>
+                          <span className="flex-1 min-w-0">
+                            <span className="block truncate text-sm">{c.title ?? `Commitment #${c.number}`}</span>
+                            <span className="text-xs text-muted-foreground">{c.projects?.name ?? `Project ${c.project_id}`}</span>
+                          </span>
+                          <div className="flex items-center gap-2 shrink-0">
+                            {c.contract_amount != null && (
+                              <span className="text-xs tabular-nums text-muted-foreground">
+                                {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(c.contract_amount)}
+                              </span>
+                            )}
+                            <StatusBadge status={c.status} />
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Direct Costs / Invoices */}
+                <div className="space-y-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    Invoices & Direct Costs ({vendorDirectCosts.length})
+                  </p>
+                  {vendorDirectCosts.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No direct costs or invoices found.</p>
+                  ) : (
+                    <div className="divide-y divide-border rounded-md border border-border overflow-hidden">
+                      {vendorDirectCosts.map((dc) => (
+                        <Link
+                          key={dc.id}
+                          href={`/${dc.project_id}/direct-costs/${dc.id}`}
+                          className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex-1 min-w-0">
+                            <span className="block truncate text-sm">{dc.description ?? dc.invoice_number ?? "Direct Cost"}</span>
+                            <span className="text-xs text-muted-foreground">
+                              {dc.projects?.name ?? `Project ${dc.project_id}`}
+                              {dc.date ? ` · ${new Date(dc.date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}` : ""}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <span className="text-xs tabular-nums text-muted-foreground">
+                              {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(dc.total_amount)}
+                            </span>
+                            <StatusBadge status={dc.status} />
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </>
             )}
           </section>
         </section>

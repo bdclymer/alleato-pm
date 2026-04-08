@@ -808,7 +808,7 @@ export default function ProjectContractDetailPage() {
         onTabClick={(href) => setActiveTab(href as ContractTab)}
       />
 
-      <div className="px-4 pt-10 md:px-6 lg:px-8">
+      <div className="pt-6">
         {activeTab === "overview" && (
           <PrimeContractOverviewTab
             contract={contract} changeOrders={changeOrders} attachments={attachments} attachmentsLoading={attachmentsLoading}
@@ -820,7 +820,6 @@ export default function ProjectContractDetailPage() {
             onAddSovLine={sov.handleAddSovLine} onAddSovGroup={sov.handleAddSovGroup} onUpdateSovLine={sov.handleUpdateSovLine}
             onUpdateSovLineBudgetCode={sov.handleUpdateSovLineBudgetCode} onRemoveSovLine={sov.handleRemoveSovLine} onReorderSovLines={sov.handleReorderSovLines}
             onRequestCreateBudgetCode={handleRequestCreateBudgetCodeForSovLine} onDeleteSovLine={sov.handleDeleteSovLine}
-            onEditGeneralInfo={() => setIsEditing(true)}
           />
         )}
 

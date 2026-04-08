@@ -11,9 +11,49 @@
  */
 
 import { Agentation } from "agentation";
+import { useEffect, useMemo, useState } from "react";
 
 const MCP_ENDPOINT = "http://localhost:4747";
+const TOOLBAR_SETTINGS_KEY = "feedback-toolbar-settings";
+const BLOCK_INTERACTIONS_MIGRATION_KEY =
+  "feedback-toolbar-settings:block-interactions-default-off";
 
 export function UnifiedFeedbackWidget() {
-  return <Agentation endpoint={MCP_ENDPOINT} />;
+  const [isReady, setIsReady] = useState(false);
+
+  const webhookUrl = useMemo(() => {
+    if (typeof window === "undefined") return undefined;
+    return `${window.location.origin}/api/agentation`;
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    try {
+      const hasMigrated =
+        window.localStorage.getItem(BLOCK_INTERACTIONS_MIGRATION_KEY) === "1";
+
+      if (!hasMigrated) {
+        const savedRaw = window.localStorage.getItem(TOOLBAR_SETTINGS_KEY);
+        const savedSettings = savedRaw ? JSON.parse(savedRaw) : {};
+
+        window.localStorage.setItem(
+          TOOLBAR_SETTINGS_KEY,
+          JSON.stringify({
+            ...savedSettings,
+            blockInteractions: false,
+          }),
+        );
+        window.localStorage.setItem(BLOCK_INTERACTIONS_MIGRATION_KEY, "1");
+      }
+    } catch {
+      // Non-blocking: fall back to Agentation defaults if localStorage is unavailable.
+    } finally {
+      setIsReady(true);
+    }
+  }, []);
+
+  if (!isReady) return null;
+
+  return <Agentation endpoint={MCP_ENDPOINT} webhookUrl={webhookUrl} />;
 }

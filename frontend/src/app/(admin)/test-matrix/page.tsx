@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -67,7 +68,7 @@ interface Run {
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const SUITE = "photos";
+const DEFAULT_SUITE = "photos";
 
 const STATUS_CONFIG: Record<TestStatus, { label: string; color: string; icon: React.ElementType }> = {
   pass:       { label: "Pass",       color: "text-green-600",  icon: CheckCircle2 },
@@ -105,6 +106,10 @@ function calcStats(results: TestResult[]) {
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function TestingPage() {
+  // Suite (from ?suite=... URL param, defaults to photos for back-compat)
+  const searchParams = useSearchParams();
+  const SUITE = searchParams.get("suite") ?? DEFAULT_SUITE;
+
   // Run management
   const [runs, setRuns] = useState<Run[]>([]);
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
@@ -131,7 +136,14 @@ export default function TestingPage() {
     if (!activeRunId && data.runs?.length > 0) {
       setActiveRunId(data.runs[0].id);
     }
-  }, [activeRunId]);
+  }, [activeRunId, SUITE]);
+
+  // Reset selection when suite changes via URL
+  useEffect(() => {
+    setActiveRunId(null);
+    setResults([]);
+    setCursor(0);
+  }, [SUITE]);
 
   useEffect(() => { loadRuns(); }, [loadRuns]);
 

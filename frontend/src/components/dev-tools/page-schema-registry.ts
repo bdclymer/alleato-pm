@@ -5,6 +5,7 @@
  * and form field → DB column mappings. Used by the Developer Tools panel
  * to show contextual schema information for the current page.
  */
+import { PAGE_SCHEMA_FK_TARGETS } from "./page-schema-fk.generated"
 
 export interface ColumnDef {
   name: string
@@ -44,6 +45,21 @@ export interface PageSchemaEntry {
   fieldMappings: FieldMapping[]
 }
 
+function getFkTarget(tableName: string, columnName: string, fallback?: string): string | undefined {
+  return PAGE_SCHEMA_FK_TARGETS[`${tableName}.${columnName}`] ?? fallback
+}
+
+function getMismatchNote(
+  fkTarget: string | undefined,
+  dropdownSource: string | undefined,
+  mismatchNote: string,
+  alignedNote?: string,
+): string | undefined {
+  if (!fkTarget || !dropdownSource) return undefined
+  if (fkTarget === dropdownSource) return alignedNote
+  return mismatchNote
+}
+
 /* ── Change Events ──────────────────────────────────────────────── */
 
 const CHANGE_EVENTS_SCHEMA: PageSchemaEntry = {
@@ -80,9 +96,38 @@ const CHANGE_EVENTS_SCHEMA: PageSchemaEntry = {
       columns: [
         { name: "id", type: "uuid", pk: true },
         { name: "change_event_id", type: "uuid", fk: { table: "change_events", column: "id" } },
-        { name: "budget_code_id", type: "uuid", nullable: true, fk: { table: "budget_lines", column: "id" }, notes: "⚠️ FK → budget_lines.id, but dropdown uses project_cost_codes. Requires ID resolution." },
+        {
+          name: "budget_code_id",
+          type: "uuid",
+          nullable: true,
+          fk: (() => {
+            const fkTarget = getFkTarget("change_event_line_items", "budget_code_id", "budget_lines.id")
+            const [table = "budget_lines", column = "id"] = fkTarget.split(".")
+            return { table, column }
+          })(),
+          notes: getMismatchNote(
+            getFkTarget("change_event_line_items", "budget_code_id", "budget_lines.id"),
+            "project_cost_codes.id",
+            "⚠️ FK → budget_lines.id, but dropdown uses project_cost_codes. Requires ID resolution.",
+          ),
+        },
         { name: "description", type: "text", nullable: true },
-        { name: "vendor_id", type: "uuid", nullable: true, fk: { table: "companies", column: "id" }, notes: "⚠️ FK → companies.id, but dropdown uses vendors. Requires ID resolution." },
+        {
+          name: "vendor_id",
+          type: "uuid",
+          nullable: true,
+          fk: (() => {
+            const fkTarget = getFkTarget("change_event_line_items", "vendor_id", "vendors.id")
+            const [table = "vendors", column = "id"] = fkTarget.split(".")
+            return { table, column }
+          })(),
+          notes: getMismatchNote(
+            getFkTarget("change_event_line_items", "vendor_id", "vendors.id"),
+            "vendors.id",
+            "⚠️ FK → vendors.id, but dropdown uses a different source.",
+            "FK aligns with vendor dropdown source.",
+          ),
+        },
         { name: "contract_id", type: "integer", nullable: true },
         { name: "commitment_id", type: "uuid", nullable: true, notes: "Links to subcontracts or purchase_orders" },
         { name: "commitment_type", type: "text", nullable: true, notes: "'subcontract' or 'purchase_order'" },
@@ -163,7 +208,7 @@ const CHANGE_EVENTS_SCHEMA: PageSchemaEntry = {
     },
     {
       name: "companies",
-      description: "Company records. FK target for change_event_line_items.vendor_id.",
+      description: "Company records.",
       columns: [
         { name: "id", type: "uuid", pk: true },
         { name: "name", type: "text" },
@@ -172,10 +217,10 @@ const CHANGE_EVENTS_SCHEMA: PageSchemaEntry = {
     },
     {
       name: "vendors",
-      description: "Project-scoped vendor records. Dropdown source for vendor selection. NOT the FK target.",
+      description: "Project-scoped vendor records. Dropdown source for vendor selection and FK target for change_event_line_items.vendor_id.",
       columns: [
-        { name: "id", type: "uuid", pk: true, notes: "⚠️ This ID is NOT stored in change_event_line_items.vendor_id" },
-        { name: "company_id", type: "uuid", fk: { table: "companies", column: "id" }, notes: "Maps vendors.id → companies.id for FK resolution" },
+        { name: "id", type: "uuid", pk: true, notes: "Stored directly in change_event_line_items.vendor_id" },
+        { name: "company_id", type: "uuid", fk: { table: "companies", column: "id" } },
         { name: "project_id", type: "integer", nullable: true, fk: { table: "projects", column: "id" } },
       ],
     },
@@ -213,9 +258,32 @@ const CHANGE_EVENTS_SCHEMA: PageSchemaEntry = {
     { formField: "primeContractId", dbColumn: "prime_contract_id", dbTable: "change_events" },
     { formField: "description", dbColumn: "description", dbTable: "change_events" },
     // Line item form fields
-    { formField: "lineItems[].budgetCode", dbColumn: "budget_code_id", dbTable: "change_event_line_items", fkTarget: "budget_lines.id", dropdownSource: "project_cost_codes.id", notes: "⚠️ FK MISMATCH — API resolves pcc.id → budget_lines.id via (cost_code_id, cost_type_id). Auto-creates budget_line if missing." },
+    {
+      formField: "lineItems[].budgetCode",
+      dbColumn: "budget_code_id",
+      dbTable: "change_event_line_items",
+      fkTarget: getFkTarget("change_event_line_items", "budget_code_id", "budget_lines.id"),
+      dropdownSource: "project_cost_codes.id",
+      notes: getMismatchNote(
+        getFkTarget("change_event_line_items", "budget_code_id", "budget_lines.id"),
+        "project_cost_codes.id",
+        "⚠️ FK MISMATCH — API resolves pcc.id → budget_lines.id via (cost_code_id, cost_type_id). Auto-creates budget_line if missing.",
+      ),
+    },
     { formField: "lineItems[].description", dbColumn: "description", dbTable: "change_event_line_items" },
-    { formField: "lineItems[].vendor", dbColumn: "vendor_id", dbTable: "change_event_line_items", fkTarget: "companies.id", dropdownSource: "vendors.id", notes: "⚠️ FK MISMATCH — API resolves vendors.id → companies.id via company_id lookup." },
+    {
+      formField: "lineItems[].vendor",
+      dbColumn: "vendor_id",
+      dbTable: "change_event_line_items",
+      fkTarget: getFkTarget("change_event_line_items", "vendor_id", "vendors.id"),
+      dropdownSource: "vendors.id",
+      notes: getMismatchNote(
+        getFkTarget("change_event_line_items", "vendor_id", "vendors.id"),
+        "vendors.id",
+        "⚠️ FK MISMATCH — API resolves dropdown IDs before write.",
+        "FK aligns with dropdown source.",
+      ),
+    },
     { formField: "lineItems[].contract", dbColumn: "commitment_id + commitment_type", dbTable: "change_event_line_items", notes: "Form stores 'sub-{id}' or 'po-{id}'. Parsed into commitment_id + commitment_type on save." },
     { formField: "lineItems[].commitmentLineItemId", dbColumn: "commitment_line_item_id", dbTable: "change_event_line_items" },
     { formField: "lineItems[].costQuantity", dbColumn: "quantity", dbTable: "change_event_line_items", notes: "Form has separate revenue/cost quantity but DB has one field" },

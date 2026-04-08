@@ -114,6 +114,14 @@ interface CommitmentCompanyRelation {
   name: string | null;
 }
 
+interface VendorRecipientRow {
+  id: string;
+  company_id: string;
+  contact_email: string | null;
+  contact_name: string | null;
+  name: string;
+}
+
 interface CommitmentBaseRow {
   id: string;
   project_id: number;
@@ -1253,10 +1261,7 @@ async function loadCommitmentBundle(
 
   const { data: baseData, error: baseError } = await supabase
     .from(tableName)
-    .select(`
-      *,
-      contract_company:companies!contract_company_id(id, name)
-    `)
+    .select("*")
     .eq("id", recordId)
     .single();
 
@@ -1279,8 +1284,22 @@ async function loadCommitmentBundle(
 
   const base = baseData as unknown as CommitmentBaseRow;
   const totals = (totalsResult.data ?? {}) as CommitmentTotalsRow;
-  const company = coerceSingle(base.contract_company);
   const lineItems = (lineItemsResult.data ?? []) as CommitmentLineItemRow[];
+
+  let vendor: VendorRecipientRow | null = null;
+  if (base.contract_company_id) {
+    const { data: vendorData, error: vendorError } = await supabase
+      .from("vendors")
+      .select("id, company_id, contact_email, contact_name, name")
+      .eq("id", base.contract_company_id)
+      .single();
+
+    if (vendorError && vendorError.code !== "PGRST116") {
+      throw new Error(`Failed to load vendor: ${vendorError.message}`);
+    }
+
+    vendor = (vendorData ?? null) as VendorRecipientRow | null;
+  }
 
   const { data: projectData } = await supabase
     .from("projects")
@@ -1300,13 +1319,38 @@ async function loadCommitmentBundle(
     contractorName = contractorCompany?.name || contractorName;
   }
 
-  const recipients = await fetchPeopleSuggestions(
+  const contactRecipients = await fetchPeopleSuggestions(
     supabase,
-    company?.id
-      ? [{ companyId: company.id, role: isSubcontract ? "Subcontractor contact" : "Vendor contact" }]
+    vendor?.company_id
+      ? [{ companyId: vendor.company_id, role: isSubcontract ? "Subcontractor contact" : "Vendor contact" }]
       : [],
     base.invoice_contact_ids ?? [],
   );
+
+  const recipients = (() => {
+    const merged = new Map<string, DocumentRecipientSuggestion>();
+
+    if (vendor?.contact_email) {
+      merged.set(vendor.contact_email.toLowerCase(), {
+        id: `vendor-contact-${vendor.id}`,
+        email: vendor.contact_email,
+        name: vendor.contact_name || vendor.name || vendor.contact_email,
+        source: isSubcontract ? "Subcontractor contact" : "Vendor contact",
+        defaultSelected: true,
+      });
+    }
+
+    for (const recipient of contactRecipients) {
+      merged.set(recipient.email.toLowerCase(), recipient);
+    }
+
+    return Array.from(merged.values()).sort((left, right) => {
+      if (left.defaultSelected !== right.defaultSelected) {
+        return left.defaultSelected ? -1 : 1;
+      }
+      return left.name.localeCompare(right.name);
+    });
+  })();
 
   const number = base.contract_number || (isSubcontract ? "Subcontract" : "Purchase Order");
   const title = base.title || (isSubcontract ? "Subcontract" : "Purchase Order");
@@ -1325,7 +1369,7 @@ async function loadCommitmentBundle(
     defaultSubject: `${number} - ${title}`,
     parties: {
       contractor: contractorName,
-      counterparty: company?.name || "Not set",
+      counterparty: vendor?.name || "Not set",
     },
     project: {
       name: project?.name || "Not set",
@@ -1336,7 +1380,7 @@ async function loadCommitmentBundle(
       {
         title: "Overview",
         fields: [
-          { label: "Company", value: company?.name || "Not set" },
+          { label: "Company", value: vendor?.name || "Not set" },
           { label: "Description", value: formatPlainValue(base.description) },
           { label: "Executed", value: formatBool(base.executed) },
           { label: "Accounting Method", value: formatPlainValue(base.accounting_method) },

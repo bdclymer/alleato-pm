@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronRight, ChevronsUpDown, GitCompare, Inbox, Menu } from "lucide-react";
+import { ChevronRight, ChevronsUpDown, GitCompare, Inbox, Menu, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
 import { useProjectPermissions } from "@/hooks/use-project-permissions";
@@ -140,6 +140,15 @@ export function SiteHeader() {
           >
             <Inbox className="h-4 w-4" />
           </Link>
+          {(isAppAdmin || userType === "developer") && (
+            <Link
+              href="/annotation-inbox"
+              className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+              aria-label="Annotation inbox"
+            >
+              <Sparkles className="h-4 w-4" />
+            </Link>
+          )}
           <React.Suspense fallback={null}>
             <NotificationBell />
           </React.Suspense>

@@ -560,55 +560,10 @@ export default function UpdatesPage() {
     }).filter(({ entries }) => entries.length > 0);
   }, [search, areaFilter, typeFilter]);
 
-  const totalEntries = RELEASES.reduce((sum, r) => sum + r.entries.length, 0);
 
   return (
-    <PageShell variant="content" title="What's New" description="A running log of features added, improved, and fixed across all areas of the platform.">
+    <PageShell variant="detail" title="What's New" description="A running log of features added, improved, and fixed across all areas of the platform.">
     <div>
-
-      {/* Stats row */}
-      <div className="flex items-center gap-6 mb-8 p-4 rounded-lg bg-muted/40 border border-border">
-        {[
-          {
-            label: "Releases",
-            value: RELEASES.length,
-            color: "text-foreground",
-          },
-          {
-            label: "Updates",
-            value: totalEntries,
-            color: "text-foreground",
-          },
-          {
-            label: "New features",
-            value: RELEASES.flatMap((r) => r.entries).filter(
-              (e) => e.type === "new"
-            ).length,
-            color: "text-emerald-600",
-          },
-          {
-            label: "Improvements",
-            value: RELEASES.flatMap((r) => r.entries).filter(
-              (e) => e.type === "improved"
-            ).length,
-            color: "text-blue-600",
-          },
-          {
-            label: "Bug fixes",
-            value: RELEASES.flatMap((r) => r.entries).filter(
-              (e) => e.type === "fixed"
-            ).length,
-            color: "text-amber-600",
-          },
-        ].map(({ label, value, color }) => (
-          <div key={label} className="text-center">
-            <p className={cn("text-2xl font-semibold tabular-nums", color)}>
-              {value}
-            </p>
-            <p className="text-xs text-muted-foreground mt-0.5">{label}</p>
-          </div>
-        ))}
-      </div>
 
       {/* Filters */}
       <div className="flex items-center gap-3 mb-8">

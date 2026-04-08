@@ -64,7 +64,7 @@ interface ProjectCommandCenterProps {
   changeOrders: ChangeOrder[];
   rfis: RFI[];
   commitments: Commitment[];
-  commitmentSovTotal?: number;
+  commitmentTotal?: number;
   contracts: Contract[];
   contractLineItems?: Pick<ContractLineItem, "contract_id" | "total_cost" | "quantity" | "unit_cost">[];
   changeEvents?: ChangeEvent[];
@@ -168,26 +168,6 @@ function StatPill({ label, value, tone = "neutral" }: StatPillProps) {
   );
 }
 
-interface ProgressBarProps {
-  value: number; // 0–100
-  tone?: "neutral" | "warning" | "danger" | "success";
-}
-function ProgressBar({ value, tone = "neutral" }: ProgressBarProps) {
-  return (
-    <div className="h-1.5 w-full rounded-full bg-border overflow-hidden">
-      <div
-        className={cn(
-          "h-full rounded-full transition-all",
-          tone === "danger" && "bg-destructive",
-          tone === "warning" && "bg-amber-500 dark:bg-amber-400",
-          tone === "success" && "bg-emerald-500 dark:bg-emerald-400",
-          tone === "neutral" && "bg-primary"
-        )}
-        style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
-      />
-    </div>
-  );
-}
 
 /* ─────────────────────────────────────────────────────────────
    Main component
@@ -200,7 +180,7 @@ export function ProjectCommandCenter({
   changeOrders,
   rfis,
   commitments,
-  commitmentSovTotal = 0,
+  commitmentTotal = 0,
   contracts,
   contractLineItems = [],
   changeEvents = [],
@@ -223,7 +203,6 @@ export function ProjectCommandCenter({
   const costToDate = grandTotals.jobToDateCostDetail;
   const ecac = grandTotals.estimatedCostAtCompletion;
   const variance = grandTotals.projectedOverUnder;
-  const committedCosts = grandTotals.committedCosts;
   const spendPct = pct(costToDate, revisedBudget);
   const varianceTone: "success" | "danger" | "warning" =
     variance > 0 ? "success" : variance < 0 ? "danger" : "warning";
@@ -434,9 +413,15 @@ export function ProjectCommandCenter({
                       label: "Budget",
                       value: fmtFull(revisedBudget),
                       href: `/${projectId}/budget`,
-                      context: revisedBudget !== grandTotals.originalBudgetAmount
+                      context: costToDate > 0
+                        ? `${fmtCompact(costToDate)} of ${fmtCompact(revisedBudget)} spent`
+                        : revisedBudget !== grandTotals.originalBudgetAmount
                         ? `Original ${fmtFull(grandTotals.originalBudgetAmount)}`
                         : undefined,
+                      progress: {
+                        value: spendPct,
+                        tone: spendPct > 90 ? "danger" : spendPct > 75 ? "warning" : "neutral",
+                      },
                     },
                     {
                       label: "Prime Contract",
@@ -448,7 +433,7 @@ export function ProjectCommandCenter({
                     },
                     {
                       label: "Commitments",
-                      value: fmtFull(commitmentSovTotal || null),
+                      value: fmtFull(commitmentTotal || null),
                       href: `/${projectId}/commitments`,
                       context: commitments.length > 0
                         ? `${commitments.length} commitment${commitments.length !== 1 ? "s" : ""}`
@@ -464,34 +449,6 @@ export function ProjectCommandCenter({
                     },
                   ]}
                 />
-
-                {/* Spend progress */}
-                <div>
-                  <div className="flex items-center justify-between text-xs mb-1.5">
-                    <span className="text-muted-foreground">Cost to Date</span>
-                    <span className="tabular-nums font-medium">
-                      {fmtCompact(costToDate)} / {fmtCompact(revisedBudget)}
-                    </span>
-                  </div>
-                  <ProgressBar
-                    value={spendPct}
-                    tone={spendPct > 90 ? "danger" : spendPct > 75 ? "warning" : "neutral"}
-                  />
-                </div>
-
-                {/* Committed progress */}
-                <div>
-                  <div className="flex items-center justify-between text-xs mb-1.5">
-                    <span className="text-muted-foreground">Committed Costs</span>
-                    <span className="tabular-nums font-medium">
-                      {fmtCompact(committedCosts)} ({pct(committedCosts, revisedBudget || 1)}%)
-                    </span>
-                  </div>
-                  <ProgressBar
-                    value={pct(committedCosts, revisedBudget || 1)}
-                    tone="neutral"
-                  />
-                </div>
 
                 {/* Variance callout */}
                 {variance !== 0 && (
@@ -519,26 +476,6 @@ export function ProjectCommandCenter({
                   </div>
                 )}
 
-                {/* Stat row */}
-                <div className="flex flex-wrap gap-2 pt-1">
-                  <StatPill
-                    label="Approved COs"
-                    value={fmtCompact(grandTotals.approvedCOs)}
-                    tone="neutral"
-                  />
-                  {grandTotals.pendingChanges > 0 && (
-                    <StatPill
-                      label="Pending"
-                      value={fmtCompact(grandTotals.pendingChanges)}
-                      tone="warning"
-                    />
-                  )}
-                  <StatPill
-                    label="Forecast to Complete"
-                    value={fmtCompact(grandTotals.forecastToComplete)}
-                    tone="neutral"
-                  />
-                </div>
               </div>
             )}
           </section>
@@ -563,117 +500,78 @@ export function ProjectCommandCenter({
             {!hasPipelineData ? (
               <p className="text-sm text-muted-foreground">No pipeline items</p>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-3">
+                {/* Summary counts */}
                 <div className="flex flex-wrap gap-2">
-                  {ceDraft > 0 && <StatPill label="Draft" value={ceDraft} tone="neutral" />}
+                  {ceDraft > 0 && <StatPill label="Draft CEs" value={ceDraft} tone="neutral" />}
+                  {cePending > 0 && <StatPill label="Pending" value={cePending} tone="warning" />}
                   {ceApproved > 0 && <StatPill label="Approved" value={ceApproved} tone="success" />}
                   {ceRejected > 0 && <StatPill label="Rejected" value={ceRejected} tone="danger" />}
                 </div>
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
-                  <div className="rounded-md border border-border/70 bg-background">
-                    <div className="flex items-center justify-between border-b border-border/70 px-3 py-2">
-                      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                        Change Events
-                      </p>
-                      <span className="text-xs text-muted-foreground">{sortedChangeEvents.length}</span>
-                    </div>
-                    <div className="p-2 space-y-2">
-                      {sortedChangeEvents.length === 0 ? (
-                        <p className="px-1 py-2 text-xs text-muted-foreground">No active change events</p>
-                      ) : (
-                        sortedChangeEvents.map((ce) => (
-                          <Link
-                            key={ce.id}
-                            href={`/${projectId}/change-events/${ce.id}`}
-                            className="block rounded-md border border-border/60 px-2.5 py-2 hover:bg-muted/50 transition-colors"
-                          >
-                            <p className="text-sm font-medium leading-snug truncate">
-                              {ce.title ?? `Change Event #${ce.number}`}
-                            </p>
-                            <p className="mt-1 text-xs text-muted-foreground truncate">
-                              {ce.number ? `#${ce.number} · ` : ""}{ce.type}
-                            </p>
-                          </Link>
-                        ))
-                      )}
-                    </div>
-                  </div>
 
-                  <div className="rounded-md border border-border/70 bg-background">
-                    <div className="flex items-center justify-between border-b border-border/70 px-3 py-2">
-                      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                        Potential Change Orders
-                      </p>
-                      <span className="text-xs text-muted-foreground">{potentialChangeOrders.length}</span>
-                    </div>
-                    <div className="p-2 space-y-2">
-                      {potentialChangeOrders.length === 0 ? (
-                        <p className="px-1 py-2 text-xs text-muted-foreground">No potential change orders</p>
-                      ) : (
-                        potentialChangeOrders.map((co: ChangeOrder) => (
-                          <Link
-                            key={`pco-${co.id}`}
-                            href={`/${projectId}/change-orders/prime/${co.id}`}
-                            className="block rounded-md border border-border/60 px-2.5 py-2 hover:bg-muted/50 transition-colors"
-                          >
-                            <p className="text-sm font-medium leading-snug truncate">
-                              {co.title ?? "Untitled PCO"}
-                            </p>
-                            <p className="mt-1 text-xs text-muted-foreground truncate">
-                              {co.pcco_number ?? `PCO #${co.id}`}
-                            </p>
-                            <div className="mt-2 flex items-center justify-between gap-2">
-                              <StatusBadge status={co.status ?? "Proposed"} />
-                              <span className="text-xs tabular-nums text-muted-foreground">
-                                {fmtCompact(co.total_amount)}
-                              </span>
-                            </div>
-                          </Link>
-                        ))
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="rounded-md border border-border/70 bg-background">
-                    <div className="flex items-center justify-between border-b border-border/70 px-3 py-2">
-                      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                        Change Orders
-                      </p>
-                      <span className="text-xs text-muted-foreground">{approvedChangeOrders.length}</span>
-                    </div>
-                    <div className="p-2 space-y-2">
-                      {approvedChangeOrders.length === 0 ? (
-                        <p className="px-1 py-2 text-xs text-muted-foreground">No change orders</p>
-                      ) : (
-                        approvedChangeOrders.map((co: ChangeOrder) => {
-                          const isCommitmentCo = Boolean(co.change_order_number);
-                          const coHref = isCommitmentCo
-                            ? `/${projectId}/change-orders/commitment/${co.id}`
-                            : `/${projectId}/change-orders/prime/${co.id}`;
-                          return (
-                          <Link
-                            key={`co-${co.id}`}
-                            href={coHref}
-                            className="block rounded-md border border-border/60 px-2.5 py-2 hover:bg-muted/50 transition-colors"
-                          >
-                            <p className="text-sm font-medium leading-snug truncate">
-                              {co.title ?? "Untitled CO"}
-                            </p>
-                            <p className="mt-1 text-xs text-muted-foreground truncate">
-                              {co.change_order_number ?? `CO #${co.id}`}
-                            </p>
-                            <div className="mt-2 flex items-center justify-between gap-2">
-                              <StatusBadge status={co.status ?? "Pending"} />
-                              <span className="text-xs tabular-nums text-muted-foreground">
-                                {fmtCompact(co.amount ?? co.total_amount)}
-                              </span>
-                            </div>
-                          </Link>
-                          );
-                        })
-                      )}
-                    </div>
-                  </div>
+                {/* Unified flat list */}
+                <div className="divide-y divide-border rounded-md border border-border overflow-hidden">
+                  {sortedChangeEvents.map((ce) => (
+                    <Link
+                      key={ce.id}
+                      href={`/${projectId}/change-events/${ce.id}`}
+                      className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors"
+                    >
+                      <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-muted-foreground">
+                        CE
+                      </span>
+                      <span className="flex-1 truncate text-sm">
+                        {ce.title ?? `Change Event #${ce.number}`}
+                      </span>
+                      <StatusBadge status={ce.status ?? "Draft"} />
+                    </Link>
+                  ))}
+                  {potentialChangeOrders.map((co: ChangeOrder) => (
+                    <Link
+                      key={`pco-${co.id}`}
+                      href={`/${projectId}/change-orders/prime/${co.id}`}
+                      className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors"
+                    >
+                      <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-muted-foreground">
+                        PCO
+                      </span>
+                      <span className="flex-1 truncate text-sm">
+                        {co.title ?? "Untitled PCO"}
+                      </span>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-xs tabular-nums text-muted-foreground">
+                          {fmtCompact(co.total_amount)}
+                        </span>
+                        <StatusBadge status={co.status ?? "Proposed"} />
+                      </div>
+                    </Link>
+                  ))}
+                  {approvedChangeOrders.map((co: ChangeOrder) => {
+                    const isCommitmentCo = Boolean(co.change_order_number);
+                    const coHref = isCommitmentCo
+                      ? `/${projectId}/change-orders/commitment/${co.id}`
+                      : `/${projectId}/change-orders/prime/${co.id}`;
+                    return (
+                      <Link
+                        key={`co-${co.id}`}
+                        href={coHref}
+                        className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors"
+                      >
+                        <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-muted-foreground">
+                          CO
+                        </span>
+                        <span className="flex-1 truncate text-sm">
+                          {co.title ?? "Untitled CO"}
+                        </span>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-xs tabular-nums text-muted-foreground">
+                            {fmtCompact(co.amount ?? co.total_amount)}
+                          </span>
+                          <StatusBadge status={co.status ?? "Pending"} />
+                        </div>
+                      </Link>
+                    );
+                  })}
                 </div>
               </div>
             )}

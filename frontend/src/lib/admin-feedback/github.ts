@@ -180,6 +180,26 @@ async function postIssue(
   };
 }
 
+async function addIssueComment(
+  config: NonNullable<ReturnType<typeof getRepoConfig>>,
+  issueNumber: number,
+  body: string,
+) {
+  await fetch(
+    `https://api.github.com/repos/${config.owner}/${config.repo}/issues/${issueNumber}/comments`,
+    {
+      method: "POST",
+      headers: {
+        Accept: "application/vnd.github+json",
+        Authorization: `Bearer ${config.token}`,
+        "Content-Type": "application/json",
+        "X-GitHub-Api-Version": "2022-11-28",
+      },
+      body: JSON.stringify({ body }),
+    },
+  );
+}
+
 async function addLabels(
   config: NonNullable<ReturnType<typeof getRepoConfig>>,
   issueNumber: number,
@@ -233,6 +253,13 @@ export async function createGitHubIssue(input: CreateGitHubIssueInput) {
     await addLabels(config, issue.number, labels);
   } catch {
     // Non-fatal — issue was created, labels are secondary
+  }
+
+  // Post @claude comment to trigger auto-assignment to Claude Code
+  try {
+    await addIssueComment(config, issue.number, "@claude");
+  } catch {
+    // Non-fatal
   }
 
   return issue;

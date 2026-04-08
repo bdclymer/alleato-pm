@@ -36,6 +36,7 @@ import { toast } from "sonner";
 import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
 // ---------------------------------------------------------------------------
@@ -109,7 +110,6 @@ type DisplayStatus = Exclude<StatusFilter, "all">;
 // ---------------------------------------------------------------------------
 
 const STATUS_FILTERS: { value: StatusFilter; label: string }[] = [
-  { value: "open", label: "Open" },
   { value: "in_progress", label: "In Progress" },
   { value: "resolved", label: "Resolved" },
   { value: "all", label: "All" },
@@ -261,56 +261,116 @@ function getSavedPanelWidth(): number {
 }
 
 /** Render simple markdown: bold, italic, inline code, links, line breaks */
-function renderSimpleMarkdown(text: string): React.ReactNode[] {
-  const lines = text.split("\n");
+function renderInlineMarkdown(text: string, keyPrefix: string): React.ReactNode[] {
+  const parts = text.split(/(\*\*[^*]+\*\*|_[^_]+_|`[^`]+`|\[([^\]]+)\]\(([^)]+)\))/g);
   const nodes: React.ReactNode[] = [];
-
-  for (let li = 0; li < lines.length; li++) {
-    if (li > 0) nodes.push(<br key={`br-${li}`} />);
-
-    const line = lines[li];
-    // Split by markdown patterns
-    const parts = line.split(/(\*\*[^*]+\*\*|_[^_]+_|`[^`]+`|\[([^\]]+)\]\(([^)]+)\))/g);
-
-    for (let i = 0; i < parts.length; i++) {
-      const part = parts[i];
-      if (!part) continue;
-
-      if (part.startsWith("**") && part.endsWith("**")) {
-        nodes.push(<strong key={`${li}-${i}`}>{part.slice(2, -2)}</strong>);
-      } else if (part.startsWith("_") && part.endsWith("_")) {
-        nodes.push(<em key={`${li}-${i}`}>{part.slice(1, -1)}</em>);
-      } else if (part.startsWith("`") && part.endsWith("`")) {
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i];
+    if (!part) continue;
+    if (part.startsWith("**") && part.endsWith("**")) {
+      nodes.push(<strong key={`${keyPrefix}-${i}`}>{part.slice(2, -2)}</strong>);
+    } else if (part.startsWith("_") && part.endsWith("_")) {
+      nodes.push(<em key={`${keyPrefix}-${i}`}>{part.slice(1, -1)}</em>);
+    } else if (part.startsWith("`") && part.endsWith("`")) {
+      nodes.push(
+        <code key={`${keyPrefix}-${i}`} className="rounded bg-muted px-1 py-0.5 text-[11px] font-mono">
+          {part.slice(1, -1)}
+        </code>,
+      );
+    } else if (part.startsWith("[")) {
+      const linkText = parts[i + 1];
+      const linkUrl = parts[i + 2];
+      if (linkText && linkUrl) {
         nodes.push(
-          <code key={`${li}-${i}`} className="rounded bg-muted px-1 py-0.5 text-[11px] font-mono">
-            {part.slice(1, -1)}
-          </code>,
+          <a key={`${keyPrefix}-${i}`} href={linkUrl} target="_blank" rel="noopener noreferrer"
+            className="text-primary underline hover:opacity-80 break-all">
+            {linkText}
+          </a>,
         );
-      } else if (part.startsWith("[")) {
-        // Link — the regex captures the text and url in subsequent groups
-        const linkText = parts[i + 1];
-        const linkUrl = parts[i + 2];
-        if (linkText && linkUrl) {
-          nodes.push(
-            <a
-              key={`${li}-${i}`}
-              href={linkUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary underline"
-            >
-              {linkText}
-            </a>,
-          );
-          i += 2; // skip the captured groups
-        }
-      } else {
-        nodes.push(part);
+        i += 2;
       }
+    } else {
+      nodes.push(part);
     }
   }
-
   return nodes;
+}
+
+function renderSimpleMarkdown(text: string): React.ReactNode {
+  const lines = text.split("\n");
+  const nodes: React.ReactNode[] = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+
+    // Fenced code block
+    if (line.startsWith("```")) {
+      const codeLines: string[] = [];
+      i++;
+      while (i < lines.length && !lines[i].startsWith("```")) {
+        codeLines.push(lines[i]);
+        i++;
+      }
+      nodes.push(
+        <pre key={`code-${i}`} className="my-1.5 overflow-x-auto rounded bg-muted px-3 py-2 text-[11px] font-mono leading-relaxed whitespace-pre-wrap">
+          {codeLines.join("\n")}
+        </pre>,
+      );
+      i++;
+      continue;
+    }
+
+    // Headings
+    const h3 = line.match(/^### (.+)/);
+    const h2 = line.match(/^## (.+)/);
+    const h1 = line.match(/^# (.+)/);
+    if (h1) {
+      nodes.push(<h1 key={`h1-${i}`} className="mt-2 mb-1 text-base font-semibold text-foreground">{h1[1]}</h1>);
+      i++; continue;
+    }
+    if (h2) {
+      nodes.push(<h2 key={`h2-${i}`} className="mt-2 mb-1 text-sm font-semibold text-foreground">{h2[1]}</h2>);
+      i++; continue;
+    }
+    if (h3) {
+      nodes.push(<h3 key={`h3-${i}`} className="mt-1.5 mb-0.5 text-xs font-semibold text-foreground">{h3[1]}</h3>);
+      i++; continue;
+    }
+
+    // Bullet list
+    if (line.match(/^[-*] /)) {
+      const items: string[] = [];
+      while (i < lines.length && lines[i].match(/^[-*] /)) {
+        items.push(lines[i].replace(/^[-*] /, ""));
+        i++;
+      }
+      nodes.push(
+        <ul key={`ul-${i}`} className="my-1 ml-4 list-disc space-y-0.5">
+          {items.map((item, idx) => (
+            <li key={`${i}-${idx}-${item.slice(0, 20)}`} className="text-sm">{renderInlineMarkdown(item, `ul-${i}-${idx}`)}</li>
+          ))}
+        </ul>,
+      );
+      continue;
+    }
+
+    // Blank line → spacer
+    if (line.trim() === "") {
+      nodes.push(<div key={`gap-${i}`} className="h-1.5" />);
+      i++; continue;
+    }
+
+    // Normal paragraph line
+    nodes.push(
+      <p key={`p-${i}`} className="text-sm leading-relaxed">
+        {renderInlineMarkdown(line, `p-${i}`)}
+      </p>,
+    );
+    i++;
+  }
+
+  return <>{nodes}</>;
 }
 
 // ---------------------------------------------------------------------------
@@ -649,7 +709,7 @@ function CommentsSection({
 
   return (
     <div>
-      <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-primary/70 mb-2">
         Comments
       </p>
 
@@ -761,7 +821,7 @@ function GitHubActivitySection({ issueNumber }: { issueNumber: number }) {
   return (
     <div>
       <div className="flex items-center gap-2 mb-2">
-        <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-primary/70">
           GitHub Activity
         </p>
         <span className="text-[10px] text-muted-foreground">
@@ -809,7 +869,7 @@ function GitHubActivitySection({ issueNumber }: { issueNumber: number }) {
                   {relativeTime(comment.created_at)}
                 </span>
               </div>
-              <div className="mt-0.5 text-sm text-foreground whitespace-pre-wrap leading-relaxed">
+              <div className="mt-0.5 text-foreground">
                 {renderSimpleMarkdown(comment.body)}
               </div>
             </div>
@@ -1226,7 +1286,7 @@ function ToolContextSection({ item }: { item: FeedbackItem }) {
 
   return (
     <div>
-      <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
+      <p className="text-[11px] font-semibold uppercase tracking-wider text-primary/70 mb-2">
         Tool Context
       </p>
 
@@ -1534,7 +1594,7 @@ function FeedbackDetail({
 
       {/* Page context */}
       <div>
-        <p className="mb-2 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+        <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-primary/70">
           Page Context
         </p>
         <div className="space-y-1.5">
@@ -1599,7 +1659,7 @@ export default function FeedbackInboxPage() {
   const [items, setItems] = useState<FeedbackItem[]>([]);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<StatusFilter>("open");
+  const [filter, setFilter] = useState<StatusFilter>("in_progress");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [sendingToGitHub, setSendingToGitHub] = useState(false);
@@ -1819,23 +1879,11 @@ export default function FeedbackInboxPage() {
 
   return (
     <PageShell
-      variant="detailWide"
+      variant="dashboard"
       title="Feedback Inbox"
+      showHeader={false}
+      className="px-0! py-0!"
       description="Review feedback, assign tools, and sync issues to GitHub."
-      actions={
-        <div className="hidden items-center gap-4 lg:flex">
-          <span className="text-xs text-muted-foreground">
-            {total} {total === 1 ? "item" : "items"}
-          </span>
-          <p className="text-[10px] text-muted-foreground">
-            <kbd className="rounded border border-border px-1 py-0.5 text-[9px]">&uarr;&darr;</kbd> navigate
-            <span className="mx-1.5 text-border">|</span>
-            <kbd className="rounded border border-border px-1 py-0.5 text-[9px]">c</kbd> comment
-            <span className="mx-1.5 text-border">|</span>
-            <kbd className="rounded border border-border px-1 py-0.5 text-[9px]">g</kbd> github
-          </p>
-        </div>
-      }
     >
       <div className="flex h-full min-h-0 flex-col">
       <div className="flex flex-1 min-h-0">
@@ -1847,32 +1895,43 @@ export default function FeedbackInboxPage() {
             mobileShowDetail ? "hidden lg:flex" : "flex",
             "w-full lg:w-auto lg:shrink-0",
           )}
-          style={{ maxWidth: panelWidth, minWidth: PANEL_MIN_WIDTH }}
+          style={{ width: panelWidth, minWidth: PANEL_MIN_WIDTH, maxWidth: PANEL_MAX_WIDTH }}
         >
+          {/* Panel header: item count + keyboard hints */}
+          <div className="flex items-center justify-between border-b border-border px-4 py-2">
+            <span className="text-xs text-muted-foreground">
+              {total} {total === 1 ? "item" : "items"}
+            </span>
+            <p className="text-[10px] text-muted-foreground hidden lg:block">
+              <kbd className="rounded border border-border px-1 py-0.5 text-[9px]">&uarr;&darr;</kbd> navigate
+              <span className="mx-1.5 text-border">|</span>
+              <kbd className="rounded border border-border px-1 py-0.5 text-[9px]">c</kbd> comment
+              <span className="mx-1.5 text-border">|</span>
+              <kbd className="rounded border border-border px-1 py-0.5 text-[9px]">g</kbd> github
+            </p>
+          </div>
           {/* Filter tabs */}
-          <div className="flex items-center gap-1 border-b border-border px-4 py-2">
-            {STATUS_FILTERS.map((f) => (
-              <Button
-                key={f.value}
-                variant={filter === f.value ? "secondary" : "ghost"}
-                size="sm"
-                onClick={() => {
-                  setFilter(f.value);
-                  setSelectedId(null);
-                  setMobileShowDetail(false);
-                }}
-                className={cn(
-                  "h-7 px-2.5 text-xs",
-                  filter !== f.value && "text-muted-foreground",
-                )}
-              >
-                {f.label}
-              </Button>
-            ))}
+          <div className="border-b border-border px-3 py-2">
+            <Tabs
+              value={filter}
+              onValueChange={(v) => {
+                setFilter(v as StatusFilter);
+                setSelectedId(null);
+                setMobileShowDetail(false);
+              }}
+            >
+              <TabsList>
+                {STATUS_FILTERS.map((f) => (
+                  <TabsTrigger key={f.value} value={f.value} className="text-xs">
+                    {f.label}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </Tabs>
           </div>
 
           {/* Items */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto bg-muted/20">
             {loading && (
               <div className="flex items-center justify-center py-16">
                 <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
@@ -1880,15 +1939,13 @@ export default function FeedbackInboxPage() {
             )}
 
             {!loading && items.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
+              <div className="flex h-full min-h-48 flex-col items-center justify-center text-center">
                 <CheckCircle2 className="mb-3 h-8 w-8 text-muted-foreground/40" />
                 <p className="text-sm font-medium text-foreground">
                   No feedback items
                 </p>
                 <p className="mt-1 text-xs text-muted-foreground">
-                  {filter === "open"
-                    ? "All clear! No open items."
-                    : `No ${filter} items found.`}
+                  {`No ${filter.replace("_", " ")} items found.`}
                 </p>
               </div>
             )}
@@ -1945,8 +2002,8 @@ export default function FeedbackInboxPage() {
 
                         {/* Meta row */}
                         <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                          <span
-                            role="button"
+                          <button
+                            type="button"
                             tabIndex={-1}
                             className="font-mono text-[10px] text-muted-foreground/60 hover:text-foreground transition-colors cursor-pointer"
                             onClick={(e) => {
@@ -1957,25 +2014,21 @@ export default function FeedbackInboxPage() {
                             title={`Copy ID: ${item.id}`}
                           >
                             #{item.id.slice(0, 8)}
-                          </span>
+                          </button>
                           <span className="text-border">|</span>
                           {(() => {
                             const requestMeta =
                               REQUEST_TYPE_META[item.request_type];
-                            const RequestIcon = requestMeta?.icon ?? MessageSquare;
                             return (
                               <span
                                 className={cn(
-                                  "inline-flex items-center gap-1 text-[10px]",
+                                  "text-[10px] font-normal",
                                   requestMeta?.className ?? "text-muted-foreground",
                                 )}
                               >
-                                <RequestIcon className="h-3 w-3" />
-                                <span className="font-normal">
-                                  {requestMeta?.shortLabel ??
-                                    REQUEST_TYPE_LABELS[item.request_type] ??
-                                    item.request_type}
-                                </span>
+                                {requestMeta?.shortLabel ??
+                                  REQUEST_TYPE_LABELS[item.request_type] ??
+                                  item.request_type}
                               </span>
                             );
                           })()}
@@ -1985,18 +2038,6 @@ export default function FeedbackInboxPage() {
                           </span>
                         </div>
 
-                        {/* Status text for in-progress and resolved states */}
-                        {meta.showInList && (
-                          <div className={cn("mt-0.5 flex items-center gap-1.5 text-[10px] font-medium", meta.className)}>
-                            {displayStatus === "in_progress" && (
-                              <Loader2 className="h-2.5 w-2.5 animate-spin" />
-                            )}
-                            {displayStatus === "resolved" && (
-                              <ShieldCheck className="h-2.5 w-2.5" />
-                            )}
-                            {meta.label}
-                          </div>
-                        )}
 
                       </div>
 

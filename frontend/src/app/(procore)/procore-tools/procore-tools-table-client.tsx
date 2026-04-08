@@ -386,6 +386,11 @@ export function ProcoreToolsTableClient({
       table={{
         columns: tableColumns,
         getRowId: getToolRowId,
+        onRowClick: (item) => {
+          if (item.slug) {
+            router.push(`/procore-tools${item.slug}`);
+          }
+        },
         rowActions: () => (
           <Button variant="ghost" size="icon" className="h-8 w-8">
             <MoreHorizontal />

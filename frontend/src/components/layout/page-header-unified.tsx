@@ -25,6 +25,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
+import { PageTabsV2 } from "@/components/layout/PageTabsV2";
 
 interface BreadcrumbItem {
   label: string;
@@ -107,6 +108,7 @@ export function PageHeader({
   onExportCSV,
   onExportPDF,
   exportLabel = "Export",
+  tabs,
 }: PageHeaderProps) {
   // Subheadings are intentionally suppressed globally to keep page headers tighter.
   void description;
@@ -253,6 +255,11 @@ export function PageHeader({
             </div>
           )}
         </div>
+
+        {/* Tabs — rendered below title/actions, flush with the header bottom */}
+        {tabs && tabs.length > 0 && (
+          <PageTabsV2 tabs={tabs} className="-mx-4 sm:-mx-6 lg:-mx-8 px-0" />
+        )}
       </div>
     </div>
   );

@@ -17,9 +17,11 @@ import {
 } from "@/lib/ai/orchestrator";
 import {
   assembleSystemPrompt,
+  type BotLearningUsageSummary,
   type MemoryUsageSummary,
   runPostResponseTasks,
 } from "@/lib/ai/bot-core";
+import { recordAgentLearningUsages } from "@/lib/ai/services/agent-learning-service";
 
 export const maxDuration = 120;
 
@@ -106,6 +108,7 @@ export async function POST(request: Request) {
   const supabase = createServiceClient();
   const toolTrace: Array<Record<string, unknown>> = [];
   let memoryUsage: MemoryUsageSummary | undefined;
+  let learningUsage: BotLearningUsageSummary | undefined;
 
   // Token usage tracking — populated inside execute(), read in onFinish()
   let totalUsage: {
@@ -113,6 +116,7 @@ export async function POST(request: Request) {
     outputTokens: number | undefined;
     totalTokens: number | undefined;
   } | undefined;
+  let latestResponseQuality: ResponseQuality | undefined;
 
   // Persist the latest user message
   const lastUserMessage = [...messages].reverse().find((m) => m.role === "user");
@@ -150,6 +154,9 @@ export async function POST(request: Request) {
     onMemoryUsage: (usage) => {
       memoryUsage = usage;
     },
+    onLearningUsage: (usage) => {
+      learningUsage = usage;
+    },
   });
   const stream = createUIMessageStream({
     execute: async ({ writer }) => {
@@ -180,6 +187,7 @@ export async function POST(request: Request) {
               toolTrace,
               content,
             });
+            latestResponseQuality = responseQuality;
             await supabase.from("chat_history").insert({
               session_id: sessionId,
               user_id: user.id,
@@ -208,6 +216,16 @@ export async function POST(request: Request) {
                         })),
                       }
                     : null,
+                  learning_usage: learningUsage
+                    ? {
+                        totalUsed: learningUsage.totalUsed,
+                        learnings: learningUsage.learnings.map((learning) => ({
+                          id: learning.id,
+                          title: learning.title,
+                          source: learning.source,
+                        })),
+                      }
+                    : null,
                   usage: totalUsage
                     ? {
                         inputTokens: totalUsage.inputTokens ?? 0,
@@ -229,6 +247,16 @@ export async function POST(request: Request) {
         .update({ last_message_at: new Date().toISOString() })
         .eq("session_id", sessionId)
         .eq("user_id", user.id);
+
+      if (learningUsage?.learnings.length) {
+        await recordAgentLearningUsages({
+          sessionId,
+          userId: user.id,
+          messageText: lastUserContent,
+          responseQualityScore: latestResponseQuality?.score,
+          learnings: learningUsage.learnings,
+        });
+      }
     },
     onError: () => {
       return "An error occurred while generating a response. Please try again.";

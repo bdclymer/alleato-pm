@@ -141,8 +141,18 @@ import {
   TruncatedCell,
   // Misc
   Badge,
+  // New DS components
+  BackButton,
+  InfoAlert,
+  DetailField,
+  DetailFieldGrid,
+  ConfirmDeleteDialog,
+  DetailActions,
+  EditModeActions,
+  SplitButton,
 } from "@/components/ds";
 
+import { cn } from "@/lib/utils";
 import { PageTabsV2 } from "@/components/layout";
 import { SimplePagination } from "@/components/ui/pagination";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
@@ -237,6 +247,75 @@ const TABLE_COLUMNS = [
 ];
 
 // ---------------------------------------------------------------------------
+// Local doc primitives — defined at module scope (never inside a component)
+// ---------------------------------------------------------------------------
+
+function DesignSection({
+  id,
+  title,
+  description,
+  children,
+}: {
+  id?: string;
+  title: string;
+  description?: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <section id={id} className="scroll-mt-24">
+      <div className="mb-8 flex items-baseline gap-6 border-b border-border pb-5">
+        <h2 className="shrink-0 text-xl font-bold tracking-tight text-foreground">
+          {title}
+        </h2>
+        {description && (
+          <p className="text-sm text-muted-foreground leading-snug">{description}</p>
+        )}
+      </div>
+      <div className="space-y-10">{children}</div>
+    </section>
+  );
+}
+
+function SubSection({
+  title,
+  children,
+}: {
+  title: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center gap-3">
+        <p className="shrink-0 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground/50">
+          {title}
+        </p>
+        <div className="h-px flex-1 bg-border/60" />
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function Preview({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "flex flex-wrap items-start gap-4 rounded-lg border border-border/50 bg-muted/20 p-6",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Page component
 // ---------------------------------------------------------------------------
 
@@ -252,57 +331,73 @@ export default function DesignSystemComponentsPage() {
   const [sliderValue, setSliderValue] = useState([33]);
   const [calendarDate, setCalendarDate] = useState<Date | undefined>(new Date());
   const [numberInputValue, setNumberInputValue] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+
+  const NAV_SECTIONS = [
+    { group: "Tokens", items: [
+      { href: "#tokens-colors", label: "Colors" },
+      { href: "#tokens-typography", label: "Typography" },
+      { href: "#tokens-spacing", label: "Spacing" },
+      { href: "#tokens-radius", label: "Radius" },
+      { href: "#tokens-shadows", label: "Shadows" },
+      { href: "#tokens-motion", label: "Motion" },
+    ]},
+    { group: "Components", items: [
+      { href: "#section-layout", label: "1. Layout" },
+      { href: "#section-status", label: "2. Status" },
+      { href: "#section-data", label: "3. Data Display" },
+      { href: "#section-feedback", label: "4. Feedback" },
+      { href: "#section-forms", label: "5. Forms" },
+      { href: "#section-overlays", label: "6. Overlays" },
+      { href: "#section-navigation", label: "7. Navigation" },
+      { href: "#section-cards", label: "8. Cards" },
+      { href: "#section-cells", label: "9. Cell Primitives" },
+      { href: "#section-missing", label: "10. Missing" },
+    ]},
+  ];
 
   return (
-    <PageShell variant="content" title="Design System">
-      <p className="text-sm text-muted-foreground">
-        Living inventory of every design token and component in the Alleato design system. Import
-        from <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono">@/components/ds</code> or{" "}
-        <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono">@/components/layout</code>.
-      </p>
+    <PageShell variant="detailWide" title="Design System" description="Living inventory of every token and component. Import from @/components/ds.">
 
-      {/* ================================================================== */}
-      {/* TABLE OF CONTENTS                                                    */}
-      {/* ================================================================== */}
-      <nav className="sticky top-0 z-10 -mx-1 rounded-lg border border-border bg-card/95 px-4 py-3 backdrop-blur-sm shadow-sm">
-        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Jump to</p>
-        <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-xs">
-          {[
-            { href: "#tokens-colors", label: "Colors" },
-            { href: "#tokens-typography", label: "Typography" },
-            { href: "#tokens-spacing", label: "Spacing" },
-            { href: "#tokens-radius", label: "Radius" },
-            { href: "#tokens-shadows", label: "Shadows" },
-            { href: "#tokens-motion", label: "Motion" },
-            { href: "#section-layout", label: "1. Layout" },
-            { href: "#section-status", label: "2. Status" },
-            { href: "#section-data", label: "3. Data Display" },
-            { href: "#section-feedback", label: "4. Feedback" },
-            { href: "#section-forms", label: "5. Forms" },
-            { href: "#section-overlays", label: "6. Overlays" },
-            { href: "#section-navigation", label: "7. Navigation" },
-            { href: "#section-cards", label: "8. Cards" },
-            { href: "#section-cells", label: "9. Cell Primitives" },
-            { href: "#section-missing", label: "10. Missing" },
-          ].map(({ href, label }) => (
-            <a key={href} href={href} className="text-muted-foreground transition-colors hover:text-primary">
-              {label}
-            </a>
+      {/* 2-column layout: sticky left nav + scrollable content */}
+      <div className="flex gap-8 items-start">
+        {/* Left vertical nav */}
+        <nav className="hidden lg:block w-48 shrink-0 self-start sticky top-4 space-y-6">
+          {NAV_SECTIONS.map((group) => (
+            <div key={group.group}>
+              <p className="mb-2 px-0 text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground/40">
+                {group.group}
+              </p>
+              <ul className="space-y-px">
+                {group.items.map(({ href, label }) => (
+                  <li key={href}>
+                    <a
+                      href={href}
+                      className="flex items-center rounded px-2.5 py-1.5 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    >
+                      {label}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
           ))}
-        </div>
-      </nav>
+        </nav>
+
+        {/* Main content */}
+        <div className="min-w-0 flex-1 space-y-16">
 
       {/* ================================================================== */}
       {/* SECTION 0: DESIGN TOKENS                                            */}
       {/* ================================================================== */}
 
       {/* ── COLORS ────────────────────────────────────────────────────────── */}
-      <div id="tokens-colors" className="scroll-mt-20 space-y-6">
-        <SectionHeader title="Colors" />
+      <DesignSection id="tokens-colors" title="Colors" description="Semantic color tokens. Use only these — zero hex codes, zero gray-*/blue-* classes.">
 
         {/* Background tokens */}
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-foreground">Backgrounds</h3>
+        <SubSection title="Backgrounds">
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
             {[
               { token: "bg-background", label: "background", desc: "Page bg" },
@@ -323,30 +418,29 @@ export default function DesignSystemComponentsPage() {
               </div>
             ))}
           </div>
-        </div>
+        </SubSection>
 
         {/* Text tokens */}
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-foreground">Text</h3>
+        <SubSection title="Text">
           <div className="divide-y divide-border rounded-md border border-border overflow-hidden">
             {[
-              { token: "text-foreground", sample: "Primary text — headings & body" },
-              { token: "text-muted-foreground", sample: "Secondary text — descriptions & labels" },
-              { token: "text-primary", sample: "Brand accent — links & active nav" },
-              { token: "text-destructive", sample: "Error text — destructive actions" },
-              { token: "text-card-foreground", sample: "Text on card surfaces" },
-            ].map(({ token, sample }) => (
-              <div key={token} className="flex items-center justify-between bg-card px-4 py-2.5">
-                <span className={`${token} text-sm`}>{sample}</span>
-                <code className="ml-4 shrink-0 rounded bg-muted px-1.5 py-0.5 text-xs font-mono text-muted-foreground">{token}</code>
+              { token: "text-foreground", bg: "bg-foreground", sample: "Primary text — headings & body" },
+              { token: "text-muted-foreground", bg: "bg-muted-foreground", sample: "Secondary text — descriptions & labels" },
+              { token: "text-primary", bg: "bg-primary", sample: "Brand accent — links & active nav" },
+              { token: "text-destructive", bg: "bg-destructive", sample: "Error text — destructive actions" },
+              { token: "text-card-foreground", bg: "bg-card-foreground", sample: "Text on card surfaces" },
+            ].map(({ token, bg, sample }) => (
+              <div key={token} className="flex items-center gap-4 bg-card px-4 py-2.5">
+                <div className={`${bg} h-6 w-6 shrink-0 rounded border border-border`} />
+                <span className={`${token} flex-1 text-sm`}>{sample}</span>
+                <code className="shrink-0 rounded bg-muted px-1.5 py-0.5 text-xs font-mono text-muted-foreground">{token}</code>
               </div>
             ))}
           </div>
-        </div>
+        </SubSection>
 
         {/* Border tokens */}
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-foreground">Borders</h3>
+        <SubSection title="Borders">
           <div className="divide-y divide-border rounded-md border border-border overflow-hidden">
             {[
               { token: "border-border", desc: "Default borders (use sparingly)" },
@@ -362,11 +456,10 @@ export default function DesignSystemComponentsPage() {
               </div>
             ))}
           </div>
-        </div>
+        </SubSection>
 
         {/* Chart colors */}
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-foreground">Chart Colors</h3>
+        <SubSection title="Chart Colors">
           <div className="flex gap-3 flex-wrap">
             {[
               { cls: "bg-[hsl(var(--chart-1))]", label: "chart-1" },
@@ -381,22 +474,20 @@ export default function DesignSystemComponentsPage() {
               </div>
             ))}
           </div>
-        </div>
+        </SubSection>
 
         {/* Status colors */}
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-foreground">Status Colors</h3>
+        <SubSection title="Status Colors">
           <p className="text-xs text-muted-foreground">Always use <code className="rounded bg-muted px-1 font-mono">StatusBadge</code> — never map these manually.</p>
           <div className="flex flex-wrap gap-2">
             {["Draft", "Pending", "Approved", "Active", "Rejected", "Overdue", "Closed", "In Progress", "Complete", "Submitted", "Cancelled", "Open"].map((s) => (
               <StatusBadge key={s} status={s} />
             ))}
           </div>
-        </div>
+        </SubSection>
 
         {/* CSS variable reference */}
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-foreground">CSS Variable Reference</h3>
+        <SubSection title="CSS Variable Reference">
           <p className="text-xs text-muted-foreground">Defined in <code className="font-mono">globals.css</code>. Never use raw values — always use Tailwind tokens.</p>
           <div className="overflow-x-auto rounded-md border border-border">
             <table className="w-full text-xs">
@@ -431,17 +522,15 @@ export default function DesignSystemComponentsPage() {
               </tbody>
             </table>
           </div>
-        </div>
-      </div>
+        </SubSection>
+      </DesignSection>
 
       <Separator />
 
       {/* ── TYPOGRAPHY ────────────────────────────────────────────────────── */}
-      <div id="tokens-typography" className="scroll-mt-20 space-y-6">
-        <SectionHeader title="Typography" />
+      <DesignSection id="tokens-typography" title="Typography" description="Font stack, size scale, weight, and letter-spacing tokens.">
 
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-foreground">Font Stack</h3>
+        <SubSection title="Font Stack">
           <div className="divide-y divide-border rounded-md border border-border overflow-hidden">
             <div className="bg-card px-4 py-3">
               <p className="font-sans text-base text-foreground">The quick brown fox jumps — Inter (sans)</p>
@@ -452,10 +541,9 @@ export default function DesignSystemComponentsPage() {
               <code className="text-xs text-muted-foreground font-mono">font-mono · JetBrains Mono</code>
             </div>
           </div>
-        </div>
+        </SubSection>
 
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-foreground">Font Sizes</h3>
+        <SubSection title="Font Sizes">
           <div className="divide-y divide-border rounded-md border border-border overflow-hidden">
             {[
               { cls: "text-2xl font-semibold tracking-tight", token: "text-2xl", desc: "24px · Page titles (rare)" },
@@ -474,10 +562,9 @@ export default function DesignSystemComponentsPage() {
               </div>
             ))}
           </div>
-        </div>
+        </SubSection>
 
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-foreground">Font Weights</h3>
+        <SubSection title="Font Weights">
           <div className="divide-y divide-border rounded-md border border-border overflow-hidden">
             {[
               { cls: "font-light", token: "font-light", desc: "Large numbers, KPI values" },
@@ -494,10 +581,9 @@ export default function DesignSystemComponentsPage() {
               </div>
             ))}
           </div>
-        </div>
+        </SubSection>
 
-        <div className="space-y-3">
-          <h3 className="text-sm font-semibold text-foreground">Letter Spacing</h3>
+        <SubSection title="Letter Spacing">
           <div className="divide-y divide-border rounded-md border border-border overflow-hidden">
             {[
               { cls: "tracking-tight", token: "tracking-tight", desc: "−0.025em · Default headings" },
@@ -514,14 +600,13 @@ export default function DesignSystemComponentsPage() {
               </div>
             ))}
           </div>
-        </div>
-      </div>
+        </SubSection>
+      </DesignSection>
 
       <Separator />
 
       {/* ── SPACING ───────────────────────────────────────────────────────── */}
-      <div id="tokens-spacing" className="scroll-mt-20 space-y-6">
-        <SectionHeader title="Spacing" />
+      <DesignSection id="tokens-spacing" title="Spacing" description="Standard spacing scale. Use gap-*, p-*, m-* — no arbitrary values.">
         <p className="text-sm text-muted-foreground">8px grid system. Every value is a multiple of 8px (4px for tight situations).</p>
 
         <div className="space-y-2">
@@ -547,13 +632,12 @@ export default function DesignSystemComponentsPage() {
             </div>
           ))}
         </div>
-      </div>
+      </DesignSection>
 
       <Separator />
 
       {/* ── BORDER RADIUS ─────────────────────────────────────────────────── */}
-      <div id="tokens-radius" className="scroll-mt-20 space-y-6">
-        <SectionHeader title="Border Radius" />
+      <DesignSection id="tokens-radius" title="Border Radius" description="Approved radius values. rounded-md for inputs/cards, rounded-lg for panels.">
         <div className="flex flex-wrap gap-4">
           {[
             { token: "rounded-sm", cls: "rounded-sm", label: "rounded-sm", use: "Tight UI, tags" },
@@ -569,13 +653,12 @@ export default function DesignSystemComponentsPage() {
             </div>
           ))}
         </div>
-      </div>
+      </DesignSection>
 
       <Separator />
 
       {/* ── SHADOWS ───────────────────────────────────────────────────────── */}
-      <div id="tokens-shadows" className="scroll-mt-20 space-y-6">
-        <SectionHeader title="Shadows" />
+      <DesignSection id="tokens-shadows" title="Shadows" description="Only shadow-xs (cards) or shadow-sm (dropdowns). Never shadow-md or larger.">
         <p className="text-sm text-muted-foreground">Only two shadow levels. Most elements have NO shadow — tonal elevation replaces them.</p>
         <div className="flex flex-wrap gap-6">
           {[
@@ -590,16 +673,14 @@ export default function DesignSystemComponentsPage() {
             </div>
           ))}
         </div>
-      </div>
+      </DesignSection>
 
       <Separator />
 
       {/* ── MOTION ────────────────────────────────────────────────────────── */}
-      <div id="tokens-motion" className="scroll-mt-20 space-y-6">
-        <SectionHeader title="Motion / Animation" />
+      <DesignSection id="tokens-motion" title="Motion / Animation" description="Transition and animation utilities for consistent motion.">
         <div className="space-y-4">
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-foreground">Transition Durations</h3>
+          <SubSection title="Transition Durations">
             <div className="overflow-x-auto rounded-md border border-border">
               <table className="w-full text-xs">
                 <thead>
@@ -627,10 +708,9 @@ export default function DesignSystemComponentsPage() {
                 </tbody>
               </table>
             </div>
-          </div>
+          </SubSection>
 
-          <div className="space-y-3">
-            <h3 className="text-sm font-semibold text-foreground">Easing Functions</h3>
+          <SubSection title="Easing Functions">
             <div className="overflow-x-auto rounded-md border border-border">
               <table className="w-full text-xs">
                 <thead>
@@ -657,20 +737,18 @@ export default function DesignSystemComponentsPage() {
                 </tbody>
               </table>
             </div>
-          </div>
+          </SubSection>
         </div>
-      </div>
+      </DesignSection>
 
       {/* ================================================================== */}
       {/* SECTION 1: Layout Components */}
       {/* ================================================================== */}
       <Separator />
-      <div id="section-layout" className="scroll-mt-20 space-y-6">
-        <SectionHeader title="1. Layout Components" />
+      <DesignSection id="section-layout" title="1. Layout Components" description="PageShell, PageContainer, Separator, Accordion, and structural primitives.">
 
       {/* PageShell */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">PageShell</h3>
+      <SubSection title="PageShell">
         <p className="text-sm text-muted-foreground">
           The one entry point for all page layouts. Every new page must use one of these variants.
         </p>
@@ -701,29 +779,26 @@ export default function DesignSystemComponentsPage() {
             </div>
           ))}
         </div>
-      </div>
+      </SubSection>
 
       {/* PageContainer */}
-      <div className="space-y-2">
-        <h3 className="text-base font-semibold text-foreground">PageContainer</h3>
+      <SubSection title="PageContainer">
         <p className="text-sm text-muted-foreground">
           Low-level mx-auto wrapper with responsive padding:{" "}
           <code className="rounded bg-muted px-1.5 py-0.5 text-xs font-mono">px-3 sm:px-5 lg:px-7</code>.
           Used internally by PageShell. Rarely needed directly.
         </p>
-      </div>
+      </SubSection>
 
       {/* PageHeader */}
-      <div className="space-y-2">
-        <h3 className="text-base font-semibold text-foreground">PageHeader / ProjectPageHeader</h3>
+      <SubSection title="PageHeader / ProjectPageHeader">
         <p className="text-sm text-muted-foreground">
           Unified header with title, description, optional actions and status badge. Shown here inside PageShell above.
         </p>
-      </div>
+      </SubSection>
 
       {/* PageTabs */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">PageTabs (border-bottom style)</h3>
+      <SubSection title="PageTabs (border-bottom style)">
         <PageTabs
           variant="inline"
           tabs={[
@@ -737,11 +812,10 @@ export default function DesignSystemComponentsPage() {
         <p className="text-xs text-muted-foreground">
           Site standard. Uses <code className="rounded bg-muted px-1 py-0.5 font-mono">onTabClick</code> for local state or router.push for real navigation.
         </p>
-      </div>
+      </SubSection>
 
       {/* PageTabsV2 */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">PageTabsV2 (pill style)</h3>
+      <SubSection title="PageTabsV2 (pill style)">
         <div className="inline-flex h-9 w-fit items-center justify-center rounded-lg bg-muted/50 p-[3px]">
           {["Tab 1", "Tab 2", "Tab 3"].map((label, i) => {
             const key = `tab${i + 1}`;
@@ -766,11 +840,10 @@ export default function DesignSystemComponentsPage() {
         <p className="text-xs text-muted-foreground">
           Alternative pill-style variant. Imported from <code className="rounded bg-muted px-1 py-0.5 font-mono">@/components/layout</code>.
         </p>
-      </div>
+      </SubSection>
 
       {/* Separator */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">Separator</h3>
+      <SubSection title="Separator">
         <p className="text-sm text-muted-foreground">
           Visual divider for content sections. Supports horizontal (default) and vertical orientations.
         </p>
@@ -790,11 +863,10 @@ export default function DesignSystemComponentsPage() {
             <span className="text-sm text-foreground">Right</span>
           </div>
         </div>
-      </div>
+      </SubSection>
 
       {/* Accordion */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">Accordion</h3>
+      <SubSection title="Accordion">
         <p className="text-sm text-muted-foreground">
           Collapsible content sections. Supports single and multiple mode. Import from{" "}
           <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">@/components/ds</code>.
@@ -821,11 +893,10 @@ export default function DesignSystemComponentsPage() {
             </AccordionContent>
           </AccordionItem>
         </Accordion>
-      </div>
+      </SubSection>
 
       {/* Collapsible */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">Collapsible</h3>
+      <SubSection title="Collapsible">
         <p className="text-sm text-muted-foreground">
           Toggle content visibility with a trigger. More manual than Accordion — use when you need custom trigger UI.
         </p>
@@ -851,19 +922,18 @@ export default function DesignSystemComponentsPage() {
             </div>
           </CollapsibleContent>
         </Collapsible>
-      </div>
+      </SubSection>
 
       {/* ScrollArea */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">ScrollArea</h3>
+      <SubSection title="ScrollArea">
         <p className="text-sm text-muted-foreground">
           Custom scrollbar container. Use for constrained-height lists, code blocks, and side panels.
         </p>
         <ScrollArea className="h-48 w-full rounded-md border border-border">
           <div className="p-4">
-            {Array.from({ length: 20 }, (_, i) => (
-              <div key={i} className="border-b border-border py-2 text-sm text-foreground last:border-b-0">
-                Item {i + 1} — Scrollable content row
+            {["1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20"].map((n) => (
+              <div key={n} className="border-b border-border py-2 text-sm text-foreground last:border-b-0">
+                Item {n} — Scrollable content row
               </div>
             ))}
           </div>
@@ -871,19 +941,17 @@ export default function DesignSystemComponentsPage() {
         <p className="text-xs text-muted-foreground">
           Horizontal scrolling: use <code className="rounded bg-muted px-1 py-0.5 font-mono">ScrollBar orientation=&quot;horizontal&quot;</code>.
         </p>
-      </div>
-      </div>{/* end section-layout */}
+      </SubSection>
+      </DesignSection>{/* end section-layout */}
 
       {/* ================================================================== */}
       {/* SECTION 2: Status Components */}
       {/* ================================================================== */}
       <Separator />
-      <div id="section-status" className="scroll-mt-20 space-y-6">
-        <SectionHeader title="2. Status Components" />
+      <DesignSection id="section-status" title="2. Status Components" description="StatusBadge, StatusDot, StatusText — always use these, never hand-roll status colors.">
 
       {/* StatusBadge */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">StatusBadge</h3>
+      <SubSection title="StatusBadge">
         <p className="text-sm text-muted-foreground">
           Pass a raw status string — colors are resolved automatically via STATUS_TO_VARIANT map.
         </p>
@@ -892,11 +960,10 @@ export default function DesignSystemComponentsPage() {
             <StatusBadge key={s} status={s} />
           ))}
         </div>
-      </div>
+      </SubSection>
 
       {/* StatusDot */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">StatusDot</h3>
+      <SubSection title="StatusDot">
         <p className="text-sm text-muted-foreground">
           Minimal inline dot + label for tables and compact views.
         </p>
@@ -905,11 +972,10 @@ export default function DesignSystemComponentsPage() {
             <StatusDot key={s} status={s} />
           ))}
         </div>
-      </div>
+      </SubSection>
 
       {/* StatusText */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">StatusText</h3>
+      <SubSection title="StatusText">
         <p className="text-sm text-muted-foreground">
           Plain muted text for non-emphasized statuses.
         </p>
@@ -918,20 +984,18 @@ export default function DesignSystemComponentsPage() {
             <StatusText key={s} status={s} />
           ))}
         </div>
-      </div>
+      </SubSection>
 
-      </div>{/* end section-status */}
+      </DesignSection>{/* end section-status */}
 
       {/* ================================================================== */}
       {/* SECTION 3: Data Display */}
       {/* ================================================================== */}
       <Separator />
-      <div id="section-data" className="scroll-mt-20 space-y-6">
-        <SectionHeader title="3. Data Display" />
+      <DesignSection id="section-data" title="3. Data Display" description="KpiBlock, DataTable, SectionHeader, EmptyState, and data visualization primitives.">
 
       {/* KpiRow */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">KpiBlock &amp; KpiRow</h3>
+      <SubSection title="KpiBlock &amp; KpiRow">
         <KpiRow
           metrics={[
             { label: "Total Budget", value: "$2.4M", delta: { value: "3.2%", positive: true }, context: "vs. last quarter" },
@@ -940,17 +1004,15 @@ export default function DesignSystemComponentsPage() {
             { label: "Remaining", value: "$260K", context: "10.8% available" },
           ]}
         />
-      </div>
+      </SubSection>
 
       {/* DataTable */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">DataTable</h3>
+      <SubSection title="DataTable">
         <DataTable columns={TABLE_COLUMNS} rows={TABLE_ROWS} />
-      </div>
+      </SubSection>
 
       {/* SectionHeader */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">SectionHeader</h3>
+      <SubSection title="SectionHeader">
         <div className="rounded-md bg-muted/30 p-4">
           <SectionHeader
             title="Line Items"
@@ -961,29 +1023,26 @@ export default function DesignSystemComponentsPage() {
             Content beneath the section header goes here.
           </p>
         </div>
-      </div>
+      </SubSection>
 
       {/* Eyebrow */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">Eyebrow</h3>
+      <SubSection title="Eyebrow">
         <Eyebrow>SECTION LABEL</Eyebrow>
         <p className="text-sm text-muted-foreground">
           11px uppercase tracking-wider. Tier 1 text hierarchy.
         </p>
-      </div>
+      </SubSection>
 
       {/* DateAvatar */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">DateAvatar</h3>
+      <SubSection title="DateAvatar">
         <div className="flex items-center gap-6">
           <DateAvatar date="2026-03-26" size="md" />
           <DateAvatar date="2026-12-25" size="sm" />
         </div>
-      </div>
+      </SubSection>
 
       {/* AvatarStack */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">AvatarStack</h3>
+      <SubSection title="AvatarStack">
         <div className="flex items-center gap-6">
           <AvatarStack avatars={["JD", "MH", "BC", "TS"]} max={4} size="md" />
           <AvatarStack avatars={["JD", "MH", "BC", "TS"]} max={3} size="sm" />
@@ -991,11 +1050,10 @@ export default function DesignSystemComponentsPage() {
         <p className="text-sm text-muted-foreground">
           Overlapping avatar initials. Props: avatars (string[]), max, size (sm | md).
         </p>
-      </div>
+      </SubSection>
 
       {/* Avatar + AvatarGroup */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">Avatar &amp; AvatarGroup (shadcn)</h3>
+      <SubSection title="Avatar &amp; AvatarGroup (shadcn)">
         <p className="text-sm text-muted-foreground">
           Base avatar primitives from shadcn. Use for individual avatars or composable groups with overflow count.
         </p>
@@ -1025,11 +1083,10 @@ export default function DesignSystemComponentsPage() {
           </Avatar>
           <AvatarGroupCount>+5</AvatarGroupCount>
         </AvatarGroup>
-      </div>
+      </SubSection>
 
       {/* Progress */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">Progress</h3>
+      <SubSection title="Progress">
         <p className="text-sm text-muted-foreground">
           Linear progress indicator. Pass a <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">value</code> between 0 and 100.
         </p>
@@ -1070,11 +1127,10 @@ export default function DesignSystemComponentsPage() {
             <Progress value={100} />
           </div>
         </div>
-      </div>
+      </SubSection>
 
       {/* HoverCard */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">HoverCard</h3>
+      <SubSection title="HoverCard">
         <p className="text-sm text-muted-foreground">
           Content card that appears on hover. Use for user profiles, link previews, or contextual details.
         </p>
@@ -1104,41 +1160,37 @@ export default function DesignSystemComponentsPage() {
             </div>
           </HoverCardContent>
         </HoverCard>
-      </div>
+      </SubSection>
 
-      </div>{/* end section-data */}
+      </DesignSection>{/* end section-data */}
 
       {/* ================================================================== */}
       {/* SECTION 4: Feedback & States */}
       {/* ================================================================== */}
       <Separator />
-      <div id="section-feedback" className="scroll-mt-20 space-y-6">
-        <SectionHeader title="4. Feedback & States" />
+      <DesignSection id="section-feedback" title="4. Feedback & States" description="Alert, Skeleton, Spinner, Progress, Toast — for async states and system feedback.">
 
       {/* EmptyState */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">EmptyState</h3>
+      <SubSection title="EmptyState">
         <EmptyState
           icon={<FolderOpen />}
           title="No contracts yet"
           description="Create your first contract to start tracking commitments and change orders."
           action={{ label: "New Contract", onClick: () => {} }}
         />
-      </div>
+      </SubSection>
 
       {/* Skeleton */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">Skeleton</h3>
+      <SubSection title="Skeleton">
         <div className="space-y-2">
           <Skeleton className="h-4 w-3/4" />
           <Skeleton className="h-4 w-1/2" />
           <Skeleton className="h-8 w-full" />
         </div>
-      </div>
+      </SubSection>
 
       {/* Alert */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">Alert — All Variants</h3>
+      <SubSection title="Alert — All Variants">
         <div className="grid gap-3">
           <Alert>
             <Info />
@@ -1176,31 +1228,28 @@ export default function DesignSystemComponentsPage() {
             </AlertDescription>
           </Alert>
         </div>
-      </div>
+      </SubSection>
 
       {/* Spinner */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">Spinner</h3>
+      <SubSection title="Spinner">
         <div className="flex items-center gap-4">
           <Spinner className="size-4" />
           <Spinner className="size-6" />
           <Spinner className="size-8" />
           <span className="text-sm text-muted-foreground">Sizes: 16px, 24px, 32px</span>
         </div>
-      </div>
+      </SubSection>
 
-      </div>{/* end section-feedback */}
+      </DesignSection>{/* end section-feedback */}
 
       {/* ================================================================== */}
       {/* SECTION 5: Form Components */}
       {/* ================================================================== */}
       <Separator />
-      <div id="section-forms" className="scroll-mt-20 space-y-6">
-        <SectionHeader title="5. Form Components" />
+      <DesignSection id="section-forms" title="5. Form Components" description="All form inputs, Button variants, and form layout primitives.">
 
       {/* Buttons */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">Button — All Variants &amp; Sizes</h3>
+      <SubSection title="Button — All Variants &amp; Sizes">
 
         {/* Variant grid */}
         <div className="space-y-3">
@@ -1295,11 +1344,10 @@ export default function DesignSystemComponentsPage() {
             </div>
           </div>
         </div>
-      </div>
+      </SubSection>
 
       {/* Form fields */}
-      <div className="space-y-4">
-        <h3 className="text-base font-semibold text-foreground">Form Fields</h3>
+      <SubSection title="Form Fields">
         <div className="grid gap-6 sm:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="demo-input">Input</Label>
@@ -1354,11 +1402,10 @@ export default function DesignSystemComponentsPage() {
             </RadioGroup>
           </div>
         </div>
-      </div>
+      </SubSection>
 
       {/* Slider */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">Slider</h3>
+      <SubSection title="Slider">
         <p className="text-sm text-muted-foreground">
           Draggable value slider. Supports single value and range mode.
         </p>
@@ -1380,11 +1427,10 @@ export default function DesignSystemComponentsPage() {
             <Slider defaultValue={[50]} max={100} step={1} disabled />
           </div>
         </div>
-      </div>
+      </SubSection>
 
       {/* ToggleGroup */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">ToggleGroup</h3>
+      <SubSection title="ToggleGroup">
         <p className="text-sm text-muted-foreground">
           Mutually exclusive toggle buttons. Use for view modes, alignment, and formatting options.
         </p>
@@ -1411,11 +1457,10 @@ export default function DesignSystemComponentsPage() {
             </ToggleGroupItem>
           </ToggleGroup>
         </div>
-      </div>
+      </SubSection>
 
       {/* Calendar */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">Calendar</h3>
+      <SubSection title="Calendar">
         <p className="text-sm text-muted-foreground">
           Month calendar built on react-day-picker. Use inside a Popover to create a DatePicker.
         </p>
@@ -1430,11 +1475,10 @@ export default function DesignSystemComponentsPage() {
         <p className="text-xs text-muted-foreground">
           Selected: {calendarDate?.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) ?? "none"}
         </p>
-      </div>
+      </SubSection>
 
       {/* NumberInput */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">NumberInput</h3>
+      <SubSection title="NumberInput">
         <p className="text-sm text-muted-foreground">
           Enhanced number input for budget/financial data entry. Auto-selects on focus, formats currency on blur.
         </p>
@@ -1462,16 +1506,15 @@ export default function DesignSystemComponentsPage() {
           Currency inputs use <code className="rounded bg-muted px-1 py-0.5 font-mono">MoneyField</code> exclusively.{" "}
           <code className="rounded bg-muted px-1 py-0.5 font-mono">NumberInput</code> is for non-currency numbers only.
         </p>
-      </div>
+      </SubSection>
 
-      </div>{/* end section-forms */}
+      </DesignSection>{/* end section-forms */}
 
       {/* ================================================================== */}
       {/* SECTION 6: Overlays */}
       {/* ================================================================== */}
       <Separator />
-      <div id="section-overlays" className="scroll-mt-20 space-y-6">
-        <SectionHeader title="6. Overlays" />
+      <DesignSection id="section-overlays" title="6. Overlays" description="Dialog, Sheet, Tooltip, Popover, AlertDialog, Drawer — all modal patterns.">
 
       <div className="flex flex-wrap gap-3">
         {/* Dialog */}
@@ -1589,18 +1632,16 @@ export default function DesignSystemComponentsPage() {
         Tooltip = hover hint text.
       </p>
 
-      </div>{/* end section-overlays */}
+      </DesignSection>{/* end section-overlays */}
 
       {/* ================================================================== */}
       {/* SECTION 7: Navigation */}
       {/* ================================================================== */}
       <Separator />
-      <div id="section-navigation" className="scroll-mt-20 space-y-6">
-        <SectionHeader title="7. Navigation" />
+      <DesignSection id="section-navigation" title="7. Navigation" description="Tabs, DropdownMenu, Breadcrumb, Command palette, and wayfinding components.">
 
       {/* Tabs (shadcn) */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">Tabs (shadcn pill-style)</h3>
+      <SubSection title="Tabs (shadcn pill-style)">
         <Tabs defaultValue="general">
           <TabsList>
             <TabsTrigger value="general">General</TabsTrigger>
@@ -1617,11 +1658,10 @@ export default function DesignSystemComponentsPage() {
             <p className="text-sm text-muted-foreground">Security settings content.</p>
           </TabsContent>
         </Tabs>
-      </div>
+      </SubSection>
 
       {/* DropdownMenu */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">DropdownMenu</h3>
+      <SubSection title="DropdownMenu">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline">
@@ -1642,11 +1682,10 @@ export default function DesignSystemComponentsPage() {
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </div>
+      </SubSection>
 
       {/* Breadcrumb */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">Breadcrumb</h3>
+      <SubSection title="Breadcrumb">
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
@@ -1662,11 +1701,10 @@ export default function DesignSystemComponentsPage() {
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
-      </div>
+      </SubSection>
 
       {/* Pagination */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">Pagination</h3>
+      <SubSection title="Pagination">
         <p className="text-sm text-muted-foreground">
           Page navigation with prev/next buttons and page numbers. Automatically collapses with ellipsis for many pages.
         </p>
@@ -1680,11 +1718,10 @@ export default function DesignSystemComponentsPage() {
           <code className="rounded bg-muted px-1 py-0.5 font-mono">SimplePagination</code> from{" "}
           <code className="rounded bg-muted px-1 py-0.5 font-mono">@/components/ui/pagination</code>.
         </p>
-      </div>
+      </SubSection>
 
       {/* Command Palette */}
-      <div className="space-y-3">
-        <h3 className="text-base font-semibold text-foreground">Command Palette</h3>
+      <SubSection title="Command Palette">
         <p className="text-sm text-muted-foreground">
           Searchable command list (cmdk). Use standalone or inside a Dialog for a spotlight-style search.
         </p>
@@ -1723,16 +1760,15 @@ export default function DesignSystemComponentsPage() {
             </CommandGroup>
           </CommandList>
         </Command>
-      </div>
+      </SubSection>
 
-      </div>{/* end section-navigation */}
+      </DesignSection>{/* end section-navigation */}
 
       {/* ================================================================== */}
       {/* SECTION 8: Cards */}
       {/* ================================================================== */}
       <Separator />
-      <div id="section-cards" className="scroll-mt-20 space-y-6">
-        <SectionHeader title="8. Cards" />
+      <DesignSection id="section-cards" title="8. Cards" description="Card primitives. Use bg-card + border-border + rounded-lg — no ad-hoc card styling.">
 
       <Card>
         <CardHeader>
@@ -1752,14 +1788,13 @@ export default function DesignSystemComponentsPage() {
         </CardFooter>
       </Card>
 
-      </div>{/* end section-cards */}
+      </DesignSection>{/* end section-cards */}
 
       {/* ================================================================== */}
       {/* SECTION 9: Table Cell Primitives */}
       {/* ================================================================== */}
       <Separator />
-      <div id="section-cells" className="scroll-mt-20 space-y-6">
-        <SectionHeader title="9. Table Cell Primitives" />
+      <DesignSection id="section-cells" title="9. Table Cell Primitives" description="Cell*, Table* — use ONLY these in column render functions. Never raw JSX in table cells.">
 
       <p className="text-sm text-muted-foreground">
         Use these in column <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">render</code> functions.
@@ -1844,82 +1879,178 @@ export default function DesignSystemComponentsPage() {
         </table>
       </div>
 
-      </div>{/* end section-cells */}
+      </DesignSection>{/* end section-cells */}
 
       {/* ================================================================== */}
-      {/* SECTION 10: Missing Components */}
+      {/* SECTION 10: New DS Components */}
       {/* ================================================================== */}
       <Separator />
-      <div id="section-missing" className="scroll-mt-20 space-y-6">
-        <SectionHeader title="10. Missing Components (Not Yet Built)" />
+      <DesignSection id="section-missing" title="10. New DS Components" description="Freshly built components ready to use. Import from @/components/ds.">
 
-      <div className="rounded-md bg-destructive/5 p-6">
-        <div className="mb-4 flex items-center gap-2 text-destructive">
-          <AlertTriangle className="h-5 w-5" />
-          <span className="text-sm font-semibold">Components that need to be created</span>
+        {/* BackButton */}
+        <div className="space-y-3">
+          <p className="text-sm font-semibold text-foreground">BackButton</p>
+          <p className="text-xs text-muted-foreground">Standardized back navigation. Pass <code className="font-mono">onClick</code> for <code className="font-mono">router.back()</code> or <code className="font-mono">href</code> for a fixed URL.</p>
+          <div className="flex items-center gap-4">
+            <BackButton onClick={() => {}} />
+            <BackButton onClick={() => {}} label="Return to contracts" />
+          </div>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2">
-          {[
-            {
-              name: "DetailActions",
-              desc: "Standardized action icons (edit, delete, share) for detail page headers",
-              gap: "Each detail page hand-rolls its own action buttons",
-            },
-            {
-              name: "FormActions",
-              desc: "Standardized cancel/save button row for form footers",
-              gap: "Every form reimplements the same cancel + save pattern",
-            },
-            {
-              name: "EditModeActions",
-              desc: "View/edit toggle pattern with save/cancel states",
-              gap: "Inline editing UX is inconsistent across detail pages",
-            },
-            {
-              name: "SplitButton",
-              desc: "Primary action + dropdown of secondary actions in one button",
-              gap: "No cohesive multi-action button exists",
-            },
-            {
-              name: "DetailField",
-              desc: "Label + value pair for read-only detail views",
-              gap: "Detail pages use ad-hoc label/value markup",
-            },
-            {
-              name: "DetailFieldGrid",
-              desc: "Responsive grid layout for DetailField groups",
-              gap: "Detail field grids are hand-rolled with inconsistent column counts",
-            },
-            {
-              name: "ConfirmDeleteDialog",
-              desc: "Pre-built destructive confirmation dialog with standard copy",
-              gap: "Delete confirmations are reimplemented per feature",
-            },
-            {
-              name: "BackButton",
-              desc: "Standardized back navigation with consistent icon and label",
-              gap: "Back buttons vary in style and placement",
-            },
-            {
-              name: "PageShell tabs integration",
-              desc: "A tabs prop on PageShell for built-in tab bar below header",
-              gap: "Tabs are manually placed between header and content",
-            },
-            {
-              name: "InfoAlert",
-              desc: "Lightweight info message without Alert overhead",
-              gap: "Informational messages use inconsistent markup",
-            },
-          ].map((item) => (
-            <div key={item.name} className="rounded-md bg-card p-3">
-              <p className="text-sm font-semibold text-foreground">{item.name}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">{item.desc}</p>
-              <p className="mt-1 text-xs text-destructive/80">Gap: {item.gap}</p>
+
+        <Separator />
+
+        {/* InfoAlert */}
+        <div className="space-y-3">
+          <p className="text-sm font-semibold text-foreground">InfoAlert</p>
+          <p className="text-xs text-muted-foreground">Lightweight contextual messages. Four variants: <code className="font-mono">info</code> (default), <code className="font-mono">warning</code>, <code className="font-mono">success</code>, <code className="font-mono">error</code>.</p>
+          <div className="space-y-2 max-w-lg">
+            <InfoAlert>This budget is locked and cannot be edited until the next billing period.</InfoAlert>
+            <InfoAlert variant="warning">This change order has not been approved by the owner yet.</InfoAlert>
+            <InfoAlert variant="success">Contract fully executed. All parties have signed.</InfoAlert>
+            <InfoAlert variant="error">One or more line items exceed the approved budget.</InfoAlert>
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* DetailField + DetailFieldGrid */}
+        <div className="space-y-3">
+          <p className="text-sm font-semibold text-foreground">DetailField + DetailFieldGrid</p>
+          <p className="text-xs text-muted-foreground">Label/value pairs for read-only detail views. Wrap in <code className="font-mono">DetailFieldGrid</code> for responsive column layout (<code className="font-mono">cols=2|3|4</code>).</p>
+          <DetailFieldGrid cols={3} className="max-w-2xl">
+            <DetailField label="Contract Number" value="CO-2026-0041" />
+            <DetailField label="Status" value={<StatusBadge status="Approved" />} />
+            <DetailField label="Total Value" value="$1,245,000" />
+            <DetailField label="Executed Date" value="April 2, 2026" />
+            <DetailField label="Owner" value="Vermillion Rise LLC" />
+            <DetailField label="Notes" value={null} />
+          </DetailFieldGrid>
+        </div>
+
+        <Separator />
+
+        {/* DetailActions */}
+        <div className="space-y-3">
+          <p className="text-sm font-semibold text-foreground">DetailActions</p>
+          <p className="text-xs text-muted-foreground">Standard icon action row for detail page headers. Edit and Share render as icon buttons; Delete and extras collapse into an overflow menu.</p>
+          <div className="flex items-center gap-6">
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2">
+              <span className="text-sm font-medium text-foreground">Change Order #41</span>
+              <DetailActions
+                onEdit={() => {}}
+                onDelete={() => {}}
+                onShare={() => {}}
+              />
             </div>
-          ))}
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2">
+              <span className="text-sm font-medium text-foreground">Contract #12</span>
+              <DetailActions
+                onEdit={() => {}}
+                onDelete={() => {}}
+                extraActions={[
+                  { label: "Duplicate", onClick: () => {} },
+                  { label: "Export PDF", onClick: () => {} },
+                ]}
+              />
+            </div>
+          </div>
         </div>
-      </div>
-      </div>{/* end section-missing */}
+
+        <Separator />
+
+        {/* EditModeActions */}
+        <div className="space-y-3">
+          <p className="text-sm font-semibold text-foreground">EditModeActions</p>
+          <p className="text-xs text-muted-foreground">View/edit toggle with save/cancel. In view mode shows Edit; in edit mode shows Cancel + Save. Click Edit to toggle.</p>
+          <div className="flex items-center gap-4">
+            <EditModeActions
+              isEditing={isEditing}
+              onEdit={() => setIsEditing(true)}
+              onSave={async () => {
+                setIsSaving(true);
+                await new Promise((r) => setTimeout(r, 1200));
+                setIsSaving(false);
+                setIsEditing(false);
+              }}
+              onCancel={() => setIsEditing(false)}
+              isSaving={isSaving}
+            />
+            <span className="text-xs text-muted-foreground">
+              Mode: <code className="font-mono">{isEditing ? "editing" : "view"}</code>
+            </span>
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* SplitButton */}
+        <div className="space-y-3">
+          <p className="text-sm font-semibold text-foreground">SplitButton</p>
+          <p className="text-xs text-muted-foreground">Primary action + secondary actions dropdown. Keeps the header clean while exposing related actions.</p>
+          <div className="flex items-center gap-4">
+            <SplitButton
+              label="Save"
+              onClick={() => {}}
+              actions={[
+                { label: "Save & Close", onClick: () => {} },
+                { label: "Save as Draft", onClick: () => {} },
+                { label: "Discard changes", onClick: () => {}, destructive: true, separator: true },
+              ]}
+            />
+            <SplitButton
+              label="Submit"
+              variant="outline"
+              onClick={() => {}}
+              actions={[
+                { label: "Submit for review", onClick: () => {} },
+                { label: "Submit & notify owner", onClick: () => {} },
+              ]}
+            />
+          </div>
+        </div>
+
+        <Separator />
+
+        {/* ConfirmDeleteDialog */}
+        <div className="space-y-3">
+          <p className="text-sm font-semibold text-foreground">ConfirmDeleteDialog</p>
+          <p className="text-xs text-muted-foreground">Standard destructive confirmation. Pass <code className="font-mono">itemName</code> for auto-generated title, or override with <code className="font-mono">title</code> + <code className="font-mono">description</code>.</p>
+          <Button variant="destructive" size="sm" onClick={() => setConfirmDeleteOpen(true)}>
+            Delete record
+          </Button>
+          <ConfirmDeleteDialog
+            open={confirmDeleteOpen}
+            onOpenChange={setConfirmDeleteOpen}
+            itemName="Change Order #41"
+            onConfirm={async () => {
+              await new Promise((r) => setTimeout(r, 800));
+              setConfirmDeleteOpen(false);
+            }}
+          />
+        </div>
+
+        <Separator />
+
+        {/* PageShell tabs */}
+        <div className="space-y-3">
+          <p className="text-sm font-semibold text-foreground">PageShell tabs integration</p>
+          <p className="text-xs text-muted-foreground">Pass a <code className="font-mono">tabs</code> prop to <code className="font-mono">PageShell</code> and the tab bar renders automatically below the header — no manual placement needed.</p>
+          <pre className="rounded-md bg-muted p-4 text-xs leading-relaxed text-foreground overflow-x-auto">{`<PageShell
+  variant="detail"
+  title="Contract #1042"
+  tabs={[
+    { label: "Overview",    href: "/...", isActive: true },
+    { label: "Line Items",  href: "/...", isActive: false },
+    { label: "Attachments", href: "/...", isActive: false },
+  ]}
+>
+  ...
+</PageShell>`}</pre>
+        </div>
+
+      </DesignSection>{/* end section-missing */}
+        </div>{/* end main content */}
+      </div>{/* end 2-col layout */}
     </PageShell>
   );
 }

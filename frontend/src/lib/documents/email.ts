@@ -16,10 +16,19 @@ interface ResendSuccessResponse {
 }
 
 function getFromAddress(): string {
-  return (
-    process.env.RESEND_FROM_EMAIL ||
-    process.env.DIGEST_FROM_EMAIL ||
-    "ai@alleato.io"
+  const configuredFrom =
+    process.env.RESEND_FROM_EMAIL || process.env.DIGEST_FROM_EMAIL;
+
+  if (configuredFrom) {
+    return configuredFrom;
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    return "Alleato <onboarding@resend.dev>";
+  }
+
+  throw new Error(
+    "RESEND_FROM_EMAIL or DIGEST_FROM_EMAIL must be configured with a verified sender address",
   );
 }
 

@@ -252,11 +252,12 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       });
     }
 
-    // 8. Update the change event status to indicate conversion
+    // 8. Mark the change event as converted via workflow_stage (status stays Procore-aligned)
     const { error: updateError } = await supabase
       .from("change_events")
       .update({
-        status: "Converted",
+        workflow_stage: "converted",
+        status: "Closed",
         updated_at: new Date().toISOString(),
         updated_by: user.id,
       })
@@ -272,7 +273,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       change_event_id: changeEventId,
       field_name: "status",
       old_value: changeEvent.status,
-      new_value: "Converted",
+      new_value: "Closed",
       changed_by: user.id,
       change_type: "CONVERSION",
     });

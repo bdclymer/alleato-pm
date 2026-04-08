@@ -44,12 +44,12 @@ export default function MainLayout({
   return (
     <SidebarProvider defaultOpen={false}>
       <AppSidebar />
-      <SidebarInset className="overflow-hidden">
+      <SidebarInset className="h-svh overflow-hidden">
         <CreateProjectDevConfigProvider>
           <SiteHeader />
-          <div className="flex flex-1 overflow-hidden min-h-0">
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <main
-              className="flex flex-1 flex-col overflow-auto min-w-0"
+              className="flex flex-1 flex-col overflow-auto scrollbar-hide min-w-0 min-h-0"
               {...feedbackTargetProps("app.main-content")}
             >
               {children}

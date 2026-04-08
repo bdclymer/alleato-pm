@@ -13,6 +13,7 @@ import {
 import { createGitHubIssue } from "@/lib/admin-feedback/github";
 import { matchFeedbackToTool, getToolById } from "@/lib/admin-feedback/tool-matcher";
 import { resolveToolContext, contextToAgentPayload } from "@/lib/admin-feedback/context-resolver";
+import { ingestAdminFeedbackLearning } from "@/lib/ai/services/agent-learning-service";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import type { Database } from "@/types/database.types";
@@ -371,6 +372,20 @@ export async function POST(request: Request) {
       });
     }
 
+    try {
+      await ingestAdminFeedbackLearning({
+        feedbackItemId: inserted.id,
+        title,
+        comment: payload.comment,
+        pagePath: payload.pagePath,
+        toolId: matchedTool?.id ?? null,
+        projectId: payload.projectId ?? null,
+        status: "candidate",
+      });
+    } catch (learningError) {
+      console.error("[AdminFeedback] Candidate learning ingestion failed", learningError);
+    }
+
     let githubIssue:
       | {
           number: number;
@@ -533,6 +548,7 @@ const patchSchema = z.object({
   id: z.string().uuid(),
   status: z.enum(["open", "submitted", "github_failed", "in_progress", "triaged", "diagnosing", "fixing", "verifying", "in_review", "resolved", "closed"]).optional(),
   title: z.string().trim().min(1).max(200).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 const LEGACY_STATUS_FALLBACKS: Record<string, string> = {
@@ -559,15 +575,46 @@ export async function PATCH(request: Request) {
       );
     }
 
-    const { id, ...updates } = parsed.data;
+    const { id, metadata, ...updates } = parsed.data;
     if (Object.keys(updates).length === 0) {
-      return jsonError(400, { error: "No fields to update" });
+      if (!metadata) {
+        return jsonError(400, { error: "No fields to update" });
+      }
     }
 
     const serviceSupabase = createServiceClient();
+    const mergedUpdates: Record<string, unknown> = { ...updates };
+
+    if (metadata) {
+      const { data: existingItem, error: existingError } = await serviceSupabase
+        .from("admin_feedback_items")
+        .select("metadata")
+        .eq("id", id)
+        .maybeSingle();
+
+      if (existingError) {
+        const details = toErrorDetails(existingError);
+        return jsonError(500, {
+          error: "Failed to fetch existing feedback metadata",
+          code: details.code,
+          details: details.message,
+        });
+      }
+
+      const currentMetadata =
+        existingItem?.metadata && typeof existingItem.metadata === "object"
+          ? (existingItem.metadata as Record<string, unknown>)
+          : {};
+
+      mergedUpdates.metadata = toJsonValue({
+        ...currentMetadata,
+        ...metadata,
+      });
+    }
+
     let { data, error } = await serviceSupabase
       .from("admin_feedback_items")
-      .update(updates)
+      .update(mergedUpdates)
       .eq("id", id)
       .select("id, status, title")
       .single();
@@ -579,7 +626,7 @@ export async function PATCH(request: Request) {
       LEGACY_STATUS_FALLBACKS[updates.status]
     ) {
       const fallbackStatus = LEGACY_STATUS_FALLBACKS[updates.status];
-      const fallbackUpdates = { ...updates, status: fallbackStatus };
+      const fallbackUpdates = { ...mergedUpdates, status: fallbackStatus };
 
       const fallbackResult = await serviceSupabase
         .from("admin_feedback_items")
@@ -606,6 +653,46 @@ export async function PATCH(request: Request) {
         code: details.code,
         details: details.message,
       });
+    }
+
+    if (data?.status === "resolved") {
+      try {
+        const { data: fullItem } = await serviceSupabase
+          .from("admin_feedback_items")
+          .select("id, title, comment, page_path, tool_id, project_id, metadata")
+          .eq("id", id)
+          .maybeSingle();
+
+        if (fullItem) {
+          const metadata =
+            fullItem.metadata &&
+            typeof fullItem.metadata === "object" &&
+            !Array.isArray(fullItem.metadata)
+              ? (fullItem.metadata as Record<string, unknown>)
+              : null;
+          const resolutionSummary =
+            metadata && "resolution_summary" in metadata
+              ? String(metadata.resolution_summary ?? "")
+              : null;
+
+          await ingestAdminFeedbackLearning({
+            feedbackItemId: fullItem.id,
+            title: fullItem.title,
+            comment: fullItem.comment,
+            pagePath: fullItem.page_path,
+            toolId:
+              typeof fullItem.tool_id === "number" ? fullItem.tool_id : null,
+            projectId:
+              typeof fullItem.project_id === "number"
+                ? fullItem.project_id
+                : null,
+            status: "active",
+            resolutionSummary,
+          });
+        }
+      } catch (learningError) {
+        console.error("[AdminFeedback] Resolved learning ingestion failed", learningError);
+      }
     }
 
     return NextResponse.json({ item: data });

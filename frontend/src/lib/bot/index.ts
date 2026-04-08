@@ -21,6 +21,8 @@ import {
   persistChatMessage,
   runPostResponseTasks,
 } from "@/lib/ai/bot-core";
+import type { BotLearningUsageSummary } from "@/lib/ai/bot-core";
+import { recordAgentLearningUsages } from "@/lib/ai/services/agent-learning-service";
 import { createServiceClient } from "@/lib/supabase/service";
 import { nanoid } from "nanoid";
 
@@ -120,10 +122,14 @@ bot.onNewMention(async (thread, message) => {
   await thread.setState({ sessionId, userId });
 
   // Stream the AI response
+  let learningUsage: BotLearningUsageSummary | undefined;
   const { result, toolTrace } = await streamBotResponse({
     userId,
     messageText: message.text,
     sessionId,
+    onLearningUsage: (usage) => {
+      learningUsage = usage;
+    },
   });
 
   // Post the streaming response — Chat SDK handles post+edit fallback
@@ -143,6 +149,15 @@ bot.onNewMention(async (thread, message) => {
       channel: thread.adapter.name,
     },
   });
+
+  if (learningUsage?.learnings.length) {
+    await recordAgentLearningUsages({
+      sessionId,
+      userId,
+      messageText: message.text,
+      learnings: learningUsage.learnings,
+    });
+  }
 
   // Background memory tasks
   await runPostResponseTasks(sessionId, userId);
@@ -168,10 +183,14 @@ bot.onDirectMessage(async (thread, message) => {
 
   await thread.setState({ sessionId, userId });
 
+  let learningUsage: BotLearningUsageSummary | undefined;
   const { result, toolTrace } = await streamBotResponse({
     userId,
     messageText: message.text,
     sessionId,
+    onLearningUsage: (usage) => {
+      learningUsage = usage;
+    },
   });
 
   await thread.post(result.fullStream);
@@ -189,6 +208,15 @@ bot.onDirectMessage(async (thread, message) => {
       channel: thread.adapter.name,
     },
   });
+
+  if (learningUsage?.learnings.length) {
+    await recordAgentLearningUsages({
+      sessionId,
+      userId,
+      messageText: message.text,
+      learnings: learningUsage.learnings,
+    });
+  }
 
   await runPostResponseTasks(sessionId, userId);
 });
@@ -224,11 +252,15 @@ bot.onSubscribedMessage(async (thread, message) => {
   const conversationHistory = await toAiMessages(threadMessages);
 
   // Stream the AI response with full conversation context
+  let learningUsage: BotLearningUsageSummary | undefined;
   const { result, toolTrace } = await streamBotResponse({
     userId,
     messageText: message.text,
     sessionId,
     conversationHistory,
+    onLearningUsage: (usage) => {
+      learningUsage = usage;
+    },
   });
 
   await thread.post(result.fullStream);
@@ -246,6 +278,15 @@ bot.onSubscribedMessage(async (thread, message) => {
       channel: thread.adapter.name,
     },
   });
+
+  if (learningUsage?.learnings.length) {
+    await recordAgentLearningUsages({
+      sessionId,
+      userId,
+      messageText: message.text,
+      learnings: learningUsage.learnings,
+    });
+  }
 
   await runPostResponseTasks(sessionId, userId);
 });

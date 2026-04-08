@@ -190,13 +190,24 @@ export function useCostCodes(
     [fetchCostCodes],
   );
 
-  // Transform cost codes to options for dropdowns
-  const costCodeOptions: CostCodeOption[] = costCodes.map((code) => ({
-    value: code.id,
-    label: `${code.id} - ${code.title || code.description || "No Description"}`,
-    code: code.id,
-    description: code.title || code.description || "",
-  }));
+  // Transform cost codes to options for dropdowns.
+  // Deduplicate by id and filter out any records with a falsy id — duplicate or
+  // empty ids would produce identical `key` props and trigger React's
+  // "Encountered two children with the same key" warning.
+  const seen = new Set<string>();
+  const costCodeOptions: CostCodeOption[] = costCodes
+    .filter((code) => {
+      if (!code.id) return false;
+      if (seen.has(code.id)) return false;
+      seen.add(code.id);
+      return true;
+    })
+    .map((code) => ({
+      value: code.id,
+      label: `${code.id} - ${code.title || code.description || "No Description"}`,
+      code: code.id,
+      description: code.title || code.description || "",
+    }));
 
   return {
     costCodes,

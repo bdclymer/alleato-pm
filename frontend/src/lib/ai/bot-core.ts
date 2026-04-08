@@ -24,6 +24,11 @@ import {
   buildMemoryContextPayload,
 } from "@/lib/ai/services/ai-memory-service";
 import { extractAndStoreMemories } from "@/lib/ai/services/memory-extraction";
+import {
+  buildAgentLearningContextBlock,
+  getRelevantAgentLearnings,
+  type AgentLearningUsageSummary,
+} from "@/lib/ai/services/agent-learning-service";
 import { createServiceClient } from "@/lib/supabase/service";
 
 // ---------------------------------------------------------------------------
@@ -45,6 +50,8 @@ export interface BotCoreOptions {
   conversationHistory?: ModelMessage[];
   /** Trace callback for tool calls */
   onTrace?: (trace: Record<string, unknown>) => void;
+  /** Callback for learnings injected into the prompt */
+  onLearningUsage?: (usage: BotLearningUsageSummary) => void;
 }
 
 export interface MemoryUsageSummary {
@@ -59,6 +66,8 @@ export interface MemoryUsageSummary {
     content: string;
   }>;
 }
+
+export interface BotLearningUsageSummary extends AgentLearningUsageSummary {}
 
 export interface BotCoreResult {
   /** The generated response text */
@@ -85,6 +94,7 @@ export async function assembleSystemPrompt(options: {
   sessionId?: string;
   isFirstTurn?: boolean;
   onMemoryUsage?: (usage: MemoryUsageSummary) => void;
+  onLearningUsage?: (usage: BotLearningUsageSummary) => void;
 }): Promise<string> {
   const {
     userId,
@@ -94,6 +104,7 @@ export async function assembleSystemPrompt(options: {
     sessionId,
     isFirstTurn = true,
     onMemoryUsage,
+    onLearningUsage,
   } = options;
 
   let systemPrompt = getStrategistSystemPrompt();
@@ -108,9 +119,18 @@ export async function assembleSystemPrompt(options: {
             ? getRecentConversationSummaries(userId, sessionId, 3)
             : Promise.resolve([]),
         ]);
+      const relevantLearnings = await getRelevantAgentLearnings({
+        messageText,
+        projectId: selectedProjectId,
+        limit: 4,
+      });
 
       const { block: memoryBlock, selected: selectedMemories } =
         buildMemoryContextPayload(preferences, relevant, team);
+      const {
+        block: learningBlock,
+        selected: selectedLearnings,
+      } = buildAgentLearningContextBlock(relevantLearnings);
       const usedMemories = selectedMemories
         .slice(0, 12)
         .map((memory) => ({
@@ -126,9 +146,18 @@ export async function assembleSystemPrompt(options: {
         recentConversationsUsed: recentSummaries.length,
         memories: usedMemories,
       });
+      onLearningUsage?.({
+        totalUsed: selectedLearnings.length,
+        learnings: selectedLearnings.map((learning) => ({
+          id: learning.id,
+          title: learning.title,
+          source: learning.source,
+          preventionPrompt: learning.prevention_prompt,
+        })),
+      });
       const recentBlock = buildRecentConversationsBlock(recentSummaries);
 
-      const contextParts = [recentBlock, memoryBlock].filter(Boolean);
+      const contextParts = [recentBlock, memoryBlock, learningBlock].filter(Boolean);
       if (contextParts.length > 0) {
         systemPrompt = contextParts.join("\n\n") + "\n\n---\n\n" + systemPrompt;
       }
@@ -212,6 +241,7 @@ export async function generateBotResponse(
     councilMode: options.councilMode,
     sessionId: options.sessionId,
     isFirstTurn: !options.conversationHistory?.length,
+    onLearningUsage: options.onLearningUsage,
   });
 
   const messages: ModelMessage[] = options.conversationHistory?.length
@@ -268,6 +298,7 @@ export async function streamBotResponse(options: BotCoreOptions) {
     councilMode: options.councilMode,
     sessionId: options.sessionId,
     isFirstTurn: !options.conversationHistory?.length,
+    onLearningUsage: options.onLearningUsage,
   });
 
   const messages: ModelMessage[] = options.conversationHistory?.length

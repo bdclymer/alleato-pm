@@ -17,6 +17,10 @@ interface KpiBlockProps {
   context?: string;
   size?: "prominent" | "compact";
   href?: string;
+  progress?: {
+    value: number; // 0–100
+    tone?: "neutral" | "warning" | "danger";
+  };
 }
 
 export type { KpiBlockProps };
@@ -28,6 +32,7 @@ export function KpiBlock({
   context,
   size = "prominent",
   href,
+  progress,
 }: KpiBlockProps) {
   const content = (
     <>
@@ -65,6 +70,23 @@ export function KpiBlock({
         <span className="mt-0.5 block text-xs text-muted-foreground/60">
           {context}
         </span>
+      )}
+
+      {/* Optional progress bar */}
+      {progress !== undefined && (
+        <div className="mt-2 h-1 w-full overflow-hidden rounded-full bg-border">
+          <div
+            className={cn(
+              "h-full rounded-full transition-all",
+              progress.tone === "danger"
+                ? "bg-destructive"
+                : progress.tone === "warning"
+                ? "bg-amber-400"
+                : "bg-primary/60"
+            )}
+            style={{ width: `${Math.min(100, Math.max(0, progress.value))}%` }}
+          />
+        </div>
       )}
     </>
   );

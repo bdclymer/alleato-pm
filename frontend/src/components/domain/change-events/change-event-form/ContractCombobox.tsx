@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronDown, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -74,6 +74,22 @@ export function ContractCombobox({
             onValueChange={setSearch}
           />
           <CommandList id={contractListId} className="max-h-[200px]">
+            {selected && (
+              <CommandGroup>
+                <CommandItem
+                  value="__clear__"
+                  onSelect={() => {
+                    onChange("");
+                    setOpen(false);
+                    setSearch("");
+                  }}
+                  className="cursor-pointer text-muted-foreground"
+                >
+                  <X className="mr-2 h-4 w-4" />
+                  Clear selection
+                </CommandItem>
+              </CommandGroup>
+            )}
             <CommandEmpty>No contracts found.</CommandEmpty>
             {poContracts.length > 0 && (
               <CommandGroup heading="Purchase Orders">

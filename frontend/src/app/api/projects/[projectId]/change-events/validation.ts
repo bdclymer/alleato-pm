@@ -51,20 +51,37 @@ export const ChangeEventScope = createNormalizedEnum(
     out_of_scope: "Out of Scope",
   },
 );
+// Procore-aligned status set. Approval workflow + conversion are tracked in
+// `change_events.workflow_stage` (see migration change_events_workflow_stage),
+// not in this column.
 export const ChangeEventStatus = createNormalizedEnum(
   [
   "Open",
-  "Pending Approval",
-  "Approved",
-  "Rejected",
+  "Pending",
   "Closed",
   "Void",
-  "Converted",
   ],
   {
-    pending: "Pending Approval",
-    pending_approval: "Pending Approval",
+    pending_approval: "Pending",
+    "pending approval": "Pending",
+    approved: "Pending",
+    rejected: "Closed",
+    converted: "Closed",
     close: "Closed",
+  },
+);
+// Procore-aligned change reason set.
+export const ChangeEventReason = createNormalizedEnum(
+  [
+    "Allowance",
+    "Back Charge",
+    "Client Request",
+    "Design Development",
+    "Existing Condition",
+  ],
+  {
+    backcharge: "Back Charge",
+    back_charge: "Back Charge",
   },
 );
 export const ChangeEventOrigin = createNormalizedEnum(
@@ -82,7 +99,7 @@ export const createChangeEventSchema = z.object({
   title: z.string().min(1).max(255, "Title must be less than 255 characters"),
   type: ChangeEventType,
   status: ChangeEventStatus.optional(),
-  reason: z.string().max(100).optional(),
+  reason: ChangeEventReason.optional(),
   scope: ChangeEventScope,
   origin: ChangeEventOrigin.optional(),
   expectingRevenue: z.boolean().default(true),
@@ -95,7 +112,7 @@ export const createChangeEventSchema = z.object({
 export const updateChangeEventSchema = z.object({
   title: z.string().min(1).max(255).optional(),
   type: ChangeEventType.nullable().optional(),
-  reason: z.string().max(100).nullable().optional(),
+  reason: ChangeEventReason.nullable().optional(),
   scope: ChangeEventScope.nullable().optional(),
   origin: ChangeEventOrigin.nullable().optional(),
   expectingRevenue: z.boolean().optional(),

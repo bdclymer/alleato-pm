@@ -50,14 +50,12 @@ const getStatusDisplayName = (status: string | null) => {
   switch (status?.toLowerCase()) {
     case "open":
       return "Open";
-    case "pending_approval":
-      return "Pending Approval";
-    case "approved":
-      return "Approved";
-    case "rejected":
-      return "Rejected";
+    case "pending":
+      return "Pending";
     case "closed":
       return "Closed";
+    case "void":
+      return "Void";
     default:
       return status || "-";
   }

@@ -9,6 +9,7 @@ import {
   Copy,
   Download,
   FileCheck2,
+  FileText,
   Mail,
   MoreHorizontal,
   Trash2,
@@ -47,6 +48,7 @@ import type { ChangeEventFormData } from "@/components/domain/change-events/Chan
 import { useChangeEventDetail } from "@/hooks/use-change-event-detail";
 import { useVerticalMarkup } from "@/hooks/use-vertical-markup";
 import { ChangeEventConvertDialog } from "@/components/domain/change-events/ChangeEventConvertDialog";
+import { ChangeEventEmailDialog } from "@/components/domain/change-events/ChangeEventEmailDialog";
 import { ChangeEventForm } from "@/components/domain/change-events/ChangeEventForm";
 import { ChangeEventGeneralInfoPanel } from "@/components/domain/change-events/ChangeEventGeneralInfoPanel";
 import { ChangeEventLineItemsTable } from "@/components/domain/change-events/ChangeEventLineItemsTable";
@@ -58,14 +60,28 @@ import { EntityComments, EntityRoom } from "@/components/comments/entity-comment
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
 
+function mapApiReasonToFormReason(reason?: string | null): string | undefined {
+  if (!reason) return undefined;
+  const key = reason.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_");
+  const map: Record<string, string> = {
+    allowance: "allowance",
+    back_charge: "back_charge",
+    backcharge: "back_charge",
+    client_request: "client_request",
+    design_development: "design_development",
+    existing_condition: "existing_condition",
+  };
+  return map[key];
+}
+
 function mapApiStatusToFormStatus(status?: string | null): string {
   if (!status) return "open";
   const s = status.toLowerCase();
   if (s === "closed") return "close";
-  if (s === "pending approval" || s === "pending_approval") return "pending";
+  if (s === "pending" || s === "pending approval" || s === "pending_approval") return "pending";
   if (s === "open") return "open";
   if (s === "void") return "void";
-  return status;
+  return "open";
 }
 
 /* ── Page component ──────────────────────────────────────────────── */
@@ -94,6 +110,7 @@ export default function ChangeEventDetailPage() {
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showConvertDialog, setShowConvertDialog] = useState(false);
+  const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
 
   const handleUploadAttachment = useCallback(async (file: File) => {
@@ -147,9 +164,7 @@ export default function ChangeEventDetailPage() {
       : "Loading...",
   );
 
-  const canEdit = ["open", "rejected"].includes(
-    (changeEvent?.status || "").toLowerCase(),
-  );
+  const canEdit = true;
 
   const normalizedStatus = (changeEvent?.status || "").toLowerCase().replace(/\s+/g, "_");
 
@@ -204,6 +219,30 @@ export default function ChangeEventDetailPage() {
     toast.success("Change event ID copied");
   }, [changeEventId]);
 
+  const handleExportPDF = useCallback(async () => {
+    if (!changeEvent) return;
+    try {
+      toast.loading("Generating PDF...", { id: "pdf-export" });
+      const res = await fetch(
+        `/api/projects/${projectId}/change-events/${changeEventId}/pdf`,
+      );
+      if (!res.ok) {
+        toast.error("Failed to generate PDF", { id: "pdf-export" });
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `change-event-${changeEvent.number || changeEvent.id}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success("PDF downloaded", { id: "pdf-export" });
+    } catch {
+      toast.error("Failed to generate PDF", { id: "pdf-export" });
+    }
+  }, [changeEvent, projectId, changeEventId]);
+
   const handleEditSubmit = useCallback(
     async (data: ChangeEventFormData) => {
       await actions.submitEdit(data);
@@ -223,7 +262,7 @@ export default function ChangeEventDetailPage() {
       status: mapApiStatusToFormStatus(changeEvent.status),
       origin: changeEvent.origin || undefined,
       type: changeEvent.type || undefined,
-      changeReason: changeEvent.reason || undefined,
+      changeReason: mapApiReasonToFormReason(changeEvent.reason),
       scope: changeEvent.scope || undefined,
       expectingRevenue: changeEvent.expectingRevenue ?? changeEvent.expecting_revenue ?? true,
       lineItemRevenueSource:
@@ -384,6 +423,14 @@ export default function ChangeEventDetailPage() {
             <Download className="mr-2 h-4 w-4" />
             Export as CSV
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleExportPDF}>
+            <FileText className="mr-2 h-4 w-4" />
+            Export as PDF
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setShowEmailDialog(true)}>
+            <Mail className="mr-2 h-4 w-4" />
+            Email Change Event
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={handleCopyId}>
             <Copy className="mr-2 h-4 w-4" />
             Copy ID
@@ -449,6 +496,7 @@ export default function ChangeEventDetailPage() {
                 lineItems={lineItems}
                 markupRows={markupRows}
                 expectingRevenue={(changeEvent.expectingRevenue ?? changeEvent.expecting_revenue) !== false}
+                onDeleteLineItem={actions.deleteLineItem}
               />
             </div>
             <div className="mt-10">
@@ -499,6 +547,15 @@ export default function ChangeEventDetailPage() {
       </Tabs>
 
       {/* Dialogs */}
+      <ChangeEventEmailDialog
+        open={showEmailDialog}
+        onOpenChange={setShowEmailDialog}
+        changeEventTitle={changeEvent.title || "Untitled"}
+        changeEventNumber={ceNumber}
+        projectId={projectId}
+        changeEventId={changeEventId}
+      />
+
       <ChangeEventConvertDialog
         open={showConvertDialog}
         onOpenChange={setShowConvertDialog}

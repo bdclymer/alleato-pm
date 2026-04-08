@@ -74,7 +74,6 @@ interface PrimeContractOverviewTabProps {
   exclusionsList: string[];
   formatStatusLabel: (status: Contract["status"]) => string;
   formatCurrency: (value: number | null | undefined) => string;
-  onEditGeneralInfo?: () => void;
   lineItemsLoading: boolean;
   lineItems: ContractLineItem[];
   budgetCodes: BudgetCode[];
@@ -131,7 +130,6 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
     onReorderSovLines,
     onRequestCreateBudgetCode,
     onDeleteSovLine,
-    onEditGeneralInfo,
   } = props;
   const ownerName = contract.contract_company?.name || contract.client?.name;
   const displayedSovItems = isSovEditing ? sovDraftItems : lineItems;
@@ -213,19 +211,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-14 gap-y-8">
               {/* Details */}
               <div className="space-y-6">
-                <div className="flex items-center justify-between">
-                  <SectionRuleHeading label="Details" className="[&_span]:text-primary" />
-                  {onEditGeneralInfo && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-6 px-2 text-xs text-primary"
-                      onClick={onEditGeneralInfo}
-                    >
-                      Edit
-                    </Button>
-                  )}
-                </div>
+                <SectionRuleHeading label="Details" className="[&_span]:text-primary" />
                 <dl className="space-y-4 text-sm">
                   <LabelValueRow label="Contract #">
                     {contract.contract_number || "Not set"}

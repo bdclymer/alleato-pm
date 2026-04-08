@@ -1,5 +1,6 @@
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
+import { ingestThumbsFeedbackLearning } from "@/lib/ai/services/agent-learning-service";
 
 /**
  * POST /api/ai-assistant/feedback
@@ -45,6 +46,16 @@ export async function POST(request: Request) {
   if (error) {
     console.error("[Feedback] Failed to persist:", error);
     return new Response("Failed to save feedback", { status: 500 });
+  }
+
+  try {
+    await ingestThumbsFeedbackLearning({
+      sessionId,
+      feedback,
+      messageContent,
+    });
+  } catch (learningError) {
+    console.error("[Feedback] Learning ingestion failed:", learningError);
   }
 
   return Response.json({ success: true });

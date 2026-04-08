@@ -29,7 +29,7 @@ it into a structured test matrix document.
 3. Synthesizes a structured test matrix grouped by feature category
 4. Saves the document to `docs/testing/<tool-name>-test-matrix.md`
 5. **Seeds all test cases into Supabase** (`test_suites` + `test_cases` tables)
-6. Test cases are immediately trackable in the Test Runner at `/admin/testing`
+6. Test cases are immediately trackable in the Test Runner at `/test-matrix`
 
 The Procore RAG database (`document_chunks` + `search_support_articles`) is the
 source of truth — not your memory, not the codebase. You are generating tests
@@ -347,7 +347,7 @@ Create the `docs/testing/` directory if it doesn't exist.
 ## Step 5: Seed Test Cases into Supabase
 
 After saving the markdown, upsert all test cases into the Supabase tracking tables
-so they can be tracked, run, and managed from the Test Runner UI at `/admin/testing`.
+so they can be tracked, run, and managed from the Test Runner UI at `/test-matrix`.
 
 **Supabase project:** `lgveqfnpkxvzbnnwuled`
 
@@ -409,7 +409,7 @@ After saving, report:
 3. **Categories covered** — which of the 11 categories have tests
 4. **File location** — where the document was saved
 5. **Supabase seed** — confirm cases inserted and suite ID
-6. **Test Runner URL** — `http://localhost:3000/admin/testing`
+6. **Test Runner URL** — `http://localhost:3000/test-matrix`
 7. **Top 3 HIGH priority areas** — most critical things to test first
 
 ---

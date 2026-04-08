@@ -58,6 +58,13 @@ export function stateLabel(stateId: string): string {
     "list-owner": "Owner Invoices",
     "list-subcontractor": "Subcontractor Invoices",
     "po-invoices-list": "PO Invoices",
+    "budget-details": "Budget Details",
+    "budget-modifications": "Budget Modifications",
+    "cost-codes": "Cost Codes",
+    "forecasting": "Forecasting",
+    "project-status-snapshots": "Project Status Snapshots",
+    "change-history": "Change History",
+    "settings": "Settings",
   };
   return overrides[stateId] ?? stateId.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }

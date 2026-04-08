@@ -138,6 +138,7 @@ Deletes `.next` directory to force rebuild.
 ### POST `/api/dev-tools/regenerate-types`
 
 Runs `npx supabase gen types typescript...` command.
+Also auto-syncs Dev Tools page-schema FK targets from the regenerated types file.
 
 **Security:** Only works in development mode.
 
@@ -163,6 +164,7 @@ Runs route conflict checker script or basic validation.
 - Before debugging a 404 → Clear Next.js cache first
 - Before creating new routes → Check route conflicts
 - When types are out of date → Regenerate types
+  - This also refreshes FK targets used by the Page Schema tab
 
 **Database Tab:**
 

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useRef, useEffect, type ComponentType } from "react";
+import { useState, useRef, useEffect } from "react";
 import { ChevronUp } from "lucide-react";
 
 const currentYear = new Date().getFullYear();
@@ -13,6 +13,7 @@ const adminSections = [
       { label: "Command Center", href: "/command-center" },
       { label: "Admin Dashboard", href: "/admin" },
       { label: "Feedback Inbox", href: "/feedback-inbox" },
+      { label: "Annotation Inbox", href: "/annotation-inbox" },
       { label: "Updates", href: "/updates" },
     ],
   },
@@ -99,20 +100,10 @@ function AdminDropdown() {
 }
 
 export function SiteFooter() {
-  const [DevPanel, setDevPanel] = useState<ComponentType<{ variant?: "sidebar" | "footer" }> | null>(null);
-
-  useEffect(() => {
-    if (process.env.NODE_ENV !== "development") return;
-    import("@/components/dev-tools/enhanced-dev-panel").then((mod) => {
-      setDevPanel(() => mod.EnhancedDevPanel);
-    });
-  }, []);
-
   return (
     <footer className="mt-16 border-t border-border bg-muted/30">
-      <div className="flex flex-col items-center gap-3 px-4 py-6 sm:flex-row sm:justify-between sm:px-6 lg:px-8">
+      <div className="flex flex-col items-center gap-3 border-t border-border px-4 py-6 sm:flex-row sm:justify-between sm:px-6 lg:px-8">
         <nav className="flex flex-wrap items-center gap-x-4 gap-y-1">
-          {process.env.NODE_ENV === "development" && DevPanel ? <DevPanel variant="footer" /> : null}
           <AdminDropdown />
         </nav>
         <p className="text-xs text-muted-foreground">

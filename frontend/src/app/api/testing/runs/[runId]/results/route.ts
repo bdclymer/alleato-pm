@@ -6,10 +6,12 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET(
-  _req: Request,
+  req: Request,
   { params }: { params: Promise<{ runId: string }> }
 ) {
   const { runId } = await params;
+  const { searchParams } = new URL(req.url);
+  const typeFilter = searchParams.get("type"); // "scenario" | "feature" | null (all)
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -18,7 +20,8 @@ export async function GET(
       id, status, notes, updated_at,
       test_cases (
         id, test_number, category, subcategory, test_name,
-        steps, expected_result, priority
+        steps, setup_steps, context_note, expected_result, priority,
+        test_type, start_url
       ),
       test_screenshots (id, public_url, label, created_at)
     `)
@@ -29,11 +32,19 @@ export async function GET(
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
+  type ResultRow = (typeof data)[number];
+  type TC = { test_number: string; test_type: string } | null;
+
+  // Filter by test_type in JS (PostgREST .eq on embedded resources filters embedded rows, not parents)
+  const filtered = typeFilter
+    ? (data ?? []).filter((r) => (r.test_cases as TC)?.test_type === typeFilter)
+    : (data ?? []);
+
   // Sort by test_number (e.g. "1.1.2" < "1.1.10")
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const sorted = (data ?? []).sort((a: any, b: any) => {
-    const numA: string = (a.test_cases as { test_number: string } | null)?.test_number ?? "";
-    const numB: string = (b.test_cases as { test_number: string } | null)?.test_number ?? "";
+  const sorted = filtered.sort((a: ResultRow, b: ResultRow) => {
+    const tc = (r: ResultRow) => r.test_cases as { test_number: string } | null;
+    const numA: string = tc(a)?.test_number ?? "";
+    const numB: string = tc(b)?.test_number ?? "";
     const partsA = numA.split(".").map(Number);
     const partsB = numB.split(".").map(Number);
     for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {

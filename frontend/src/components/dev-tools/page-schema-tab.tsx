@@ -12,14 +12,11 @@ import {
   ArrowRight,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
-  TableHeader,
   TableRow,
 } from "@/components/ui/table"
 import {
@@ -37,52 +34,54 @@ function TableAccordion({ table }: { table: TableSchema }) {
   const fkColumns = table.columns.filter((c) => c.fk)
 
   return (
-    <div className="rounded-md border border-border">
-      <Button
-        variant="ghost"
+    <div className="border-b border-border last:border-b-0">
+      <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className="flex h-auto w-full items-center justify-between rounded-none p-3 text-left"
+        className="flex w-full items-center justify-between px-2 py-1.5 text-left hover:bg-muted/50 transition-colors"
       >
         <div className="flex items-center gap-2">
-          <Database className="h-3.5 w-3.5 text-muted-foreground" />
-          <span className="font-mono text-sm font-semibold">{table.name}</span>
-          <span className="text-xs text-muted-foreground">
+          {isOpen ? (
+            <ChevronDown className="h-3 w-3 text-muted-foreground" />
+          ) : (
+            <ChevronRight className="h-3 w-3 text-muted-foreground" />
+          )}
+          <Database className="h-3 w-3 text-muted-foreground" />
+          <span className="font-mono text-xs font-semibold">{table.name}</span>
+          <span className="text-[10px] text-muted-foreground">
             ({table.columns.length} cols)
           </span>
         </div>
         <div className="flex items-center gap-2">
           {fkColumns.length > 0 && (
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="outline" className="text-[10px] px-1 py-0">
               {fkColumns.length} FK
             </Badge>
           )}
-          {isOpen ? (
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-          ) : (
-            <ChevronRight className="h-4 w-4 text-muted-foreground" />
-          )}
         </div>
-      </Button>
+      </button>
 
       {isOpen && (
-        <div className="border-t border-border">
-          <p className="px-3 py-2 text-xs text-muted-foreground">
-            {table.description}
-          </p>
+        <div className="bg-muted/20">
+          {table.description && (
+            <p className="px-6 pt-1 pb-0.5 text-[10px] text-muted-foreground italic">
+              {table.description}
+            </p>
+          )}
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-48">Column</TableHead>
-                <TableHead className="w-24">Type</TableHead>
-                <TableHead className="w-12">PK</TableHead>
-                <TableHead className="w-52">FK</TableHead>
-                <TableHead>Notes</TableHead>
-              </TableRow>
-            </TableHeader>
+            <thead>
+              <tr className="border-b border-border">
+                <th className="w-48 px-3 py-1 text-left text-[10px] font-medium text-muted-foreground">Column</th>
+                <th className="w-24 px-3 py-1 text-left text-[10px] font-medium text-muted-foreground">Type</th>
+                <th className="w-12 px-3 py-1 text-left text-[10px] font-medium text-muted-foreground">PK</th>
+                <th className="w-52 px-3 py-1 text-left text-[10px] font-medium text-muted-foreground">FK</th>
+                <th className="px-3 py-1 text-left text-[10px] font-medium text-muted-foreground">Notes</th>
+              </tr>
+            </thead>
             <TableBody>
               {table.columns.map((col) => (
-                <TableRow key={col.name}>
-                  <TableCell className="font-mono text-xs">
+                <TableRow key={col.name} className="border-0">
+                  <TableCell className="py-0.5 font-mono text-[11px]">
                     <span className={col.pk ? "font-bold text-primary" : ""}>
                       {col.name}
                     </span>
@@ -90,15 +89,15 @@ function TableAccordion({ table }: { table: TableSchema }) {
                       <span className="ml-1 text-muted-foreground">?</span>
                     )}
                   </TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground">
+                  <TableCell className="py-0.5 font-mono text-[11px] text-muted-foreground">
                     {col.type}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="py-0.5">
                     {col.pk && (
                       <KeyRound className="h-3 w-3 text-primary" />
                     )}
                   </TableCell>
-                  <TableCell className="font-mono text-xs">
+                  <TableCell className="py-0.5 font-mono text-[11px]">
                     {col.fk && (
                       <span className="flex items-center gap-1">
                         <LinkIcon className="h-3 w-3 text-muted-foreground" />
@@ -106,7 +105,7 @@ function TableAccordion({ table }: { table: TableSchema }) {
                       </span>
                     )}
                   </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
+                  <TableCell className="py-0.5 text-[11px] text-muted-foreground">
                     {col.notes?.startsWith("⚠️") ? (
                       <span className="text-warning flex items-start gap-1">
                         <AlertTriangle className="mt-0.5 h-3 w-3 shrink-0" />
@@ -187,8 +186,11 @@ export function PageSchemaTab({ pathname, params }: PageSchemaTabProps) {
     return resolved
   }
 
-  const fkMismatchCount = schema.fieldMappings.filter(
-    (m) => m.fkTarget && m.dropdownSource,
+  const isFkMismatch = (fkTarget?: string, dropdownSource?: string) =>
+    Boolean(fkTarget && dropdownSource && fkTarget !== dropdownSource)
+
+  const fkMismatchCount = schema.fieldMappings.filter((m) =>
+    isFkMismatch(m.fkTarget, m.dropdownSource),
   ).length
 
   return (
@@ -216,7 +218,7 @@ export function PageSchemaTab({ pathname, params }: PageSchemaTabProps) {
           <Database className="h-3.5 w-3.5" />
           Supabase Tables
         </h4>
-        <div className="space-y-2">
+        <div className="rounded-md border border-border">
           {schema.tables.map((table) => (
             <TableAccordion key={table.name} table={table} />
           ))}
@@ -259,19 +261,19 @@ export function PageSchemaTab({ pathname, params }: PageSchemaTabProps) {
         </h4>
         <div className="rounded-md border border-border">
           <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Form Field</TableHead>
-                <TableHead>DB Table</TableHead>
-                <TableHead>DB Column</TableHead>
-                <TableHead>FK Target</TableHead>
-                <TableHead>Dropdown Source</TableHead>
-                <TableHead>Notes</TableHead>
-              </TableRow>
-            </TableHeader>
+            <thead>
+              <tr className="border-b border-border">
+                <th className="px-3 py-1 text-left text-[10px] font-medium text-muted-foreground">Form Field</th>
+                <th className="px-3 py-1 text-left text-[10px] font-medium text-muted-foreground">DB Table</th>
+                <th className="px-3 py-1 text-left text-[10px] font-medium text-muted-foreground">DB Column</th>
+                <th className="px-3 py-1 text-left text-[10px] font-medium text-muted-foreground">FK Target</th>
+                <th className="px-3 py-1 text-left text-[10px] font-medium text-muted-foreground">Dropdown Source</th>
+                <th className="px-3 py-1 text-left text-[10px] font-medium text-muted-foreground">Notes</th>
+              </tr>
+            </thead>
             <TableBody>
               {schema.fieldMappings.map((mapping, idx) => {
-                const hasMismatch = mapping.fkTarget && mapping.dropdownSource
+                const hasMismatch = isFkMismatch(mapping.fkTarget, mapping.dropdownSource)
                 return (
                   <TableRow
                     key={`${mapping.formField}-${idx}`}

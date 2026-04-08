@@ -1,13 +1,12 @@
-import * as React from "react";
-import type { ReactElement } from "react";
 import { ChevronRight, Eye, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import type { ReactElement } from "react";
 
+import { StatusBadge } from "@/components/ds";
 import type {
   ColumnConfig,
   FilterConfig,
   TableColumn,
 } from "@/components/tables/unified";
-import { StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -15,15 +14,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import type { ChangeEvent } from "@/hooks/use-change-events";
 
 const STATUS_FILTER_OPTIONS = [
   { value: "open", label: "Open" },
   { value: "pending", label: "Pending" },
-  { value: "pending_approval", label: "Pending Approval" },
-  { value: "approved", label: "Approved" },
-  { value: "rejected", label: "Rejected" },
   { value: "closed", label: "Closed" },
+  { value: "void", label: "Void" },
 ];
 
 const SCOPE_FILTER_OPTIONS = [
@@ -130,16 +132,14 @@ export const changeEventDefaultVisibleColumns = changeEventColumns
 
 function statusLabel(status: string | null | undefined): string {
   switch ((status ?? "").toLowerCase()) {
-    case "pending_approval":
-      return "Pending Approval";
     case "open":
       return "Open";
-    case "approved":
-      return "Approved";
-    case "rejected":
-      return "Rejected";
+    case "pending":
+      return "Pending";
     case "closed":
       return "Closed";
+    case "void":
+      return "Void";
     default:
       return status || "-";
   }
@@ -235,11 +235,22 @@ export function buildChangeEventTableColumns(
               />
             </button>
           )}
-          <div>
-            <span className="font-mono text-xs text-muted-foreground">{item.number || `CE-${item.id}`}</span>
-            {" - "}
-            <span className="font-medium">{item.title}</span>
-          </div>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="cursor-default">
+                <span className="font-mono text-muted-foreground">{item.number || `CE-${item.id}`}</span>
+                {" - "}
+                <span className="font-medium">{item.title}</span>
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="max-w-xs space-y-1 text-xs">
+              <p className="font-semibold text-sm">{item.number || `CE-${item.id}`} — {item.title}</p>
+              <p><span className="text-muted-foreground">Status:</span> {statusLabel(item.status)}</p>
+              <p><span className="text-muted-foreground">Scope:</span> {scopeLabel(item.scope)}</p>
+              {item.reason && <p><span className="text-muted-foreground">Change Reason:</span> {item.reason}</p>}
+              <p><span className="text-muted-foreground">Type:</span> {typeLabel(item.type)}</p>
+            </TooltipContent>
+          </Tooltip>
         </div>
       ),
       sortValue: (item) => `${item.number ?? ""} ${item.title}`,
@@ -334,18 +345,6 @@ export function renderChangeEventRowActions(
 ): ReactElement {
   return (
     <div className="flex items-center gap-1">
-      <Button
-        variant="ghost"
-        size="sm"
-        className="h-7 gap-1.5 text-xs"
-        onClick={(e) => {
-          e.stopPropagation();
-          onEdit(item);
-        }}
-      >
-        <Pencil className="h-3.5 w-3.5" />
-        Edit
-      </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
@@ -362,6 +361,10 @@ export function renderChangeEventRowActions(
             <Eye className="mr-2 h-4 w-4" />
             View
           </DropdownMenuItem>
+          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); onEdit(item); }}>
+            <Pencil className="mr-2 h-4 w-4" />
+            Edit
+          </DropdownMenuItem>
           <DropdownMenuItem className="text-destructive" onClick={() => onDelete(item)}>
             <Trash2 className="mr-2 h-4 w-4" />
             Delete
@@ -377,8 +380,9 @@ export function renderChangeEventCard(
   onClick: (item: ChangeEvent) => void,
 ): ReactElement {
   return (
-    <div
-      className="cursor-pointer rounded-lg border p-4 transition-colors hover:bg-muted/50"
+    <button
+      type="button"
+      className="w-full cursor-pointer rounded-lg border p-4 text-left transition-colors hover:bg-muted/50"
       onClick={() => onClick(item)}
     >
       <div className="mb-2 flex items-start justify-between gap-4">
@@ -389,7 +393,7 @@ export function renderChangeEventCard(
         <StatusBadge status={statusLabel(item.status)} />
       </div>
       <p className="text-sm text-muted-foreground">{scopeLabel(item.scope)} · {typeLabel(item.type)}</p>
-    </div>
+    </button>
   );
 }
 
@@ -398,8 +402,9 @@ export function renderChangeEventList(
   onClick: (item: ChangeEvent) => void,
 ): ReactElement {
   return (
-    <div
-      className="flex cursor-pointer items-center justify-between rounded-md px-4 py-2 transition-colors hover:bg-muted/50"
+    <button
+      type="button"
+      className="flex w-full cursor-pointer items-center justify-between rounded-md px-4 py-2 text-left transition-colors hover:bg-muted/50"
       onClick={() => onClick(item)}
     >
       <div>
@@ -407,7 +412,7 @@ export function renderChangeEventList(
         <p className="text-xs text-muted-foreground">{item.title || "Untitled Change Event"}</p>
       </div>
       <StatusBadge status={statusLabel(item.status)} />
-    </div>
+    </button>
   );
 }
 
