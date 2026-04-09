@@ -1,21 +1,6 @@
 # Change Events — Procore Feature Test Matrix
 
 **Generated:** 2026-04-07
-**Source:** Procore documentation (Supabase RAG — 40 docs retrieved)
-**Tool:** change-events
-**Purpose:** Comprehensive testing checklist to verify all Procore features are
-             implemented and working in Alleato PM.
-
----
-
-## How to Use This Document
-
-- Work through each section systematically
-- Mark each test: ✅ Pass | ❌ Fail | ⏭️ Skip (not applicable) | 🔲 Not tested
-- For failures, note the issue in the "Notes" column
-- Priority: HIGH items block release; MEDIUM reduce quality; LOW are polish
-
----
 
 ## Summary
 

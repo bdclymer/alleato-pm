@@ -229,48 +229,87 @@ export default function TestingPage() {
 
   // ─── View: HOME ────────────────────────────────────────────────────────────
   if (view === "home") {
+    const FINANCIAL = new Set([
+      "budget",
+      "prime-contracts",
+      "commitments",
+      "change-events",
+      "change-orders",
+      "direct-costs",
+      "invoicing",
+      "invoices",
+    ]);
+    const categoryFor = (tool: string): "Financial" | "Project Management" => {
+      const key = tool.toLowerCase();
+      if (FINANCIAL.has(key) || key.includes("budget") || key.includes("cost") || key.includes("invoice") || key.includes("contract") || key.includes("change")) {
+        return "Financial";
+      }
+      return "Project Management";
+    };
+
+    const grouped = suites.reduce<Record<string, Suite[]>>((acc, s) => {
+      const cat = categoryFor(s.tool_name);
+      (acc[cat] ||= []).push(s);
+      return acc;
+    }, {});
+    const order: Array<"Financial" | "Project Management"> = ["Financial", "Project Management"];
+
     return (
-      <PageShell variant="content" title="Testing" description="Browse scenarios or start an interactive test session">
-        <div className="max-w-2xl space-y-2">
+      <PageShell variant="content" title="Testing" description="Browse scenarios or start an interactive test session" fullWidth>
+        <div className="space-y-10">
           {suites.length === 0 && (
             <p className="text-muted-foreground text-sm text-center py-12">No test scenarios available yet.</p>
           )}
-          {suites.map((suite) => (
-            <div
-              key={suite.id}
-              className="flex items-center justify-between px-5 py-4 rounded-xl border border-border bg-card"
-            >
-              <div className="min-w-0">
-                <p className="font-semibold text-sm">{suite.display_name}</p>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {suite.scenario_count} scenario{suite.scenario_count !== 1 ? "s" : ""}
-                  {suite.feature_count > 0 && ` · ${suite.feature_count} feature checks`}
-                </p>
-              </div>
-              <div className="flex items-center gap-2 shrink-0 ml-4">
-                <Link
-                  href={`/procore-tools/${suite.tool_name}?tab=test-scenarios`}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-border bg-background hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                >
-                  <BookOpen className="h-3.5 w-3.5" />
-                  Browse
-                </Link>
-                <button
-                  type="button"
-                  onClick={() => openHistory(suite)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-border bg-background hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                >
-                  <History className="h-3.5 w-3.5" />
-                  Results
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setSelectedSuite(suite); setView("start-run"); }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
-                >
-                  <Play className="h-3.5 w-3.5" />
-                  Run
-                </button>
+          {order.filter((cat) => grouped[cat]?.length).map((cat) => (
+            <div key={cat} className="space-y-3">
+              <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{cat}</h2>
+              <div className="overflow-hidden rounded-xl border border-border bg-card">
+                <table className="w-full text-sm">
+                  <thead className="bg-muted/40 text-xs uppercase tracking-wider text-muted-foreground">
+                    <tr>
+                      <th className="text-left font-medium px-5 py-3">Tool</th>
+                      <th className="text-left font-medium px-5 py-3 w-32">Scenarios</th>
+                      <th className="text-left font-medium px-5 py-3 w-40">Feature checks</th>
+                      <th className="text-right font-medium px-5 py-3 w-72">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {grouped[cat].map((suite) => (
+                      <tr key={suite.id} className="hover:bg-muted/20 transition-colors">
+                        <td className="px-5 py-3 font-medium">{suite.display_name}</td>
+                        <td className="px-5 py-3 text-muted-foreground">{suite.scenario_count}</td>
+                        <td className="px-5 py-3 text-muted-foreground">{suite.feature_count || "—"}</td>
+                        <td className="px-5 py-3">
+                          <div className="flex items-center gap-2 justify-end">
+                            <Link
+                              href={`/procore-tools/${suite.tool_name}?tab=test-scenarios`}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-border bg-background hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                            >
+                              <BookOpen className="h-3.5 w-3.5" />
+                              Browse
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={() => openHistory(suite)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-border bg-background hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                            >
+                              <History className="h-3.5 w-3.5" />
+                              Results
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => { setSelectedSuite(suite); setView("start-run"); }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                            >
+                              <Play className="h-3.5 w-3.5" />
+                              Run
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           ))}

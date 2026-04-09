@@ -1,21 +1,7 @@
 # Budget — Procore Feature Test Matrix
 
-**Generated:** 2026-04-07
-**Source:** Procore documentation (Supabase RAG — 52 docs retrieved)
-**Tool:** budget
-**Purpose:** Comprehensive testing checklist to verify all Procore features are
-             implemented and working in Alleato PM.
-
----
-
-## How to Use This Document
-
-- Work through each section systematically
-- Mark each test: ✅ Pass | ❌ Fail | ⏭️ Skip (not applicable) | 🔲 Not tested
-- For failures, note the issue in the "Notes" column
-- Priority: HIGH items block release; MEDIUM reduce quality; LOW are polish
-
----
+- **Generated:** 2026-04-07
+- **Source:** Procore documentation (Supabase RAG — 52 docs retrieved)
 
 ## Summary
 
@@ -38,7 +24,12 @@
 
 ## 1. Core Actions
 
-> Source: Procore Budget documentation — Add a Budget Line Item, Edit a Budget, Delete a Budget Line Item, Import a Budget, Lock a Budget, Unlock a Budget
+1. Add a Budget Line Item
+2. Edit a Budget
+3. Delete a Budget Line Item
+4. Import a Budget
+5. Lock a Budget
+6. Unlock a Budget
 
 ### 1.1 Create / Add Budget Line Items
 
