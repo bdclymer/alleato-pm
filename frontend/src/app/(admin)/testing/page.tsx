@@ -18,6 +18,8 @@ import {
   ChevronRight,
   BookOpen,
   Play,
+  History,
+  ChevronDown,
 } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -54,9 +56,34 @@ interface Suite {
   feature_count: number;
 }
 
+interface HistoryRun {
+  id: string;
+  run_date: string;
+  tester: string | null;
+  environment: string | null;
+  branch: string | null;
+  total: number;
+  pass: number;
+  fail: number;
+  skip: number;
+  not_tested: number;
+}
+
+interface RunDetailResult {
+  id: string;
+  status: TestStatus;
+  notes: string | null;
+  test_cases: {
+    test_number: string;
+    category: string;
+    test_name: string;
+    priority: string;
+  };
+}
+
 // ─── View States ─────────────────────────────────────────────────────────────
 
-type View = "home" | "start-run" | "running" | "complete";
+type View = "home" | "start-run" | "running" | "complete" | "history" | "run-detail";
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -83,6 +110,11 @@ export default function TestingPage() {
   const [checkedSteps, setCheckedSteps] = useState<Record<number, boolean>>({});
   const [uploadingScreenshot, setUploadingScreenshot] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [historyRuns, setHistoryRuns] = useState<HistoryRun[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [expandedRunId, setExpandedRunId] = useState<string | null>(null);
+  const [runDetail, setRunDetail] = useState<RunDetailResult[]>([]);
+  const [runDetailLoading, setRunDetailLoading] = useState(false);
 
   // ── Load suites ──
   useEffect(() => {
@@ -90,6 +122,34 @@ export default function TestingPage() {
       .then((r) => r.json())
       .then((d) => setSuites((d.suites ?? []).filter((s: Suite) => s.scenario_count > 0)));
   }, []);
+
+  // ── Load history for a suite ──
+  const openHistory = async (suite: Suite) => {
+    setSelectedSuite(suite);
+    setHistoryLoading(true);
+    setHistoryRuns([]);
+    setView("history");
+    const res = await fetch(`/api/testing/runs?suite=${suite.tool_name}`);
+    if (res.ok) {
+      const d = await res.json();
+      setHistoryRuns(d.runs ?? []);
+    }
+    setHistoryLoading(false);
+  };
+
+  // ── Load detail for a single run ──
+  const openRunDetail = async (runId: string) => {
+    setExpandedRunId(runId);
+    setRunDetailLoading(true);
+    setRunDetail([]);
+    setView("run-detail");
+    const res = await fetch(`/api/testing/runs/${runId}/results`);
+    if (res.ok) {
+      const d = await res.json();
+      setRunDetail(d.results ?? []);
+    }
+    setRunDetailLoading(false);
+  };
 
   // ── Reset step checkboxes when scenario changes ──
   useEffect(() => {
@@ -195,6 +255,14 @@ export default function TestingPage() {
                   <BookOpen className="h-3.5 w-3.5" />
                   Browse
                 </Link>
+                <button
+                  type="button"
+                  onClick={() => openHistory(suite)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-border bg-background hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                >
+                  <History className="h-3.5 w-3.5" />
+                  Results
+                </button>
                 <button
                   type="button"
                   onClick={() => { setSelectedSuite(suite); setView("start-run"); }}
@@ -314,6 +382,110 @@ export default function TestingPage() {
               Run again
             </Button>
           </div>
+        </div>
+      </PageShell>
+    );
+  }
+
+  // ─── View: HISTORY ────────────────────────────────────────────────────────
+  if (view === "history") {
+    const passRate = (run: HistoryRun) =>
+      run.total > 0 ? Math.round((run.pass / run.total) * 100) : 0;
+
+    return (
+      <PageShell
+        variant="content"
+        title={`${selectedSuite?.display_name ?? ""} — Results`}
+        description="Past test runs"
+        onBack={() => setView("home")}
+      >
+        <div className="max-w-2xl space-y-3">
+          {historyLoading && <p className="text-sm text-muted-foreground py-8 text-center">Loading…</p>}
+          {!historyLoading && historyRuns.length === 0 && (
+            <p className="text-sm text-muted-foreground py-8 text-center">No runs yet. Click Run to start the first session.</p>
+          )}
+          {historyRuns.map((run) => (
+            <div key={run.id} className="rounded-xl border border-border bg-card overflow-hidden">
+              <button
+                type="button"
+                onClick={() => openRunDetail(run.id)}
+                className="w-full flex items-center justify-between px-5 py-4 hover:bg-muted/30 transition-colors text-left"
+              >
+                <div className="min-w-0">
+                  <p className="text-sm font-medium">
+                    {new Date(run.run_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                    {run.tester && <span className="text-muted-foreground font-normal"> · {run.tester}</span>}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {run.environment ?? "localhost:3000"}
+                    {run.branch && ` · ${run.branch}`}
+                  </p>
+                </div>
+                <div className="flex items-center gap-4 shrink-0 ml-4">
+                  <div className="flex items-center gap-2 text-xs">
+                    <span className="text-green-600 font-semibold">{run.pass} ✓</span>
+                    {run.fail > 0 && <span className="text-red-500 font-semibold">{run.fail} ✗</span>}
+                    {run.skip > 0 && <span className="text-muted-foreground">{run.skip} –</span>}
+                  </div>
+                  <div className="w-16 text-right">
+                    <span className={`text-sm font-bold ${passRate(run) === 100 ? "text-green-600" : passRate(run) >= 70 ? "text-amber-500" : "text-red-500"}`}>
+                      {passRate(run)}%
+                    </span>
+                  </div>
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                </div>
+              </button>
+            </div>
+          ))}
+        </div>
+      </PageShell>
+    );
+  }
+
+  // ─── View: RUN DETAIL ──────────────────────────────────────────────────────
+  if (view === "run-detail") {
+    const grouped = runDetail.reduce<Record<string, RunDetailResult[]>>((acc, r) => {
+      const cat = r.test_cases?.category ?? "Other";
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat].push(r);
+      return acc;
+    }, {});
+
+    const statusIcon = (s: TestStatus) => {
+      if (s === "pass") return <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />;
+      if (s === "fail") return <XCircle className="h-4 w-4 text-red-500 shrink-0" />;
+      if (s === "skip") return <MinusCircle className="h-4 w-4 text-muted-foreground shrink-0" />;
+      return <div className="h-4 w-4 rounded-full border-2 border-border shrink-0" />;
+    };
+
+    return (
+      <PageShell
+        variant="content"
+        title={`${selectedSuite?.display_name ?? ""} — Run Detail`}
+        onBack={() => setView("history")}
+      >
+        <div className="max-w-2xl space-y-6">
+          {runDetailLoading && <p className="text-sm text-muted-foreground py-8 text-center">Loading…</p>}
+          {!runDetailLoading && Object.entries(grouped).map(([category, items]) => (
+            <div key={category}>
+              <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground mb-2">{category}</p>
+              <div className="space-y-1">
+                {items.map((r) => (
+                  <div key={r.id} className={`flex items-start gap-3 px-4 py-3 rounded-lg ${r.status === "fail" ? "bg-red-50 dark:bg-red-950/20" : r.status === "pass" ? "bg-green-50/50 dark:bg-green-950/10" : "bg-muted/20"}`}>
+                    {statusIcon(r.status)}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium leading-snug">
+                        <span className="text-muted-foreground text-xs mr-1.5">{r.test_cases?.test_number}</span>
+                        {r.test_cases?.test_name}
+                      </p>
+                      {r.notes && <p className="text-xs text-muted-foreground mt-0.5">{r.notes}</p>}
+                    </div>
+                    <span className="text-[10px] text-muted-foreground shrink-0">{r.test_cases?.priority}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
       </PageShell>
     );
