@@ -89,6 +89,8 @@ type View = "home" | "start-run" | "running" | "complete" | "history" | "run-det
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
+const APP_BASE = "http://localhost:3000";
+
 function parseSteps(raw: string | null): string[] {
   if (!raw) return [];
   return raw.split("\n").filter(Boolean).map((s) => s.replace(/^\d+\.\s*/, "").trim());
@@ -563,9 +565,9 @@ export default function TestingPage() {
   const tc = current.test_cases;
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col px-4 sm:px-6">
       {/* Progress bar */}
-      <div className="h-1.5 bg-muted -mx-6 -mt-2 mb-0">
+      <div className="h-1.5 bg-muted -mx-4 sm:-mx-6 -mt-2 mb-0">
         <div
           className="h-full bg-primary transition-all duration-500"
           style={{ width: `${pct}%` }} // eslint-disable-line react/forbid-component-props
@@ -573,7 +575,7 @@ export default function TestingPage() {
       </div>
 
       {/* Run header */}
-      <div className="flex items-center justify-between border-b border-border px-0 py-3 mb-4">
+      <div className="flex items-center justify-between border-b border-border px-0 py-3 mb-4 max-w-2xl w-full mx-auto">
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -595,7 +597,7 @@ export default function TestingPage() {
         </div>
       </div>
 
-      <div className="overflow-y-auto max-w-2xl w-full space-y-6 pb-48">
+      <div className="overflow-y-auto max-w-2xl w-full mx-auto space-y-6 pb-48">
 
         {/* Category chip + test number */}
         <div className="flex items-center gap-2 flex-wrap">
@@ -611,7 +613,7 @@ export default function TestingPage() {
         </div>
 
         {/* Title */}
-        <h2 className="text-xl sm:text-2xl font-bold leading-snug">{tc.test_name}</h2>
+        <h2 className="text-lg sm:text-xl font-semibold leading-snug tracking-tight">{tc.test_name}</h2>
 
         {/* Context note (plain English "what this tests") */}
         {tc.context_note && (
@@ -623,7 +625,7 @@ export default function TestingPage() {
         {/* Setup steps ("Before you start") */}
         {tc.setup_steps && (
           <div className="bg-amber-50 dark:bg-amber-950/20 rounded-xl px-4 py-3 space-y-1">
-            <p className="text-xs font-semibold text-amber-800 dark:text-amber-400 uppercase tracking-wider">Before you start</p>
+            <p className="text-sm font-semibold text-amber-900 dark:text-amber-300">Before you start</p>
             {parseSteps(tc.setup_steps).map((s, i) => (
               <p key={i} className="text-sm text-amber-900 dark:text-amber-300">· {s}</p>
             ))}
@@ -645,15 +647,13 @@ export default function TestingPage() {
 
         {/* Steps */}
         <div className="space-y-3">
-          <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Steps</h3>
+          <p className="text-sm font-semibold text-foreground">Steps</p>
           {steps.map((step, i) => (
             <label
               key={i}
               className={cn(
-                "flex items-start gap-3 cursor-pointer rounded-xl border px-4 py-3 transition-all select-none",
-                checkedSteps[i]
-                  ? "border-green-300 bg-green-50 dark:border-green-800 dark:bg-green-950/20"
-                  : "border-border bg-card hover:border-muted-foreground/30"
+                "flex items-start gap-3 cursor-pointer py-1.5 transition-all select-none",
+                checkedSteps[i] && "opacity-70"
               )}
             >
               <div className={cn(
@@ -682,17 +682,17 @@ export default function TestingPage() {
         {/* Expected result */}
         {tc.expected_result && (
           <div className="space-y-2">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">What should happen</h3>
-            <div className="bg-muted/50 rounded-xl px-4 py-3 text-sm leading-relaxed">
+            <p className="text-sm font-semibold text-foreground">What should happen</p>
+            <p className="text-sm leading-relaxed text-muted-foreground">
               {tc.expected_result}
-            </div>
+            </p>
           </div>
         )}
 
         {/* Issue notes box (shown when Fail is tapped) */}
         {showIssueBox && (
           <div className="space-y-2">
-            <Label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+            <Label className="text-sm font-semibold text-foreground">
               Describe what went wrong
             </Label>
             <Textarea
@@ -708,7 +708,7 @@ export default function TestingPage() {
         {/* Screenshots */}
         {current.test_screenshots.length > 0 && (
           <div className="space-y-2">
-            <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Screenshots</h3>
+            <p className="text-sm font-semibold text-foreground">Screenshots</p>
             <div className="flex flex-wrap gap-2">
               {current.test_screenshots.map((s) => (
                 <a key={s.id} href={s.public_url ?? "#"} target="_blank" rel="noopener noreferrer">
