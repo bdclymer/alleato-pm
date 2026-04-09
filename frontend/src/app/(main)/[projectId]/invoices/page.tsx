@@ -6,7 +6,7 @@ import { useParams, usePathname, useRouter, useSearchParams } from "next/navigat
 import { Plus, Eye, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 
-import { StatusBadge } from "@/components/ds";
+import { KpiRow, StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -33,9 +33,8 @@ import {
   type TableColumn,
 } from "@/components/tables/unified";
 import { useOwnerInvoicesList } from "@/hooks/use-invoicing";
-import { useCommitmentsList } from "@/hooks/use-commitments-query";
+import { useSubcontractorInvoicesList } from "@/hooks/use-subcontractor-invoices";
 import { useBillingPeriodsList, useCreateBillingPeriod, type BillingPeriod } from "@/hooks/use-billing-periods";
-import type { CommitmentListItem } from "@/lib/validation/commitments";
 import {
   buildInvoiceTableColumns,
   invoiceColumns,
@@ -52,30 +51,54 @@ const EMPTY_FILTERS: FilterState = {
   status: undefined,
 };
 
-const subcontractorFilters: FilterConfig[] = [
-  {
-    id: "status",
-    label: "Status",
-    type: "select",
-    options: [
-      { value: "draft", label: "Draft" },
-      { value: "pending", label: "Pending" },
-      { value: "approved", label: "Approved" },
-      { value: "executed", label: "Executed" },
-      { value: "closed", label: "Closed" },
-      { value: "void", label: "Void" },
-    ],
-  },
+interface SubcontractorInvoiceRow {
+  id: number;
+  invoice_number: string | null;
+  status: string;
+  billing_date: string | null;
+  period_start: string | null;
+  period_end: string | null;
+  billing_period_id: string | null;
+  billing_period_name: string | null;
+  contract_number: string | null;
+  contract_title: string | null;
+  contract_company_id: string | null;
+  contract_company_name: string | null;
+  contract_type: "subcontract" | "purchase_order" | null;
+  gross_amount: number;
+  net_amount: number;
+  paid_amount: number;
+  total_completed: number;
+  total_contract_amount: number;
+  percent_complete: number;
+  erp_status: string | null;
+  payment_status: string | null;
+}
+
+const INVOICE_STATUS_OPTIONS = [
+  { value: "draft", label: "Draft" },
+  { value: "under_review", label: "Under Review" },
+  { value: "approved", label: "Approved" },
+  { value: "approved_as_noted", label: "Approved as Noted" },
+  { value: "revise_and_resubmit", label: "Revise & Resubmit" },
+  { value: "pending_owner_approval", label: "Pending Owner Approval" },
+  { value: "paid", label: "Paid" },
 ];
 
 const subcontractorColumnConfig: ColumnConfig[] = [
-  { id: "number", label: "Commitment #", alwaysVisible: true },
-  { id: "title", label: "Title", defaultVisible: true },
-  { id: "company", label: "Vendor", defaultVisible: true },
-  { id: "status", label: "Status", defaultVisible: true },
-  { id: "invoiced_amount", label: "Invoiced", defaultVisible: true },
-  { id: "balance_to_finish", label: "Remaining", defaultVisible: true },
-  { id: "updated_at", label: "Updated", defaultVisible: false },
+  { id: "invoice_number", label: "Invoice #", alwaysVisible: true },
+  { id: "status", label: "Invoice Status", defaultVisible: true },
+  { id: "contract_company", label: "Contract Company", defaultVisible: true },
+  { id: "billing_period", label: "Billing Period", defaultVisible: true },
+  { id: "gross_amount", label: "Gross Amount", defaultVisible: true },
+  { id: "net_amount", label: "Net Amount", defaultVisible: true },
+  { id: "paid_amount", label: "Paid Amount", defaultVisible: true },
+  { id: "invoice_dates", label: "Invoice Dates", defaultVisible: true },
+  { id: "contract", label: "Contract", defaultVisible: true },
+  { id: "total_contract_amount", label: "Total Contract", defaultVisible: true },
+  { id: "percent_complete", label: "% Complete", defaultVisible: true },
+  { id: "total_amount", label: "Total Amount", defaultVisible: false },
+  { id: "erp_status", label: "ERP Status", defaultVisible: false },
 ];
 
 const subcontractorDefaultVisibleColumns = subcontractorColumnConfig
@@ -276,17 +299,16 @@ export default function ProjectInvoicesPage(): ReactElement {
     useOwnerInvoicesList(projectId);
 
   const {
-    data: subcontractorResponse,
+    data: subInvoicesRaw = [] as SubcontractorInvoiceRow[],
     isLoading: subcontractorLoading,
     isFetching: subcontractorFetching,
     error: subcontractorError,
-  } = useCommitmentsList(projectId, {
-    page: tableState.page,
-    limit: tableState.perPage,
-    status: activeTab === "subcontractor" ? statusFilter : undefined,
-    type: "subcontract",
-    search: activeTab === "subcontractor" ? tableState.debouncedSearch || undefined : undefined,
-  });
+  } = useSubcontractorInvoicesList(projectId) as {
+    data: SubcontractorInvoiceRow[] | undefined;
+    isLoading: boolean;
+    isFetching: boolean;
+    error: unknown;
+  };
 
   const ownerInvoices = React.useMemo(() => {
     let items = ownerRawInvoices;
@@ -307,7 +329,93 @@ export default function ProjectInvoicesPage(): ReactElement {
     return items;
   }, [ownerRawInvoices, statusFilter, tableState.debouncedSearch]);
 
-  const subcontractorItems = subcontractorResponse?.data ?? [];
+  // Derive dynamic filter options from loaded invoices
+  const subBillingPeriodOptions = React.useMemo(() => {
+    const map = new Map<string, string>();
+    for (const inv of subInvoicesRaw) {
+      if (inv.billing_period_id && inv.billing_period_name) {
+        map.set(inv.billing_period_id, inv.billing_period_name);
+      }
+    }
+    return Array.from(map.entries()).map(([value, label]) => ({ value, label }));
+  }, [subInvoicesRaw]);
+
+  const subCompanyOptions = React.useMemo(() => {
+    const map = new Map<string, string>();
+    for (const inv of subInvoicesRaw) {
+      if (inv.contract_company_id && inv.contract_company_name) {
+        map.set(inv.contract_company_id, inv.contract_company_name);
+      }
+    }
+    return Array.from(map.entries())
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => a.label.localeCompare(b.label));
+  }, [subInvoicesRaw]);
+
+  const subcontractorFilters: FilterConfig[] = React.useMemo(
+    () => [
+      { id: "status", label: "Invoice Status", type: "select", options: INVOICE_STATUS_OPTIONS },
+      {
+        id: "billing_period_id",
+        label: "Billing Period",
+        type: "select",
+        options: subBillingPeriodOptions,
+      },
+      {
+        id: "contract_company_id",
+        label: "Contract Company",
+        type: "select",
+        options: subCompanyOptions,
+      },
+      {
+        id: "payment_status",
+        label: "Payment Status",
+        type: "select",
+        options: [
+          { value: "paid", label: "Paid" },
+          { value: "unpaid", label: "Unpaid" },
+        ],
+      },
+      {
+        id: "contract_type",
+        label: "Contract Type",
+        type: "select",
+        options: [
+          { value: "subcontract", label: "Subcontract" },
+          { value: "purchase_order", label: "Purchase Order" },
+        ],
+      },
+    ],
+    [subBillingPeriodOptions, subCompanyOptions],
+  );
+
+  const subcontractorItems = React.useMemo(() => {
+    let items = subInvoicesRaw;
+    const f = activeFilters as Record<string, string | undefined>;
+
+    if (f.status) items = items.filter((i) => i.status === f.status);
+    if (f.billing_period_id)
+      items = items.filter((i) => i.billing_period_id === f.billing_period_id);
+    if (f.contract_company_id)
+      items = items.filter((i) => i.contract_company_id === f.contract_company_id);
+    if (f.payment_status)
+      items = items.filter((i) => i.payment_status === f.payment_status);
+    if (f.contract_type)
+      items = items.filter((i) => i.contract_type === f.contract_type);
+
+    const search = tableState.debouncedSearch.toLowerCase().trim();
+    if (search) {
+      items = items.filter((i) => {
+        const number = (i.invoice_number ?? "").toLowerCase();
+        const contract = (i.contract_number ?? "").toLowerCase();
+        const company = (i.contract_company_name ?? "").toLowerCase();
+        return (
+          number.includes(search) || contract.includes(search) || company.includes(search)
+        );
+      });
+    }
+    return items;
+  }, [subInvoicesRaw, activeFilters, tableState.debouncedSearch]);
 
   const ownerColumns = React.useMemo(
     () =>
@@ -318,85 +426,158 @@ export default function ProjectInvoicesPage(): ReactElement {
     [projectId, router],
   );
 
-  const subcontractorColumns = React.useMemo<TableColumn<CommitmentListItem>[]>(
+  const subcontractorColumns = React.useMemo<TableColumn<SubcontractorInvoiceRow>[]>(
     () => [
       {
-        id: "number",
-        label: "Commitment #",
+        id: "invoice_number",
+        label: "Invoice #",
         alwaysVisible: true,
         sortable: true,
-        sortValue: (item) => item.number,
-        render: (item) => (
+        sortValue: (i) => i.invoice_number ?? `INV-${i.id}`,
+        render: (i) => (
           <Button
             type="button"
             variant="link"
             className="font-medium text-primary hover:underline h-auto p-0"
-            onClick={() => router.push(`/${projectId}/commitments/${item.id}`)}
+            onClick={() => router.push(`/${projectId}/invoicing/subcontractor/${i.id}`)}
           >
-            {item.number}
+            {i.invoice_number ?? `INV-${i.id}`}
           </Button>
         ),
       },
       {
-        id: "title",
-        label: "Title",
-        defaultVisible: true,
-        sortable: true,
-        sortValue: (item) => item.title || "",
-        render: (item) => (
-          <span className="text-sm text-foreground">{item.title || "-"}</span>
-        ),
-      },
-      {
-        id: "company",
-        label: "Vendor",
-        defaultVisible: true,
-        sortable: true,
-        sortValue: (item) => item.contract_company?.name || "",
-        render: (item) => (
-          <span className="text-sm text-muted-foreground">
-            {item.contract_company?.name || "-"}
-          </span>
-        ),
-      },
-      {
         id: "status",
-        label: "Status",
+        label: "Invoice Status",
         defaultVisible: true,
         sortable: true,
-        sortValue: (item) => item.status,
-        render: (item) => <StatusBadge status={item.status} />,
+        sortValue: (i) => i.status,
+        render: (i) => <StatusBadge status={i.status} />,
       },
       {
-        id: "invoiced_amount",
-        label: "Invoiced",
+        id: "contract_company",
+        label: "Contract Company",
         defaultVisible: true,
         sortable: true,
-        sortValue: (item) => item.invoiced_amount,
-        render: (item) => (
-          <span className="font-medium tabular-nums">{formatCurrency(item.invoiced_amount)}</span>
-        ),
-      },
-      {
-        id: "balance_to_finish",
-        label: "Remaining",
-        defaultVisible: true,
-        sortable: true,
-        sortValue: (item) => item.balance_to_finish,
-        render: (item) => (
-          <span className="tabular-nums text-muted-foreground">
-            {formatCurrency(item.balance_to_finish)}
+        sortValue: (i) => i.contract_company_name ?? "",
+        render: (i) => (
+          <span className="text-sm text-foreground">
+            {i.contract_company_name ?? "-"}
           </span>
         ),
       },
       {
-        id: "updated_at",
-        label: "Updated",
+        id: "billing_period",
+        label: "Billing Period",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (i) => i.billing_period_name ?? "",
+        render: (i) => (
+          <span className="text-sm text-muted-foreground">
+            {i.billing_period_name ?? "-"}
+          </span>
+        ),
+      },
+      {
+        id: "gross_amount",
+        label: "Gross Amount",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (i) => i.gross_amount,
+        render: (i) => (
+          <span className="font-medium tabular-nums">{formatCurrency(i.gross_amount)}</span>
+        ),
+      },
+      {
+        id: "net_amount",
+        label: "Net Amount",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (i) => i.net_amount,
+        render: (i) => (
+          <span className="tabular-nums">{formatCurrency(i.net_amount)}</span>
+        ),
+      },
+      {
+        id: "paid_amount",
+        label: "Paid Amount",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (i) => i.paid_amount,
+        render: (i) => (
+          <span className="tabular-nums text-muted-foreground">
+            {formatCurrency(i.paid_amount)}
+          </span>
+        ),
+      },
+      {
+        id: "invoice_dates",
+        label: "Invoice Dates",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (i) => i.billing_date ?? i.period_start ?? "",
+        render: (i) => (
+          <span className="text-sm text-muted-foreground">
+            {i.period_start || i.period_end
+              ? `${formatDate(i.period_start)} – ${formatDate(i.period_end)}`
+              : formatDate(i.billing_date)}
+          </span>
+        ),
+      },
+      {
+        id: "contract",
+        label: "Contract",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (i) => i.contract_number ?? "",
+        render: (i) => (
+          <span className="text-sm text-foreground">
+            {i.contract_number ?? "-"}
+            {i.contract_title ? (
+              <span className="text-muted-foreground"> — {i.contract_title}</span>
+            ) : null}
+          </span>
+        ),
+      },
+      {
+        id: "total_contract_amount",
+        label: "Total Contract",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (i) => i.total_contract_amount,
+        render: (i) => (
+          <span className="tabular-nums">{formatCurrency(i.total_contract_amount)}</span>
+        ),
+      },
+      {
+        id: "percent_complete",
+        label: "% Complete",
+        defaultVisible: true,
+        sortable: true,
+        sortValue: (i) => i.percent_complete,
+        render: (i) => (
+          <span className="tabular-nums text-muted-foreground">
+            {i.percent_complete.toFixed(1)}%
+          </span>
+        ),
+      },
+      {
+        id: "total_amount",
+        label: "Total Amount",
         defaultVisible: false,
         sortable: true,
-        sortValue: (item) => item.updated_at,
-        render: (item) => (
-          <span className="text-sm text-muted-foreground">{formatDate(item.updated_at)}</span>
+        sortValue: (i) => i.total_completed,
+        render: (i) => (
+          <span className="tabular-nums">{formatCurrency(i.total_completed)}</span>
+        ),
+      },
+      {
+        id: "erp_status",
+        label: "ERP Status",
+        defaultVisible: false,
+        sortable: true,
+        sortValue: (i) => i.erp_status ?? "",
+        render: (i) => (
+          <span className="text-sm text-muted-foreground">{i.erp_status ?? "-"}</span>
         ),
       },
     ],
@@ -419,13 +600,62 @@ export default function ProjectInvoicesPage(): ReactElement {
     [subcontractorItems, subcontractorColumns, tableState.sortBy, tableState.sortDirection],
   );
 
+  const ownerKpiTotals = React.useMemo(() => {
+    const sumFor = (status: string) =>
+      ownerRawInvoices
+        .filter((inv) => inv.status === status)
+        .reduce((acc, inv) => acc + (inv.gross_amount ?? inv.total_amount ?? 0), 0);
+    return {
+      underReview: sumFor("under_review"),
+      approved: sumFor("approved"),
+      reviseAndResubmit: sumFor("revise_and_resubmit"),
+    };
+  }, [ownerRawInvoices]);
+
+  const ownerKpiRow = (
+    <KpiRow
+      metrics={[
+        { label: "Under Review", value: formatCurrency(ownerKpiTotals.underReview) },
+        { label: "Approved", value: formatCurrency(ownerKpiTotals.approved) },
+        { label: "Revise & Resubmit", value: formatCurrency(ownerKpiTotals.reviseAndResubmit) },
+      ]}
+    />
+  );
+
   const ownerTotalItems = sortedOwnerInvoices.length;
   const ownerTotalPages = Math.max(1, Math.ceil(ownerTotalItems / tableState.perPage));
   const ownerOffset = (tableState.page - 1) * tableState.perPage;
   const ownerPageItems = sortedOwnerInvoices.slice(ownerOffset, ownerOffset + tableState.perPage);
 
-  const subcontractorTotalItems = subcontractorResponse?.meta.total ?? sortedSubcontractors.length;
-  const subcontractorTotalPages = subcontractorResponse?.meta.totalPages ?? 1;
+  const subcontractorTotalItems = sortedSubcontractors.length;
+  const subcontractorTotalPages = Math.max(
+    1,
+    Math.ceil(subcontractorTotalItems / tableState.perPage),
+  );
+  const subOffset = (tableState.page - 1) * tableState.perPage;
+  const subPageItems = sortedSubcontractors.slice(subOffset, subOffset + tableState.perPage);
+
+  const subKpiTotals = React.useMemo(() => {
+    const sumFor = (status: string) =>
+      subInvoicesRaw
+        .filter((i) => i.status === status)
+        .reduce((acc, i) => acc + (i.gross_amount ?? 0), 0);
+    return {
+      underReview: sumFor("under_review"),
+      approved: sumFor("approved") + sumFor("approved_as_noted"),
+      reviseAndResubmit: sumFor("revise_and_resubmit"),
+    };
+  }, [subInvoicesRaw]);
+
+  const subKpiRow = (
+    <KpiRow
+      metrics={[
+        { label: "Under Review", value: formatCurrency(subKpiTotals.underReview) },
+        { label: "Approved", value: formatCurrency(subKpiTotals.approved) },
+        { label: "Revise & Resubmit", value: formatCurrency(subKpiTotals.reviseAndResubmit) },
+      ]}
+    />
+  );
 
   // Billing periods — columns + filtered/sorted data
   const bpColumns = React.useMemo(
@@ -525,13 +755,14 @@ export default function ProjectInvoicesPage(): ReactElement {
           actions: createInvoiceAction,
         }}
         tabs={tabs}
+        topContent={subKpiRow}
         toolbar={{
-          totalItems: subcontractorTotalItems,
+          totalItems: subInvoicesRaw.length,
           filteredItems: subcontractorTotalItems,
           selectedCount: tableState.selectedIds.length,
           searchValue: tableState.searchInput,
           onSearchChange: tableState.setSearchInput,
-          searchPlaceholder: "Search subcontractor commitments...",
+          searchPlaceholder: "Search subcontractor invoices...",
           currentView: "table",
           onViewChange: () => undefined,
           enabledViews: ["table"],
@@ -544,7 +775,7 @@ export default function ProjectInvoicesPage(): ReactElement {
           onColumnVisibilityChange: setSubcontractorVisibleColumns,
         }}
         data={{
-          items: sortedSubcontractors,
+          items: subPageItems,
           isLoading: subcontractorLoading,
           isFetching: subcontractorFetching,
           error:
@@ -556,8 +787,9 @@ export default function ProjectInvoicesPage(): ReactElement {
         }}
         table={{
           columns: subcontractorColumns,
-          getRowId: (item) => item.id,
-          onRowClick: (item) => router.push(`/${projectId}/commitments/${item.id}`),
+          getRowId: (item) => String(item.id),
+          onRowClick: (item) =>
+            router.push(`/${projectId}/invoicing/subcontractor/${item.id}`),
         }}
         sorting={{
           sortBy: tableState.sortBy,
@@ -572,23 +804,23 @@ export default function ProjectInvoicesPage(): ReactElement {
         selection={{
           selectedIds: tableState.selectedIds,
           onSelectAll: (checked) => {
-            tableState.setSelectedIds(checked ? sortedSubcontractors.map((item) => item.id) : []);
+            tableState.setSelectedIds(checked ? subPageItems.map((item) => String(item.id)) : []);
           },
           onSelectRow: (id, checked) => {
             tableState.setSelectedIds((prev) =>
-              checked ? [...prev, id] : prev.filter((existingId) => existingId !== id),
+              checked ? [...prev, String(id)] : prev.filter((existingId) => existingId !== id),
             );
           },
         }}
         emptyState={{
-          title: "No subcontractor commitments found",
-          description: "No subcontractor commitments are available for invoicing yet.",
+          title: "No subcontractor invoices found",
+          description: "Create a subcontractor invoice against one of your commitments.",
           filteredDescription: "Try adjusting your search or filters.",
           isFiltered,
         }}
         pagination={{
           page: tableState.page,
-          totalPages: Math.max(1, subcontractorTotalPages),
+          totalPages: subcontractorTotalPages,
           perPage: tableState.perPage,
           onPageChange: handlePaginationChange,
           onPerPageChange: handlePerPageChange,
@@ -787,6 +1019,7 @@ export default function ProjectInvoicesPage(): ReactElement {
         actions: createInvoiceAction,
       }}
       tabs={tabs}
+      topContent={ownerKpiRow}
       toolbar={{
         totalItems: ownerTotalItems,
         filteredItems: ownerTotalItems,

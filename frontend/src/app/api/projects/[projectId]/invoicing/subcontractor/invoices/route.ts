@@ -71,8 +71,80 @@ export async function GET(
       );
     }
 
-    // Flatten joined relations into top-level fields
-    const enriched = (invoices || []).map((invoice) => {
+    const invoiceRows = invoices ?? [];
+    const invoiceIds = invoiceRows.map((i) => i.id);
+
+    // Batch: line items for all invoices
+    const lineItemsByInvoice = new Map<number, Array<Record<string, unknown>>>();
+    if (invoiceIds.length > 0) {
+      const { data: liRows } = await supabase
+        .from("subcontractor_invoice_line_items")
+        .select(
+          "invoice_id, work_completed_period, materials_stored, total_completed_stored, retainage_amount, materials_retainage_amount, net_amount_this_period, scheduled_value",
+        )
+        .in("invoice_id", invoiceIds);
+      for (const li of liRows ?? []) {
+        const arr = lineItemsByInvoice.get(li.invoice_id as number) ?? [];
+        arr.push(li as Record<string, unknown>);
+        lineItemsByInvoice.set(li.invoice_id as number, arr);
+      }
+    }
+
+    // Collect contract ids (subcontract or PO) + company ids
+    const subIds = new Set<string>();
+    const poIds = new Set<string>();
+    const companyIds = new Set<string>();
+    for (const inv of invoiceRows) {
+      const sc = inv.subcontracts as { contract_company_id: string | null } | null;
+      const po = inv.purchase_orders as { contract_company_id: string | null } | null;
+      if (inv.subcontract_id) subIds.add(inv.subcontract_id as string);
+      if (inv.purchase_order_id) poIds.add(inv.purchase_order_id as string);
+      const cid = sc?.contract_company_id ?? po?.contract_company_id ?? null;
+      if (cid) companyIds.add(cid);
+    }
+
+    // Batch: SOV items per contract (subcontracts)
+    const sovSumByContract = new Map<string, number>();
+    if (subIds.size > 0) {
+      const { data: sovRows } = await supabase
+        .from("subcontract_sov_items")
+        .select("subcontract_id, amount")
+        .in("subcontract_id", Array.from(subIds));
+      for (const r of sovRows ?? []) {
+        const k = r.subcontract_id as string;
+        sovSumByContract.set(k, (sovSumByContract.get(k) ?? 0) + (Number(r.amount) || 0));
+      }
+    }
+
+    // Batch: approved change orders per contract
+    const coSumByContract = new Map<string, number>();
+    if (subIds.size > 0 || poIds.size > 0) {
+      const contractIds = [...subIds, ...poIds];
+      const { data: coRows } = await supabase
+        .from("contract_change_orders")
+        .select("contract_id, amount, status")
+        .in("contract_id", contractIds);
+      for (const r of coRows ?? []) {
+        if ((r.status ?? "").toLowerCase() !== "approved") continue;
+        const k = r.contract_id as string;
+        coSumByContract.set(k, (coSumByContract.get(k) ?? 0) + (Number(r.amount) || 0));
+      }
+    }
+
+    // Batch: companies
+    const companyNameById = new Map<string, string>();
+    if (companyIds.size > 0) {
+      const { data: companyRows } = await supabase
+        .from("companies")
+        .select("id, name")
+        .in("id", Array.from(companyIds));
+      for (const c of companyRows ?? []) {
+        companyNameById.set(c.id as string, (c.name as string) ?? "");
+      }
+    }
+
+    // Flatten + enrich
+    const enriched = invoiceRows.map((invoice) => {
       const sc = invoice.subcontracts as {
         contract_number: string | null;
         title: string | null;
@@ -89,16 +161,71 @@ export async function GET(
         end_date: string | null;
       } | null;
 
-      const { subcontracts: _sc, purchase_orders: _po, billing_periods: _bp, ...invoiceData } = invoice;
+      const { subcontracts: _sc, purchase_orders: _po, billing_periods: _bp, ...invoiceData } =
+        invoice;
+
+      const lineItems = lineItemsByInvoice.get(invoice.id as number) ?? [];
+      const num = (v: unknown) => Number(v) || 0;
+      const grossAmount = lineItems.reduce(
+        (s, li) => s + num(li.work_completed_period) + num(li.materials_stored),
+        0,
+      );
+      const totalCompleted = lineItems.reduce(
+        (s, li) => s + num(li.total_completed_stored),
+        0,
+      );
+      const totalWorkRet = lineItems.reduce((s, li) => s + num(li.retainage_amount), 0);
+      const totalMatRet = lineItems.reduce(
+        (s, li) => s + num(li.materials_retainage_amount),
+        0,
+      );
+      const netAmount = lineItems.reduce(
+        (s, li) => s + num(li.net_amount_this_period),
+        0,
+      );
+      const totalRetainage = totalWorkRet + totalMatRet;
+
+      const contractId =
+        (invoice.subcontract_id as string | null) ??
+        (invoice.purchase_order_id as string | null) ??
+        null;
+      const originalContractSum = contractId ? sovSumByContract.get(contractId) ?? 0 : 0;
+      const netChangeByCos = contractId ? coSumByContract.get(contractId) ?? 0 : 0;
+      const totalContractAmount = originalContractSum + netChangeByCos;
+      const percentComplete =
+        totalContractAmount > 0 ? (totalCompleted / totalContractAmount) * 100 : 0;
+
+      const contractCompanyId =
+        sc?.contract_company_id ?? po?.contract_company_id ?? null;
+
+      // Paid amount: approved invoices counted as paid until payments table lands
+      const paidAmount = invoice.status === "paid" ? grossAmount - totalRetainage : 0;
 
       return {
         ...invoiceData,
         contract_number: sc?.contract_number ?? po?.contract_number ?? null,
         contract_title: sc?.title ?? po?.title ?? null,
-        contract_company_id: sc?.contract_company_id ?? po?.contract_company_id ?? null,
+        contract_company_id: contractCompanyId,
+        contract_company_name: contractCompanyId
+          ? companyNameById.get(contractCompanyId) ?? null
+          : null,
+        contract_type: invoice.subcontract_id
+          ? "subcontract"
+          : invoice.purchase_order_id
+            ? "purchase_order"
+            : null,
         billing_period_name: bp?.name ?? null,
         billing_period_start: bp?.start_date ?? null,
         billing_period_end: bp?.end_date ?? null,
+        gross_amount: grossAmount,
+        net_amount: netAmount,
+        total_completed: totalCompleted,
+        total_retainage: totalRetainage,
+        paid_amount: paidAmount,
+        total_contract_amount: totalContractAmount,
+        percent_complete: percentComplete,
+        erp_status: null as string | null,
+        payment_status: invoice.status === "paid" ? "paid" : "unpaid",
       };
     });
 
