@@ -4,6 +4,15 @@ import { useState, useCallback, useMemo } from "react";
 import { Pencil, X, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
 import { cn, formatCurrency } from "@/lib/utils";
 import type { PaymentApplicationLineItem } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
 
@@ -28,6 +37,69 @@ interface EditableValues {
   };
 }
 
+interface SetRetainageDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onApply: (workPct: number, materialsPct: number) => void;
+}
+
+function SetRetainageDialog({ open, onOpenChange, onApply }: SetRetainageDialogProps) {
+  const [workPct, setWorkPct] = useState("10");
+  const [materialsPct, setMaterialsPct] = useState("10");
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Set Retainage on All Line Items</DialogTitle>
+          <DialogDescription>
+            Enter percentages to apply to every line item&apos;s work completed and materials stored amounts.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="set-work-pct">Work Completed Retainage (%)</Label>
+            <Input
+              id="set-work-pct"
+              type="number"
+              min={0}
+              max={100}
+              step={0.1}
+              value={workPct}
+              onChange={(e) => setWorkPct(e.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="set-mat-pct">Materials Stored Retainage (%)</Label>
+            <Input
+              id="set-mat-pct"
+              type="number"
+              min={0}
+              max={100}
+              step={0.1}
+              value={materialsPct}
+              onChange={(e) => setMaterialsPct(e.target.value)}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              onApply(parseFloat(workPct) || 0, parseFloat(materialsPct) || 0);
+              onOpenChange(false);
+            }}
+          >
+            Set
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function pct(numerator: number, denominator: number): string {
   if (denominator === 0) return "0.0%";
   return ((numerator / denominator) * 100).toFixed(1) + "%";
@@ -47,6 +119,7 @@ export function InvoiceG703Detail({
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editValues, setEditValues] = useState<EditableValues>({});
+  const [setRetainageOpen, setSetRetainageOpen] = useState(false);
 
   const handleEdit = useCallback(() => {
     const values: EditableValues = {};
@@ -188,6 +261,49 @@ export function InvoiceG703Detail({
     }
   }, [getEffectiveValues, lineItems, onSave]);
 
+  const handleSetRetainage = useCallback(
+    (workPct: number, materialsPct: number) => {
+      const values: EditableValues = {};
+      for (const li of lineItems) {
+        const work = li.work_completed_this_period;
+        const mats = li.materials_stored;
+        values[li.id] = {
+          work_completed_this_period: work,
+          materials_stored: mats,
+          retainage_this_period_work_pct: workPct,
+          retainage_this_period_work: roundCurrency(work * (workPct / 100)),
+          retainage_this_period_materials_pct: materialsPct,
+          retainage_this_period_materials: roundCurrency(mats * (materialsPct / 100)),
+          retainage_released_work: li.retainage_released_work,
+          retainage_released_materials: li.retainage_released_materials,
+        };
+      }
+      setEditValues(values);
+      setIsEditing(true);
+    },
+    [lineItems],
+  );
+
+  const handleReleaseAllRetainage = useCallback(() => {
+    const values: EditableValues = {};
+    for (const li of lineItems) {
+      values[li.id] = {
+        work_completed_this_period: li.work_completed_this_period,
+        materials_stored: li.materials_stored,
+        retainage_this_period_work_pct: li.retainage_this_period_work_pct,
+        retainage_this_period_work: li.retainage_this_period_work,
+        retainage_this_period_materials_pct: li.retainage_this_period_materials_pct,
+        retainage_this_period_materials: li.retainage_this_period_materials,
+        retainage_released_work:
+          (li.retainage_previous_work ?? 0) + (li.retainage_this_period_work ?? 0),
+        retainage_released_materials:
+          (li.retainage_previous_materials ?? 0) + (li.retainage_this_period_materials ?? 0),
+      };
+    }
+    setEditValues(values);
+    setIsEditing(true);
+  }, [lineItems]);
+
   const totals = useMemo(() => {
     let scheduledValue = 0;
     let previousApp = 0;
@@ -257,14 +373,36 @@ export function InvoiceG703Detail({
                 </Button>
               </>
             ) : (
-              <Button variant="ghost" size="sm" onClick={handleEdit}>
-                <Pencil className="mr-1 h-3.5 w-3.5" />
-                Edit
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSetRetainageOpen(true)}
+                >
+                  Set Retainage
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleReleaseAllRetainage}
+                >
+                  Release All
+                </Button>
+                <Button variant="ghost" size="sm" onClick={handleEdit}>
+                  <Pencil className="mr-1 h-3.5 w-3.5" />
+                  Edit
+                </Button>
+              </>
             )}
           </div>
         ) : null}
       </div>
+
+      <SetRetainageDialog
+        open={setRetainageOpen}
+        onOpenChange={setSetRetainageOpen}
+        onApply={handleSetRetainage}
+      />
 
       <div className="overflow-x-auto rounded-lg border border-border">
         <table className="w-full text-sm">
