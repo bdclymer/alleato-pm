@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useForm, type Control } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { ArrowLeft, Edit, Trash2, Download, Check, Send, RotateCcw } from "lucide-react";
+import { ArrowLeft, Edit, Trash2, Download, Check, CheckCheck, Ban, Send, RotateCcw, Plus, Save, Mail } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -29,6 +29,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
   Form,
 } from "@/components/ui/form";
 import {
@@ -39,9 +46,18 @@ import {
 } from "@/components/ui/unified-slideover";
 import { StatusBadge } from "@/components/misc/status-badge";
 import { PageShell } from "@/components/layout";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 
 import { useProjectTitle } from "@/hooks/useProjectTitle";
-import { formatCurrency, formatDate, type OwnerInvoice } from "@/config/tables";
+import { useSendInvoiceEmail } from "@/hooks/use-invoicing";
+import {
+  formatCurrency,
+  formatDate,
+  type OwnerInvoice,
+  type OwnerInvoiceLineItem,
+} from "@/features/invoicing/invoicing-table-config";
 import { Separator } from "@/components/ui/separator";
 import { Text } from "@/components/ds/text";
 import { FormGrid, FormSection } from "@/components/forms";
@@ -52,6 +68,16 @@ import { RHFTextField } from "@/components/forms/fields/RHFTextField";
 import { RHFTextareaField } from "@/components/forms/fields/RHFTextareaField";
 
 // ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+const EDITABLE_STATUSES = ["draft", "revise_and_resubmit"] as const;
+
+function isEditable(status: string): boolean {
+  return (EDITABLE_STATUSES as readonly string[]).includes(status);
+}
+
+// ---------------------------------------------------------------------------
 // Edit form schema
 // ---------------------------------------------------------------------------
 
@@ -59,7 +85,7 @@ const invoiceEditSchema = z.object({
   invoice_number: z.string().trim().max(255).nullable().optional(),
   period_start: z.string().nullable().optional(),
   period_end: z.string().nullable().optional(),
-  status: z.enum(["draft", "submitted", "approved", "paid", "void"]),
+  status: z.enum(["draft", "under_review", "approved", "approved_as_noted", "revise_and_resubmit", "paid", "void", "not_invited", "invited"]),
   notes: z.string().trim().max(2000).nullable().optional(),
 });
 
@@ -67,14 +93,506 @@ type InvoiceEditValues = z.infer<typeof invoiceEditSchema>;
 
 const invoiceStatusOptions = [
   { value: "draft", label: "Draft" },
-  { value: "submitted", label: "Submitted" },
+  { value: "under_review", label: "Under Review" },
   { value: "approved", label: "Approved" },
+  { value: "approved_as_noted", label: "Approved as Noted" },
+  { value: "revise_and_resubmit", label: "Revise & Resubmit" },
   { value: "paid", label: "Paid" },
   { value: "void", label: "Void" },
 ];
 
 // ---------------------------------------------------------------------------
-// Inline edit form
+// Add line item schema
+// ---------------------------------------------------------------------------
+
+const addLineItemSchema = z.object({
+  description: z.string().trim().max(500).optional(),
+  category: z.string().trim().max(100).optional(),
+  scheduled_value: z.coerce.number().min(0).default(0),
+  work_completed_period: z.coerce.number().min(0).default(0),
+  materials_stored: z.coerce.number().min(0).default(0),
+  retainage_pct: z.coerce.number().min(0).max(100).default(0),
+  retainage_amount: z.coerce.number().min(0).default(0),
+  retainage_released: z.coerce.number().min(0).default(0),
+});
+
+type AddLineItemValues = z.infer<typeof addLineItemSchema>;
+
+// ---------------------------------------------------------------------------
+// SOV editable cell — inline number input
+// ---------------------------------------------------------------------------
+
+interface EditableCellProps {
+  value: number;
+  onChange: (val: number) => void;
+  prefix?: string;
+  suffix?: string;
+  min?: number;
+  max?: number;
+  step?: number;
+}
+
+function EditableCell({ value, onChange, prefix, suffix, min = 0, max, step = 0.01 }: EditableCellProps) {
+  const [localValue, setLocalValue] = useState(String(value));
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Sync if parent value changes externally
+  useEffect(() => {
+    setLocalValue(String(value));
+  }, [value]);
+
+  const commit = () => {
+    const parsed = parseFloat(localValue);
+    if (!isNaN(parsed)) {
+      onChange(parsed);
+    } else {
+      setLocalValue(String(value));
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-0.5 min-w-[100px]">
+      {prefix && <span className="text-muted-foreground text-xs">{prefix}</span>}
+      <input
+        ref={inputRef}
+        type="number"
+        value={localValue}
+        min={min}
+        max={max}
+        step={step}
+        onChange={(e) => setLocalValue(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") {
+            commit();
+            inputRef.current?.blur();
+          }
+          if (e.key === "Escape") {
+            setLocalValue(String(value));
+            inputRef.current?.blur();
+          }
+        }}
+        className="w-full rounded border border-border bg-muted px-2 py-1 text-right text-sm tabular-nums focus:outline-none focus:ring-1 focus:ring-ring"
+      />
+      {suffix && <span className="text-muted-foreground text-xs">{suffix}</span>}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Derived calculation helpers
+// ---------------------------------------------------------------------------
+
+function calcTotalCompleted(item: OwnerInvoiceLineItem, overrides: Partial<SovDraft>): number {
+  const wcp = overrides.work_completed_period ?? item.work_completed_period;
+  const ms = overrides.materials_stored ?? item.materials_stored;
+  return (item.work_completed_previous ?? 0) + wcp + ms;
+}
+
+function calcPctComplete(item: OwnerInvoiceLineItem, overrides: Partial<SovDraft>): number {
+  const sv = item.scheduled_value;
+  if (!sv || sv === 0) return 0;
+  return (calcTotalCompleted(item, overrides) / sv) * 100;
+}
+
+function calcRetainageAmount(item: OwnerInvoiceLineItem, overrides: Partial<SovDraft>): number {
+  if (overrides.retainage_amount !== undefined) return overrides.retainage_amount;
+  const wcp = overrides.work_completed_period ?? item.work_completed_period;
+  const pct = overrides.retainage_pct ?? item.retainage_pct;
+  return wcp * (pct / 100);
+}
+
+function calcNetAmountThisPeriod(item: OwnerInvoiceLineItem, overrides: Partial<SovDraft>): number {
+  const wcp = overrides.work_completed_period ?? item.work_completed_period;
+  const ms = overrides.materials_stored ?? item.materials_stored;
+  const retainageAmt = calcRetainageAmount(item, overrides);
+  const released = overrides.retainage_released ?? item.retainage_released;
+  return wcp + ms - retainageAmt + released;
+}
+
+function calcBalanceToFinish(item: OwnerInvoiceLineItem, overrides: Partial<SovDraft>): number {
+  const sv = item.scheduled_value;
+  const total = calcTotalCompleted(item, overrides);
+  return sv - total;
+}
+
+// ---------------------------------------------------------------------------
+// SOV Draft state type (per-row editable fields keyed by item id)
+// ---------------------------------------------------------------------------
+
+interface SovDraft {
+  work_completed_period: number;
+  materials_stored: number;
+  retainage_pct: number;
+  retainage_amount: number;
+  retainage_released: number;
+}
+
+type SovDraftMap = Record<number, Partial<SovDraft>>;
+
+// ---------------------------------------------------------------------------
+// SOV Table component
+// ---------------------------------------------------------------------------
+
+interface SovTableProps {
+  lineItems: OwnerInvoiceLineItem[];
+  editable: boolean;
+  draftMap: SovDraftMap;
+  onDraftChange: (itemId: number, field: keyof SovDraft, value: number) => void;
+}
+
+function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProps) {
+  if (lineItems.length === 0) {
+    return (
+      <div className="text-center py-8">
+        <Text tone="muted">No line items found</Text>
+      </div>
+    );
+  }
+
+  return (
+    <div className="overflow-x-auto">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead className="min-w-[160px]">Description</TableHead>
+            <TableHead>Category</TableHead>
+            <TableHead className="text-right min-w-[110px]">Scheduled Value</TableHead>
+            <TableHead className="text-right min-w-[110px]">Prev Work</TableHead>
+            <TableHead className="text-right min-w-[120px]">
+              {editable ? (
+                <span className="inline-flex items-center gap-1">
+                  Work This Period
+                  <span className="inline-block w-2 h-2 rounded-full bg-amber-400" title="Editable" />
+                </span>
+              ) : (
+                "Work This Period"
+              )}
+            </TableHead>
+            <TableHead className="text-right min-w-[120px]">
+              {editable ? (
+                <span className="inline-flex items-center gap-1">
+                  Materials Stored
+                  <span className="inline-block w-2 h-2 rounded-full bg-amber-400" title="Editable" />
+                </span>
+              ) : (
+                "Materials Stored"
+              )}
+            </TableHead>
+            <TableHead className="text-right min-w-[100px]">Total Comp. &amp; Stored</TableHead>
+            <TableHead className="text-right min-w-[80px]">% Complete</TableHead>
+            <TableHead className="text-right min-w-[120px]">
+              {editable ? (
+                <span className="inline-flex items-center gap-1">
+                  Retainage %
+                  <span className="inline-block w-2 h-2 rounded-full bg-amber-400" title="Editable" />
+                </span>
+              ) : (
+                "Retainage %"
+              )}
+            </TableHead>
+            <TableHead className="text-right min-w-[110px]">
+              {editable ? (
+                <span className="inline-flex items-center gap-1">
+                  Retainage $
+                  <span className="inline-block w-2 h-2 rounded-full bg-amber-400" title="Editable" />
+                </span>
+              ) : (
+                "Retainage $"
+              )}
+            </TableHead>
+            <TableHead className="text-right min-w-[120px]">
+              {editable ? (
+                <span className="inline-flex items-center gap-1">
+                  Retainage Released
+                  <span className="inline-block w-2 h-2 rounded-full bg-amber-400" title="Editable" />
+                </span>
+              ) : (
+                "Retainage Released"
+              )}
+            </TableHead>
+            <TableHead className="text-right min-w-[110px]">Net This Period</TableHead>
+            <TableHead className="text-right min-w-[110px]">Balance to Finish</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {lineItems.map((item) => {
+            const overrides = draftMap[item.id] ?? {};
+            const totalCompleted = calcTotalCompleted(item, overrides);
+            const pctComplete = calcPctComplete(item, overrides);
+            const retainageAmt = calcRetainageAmount(item, overrides);
+            const netThisPeriod = calcNetAmountThisPeriod(item, overrides);
+            const balance = calcBalanceToFinish(item, overrides);
+
+            return (
+              <TableRow key={item.id}>
+                <TableCell className="font-medium text-sm">
+                  {item.description || "—"}
+                </TableCell>
+                <TableCell>
+                  <span className="text-sm capitalize">
+                    {item.category?.replace(/_/g, " ") || "—"}
+                  </span>
+                </TableCell>
+                <TableCell className="text-right tabular-nums text-sm">
+                  {formatCurrency(item.scheduled_value)}
+                </TableCell>
+                <TableCell className="text-right tabular-nums text-sm">
+                  {formatCurrency(item.work_completed_previous)}
+                </TableCell>
+
+                {/* Editable: Work Completed This Period */}
+                <TableCell className="text-right">
+                  {editable ? (
+                    <EditableCell
+                      value={overrides.work_completed_period ?? item.work_completed_period}
+                      onChange={(val) => onDraftChange(item.id, "work_completed_period", val)}
+                      prefix="$"
+                    />
+                  ) : (
+                    <span className="tabular-nums text-sm">{formatCurrency(item.work_completed_period)}</span>
+                  )}
+                </TableCell>
+
+                {/* Editable: Materials Stored */}
+                <TableCell className="text-right">
+                  {editable ? (
+                    <EditableCell
+                      value={overrides.materials_stored ?? item.materials_stored}
+                      onChange={(val) => onDraftChange(item.id, "materials_stored", val)}
+                      prefix="$"
+                    />
+                  ) : (
+                    <span className="tabular-nums text-sm">{formatCurrency(item.materials_stored)}</span>
+                  )}
+                </TableCell>
+
+                {/* Read-only calculated */}
+                <TableCell className="text-right tabular-nums text-sm">
+                  {formatCurrency(totalCompleted)}
+                </TableCell>
+                <TableCell className="text-right tabular-nums text-sm">
+                  {pctComplete.toFixed(1)}%
+                </TableCell>
+
+                {/* Editable: Retainage % */}
+                <TableCell className="text-right">
+                  {editable ? (
+                    <EditableCell
+                      value={overrides.retainage_pct ?? item.retainage_pct}
+                      onChange={(pct) => {
+                        const wcp = overrides.work_completed_period ?? item.work_completed_period;
+                        onDraftChange(item.id, "retainage_pct", pct);
+                        onDraftChange(item.id, "retainage_amount", wcp * (pct / 100));
+                      }}
+                      suffix="%"
+                      max={100}
+                      step={0.1}
+                    />
+                  ) : (
+                    <span className="tabular-nums text-sm">
+                      {(item.retainage_pct ?? 0).toFixed(2)}%
+                    </span>
+                  )}
+                </TableCell>
+
+                {/* Editable: Retainage $ */}
+                <TableCell className="text-right">
+                  {editable ? (
+                    <EditableCell
+                      value={overrides.retainage_amount ?? retainageAmt}
+                      onChange={(amt) => {
+                        const wcp = overrides.work_completed_period ?? item.work_completed_period;
+                        onDraftChange(item.id, "retainage_amount", amt);
+                        onDraftChange(item.id, "retainage_pct", wcp > 0 ? (amt / wcp) * 100 : 0);
+                      }}
+                      prefix="$"
+                    />
+                  ) : (
+                    <span className="tabular-nums text-sm">{formatCurrency(retainageAmt)}</span>
+                  )}
+                </TableCell>
+
+                {/* Editable: Retainage Released */}
+                <TableCell className="text-right">
+                  {editable ? (
+                    <EditableCell
+                      value={overrides.retainage_released ?? item.retainage_released}
+                      onChange={(val) => onDraftChange(item.id, "retainage_released", val)}
+                      prefix="$"
+                    />
+                  ) : (
+                    <span className="tabular-nums text-sm">{formatCurrency(item.retainage_released)}</span>
+                  )}
+                </TableCell>
+
+                {/* Calculated: Net this period */}
+                <TableCell className="text-right tabular-nums text-sm font-medium">
+                  {formatCurrency(netThisPeriod)}
+                </TableCell>
+
+                {/* Calculated: Balance to finish */}
+                <TableCell className="text-right tabular-nums text-sm">
+                  {formatCurrency(balance)}
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Add Line Item dialog
+// ---------------------------------------------------------------------------
+
+interface AddLineItemDialogProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  projectId: number;
+  invoiceId: number;
+  onSuccess: (item: OwnerInvoiceLineItem) => void;
+}
+
+function AddLineItemDialog({ open, onOpenChange, projectId, invoiceId, onSuccess }: AddLineItemDialogProps) {
+  const [isSaving, setIsSaving] = useState(false);
+  const form = useForm<AddLineItemValues>({
+    resolver: zodResolver(addLineItemSchema),
+    defaultValues: {
+      description: "",
+      category: "",
+      scheduled_value: 0,
+      work_completed_period: 0,
+      materials_stored: 0,
+      retainage_pct: 0,
+      retainage_amount: 0,
+      retainage_released: 0,
+    },
+  });
+
+  const onSubmit = async (values: AddLineItemValues) => {
+    setIsSaving(true);
+    try {
+      const response = await fetch(
+        `/api/projects/${projectId}/invoicing/owner/${invoiceId}/line-items`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(values),
+        },
+      );
+
+      if (!response.ok) {
+        const body = await response.json();
+        throw new Error(body.error || "Failed to create line item");
+      }
+
+      const body = await response.json();
+      toast.success("Line item added");
+      form.reset();
+      onOpenChange(false);
+      onSuccess(body.data as OwnerInvoiceLineItem);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to add line item");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Add Line Item</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="col-span-2 space-y-1">
+              <Label htmlFor="add-description">Description</Label>
+              <Input
+                id="add-description"
+                placeholder="Line item description"
+                {...form.register("description")}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="add-category">Category</Label>
+              <Input
+                id="add-category"
+                placeholder="e.g. labor, materials"
+                {...form.register("category")}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="add-scheduled-value">Scheduled Value ($)</Label>
+              <Input
+                id="add-scheduled-value"
+                type="number"
+                min={0}
+                step={0.01}
+                {...form.register("scheduled_value")}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="add-work-period">Work Completed This Period ($)</Label>
+              <Input
+                id="add-work-period"
+                type="number"
+                min={0}
+                step={0.01}
+                {...form.register("work_completed_period")}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="add-materials">Materials Stored ($)</Label>
+              <Input
+                id="add-materials"
+                type="number"
+                min={0}
+                step={0.01}
+                {...form.register("materials_stored")}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="add-retainage-pct">Retainage (%)</Label>
+              <Input
+                id="add-retainage-pct"
+                type="number"
+                min={0}
+                max={100}
+                step={0.1}
+                {...form.register("retainage_pct")}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="add-retainage-released">Retainage Released ($)</Label>
+              <Input
+                id="add-retainage-released"
+                type="number"
+                min={0}
+                step={0.01}
+                {...form.register("retainage_released")}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={isSaving}>
+              {isSaving ? "Adding..." : "Add Line Item"}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Invoice Edit Slideover form
 // ---------------------------------------------------------------------------
 
 interface InvoiceEditFormProps {
@@ -102,10 +620,11 @@ function InvoiceEditForm({
         ? invoice.period_start.slice(0, 10)
         : "",
       period_end: invoice.period_end ? invoice.period_end.slice(0, 10) : "",
-      status: invoice.status,
+      status: invoice.status as InvoiceEditValues["status"],
       notes: "",
     },
   });
+  const control = form.control as Control<InvoiceEditValues>;
 
   const onSubmit = async (values: InvoiceEditValues) => {
     setIsSaving(true);
@@ -154,7 +673,7 @@ function InvoiceEditForm({
           <FormGrid columns={2}>
             <div className="md:col-span-2">
               <RHFTextField
-                control={form.control}
+                control={control}
                 name="invoice_number"
                 label="Invoice Number"
                 placeholder="e.g. INV-001"
@@ -176,7 +695,7 @@ function InvoiceEditForm({
             />
             <div className="md:col-span-2">
               <RHFSelectField
-                control={form.control}
+                control={control}
                 name="status"
                 label="Status"
                 options={invoiceStatusOptions}
@@ -185,7 +704,7 @@ function InvoiceEditForm({
             </div>
             <div className="md:col-span-2">
               <RHFTextareaField
-                control={form.control}
+                control={control}
                 name="notes"
                 label="Notes"
                 placeholder="Optional notes about this invoice..."
@@ -205,11 +724,15 @@ function InvoiceEditForm({
   );
 }
 
+// ---------------------------------------------------------------------------
+// Invoice Detail Page
+// ---------------------------------------------------------------------------
+
 /**
  * Invoice Detail Page
  *
  * Displays detailed information about a specific owner invoice
- * including line items, totals, and action buttons.
+ * including an editable SOV grid (when status is draft or revise_and_resubmit).
  */
 export default function InvoiceDetailPage() {
   const router = useRouter();
@@ -223,7 +746,25 @@ export default function InvoiceDetailPage() {
   const [error, setError] = useState<string | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [approveAsNotedDialogOpen, setApproveAsNotedDialogOpen] = useState(false);
+  const [isApprovingAsNoted, setIsApprovingAsNoted] = useState(false);
+  const [voidDialogOpen, setVoidDialogOpen] = useState(false);
+  const [voidReason, setVoidReason] = useState("");
+  const [isVoiding, setIsVoiding] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
+  const [addLineItemOpen, setAddLineItemOpen] = useState(false);
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [emailTo, setEmailTo] = useState("");
+  const [emailCc, setEmailCc] = useState("");
+  const [emailSubject, setEmailSubject] = useState("");
+  const [emailMessage, setEmailMessage] = useState("");
+  const sendInvoiceEmail = useSendInvoiceEmail(String(projectId));
+
+  // SOV draft state — tracks unsaved edits keyed by line item id
+  const [sovDraft, setSovDraft] = useState<SovDraftMap>({});
+  const [isSavingSOV, setIsSavingSOV] = useState(false);
+
+  const hasSovChanges = Object.keys(sovDraft).length > 0;
 
   // Fetch invoice details
   const fetchInvoice = useCallback(async () => {
@@ -243,6 +784,8 @@ export default function InvoiceDetailPage() {
 
       const data = await response.json();
       setInvoice(data.data);
+      // Reset draft on fresh load
+      setSovDraft({});
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to fetch invoice");
     } finally {
@@ -253,6 +796,57 @@ export default function InvoiceDetailPage() {
   useEffect(() => {
     fetchInvoice();
   }, [fetchInvoice]);
+
+  // SOV draft change handler
+  const handleDraftChange = useCallback(
+    (itemId: number, field: keyof SovDraft, value: number) => {
+      setSovDraft((prev) => ({
+        ...prev,
+        [itemId]: { ...prev[itemId], [field]: value },
+      }));
+    },
+    [],
+  );
+
+  // Save SOV changes via PATCH bulk endpoint
+  const handleSaveSOV = async () => {
+    if (!hasSovChanges) return;
+
+    setIsSavingSOV(true);
+    try {
+      const updates = Object.entries(sovDraft).map(([idStr, fields]) => ({
+        id: parseInt(idStr, 10),
+        ...fields,
+      }));
+
+      const response = await fetch(
+        `/api/projects/${projectId}/invoicing/owner/${invoiceId}/line-items`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ updates }),
+        },
+      );
+
+      if (!response.ok) {
+        const body = await response.json();
+        throw new Error(body.error || "Failed to save SOV changes");
+      }
+
+      toast.success("Schedule of Values saved");
+      // Refresh invoice to get server-computed values
+      await fetchInvoice();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save changes");
+    } finally {
+      setIsSavingSOV(false);
+    }
+  };
+
+  // Discard draft changes
+  const handleDiscardSOV = () => {
+    setSovDraft({});
+  };
 
   // Action handlers
   const handleBack = () => {
@@ -276,6 +870,12 @@ export default function InvoiceDetailPage() {
   const handleSubmit = async () => {
     if (!invoice) return;
 
+    // Prompt to save unsaved SOV changes first
+    if (hasSovChanges) {
+      toast.warning("You have unsaved SOV changes. Please save or discard them before submitting.");
+      return;
+    }
+
     try {
       const response = await fetch(
         `/api/projects/${projectId}/invoicing/owner/${invoiceId}/submit`,
@@ -285,8 +885,8 @@ export default function InvoiceDetailPage() {
       );
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to submit invoice");
+        const err = await response.json();
+        throw new Error(err.message || "Failed to submit invoice");
       }
 
       toast.success("Invoice submitted successfully");
@@ -329,14 +929,63 @@ export default function InvoiceDetailPage() {
       );
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to approve invoice");
+        const err = await response.json();
+        throw new Error(err.message || "Failed to approve invoice");
       }
 
       toast.success("Invoice approved successfully");
       fetchInvoice();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to approve invoice");
+    }
+  };
+
+  const handleApproveAsNoted = async () => {
+    if (!invoice) return;
+    try {
+      setIsApprovingAsNoted(true);
+      const response = await fetch(
+        `/api/projects/${projectId}/invoicing/owner/${invoiceId}/approve-as-noted`,
+        { method: "POST" },
+      );
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || err.message || "Failed to approve invoice as noted");
+      }
+      toast.success("Invoice approved as noted");
+      setApproveAsNotedDialogOpen(false);
+      fetchInvoice();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to approve invoice as noted");
+    } finally {
+      setIsApprovingAsNoted(false);
+    }
+  };
+
+  const handleVoid = async () => {
+    if (!invoice) return;
+    try {
+      setIsVoiding(true);
+      const response = await fetch(
+        `/api/projects/${projectId}/invoicing/owner/${invoiceId}/void`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ reason: voidReason.trim() || undefined }),
+        },
+      );
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || err.message || "Failed to void invoice");
+      }
+      toast.success("Invoice voided");
+      setVoidDialogOpen(false);
+      setVoidReason("");
+      fetchInvoice();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to void invoice");
+    } finally {
+      setIsVoiding(false);
     }
   };
 
@@ -353,8 +1002,8 @@ export default function InvoiceDetailPage() {
       );
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to delete invoice");
+        const err = await response.json();
+        throw new Error(err.message || "Failed to delete invoice");
       }
 
       toast.success("Invoice deleted successfully");
@@ -368,19 +1017,94 @@ export default function InvoiceDetailPage() {
   };
 
   const handleExportPDF = () => {
-    toast.info("PDF export coming soon");
+    window.open(
+      `/api/projects/${projectId}/invoicing/owner/${invoiceId}/pdf`,
+      "_blank",
+    );
   };
 
-  // Calculate totals
-  const lineItems = invoice?.owner_invoice_line_items || [];
-  const subtotal = lineItems.reduce(
-    (sum, item) => sum + (item.approved_amount || 0),
-    0,
+  const openEmailDialog = () => {
+    const invoiceNumber = invoice?.invoice_number || invoice?.id || "";
+    setEmailTo("");
+    setEmailCc("");
+    setEmailSubject(`Invoice #${invoiceNumber}`);
+    setEmailMessage(`Please find attached invoice #${invoiceNumber}.`);
+    setEmailDialogOpen(true);
+  };
+
+  const handleSendEmail = async () => {
+    if (!invoice) return;
+    const toArr = emailTo
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const ccArr = emailCc
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+
+    if (toArr.length === 0) {
+      toast.error("At least one recipient is required");
+      return;
+    }
+
+    try {
+      await sendInvoiceEmail.mutateAsync({
+        invoiceId: invoice.id,
+        to: toArr,
+        cc: ccArr.length > 0 ? ccArr : undefined,
+        subject: emailSubject || undefined,
+        message: emailMessage || undefined,
+      });
+      setEmailDialogOpen(false);
+    } catch {
+      // toast handled by hook
+    }
+  };
+
+  const handleLineItemAdded = (item: OwnerInvoiceLineItem) => {
+    setInvoice((prev) => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        owner_invoice_line_items: [
+          ...(prev.owner_invoice_line_items ?? []),
+          item,
+        ],
+      };
+    });
+  };
+
+  // Calculate totals (prefer draft values for real-time summary)
+  const lineItems = invoice?.owner_invoice_line_items ?? [];
+
+  const sovTotals = lineItems.reduce(
+    (acc, item) => {
+      const overrides = sovDraft[item.id] ?? {};
+      acc.scheduledValue += item.scheduled_value;
+      acc.workPrevious += item.work_completed_previous ?? 0;
+      acc.workThisPeriod += overrides.work_completed_period ?? item.work_completed_period;
+      acc.materialsStored += overrides.materials_stored ?? item.materials_stored;
+      acc.retainageAmount += calcRetainageAmount(item, overrides);
+      acc.netThisPeriod += calcNetAmountThisPeriod(item, overrides);
+      return acc;
+    },
+    {
+      scheduledValue: 0,
+      workPrevious: 0,
+      workThisPeriod: 0,
+      materialsStored: 0,
+      retainageAmount: 0,
+      netThisPeriod: 0,
+    },
   );
-  // retention_percentage stored as a percentage (e.g. 5.0 = 5%); fall back to 0 if not set
-  const retentionRate = ((invoice?.contract_retention_percentage ?? 0) / 100);
-  const retention = subtotal * retentionRate;
-  const totalDue = subtotal - retention;
+
+  const totalCompleted = sovTotals.workPrevious + sovTotals.workThisPeriod + sovTotals.materialsStored;
+  const pctComplete = sovTotals.scheduledValue > 0
+    ? (totalCompleted / sovTotals.scheduledValue) * 100
+    : 0;
+
+  const invoiceEditable = invoice ? isEditable(invoice.status) : false;
 
   if (isLoading) {
     return (
@@ -417,7 +1141,7 @@ export default function InvoiceDetailPage() {
       <PageShell
         variant="detail"
         title={`Invoice ${invoice.invoice_number || invoice.id}`}
-        description={`Contract #${invoice.contract_id}`}
+        description={invoice.contract_number ?? invoice.prime_contract_id ?? undefined}
         statusBadge={<StatusBadge status={invoice.status} type="invoice" />}
         onBack={() => router.back()}
         actions={
@@ -434,10 +1158,26 @@ export default function InvoiceDetailPage() {
                 </Button>
               </>
             )}
-            {invoice.status === "submitted" && (
+            {invoice.status === "revise_and_resubmit" && (
+              <Button variant="outline" size="sm" onClick={handleEdit}>
+                <Edit />
+                Edit
+              </Button>
+            )}
+            {invoice.status === "under_review" && (
               <Button size="sm" onClick={handleApprove}>
                 <Check />
                 Approve
+              </Button>
+            )}
+            {invoice.status === "under_review" && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setApproveAsNotedDialogOpen(true)}
+              >
+                <CheckCheck />
+                Approve as Noted
               </Button>
             )}
             {invoice.status === "under_review" && (
@@ -450,6 +1190,21 @@ export default function InvoiceDetailPage() {
               <Download />
               Export PDF
             </Button>
+            <Button variant="outline" size="sm" onClick={openEmailDialog}>
+              <Mail />
+              Email Invoice
+            </Button>
+            {invoice.status !== "paid" && invoice.status !== "void" && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setVoidDialogOpen(true)}
+                disabled={isVoiding}
+              >
+                <Ban className="h-4 w-4 mr-2" />
+                Void
+              </Button>
+            )}
             {invoice.status !== "approved" && (
               <Button
                 variant="destructive"
@@ -481,12 +1236,7 @@ export default function InvoiceDetailPage() {
                 <div>
                   <Text size="sm" tone="muted">Due Date</Text>
                   <Text weight="medium">
-                    {formatDate(
-                      new Date(
-                        new Date(invoice.created_at).getTime() +
-                          30 * 24 * 60 * 60 * 1000,
-                      ).toISOString(),
-                    )}
+                    {invoice.due_date ? formatDate(invoice.due_date) : "—"}
                   </Text>
                 </div>
                 <div>
@@ -501,81 +1251,198 @@ export default function InvoiceDetailPage() {
             </CardContent>
           </Card>
 
-          {/* Line Items */}
+          {/* Schedule of Values */}
           <Card>
             <CardHeader>
-              <CardTitle>Line Items</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {lineItems.length === 0 ? (
-                <div className="text-center py-8">
-                  <Text tone="muted">No line items found</Text>
+              <div className="flex items-center justify-between flex-wrap gap-3">
+                <div>
+                  <CardTitle>Schedule of Values</CardTitle>
+                  {invoiceEditable && (
+                    <p className="text-sm text-muted-foreground mt-0.5">
+                      <span className="inline-flex items-center gap-1">
+                        <span className="inline-block w-2 h-2 rounded-full bg-amber-400" />
+                        Columns marked with a dot are editable
+                      </span>
+                    </p>
+                  )}
                 </div>
-              ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Description</TableHead>
-                      <TableHead>Category</TableHead>
-                      <TableHead className="text-right">Amount</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {lineItems.map((item) => (
-                      <TableRow key={item.id}>
-                        <TableCell>{item.description || "—"}</TableCell>
-                        <TableCell>
-                          <span className="capitalize">
-                            {item.category?.replace(/_/g, " ") || "—"}
-                          </span>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {formatCurrency(item.approved_amount)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              )}
+                <div className="flex items-center gap-2">
+                  {invoiceEditable && hasSovChanges && (
+                    <>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleDiscardSOV}
+                        disabled={isSavingSOV}
+                      >
+                        Discard Changes
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={handleSaveSOV}
+                        disabled={isSavingSOV}
+                      >
+                        <Save />
+                        {isSavingSOV ? "Saving..." : "Save Changes"}
+                      </Button>
+                    </>
+                  )}
+                  {invoiceEditable && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setAddLineItemOpen(true)}
+                    >
+                      <Plus />
+                      Add Line Item
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="p-0">
+              <SovTable
+                lineItems={lineItems}
+                editable={invoiceEditable}
+                draftMap={sovDraft}
+                onDraftChange={handleDraftChange}
+              />
             </CardContent>
           </Card>
 
-          {/* Totals */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Invoice Totals</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                  <Text tone="muted">Subtotal</Text>
-                  <Text weight="medium">
-                    {formatCurrency(subtotal)}
-                  </Text>
-                </div>
-                {retentionRate > 0 && (
+          {/* SOV Totals Summary */}
+          {lineItems.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Invoice Totals</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
                   <div className="flex justify-between items-center">
-                    <Text tone="muted">
-                      Retention ({(retentionRate * 100).toFixed(1)}%)
-                    </Text>
-                    <Text weight="medium" tone="destructive">
-                      -{formatCurrency(retention)}
+                    <Text tone="muted">Scheduled Value</Text>
+                    <Text weight="medium" className="tabular-nums">
+                      {formatCurrency(sovTotals.scheduledValue)}
                     </Text>
                   </div>
-                )}
-                <Separator />
-                <div className="flex justify-between items-center">
-                  <Text size="lg" weight="semibold">Total Due</Text>
-                  <Text size="lg" weight="bold">
-                    {formatCurrency(totalDue)}
-                  </Text>
+                  <div className="flex justify-between items-center">
+                    <Text tone="muted">Work from Previous Applications</Text>
+                    <Text weight="medium" className="tabular-nums">
+                      {formatCurrency(sovTotals.workPrevious)}
+                    </Text>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <Text tone="muted">Work Completed This Period</Text>
+                    <Text weight="medium" className="tabular-nums">
+                      {formatCurrency(sovTotals.workThisPeriod)}
+                    </Text>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <Text tone="muted">Materials Presently Stored</Text>
+                    <Text weight="medium" className="tabular-nums">
+                      {formatCurrency(sovTotals.materialsStored)}
+                    </Text>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <Text tone="muted">Total Completed &amp; Stored</Text>
+                    <Text weight="medium" className="tabular-nums">
+                      {formatCurrency(totalCompleted)}
+                    </Text>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <Text tone="muted">% Complete</Text>
+                    <Text weight="medium" className="tabular-nums">
+                      {pctComplete.toFixed(1)}%
+                    </Text>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <Text tone="muted">Less Retainage</Text>
+                    <Text weight="medium" tone="destructive" className="tabular-nums">
+                      -{formatCurrency(sovTotals.retainageAmount)}
+                    </Text>
+                  </div>
+                  <Separator />
+                  <div className="flex justify-between items-center">
+                    <Text size="lg" weight="semibold">Net Amount This Period</Text>
+                    <Text size="lg" weight="bold" className="tabular-nums">
+                      {formatCurrency(sovTotals.netThisPeriod)}
+                    </Text>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </PageShell>
 
+      {/* Email Invoice Dialog */}
+      <Dialog open={emailDialogOpen} onOpenChange={setEmailDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Email Invoice</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="email-to">To *</Label>
+              <Input
+                id="email-to"
+                type="text"
+                placeholder="recipient@example.com, another@example.com"
+                value={emailTo}
+                onChange={(e) => setEmailTo(e.target.value)}
+              />
+              <Text size="sm" tone="muted">
+                Comma-separated list of email addresses.
+              </Text>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="email-cc">CC</Label>
+              <Input
+                id="email-cc"
+                type="text"
+                placeholder="cc@example.com"
+                value={emailCc}
+                onChange={(e) => setEmailCc(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="email-subject">Subject</Label>
+              <Input
+                id="email-subject"
+                type="text"
+                value={emailSubject}
+                onChange={(e) => setEmailSubject(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="email-message">Message</Label>
+              <Textarea
+                id="email-message"
+                rows={4}
+                value={emailMessage}
+                onChange={(e) => setEmailMessage(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setEmailDialogOpen(false)}
+              disabled={sendInvoiceEmail.isPending}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={() => void handleSendEmail()}
+              disabled={sendInvoiceEmail.isPending}
+            >
+              <Send />
+              {sendInvoiceEmail.isPending ? "Sending..." : "Send"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -598,7 +1465,68 @@ export default function InvoiceDetailPage() {
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* Edit Slideover */}
+      {/* Approve as Noted Confirmation */}
+      <AlertDialog open={approveAsNotedDialogOpen} onOpenChange={setApproveAsNotedDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Approve as Noted</AlertDialogTitle>
+            <AlertDialogDescription>
+              Approve invoice {invoice?.invoice_number || invoice?.id} as noted? This
+              marks the invoice as approved with noted exceptions.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => void handleApproveAsNoted()}
+              disabled={isApprovingAsNoted}
+            >
+              {isApprovingAsNoted ? "Approving..." : "Approve as Noted"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Void Confirmation */}
+      <AlertDialog
+        open={voidDialogOpen}
+        onOpenChange={(open) => {
+          setVoidDialogOpen(open);
+          if (!open) setVoidReason("");
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Void Invoice</AlertDialogTitle>
+            <AlertDialogDescription>
+              Void invoice {invoice?.invoice_number || invoice?.id}? This marks the
+              invoice as void and cannot be reversed through the UI.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2 py-2">
+            <Label htmlFor="void-reason">Reason (optional)</Label>
+            <Textarea
+              id="void-reason"
+              value={voidReason}
+              onChange={(e) => setVoidReason(e.target.value)}
+              placeholder="Why is this invoice being voided?"
+              rows={3}
+            />
+          </div>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => void handleVoid()}
+              disabled={isVoiding}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {isVoiding ? "Voiding..." : "Void Invoice"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Edit Invoice Slideover */}
       <Slideover
         open={isEditOpen}
         onOpenChange={(open) => !open && setIsEditOpen(false)}
@@ -619,6 +1547,15 @@ export default function InvoiceDetailPage() {
           />
         </SlideoverContent>
       </Slideover>
+
+      {/* Add Line Item Dialog */}
+      <AddLineItemDialog
+        open={addLineItemOpen}
+        onOpenChange={setAddLineItemOpen}
+        projectId={projectId}
+        invoiceId={invoiceId}
+        onSuccess={handleLineItemAdded}
+      />
     </>
   );
 }
