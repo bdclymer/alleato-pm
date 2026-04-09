@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
-type Vendor = Database["public"]["Tables"]["vendors"]["Row"];
+type Vendor = Database["public"]["Tables"]["companies"]["Row"];
 type Contact = Database["public"]["Tables"]["people"]["Row"];
 
 function normalizeVendorField(value: string | null | undefined): string {
@@ -119,7 +119,7 @@ export default function VendorDetailPage() {
         setError(null);
         const supabase = createClient();
         const { data, error: queryError } = await supabase
-          .from("vendors")
+          .from("companies")
           .select("*")
           .eq("id", vendorId)
           .single();
@@ -182,14 +182,14 @@ export default function VendorDetailPage() {
   }, []);
 
   React.useEffect(() => {
-    if (!vendor?.company_id) {
+    if (!vendor?.id) {
       setContacts([]);
       setAvailableContacts([]);
       return;
     }
-    void loadContacts(vendor.company_id);
-    void loadAvailableContacts(vendor.company_id);
-  }, [loadAvailableContacts, loadContacts, vendor?.company_id]);
+    void loadContacts(vendor.id);
+    void loadAvailableContacts(vendor.id);
+  }, [loadAvailableContacts, loadContacts, vendor?.id]);
 
   React.useEffect(() => {
     if (!vendor) return;
@@ -199,11 +199,11 @@ export default function VendorDetailPage() {
       try {
         const supabase = createClient();
         const [{ data: subs }, { data: costs }] = await Promise.all([
-          vendor.company_id
+          vendor.id
             ? supabase
                 .from("subcontracts")
                 .select("id, number, title, status, contract_amount, type, project_id, projects(id, name)")
-                .eq("contract_company_id", vendor.company_id)
+                .eq("contract_company_id", vendor.id)
                 .order("created_at", { ascending: false })
             : Promise.resolve({ data: [] }),
           supabase
@@ -265,7 +265,7 @@ export default function VendorDetailPage() {
   const contactName = normalizeVendorField(vendor.contact_name);
   const location = [vendor.city, vendor.state, vendor.zip_code].filter(Boolean).join(", ");
   const handleCreateContact = async () => {
-    if (!vendor.company_id) return;
+    if (!vendor.id) return;
     if (!newContactForm.first_name.trim() || !newContactForm.last_name.trim()) return;
 
     try {
@@ -279,7 +279,7 @@ export default function VendorDetailPage() {
         job_title: newContactForm.job_title.trim() || null,
         person_type: "contact",
         status: "active",
-        company_id: vendor.company_id,
+        company_id: vendor.id,
       });
 
       if (insertError) throw insertError;
@@ -292,26 +292,26 @@ export default function VendorDetailPage() {
         phone_business: "",
         job_title: "",
       });
-      await loadContacts(vendor.company_id);
-      await loadAvailableContacts(vendor.company_id);
+      await loadContacts(vendor.id);
+      await loadAvailableContacts(vendor.id);
     } finally {
       setIsSavingContact(false);
     }
   };
 
   const handleAddExistingContact = async (contactId: string) => {
-    if (!vendor.company_id) return;
+    if (!vendor.id) return;
     try {
       setIsLinkingContactId(contactId);
       const supabase = createClient();
       const { error: updateError } = await supabase
         .from("people")
-        .update({ company_id: vendor.company_id })
+        .update({ company_id: vendor.id })
         .eq("id", contactId);
 
       if (updateError) throw updateError;
-      await loadContacts(vendor.company_id);
-      await loadAvailableContacts(vendor.company_id);
+      await loadContacts(vendor.id);
+      await loadAvailableContacts(vendor.id);
       setAddContactComboboxOpen(false);
       setContactQuery("");
     } finally {
@@ -320,7 +320,7 @@ export default function VendorDetailPage() {
   };
 
   const handleRemoveContact = async (contactId: string) => {
-    if (!vendor.company_id) return;
+    if (!vendor.id) return;
     try {
       setIsUnlinkingContactId(contactId);
       const supabase = createClient();
@@ -328,11 +328,11 @@ export default function VendorDetailPage() {
         .from("people")
         .update({ company_id: null })
         .eq("id", contactId)
-        .eq("company_id", vendor.company_id);
+        .eq("company_id", vendor.id);
 
       if (updateError) throw updateError;
-      await loadContacts(vendor.company_id);
-      await loadAvailableContacts(vendor.company_id);
+      await loadContacts(vendor.id);
+      await loadAvailableContacts(vendor.id);
     } finally {
       setIsUnlinkingContactId(null);
     }
@@ -368,7 +368,7 @@ export default function VendorDetailPage() {
         <section className="space-y-6">
           <div className="space-y-3">
             <div className="mt-2 flex flex-wrap items-center gap-2">
-              <StatusBadge status={vendor.is_active ? "Active" : "Inactive"} />
+              <StatusBadge status={vendor.status === "active" ? "Active" : "Inactive"} />
             </div>
           </div>
 

@@ -35,12 +35,12 @@ import {
 } from "@/components/ui/tooltip";
 import { StatusBadge } from "@/components/ds";
 
-type Vendor = Database["public"]["Tables"]["vendors"]["Row"];
+type Vendor = Database["public"]["Tables"]["companies"]["Row"];
 
 type VendorFilterState = Record<string, FilterValue>;
 
 const EMPTY_FILTERS: VendorFilterState = {
-  is_active: undefined,
+  status: undefined,
   vendor_class: undefined,
   payment_method: undefined,
 };
@@ -53,7 +53,7 @@ const vendorColumns: ColumnConfig[] = [
   { id: "contact_phone", label: "Phone", defaultVisible: true },
   { id: "city", label: "City", defaultVisible: true },
   { id: "state", label: "State", defaultVisible: true },
-  { id: "is_active", label: "Status", defaultVisible: true },
+  { id: "status", label: "Status", defaultVisible: true },
   { id: "vendor_class", label: "Class", defaultVisible: true },
   { id: "payment_method", label: "Payment Method", defaultVisible: false },
   { id: "terms", label: "Terms", defaultVisible: false },
@@ -100,7 +100,7 @@ const vendorPreviewFields: Array<{
 }> = [
   { key: "name", label: "Name" },
   { key: "legal_name", label: "Legal Name" },
-  { key: "is_active", label: "Active", type: "boolean" },
+  { key: "status", label: "Status" },
   { key: "vendor_class", label: "Vendor Class" },
   { key: "acumatica_vendor_id", label: "Acumatica Vendor ID" },
   { key: "acumatica_sync_at", label: "Acumatica Sync At", type: "date" },
@@ -212,9 +212,9 @@ function buildVendorTableColumns(): TableColumn<Vendor>[] {
     {
       ...vendorColumns[7],
       render: (item) => (
-        <StatusBadge status={item.is_active ? "Active" : "Inactive"} />
+        <StatusBadge status={item.status === "active" ? "Active" : "Inactive"} />
       ),
-      sortValue: (item) => (item.is_active ? "Active" : "Inactive"),
+      sortValue: (item) => (item.status === "active" ? "Active" : "Inactive"),
     },
     {
       ...vendorColumns[8],
@@ -342,7 +342,7 @@ function VendorPreviewPane({
             <div className="min-w-0 flex-1">
               <h3 className="text-sm font-semibold leading-tight truncate">{vendor.name}</h3>
               <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
-                <StatusBadge status={vendor.is_active ? "Active" : "Inactive"} />
+                <StatusBadge status={vendor.status === "active" ? "Active" : "Inactive"} />
                 {vendor.vendor_class && (
                   <StatusBadge status={vendor.vendor_class} />
                 )}
@@ -407,7 +407,7 @@ export default function DirectoryVendorsPage(): ReactElement {
   const initialSearch = searchParams.get("search") ?? "";
 
   const initialFilters: VendorFilterState = {
-    is_active: searchParams.get("is_active") || undefined,
+    status: searchParams.get("status") || undefined,
     vendor_class: searchParams.get("vendor_class") || undefined,
     payment_method: searchParams.get("payment_method") || undefined,
   };
@@ -479,8 +479,8 @@ export default function DirectoryVendorsPage(): ReactElement {
         params.set("search", debouncedSearch.trim());
       }
 
-      if (typeof activeFilters.is_active === "string" && activeFilters.is_active) {
-        params.set("is_active", activeFilters.is_active);
+      if (typeof activeFilters.status === "string" && activeFilters.status) {
+        params.set("status", activeFilters.status);
       }
       if (typeof activeFilters.vendor_class === "string" && activeFilters.vendor_class) {
         params.set("vendor_class", activeFilters.vendor_class);
@@ -532,7 +532,7 @@ export default function DirectoryVendorsPage(): ReactElement {
       }
     }
   }, [
-    activeFilters.is_active,
+    activeFilters.status,
     activeFilters.payment_method,
     activeFilters.vendor_class,
     debouncedSearch,
@@ -575,18 +575,18 @@ export default function DirectoryVendorsPage(): ReactElement {
 
   // Sync URL filters to table state
   React.useEffect(() => {
-    const nextActive = searchParams.get("is_active") || undefined;
+    const nextStatus = searchParams.get("status") || undefined;
     const nextClass = searchParams.get("vendor_class") || undefined;
     const nextPayment = searchParams.get("payment_method") || undefined;
     tableState.setActiveFilters((prev) => {
       if (
-        prev.is_active === nextActive &&
+        prev.status === nextStatus &&
         prev.vendor_class === nextClass &&
         prev.payment_method === nextPayment
       ) {
         return prev;
       }
-      return { is_active: nextActive, vendor_class: nextClass, payment_method: nextPayment };
+      return { status: nextStatus, vendor_class: nextClass, payment_method: nextPayment };
     });
   }, [searchParams, tableState.setActiveFilters]);
 
@@ -600,12 +600,12 @@ export default function DirectoryVendorsPage(): ReactElement {
   const filters: FilterConfig[] = React.useMemo(
     () => [
       {
-        id: "is_active",
+        id: "status",
         label: "Status",
         type: "select",
         options: [
-          { value: "true", label: "Active" },
-          { value: "false", label: "Inactive" },
+          { value: "active", label: "Active" },
+          { value: "inactive", label: "Inactive" },
         ],
       },
       {
@@ -636,7 +636,7 @@ export default function DirectoryVendorsPage(): ReactElement {
   const activeVendorId = selectedVendor?.id ?? null;
   const isFiltered =
     Boolean(searchInput) ||
-    Boolean(activeFilters.is_active) ||
+    Boolean(activeFilters.status) ||
     Boolean(activeFilters.vendor_class) ||
     Boolean(activeFilters.payment_method);
 
@@ -645,7 +645,7 @@ export default function DirectoryVendorsPage(): ReactElement {
       try {
         const supabase = createClient();
         const { error: deleteError } = await supabase
-          .from("vendors")
+          .from("companies")
           .delete()
           .eq("id", vendor.id);
         if (deleteError) throw deleteError;
@@ -661,7 +661,7 @@ export default function DirectoryVendorsPage(): ReactElement {
   const handleFilterChange = (nextFilters: VendorFilterState) => {
     tableState.setActiveFilters(nextFilters);
     tableState.setSearchParams({
-      is_active: typeof nextFilters.is_active === "string" ? nextFilters.is_active : null,
+      status: typeof nextFilters.status === "string" ? nextFilters.status : null,
       vendor_class: typeof nextFilters.vendor_class === "string" ? nextFilters.vendor_class : null,
       payment_method: typeof nextFilters.payment_method === "string" ? nextFilters.payment_method : null,
       page: "1",
