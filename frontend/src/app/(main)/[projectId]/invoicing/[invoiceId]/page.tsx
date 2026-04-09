@@ -1078,6 +1078,25 @@ export default function InvoiceDetailPage() {
   // Calculate totals (prefer draft values for real-time summary)
   const lineItems = invoice?.owner_invoice_line_items ?? [];
 
+  // Pre-fill retainage_released for every line item to equal its held retainage
+  const handleReleaseAllRetainage = useCallback(() => {
+    setSovDraft((prev) => {
+      const next: SovDraftMap = { ...prev };
+      for (const item of lineItems) {
+        const existingOverrides = prev[item.id] ?? {};
+        const retainageHeld =
+          existingOverrides.retainage_amount !== undefined
+            ? existingOverrides.retainage_amount
+            : (item.retainage_amount ?? 0);
+        next[item.id] = {
+          ...existingOverrides,
+          retainage_released: retainageHeld,
+        };
+      }
+      return next;
+    });
+  }, [lineItems]);
+
   const sovTotals = lineItems.reduce(
     (acc, item) => {
       const overrides = sovDraft[item.id] ?? {};
@@ -1286,6 +1305,16 @@ export default function InvoiceDetailPage() {
                         {isSavingSOV ? "Saving..." : "Save Changes"}
                       </Button>
                     </>
+                  )}
+                  {invoiceEditable && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleReleaseAllRetainage}
+                      title="Pre-fills retainage released = retainage held for all line items"
+                    >
+                      Release All Retainage
+                    </Button>
                   )}
                   {invoiceEditable && (
                     <Button
