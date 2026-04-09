@@ -263,7 +263,7 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
               {editable ? (
                 <span className="inline-flex items-center gap-1">
                   Work This Period
-                  <span className="inline-block w-2 h-2 rounded-full bg-amber-400" title="Editable" />
+                  <span className="inline-block w-2 h-2 rounded-full bg-primary/60" title="Editable" />
                 </span>
               ) : (
                 "Work This Period"
@@ -273,7 +273,7 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
               {editable ? (
                 <span className="inline-flex items-center gap-1">
                   Materials Stored
-                  <span className="inline-block w-2 h-2 rounded-full bg-amber-400" title="Editable" />
+                  <span className="inline-block w-2 h-2 rounded-full bg-primary/60" title="Editable" />
                 </span>
               ) : (
                 "Materials Stored"
@@ -285,7 +285,7 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
               {editable ? (
                 <span className="inline-flex items-center gap-1">
                   Retainage %
-                  <span className="inline-block w-2 h-2 rounded-full bg-amber-400" title="Editable" />
+                  <span className="inline-block w-2 h-2 rounded-full bg-primary/60" title="Editable" />
                 </span>
               ) : (
                 "Retainage %"
@@ -295,7 +295,7 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
               {editable ? (
                 <span className="inline-flex items-center gap-1">
                   Retainage $
-                  <span className="inline-block w-2 h-2 rounded-full bg-amber-400" title="Editable" />
+                  <span className="inline-block w-2 h-2 rounded-full bg-primary/60" title="Editable" />
                 </span>
               ) : (
                 "Retainage $"
@@ -305,7 +305,7 @@ function SovTable({ lineItems, editable, draftMap, onDraftChange }: SovTableProp
               {editable ? (
                 <span className="inline-flex items-center gap-1">
                   Retainage Released
-                  <span className="inline-block w-2 h-2 rounded-full bg-amber-400" title="Editable" />
+                  <span className="inline-block w-2 h-2 rounded-full bg-primary/60" title="Editable" />
                 </span>
               ) : (
                 "Retainage Released"
@@ -1260,7 +1260,7 @@ export default function InvoiceDetailPage() {
                   {invoiceEditable && (
                     <p className="text-sm text-muted-foreground mt-0.5">
                       <span className="inline-flex items-center gap-1">
-                        <span className="inline-block w-2 h-2 rounded-full bg-amber-400" />
+                        <span className="inline-block w-2 h-2 rounded-full bg-primary/60" />
                         Columns marked with a dot are editable
                       </span>
                     </p>
