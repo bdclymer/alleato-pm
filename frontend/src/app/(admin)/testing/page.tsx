@@ -99,7 +99,7 @@ export default function TestingPage() {
   const [view, setView] = useState<View>("home");
   const [suites, setSuites] = useState<Suite[]>([]);
   const [selectedSuite, setSelectedSuite] = useState<Suite | null>(null);
-  const [runForm, setRunForm] = useState({ tester: "", environment: typeof window !== "undefined" ? window.location.host : "", branch: "main", notes: "" });
+  const [runForm, setRunForm] = useState({ tester: "", environment: typeof window !== "undefined" ? window.location.host : "", branch: "main", notes: "", projectId: "" });
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
   const [results, setResults] = useState<TestResult[]>([]);
   const [cursor, setCursor] = useState(0);
@@ -423,6 +423,14 @@ export default function TestingPage() {
                 placeholder="main"
               />
             </div>
+            <div className="space-y-1.5">
+              <Label>Project ID <span className="text-muted-foreground text-xs">(for test links)</span></Label>
+              <Input
+                value={runForm.projectId}
+                onChange={(e) => setRunForm((f) => ({ ...f, projectId: e.target.value }))}
+                placeholder="e.g. 67"
+              />
+            </div>
           </div>
 
           {startError && (
@@ -675,7 +683,24 @@ export default function TestingPage() {
         {/* Open in app button */}
         {tc.start_url && (
           <a
-            href={(() => { try { return new URL(tc.start_url ?? "").pathname; } catch { return tc.start_url ?? "#"; } })()}
+            href={(() => {
+              try {
+                // Extract just the pathname from potentially full URL
+                const raw = new URL(tc.start_url ?? "").pathname;
+                // Replace the hardcoded project ID segment with the tester's project ID
+                if (runForm.projectId) {
+                  return raw.replace(/^\/\d+\//, `/${runForm.projectId}/`);
+                }
+                return raw;
+              } catch {
+                // Already a relative path — just swap project ID
+                const raw = tc.start_url ?? "#";
+                if (runForm.projectId) {
+                  return raw.replace(/^\/\d+\//, `/${runForm.projectId}/`);
+                }
+                return raw;
+              }
+            })()}
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm font-medium text-primary hover:underline"
