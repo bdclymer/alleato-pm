@@ -290,9 +290,19 @@ export default function ProjectInvoicesPage(): ReactElement {
   const [bpAutoFrequency, setBpAutoFrequency] = React.useState<
     "monthly" | "semi_monthly" | "weekly"
   >("monthly");
-  const [bpAutoStart, setBpAutoStart] = React.useState("");
-  const [bpAutoCount, setBpAutoCount] = React.useState("6");
-  const [bpAutoDueOffset, setBpAutoDueOffset] = React.useState("15");
+  const [bpAutoBasis, setBpAutoBasis] = React.useState<"by_date">("by_date");
+  const [bpAutoStartDay, setBpAutoStartDay] = React.useState("1");
+  const [bpAutoStartMonth, setBpAutoStartMonth] = React.useState<
+    "previous" | "this" | "next"
+  >("this");
+  const [bpAutoEndDay, setBpAutoEndDay] = React.useState("30");
+  const [bpAutoEndMonth, setBpAutoEndMonth] = React.useState<
+    "previous" | "this" | "next"
+  >("this");
+  const [bpAutoDueDay, setBpAutoDueDay] = React.useState("24");
+  const [bpAutoDueMonth, setBpAutoDueMonth] = React.useState<
+    "previous" | "this" | "next"
+  >("this");
   const createBpMutation = useCreateBillingPeriod(projectId);
 
   const {
@@ -1016,60 +1026,151 @@ export default function ProjectInvoicesPage(): ReactElement {
               </div>
             </div>
           ) : (
-            <div className="space-y-4 py-2">
-              <div className="space-y-2">
-                <Label htmlFor="bp-auto-freq">Frequency</Label>
-                <select
-                  id="bp-auto-freq"
-                  value={bpAutoFrequency}
-                  onChange={(e) =>
-                    setBpAutoFrequency(
-                      e.target.value as "monthly" | "semi_monthly" | "weekly",
-                    )
-                  }
-                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
-                >
-                  <option value="monthly">Monthly</option>
-                  <option value="semi_monthly">Semi-monthly (15 days)</option>
-                  <option value="weekly">Weekly</option>
-                </select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="bp-auto-start">First Period Start</Label>
-                  <Input
-                    id="bp-auto-start"
-                    type="date"
-                    value={bpAutoStart}
-                    onChange={(e) => setBpAutoStart(e.target.value)}
-                  />
+            (() => {
+              const selectClass =
+                "flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring";
+              const dayOptions = Array.from({ length: 31 }, (_, i) => i + 1);
+              const ordinal = (n: number) => {
+                const s = ["th", "st", "nd", "rd"];
+                const v = n % 100;
+                return `${n}${s[(v - 20) % 10] ?? s[v] ?? s[0]}`;
+              };
+              const monthOptions = [
+                { value: "previous", label: "previous month" },
+                { value: "this", label: "this month" },
+                { value: "next", label: "next month" },
+              ] as const;
+              return (
+                <div className="space-y-4 py-2">
+                  <div className="space-y-2">
+                    <Label>Frequency</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <select
+                        value={bpAutoFrequency}
+                        onChange={(e) =>
+                          setBpAutoFrequency(
+                            e.target.value as "monthly" | "semi_monthly" | "weekly",
+                          )
+                        }
+                        className={selectClass}
+                      >
+                        <option value="monthly">Monthly</option>
+                        <option value="semi_monthly">Semi-monthly</option>
+                        <option value="weekly">Weekly</option>
+                      </select>
+                      <select
+                        value={bpAutoBasis}
+                        onChange={(e) =>
+                          setBpAutoBasis(e.target.value as "by_date")
+                        }
+                        className={selectClass}
+                      >
+                        <option value="by_date">By date</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Start Date</Label>
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                      <select
+                        value={bpAutoStartDay}
+                        onChange={(e) => setBpAutoStartDay(e.target.value)}
+                        className={selectClass}
+                      >
+                        {dayOptions.map((d) => (
+                          <option key={d} value={d}>
+                            {ordinal(d)}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="text-sm text-muted-foreground">of</span>
+                      <select
+                        value={bpAutoStartMonth}
+                        onChange={(e) =>
+                          setBpAutoStartMonth(
+                            e.target.value as "previous" | "this" | "next",
+                          )
+                        }
+                        className={selectClass}
+                      >
+                        {monthOptions.map((o) => (
+                          <option key={o.value} value={o.value}>
+                            {o.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>End Date</Label>
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                      <select
+                        value={bpAutoEndDay}
+                        onChange={(e) => setBpAutoEndDay(e.target.value)}
+                        className={selectClass}
+                      >
+                        {dayOptions.map((d) => (
+                          <option key={d} value={d}>
+                            {ordinal(d)}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="text-sm text-muted-foreground">of</span>
+                      <select
+                        value={bpAutoEndMonth}
+                        onChange={(e) =>
+                          setBpAutoEndMonth(
+                            e.target.value as "previous" | "this" | "next",
+                          )
+                        }
+                        className={selectClass}
+                      >
+                        {monthOptions.map((o) => (
+                          <option key={o.value} value={o.value}>
+                            {o.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Due Date</Label>
+                    <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+                      <select
+                        value={bpAutoDueDay}
+                        onChange={(e) => setBpAutoDueDay(e.target.value)}
+                        className={selectClass}
+                      >
+                        {dayOptions.map((d) => (
+                          <option key={d} value={d}>
+                            {ordinal(d)}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="text-sm text-muted-foreground">of</span>
+                      <select
+                        value={bpAutoDueMonth}
+                        onChange={(e) =>
+                          setBpAutoDueMonth(
+                            e.target.value as "previous" | "this" | "next",
+                          )
+                        }
+                        className={selectClass}
+                      >
+                        {monthOptions.map((o) => (
+                          <option key={o.value} value={o.value}>
+                            {o.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="bp-auto-count">Number of Periods</Label>
-                  <Input
-                    id="bp-auto-count"
-                    type="number"
-                    min="1"
-                    max="60"
-                    value={bpAutoCount}
-                    onChange={(e) => setBpAutoCount(e.target.value)}
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="bp-auto-offset">
-                  Due Date Offset (days after period end)
-                </Label>
-                <Input
-                  id="bp-auto-offset"
-                  type="number"
-                  min="0"
-                  max="90"
-                  value={bpAutoDueOffset}
-                  onChange={(e) => setBpAutoDueOffset(e.target.value)}
-                />
-              </div>
-            </div>
+              );
+            })()
           )}
 
           <DialogFooter>
@@ -1079,11 +1180,8 @@ export default function ProjectInvoicesPage(): ReactElement {
             <Button
               disabled={
                 createBpMutation.isPending ||
-                (bpMode === "manual"
-                  ? !bpFormStartDate || !bpFormEndDate || !bpFormBillingDate
-                  : !bpAutoStart ||
-                    !bpAutoCount ||
-                    Number(bpAutoCount) <= 0)
+                (bpMode === "manual" &&
+                  (!bpFormStartDate || !bpFormEndDate || !bpFormBillingDate))
               }
               onClick={async () => {
                 if (bpMode === "manual") {
@@ -1105,49 +1203,39 @@ export default function ProjectInvoicesPage(): ReactElement {
                   return;
                 }
 
-                // Automatic: generate N periods of the chosen frequency
-                const count = Math.min(60, Math.max(1, Number(bpAutoCount) || 1));
-                const offsetDays = Math.max(0, Number(bpAutoDueOffset) || 0);
-                const addDays = (d: Date, days: number) => {
-                  const next = new Date(d);
-                  next.setDate(next.getDate() + days);
-                  return next;
+                // Automatic: resolve day-of-month rule to a single period
+                const resolveDate = (
+                  dayStr: string,
+                  offset: "previous" | "this" | "next",
+                ) => {
+                  const today = new Date();
+                  const monthDelta =
+                    offset === "previous" ? -1 : offset === "next" ? 1 : 0;
+                  const target = new Date(
+                    today.getFullYear(),
+                    today.getMonth() + monthDelta,
+                    1,
+                  );
+                  const lastDay = new Date(
+                    target.getFullYear(),
+                    target.getMonth() + 1,
+                    0,
+                  ).getDate();
+                  const day = Math.min(
+                    Math.max(1, Number(dayStr) || 1),
+                    lastDay,
+                  );
+                  target.setDate(day);
+                  return target.toISOString().slice(0, 10);
                 };
-                const addMonths = (d: Date, months: number) => {
-                  const next = new Date(d);
-                  next.setMonth(next.getMonth() + months);
-                  return next;
-                };
-                const fmt = (d: Date) => d.toISOString().slice(0, 10);
 
-                let cursor = new Date(bpAutoStart);
                 try {
-                  for (let i = 0; i < count; i++) {
-                    let periodStart: Date;
-                    let periodEnd: Date;
-                    if (bpAutoFrequency === "monthly") {
-                      periodStart = cursor;
-                      periodEnd = addDays(addMonths(cursor, 1), -1);
-                      cursor = addMonths(cursor, 1);
-                    } else if (bpAutoFrequency === "semi_monthly") {
-                      periodStart = cursor;
-                      periodEnd = addDays(cursor, 14);
-                      cursor = addDays(cursor, 15);
-                    } else {
-                      periodStart = cursor;
-                      periodEnd = addDays(cursor, 6);
-                      cursor = addDays(cursor, 7);
-                    }
-                    const dueDate = addDays(periodEnd, offsetDays);
-                    await createBpMutation.mutateAsync({
-                      start_date: fmt(periodStart),
-                      end_date: fmt(periodEnd),
-                      due_date: fmt(dueDate),
-                    });
-                  }
+                  await createBpMutation.mutateAsync({
+                    start_date: resolveDate(bpAutoStartDay, bpAutoStartMonth),
+                    end_date: resolveDate(bpAutoEndDay, bpAutoEndMonth),
+                    due_date: resolveDate(bpAutoDueDay, bpAutoDueMonth),
+                  });
                   setCreateBpOpen(false);
-                  setBpAutoStart("");
-                  setBpAutoCount("6");
                 } catch {
                   // toast already shown by mutation onError
                 }
