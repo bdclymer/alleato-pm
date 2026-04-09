@@ -35,6 +35,7 @@ import {
 import { useOwnerInvoicesList } from "@/hooks/use-invoicing";
 import { useSubcontractorInvoicesList } from "@/hooks/use-subcontractor-invoices";
 import { useBillingPeriodsList, useCreateBillingPeriod, type BillingPeriod } from "@/hooks/use-billing-periods";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   buildInvoiceTableColumns,
   invoiceColumns,
@@ -968,30 +969,15 @@ export default function ProjectInvoicesPage(): ReactElement {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid grid-cols-2 gap-1 rounded-md bg-muted p-1">
-            <button
-              type="button"
-              onClick={() => setBpMode("manual")}
-              className={`rounded-sm px-3 py-1.5 text-sm font-medium transition-colors ${
-                bpMode === "manual"
-                  ? "bg-background text-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Manual
-            </button>
-            <button
-              type="button"
-              onClick={() => setBpMode("automatic")}
-              className={`rounded-sm px-3 py-1.5 text-sm font-medium transition-colors ${
-                bpMode === "automatic"
-                  ? "bg-background text-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              Automatic
-            </button>
-          </div>
+          <Tabs
+            value={bpMode}
+            onValueChange={(v) => setBpMode(v as "manual" | "automatic")}
+          >
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="manual">Manual</TabsTrigger>
+              <TabsTrigger value="automatic">Automatic</TabsTrigger>
+            </TabsList>
+          </Tabs>
 
           {bpMode === "manual" ? (
             <div className="space-y-4 py-2">
