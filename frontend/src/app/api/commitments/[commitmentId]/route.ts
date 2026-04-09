@@ -224,19 +224,19 @@ export async function GET(
       }
     }
 
-    // Fetch vendor separately — contract_company_id FK references vendors(id)
+    // Fetch contract company — contract_company_id FK references companies(id)
     const record = data as Record<string, unknown>;
     let contractCompany: { id: string; name: string; type: string | null } | null = null;
     if (record?.contract_company_id) {
-      const { data: vendorData } = await supabase
-        .from("vendors")
+      const { data: companyData } = await supabase
+        .from("companies")
         .select("id, name")
         .eq("id", record.contract_company_id as string)
         .single();
-      if (vendorData) {
+      if (companyData) {
         contractCompany = {
-          id: vendorData.id,
-          name: vendorData.name,
+          id: companyData.id,
+          name: companyData.name,
           type: "vendor",
         };
       }

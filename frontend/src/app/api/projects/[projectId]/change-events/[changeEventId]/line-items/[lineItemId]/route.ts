@@ -229,7 +229,7 @@ export async function PATCH(
       }
     }
 
-    // vendor_id FK targets vendors(id) directly — store as-is.
+    // vendor_id FK targets companies(id) directly — store as-is.
     const resolvedVendorId = validatedData.vendorId;
 
     // Build update object

@@ -183,8 +183,9 @@ export function createFinancialTools(
               .not("commitment_id", "is", null),
             // Get vendor names
             supabase
-              .from("vendors")
-              .select("id, name"),
+              .from("companies")
+              .select("id, name")
+              .eq("is_vendor", true),
           ]);
 
           const subs = (subRes.data ?? []) as unknown as AnyRow[];
@@ -569,7 +570,7 @@ export function createFinancialTools(
 
           const [dcRes, vendorRes, lineItemsRes] = await Promise.all([
             dcQuery,
-            supabase.from("vendors").select("id, name"),
+            supabase.from("companies").select("id, name").eq("is_vendor", true),
             supabase
               .from("direct_cost_line_items")
               .select(

@@ -1099,7 +1099,7 @@ async function loadPrimeContractBundle(
         contract_company:companies!prime_contracts_contract_company_id_fkey(id, name),
         contractor:companies!prime_contracts_contractor_id_fkey(id, name),
         architect_engineer:companies!prime_contracts_architect_engineer_id_fkey(id, name),
-        vendor:vendors(id, name, contact_email)
+        vendor:companies(id, name, contact_email)
       `,
     )
     .eq("id", recordId)
@@ -1289,8 +1289,8 @@ async function loadCommitmentBundle(
   let vendor: VendorRecipientRow | null = null;
   if (base.contract_company_id) {
     const { data: vendorData, error: vendorError } = await supabase
-      .from("vendors")
-      .select("id, company_id, contact_email, contact_name, name")
+      .from("companies")
+      .select("id, contact_email, contact_name, name")
       .eq("id", base.contract_company_id)
       .single();
 

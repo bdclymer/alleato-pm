@@ -54,7 +54,7 @@ export async function GET(
             division_title
           )
         ),
-        vendor:vendors!vendor_id(
+        vendor:companies!vendor_id(
           id,
           name
         )
@@ -67,7 +67,7 @@ export async function GET(
     }
 
     // Batch reverse-map budget_lines.id → project_cost_codes.id
-    // and companies.id → vendors.id to pre-fill dropdowns on edit.
+    // vendor_id directly stores companies.id — no remap needed.
     // Done as two bulk queries (not per-item) to avoid N+1.
     const budgetCodeIds = [...new Set(
       (lineItems || []).map(i => i.budget_code_id).filter(Boolean)
@@ -102,7 +102,7 @@ export async function GET(
       }
     }
 
-    // vendor_id now directly stores vendors.id — no remap needed.
+    // vendor_id stores companies.id — no remap needed.
 
     // Format response
     const formattedItems = (lineItems || []).map(item => {
@@ -272,7 +272,7 @@ export async function POST(
       }
     }
 
-    // vendor_id FK targets vendors(id) directly — store as-is.
+    // vendor_id FK targets companies(id) directly — store as-is.
     const resolvedVendorId = validatedData.vendorId;
 
     // Calculate extended amount for cost_rom if not provided
@@ -312,7 +312,7 @@ export async function POST(
             division_title
           )
         ),
-        vendor:vendors!vendor_id(
+        vendor:companies!vendor_id(
           id,
           name
         )

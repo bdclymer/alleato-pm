@@ -52,7 +52,7 @@ export class DirectCostService {
         `
         *,
         line_items:direct_cost_line_items(*),
-        vendor:vendors(*)
+        vendor:companies(*)
       `
       )
       .eq("project_id", projectId)
@@ -195,7 +195,7 @@ export class DirectCostService {
           *,
           budget_code:budget_codes(code, description)
         ),
-        vendor:vendors(*)
+        vendor:companies(*)
       `
       )
       .eq("project_id", projectId)
@@ -579,7 +579,7 @@ export class DirectCostService {
     // Get recent activity
     const { data: recentCosts } = await this.supabase
       .from("direct_costs")
-      .select("*, vendor:vendors(*)")
+      .select("*, vendor:companies(*)")
       .eq("project_id", projectId)
       .eq("is_deleted", false)
       .order("updated_at", { ascending: false })

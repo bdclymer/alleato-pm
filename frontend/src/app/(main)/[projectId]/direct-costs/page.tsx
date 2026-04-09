@@ -15,7 +15,7 @@ export default async function ProjectDirectCostsPage({
     .from("direct_costs")
     .select(`
       *,
-      vendor:vendors(name),
+      vendor:companies(name),
       line_items:direct_cost_line_items(
         id,
         budget_code_id,

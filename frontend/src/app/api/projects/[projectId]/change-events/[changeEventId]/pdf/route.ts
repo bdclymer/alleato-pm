@@ -263,7 +263,7 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
               division_title
             )
           ),
-          vendor:vendors!vendor_id(id, name)
+          vendor:companies!vendor_id(id, name)
         )
       `
       )

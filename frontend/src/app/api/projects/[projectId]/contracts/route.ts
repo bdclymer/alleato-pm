@@ -24,7 +24,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       .select(
         `
         *,
-        vendor:vendors(id, name),
+        vendor:companies(id, name),
         client:companies!prime_contracts_client_company_id_fkey(id, name),
         contract_company:companies!prime_contracts_contract_company_id_fkey(id, name)
       `,
@@ -187,7 +187,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       .select(
         `
         *,
-        vendor:vendors(id, name)
+        vendor:companies(id, name)
       `,
       )
       .single();

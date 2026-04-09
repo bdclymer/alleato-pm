@@ -349,7 +349,7 @@ export function CreatePurchaseOrderForm({
   const handleFormSubmit = async (data: CreatePurchaseOrderInput) => {
     setIsSubmitting(true);
     try {
-      // contract_company_id FK references vendors(id) — send vendor ID directly
+      // contract_company_id FK references companies(id) — send vendor ID directly
       const submitData = { ...data, sov: sovLines, accountingMethod };
       await onSubmit(submitData);
     } catch (err) {

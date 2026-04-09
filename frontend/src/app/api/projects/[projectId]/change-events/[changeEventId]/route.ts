@@ -106,7 +106,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
               division_title
             )
           ),
-          vendor:vendors!vendor_id(
+          vendor:companies!vendor_id(
             id,
             name
           )
@@ -155,39 +155,6 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
           .select("id, contract_number, title")
           .in("id", remainingIds);
         (pos || []).forEach((p: any) => { commitmentMap[p.id] = p; });
-      }
-    }
-
-    // Map company IDs to vendor IDs for edit form compatibility
-    // vendor_id on line items references companies.id, but the form's VendorCombobox uses vendors.id
-    // Match by company name since company_id on vendors may not match directly
-    const companyIds = [...new Set(lineItems.filter((li: any) => li.vendor_id).map((li: any) => li.vendor_id))];
-    const companyToVendorMap: Record<string, string> = {};
-    if (companyIds.length > 0) {
-      // Get company names for the vendor_ids
-      const { data: companies } = await supabase
-        .from("companies")
-        .select("id, name")
-        .in("id", companyIds);
-
-      if (companies && companies.length > 0) {
-        const companyNames = companies.map((c: any) => c.name?.toLowerCase()).filter(Boolean);
-        // Find matching vendors by name
-        const { data: vendorRows } = await supabase
-          .from("vendors")
-          .select("id, name")
-          .eq("is_active", true);
-
-        if (vendorRows) {
-          for (const company of companies as any[]) {
-            const matchingVendor = vendorRows.find((v: any) =>
-              v.name?.toLowerCase() === company.name?.toLowerCase()
-            );
-            if (matchingVendor) {
-              companyToVendorMap[company.id] = matchingVendor.id;
-            }
-          }
-        }
       }
     }
 
@@ -318,8 +285,6 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
           costRom: item.cost_rom,
           nonCommittedCost: item.non_committed_cost,
           vendorId: item.vendor_id,
-          // formVendorId maps companies.id → vendors.id for form selectors
-          formVendorId: item.vendor_id ? (companyToVendorMap[item.vendor_id] || null) : null,
           vendor: item.vendor || null,
           contractId: item.contract_id,
           commitmentId: item.commitment_id,
@@ -455,7 +420,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
               division_title
             )
           ),
-          vendor:vendors!vendor_id(
+          vendor:companies!vendor_id(
             id,
             name
           )

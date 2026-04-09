@@ -1585,8 +1585,9 @@ Keep the total under 800 words. Do not use markdown headers larger than ###.`,
         let contractCompanyId: string | null = null;
         if (vendorName) {
           const { data: vendorRows } = await supabase
-            .from("vendors")
+            .from("companies")
             .select("id, name")
+            .eq("is_vendor", true)
             .ilike("name", `%${vendorName}%`)
             .limit(1);
 

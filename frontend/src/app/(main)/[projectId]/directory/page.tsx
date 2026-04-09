@@ -90,7 +90,7 @@ interface VendorOption {
   contact_name: string | null;
   city: string | null;
   state: string | null;
-  is_active: boolean;
+  status: string | null;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────
@@ -556,11 +556,11 @@ function AddVendorDialog({
     setSelected(null);
     const supabase = createClient();
     supabase
-      .from("vendors")
+      .from("companies")
       .select(
-        "id, name, legal_name, vendor_class, contact_name, city, state, is_active"
+        "id, name, legal_name, vendor_class, contact_name, city, state, status"
       )
-      .eq("is_active", true)
+      .eq("is_vendor", true)
       .order("name")
       .then(({ data }) => {
         if (data) setAllVendors(data as VendorOption[]);
