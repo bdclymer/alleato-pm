@@ -23,12 +23,16 @@ function statusVariant(status: string | null): "default" | "secondary" | "outlin
 }
 
 async function readScenariosMarkdown(slug: string): Promise<string | null> {
-  try {
-    const filePath = path.join(process.cwd(), "..", "docs", "testing", `${slug}-scenarios.md`);
-    return await fs.readFile(filePath, "utf-8");
-  } catch {
-    return null;
+  const base = path.join(process.cwd(), "..", "docs", "testing");
+  // Prefer the detailed test matrix; fall back to the guided scenario file
+  for (const name of [`${slug}-test-matrix.md`, `${slug}-scenarios.md`]) {
+    try {
+      return await fs.readFile(path.join(base, name), "utf-8");
+    } catch {
+      // try next
+    }
   }
+  return null;
 }
 
 export default async function ProcoreToolDetailPage({ params }: Props) {
