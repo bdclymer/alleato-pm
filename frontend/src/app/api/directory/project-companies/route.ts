@@ -1,18 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 
-import { createClient } from "@/lib/supabase/server";
-import type { Database } from "@/types/database.types";
 import { apiErrorResponse } from "@/lib/api-error";
-
-type ProjectCompanyRow = Database["public"]["Tables"]["project_companies"]["Row"];
-type CompanyRow = Database["public"]["Tables"]["companies"]["Row"];
-
-type ProjectCompanyListItem = ProjectCompanyRow & {
-  company_name: string | null;
-  website: string | null;
-  contact_count: number;
-  project_count: number;
-};
+import { createClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
   try {
@@ -38,96 +27,36 @@ export async function GET(request: NextRequest) {
     const company_type = searchParams.get("company_type") || "";
     const sort = searchParams.get("sort") || "updated_at:desc";
 
+    // Query companies directly using the type column
     let query = supabase
-      .from("project_companies")
-      .select("*", { count: "exact" });
+      .from("companies")
+      .select("id, name, website, type, status, contact_phone, contact_email, acumatica_vendor_id, logo_url, created_at, updated_at", { count: "exact" });
 
     if (status !== "all") {
       query = query.eq("status", status);
     }
 
     if (company_type) {
-      const { data: matchingCompaniesByType, error: companyTypeError } = await supabase
-        .from("companies")
-        .select("id")
-        .ilike("type", company_type);
-
-      if (companyTypeError) {
-        return NextResponse.json(
-          { error: "Failed to filter companies by type", details: companyTypeError.message },
-          { status: 500 },
-        );
-      }
-
-      const matchingCompanyIds = (matchingCompaniesByType || [])
-        .map((row) => row.id)
-        .filter(Boolean);
-
-      if (matchingCompanyIds.length > 0) {
-        query = query.or(
-          `company_type.eq.${company_type},company_id.in.(${matchingCompanyIds.join(",")})`,
-        );
-      } else {
-        query = query.eq("company_type", company_type);
-      }
+      query = query.ilike("type", company_type);
     }
 
     if (search) {
-      const { data: matchingCompanies, error: matchingError } = await supabase
-        .from("companies")
-        .select("id")
-        .ilike("name", `%${search}%`);
-
-      if (matchingError) {
-        return NextResponse.json(
-          { error: "Failed to search companies", details: matchingError.message },
-          { status: 500 },
-        );
-      }
-
-      const matchingIds = (matchingCompanies || [])
-        .map((row) => row.id)
-        .filter(Boolean);
-
-      const inList =
-        matchingIds.length > 0
-          ? matchingIds
-              .map((id) => `"${String(id).replace(/"/g, '\\"')}"`)
-              .join(",")
-          : null;
-
-      const searchFilters = [
-        inList ? `company_id.in.(${inList})` : null,
-        `business_phone.ilike.%${search}%`,
-        `email_address.ilike.%${search}%`,
-        `erp_vendor_id.ilike.%${search}%`,
-      ]
-        .filter(Boolean)
-        .join(",");
-
-      if (searchFilters) {
-        query = query.or(searchFilters);
-      }
+      query = query.or(
+        `name.ilike.%${search}%,contact_phone.ilike.%${search}%,contact_email.ilike.%${search}%,acumatica_vendor_id.ilike.%${search}%`,
+      );
     }
 
     const [sortField, sortDirection] = sort.split(":");
     const allowedSortFields = new Set([
-      "id",
-      "project_id",
-      "company_id",
+      "name",
+      "type",
+      "status",
       "business_phone",
       "email_address",
-      "primary_contact_id",
-      "erp_vendor_id",
-      "company_type",
-      "status",
-      "logo_url",
       "created_at",
       "updated_at",
     ]);
-    const normalizedSortField = allowedSortFields.has(sortField)
-      ? sortField
-      : "updated_at";
+    const normalizedSortField = allowedSortFields.has(sortField) ? sortField : "updated_at";
 
     query = query.order(normalizedSortField, {
       ascending: sortDirection !== "desc",
@@ -138,54 +67,29 @@ export async function GET(request: NextRequest) {
     const to = from + per_page - 1;
     query = query.range(from, to);
 
-    const { data, error, count } = await query;
+    const { data: companies, error, count } = await query;
 
     if (error) {
       return apiErrorResponse(error);
     }
 
-    const projectCompanies = (data || []) as ProjectCompanyRow[];
-    const companyIds = Array.from(
-      new Set(projectCompanies.map((row) => row.company_id).filter(Boolean)),
-    );
+    const companyIds = (companies || []).map((c) => c.id);
 
-    let companyInfoMap = new Map<string, { name: string | null; website: string | null }>();
     const contactCountMap = new Map<string, number>();
     const projectCountMap = new Map<string, number>();
 
     if (companyIds.length > 0) {
-      const [companiesResult, contactsResult, projectsResult] = await Promise.all([
-        supabase
-          .from("companies")
-          .select("id, name, website")
-          .in("id", companyIds)
-          .returns<Pick<CompanyRow, "id" | "name" | "website">[]>(),
-        supabase
-          .from("people")
-          .select("company_id")
-          .in("company_id", companyIds),
-        supabase
-          .from("project_companies")
-          .select("company_id, project_id")
-          .in("company_id", companyIds),
+      const [contactsResult, projectsResult] = await Promise.all([
+        supabase.from("people").select("company_id").in("company_id", companyIds),
+        supabase.from("project_companies").select("company_id, project_id").in("company_id", companyIds),
       ]);
 
-      if (companiesResult.error) {
-        return apiErrorResponse(companiesResult.error);
-      }
-
-      companyInfoMap = new Map(
-        (companiesResult.data || []).map((c) => [c.id, { name: c.name || null, website: c.website || null }]),
-      );
-
-      // Count contacts per company
       for (const row of contactsResult.data || []) {
         if (row.company_id) {
           contactCountMap.set(row.company_id, (contactCountMap.get(row.company_id) || 0) + 1);
         }
       }
 
-      // Count unique projects per company
       const projectSets = new Map<string, Set<number>>();
       for (const row of projectsResult.data || []) {
         if (row.company_id) {
@@ -202,16 +106,24 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const rows: ProjectCompanyListItem[] = projectCompanies.map((row) => {
-      const info = companyInfoMap.get(row.company_id);
-      return {
-        ...row,
-        company_name: info?.name ?? null,
-        website: info?.website ?? null,
-        contact_count: contactCountMap.get(row.company_id) ?? 0,
-        project_count: projectCountMap.get(row.company_id) ?? 0,
-      };
-    });
+    const rows = (companies || []).map((company) => ({
+      id: company.id,
+      project_id: 0,
+      company_id: company.id,
+      business_phone: company.contact_phone ?? null,
+      email_address: company.contact_email ?? null,
+      primary_contact_id: null,
+      erp_vendor_id: company.acumatica_vendor_id ?? null,
+      company_type: company.type ?? null,
+      status: company.status ?? null,
+      logo_url: company.logo_url ?? null,
+      created_at: company.created_at ?? null,
+      updated_at: company.updated_at ?? null,
+      company_name: company.name ?? null,
+      website: company.website ?? null,
+      contact_count: contactCountMap.get(company.id) ?? 0,
+      project_count: projectCountMap.get(company.id) ?? 0,
+    }));
 
     const total = count || 0;
     const total_pages = Math.ceil(total / per_page);
