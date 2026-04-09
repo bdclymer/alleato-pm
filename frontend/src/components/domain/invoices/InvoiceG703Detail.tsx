@@ -384,6 +384,9 @@ export function InvoiceG703Detail({
                           </span>
                           <Input
                             type="number"
+                            min={0}
+                            max={100}
+                            aria-label={`Work retainage percent for item ${li.sort_order ?? li.id}`}
                             className="h-7 text-right text-sm"
                             disabled={!canEditRetainage}
                             value={
@@ -402,6 +405,8 @@ export function InvoiceG703Detail({
                           <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Work $</span>
                           <Input
                             type="number"
+                            min={0}
+                            aria-label={`Work retainage amount for item ${li.sort_order ?? li.id}`}
                             className="h-7 text-right text-sm"
                             disabled={!canEditRetainage}
                             value={editValues[li.id]?.retainage_this_period_work ?? 0}
@@ -420,6 +425,9 @@ export function InvoiceG703Detail({
                           </span>
                           <Input
                             type="number"
+                            min={0}
+                            max={100}
+                            aria-label={`Materials retainage percent for item ${li.sort_order ?? li.id}`}
                             className="h-7 text-right text-sm"
                             disabled={!canEditRetainage}
                             value={
@@ -438,6 +446,8 @@ export function InvoiceG703Detail({
                           <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Mat $</span>
                           <Input
                             type="number"
+                            min={0}
+                            aria-label={`Materials retainage amount for item ${li.sort_order ?? li.id}`}
                             className="h-7 text-right text-sm"
                             disabled={!canEditRetainage}
                             value={editValues[li.id]?.retainage_this_period_materials ?? 0}
@@ -456,6 +466,8 @@ export function InvoiceG703Detail({
                           </span>
                           <Input
                             type="number"
+                            min={0}
+                            aria-label={`Work retainage released for item ${li.sort_order ?? li.id}`}
                             className="h-7 text-right text-sm"
                             disabled={!canEditRetainage}
                             value={editValues[li.id]?.retainage_released_work ?? 0}
@@ -474,6 +486,8 @@ export function InvoiceG703Detail({
                           </span>
                           <Input
                             type="number"
+                            min={0}
+                            aria-label={`Materials retainage released for item ${li.sort_order ?? li.id}`}
                             className="h-7 text-right text-sm"
                             disabled={!canEditRetainage}
                             value={
