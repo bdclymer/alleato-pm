@@ -839,16 +839,6 @@ export default function ProjectInvoicingPage(): ReactElement {
       href: `/${projectId}/invoicing?tab=billing-periods`,
       isActive: activeTab === "billing-periods",
     },
-    {
-      label: "Payments",
-      href: `/${projectId}/invoicing?tab=payments`,
-      isActive: activeTab === "payments",
-    },
-    {
-      label: "Settings",
-      href: `/${projectId}/invoicing?tab=settings`,
-      isActive: activeTab === "settings",
-    },
   ];
 
   // ─── Action Button ─────────────────────────────────────────────────────────
