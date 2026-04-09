@@ -740,9 +740,7 @@ export default function CommitmentDetailPage() {
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={() => {
-              router.push(
-                `/${projectId}/invoices/new?contractType=commitment&commitmentId=${commitmentId}`,
-              );
+              setActiveTab("invoices");
             }}
           >
             <Receipt className="mr-2 h-4 w-4" />
@@ -848,7 +846,7 @@ export default function CommitmentDetailPage() {
         )}
 
         {activeTab === "invoices" && (
-          <InvoicesTab commitmentId={commitment.id} />
+          <InvoicesTab commitmentId={commitment.id} projectId={projectId} />
         )}
 
         {activeTab === "payments" && (
