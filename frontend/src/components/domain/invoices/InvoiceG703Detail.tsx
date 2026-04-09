@@ -11,12 +11,20 @@ interface InvoiceG703DetailProps {
   lineItems: PaymentApplicationLineItem[];
   onSave: (items: Partial<PaymentApplicationLineItem>[]) => Promise<void>;
   isReadOnly?: boolean;
+  canEditRetainage?: boolean;
+  retainageEditBlockReason?: string | null;
 }
 
 interface EditableValues {
   [id: string]: {
     work_completed_this_period: number;
     materials_stored: number;
+    retainage_this_period_work_pct: number;
+    retainage_this_period_work: number;
+    retainage_this_period_materials_pct: number;
+    retainage_this_period_materials: number;
+    retainage_released_work: number;
+    retainage_released_materials: number;
   };
 }
 
@@ -25,10 +33,16 @@ function pct(numerator: number, denominator: number): string {
   return ((numerator / denominator) * 100).toFixed(1) + "%";
 }
 
+function roundCurrency(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
 export function InvoiceG703Detail({
   lineItems,
   onSave,
   isReadOnly = false,
+  canEditRetainage = true,
+  retainageEditBlockReason = null,
 }: InvoiceG703DetailProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -40,6 +54,12 @@ export function InvoiceG703Detail({
       values[li.id] = {
         work_completed_this_period: li.work_completed_this_period,
         materials_stored: li.materials_stored,
+        retainage_this_period_work_pct: li.retainage_this_period_work_pct,
+        retainage_this_period_work: li.retainage_this_period_work,
+        retainage_this_period_materials_pct: li.retainage_this_period_materials_pct,
+        retainage_this_period_materials: li.retainage_this_period_materials,
+        retainage_released_work: li.retainage_released_work,
+        retainage_released_materials: li.retainage_released_materials,
       };
     }
     setEditValues(values);
@@ -51,30 +71,113 @@ export function InvoiceG703Detail({
     setEditValues({});
   }, []);
 
+  const handleValueChange = useCallback(
+    (id: string, field: keyof EditableValues[string], rawValue: string) => {
+      const numValue = Number.parseFloat(rawValue);
+      const val = Number.isNaN(numValue) ? 0 : numValue;
+
+      setEditValues((prev) => {
+        const current = prev[id] ?? {};
+        const updated: EditableValues[string] = { ...current, [field]: val };
+
+        // Work retainage $ ↔ %
+        if (field === "retainage_this_period_work_pct") {
+          const work = current.work_completed_this_period ?? 0;
+          updated.retainage_this_period_work = roundCurrency(work * (val / 100));
+        } else if (field === "retainage_this_period_work") {
+          const work = current.work_completed_this_period ?? 0;
+          updated.retainage_this_period_work_pct = work > 0 ? (val / work) * 100 : 0;
+        }
+
+        // Materials retainage $ ↔ %
+        if (field === "retainage_this_period_materials_pct") {
+          const mats = current.materials_stored ?? 0;
+          updated.retainage_this_period_materials = roundCurrency(mats * (val / 100));
+        } else if (field === "retainage_this_period_materials") {
+          const mats = current.materials_stored ?? 0;
+          updated.retainage_this_period_materials_pct = mats > 0 ? (val / mats) * 100 : 0;
+        }
+
+        return { ...prev, [id]: updated };
+      });
+    },
+    [],
+  );
+
+  const getEffectiveValues = useCallback(
+    (li: PaymentApplicationLineItem) => {
+      const edited = isEditing ? editValues[li.id] : null;
+      const workThisPeriod =
+        edited?.work_completed_this_period ?? li.work_completed_this_period;
+      const materialsStored =
+        edited?.materials_stored ?? li.materials_stored;
+      const retainageWorkPct =
+        edited?.retainage_this_period_work_pct ??
+        li.retainage_this_period_work_pct;
+      const retainageMaterialsPct =
+        edited?.retainage_this_period_materials_pct ??
+        li.retainage_this_period_materials_pct;
+      const retainageReleasedWork =
+        edited?.retainage_released_work ?? li.retainage_released_work;
+      const retainageReleasedMaterials =
+        edited?.retainage_released_materials ?? li.retainage_released_materials;
+      const totalCompleted =
+        li.work_completed_previous + workThisPeriod + materialsStored;
+      const retainageThisPeriodWork =
+        edited?.retainage_this_period_work !== undefined
+          ? edited.retainage_this_period_work
+          : roundCurrency(workThisPeriod * (retainageWorkPct / 100));
+      const retainageThisPeriodMaterials =
+        edited?.retainage_this_period_materials !== undefined
+          ? edited.retainage_this_period_materials
+          : roundCurrency(materialsStored * (retainageMaterialsPct / 100));
+      const currentRetainage =
+        li.retainage_previous_work +
+        li.retainage_previous_materials +
+        retainageThisPeriodWork +
+        retainageThisPeriodMaterials -
+        retainageReleasedWork -
+        retainageReleasedMaterials;
+
+      return {
+        workThisPeriod,
+        materialsStored,
+        totalCompleted,
+        percentComplete:
+          li.scheduled_value > 0
+            ? (totalCompleted / li.scheduled_value) * 100
+            : 0,
+        balanceToFinish: li.scheduled_value - totalCompleted,
+        retainageWorkPct,
+        retainageMaterialsPct,
+        retainageThisPeriodWork,
+        retainageThisPeriodMaterials,
+        retainageReleasedWork,
+        retainageReleasedMaterials,
+        currentRetainage,
+      };
+    },
+    [editValues, isEditing],
+  );
+
   const handleSave = useCallback(async () => {
     setIsSaving(true);
     try {
       const updates = lineItems.map((li) => {
-        const edited = editValues[li.id];
-        if (!edited) return { id: li.id };
-
-        const workThisPeriod = edited.work_completed_this_period;
-        const materialsStored = edited.materials_stored;
-        const totalCompleted =
-          li.work_completed_previous + workThisPeriod + materialsStored;
-        const percentComplete =
-          li.scheduled_value > 0
-            ? (totalCompleted / li.scheduled_value) * 100
-            : 0;
-        const balanceToFinish = li.scheduled_value - totalCompleted;
-
+        const effective = getEffectiveValues(li);
         return {
           id: li.id,
-          work_completed_this_period: workThisPeriod,
-          materials_stored: materialsStored,
-          total_completed: totalCompleted,
-          percent_complete: percentComplete,
-          balance_to_finish: balanceToFinish,
+          work_completed_this_period: effective.workThisPeriod,
+          materials_stored: effective.materialsStored,
+          retainage_this_period_work_pct: effective.retainageWorkPct,
+          retainage_this_period_work: effective.retainageThisPeriodWork,
+          retainage_this_period_materials_pct: effective.retainageMaterialsPct,
+          retainage_this_period_materials: effective.retainageThisPeriodMaterials,
+          retainage_released_work: effective.retainageReleasedWork,
+          retainage_released_materials: effective.retainageReleasedMaterials,
+          total_completed: effective.totalCompleted,
+          percent_complete: effective.percentComplete,
+          balance_to_finish: effective.balanceToFinish,
         };
       });
 
@@ -83,54 +186,8 @@ export function InvoiceG703Detail({
     } finally {
       setIsSaving(false);
     }
-  }, [editValues, lineItems, onSave]);
+  }, [getEffectiveValues, lineItems, onSave]);
 
-  const handleValueChange = useCallback(
-    (id: string, field: keyof EditableValues[string], value: string) => {
-      const numValue = parseFloat(value) || 0;
-      setEditValues((prev) => ({
-        ...prev,
-        [id]: {
-          ...prev[id],
-          [field]: numValue,
-        },
-      }));
-    },
-    [],
-  );
-
-  // Calculate effective values (edited or original)
-  const getEffectiveValues = useCallback(
-    (li: PaymentApplicationLineItem) => {
-      if (isEditing && editValues[li.id]) {
-        const edited = editValues[li.id];
-        const totalCompleted =
-          li.work_completed_previous +
-          edited.work_completed_this_period +
-          edited.materials_stored;
-        return {
-          workThisPeriod: edited.work_completed_this_period,
-          materialsStored: edited.materials_stored,
-          totalCompleted,
-          percentComplete:
-            li.scheduled_value > 0
-              ? (totalCompleted / li.scheduled_value) * 100
-              : 0,
-          balanceToFinish: li.scheduled_value - totalCompleted,
-        };
-      }
-      return {
-        workThisPeriod: li.work_completed_this_period,
-        materialsStored: li.materials_stored,
-        totalCompleted: li.total_completed,
-        percentComplete: li.percent_complete,
-        balanceToFinish: li.balance_to_finish,
-      };
-    },
-    [isEditing, editValues],
-  );
-
-  // Calculate totals
   const totals = useMemo(() => {
     let scheduledValue = 0;
     let previousApp = 0;
@@ -141,15 +198,14 @@ export function InvoiceG703Detail({
     let retainage = 0;
 
     for (const li of lineItems) {
-      const eff = getEffectiveValues(li);
+      const effective = getEffectiveValues(li);
       scheduledValue += li.scheduled_value;
       previousApp += li.work_completed_previous;
-      thisPeriod += eff.workThisPeriod;
-      materialsStored += eff.materialsStored;
-      totalComplete += eff.totalCompleted;
-      balance += eff.balanceToFinish;
-      retainage +=
-        li.retainage_this_period_work + li.retainage_this_period_materials;
+      thisPeriod += effective.workThisPeriod;
+      materialsStored += effective.materialsStored;
+      totalComplete += effective.totalCompleted;
+      balance += effective.balanceToFinish;
+      retainage += effective.currentRetainage;
     }
 
     return {
@@ -162,7 +218,7 @@ export function InvoiceG703Detail({
       balance,
       retainage,
     };
-  }, [lineItems, getEffectiveValues]);
+  }, [getEffectiveValues, lineItems]);
 
   const sorted = useMemo(
     () => [...lineItems].sort((a, b) => a.sort_order - b.sort_order),
@@ -171,11 +227,18 @@ export function InvoiceG703Detail({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <h3 className="text-sm font-semibold text-foreground">
-          AIA G703 — Schedule of Values
-        </h3>
-        {!isReadOnly && (
+      <div className="flex items-center justify-between gap-4">
+        <div className="space-y-1">
+          <h3 className="text-sm font-semibold text-foreground">
+            AIA G703 — Schedule of Values
+          </h3>
+          {!isReadOnly && !canEditRetainage && retainageEditBlockReason ? (
+            <p className="text-xs text-muted-foreground">
+              {retainageEditBlockReason}
+            </p>
+          ) : null}
+        </div>
+        {!isReadOnly ? (
           <div className="flex items-center gap-1.5">
             {isEditing ? (
               <>
@@ -200,7 +263,7 @@ export function InvoiceG703Detail({
               </Button>
             )}
           </div>
-        )}
+        ) : null}
       </div>
 
       <div className="overflow-x-auto rounded-lg border border-border">
@@ -213,7 +276,7 @@ export function InvoiceG703Detail({
               <th className="px-3 py-2 text-left font-medium text-muted-foreground whitespace-nowrap">
                 Budget Code
               </th>
-              <th className="px-3 py-2 text-left font-medium text-muted-foreground min-w-[180px]">
+              <th className="px-3 py-2 text-left font-medium text-muted-foreground min-w-44">
                 B: Description
               </th>
               <th className="px-3 py-2 text-right font-medium text-muted-foreground whitespace-nowrap">
@@ -237,20 +300,17 @@ export function InvoiceG703Detail({
               <th className="px-3 py-2 text-right font-medium text-muted-foreground whitespace-nowrap">
                 H: Balance
               </th>
-              <th className="px-3 py-2 text-right font-medium text-muted-foreground whitespace-nowrap">
+              <th className="px-3 py-2 text-right font-medium text-muted-foreground min-w-56">
                 Retainage
               </th>
             </tr>
           </thead>
           <tbody>
             {sorted.map((li) => {
-              const eff = getEffectiveValues(li);
-              const currentRetainage =
-                li.retainage_this_period_work +
-                li.retainage_this_period_materials;
+              const effective = getEffectiveValues(li);
 
               return (
-                <tr key={li.id} className="border-t border-border">
+                <tr key={li.id} className="border-t border-border align-top">
                   <td className="px-3 py-2 text-foreground tabular-nums">
                     {li.item_number}
                   </td>
@@ -270,7 +330,7 @@ export function InvoiceG703Detail({
                     {isEditing ? (
                       <Input
                         type="number"
-                        className="w-28 h-7 text-sm text-right ml-auto"
+                        className="ml-auto h-7 w-28 text-right text-sm"
                         value={editValues[li.id]?.work_completed_this_period ?? 0}
                         onChange={(e) =>
                           handleValueChange(
@@ -282,7 +342,7 @@ export function InvoiceG703Detail({
                       />
                     ) : (
                       <span className="tabular-nums">
-                        {formatCurrency(eff.workThisPeriod)}
+                        {formatCurrency(effective.workThisPeriod)}
                       </span>
                     )}
                   </td>
@@ -290,7 +350,7 @@ export function InvoiceG703Detail({
                     {isEditing ? (
                       <Input
                         type="number"
-                        className="w-28 h-7 text-sm text-right ml-auto"
+                        className="ml-auto h-7 w-28 text-right text-sm"
                         value={editValues[li.id]?.materials_stored ?? 0}
                         onChange={(e) =>
                           handleValueChange(
@@ -302,32 +362,159 @@ export function InvoiceG703Detail({
                       />
                     ) : (
                       <span className="tabular-nums">
-                        {formatCurrency(eff.materialsStored)}
+                        {formatCurrency(effective.materialsStored)}
                       </span>
                     )}
                   </td>
                   <td className="px-3 py-2 text-right text-foreground tabular-nums">
-                    {formatCurrency(eff.totalCompleted)}
+                    {formatCurrency(effective.totalCompleted)}
                   </td>
                   <td className="px-3 py-2 text-right text-foreground tabular-nums">
-                    {pct(eff.totalCompleted, li.scheduled_value)}
+                    {pct(effective.totalCompleted, li.scheduled_value)}
                   </td>
                   <td className="px-3 py-2 text-right text-foreground tabular-nums">
-                    {formatCurrency(eff.balanceToFinish)}
+                    {formatCurrency(effective.balanceToFinish)}
                   </td>
-                  <td className="px-3 py-2 text-right text-foreground tabular-nums">
-                    {formatCurrency(currentRetainage)}
+                  <td className="px-3 py-2">
+                    {isEditing ? (
+                      <div className="space-y-2">
+                        <div className="grid grid-cols-[56px_1fr] items-center gap-2">
+                          <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                            Work %
+                          </span>
+                          <Input
+                            type="number"
+                            className="h-7 text-right text-sm"
+                            disabled={!canEditRetainage}
+                            value={
+                              editValues[li.id]?.retainage_this_period_work_pct ?? 0
+                            }
+                            onChange={(e) =>
+                              handleValueChange(
+                                li.id,
+                                "retainage_this_period_work_pct",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                        <div className="grid grid-cols-[56px_1fr] items-center gap-2">
+                          <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Work $</span>
+                          <Input
+                            type="number"
+                            className="h-7 text-right text-sm"
+                            disabled={!canEditRetainage}
+                            value={editValues[li.id]?.retainage_this_period_work ?? 0}
+                            onChange={(e) =>
+                              handleValueChange(
+                                li.id,
+                                "retainage_this_period_work",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                        <div className="grid grid-cols-[56px_1fr] items-center gap-2">
+                          <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                            Mat %
+                          </span>
+                          <Input
+                            type="number"
+                            className="h-7 text-right text-sm"
+                            disabled={!canEditRetainage}
+                            value={
+                              editValues[li.id]?.retainage_this_period_materials_pct ?? 0
+                            }
+                            onChange={(e) =>
+                              handleValueChange(
+                                li.id,
+                                "retainage_this_period_materials_pct",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                        <div className="grid grid-cols-[56px_1fr] items-center gap-2">
+                          <span className="text-[11px] uppercase tracking-wide text-muted-foreground">Mat $</span>
+                          <Input
+                            type="number"
+                            className="h-7 text-right text-sm"
+                            disabled={!canEditRetainage}
+                            value={editValues[li.id]?.retainage_this_period_materials ?? 0}
+                            onChange={(e) =>
+                              handleValueChange(
+                                li.id,
+                                "retainage_this_period_materials",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                        <div className="grid grid-cols-[56px_1fr] items-center gap-2">
+                          <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                            Rel W
+                          </span>
+                          <Input
+                            type="number"
+                            className="h-7 text-right text-sm"
+                            disabled={!canEditRetainage}
+                            value={editValues[li.id]?.retainage_released_work ?? 0}
+                            onChange={(e) =>
+                              handleValueChange(
+                                li.id,
+                                "retainage_released_work",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                        <div className="grid grid-cols-[56px_1fr] items-center gap-2">
+                          <span className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                            Rel M
+                          </span>
+                          <Input
+                            type="number"
+                            className="h-7 text-right text-sm"
+                            disabled={!canEditRetainage}
+                            value={
+                              editValues[li.id]?.retainage_released_materials ?? 0
+                            }
+                            onChange={(e) =>
+                              handleValueChange(
+                                li.id,
+                                "retainage_released_materials",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                        <div className="border-t border-border pt-2 text-right">
+                          <div className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                            Current Retained
+                          </div>
+                          <div className="tabular-nums text-sm font-medium text-foreground">
+                            {formatCurrency(effective.currentRetainage)}
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-1 text-right">
+                        <div className="tabular-nums text-foreground">
+                          {formatCurrency(effective.currentRetainage)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {effective.retainageWorkPct.toFixed(2)}% work /{" "}
+                          {effective.retainageMaterialsPct.toFixed(2)}% materials
+                        </div>
+                      </div>
+                    )}
                   </td>
                 </tr>
               );
             })}
           </tbody>
           <tfoot>
-            <tr
-              className={cn(
-                "border-t-2 border-border bg-muted font-semibold",
-              )}
-            >
+            <tr className={cn("border-t-2 border-border bg-muted font-semibold")}>
               <td className="px-3 py-2" colSpan={3}>
                 Totals
               </td>
