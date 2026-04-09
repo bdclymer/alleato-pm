@@ -2,18 +2,13 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { syncVendors } from "@/lib/acumatica/sync";
 
-// Alleato Group company ID — the single company in this deployment
-const ALLEATO_COMPANY_ID = "bef9dcfc-531e-47c9-90a5-4cadd99447fb";
-
 /**
  * POST /api/sync/acumatica/vendors
  *
- * Pulls all active vendors from Acumatica and upserts them into
- * the vendors table. Also ensures each vendor exists in the app's
- * global companies table by name so new Acumatica companies appear
- * in the directory.
+ * Pulls all active vendors from Acumatica and upserts them directly
+ * into the companies table (is_vendor = true), keyed on acumatica_vendor_id.
  *
- * No body required — always syncs into the Alleato Group company.
+ * No body required.
  */
 export async function POST(_request: Request) {
   const supabase = await createClient();
@@ -24,14 +19,11 @@ export async function POST(_request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const companyId = ALLEATO_COMPANY_ID;
-
   try {
-    const result = await syncVendors(companyId);
+    const result = await syncVendors();
 
     return NextResponse.json({
       success: true,
-      companyId,
       result,
       syncedAt: new Date().toISOString(),
     });
