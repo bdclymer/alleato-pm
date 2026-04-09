@@ -37,8 +37,11 @@ import { generateHashedPassword } from "./utils";
 // use the Drizzle adapter for Auth.js / NextAuth
 // https://authjs.dev/reference/adapter/drizzle
 
+// Singleton to prevent multiple pools from being created on hot reloads in dev.
+const globalForDb = globalThis as unknown as { pgClient: ReturnType<typeof postgres> };
 // biome-ignore lint: Forbidden non-null assertion.
-const client = postgres(process.env.POSTGRES_URL!);
+const client = globalForDb.pgClient ?? postgres(process.env.POSTGRES_URL!);
+if (process.env.NODE_ENV !== "production") globalForDb.pgClient = client;
 const db = drizzle(client);
 
 export async function getUser(email: string): Promise<User[]> {
