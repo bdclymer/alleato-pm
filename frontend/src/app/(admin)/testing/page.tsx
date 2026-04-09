@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+
+import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -115,12 +117,25 @@ export default function TestingPage() {
   const [expandedRunId, setExpandedRunId] = useState<string | null>(null);
   const [runDetail, setRunDetail] = useState<RunDetailResult[]>([]);
   const [runDetailLoading, setRunDetailLoading] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
 
-  // ── Load suites ──
+  // ── Load suites + pre-fill tester name from session ──
   useEffect(() => {
     fetch("/api/testing/suites")
       .then((r) => r.json())
       .then((d) => setSuites((d.suites ?? []).filter((s: Suite) => s.scenario_count > 0)));
+
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      const user = data?.user;
+      if (!user) return;
+      const name =
+        user.user_metadata?.full_name ||
+        user.user_metadata?.name ||
+        user.email?.split("@")[0] ||
+        "";
+      setRunForm((f) => ({ ...f, tester: name }));
+    });
   }, []);
 
   // ── Load history for a suite ──
@@ -166,6 +181,7 @@ export default function TestingPage() {
   // ── Start a run ──
   const startRun = async () => {
     if (!selectedSuite) return;
+    setStartError(null);
     setSaving(true);
     const res = await fetch("/api/testing/runs", {
       method: "POST",
@@ -175,12 +191,19 @@ export default function TestingPage() {
     if (res.ok) {
       const { run_id } = await res.json();
       setActiveRunId(run_id);
-      // Load results filtered to scenario type
       const r2 = await fetch(`/api/testing/runs/${run_id}/results?type=scenario`);
       const d2 = await r2.json();
-      setResults(d2.results ?? []);
-      setCursor(0);
-      setView("running");
+      const loaded = d2.results ?? [];
+      if (loaded.length === 0) {
+        setStartError("No scenario test cases found for this tool. Check that the test suite has been seeded.");
+      } else {
+        setResults(loaded);
+        setCursor(0);
+        setView("running");
+      }
+    } else {
+      const err = await res.json().catch(() => ({}));
+      setStartError(err.error ?? "Failed to create test run. Please try again.");
     }
     setSaving(false);
   };
@@ -255,7 +278,7 @@ export default function TestingPage() {
     const order: Array<"Financial" | "Project Management"> = ["Financial", "Project Management"];
 
     return (
-      <PageShell variant="content" title="Testing" description="Browse scenarios or start an interactive test session" fullWidth>
+      <PageShell variant="content" title="Testing" description="Browse scenarios or start an interactive test session">
         <div className="space-y-10">
           {suites.length === 0 && (
             <p className="text-muted-foreground text-sm text-center py-12">No test scenarios available yet.</p>
@@ -265,12 +288,12 @@ export default function TestingPage() {
               <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{cat}</h2>
               <div className="overflow-hidden rounded-xl border border-border bg-card">
                 <table className="w-full text-sm">
-                  <thead className="bg-muted/40 text-xs uppercase tracking-wider text-muted-foreground">
+                  <thead className="bg-muted/40">
                     <tr>
-                      <th className="text-left font-medium px-5 py-3">Tool</th>
-                      <th className="text-left font-medium px-5 py-3 w-32">Scenarios</th>
-                      <th className="text-left font-medium px-5 py-3 w-40">Feature checks</th>
-                      <th className="text-right font-medium px-5 py-3 w-72">Actions</th>
+                      <th style={{ fontSize: "10px" }} className="text-left font-medium uppercase tracking-wider text-muted-foreground px-5 py-2">Tool</th>
+                      <th style={{ fontSize: "10px" }} className="text-left font-medium uppercase tracking-wider text-muted-foreground px-5 py-2 w-28">Scenarios</th>
+                      <th style={{ fontSize: "10px" }} className="text-left font-medium uppercase tracking-wider text-muted-foreground px-5 py-2 w-32">Feature checks</th>
+                      <th style={{ fontSize: "10px" }} className="text-right font-medium uppercase tracking-wider text-muted-foreground px-5 py-2 w-72">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -362,6 +385,10 @@ export default function TestingPage() {
             </div>
           </div>
 
+          {startError && (
+            <p className="text-sm text-red-500 bg-red-50 dark:bg-red-950/30 rounded-lg px-4 py-3">{startError}</p>
+          )}
+
           <Button
             type="button"
             className="w-full"
@@ -371,6 +398,9 @@ export default function TestingPage() {
           >
             {saving ? "Setting up…" : `Start ${selectedSuite?.display_name} testing →`}
           </Button>
+          {!runForm.tester.trim() && (
+            <p className="text-xs text-center text-muted-foreground">Enter your name above to begin</p>
+          )}
         </div>
       </PageShell>
     );
