@@ -92,23 +92,17 @@ export function useCompanyContacts(
       const supabase = createClient();
 
       if (vendorId) {
-        const [{ data: vendor, error: vendorError }, { data, error: queryError }] =
-          await Promise.all([
-            supabase
-              .from("vendors")
-              .select("company_id")
-              .eq("id", vendorId)
-              .single(),
-            supabase
-              .from("vendor_contacts")
-              .select(
-                "people!vendor_contacts_person_id_fkey(id, first_name, last_name, email, phone_business, job_title, company_id, person_type)",
-              )
-              .eq("vendor_id", vendorId)
-              .limit(limit),
-          ]);
+        // After vendors→companies migration, vendorId IS the companyId
+        const resolvedCompanyId = vendorId ?? companyId;
 
-        if (vendorError) throw new Error(vendorError.message);
+        const { data, error: queryError } = await supabase
+          .from("vendor_contacts")
+          .select(
+            "people!vendor_contacts_person_id_fkey(id, first_name, last_name, email, phone_business, job_title, company_id, person_type)",
+          )
+          .eq("company_id", vendorId)
+          .limit(limit);
+
         if (queryError) throw new Error(queryError.message);
 
         const vendorLinkedPeople = (data || [])
@@ -116,13 +110,13 @@ export function useCompanyContacts(
           .filter(Boolean) as CompanyContact[];
 
         let companyContacts: CompanyContact[] = [];
-        if (vendor?.company_id) {
+        if (resolvedCompanyId) {
           const { data: companyContactData, error: companyContactsError } = await supabase
             .from("people")
             .select(
               "id, first_name, last_name, email, phone_business, job_title, company_id, person_type",
             )
-            .eq("company_id", vendor.company_id)
+            .eq("company_id", resolvedCompanyId)
             .eq("person_type", "contact")
             .order("last_name", { ascending: true })
             .order("first_name", { ascending: true })

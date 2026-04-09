@@ -5,8 +5,9 @@ import { useState, useEffect, useCallback } from "react";
 export interface ProjectVendor {
   id: string;
   added_at: string;
+  added_by: string | null;
   notes: string | null;
-  vendor: {
+  companies: {
     id: string;
     name: string;
     legal_name: string | null;
@@ -16,7 +17,7 @@ export interface ProjectVendor {
     contact_phone: string | null;
     city: string | null;
     state: string | null;
-    is_active: boolean;
+    status: string | null;
     acumatica_vendor_id: string | null;
   } | null;
 }
