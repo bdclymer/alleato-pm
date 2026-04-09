@@ -16,7 +16,6 @@ import {
   MinusCircle,
   Camera,
   ChevronLeft,
-  ChevronRight,
   BookOpen,
   Play,
   History,
@@ -638,7 +637,7 @@ export default function TestingPage() {
         </div>
       </div>
 
-      <div className="space-y-6 pb-48">
+      <div className="space-y-6 pb-12">
 
         {/* Category chip + test number */}
         <div className="flex items-center gap-2 flex-wrap">
@@ -763,46 +762,8 @@ export default function TestingPage() {
           </div>
         )}
 
-        {/* Spacer so action bar doesn't cover content */}
-        <div className="h-4" />
-      </div>
-
-      {/* ── Fixed bottom action bar ── */}
-      <div className="fixed bottom-0 inset-x-0 border-t border-border bg-background/95 backdrop-blur px-4 sm:px-6 py-4 safe-area-inset-bottom">
-        <div className="max-w-2xl mx-auto space-y-3">
-          {/* Screenshot + prev/next row */}
-          <div className="flex items-center justify-between">
-            <div className="flex gap-2">
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/*"
-                aria-label="Upload screenshot"
-                title="Upload screenshot"
-                className="hidden"
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }}
-              />
-              <button
-                type="button"
-                onClick={() => fileRef.current?.click()}
-                disabled={uploadingScreenshot}
-                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-lg hover:bg-muted"
-              >
-                <Camera className="h-3.5 w-3.5" />
-                {uploadingScreenshot ? "Uploading…" : "Screenshot"}
-              </button>
-            </div>
-            <button
-              type="button"
-              onClick={() => setCursor((c) => Math.min(c + 1, results.length - 1))}
-              disabled={cursor === results.length - 1}
-              className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-30 transition-colors"
-            >
-              Skip <ChevronRight className="h-3.5 w-3.5" />
-            </button>
-          </div>
-
-          {/* Main outcome buttons */}
+        {/* ── Verdict buttons ── */}
+        <div className="pt-2 space-y-3">
           <div className="grid grid-cols-3 gap-2">
             <Button
               onClick={async () => { setShowIssueBox(false); await record("pass"); }}
@@ -819,7 +780,7 @@ export default function TestingPage() {
               className="gap-2 h-12 text-sm font-semibold rounded-xl"
             >
               <XCircle className="h-4 w-4" />
-              {showIssueBox ? "Confirm fail →" : "Issue found"}
+              {showIssueBox ? "Confirm →" : "Issue found"}
             </Button>
             <Button
               onClick={async () => { setShowIssueBox(false); await record("skip"); }}
@@ -843,7 +804,30 @@ export default function TestingPage() {
               Save issue &amp; continue →
             </Button>
           )}
+
+          {/* Screenshot upload */}
+          <div>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/*"
+              aria-label="Upload screenshot"
+              title="Upload screenshot"
+              className="hidden"
+              onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFile(f); e.target.value = ""; }}
+            />
+            <button
+              type="button"
+              onClick={() => fileRef.current?.click()}
+              disabled={uploadingScreenshot}
+              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-lg hover:bg-muted"
+            >
+              <Camera className="h-3.5 w-3.5" />
+              {uploadingScreenshot ? "Uploading…" : "Attach screenshot"}
+            </button>
+          </div>
         </div>
+
       </div>
     </PageShell>
   );
