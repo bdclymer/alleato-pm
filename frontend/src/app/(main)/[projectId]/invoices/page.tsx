@@ -283,9 +283,16 @@ export default function ProjectInvoicesPage(): ReactElement {
     billingPeriodDefaultVisibleColumns,
   );
   const [createBpOpen, setCreateBpOpen] = React.useState(false);
+  const [bpMode, setBpMode] = React.useState<"manual" | "automatic">("manual");
   const [bpFormStartDate, setBpFormStartDate] = React.useState("");
   const [bpFormEndDate, setBpFormEndDate] = React.useState("");
   const [bpFormBillingDate, setBpFormBillingDate] = React.useState("");
+  const [bpAutoFrequency, setBpAutoFrequency] = React.useState<
+    "monthly" | "semi_monthly" | "weekly"
+  >("monthly");
+  const [bpAutoStart, setBpAutoStart] = React.useState("");
+  const [bpAutoCount, setBpAutoCount] = React.useState("6");
+  const [bpAutoDueOffset, setBpAutoDueOffset] = React.useState("15");
   const createBpMutation = useCreateBillingPeriod(projectId);
 
   const {
@@ -944,62 +951,206 @@ export default function ProjectInvoicesPage(): ReactElement {
       <Dialog open={createBpOpen} onOpenChange={setCreateBpOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>Create Billing Period</DialogTitle>
+            <DialogTitle>Set Up Billing Period</DialogTitle>
             <DialogDescription>
-              Add a new billing period to this project&apos;s prime contract.
+              Add a billing period manually, or generate a recurring schedule
+              automatically.
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label htmlFor="bp-start">Start Date</Label>
-              <Input
-                id="bp-start"
-                type="date"
-                value={bpFormStartDate}
-                onChange={(e) => setBpFormStartDate(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="bp-end">End Date</Label>
-              <Input
-                id="bp-end"
-                type="date"
-                value={bpFormEndDate}
-                onChange={(e) => setBpFormEndDate(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="bp-billing">Billing Date</Label>
-              <Input
-                id="bp-billing"
-                type="date"
-                value={bpFormBillingDate}
-                onChange={(e) => setBpFormBillingDate(e.target.value)}
-              />
-            </div>
+
+          <div className="grid grid-cols-2 gap-1 rounded-md bg-muted p-1">
+            <button
+              type="button"
+              onClick={() => setBpMode("manual")}
+              className={`rounded-sm px-3 py-1.5 text-sm font-medium transition-colors ${
+                bpMode === "manual"
+                  ? "bg-background text-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Manual
+            </button>
+            <button
+              type="button"
+              onClick={() => setBpMode("automatic")}
+              className={`rounded-sm px-3 py-1.5 text-sm font-medium transition-colors ${
+                bpMode === "automatic"
+                  ? "bg-background text-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              Automatic
+            </button>
           </div>
+
+          {bpMode === "manual" ? (
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="bp-start">From</Label>
+                  <Input
+                    id="bp-start"
+                    type="date"
+                    value={bpFormStartDate}
+                    onChange={(e) => setBpFormStartDate(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="bp-end">To</Label>
+                  <Input
+                    id="bp-end"
+                    type="date"
+                    value={bpFormEndDate}
+                    onChange={(e) => setBpFormEndDate(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bp-billing">Due Date</Label>
+                <Input
+                  id="bp-billing"
+                  type="date"
+                  value={bpFormBillingDate}
+                  onChange={(e) => setBpFormBillingDate(e.target.value)}
+                />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label htmlFor="bp-auto-freq">Frequency</Label>
+                <select
+                  id="bp-auto-freq"
+                  value={bpAutoFrequency}
+                  onChange={(e) =>
+                    setBpAutoFrequency(
+                      e.target.value as "monthly" | "semi_monthly" | "weekly",
+                    )
+                  }
+                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-xs focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring"
+                >
+                  <option value="monthly">Monthly</option>
+                  <option value="semi_monthly">Semi-monthly (15 days)</option>
+                  <option value="weekly">Weekly</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="bp-auto-start">First Period Start</Label>
+                  <Input
+                    id="bp-auto-start"
+                    type="date"
+                    value={bpAutoStart}
+                    onChange={(e) => setBpAutoStart(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="bp-auto-count">Number of Periods</Label>
+                  <Input
+                    id="bp-auto-count"
+                    type="number"
+                    min="1"
+                    max="60"
+                    value={bpAutoCount}
+                    onChange={(e) => setBpAutoCount(e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bp-auto-offset">
+                  Due Date Offset (days after period end)
+                </Label>
+                <Input
+                  id="bp-auto-offset"
+                  type="number"
+                  min="0"
+                  max="90"
+                  value={bpAutoDueOffset}
+                  onChange={(e) => setBpAutoDueOffset(e.target.value)}
+                />
+              </div>
+            </div>
+          )}
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateBpOpen(false)}>
               Cancel
             </Button>
             <Button
-              disabled={createBpMutation.isPending || !bpFormStartDate || !bpFormEndDate || !bpFormBillingDate}
-              onClick={() => {
-                createBpMutation.mutate(
-                  {
-                    start_date: bpFormStartDate,
-                    end_date: bpFormEndDate,
-                    due_date: bpFormBillingDate || undefined,
-                  },
-                  {
-                    onSuccess: () => {
-                      setCreateBpOpen(false);
-                      setBpFormStartDate("");
-                      setBpFormEndDate("");
-                      setBpFormBillingDate("");
+              disabled={
+                createBpMutation.isPending ||
+                (bpMode === "manual"
+                  ? !bpFormStartDate || !bpFormEndDate || !bpFormBillingDate
+                  : !bpAutoStart ||
+                    !bpAutoCount ||
+                    Number(bpAutoCount) <= 0)
+              }
+              onClick={async () => {
+                if (bpMode === "manual") {
+                  createBpMutation.mutate(
+                    {
+                      start_date: bpFormStartDate,
+                      end_date: bpFormEndDate,
+                      due_date: bpFormBillingDate || undefined,
                     },
-                  },
-                );
+                    {
+                      onSuccess: () => {
+                        setCreateBpOpen(false);
+                        setBpFormStartDate("");
+                        setBpFormEndDate("");
+                        setBpFormBillingDate("");
+                      },
+                    },
+                  );
+                  return;
+                }
+
+                // Automatic: generate N periods of the chosen frequency
+                const count = Math.min(60, Math.max(1, Number(bpAutoCount) || 1));
+                const offsetDays = Math.max(0, Number(bpAutoDueOffset) || 0);
+                const addDays = (d: Date, days: number) => {
+                  const next = new Date(d);
+                  next.setDate(next.getDate() + days);
+                  return next;
+                };
+                const addMonths = (d: Date, months: number) => {
+                  const next = new Date(d);
+                  next.setMonth(next.getMonth() + months);
+                  return next;
+                };
+                const fmt = (d: Date) => d.toISOString().slice(0, 10);
+
+                let cursor = new Date(bpAutoStart);
+                try {
+                  for (let i = 0; i < count; i++) {
+                    let periodStart: Date;
+                    let periodEnd: Date;
+                    if (bpAutoFrequency === "monthly") {
+                      periodStart = cursor;
+                      periodEnd = addDays(addMonths(cursor, 1), -1);
+                      cursor = addMonths(cursor, 1);
+                    } else if (bpAutoFrequency === "semi_monthly") {
+                      periodStart = cursor;
+                      periodEnd = addDays(cursor, 14);
+                      cursor = addDays(cursor, 15);
+                    } else {
+                      periodStart = cursor;
+                      periodEnd = addDays(cursor, 6);
+                      cursor = addDays(cursor, 7);
+                    }
+                    const dueDate = addDays(periodEnd, offsetDays);
+                    await createBpMutation.mutateAsync({
+                      start_date: fmt(periodStart),
+                      end_date: fmt(periodEnd),
+                      due_date: fmt(dueDate),
+                    });
+                  }
+                  setCreateBpOpen(false);
+                  setBpAutoStart("");
+                  setBpAutoCount("6");
+                } catch {
+                  // toast already shown by mutation onError
+                }
               }}
             >
               {createBpMutation.isPending ? "Creating..." : "Create"}
