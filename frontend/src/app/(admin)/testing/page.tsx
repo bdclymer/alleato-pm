@@ -391,7 +391,7 @@ export default function TestingPage() {
         description="Start a new test session"
         onBack={() => setView("home")}
       >
-        <div className="max-w-lg space-y-6">
+        <div className="space-y-6">
           <div className="bg-muted/40 rounded-xl px-5 py-4 text-sm text-muted-foreground space-y-1">
             <p className="font-medium text-foreground">Before you start</p>
             <p>Make sure you&apos;re logged into the app you&apos;re testing.</p>
@@ -454,7 +454,7 @@ export default function TestingPage() {
     const skipped = results.filter((r) => r.status === "skip").length;
     return (
       <PageShell variant="content" title="Session Complete">
-        <div className="max-w-md mx-auto text-center space-y-6">
+        <div className="text-center space-y-6">
           <div className="text-5xl">{failed === 0 ? "🎉" : "📋"}</div>
           <p className="text-muted-foreground">
             {selectedSuite?.display_name} · {runForm.tester}
@@ -509,7 +509,7 @@ export default function TestingPage() {
         description="Past test runs"
         onBack={() => setView("home")}
       >
-        <div className="max-w-2xl space-y-3">
+        <div className="space-y-3">
           {historyLoading && <p className="text-sm text-muted-foreground py-8 text-center">Loading…</p>}
           {!historyLoading && historyRuns.length === 0 && (
             <p className="text-sm text-muted-foreground py-8 text-center">No runs yet. Click Run to start the first session.</p>
@@ -574,7 +574,7 @@ export default function TestingPage() {
         title={`${selectedSuite?.display_name ?? ""} — Run Detail`}
         onBack={() => setView("history")}
       >
-        <div className="max-w-2xl space-y-6">
+        <div className="space-y-6">
           {runDetailLoading && <p className="text-sm text-muted-foreground py-8 text-center">Loading…</p>}
           {!runDetailLoading && Object.entries(grouped).map(([category, items]) => (
             <div key={category}>
@@ -606,9 +606,9 @@ export default function TestingPage() {
   const tc = current.test_cases;
 
   return (
-    <div className="flex flex-col px-4 sm:px-6">
-      {/* Progress bar */}
-      <div className="h-1.5 bg-muted -mx-4 sm:-mx-6 -mt-2 mb-0">
+    <PageShell variant="content" title="" showHeader={false}>
+      {/* Progress bar — spans full container */}
+      <div className="h-1.5 bg-muted -mt-2 mb-0">
         <div
           className="h-full bg-primary transition-all duration-500"
           style={{ width: `${pct}%` }} // eslint-disable-line react/forbid-component-props
@@ -616,7 +616,7 @@ export default function TestingPage() {
       </div>
 
       {/* Run header */}
-      <div className="flex items-center justify-between border-b border-border px-0 py-3 mb-4 max-w-2xl w-full mx-auto">
+      <div className="flex items-center justify-between border-b border-border py-3 mb-4">
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -638,7 +638,7 @@ export default function TestingPage() {
         </div>
       </div>
 
-      <div className="overflow-y-auto max-w-2xl w-full mx-auto space-y-6 pb-48">
+      <div className="space-y-6 pb-48">
 
         {/* Category chip + test number */}
         <div className="flex items-center gap-2 flex-wrap">
@@ -676,7 +676,7 @@ export default function TestingPage() {
         {/* Open in app button */}
         {tc.start_url && (
           <a
-            href={tc.start_url}
+            href={(() => { try { return new URL(tc.start_url ?? "").pathname; } catch { return tc.start_url ?? "#"; } })()}
             target="_blank"
             rel="noopener noreferrer"
             className="text-sm font-medium text-primary hover:underline"
@@ -845,6 +845,6 @@ export default function TestingPage() {
           )}
         </div>
       </div>
-    </div>
+    </PageShell>
   );
 }
