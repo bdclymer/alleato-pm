@@ -14,7 +14,6 @@ import {
   CheckCircle2,
   XCircle,
   MinusCircle,
-  ExternalLink,
   Camera,
   ChevronLeft,
   ChevronRight,
@@ -89,7 +88,6 @@ type View = "home" | "start-run" | "running" | "complete" | "history" | "run-det
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const APP_BASE = "http://localhost:3000";
 
 function parseSteps(raw: string | null): string[] {
   if (!raw) return [];
@@ -286,14 +284,57 @@ export default function TestingPage() {
           {order.filter((cat) => grouped[cat]?.length).map((cat) => (
             <div key={cat} className="space-y-3">
               <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">{cat}</h2>
-              <div className="overflow-hidden rounded-xl border border-border bg-card">
+              {/* Mobile: stacked list */}
+              <div className="sm:hidden divide-y divide-border rounded-md border border-border bg-card">
+                {grouped[cat].map((suite) => (
+                  <div key={suite.id} className="px-4 py-3 space-y-2">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="font-medium text-sm">{suite.display_name}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {suite.scenario_count} scenarios
+                          {suite.feature_count ? ` · ${suite.feature_count} feature checks` : ""}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Link
+                        href={`/procore-tools/${suite.tool_name}?tab=test-scenarios`}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-border bg-background text-muted-foreground"
+                      >
+                        <BookOpen className="h-3.5 w-3.5" />
+                        Review
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => openHistory(suite)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-border bg-background text-muted-foreground"
+                      >
+                        <History className="h-3.5 w-3.5" />
+                        Results
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => { setSelectedSuite(suite); setView("start-run"); }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary text-primary-foreground ml-auto"
+                      >
+                        <Play className="h-3.5 w-3.5" />
+                        Run
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop: table */}
+              <div className="hidden sm:block overflow-x-auto rounded-md border border-border bg-card">
                 <table className="w-full text-sm">
                   <thead className="bg-muted/40">
                     <tr>
-                      <th style={{ fontSize: "10px" }} className="text-left font-medium uppercase tracking-wider text-muted-foreground px-5 py-2">Tool</th>
-                      <th style={{ fontSize: "10px" }} className="text-left font-medium uppercase tracking-wider text-muted-foreground px-5 py-2 w-28">Scenarios</th>
-                      <th style={{ fontSize: "10px" }} className="text-left font-medium uppercase tracking-wider text-muted-foreground px-5 py-2 w-32">Feature checks</th>
-                      <th style={{ fontSize: "10px" }} className="text-right font-medium uppercase tracking-wider text-muted-foreground px-5 py-2 w-72">Actions</th>
+                      <th style={{ fontSize: "10px" }} className="text-left font-semibold uppercase tracking-wider text-foreground px-5 py-2">Tool</th>
+                      <th style={{ fontSize: "10px" }} className="text-left font-semibold uppercase tracking-wider text-foreground px-5 py-2 w-28 whitespace-nowrap">Scenarios</th>
+                      <th style={{ fontSize: "10px" }} className="text-left font-semibold uppercase tracking-wider text-foreground px-5 py-2 w-44 whitespace-nowrap">Feature checks</th>
+                      <th style={{ fontSize: "10px" }} className="text-right font-semibold uppercase tracking-wider text-foreground px-5 py-2 w-72">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border">
@@ -309,7 +350,7 @@ export default function TestingPage() {
                               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-border bg-background hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
                             >
                               <BookOpen className="h-3.5 w-3.5" />
-                              Browse
+                              Review
                             </Link>
                             <button
                               type="button"
@@ -635,12 +676,11 @@ export default function TestingPage() {
         {/* Open in app button */}
         {tc.start_url && (
           <a
-            href={`${APP_BASE}${tc.start_url}`}
+            href={tc.start_url}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+            className="text-sm font-medium text-primary hover:underline"
           >
-            <ExternalLink className="h-4 w-4" />
             Open the app at the right page →
           </a>
         )}
