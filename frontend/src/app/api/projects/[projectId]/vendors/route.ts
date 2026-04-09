@@ -6,8 +6,9 @@ import { apiErrorResponse } from "@/lib/api-error";
 
 /**
  * GET /api/projects/[projectId]/vendors
- * Returns vendors for use in form dropdowns (e.g., Direct Costs).
- * Vendors are company-scoped, so we return all active vendors.
+ * Returns vendor companies for this project (used by form dropdowns, e.g. Direct Costs).
+ * vendors table was dropped; vendor data now lives in companies with is_vendor = true,
+ * linked to projects via project_vendors (vendor_id -> companies.id).
  */
 export async function GET(
   _request: NextRequest,
@@ -27,32 +28,48 @@ export async function GET(
     const supabase = await createClient();
 
     const { data, error } = await supabase
-      .from("vendors")
-      .select("id, name, company_id, companies ( name )")
-      .eq("is_active", true)
-      .order("name", { ascending: true });
+      .from("project_vendors")
+      .select("vendor_id, companies(id, name, legal_name)")
+      .eq("project_id", projectIdNum);
 
     if (error) {
-      console.error("Error fetching vendors:", error);
-      return apiErrorResponse(error);
+      console.error("Error fetching project vendors:", error);
+
+      // Fallback: return all vendor companies regardless of project
+      const { data: allVendors, error: fallbackError } = await supabase
+        .from("companies")
+        .select("id, name, legal_name")
+        .eq("is_vendor", true)
+        .order("name");
+
+      if (fallbackError) {
+        return apiErrorResponse(fallbackError);
+      }
+
+      return NextResponse.json(
+        (allVendors ?? []).map((c) => ({
+          id: c.id,
+          vendor_name: c.name,
+          company_id: c.id,
+          company: c.name,
+        })),
+      );
     }
 
     // Map to the shape the DirectCostForm expects:
-    // { id: string, vendor_name: string, company?: string }
-    const vendors = (data || []).map((row: Record<string, unknown>) => {
-      const companies = row.companies as
-        | { name: string | null }
-        | { name: string | null }[]
+    // { id: string, vendor_name: string, company_id: string, company?: string }
+    const vendors = (data ?? []).map((row) => {
+      const company = row.companies as
+        | { id: string | number; name: string | null; legal_name: string | null }
+        | { id: string | number; name: string | null; legal_name: string | null }[]
         | null;
-      const companyName = Array.isArray(companies)
-        ? companies[0]?.name
-        : companies?.name;
+      const resolved = Array.isArray(company) ? company[0] : company;
 
       return {
-        id: row.id as string,
-        vendor_name: row.name as string,
-        company_id: (row.company_id as string | null) ?? null,
-        company: companyName || undefined,
+        id: row.vendor_id,
+        vendor_name: resolved?.name ?? "",
+        company_id: row.vendor_id,
+        company: resolved?.name ?? undefined,
       };
     });
 

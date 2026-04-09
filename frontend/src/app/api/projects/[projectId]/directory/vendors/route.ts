@@ -22,8 +22,9 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
         `
         id,
         added_at,
+        added_by,
         notes,
-        vendor:vendors (
+        companies(
           id,
           name,
           legal_name,
@@ -33,7 +34,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
           contact_phone,
           city,
           state,
-          is_active,
+          status,
           acumatica_vendor_id
         )
       `,
