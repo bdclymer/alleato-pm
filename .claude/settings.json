@@ -62,7 +62,7 @@
           },
           {
             "type": "command",
-            "command": "echo \"$TOOL_INPUT\" | python3 /Users/meganharrison/Documents/alleato-pm/.claude/hooks/verify-feature-gate.py"
+            "command": "HOOK=\"${CLAUDE_PROJECT_DIR:-$PWD}/.claude/hooks/verify-feature-gate.py\"; [ -f \"$HOOK\" ] && echo \"$TOOL_INPUT\" | python3 \"$HOOK\" || exit 0"
           }
         ]
       },
@@ -71,7 +71,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo \"$TOOL_INPUT\" | python3 /Users/meganharrison/Documents/alleato-pm/.claude/hooks/verify-feature-gate.py"
+            "command": "HOOK=\"${CLAUDE_PROJECT_DIR:-$PWD}/.claude/hooks/verify-feature-gate.py\"; [ -f \"$HOOK\" ] && echo \"$TOOL_INPUT\" | python3 \"$HOOK\" || exit 0"
           }
         ]
       }
@@ -91,7 +91,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "CLAUDE_HOOK_EVENT=PostToolUse echo \"$TOOL_INPUT\" | CLAUDE_HOOK_EVENT=PostToolUse python3 /Users/meganharrison/Documents/alleato-pm/.claude/hooks/verify-feature-gate.py"
+            "command": "HOOK=\"${CLAUDE_PROJECT_DIR:-$PWD}/.claude/hooks/verify-feature-gate.py\"; [ -f \"$HOOK\" ] && CLAUDE_HOOK_EVENT=PostToolUse echo \"$TOOL_INPUT\" | CLAUDE_HOOK_EVENT=PostToolUse python3 \"$HOOK\" || exit 0"
           }
         ]
       }
