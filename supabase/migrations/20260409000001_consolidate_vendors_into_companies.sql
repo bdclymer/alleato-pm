@@ -165,4 +165,14 @@ ALTER TABLE acumatica_subcontracts
 ----------------------------------------------------------------------
 DROP TABLE IF EXISTS vendors CASCADE;
 
+----------------------------------------------------------------------
+-- PART 5: Backfill is_vendor for Acumatica-imported companies
+----------------------------------------------------------------------
+-- Companies imported from Acumatica have type = 'VENDOR' but
+-- is_vendor was not set during the initial sync. Backfill now.
+UPDATE companies
+SET is_vendor = true
+WHERE type = 'VENDOR'
+  AND is_vendor = false;
+
 COMMIT;
