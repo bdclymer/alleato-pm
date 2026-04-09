@@ -6,6 +6,7 @@ export type InvoiceStatus =
   | "under_review"
   | "approved"
   | "approved_as_noted"
+  | "pending_owner_approval"
   | "revise_and_resubmit"
   | "paid"
   | "void"
@@ -17,6 +18,7 @@ const STATUS_CONFIG: Record<InvoiceStatus, { label: string; variant: "default" |
   under_review:         { label: "Under Review",         variant: "default" },
   approved:             { label: "Approved",             variant: "success" },
   approved_as_noted:    { label: "Approved as Noted",    variant: "success" },
+  pending_owner_approval: { label: "Pending Owner Approval", variant: "warning" },
   revise_and_resubmit:  { label: "Revise and Resubmit",  variant: "destructive" },
   paid:                 { label: "Paid",                 variant: "success" },
   void:                 { label: "Void",                 variant: "outline" },

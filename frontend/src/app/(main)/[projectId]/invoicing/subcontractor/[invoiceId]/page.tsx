@@ -3,18 +3,26 @@
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  ChevronDown,
+  Download,
+  FilePlus2,
+  Mail,
+  Send,
+  Trash2,
+} from "lucide-react";
 
 import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,40 +35,17 @@ import {
 } from "@/components/ui/alert-dialog";
 import { InvoiceStatusBadge } from "@/components/invoicing/InvoiceStatusBadge";
 import {
+  SummaryTab,
+  DetailTab,
+  RelatedItemsTab,
+  EmailsTab,
+  ChangeHistoryTab,
+  type SovLineItem,
+} from "@/components/invoicing/subcontractor-detail-tabs";
+import {
   useSubcontractorInvoiceDetail,
   useDeleteSubcontractorInvoice,
 } from "@/hooks/use-subcontractor-invoices";
-
-interface SovLineItem {
-  id: number | string;
-  line_number?: number | null;
-  description?: string | null;
-  scheduled_value?: number | null;
-  previous_billed?: number | null;
-  work_completed_this_period?: number | null;
-  materials_stored?: number | null;
-  total_completed_and_stored?: number | null;
-  percent_complete?: number | null;
-  balance_to_finish?: number | null;
-  retainage_this_period?: number | null;
-  net_amount_this_period?: number | null;
-}
-
-const currencyFmt = new Intl.NumberFormat("en-US", {
-  style: "currency",
-  currency: "USD",
-});
-
-function formatDate(value?: string | null) {
-  if (!value) return "—";
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString();
-}
-
-function formatCurrency(value?: number | null) {
-  return currencyFmt.format(value ?? 0);
-}
 
 async function patchStatus(
   projectId: string,
@@ -78,6 +63,22 @@ async function patchStatus(
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error ?? "Failed to update status");
+  }
+  return res.json();
+}
+
+async function postTransition(
+  projectId: string,
+  invoiceId: string | number,
+  action: "approve-as-noted" | "pending-owner-approval",
+) {
+  const res = await fetch(
+    `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}/${action}`,
+    { method: "POST" },
+  );
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error ?? "Failed to update invoice");
   }
   return res.json();
 }
@@ -100,6 +101,7 @@ export default function SubcontractorInvoiceDetailPage() {
 
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [activeTab, setActiveTab] = useState("summary");
 
   async function handleStatus(next: string, successMsg: string) {
     setBusy(true);
@@ -111,6 +113,87 @@ export default function SubcontractorInvoiceDetailPage() {
       toast.error(err instanceof Error ? err.message : "Status update failed");
     } finally {
       setBusy(false);
+    }
+  }
+
+  async function handleTransition(
+    action: "approve-as-noted" | "pending-owner-approval",
+    successMsg: string,
+  ) {
+    setBusy(true);
+    try {
+      await postTransition(projectId, invoiceIdNum, action);
+      toast.success(successMsg);
+      await refetch();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Status update failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleExportPdf() {
+    window.open(
+      `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceIdNum}/pdf`,
+      "_blank",
+    );
+  }
+
+  async function handleEmailInvoice() {
+    const recipients = window.prompt(
+      "Email invoice to (comma-separated addresses):",
+    );
+    if (!recipients) return;
+    const to = recipients
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (to.length === 0) return;
+    try {
+      const res = await fetch(
+        `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceIdNum}/emails`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            to_recipients: to,
+            subject: `Invoice ${invoice?.invoice_number ?? ""}`.trim(),
+            email_type: "invoice",
+          }),
+        },
+      );
+      if (!res.ok) throw new Error((await res.json()).error ?? "Failed");
+      toast.success("Email logged");
+      await refetch();
+      setActiveTab("emails");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to send");
+    }
+  }
+
+  async function handleEmailContract() {
+    toast.info("Email Contract — wires to commitment email flow (pending)");
+  }
+
+  async function handleCreateInvoice() {
+    router.push(
+      `/${projectId}/invoicing/subcontractor/new?contract=${invoice?.subcontract_id ?? invoice?.purchase_order_id ?? ""}`,
+    );
+  }
+
+  async function handleResendErp() {
+    try {
+      const res = await fetch(
+        `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceIdNum}/erp-resend`,
+        { method: "POST" },
+      );
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.error ?? "Failed");
+      toast.success(body.message ?? "ERP resend queued");
+      await refetch();
+      setActiveTab("history");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to resend");
     }
   }
 
@@ -147,37 +230,25 @@ export default function SubcontractorInvoiceDetailPage() {
     );
   }
 
-  const lineItems: SovLineItem[] =
-    invoice.subcontractor_invoice_line_items ?? [];
-
-  const totals = lineItems.reduce(
-    (acc, li) => {
-      acc.scheduled += li.scheduled_value ?? 0;
-      acc.thisPeriod += li.work_completed_this_period ?? 0;
-      acc.stored += li.materials_stored ?? 0;
-      acc.totalCompleted += li.total_completed_and_stored ?? 0;
-      acc.retainage += li.retainage_this_period ?? 0;
-      acc.net += li.net_amount_this_period ?? 0;
-      return acc;
-    },
-    {
-      scheduled: 0,
-      thisPeriod: 0,
-      stored: 0,
-      totalCompleted: 0,
-      retainage: 0,
-      net: 0,
-    },
-  );
-
   const status = invoice.status as string;
   const isDraft = status === "draft";
   const isUnderReview = status === "under_review";
   const isReviseAndResubmit = status === "revise_and_resubmit";
+  const canEdit = isDraft || isReviseAndResubmit;
   const canDelete = !["approved", "paid"].includes(status);
+  const canResendErp = ["approved", "approved_as_noted", "paid"].includes(
+    status,
+  );
 
-  const title =
-    invoice.invoice_number ?? `Invoice #${invoice.id}`;
+  const lineItems: SovLineItem[] =
+    invoice.subcontractor_invoice_line_items ?? [];
+  const tabCounts = invoice.tab_counts ?? {
+    related_items: 0,
+    emails: 0,
+    change_history: 0,
+  };
+
+  const title = invoice.invoice_number ?? `Invoice #${invoice.id}`;
 
   return (
     <PageShell
@@ -188,9 +259,7 @@ export default function SubcontractorInvoiceDetailPage() {
           ? `Contract ${invoice.contract_number}${invoice.contract_title ? ` — ${invoice.contract_title}` : ""}`
           : undefined
       }
-      onBack={() =>
-        router.push(`/${projectId}/invoicing?tab=subcontractor`)
-      }
+      onBack={() => router.push(`/${projectId}/invoicing?tab=subcontractor`)}
       backLabel="Back to Invoicing"
       actions={
         <div className="flex items-center gap-2">
@@ -220,6 +289,32 @@ export default function SubcontractorInvoiceDetailPage() {
                 variant="outline"
                 disabled={busy}
                 onClick={() =>
+                  handleTransition(
+                    "approve-as-noted",
+                    "Invoice approved as noted",
+                  )
+                }
+              >
+                Approve as Noted
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={busy}
+                onClick={() =>
+                  handleTransition(
+                    "pending-owner-approval",
+                    "Invoice sent for owner approval",
+                  )
+                }
+              >
+                Send to Owner
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={busy}
+                onClick={() =>
                   handleStatus(
                     "revise_and_resubmit",
                     "Invoice sent back for revision",
@@ -230,177 +325,102 @@ export default function SubcontractorInvoiceDetailPage() {
               </Button>
             </>
           )}
-          {canDelete && (
-            <Button
-              size="sm"
-              variant="outline"
-              className="text-destructive hover:text-destructive"
-              onClick={() => setDeleteOpen(true)}
-            >
-              <Trash2 className="h-4 w-4 mr-1" />
-              Delete
-            </Button>
-          )}
+          {/* Actions dropdown — Procore-parity action menu */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="outline">
+                Actions <ChevronDown className="h-4 w-4 ml-1" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={handleExportPdf}>
+                <Download className="h-4 w-4 mr-2" /> Export
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleCreateInvoice}>
+                <FilePlus2 className="h-4 w-4 mr-2" /> Create Invoice
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleEmailContract}>
+                <Mail className="h-4 w-4 mr-2" /> Email Contract
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={handleEmailInvoice}>
+                <Mail className="h-4 w-4 mr-2" /> Email Invoice
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={handleResendErp}
+                disabled={!canResendErp}
+              >
+                <Send className="h-4 w-4 mr-2" /> Resend to ERP
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={() => setDeleteOpen(true)}
+                disabled={!canDelete}
+                className="text-destructive focus:text-destructive"
+              >
+                <Trash2 className="h-4 w-4 mr-2" /> Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       }
     >
-      <div className="px-6 py-4 space-y-6">
-        {/* Invoice Information */}
-        <section className="bg-card border border-border rounded-lg p-6">
-          <h2 className="text-sm font-semibold text-foreground mb-4">
-            Invoice Information
-          </h2>
-          <dl className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-4 text-sm">
-            <div>
-              <dt className="text-muted-foreground">Commitment</dt>
-              <dd className="font-medium text-foreground">
-                {invoice.contract_number ?? "—"}
-                {invoice.contract_title ? ` — ${invoice.contract_title}` : ""}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Billing Period</dt>
-              <dd className="font-medium text-foreground">
-                {invoice.billing_period_name ?? "—"}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Invoice Number</dt>
-              <dd className="font-medium text-foreground">
-                {invoice.invoice_number ?? "—"}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Period Start</dt>
-              <dd className="font-medium text-foreground">
-                {formatDate(invoice.period_start)}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Period End</dt>
-              <dd className="font-medium text-foreground">
-                {formatDate(invoice.period_end)}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-muted-foreground">Billing Date</dt>
-              <dd className="font-medium text-foreground">
-                {formatDate(invoice.billing_date)}
-              </dd>
-            </div>
-            {invoice.notes && (
-              <div className="col-span-full">
-                <dt className="text-muted-foreground">Notes</dt>
-                <dd className="font-medium text-foreground whitespace-pre-wrap">
-                  {invoice.notes}
-                </dd>
-              </div>
-            )}
-          </dl>
-        </section>
+      <div className="px-6 py-4">
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList>
+            <TabsTrigger value="summary">Summary</TabsTrigger>
+            <TabsTrigger value="detail">Detail</TabsTrigger>
+            <TabsTrigger value="related">
+              Related Items
+              {tabCounts.related_items > 0 && (
+                <span className="ml-1.5 text-xs text-muted-foreground">
+                  ({tabCounts.related_items})
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="emails">
+              Emails
+              {tabCounts.emails > 0 && (
+                <span className="ml-1.5 text-xs text-muted-foreground">
+                  ({tabCounts.emails})
+                </span>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="history">
+              Change History
+              {tabCounts.change_history > 0 && (
+                <span className="ml-1.5 text-xs text-muted-foreground">
+                  ({tabCounts.change_history})
+                </span>
+              )}
+            </TabsTrigger>
+          </TabsList>
 
-        {/* SOV Line Items */}
-        <section className="bg-card border border-border rounded-lg overflow-hidden">
-          <div className="px-6 py-4 border-b border-border flex items-center justify-between">
-            <div>
-              <h2 className="text-sm font-semibold text-foreground">
-                Schedule of Values
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                {lineItems.length} line item
-                {lineItems.length !== 1 ? "s" : ""}
-              </p>
-            </div>
-          </div>
-          {lineItems.length === 0 ? (
-            <div className="p-8 text-center text-sm text-muted-foreground">
-              No line items yet.
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-12">#</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead className="text-right">Scheduled Value</TableHead>
-                  <TableHead className="text-right">Previous Billed</TableHead>
-                  <TableHead className="text-right">This Period</TableHead>
-                  <TableHead className="text-right">Stored</TableHead>
-                  <TableHead className="text-right">Total Completed</TableHead>
-                  <TableHead className="text-right">%</TableHead>
-                  <TableHead className="text-right">Balance</TableHead>
-                  <TableHead className="text-right">Retainage</TableHead>
-                  <TableHead className="text-right">Net This Period</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {lineItems.map((li) => (
-                  <TableRow key={li.id}>
-                    <TableCell className="text-muted-foreground tabular-nums">
-                      {li.line_number ?? "—"}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {li.description ?? "—"}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatCurrency(li.scheduled_value)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatCurrency(li.previous_billed)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatCurrency(li.work_completed_this_period)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatCurrency(li.materials_stored)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatCurrency(li.total_completed_and_stored)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {li.percent_complete != null
-                        ? `${Number(li.percent_complete).toFixed(1)}%`
-                        : "—"}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatCurrency(li.balance_to_finish)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums">
-                      {formatCurrency(li.retainage_this_period)}
-                    </TableCell>
-                    <TableCell className="text-right tabular-nums font-medium">
-                      {formatCurrency(li.net_amount_this_period)}
-                    </TableCell>
-                  </TableRow>
-                ))}
-                <TableRow className="bg-muted/50 font-semibold">
-                  <TableCell colSpan={2}>Totals</TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatCurrency(totals.scheduled)}
-                  </TableCell>
-                  <TableCell />
-                  <TableCell className="text-right tabular-nums">
-                    {formatCurrency(totals.thisPeriod)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatCurrency(totals.stored)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatCurrency(totals.totalCompleted)}
-                  </TableCell>
-                  <TableCell />
-                  <TableCell />
-                  <TableCell className="text-right tabular-nums">
-                    {formatCurrency(totals.retainage)}
-                  </TableCell>
-                  <TableCell className="text-right tabular-nums">
-                    {formatCurrency(totals.net)}
-                  </TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          )}
-        </section>
+          <TabsContent value="summary" className="mt-6">
+            <SummaryTab invoice={invoice} />
+          </TabsContent>
+
+          <TabsContent value="detail" className="mt-6">
+            <DetailTab
+              projectId={projectId}
+              invoiceId={invoiceIdNum}
+              lineItems={lineItems}
+              canEdit={canEdit}
+              onRefetch={refetch}
+            />
+          </TabsContent>
+
+          <TabsContent value="related" className="mt-6">
+            <RelatedItemsTab projectId={projectId} invoiceId={invoiceIdNum} />
+          </TabsContent>
+
+          <TabsContent value="emails" className="mt-6">
+            <EmailsTab projectId={projectId} invoiceId={invoiceIdNum} />
+          </TabsContent>
+
+          <TabsContent value="history" className="mt-6">
+            <ChangeHistoryTab projectId={projectId} invoiceId={invoiceIdNum} />
+          </TabsContent>
+        </Tabs>
       </div>
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>

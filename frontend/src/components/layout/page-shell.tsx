@@ -66,7 +66,7 @@ const variantConfig: Record<
 > = {
   dashboard: { containerMaxWidth: "full", spacing: "space-y-6" },
   table:     { containerMaxWidth: "full", spacing: "space-y-4" },
-  form:      { containerMaxWidth: "full", contentMaxWidth: "max-w-5xl",  spacing: "space-y-8" },
+  form:      { containerMaxWidth: "full", contentMaxWidth: "max-w-7xl",  spacing: "space-y-8" },
   detail:    { containerMaxWidth: "full", contentMaxWidth: "max-w-6xl",  spacing: "space-y-6" },
   detailWide:{ containerMaxWidth: "full", contentMaxWidth: "max-w-screen-2xl",  spacing: "space-y-6" },
   content:   { containerMaxWidth: "full", contentMaxWidth: "max-w-4xl",  spacing: "space-y-8" },
@@ -130,7 +130,7 @@ export function PageShell({
   // Form/detail/content: constrained inner width
   if (config.contentMaxWidth) {
     return (
-      <PageContainer maxWidth={config.containerMaxWidth} className={cn("pb-14", className)}>
+      <PageContainer maxWidth={config.containerMaxWidth} className={cn(className)}>
         <div className={cn("mx-auto w-full", config.contentMaxWidth)}>
           {header}
           <div className={cn(config.spacing, contentClassName)}>{children}</div>
@@ -141,7 +141,7 @@ export function PageShell({
 
   // Dashboard (and fallback): full width
   return (
-    <PageContainer maxWidth={config.containerMaxWidth} className={cn("pb-6", className)}>
+    <PageContainer maxWidth={config.containerMaxWidth} className={cn(className)}>
       {header}
       <div className={cn(config.spacing, contentClassName)}>{children}</div>
     </PageContainer>

@@ -55,17 +55,6 @@ export default {
         "surface-inverse": "hsl(var(--surface-inverse))",
         "surface-elevated": "hsl(var(--surface-elevated))",
 
-        /* Procore Brand Colors (integration badges only) */
-        procore: {
-          orange: "hsl(var(--procore-orange))",
-          "orange-hover": "hsl(var(--procore-orange-hover))",
-          header: "hsl(var(--procore-header))",
-          "header-text": "hsl(var(--procore-header-text))",
-          "info-bg": "hsl(var(--procore-info-bg))",
-          "info-text": "hsl(var(--procore-info-text))",
-          negative: "hsl(var(--procore-negative))",
-        },
-
         /* Semantic Status Colors */
         status: {
           success: "hsl(var(--status-success))",
@@ -238,7 +227,7 @@ export default {
          No shadow-lg, shadow-xl, shadow-2xl.
          ================================================================= */
       boxShadow: {
-        "card-hover": "0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)",
+        "card-hover": "0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02)",
       },
     },
   },

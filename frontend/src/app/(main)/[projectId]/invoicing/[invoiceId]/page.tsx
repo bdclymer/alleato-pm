@@ -1158,7 +1158,7 @@ export default function InvoiceDetailPage() {
   return (
     <>
       <PageShell
-        variant="detail"
+        variant="dashboard"
         title={`Invoice ${invoice.invoice_number || invoice.id}`}
         description={invoice.contract_number ?? invoice.prime_contract_id ?? undefined}
         statusBadge={<StatusBadge status={invoice.status} type="invoice" />}

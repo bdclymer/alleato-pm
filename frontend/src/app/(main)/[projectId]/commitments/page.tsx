@@ -615,11 +615,6 @@ export default function ProjectCommitmentsPage(): ReactElement {
       isActive: activeFilters.type === "purchase_order",
     },
     {
-      label: "Change Orders",
-      href: `/${projectId}/commitments?tab=change-orders`,
-      isActive: activeFilters.tab === "change-orders",
-    },
-    {
       label: "Recycle Bin",
       href: `/${projectId}/commitments/recycle-bin`,
     },

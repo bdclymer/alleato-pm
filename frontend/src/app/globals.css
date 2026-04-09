@@ -68,7 +68,7 @@
     /* Accent */
     --accent: 260 30% 95%;
     --accent-foreground: 260 37% 45%;
-    --light: 260 15% 97.5%;
+    --light: 260 15% 95.5%;
 
     /* Destructive */
     --destructive: 0 72% 51%;
@@ -252,6 +252,7 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-surface-alt: hsl(var(--surface-alt));
+  --color-light: hsl(var(--light));
 }
 
 /* ============================================================================

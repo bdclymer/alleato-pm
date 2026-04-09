@@ -63,7 +63,7 @@ export function CreateBudgetCodeModal({
   const [isCreatingBudgetCode, setIsCreatingBudgetCode] = React.useState(false);
   const [newBudgetCodeData, setNewBudgetCodeData] = React.useState({
     costCodeId: "",
-    costType: "S",
+    costType: "",
   });
 
   React.useEffect(() => {
@@ -178,7 +178,7 @@ export function CreateBudgetCodeModal({
       }
 
       onOpenChange(false);
-      setNewBudgetCodeData({ costCodeId: "", costType: "S" });
+      setNewBudgetCodeData({ costCodeId: "", costType: "" });
       toast.success("Budget code created and added to form");
     } catch (error) {
       toast.error(
@@ -273,7 +273,7 @@ export function CreateBudgetCodeModal({
               }
             >
               <SelectTrigger className="w-full">
-                <SelectValue />
+                <SelectValue placeholder="Select cost type" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="R">R - Contract Revenue</SelectItem>

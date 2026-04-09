@@ -40,7 +40,7 @@ import { CompanyFormDialog } from "@/components/domain/companies/CompanyFormDial
 import { Building2, Plus } from "lucide-react";
 
 interface Contact {
-  id: number;
+  id: string | number;
   first_name: string | null;
   last_name: string | null;
   email: string | null;

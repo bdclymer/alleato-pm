@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronsUpDown, HelpCircle, UserPlus } from "lucide-react";
+import { Check, ChevronsUpDown, HelpCircle, UserPlus, X } from "lucide-react";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -59,7 +59,35 @@ export function InvoiceContactsSection({
 }: InvoiceContactsSectionProps) {
   const { control, setValue, getValues } = useFormContext<CreateSubcontractInput>();
   const contractCompanyId = useWatch({ control, name: "contractCompanyId" });
+  const selectedContactIds = useWatch({ control, name: "invoiceContactIds" }) || [];
   const [open, setOpen] = React.useState(false);
+  const [extraLabels, setExtraLabels] = React.useState<Record<string, string>>({});
+
+  // Resolve labels for selected contacts that aren't in the current vendor's options
+  // (e.g. contacts saved before the contract company changed).
+  React.useEffect(() => {
+    const optionIds = new Set(invoiceContactOptions.map((o) => o.value));
+    const missing = selectedContactIds.filter(
+      (id: string) => !optionIds.has(id) && !extraLabels[id],
+    );
+    if (missing.length === 0) return;
+    const supabase = createClient();
+    void supabase
+      .from("people")
+      .select("id, first_name, last_name, email")
+      .in("id", missing)
+      .then(({ data }) => {
+        if (!data) return;
+        setExtraLabels((prev) => {
+          const next = { ...prev };
+          for (const person of data as Array<{ id: string; first_name: string | null; last_name: string | null; email: string | null }>) {
+            const name = `${person.first_name || ""} ${person.last_name || ""}`.trim();
+            next[person.id] = name || person.email || "Unknown contact";
+          }
+          return next;
+        });
+      });
+  }, [selectedContactIds, invoiceContactOptions, extraLabels]);
   const [showAddDialog, setShowAddDialog] = React.useState(false);
   const [isSaving, setIsSaving] = React.useState(false);
   const [newContact, setNewContact] = React.useState({
@@ -129,11 +157,7 @@ export function InvoiceContactsSection({
         </TooltipProvider>
       </div>
       <div>
-        {!contractCompanyId ? (
-          <p className="text-sm text-muted-foreground">
-            Select a contract company above to enable invoice contacts.
-          </p>
-        ) : (
+        {(
           <Controller
             name="invoiceContactIds"
             control={control}
@@ -145,9 +169,16 @@ export function InvoiceContactsSection({
                   : [...value, optionValue];
                 field.onChange(next);
               };
-              const selectedLabels = value
-                .map((v: string) => invoiceContactOptions.find((o) => o.value === v)?.label)
-                .filter(Boolean);
+              const selectedItems = value
+                .map((v: string) => ({
+                  id: v,
+                  label:
+                    invoiceContactOptions.find((o) => o.value === v)?.label ||
+                    extraLabels[v] ||
+                    "…",
+                }));
+              const removeContact = (id: string) =>
+                field.onChange(value.filter((v: string) => v !== id));
 
               return (
                 <>
@@ -169,9 +200,29 @@ export function InvoiceContactsSection({
                         >
                           <div className="flex flex-wrap gap-1">
                             {value.length > 0
-                              ? selectedLabels.map((label: string) => (
-                                  <Badge key={label} variant="secondary" className="mr-1">
-                                    {label}
+                              ? selectedItems.map((item) => (
+                                  <Badge key={item.id} variant="secondary" className="mr-1 gap-1 pr-1">
+                                    {item.label}
+                                    <span
+                                      role="button"
+                                      tabIndex={0}
+                                      aria-label={`Remove ${item.label}`}
+                                      className="flex h-4 w-4 items-center justify-center rounded-sm hover:bg-muted-foreground/20"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        removeContact(item.id);
+                                      }}
+                                      onKeyDown={(e) => {
+                                        if (e.key === "Enter" || e.key === " ") {
+                                          e.preventDefault();
+                                          e.stopPropagation();
+                                          removeContact(item.id);
+                                        }
+                                      }}
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </span>
                                   </Badge>
                                 ))
                               : isLoadingContacts
@@ -229,31 +280,6 @@ export function InvoiceContactsSection({
                     </Popover>
                     <FormMessage />
                   </FormItem>
-
-                  {value.length > 0 && (
-                    <div className="mt-4 space-y-3">
-                      <p className="text-sm text-muted-foreground">
-                        Make this visible only to administrators and the following users.
-                      </p>
-                      <Controller
-                        name="privacy.allowNonAdminViewSovItems"
-                        control={control}
-                        render={({ field: sovField }) => (
-                          <div className="flex items-center gap-2">
-                            <Checkbox
-                              id="invoice-allow-sov"
-                              checked={sovField.value ?? false}
-                              onCheckedChange={(checked) => sovField.onChange(checked)}
-                              disabled={isSubmitting}
-                            />
-                            <Label htmlFor="invoice-allow-sov" className="text-sm font-normal cursor-pointer">
-                              Allow these users to see SOV items
-                            </Label>
-                          </div>
-                        )}
-                      />
-                    </div>
-                  )}
 
                   <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
                     <DialogContent>
@@ -334,6 +360,7 @@ export function InvoiceContactsSection({
           />
         )}
       </div>
+      {/* contractCompanyId watched but no longer gates rendering */}
     </section>
   );
 }

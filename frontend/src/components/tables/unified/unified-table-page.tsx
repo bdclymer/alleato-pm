@@ -37,6 +37,25 @@ import { Button } from "@/components/ui/button";
 import { ArrowDown, ArrowUp, ChevronDown, ChevronUp, EyeOff, Inbox, MoreHorizontal, PanelRightClose, PanelRightOpen, Pin, PinOff, Trash2, X } from "lucide-react";
 import { MobileCardList } from "./mobile-card-list";
 
+const INTERACTIVE_ROW_TARGET_SELECTOR = [
+  "a",
+  "button",
+  "input",
+  "textarea",
+  "select",
+  "[role='button']",
+  "[role='menuitem']",
+  "[contenteditable='true']",
+  "[data-row-interactive='true']",
+].join(", ");
+
+function isInteractiveRowTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) {
+    return false;
+  }
+  return Boolean(target.closest(INTERACTIVE_ROW_TARGET_SELECTOR));
+}
+
 interface TabItem {
   label: string;
   href: string;
@@ -1254,9 +1273,17 @@ export function UnifiedTablePage<T>({
                       setDraggedRowId(null);
                     }}
                     onDragEnd={() => setDraggedRowId(null)}
-                    onClick={() => activateRow(item)}
+                    onClick={(event) => {
+                      if (isInteractiveRowTarget(event.target)) {
+                        return;
+                      }
+                      activateRow(item);
+                    }}
                     tabIndex={table.onRowClick ? 0 : undefined}
                     onKeyDown={table.onRowClick ? (event) => {
+                      if (isInteractiveRowTarget(event.target)) {
+                        return;
+                      }
                       if (event.key === "Enter" || event.key === " ") {
                         event.preventDefault();
                         activateRow(item);

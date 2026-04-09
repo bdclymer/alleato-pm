@@ -43,11 +43,13 @@ const globalMeetingTitleCache = new Map<string, string>();
 const primeContractTitleCache = new Map<string, string>();
 const companyTitleCache = new Map<string, string>();
 const vendorTitleCache = new Map<string, string>();
+const contactTitleCache = new Map<string, string>();
 const commitmentTitleCache = new Map<string, string>();
 const changeEventTitleCache = new Map<string, string>();
 const primeCoTitleCache = new Map<string, string>();
 const invoiceTitleCache = new Map<string, string>();
 const rfiTitleCache = new Map<string, string>();
+const settingsUserTitleCache = new Map<string, string>();
 
 const TABLE_ROUTE_ALIASES: Record<string, string> = {
   tasks: "tasks",
@@ -70,11 +72,13 @@ export function useHeaderNav(): UseHeaderNavReturn {
   );
   const [companyTitle, setCompanyTitle] = useState<string | null>(null);
   const [vendorTitle, setVendorTitle] = useState<string | null>(null);
+  const [contactTitle, setContactTitle] = useState<string | null>(null);
   const [commitmentTitle, setCommitmentTitle] = useState<string | null>(null);
   const [changeEventTitle, setChangeEventTitle] = useState<string | null>(null);
   const [primeCoTitle, setPrimeCoTitle] = useState<string | null>(null);
   const [invoiceTitle, setInvoiceTitle] = useState<string | null>(null);
   const [rfiTitle, setRfiTitle] = useState<string | null>(null);
+  const [settingsUserTitle, setSettingsUserTitle] = useState<string | null>(null);
 
   // Extract project ID from URL path or query parameters
   const projectId = useMemo(() => {
@@ -198,6 +202,11 @@ export function useHeaderNav(): UseHeaderNavReturn {
       segments[0] === "directory" &&
       segments[1] === "vendors" &&
       segments[2] !== "new";
+    const isGlobalContactDetailRoute =
+      segments.length >= 3 &&
+      segments[0] === "directory" &&
+      segments[1] === "contacts" &&
+      segments[2] !== "new";
     const isProjectCompanyDetailRoute =
       segments.length >= 4 &&
       /^\d+$/.test(segments[0]) &&
@@ -209,6 +218,11 @@ export function useHeaderNav(): UseHeaderNavReturn {
       /^\d+$/.test(segments[0]) &&
       segments[1] === "rfis" &&
       segments[2] !== "new";
+    const isSettingsUserDetailRoute =
+      segments.length >= 3 &&
+      segments[0] === "settings" &&
+      segments[1] === "users" &&
+      /^[0-9a-f-]{36}$/i.test(segments[2]);
 
     // Always start with Projects
     crumbs.push({ label: "Projects", href: "/" });
@@ -263,10 +277,14 @@ export function useHeaderNav(): UseHeaderNavReturn {
         label = companyTitle || "Company";
       } else if (isGlobalVendorDetailRoute && index === 2) {
         label = vendorTitle || "Vendor";
+      } else if (isGlobalContactDetailRoute && index === 2) {
+        label = contactTitle || "Contact";
       } else if (isProjectCompanyDetailRoute && index === 3) {
         label = companyTitle || "Company";
       } else if (isRfiDetailRoute && index === 2) {
         label = rfiTitle || "RFI";
+      } else if (isSettingsUserDetailRoute && index === 2) {
+        label = settingsUserTitle || "User";
       } else if (index === 0 && segment === "directory") {
         // Global directory routes (/directory/vendors, /directory/clients, etc.)
         // — not project-scoped, so label as Company Directory
@@ -314,7 +332,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
     });
 
     return crumbs;
-  }, [pathname, companyTitle, vendorTitle, currentProject, meetingTitle, globalMeetingTitle, primeContractTitle, commitmentTitle, changeEventTitle, primeCoTitle, invoiceTitle, rfiTitle]);
+  }, [pathname, companyTitle, vendorTitle, contactTitle, currentProject, meetingTitle, globalMeetingTitle, primeContractTitle, commitmentTitle, changeEventTitle, primeCoTitle, invoiceTitle, rfiTitle, settingsUserTitle]);
   useEffect(() => {
     const segments = pathname?.split("/").filter(Boolean) ?? [];
     const isMeetingDetailRoute =
@@ -423,6 +441,65 @@ export function useHeaderNav(): UseHeaderNavReturn {
     };
 
     fetchVendorTitle();
+    return () => {
+      isActive = false;
+    };
+  }, [pathname]);
+
+  useEffect(() => {
+    const segments = pathname?.split("/").filter(Boolean) ?? [];
+    const isGlobalContactDetailRoute =
+      segments.length >= 3 &&
+      segments[0] === "directory" &&
+      segments[1] === "contacts" &&
+      segments[2] !== "new";
+
+    if (!isGlobalContactDetailRoute) {
+      setContactTitle(null);
+      return;
+    }
+
+    const contactId = segments[2];
+    if (!contactId) {
+      setContactTitle(null);
+      return;
+    }
+
+    const cachedTitle = contactTitleCache.get(contactId);
+    if (cachedTitle) {
+      setContactTitle(cachedTitle);
+      return;
+    }
+
+    let isActive = true;
+    const fetchContactTitle = async () => {
+      try {
+        const supabase = createClient();
+        const { data, error } = await supabase
+          .from("people")
+          .select("first_name, last_name, email")
+          .eq("id", contactId)
+          .single();
+
+        if (error || !isActive) return;
+
+        const fullName = `${data.first_name || ""} ${data.last_name || ""}`.trim();
+        const title =
+          (fullName.length > 0 ? fullName : null) ||
+          (typeof data.email === "string" && data.email.length > 0 ? data.email : null);
+
+        if (title) {
+          contactTitleCache.set(contactId, title);
+          setContactTitle(title);
+        } else {
+          setContactTitle(null);
+        }
+      } catch {
+        // Best-effort only; fallback label remains
+      }
+    };
+
+    fetchContactTitle();
     return () => {
       isActive = false;
     };
@@ -821,6 +898,46 @@ export function useHeaderNav(): UseHeaderNavReturn {
     return () => {
       isActive = false;
     };
+  }, [pathname]);
+
+  useEffect(() => {
+    const segments = pathname?.split("/").filter(Boolean) ?? [];
+    const isSettingsUserRoute =
+      segments.length >= 3 &&
+      segments[0] === "settings" &&
+      segments[1] === "users" &&
+      /^[0-9a-f-]{36}$/i.test(segments[2]);
+
+    if (!isSettingsUserRoute) {
+      setSettingsUserTitle(null);
+      return;
+    }
+
+    const userId = segments[2];
+    const cached = settingsUserTitleCache.get(userId);
+    if (cached) {
+      setSettingsUserTitle(cached);
+      return;
+    }
+
+    let isActive = true;
+    const fetchTitle = async () => {
+      try {
+        const response = await fetch(`/api/settings/users/${userId}`);
+        if (!response.ok) return;
+        const data = await response.json();
+        const name = data?.data?.full_name || data?.data?.email || null;
+        if (isActive && name) {
+          settingsUserTitleCache.set(userId, name);
+          setSettingsUserTitle(name);
+        }
+      } catch {
+        // Best-effort only
+      }
+    };
+
+    fetchTitle();
+    return () => { isActive = false; };
   }, [pathname]);
 
   useEffect(() => {

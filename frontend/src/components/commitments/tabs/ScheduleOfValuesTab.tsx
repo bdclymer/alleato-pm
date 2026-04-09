@@ -61,7 +61,7 @@ export function ScheduleOfValuesTab({
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   // Fetch cost codes for budget code selection — need high limit to cover all divisions
-  const { costCodes, options: costCodeOptions, isLoading: costCodesLoading } = useCostCodes({
+  const { options: costCodeOptions, isLoading: costCodesLoading } = useCostCodes({
     enabled: true,
     useFallback: true,
     limit: 1000,
@@ -111,21 +111,15 @@ export function ScheduleOfValuesTab({
 
   const updateItem = (
     id: string,
-    field: keyof LineItem,
+    field: "budget_code" | "description" | "amount",
     value: string | number | undefined,
   ) => {
     setItems((prev) =>
       prev.map((item) => {
         if (item.id !== id) return item;
-
-        if (field === "amount" || field === "billed_to_date") {
-          return { ...item, [field]: value === undefined ? null : Number(value), isDirty: true };
+        if (field === "amount") {
+          return { ...item, amount: value === undefined ? null : Number(value), isDirty: true };
         }
-
-        if (field === "line_number") {
-          return { ...item, line_number: value === "" ? null : Number(value), isDirty: true };
-        }
-
         return { ...item, [field]: typeof value === "string" ? value : "", isDirty: true };
       }),
     );
@@ -198,13 +192,6 @@ export function ScheduleOfValuesTab({
       setIsSaving(false);
     }
   }, [commitmentId, commitmentType, items, onImportComplete, onLineItemsChange, projectId]);
-
-  // Get the description for a budget code
-  const getBudgetCodeDescription = useCallback((code: string | null | undefined) => {
-    if (!code) return null;
-    const costCode = costCodes.find((c) => c.id === code);
-    return costCode?.title || costCode?.description || null;
-  }, [costCodes]);
 
   const handleImport = useCallback(async () => {
     if (!projectId || !commitmentId) {
@@ -323,178 +310,162 @@ export function ScheduleOfValuesTab({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {showHeader ? <SectionHeader title="Schedule of Values" /> : null}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {hasUnsavedChanges && (
-              <Badge variant="outline" className="text-amber-600 border-amber-600">
-                <AlertCircle className="h-3 w-3 mr-1" />
-                Unsaved changes
-              </Badge>
-            )}
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={handleImport}
-              disabled={isImporting || isSaving}
-            >
-              {isImporting ? "Importing..." : "Import from Budget"}
-            </Button>
-            <Button size="sm" variant="outline" onClick={handleAdd} disabled={isSaving}>
-              <Plus />
-              Add Line Item
-            </Button>
-            {hasUnsavedChanges && (
-              <Button
-                size="sm"
-                onClick={handleSave}
-                disabled={isSaving}
-                className="bg-green-600 hover:bg-green-700"
-              >
-                <Save />
-                {isSaving ? "Saving..." : "Save Changes"}
-              </Button>
-            )}
-          </div>
-        </div>
 
-        <div className="overflow-x-auto rounded-md border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted">
-              <tr>
-                <th className="px-4 py-4 text-left font-medium">#</th>
-                <th className="px-4 py-4 text-left font-medium">Budget Code</th>
-                <th className="px-4 py-4 text-left font-medium">Description</th>
-                <th className="px-4 py-4 text-right font-medium">Amount</th>
-                <th className="px-4 py-4 text-right font-medium">Billed to Date</th>
-                <th className="px-4 py-4 text-right font-medium">Remaining</th>
-                <th className="px-4 py-4 text-right font-medium">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item, index) => {
-                const amount = Number(item.amount ?? 0);
-                const billed = Number(item.billed_to_date ?? 0);
-                const remaining = Math.max(amount - billed, 0);
+      <div className="overflow-x-auto rounded-md border">
+        <table className="w-full text-sm">
+          <thead className="bg-muted">
+            <tr>
+              <th className="w-10 px-3 py-3 text-left font-medium text-muted-foreground">#</th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Budget Code</th>
+              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Description</th>
+              <th className="px-4 py-3 text-right font-medium text-muted-foreground">Amount</th>
+              <th className="px-4 py-3 text-right font-medium text-muted-foreground">Billed to Date</th>
+              <th className="px-4 py-3 text-right font-medium text-muted-foreground">Remaining</th>
+              <th className="w-px px-3 py-3" />
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((item, index) => {
+              const amount = Number(item.amount ?? 0);
+              const billed = Number(item.billed_to_date ?? 0);
+              const remaining = Math.max(amount - billed, 0);
 
-                return (
-                  <tr key={item.id} className="border-t">
-                    <td className="px-4 py-2 whitespace-nowrap">
-                      <Input
-                        aria-label={`Line number ${index + 1}`}
-                        type="number"
-                        className="w-20"
-                        value={item.line_number ?? ""}
-                        onChange={(e) => updateItem(item.id, "line_number", e.target.value)}
-                      />
-                    </td>
-                    <td className="px-4 py-2 whitespace-nowrap min-w-[200px]">
-                      <Select
-                        value={item.budget_code || "none"}
-                        onValueChange={(value) => updateItem(item.id, "budget_code", value === "none" ? "" : value)}
-                        disabled={costCodesLoading}
+              return (
+                <tr key={item.id} className="border-t">
+                  <td className="px-3 py-2 text-muted-foreground tabular-nums text-xs">
+                    {index + 1}
+                  </td>
+                  <td className="px-4 py-2 whitespace-nowrap min-w-[200px]">
+                    <Select
+                      value={item.budget_code || "none"}
+                      onValueChange={(value) => updateItem(item.id, "budget_code", value === "none" ? "" : value)}
+                      disabled={costCodesLoading}
+                    >
+                      <SelectTrigger className="w-full" aria-label={`Budget code ${index + 1}`}>
+                        <SelectValue placeholder={costCodesLoading ? "Loading..." : "Select budget code"}>
+                          {item.budget_code
+                            ? (() => {
+                                const match = costCodeOptions.find((o) => o.value === item.budget_code);
+                                return match ? match.label : item.budget_code;
+                              })()
+                            : "No budget code"}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No budget code</SelectItem>
+                        {costCodeOptions.map((option) => (
+                          <SelectItem key={option.value} value={option.value}>
+                            {option.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </td>
+                  <td className="px-4 py-2 min-w-[200px]">
+                    <Input
+                      aria-label={`Description ${index + 1}`}
+                      value={item.description ?? ""}
+                      onChange={(e) => updateItem(item.id, "description", e.target.value)}
+                    />
+                  </td>
+                  <td className="px-4 py-2 text-right">
+                    <MoneyField
+                      label={`Amount ${index + 1}`}
+                      inline
+                      showCurrency={false}
+                      value={item.amount ?? undefined}
+                      onChange={(value) => updateItem(item.id, "amount", value)}
+                    />
+                  </td>
+                  <td className="px-4 py-2 text-right tabular-nums text-muted-foreground">
+                    {formatCurrency(billed)}
+                  </td>
+                  <td className="px-4 py-2 text-right tabular-nums">{formatCurrency(remaining)}</td>
+                  <td className="px-3 py-2">
+                    <div className="flex items-center justify-end gap-0.5">
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        aria-label={`Move line ${index + 1} up`}
+                        disabled={index === 0}
+                        onClick={() => moveItem(item.id, "up")}
                       >
-                        <SelectTrigger
-                          className="w-full"
-                          aria-label={`Budget code ${index + 1}`}
-                        >
-                          <SelectValue placeholder={costCodesLoading ? "Loading..." : "Select budget code"}>
-                            {item.budget_code
-                              ? (() => {
-                                  const match = costCodeOptions.find((o) => o.value === item.budget_code);
-                                  return match ? match.label : item.budget_code;
-                                })()
-                              : "No budget code"}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">No budget code</SelectItem>
-                          {costCodeOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </td>
-                    <td className="px-4 py-2 min-w-[200px]">
-                      <Input
-                        aria-label={`Description ${index + 1}`}
-                        value={item.description ?? ""}
-                        onChange={(e) => updateItem(item.id, "description", e.target.value)}
-                      />
-                    </td>
-                    <td className="px-4 py-2 text-right">
-                      <MoneyField
-                        label={`Amount ${index + 1}`}
-                        inline
-                        showCurrency={false}
-                        value={item.amount ?? undefined}
-                        onChange={(value) => updateItem(item.id, "amount", value)}
-                      />
-                    </td>
-                    <td className="px-4 py-2 text-right">
-                      <MoneyField
-                        label={`Billed to date ${index + 1}`}
-                        inline
-                        showCurrency={false}
-                        value={item.billed_to_date ?? undefined}
-                        onChange={(value) => updateItem(item.id, "billed_to_date", value)}
-                      />
-                    </td>
-                    <td className="px-4 py-2 text-right">{formatCurrency(remaining)}</td>
-                    <td className="px-4 py-2 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label={`Move line ${index + 1} up`}
-                          disabled={index === 0}
-                          onClick={() => moveItem(item.id, "up")}
-                        >
-                          <ArrowUp />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label={`Move line ${index + 1} down`}
-                          disabled={index === items.length - 1}
-                          onClick={() => moveItem(item.id, "down")}
-                        >
-                          <ArrowDown />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          aria-label={`Delete line ${index + 1}`}
-                          onClick={() => handleDelete(item.id)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-            <tfoot className="bg-muted/60">
-              <tr className="font-semibold">
-                <td className="px-4 py-4" colSpan={3}>
-                  Totals
-                </td>
-                <td className="px-4 py-4 text-right">{formatCurrency(totals.amount)}</td>
-                <td className="px-4 py-4 text-right">{formatCurrency(totals.billed)}</td>
-                <td className="px-4 py-4 text-right">{formatCurrency(amountRemaining)}</td>
-                <td className="px-4 py-4"></td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
+                        <ArrowUp />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        aria-label={`Move line ${index + 1} down`}
+                        disabled={index === items.length - 1}
+                        onClick={() => moveItem(item.id, "down")}
+                      >
+                        <ArrowDown />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        aria-label={`Delete line ${index + 1}`}
+                        onClick={() => handleDelete(item.id)}
+                        className="text-destructive hover:text-destructive"
+                      >
+                        <Trash2 />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+          <tfoot className="bg-muted/60">
+            <tr className="font-semibold">
+              <td className="px-3 py-3" colSpan={3}>Totals</td>
+              <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(totals.amount)}</td>
+              <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(totals.billed)}</td>
+              <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(amountRemaining)}</td>
+              <td className="px-3 py-3" />
+            </tr>
+          </tfoot>
+        </table>
+      </div>
 
+      {/* Actions below table, left-aligned */}
+      <div className="flex items-center gap-2">
+        <Button
+          size="xs"
+          variant="outline"
+          onClick={handleAdd}
+          disabled={isSaving}
+        >
+          <Plus />
+          Add Line Item
+        </Button>
+        <Button
+          size="xs"
+          variant="outline"
+          onClick={handleImport}
+          disabled={isImporting || isSaving}
+        >
+          {isImporting ? "Importing..." : "Import from Budget"}
+        </Button>
+        {hasUnsavedChanges && (
+          <Button
+            size="xs"
+            onClick={handleSave}
+            disabled={isSaving}
+          >
+            <Save />
+            {isSaving ? "Saving..." : "Save Changes"}
+          </Button>
+        )}
+        {hasUnsavedChanges && (
+          <Badge variant="outline" className="text-amber-600 border-amber-600 text-xs">
+            <AlertCircle className="h-3 w-3 mr-1" />
+            Unsaved changes
+          </Badge>
+        )}
+      </div>
     </div>
   );
 }

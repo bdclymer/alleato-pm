@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Brain, Trash2, Pencil, Check, X, RefreshCw } from "lucide-react";
+import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -278,19 +279,8 @@ export default function MemorySettingsPage() {
   const typeOrder: MemoryType[] = ["preference", "commitment", "fact", "lesson", "context"];
 
   return (
+    <PageShell variant="dashboard" title="AI Memory">
     <div className="px-8 py-8 max-w-4xl">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2 mb-1">
-          <Brain className="h-5 w-5 text-muted-foreground" />
-          <h1 className="text-xl font-semibold tracking-tight">AI Memory</h1>
-        </div>
-        <p className="text-sm text-muted-foreground">
-          What Alleato AI remembers about you and your projects. You can edit or
-          delete any memory — changes take effect immediately.
-        </p>
-      </div>
-
       {/* Controls */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
@@ -378,5 +368,6 @@ export default function MemorySettingsPage() {
         </p>
       </div>
     </div>
+    </PageShell>
   );
 }

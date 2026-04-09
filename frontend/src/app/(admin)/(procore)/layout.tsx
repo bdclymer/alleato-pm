@@ -1,0 +1,32 @@
+"use client";
+
+import { AppSidebar } from "@/components/app-sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { SiteHeader } from "@/components/header";
+import { AIChatWidgetLazy } from "@/components/chat/ai-chat-widget-lazy";
+import { SiteFooter } from "@/components/layout/site-footer";
+
+/**
+ * Layout for the (procore) route group.
+ * Matches the (admin) layout so pages like /procore-tools/[slug]
+ * render with the standard app chrome (sidebar + header + footer).
+ */
+export default function ProcoreLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <SidebarProvider defaultOpen={false}>
+      <AppSidebar />
+      <SidebarInset className="overflow-hidden">
+        <SiteHeader />
+        <main className="flex flex-1 flex-col overflow-auto min-w-0">
+          {children}
+        </main>
+        <SiteFooter />
+        <AIChatWidgetLazy />
+      </SidebarInset>
+    </SidebarProvider>
+  );
+}

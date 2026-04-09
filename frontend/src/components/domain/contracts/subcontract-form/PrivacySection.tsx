@@ -65,7 +65,7 @@ export function PrivacySection({
                 disabled={isSubmitting}
               />
               <Label htmlFor="privacy-is-private" className="text-sm font-normal cursor-pointer">
-                Private (default)
+                Private - Make this visible only to administrators and the following users.
               </Label>
             </div>
           )}

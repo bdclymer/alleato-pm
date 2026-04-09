@@ -3,6 +3,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { CheckCircle2, AlertCircle, ExternalLink, RefreshCw } from "lucide-react";
+import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
@@ -219,17 +220,8 @@ export default function IntegrationsSettingsPage() {
   ).length;
 
   return (
+    <PageShell variant="dashboard" title="Integrations">
     <div className="px-8 py-8 max-w-4xl">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-xl font-semibold tracking-tight">Integrations</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Connect your financial, field, and communication tools.{" "}
-          <span className="text-foreground font-medium">{connectedCount} active</span>{" "}
-          of {INTEGRATION_GROUPS.flatMap((g) => g.items).length} available.
-        </p>
-      </div>
-
       {/* Groups */}
       <div className="space-y-8">
         {INTEGRATION_GROUPS.map((group, idx) => (
@@ -255,5 +247,6 @@ export default function IntegrationsSettingsPage() {
         ))}
       </div>
     </div>
+    </PageShell>
   );
 }

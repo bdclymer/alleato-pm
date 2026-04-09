@@ -260,6 +260,21 @@ export async function GET(
       }
     }
 
+    // Resolve created_by UUID → display name via people.auth_user_id
+    let createdByName: string | null = null;
+    const createdByUuid = typeof record.created_by === "string" ? record.created_by : null;
+    if (createdByUuid) {
+      const { data: creatorData } = await (supabase as any)
+        .from("people")
+        .select("first_name, last_name")
+        .eq("auth_user_id", createdByUuid)
+        .maybeSingle();
+      if (creatorData) {
+        createdByName =
+          [creatorData.first_name, creatorData.last_name].filter(Boolean).join(" ") || null;
+      }
+    }
+
     const originalAmount = Number(totalsData?.total_sov_amount) || 0;
     const billedToDate = Number(totalsData?.total_billed_to_date) || 0;
     // Revised amount = original + approved change orders
@@ -286,6 +301,7 @@ export async function GET(
       line_items: sovItems || [],
       change_order_totals: changeOrderTotals,
       invoice_contacts: invoiceContacts,
+      created_by_name: createdByName,
     };
 
     // Add cache headers for detail data (5 seconds, revalidate in background)

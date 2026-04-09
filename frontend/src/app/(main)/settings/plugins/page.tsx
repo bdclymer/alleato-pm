@@ -4,11 +4,12 @@
  */
 
 import { PluginManagerUI } from "@/components/plugins/plugin-manager-ui";
+import { PageShell } from "@/components/layout";
 
 export default function PluginsSettingsPage() {
   return (
-    <div className="container mx-auto py-6">
+    <PageShell variant="dashboard" title="Plugins">
       <PluginManagerUI />
-    </div>
+    </PageShell>
   );
 }

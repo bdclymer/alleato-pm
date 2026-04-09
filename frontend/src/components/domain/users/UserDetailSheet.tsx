@@ -33,7 +33,9 @@ import type { PersonWithDetails } from "@/services/directoryService";
 interface UserDetailSheetProps {
   user: PersonWithDetails;
   projectId: string;
-  trigger: React.ReactNode;
+  trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
   onUserUpdated?: () => void;
 }
 
@@ -41,6 +43,8 @@ export function UserDetailSheet({
   user,
   projectId,
   trigger,
+  open,
+  onOpenChange,
   onUserUpdated,
 }: UserDetailSheetProps) {
   const [isEditOpen, setIsEditOpen] = React.useState(false);
@@ -72,10 +76,19 @@ export function UserDetailSheet({
     setIsEditOpen(true);
   };
 
+  const isControlled = open !== undefined;
+  const resolvedOpen = isControlled ? open : isSheetOpen;
+  const handleSheetOpenChange = (nextOpen: boolean) => {
+    if (!isControlled) {
+      setIsSheetOpen(nextOpen);
+    }
+    onOpenChange?.(nextOpen);
+  };
+
   return (
     <>
-      <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetTrigger asChild>{trigger}</SheetTrigger>
+      <Sheet open={resolvedOpen} onOpenChange={handleSheetOpenChange}>
+        {trigger ? <SheetTrigger asChild>{trigger}</SheetTrigger> : null}
         <SheetContent
           side="right"
           className="flex flex-col w-[400px] sm:w-[540px]"

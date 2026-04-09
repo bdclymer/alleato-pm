@@ -1,27 +1,32 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, Save, Trash2 } from "lucide-react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Plus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { SectionHeader } from "@/components/ds";
+import { MoneyField } from "@/components/forms/MoneyField";
 import { formatCurrency } from "@/config/tables";
-import { useCostCodes } from "@/hooks/use-cost-codes";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MoneyField } from "@/components/forms/MoneyField";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+interface SovSourceLine {
+  id: string;
+  line_number: number | null;
+  budget_code: string | null;
+  description: string | null;
+  amount: number | null;
+  billed_to_date: number | null;
+}
 
 interface SsovLineItem {
   id: string;
+  source_sov_item_id: string | null;
   line_number: number | null;
   budget_code: string | null;
   description: string | null;
@@ -55,6 +60,7 @@ interface SsovPayload {
   data: {
     status: SsovStatus;
     targetAmount: number;
+    sourceSov: SovSourceLine[];
     lineItems: SsovLineItem[];
     submittedAt: string | null;
     reviewedAt: string | null;
@@ -65,12 +71,14 @@ interface SsovPayload {
   };
 }
 
-const statusLabel: Record<SsovStatus, string> = {
+const STATUS_LABEL: Record<SsovStatus, string> = {
   draft: "Draft",
   under_review: "Under Review",
   approved: "Approved",
   revise_resubmit: "Revise & Resubmit",
 };
+
+// ─── Component ───────────────────────────────────────────────────────────────
 
 export function SubcontractorSovTab({
   projectId,
@@ -78,6 +86,7 @@ export function SubcontractorSovTab({
   onSubmitted,
   onCountChange,
 }: SubcontractorSovTabProps) {
+  const [sourceSov, setSourceSov] = useState<SovSourceLine[]>([]);
   const [items, setItems] = useState<SsovLineItem[]>([]);
   const [status, setStatus] = useState<SsovStatus>("draft");
   const [targetAmount, setTargetAmount] = useState(0);
@@ -93,12 +102,6 @@ export function SubcontractorSovTab({
     canSendNotification: false,
   });
 
-  const { options: costCodeOptions, isLoading: costCodesLoading } = useCostCodes({
-    enabled: true,
-    useFallback: true,
-    limit: 1000,
-  });
-
   const fetchSsov = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -106,22 +109,16 @@ export function SubcontractorSovTab({
         `/api/projects/${projectId}/commitments/${commitmentId}/subcontractor-sov`,
       );
       const payload = (await response.json()) as SsovPayload;
+      if (!response.ok) throw new Error("Failed to load Subcontractor SOV.");
 
-      if (!response.ok) {
-        throw new Error("Failed to load Subcontractor SOV.");
-      }
-
+      setSourceSov(payload.data.sourceSov || []);
       setItems(payload.data.lineItems || []);
       setStatus(payload.data.status || "draft");
       setTargetAmount(payload.data.targetAmount || 0);
       setInviteSentAt(payload.data.inviteSentAt || null);
       setInvoiceContacts(payload.data.invoiceContacts || []);
       setPermissions(
-        payload.data.permissions || {
-          canEdit: false,
-          canReview: false,
-          canSendNotification: false,
-        },
+        payload.data.permissions || { canEdit: false, canReview: false, canSendNotification: false },
       );
       setHasUnsavedChanges(false);
       onCountChange?.((payload.data.lineItems || []).length);
@@ -136,55 +133,59 @@ export function SubcontractorSovTab({
     void fetchSsov();
   }, [fetchSsov]);
 
+  // Group children under parents
+  const groups = useMemo(() => {
+    return sourceSov.map((parent) => {
+      const children = items.filter((i) => i.source_sov_item_id === parent.id);
+      const allocated = children.reduce((sum, c) => sum + Number(c.amount ?? 0), 0);
+      const remaining = Math.max(Number(parent.amount ?? 0) - allocated, 0);
+      return { parent, children, allocated, remaining };
+    });
+  }, [sourceSov, items]);
+
+  const orphans = useMemo(
+    () => items.filter((i) => !i.source_sov_item_id || !sourceSov.some((s) => s.id === i.source_sov_item_id)),
+    [items, sourceSov],
+  );
+
   const allocatedTotal = useMemo(
     () => items.reduce((sum, item) => sum + Number(item.amount ?? 0), 0),
     [items],
   );
+  const totalRemaining = Math.max(targetAmount - allocatedTotal, 0);
 
-  const remainingToAllocate = Math.max(targetAmount - allocatedTotal, 0);
+  const isLocked = status === "under_review" || status === "approved" || !permissions.canEdit;
   const canSubmit =
     permissions.canEdit &&
     items.length > 0 &&
-    remainingToAllocate === 0 &&
+    totalRemaining === 0 &&
     (status === "draft" || status === "revise_resubmit");
-  const isLocked = status === "under_review" || status === "approved" || !permissions.canEdit;
 
-  const updateItem = (id: string, field: keyof SsovLineItem, value: string | number) => {
+  // ─── Edits ─────────────────────────────────────────────────────────────
+
+  const updateItem = (id: string, field: "description" | "amount", value: string | number) => {
     if (isLocked) return;
     setItems((prev) =>
       prev.map((item) => {
         if (item.id !== id) return item;
-        if (field === "amount" || field === "billed_to_date") {
-          return {
-            ...item,
-            [field]: value === "" ? null : Number(value),
-            isDirty: true,
-          };
+        if (field === "amount") {
+          return { ...item, amount: value === "" ? null : Number(value), isDirty: true };
         }
-
-        if (field === "line_number") {
-          return {
-            ...item,
-            line_number: value === "" ? null : Number(value),
-            isDirty: true,
-          };
-        }
-
-        return { ...item, [field]: String(value), isDirty: true };
+        return { ...item, description: String(value), isDirty: true };
       }),
     );
     setHasUnsavedChanges(true);
   };
 
-  const addLine = () => {
+  const addChildLine = (parent: SovSourceLine) => {
     if (isLocked) return;
-    const nextLineNumber = (items[items.length - 1]?.line_number || items.length) + 1;
     setItems((prev) => [
       ...prev,
       {
-        id: `temp-${Date.now()}`,
-        line_number: nextLineNumber,
-        budget_code: "",
+        id: `temp-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        source_sov_item_id: parent.id,
+        line_number: prev.length + 1,
+        budget_code: parent.budget_code,
         description: "",
         amount: 0,
         billed_to_date: 0,
@@ -200,26 +201,7 @@ export function SubcontractorSovTab({
     setHasUnsavedChanges(true);
   };
 
-  const moveItem = (id: string, direction: "up" | "down") => {
-    if (isLocked) return;
-    setItems((prev) => {
-      const index = prev.findIndex((item) => item.id === id);
-      if (index === -1) return prev;
-      const targetIndex = direction === "up" ? index - 1 : index + 1;
-      if (targetIndex < 0 || targetIndex >= prev.length) return prev;
-
-      const next = [...prev];
-      const [moved] = next.splice(index, 1);
-      next.splice(targetIndex, 0, moved);
-      setHasUnsavedChanges(true);
-
-      return next.map((item, idx) => ({
-        ...item,
-        line_number: idx + 1,
-        isDirty: true,
-      }));
-    });
-  };
+  // ─── Save ──────────────────────────────────────────────────────────────
 
   const saveLineItems = useCallback(async () => {
     setIsSaving(true);
@@ -232,6 +214,7 @@ export function SubcontractorSovTab({
           body: JSON.stringify({
             lineItems: items.map((item, index) => ({
               id: item.id.startsWith("temp-") ? undefined : item.id,
+              source_sov_item_id: item.source_sov_item_id,
               line_number: item.line_number ?? index + 1,
               budget_code: item.budget_code || null,
               description: item.description || null,
@@ -241,12 +224,10 @@ export function SubcontractorSovTab({
           }),
         },
       );
-
       if (!response.ok) {
         const payload = (await response.json()) as { error?: string };
-        throw new Error(payload.error || "Failed to save subcontractor SOV.");
+        throw new Error(payload.error || "Failed to save.");
       }
-
       toast.success("Subcontractor SOV saved.");
       await fetchSsov();
     } catch (error) {
@@ -256,20 +237,14 @@ export function SubcontractorSovTab({
     }
   }, [commitmentId, fetchSsov, items, projectId]);
 
+  // ─── Actions ───────────────────────────────────────────────────────────
+
   const runAction = useCallback(
-    async (
-      action:
-        | "submit"
-        | "approve"
-        | "reject"
-        | "import_from_sov"
-        | "send_notification",
-    ) => {
+    async (action: "submit" | "approve" | "reject" | "import_from_sov" | "send_notification") => {
       if (action === "submit" && !canSubmit) {
         toast.error("Remaining to Allocate must equal $0 before submitting.");
         return;
       }
-
       setIsSubmitting(true);
       try {
         const response = await fetch(
@@ -280,25 +255,21 @@ export function SubcontractorSovTab({
             body: JSON.stringify({ action }),
           },
         );
-
         const payload = (await response.json()) as { message?: string; error?: string };
-        if (!response.ok) {
-          throw new Error(payload.error || "Subcontractor SOV action failed.");
-        }
-
+        if (!response.ok) throw new Error(payload.error || "Action failed.");
         toast.success(payload.message || "Subcontractor SOV updated.");
         await fetchSsov();
-        if (action === "submit") {
-          await onSubmitted?.();
-        }
+        if (action === "submit") await onSubmitted?.();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Subcontractor SOV action failed.");
+        toast.error(error instanceof Error ? error.message : "Action failed.");
       } finally {
         setIsSubmitting(false);
       }
     },
     [canSubmit, commitmentId, fetchSsov, onSubmitted, projectId],
   );
+
+  // ─── Loading ───────────────────────────────────────────────────────────
 
   if (isLoading) {
     return (
@@ -310,247 +281,240 @@ export function SubcontractorSovTab({
     );
   }
 
+  // ─── Render ────────────────────────────────────────────────────────────
+
+  const colSpanFull = isLocked ? 5 : 6;
+
   return (
     <div className="space-y-6">
       <SectionHeader title="Subcontractor Schedule of Values" />
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
+      {/* Status + meta */}
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="space-y-2">
           <div className="flex items-center gap-2 text-sm">
             <span className="text-muted-foreground">Status</span>
-            <Badge variant="outline">{statusLabel[status]}</Badge>
+            <Badge variant="outline">{STATUS_LABEL[status]}</Badge>
           </div>
           {inviteSentAt && (
-            <div className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               Invitation sent {new Date(inviteSentAt).toLocaleString()}
-            </div>
+            </p>
           )}
-          {invoiceContacts.length > 0 && (
-            <div className="text-xs text-muted-foreground">
-              Invoice contacts: {invoiceContacts.map((contact) => contact.email).join(", ")}
-            </div>
+          {invoiceContacts.length > 0 ? (
+            <p className="text-xs text-muted-foreground">
+              Invoice contacts: {invoiceContacts.map((c) => c.email).join(", ")}
+            </p>
+          ) : (
+            <p className="text-xs text-amber-600">
+              No invoice contact set. Add one in Advanced Settings before sending an SSOV invitation.
+            </p>
           )}
-          {invoiceContacts.length === 0 && (
-            <div className="text-xs text-status-warning">
-              No invoice contact is set for this commitment. Add one in Advanced Settings before sending an SSOV invitation.
-            </div>
-          )}
-          <div className="flex flex-wrap items-center gap-6 text-sm">
-            <div>
-              <span className="text-muted-foreground">Contract Amount: </span>
-              <span className="font-medium">{formatCurrency(targetAmount)}</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Allocated: </span>
-              <span className="font-medium">{formatCurrency(allocatedTotal)}</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">Remaining to Allocate: </span>
-              <span className={remainingToAllocate === 0 ? "font-semibold text-emerald-700" : "font-semibold text-amber-700"}>
-                {formatCurrency(remainingToAllocate)}
-              </span>
-            </div>
-          </div>
         </div>
 
         <div className="flex items-center gap-2">
-          {(status === "under_review" || status === "approved") && permissions.canReview && (
+          {status === "under_review" && permissions.canReview && (
             <>
-              {status === "under_review" && (
-                <>
-                  <Button
-                    variant="outline"
-                    onClick={() => void runAction("reject")}
-                    disabled={isSubmitting}
-                  >
-                    Send Back
-                  </Button>
-                  <Button onClick={() => void runAction("approve")} disabled={isSubmitting}>
-                    Approve
-                  </Button>
-                </>
-              )}
+              <Button variant="outline" onClick={() => void runAction("reject")} disabled={isSubmitting}>
+                Send Back
+              </Button>
+              <Button onClick={() => void runAction("approve")} disabled={isSubmitting}>
+                Approve
+              </Button>
             </>
           )}
           {permissions.canSendNotification && (
-            <Button
-              variant="outline"
-              onClick={() => void runAction("send_notification")}
-              disabled={isSubmitting}
-            >
+            <Button variant="outline" onClick={() => void runAction("send_notification")} disabled={isSubmitting}>
               Send SSOV Notification
             </Button>
           )}
           {(status === "draft" || status === "revise_resubmit") && (
-            <Button
-              onClick={() => void runAction("submit")}
-              disabled={isSubmitting || !canSubmit || hasUnsavedChanges}
-            >
+            <Button onClick={() => void runAction("submit")} disabled={isSubmitting || !canSubmit || hasUnsavedChanges}>
               {isSubmitting ? "Submitting..." : "Submit for Review"}
             </Button>
           )}
         </div>
       </div>
 
-      <div className="flex items-center justify-end gap-2">
-        {hasUnsavedChanges && (
-          <Button
-            size="sm"
-            onClick={() => void saveLineItems()}
-            disabled={isSaving || isSubmitting || isLocked}
-          >
-            <Save className="h-4 w-4" />
-            {isSaving ? "Saving..." : "Save Changes"}
-          </Button>
-        )}
-      </div>
-
+      {/* Grouped SOV → SSOV table */}
       <div className="overflow-x-auto rounded-md border">
         <table className="w-full text-sm">
           <thead className="bg-muted">
             <tr>
-              <th className="px-4 py-3 text-left font-medium">#</th>
-              <th className="px-4 py-3 text-left font-medium">Budget Code</th>
-              <th className="px-4 py-3 text-left font-medium">Description</th>
-              <th className="px-4 py-3 text-right font-medium">Billed To Date</th>
-              <th className="px-4 py-3 text-right font-medium">Amount</th>
-              <th className="px-4 py-3 text-right font-medium">Actions</th>
+              <th className="px-4 py-2.5 text-left font-medium text-muted-foreground w-16">#</th>
+              <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Budget Code</th>
+              <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Description</th>
+              <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">Billed To Date</th>
+              <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">Amount</th>
+              {!isLocked && <th className="px-4 py-2.5 w-px" />}
             </tr>
           </thead>
           <tbody>
-            {items.length === 0 ? (
+            {groups.length === 0 && orphans.length === 0 && (
               <tr>
-                <td className="px-4 py-8 text-center text-muted-foreground" colSpan={7}>
-                  No subcontractor SOV line items yet.
+                <td className="px-4 py-8 text-center text-muted-foreground" colSpan={colSpanFull}>
+                  No SOV line items on this commitment. Add SOV lines first.
                 </td>
               </tr>
-            ) : (
-              items.map((item, index) => {
-                return (
-                  <tr key={item.id} className="border-t">
-                    <td className="px-4 py-2">
+            )}
+
+            {groups.map(({ parent, children, allocated, remaining }) => (
+              <React.Fragment key={parent.id}>
+                {/* Parent SOV row */}
+                <tr className="border-t bg-muted/40">
+                  <td className="px-4 py-2.5 font-semibold tabular-nums">{parent.line_number ?? "—"}</td>
+                  <td className="px-4 py-2.5 font-medium">{parent.budget_code || "—"}</td>
+                  <td className="px-4 py-2.5 font-medium">{parent.description || "—"}</td>
+                  <td className="px-4 py-2.5 text-right tabular-nums text-muted-foreground">
+                    {formatCurrency(parent.billed_to_date ?? 0)}
+                  </td>
+                  <td className="px-4 py-2.5 text-right font-semibold tabular-nums">
+                    {formatCurrency(parent.amount ?? 0)}
+                  </td>
+                  {!isLocked && <td className="px-4 py-2.5" />}
+                </tr>
+
+                {/* SSOV child rows */}
+                {children.map((child) => (
+                  <tr key={child.id} className="border-t">
+                    <td className="px-4 py-2" />
+                    <td className="px-4 py-2 pl-8 text-xs text-muted-foreground">↳</td>
+                    <td className="px-4 py-2 min-w-56">
                       <Input
-                        type="number"
-                        className="w-20"
-                        value={item.line_number ?? ""}
-                        onChange={(e) => updateItem(item.id, "line_number", e.target.value)}
+                        value={child.description || ""}
+                        onChange={(e) => updateItem(child.id, "description", e.target.value)}
+                        placeholder="Line item description"
                         disabled={isLocked}
                       />
                     </td>
-                    <td className="px-4 py-2 min-w-56">
-                      <Select
-                        value={item.budget_code || "none"}
-                        onValueChange={(value) =>
-                          updateItem(item.id, "budget_code", value === "none" ? "" : value)
-                        }
-                        disabled={costCodesLoading || isLocked}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder={costCodesLoading ? "Loading..." : "Select budget code"}>
-                            {item.budget_code
-                              ? (costCodeOptions.find((opt) => opt.value === item.budget_code)?.label || item.budget_code)
-                              : "No budget code"}
-                          </SelectValue>
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">No budget code</SelectItem>
-                          {costCodeOptions.map((option) => (
-                            <SelectItem key={option.value} value={option.value}>
-                              {option.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </td>
-                    <td className="px-4 py-2 min-w-56">
-                      <Input
-                        value={item.description || ""}
-                        onChange={(e) => updateItem(item.id, "description", e.target.value)}
-                        disabled={isLocked}
-                      />
+                    <td className="px-4 py-2 text-right tabular-nums text-muted-foreground">
+                      {formatCurrency(child.billed_to_date ?? 0)}
                     </td>
                     <td className="px-4 py-2 text-right">
                       <MoneyField
-                        label={`Billed ${index + 1}`}
+                        label="Amount"
                         inline
                         showCurrency={false}
-                        value={item.billed_to_date ?? undefined}
-                        onChange={(value) => updateItem(item.id, "billed_to_date", value ?? 0)}
+                        value={child.amount ?? undefined}
+                        onChange={(value) => updateItem(child.id, "amount", value ?? 0)}
                         disabled={isLocked}
                       />
                     </td>
-                    <td className="px-4 py-2 text-right">
-                      <MoneyField
-                        label={`Amount ${index + 1}`}
-                        inline
-                        showCurrency={false}
-                        value={item.amount ?? undefined}
-                        onChange={(value) => updateItem(item.id, "amount", value ?? 0)}
-                        disabled={isLocked}
-                      />
-                    </td>
-                    <td className="px-4 py-2 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => moveItem(item.id, "up")}
-                          disabled={index === 0 || isLocked}
-                        >
-                          <ArrowUp className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => moveItem(item.id, "down")}
-                          disabled={index === items.length - 1 || isLocked}
-                        >
-                          <ArrowDown className="h-4 w-4" />
-                        </Button>
+                    {!isLocked && (
+                      <td className="px-4 py-2 text-right">
                         <Button
                           variant="ghost"
                           size="icon"
                           className="text-destructive hover:text-destructive"
-                          onClick={() => deleteLine(item.id)}
-                          disabled={isLocked}
+                          onClick={() => deleteLine(child.id)}
                         >
                           <Trash2 className="h-4 w-4" />
                         </Button>
-                      </div>
-                    </td>
+                      </td>
+                    )}
                   </tr>
-                );
-              })
+                ))}
+
+                {/* Per-parent footer: Add line + Remaining to Allocate */}
+                <tr className="border-t bg-background">
+                  <td className="px-4 py-2" colSpan={3}>
+                    {!isLocked && (
+                      <Button
+                        type="button"
+                        variant="link"
+                        size="sm"
+                        onClick={() => addChildLine(parent)}
+                        className="h-auto p-0"
+                      >
+                        <Plus className="h-3.5 w-3.5" /> Add line item
+                      </Button>
+                    )}
+                  </td>
+                  <td className="px-4 py-2 text-right text-xs text-muted-foreground">Remaining to Allocate</td>
+                  <td
+                    className={cn(
+                      "px-4 py-2 text-right font-semibold tabular-nums",
+                      remaining === 0 ? "text-emerald-700" : "text-amber-600",
+                    )}
+                  >
+                    {formatCurrency(remaining)}
+                  </td>
+                  {!isLocked && <td className="px-4 py-2" />}
+                </tr>
+              </React.Fragment>
+            ))}
+
+            {/* Orphans (SSOV rows with no matching parent — shouldn't happen post-backfill, but render defensively) */}
+            {orphans.length > 0 && (
+              <>
+                <tr className="border-t bg-amber-50">
+                  <td className="px-4 py-2 text-xs font-semibold text-amber-800" colSpan={colSpanFull}>
+                    Unlinked line items (no matching SOV parent)
+                  </td>
+                </tr>
+                {orphans.map((child) => (
+                  <tr key={child.id} className="border-t">
+                    <td className="px-4 py-2 tabular-nums">{child.line_number ?? "—"}</td>
+                    <td className="px-4 py-2">{child.budget_code || "—"}</td>
+                    <td className="px-4 py-2 min-w-56">
+                      <Input
+                        value={child.description || ""}
+                        onChange={(e) => updateItem(child.id, "description", e.target.value)}
+                        disabled={isLocked}
+                      />
+                    </td>
+                    <td className="px-4 py-2 text-right tabular-nums text-muted-foreground">
+                      {formatCurrency(child.billed_to_date ?? 0)}
+                    </td>
+                    <td className="px-4 py-2 text-right">
+                      <MoneyField
+                        label="Amount"
+                        inline
+                        showCurrency={false}
+                        value={child.amount ?? undefined}
+                        onChange={(value) => updateItem(child.id, "amount", value ?? 0)}
+                        disabled={isLocked}
+                      />
+                    </td>
+                    {!isLocked && (
+                      <td className="px-4 py-2 text-right">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => deleteLine(child.id)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </>
             )}
-            <tr className="border-t">
-              <td className="px-4 py-3" colSpan={7}>
-                <Button
-                  type="button"
-                  variant="link"
-                  size="sm"
-                  onClick={addLine}
-                  disabled={isLocked}
-                  className="h-auto p-0"
-                >
-                  + Add Line
-                </Button>
-              </td>
-            </tr>
           </tbody>
           <tfoot className="bg-muted/60">
             <tr>
-              <td className="px-4 py-3" colSpan={5} />
-              <td className="px-4 py-3 text-right font-semibold">Remaining To Allocate:</td>
-              <td className="px-4 py-3 text-right font-semibold">{formatCurrency(remainingToAllocate)}</td>
-            </tr>
-            <tr>
-              <td className="px-4 py-3" colSpan={5} />
-              <td className="px-4 py-3 text-right">Grand Total:</td>
-              <td className="px-4 py-3 text-right">{formatCurrency(allocatedTotal)}</td>
+              <td className="px-4 py-3 text-right font-semibold" colSpan={4}>
+                Grand Total
+              </td>
+              <td className="px-4 py-3 text-right font-semibold tabular-nums">
+                {formatCurrency(allocatedTotal)}
+              </td>
+              {!isLocked && <td className="px-4 py-3" />}
             </tr>
           </tfoot>
         </table>
       </div>
+
+      {hasUnsavedChanges && !isLocked && (
+        <div className="flex justify-end">
+          <Button size="sm" onClick={() => void saveLineItems()} disabled={isSaving || isSubmitting}>
+            <Save className="h-4 w-4" />
+            {isSaving ? "Saving..." : "Save Changes"}
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

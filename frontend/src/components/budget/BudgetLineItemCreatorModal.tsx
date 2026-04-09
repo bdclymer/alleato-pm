@@ -612,17 +612,17 @@ export function BudgetLineItemCreatorModal({
                   <table className="w-full">
                     <thead>
                       <tr>
-                        <th className="pb-2 pr-4 text-left text-xs font-medium text-muted-foreground w-8">#</th>
-                        <th className="pb-2 pr-3 text-left text-xs font-medium text-muted-foreground">
+                        <th className="py-2 pr-4 text-left text-xs font-medium text-foreground bg-primary/5 w-8">#</th>
+                        <th className="py-2 pr-3 text-left text-xs font-medium text-foreground bg-primary/5 w-72">
                           Budget Code <span className="text-destructive">*</span>
                         </th>
-                        <th className="pb-2 pr-3 text-left text-xs font-medium text-muted-foreground w-24">Qty</th>
-                        <th className="pb-2 pr-3 text-left text-xs font-medium text-muted-foreground w-24">UOM</th>
-                        <th className="pb-2 pr-3 text-left text-xs font-medium text-muted-foreground w-28">Unit Cost</th>
-                        <th className="pb-2 pr-3 text-left text-xs font-medium text-muted-foreground w-28">
+                        <th className="py-2 pr-3 text-left text-xs font-medium text-foreground bg-primary/5 w-24">Qty</th>
+                        <th className="py-2 pr-3 text-left text-xs font-medium text-foreground bg-primary/5 w-24">UOM</th>
+                        <th className="py-2 pr-3 text-left text-xs font-medium text-foreground bg-primary/5 w-36">Unit Cost</th>
+                        <th className="py-2 pr-3 text-left text-xs font-medium text-foreground bg-primary/5 w-36">
                           Amount <span className="text-destructive">*</span>
                         </th>
-                        <th className="pb-2 w-8" />
+                        <th className="py-2 bg-primary/5 w-8" />
                       </tr>
                     </thead>
                     <tbody>
@@ -640,7 +640,7 @@ export function BudgetLineItemCreatorModal({
                               {index + 1}
                             </td>
 
-                            <td className="py-2 pr-3 align-middle">
+                            <td className="py-2 pr-3 align-middle w-72">
                               <Popover
                                 open={openPopoverId === index}
                                 onOpenChange={(open) => setOpenPopoverId(open ? index : null)}
@@ -732,7 +732,7 @@ export function BudgetLineItemCreatorModal({
                               </Select>
                             </td>
 
-                            <td className="py-2 pr-3 align-middle">
+                            <td className="py-2 pr-3 align-middle w-36">
                               <MoneyField
                                 label="Unit cost"
                                 value={row.unitCost ? parseFloat(String(row.unitCost)) : undefined}
@@ -744,7 +744,7 @@ export function BudgetLineItemCreatorModal({
                               />
                             </td>
 
-                            <td className="py-2 pr-2 align-top pt-3">
+                            <td className="py-2 pr-2 align-top pt-3 w-36">
                               <MoneyField
                                 label="Amount"
                                 value={row.amount ? parseFloat(String(row.amount)) : undefined}
@@ -781,7 +781,7 @@ export function BudgetLineItemCreatorModal({
                       </AnimatePresence>
                     </tbody>
                     <tfoot>
-                      <tr className="border-t border-border bg-muted/20">
+                      <tr className="border-t border-border !bg-transparent">
                         <td colSpan={5} className="py-2 pr-3 text-right text-sm font-semibold text-foreground">
                           Total
                         </td>
@@ -803,7 +803,7 @@ export function BudgetLineItemCreatorModal({
                     disabled={isCreating}
                     aria-label="Add line item"
                     title="Add line item"
-                    className="h-8 px-0 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-transparent border-0 shadow-none"
+                    className="h-8 px-0 text-sm font-medium text-primary hover:text-primary/90 hover:bg-transparent border-0 shadow-none"
                   >
                     <Plus />
                     Add Line Item
@@ -812,7 +812,7 @@ export function BudgetLineItemCreatorModal({
               </div>
 
               {/* Footer — padding only, no divider */}
-              <div className="flex items-center justify-end px-6 pt-3 pb-5 bg-muted/20">
+              <div className="flex items-center justify-end px-6 pt-3 pb-5">
                 <div className="flex gap-4">
                   <Button
                     variant="outline"

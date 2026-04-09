@@ -150,7 +150,6 @@ export default function VendorDetailPage() {
         .from("people")
         .select("*")
         .eq("company_id", companyId)
-        .eq("person_type", "contact")
         .order("last_name", { ascending: true })
         .order("first_name", { ascending: true });
 
@@ -169,13 +168,11 @@ export default function VendorDetailPage() {
       const { data, error: queryError } = await supabase
         .from("people")
         .select("*")
-        .eq("person_type", "contact")
         .order("last_name", { ascending: true })
         .order("first_name", { ascending: true });
 
       if (queryError) throw queryError;
-      const options = (data ?? []).filter((person) => person.company_id !== companyId);
-      setAvailableContacts(options);
+      setAvailableContacts(data ?? []);
     } catch {
       setAvailableContacts([]);
     }

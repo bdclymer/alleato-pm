@@ -1,0 +1,120 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { History } from "lucide-react";
+
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+
+import { formatDateTime } from "./shared";
+
+interface AuditRow {
+  id: number;
+  actor_email: string | null;
+  event_type: string;
+  field_name: string | null;
+  old_value: unknown;
+  new_value: unknown;
+  notes: string | null;
+  created_at: string;
+}
+
+function describe(row: AuditRow): string {
+  switch (row.event_type) {
+    case "line_item.updated":
+      return `Updated ${row.field_name ?? "line item"}`;
+    case "email.sent":
+      return "Sent email";
+    case "erp.resend_requested":
+      return "Requested ERP resend";
+    case "status.changed":
+      return "Status changed";
+    default:
+      return row.event_type.replace(/[._]/g, " ");
+  }
+}
+
+export function ChangeHistoryTab({
+  projectId,
+  invoiceId,
+}: {
+  projectId: string;
+  invoiceId: number;
+}) {
+  const [rows, setRows] = useState<AuditRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(
+          `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}/change-history`,
+        );
+        const body = await res.json();
+        if (res.ok) setRows(body.data ?? []);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [projectId, invoiceId]);
+
+  return (
+    <section className="bg-card border border-border rounded-lg overflow-hidden">
+      <div className="px-6 py-4 border-b border-border">
+        <h2 className="text-sm font-semibold text-foreground">
+          Change History
+        </h2>
+        <p className="text-xs text-muted-foreground">
+          Audit log of all changes made to this invoice.
+        </p>
+      </div>
+      {loading ? (
+        <div className="p-8 text-center text-sm text-muted-foreground">
+          Loading…
+        </div>
+      ) : rows.length === 0 ? (
+        <div className="p-12 text-center space-y-2">
+          <History className="h-8 w-8 mx-auto text-muted-foreground" />
+          <p className="text-sm text-muted-foreground">
+            No changes logged yet.
+          </p>
+        </div>
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>When</TableHead>
+              <TableHead>Who</TableHead>
+              <TableHead>Action</TableHead>
+              <TableHead>Details</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {rows.map((r) => (
+              <TableRow key={r.id}>
+                <TableCell className="text-muted-foreground whitespace-nowrap">
+                  {formatDateTime(r.created_at)}
+                </TableCell>
+                <TableCell>{r.actor_email ?? "—"}</TableCell>
+                <TableCell className="font-medium">{describe(r)}</TableCell>
+                <TableCell className="text-muted-foreground text-xs">
+                  {r.notes ??
+                    (r.new_value
+                      ? JSON.stringify(r.new_value).slice(0, 120)
+                      : "—")}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      )}
+    </section>
+  );
+}

@@ -76,6 +76,9 @@ type CommitmentDetail = Commitment & {
   inclusions?: string | null;
   exclusions?: string | null;
   allow_non_admin_view_sov_items?: boolean;
+  executed?: boolean;
+  created_by?: string | null;
+  created_by_name?: string | null;
   change_order_totals?: {
     approved: number;
     pending: number;
@@ -265,6 +268,9 @@ const normalizeCommitment = (raw: unknown): CommitmentDetail | null => {
       record.change_order_totals && typeof record.change_order_totals === "object"
         ? (record.change_order_totals as CommitmentDetail["change_order_totals"])
         : undefined,
+    executed: typeof record.executed === "boolean" ? record.executed : undefined,
+    created_by: typeof record.created_by === "string" ? record.created_by : null,
+    created_by_name: typeof record.created_by_name === "string" ? record.created_by_name : null,
     line_items,
   };
 };
@@ -282,6 +288,65 @@ function isRawUuid(s: string): boolean {
 function safeNumber(n: string | undefined): string | undefined {
   if (!n || isRawUuid(n)) return undefined;
   return n;
+}
+
+// ---------------------------------------------------------------------------
+// Contract Summary Report
+// ---------------------------------------------------------------------------
+
+function ContractSummaryReport({ commitment }: { commitment: CommitmentDetail }) {
+  const approvedCOs = commitment.change_order_totals?.approved ?? commitment.approved_change_orders ?? 0;
+  const pendingCOs = commitment.pending_change_orders ?? 0;
+  const draftCOs = commitment.draft_change_orders ?? 0;
+  const revisedContract = commitment.revised_contract_amount ?? 0;
+  const pendingRevised = revisedContract + pendingCOs;
+  const invoiced = commitment.billed_to_date ?? 0;
+  const paymentsIssued = commitment.payments_issued ?? 0;
+  const remainingBalance = commitment.remaining_balance !== undefined
+    ? commitment.remaining_balance
+    : revisedContract - paymentsIssued;
+  const percentPaid = revisedContract > 0 ? (paymentsIssued / revisedContract) * 100 : 0;
+
+  const rows: Array<{ label: string; value: string; bold?: boolean; indent?: boolean; dividerAbove?: boolean }> = [
+    { label: "Original Contract", value: formatCurrency(commitment.original_amount) },
+    { label: "Approved Change Orders", value: formatCurrency(approvedCOs), indent: true },
+    { label: "Revised Contract", value: formatCurrency(revisedContract), bold: true, dividerAbove: true },
+    { label: "Pending Change Orders", value: formatCurrency(pendingCOs), indent: true },
+    { label: "Pending Revised Contract", value: formatCurrency(pendingRevised), bold: true, dividerAbove: true },
+    { label: "Draft Change Orders", value: formatCurrency(draftCOs), indent: true },
+    { label: "Invoices (Billed to Date)", value: formatCurrency(invoiced), dividerAbove: true },
+    { label: "Payments Issued", value: formatCurrency(paymentsIssued) },
+    { label: "Percent Paid", value: `${percentPaid.toFixed(1)}%` },
+    { label: "Remaining Balance Outstanding", value: formatCurrency(remainingBalance), bold: true, dividerAbove: true },
+  ];
+
+  return (
+    <table className="w-full text-sm">
+      <tbody>
+        {rows.map((row, i) => {
+          const isLast = row.label === "Remaining Balance Outstanding";
+          const isEven = i % 2 === 0;
+          return (
+            <tr
+              key={row.label}
+              className={isEven ? "bg-violet-50/60 dark:bg-violet-950/20" : ""}
+            >
+              <td
+                className={`px-4 py-2.5 ${row.indent ? "pl-8" : ""} ${isLast ? "font-bold text-foreground text-base" : row.bold ? "font-medium text-foreground" : "text-muted-foreground"}`}
+              >
+                {row.label}
+              </td>
+              <td
+                className={`px-4 py-2.5 text-right tabular-nums ${isLast ? "font-extrabold text-foreground text-base" : row.bold ? "font-semibold text-foreground" : "text-foreground"}`}
+              >
+                {row.value}
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
+  );
 }
 
 // ---------------------------------------------------------------------------
@@ -308,10 +373,10 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
   const exclusionText = commitment.exclusions?.trim() || "";
 
   return (
-    <ContentSectionStack className="pb-20">
+    <ContentSectionStack className="pb-20 space-y-16">
       <section>
         <div className="grid grid-cols-[minmax(0,1fr)_minmax(340px,420px)] gap-x-16 gap-y-10">
-          <div className="space-y-10">
+          <div className="space-y-14">
             <div className="grid grid-cols-2 gap-x-20 gap-y-8">
               <div className="space-y-6">
                 <SectionRuleHeading label="Details" className="[&_span]:text-primary" />
@@ -367,15 +432,14 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
               <div className="space-y-6">
                 <SectionRuleHeading label="Contract Settings" className="[&_span]:text-primary" />
                 <dl className="space-y-4 text-sm">
-                  <LabelValueRow label="Retention">
+                  <LabelValueRow label="Default Retainage">
                     {commitment.retention_percentage ?? 0}%
                   </LabelValueRow>
-                  <LabelValueRow label="Accounting Method">
-                    {commitment.accounting_method
-                      ? commitment.accounting_method
-                          .replace(/_/g, " ")
-                          .replace(/\b\w/g, (c) => c.toUpperCase())
-                      : "Not set"}
+                  <LabelValueRow label="Executed">
+                    {commitment.executed === true ? "Yes" : commitment.executed === false ? "No" : "—"}
+                  </LabelValueRow>
+                  <LabelValueRow label="Created By" missing={!commitment.created_by_name && !commitment.created_by}>
+                    {commitment.created_by_name || "—"}
                   </LabelValueRow>
                 </dl>
               </div>
@@ -444,7 +508,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
             </div>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-10">
             <div className="space-y-4">
               <SectionRuleHeading label="Key Dates" className="[&_span]:text-primary" />
               <dl className="space-y-3 text-sm">
@@ -487,7 +551,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
       </section>
 
       {/* Schedule of Values */}
-      <div className="space-y-4">
+      <div className="space-y-6">
         <SectionRuleHeading label="Schedule of Values" className="[&_span]:text-primary" />
         <ScheduleOfValuesTab
           lineItems={commitment.line_items || []}
@@ -499,8 +563,14 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
         />
       </div>
 
-      {/* Attachments */}
+      {/* Contract Summary Report */}
       <div className="space-y-4">
+        <SectionRuleHeading label="Contract Summary" className="[&_span]:text-primary" />
+        <ContractSummaryReport commitment={commitment} />
+      </div>
+
+      {/* Attachments */}
+      <div className="space-y-6">
         <SectionRuleHeading label="Attachments" className="[&_span]:text-primary" />
         <AttachmentsTab commitmentId={commitmentId} />
       </div>
@@ -782,7 +852,7 @@ export default function CommitmentDetailPage() {
     );
   }
 
-  const sovLabel = isPO ? "PO SOV" : "SC SOV";
+  const sovLabel = isPO ? "PO SOV" : "SOV";
   const showSubcontractorSovTab = !isPO;
 
   const headerActions = (
@@ -846,8 +916,21 @@ export default function CommitmentDetailPage() {
               toast.info("Navigate to Payments tab to create a payment");
             }}
           >
-            <Mail className="mr-2 h-4 w-4" />
+            <Receipt className="mr-2 h-4 w-4" />
             Payment
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => {
+              setActiveTab("rfqs");
+              toast.info("Navigate to RFQs tab to create an RFQ");
+            }}
+          >
+            <FileText className="mr-2 h-4 w-4" />
+            RFQ
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleEmail}>
+            <Mail className="mr-2 h-4 w-4" />
+            Email Contract
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -940,7 +1023,11 @@ export default function CommitmentDetailPage() {
         )}
 
         {activeTab === "invoices" && (
-          <InvoicesTab commitmentId={commitment.id} projectId={projectId} />
+          <InvoicesTab
+            commitmentId={commitment.id}
+            projectId={projectId}
+            commitmentType={commitment.type}
+          />
         )}
 
         {activeTab === "payments" && (

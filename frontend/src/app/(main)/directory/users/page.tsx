@@ -13,6 +13,7 @@ import {
   Shield,
   UserPlus,
   Users,
+  Edit,
 } from "lucide-react";
 import { useProjectUsers } from "@/hooks/use-project-users";
 
@@ -57,6 +58,8 @@ export default function DirectoryUsersPage() {
   const [isAddOpen, setIsAddOpen] = React.useState(false);
   const [isBulkAddOpen, setIsBulkAddOpen] = React.useState(false);
   const [selectedUser, setSelectedUser] =
+    React.useState<PersonWithDetails | null>(null);
+  const [editingUser, setEditingUser] =
     React.useState<PersonWithDetails | null>(null);
   const [permissionsUserId, setPermissionsUserId] = React.useState<
     string | null
@@ -250,6 +253,10 @@ export default function DirectoryUsersPage() {
                 <Eye className="mr-2 h-4 w-4" />
                 View Details
               </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setEditingUser(user)}>
+                <Edit className="mr-2 h-4 w-4" />
+                Edit User
+              </DropdownMenuItem>
               <DropdownMenuItem onClick={() => handleManagePermissions(user)}>
                 <Shield className="mr-2 h-4 w-4" />
                 Manage Permissions
@@ -404,8 +411,42 @@ export default function DirectoryUsersPage() {
         <UserDetailSheet
           user={selectedUser}
           projectId={projectId}
-          trigger={<div />}
+          open={!!selectedUser}
+          onOpenChange={(open) => {
+            if (!open) {
+              setSelectedUser(null);
+            }
+          }}
           onUserUpdated={handleUserUpdated}
+        />
+      )}
+
+      {editingUser && (
+        <UserFormDialog
+          open={!!editingUser}
+          onOpenChange={(open) => {
+            if (!open) {
+              setEditingUser(null);
+            }
+          }}
+          projectId={projectId}
+          user={{
+            id: editingUser.id,
+            first_name: editingUser.first_name,
+            last_name: editingUser.last_name,
+            email: editingUser.email,
+            phone_mobile: editingUser.phone_mobile,
+            phone_business: editingUser.phone_business,
+            job_title: editingUser.job_title,
+            company_id: editingUser.company_id,
+            membership: {
+              permission_template_id:
+                editingUser.membership?.permission_template_id,
+              department: (editingUser.membership as { department?: string })
+                ?.department,
+            },
+          }}
+          onSuccess={handleUserUpdated}
         />
       )}
 

@@ -13,6 +13,7 @@ import {
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { PageShell } from "@/components/layout";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -86,15 +87,8 @@ export default function AccountSettingsPage() {
   };
 
   return (
+    <PageShell variant="dashboard" title="Account">
     <div className="px-8 py-8 max-w-4xl">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-xl font-semibold tracking-tight">Account</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Manage your company profile and billing information.
-        </p>
-      </div>
-
       <div className="space-y-8">
         {/* Company Profile */}
         <SectionCard icon={Building2} title="Company Profile">
@@ -316,5 +310,6 @@ export default function AccountSettingsPage() {
         </SectionCard>
       </div>
     </div>
+    </PageShell>
   );
 }

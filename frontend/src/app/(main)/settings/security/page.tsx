@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Shield, Smartphone, Clock, Key } from "lucide-react";
+import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -73,15 +74,8 @@ export default function SecuritySettingsPage() {
   const [ssoEnabled, setSsoEnabled] = React.useState(false);
 
   return (
+    <PageShell variant="dashboard" title="Security">
     <div className="px-8 py-8 max-w-4xl">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-xl font-semibold tracking-tight">Security</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Control access policies, authentication, and active sessions.
-        </p>
-      </div>
-
       <div className="space-y-8">
         {/* Authentication */}
         <section>
@@ -211,5 +205,6 @@ export default function SecuritySettingsPage() {
         </section>
       </div>
     </div>
+    </PageShell>
   );
 }

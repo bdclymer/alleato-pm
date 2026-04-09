@@ -222,6 +222,8 @@ export async function GET(
         total_completed: totalCompleted,
         total_retainage: totalRetainage,
         paid_amount: paidAmount,
+        original_contract_sum: originalContractSum,
+        net_change_by_cos: netChangeByCos,
         total_contract_amount: totalContractAmount,
         percent_complete: percentComplete,
         erp_status: null as string | null,

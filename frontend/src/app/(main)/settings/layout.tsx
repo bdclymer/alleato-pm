@@ -32,7 +32,7 @@ const navGroups: NavGroup[] = [
     title: "Workspace",
     items: [
       { label: "Account", href: "/settings/account", icon: Building2 },
-      { label: "Members", href: "/settings/members", icon: Users },
+      { label: "Users", href: "/settings/users", icon: Users },
     ],
   },
 ];

@@ -3,6 +3,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Search, UserPlus, Settings, Link, Shield, Trash2 } from "lucide-react";
+import { PageShell } from "@/components/layout";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
@@ -221,15 +222,8 @@ export default function AuditLogPage() {
   const grouped = groupByDate(filtered);
 
   return (
+    <PageShell variant="dashboard" title="Audit Log">
     <div className="px-8 py-8 max-w-4xl">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold tracking-tight">Audit Log</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          A record of all administrative actions taken in your workspace.
-        </p>
-      </div>
-
       {/* Filters */}
       <div className="flex items-center gap-3 mb-5">
         <div className="relative flex-1 max-w-xs">
@@ -290,5 +284,6 @@ export default function AuditLogPage() {
         </div>
       )}
     </div>
+    </PageShell>
   );
 }

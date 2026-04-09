@@ -11,6 +11,7 @@ interface RouteParams {
 
 interface SsovLineItemInput {
   id?: string;
+  source_sov_item_id: string | null;
   line_number: number | null;
   budget_code: string | null;
   description: string | null;
@@ -77,7 +78,6 @@ async function getCommitmentType(supabase: any, commitmentId: string) {
   }
   return data.commitment_type as string | null;
 }
-
 async function getTargetAndSourceSov(supabase: any, commitmentId: string) {
   const { data: sourceSov, error } = await supabase
     .from("subcontract_sov_items")
@@ -313,7 +313,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 
     const { data: lineItems, error: lineItemsError } = await supabase
       .from("subcontractor_sov_items")
-      .select("id, line_number, budget_code, description, amount, billed_to_date")
+      .select("id, source_sov_item_id, line_number, budget_code, description, amount, billed_to_date")
       .eq("submission_id", submission.id)
       .order("line_number", { ascending: true });
 
@@ -414,6 +414,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       const item = body.lineItems[i];
       const rowData = {
         submission_id: submission.id,
+        source_sov_item_id: item.source_sov_item_id || null,
         line_number: item.line_number ?? i + 1,
         budget_code: item.budget_code || null,
         description: item.description || null,
@@ -517,6 +518,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       if (sourceSov.length > 0) {
         const mapped = sourceSov.map((row: any, index: number) => ({
           submission_id: submission.id,
+          source_sov_item_id: row.id,
           line_number: row.line_number ?? index + 1,
           budget_code: row.budget_code || null,
           description: row.description || null,

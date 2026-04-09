@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Edit, Mail, Phone, Building, User, Shield } from "lucide-react";
 import type { Database } from "@/types/database.types";
+import { ContactFormDialog } from "@/components/domain/contacts/ContactFormDialog";
 
 type Contact = Database["public"]["Tables"]["people"]["Row"];
 type Company = Database["public"]["Tables"]["companies"]["Row"];
@@ -35,59 +36,61 @@ export default function ContactDetailsPage() {
   const [contact, setContact] = React.useState<ContactWithRelations | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<Error | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
+
+  const fetchContactDetails = React.useCallback(async () => {
+    try {
+      setError(null);
+      const supabase = createClient();
+
+      // Fetch contact
+      const { data: contactData, error: contactError } = await supabase
+        .from("people")
+        .select("*")
+        .eq("id", contactId)
+        .single();
+
+      if (contactError) throw contactError;
+
+      // Fetch company separately if contact has a company_id
+      let company: Company | null = null;
+      if (contactData.company_id) {
+        const { data: companyData } = await supabase
+          .from("companies")
+          .select("*")
+          .eq("id", contactData.company_id)
+          .single();
+        company = companyData;
+      }
+
+      // Fetch project memberships with permissions
+      const { data: memberships, error: membershipError } = await supabase
+        .from("project_directory_memberships")
+        .select(`
+          *,
+          project:projects(*),
+          permission_template:permission_templates(*)
+        `)
+        .eq("person_id", contactId)
+        .order("created_at", { ascending: false });
+
+      if (membershipError) throw membershipError;
+
+      setContact({
+        ...contactData,
+        company,
+        memberships: memberships || [],
+      });
+    } catch (err) {
+      setError(err as Error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [contactId]);
 
   React.useEffect(() => {
-    async function fetchContactDetails() {
-      try {
-        const supabase = createClient();
-
-        // Fetch contact
-        const { data: contactData, error: contactError } = await supabase
-          .from("people")
-          .select("*")
-          .eq("id", contactId)
-          .single();
-
-        if (contactError) throw contactError;
-
-        // Fetch company separately if contact has a company_id
-        let company: Company | null = null;
-        if (contactData.company_id) {
-          const { data: companyData } = await supabase
-            .from("companies")
-            .select("*")
-            .eq("id", contactData.company_id)
-            .single();
-          company = companyData;
-        }
-
-        // Fetch project memberships with permissions
-        const { data: memberships, error: membershipError } = await supabase
-          .from("project_directory_memberships")
-          .select(`
-            *,
-            project:projects(*),
-            permission_template:permission_templates(*)
-          `)
-          .eq("person_id", contactId)
-          .order("created_at", { ascending: false });
-
-        if (membershipError) throw membershipError;
-
-        setContact({
-          ...contactData,
-          company,
-          memberships: memberships || [],
-        });
-      } catch (err) {
-        setError(err as Error);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    fetchContactDetails();
-  }, [contactId]);
+    void fetchContactDetails();
+  }, [fetchContactDetails]);
 
   if (isLoading) {
     return (
@@ -129,7 +132,10 @@ export default function ContactDetailsPage() {
       description={contact.email || "No email provided"}
       onBack={() => router.back()}
       actions={
-        <Button className="bg-primary hover:bg-primary/90">
+        <Button
+          className="bg-primary hover:bg-primary/90"
+          onClick={() => setIsEditDialogOpen(true)}
+        >
           <Edit />
           Edit Contact
         </Button>
@@ -350,6 +356,28 @@ export default function ContactDetailsPage() {
             </CardContent>
           </Card>
         </div>
+      <ContactFormDialog
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+        contact={{
+          id: contact.id,
+          first_name: contact.first_name,
+          last_name: contact.last_name,
+          email: contact.email,
+          phone: contact.phone_mobile ?? contact.phone_business,
+          company_id: contact.company_id,
+          job_title: contact.job_title,
+          department: contact.business_unit,
+          address: contact.address_line1,
+          city: contact.city,
+          state: contact.state,
+          zip: contact.zip,
+          notes: contact.notes,
+        }}
+        onSuccess={() => {
+          void fetchContactDetails();
+        }}
+      />
     </PageShell>
   );
 }

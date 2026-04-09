@@ -2,11 +2,10 @@
 
 import { useState, useEffect, useMemo, memo } from 'react'
 import { toast } from 'sonner'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { DataTable } from '@/components/tables/DataTable'
 import { Text } from '@/components/ds/text'
 import { EmptyState } from '@/components/ds/empty-state'
-import { SummaryCardGrid } from '@/components/ds/summary-card-grid'
 import { formatCurrency } from '@/config/tables'
 import { formatDate } from '@/lib/table-config/formatters'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -173,82 +172,69 @@ export const ChangeOrdersTab = memo(function ChangeOrdersTab({ commitmentId, pro
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
+      <div>
+        <CardHeader className="px-0">
           <CardTitle>Change Orders</CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 px-0">
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-10 w-full" />
         </CardContent>
-      </Card>
+      </div>
     )
   }
 
   if (error) {
     return (
-      <Card>
-        <CardHeader>
+      <div>
+        <CardHeader className="px-0">
           <CardTitle>Change Orders</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-0">
           <Text tone="destructive">{error}</Text>
         </CardContent>
-      </Card>
-    )
-  }
-
-  const summaryCards = [
-    { id: 'approved', label: 'Approved', value: formatCurrency(totals.approved) },
-    { id: 'pending', label: 'Pending', value: formatCurrency(totals.pending) },
-    { id: 'draft', label: 'Draft', value: formatCurrency(totals.draft) },
-    { id: 'total', label: 'Total', value: formatCurrency(totals.total) },
-  ]
-
-  if (changeOrders.length === 0) {
-    return (
-      <div className="space-y-6">
-        <SummaryCardGrid cards={summaryCards} columns={4} size="sm" />
-        <Card>
-          <CardHeader>
-            <CardTitle>Change Orders</CardTitle>
-            <CardDescription>
-              No change orders have been created for this commitment yet.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <EmptyState
-              icon={<FileText className="h-5 w-5" />}
-              title="No change orders yet"
-              description="Change orders will appear here when created."
-            />
-          </CardContent>
-        </Card>
       </div>
     )
   }
 
-  return (
-    <div className="space-y-6">
-      <SummaryCardGrid cards={summaryCards} columns={4} size="sm" />
-      <Card>
-        <CardHeader>
-          <CardTitle>Change Orders ({changeOrders.length})</CardTitle>
+  if (changeOrders.length === 0) {
+    return (
+      <section className="space-y-4">
+        <CardHeader className="px-0">
+          <CardTitle>Change Orders</CardTitle>
           <CardDescription>
-            Approved change orders automatically update the revised contract amount.
+            No change orders have been created for this commitment yet.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <DataTable
-            columns={columns}
-            data={changeOrders}
-            showToolbar={false}
-            showPagination={changeOrders.length > 10}
+        <CardContent className="px-0">
+          <EmptyState
+            icon={<FileText className="h-5 w-5" />}
+            title="No change orders yet"
+            description="Change orders will appear here when created."
           />
         </CardContent>
-      </Card>
-    </div>
+      </section>
+    )
+  }
+
+  return (
+    <section className="space-y-4">
+      <CardHeader className="px-0">
+        <CardTitle>Change Orders ({changeOrders.length})</CardTitle>
+        <CardDescription>
+          Approved change orders automatically update the revised contract amount.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="px-0">
+        <DataTable
+          columns={columns}
+          data={changeOrders}
+          showToolbar={false}
+          showPagination={changeOrders.length > 10}
+        />
+      </CardContent>
+    </section>
   )
 })
 

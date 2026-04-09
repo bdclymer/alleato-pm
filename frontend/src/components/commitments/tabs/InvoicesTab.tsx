@@ -1,380 +1,267 @@
 "use client";
 
+import Link from "next/link";
 import { memo, useEffect, useMemo, useState } from "react";
-import {
-  ArrowUpDown,
-  DollarSign,
-  Percent,
-  Receipt,
-  TrendingUp,
-} from "lucide-react";
+import { Paperclip } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DataTable } from "@/components/tables/DataTable";
 import { Text } from "@/components/ds/text";
+import { InvoiceStatusBadge } from "@/components/invoicing/InvoiceStatusBadge";
 import { formatCurrency } from "@/config/tables";
 
-interface InvoiceSummary {
+interface CommitmentInvoiceRow {
+  id: number;
+  invoice_number: string | null;
+  period_start: string | null;
+  period_end: string | null;
+  billing_date: string | null;
+  status: string;
+  total_completed: number;
+  total_retainage: number;
+  net_amount: number;
   total_contract_amount: number;
-  gross_billed_to_date: number;
-  retainage_percentage: number;
-  retainage_held: number;
-  net_billed_to_date: number;
-  remaining_to_invoice: number;
-  net_remaining_balance: number;
-  percent_invoiced: number;
-}
-
-interface InvoiceLineItem {
-  id: string;
-  line_number: number | null;
-  budget_code: string | null;
-  description: string;
-  scheduled_value: number;
-  gross_billed_to_date: number;
-  retainage_percentage: number;
-  retainage_held: number;
-  net_billed_to_date: number;
-  remaining_amount: number;
+  original_contract_sum: number;
+  net_change_by_cos: number;
   percent_complete: number;
+  attachment_count?: number;
 }
 
 interface InvoicesTabProps {
   commitmentId: string;
   projectId: string | number;
+  commitmentType: "subcontract" | "purchase_order";
+}
+
+interface EnrichedInvoice extends CommitmentInvoiceRow {
+  revised_contract_sum: number;
+  total_earned_less_retainage: number;
+  balance_to_finish: number;
+}
+
+function formatDate(value: string | null): string {
+  if (!value) return "—";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return "—";
+  return d.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function formatInvoiceDates(start: string | null, end: string | null): string {
+  if (!start && !end) return "—";
+  if (start && end) return `${formatDate(start)} – ${formatDate(end)}`;
+  return formatDate(start ?? end);
 }
 
 export const InvoicesTab = memo(function InvoicesTab({
   commitmentId,
   projectId,
+  commitmentType,
 }: InvoicesTabProps) {
-  const [summary, setSummary] = useState<InvoiceSummary | null>(null);
-  const [lineItems, setLineItems] = useState<InvoiceLineItem[]>([]);
+  const [invoices, setInvoices] = useState<EnrichedInvoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchInvoiceData = async () => {
+    const controller = new AbortController();
+
+    async function load() {
       setIsLoading(true);
       setError(null);
-
       try {
-        const response = await fetch(`/api/commitments/${commitmentId}/invoices`);
+        const filterKey =
+          commitmentType === "subcontract" ? "subcontract_id" : "purchase_order_id";
+        const url = `/api/projects/${projectId}/invoicing/subcontractor/invoices?${filterKey}=${encodeURIComponent(commitmentId)}`;
+        const response = await fetch(url, { signal: controller.signal });
+        if (!response.ok) throw new Error("Failed to load invoices");
+        const payload = (await response.json()) as { data?: CommitmentInvoiceRow[] };
+        const rows = payload.data ?? [];
 
-        if (!response.ok) {
-          if (response.status === 404) {
-            setSummary(null);
-            setLineItems([]);
-            return;
-          }
-          throw new Error("Failed to fetch invoice data");
-        }
+        const enriched: EnrichedInvoice[] = rows.map((row) => {
+          const revised = row.total_contract_amount;
+          const totalEarnedLessRetainage = row.total_completed - row.total_retainage;
+          return {
+            ...row,
+            revised_contract_sum: revised,
+            total_earned_less_retainage: totalEarnedLessRetainage,
+            balance_to_finish: Math.max(revised - totalEarnedLessRetainage, 0),
+          };
+        });
 
-        const payload = await response.json();
-
-        if (payload.summary) {
-          setSummary(payload.summary);
-        } else {
-          setSummary({
-            total_contract_amount: 0,
-            gross_billed_to_date: 0,
-            retainage_percentage: 0,
-            retainage_held: 0,
-            net_billed_to_date: 0,
-            remaining_to_invoice: 0,
-            net_remaining_balance: 0,
-            percent_invoiced: 0,
-          });
-        }
-
-        if (Array.isArray(payload.line_items)) {
-          setLineItems(payload.line_items);
-        } else {
-          setLineItems([]);
-        }
+        setInvoices(enriched);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load invoice data");
+        if ((err as Error).name === "AbortError") return;
+        setError(err instanceof Error ? err.message : "Failed to load invoices");
       } finally {
         setIsLoading(false);
       }
-    };
+    }
 
-    fetchInvoiceData();
-  }, [commitmentId]);
+    void load();
+    return () => controller.abort();
+  }, [commitmentId, commitmentType, projectId]);
 
-  const columns: ColumnDef<InvoiceLineItem>[] = useMemo(
+  const columns: ColumnDef<EnrichedInvoice>[] = useMemo(
     () => [
       {
-        accessorKey: "line_number",
+        accessorKey: "invoice_number",
         header: "#",
-        cell: ({ row }) => <Text size="sm">{row.original.line_number ?? "—"}</Text>,
-        size: 60,
-      },
-      {
-        accessorKey: "budget_code",
-        header: "Cost Code",
         cell: ({ row }) => (
-          <Text size="sm" className="font-mono">
-            {row.original.budget_code || "—"}
-          </Text>
+          <Link
+            href={`/${projectId}/invoicing/subcontractor/${row.original.id}`}
+            className="font-medium text-primary hover:underline"
+          >
+            {row.original.invoice_number || `INV-${row.original.id}`}
+          </Link>
         ),
         size: 120,
       },
       {
-        accessorKey: "description",
-        header: "Description",
+        id: "invoice_dates",
+        header: "Invoice Dates",
         cell: ({ row }) => (
-          <Text size="sm" className="max-w-72 truncate">
-            {row.original.description || "—"}
+          <Text size="sm" className="whitespace-nowrap">
+            {formatInvoiceDates(row.original.period_start, row.original.period_end)}
           </Text>
         ),
       },
       {
-        accessorKey: "scheduled_value",
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="h-8 px-2"
-          >
-            Scheduled Value
-            <ArrowUpDown />
-          </Button>
-        ),
+        accessorKey: "billing_date",
+        header: "Billing Date",
         cell: ({ row }) => (
-          <Text size="sm" className="text-right">
-            {formatCurrency(row.original.scheduled_value)}
+          <Text size="sm" className="whitespace-nowrap">
+            {formatDate(row.original.billing_date)}
           </Text>
         ),
       },
       {
-        accessorKey: "gross_billed_to_date",
-        header: ({ column }) => (
-          <Button
-            variant="ghost"
-            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-            className="h-8 px-2"
-          >
-            Gross Billed
-            <ArrowUpDown />
-          </Button>
-        ),
+        accessorKey: "status",
+        header: "Status",
+        cell: ({ row }) => <InvoiceStatusBadge status={row.original.status} />,
+      },
+      {
+        accessorKey: "original_contract_sum",
+        header: () => <div className="text-right">Original Contract Sum</div>,
         cell: ({ row }) => (
-          <Text size="sm" className="text-right font-medium">
-            {formatCurrency(row.original.gross_billed_to_date)}
-          </Text>
+          <div className="text-right tabular-nums">
+            {formatCurrency(row.original.original_contract_sum)}
+          </div>
         ),
       },
       {
-        accessorKey: "retainage_held",
-        header: "Retainage Held",
+        accessorKey: "net_change_by_cos",
+        header: () => <div className="text-right">Net Change by COs</div>,
         cell: ({ row }) => (
-          <Text size="sm" className="text-right text-destructive">
-            {formatCurrency(row.original.retainage_held)}
-          </Text>
+          <div className="text-right tabular-nums">
+            {formatCurrency(row.original.net_change_by_cos)}
+          </div>
         ),
       },
       {
-        accessorKey: "net_billed_to_date",
-        header: "Net Billed",
+        accessorKey: "revised_contract_sum",
+        header: () => <div className="text-right">Revised Contract Sum</div>,
         cell: ({ row }) => (
-          <Text size="sm" className="text-right font-medium">
-            {formatCurrency(row.original.net_billed_to_date)}
-          </Text>
+          <div className="text-right tabular-nums font-medium">
+            {formatCurrency(row.original.revised_contract_sum)}
+          </div>
         ),
       },
       {
-        accessorKey: "remaining_amount",
-        header: "Remaining",
+        accessorKey: "total_completed",
+        header: () => <div className="text-right">Total Completed & Stored</div>,
         cell: ({ row }) => (
-          <Text size="sm" className="text-right text-muted-foreground">
-            {formatCurrency(row.original.remaining_amount)}
-          </Text>
+          <div className="text-right tabular-nums">
+            {formatCurrency(row.original.total_completed)}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "total_retainage",
+        header: () => <div className="text-right">Total Retainage</div>,
+        cell: ({ row }) => (
+          <div className="text-right tabular-nums">
+            {formatCurrency(row.original.total_retainage)}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "total_earned_less_retainage",
+        header: () => <div className="text-right">Total Earned Less Retainage</div>,
+        cell: ({ row }) => (
+          <div className="text-right tabular-nums font-medium">
+            {formatCurrency(row.original.total_earned_less_retainage)}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "net_amount",
+        header: () => <div className="text-right">Payment Due</div>,
+        cell: ({ row }) => (
+          <div className="text-right tabular-nums font-medium">
+            {formatCurrency(row.original.net_amount)}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "balance_to_finish",
+        header: () => <div className="text-right">Balance to Finish</div>,
+        cell: ({ row }) => (
+          <div className="text-right tabular-nums">
+            {formatCurrency(row.original.balance_to_finish)}
+          </div>
         ),
       },
       {
         accessorKey: "percent_complete",
-        header: "% Complete",
+        header: () => <div className="text-right">% Complete</div>,
         cell: ({ row }) => (
-          <div className="flex items-center gap-2">
-            <Progress value={row.original.percent_complete} className="h-2 w-16" />
-            <Text size="xs" className="w-10 text-right">
-              {row.original.percent_complete}%
-            </Text>
+          <div className="text-right tabular-nums">
+            {`${Math.round(row.original.percent_complete || 0)}%`}
           </div>
         ),
-        size: 140,
+      },
+      {
+        id: "attachments",
+        header: () => <div className="text-center">Attachments</div>,
+        cell: ({ row }) => (
+          <div className="flex items-center justify-center text-muted-foreground">
+            <Paperclip className="h-4 w-4" />
+            {row.original.attachment_count ? (
+              <span className="ml-1 text-xs">{row.original.attachment_count}</span>
+            ) : null}
+          </div>
+        ),
+        size: 100,
       },
     ],
-    [],
+    [projectId],
   );
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Retainage Billing Summary</CardTitle>
-          <CardDescription>Billing progress for this commitment</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Skeleton className="h-24 w-full" />
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-full" />
-          <Skeleton className="h-10 w-full" />
-        </CardContent>
-      </Card>
+      <div className="space-y-3">
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+        <Skeleton className="h-10 w-full" />
+      </div>
     );
   }
 
   if (error) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Retainage Billing Summary</CardTitle>
-          <CardDescription>Billing progress for this commitment</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Text tone="destructive">{error}</Text>
-        </CardContent>
-      </Card>
-    );
+    return <Text tone="destructive">{error}</Text>;
   }
 
-  const hasBillingData =
-    summary &&
-    (summary.total_contract_amount > 0 ||
-      summary.gross_billed_to_date > 0 ||
-      summary.retainage_held > 0);
-
   return (
-    <div className="space-y-6">
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Receipt className="h-5 w-5" />
-            Retainage Billing Summary
-          </CardTitle>
-          <CardDescription>
-            Gross billing, retainage held, and the remaining balance for this commitment
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {hasBillingData ? (
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <Text tone="muted">Gross Billing Progress</Text>
-                  <Text weight="medium">{summary?.percent_invoiced || 0}% Invoiced</Text>
-                </div>
-                <Progress value={summary?.percent_invoiced || 0} className="h-3" />
-              </div>
-
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
-                <div className="rounded-lg bg-muted/50 p-4">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <DollarSign className="h-4 w-4" />
-                    <Text size="xs">Contract Value</Text>
-                  </div>
-                  <Text size="lg" weight="semibold" className="mt-1">
-                    {formatCurrency(summary?.total_contract_amount || 0)}
-                  </Text>
-                </div>
-
-                <div className="rounded-lg bg-muted/50 p-4">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <TrendingUp className="h-4 w-4" />
-                    <Text size="xs">Gross Billed</Text>
-                  </div>
-                  <Text
-                    size="lg"
-                    weight="semibold"
-                    className="mt-1 text-green-600 dark:text-green-400"
-                  >
-                    {formatCurrency(summary?.gross_billed_to_date || 0)}
-                  </Text>
-                </div>
-
-                <div className="rounded-lg bg-muted/50 p-4">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Receipt className="h-4 w-4" />
-                    <Text size="xs">Retainage Held</Text>
-                  </div>
-                  <Text size="lg" weight="semibold" className="mt-1 text-destructive">
-                    {formatCurrency(summary?.retainage_held || 0)}
-                  </Text>
-                </div>
-
-                <div className="rounded-lg bg-muted/50 p-4">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Percent className="h-4 w-4" />
-                    <Text size="xs">Net Billed</Text>
-                  </div>
-                  <Text size="lg" weight="semibold" className="mt-1">
-                    {formatCurrency(summary?.net_billed_to_date || 0)}
-                  </Text>
-                </div>
-
-                <div className="rounded-lg bg-muted/50 p-4">
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Percent className="h-4 w-4" />
-                    <Text size="xs">Remaining to Invoice</Text>
-                  </div>
-                  <Text size="lg" weight="semibold" className="mt-1">
-                    {formatCurrency(summary?.remaining_to_invoice || 0)}
-                  </Text>
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between text-sm text-muted-foreground">
-                <Text size="sm">Retainage rate: {summary?.retainage_percentage || 0}%</Text>
-                <Text size="sm">
-                  Net remaining balance: {formatCurrency(summary?.net_remaining_balance || 0)}
-                </Text>
-              </div>
-            </div>
-          ) : (
-            <div className="py-8 text-center">
-              <Receipt className="mx-auto h-12 w-12 text-muted-foreground/50" />
-              <Text tone="muted" size="sm" className="mt-2">
-                No billing data available for this commitment
-              </Text>
-              <Text tone="muted" size="xs" className="mt-1">
-                Add SOV line items with billed amounts to see retainage-aware invoice progress
-              </Text>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {lineItems.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Billing by Line Item</CardTitle>
-            <CardDescription>
-              Detailed breakdown of gross billed amounts and retainage by SOV line item
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <DataTable
-              columns={columns}
-              data={lineItems}
-              showToolbar={false}
-              showPagination={lineItems.length > 10}
-            />
-          </CardContent>
-        </Card>
-      )}
-    </div>
+    <DataTable
+      columns={columns}
+      data={invoices}
+      showToolbar={false}
+      showPagination={invoices.length > 25}
+    />
   );
 });
 

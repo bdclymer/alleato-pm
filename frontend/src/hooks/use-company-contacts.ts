@@ -95,7 +95,8 @@ export function useCompanyContacts(
         // After vendors→companies migration, vendorId IS the companyId
         const resolvedCompanyId = vendorId ?? companyId;
 
-        const { data, error: queryError } = await supabase
+        // Fetch vendor_contacts links (non-fatal — failure still allows company contacts through)
+        const { data: vcData } = await supabase
           .from("vendor_contacts")
           .select(
             "people!vendor_contacts_person_id_fkey(id, first_name, last_name, email, phone_business, job_title, company_id, person_type)",
@@ -103,12 +104,11 @@ export function useCompanyContacts(
           .eq("company_id", vendorId)
           .limit(limit);
 
-        if (queryError) throw new Error(queryError.message);
-
-        const vendorLinkedPeople = (data || [])
+        const vendorLinkedPeople = (vcData || [])
           .map((row) => (row as Record<string, unknown>).people)
           .filter(Boolean) as CompanyContact[];
 
+        // Always fetch all people directly on the company — this is the primary source
         let companyContacts: CompanyContact[] = [];
         if (resolvedCompanyId) {
           const { data: companyContactData, error: companyContactsError } = await supabase
@@ -117,7 +117,6 @@ export function useCompanyContacts(
               "id, first_name, last_name, email, phone_business, job_title, company_id, person_type",
             )
             .eq("company_id", resolvedCompanyId)
-            .eq("person_type", "contact")
             .order("last_name", { ascending: true })
             .order("first_name", { ascending: true })
             .limit(limit);
@@ -130,7 +129,6 @@ export function useCompanyContacts(
 
         for (const contact of [...vendorLinkedPeople, ...companyContacts]) {
           if (!contact?.id) continue;
-          if (contact.person_type && contact.person_type !== "contact") continue;
           merged.set(contact.id, contact);
         }
 
@@ -148,7 +146,6 @@ export function useCompanyContacts(
             "id, first_name, last_name, email, phone_business, job_title, company_id, person_type",
           )
           .eq("company_id", companyId)
-          .eq("person_type", "contact")
           .order("last_name", { ascending: true })
           .limit(limit);
 

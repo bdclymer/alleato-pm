@@ -1,3 +1,4 @@
+Using workdir /Users/meganharrison/Documents/alleato-pm
 export type Json =
   | string
   | number
@@ -5925,17 +5926,32 @@ export type Database = {
           approved_by: string | null
           approved_date: string | null
           change_order_number: string
+          change_reason: string | null
+          contract_company: string | null
           contract_id: string
           contract_type: string | null
           created_at: string
+          created_by: string | null
           description: string
+          designated_reviewer: string | null
+          due_date: string | null
+          executed: boolean | null
+          field_change: boolean | null
           id: string
+          invoiced_date: string | null
+          is_private: boolean | null
+          location: string | null
+          paid_in_full: boolean | null
           parallel_mode: boolean
           prime_change_order_id: number | null
+          reference: string | null
           rejection_reason: string | null
           requested_by: string | null
           requested_date: string
+          revision: number | null
+          schedule_impact: number | null
           status: string
+          title: string | null
           updated_at: string
         }
         Insert: {
@@ -5944,17 +5960,32 @@ export type Database = {
           approved_by?: string | null
           approved_date?: string | null
           change_order_number: string
+          change_reason?: string | null
+          contract_company?: string | null
           contract_id: string
           contract_type?: string | null
           created_at?: string
+          created_by?: string | null
           description: string
+          designated_reviewer?: string | null
+          due_date?: string | null
+          executed?: boolean | null
+          field_change?: boolean | null
           id?: string
+          invoiced_date?: string | null
+          is_private?: boolean | null
+          location?: string | null
+          paid_in_full?: boolean | null
           parallel_mode?: boolean
           prime_change_order_id?: number | null
+          reference?: string | null
           rejection_reason?: string | null
           requested_by?: string | null
           requested_date?: string
+          revision?: number | null
+          schedule_impact?: number | null
           status?: string
+          title?: string | null
           updated_at?: string
         }
         Update: {
@@ -5963,17 +5994,32 @@ export type Database = {
           approved_by?: string | null
           approved_date?: string | null
           change_order_number?: string
+          change_reason?: string | null
+          contract_company?: string | null
           contract_id?: string
           contract_type?: string | null
           created_at?: string
+          created_by?: string | null
           description?: string
+          designated_reviewer?: string | null
+          due_date?: string | null
+          executed?: boolean | null
+          field_change?: boolean | null
           id?: string
+          invoiced_date?: string | null
+          is_private?: boolean | null
+          location?: string | null
+          paid_in_full?: boolean | null
           parallel_mode?: boolean
           prime_change_order_id?: number | null
+          reference?: string | null
           rejection_reason?: string | null
           requested_by?: string | null
           requested_date?: string
+          revision?: number | null
+          schedule_impact?: number | null
           status?: string
+          title?: string | null
           updated_at?: string
         }
         Relationships: []
@@ -11536,6 +11582,33 @@ export type Database = {
           },
         ]
       }
+      notion_databases: {
+        Row: {
+          archived: boolean | null
+          attrs: Json | null
+          created_time: string | null
+          id: string | null
+          last_edited_time: string | null
+          url: string | null
+        }
+        Insert: {
+          archived?: boolean | null
+          attrs?: Json | null
+          created_time?: string | null
+          id?: string | null
+          last_edited_time?: string | null
+          url?: string | null
+        }
+        Update: {
+          archived?: boolean | null
+          attrs?: Json | null
+          created_time?: string | null
+          id?: string | null
+          last_edited_time?: string | null
+          url?: string | null
+        }
+        Relationships: []
+      }
       observation_comments: {
         Row: {
           author_id: string
@@ -13329,6 +13402,7 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           description: string | null
+          designated_reviewer: string | null
           due_date: string | null
           executed: boolean | null
           field_change: boolean | null
@@ -13341,7 +13415,10 @@ export type Database = {
           prime_contract_id: string | null
           project_id: number | null
           reference: string | null
+          rejection_reason: string | null
           request_received_from: string | null
+          review_date: string | null
+          revised_substantial_completion_date: string | null
           revision: number | null
           schedule_impact: number | null
           signed_co_received_date: string | null
@@ -13359,6 +13436,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           description?: string | null
+          designated_reviewer?: string | null
           due_date?: string | null
           executed?: boolean | null
           field_change?: boolean | null
@@ -13371,7 +13449,10 @@ export type Database = {
           prime_contract_id?: string | null
           project_id?: number | null
           reference?: string | null
+          rejection_reason?: string | null
           request_received_from?: string | null
+          review_date?: string | null
+          revised_substantial_completion_date?: string | null
           revision?: number | null
           schedule_impact?: number | null
           signed_co_received_date?: string | null
@@ -13389,6 +13470,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           description?: string | null
+          designated_reviewer?: string | null
           due_date?: string | null
           executed?: boolean | null
           field_change?: boolean | null
@@ -13401,7 +13483,10 @@ export type Database = {
           prime_contract_id?: string | null
           project_id?: number | null
           reference?: string | null
+          rejection_reason?: string | null
           request_received_from?: string | null
+          review_date?: string | null
+          revised_substantial_completion_date?: string | null
           revision?: number | null
           schedule_impact?: number | null
           signed_co_received_date?: string | null
@@ -14827,7 +14912,6 @@ export type Database = {
       }
       project_companies: {
         Row: {
-          business_phone: string | null
           company_id: string
           company_type: string | null
           created_at: string | null
@@ -14841,7 +14925,6 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          business_phone?: string | null
           company_id: string
           company_type?: string | null
           created_at?: string | null
@@ -14855,7 +14938,6 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          business_phone?: string | null
           company_id?: string
           company_type?: string | null
           created_at?: string | null
@@ -18918,6 +19000,103 @@ export type Database = {
           },
         ]
       }
+      subcontractor_invoice_audit_log: {
+        Row: {
+          actor_email: string | null
+          actor_user_id: string | null
+          created_at: string
+          event_type: string
+          field_name: string | null
+          id: number
+          invoice_id: number
+          new_value: Json | null
+          notes: string | null
+          old_value: Json | null
+        }
+        Insert: {
+          actor_email?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          event_type: string
+          field_name?: string | null
+          id?: number
+          invoice_id: number
+          new_value?: Json | null
+          notes?: string | null
+          old_value?: Json | null
+        }
+        Update: {
+          actor_email?: string | null
+          actor_user_id?: string | null
+          created_at?: string
+          event_type?: string
+          field_name?: string | null
+          id?: number
+          invoice_id?: number
+          new_value?: Json | null
+          notes?: string | null
+          old_value?: Json | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subcontractor_invoice_audit_log_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractor_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subcontractor_invoice_emails: {
+        Row: {
+          body: string | null
+          cc_recipients: string[]
+          email_type: string
+          id: number
+          invoice_id: number
+          sent_at: string
+          sent_by_email: string | null
+          sent_by_user_id: string | null
+          status: string
+          subject: string | null
+          to_recipients: string[]
+        }
+        Insert: {
+          body?: string | null
+          cc_recipients?: string[]
+          email_type?: string
+          id?: number
+          invoice_id: number
+          sent_at?: string
+          sent_by_email?: string | null
+          sent_by_user_id?: string | null
+          status?: string
+          subject?: string | null
+          to_recipients?: string[]
+        }
+        Update: {
+          body?: string | null
+          cc_recipients?: string[]
+          email_type?: string
+          id?: number
+          invoice_id?: number
+          sent_at?: string
+          sent_by_email?: string | null
+          sent_by_user_id?: string | null
+          status?: string
+          subject?: string | null
+          to_recipients?: string[]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subcontractor_invoice_emails_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractor_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subcontractor_invoice_line_items: {
         Row: {
           balance_to_finish: number | null
@@ -18925,8 +19104,12 @@ export type Database = {
           description: string | null
           id: number
           invoice_id: number
+          materials_retainage_amount: number
+          materials_retainage_pct: number
           materials_stored: number
           net_amount_this_period: number | null
+          previous_materials_retainage: number
+          previous_work_retainage: number
           retainage_amount: number
           retainage_pct: number
           retainage_released: number
@@ -18944,8 +19127,12 @@ export type Database = {
           description?: string | null
           id?: number
           invoice_id: number
+          materials_retainage_amount?: number
+          materials_retainage_pct?: number
           materials_stored?: number
           net_amount_this_period?: number | null
+          previous_materials_retainage?: number
+          previous_work_retainage?: number
           retainage_amount?: number
           retainage_pct?: number
           retainage_released?: number
@@ -18963,8 +19150,12 @@ export type Database = {
           description?: string | null
           id?: number
           invoice_id?: number
+          materials_retainage_amount?: number
+          materials_retainage_pct?: number
           materials_stored?: number
           net_amount_this_period?: number | null
+          previous_materials_retainage?: number
+          previous_work_retainage?: number
           retainage_amount?: number
           retainage_pct?: number
           retainage_released?: number
@@ -18979,6 +19170,44 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "subcontractor_invoice_line_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractor_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subcontractor_invoice_related_items: {
+        Row: {
+          description: string | null
+          id: number
+          invoice_id: number
+          linked_at: string
+          linked_by_user_id: string | null
+          related_id: string
+          related_type: string
+        }
+        Insert: {
+          description?: string | null
+          id?: number
+          invoice_id: number
+          linked_at?: string
+          linked_by_user_id?: string | null
+          related_id: string
+          related_type: string
+        }
+        Update: {
+          description?: string | null
+          id?: number
+          invoice_id?: number
+          linked_at?: string
+          linked_by_user_id?: string | null
+          related_id?: string
+          related_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subcontractor_invoice_related_items_invoice_id_fkey"
             columns: ["invoice_id"]
             isOneToOne: false
             referencedRelation: "subcontractor_invoices"
@@ -19181,6 +19410,173 @@ export type Database = {
             columns: ["subcontractor_id"]
             isOneToOne: false
             referencedRelation: "subcontractors_summary"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subcontractor_sov_items: {
+        Row: {
+          amount: number
+          billed_to_date: number
+          budget_code: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          line_number: number | null
+          submission_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount?: number
+          billed_to_date?: number
+          budget_code?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          line_number?: number | null
+          submission_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          billed_to_date?: number
+          budget_code?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          line_number?: number | null
+          submission_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subcontractor_sov_items_submission_id_fkey"
+            columns: ["submission_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractor_sov_submissions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subcontractor_sov_submissions: {
+        Row: {
+          commitment_id: string
+          created_at: string | null
+          id: string
+          invite_sent_at: string | null
+          project_id: number
+          review_notes: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+          submitted_at: string | null
+          submitted_by: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          commitment_id: string
+          created_at?: string | null
+          id?: string
+          invite_sent_at?: string | null
+          project_id: number
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          commitment_id?: string
+          created_at?: string | null
+          id?: string
+          invite_sent_at?: string | null
+          project_id?: number
+          review_notes?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+          submitted_at?: string | null
+          submitted_by?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subcontractor_sov_submissions_commitment_id_fkey"
+            columns: ["commitment_id"]
+            isOneToOne: true
+            referencedRelation: "subcontracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontractor_sov_submissions_commitment_id_fkey"
+            columns: ["commitment_id"]
+            isOneToOne: true
+            referencedRelation: "subcontracts_with_totals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontractor_sov_submissions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "subcontractor_sov_submissions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontractor_sov_submissions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontractor_sov_submissions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "subcontractor_sov_submissions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontractor_sov_submissions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontractor_sov_submissions_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontractor_sov_submissions_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontractor_sov_submissions_submitted_by_fkey"
+            columns: ["submitted_by"]
+            isOneToOne: false
+            referencedRelation: "people"
             referencedColumns: ["id"]
           },
         ]
@@ -21579,6 +21975,7 @@ export type Database = {
           email: string
           full_name: string | null
           id: string
+          is_active: boolean
           is_admin: boolean | null
           role: string | null
           updated_at: string
@@ -21588,6 +21985,7 @@ export type Database = {
           email: string
           full_name?: string | null
           id: string
+          is_active?: boolean
           is_admin?: boolean | null
           role?: string | null
           updated_at?: string
@@ -21597,6 +21995,7 @@ export type Database = {
           email?: string
           full_name?: string | null
           id?: string
+          is_active?: boolean
           is_admin?: boolean | null
           role?: string | null
           updated_at?: string
@@ -25178,6 +25577,7 @@ export type Database = {
         | "not_invited"
         | "invited"
         | "approved_as_noted"
+        | "pending_owner_approval"
       issue_category:
         | "Design"
         | "Submittal"
@@ -25361,6 +25761,7 @@ export const Constants = {
         "not_invited",
         "invited",
         "approved_as_noted",
+        "pending_owner_approval",
       ],
       issue_category: [
         "Design",

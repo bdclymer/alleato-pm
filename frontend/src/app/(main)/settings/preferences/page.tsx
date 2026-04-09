@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Bell, Globe, Calendar, DollarSign } from "lucide-react";
+import { PageShell } from "@/components/layout";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -62,15 +63,8 @@ function SectionCard({
 
 export default function PreferencesSettingsPage() {
   return (
+    <PageShell variant="dashboard" title="Preferences">
     <div className="px-8 py-8 max-w-6xl">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-xl font-semibold tracking-tight">Preferences</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Customize notifications, display settings, and workspace defaults.
-        </p>
-      </div>
-
       <div className="space-y-8">
         {/* Notifications */}
         <SectionCard icon={Bell} title="Notifications">
@@ -214,5 +208,6 @@ export default function PreferencesSettingsPage() {
         </div>
       </div>
     </div>
+    </PageShell>
   );
 }

@@ -135,8 +135,19 @@ export function useSubcontractFormState({
     enabled: !!contractCompanyId,
   });
 
+  // Clear invoice contacts whenever the contract company changes (including to empty).
+  // Skip the first run so we don't wipe pre-filled contacts when an existing record loads.
+  const prevContractCompanyIdRef = React.useRef<string | null>(null);
   React.useEffect(() => {
-    if (!contractCompanyId) setValue("invoiceContactIds", []);
+    const prev = prevContractCompanyIdRef.current;
+    if (prev === null) {
+      prevContractCompanyIdRef.current = contractCompanyId || "";
+      return;
+    }
+    if (prev !== (contractCompanyId || "")) {
+      setValue("invoiceContactIds", []);
+      prevContractCompanyIdRef.current = contractCompanyId || "";
+    }
   }, [contractCompanyId, setValue]);
 
   const selectedVendor = React.useMemo(

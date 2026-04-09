@@ -53,10 +53,49 @@ async function resolvePersonIdFromAuth(
     .maybeSingle();
 
   if (!personByEmailError && personByEmail?.id) {
+    // Backfill users_auth link for future lookups
+    await serviceClient
+      .from("users_auth")
+      .upsert(
+        { auth_user_id: user.id, person_id: personByEmail.id },
+        { onConflict: "auth_user_id" },
+      );
     return personByEmail.id;
   }
 
-  return null;
+  // No matching person — auto-provision one so authenticated users always have
+  // a valid people row (required for FK columns like submitted_by, reviewed_by).
+  const emailLocal = user.email.split("@")[0] || "User";
+  const nameParts = emailLocal.split(/[._-]+/).filter(Boolean);
+  const firstName = nameParts[0] ? nameParts[0][0].toUpperCase() + nameParts[0].slice(1) : "User";
+  const lastName = nameParts[1]
+    ? nameParts[1][0].toUpperCase() + nameParts[1].slice(1)
+    : "Account";
+
+  const { data: created, error: createError } = await serviceClient
+    .from("people")
+    .insert({
+      first_name: firstName,
+      last_name: lastName,
+      email: normalizedEmail,
+      person_type: "employee",
+      auth_user_id: user.id,
+    })
+    .select("id")
+    .single();
+
+  if (createError || !created) {
+    return null;
+  }
+
+  await serviceClient
+    .from("users_auth")
+    .upsert(
+      { auth_user_id: user.id, person_id: created.id },
+      { onConflict: "auth_user_id" },
+    );
+
+  return created.id;
 }
 
 /**

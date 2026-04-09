@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 
 import {
@@ -10,7 +11,7 @@ import {
 } from "@/components/domain/contracts";
 import { PageShell } from "@/components/layout";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useCommitmentDetail } from "@/hooks/use-commitments-query";
+import { commitmentKeys, useCommitmentDetail } from "@/hooks/use-commitments-query";
 import type { CreateSubcontractInput, SovLineItem } from "@/lib/schemas/create-subcontract-schema";
 import type { CreatePurchaseOrderInput, PurchaseOrderSovLineItem } from "@/lib/schemas/create-purchase-order-schema";
 
@@ -29,6 +30,7 @@ type CommitmentAttachment = {
 export default function EditCommitmentPage() {
   const router = useRouter();
   const params = useParams();
+  const queryClient = useQueryClient();
   const projectId = Number(params.projectId);
   const commitmentId = params.commitmentId as string;
 
@@ -97,8 +99,7 @@ export default function EditCommitmentPage() {
             typeof item.budget_code === "string" ? item.budget_code : undefined,
           budgetCodeId:
             typeof item.budget_code === "string" ? item.budget_code : undefined,
-          budgetCodeLabel:
-            typeof item.budget_code === "string" ? item.budget_code : undefined,
+          budgetCodeLabel: undefined, // let reconciliation in useSubcontractFormState fill in the full label
           description: typeof item.description === "string" ? item.description : undefined,
           amount: typeof item.amount === "number" ? item.amount : 0,
           billedToDate: typeof item.billed_to_date === "number" ? item.billed_to_date : undefined,
@@ -248,6 +249,8 @@ export default function EditCommitmentPage() {
       await uploadCommitmentAttachments(commitmentId, attachmentFiles);
     }
 
+    await queryClient.invalidateQueries({ queryKey: commitmentKeys.detail(commitmentId) });
+    await queryClient.invalidateQueries({ queryKey: commitmentKeys.lists() });
     toast.success("Subcontract updated successfully");
     router.push(detailUrl);
   };
@@ -274,6 +277,8 @@ export default function EditCommitmentPage() {
       throw new Error(err.error || "Failed to save");
     }
 
+    await queryClient.invalidateQueries({ queryKey: commitmentKeys.detail(commitmentId) });
+    await queryClient.invalidateQueries({ queryKey: commitmentKeys.lists() });
     toast.success("Purchase order updated successfully");
     router.push(detailUrl);
   };
