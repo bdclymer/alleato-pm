@@ -89,8 +89,6 @@ type View = "home" | "start-run" | "running" | "complete" | "history" | "run-det
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-const APP_BASE = "http://localhost:3000";
-
 function parseSteps(raw: string | null): string[] {
   if (!raw) return [];
   return raw.split("\n").filter(Boolean).map((s) => s.replace(/^\d+\.\s*/, "").trim());
@@ -102,7 +100,7 @@ export default function TestingPage() {
   const [view, setView] = useState<View>("home");
   const [suites, setSuites] = useState<Suite[]>([]);
   const [selectedSuite, setSelectedSuite] = useState<Suite | null>(null);
-  const [runForm, setRunForm] = useState({ tester: "", environment: "localhost:3000", branch: "main", notes: "" });
+  const [runForm, setRunForm] = useState({ tester: "", environment: typeof window !== "undefined" ? window.location.host : "", branch: "main", notes: "" });
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
   const [results, setResults] = useState<TestResult[]>([]);
   const [cursor, setCursor] = useState(0);
@@ -353,7 +351,7 @@ export default function TestingPage() {
         <div className="max-w-lg space-y-6">
           <div className="bg-muted/40 rounded-xl px-5 py-4 text-sm text-muted-foreground space-y-1">
             <p className="font-medium text-foreground">Before you start</p>
-            <p>Make sure the app is running at <span className="font-mono text-xs bg-muted rounded px-1 py-0.5">{APP_BASE}</span> and you&apos;re logged in.</p>
+            <p>Make sure you&apos;re logged into the app you&apos;re testing.</p>
             <p>Each test takes 1–3 minutes. You&apos;ll follow step-by-step instructions and mark each test passed, failed, or skipped.</p>
           </div>
 
