@@ -2,85 +2,98 @@
 
 **Purpose:** A sequential, narrative end-to-end test that follows how a real construction PM uses Alleato day-to-day. Tests are ordered — data created in earlier phases is referenced in later ones. The tester carries context forward throughout the session.
 
-**Project used for testing:** Vermillion Rise Warehouse (project ID: 767)
+**Each tester creates their own project** — this prevents data collision between testers.
 **Test user:** test1@mail.com
-**Base URL:** http://localhost:3000
+**Base URL:** https://alleato-hub.vercel.app (or http://localhost:3000)
 
 ---
 
 ## How to run this matrix
 
-1. Work through phases in order — do not skip ahead.
-2. Each test's `context_note` tells you what prior data to use.
-3. At the end of each test, note any IDs or names you created — you will need them in the next phase.
-4. If a test fails, note it and continue — most later tests can still run with the pre-existing seed data.
+1. **Start by creating your own test project** (test 1.1). Note the project ID from the URL.
+2. Enter that project ID in the "Project ID" field in the test run form — all "Open in app" links will then auto-navigate to your project.
+3. Work through phases in order — do not skip ahead.
+4. Each test's `context_note` tells you what prior data to use.
+5. At the end of each test, note any IDs or names you created — you will need them in the next phase.
+6. If a test fails, note it and continue — most later tests can still run.
 
 ---
 
 ## Phase 1: Project Setup
 
-**Goal:** Confirm the project exists, details are correct, and the team has the right members.
+**Goal:** Create your own test project, confirm details are correct, and ensure the team/permissions are ready for financial work.
 
 ---
 
-### 1.1 — Open an existing project (HIGH)
+### 1.1 — Create a new test project (HIGH)
 
-**start_url:** `/767`
+**start_url:** `/create-project`
 
-**context_note:** This is the entry point for the whole lifecycle. You are opening the Vermillion Rise Warehouse project.
+**context_note:** Every tester creates their own isolated project so data from different testers does not collide. Name your project using the pattern "Test – [Your Name] – [Today's Date]" so it is easy to identify and clean up later.
 
 **setup_steps:** Log in as test1@mail.com before starting.
 
 **Steps:**
-1. Navigate to http://localhost:3000/767
-2. Wait for the project home/dashboard page to load
-3. Observe the project name and any summary cards
+1. Navigate to /create-project
+2. In Project Name, type: `Test – [Your Name] – [Today's Date]` (e.g. "Test – Jordan – 2026-04-08")
+3. Fill in any other required fields (e.g. Project Number: TEST-001, Status: Active, Start Date: today)
+4. Click Save / Create
+5. Wait for the page to redirect to your new project dashboard
+6. Note the project ID from the URL (e.g. `https://app.alleato.com/123/home` — the ID is `123`)
+7. Enter that project ID in the "Project ID" field in the test run form (top of the sidebar)
 
-**Expected result:** The page loads without errors. The project name "Vermillion Rise Warehouse" (or the current test project name) is visible in the header or sidebar. No spinner remains on screen.
-
----
-
-### 1.2 — Verify project details are correct (HIGH)
-
-**start_url:** `/767/settings` or `/767/overview`
-
-**context_note:** You are checking the administrative details of the project before doing any financial work.
-
-**Steps:**
-1. From the project home, navigate to project Settings or the Project Overview page
-2. Verify that the following fields are populated: Project Name, Project Number, Address, Start Date, Estimated Completion Date
-3. Note the project number — you will reference it throughout the lifecycle
-
-**Expected result:** All key project fields display real data (not "—" or empty). The project address is visible. No field shows a loading spinner.
+**Expected result:** A success toast appears. The app redirects to the new project dashboard. The URL contains your new project ID. After entering the ID in the test run form, all "Open in app" links throughout this test suite will open pages in your new project.
 
 ---
 
-### 1.3 — Check team members (MEDIUM)
+### 1.2 — Verify project details are saved correctly (HIGH)
 
-**start_url:** `/767/directory` or `/767/settings/members`
+**start_url:** `/[projectId]`
 
-**context_note:** Confirm the project team is set up so that later steps (assigning owners to contracts, commitments, etc.) have people to select.
+**context_note:** Confirm the details you just entered are correct before doing any financial work. The project name and number will appear throughout the lifecycle.
+
+**setup_steps:** Complete test 1.1 and enter your project ID in the run form.
 
 **Steps:**
-1. Navigate to the project directory or members page
-2. Look for at least one person with a Project Manager role
-3. Look for at least one Owner/Client company listed
+1. From your new project dashboard, navigate to project Settings or the Project Overview page
+2. Verify that the following fields are populated: Project Name, Project Number, Status, Start Date
+3. Confirm the project name matches what you typed in test 1.1
 
-**Expected result:** The directory loads with at least 2–3 team members. Role labels are visible (Project Manager, Owner, Superintendent, etc.). No blank table with only headers.
+**Expected result:** All key project fields display the data you entered. No field is blank or shows a placeholder. The project name is exactly what you typed.
 
 ---
 
-### 1.4 — Verify project permissions allow creating records (HIGH)
+### 1.3 — Check directory is ready for later steps (MEDIUM)
 
-**start_url:** `/767`
+**start_url:** `/[projectId]/directory`
 
-**context_note:** Before creating any financial records, confirm you have write access. If the Create buttons are missing, stop and fix permissions before proceeding.
+**context_note:** Later phases (commitments, prime contracts) require companies and people to be assigned as owners, vendors, and contractors. Confirm the project directory has usable entries — if not, add them now.
+
+**setup_steps:** Complete test 1.2 first.
 
 **Steps:**
-1. Navigate to /767/budget
+1. Navigate to your project's Directory page
+2. Check the People tab — confirm at least 1 person is listed (you may need to add yourself)
+3. Check the Companies tab — confirm at least 1 company is listed
+4. If empty, add a test person and a test company now before continuing
+
+**Expected result:** The directory shows at least 1 person and 1 company. Role labels are visible. The tester can proceed knowing dropdowns in later forms will have options to select.
+
+---
+
+### 1.4 — Verify create permissions on financial tools (HIGH)
+
+**start_url:** `/[projectId]/budget`
+
+**context_note:** Before creating any financial records, confirm you have write access. If Create buttons are missing, stop and fix permissions before proceeding.
+
+**setup_steps:** Complete test 1.3 first.
+
+**Steps:**
+1. Navigate to your project's Budget page
 2. Look for a "New Line Item" or "Add" button in the toolbar or header
-3. Navigate to /767/prime-contracts and look for a "Create" button
-4. Navigate to /767/change-events and look for a "New Change Event" button
+3. Navigate to /[projectId]/prime-contracts and look for a "Create" button
+4. Navigate to /[projectId]/change-events and look for a "New Change Event" button
 
 **Expected result:** All three pages show a primary action button. If any are missing, the logged-in user lacks write permission — stop here and fix permissions before continuing the lifecycle.
 
@@ -94,14 +107,14 @@
 
 ### 2.1 — Add budget line items for major cost divisions (HIGH)
 
-**start_url:** `/767/budget`
+**start_url:** `/[projectId]/budget`
 
 **context_note:** You are creating the original budget. These line items will be compared against the prime contract SOV in Phase 3 and commitments in Phase 4.
 
 **setup_steps:** The budget page must load without errors. At least 3 cost codes must exist in the system (they are pre-seeded).
 
 **Steps:**
-1. Navigate to /767/budget
+1. Navigate to /[projectId]/budget
 2. Click "New Line Item" (or the equivalent add button)
 3. Set Cost Code = first available code (e.g. 03-000 Concrete), Description = "Concrete & Foundation", Original Budget = 85000
 4. Save the line item
@@ -118,12 +131,12 @@
 
 ### 2.2 — Verify budget totals update correctly (HIGH)
 
-**start_url:** `/767/budget`
+**start_url:** `/[projectId]/budget`
 
 **context_note:** You are confirming that the summary numbers at the top of the Budget page match the individual line items you just created.
 
 **Steps:**
-1. Stay on or return to the /767/budget page
+1. Stay on or return to the /[projectId]/budget page
 2. Note the "Original Budget" summary total shown at the top of the page
 3. Add up the Original Budget values from the individual line item rows
 4. Compare the sum to the displayed total
@@ -134,7 +147,7 @@
 
 ### 2.3 — Edit a budget line item amount (HIGH)
 
-**start_url:** `/767/budget`
+**start_url:** `/[projectId]/budget`
 
 **context_note:** Budgets often need adjustment. You are testing that edits persist correctly.
 
@@ -150,12 +163,12 @@
 
 ### 2.4 — Check the budget breakdown / cost code grouping (MEDIUM)
 
-**start_url:** `/767/budget`
+**start_url:** `/[projectId]/budget`
 
 **context_note:** The budget should organize line items by cost division or cost code. This test confirms the groupings are logical.
 
 **Steps:**
-1. On the /767/budget page, scan the table for any grouping headers or sort order
+1. On the /[projectId]/budget page, scan the table for any grouping headers or sort order
 2. If a "Group by" or "View" toggle exists, switch to a grouped view
 3. Confirm each of your three line items appears under an appropriate cost code heading
 
@@ -165,12 +178,12 @@
 
 ### 2.5 — Record the final budget total (HIGH)
 
-**start_url:** `/767/budget`
+**start_url:** `/[projectId]/budget`
 
 **context_note:** Write down the total Original Budget displayed. You will compare this to the Prime Contract value in Phase 3. For the example values: $275,000.
 
 **Steps:**
-1. Open /767/budget
+1. Open /[projectId]/budget
 2. Note the total Original Budget figure from the summary at the top of the page
 3. Write it down — you will use this number in test 3.3
 
@@ -186,15 +199,15 @@
 
 ### 3.1 — Create a new prime contract (HIGH)
 
-**start_url:** `/767/prime-contracts/new`
+**start_url:** `/[projectId]/prime-contracts/new`
 
 **context_note:** The prime contract is the master agreement between the owner and the general contractor. This is the contract you will attach change events and invoices to in later phases. Use the details below exactly — later tests reference this contract by name.
 
 **Steps:**
-1. Navigate to /767/prime-contracts
+1. Navigate to /[projectId]/prime-contracts
 2. Click the "Create" button
 3. In Contract #, type: PC-LIFECYCLE-001
-4. In Title, type: Vermillion Rise — Prime Contract
+4. In Title, type: [Your Project Name] — Prime Contract
 5. Set Status to Draft
 6. In the Owner/Client dropdown, select any available owner company
 7. In the Contractor dropdown, select any available general contractor
@@ -203,13 +216,13 @@
 10. In Default Retainage, type: 10
 11. Click Save
 
-**Expected result:** A success toast appears. The app navigates to the detail page for "Vermillion Rise — Prime Contract" (PC-LIFECYCLE-001). The status shows Draft, the retainage shows 10%, and the dates are correct. The contract appears in the list at /767/prime-contracts.
+**Expected result:** A success toast appears. The app navigates to the detail page for "[Your Project Name] — Prime Contract" (PC-LIFECYCLE-001). The status shows Draft, the retainage shows 10%, and the dates are correct. The contract appears in the list at /[projectId]/prime-contracts.
 
 ---
 
 ### 3.2 — Add Schedule of Values line items (HIGH)
 
-**start_url:** `/767/prime-contracts` (then open PC-LIFECYCLE-001)
+**start_url:** `/[projectId]/prime-contracts` (then open PC-LIFECYCLE-001)
 
 **context_note:** The SOV breaks the contract price into individual work items. Add three line items that roughly match the budget divisions you created in Phase 2.
 
@@ -232,7 +245,7 @@
 
 ### 3.3 — Verify contract value matches budget (HIGH)
 
-**start_url:** `/767/prime-contracts` (then open PC-LIFECYCLE-001)
+**start_url:** `/[projectId]/prime-contracts` (then open PC-LIFECYCLE-001)
 
 **context_note:** Cross-check: the prime contract Original Contract Amount should equal the budget total you noted at the end of Phase 2 ($275,000 in the example).
 
@@ -247,7 +260,7 @@
 
 ### 3.4 — Change the contract status to Approved (HIGH)
 
-**start_url:** `/767/prime-contracts` (then open PC-LIFECYCLE-001)
+**start_url:** `/[projectId]/prime-contracts` (then open PC-LIFECYCLE-001)
 
 **context_note:** Moving the contract from Draft to Approved simulates the owner signing the contract. Some later steps (invoicing) may require an Approved contract.
 
@@ -264,7 +277,7 @@
 
 ### 3.5 — Verify SOV line items persist after refresh (MEDIUM)
 
-**start_url:** `/767/prime-contracts` (then open PC-LIFECYCLE-001, SOV tab)
+**start_url:** `/[projectId]/prime-contracts` (then open PC-LIFECYCLE-001, SOV tab)
 
 **context_note:** Confirm the SOV data actually saved to the database.
 
@@ -285,14 +298,14 @@
 
 ### 4.1 — Create a framing subcontractor commitment (HIGH)
 
-**start_url:** `/767/commitments/new`
+**start_url:** `/[projectId]/commitments/new`
 
 **context_note:** A commitment is a contract between the general contractor and a subcontractor or supplier. You are creating a commitment for the framing work. Note the commitment number — you will reference it in Phase 5.
 
 **setup_steps:** At least one subcontractor company must exist in the project directory.
 
 **Steps:**
-1. Navigate to /767/commitments
+1. Navigate to /[projectId]/commitments
 2. Click "Create" (or "New Commitment")
 3. In Contract #, type: SC-FRAME-001
 4. In Title, type: Framing Subcontract
@@ -302,13 +315,13 @@
 8. In Completion Date, enter 2026-06-30
 9. Click Save
 
-**Expected result:** The commitment "Framing Subcontract" (SC-FRAME-001) is created. The app navigates to its detail page. Status shows Draft. The commitment appears in the list at /767/commitments.
+**Expected result:** The commitment "Framing Subcontract" (SC-FRAME-001) is created. The app navigates to its detail page. Status shows Draft. The commitment appears in the list at /[projectId]/commitments.
 
 ---
 
 ### 4.2 — Add line items to the framing commitment (HIGH)
 
-**start_url:** `/767/commitments` (then open SC-FRAME-001)
+**start_url:** `/[projectId]/commitments` (then open SC-FRAME-001)
 
 **context_note:** Commitment line items describe exactly what work the subcontractor will perform and for how much. These amounts reduce the budget's "committed" balance.
 
@@ -328,12 +341,12 @@
 
 ### 4.3 — Verify commitment rolls up to budget (HIGH)
 
-**start_url:** `/767/budget`
+**start_url:** `/[projectId]/budget`
 
 **context_note:** The Budget page should reflect the committed amounts from the framing subcontract. Look for a "Committed Costs" or "Subcontracted" column in the budget table.
 
 **Steps:**
-1. Navigate to /767/budget
+1. Navigate to /[projectId]/budget
 2. Find a line item that corresponds to the cost code used in the framing commitment (if cost codes were linked in 4.2)
 3. Look for a "Committed Costs" or "Commitments" column in the budget table
 4. Compare the committed amount shown against the $80,000 framing subcontract total
@@ -344,12 +357,12 @@
 
 ### 4.4 — Add a second commitment for electrical (MEDIUM)
 
-**start_url:** `/767/commitments/new`
+**start_url:** `/[projectId]/commitments/new`
 
 **context_note:** Creating a second commitment confirms the list and budget can handle multiple subs. This electrical commitment also sets up a realistic scenario for the change event in Phase 5.
 
 **Steps:**
-1. Navigate to /767/commitments and click "Create"
+1. Navigate to /[projectId]/commitments and click "Create"
 2. Contract # = SC-ELEC-001, Title = Electrical Subcontract
 3. Select a different subcontractor vendor (or the same if only one exists)
 4. Set Status to Draft
@@ -363,7 +376,7 @@
 
 ### 4.5 — Change a commitment status to Approved (MEDIUM)
 
-**start_url:** `/767/commitments` (then open SC-FRAME-001)
+**start_url:** `/[projectId]/commitments` (then open SC-FRAME-001)
 
 **context_note:** Approved commitments are "locked in" costs. Simulates the GC signing the framing sub's contract.
 
@@ -385,12 +398,12 @@
 
 ### 5.1 — Create a change event for owner-requested electrical work (HIGH)
 
-**start_url:** `/767/change-events/new`
+**start_url:** `/[projectId]/change-events/new`
 
 **context_note:** A Change Event captures a potential change to the project scope before it becomes a formal change order. You are recording an owner's request for additional electrical outlets. Note the change event number — you will use it in Phase 6 to create a PCO.
 
 **Steps:**
-1. Navigate to /767/change-events
+1. Navigate to /[projectId]/change-events
 2. Click "New Change Event" (or "Create")
 3. In Number, type: CE-001 (or accept the auto-generated number)
 4. In Title, type: Additional Electrical Outlets — Owner Request
@@ -405,7 +418,7 @@
 
 ### 5.2 — Attach cost line items to the change event (HIGH)
 
-**start_url:** `/767/change-events` (then open CE-001)
+**start_url:** `/[projectId]/change-events` (then open CE-001)
 
 **context_note:** Cost items quantify the financial impact of the scope change. You are estimating the cost of the additional electrical outlets.
 
@@ -425,12 +438,12 @@
 
 ### 5.3 — Verify change event shows in the list with correct status (HIGH)
 
-**start_url:** `/767/change-events`
+**start_url:** `/[projectId]/change-events`
 
 **context_note:** Confirm the change event is visible to anyone checking the list — not hidden or filtered out.
 
 **Steps:**
-1. Navigate to /767/change-events
+1. Navigate to /[projectId]/change-events
 2. Scan the list for CE-001 "Additional Electrical Outlets — Owner Request"
 3. Confirm the Status column shows "Open"
 4. Confirm the Total Cost or Estimated Cost column shows approximately $11,700
@@ -441,7 +454,7 @@
 
 ### 5.4 — Edit the change event description (MEDIUM)
 
-**start_url:** `/767/change-events` (then open CE-001)
+**start_url:** `/[projectId]/change-events` (then open CE-001)
 
 **context_note:** Testing that edits to a change event save correctly.
 
@@ -457,12 +470,12 @@
 
 ### 5.5 — Check pending changes summary (HIGH)
 
-**start_url:** `/767/change-events`
+**start_url:** `/[projectId]/change-events`
 
 **context_note:** The system should aggregate open change events into a "pending changes" total. This total shows the financial exposure from unapproved scope changes.
 
 **Steps:**
-1. Stay on or return to /767/change-events
+1. Stay on or return to /[projectId]/change-events
 2. Look for a summary row, footer, or header card that shows Total Pending Changes or Total Open
 3. Note whether CE-001's cost ($11,700) is included in that figure
 
@@ -478,12 +491,12 @@
 
 ### 6.1 — Generate a PCO from the change event (HIGH)
 
-**start_url:** `/767/change-orders`
+**start_url:** `/[projectId]/change-orders`
 
 **context_note:** A PCO (Potential Change Order) is the formal document sent to the owner to request approval for a scope change. You are promoting CE-001 into a PCO. Note the PCO number — you will track it through approval.
 
 **Steps:**
-1. Navigate to /767/change-orders
+1. Navigate to /[projectId]/change-orders
 2. Click "Create" or "New Change Order" (or "Generate PCO")
 3. In Number, type: PCO-001
 4. In Title, type: PCO — Additional Electrical Outlets
@@ -499,7 +512,7 @@
 
 ### 6.2 — Review and approve the PCO (HIGH)
 
-**start_url:** `/767/change-orders` (then open PCO-001)
+**start_url:** `/[projectId]/change-orders` (then open PCO-001)
 
 **context_note:** Approving the PCO means the owner has agreed to pay for the additional electrical work. After approval, the budget should be updated.
 
@@ -516,12 +529,12 @@
 
 ### 6.3 — Verify the budget reflects the approved change order (HIGH)
 
-**start_url:** `/767/budget`
+**start_url:** `/[projectId]/budget`
 
 **context_note:** An approved change order should increase the Revised Contract Amount and show up in the budget's "Approved Changes" column. Compare the budget before and after.
 
 **Steps:**
-1. Navigate to /767/budget
+1. Navigate to /[projectId]/budget
 2. Look for an "Approved Changes" or "Owner Change Orders" or "Revised Budget" column
 3. Find the electrical cost code row and note whether $11,700 appears
 4. Look at the overall budget summary — the Revised Budget total should be $275,000 + $11,700 = $286,700
@@ -532,7 +545,7 @@
 
 ### 6.4 — Verify the prime contract Revised Amount updated (HIGH)
 
-**start_url:** `/767/prime-contracts` (then open PC-LIFECYCLE-001)
+**start_url:** `/[projectId]/prime-contracts` (then open PC-LIFECYCLE-001)
 
 **context_note:** Approving a change order against a prime contract should increase the contract's "Revised Contract Amount" to reflect the new total obligation.
 
@@ -547,7 +560,7 @@
 
 ### 6.5 — Check change event CE-001 links back to PCO-001 (MEDIUM)
 
-**start_url:** `/767/change-events` (then open CE-001)
+**start_url:** `/[projectId]/change-events` (then open CE-001)
 
 **context_note:** Traceability check — navigating from a change event to its resulting change order should work in both directions.
 
@@ -569,14 +582,14 @@
 
 ### 7.1 — Create a pay application against the prime contract (HIGH)
 
-**start_url:** `/767/invoices/new` or `/767/pay-applications/new`
+**start_url:** `/[projectId]/invoices/new` or `/[projectId]/pay-applications/new`
 
 **context_note:** A Pay Application (Pay App) is the invoice the general contractor submits to the project owner at the end of each billing period. It lists all SOV items and shows how much work has been completed since the last pay app. You are creating Pay App #1.
 
 **setup_steps:** PC-LIFECYCLE-001 must be in Approved status (completed in Phase 3, test 3.4).
 
 **Steps:**
-1. Navigate to /767/invoices (or /767/pay-applications)
+1. Navigate to /[projectId]/invoices (or /[projectId]/pay-applications)
 2. Click "Create" (or "New Invoice" / "New Pay Application")
 3. In Application Number, type: PA-001 (or accept the auto-generated number)
 4. Link to Prime Contract: select PC-LIFECYCLE-001 (Vermillion Rise — Prime Contract)
@@ -590,7 +603,7 @@
 
 ### 7.2 — Add line items with percent complete (HIGH)
 
-**start_url:** `/767/invoices` (then open PA-001)
+**start_url:** `/[projectId]/invoices` (then open PA-001)
 
 **context_note:** You are marking how much of each SOV line item has been completed in this billing period. The three SOV items were created in Phase 3: Concrete & Foundation ($90,000), Electrical Systems ($120,000), Interior Finishes ($65,000).
 
@@ -616,7 +629,7 @@ All calculated totals appear on the pay application. No errors.
 
 ### 7.3 — Verify invoice totals (HIGH)
 
-**start_url:** `/767/invoices` (then open PA-001)
+**start_url:** `/[projectId]/invoices` (then open PA-001)
 
 **context_note:** Cross-check the arithmetic. The totals on the pay app must match the individual line item percentages applied to the SOV scheduled values.
 
@@ -635,7 +648,7 @@ All calculated totals appear on the pay application. No errors.
 
 ### 7.4 — Change pay application status to Submitted (HIGH)
 
-**start_url:** `/767/invoices` (then open PA-001)
+**start_url:** `/[projectId]/invoices` (then open PA-001)
 
 **context_note:** "Submitted" means the GC has sent the pay app to the owner for review. This is a key workflow milestone.
 
@@ -651,7 +664,7 @@ All calculated totals appear on the pay application. No errors.
 
 ### 7.5 — Verify the pay application appears on the prime contract's Invoices tab (HIGH)
 
-**start_url:** `/767/prime-contracts` (then open PC-LIFECYCLE-001, Invoices tab)
+**start_url:** `/[projectId]/prime-contracts` (then open PC-LIFECYCLE-001, Invoices tab)
 
 **context_note:** Traceability check — the pay application you created against PC-LIFECYCLE-001 should be visible under that contract's Invoices tab.
 
