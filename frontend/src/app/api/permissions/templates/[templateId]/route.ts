@@ -39,12 +39,13 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     const { templateId } = await params;
     const body = await request.json();
-    const { name, description, rules_json } = body;
+    const { name, description, rules_json, granular_flags } = body;
 
     const result = await updatePermissionTemplate(templateId, {
       name,
       description,
       rules_json,
+      ...(Array.isArray(granular_flags) ? { granular_flags } : {}),
     });
 
     if (!result.success) {

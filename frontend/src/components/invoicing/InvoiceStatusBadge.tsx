@@ -5,6 +5,7 @@ export type InvoiceStatus =
   | "draft"
   | "under_review"
   | "approved"
+  | "approved_as_noted"
   | "revise_and_resubmit"
   | "paid"
   | "void"
@@ -15,6 +16,7 @@ const STATUS_CONFIG: Record<InvoiceStatus, { label: string; variant: "default" |
   draft:                { label: "Draft",                variant: "secondary" },
   under_review:         { label: "Under Review",         variant: "default" },
   approved:             { label: "Approved",             variant: "success" },
+  approved_as_noted:    { label: "Approved as Noted",    variant: "success" },
   revise_and_resubmit:  { label: "Revise and Resubmit",  variant: "destructive" },
   paid:                 { label: "Paid",                 variant: "success" },
   void:                 { label: "Void",                 variant: "outline" },

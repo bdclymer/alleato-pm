@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DefaultChatTransport } from "ai";
 import { useChat } from "@ai-sdk/react";
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import {
   BarChart3,
@@ -32,8 +33,12 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-import { MessageResponse } from "@/components/ai-elements/message";
 import { PageShell } from "@/components/layout";
+
+const MessageResponse = dynamic(
+  () => import("@/components/ai-elements/message").then((m) => m.MessageResponse),
+  { ssr: false }
+);
 import { Button } from "@/components/ui/button";
 import {
   Command,

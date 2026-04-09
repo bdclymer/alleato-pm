@@ -60,6 +60,7 @@ export function LineItemRow({
   handleCommitmentLineItemChange,
 }: LineItemRowProps) {
   const lineTotal = item.revenueRom || 0;
+  const isLinkedToCommitment = Boolean(item.commitmentId);
 
   return (
     <TableRow className="group border-b border-border/60 bg-background transition-colors hover:bg-muted/20">
@@ -78,6 +79,7 @@ export function LineItemRow({
           budgetCodes={budgetCodes}
           onCreateNew={() => onCreateBudgetCode(index)}
           placeholder="Select budget code..."
+          disabled={isLinkedToCommitment}
         />
       </TableCell>
 
@@ -106,6 +108,7 @@ export function LineItemRow({
           value={item.contract}
           onChange={(value) => handleCommitmentChange(index, value)}
           contracts={contracts}
+          disabled={isLinkedToCommitment}
         />
         {item.contract &&
           (commitmentLineItemsMap[item.contract]?.length ?? 0) > 1 && (

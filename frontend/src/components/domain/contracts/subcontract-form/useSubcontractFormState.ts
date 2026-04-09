@@ -82,23 +82,22 @@ export function useSubcontractFormState({
   const contractCompanyId = useWatch({ control, name: "contractCompanyId" });
   const accountingMethod = useWatch({ control, name: "accountingMethod" });
 
-  // --- Fetch vendors ---
+  // --- Fetch companies (contract companies) ---
   React.useEffect(() => {
-    const fetchVendors = async () => {
+    const fetchCompanies = async () => {
       try {
         setIsLoadingVendors(true);
-        const response = await fetch(`/api/projects/${projectId}/vendors`);
-        if (!response.ok) throw new Error("Failed to load vendors");
+        const response = await fetch(`/api/companies`);
+        if (!response.ok) throw new Error("Failed to load companies");
         const data = (await response.json()) as Array<{
           id: string;
-          vendor_name: string;
-          company_id?: string | null;
+          name: string;
         }>;
         setVendorOptions(
-          (data || []).map((v) => ({
-            value: v.id,
-            label: v.vendor_name,
-            companyId: v.company_id ?? null,
+          (data || []).map((c) => ({
+            value: c.id,
+            label: c.name,
+            companyId: c.id,
           })),
         );
       } catch {
@@ -107,7 +106,7 @@ export function useSubcontractFormState({
         setIsLoadingVendors(false);
       }
     };
-    fetchVendors();
+    fetchCompanies();
   }, [projectId]);
 
   // --- Project users ---
@@ -139,6 +138,11 @@ export function useSubcontractFormState({
   React.useEffect(() => {
     if (!contractCompanyId) setValue("invoiceContactIds", []);
   }, [contractCompanyId, setValue]);
+
+  const selectedVendor = React.useMemo(
+    () => vendorOptions.find((vendor) => vendor.value === contractCompanyId) ?? null,
+    [contractCompanyId, vendorOptions],
+  );
 
   // --- Reset on edit ---
   React.useEffect(() => {
@@ -301,6 +305,7 @@ export function useSubcontractFormState({
     isLoadingContacts,
     refetchContacts,
     vendorId: contractCompanyId || null,
+    vendorCompanyId: selectedVendor?.companyId ?? null,
     handleAttachmentListChange,
     handleFilesSelected,
   };

@@ -55,10 +55,25 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    const { data: contract, error: contractError } = await supabase
+      .from("prime_contracts")
+      .select("retention_percentage")
+      .eq("id", contractId)
+      .single();
+
+    if (contractError || !contract) {
+      return NextResponse.json(
+        { error: "Prime contract not found" },
+        { status: 404 },
+      );
+    }
+
+    const defaultRetainagePct = Number(contract.retention_percentage ?? 0);
+
     // 3. Find previous payment application by comparing application_number
     // Application numbers are typically sequential strings like "1", "2", "3"
     const currentAppNum = parseInt(currentApp.application_number, 10);
-    let previousLineItems: PreviousLineItemMap = {};
+    const previousLineItems: PreviousLineItemMap = {};
 
     if (!isNaN(currentAppNum) && currentAppNum > 1) {
       const prevAppNum = String(currentAppNum - 1);
@@ -157,9 +172,9 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
         retainage_previous_work: prev?.retainage_previous_work ?? 0,
         retainage_previous_materials: prev?.retainage_previous_materials ?? 0,
         retainage_this_period_work: 0,
-        retainage_this_period_work_pct: 10,
+        retainage_this_period_work_pct: defaultRetainagePct,
         retainage_this_period_materials: 0,
-        retainage_this_period_materials_pct: 10,
+        retainage_this_period_materials_pct: defaultRetainagePct,
         retainage_released_work: 0,
         retainage_released_materials: 0,
       });
@@ -186,9 +201,9 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
         retainage_previous_work: prev?.retainage_previous_work ?? 0,
         retainage_previous_materials: prev?.retainage_previous_materials ?? 0,
         retainage_this_period_work: 0,
-        retainage_this_period_work_pct: 10,
+        retainage_this_period_work_pct: defaultRetainagePct,
         retainage_this_period_materials: 0,
-        retainage_this_period_materials_pct: 10,
+        retainage_this_period_materials_pct: defaultRetainagePct,
         retainage_released_work: 0,
         retainage_released_materials: 0,
       });

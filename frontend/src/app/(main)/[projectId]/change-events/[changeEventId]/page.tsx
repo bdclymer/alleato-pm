@@ -60,6 +60,32 @@ import { EntityComments, EntityRoom } from "@/components/comments/entity-comment
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
 
+function mapApiOriginToFormOrigin(origin?: string | null): string | undefined {
+  if (!origin) return undefined;
+  const key = origin.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_");
+  const map: Record<string, string> = {
+    emails: "emails",
+    meetings: "meetings",
+    rfis: "rfis",
+    rfi_s: "rfis",
+    rfi: "rfis",
+  };
+  return map[key] ?? key;
+}
+
+function mapApiTypeToFormType(type?: string | null): string | undefined {
+  if (!type) return undefined;
+  const key = type.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_");
+  const map: Record<string, string> = {
+    allowance: "allowance",
+    contingency: "contingency",
+    owner_change: "owner_change",
+    tbd: "tbd",
+    transfer: "transfer",
+  };
+  return map[key] ?? key;
+}
+
 function mapApiReasonToFormReason(reason?: string | null): string | undefined {
   if (!reason) return undefined;
   const key = reason.trim().toLowerCase().replace(/[^a-z0-9]+/g, "_");
@@ -260,8 +286,8 @@ export default function ChangeEventDetailPage() {
       contractNumber: changeEvent.number || "",
       title: changeEvent.title || "",
       status: mapApiStatusToFormStatus(changeEvent.status),
-      origin: changeEvent.origin || undefined,
-      type: changeEvent.type || undefined,
+      origin: mapApiOriginToFormOrigin(changeEvent.origin),
+      type: mapApiTypeToFormType(changeEvent.type),
       changeReason: mapApiReasonToFormReason(changeEvent.reason),
       scope: changeEvent.scope || undefined,
       expectingRevenue: changeEvent.expectingRevenue ?? changeEvent.expecting_revenue ?? true,
@@ -286,6 +312,10 @@ export default function ChangeEventDetailPage() {
                 item.commitmentId && item.commitmentType
                   ? `${item.commitmentType === "purchase_order" ? "po" : "sub"}-${item.commitmentId}`
                   : item.contractId?.toString() || "",
+              commitmentId:
+                item.commitmentId && item.commitmentType
+                  ? `${item.commitmentType === "purchase_order" ? "po" : "sub"}-${item.commitmentId}`
+                  : undefined,
               commitmentLineItemId: item.commitmentLineItemId || "",
               revenueUnitOfMeasure: item.unitOfMeasure || "",
               revenueQuantity: Number(item.quantity || 1) || 1,

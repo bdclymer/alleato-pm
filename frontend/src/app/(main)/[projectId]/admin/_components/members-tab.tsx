@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/collapsible";
 import { ChevronDown } from "lucide-react";
 import { EmptyState } from "@/components/ds";
-import type { PermissionTemplate, PermissionModule, PermissionLevel } from "@/lib/permissions";
+import type { PermissionTemplate, PermissionModule, PermissionLevel } from "@/lib/permissions-shared";
 
 const MODULES: { key: PermissionModule; label: string }[] = [
   { key: "directory",     label: "Directory" },

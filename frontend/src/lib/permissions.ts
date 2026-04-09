@@ -6,108 +6,32 @@
  */
 
 import { createClient } from "@/lib/supabase/server";
+import {
+  ALL_MODULES,
+  type PermissionLevel,
+  type PermissionModule,
+  type GranularFlag,
+  type UserPermissions,
+  type PermissionTemplate,
+} from "@/lib/permissions-shared";
 
-export type PermissionLevel = "none" | "read" | "write" | "admin";
-export type PermissionModule =
-  | "directory"
-  | "budget"
-  | "contracts"
-  | "documents"
-  | "schedule"
-  | "submittals"
-  | "rfis"
-  | "change_orders";
-
-export const ALL_MODULES: PermissionModule[] = [
-  "directory",
-  "budget",
-  "contracts",
-  "documents",
-  "schedule",
-  "submittals",
-  "rfis",
-  "change_orders",
-];
-
-export interface UserPermissions {
-  userId: string;
-  personId: string;
-  projectId: number;
-  template?: {
-    id: string;
-    name: string;
-    rules: Record<PermissionModule, PermissionLevel[]>;
-  };
-  overrides: Record<PermissionModule, PermissionLevel>;
-  isAdmin: boolean;
-}
-
-export interface PermissionTemplate {
-  id: string;
-  name: string;
-  description?: string;
-  rules_json: Record<PermissionModule, PermissionLevel[]>;
-  is_system: boolean;
-  scope?: string;
-}
-
-// ---------------------------------------------------------------------------
-// Helpers
-// ---------------------------------------------------------------------------
-
-/**
- * Check if a user has a specific permission level for a module.
- * Hierarchy: admin > write > read > none
- */
-export function hasPermission(
-  permissions: UserPermissions,
-  module: PermissionModule,
-  level: PermissionLevel
-): boolean {
-  if (permissions.isAdmin) return true;
-
-  if (permissions.overrides[module] && permissions.overrides[module] !== "none") {
-    return checkPermissionLevel(permissions.overrides[module], level);
-  }
-
-  if (permissions.template?.rules[module]) {
-    const templateLevels = permissions.template.rules[module];
-    return templateLevels.some((tl) => checkPermissionLevel(tl, level));
-  }
-
-  return false;
-}
-
-/**
- * Get the highest permission level a user has for a module.
- */
-export function getPermissionLevel(
-  permissions: UserPermissions,
-  module: PermissionModule
-): PermissionLevel {
-  if (permissions.isAdmin) return "admin";
-
-  if (permissions.overrides[module] && permissions.overrides[module] !== "none") {
-    return permissions.overrides[module];
-  }
-
-  if (permissions.template?.rules[module]) {
-    const levels = permissions.template.rules[module];
-    if (levels.includes("admin")) return "admin";
-    if (levels.includes("write")) return "write";
-    if (levels.includes("read")) return "read";
-  }
-
-  return "none";
-}
-
-function checkPermissionLevel(
-  userLevel: PermissionLevel,
-  requiredLevel: PermissionLevel
-): boolean {
-  const order: PermissionLevel[] = ["none", "read", "write", "admin"];
-  return order.indexOf(userLevel) >= order.indexOf(requiredLevel);
-}
+// Re-export shared types + pure helpers for server-side consumers that
+// used to import from this module.
+export {
+  ALL_MODULES,
+  ALL_GRANULAR_FLAGS,
+  GRANULAR_FLAG_LABELS,
+  hasPermission,
+  getPermissionLevel,
+  hasGranular,
+} from "@/lib/permissions-shared";
+export type {
+  PermissionLevel,
+  PermissionModule,
+  GranularFlag,
+  UserPermissions,
+  PermissionTemplate,
+} from "@/lib/permissions-shared";
 
 // ---------------------------------------------------------------------------
 // Load
@@ -152,7 +76,7 @@ export async function loadUserPermissions(
       .from("project_directory_memberships")
       .select(
         `permission_template_id,
-         permission_template:permission_templates (id, name, rules_json)`
+         permission_template:permission_templates (id, name, rules_json, granular_flags)`
       )
       .eq("project_id", projectId)
       .eq("person_id", personId)
@@ -174,6 +98,7 @@ export async function loadUserPermissions(
         id: rawTemplate.id,
         name: rawTemplate.name,
         rules: rawTemplate.rules_json as Record<PermissionModule, PermissionLevel[]>,
+        granularFlags: (rawTemplate.granular_flags ?? []) as GranularFlag[],
       }
     : undefined;
 
@@ -195,14 +120,22 @@ export async function loadUserPermissions(
 // Templates
 // ---------------------------------------------------------------------------
 
-export async function getPermissionTemplates(): Promise<PermissionTemplate[]> {
+export async function getPermissionTemplates(
+  scope?: "project" | "company" | "global",
+): Promise<PermissionTemplate[]> {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("permission_templates")
     .select("*")
     .order("is_system", { ascending: false })
     .order("name");
+
+  if (scope) {
+    query = query.eq("scope", scope);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error("Error loading permission templates:", error);
@@ -225,6 +158,7 @@ export async function createPermissionTemplate(
       scope: template.scope ?? "project",
       is_system: false,
       rules_json: template.rules_json,
+      granular_flags: template.granular_flags ?? [],
     })
     .select()
     .single();

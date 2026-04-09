@@ -68,6 +68,7 @@
     /* Accent */
     --accent: 260 30% 95%;
     --accent-foreground: 260 37% 45%;
+    --light: 260 15% 97.5%;
 
     /* Destructive */
     --destructive: 0 72% 51%;
@@ -204,6 +205,7 @@
     --muted-foreground: 0 0% 65%;
     --accent: 245 30% 20%;
     --accent-foreground: 245 58% 75%;
+    --light: 245 15% 60%;
     --destructive: 0 62% 40%;
     --destructive-foreground: 0 0% 98%;
     --border: 240 5% 19%;

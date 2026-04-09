@@ -7,6 +7,7 @@ import type {
   FilterConfig,
   TableColumn,
 } from "@/components/tables/unified";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -22,6 +23,29 @@ import {
 // =============================================================================
 // Types
 // =============================================================================
+
+export interface OwnerInvoiceLineItem {
+  id: number;
+  invoice_id: number;
+  description: string | null;
+  category: string | null;
+  approved_amount: number | null;
+  // SOV fields
+  scheduled_value: number;
+  work_completed_previous: number;
+  work_completed_period: number;
+  materials_stored: number;
+  retainage_pct: number;
+  retainage_released: number;
+  retainage_amount: number;
+  total_completed_stored: number | null;
+  net_amount_this_period: number | null;
+  balance_to_finish: number | null;
+  work_completed_pct: number;
+  sort_order: number;
+  created_at: string | null;
+  updated_at: string;
+}
 
 export interface OwnerInvoice {
   id: number;
@@ -48,6 +72,16 @@ export interface OwnerInvoice {
   vendor_name?: string | null;
   // ERP sync
   acumatica_ref_nbr?: string | null;
+  // Retention (stored as percentage, e.g. 5.0 = 5%)
+  contract_retention_percentage?: number | null;
+  // Change orders (computed from prime_contract_change_orders vs invoice period)
+  previous_changes?: number | null;
+  current_changes?: number | null;
+  // Payment status (computed from invoice_payments)
+  total_paid?: number | null;
+  payment_status?: "unpaid" | "partially_paid" | "paid" | null;
+  // Line items (joined)
+  owner_invoice_line_items?: OwnerInvoiceLineItem[];
   created_at: string;
   updated_at: string;
 }
@@ -56,7 +90,7 @@ export interface OwnerInvoice {
 // Helpers
 // =============================================================================
 
-function formatCurrency(value: number | null | undefined): string {
+export function formatCurrency(value: number | null | undefined): string {
   if (value === null || value === undefined) return "$0.00";
   return new Intl.NumberFormat("en-US", {
     style: "currency",
@@ -64,7 +98,7 @@ function formatCurrency(value: number | null | undefined): string {
   }).format(value);
 }
 
-function formatDate(dateStr: string | null | undefined): string {
+export function formatDate(dateStr: string | null | undefined): string {
   if (!dateStr) return "—";
   const d = new Date(dateStr);
   if (Number.isNaN(d.getTime())) return "—";
@@ -91,6 +125,9 @@ export const invoiceColumns: ColumnConfig[] = [
   { id: "billing_period", label: "Billing Period", defaultVisible: true },
   { id: "gross_amount", label: "Gross Amount", defaultVisible: true },
   { id: "net_amount", label: "Net Amount", defaultVisible: true },
+  { id: "previous_changes", label: "Previous Changes", defaultVisible: false },
+  { id: "current_changes", label: "Current Changes", defaultVisible: false },
+  { id: "payment_status", label: "Payment Status", defaultVisible: true },
   { id: "paid_amount", label: "Paid Amount", defaultVisible: true },
   { id: "invoice_dates", label: "Invoice Dates", defaultVisible: true },
   { id: "contract", label: "Contract", defaultVisible: true },
@@ -204,6 +241,50 @@ export function buildInvoiceTableColumns(
       sortValue: (invoice) => invoice.net_amount ?? 0,
     },
     {
+      id: "previous_changes",
+      label: "Previous Changes",
+      defaultVisible: false,
+      render: (invoice) => (
+        <span className="tabular-nums text-right block">
+          {formatCurrency(invoice.previous_changes ?? 0)}
+        </span>
+      ),
+      sortable: true,
+      sortValue: (invoice) => invoice.previous_changes ?? 0,
+    },
+    {
+      id: "current_changes",
+      label: "Current Changes",
+      defaultVisible: false,
+      render: (invoice) => (
+        <span className="tabular-nums text-right block">
+          {formatCurrency(invoice.current_changes ?? 0)}
+        </span>
+      ),
+      sortable: true,
+      sortValue: (invoice) => invoice.current_changes ?? 0,
+    },
+    {
+      id: "payment_status",
+      label: "Payment Status",
+      defaultVisible: true,
+      render: (invoice) => {
+        const status = invoice.payment_status ?? "unpaid";
+        if (status === "paid") {
+          return <Badge variant="success">Paid</Badge>;
+        }
+        if (status === "partially_paid") {
+          return <Badge variant="default">Partial</Badge>;
+        }
+        return <Badge variant="secondary">Unpaid</Badge>;
+      },
+      sortable: true,
+      sortValue: (invoice) => {
+        const s = invoice.payment_status ?? "unpaid";
+        return s === "paid" ? 2 : s === "partially_paid" ? 1 : 0;
+      },
+    },
+    {
       id: "paid_amount",
       label: "Paid Amount",
       defaultVisible: true,
@@ -295,7 +376,11 @@ export function renderInvoiceRowActions(
   onEdit: (invoice: OwnerInvoice) => void,
   onDelete: (invoice: OwnerInvoice) => void,
 ): ReactElement {
-  const isDeletable = invoice.status !== "approved" && invoice.status !== "paid";
+  const isDeletable =
+    invoice.status !== "approved" &&
+    invoice.status !== "approved_as_noted" &&
+    invoice.status !== "paid" &&
+    invoice.status !== "void";
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>

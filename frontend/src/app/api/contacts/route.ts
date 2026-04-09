@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
         phone_mobile: body.phone_mobile || undefined,
         phone_business: body.phone_business || undefined,
         company_id: body.company_id || undefined,
-        address: body.address || undefined,
+        address_line1: body.address || body.address_line1 || undefined,
         city: body.city || undefined,
         state: body.state || undefined,
         zip: body.zip || undefined,

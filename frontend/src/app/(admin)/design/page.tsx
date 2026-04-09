@@ -263,7 +263,7 @@ function DesignSection({
 }) {
   return (
     <section id={id} className="scroll-mt-24">
-      <div className="mb-8 flex items-baseline gap-6 border-b border-border pb-5">
+      <div className="mb-8 flex items-baseline gap-6">
         <h2 className="shrink-0 text-xl font-bold tracking-tight text-foreground">
           {title}
         </h2>
@@ -364,7 +364,7 @@ export default function DesignSystemComponentsPage() {
       {/* 2-column layout: sticky left nav + scrollable content */}
       <div className="flex gap-8 items-start">
         {/* Left vertical nav */}
-        <nav className="hidden lg:block w-48 shrink-0 self-start sticky top-4 space-y-6">
+        <nav className="hidden lg:block w-48 shrink-0 self-start sticky top-4 max-h-[calc(100vh-2rem)] overflow-y-auto space-y-6">
           {NAV_SECTIONS.map((group) => (
             <div key={group.group}>
               <p className="mb-2 px-0 text-[9px] font-bold uppercase tracking-[0.2em] text-muted-foreground/40">

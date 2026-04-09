@@ -1,7 +1,7 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import Link from "next/link";
-import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
+import { ChevronRight, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/ds";
@@ -59,12 +59,49 @@ export const commitmentFilters: FilterConfig[] = [
     type: "select",
     options: [
       { value: "draft", label: "Draft" },
-      { value: "pending", label: "Pending" },
-      { value: "approved", label: "Approved" },
+      { value: "out_for_bid", label: "Out for Bid" },
       { value: "out_for_signature", label: "Out for Signature" },
-      { value: "executed", label: "Executed" },
+      { value: "approved", label: "Approved" },
       { value: "complete", label: "Complete" },
       { value: "terminated", label: "Terminated" },
+      { value: "void", label: "Void" },
+    ],
+  },
+  {
+    id: "contract_company_name",
+    label: "Contract Company",
+    type: "text",
+    placeholder: "Filter by company name...",
+  },
+  {
+    id: "erp_status",
+    label: "ERP Status",
+    type: "select",
+    options: [
+      { value: "synced", label: "Synced" },
+      { value: "not_synced", label: "Not Synced" },
+      { value: "sync_error", label: "Sync Error" },
+      { value: "pending", label: "Pending" },
+    ],
+  },
+  {
+    id: "executed",
+    label: "Executed",
+    type: "select",
+    options: [
+      { value: "true", label: "Yes" },
+      { value: "false", label: "No" },
+    ],
+  },
+  {
+    id: "ssov_status",
+    label: "SSOV Status",
+    type: "select",
+    options: [
+      { value: "draft", label: "Draft" },
+      { value: "pending_approval", label: "Pending Approval" },
+      { value: "approved", label: "Approved" },
+      { value: "revised", label: "Revised" },
     ],
   },
 ];
@@ -90,9 +127,19 @@ function formatDate(value: string | null | undefined): string {
 
 // Converts snake_case DB values to display strings that StatusBadge can look up.
 // e.g., "out_for_signature" → "out for signature"
+const STATUS_LABELS: Record<string, string> = {
+  draft: "Draft",
+  out_for_bid: "Out for Bid",
+  out_for_signature: "Out for Signature",
+  approved: "Approved",
+  complete: "Complete",
+  terminated: "Terminated",
+  void: "Void",
+};
+
 function statusLabel(status: string | null | undefined): string {
   if (!status) return "-";
-  return status.replace(/_/g, " ");
+  return STATUS_LABELS[status.toLowerCase()] ?? status.replace(/_/g, " ");
 }
 
 function typeVariant(type: string | null | undefined): "default" | "secondary" | "outline" {
@@ -112,11 +159,33 @@ function yesNo(value: boolean): string {
 
 export function buildCommitmentTableColumns(
   projectId: string,
+  expandedIds?: Set<string>,
+  onToggleExpand?: (id: string) => void,
 ): TableColumn<CommitmentListItem>[] {
   return [
     {
       ...commitmentColumns[0],
-      render: (item) => <span className="font-medium">{item.number}</span>,
+      render: (item) => (
+        <div className="flex items-center gap-1.5">
+          {onToggleExpand && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleExpand(item.id);
+              }}
+              className="flex h-5 w-5 items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            >
+              <ChevronRight
+                className={`h-3.5 w-3.5 transition-transform ${
+                  expandedIds?.has(item.id) ? "rotate-90" : ""
+                }`}
+              />
+            </button>
+          )}
+          <span className="font-medium">{item.number}</span>
+        </div>
+      ),
       csvValue: (item) => item.number,
       sortValue: (item) => item.number,
     },

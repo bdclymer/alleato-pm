@@ -11,6 +11,7 @@ export interface CompanyContact {
   phone_business: string | null;
   job_title: string | null;
   company_id: string | null;
+  person_type?: string | null;
 }
 
 export interface CompanyContactOption {
@@ -37,9 +38,37 @@ interface UseCompanyContactsReturn {
   refetch: () => Promise<void>;
 }
 
+function matchesSearch(contact: CompanyContact, search?: string): boolean {
+  if (!search) return true;
+  const term = search.trim().toLowerCase();
+  if (!term) return true;
+
+  return [
+    contact.first_name,
+    contact.last_name,
+    contact.email,
+    contact.job_title,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .some((value) => value.toLowerCase().includes(term));
+}
+
+function sortContacts(a: CompanyContact, b: CompanyContact): number {
+  const aLast = (a.last_name || "").toLowerCase();
+  const bLast = (b.last_name || "").toLowerCase();
+  if (aLast !== bLast) return aLast.localeCompare(bLast);
+
+  const aFirst = (a.first_name || "").toLowerCase();
+  const bFirst = (b.first_name || "").toLowerCase();
+  if (aFirst !== bFirst) return aFirst.localeCompare(bFirst);
+
+  return (a.email || "").toLowerCase().localeCompare((b.email || "").toLowerCase());
+}
+
 /**
- * Hook for fetching contacts belonging to a specific vendor via vendor_contacts join table.
- * Falls back to company_id filter if vendorId is not provided.
+ * Hook for fetching contacts for a vendor or company.
+ * For vendors, it merges explicit vendor assignments with contacts linked to the
+ * vendor's backing company so directory contacts appear everywhere consistently.
  */
 export function useCompanyContacts(
   options: UseCompanyContactsOptions = {},
@@ -63,38 +92,69 @@ export function useCompanyContacts(
       const supabase = createClient();
 
       if (vendorId) {
-        // Query via vendor_contacts join table for exact vendor assignment
-        let query = supabase
-          .from("vendor_contacts")
-          .select(
-            "people!vendor_contacts_person_id_fkey(id, first_name, last_name, email, phone_business, job_title, company_id)",
-          )
-          .eq("vendor_id", vendorId)
-          .limit(limit);
+        const [{ data: vendor, error: vendorError }, { data, error: queryError }] =
+          await Promise.all([
+            supabase
+              .from("vendors")
+              .select("company_id")
+              .eq("id", vendorId)
+              .single(),
+            supabase
+              .from("vendor_contacts")
+              .select(
+                "people!vendor_contacts_person_id_fkey(id, first_name, last_name, email, phone_business, job_title, company_id, person_type)",
+              )
+              .eq("vendor_id", vendorId)
+              .limit(limit),
+          ]);
 
-        if (search) {
-          query = query.or(
-            `people.first_name.ilike.%${search}%,people.last_name.ilike.%${search}%,people.email.ilike.%${search}%`,
-          );
-        }
-
-        const { data, error: queryError } = await query;
-
+        if (vendorError) throw new Error(vendorError.message);
         if (queryError) throw new Error(queryError.message);
 
-        const people = (data || [])
+        const vendorLinkedPeople = (data || [])
           .map((row) => (row as Record<string, unknown>).people)
           .filter(Boolean) as CompanyContact[];
 
-        setContacts(people);
+        let companyContacts: CompanyContact[] = [];
+        if (vendor?.company_id) {
+          const { data: companyContactData, error: companyContactsError } = await supabase
+            .from("people")
+            .select(
+              "id, first_name, last_name, email, phone_business, job_title, company_id, person_type",
+            )
+            .eq("company_id", vendor.company_id)
+            .eq("person_type", "contact")
+            .order("last_name", { ascending: true })
+            .order("first_name", { ascending: true })
+            .limit(limit);
+
+          if (companyContactsError) throw new Error(companyContactsError.message);
+          companyContacts = (companyContactData || []) as CompanyContact[];
+        }
+
+        const merged = new Map<string, CompanyContact>();
+
+        for (const contact of [...vendorLinkedPeople, ...companyContacts]) {
+          if (!contact?.id) continue;
+          if (contact.person_type && contact.person_type !== "contact") continue;
+          merged.set(contact.id, contact);
+        }
+
+        setContacts(
+          Array.from(merged.values())
+            .filter((contact) => matchesSearch(contact, search))
+            .sort(sortContacts)
+            .slice(0, limit),
+        );
       } else if (companyId) {
         // Legacy: filter directly on people.company_id
         let query = supabase
           .from("people")
           .select(
-            "id, first_name, last_name, email, phone_business, job_title, company_id",
+            "id, first_name, last_name, email, phone_business, job_title, company_id, person_type",
           )
           .eq("company_id", companyId)
+          .eq("person_type", "contact")
           .order("last_name", { ascending: true })
           .limit(limit);
 

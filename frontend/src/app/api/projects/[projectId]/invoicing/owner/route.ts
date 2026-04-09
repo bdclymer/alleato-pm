@@ -31,7 +31,7 @@ export async function POST(
 
     const projectIdNum = parseInt(projectId, 10);
     const body = await request.json();
-    const { prime_contract_id, invoice_number, period_start, period_end, billing_period_id, status } = body;
+    const { prime_contract_id, invoice_number, period_start, period_end, billing_period_id, billing_date, status } = body;
 
     // Validate required fields
     if (!prime_contract_id) {
@@ -65,6 +65,7 @@ export async function POST(
         period_start: period_start ?? null,
         period_end: period_end ?? null,
         billing_period_id: billing_period_id ?? null,
+        billing_date: billing_date === "" ? null : (billing_date ?? null),
         status: status ?? "draft",
       })
       .select()
@@ -146,6 +147,47 @@ export async function GET(
       );
     }
 
+    // Batch-fetch approved prime contract change orders for all contracts in result set
+    const contractIds = Array.from(
+      new Set(
+        (invoices || [])
+          .map((inv) => inv.prime_contract_id)
+          .filter((id): id is string => id != null),
+      ),
+    );
+
+    type PCCO = {
+      prime_contract_id: string | null;
+      total_amount: number | null;
+      status: string | null;
+      approved_at: string | null;
+      signed_co_received_date: string | null;
+      due_date: string | null;
+    };
+    let changeOrders: PCCO[] = [];
+    if (contractIds.length > 0) {
+      const { data: coData } = await supabase
+        .from("prime_contract_change_orders")
+        .select("prime_contract_id, total_amount, status, approved_at, signed_co_received_date, due_date")
+        .in("prime_contract_id", contractIds)
+        .ilike("status", "approved%");
+      changeOrders = coData || [];
+    }
+
+    // Batch-fetch all payments for invoices in result set
+    const invoiceIds = (invoices || []).map((inv) => inv.id);
+    let payments: { owner_invoice_id: number | null; amount: number }[] = [];
+    if (invoiceIds.length > 0) {
+      const { data: payData } = await supabase
+        .from("invoice_payments")
+        .select("owner_invoice_id, amount")
+        .in("owner_invoice_id", invoiceIds);
+      payments = payData || [];
+    }
+
+    const pickCoDate = (co: PCCO): string | null =>
+      co.approved_at ?? co.signed_co_received_date ?? co.due_date ?? null;
+
     // Compute financial summary for each invoice from line items
     const invoicesWithTotals = (invoices || []).map((invoice) => {
       const lineItems = invoice.owner_invoice_line_items || [];
@@ -170,6 +212,43 @@ export async function GET(
 
       const { prime_contracts: _pc, ...invoiceData } = invoice;
 
+      // Compute previous / current changes from approved prime contract COs
+      let previous_changes = 0;
+      let current_changes = 0;
+      const periodStart = invoice.period_start;
+      const periodEnd = invoice.period_end;
+      for (const co of changeOrders) {
+        if (co.prime_contract_id !== invoice.prime_contract_id) continue;
+        const coDate = pickCoDate(co);
+        if (!coDate) continue;
+        const amount = co.total_amount ?? 0;
+        if (periodStart && coDate < periodStart) {
+          previous_changes += amount;
+        } else if (
+          periodStart &&
+          periodEnd &&
+          coDate >= periodStart &&
+          coDate <= periodEnd
+        ) {
+          current_changes += amount;
+        }
+      }
+
+      // Compute payment status from invoice_payments
+      const total_paid = payments
+        .filter((p) => p.owner_invoice_id === invoice.id)
+        .reduce((sum, p) => sum + (p.amount || 0), 0);
+      const billedTotal =
+        (invoice.net_amount ?? net_amount) ||
+        (invoice.gross_amount ?? gross_amount) ||
+        total_amount;
+      let payment_status: "unpaid" | "partially_paid" | "paid" = "unpaid";
+      if (billedTotal > 0 && total_paid >= billedTotal) {
+        payment_status = "paid";
+      } else if (total_paid > 0) {
+        payment_status = "partially_paid";
+      }
+
       return {
         ...invoiceData,
         contract_number: pc?.contract_number ?? null,
@@ -177,9 +256,13 @@ export async function GET(
         total_contract_amount: pc?.revised_contract_value ?? pc?.original_contract_value ?? null,
         gross_amount: invoice.gross_amount ?? gross_amount,
         net_amount: invoice.net_amount ?? net_amount,
-        paid_amount: invoice.paid_amount ?? null,
+        paid_amount: invoice.paid_amount ?? total_paid,
         percent_complete: invoice.percent_complete ?? null,
         total_amount,
+        previous_changes,
+        current_changes,
+        total_paid,
+        payment_status,
       };
     });
 

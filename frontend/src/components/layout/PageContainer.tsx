@@ -35,7 +35,7 @@ export function PageContainer({
         // Vertical: compact on mobile, slightly roomier from tablet+
         padding && "px-3 sm:px-5 lg:px-7 py-1 sm:py-2",
         // Prevent horizontal overflow on all screen sizes
-        "overflow-x-hidden",
+        "overflow-x-clip",
         className,
       )}
     >

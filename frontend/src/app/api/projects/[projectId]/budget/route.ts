@@ -709,8 +709,7 @@ export async function POST(
       const { error: projectUpdateError } = await supabase
         .from("projects")
         .update({
-          original_budget: totalBudget,
-          current_budget: totalBudget,
+          budget: totalBudget,
         })
         .eq("id", projectIdNum);
 

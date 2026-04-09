@@ -157,11 +157,9 @@ export async function POST(request: NextRequest) {
         address: body.address || null,
         city: body.city || null,
         state: body.state || null,
-        zip: body.zip || null,
         website: body.website || null,
         type: body.company_type || body.type || "VENDOR",
         status: body.status || "ACTIVE",
-        created_by: user.id,
       })
       .select()
       .single();

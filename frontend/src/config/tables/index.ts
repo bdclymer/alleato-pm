@@ -17,21 +17,6 @@ export {
 } from "./commitments.config";
 export type { CommitmentStatusCounts } from "./commitments.config";
 
-// Invoicing table configuration
-export {
-  getOwnerInvoicesColumns,
-  getSubcontractorInvoicesColumns,
-  invoiceStatusOptions,
-  getOwnerInvoicesSummaryCards,
-  getInvoicingTabs,
-  invoicingMobileColumns,
-  formatDate,
-} from "./invoicing.config";
-export type {
-  OwnerInvoice,
-  OwnerInvoiceLineItem,
-  SubcontractorInvoice,
-} from "./invoicing.config";
 
 // Direct Costs table configuration
 export {

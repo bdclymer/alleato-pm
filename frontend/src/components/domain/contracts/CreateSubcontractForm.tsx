@@ -63,6 +63,7 @@ export function CreateSubcontractForm({
     isLoadingContacts,
     refetchContacts,
     vendorId,
+    vendorCompanyId,
     handleAttachmentListChange,
     handleFilesSelected,
   } = useSubcontractFormState({ projectId, initialData, mode: mode ?? "create" });
@@ -171,7 +172,7 @@ export function CreateSubcontractForm({
             <InclusionsExclusionsSection isSubmitting={isSubmitting} />
             <ContractDatesSection isSubmitting={isSubmitting} />
             <PrivacySection isSubmitting={isSubmitting} userOptions={userOptions} isLoadingUsers={isLoadingUsers} />
-            <InvoiceContactsSection isSubmitting={isSubmitting} invoiceContactOptions={invoiceContactOptions} isLoadingContacts={isLoadingContacts} vendorId={vendorId} refetchContacts={refetchContacts} />
+            <InvoiceContactsSection isSubmitting={isSubmitting} invoiceContactOptions={invoiceContactOptions} isLoadingContacts={isLoadingContacts} vendorId={vendorId} vendorCompanyId={vendorCompanyId} refetchContacts={refetchContacts} />
           </div>
 
           <div className="mt-10 flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">

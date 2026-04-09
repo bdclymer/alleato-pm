@@ -207,16 +207,17 @@ export function ContactFormDialog({
     setIsSubmitting(true);
     try {
       const cleanData = {
-        ...data,
+        first_name: data.first_name,
+        last_name: data.last_name,
         email: data.email || null,
-        phone: data.phone || null,
+        phone_mobile: data.phone || null,
         company_id:
           data.company_id && data.company_id.trim() !== ""
             ? data.company_id
             : null,
         job_title: data.job_title || null,
-        department: data.department || null,
-        address: data.address || null,
+        business_unit: data.department || null,
+        address_line1: data.address || null,
         city: data.city || null,
         state: data.state || null,
         zip: data.zip || null,

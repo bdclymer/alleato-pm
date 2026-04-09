@@ -87,14 +87,6 @@ export async function POST(request: Request) {
         title: title || defaultTitle,
         body: bodyParts.join("\n\n"),
         created_by: user.email || user.id,
-        note_type: "highlight",
-        source_type: "meeting_transcript",
-        source_metadata_id: meeting.id,
-        source_context: {
-          meeting_id: meeting.id,
-          meeting_title: meeting.title,
-          meeting_date: meeting.date,
-        },
       })
       .select("id, title")
       .single();

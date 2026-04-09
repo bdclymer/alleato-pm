@@ -150,6 +150,22 @@ export async function PATCH(
       );
     }
 
+    // Guard: budget code and contract cannot be changed on commitment-linked line items
+    if (existingItem.commitment_id) {
+      if (validatedData.budgetCodeId !== undefined && validatedData.budgetCodeId !== existingItem.budget_code_id) {
+        return NextResponse.json(
+          { error: 'Cannot change the budget code on a line item linked to a commitment' },
+          { status: 409 }
+        );
+      }
+      if (validatedData.contractId !== undefined && validatedData.contractId !== existingItem.commitment_id) {
+        return NextResponse.json(
+          { error: 'Cannot change the commitment on a line item linked to a commitment' },
+          { status: 409 }
+        );
+      }
+    }
+
     // Resolve budgetCodeId: could be budget_lines.id OR project_cost_codes.id
     let resolvedBudgetCodeId: string | null = validatedData.budgetCodeId ?? null;
     if (validatedData.budgetCodeId) {

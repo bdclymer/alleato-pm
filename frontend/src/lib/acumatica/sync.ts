@@ -583,7 +583,7 @@ export async function syncARInvoices(
           .from("owner_invoices")
           .insert({
             ...fields,
-            contract_id: primeContract.id,
+            prime_contract_id: primeContract.id,
           })
           .select("id")
           .single();

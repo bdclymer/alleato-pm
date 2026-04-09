@@ -104,6 +104,8 @@ export interface CreateSubmittalInput {
   description?: string | null;
   priority?: string | null;
   ball_in_court?: string | null;
+  required_approval_date?: string | null;
+  submission_date?: string | null;
 }
 
 export type UpdateSubmittalInput = Partial<CreateSubmittalInput>;
@@ -222,6 +224,121 @@ export function useDeleteSubmittal(projectId: number) {
     },
     onError: (err: Error) => {
       toast.error("Could not delete submittal", { description: err.message });
+    },
+  });
+}
+
+export function useRestoreSubmittal(projectId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (submittalId: string): Promise<SubmittalSummary> => {
+      const res = await fetch(
+        `/api/projects/${projectId}/submittals/${submittalId}/restore`,
+        { method: "PATCH" },
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? `HTTP ${res.status}`);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: submittalKeys.all(projectId) });
+      toast.success("Submittal restored");
+    },
+    onError: (err: Error) => {
+      toast.error("Could not restore submittal", { description: err.message });
+    },
+  });
+}
+
+export function useDuplicateSubmittal(projectId: number) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (submittalId: string): Promise<SubmittalSummary> => {
+      const res = await fetch(
+        `/api/projects/${projectId}/submittals/${submittalId}/duplicate`,
+        { method: "POST" },
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? `HTTP ${res.status}`);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: submittalKeys.all(projectId) });
+      toast.success("Submittal duplicated");
+    },
+    onError: (err: Error) => {
+      toast.error("Could not duplicate submittal", { description: err.message });
+    },
+  });
+}
+
+export function useAddWorkflowStep(projectId: number, submittalId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      user_id: string;
+      step_type: string;
+      required?: boolean;
+    }): Promise<{ id: string; step_order: number; step_type: string }> => {
+      const res = await fetch(
+        `/api/projects/${projectId}/submittals/${submittalId}/workflow-steps`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(input),
+        },
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? `HTTP ${res.status}`);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: submittalKeys.all(projectId) });
+      toast.success("Workflow step added");
+    },
+    onError: (err: Error) => {
+      toast.error("Could not add workflow step", { description: err.message });
+    },
+  });
+}
+
+export function useRespondToWorkflowStep(
+  projectId: number,
+  submittalId: string,
+  stepId: string,
+) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: {
+      response_status: string;
+      comments?: string | null;
+    }): Promise<{ id: string; response_status: string }> => {
+      const res = await fetch(
+        `/api/projects/${projectId}/submittals/${submittalId}/workflow-steps/${stepId}/respond`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(input),
+        },
+      );
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.error ?? `HTTP ${res.status}`);
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: submittalKeys.all(projectId) });
+      toast.success("Response recorded");
+    },
+    onError: (err: Error) => {
+      toast.error("Could not record response", { description: err.message });
     },
   });
 }

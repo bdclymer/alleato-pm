@@ -19,6 +19,7 @@ export interface ChangeEventLineItem {
   description: string;
   vendor: string;
   contract: string;
+  commitmentId?: string;
   commitmentLineItemId: string;
   revenueUnitOfMeasure: string;
   revenueQuantity: number;
@@ -95,6 +96,7 @@ export const createEmptyLineItem = (): ChangeEventLineItem => ({
   description: "",
   vendor: "",
   contract: "",
+  commitmentId: undefined,
   commitmentLineItemId: "",
   revenueUnitOfMeasure: "",
   revenueQuantity: 1,

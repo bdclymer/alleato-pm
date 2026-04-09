@@ -892,7 +892,18 @@ export default function TestingPage() {
           </div>
         </div>
         <p className="text-sm font-medium">{selectedSuite?.display_name}</p>
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <div className="flex items-center gap-1.5">
+            <label htmlFor="runner-project-id" className="text-muted-foreground shrink-0">Project ID:</label>
+            <input
+              id="runner-project-id"
+              type="text"
+              value={runForm.projectId}
+              onChange={(e) => setRunForm((f) => ({ ...f, projectId: e.target.value }))}
+              placeholder="e.g. 67"
+              className="w-16 rounded border border-border bg-background px-1.5 py-0.5 text-xs text-foreground placeholder:text-muted-foreground/50 focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          </div>
           <span className="text-green-600 font-medium">{results.filter((r) => r.status === "pass").length} ✓</span>
           <span className="text-red-500 font-medium">{results.filter((r) => r.status === "fail").length} ✗</span>
         </div>

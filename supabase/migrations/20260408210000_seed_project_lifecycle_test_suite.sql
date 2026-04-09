@@ -28,7 +28,7 @@ VALUES
   ((SELECT id FROM suite), '1.1', 'Project Setup', 'Open project',
    'Open an existing project',
    'This is the entry point for the whole lifecycle. You are opening the Alleato AI project. Everything else in this test matrix builds on the project being accessible here.',
-   'Log in as test1@mail.com before starting.',
+   NULL,
    E'1. Navigate to http://localhost:3000/67\n2. Wait for the project home/dashboard page to load\n3. Observe the project name and any summary cards',
    'The page loads without errors. The project name is visible in the header or sidebar. No spinner remains on screen.',
    'HIGH', 'scenario', '/67'),

@@ -19,7 +19,7 @@ FROM (VALUES
   ('1.1',
    'Create a new test project',
    'Every tester creates their own isolated project so data from different testers does not collide. Name your project using the pattern "Test – [Your Name] – [Today''s Date]" so it is easy to identify and clean up later.',
-   'Log in as test1@mail.com before starting.',
+   NULL,
    E'1. Navigate to /create-project\n2. In Project Name, type: Test – [Your Name] – [Today''s Date] (e.g. "Test – Jordan – 2026-04-08")\n3. Fill in any other required fields (e.g. Project Number: TEST-001, Status: Active, Start Date: today)\n4. Click Save / Create\n5. Wait for the page to redirect to your new project dashboard\n6. Note the project ID from the URL (e.g. https://app.alleato.com/123/home — the ID is 123)\n7. Enter that project ID in the "Project ID" field in the test run form (top of the sidebar)',
    'A success toast appears. The app redirects to the new project dashboard. The URL contains your new project ID. After entering the ID in the test run form, all "Open in app" links throughout this test suite will open pages in your new project.',
    '/create-project'),

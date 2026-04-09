@@ -129,13 +129,12 @@ async function generateChangeEventNumber(
   supabase: any,
   projectId: number
 ): Promise<string> {
-  // Get all existing (non-deleted) change event numbers and compute max numerically.
-  // String ordering is unsafe with mixed formats like "CE-001" and "009".
+  // Get ALL change event numbers (including soft-deleted) to avoid unique constraint
+  // violations — the unique constraint covers all rows, not just active ones.
   const { data: existing } = await supabase
     .from('change_events')
     .select('number')
     .eq('project_id', projectId)
-    .is('deleted_at', null)
 
   let maxNumber = 0
   for (const row of existing ?? []) {

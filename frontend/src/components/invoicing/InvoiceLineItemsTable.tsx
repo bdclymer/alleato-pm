@@ -7,11 +7,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Text } from "@/components/ds/text";
-import { formatCurrency, type OwnerInvoiceLineItem } from "@/config/tables";
+import {
+  formatCurrency,
+  type OwnerInvoiceLineItem,
+} from "@/features/invoicing/invoicing-table-config";
 
 interface InvoiceLineItemsTableProps {
   lineItems: OwnerInvoiceLineItem[];
   showRetention?: boolean;
+  /** Retention percentage as a number (e.g. 5 = 5%). Defaults to 0. */
+  retentionPercent?: number;
 }
 
 /**
@@ -24,11 +29,13 @@ interface InvoiceLineItemsTableProps {
  * <InvoiceLineItemsTable
  *   lineItems={invoice.owner_invoice_line_items}
  *   showRetention={true}
+ *   retentionPercent={invoice.contract_retention_percentage ?? 0}
  * />
  */
 export function InvoiceLineItemsTable({
   lineItems,
   showRetention = false,
+  retentionPercent = 0,
 }: InvoiceLineItemsTableProps) {
   if (!lineItems || lineItems.length === 0) {
     return (
@@ -43,7 +50,7 @@ export function InvoiceLineItemsTable({
     (sum, item) => sum + (item.approved_amount || 0),
     0,
   );
-  const retentionRate = 0.05; // 5% retention (placeholder)
+  const retentionRate = retentionPercent / 100;
   const retention = subtotal * retentionRate;
   const total = subtotal - retention;
 
@@ -83,7 +90,7 @@ export function InvoiceLineItemsTable({
           </div>
           <div className="flex justify-between items-center text-sm">
             <span className="text-muted-foreground">
-              Retention ({(retentionRate * 100).toFixed(0)}%)
+              Retention ({retentionPercent.toFixed(0)}%)
             </span>
             <span className="font-medium text-destructive">
               -{formatCurrency(retention)}

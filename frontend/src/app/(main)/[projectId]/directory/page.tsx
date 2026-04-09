@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
   UserPlus,
@@ -707,7 +708,7 @@ function ProjectTeamSection({
     <>
       {/* Team members table */}
       {assignedRoles.length > 0 && (
-        <div className="rounded-lg border border-border overflow-hidden">
+        <div className="rounded-md border border-border/50 overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow>
@@ -992,7 +993,7 @@ function ExternalMembersSection({ projectId }: { projectId: string }) {
       </div>
 
       {/* Members table */}
-      <div className="rounded-lg border border-border overflow-hidden">
+      <div className="rounded-md border border-border/50 overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -1143,7 +1144,7 @@ function VendorsSection({
   }
 
   return (
-    <div className="rounded-lg border border-border overflow-hidden">
+    <div className="rounded-md border border-border/50 overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow>
@@ -1234,7 +1235,7 @@ function CompaniesSection({ members }: { members: PersonWithDetails[] }) {
   }
 
   return (
-    <div className="rounded-lg border border-border overflow-hidden">
+    <div className="rounded-md border border-border/50 overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow>
@@ -1244,16 +1245,26 @@ function CompaniesSection({ members }: { members: PersonWithDetails[] }) {
         </TableHeader>
         <TableBody>
           {companies.map((c) => (
-            <TableRow key={c.id}>
+            <TableRow
+              key={c.id}
+              className="cursor-pointer hover:bg-muted/40"
+              onClick={() => {
+                window.location.href = `/directory/companies/${c.id}`;
+              }}
+            >
               <TableCell>
-                <div className="flex items-center gap-3">
+                <Link
+                  href={`/directory/companies/${c.id}`}
+                  className="flex items-center gap-3"
+                  onClick={(e) => e.stopPropagation()}
+                >
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted">
                     <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
                   </div>
-                  <span className="text-sm font-medium text-foreground">
+                  <span className="text-sm font-medium text-foreground hover:underline">
                     {c.name}
                   </span>
-                </div>
+                </Link>
               </TableCell>
               <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
                 {c.memberCount} {c.memberCount === 1 ? "member" : "members"}

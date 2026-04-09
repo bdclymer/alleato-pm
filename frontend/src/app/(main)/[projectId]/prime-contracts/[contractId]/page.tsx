@@ -78,6 +78,9 @@ interface PrimeContractSettings {
   allow_standard_users_create_pcco: boolean;
   allow_standard_users_create_pco: boolean;
   sov_always_editable: boolean;
+  enable_completed_work_retainage: boolean;
+  enable_stored_materials_retainage: boolean;
+  default_retainage_percent: number;
   show_markup_on_co_pdf: boolean;
   show_markup_on_invoice_pdf: boolean;
   default_distribution_prime_contract: string | null;

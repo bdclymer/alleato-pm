@@ -76,14 +76,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
         ...(body.address !== undefined && { address: body.address }),
         ...(body.city !== undefined && { city: body.city }),
         ...(body.state !== undefined && { state: body.state }),
-        ...(body.zip !== undefined && { zip: body.zip }),
         ...(body.website !== undefined && { website: body.website }),
-        ...(body.business_phone !== undefined && { business_phone: body.business_phone }),
-        ...(body.email_address !== undefined && { email_address: body.email_address }),
-        ...(body.company_type !== undefined && { company_type: body.company_type }),
+        ...(body.company_type !== undefined && { type: body.company_type }),
         ...(body.status !== undefined && { status: body.status }),
         updated_at: new Date().toISOString(),
-        updated_by: user.id,
       })
       .eq("id", companyId)
       .select()

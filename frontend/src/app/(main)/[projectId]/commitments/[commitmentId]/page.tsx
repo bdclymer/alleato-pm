@@ -22,6 +22,7 @@ import { ChangeOrdersTab } from "@/components/commitments/tabs/ChangeOrdersTab";
 import { EmailsTab } from "@/components/commitments/tabs/EmailsTab";
 import { InvoicesTab } from "@/components/commitments/tabs/InvoicesTab";
 import { PaymentsIssuedTab } from "@/components/commitments/tabs/PaymentsIssuedTab";
+import { RelatedItemsTab } from "@/components/commitments/tabs/RelatedItemsTab";
 import { RfqsTab } from "@/components/commitments/tabs/RfqsTab";
 import { ScheduleOfValuesTab } from "@/components/commitments/tabs/ScheduleOfValuesTab";
 import { SubcontractorSovTab } from "@/components/commitments/tabs/SubcontractorSovTab";
@@ -66,6 +67,11 @@ type CommitmentDetail = Commitment & {
   type?: "subcontract" | "purchase_order" | string;
   pending_change_orders?: number;
   draft_change_orders?: number;
+  payments_issued?: number;
+  remaining_balance?: number;
+  actual_completion_date?: string;
+  issued_on_date?: string;
+  invoice_contact_ids?: string[];
   inclusions?: string | null;
   exclusions?: string | null;
   allow_non_admin_view_sov_items?: boolean;
@@ -234,6 +240,23 @@ const normalizeCommitment = (raw: unknown): CommitmentDetail | null => {
         : false,
     pending_change_orders: Number(record.pending_change_orders ?? 0),
     draft_change_orders: Number(record.draft_change_orders ?? 0),
+    payments_issued:
+      typeof record.payments_issued === "number" || typeof record.payments_issued === "string"
+        ? Number(record.payments_issued)
+        : undefined,
+    remaining_balance:
+      typeof record.remaining_balance === "number" || typeof record.remaining_balance === "string"
+        ? Number(record.remaining_balance)
+        : undefined,
+    actual_completion_date:
+      typeof record.actual_completion_date === "string"
+        ? record.actual_completion_date
+        : undefined,
+    issued_on_date:
+      typeof record.issued_on_date === "string" ? record.issued_on_date : undefined,
+    invoice_contact_ids: Array.isArray(record.invoice_contact_ids)
+      ? (record.invoice_contact_ids as string[]).filter((v) => typeof v === "string")
+      : undefined,
     change_order_totals:
       record.change_order_totals && typeof record.change_order_totals === "object"
         ? (record.change_order_totals as CommitmentDetail["change_order_totals"])
@@ -310,7 +333,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
                     <StatusBadge status={displayStatus} />
                   </LabelValueRow>
                   <LabelValueRow
-                    label="Invoice Contact"
+                    label="Contract Company"
                     missing={!commitment.contract_company?.name}
                   >
                     {commitment.contract_company?.name ? (
@@ -328,6 +351,16 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
                       "Not set"
                     )}
                   </LabelValueRow>
+                  {commitment.invoice_contact_ids !== undefined && (
+                    <LabelValueRow
+                      label="Invoice Contacts"
+                      missing={commitment.invoice_contact_ids.length === 0}
+                    >
+                      {commitment.invoice_contact_ids.length > 0
+                        ? `${commitment.invoice_contact_ids.length} contact${commitment.invoice_contact_ids.length === 1 ? "" : "s"}`
+                        : "None"}
+                    </LabelValueRow>
+                  )}
                 </dl>
               </div>
 
@@ -344,8 +377,8 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
                           .replace(/\b\w/g, (c) => c.toUpperCase())
                       : "Not set"}
                   </LabelValueRow>
-                  <LabelValueRow label="Assignee" missing={!commitment.assignee?.name}>
-                    {commitment.assignee?.name || "Not set"}
+                  <LabelValueRow label="Assignee" missing={!commitment.assignee?.full_name}>
+                    {commitment.assignee?.full_name || "Not set"}
                   </LabelValueRow>
                   <LabelValueRow label="SOV Total">
                     {formatCurrency(scheduleOfValuesTotal)}
@@ -435,6 +468,12 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
                 <LabelValueRow label="Signed Contract Received">
                   {renderDateOrDash(commitment.signed_received_date)}
                 </LabelValueRow>
+                <LabelValueRow label="Actual Completion">
+                  {renderDateOrDash(commitment.actual_completion_date)}
+                </LabelValueRow>
+                <LabelValueRow label="Issued On">
+                  {renderDateOrDash(commitment.issued_on_date)}
+                </LabelValueRow>
               </dl>
             </div>
 
@@ -465,6 +504,12 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
           onImportComplete={onImportComplete}
         />
       </div>
+
+      {/* Attachments */}
+      <div className="space-y-4">
+        <SectionRuleHeading label="Attachments" className="[&_span]:text-primary" />
+        <AttachmentsTab commitmentId={commitmentId} />
+      </div>
     </ContentSectionStack>
   );
 }
@@ -479,9 +524,22 @@ function FinancialKpiStrip({ commitment }: { commitment: CommitmentDetail }) {
     ? (commitment.billed_to_date / commitment.revised_contract_amount) * 100
     : 0;
 
+  const pendingCOs = commitment.pending_change_orders ?? 0;
+  const draftCOs = commitment.draft_change_orders ?? 0;
+  const paymentsIssued = commitment.payments_issued;
+  const remainingBalance = commitment.remaining_balance !== undefined
+    ? commitment.remaining_balance
+    : commitment.revised_contract_amount - (paymentsIssued ?? 0);
+  const percentPaid =
+    paymentsIssued !== undefined && commitment.revised_contract_amount > 0
+      ? (paymentsIssued / commitment.revised_contract_amount) * 100
+      : undefined;
+  const pendingRevisedContractAmount =
+    commitment.revised_contract_amount + pendingCOs;
+
   return (
     <div className="overflow-hidden rounded-lg bg-card">
-      <div className="grid grid-cols-2 divide-x divide-border lg:grid-cols-5">
+      <div className="grid grid-cols-2 divide-x divide-y divide-border lg:grid-cols-5 lg:divide-y-0">
         <div className="px-5 py-4">
           <KpiBlock
             label="Original Contract"
@@ -519,6 +577,48 @@ function FinancialKpiStrip({ commitment }: { commitment: CommitmentDetail }) {
           <KpiBlock
             label="Balance to Finish"
             value={formatCurrency(commitment.balance_to_finish)}
+            size="compact"
+          />
+        </div>
+        <div className="px-5 py-4">
+          <KpiBlock
+            label="Pending COs"
+            value={formatCurrency(pendingCOs)}
+            size="compact"
+          />
+        </div>
+        <div className="px-5 py-4">
+          <KpiBlock
+            label="Draft COs"
+            value={formatCurrency(draftCOs)}
+            size="compact"
+          />
+        </div>
+        <div className="px-5 py-4">
+          <KpiBlock
+            label="Payments Issued"
+            value={paymentsIssued !== undefined ? formatCurrency(paymentsIssued) : "—"}
+            size="compact"
+          />
+        </div>
+        <div className="px-5 py-4">
+          <KpiBlock
+            label="Remaining Balance"
+            value={formatCurrency(remainingBalance)}
+            size="compact"
+          />
+        </div>
+        <div className="px-5 py-4">
+          <KpiBlock
+            label="% Paid"
+            value={percentPaid !== undefined ? `${percentPaid.toFixed(1)}%` : "—"}
+            size="compact"
+          />
+        </div>
+        <div className="px-5 py-4 lg:col-span-1">
+          <KpiBlock
+            label="Pending Revised Contract"
+            value={formatCurrency(pendingRevisedContractAmount)}
             size="compact"
           />
         </div>
@@ -608,7 +708,7 @@ export default function CommitmentDetailPage() {
       "emails",
       "history",
       "advanced-settings",
-      "attachments",
+      "related-items",
     ]);
     if (allowedTabs.has(tab)) {
       setActiveTab(tab);
@@ -799,7 +899,7 @@ export default function CommitmentDetailPage() {
           { label: "Payments Issued", href: "payments", isActive: activeTab === "payments" },
           { label: "Emails", href: "emails", isActive: activeTab === "emails" },
           { label: "Change History", href: "history", isActive: activeTab === "history" },
-          { label: "Attachments", href: "attachments", isActive: activeTab === "attachments" },
+          { label: "Related Items", href: "related-items", isActive: activeTab === "related-items" },
           { label: "Advanced Settings", href: "advanced-settings", isActive: activeTab === "advanced-settings" },
         ]}
         onTabClick={(href) => setActiveTab(href)}
@@ -861,8 +961,12 @@ export default function CommitmentDetailPage() {
           <ChangeHistoryTab commitmentId={commitment.id} />
         )}
 
-        {activeTab === "attachments" && (
-          <AttachmentsTab commitmentId={commitment.id} />
+        {activeTab === "related-items" && (
+          <RelatedItemsTab
+            commitmentId={commitment.id}
+            projectId={projectId}
+            commitmentType={commitment.type}
+          />
         )}
 
         {activeTab === "advanced-settings" && (

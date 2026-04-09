@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -15,6 +16,9 @@ interface PrimeContractSettings {
   allow_standard_users_create_pcco: boolean;
   allow_standard_users_create_pco: boolean;
   sov_always_editable: boolean;
+  enable_completed_work_retainage: boolean;
+  enable_stored_materials_retainage: boolean;
+  default_retainage_percent: number;
   show_markup_on_co_pdf: boolean;
   show_markup_on_invoice_pdf: boolean;
   default_distribution_prime_contract: string | null;
@@ -79,6 +83,7 @@ export function PrimeContractAdvancedSettingsTab({
             inclusions: contractAdvancedDraft.inclusions || null,
             exclusions: contractAdvancedDraft.exclusions || null,
             is_private: contractAdvancedDraft.is_private,
+            retention_percentage: advancedSettings.default_retainage_percent,
             payment_terms: contractAdvancedDraft.payment_terms || null,
             billing_schedule: contractAdvancedDraft.billing_schedule || null,
           }),
@@ -153,31 +158,12 @@ export function PrimeContractAdvancedSettingsTab({
                   Approve Subcontractor Invoices when Owner Approves Owner Invoice
                 </Label>
               </div>
-              <div className="flex items-center gap-3">
-                <Checkbox
-                  id="enable-work-retainage"
-                  checked={advancedSettings?.sov_always_editable ?? false}
-                  onCheckedChange={(checked) =>
-                    updateAdvancedSetting("sov_always_editable", !!checked)
-                  }
-                />
-                <Label htmlFor="enable-work-retainage" className="text-[15px] font-medium text-foreground">
-                  Enable Work Retainage This Period
-                </Label>
-              </div>
             </div>
           </section>
 
           <section className="py-4">
-            <h4 className="text-lg font-semibold text-foreground">Stored Materials</h4>
-            <p className="mt-1 text-[15px] text-muted-foreground">
-              The Materials Presently Stored column amount is manually managed.
-            </p>
-            <div className="mt-4 flex items-center gap-3">
-              <Checkbox id="enable-material-retainage" checked disabled />
-              <Label htmlFor="enable-material-retainage" className="text-[15px] font-medium text-foreground">
-                Enable Material Retainage
-              </Label>
+            <div className="flex items-center gap-2">
+              <h4 className="text-lg font-semibold text-foreground">Retainage</h4>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
@@ -185,17 +171,75 @@ export function PrimeContractAdvancedSettingsTab({
                     variant="ghost"
                     size="icon"
                     className="h-4 w-4 p-0 text-muted-foreground hover:bg-transparent"
-                    aria-label="Material retainage info"
+                    aria-label="Retainage settings info"
                   >
                     <AlertCircle className="h-4 w-4" />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent className="max-w-md text-left">
-                  To enable Material Retainage, first enable Work Retainage This Period. The
-                  Material Retainage percentage amount will sync with the Work Retainage This
-                  Period.
+                <TooltipContent className="max-w-lg text-left">
+                  Retainage defaults control how work completed and stored materials are
+                  billed on prime contract payment applications.
                 </TooltipContent>
               </Tooltip>
+            </div>
+            <p className="mt-1 text-[15px] text-muted-foreground">
+              Configure the default retainage rules used when payment applications are
+              populated.
+            </p>
+            <div className="mt-4 space-y-5">
+              <div className="flex items-center gap-3">
+                <Checkbox
+                  id="enable-completed-work-retainage"
+                  checked={advancedSettings?.enable_completed_work_retainage ?? true}
+                  onCheckedChange={(checked) =>
+                    updateAdvancedSetting("enable_completed_work_retainage", !!checked)
+                  }
+                />
+                <Label
+                  htmlFor="enable-completed-work-retainage"
+                  className="text-[15px] font-medium text-foreground"
+                >
+                  Enable Completed Work Retainage
+                </Label>
+              </div>
+              <div className="flex items-center gap-3">
+                <Checkbox
+                  id="enable-stored-materials-retainage"
+                  checked={advancedSettings?.enable_stored_materials_retainage ?? false}
+                  onCheckedChange={(checked) =>
+                    updateAdvancedSetting("enable_stored_materials_retainage", !!checked)
+                  }
+                />
+                <Label
+                  htmlFor="enable-stored-materials-retainage"
+                  className="text-[15px] font-medium text-foreground"
+                >
+                  Enable Stored Materials Retainage
+                </Label>
+              </div>
+              <div className="max-w-xs space-y-2">
+                <Label htmlFor="default-retainage-percent" className="text-[15px] font-medium text-foreground">
+                  Default Retainage Percent
+                </Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="default-retainage-percent"
+                    type="number"
+                    min={0}
+                    max={100}
+                    step="0.01"
+                    value={advancedSettings?.default_retainage_percent ?? 10}
+                    onChange={(e) =>
+                      updateAdvancedSetting(
+                        "default_retainage_percent",
+                        Number(e.target.value || 0),
+                      )
+                    }
+                    className="w-28"
+                  />
+                  <span className="text-sm text-muted-foreground">%</span>
+                </div>
+              </div>
             </div>
           </section>
 

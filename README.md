@@ -75,3 +75,7 @@ Start here:
 - Supabase types are generated into `frontend/src/types/database.types.ts` via `npm run db:types`.
 - Route conflicts are guarded by `npm run check:routes`.
 - Browser-style verification artifacts are written under `tests/agent-browser-runs/` and should not be committed as active work products unless intentionally documenting a result.
+
+## Commands
+
+npm run audit:db - audit forms (frontend/scripts/audit/audit-db-inserts.ts)

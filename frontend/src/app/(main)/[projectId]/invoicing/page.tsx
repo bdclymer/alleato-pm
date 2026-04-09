@@ -4,7 +4,7 @@ import * as React from "react";
 import type { ReactElement } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronDown, Plus, RefreshCw } from "lucide-react";
+import { ChevronDown, MoreHorizontal, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -17,13 +17,24 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Tooltip,
   TooltipContent,
@@ -45,6 +56,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { StatusBadge } from "@/components/misc/status-badge";
+import { InvoiceStatusBadge } from "@/components/invoicing/InvoiceStatusBadge";
 import { KpiRow } from "@/components/ds";
 import { PageShell } from "@/components/layout";
 import {
@@ -52,7 +64,21 @@ import {
   useDeleteOwnerInvoice,
 } from "@/hooks/use-invoicing";
 import {
+  useSubcontractorInvoicesList,
+  useDeleteSubcontractorInvoice,
+} from "@/hooks/use-subcontractor-invoices";
+import {
+  useBillingPeriodsList,
+  useCreateBillingPeriod,
+  useUpdateBillingPeriod,
+  useDeleteBillingPeriod,
+  type BillingPeriod,
+  type CreateBillingPeriodInput,
+  type UpdateBillingPeriodInput,
+} from "@/hooks/use-billing-periods";
+import {
   buildInvoiceTableColumns,
+  formatDate,
   invoiceColumns,
   invoiceDefaultVisibleColumns,
   renderInvoiceCard,
@@ -60,21 +86,28 @@ import {
   renderInvoiceRowActions,
   type OwnerInvoice,
 } from "@/features/invoicing/invoicing-table-config";
+import { InvoicingSettingsTab } from "@/features/invoicing/invoicing-settings-tab";
+import { PaymentsTab } from "@/features/invoicing/payments-tab";
 
 // =============================================================================
 // Types
 // =============================================================================
 
 interface SubcontractorInvoiceRow {
-  id: string | null;
+  id: number;
+  invoice_number: string | null;
   contract_number: string | null;
-  title: string | null;
+  contract_title: string | null;
+  contract_company_id: string | null;
+  contract_company_name?: string | null;
+  billing_period_id: string | null;
+  billing_period_name: string | null;
+  billing_period_start: string | null;
+  billing_period_end: string | null;
+  period_start: string | null;
+  period_end: string | null;
   status: string | null;
-  company_name: string | null;
-  total_contract_amount: number;
-  total_billed_to_date: number;
-  percent_billed: number;
-  contract_date: string | null;
+  total_amount?: number | null;
   created_at: string | null;
 }
 
@@ -90,6 +123,389 @@ const EMPTY_FILTERS: Record<string, FilterValue> = {
 };
 
 type FilterState = Record<string, FilterValue>;
+
+// =============================================================================
+// Billing Periods Form State
+// =============================================================================
+
+interface BillingPeriodFormValues {
+  name: string;
+  start_date: string;
+  end_date: string;
+  due_date: string;
+}
+
+const EMPTY_FORM: BillingPeriodFormValues = {
+  name: "",
+  start_date: "",
+  end_date: "",
+  due_date: "",
+};
+
+// =============================================================================
+// Billing Periods Tab Component
+// =============================================================================
+
+function BillingPeriodsTab({ projectId }: { projectId: string }) {
+  const { data: periods = [], isLoading } = useBillingPeriodsList(projectId);
+  const createPeriod = useCreateBillingPeriod(projectId);
+  const updatePeriod = useUpdateBillingPeriod(projectId);
+  const deletePeriod = useDeleteBillingPeriod(projectId);
+
+  const [createOpen, setCreateOpen] = React.useState(false);
+  const [editPeriod, setEditPeriod] = React.useState<BillingPeriod | null>(null);
+  const [deleteTarget, setDeleteTarget] = React.useState<BillingPeriod | null>(null);
+  const [form, setForm] = React.useState<BillingPeriodFormValues>(EMPTY_FORM);
+
+  function openCreate() {
+    setForm(EMPTY_FORM);
+    setCreateOpen(true);
+  }
+
+  function openEdit(period: BillingPeriod) {
+    setForm({
+      name: period.name ?? "",
+      start_date: period.start_date ?? "",
+      end_date: period.end_date ?? "",
+      due_date: period.due_date ?? "",
+    });
+    setEditPeriod(period);
+  }
+
+  function handleFormChange(field: keyof BillingPeriodFormValues, value: string) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  async function handleCreate(e: React.FormEvent) {
+    e.preventDefault();
+    if (!form.start_date || !form.end_date) {
+      toast.error("Start date and end date are required");
+      return;
+    }
+    const input: CreateBillingPeriodInput = {
+      start_date: form.start_date,
+      end_date: form.end_date,
+      ...(form.name ? { name: form.name } : {}),
+      ...(form.due_date ? { due_date: form.due_date } : {}),
+    };
+    await createPeriod.mutateAsync(input);
+    setCreateOpen(false);
+    setForm(EMPTY_FORM);
+  }
+
+  async function handleEdit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!editPeriod) return;
+    if (!form.start_date || !form.end_date) {
+      toast.error("Start date and end date are required");
+      return;
+    }
+    const input: UpdateBillingPeriodInput = {
+      periodId: editPeriod.id,
+      start_date: form.start_date,
+      end_date: form.end_date,
+      ...(form.name ? { name: form.name } : { name: undefined }),
+      ...(form.due_date ? { due_date: form.due_date } : { due_date: undefined }),
+    };
+    await updatePeriod.mutateAsync(input);
+    setEditPeriod(null);
+    setForm(EMPTY_FORM);
+  }
+
+  async function handleToggleClose(period: BillingPeriod) {
+    await updatePeriod.mutateAsync({
+      periodId: period.id,
+      is_closed: !period.is_closed,
+    });
+  }
+
+  async function handleDeleteConfirm() {
+    if (!deleteTarget) return;
+    await deletePeriod.mutateAsync(deleteTarget.id);
+    setDeleteTarget(null);
+  }
+
+  const isMutating =
+    createPeriod.isPending || updatePeriod.isPending || deletePeriod.isPending;
+
+  return (
+    <div className="px-6 py-4 space-y-4">
+      {/* Header row */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-foreground">Billing Periods</h2>
+          <p className="text-sm text-muted-foreground">
+            {isLoading
+              ? "Loading…"
+              : `${periods.length} billing period${periods.length !== 1 ? "s" : ""}`}
+          </p>
+        </div>
+        <Button size="sm" onClick={openCreate}>
+          <Plus />
+          New Billing Period
+        </Button>
+      </div>
+
+      {/* Table */}
+      {isLoading ? (
+        <div className="bg-card border border-border rounded-lg p-8 text-center">
+          <p className="text-sm text-muted-foreground">Loading billing periods…</p>
+        </div>
+      ) : periods.length === 0 ? (
+        <div className="bg-card border border-border rounded-lg p-12 text-center space-y-3">
+          <p className="text-sm font-medium text-foreground">No billing periods yet</p>
+          <p className="text-sm text-muted-foreground">
+            Create your first billing period to start organizing owner invoices.
+          </p>
+          <div className="pt-2">
+            <Button size="sm" onClick={openCreate}>
+              <Plus />
+              Create First Period
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-card border border-border rounded-lg overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-8">#</TableHead>
+              <TableHead>Name</TableHead>
+              <TableHead>Start Date</TableHead>
+              <TableHead>End Date</TableHead>
+              <TableHead>Due Date</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="w-10" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {periods.map((period) => (
+              <TableRow key={period.id}>
+                <TableCell className="text-muted-foreground tabular-nums">
+                  {period.period_number}
+                </TableCell>
+                <TableCell className="font-medium">
+                  {period.name ?? `Period ${period.period_number}`}
+                </TableCell>
+                <TableCell>{formatDate(period.start_date)}</TableCell>
+                <TableCell>{formatDate(period.end_date)}</TableCell>
+                <TableCell>{formatDate(period.due_date)}</TableCell>
+                <TableCell>
+                  {period.is_closed ? (
+                    <Badge variant="secondary">Closed</Badge>
+                  ) : (
+                    <Badge variant="success">Open</Badge>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        aria-label="Period actions"
+                      >
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => openEdit(period)}>
+                        <Pencil className="h-4 w-4 mr-2" />
+                        Edit
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleToggleClose(period)}>
+                        {period.is_closed ? (
+                          <>
+                            <X className="h-4 w-4 mr-2" />
+                            Reopen
+                          </>
+                        ) : (
+                          <>
+                            <X className="h-4 w-4 mr-2" />
+                            Close Period
+                          </>
+                        )}
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onClick={() => setDeleteTarget(period)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        </div>
+      )}
+
+      {/* Create Dialog */}
+      <Dialog open={createOpen} onOpenChange={setCreateOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>New Billing Period</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleCreate} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="bp-name">Name (optional)</Label>
+              <Input
+                id="bp-name"
+                placeholder="e.g. January 2025"
+                value={form.name}
+                onChange={(e) => handleFormChange("name", e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="bp-start">
+                  Start Date <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="bp-start"
+                  type="date"
+                  required
+                  value={form.start_date}
+                  onChange={(e) => handleFormChange("start_date", e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="bp-end">
+                  End Date <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="bp-end"
+                  type="date"
+                  required
+                  value={form.end_date}
+                  onChange={(e) => handleFormChange("end_date", e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="bp-due">Due Date (optional)</Label>
+              <Input
+                id="bp-due"
+                type="date"
+                value={form.due_date}
+                onChange={(e) => handleFormChange("due_date", e.target.value)}
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setCreateOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isMutating}>
+                {createPeriod.isPending ? "Creating…" : "Create Period"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editPeriod} onOpenChange={(open) => { if (!open) setEditPeriod(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Edit Billing Period</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleEdit} className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="ep-name">Name (optional)</Label>
+              <Input
+                id="ep-name"
+                placeholder="e.g. January 2025"
+                value={form.name}
+                onChange={(e) => handleFormChange("name", e.target.value)}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="ep-start">
+                  Start Date <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="ep-start"
+                  type="date"
+                  required
+                  value={form.start_date}
+                  onChange={(e) => handleFormChange("start_date", e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="ep-end">
+                  End Date <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="ep-end"
+                  type="date"
+                  required
+                  value={form.end_date}
+                  onChange={(e) => handleFormChange("end_date", e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="ep-due">Due Date (optional)</Label>
+              <Input
+                id="ep-due"
+                type="date"
+                value={form.due_date}
+                onChange={(e) => handleFormChange("due_date", e.target.value)}
+              />
+            </div>
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setEditPeriod(null)}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={isMutating}>
+                {updatePeriod.isPending ? "Saving…" : "Save Changes"}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation */}
+      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Billing Period</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete{" "}
+              <strong>
+                {deleteTarget?.name ?? `Period ${deleteTarget?.period_number}`}
+              </strong>
+              ? This cannot be undone. Periods with invoices cannot be deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Period
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
 
 // =============================================================================
 // Page Component
@@ -168,18 +584,41 @@ export default function ProjectInvoicingPage(): ReactElement {
 
   const deleteInvoice = useDeleteOwnerInvoice(projectId);
 
+  // ─── Filter option data ────────────────────────────────────────────────────
+
+  const { data: billingPeriods = [] } = useQuery<{ id: string; name: string | null; start_date: string }[]>({
+    queryKey: ["billing-periods-filter", projectId],
+    queryFn: async () => {
+      const resp = await fetch(`/api/projects/${projectId}/invoicing/billing-periods`);
+      if (!resp.ok) return [];
+      const json = await resp.json();
+      return json.data ?? [];
+    },
+    enabled: Boolean(projectId),
+  });
+
+  const { data: contracts = [] } = useQuery<{ id: string; contract_number: string | null; title: string | null }[]>({
+    queryKey: ["contracts-filter", projectId],
+    queryFn: async () => {
+      const resp = await fetch(`/api/projects/${projectId}/contracts`);
+      if (!resp.ok) return [];
+      const json = await resp.json();
+      // contracts route returns the array directly (not wrapped in .data)
+      return Array.isArray(json) ? json : (json.data ?? []);
+    },
+    enabled: Boolean(projectId),
+  });
+
   // ─── Subcontractor invoices ───────────────────────────────────────────────
 
-  const { data: subcontractorInvoices = [], isLoading: isSubLoading } = useQuery<SubcontractorInvoiceRow[]>({
-    queryKey: ["subcontractor-invoices", projectId],
-    queryFn: async () => {
-      const resp = await fetch(`/api/projects/${projectId}/invoicing/subcontractor`);
-      if (!resp.ok) throw new Error("Failed to load subcontractor invoices");
-      const json = await resp.json();
-      return json.data as SubcontractorInvoiceRow[];
-    },
-    enabled: activeTab === "subcontractor",
-  });
+  const { data: subcontractorInvoices = [], isLoading: isSubLoading } =
+    useSubcontractorInvoicesList(projectId) as {
+      data: SubcontractorInvoiceRow[];
+      isLoading: boolean;
+    };
+  const deleteSubInvoice = useDeleteSubcontractorInvoice(projectId);
+  const [subDeleteTarget, setSubDeleteTarget] =
+    React.useState<SubcontractorInvoiceRow | null>(null);
 
   // ─── Acumatica Sync ──────────────────────────────────────────────────────
 
@@ -347,13 +786,19 @@ export default function ProjectInvoicingPage(): ReactElement {
       id: "billing_period_id",
       label: "Billing Period",
       type: "select",
-      options: [],
+      options: billingPeriods.map((p) => ({
+        value: p.id,
+        label: p.name ?? p.start_date,
+      })),
     },
     {
       id: "prime_contract_id",
       label: "Prime Contract",
       type: "select",
-      options: [],
+      options: contracts.map((c) => ({
+        value: c.id,
+        label: [c.contract_number, c.title].filter(Boolean).join(" - "),
+      })),
     },
     {
       id: "status",
@@ -394,6 +839,16 @@ export default function ProjectInvoicingPage(): ReactElement {
       href: `/${projectId}/invoicing?tab=billing-periods`,
       isActive: activeTab === "billing-periods",
     },
+    {
+      label: "Payments",
+      href: `/${projectId}/invoicing?tab=payments`,
+      isActive: activeTab === "payments",
+    },
+    {
+      label: "Settings",
+      href: `/${projectId}/invoicing?tab=settings`,
+      isActive: activeTab === "settings",
+    },
   ];
 
   // ─── Action Button ─────────────────────────────────────────────────────────
@@ -412,7 +867,11 @@ export default function ProjectInvoicingPage(): ReactElement {
           <Plus className="h-4 w-4 mr-2" />
           Owner Invoice
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => toast.info("Subcontractor invoice coming soon")}>
+        <DropdownMenuItem
+          onClick={() =>
+            router.push(`/${projectId}/invoicing/subcontractor/new`)
+          }
+        >
           <Plus className="h-4 w-4 mr-2" />
           Subcontractor Invoice
         </DropdownMenuItem>
@@ -422,55 +881,204 @@ export default function ProjectInvoicingPage(): ReactElement {
 
   // ─── Subcontractor table render ────────────────────────────────────────────
 
+  const currencyFmt = new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  });
+
   const subcontractorTable = (
     <div className="px-6 py-4 space-y-4">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          {isSubLoading ? "Loading…" : `${subcontractorInvoices.length} subcontract${subcontractorInvoices.length !== 1 ? "s" : ""}`}
+          {isSubLoading
+            ? "Loading…"
+            : `${subcontractorInvoices.length} invoice${subcontractorInvoices.length !== 1 ? "s" : ""}`}
         </p>
       </div>
       {isSubLoading ? (
-        <p className="text-sm text-muted-foreground py-8 text-center">Loading subcontractor invoices…</p>
+        <p className="text-sm text-muted-foreground py-8 text-center">
+          Loading subcontractor invoices…
+        </p>
       ) : subcontractorInvoices.length === 0 ? (
-        <p className="text-sm text-muted-foreground py-8 text-center">No subcontractor invoices found.</p>
+        <div className="bg-card border border-border rounded-lg p-12 text-center space-y-3">
+          <p className="text-sm font-medium text-foreground">
+            No subcontractor invoices yet
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Create an invoice against a subcontract or purchase order to get started.
+          </p>
+          <div className="pt-2">
+            <Button
+              size="sm"
+              onClick={() =>
+                router.push(`/${projectId}/invoicing/subcontractor/new`)
+              }
+            >
+              <Plus />
+              Create Subcontractor Invoice
+            </Button>
+          </div>
+        </div>
       ) : (
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Contract #</TableHead>
-              <TableHead>Title</TableHead>
-              <TableHead>Company</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Contract Amount</TableHead>
-              <TableHead className="text-right">Billed to Date</TableHead>
-              <TableHead className="text-right">% Billed</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {subcontractorInvoices.map((row) => (
-              <TableRow key={row.id ?? row.contract_number}>
-                <TableCell className="font-medium">{row.contract_number ?? "—"}</TableCell>
-                <TableCell>{row.title ?? "—"}</TableCell>
-                <TableCell>{row.company_name ?? "—"}</TableCell>
-                <TableCell>
-                  {row.status ? <StatusBadge status={row.status} /> : "—"}
-                </TableCell>
-                <TableCell className="text-right tabular-nums">
-                  {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(row.total_contract_amount)}
-                </TableCell>
-                <TableCell className="text-right tabular-nums">
-                  {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format(row.total_billed_to_date)}
-                </TableCell>
-                <TableCell className="text-right tabular-nums">{row.percent_billed}%</TableCell>
+        <div className="bg-card border border-border rounded-lg overflow-hidden">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Invoice #</TableHead>
+                <TableHead>Contract #</TableHead>
+                <TableHead>Title</TableHead>
+                <TableHead>Billing Period</TableHead>
+                <TableHead>Period Start</TableHead>
+                <TableHead>Period End</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Total</TableHead>
+                <TableHead className="w-10" />
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {subcontractorInvoices.map((row) => (
+                <TableRow
+                  key={row.id}
+                  className="cursor-pointer"
+                  onClick={() =>
+                    router.push(
+                      `/${projectId}/invoicing/subcontractor/${row.id}`,
+                    )
+                  }
+                >
+                  <TableCell className="font-medium">
+                    {row.invoice_number ?? `INV-${row.id}`}
+                  </TableCell>
+                  <TableCell>{row.contract_number ?? "—"}</TableCell>
+                  <TableCell>{row.contract_title ?? "—"}</TableCell>
+                  <TableCell>{row.billing_period_name ?? "—"}</TableCell>
+                  <TableCell>{formatDate(row.period_start)}</TableCell>
+                  <TableCell>{formatDate(row.period_end)}</TableCell>
+                  <TableCell>
+                    {row.status ? (
+                      <InvoiceStatusBadge status={row.status} />
+                    ) : (
+                      "—"
+                    )}
+                  </TableCell>
+                  <TableCell className="text-right tabular-nums">
+                    {currencyFmt.format(row.total_amount ?? 0)}
+                  </TableCell>
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8"
+                          aria-label="Invoice actions"
+                        >
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onClick={() =>
+                            router.push(
+                              `/${projectId}/invoicing/subcontractor/${row.id}`,
+                            )
+                          }
+                        >
+                          <Pencil className="h-4 w-4 mr-2" />
+                          View
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onClick={() => setSubDeleteTarget(row)}
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       )}
+
+      <AlertDialog
+        open={Boolean(subDeleteTarget)}
+        onOpenChange={(open) => !open && setSubDeleteTarget(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Subcontractor Invoice</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete invoice{" "}
+              <strong>
+                {subDeleteTarget?.invoice_number ??
+                  `INV-${subDeleteTarget?.id}`}
+              </strong>
+              ? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={async () => {
+                if (!subDeleteTarget) return;
+                await deleteSubInvoice.mutateAsync(subDeleteTarget.id);
+                setSubDeleteTarget(null);
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete Invoice
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 
   // ─── Render ────────────────────────────────────────────────────────────────
+
+  if (activeTab === "billing-periods") {
+    return (
+      <PageShell
+        variant="table"
+        title="Invoicing"
+        description="Manage owner invoices and billing periods"
+        tabs={tabs}
+      >
+        <BillingPeriodsTab projectId={projectId} />
+      </PageShell>
+    );
+  }
+
+  if (activeTab === "settings") {
+    return (
+      <PageShell
+        variant="table"
+        title="Invoicing"
+        description="Manage owner invoices and billing periods"
+        tabs={tabs}
+      >
+        <InvoicingSettingsTab projectId={projectId} />
+      </PageShell>
+    );
+  }
+
+  if (activeTab === "payments") {
+    return (
+      <PageShell
+        variant="table"
+        title="Invoicing"
+        description="Manage owner invoices and billing periods"
+        tabs={tabs}
+      >
+        <PaymentsTab projectId={projectId} />
+      </PageShell>
+    );
+  }
 
   if (activeTab === "subcontractor") {
     return (

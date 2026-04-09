@@ -10,6 +10,17 @@ Verify that a specific feature works correctly from a real user's perspective �
 
 ---
 
+## The Two Verification Questions
+
+Every verification must answer **both** of these:
+
+1. **Does our implementation work as coded?** — technical correctness (forms save, DB fields persist, APIs return correct data)
+2. **Does our implementation match what Procore actually does?** — behavioral correctness (right statuses, right field names, right workflow logic)
+
+A feature can pass question 1 and fail question 2. That's a product bug, not a technical bug. Phase 0 establishes the Procore spec before any browser testing begins.
+
+---
+
 ## The Core Principle: Outcomes Over Mechanics
 
 **Technical success ≠ user success.**
@@ -42,9 +53,44 @@ Always use `agent-browser` directly — never `npx agent-browser`. The Rust clie
 
 ---
 
-## Phase 1: Research (Two Sub-agents in Parallel)
+## Phase 0: Procore Behavior Baseline (Procore-mirroring features only)
 
-Launch **both sub-agents simultaneously** using the Task tool.
+**Skip this phase only if the feature has no Procore equivalent** (e.g., AI chat, internal tools).
+
+For any feature that mirrors a Procore tool, run the procore-docs-rag three-tier lookup **before** any other research. This establishes what Procore says the feature should do — which becomes a third test dimension beyond "code works" and "data persists."
+
+```bash
+# Tier 1 — business rules and workflows (run 2–3 targeted queries)
+node scripts/procore-docs-query.js "{feature name} workflow statuses"
+node scripts/procore-docs-query.js "{feature name} form fields required"
+node scripts/procore-docs-query.js "{feature name} relationships to other tools"
+
+# Tier 2 — exact UI structure from live DOM capture
+# (identify the tool slug from: budget, change-events, change-orders, commitments,
+#  direct-costs, invoicing, prime-contracts, rfis, submittals, etc.)
+# Read .claude/procore-manifests/{tool-slug}/manifest.json
+```
+
+From the Tier 1 + Tier 2 results, extract and document in `verify-output/{feature-slug}/procore-spec.md`:
+
+- **Exact field names** Procore uses (these should match our labels)
+- **Status values** and their valid transitions
+- **Required vs optional** fields per Procore's documentation
+- **Workflow steps** in the correct Procore order
+- **Relationships** to other tools (what creates what, what affects what)
+- **Fields our implementation has that Procore doesn't** (custom additions — note but not bugs)
+- **Fields Procore has that we're missing** (gaps — flag for review)
+
+> If Tier 1 scores are all < 40% after two rephrasing attempts, go to Tier 3:
+> WebFetch the relevant article URLs from results, or fetch `https://v2.support.procore.com/`
+
+This procore-spec.md feeds directly into Phase 2 success criteria — Procore compliance is a pass/fail criterion, not a nice-to-have.
+
+---
+
+## Phase 1: Research (Three Sub-agents in Parallel)
+
+Launch **all three sub-agents simultaneously** using the Task tool. Send a progress update to the user when launching: "Launching 3 research sub-agents in parallel for [feature name]…"
 
 ### Sub-agent 1: Feature Behavior & User Flows
 
@@ -71,7 +117,19 @@ Launch **both sub-agents simultaneously** using the Task tool.
 > 5. **Design system audit targets** — specific source files to check for design violations
 > 6. **Design components expected** — which ds/ components should appear in this feature's UI
 
-Wait for both sub-agents to complete before continuing.
+### Sub-agent 3: FK Relationships & Edit-Flow Pre-fill Map
+
+> Research the FK relationships for **[FEATURE NAME]** in this codebase. Return:
+>
+> 1. **Every select/dropdown field** in every form — for each one: what DB column does it write to, what table does that column's FK point to, and what table/API does the dropdown load its options from
+> 2. **Mismatches** — if the FK target table ≠ the dropdown options source table, flag it explicitly with the mismatch pattern
+> 3. **Pre-fill logic** — how does the edit form load existing values back into each dropdown? Where is that mapping in the code?
+> 4. **Status fields** — list every valid status value and the allowed transitions between them (what can transition to what)
+> 5. **Locked fields** — which fields become read-only after certain conditions (e.g., cost code locked after linking to a PCO/RFQ)? What triggers the lock?
+>
+> Return specific file paths and line numbers for each finding.
+
+Wait for all three sub-agents to complete before continuing. Send a progress update: "Research complete — compiling success criteria and procore-spec…"
 
 ---
 
@@ -331,7 +389,122 @@ Verify:
 - Sub-feature records exist and have correct values
 - No duplicates
 
-### 4g. Check API Endpoints
+### 4g. FK-Aware Database Verification
+
+Standard DB validation checks that fields are non-null. FK-aware validation checks that FK values point to the **right** record — not just any record.
+
+For every FK column that was populated via a dropdown:
+
+```sql
+-- ❌ Weak: only checks non-null
+SELECT budget_code_id FROM change_events WHERE id = '{id}';
+
+-- ✅ Strong: verifies FK resolves to the correct record
+SELECT
+  ce.id,
+  ce.budget_code_id,
+  bl.code        AS budget_code,
+  bl.description AS budget_description
+FROM change_events ce
+JOIN budget_lines bl ON bl.id = ce.budget_code_id
+WHERE ce.id = '{id}';
+-- Expected: bl.code must match what was selected in the dropdown
+```
+
+Apply this JOIN pattern to every FK column: vendor_id → companies, prime_contract_id → prime_contracts, etc.
+
+If the joined value doesn't match the dropdown selection, you have an FK mismatch — the dropdown showed one table's records but saved an ID from a different table. That is a **Critical** bug.
+
+### 4h. Edit Flow + Dropdown Pre-fill Verification (mandatory for any feature with selects)
+
+> ⚠️ **This is Gate 11 from CLAUDE.md.** Must be tested for every feature with select/dropdown fields.
+> A form that creates correctly but opens Edit with blank dropdowns ("Select...") is a bug
+> that is invisible at create time and surfaces only when a user tries to edit. It is the
+> most common silent data corruption pattern in this codebase.
+
+```bash
+# 1. Record the URL of the record just created
+RECORD_URL=$(agent-browser --session {SESSION} get url)
+
+# 2. Navigate away to the list
+agent-browser --session {SESSION} open {LIST_URL}
+agent-browser --session {SESSION} wait --load networkidle
+sleep 1
+
+# 3. Navigate back
+agent-browser --session {SESSION} open "$RECORD_URL"
+agent-browser --session {SESSION} wait --load networkidle
+sleep 1
+
+# 4. Click Edit
+agent-browser --session {SESSION} snapshot -i
+agent-browser --session {SESSION} click @eN  # Edit button
+agent-browser --session {SESSION} wait --load networkidle
+sleep 1
+
+# 5. Screenshot and read all dropdown values
+agent-browser --session {SESSION} screenshot --full {OUTPUT_DIR}/screenshots/edit-prefill.png
+agent-browser --session {SESSION} snapshot  # Read actual dropdown values
+```
+
+**For every dropdown in the edit form**, compare against the value originally selected:
+- Placeholder ("Select…") instead of the saved value → **Critical**
+- Wrong option selected → **Critical**
+- Correct option pre-filled → ✅ Pass
+
+### 4i. Negative Path Testing
+
+The happy path passing is necessary but not sufficient. Test at least these failure modes:
+
+**Required field validation — submit an empty form:**
+```bash
+agent-browser --session {SESSION} open {FORM_URL}
+agent-browser --session {SESSION} wait --load networkidle
+agent-browser --session {SESSION} snapshot -i
+agent-browser --session {SESSION} click @eN  # Submit without filling anything
+agent-browser --session {SESSION} wait --load networkidle
+sleep 1
+agent-browser --session {SESSION} screenshot {OUTPUT_DIR}/screenshots/validation-empty.png
+```
+Expected: validation errors appear inline. Form stays on page. No crash, no 500, no silent save.
+
+**Invalid data (where applicable):**
+- Amount fields: enter a negative number where positive is required
+- Text: exceed DB column's max character length
+- Date: enter a past date where only future dates are valid
+
+**Locked fields (workflow features only):**
+If certain fields lock after workflow transitions (e.g., cost code after linking to a PCO/RFQ), set up that locked state and verify the field is actually read-only:
+```bash
+# After linking/approving, open Edit and check if the field is still editable
+agent-browser --session {SESSION} snapshot  # Is it an input or display-only?
+```
+If a locked field is still editable → **High** (data integrity risk).
+
+### 4j. Status Transition Matrix (workflow features only)
+
+**Skip if the feature has no status workflow.**
+
+**Happy path transition:**
+```bash
+agent-browser --session {SESSION} snapshot -i
+agent-browser --session {SESSION} click @eN  # e.g., "Submit for Approval"
+agent-browser --session {SESSION} wait --load networkidle
+sleep 1
+agent-browser --session {SESSION} screenshot {OUTPUT_DIR}/screenshots/status-transition.png
+agent-browser --session {SESSION} snapshot  # Read the new status badge value
+```
+Verify: status badge shows the new status. DB status column matches.
+
+**Invalid transition (if UI exposes it):**
+Attempt a transition that should be blocked (e.g., Approve directly from Open, skipping Pending). Verify the action is either hidden, disabled, or returns an error — it must not succeed silently.
+
+**After each transition, DB verify:**
+```sql
+SELECT id, status, updated_at FROM {table} WHERE id = '{id}';
+```
+
+### 4k. Check API Endpoints
 
 For the primary create/read/update/delete endpoints:
 
@@ -460,9 +633,13 @@ Save to `{OUTPUT_DIR}/report.md`:
 |-------|--------|
 | User Flows | {N}/{total} producing correct outcomes |
 | Sub-features Tested | {list: line items, attachments, etc.} |
-| Database Validation | {N}/{total} fields verified correct |
+| Database Validation | {N}/{total} fields verified correct (including FK-aware JOIN checks) |
+| Edit Flow / Dropdowns | {N}/{total} dropdowns pre-fill correctly after navigate-away |
+| Negative Path Tests | Required validation ✅/❌ · Invalid data ✅/❌ · Locked fields ✅/❌ |
+| Status Transitions | {N}/{total} valid transitions work · invalid transitions blocked ✅/❌ |
 | API Health | {N}/{total} endpoints healthy |
 | Design System | Passes all critical checks · {N} violations |
+| Procore Compliance | {N}/{total} behaviors match Procore spec · {N} gaps documented |
 | Issues Found | {critical} critical · {high} high · {medium} medium · {low} low |
 | Issues Fixed | {N} fixed during this session |
 
@@ -539,6 +716,16 @@ List every form field that was tested and whether its saved value was verified i
 
 **Root cause:** {if fixed}
 **Fix applied:** {file:line}
+
+---
+
+## Procore Compliance
+
+| Behavior | Procore Spec | Our Implementation | Verdict |
+|----------|-------------|-------------------|---------|
+| {field/workflow} | {what Procore does} | {what we do} | ✅ Match / ⚠️ Gap / ➕ Custom |
+
+Gaps are not automatically bugs — intentional differences are fine if documented here.
 
 ---
 

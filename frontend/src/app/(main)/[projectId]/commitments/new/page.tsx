@@ -251,7 +251,7 @@ export default function NewCommitmentPage() {
 
   return (
     <PageShell
-      variant="form"
+      variant="detail"
       title={title}
       description={
         type === "subcontract"

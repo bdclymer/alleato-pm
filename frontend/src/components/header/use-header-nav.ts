@@ -9,6 +9,7 @@ import {
   adminSettingsTools,
   type HeaderNavigationTool,
 } from "@/lib/navigation-config";
+import { createClient } from "@/lib/supabase/client";
 
 interface Project {
   id: number;
@@ -46,6 +47,7 @@ const commitmentTitleCache = new Map<string, string>();
 const changeEventTitleCache = new Map<string, string>();
 const primeCoTitleCache = new Map<string, string>();
 const invoiceTitleCache = new Map<string, string>();
+const rfiTitleCache = new Map<string, string>();
 
 const TABLE_ROUTE_ALIASES: Record<string, string> = {
   tasks: "tasks",
@@ -72,6 +74,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
   const [changeEventTitle, setChangeEventTitle] = useState<string | null>(null);
   const [primeCoTitle, setPrimeCoTitle] = useState<string | null>(null);
   const [invoiceTitle, setInvoiceTitle] = useState<string | null>(null);
+  const [rfiTitle, setRfiTitle] = useState<string | null>(null);
 
   // Extract project ID from URL path or query parameters
   const projectId = useMemo(() => {
@@ -145,6 +148,11 @@ export function useHeaderNav(): UseHeaderNavReturn {
   const breadcrumbs = useMemo(() => {
     const segments = pathname?.split("/").filter(Boolean) ?? [];
     const crumbs: Breadcrumb[] = [];
+    const skippedIndexes = new Set<number>();
+    const allTools: HeaderNavigationTool[] = [
+      ...headerNavGroups.flatMap((g) => g.tools),
+      ...adminSettingsTools,
+    ];
     const isMeetingDetailRoute =
       segments.length >= 3 &&
       /^\d+$/.test(segments[0]) &&
@@ -196,13 +204,42 @@ export function useHeaderNav(): UseHeaderNavReturn {
       segments[1] === "directory" &&
       segments[2] === "companies" &&
       segments[3] !== "new";
+    const isRfiDetailRoute =
+      segments.length >= 3 &&
+      /^\d+$/.test(segments[0]) &&
+      segments[1] === "rfis" &&
+      segments[2] !== "new";
 
     // Always start with Projects
     crumbs.push({ label: "Projects", href: "/" });
 
     segments.forEach((segment, index) => {
+      if (skippedIndexes.has(index)) return;
+
       let href = `/${segments.slice(0, index + 1).join("/")}`;
       let label: string;
+
+      if (index === 0 && !/^\d+$/.test(segment)) {
+        const globalMultiSegmentTool = allTools.find((tool) => {
+          if (tool.requiresProject || !tool.path.includes("/")) return false;
+
+          const toolSegments = tool.path.split("/");
+          return segments.slice(0, toolSegments.length).join("/") === tool.path;
+        });
+
+        if (globalMultiSegmentTool) {
+          label = globalMultiSegmentTool.name;
+          href = `/${globalMultiSegmentTool.path}`;
+
+          const toolDepth = globalMultiSegmentTool.path.split("/").length;
+          for (let skippedIndex = 1; skippedIndex < toolDepth; skippedIndex += 1) {
+            skippedIndexes.add(skippedIndex);
+          }
+
+          crumbs.push({ label, href });
+          return;
+        }
+      }
 
       // Check if this segment is a project ID (numeric)
       if (index === 0 && /^\d+$/.test(segment)) {
@@ -228,12 +265,10 @@ export function useHeaderNav(): UseHeaderNavReturn {
         label = vendorTitle || "Vendor";
       } else if (isProjectCompanyDetailRoute && index === 3) {
         label = companyTitle || "Company";
+      } else if (isRfiDetailRoute && index === 2) {
+        label = rfiTitle || "RFI";
       } else {
         // Try to find a matching tool name
-        const allTools: HeaderNavigationTool[] = [
-          ...headerNavGroups.flatMap((g) => g.tools),
-          ...adminSettingsTools,
-        ];
         const matchingTool = allTools.find((tool) => tool.path === segment);
         const aliasMatchingTool =
           index === 0 && TABLE_ROUTE_ALIASES[segment]
@@ -275,7 +310,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
     });
 
     return crumbs;
-  }, [pathname, companyTitle, vendorTitle, currentProject, meetingTitle, globalMeetingTitle, primeContractTitle, commitmentTitle, changeEventTitle, primeCoTitle, invoiceTitle]);
+  }, [pathname, companyTitle, vendorTitle, currentProject, meetingTitle, globalMeetingTitle, primeContractTitle, commitmentTitle, changeEventTitle, primeCoTitle, invoiceTitle, rfiTitle]);
   useEffect(() => {
     const segments = pathname?.split("/").filter(Boolean) ?? [];
     const isMeetingDetailRoute =
@@ -720,6 +755,65 @@ export function useHeaderNav(): UseHeaderNavReturn {
     };
 
     fetchTitle();
+    return () => {
+      isActive = false;
+    };
+  }, [pathname]);
+
+  // Fetch title for RFI detail routes ([projectId]/rfis/[rfiId])
+  useEffect(() => {
+    const segments = pathname?.split("/").filter(Boolean) ?? [];
+    const isRfiDetailRoute =
+      segments.length >= 3 &&
+      /^\d+$/.test(segments[0]) &&
+      segments[1] === "rfis" &&
+      segments[2] !== "new";
+
+    if (!isRfiDetailRoute) {
+      setRfiTitle(null);
+      return;
+    }
+
+    const rfiId = segments[2];
+    const cacheKey = `${segments[0]}:${rfiId}`;
+    const cached = rfiTitleCache.get(cacheKey);
+    if (cached) {
+      setRfiTitle(cached);
+      return;
+    }
+
+    let isActive = true;
+    const fetchRfiTitle = async () => {
+      try {
+        const supabase = createClient();
+        const { data } = await supabase
+          .from("rfis")
+          .select("number, subject")
+          .eq("id", rfiId)
+          .single();
+
+        if (!isActive || !data) return;
+        const number =
+          data.number != null && String(data.number).length > 0
+            ? `RFI #${data.number}`
+            : null;
+        const subject =
+          typeof data.subject === "string" && data.subject.length > 0
+            ? data.subject
+            : null;
+        const title = subject ?? number;
+        if (title) {
+          rfiTitleCache.set(cacheKey, title);
+          setRfiTitle(title);
+        } else {
+          setRfiTitle(null);
+        }
+      } catch {
+        // Best-effort only
+      }
+    };
+
+    fetchRfiTitle();
     return () => {
       isActive = false;
     };

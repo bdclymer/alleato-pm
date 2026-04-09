@@ -31,8 +31,6 @@
 
 **context_note:** Every tester creates their own isolated project so data from different testers does not collide. Name your project using the pattern "Test – [Your Name] – [Today's Date]" so it is easy to identify and clean up later.
 
-**setup_steps:** Log in as test1@mail.com before starting.
-
 **Steps:**
 1. Navigate to /create-project
 2. In Project Name, type: `Test – [Your Name] – [Today's Date]` (e.g. "Test – Jordan – 2026-04-08")

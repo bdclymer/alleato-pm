@@ -1,10 +1,17 @@
 "use client";
 
 import * as React from "react";
-import { Check, ChevronsUpDown, UserPlus } from "lucide-react";
+import { Check, ChevronsUpDown, HelpCircle, UserPlus } from "lucide-react";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   Command,
   CommandEmpty,
@@ -38,6 +45,7 @@ interface InvoiceContactsSectionProps {
   invoiceContactOptions: Array<{ value: string; label: string }>;
   isLoadingContacts: boolean;
   vendorId?: string | null;
+  vendorCompanyId?: string | null;
   refetchContacts?: () => Promise<void>;
 }
 
@@ -46,6 +54,7 @@ export function InvoiceContactsSection({
   invoiceContactOptions,
   isLoadingContacts,
   vendorId,
+  vendorCompanyId,
   refetchContacts,
 }: InvoiceContactsSectionProps) {
   const { control, setValue, getValues } = useFormContext<CreateSubcontractInput>();
@@ -73,6 +82,8 @@ export function InvoiceContactsSection({
           email: newContact.email || null,
           job_title: newContact.job_title || null,
           person_type: "contact",
+          status: "active",
+          company_id: vendorCompanyId || null,
         })
         .select("id")
         .single();
@@ -104,11 +115,23 @@ export function InvoiceContactsSection({
 
   return (
     <section className="space-y-4">
-      <h2 className="text-lg font-semibold text-foreground">Invoice Contacts</h2>
+      <div className="flex items-center gap-2">
+        <h2 className="text-lg font-semibold text-foreground">Invoice Contacts</h2>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <HelpCircle className="h-4 w-4 text-muted-foreground cursor-help" />
+            </TooltipTrigger>
+            <TooltipContent className="max-w-xs text-sm">
+              This person will be added to the contract and will be the point of contact and signer for subcontractor invoices.
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
       <div>
         {!contractCompanyId ? (
           <p className="text-sm text-muted-foreground">
-            Select a vendor above to enable invoice contacts.
+            Select a contract company above to enable invoice contacts.
           </p>
         ) : (
           <Controller
@@ -142,6 +165,7 @@ export function InvoiceContactsSection({
                             value.length === 0 && "text-muted-foreground",
                           )}
                           disabled={isSubmitting || isLoadingContacts}
+                          {...(value.length === 0 && { "data-placeholder-style": "" })}
                         >
                           <div className="flex flex-wrap gap-1">
                             {value.length > 0
@@ -205,6 +229,31 @@ export function InvoiceContactsSection({
                     </Popover>
                     <FormMessage />
                   </FormItem>
+
+                  {value.length > 0 && (
+                    <div className="mt-4 space-y-3">
+                      <p className="text-sm text-muted-foreground">
+                        Make this visible only to administrators and the following users.
+                      </p>
+                      <Controller
+                        name="privacy.allowNonAdminViewSovItems"
+                        control={control}
+                        render={({ field: sovField }) => (
+                          <div className="flex items-center gap-2">
+                            <Checkbox
+                              id="invoice-allow-sov"
+                              checked={sovField.value ?? false}
+                              onCheckedChange={(checked) => sovField.onChange(checked)}
+                              disabled={isSubmitting}
+                            />
+                            <Label htmlFor="invoice-allow-sov" className="text-sm font-normal cursor-pointer">
+                              Allow these users to see SOV items
+                            </Label>
+                          </div>
+                        )}
+                      />
+                    </div>
+                  )}
 
                   <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
                     <DialogContent>

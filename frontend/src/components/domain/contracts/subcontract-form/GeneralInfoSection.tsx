@@ -110,7 +110,7 @@ export function GeneralInfoSection({
 
         <div className="space-y-2">
           <Label htmlFor="contractCompanyId">
-            Vendor <span className="text-destructive">*</span>
+            Contract Company <span className="text-destructive">*</span>
           </Label>
           <Popover
             open={openContractCompanyPopover}
@@ -124,15 +124,16 @@ export function GeneralInfoSection({
                 role="combobox"
                 className="w-full justify-between text-left font-normal"
                 disabled={isSubmitting || isLoadingVendors}
+                {...(!selectedVendor && { "data-placeholder-style": "" })}
               >
                 <span className="truncate">
                   {isLoadingVendors ? (
                     <span className="flex items-center gap-2 text-muted-foreground">
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      Loading vendors...
+                      Loading companies...
                     </span>
                   ) : (
-                    selectedVendor?.label || "Select vendor"
+                    selectedVendor?.label || "Select contract company"
                   )}
                 </span>
                 <Search className="shrink-0 opacity-50" />
@@ -140,12 +141,12 @@ export function GeneralInfoSection({
             </PopoverTrigger>
             <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0">
               <Command>
-                <CommandInput placeholder="Type to search vendors..." />
+                <CommandInput placeholder="Type to search companies..." />
                 <CommandList>
                   <CommandEmpty>
                     {isLoadingVendors
-                      ? "Loading vendors..."
-                      : "No vendors found."}
+                      ? "Loading companies..."
+                      : "No companies found."}
                   </CommandEmpty>
                   <CommandGroup>
                     {vendorOptions.map((option) => (

@@ -19,9 +19,9 @@ export default function TablesLayout({
   return (
     <SidebarProvider defaultOpen={false}>
       <AppSidebar />
-      <SidebarInset className="overflow-hidden">
+      <SidebarInset className="overflow-x-clip">
         <SiteHeader />
-        <main className="flex flex-1 flex-col overflow-auto min-w-0">
+        <main className="flex flex-1 flex-col min-w-0">
           {children}
         </main>
         <SiteFooter />

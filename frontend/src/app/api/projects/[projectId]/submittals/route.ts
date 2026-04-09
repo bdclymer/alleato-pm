@@ -31,6 +31,8 @@ const createSubmittalSchema = z.object({
   description: z.string().nullable().optional(),
   priority: z.string().nullable().optional(),
   ball_in_court: z.string().nullable().optional(),
+  required_approval_date: z.string().nullable().optional(),
+  submission_date: z.string().nullable().optional(),
 });
 
 /**

@@ -201,7 +201,7 @@ export function useUpdateLineItems(
         {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ line_items: lineItems }),
+          body: JSON.stringify({ items: lineItems }),
         },
       ),
     onSuccess: () => {

@@ -40,7 +40,7 @@ function SelectTrigger({
       data-size={size}
       data-variant={variant}
       className={cn(
-        "[&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-primary aria-invalid:border-destructive flex min-w-0 items-center justify-between rounded-md text-sm transition-colors outline-none disabled:cursor-not-allowed disabled:opacity-50",
+        "[&_svg:not([class*='text-'])]:text-muted-foreground focus-visible:border-primary aria-invalid:border-destructive data-[placeholder]:text-muted-foreground flex min-w-0 items-center justify-between rounded-md text-sm transition-colors outline-none disabled:cursor-not-allowed disabled:opacity-50",
         // Variant-specific styles
         variant === "inline"
           ? "border-0 bg-transparent shadow-none focus-visible:ring-1 focus-visible:ring-ring"

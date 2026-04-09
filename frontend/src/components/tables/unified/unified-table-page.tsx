@@ -967,9 +967,9 @@ export function UnifiedTablePage<T>({
         <div className={cn("hidden sm:block", data.isFetching && "opacity-70")}>
           <div
             className={cn(
-              "overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border/70 border border-border rounded-md",
+              "overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border/70 border border-border/50 rounded-md",
               sidePanel
-                ? "mx-0 pl-0"
+                ? "mx-0 pl-0 lg:rounded-r-none lg:border-r-0"
                 : isFullBleedTable
                   ? "-mx-4 sm:-mx-6 lg:-mx-8 lg:pl-2"
                   : "mx-0",
@@ -1000,7 +1000,7 @@ export function UnifiedTablePage<T>({
                           key={`group-${group.label}-${group.columnIds.join("-")}`}
                           colSpan={visibleCount}
                           className={cn(
-                            "text-left text-[10px] font-semibold text-foreground/80 bg-muted/40 py-0 px-2 leading-tight border-b border-l border-border normal-case",
+                            "text-left text-[10px] font-semibold text-foreground/80 bg-muted/40 py-0 px-2 leading-tight border-b border-l border-border/50 normal-case",
                             !group.label && "bg-muted/20",
                           )}
                         >
@@ -1554,7 +1554,7 @@ export function UnifiedTablePage<T>({
               {/* Side panel with resize handle */}
               <aside
                 className={cn(
-                  "hidden lg:flex lg:flex-col bg-muted border-l border-t border-border relative",
+                  "hidden lg:flex lg:flex-col bg-muted border-y border-l border-border/50 relative",
                   panelSticky
                     ? "lg:sticky lg:top-12 lg:max-h-[calc(100dvh-3rem)]"
                     : "lg:relative lg:max-h-none",

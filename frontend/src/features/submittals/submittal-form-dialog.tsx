@@ -4,6 +4,7 @@ import * as React from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { useQuery } from "@tanstack/react-query";
 
 import {
   Dialog,
@@ -31,7 +32,34 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { createClient } from "@/lib/supabase/client";
+import { useProjectCompanies } from "@/hooks/use-project-companies";
+import { useAuthUsers } from "@/hooks/use-auth-users";
 import { useCreateSubmittal, useUpdateSubmittal, type SubmittalSummary } from "@/hooks/use-submittals";
+
+// ─── Inline hook: submittal types ────────────────────────────────────────────
+
+interface SubmittalType {
+  id: string;
+  name: string;
+}
+
+function useSubmittalTypes() {
+  const supabase = createClient();
+
+  return useQuery<SubmittalType[]>({
+    queryKey: ["submittal-types"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("submittal_types")
+        .select("id, name")
+        .order("name");
+
+      if (error) throw error;
+      return (data ?? []) as SubmittalType[];
+    },
+  });
+}
 
 // ─── Schema ───────────────────────────────────────────────────────────────────
 
@@ -43,7 +71,7 @@ const submittalFormSchema = z.object({
   revision: z.number().int().min(0),
   status: z.enum(["Draft", "Open", "Distributed", "Closed"]),
   specification_section: z.string().nullable().optional(),
-  submittal_type: z.string().nullable().optional(),
+  submittal_type_id: z.string().nullable().optional(),
   division: z.string().nullable().optional(),
   final_due_date: z.string().nullable().optional(),
   lead_time: z.number().int().min(0).nullable().optional(),
@@ -51,6 +79,9 @@ const submittalFormSchema = z.object({
   description: z.string().nullable().optional(),
   is_private: z.boolean(),
   ball_in_court: z.string().nullable().optional(),
+  responsible_contractor_id: z.number().int().nullable().optional(),
+  received_from_id: z.string().nullable().optional(),
+  submittal_manager_id: z.string().nullable().optional(),
 });
 
 type SubmittalFormValues = z.infer<typeof submittalFormSchema>;
@@ -68,10 +99,10 @@ const STATUS_OPTIONS = ["Draft", "Open", "Distributed", "Closed"] as const;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function getSubmittalTypeString(v: SubmittalSummary["submittal_type"] | undefined): string {
-  if (!v) return "";
-  if (typeof v === "object") return v.name ?? "";
-  return v;
+function getSubmittalTypeId(v: SubmittalSummary["submittal_type"] | undefined): string | null {
+  if (!v) return null;
+  if (typeof v === "object") return v.id ?? null;
+  return null;
 }
 
 function buildDefaults(submittal: SubmittalSummary | undefined): SubmittalFormValues {
@@ -81,7 +112,7 @@ function buildDefaults(submittal: SubmittalSummary | undefined): SubmittalFormVa
     revision: submittal?.revision ?? 0,
     status: (submittal?.status as "Draft" | "Open" | "Distributed" | "Closed") ?? "Draft",
     specification_section: submittal?.specification_section ?? "",
-    submittal_type: getSubmittalTypeString(submittal?.submittal_type),
+    submittal_type_id: getSubmittalTypeId(submittal?.submittal_type),
     division: submittal?.division ?? "",
     final_due_date: submittal?.final_due_date ?? "",
     lead_time: null,
@@ -89,6 +120,9 @@ function buildDefaults(submittal: SubmittalSummary | undefined): SubmittalFormVa
     description: "",
     is_private: submittal?.is_private ?? false,
     ball_in_court: submittal?.ball_in_court ?? "",
+    responsible_contractor_id: null,
+    received_from_id: null,
+    submittal_manager_id: null,
   };
 }
 
@@ -103,6 +137,14 @@ export function SubmittalFormDialog({
   const isEditing = Boolean(submittal);
   const createMutation = useCreateSubmittal(projectId);
   const updateMutation = useUpdateSubmittal(projectId, submittal?.id ?? "");
+
+  // Data hooks — only fetch when dialog is open
+  const { companies, isLoading: companiesLoading } = useProjectCompanies(
+    String(projectId),
+    { per_page: 200 },
+  );
+  const { users, isLoading: usersLoading } = useAuthUsers(String(projectId));
+  const { data: submittalTypes, isLoading: typesLoading } = useSubmittalTypes();
 
   const form = useForm<SubmittalFormValues>({
     resolver: zodResolver(submittalFormSchema),
@@ -120,12 +162,15 @@ export function SubmittalFormDialog({
     const payload = {
       ...values,
       specification_section: values.specification_section || null,
-      submittal_type: values.submittal_type || null,
+      submittal_type_id: values.submittal_type_id || null,
       division: values.division || null,
       final_due_date: values.final_due_date || null,
       required_on_site_date: values.required_on_site_date || null,
       description: values.description || null,
       ball_in_court: values.ball_in_court || null,
+      responsible_contractor_id: values.responsible_contractor_id ?? null,
+      received_from_id: values.received_from_id || null,
+      submittal_manager_id: values.submittal_manager_id || null,
     };
 
     if (isEditing) {
@@ -239,23 +284,38 @@ export function SubmittalFormDialog({
               </div>
 
               <div className="grid grid-cols-2 gap-4">
+                {/* Submittal Type — FK dropdown */}
                 <FormField
                   control={form.control}
-                  name="submittal_type"
+                  name="submittal_type_id"
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Submittal Type</FormLabel>
-                      <FormControl>
-                        <Input
-                          placeholder="e.g. Product Information"
-                          {...field}
-                          value={field.value ?? ""}
-                        />
-                      </FormControl>
+                      <Select
+                        onValueChange={(val) => field.onChange(val === "__none__" ? null : val)}
+                        value={field.value ?? "__none__"}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue
+                              placeholder={typesLoading ? "Loading..." : "Select type"}
+                            />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="__none__">None</SelectItem>
+                          {(submittalTypes ?? []).map((t) => (
+                            <SelectItem key={t.id} value={t.id}>
+                              {t.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+
                 <FormField
                   control={form.control}
                   name="status"
@@ -274,6 +334,129 @@ export function SubmittalFormDialog({
                               {s}
                             </SelectItem>
                           ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </section>
+
+            {/* ── People & Companies ── */}
+            <section className="space-y-4">
+              <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                People &amp; Companies
+              </h3>
+
+              {/* Responsible Contractor */}
+              <FormField
+                control={form.control}
+                name="responsible_contractor_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Responsible Contractor</FormLabel>
+                    <Select
+                      onValueChange={(val) =>
+                        field.onChange(val === "__none__" ? null : parseInt(val, 10))
+                      }
+                      value={field.value != null ? String(field.value) : "__none__"}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue
+                            placeholder={companiesLoading ? "Loading..." : "Select company"}
+                          />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="__none__">None</SelectItem>
+                        {companies.map((c) => (
+                          <SelectItem key={c.id} value={c.id}>
+                            {c.company?.name ?? c.id}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <div className="grid grid-cols-2 gap-4">
+                {/* Received From */}
+                <FormField
+                  control={form.control}
+                  name="received_from_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Received From</FormLabel>
+                      <Select
+                        onValueChange={(val) =>
+                          field.onChange(val === "__none__" ? null : val)
+                        }
+                        value={field.value ?? "__none__"}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue
+                              placeholder={usersLoading ? "Loading..." : "Select person"}
+                            />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="__none__">None</SelectItem>
+                          {users.map((u) => {
+                            const name =
+                              u.first_name || u.last_name
+                                ? `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim()
+                                : u.email;
+                            return (
+                              <SelectItem key={u.id} value={u.id}>
+                                {name} ({u.email})
+                              </SelectItem>
+                            );
+                          })}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Submittal Manager */}
+                <FormField
+                  control={form.control}
+                  name="submittal_manager_id"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Submittal Manager</FormLabel>
+                      <Select
+                        onValueChange={(val) =>
+                          field.onChange(val === "__none__" ? null : val)
+                        }
+                        value={field.value ?? "__none__"}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue
+                              placeholder={usersLoading ? "Loading..." : "Select person"}
+                            />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="__none__">None</SelectItem>
+                          {users.map((u) => {
+                            const name =
+                              u.first_name || u.last_name
+                                ? `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim()
+                                : u.email;
+                            return (
+                              <SelectItem key={u.id} value={u.id}>
+                                {name} ({u.email})
+                              </SelectItem>
+                            );
+                          })}
                         </SelectContent>
                       </Select>
                       <FormMessage />

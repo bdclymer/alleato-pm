@@ -305,6 +305,8 @@ export default function InvoiceDetailPage({
               lineItems={lineItems}
               onSave={handleSaveLineItems}
               isReadOnly={invoice.status === "approved"}
+              canEditRetainage={invoice.can_edit_retainage ?? false}
+              retainageEditBlockReason={invoice.retainage_edit_block_reason}
             />
           )}
         </TabsContent>

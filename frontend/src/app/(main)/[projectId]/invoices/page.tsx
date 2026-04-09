@@ -34,7 +34,7 @@ import {
 } from "@/components/tables/unified";
 import { useOwnerInvoicesList } from "@/hooks/use-invoicing";
 import { useCommitmentsList } from "@/hooks/use-commitments-query";
-import { useBillingPeriodsList, useCreateBillingPeriod, type BillingPeriodItem } from "@/hooks/use-billing-periods";
+import { useBillingPeriodsList, useCreateBillingPeriod, type BillingPeriod } from "@/hooks/use-billing-periods";
 import type { CommitmentListItem } from "@/lib/validation/commitments";
 import {
   buildInvoiceTableColumns,
@@ -133,15 +133,11 @@ function sortItems<T>(
 // Billing Periods — inline tab columns + helpers
 // ---------------------------------------------------------------------------
 
-type BillingPeriod = BillingPeriodItem;
-
 const billingPeriodColumnConfig: ColumnConfig[] = [
   { id: "period_number", label: "Period #", alwaysVisible: true },
   { id: "period", label: "Period", defaultVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
-  { id: "workCompleted", label: "Work Completed", defaultVisible: true },
-  { id: "paymentDue", label: "Payment Due", defaultVisible: true },
-  { id: "retention", label: "Retention", defaultVisible: true },
+  { id: "due_date", label: "Due Date", defaultVisible: true },
 ];
 
 const billingPeriodDefaultVisibleColumns = billingPeriodColumnConfig
@@ -154,10 +150,8 @@ const billingPeriodFilters: FilterConfig[] = [
     label: "Status",
     type: "select",
     options: [
-      { value: "draft", label: "Draft" },
-      { value: "submitted", label: "Submitted" },
-      { value: "approved", label: "Approved" },
-      { value: "paid", label: "Paid" },
+      { value: "open", label: "Open" },
+      { value: "closed", label: "Closed" },
     ],
   },
 ];
@@ -195,39 +189,19 @@ function buildBillingPeriodColumns(
       label: "Status",
       defaultVisible: true,
       sortable: true,
-      sortValue: (bp) => bp.status,
-      render: (bp) => <StatusBadge status={bp.status} />,
-    },
-    {
-      id: "workCompleted",
-      label: "Work Completed",
-      defaultVisible: true,
-      sortable: true,
-      sortValue: (bp) => bp.work_completed,
+      sortValue: (bp) => (bp.is_closed ? 1 : 0),
       render: (bp) => (
-        <span className="font-medium tabular-nums">{formatCurrency(bp.work_completed)}</span>
+        <StatusBadge status={bp.is_closed ? "closed" : "open"} />
       ),
     },
     {
-      id: "paymentDue",
-      label: "Payment Due",
+      id: "due_date",
+      label: "Due Date",
       defaultVisible: true,
       sortable: true,
-      sortValue: (bp) => bp.current_payment_due,
+      sortValue: (bp) => bp.due_date ?? "",
       render: (bp) => (
-        <span className="font-medium tabular-nums">{formatCurrency(bp.current_payment_due)}</span>
-      ),
-    },
-    {
-      id: "retention",
-      label: "Retention",
-      defaultVisible: true,
-      sortable: true,
-      sortValue: (bp) => bp.retention_amount,
-      render: (bp) => (
-        <span className="tabular-nums text-muted-foreground">
-          {formatCurrency(bp.retention_amount)} ({bp.retention_percentage}%)
-        </span>
+        <span className="text-sm text-muted-foreground">{formatDate(bp.due_date)}</span>
       ),
     },
   ];
@@ -299,10 +273,7 @@ export default function ProjectInvoicesPage(): ReactElement {
   } = useBillingPeriodsList(projectId);
 
   const { data: ownerRawInvoices = [], isLoading: ownerLoading, isFetching: ownerFetching, error: ownerError } =
-    useOwnerInvoicesList(projectId, {
-      status: activeTab === "owner" ? statusFilter : undefined,
-      search: activeTab === "owner" ? tableState.debouncedSearch : undefined,
-    });
+    useOwnerInvoicesList(projectId);
 
   const {
     data: subcontractorResponse,
@@ -468,7 +439,9 @@ export default function ProjectInvoicesPage(): ReactElement {
   const filteredBillingPeriods = React.useMemo(() => {
     let items = [...billingPeriodsRaw];
     if (activeTab === "billing-periods" && statusFilter) {
-      items = items.filter((bp) => bp.status === statusFilter);
+      items = items.filter((bp) =>
+        statusFilter === "closed" ? bp.is_closed === true : bp.is_closed !== true,
+      );
     }
     const search = tableState.debouncedSearch.toLowerCase().trim();
     if (activeTab === "billing-periods" && search) {
@@ -640,7 +613,7 @@ export default function ProjectInvoicesPage(): ReactElement {
         <DropdownMenuContent align="end">
           <DropdownMenuItem
             onClick={() =>
-              toast.info(`Billing Period BP-${String(bp.period_number).padStart(3, "0")} — ${bp.status}. Net payment due: ${formatCurrency(bp.net_payment_due)}`)
+              toast.info(`Billing Period BP-${String(bp.period_number).padStart(3, "0")} — ${bp.is_closed ? "Closed" : "Open"}`)
             }
           >
             <Eye className="mr-2 h-4 w-4" />
@@ -695,7 +668,7 @@ export default function ProjectInvoicesPage(): ReactElement {
           columns: bpColumns,
           getRowId: (bp) => bp.id,
           onRowClick: (bp) =>
-            toast.info(`Billing Period BP-${String(bp.period_number).padStart(3, "0")} — ${bp.status}. Net payment due: ${formatCurrency(bp.net_payment_due)}`),
+            toast.info(`Billing Period BP-${String(bp.period_number).padStart(3, "0")} — ${bp.is_closed ? "Closed" : "Open"}`),
           rowActions: renderBpRowActions,
         }}
         sorting={{
@@ -780,18 +753,11 @@ export default function ProjectInvoicesPage(): ReactElement {
             <Button
               disabled={createBpMutation.isPending || !bpFormStartDate || !bpFormEndDate || !bpFormBillingDate}
               onClick={() => {
-                // Use the first prime contract for this project
-                const contractId = billingPeriodsRaw[0]?.contract_id;
-                if (!contractId) {
-                  toast.error("No prime contract found for this project.");
-                  return;
-                }
                 createBpMutation.mutate(
                   {
-                    contract_id: contractId,
                     start_date: bpFormStartDate,
                     end_date: bpFormEndDate,
-                    billing_date: bpFormBillingDate,
+                    due_date: bpFormBillingDate || undefined,
                   },
                   {
                     onSuccess: () => {

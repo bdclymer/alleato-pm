@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { AutocompleteField, MoneyField } from "@/components/forms";
 import {
   Select,
   SelectContent,
@@ -23,6 +24,7 @@ import {
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import type { Database } from "@/types/database.types";
+import { useCompanies } from "@/hooks/use-companies";
 import {
   STAGE_OPTIONS,
   PHASE_OPTIONS,
@@ -221,10 +223,27 @@ export function EditProjectSidebar({ project, open, onOpenChange }: EditProjectS
   const [form, setForm] = React.useState<FormData>(initForm(project));
   const [saving, setSaving] = React.useState(false);
   const router = useRouter();
+  const { options: companyOptions, isLoading: isLoadingCompanies } = useCompanies({
+    enabled: open,
+  });
 
   React.useEffect(() => {
     if (open) setForm(initForm(project));
   }, [open, project]);
+
+  const clientOptions = React.useMemo(() => {
+    const currentValue = form.client.trim();
+    if (!currentValue) return companyOptions;
+    const hasMatch = companyOptions.some((option) => option.label === currentValue);
+    return hasMatch
+      ? companyOptions
+      : [{ value: `current:${currentValue}`, label: currentValue }, ...companyOptions];
+  }, [companyOptions, form.client]);
+
+  const selectedClientValue = React.useMemo(() => {
+    const match = clientOptions.find((option) => option.label === form.client);
+    return match?.value;
+  }, [clientOptions, form.client]);
 
   const set = <K extends keyof FormData>(key: K, value: FormData[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
@@ -309,7 +328,7 @@ export function EditProjectSidebar({ project, open, onOpenChange }: EditProjectS
                 <TextField id="edit-job" label="Job Number" value={form.job_number} onChange={(v) => set("job_number", v)} required />
                 <SelectField
                   id="edit-stage"
-                  label="Stage"
+                  label="Status"
                   value={form.stage}
                   onChange={(v) => set("stage", v)}
                   options={STAGE_OPTIONS.map((v) => ({ value: v, label: v }))}
@@ -325,7 +344,24 @@ export function EditProjectSidebar({ project, open, onOpenChange }: EditProjectS
                   placeholder="Select phase"
                   allowClear
                 />
-                <TextField id="edit-client" label="Client" value={form.client} onChange={(v) => set("client", v)} />
+                <AutocompleteField
+                  label="Client"
+                  options={clientOptions}
+                  value={selectedClientValue}
+                  onValueChange={(value) => {
+                    if (!value) {
+                      set("client", "");
+                      return;
+                    }
+                    const selected = clientOptions.find((option) => option.value === value);
+                    set("client", selected?.label ?? "");
+                  }}
+                  placeholder={isLoadingCompanies ? "Loading companies..." : "Select client"}
+                  searchPlaceholder="Search companies..."
+                  emptyMessage="No companies found"
+                  loading={isLoadingCompanies}
+                  clearable
+                />
                 <SelectField
                   id="edit-type"
                   label="Type"
@@ -383,8 +419,18 @@ export function EditProjectSidebar({ project, open, onOpenChange }: EditProjectS
               </h3>
               <div className="grid grid-cols-2 gap-3">
                 <TextField id="edit-sqft" label="Square Footage" value={form.square_footage} onChange={(v) => set("square_footage", v)} type="number" />
-                <TextField id="edit-value" label="Total Value ($)" value={form.total_value} onChange={(v) => set("total_value", v)} type="number" />
-                <TextField id="edit-profit" label="Est. Profit ($)" value={form.est_profit} onChange={(v) => set("est_profit", v)} type="number" />
+                <MoneyField
+                  id="edit-value"
+                  label="Total Value"
+                  value={parseNum(form.total_value) ?? undefined}
+                  onChange={(value) => set("total_value", value !== undefined ? String(value) : "")}
+                />
+                <MoneyField
+                  id="edit-profit"
+                  label="Est. Profit"
+                  value={parseNum(form.est_profit) ?? undefined}
+                  onChange={(value) => set("est_profit", value !== undefined ? String(value) : "")}
+                />
                 <TextField id="edit-code" label="Project Code" value={form.project_code} onChange={(v) => set("project_code", v)} />
               </div>
             </section>

@@ -78,14 +78,14 @@ export function ClientStatusToggle({
     const supabase = createClient();
 
     try {
+      // company_id lives on people, not on project_directory_memberships
       const { error } = await supabase
-        .from("project_directory_memberships")
+        .from("people")
         .update({
-          company_id: companyId,
+          company_id: String(companyId),
           updated_at: new Date().toISOString(),
         })
-        .eq("project_id", parseInt(projectId))
-        .eq("user_id", userId);
+        .eq("id", userId);
 
       if (error) throw error;
 

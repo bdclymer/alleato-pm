@@ -47,6 +47,7 @@ export function CostCodeSelector({
           aria-expanded={open}
           className={cn("w-[150px] justify-between", className)}
           disabled={isLoading}
+          {...(!selectedCode && !isLoading && { "data-placeholder-style": "" })}
         >
           {isLoading ? (
             <Loader2 className="h-4 w-4 animate-spin" />

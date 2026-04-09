@@ -59,6 +59,15 @@ export async function POST(
       );
     }
 
+    // Only draft or revise_and_resubmit invoices can be submitted
+    const submittableStatuses = ["draft", "revise_and_resubmit"];
+    if (!submittableStatuses.includes(invoice.status)) {
+      return NextResponse.json(
+        { error: "Invoice must be in Draft or Revise & Resubmit status to submit" },
+        { status: 400 },
+      );
+    }
+
     // Update invoice status to under_review (Procore: UNDER REVIEW)
     const { data: updatedInvoice, error: updateError } = await supabase
       .from("owner_invoices")

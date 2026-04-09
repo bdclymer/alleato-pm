@@ -287,7 +287,6 @@ export class CompanyService {
         address: data.address,
         city: data.city,
         state: data.state,
-        zip: data.zip,
         website: data.website,
       })
       .select()

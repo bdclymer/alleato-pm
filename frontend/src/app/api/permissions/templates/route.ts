@@ -9,9 +9,15 @@ import {
  * GET /api/permissions/templates
  * Get all available permission templates
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const templates = await getPermissionTemplates();
+    const scopeParam = request.nextUrl.searchParams.get("scope");
+    const scope =
+      scopeParam === "project" || scopeParam === "company" || scopeParam === "global"
+        ? scopeParam
+        : undefined;
+
+    const templates = await getPermissionTemplates(scope);
     return NextResponse.json({ data: templates });
   } catch (error) {
     console.error("Error loading permission templates:", error);
@@ -47,7 +53,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, description, rules_json } = body;
+    const { name, description, rules_json, granular_flags, scope } = body;
 
     if (!name || !rules_json) {
       return NextResponse.json(
@@ -56,10 +62,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const normalizedScope =
+      scope === "company" || scope === "project" || scope === "global"
+        ? scope
+        : "project";
+
     const result = await createPermissionTemplate({
       name,
       description,
       rules_json,
+      granular_flags: Array.isArray(granular_flags) ? granular_flags : [],
+      scope: normalizedScope,
       is_system: false,
     });
 

@@ -59,6 +59,14 @@ export async function POST(
       );
     }
 
+    // Only under_review invoices can be approved
+    if (invoice.status !== "under_review") {
+      return NextResponse.json(
+        { error: "Invoice must be Under Review to approve" },
+        { status: 400 },
+      );
+    }
+
     // Update invoice status to approved
     const { data: updatedInvoice, error: updateError } = await supabase
       .from("owner_invoices")

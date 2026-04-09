@@ -121,7 +121,7 @@ export function useChangeEventFormData({
 
       setFormData((prev) => {
         const nextItems = [...prev.lineItems];
-        const current = { ...nextItems[rowIndex], contract: commitmentId, commitmentLineItemId: "" };
+        const current = { ...nextItems[rowIndex], contract: commitmentId, commitmentId: commitmentId || undefined, commitmentLineItemId: "" };
         if (commitment?.vendorId) {
           current.vendor = commitment.vendorId;
         }
@@ -293,6 +293,7 @@ export function useChangeEventFormData({
           description: li.description || "",
           vendor: commitment?.vendorId || "",
           contract: commitmentId,
+          commitmentId: commitmentId,
           commitmentLineItemId: li.id,
         };
       });

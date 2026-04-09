@@ -120,7 +120,7 @@ export async function PATCH(
 
     // Parse and validate the request body
     const body = await request.json();
-    const allowedFields = ["invoice_number", "period_start", "period_end", "status", "notes"];
+    const allowedFields = ["invoice_number", "period_start", "period_end", "billing_date", "status", "notes"];
     const updatePayload: Record<string, unknown> = {};
     for (const field of allowedFields) {
       if (field in body) {

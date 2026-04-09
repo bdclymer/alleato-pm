@@ -10,10 +10,11 @@ import {
  */
 export const CommitmentStatusValues = [
   "Draft",
+  "Out for Bid",
   "Out for Signature",
-  "Pending",
   "Approved",
   "Complete",
+  "Terminated",
   "Void",
 ] as const;
 

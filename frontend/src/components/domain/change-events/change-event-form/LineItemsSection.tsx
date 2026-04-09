@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Plus, Upload } from "lucide-react";
+import { Download, Plus, Upload } from "lucide-react";
 
 import { formatCurrency } from "@/lib/table-config/formatters";
 import { Button } from "@/components/ui/button";
@@ -255,6 +255,26 @@ function LineItemsToolbar({
       </Button>
 
       <div className="mx-1.5 h-4 w-px bg-border" />
+
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="gap-1.5 text-muted-foreground hover:text-foreground"
+        onClick={() => {
+          const headers = "Budget Code,Description,Cost Qty,Cost Unit Cost,Revenue Qty,Revenue Unit Cost,UOM";
+          const blob = new Blob([headers + "\n"], { type: "text/csv" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = "change-event-line-items-template.csv";
+          a.click();
+          URL.revokeObjectURL(url);
+        }}
+      >
+        <Download />
+        Template
+      </Button>
 
       <Button
         type="button"

@@ -29,7 +29,7 @@ import {
 } from "@/components/tables/unified";
 import {
   useBillingPeriodsList,
-  type BillingPeriodItem,
+  type BillingPeriod,
 } from "@/hooks/use-billing-periods";
 
 // =============================================================================
@@ -70,7 +70,7 @@ export default function ProjectBillingPeriodsPage(): ReactElement {
   const projectId = params.projectId ?? "";
 
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
-  const [periodToDelete, setPeriodToDelete] = React.useState<BillingPeriodItem | null>(null);
+  const [periodToDelete, setPeriodToDelete] = React.useState<BillingPeriod | null>(null);
 
   // ─── Table State ───────────────────────────────────────────────────────────
 
@@ -105,14 +105,14 @@ export default function ProjectBillingPeriodsPage(): ReactElement {
     let items = rawPeriods;
     const search = tableState.debouncedSearch.toLowerCase().trim();
     if (search) {
-      items = items.filter((p) => p.name.toLowerCase().includes(search));
+      items = items.filter((p) => (p.name ?? p.start_date).toLowerCase().includes(search));
     }
     return items;
   }, [rawPeriods, tableState.debouncedSearch]);
 
   // ─── Table Columns ─────────────────────────────────────────────────────────
 
-  const tableColumns: TableColumn<BillingPeriodItem>[] = React.useMemo(
+  const tableColumns: TableColumn<BillingPeriod>[] = React.useMemo(
     () => [
       {
         id: "name",
@@ -188,7 +188,7 @@ export default function ProjectBillingPeriodsPage(): ReactElement {
 
   // ─── Handlers ──────────────────────────────────────────────────────────────
 
-  function handleDeleteIntent(period: BillingPeriodItem) {
+  function handleDeleteIntent(period: BillingPeriod) {
     setPeriodToDelete(period);
     setDeleteDialogOpen(true);
   }
@@ -200,7 +200,7 @@ export default function ProjectBillingPeriodsPage(): ReactElement {
 
   // ─── Row Actions ───────────────────────────────────────────────────────────
 
-  function renderRowActions(period: BillingPeriodItem): ReactElement {
+  function renderRowActions(period: BillingPeriod): ReactElement {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>

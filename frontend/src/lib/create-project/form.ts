@@ -325,7 +325,7 @@ export const formSections: FormSection[] = [
       },
       {
         name: "stage",
-        label: "Stage",
+        label: "Status",
         control: "select",
         options: STAGE_OPTIONS.map((value) => ({ value, label: value })),
         allowEmptyOption: true,

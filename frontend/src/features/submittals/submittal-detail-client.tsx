@@ -3,20 +3,22 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import {
-  ArrowLeft,
   Calendar,
   Clock,
+  Copy,
   Edit,
   FileText,
   MoreHorizontal,
   Package,
+  Plus,
   Trash2,
 } from "lucide-react";
 
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,9 +26,25 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useDeleteSubmittal, type SubmittalDetail } from "@/hooks/use-submittals";
+import { Textarea } from "@/components/ui/textarea";
+import { useAuthUsers, type AuthUser } from "@/hooks/use-auth-users";
+import {
+  useAddWorkflowStep,
+  useDeleteSubmittal,
+  useDuplicateSubmittal,
+  useRespondToWorkflowStep,
+  type SubmittalDetail,
+} from "@/hooks/use-submittals";
 import { SubmittalFormDialog } from "./submittal-form-dialog";
 
 // ─── Response badge map ───────────────────────────────────────────────────────
@@ -39,9 +57,21 @@ const responseVariantMap: Record<
   Pending: "outline",
   Approved: "success",
   "Approved as Noted": "success",
+  "Revise and Resubmit": "destructive",
   Revise: "destructive",
   Rejected: "destructive",
+  Received: "secondary",
 };
+
+const RESPONSE_STATUSES = [
+  "Approved",
+  "Approved as Noted",
+  "Revise and Resubmit",
+  "Rejected",
+  "Received",
+] as const;
+
+const STEP_TYPES = ["Approver", "Submitter"] as const;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -49,6 +79,148 @@ function formatDate(v: string | null | undefined): string {
   if (!v) return "—";
   const d = new Date(v);
   return Number.isNaN(d.getTime()) ? "—" : d.toLocaleDateString();
+}
+
+function resolveUserName(users: AuthUser[], id: string): string {
+  const u = users.find((u) => u.id === id);
+  if (!u) return id;
+  const name = `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim();
+  return name || u.email;
+}
+
+// ─── Inline respond form ──────────────────────────────────────────────────────
+
+interface RespondFormProps {
+  projectId: number;
+  submittalId: string;
+  stepId: string;
+  onDone: () => void;
+}
+
+function RespondForm({ projectId, submittalId, stepId, onDone }: RespondFormProps) {
+  const [status, setStatus] = React.useState<string>("");
+  const [comments, setComments] = React.useState("");
+  const mutation = useRespondToWorkflowStep(projectId, submittalId, stepId);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!status) return;
+    await mutation.mutateAsync({ response_status: status, comments: comments || null });
+    onDone();
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-3 space-y-3 rounded-md bg-muted p-3">
+      <div className="space-y-1">
+        <Label className="text-xs">Response</Label>
+        <Select value={status} onValueChange={setStatus}>
+          <SelectTrigger className="h-8 text-xs">
+            <SelectValue placeholder="Select response..." />
+          </SelectTrigger>
+          <SelectContent>
+            {RESPONSE_STATUSES.map((s) => (
+              <SelectItem key={s} value={s} className="text-xs">
+                {s}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="space-y-1">
+        <Label className="text-xs">Comments (optional)</Label>
+        <Textarea
+          value={comments}
+          onChange={(e) => setComments(e.target.value)}
+          rows={2}
+          className="text-xs resize-none"
+          placeholder="Add a comment..."
+        />
+      </div>
+      <div className="flex items-center gap-2">
+        <Button type="submit" size="sm" disabled={!status || mutation.isPending}>
+          Submit
+        </Button>
+        <Button type="button" variant="ghost" size="sm" onClick={onDone}>
+          Cancel
+        </Button>
+      </div>
+    </form>
+  );
+}
+
+// ─── Workflow builder ─────────────────────────────────────────────────────────
+
+interface WorkflowBuilderProps {
+  projectId: number;
+  submittalId: string;
+  users: AuthUser[];
+}
+
+function WorkflowBuilder({ projectId, submittalId, users }: WorkflowBuilderProps) {
+  const [userId, setUserId] = React.useState("");
+  const [stepType, setStepType] = React.useState<string>("Approver");
+  const [required, setRequired] = React.useState(true);
+  const mutation = useAddWorkflowStep(projectId, submittalId);
+
+  async function handleAdd(e: React.FormEvent) {
+    e.preventDefault();
+    if (!userId) return;
+    await mutation.mutateAsync({ user_id: userId, step_type: stepType, required });
+    setUserId("");
+    setStepType("Approver");
+    setRequired(true);
+  }
+
+  return (
+    <form onSubmit={handleAdd} className="rounded-md border border-border bg-card p-4 space-y-3">
+      <p className="text-sm font-medium">Add Workflow Step</p>
+      <div className="grid gap-3 sm:grid-cols-3">
+        <div className="space-y-1">
+          <Label className="text-xs">User</Label>
+          <Select value={userId} onValueChange={setUserId}>
+            <SelectTrigger className="h-8 text-xs">
+              <SelectValue placeholder="Select user..." />
+            </SelectTrigger>
+            <SelectContent>
+              {users.map((u) => (
+                <SelectItem key={u.id} value={u.id} className="text-xs">
+                  {resolveUserName(users, u.id)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Step Type</Label>
+          <Select value={stepType} onValueChange={setStepType}>
+            <SelectTrigger className="h-8 text-xs">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {STEP_TYPES.map((t) => (
+                <SelectItem key={t} value={t} className="text-xs">
+                  {t}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-end gap-2 pb-0.5">
+          <label className="flex items-center gap-1.5 text-xs cursor-pointer select-none">
+            <Checkbox
+              checked={required}
+              onCheckedChange={(v) => setRequired(Boolean(v))}
+            />
+            Required
+          </label>
+        </div>
+      </div>
+      <Button type="submit" size="sm" disabled={!userId || mutation.isPending}>
+        <Plus className="h-3.5 w-3.5" />
+        Add Step
+      </Button>
+    </form>
+  );
 }
 
 // ─── Props ────────────────────────────────────────────────────────────────────
@@ -63,13 +235,12 @@ interface SubmittalDetailClientProps {
 export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailClientProps) {
   const router = useRouter();
   const deleteMutation = useDeleteSubmittal(projectId);
+  const duplicateMutation = useDuplicateSubmittal(projectId);
   const [editOpen, setEditOpen] = React.useState(false);
+  // Map of stepId → whether the inline respond form is open
+  const [respondingStep, setRespondingStep] = React.useState<string | null>(null);
 
-  async function handleDelete() {
-    if (!window.confirm("Move this submittal to the Recycle Bin?")) return;
-    await deleteMutation.mutateAsync(submittal.id);
-    router.push(`/${projectId}/submittals`);
-  }
+  const { users } = useAuthUsers(String(projectId));
 
   const workflowSteps = submittal.submittal_workflow_steps ?? [];
   const distributions = submittal.submittal_distributions ?? [];
@@ -77,9 +248,59 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
   const history = submittal.submittal_history ?? [];
   const linkedDrawings = submittal.submittal_linked_drawings ?? [];
 
+  async function handleDelete() {
+    if (!window.confirm("Move this submittal to the Recycle Bin?")) return;
+    await deleteMutation.mutateAsync(submittal.id);
+    router.push(`/${projectId}/submittals`);
+  }
+
+  async function handleDuplicate() {
+    const newRecord = await duplicateMutation.mutateAsync(submittal.id);
+    router.push(`/${projectId}/submittals/${newRecord.id}`);
+  }
+
+  const actions = (
+    <div className="flex items-center gap-1.5">
+      <Button size="sm" onClick={() => setEditOpen(true)}>
+        <Edit className="h-3.5 w-3.5" />
+        Edit
+      </Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="outline" size="icon">
+            <MoreHorizontal className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => setEditOpen(true)}>
+            <Edit className="mr-2 h-4 w-4" />
+            Edit
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={handleDuplicate}
+            disabled={duplicateMutation.isPending}
+          >
+            <Copy className="mr-2 h-4 w-4" />
+            Duplicate
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            className="text-destructive focus:text-destructive"
+            onClick={handleDelete}
+            disabled={deleteMutation.isPending}
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Delete
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+
   return (
     <>
-      <ProjectPageHeader
+      <PageShell
+        variant="detail"
         title={`${submittal.submittal_number} — ${submittal.title}`}
         description={[
           submittal.status,
@@ -88,47 +309,9 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
         ]
           .filter(Boolean)
           .join(" · ")}
-        actions={
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => router.push(`/${projectId}/submittals`)}
-            >
-              <ArrowLeft />
-              Back
-            </Button>
-            <Button size="sm" onClick={() => setEditOpen(true)}>
-              <Edit />
-              Edit
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <MoreHorizontal />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setEditOpen(true)}>
-                  <Edit className="mr-2 h-4 w-4" />
-                  Edit
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  className="text-destructive focus:text-destructive"
-                  onClick={handleDelete}
-                  disabled={deleteMutation.isPending}
-                >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        }
-      />
-
-      <PageContainer>
+        onBack={() => router.push(`/${projectId}/submittals`)}
+        actions={actions}
+      >
         <Tabs defaultValue="general" className="space-y-4">
           <TabsList>
             <TabsTrigger value="general">General</TabsTrigger>
@@ -146,7 +329,6 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
             <div className="grid gap-6 md:grid-cols-3">
               {/* Left: metadata */}
               <div className="md:col-span-2 space-y-6">
-                {/* Description */}
                 {submittal.description && (
                   <Card>
                     <CardHeader>
@@ -158,7 +340,6 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
                   </Card>
                 )}
 
-                {/* Attachments */}
                 <Card>
                   <CardHeader>
                     <CardTitle className="text-base flex items-center gap-2">
@@ -223,7 +404,11 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
                       <p className="text-muted-foreground text-xs uppercase font-medium">
                         Ball In Court
                       </p>
-                      <p>{submittal.ball_in_court ?? "—"}</p>
+                      <p>
+                        {submittal.ball_in_court
+                          ? resolveUserName(users, submittal.ball_in_court)
+                          : "—"}
+                      </p>
                     </div>
                     <Separator />
                     <div>
@@ -251,17 +436,19 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
                   </CardContent>
                 </Card>
 
-                {/* Distributions */}
                 {distributions.length > 0 && (
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-base">Distribution History</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      {distributions.map((dist) => (
+                      {distributions.map((dist, idx) => (
                         <div key={dist.id} className="text-sm space-y-1">
                           <p className="text-xs text-muted-foreground">
                             {formatDate(dist.distributed_at)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            From: {resolveUserName(users, dist.from_id)}
                           </p>
                           {dist.message && (
                             <p className="text-muted-foreground">{dist.message}</p>
@@ -270,7 +457,7 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
                             {dist.submittal_distribution_recipients?.length ?? 0} recipient
                             {dist.submittal_distribution_recipients?.length !== 1 ? "s" : ""}
                           </p>
-                          {distributions.indexOf(dist) < distributions.length - 1 && (
+                          {idx < distributions.length - 1 && (
                             <Separator className="mt-2" />
                           )}
                         </div>
@@ -287,7 +474,12 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
             {workflowSteps.length === 0 ? (
               <Card>
                 <CardContent className="pt-6">
-                  <p className="text-sm text-muted-foreground">No workflow steps configured.</p>
+                  <div className="flex flex-col items-center gap-2 py-4 text-center">
+                    <p className="text-sm text-muted-foreground">No workflow steps configured.</p>
+                    <p className="text-xs text-muted-foreground">
+                      Add a step below to begin routing this submittal.
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
             ) : (
@@ -297,61 +489,110 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
                 .map((step) => (
                   <Card key={step.id}>
                     <CardHeader className="pb-2">
-                      <CardTitle className="text-sm font-medium">
-                        Step {step.step_order} — {step.step_type}
-                      </CardTitle>
+                      <div className="flex items-center gap-2">
+                        <CardTitle className="text-sm font-medium">
+                          Step {step.step_order}
+                        </CardTitle>
+                        <Badge variant="secondary" className="text-xs">
+                          {step.step_type}
+                        </Badge>
+                        {(step as { required?: boolean }).required === false && (
+                          <Badge variant="outline" className="text-xs">
+                            Optional
+                          </Badge>
+                        )}
+                      </div>
                     </CardHeader>
                     <CardContent className="space-y-2">
                       {step.submittal_responses?.length === 0 && (
                         <p className="text-xs text-muted-foreground">No responses yet</p>
                       )}
                       {step.submittal_responses?.map((resp) => (
-                        <div
-                          key={resp.id}
-                          className="flex items-start justify-between gap-4 rounded-md border p-4"
-                        >
-                          <div className="text-sm">
-                            <p className="font-medium text-xs text-muted-foreground">
-                              Responder
-                            </p>
-                            <p>{resp.responder_id}</p>
-                            {resp.comments && (
-                              <p className="mt-1 text-muted-foreground">{resp.comments}</p>
-                            )}
-                            {resp.responded_at && (
-                              <p className="mt-1 text-xs text-muted-foreground">
-                                {formatDate(resp.responded_at)}
+                        <div key={resp.id} className="space-y-0">
+                          <div className="flex items-start justify-between gap-4 rounded-md border border-border p-3">
+                            <div className="text-sm min-w-0">
+                              <p className="font-medium text-xs text-muted-foreground mb-0.5">
+                                Responder
                               </p>
-                            )}
+                              <p className="truncate">
+                                {resolveUserName(users, resp.responder_id)}
+                              </p>
+                              {resp.comments && (
+                                <p className="mt-1 text-muted-foreground text-xs">
+                                  {resp.comments}
+                                </p>
+                              )}
+                              {resp.responded_at && (
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                  {formatDate(resp.responded_at)}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex flex-col items-end gap-2 shrink-0">
+                              <Badge
+                                variant={responseVariantMap[resp.response_status] ?? "outline"}
+                              >
+                                {resp.response_status}
+                              </Badge>
+                              {resp.response_status === "Pending" && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="text-xs h-7"
+                                  onClick={() =>
+                                    setRespondingStep(
+                                      respondingStep === `${step.id}-${resp.id}`
+                                        ? null
+                                        : `${step.id}-${resp.id}`,
+                                    )
+                                  }
+                                >
+                                  Respond
+                                </Button>
+                              )}
+                            </div>
                           </div>
-                          <Badge
-                            variant={responseVariantMap[resp.response_status] ?? "outline"}
-                            className="shrink-0"
-                          >
-                            {resp.response_status}
-                          </Badge>
+                          {respondingStep === `${step.id}-${resp.id}` && (
+                            <RespondForm
+                              projectId={projectId}
+                              submittalId={submittal.id}
+                              stepId={step.id}
+                              onDone={() => setRespondingStep(null)}
+                            />
+                          )}
                         </div>
                       ))}
                     </CardContent>
                   </Card>
                 ))
             )}
+
+            <WorkflowBuilder
+              projectId={projectId}
+              submittalId={submittal.id}
+              users={users}
+            />
           </TabsContent>
 
           {/* ── Related Items ── */}
           <TabsContent value="related" className="space-y-4">
             <Card>
               <CardHeader>
-                <CardTitle className="text-base">Linked Drawings ({linkedDrawings.length})</CardTitle>
+                <CardTitle className="text-base">
+                  Linked Drawings ({linkedDrawings.length})
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 {linkedDrawings.length === 0 ? (
                   <p className="text-sm text-muted-foreground">No drawings linked.</p>
                 ) : (
-                  <ul className="space-y-1">
-                    {linkedDrawings.map((ld) => (
-                      <li key={ld.id} className="text-sm">
-                        Drawing: {ld.drawing_id}
+                  <ul className="space-y-2">
+                    {linkedDrawings.map((ld, idx) => (
+                      <li key={ld.id} className="text-sm flex items-baseline gap-2">
+                        <span className="font-medium">Drawing {idx + 1}</span>
+                        <span className="text-xs text-muted-foreground font-mono">
+                          {ld.drawing_id}
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -379,6 +620,11 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
                         </span>
                         <div>
                           <span className="font-medium">{entry.action ?? "Update"}</span>
+                          {entry.actor_id && (
+                            <span className="ml-2 text-muted-foreground text-xs">
+                              by {resolveUserName(users, entry.actor_id)}
+                            </span>
+                          )}
                           {entry.new_status && (
                             <span className="ml-2 text-muted-foreground">
                               → {entry.new_status}
@@ -393,7 +639,7 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
             )}
           </TabsContent>
         </Tabs>
-      </PageContainer>
+      </PageShell>
 
       <SubmittalFormDialog
         projectId={projectId}

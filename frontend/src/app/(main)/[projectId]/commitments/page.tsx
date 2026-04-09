@@ -1,9 +1,9 @@
 "use client";
 
 import * as React from "react";
-import type { ReactElement } from "react";
+import type { ReactElement, ReactNode } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { ChevronDown, Plus, RefreshCw } from "lucide-react";
+import { ChevronDown, Loader2, Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -54,7 +54,194 @@ import {
 const EMPTY_FILTERS: Record<string, FilterValue> = {
   status: undefined,
   type: undefined,
+  tab: undefined,
 };
+
+// ─── Commitment Change Orders expanded sub-row ───────────────────────────────
+
+interface CommitmentChangeOrder {
+  id: string;
+  number: string;
+  title: string;
+  status: string;
+  amount: number;
+  requested_date: string | null;
+  approved_date: string | null;
+}
+
+interface CommitmentChangeOrdersRowProps {
+  commitmentId: string;
+  colSpan: number;
+}
+
+function CommitmentChangeOrdersRow({
+  commitmentId,
+  colSpan,
+}: CommitmentChangeOrdersRowProps): ReactNode {
+  const [changeOrders, setChangeOrders] = React.useState<CommitmentChangeOrder[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    let cancelled = false;
+    setIsLoading(true);
+
+    fetch(`/api/commitments/${commitmentId}/change-orders`)
+      .then((res) => res.json())
+      .then((json) => {
+        if (!cancelled) {
+          setChangeOrders(json.data ?? []);
+          setIsLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [commitmentId]);
+
+  const formatAmt = (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(value);
+
+  return (
+    <tr>
+      <td colSpan={colSpan} className="p-0">
+        <div className="bg-muted/40 border-y border-border px-6 py-3">
+          {isLoading ? (
+            <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              Loading change orders…
+            </div>
+          ) : changeOrders.length === 0 ? (
+            <p className="py-2 text-sm text-muted-foreground">No change orders</p>
+          ) : (
+            <table className="w-full text-xs">
+              <thead>
+                <tr className="text-left text-muted-foreground">
+                  <th className="pb-1.5 pr-6 font-medium">#</th>
+                  <th className="pb-1.5 pr-6 font-medium">Description</th>
+                  <th className="pb-1.5 pr-6 font-medium">Status</th>
+                  <th className="pb-1.5 pr-6 font-medium text-right">Amount</th>
+                  <th className="pb-1.5 font-medium">Requested</th>
+                </tr>
+              </thead>
+              <tbody>
+                {changeOrders.map((co) => (
+                  <tr key={co.id} className="border-t border-border/50">
+                    <td className="py-1.5 pr-6 font-mono text-muted-foreground">
+                      {co.number}
+                    </td>
+                    <td className="py-1.5 pr-6 max-w-xs truncate">{co.title}</td>
+                    <td className="py-1.5 pr-6 capitalize">{co.status}</td>
+                    <td className="py-1.5 pr-6 text-right tabular-nums">
+                      {formatAmt(co.amount)}
+                    </td>
+                    <td className="py-1.5 text-muted-foreground">
+                      {co.requested_date
+                        ? new Date(co.requested_date).toLocaleDateString()
+                        : "—"}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+// ─── Project-level Change Orders tab table ────────────────────────────────────
+
+interface ProjectCORow extends CommitmentChangeOrder {
+  commitment_id?: string;
+  commitment_number?: string;
+}
+
+interface ProjectChangeOrdersTableProps {
+  changeOrders: ProjectCORow[];
+  isLoading: boolean;
+}
+
+function ProjectChangeOrdersTable({
+  changeOrders,
+  isLoading,
+}: ProjectChangeOrdersTableProps): ReactNode {
+  const formatAmt = (value: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+      maximumFractionDigits: 0,
+    }).format(value);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground">
+        <Loader2 className="h-4 w-4 animate-spin" />
+        Loading change orders…
+      </div>
+    );
+  }
+
+  if (changeOrders.length === 0) {
+    return (
+      <p className="py-8 text-sm text-muted-foreground text-center">
+        No change orders for this project.
+      </p>
+    );
+  }
+
+  return (
+    <div className="rounded-md border border-border overflow-x-auto">
+      <table className="w-full text-sm">
+        <thead className="bg-muted/50">
+          <tr className="text-left text-muted-foreground border-b border-border">
+            <th className="px-4 py-3 font-medium">#</th>
+            <th className="px-4 py-3 font-medium">Description</th>
+            <th className="px-4 py-3 font-medium">Status</th>
+            <th className="px-4 py-3 font-medium">Commitment</th>
+            <th className="px-4 py-3 font-medium text-right">Amount</th>
+            <th className="px-4 py-3 font-medium">Requested</th>
+          </tr>
+        </thead>
+        <tbody>
+          {changeOrders.map((co, idx) => (
+            <tr
+              key={co.id}
+              className={idx % 2 === 0 ? "bg-background" : "bg-muted/20"}
+            >
+              <td className="px-4 py-3 font-mono text-muted-foreground text-xs">
+                {co.number}
+              </td>
+              <td className="px-4 py-3 max-w-xs truncate">{co.title}</td>
+              <td className="px-4 py-3 capitalize">{co.status}</td>
+              <td className="px-4 py-3 text-muted-foreground text-xs">
+                {co.commitment_number ?? "—"}
+              </td>
+              <td className="px-4 py-3 text-right tabular-nums">
+                {formatAmt(co.amount)}
+              </td>
+              <td className="px-4 py-3 text-muted-foreground text-xs">
+                {co.requested_date
+                  ? new Date(co.requested_date).toLocaleDateString()
+                  : "—"}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
 
 type FilterState = Record<string, FilterValue>;
 
@@ -75,11 +262,17 @@ export default function ProjectCommitmentsPage(): ReactElement {
   );
   const [isSyncing, setIsSyncing] = React.useState(false);
 
+  // ─── Project-level change orders (Change Orders tab) ──────────────────────
+  const [projectChangeOrders, setProjectChangeOrders] = React.useState<CommitmentChangeOrder[]>([]);
+  const [isLoadingProjectCOs, setIsLoadingProjectCOs] = React.useState(false);
+
   const initialStatus = searchParams.get("status") ?? "";
   const initialType = searchParams.get("type") ?? "";
+  const initialTab = searchParams.get("tab") ?? "";
   const initialFilters: FilterState = {
     status: initialStatus || undefined,
     type: initialType || undefined,
+    tab: initialTab || undefined,
   };
 
   const tableState = useUnifiedTableState({
@@ -106,21 +299,51 @@ export default function ProjectCommitmentsPage(): ReactElement {
   React.useEffect(() => {
     const nextStatus = searchParams.get("status") ?? "";
     const nextType = searchParams.get("type") ?? "";
+    const nextTab = searchParams.get("tab") ?? "";
 
     tableState.setActiveFilters((prev) => {
       const normalizedStatus = nextStatus || undefined;
       const normalizedType = nextType || undefined;
-      if (prev.status === normalizedStatus && prev.type === normalizedType) {
+      const normalizedTab = nextTab || undefined;
+      if (
+        prev.status === normalizedStatus &&
+        prev.type === normalizedType &&
+        prev.tab === normalizedTab
+      ) {
         return prev;
       }
       return {
         status: normalizedStatus,
         type: normalizedType,
+        tab: normalizedTab,
       };
     });
   }, [searchParams, tableState.setActiveFilters]);
 
   const activeFilters = tableState.activeFilters as FilterState;
+
+  // Fetch project-level change orders when the Change Orders tab is active
+  React.useEffect(() => {
+    if (activeFilters.tab !== "change-orders") return;
+    let cancelled = false;
+    setIsLoadingProjectCOs(true);
+
+    fetch(`/api/projects/${projectId}/commitment-change-orders`)
+      .then((res) => res.json())
+      .then((json) => {
+        if (!cancelled) {
+          setProjectChangeOrders(json.data ?? []);
+          setIsLoadingProjectCOs(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setIsLoadingProjectCOs(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [activeFilters.tab, projectId]);
 
   const {
     data: response,
@@ -208,9 +431,23 @@ export default function ProjectCommitmentsPage(): ReactElement {
     );
   }, [commitments]);
 
+  // Row expansion state — collapsed by default
+  const [expandedIds, setExpandedIds] = React.useState<Set<string>>(new Set());
+  const handleToggleExpand = React.useCallback((id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  }, []);
+
   const tableColumns = React.useMemo(
-    () => buildCommitmentTableColumns(projectId),
-    [projectId],
+    () => buildCommitmentTableColumns(projectId, expandedIds, handleToggleExpand),
+    [projectId, expandedIds, handleToggleExpand],
   );
   const sortedCommitments = React.useMemo(() => {
     if (!tableState.sortBy) return commitments;
@@ -365,7 +602,7 @@ export default function ProjectCommitmentsPage(): ReactElement {
       label: "Commitments",
       href: `/${projectId}/commitments`,
       count: totalItems,
-      isActive: !activeFilters.type,
+      isActive: !activeFilters.type && activeFilters.tab !== "change-orders",
     },
     {
       label: "Subcontracts",
@@ -376,6 +613,11 @@ export default function ProjectCommitmentsPage(): ReactElement {
       label: "Purchase Orders",
       href: `/${projectId}/commitments?type=purchase_order`,
       isActive: activeFilters.type === "purchase_order",
+    },
+    {
+      label: "Change Orders",
+      href: `/${projectId}/commitments?tab=change-orders`,
+      isActive: activeFilters.tab === "change-orders",
     },
     {
       label: "Recycle Bin",
@@ -456,16 +698,20 @@ export default function ProjectCommitmentsPage(): ReactElement {
           ),
         }}
         data={{
-          items: sortedCommitments,
-          isLoading,
-          isFetching,
-          error: resolvedError,
+          items: activeFilters.tab === "change-orders" ? [] : sortedCommitments,
+          isLoading: activeFilters.tab === "change-orders" ? false : isLoading,
+          isFetching: activeFilters.tab === "change-orders" ? false : isFetching,
+          error: activeFilters.tab === "change-orders" ? undefined : resolvedError,
         }}
         table={{
           columns: tableColumns,
           getRowId: (item) => item.id,
           onRowClick: handleRowClick,
           rowActions: (item) => renderCommitmentRowActions(item, handleEdit, handleDeleteIntent),
+          renderExpandedRow: (item, colSpan) => {
+            if (!expandedIds.has(item.id)) return null;
+            return <CommitmentChangeOrdersRow commitmentId={item.id} colSpan={colSpan} />;
+          },
         }}
         sorting={{
           sortBy: tableState.sortBy,
@@ -511,7 +757,7 @@ export default function ProjectCommitmentsPage(): ReactElement {
             balance_to_finish: <span className="font-semibold">{formatCurrency(financialTotals.balance_to_finish)}</span>,
           },
         }}
-        pagination={{
+        pagination={activeFilters.tab === "change-orders" ? undefined : {
           page: tableState.page,
           totalPages,
           perPage: tableState.perPage,
@@ -527,6 +773,14 @@ export default function ProjectCommitmentsPage(): ReactElement {
             tableState.setPage(1);
           },
         }}
+        topContent={
+          activeFilters.tab === "change-orders" ? (
+            <ProjectChangeOrdersTable
+              changeOrders={projectChangeOrders}
+              isLoading={isLoadingProjectCOs}
+            />
+          ) : undefined
+        }
       />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

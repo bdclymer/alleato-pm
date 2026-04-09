@@ -12,6 +12,83 @@ interface RouteParams {
   }>;
 }
 
+const editableStatuses = new Set(["draft", "revise_and_resubmit"]);
+
+function parseApplicationSequence(applicationNumber: string): number | null {
+  const parsed = Number.parseInt(applicationNumber, 10);
+  return Number.isNaN(parsed) ? null : parsed;
+}
+
+function compareApplications(
+  a: { application_number: string; billing_date: string | null; created_at: string },
+  b: { application_number: string; billing_date: string | null; created_at: string },
+): number {
+  const seqA = parseApplicationSequence(a.application_number);
+  const seqB = parseApplicationSequence(b.application_number);
+
+  if (seqA !== null && seqB !== null && seqA !== seqB) {
+    return seqA - seqB;
+  }
+
+  const billingDateA = a.billing_date ? new Date(a.billing_date).getTime() : 0;
+  const billingDateB = b.billing_date ? new Date(b.billing_date).getTime() : 0;
+  if (billingDateA !== billingDateB) {
+    return billingDateA - billingDateB;
+  }
+
+  return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+}
+
+async function getRetainageCapabilities(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  application: {
+    id: string;
+    contract_id: string;
+    project_id: number;
+    billing_period_id: string | null;
+    status: string;
+    application_number: string;
+    billing_date: string | null;
+    created_at: string;
+  },
+) {
+  let query = supabase
+    .from("prime_contract_payment_applications")
+    .select("id, application_number, billing_date, created_at")
+    .eq("contract_id", application.contract_id)
+    .eq("project_id", application.project_id);
+
+  if (application.billing_period_id) {
+    query = query.eq("billing_period_id", application.billing_period_id);
+  }
+
+  const { data: scopedApplications, error } = await query;
+  if (error) {
+    throw error;
+  }
+
+  const latestApplicationId = (scopedApplications ?? [])
+    .sort(compareApplications)
+    .at(-1)?.id;
+  const isLatest = latestApplicationId === application.id;
+  const isEditableStatus = editableStatuses.has(application.status);
+
+  let blockReason: string | null = null;
+  if (!isEditableStatus) {
+    blockReason =
+      "Retainage can only be edited on draft or revise-and-resubmit invoices.";
+  } else if (!isLatest) {
+    blockReason =
+      "Retainage can only be edited on the most recent invoice in this billing period.";
+  }
+
+  return {
+    can_edit_retainage: isEditableStatus && isLatest,
+    can_release_retainage: isEditableStatus && isLatest,
+    retainage_edit_block_reason: blockReason,
+  };
+}
+
 /**
  * GET /api/projects/[projectId]/contracts/[contractId]/payment-applications/[applicationId]
  * Fetch a single payment application with billing period data
@@ -36,7 +113,12 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    return NextResponse.json(data);
+    const retainageCapabilities = await getRetainageCapabilities(supabase, data);
+
+    return NextResponse.json({
+      ...data,
+      ...retainageCapabilities,
+    });
   } catch (error) {
     return apiErrorResponse(error);
   }

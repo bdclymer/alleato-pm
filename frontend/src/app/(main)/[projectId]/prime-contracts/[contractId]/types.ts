@@ -41,6 +41,9 @@ export interface PaymentApplication {
   approved_at: string | null;
   approved_by: string | null;
   notes: string | null;
+  can_edit_retainage?: boolean;
+  can_release_retainage?: boolean;
+  retainage_edit_block_reason?: string | null;
   created_at: string;
   updated_at: string;
 }

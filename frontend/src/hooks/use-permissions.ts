@@ -13,8 +13,8 @@ import {
   type PermissionLevel,
   type PermissionTemplate,
   hasPermission,
-  getPermissionLevel
-} from "@/lib/permissions";
+  getPermissionLevel,
+} from "@/lib/permissions-shared";
 
 /**
  * Hook to load and manage user permissions for a project

@@ -24,12 +24,14 @@ interface ContractComboboxProps {
   value: string;
   onChange: (value: string) => void;
   contracts: ContractOption[];
+  disabled?: boolean;
 }
 
 export function ContractCombobox({
   value,
   onChange,
   contracts,
+  disabled = false,
 }: ContractComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [search, setSearch] = React.useState("");
@@ -46,7 +48,7 @@ export function ContractCombobox({
   const subContracts = filtered.filter((c) => c.type === "subcontract");
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={disabled ? false : open} onOpenChange={disabled ? undefined : setOpen}>
       <PopoverTrigger asChild>
         <Button
           type="button"
@@ -55,6 +57,7 @@ export function ContractCombobox({
           aria-expanded={open}
           aria-controls={contractListId}
           aria-label="Select contract"
+          disabled={disabled}
           className={cn(
             "flex h-9 w-full min-w-0 items-center justify-between overflow-hidden px-3 py-2 text-sm font-normal",
             !selected && "text-muted-foreground",

@@ -1,192 +1,273 @@
-import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
+
 import { apiErrorResponse } from "@/lib/api-error";
+import { createClient } from "@/lib/supabase/server";
+
+type CommitmentType = "subcontract" | "purchase_order";
+
+interface CommitmentInvoiceLineItem {
+  id: string;
+  line_number: number | null;
+  budget_code: string | null;
+  description: string;
+  scheduled_value: number;
+  gross_billed_to_date: number;
+  retainage_percentage: number;
+  retainage_held: number;
+  net_billed_to_date: number;
+  remaining_amount: number;
+  percent_complete: number;
+}
+
+interface CommitmentInvoiceSummary {
+  total_contract_amount: number;
+  gross_billed_to_date: number;
+  retainage_percentage: number;
+  retainage_held: number;
+  net_billed_to_date: number;
+  remaining_to_invoice: number;
+  net_remaining_balance: number;
+  percent_invoiced: number;
+}
+
+interface CommitmentInvoiceResponse {
+  summary: CommitmentInvoiceSummary;
+  line_items: CommitmentInvoiceLineItem[];
+  billing_context: {
+    commitment_type: CommitmentType;
+    project_id: number | null;
+    invoices_enabled: boolean;
+    retainage_enabled: boolean;
+  };
+}
+
+function roundCurrency(value: number) {
+  return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
+}
+
+async function fetchCommitmentContext(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  commitmentId: string,
+) {
+  const { data: unifiedData, error: unifiedError } = await supabase
+    .from("commitments_unified")
+    .select("commitment_type")
+    .eq("id", commitmentId)
+    .single();
+
+  if (unifiedError || !unifiedData) {
+    return { error: "Commitment not found" as const };
+  }
+
+  const commitmentType = unifiedData.commitment_type as CommitmentType;
+  const tableName =
+    commitmentType === "subcontract" ? "subcontracts" : "purchase_orders";
+
+  const { data: commitment, error: commitmentError } = await supabase
+    .from(tableName)
+    .select(
+      "project_id, default_retainage_percent, contract_number, title, status, advanced_settings",
+    )
+    .eq("id", commitmentId)
+    .single();
+
+  if (commitmentError || !commitment) {
+    return { error: "Commitment not found" as const };
+  }
+
+  const advancedSettings =
+    commitment.advanced_settings &&
+    typeof commitment.advanced_settings === "object" &&
+    !Array.isArray(commitment.advanced_settings)
+      ? (commitment.advanced_settings as Record<string, unknown>)
+      : {};
+
+  const retainageEnabled =
+    typeof advancedSettings.enable_completed_work_retainage === "boolean"
+      ? advancedSettings.enable_completed_work_retainage
+      : true;
+  const invoicesEnabled =
+    typeof advancedSettings.enable_invoices === "boolean"
+      ? advancedSettings.enable_invoices
+      : true;
+
+  return {
+    commitmentType,
+    commitment: {
+      projectId: Number(commitment.project_id ?? 0) || null,
+      retainagePercentage: retainageEnabled
+        ? Number(commitment.default_retainage_percent ?? 0)
+        : 0,
+      contractNumber: typeof commitment.contract_number === "string" ? commitment.contract_number : null,
+      title: typeof commitment.title === "string" ? commitment.title : null,
+      status: typeof commitment.status === "string" ? commitment.status : null,
+      invoicesEnabled,
+      retainageEnabled,
+    },
+  };
+}
+
+async function fetchLineItemsForCommitment(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  commitmentId: string,
+  commitmentType: CommitmentType,
+) {
+  const isSubcontract = commitmentType === "subcontract";
+  const sovTableName = isSubcontract
+    ? "subcontract_sov_items"
+    : "purchase_order_sov_items";
+  const sovFkColumn = isSubcontract ? "subcontract_id" : "purchase_order_id";
+
+  let sovItems: Array<Record<string, unknown>> = [];
+
+  if (isSubcontract) {
+    const { data: approvedSubmission, error: submissionError } = await (supabase as any)
+      .from("subcontractor_sov_submissions")
+      .select("id, status")
+      .eq("commitment_id", commitmentId)
+      .eq("status", "approved")
+      .maybeSingle();
+
+    if (submissionError) {
+      return { error: submissionError.message as string };
+    }
+
+    if (approvedSubmission?.id) {
+      const { data, error } = await (supabase as any)
+        .from("subcontractor_sov_items")
+        .select("*")
+        .eq("submission_id", approvedSubmission.id)
+        .order("line_number", { ascending: true });
+
+      if (error) {
+        return { error: error.message as string };
+      }
+
+      sovItems = (data || []) as Array<Record<string, unknown>>;
+    }
+  }
+
+  if (sovItems.length === 0) {
+    const { data, error } = await (supabase as any)
+      .from(sovTableName)
+      .select("*")
+      .eq(sovFkColumn, commitmentId)
+      .order("line_number", { ascending: true });
+
+    if (error) {
+      return { error: error.message as string };
+    }
+
+    sovItems = (data || []) as Array<Record<string, unknown>>;
+  }
+
+  return { data: sovItems };
+}
 
 /**
  * GET /api/commitments/[commitmentId]/invoices
  *
- * Retrieves invoice/billing data for a specific commitment (subcontract or purchase order).
- *
- * For commitments, invoice data is derived from the SOV line items' billed_to_date
- * column rather than separate invoice records. Each SOV item represents a
- * line that can be invoiced, and billed_to_date tracks cumulative billing.
- *
- * @route GET /api/commitments/[commitmentId]/invoices
- * @param {string} commitmentId - Commitment UUID
- *
- * @returns {object} 200 - Invoice data with structure:
- *   {
- *     summary: {
- *       total_contract_amount: number,
- *       total_invoiced: number,
- *       remaining_to_invoice: number,
- *       percent_invoiced: number,
- *       total_paid: number,
- *       remaining_balance: number
- *     },
- *     line_items: Array<{
- *       id, line_number, budget_code, description,
- *       scheduled_value, billed_to_date, remaining_amount, percent_complete
- *     }>,
- *     data: Array<{ id, number, date, amount, paid_amount, status }> // Legacy format
- *   }
- * @returns {object} 401 - Unauthorized (no user session)
- * @returns {object} 404 - Commitment not found
- * @returns {object} 400 - Database query error
- * @returns {object} 500 - Internal server error
+ * Returns a retainage-aware billing summary for a commitment using the stored
+ * SOV line-item progress. This is a view over commitment billing state, not a
+ * separate owner invoice writer.
  */
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ commitmentId: string }> },
 ) {
   try {
     const { commitmentId } = await params;
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const context = await fetchCommitmentContext(supabase, commitmentId);
+    if ("error" in context) {
+      return NextResponse.json({ error: context.error }, { status: 404 });
     }
 
-    // First determine commitment type from unified view
-    const { data: unifiedData, error: unifiedError } = await supabase
-      .from("commitments_unified")
-      .select("commitment_type")
-      .eq("id", commitmentId)
-      .single();
+    const lineItemsResult = await fetchLineItemsForCommitment(
+      supabase,
+      commitmentId,
+      context.commitmentType,
+    );
 
-    if (unifiedError || !unifiedData) {
-      return NextResponse.json(
-        { error: "Commitment not found" },
-        { status: 404 },
-      );
+    if ("error" in lineItemsResult) {
+      return NextResponse.json({ error: lineItemsResult.error }, { status: 400 });
     }
 
-    const isSubcontract = unifiedData.commitment_type === "subcontract";
-    const sovTableName = isSubcontract
-      ? "subcontract_sov_items"
-      : "purchase_order_sov_items";
-    const sovFkColumn = isSubcontract ? "subcontract_id" : "purchase_order_id";
-    const totalsViewName = isSubcontract
-      ? "subcontracts_with_totals"
-      : "purchase_orders_with_totals";
+    const retainagePercentage = context.commitment.retainagePercentage;
+    const lineItems = lineItemsResult.data;
 
-    let sovItems: any[] = [];
-    let totalContractAmount = 0;
-    let totalInvoiced = 0;
-    let remainingToInvoice = 0;
+    const totalContractAmount = lineItems.reduce(
+      (sum, item) => sum + Number(item.amount ?? 0),
+      0,
+    );
+    const grossBilledToDate = lineItems.reduce(
+      (sum, item) => sum + Number(item.billed_to_date ?? 0),
+      0,
+    );
+    const retainageHeld = lineItems.reduce((sum, item) => {
+      const gross = Number(item.billed_to_date ?? 0);
+      return sum + roundCurrency(gross * (retainagePercentage / 100));
+    }, 0);
+    const netBilledToDate = roundCurrency(grossBilledToDate - retainageHeld);
+    const remainingToInvoice = Math.max(totalContractAmount - grossBilledToDate, 0);
+    const netRemainingBalance = Math.max(totalContractAmount - netBilledToDate, 0);
 
-    if (isSubcontract) {
-      const { data: approvedSubmission, error: ssovError } = await (supabase as any)
-        .from("subcontractor_sov_submissions")
-        .select("id, status")
-        .eq("commitment_id", commitmentId)
-        .eq("status", "approved")
-        .maybeSingle();
-
-      if (ssovError) {
-        return NextResponse.json({ error: ssovError.message }, { status: 400 });
-      }
-
-      if (approvedSubmission?.id) {
-        const { data: ssovItems, error: ssovItemsError } = await (supabase as any)
-          .from("subcontractor_sov_items")
-          .select("*")
-          .eq("submission_id", approvedSubmission.id)
-          .order("line_number", { ascending: true });
-
-        if (ssovItemsError) {
-          return NextResponse.json({ error: ssovItemsError.message }, { status: 400 });
-        }
-
-        sovItems = ssovItems || [];
-        totalContractAmount = sovItems.reduce(
-          (sum: number, item: any) => sum + (Number(item.amount) || 0),
-          0,
-        );
-        totalInvoiced = sovItems.reduce(
-          (sum: number, item: any) => sum + (Number(item.billed_to_date) || 0),
-          0,
-        );
-        remainingToInvoice = Math.max(totalContractAmount - totalInvoiced, 0);
-      }
-    }
-
-    // Fallback to commitment SOV when there is no approved SSOV (or for POs).
-    if (sovItems.length === 0) {
-      const { data: totalsData, error: totalsError } = await (supabase as any)
-        .from(totalsViewName)
-        .select(
-          "total_sov_amount, total_billed_to_date, total_amount_remaining, sov_line_count",
-        )
-        .eq("id", commitmentId)
-        .single();
-
-      if (totalsError) {
-        return NextResponse.json({ error: totalsError.message }, { status: 400 });
-      }
-
-      const { data: fallbackSovItems, error: sovError } = await (supabase as any)
-        .from(sovTableName)
-        .select("*")
-        .eq(sovFkColumn, commitmentId)
-        .order("line_number", { ascending: true });
-
-      if (sovError) {
-        return NextResponse.json({ error: sovError.message }, { status: 400 });
-      }
-
-      sovItems = fallbackSovItems || [];
-      totalContractAmount = Number(totalsData?.total_sov_amount) || 0;
-      totalInvoiced = Number(totalsData?.total_billed_to_date) || 0;
-      remainingToInvoice = Number(totalsData?.total_amount_remaining) || 0;
-    }
-
-    // Build invoice summary - for commitments, we show the billing progress
-    // based on SOV line items rather than separate invoice records
-    const invoiceSummary = {
-      total_contract_amount: totalContractAmount,
-      total_invoiced: totalInvoiced,
-      remaining_to_invoice: remainingToInvoice,
+    const invoiceSummary: CommitmentInvoiceSummary = {
+      total_contract_amount: roundCurrency(totalContractAmount),
+      gross_billed_to_date: roundCurrency(grossBilledToDate),
+      retainage_percentage: retainagePercentage,
+      retainage_held: roundCurrency(retainageHeld),
+      net_billed_to_date: roundCurrency(netBilledToDate),
+      remaining_to_invoice: roundCurrency(remainingToInvoice),
+      net_remaining_balance: roundCurrency(netRemainingBalance),
       percent_invoiced: totalContractAmount > 0
-        ? Math.round((totalInvoiced / totalContractAmount) * 100)
+        ? Math.round((grossBilledToDate / totalContractAmount) * 100)
         : 0,
-      total_paid: 0, // Placeholder - needs payment tracking implementation
-      remaining_balance: totalInvoiced, // Outstanding = invoiced but not paid
     };
 
-    // Format SOV items as invoice line items (showing billing progress)
-    const invoiceLineItems = (sovItems || []).map((item: any) => {
-      const amount = Number(item.amount) || 0;
-      const billedToDate = Number(item.billed_to_date) || 0;
-      const remainingAmount = amount - billedToDate;
-      const percentComplete = amount > 0 ? Math.round((billedToDate / amount) * 100) : 0;
+    const invoiceLineItems: CommitmentInvoiceLineItem[] = lineItems.map((item) => {
+      const amount = Number(item.amount ?? 0);
+      const gross = Number(item.billed_to_date ?? 0);
+      const itemRetainageHeld = roundCurrency(gross * (retainagePercentage / 100));
+      const itemNetBilled = roundCurrency(gross - itemRetainageHeld);
+      const remainingAmount = Math.max(amount - gross, 0);
 
       return {
-        id: item.id,
-        line_number: item.line_number || null,
-        budget_code: item.budget_code || item.cost_code || null,
-        description: item.description || "",
-        scheduled_value: amount,
-        billed_to_date: billedToDate,
-        remaining_amount: remainingAmount,
-        percent_complete: percentComplete,
+        id: String(item.id),
+        line_number:
+          typeof item.line_number === "number"
+            ? item.line_number
+            : typeof item.line_number === "string"
+              ? Number(item.line_number)
+              : null,
+        budget_code:
+          typeof item.budget_code === "string"
+            ? item.budget_code
+            : typeof item.cost_code === "string"
+              ? item.cost_code
+              : null,
+        description:
+          typeof item.description === "string" ? item.description : "",
+        scheduled_value: roundCurrency(amount),
+        gross_billed_to_date: roundCurrency(gross),
+        retainage_percentage: retainagePercentage,
+        retainage_held: roundCurrency(itemRetainageHeld),
+        net_billed_to_date: roundCurrency(itemNetBilled),
+        remaining_amount: roundCurrency(remainingAmount),
+        percent_complete: amount > 0 ? Math.round((gross / amount) * 100) : 0,
       };
     });
 
-    // Return data structure compatible with InvoicesTab
-    // Also return legacy format for backward compatibility
-    const responseData = {
+    const responseData: CommitmentInvoiceResponse = {
       summary: invoiceSummary,
       line_items: invoiceLineItems,
-      // Legacy format - return as array of "invoices" for compatibility with existing UI
-      data: invoiceLineItems.length > 0 ? [{
-        id: `${commitmentId}-billing-summary`,
-        number: "Billing Summary",
-        date: new Date().toISOString(),
-        amount: totalInvoiced,
-        paid_amount: 0,
-        status: totalInvoiced > 0 ? "billed" : "pending",
-      }] : [],
+      billing_context: {
+        commitment_type: context.commitmentType,
+        project_id: context.commitment.projectId,
+        invoices_enabled: context.commitment.invoicesEnabled,
+        retainage_enabled: context.commitment.retainageEnabled,
+      },
     };
 
     return NextResponse.json(responseData);
@@ -198,83 +279,30 @@ export async function GET(
 /**
  * POST /api/commitments/[commitmentId]/invoices
  *
- * Creates a new invoice record for a commitment. The invoice is stored in the
- * `owner_invoices` table linked to the commitment's contract_id.
- *
- * @route POST /api/commitments/[commitmentId]/invoices
- * @param {string} commitmentId - Commitment UUID (used as contract_id)
- *
- * @requestBody {object}
- *   - invoice_number {string} [optional] - Custom invoice number
- *   - period_start {string} [optional] - Billing period start date (ISO)
- *   - period_end {string} [optional] - Billing period end date (ISO)
- *   - status {string} [default="draft"] - Invoice status
- *   - billing_period_id {string} [optional] - Associated billing period ID
- *
- * @returns {object} 201 - Created invoice: { data: InvoiceRecord }
- * @returns {object} 401 - Unauthorized (no user session)
- * @returns {object} 404 - Contract not found
- * @returns {object} 400 - Database insert error
- * @returns {object} 500 - Internal server error
+ * Commitment invoice creation is not yet wired to a dedicated persistence model.
+ * This endpoint stays disabled to avoid writing commitment invoices into the
+ * wrong tables.
  */
 export async function POST(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ commitmentId: string }> },
 ) {
   try {
     const { commitmentId } = await params;
     const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const context = await fetchCommitmentContext(supabase, commitmentId);
+
+    if ("error" in context) {
+      return NextResponse.json({ error: context.error }, { status: 404 });
     }
 
-    // Parse request body
-    const body = await request.json();
-    const {
-      invoice_number,
-      period_start,
-      period_end,
-      status = "draft",
-      billing_period_id,
-    } = body;
-
-    // Validate contract_id exists
-    const { data: contract, error: contractError } = await supabase
-      .from("prime_contracts")
-      .select("id")
-      .eq("id", commitmentId)
-      .single();
-
-    if (contractError || !contract) {
-      return NextResponse.json(
-        { error: "Contract not found" },
-        { status: 404 },
-      );
-    }
-
-    // Create invoice
-    const { data: invoice, error: insertError } = await supabase
-      .from("owner_invoices")
-      .insert({
-        prime_contract_id: commitmentId,
-        invoice_number,
-        period_start,
-        period_end,
-        status,
-        billing_period_id,
-      })
-      .select()
-      .single();
-
-    if (insertError) {
-      return NextResponse.json(
-        { error: insertError.message },
-        { status: 400 },
-      );
-    }
-
-    return NextResponse.json({ data: invoice }, { status: 201 });
+    return NextResponse.json(
+      {
+        error:
+          "Commitment invoice creation is not implemented yet. The retainage billing tab is currently read-only.",
+      },
+      { status: 405 },
+    );
   } catch (error) {
     return apiErrorResponse(error);
   }

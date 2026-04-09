@@ -85,7 +85,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     await (serviceSupabase as any)
       .from("people")
-      .update({ avatar_updated_at: new Date().toISOString() })
+      .update({ updated_at: new Date().toISOString() })
       .eq("id", personId);
 
     return NextResponse.json({ success: true });

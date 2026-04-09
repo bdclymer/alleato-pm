@@ -14,6 +14,9 @@ const DEFAULT_SETTINGS = {
   allow_standard_users_create_pcco: false,
   allow_standard_users_create_pco: false,
   sov_always_editable: false,
+  enable_completed_work_retainage: true,
+  enable_stored_materials_retainage: false,
+  default_retainage_percent: 10,
   show_markup_on_co_pdf: true,
   show_markup_on_invoice_pdf: true,
   default_distribution_prime_contract: null as string | null,
@@ -26,6 +29,9 @@ const updateSettingsSchema = z.object({
   allow_standard_users_create_pcco: z.boolean().optional(),
   allow_standard_users_create_pco: z.boolean().optional(),
   sov_always_editable: z.boolean().optional(),
+  enable_completed_work_retainage: z.boolean().optional(),
+  enable_stored_materials_retainage: z.boolean().optional(),
+  default_retainage_percent: z.number().min(0).max(100).optional(),
   show_markup_on_co_pdf: z.boolean().optional(),
   show_markup_on_invoice_pdf: z.boolean().optional(),
   default_distribution_prime_contract: z.string().nullable().optional(),
@@ -58,7 +64,11 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 
     // Return existing row or defaults (without persisting)
     return NextResponse.json(
-      data ?? { ...DEFAULT_SETTINGS, project_id: parseInt(projectId, 10) },
+      {
+        ...DEFAULT_SETTINGS,
+        ...data,
+        project_id: parseInt(projectId, 10),
+      },
     );
   } catch (error) {
     return apiErrorResponse(error);

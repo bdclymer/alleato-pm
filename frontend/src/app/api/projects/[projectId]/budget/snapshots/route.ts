@@ -148,13 +148,16 @@ export async function POST(request: NextRequest, { params }: SnapshotsParams) {
     const { data: snapshot, error: insertError } = await supabase
       .from("budget_snapshots")
       .insert({
-        project_id: projectId,
+        project_id: parseInt(projectId, 10),
         name: name || `Snapshot ${new Date().toLocaleDateString()}`,
         description,
-        snapshot_date: new Date().toISOString(),
-        total_budget: totalBudget,
-        total_costs: totalCosts,
-        variance,
+        grand_totals: {
+          snapshot_date: new Date().toISOString(),
+          total_budget: totalBudget,
+          total_costs: totalCosts,
+          variance,
+        },
+        line_items: budgetLines ?? [],
         created_by: user.id,
       })
       .select()
