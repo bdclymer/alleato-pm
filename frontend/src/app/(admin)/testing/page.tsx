@@ -410,6 +410,7 @@ export default function TestingPage() {
     };
 
     const grouped = suites.reduce<Record<string, Suite[]>>((acc, s) => {
+      if (s.tool_name === "project-lifecycle") return acc; // shown as hero above
       const cat = categoryFor(s.tool_name);
       if (!acc[cat]) acc[cat] = [];
       acc[cat].push(s);
@@ -435,6 +436,42 @@ export default function TestingPage() {
           {/* ── Tab: Test Scenarios ── */}
           <TabsContent value="scenarios" className="m-0">
             <div className="space-y-10">
+
+              {/* ── Project Lifecycle hero ── */}
+              {(() => {
+                const lifecycle = suites.find((s) => s.tool_name === "project-lifecycle");
+                if (!lifecycle) return null;
+                return (
+                  <div className="rounded-lg border border-primary/20 bg-primary/5 px-6 py-5 flex items-start justify-between gap-6">
+                    <div className="space-y-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-foreground">Project Lifecycle</p>
+                        <span className="text-[10px] font-medium bg-primary/10 text-primary rounded-full px-2 py-0.5">Recommended</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">End-to-end test covering the full construction workflow: Budget → Prime Contract → Commitments → Change Events → Change Orders → Invoicing</p>
+                      <p className="text-xs text-muted-foreground">{lifecycle.scenario_count} sequential test cases</p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Link
+                        href={`/procore-tools/${lifecycle.tool_name}?tab=test-scenarios`}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-border bg-background hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                      >
+                        <BookOpen className="h-3.5 w-3.5" />
+                        Review
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => { setSelectedSuite(lifecycle); setView("start-run"); }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                      >
+                        <Play className="h-3.5 w-3.5" />
+                        Start Lifecycle Run
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
+
               {suites.length === 0 && (
                 <p className="text-muted-foreground text-sm text-center py-12">No test scenarios available yet.</p>
               )}
