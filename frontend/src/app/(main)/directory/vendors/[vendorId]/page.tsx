@@ -519,7 +519,7 @@ export default function VendorDetailPage() {
                   <div key={contact.id} className="flex items-center justify-between gap-3 py-2">
                     <Link href={`/directory/contacts/${contact.id}`} className="flex min-w-0 flex-1 items-center gap-3">
                       <Avatar size="lg">
-                        <AvatarFallback>{getContactInitials(contact)}</AvatarFallback>
+                        <AvatarFallback className="bg-primary/10 text-primary">{getContactInitials(contact)}</AvatarFallback>
                       </Avatar>
                       <div className="min-w-0 space-y-0.5">
                         <div className="truncate text-sm font-medium text-foreground">

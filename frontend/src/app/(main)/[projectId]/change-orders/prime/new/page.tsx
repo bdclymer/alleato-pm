@@ -48,7 +48,7 @@ export default function NewPrimeContractCOPage() {
     defaultValues: {
       pcco_number: "",
       title: "",
-      status: "Proposed",
+      status: "proposed",
       total_amount: 0,
     },
   });
@@ -151,9 +151,12 @@ export default function NewPrimeContractCOPage() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="Proposed">Proposed</SelectItem>
-                        <SelectItem value="Approved">Approved</SelectItem>
-                        <SelectItem value="Rejected">Rejected</SelectItem>
+                        <SelectItem value="proposed">Proposed</SelectItem>
+                        <SelectItem value="approved">Approved</SelectItem>
+                        <SelectItem value="rejected">Rejected</SelectItem>
+                        <SelectItem value="out_for_signature">Out for Signature</SelectItem>
+                        <SelectItem value="executed">Executed</SelectItem>
+                        <SelectItem value="void">Void</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

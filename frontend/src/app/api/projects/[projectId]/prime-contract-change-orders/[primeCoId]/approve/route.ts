@@ -42,7 +42,7 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    if (co.status === "Approved") {
+    if (co.status === "approved") {
       return NextResponse.json(
         { error: "Already approved" },
         { status: 400 },
@@ -53,7 +53,7 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
     const { data: updated, error: updateError } = await supabase
       .from("prime_contract_change_orders")
       .update({
-        status: "Approved",
+        status: "approved",
         approved_at: new Date().toISOString(),
       })
       .eq("id", numericId)
@@ -81,7 +81,7 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
           .from("prime_contract_change_orders")
           .select("total_amount")
           .eq("contract_id", updated.contract_id)
-          .eq("status", "Approved");
+          .eq("status", "approved");
 
         const approvedTotal = (approvedPCCOs || []).reduce(
           (sum, row) => sum + (row.total_amount ?? 0),

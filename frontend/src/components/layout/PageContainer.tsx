@@ -28,7 +28,7 @@ export function PageContainer({
   return (
     <div
       className={cn(
-        "mx-auto w-full",
+        "mx-auto w-full min-h-screen pb-14",
         maxWidthClasses[maxWidth],
         // Mobile-first responsive padding following 8px grid system
         // Horizontal: Mobile 12px, Tablet 20px, Desktop 28px

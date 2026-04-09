@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { ArrowLeft, Check, Edit, MoreHorizontal, Trash2, X } from "lucide-react";
-import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { ArrowLeft, Check, Edit, MoreHorizontal, Trash2, X } from "lucide-react";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
+import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -12,6 +12,7 @@ import { StatusBadge } from "@/components/ds";
 import { ContentSectionStack, LabelValueRow, PageShell, SectionRuleHeading } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,12 +40,29 @@ import { Textarea } from "@/components/ui/textarea";
 import { createClient } from "@/lib/supabase/client";
 
 // ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+const CHANGE_REASONS = [
+  "Client Request",
+  "Design Development",
+  "Allowance",
+  "Existing Condition",
+  "Backcharge",
+  "Scope Change",
+  "Unforeseen Condition",
+  "Value Engineering",
+  "Other",
+] as const;
+
+// ---------------------------------------------------------------------------
 // Types & schema
 // ---------------------------------------------------------------------------
 
 interface CommitmentCOData {
   id: string;
   change_order_number: string | null;
+  title: string | null;
   description: string | null;
   status: string | null;
   amount: number | null;
@@ -54,14 +72,37 @@ interface CommitmentCOData {
   approved_by: string | null;
   approved_date: string | null;
   rejection_reason: string | null;
+  change_reason: string | null;
+  due_date: string | null;
+  invoiced_date: string | null;
+  designated_reviewer: string | null;
+  schedule_impact: number | null;
+  location: string | null;
+  reference: string | null;
+  is_private: boolean | null;
+  executed: boolean | null;
+  field_change: boolean | null;
+  paid_in_full: boolean | null;
   created_at: string | null;
 }
 
 const editSchema = z.object({
   change_order_number: z.string().min(1, "Number is required"),
-  description: z.string().min(1, "Description is required"),
-  status: z.enum(["pending", "approved", "rejected"]),
+  title: z.string().trim().max(255).optional().nullable(),
+  description: z.string().optional().nullable(),
+  status: z.enum(["draft", "pending", "approved", "out_for_signature", "executed", "void"]),
   amount: z.number(),
+  change_reason: z.string().optional().nullable(),
+  due_date: z.string().optional().nullable(),
+  invoiced_date: z.string().optional().nullable(),
+  designated_reviewer: z.string().optional().nullable(),
+  schedule_impact: z.number().int().optional().nullable(),
+  location: z.string().optional().nullable(),
+  reference: z.string().optional().nullable(),
+  is_private: z.boolean(),
+  executed: z.boolean(),
+  field_change: z.boolean(),
+  paid_in_full: z.boolean(),
 });
 
 type FormData = z.infer<typeof editSchema>;
@@ -86,7 +127,10 @@ function formatDate(dateStr: string | null): string {
 
 function statusLabel(status: string | null): string {
   if (!status) return "Unknown";
-  return status.charAt(0).toUpperCase() + status.slice(1);
+  return status
+    .split("_")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
 }
 
 // ---------------------------------------------------------------------------
@@ -108,10 +152,26 @@ export default function CommitmentCODetailPage() {
 
   const form = useForm<FormData>({
     resolver: zodResolver(editSchema),
+    defaultValues: {
+      change_order_number: "",
+      title: "",
+      description: "",
+      status: "draft",
+      amount: 0,
+      change_reason: "",
+      due_date: "",
+      invoiced_date: "",
+      designated_reviewer: "",
+      schedule_impact: undefined,
+      location: "",
+      reference: "",
+      is_private: false,
+      executed: false,
+      field_change: false,
+      paid_in_full: false,
+    },
   });
 
-  // We need the contract_id to build the API URL — fetch it first from the list
-  // by querying the CO directly. The existing API requires contract_id in the path.
   const [contractId, setContractId] = useState<string | null>(null);
 
   // Line items
@@ -135,16 +195,14 @@ export default function CommitmentCODetailPage() {
   const [attachmentsLoading, setAttachmentsLoading] = useState(true);
   const [attachmentsError, setAttachmentsError] = useState<string | null>(null);
 
-  // Fetch data — we use a direct Supabase query via a lightweight API
+  // Fetch CO data
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-
-        // First, find this CO and its contract_id by fetching all commitment COs
-        // and filtering client-side. This is a pragmatic approach since we don't
-        // have a direct lookup route without contract_id.
-        const res = await fetch(`/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}`);
+        const res = await fetch(
+          `/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}`,
+        );
 
         if (res.ok) {
           const data = await res.json();
@@ -153,8 +211,6 @@ export default function CommitmentCODetailPage() {
           return;
         }
 
-        // Fallback: try via the contracts path if we can determine contract_id
-        // For now, show error
         throw new Error("Failed to fetch change order");
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load");
@@ -165,7 +221,7 @@ export default function CommitmentCODetailPage() {
     fetchData();
   }, [projectId, commitmentCoId]);
 
-  // Fetch line items from Supabase when CO loads
+  // Fetch line items
   useEffect(() => {
     if (!co) return;
     const fetchLineItems = async () => {
@@ -181,7 +237,6 @@ export default function CommitmentCODetailPage() {
         if (fetchErr) throw fetchErr;
         setLineItems(data ?? []);
       } catch {
-        // Silently fail — line items are supplementary
         setLineItems([]);
       } finally {
         setLineItemsLoading(false);
@@ -195,18 +250,23 @@ export default function CommitmentCODetailPage() {
     setAttachmentsLoading(true);
     setAttachmentsError(null);
     try {
-      const res = await fetch(`/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}/attachments`);
+      const res = await fetch(
+        `/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}/attachments`,
+      );
       if (res.ok) {
         const json = await res.json();
         setAttachments(json.data ?? []);
       } else {
         const errJson = await res.json().catch(() => null);
-        throw new Error((errJson as { error?: string } | null)?.error ?? "Failed to fetch attachments");
+        throw new Error(
+          (errJson as { error?: string } | null)?.error ?? "Failed to fetch attachments",
+        );
       }
     } catch (err) {
       console.error("Failed to fetch attachments:", err);
-      setAttachmentsError(err instanceof Error ? err.message : "Failed to fetch attachments");
-      // Keep existing attachments; don't reset to [] on transient failures
+      setAttachmentsError(
+        err instanceof Error ? err.message : "Failed to fetch attachments",
+      );
     } finally {
       setAttachmentsLoading(false);
     }
@@ -260,13 +320,26 @@ export default function CommitmentCODetailPage() {
     if (searchParams.get("edit") === "1") setIsEditing(true);
   }, [searchParams]);
 
+  // Populate form when CO loads
   useEffect(() => {
     if (!co) return;
     form.reset({
       change_order_number: co.change_order_number || "",
+      title: co.title || "",
       description: co.description || "",
-      status: (co.status as FormData["status"]) || "pending",
+      status: (co.status as FormData["status"]) || "draft",
       amount: co.amount ?? 0,
+      change_reason: co.change_reason || "",
+      due_date: co.due_date ? co.due_date.split("T")[0] : "",
+      invoiced_date: co.invoiced_date ? co.invoiced_date.split("T")[0] : "",
+      designated_reviewer: co.designated_reviewer || "",
+      schedule_impact: co.schedule_impact ?? undefined,
+      location: co.location || "",
+      reference: co.reference || "",
+      is_private: co.is_private ?? false,
+      executed: co.executed ?? false,
+      field_change: co.field_change ?? false,
+      paid_in_full: co.paid_in_full ?? false,
     });
   }, [co, form]);
 
@@ -282,19 +355,37 @@ export default function CommitmentCODetailPage() {
     setIsSaving(true);
     try {
       const res = await fetch(
-        `/api/projects/${projectId}/contracts/${contractId}/change-orders/${commitmentCoId}`,
+        `/api/commitments/${contractId}/change-orders/${commitmentCoId}`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
+          body: JSON.stringify({
+            change_order_number: data.change_order_number,
+            title: data.title || null,
+            description: data.description || null,
+            status: data.status,
+            amount: data.amount,
+            change_reason: data.change_reason || null,
+            due_date: data.due_date || null,
+            invoiced_date: data.invoiced_date || null,
+            designated_reviewer: data.designated_reviewer || null,
+            schedule_impact: data.schedule_impact ?? null,
+            location: data.location || null,
+            reference: data.reference || null,
+            is_private: data.is_private,
+            executed: data.executed,
+            field_change: data.field_change,
+            paid_in_full: data.paid_in_full,
+          }),
         },
       );
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to update");
+        throw new Error((err as { error?: string }).error || "Failed to update");
       }
       const updated = await res.json();
-      setCo(updated);
+      // The PUT route returns { data: updatedCO }
+      setCo(updated.data ?? updated);
       setIsEditing(false);
       toast.success("Change order updated");
     } catch (err) {
@@ -309,12 +400,12 @@ export default function CommitmentCODetailPage() {
     if (!confirm(`Delete change order ${co.change_order_number}?`)) return;
     try {
       const res = await fetch(
-        `/api/projects/${projectId}/contracts/${contractId}/change-orders/${commitmentCoId}`,
+        `/api/commitments/${contractId}/change-orders/${commitmentCoId}`,
         { method: "DELETE" },
       );
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || "Failed to delete");
+        throw new Error((err as { error?: string }).error || "Failed to delete");
       }
       toast.success("Change order deleted");
       router.push(`/${projectId}/change-orders?tab=commitment`);
@@ -327,20 +418,20 @@ export default function CommitmentCODetailPage() {
     if (!co || !contractId) return;
     try {
       const res = await fetch(
-        `/api/projects/${projectId}/contracts/${contractId}/change-orders/${commitmentCoId}/approve`,
+        `/api/commitments/${contractId}/change-orders/${commitmentCoId}/approve`,
         { method: "POST" },
       );
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || "Failed to approve");
+        throw new Error((err as { error?: string }).error || "Failed to approve");
       }
       const updated = await res.json();
-      setCo(updated);
+      setCo(updated.data ?? updated);
       toast.success("Change order approved");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to approve");
     }
-  }, [co, contractId, projectId, commitmentCoId]);
+  }, [co, contractId, commitmentCoId]);
 
   const [rejectionReason, setRejectionReason] = useState("");
   const [showRejectDialog, setShowRejectDialog] = useState(false);
@@ -351,6 +442,7 @@ export default function CommitmentCODetailPage() {
       return;
     }
     try {
+      // reject route does not exist at canonical path — use the projects path
       const res = await fetch(
         `/api/projects/${projectId}/contracts/${contractId}/change-orders/${commitmentCoId}/reject`,
         {
@@ -361,10 +453,10 @@ export default function CommitmentCODetailPage() {
       );
       if (!res.ok) {
         const err = await res.json();
-        throw new Error(err.error || "Failed to reject");
+        throw new Error((err as { error?: string }).error || "Failed to reject");
       }
       const updated = await res.json();
-      setCo(updated);
+      setCo(updated.data ?? updated);
       setShowRejectDialog(false);
       setRejectionReason("");
       toast.success("Change order rejected");
@@ -391,7 +483,12 @@ export default function CommitmentCODetailPage() {
   // --- Error state -----------------------------------------------------------
   if (error || !co) {
     return (
-      <PageShell variant="detail" title="Error" description="Failed to load change order" onBack={handleBack}>
+      <PageShell
+        variant="detail"
+        title="Error"
+        description="Failed to load change order"
+        onBack={handleBack}
+      >
         <div className="text-center text-destructive">{error || "Not found"}</div>
         <div className="mt-4 flex justify-center">
           <Button onClick={handleBack}>
@@ -408,15 +505,24 @@ export default function CommitmentCODetailPage() {
     return (
       <PageShell
         variant="form"
-        title={`Edit ${co.change_order_number || `CCO`}`}
+        title={`Edit ${co.title || co.change_order_number || "CCO"}`}
         description="Update commitment change order"
         onBack={() => setIsEditing(false)}
         actions={
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setIsEditing(false)} disabled={isSaving}>
+          <div className="flex items-center gap-1.5">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsEditing(false)}
+              disabled={isSaving}
+            >
               Cancel
             </Button>
-            <Button size="sm" onClick={form.handleSubmit(handleSave)} disabled={isSaving}>
+            <Button
+              size="sm"
+              onClick={form.handleSubmit(handleSave)}
+              disabled={isSaving}
+            >
               {isSaving ? "Saving..." : "Save Changes"}
             </Button>
           </div>
@@ -424,9 +530,10 @@ export default function CommitmentCODetailPage() {
       >
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSave)} className="space-y-6">
+            {/* Card 1: General */}
             <Card>
               <CardHeader>
-                <CardTitle>Details</CardTitle>
+                <CardTitle>General</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <FormField
@@ -436,7 +543,20 @@ export default function CommitmentCODetailPage() {
                     <FormItem>
                       <FormLabel>CO Number *</FormLabel>
                       <FormControl>
-                        <Input {...field} placeholder="e.g. 000582" />
+                        <Input {...field} placeholder="e.g. 001" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="title"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Title</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value ?? ""} placeholder="Change order title" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -447,9 +567,9 @@ export default function CommitmentCODetailPage() {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description *</FormLabel>
+                      <FormLabel>Description</FormLabel>
                       <FormControl>
-                        <Textarea {...field} rows={4} />
+                        <Textarea {...field} value={field.value ?? ""} rows={3} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -468,9 +588,39 @@ export default function CommitmentCODetailPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
+                          <SelectItem value="draft">Draft</SelectItem>
                           <SelectItem value="pending">Pending</SelectItem>
                           <SelectItem value="approved">Approved</SelectItem>
-                          <SelectItem value="rejected">Rejected</SelectItem>
+                          <SelectItem value="out_for_signature">Out for Signature</SelectItem>
+                          <SelectItem value="executed">Executed</SelectItem>
+                          <SelectItem value="void">Void</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="change_reason"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Change Reason</FormLabel>
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value ?? ""}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select reason" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {CHANGE_REASONS.map((reason) => (
+                            <SelectItem key={reason} value={reason}>
+                              {reason}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                       <FormMessage />
@@ -497,6 +647,177 @@ export default function CommitmentCODetailPage() {
                 />
               </CardContent>
             </Card>
+
+            {/* Card 2: Dates & Options */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Dates &amp; Options</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="due_date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Due Date</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} value={field.value ?? ""} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="invoiced_date"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Invoiced Date</FormLabel>
+                        <FormControl>
+                          <Input type="date" {...field} value={field.value ?? ""} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="designated_reviewer"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Designated Reviewer</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            value={field.value ?? ""}
+                            placeholder="Reviewer name"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="schedule_impact"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Schedule Impact (days)</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            step="1"
+                            placeholder="0"
+                            value={field.value ?? ""}
+                            onChange={(e) =>
+                              field.onChange(
+                                e.target.value === ""
+                                  ? null
+                                  : parseInt(e.target.value, 10),
+                              )
+                            }
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <FormField
+                    control={form.control}
+                    name="location"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Location</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            value={field.value ?? ""}
+                            placeholder="Location"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="reference"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Reference</FormLabel>
+                        <FormControl>
+                          <Input
+                            {...field}
+                            value={field.value ?? ""}
+                            placeholder="Reference number"
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Boolean flags */}
+                <div className="grid grid-cols-2 gap-3 pt-2 sm:grid-cols-4">
+                  <FormField
+                    control={form.control}
+                    name="is_private"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center gap-2 space-y-0">
+                        <FormControl>
+                          <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                        <FormLabel className="font-normal">Private</FormLabel>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="executed"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center gap-2 space-y-0">
+                        <FormControl>
+                          <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                        <FormLabel className="font-normal">Executed</FormLabel>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="field_change"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center gap-2 space-y-0">
+                        <FormControl>
+                          <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                        <FormLabel className="font-normal">Field Change</FormLabel>
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="paid_in_full"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center gap-2 space-y-0">
+                        <FormControl>
+                          <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+                        </FormControl>
+                        <FormLabel className="font-normal">Paid in Full</FormLabel>
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </CardContent>
+            </Card>
           </form>
         </Form>
       </PageShell>
@@ -504,26 +825,25 @@ export default function CommitmentCODetailPage() {
   }
 
   // --- View mode -------------------------------------------------------------
-  const pageTitle = co.change_order_number
-    ? `${co.change_order_number} — ${co.description || "Untitled"}`
-    : co.description || "Untitled Commitment CO";
+  const pageTitle = co.title || co.description || "Untitled Commitment CO";
 
   return (
     <>
       <PageShell
         variant="detail"
         title={pageTitle}
+        description={co.change_order_number ? `CO ${co.change_order_number}` : undefined}
         statusBadge={<StatusBadge status={statusLabel(co.status)} />}
         onBack={handleBack}
         actions={
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             {co.status === "pending" && (
               <>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => setShowRejectDialog(true)}
-                  className="border-red-300 text-red-700 hover:bg-red-50"
+                  className="border-destructive text-destructive hover:bg-destructive/10"
                 >
                   <X className="mr-2 h-4 w-4" />
                   Reject
@@ -531,7 +851,6 @@ export default function CommitmentCODetailPage() {
                 <Button
                   size="sm"
                   onClick={handleApprove}
-                  className="bg-green-600 hover:bg-green-700 text-white"
                 >
                   <Check />
                   Approve
@@ -562,16 +881,25 @@ export default function CommitmentCODetailPage() {
         }
       >
         <ContentSectionStack>
-          {/* Details + Key Dates */}
+          {/* Details + Sidebar */}
           <section>
-            <div className="grid grid-cols-[minmax(0,1fr)_minmax(340px,420px)] gap-x-16 gap-y-10">
+            <div className="grid grid-cols-1 gap-x-16 gap-y-10 lg:grid-cols-[minmax(0,1fr)_minmax(300px,380px)]">
+              {/* Left: main details */}
               <div className="space-y-6">
                 <SectionRuleHeading label="Details" className="[&_span]:text-primary" />
                 <dl className="space-y-4 text-sm">
                   <LabelValueRow label="CO Number">
                     {co.change_order_number || "—"}
                   </LabelValueRow>
-                  <LabelValueRow label="Description" valueClassName="leading-relaxed font-normal text-foreground whitespace-pre-wrap">
+                  {co.title && (
+                    <LabelValueRow label="Title">
+                      {co.title}
+                    </LabelValueRow>
+                  )}
+                  <LabelValueRow
+                    label="Description"
+                    valueClassName="leading-relaxed font-normal text-foreground whitespace-pre-wrap"
+                  >
                     {co.description || "—"}
                   </LabelValueRow>
                   <LabelValueRow label="Status">
@@ -580,16 +908,60 @@ export default function CommitmentCODetailPage() {
                   <LabelValueRow label="Amount">
                     {formatCurrency(co.amount)}
                   </LabelValueRow>
-                  <LabelValueRow label="Requested Date">
-                    {formatDate(co.requested_date)}
-                  </LabelValueRow>
-                  {co.approved_date && (
-                    <LabelValueRow label="Approved Date">
-                      {formatDate(co.approved_date)}
+                  {co.change_reason && (
+                    <LabelValueRow label="Change Reason">
+                      {co.change_reason}
+                    </LabelValueRow>
+                  )}
+                  {co.designated_reviewer && (
+                    <LabelValueRow label="Designated Reviewer">
+                      {co.designated_reviewer}
+                    </LabelValueRow>
+                  )}
+                  {co.location && (
+                    <LabelValueRow label="Location">
+                      {co.location}
+                    </LabelValueRow>
+                  )}
+                  {co.reference && (
+                    <LabelValueRow label="Reference">
+                      {co.reference}
+                    </LabelValueRow>
+                  )}
+                  {co.schedule_impact != null && (
+                    <LabelValueRow label="Schedule Impact">
+                      {co.schedule_impact} {Math.abs(co.schedule_impact) === 1 ? "day" : "days"}
                     </LabelValueRow>
                   )}
                 </dl>
+                {/* Boolean flags — only show when true */}
+                {(co.is_private || co.executed || co.field_change || co.paid_in_full) && (
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    {co.is_private && (
+                      <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
+                        Private
+                      </span>
+                    )}
+                    {co.executed && (
+                      <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
+                        Executed
+                      </span>
+                    )}
+                    {co.field_change && (
+                      <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
+                        Field Change
+                      </span>
+                    )}
+                    {co.paid_in_full && (
+                      <span className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">
+                        Paid in Full
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
+
+              {/* Right: key dates */}
               <div className="space-y-8">
                 <div className="space-y-4">
                   <SectionRuleHeading label="Key Dates" className="[&_span]:text-primary" />
@@ -601,6 +973,16 @@ export default function CommitmentCODetailPage() {
                       {co.requested_date && (
                         <LabelValueRow label="Requested">
                           {formatDate(co.requested_date)}
+                        </LabelValueRow>
+                      )}
+                      {co.due_date && (
+                        <LabelValueRow label="Due">
+                          {formatDate(co.due_date)}
+                        </LabelValueRow>
+                      )}
+                      {co.invoiced_date && (
+                        <LabelValueRow label="Invoiced">
+                          {formatDate(co.invoiced_date)}
                         </LabelValueRow>
                       )}
                       {co.approved_date && (
@@ -643,7 +1025,9 @@ export default function CommitmentCODetailPage() {
                     <tr className="font-medium">
                       <td className="pt-2">Total</td>
                       <td className="pt-2 text-right">
-                        {formatCurrency(lineItems.reduce((sum, item) => sum + (item.amount ?? 0), 0))}
+                        {formatCurrency(
+                          lineItems.reduce((sum, item) => sum + (item.amount ?? 0), 0),
+                        )}
                       </td>
                     </tr>
                   </tfoot>
@@ -659,7 +1043,9 @@ export default function CommitmentCODetailPage() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => document.getElementById("cco-attachment-upload")?.click()}
+                onClick={() =>
+                  document.getElementById("cco-attachment-upload")?.click()
+                }
               >
                 Upload File
               </Button>
@@ -689,7 +1075,8 @@ export default function CommitmentCODetailPage() {
                       <p className="truncate text-sm font-medium">{att.fileName}</p>
                       <p className="text-xs text-muted-foreground">
                         {(att.fileSize / 1024).toFixed(0)} KB
-                        {att.uploadedAt && ` — ${new Date(att.uploadedAt).toLocaleDateString()}`}
+                        {att.uploadedAt &&
+                          ` — ${new Date(att.uploadedAt).toLocaleDateString()}`}
                       </p>
                     </div>
                     <Button
@@ -710,7 +1097,10 @@ export default function CommitmentCODetailPage() {
           {/* Rejection reason */}
           {co.rejection_reason && (
             <section className="space-y-4">
-              <SectionRuleHeading label="Rejection Reason" className="[&_span]:text-destructive" />
+              <SectionRuleHeading
+                label="Rejection Reason"
+                className="[&_span]:text-destructive"
+              />
               <p className="text-sm text-foreground">{co.rejection_reason}</p>
             </section>
           )}
@@ -734,7 +1124,7 @@ export default function CommitmentCODetailPage() {
                 onChange={(e) => setRejectionReason(e.target.value)}
                 rows={3}
               />
-              <div className="flex justify-end gap-2">
+              <div className="flex justify-end gap-1.5">
                 <Button
                   variant="outline"
                   size="sm"

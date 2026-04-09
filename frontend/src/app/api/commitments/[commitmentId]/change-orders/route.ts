@@ -11,15 +11,16 @@ const createCommitmentChangeOrderSchema = z.object({
     .trim()
     .min(1, "Change order number is required")
     .max(100, "Change order number must be at most 100 characters"),
+  title: z.string().trim().max(255).optional().nullable(),
   description: z
     .string()
     .trim()
-    .min(1, "Description is required")
-    .max(2000, "Description must be at most 2000 characters"),
-  amount: z.coerce
-    .number({ message: "Amount must be a number" }),
+    .max(2000, "Description must be at most 2000 characters")
+    .optional()
+    .nullable(),
+  amount: z.coerce.number({ message: "Amount must be a number" }),
   status: z
-    .enum(["draft", "pending", "approved", "executed", "void"])
+    .enum(["draft", "pending", "approved", "out_for_signature", "executed", "void"])
     .default("draft"),
   requested_date: z
     .string()
@@ -30,6 +31,17 @@ const createCommitmentChangeOrderSchema = z.object({
     .optional()
     .nullable(),
   requested_by: z.string().uuid().optional().nullable(),
+  change_reason: z.string().optional().nullable(),
+  due_date: z.string().optional().nullable(),
+  invoiced_date: z.string().optional().nullable(),
+  designated_reviewer: z.string().optional().nullable(),
+  schedule_impact: z.coerce.number().int().optional().nullable(),
+  location: z.string().optional().nullable(),
+  reference: z.string().optional().nullable(),
+  is_private: z.boolean().optional().default(false),
+  executed: z.boolean().optional().default(false),
+  field_change: z.boolean().optional().default(false),
+  paid_in_full: z.boolean().optional().default(false),
 });
 
 /**
@@ -73,6 +85,7 @@ export async function GET(
         `
         id,
         change_order_number,
+        title,
         description,
         status,
         amount,
@@ -81,6 +94,17 @@ export async function GET(
         approved_date,
         approved_by,
         rejection_reason,
+        change_reason,
+        due_date,
+        invoiced_date,
+        designated_reviewer,
+        schedule_impact,
+        location,
+        reference,
+        is_private,
+        executed,
+        field_change,
+        paid_in_full,
         created_at,
         updated_at
       `,
@@ -206,11 +230,23 @@ export async function POST(
       .insert({
         contract_id: commitmentId,
         change_order_number: validated.change_order_number,
-        description: validated.description,
+        title: validated.title ?? null,
+        description: validated.description ?? null,
         amount: validated.amount,
         status: validated.status,
         requested_date: validated.requested_date || new Date().toISOString(),
         requested_by: validated.requested_by || user.id,
+        change_reason: validated.change_reason ?? null,
+        due_date: validated.due_date ?? null,
+        invoiced_date: validated.invoiced_date ?? null,
+        designated_reviewer: validated.designated_reviewer ?? null,
+        schedule_impact: validated.schedule_impact ?? null,
+        location: validated.location ?? null,
+        reference: validated.reference ?? null,
+        is_private: validated.is_private ?? false,
+        executed: validated.executed ?? false,
+        field_change: validated.field_change ?? false,
+        paid_in_full: validated.paid_in_full ?? false,
       })
       .select()
       .single();

@@ -52,7 +52,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    if (co.status === "Rejected") {
+    if (co.status === "rejected") {
       return NextResponse.json(
         { error: "Already rejected" },
         { status: 400 },
@@ -63,7 +63,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const { data: updated, error: updateError } = await supabase
       .from("prime_contract_change_orders")
       .update({
-        status: "Rejected",
+        status: "rejected",
+        rejection_reason: rejectionReason.trim(),
       })
       .eq("id", numericId)
       .eq("project_id", Number(projectId))

@@ -480,6 +480,105 @@ export function ProjectCommandCenter({
             )}
           </section>
 
+         {/* PROJECT TEAM */}
+          <section>
+            <SectionHeading
+              action={
+                <Link
+                  href={`/${projectId}/directory`}
+                  className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+                >
+                  View Team <ChevronRight className="h-3 w-3" />
+                </Link>
+              }
+            >
+              Project Team
+            </SectionHeading>
+
+            {team.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No team members assigned</p>
+            ) : (
+              <div>
+                {team.slice(0, 6).map((member) => {
+                  const displayName = member.full_name?.trim() || "Team Member";
+                  const avatarSrc = member.person_id
+                    ? `/api/avatar/${member.person_id}?projectId=${projectId}`
+                    : undefined;
+
+                  return (
+                    <div
+                      key={member.id}
+                      className="flex items-center gap-3 py-2.5 border-b border-border/50 last:border-0"
+                    >
+                      <Avatar className="h-8 w-8 rounded-full">
+                        <AvatarImage src={avatarSrc} alt={displayName} />
+                        <AvatarFallback className="text-xs">{initials(displayName)}</AvatarFallback>
+                      </Avatar>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{displayName}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                          {member.role || "Team Member"}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+
+          <Divider />
+
+          {/* RECENT MEETINGS */}
+          <section>
+            <SectionHeading
+              action={
+                <Link
+                  href={`/${projectId}/meetings`}
+                  className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
+                >
+                  View All <ChevronRight className="h-3 w-3" />
+                </Link>
+              }
+            >
+              Recent Meetings
+            </SectionHeading>
+
+            {recentMeetings.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No meetings recorded</p>
+            ) : (
+              <div className="space-y-1">
+                {recentMeetings.map((m) => {
+                  const meetingDateLabel = m.date
+                    ? format(new Date(m.date), "MMM d")
+                    : null;
+
+                  return (
+                    <Link
+                      key={m.id}
+                      href={`/${projectId}/meetings/${m.id}`}
+                      className="group flex items-center gap-3 py-2 px-2 -mx-2 rounded-md hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                        <Calendar className="h-3.5 w-3.5" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm truncate group-hover:text-primary transition-colors">
+                          {m.title ?? "Meeting"}
+                        </p>
+                      </div>
+                      {meetingDateLabel && (
+                        <span className="text-xs text-muted-foreground tabular-nums shrink-0">
+                          {meetingDateLabel}
+                        </span>
+                      )}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+
           <Divider />
 
           {/* CHANGE PIPELINE */}
@@ -706,55 +805,6 @@ export function ProjectCommandCenter({
 
           <Divider />
 
-          {/* PROJECT TEAM */}
-          <section>
-            <SectionHeading
-              action={
-                <Link
-                  href={`/${projectId}/directory`}
-                  className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
-                >
-                  View Team <ChevronRight className="h-3 w-3" />
-                </Link>
-              }
-            >
-              Project Team
-            </SectionHeading>
-
-            {team.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No team members assigned</p>
-            ) : (
-              <div>
-                {team.slice(0, 6).map((member) => {
-                  const displayName = member.full_name?.trim() || "Team Member";
-                  const avatarSrc = member.person_id
-                    ? `/api/avatar/${member.person_id}?projectId=${projectId}`
-                    : undefined;
-
-                  return (
-                    <div
-                      key={member.id}
-                      className="flex items-center gap-3 py-2.5 border-b border-border/50 last:border-0"
-                    >
-                      <Avatar className="h-8 w-8 rounded-full">
-                        <AvatarImage src={avatarSrc} alt={displayName} />
-                        <AvatarFallback className="text-xs">{initials(displayName)}</AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">{displayName}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                          {member.role || "Team Member"}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-
-          <Divider />
-
           {/* OPEN RFIs */}
           <section>
             <SectionHeading
@@ -797,58 +847,6 @@ export function ProjectCommandCenter({
                         )}
                       </div>
                       <StatusBadge status={rfi.status} />
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-
-          <Divider />
-
-          {/* RECENT MEETINGS */}
-          <section>
-            <SectionHeading
-              action={
-                <Link
-                  href={`/${projectId}/meetings`}
-                  className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
-                >
-                  View All <ChevronRight className="h-3 w-3" />
-                </Link>
-              }
-            >
-              Recent Meetings
-            </SectionHeading>
-
-            {recentMeetings.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No meetings recorded</p>
-            ) : (
-              <div className="space-y-1">
-                {recentMeetings.map((m) => {
-                  const meetingDateLabel = m.date
-                    ? format(new Date(m.date), "MMM d")
-                    : null;
-
-                  return (
-                    <Link
-                      key={m.id}
-                      href={`/${projectId}/meetings/${m.id}`}
-                      className="group flex items-center gap-3 py-2 px-2 -mx-2 rounded-md hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
-                        <Calendar className="h-3.5 w-3.5" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm truncate group-hover:text-primary transition-colors">
-                          {m.title ?? "Meeting"}
-                        </p>
-                      </div>
-                      {meetingDateLabel && (
-                        <span className="text-xs text-muted-foreground tabular-nums shrink-0">
-                          {meetingDateLabel}
-                        </span>
-                      )}
                     </Link>
                   );
                 })}

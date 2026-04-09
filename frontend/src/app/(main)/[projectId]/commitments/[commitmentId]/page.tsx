@@ -72,6 +72,7 @@ type CommitmentDetail = Commitment & {
   actual_completion_date?: string;
   issued_on_date?: string;
   invoice_contact_ids?: string[];
+  invoice_contacts?: Array<{ id: string; name: string }>;
   inclusions?: string | null;
   exclusions?: string | null;
   allow_non_admin_view_sov_items?: boolean;
@@ -257,6 +258,9 @@ const normalizeCommitment = (raw: unknown): CommitmentDetail | null => {
     invoice_contact_ids: Array.isArray(record.invoice_contact_ids)
       ? (record.invoice_contact_ids as string[]).filter((v) => typeof v === "string")
       : undefined,
+    invoice_contacts: Array.isArray(record.invoice_contacts)
+      ? (record.invoice_contacts as Array<{ id: string; name: string }>)
+      : undefined,
     change_order_totals:
       record.change_order_totals && typeof record.change_order_totals === "object"
         ? (record.change_order_totals as CommitmentDetail["change_order_totals"])
@@ -298,10 +302,6 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
   const displayStatus = commitment.status
     ? commitment.status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())
     : "Draft";
-  const scheduleOfValuesTotal = (commitment.line_items || []).reduce(
-    (sum, item) => sum + (Number(item.amount) || 0),
-    0,
-  );
   const renderDateOrDash = (value?: string | null) =>
     value ? formatDate(value) : <span className="text-muted-foreground/60">—</span>;
   const inclusionText = commitment.inclusions?.trim() || "";
@@ -351,13 +351,13 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
                       "Not set"
                     )}
                   </LabelValueRow>
-                  {commitment.invoice_contact_ids !== undefined && (
+                  {commitment.invoice_contacts !== undefined && (
                     <LabelValueRow
-                      label="Invoice Contacts"
-                      missing={commitment.invoice_contact_ids.length === 0}
+                      label="Invoice Contact"
+                      missing={commitment.invoice_contacts.length === 0}
                     >
-                      {commitment.invoice_contact_ids.length > 0
-                        ? `${commitment.invoice_contact_ids.length} contact${commitment.invoice_contact_ids.length === 1 ? "" : "s"}`
+                      {commitment.invoice_contacts.length > 0
+                        ? commitment.invoice_contacts.map((c) => c.name).join(", ")
                         : "None"}
                     </LabelValueRow>
                   )}
@@ -376,12 +376,6 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
                           .replace(/_/g, " ")
                           .replace(/\b\w/g, (c) => c.toUpperCase())
                       : "Not set"}
-                  </LabelValueRow>
-                  <LabelValueRow label="Assignee" missing={!commitment.assignee?.full_name}>
-                    {commitment.assignee?.full_name || "Not set"}
-                  </LabelValueRow>
-                  <LabelValueRow label="SOV Total">
-                    {formatCurrency(scheduleOfValuesTotal)}
                   </LabelValueRow>
                 </dl>
               </div>

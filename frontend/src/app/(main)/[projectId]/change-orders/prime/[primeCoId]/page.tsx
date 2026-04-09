@@ -122,6 +122,10 @@ interface PrimeCO {
   approved_at: string | null;
   created_at: string | null;
   project_id: number | null;
+  rejection_reason: string | null;
+  designated_reviewer: string | null;
+  review_date: string | null;
+  revised_substantial_completion_date: string | null;
   line_items: LineItem[];
   contract: ContractInfo | null;
 }
@@ -156,6 +160,10 @@ const editSchema = z.object({
   due_date: z.string().nullable().optional(),
   executed: z.boolean().optional(),
   contract_company: z.string().nullable().optional(),
+  rejection_reason: z.string().nullable().optional(),
+  designated_reviewer: z.string().nullable().optional(),
+  review_date: z.string().nullable().optional(),
+  revised_substantial_completion_date: z.string().nullable().optional(),
 });
 
 type FormData = z.infer<typeof editSchema>;
@@ -184,6 +192,7 @@ function formatDate(dateStr: string | null | undefined): string {
 const STATUS_OPTIONS = [
   "draft",
   "proposed",
+  "out_for_signature",
   "approved",
   "rejected",
   "executed",
@@ -262,6 +271,10 @@ export default function PrimeContractCODetailPage() {
       due_date: null,
       executed: false,
       contract_company: null,
+      rejection_reason: null,
+      designated_reviewer: null,
+      review_date: null,
+      revised_substantial_completion_date: null,
     },
   });
 
@@ -390,6 +403,10 @@ export default function PrimeContractCODetailPage() {
       due_date: co.due_date ?? null,
       executed: co.executed ?? false,
       contract_company: co.contract_company ?? null,
+      rejection_reason: co.rejection_reason ?? null,
+      designated_reviewer: co.designated_reviewer ?? null,
+      review_date: co.review_date ?? null,
+      revised_substantial_completion_date: co.revised_substantial_completion_date ?? null,
     });
   }, [co, form]);
 
@@ -870,6 +887,79 @@ export default function PrimeContractCODetailPage() {
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name="designated_reviewer"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Designated Reviewer</FormLabel>
+                      <FormControl>
+                        <Input
+                          {...field}
+                          value={field.value ?? ""}
+                          placeholder="Name"
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="review_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Review Date</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="date"
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(e.target.value || null)
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="revised_substantial_completion_date"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Revised Substantial Completion Date</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="date"
+                          value={field.value ?? ""}
+                          onChange={(e) =>
+                            field.onChange(e.target.value || null)
+                          }
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="rejection_reason"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Rejection Reason</FormLabel>
+                      <FormControl>
+                        <Textarea
+                          {...field}
+                          value={field.value ?? ""}
+                          rows={3}
+                          placeholder="Reason for rejection..."
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
               </div>
             </section>
 
@@ -1122,8 +1212,23 @@ export default function PrimeContractCODetailPage() {
                         <LabelValueRow label="Reference">
                           {co.reference || "—"}
                         </LabelValueRow>
+                        {co.designated_reviewer && (
+                          <LabelValueRow label="Designated Reviewer">
+                            {co.designated_reviewer}
+                          </LabelValueRow>
+                        )}
                       </dl>
                     </div>
+                    {co.status === "rejected" && co.rejection_reason && (
+                      <div className="rounded-md border border-destructive/30 bg-destructive/5 p-4">
+                        <p className="mb-1 text-xs font-medium uppercase text-destructive">
+                          Rejection Reason
+                        </p>
+                        <p className="text-sm text-foreground whitespace-pre-wrap">
+                          {co.rejection_reason}
+                        </p>
+                      </div>
+                    )}
                   </div>
 
                   <div className="space-y-8">
@@ -1195,6 +1300,12 @@ export default function PrimeContractCODetailPage() {
                           </LabelValueRow>
                           <LabelValueRow label="Signed CO Received Date">
                             {renderDateOrDash(co.signed_co_received_date)}
+                          </LabelValueRow>
+                          <LabelValueRow label="Review Date">
+                            {renderDateOrDash(co.review_date)}
+                          </LabelValueRow>
+                          <LabelValueRow label="Revised Substantial Completion">
+                            {renderDateOrDash(co.revised_substantial_completion_date)}
                           </LabelValueRow>
                         </dl>
                       </div>

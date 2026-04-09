@@ -57,7 +57,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       .insert({
         pcco_number: body.pcco_number,
         title: body.title,
-        status: body.status || "Proposed",
+        status: body.status || "proposed",
         total_amount: body.total_amount ?? 0,
         contract_id: body.contract_id ?? null,
         executed: body.executed ?? false,

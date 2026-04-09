@@ -11,13 +11,25 @@ const updateChangeOrderSchema = z.object({
     .min(1, "Change order number is required")
     .max(100)
     .optional(),
-  description: z.string().trim().max(2000).optional(),
+  title: z.string().trim().max(255).optional().nullable(),
+  description: z.string().trim().max(2000).optional().nullable(),
   amount: z.coerce.number().optional(),
   status: z
-    .enum(["draft", "pending", "approved", "executed", "void"])
+    .enum(["draft", "pending", "approved", "out_for_signature", "executed", "void"])
     .optional(),
   requested_date: z.string().optional().nullable(),
   requested_by: z.string().uuid().optional().nullable(),
+  change_reason: z.string().optional().nullable(),
+  due_date: z.string().optional().nullable(),
+  invoiced_date: z.string().optional().nullable(),
+  designated_reviewer: z.string().optional().nullable(),
+  schedule_impact: z.coerce.number().int().optional().nullable(),
+  location: z.string().optional().nullable(),
+  reference: z.string().optional().nullable(),
+  is_private: z.boolean().optional(),
+  executed: z.boolean().optional(),
+  field_change: z.boolean().optional(),
+  paid_in_full: z.boolean().optional(),
 });
 
 /**

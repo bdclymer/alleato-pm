@@ -242,6 +242,24 @@ export async function GET(
       }
     }
 
+    // Fetch invoice contacts from people table
+    const invoiceContactIds = Array.isArray(record.invoice_contact_ids)
+      ? (record.invoice_contact_ids as string[])
+      : [];
+    let invoiceContacts: Array<{ id: string; name: string }> = [];
+    if (invoiceContactIds.length > 0) {
+      const { data: peopleData } = await (supabase as any)
+        .from("people")
+        .select("id, first_name, last_name")
+        .in("id", invoiceContactIds);
+      if (peopleData) {
+        invoiceContacts = (peopleData as Array<{ id: string; first_name: string | null; last_name: string | null }>).map((p) => ({
+          id: p.id,
+          name: [p.first_name, p.last_name].filter(Boolean).join(" ") || "Unknown",
+        }));
+      }
+    }
+
     const originalAmount = Number(totalsData?.total_sov_amount) || 0;
     const billedToDate = Number(totalsData?.total_billed_to_date) || 0;
     // Revised amount = original + approved change orders
@@ -267,6 +285,7 @@ export async function GET(
       sov_line_count: Number(totalsData?.sov_line_count) || 0,
       line_items: sovItems || [],
       change_order_totals: changeOrderTotals,
+      invoice_contacts: invoiceContacts,
     };
 
     // Add cache headers for detail data (5 seconds, revalidate in background)

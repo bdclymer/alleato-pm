@@ -36,11 +36,14 @@ export interface PrimeContractCO {
   approved_at: string | null;
   created_at: string | null;
   project_id: number | null;
+  designated_reviewer: string | null;
+  review_date: string | null;
 }
 
 export interface CommitmentCO {
   id: string;
   change_order_number: string | null;
+  title: string | null;
   description: string | null;
   status: string | null;
   amount: number | null;
@@ -51,6 +54,8 @@ export interface CommitmentCO {
   approved_by: string | null;
   approved_date: string | null;
   rejection_reason: string | null;
+  due_date: string | null;
+  designated_reviewer: string | null;
   created_at: string | null;
 }
 
@@ -92,6 +97,8 @@ export const primeColumns: ColumnConfig[] = [
   { id: "contract_company", label: "Contract Company", defaultVisible: true },
   { id: "due_date", label: "Due Date", defaultVisible: false },
   { id: "executed", label: "Executed" },
+  { id: "designated_reviewer", label: "Designated Reviewer", defaultVisible: false },
+  { id: "review_date", label: "Review Date", defaultVisible: false },
   { id: "submitted_at", label: "Submitted", defaultVisible: false },
   { id: "created_at", label: "Created", defaultVisible: true },
 ];
@@ -169,6 +176,22 @@ export function buildPrimeTableColumns(): TableColumn<PrimeContractCO>[] {
       sortValue: (item) => (item.executed ? 1 : 0),
     },
     {
+      ...col("designated_reviewer"),
+      width: 160,
+      render: (item) => (
+        <span className="text-muted-foreground">{item.designated_reviewer || "-"}</span>
+      ),
+      sortValue: (item) => item.designated_reviewer ?? "",
+    },
+    {
+      ...col("review_date"),
+      width: 120,
+      render: (item) => (
+        <span className="text-muted-foreground">{formatDate(item.review_date)}</span>
+      ),
+      sortValue: (item) => (item.review_date ? new Date(item.review_date).getTime() : 0),
+    },
+    {
       ...col("submitted_at"),
       width: 120,
       render: (item) => (
@@ -195,9 +218,13 @@ export function buildPrimeFilters(): FilterConfig[] {
       label: "Status",
       type: "select",
       options: [
+        { value: "draft", label: "Draft" },
         { value: "proposed", label: "Proposed" },
+        { value: "out_for_signature", label: "Out for Signature" },
         { value: "approved", label: "Approved" },
         { value: "rejected", label: "Rejected" },
+        { value: "executed", label: "Executed" },
+        { value: "void", label: "Void" },
       ],
     },
     {
@@ -218,10 +245,12 @@ export function buildPrimeFilters(): FilterConfig[] {
 
 export const commitmentColumns: ColumnConfig[] = [
   { id: "change_order_number", label: "#", alwaysVisible: true },
-  { id: "description", label: "Description", defaultVisible: true },
+  { id: "title", label: "Title", defaultVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
   { id: "amount", label: "Amount", defaultVisible: true },
   { id: "contract_type", label: "Contract Type", defaultVisible: true },
+  { id: "due_date", label: "Due Date", defaultVisible: false },
+  { id: "designated_reviewer", label: "Designated Reviewer", defaultVisible: false },
   { id: "requested_date", label: "Requested Date", defaultVisible: true },
   { id: "approved_date", label: "Approved Date", defaultVisible: false },
   { id: "created_at", label: "Created", defaultVisible: true },
@@ -247,10 +276,10 @@ export function buildCommitmentTableColumns(): TableColumn<CommitmentCO>[] {
       sortValue: (item) => item.change_order_number ?? "",
     },
     {
-      ...col("description"),
+      ...col("title"),
       width: 320,
-      render: (item) => <TruncatedCell value={item.description} maxWidth={320} />,
-      sortValue: (item) => item.description ?? "",
+      render: (item) => <TruncatedCell value={item.title || item.description} maxWidth={320} />,
+      sortValue: (item) => item.title ?? item.description ?? "",
     },
     {
       ...col("status"),
@@ -277,6 +306,22 @@ export function buildCommitmentTableColumns(): TableColumn<CommitmentCO>[] {
         </span>
       ),
       sortValue: (item) => item.contract_type ?? "",
+    },
+    {
+      ...col("due_date"),
+      width: 120,
+      render: (item) => (
+        <span className="text-muted-foreground">{formatDate(item.due_date)}</span>
+      ),
+      sortValue: (item) => (item.due_date ? new Date(item.due_date).getTime() : 0),
+    },
+    {
+      ...col("designated_reviewer"),
+      width: 160,
+      render: (item) => (
+        <span className="text-muted-foreground">{item.designated_reviewer || "-"}</span>
+      ),
+      sortValue: (item) => item.designated_reviewer ?? "",
     },
     {
       ...col("requested_date"),
@@ -314,9 +359,13 @@ export function buildCommitmentFilters(): FilterConfig[] {
       label: "Status",
       type: "select",
       options: [
+        { value: "draft", label: "Draft" },
         { value: "pending", label: "Pending" },
+        { value: "out_for_signature", label: "Out for Signature" },
         { value: "approved", label: "Approved" },
         { value: "rejected", label: "Rejected" },
+        { value: "executed", label: "Executed" },
+        { value: "void", label: "Void" },
       ],
     },
   ];
@@ -366,8 +415,9 @@ export function renderPrimeCard(
   onClick: (item: PrimeContractCO) => void,
 ): ReactElement {
   return (
-    <div
-      className="cursor-pointer rounded-lg border p-4 transition-colors hover:bg-muted/50"
+    <button
+      type="button"
+      className="w-full cursor-pointer rounded-lg border p-4 text-left transition-colors hover:bg-muted/50"
       onClick={() => onClick(item)}
     >
       <div className="mb-2 flex items-start justify-between gap-4">
@@ -380,7 +430,7 @@ export function renderPrimeCard(
       <p className="mt-2 text-sm text-muted-foreground">
         {formatCurrency(item.total_amount)}
       </p>
-    </div>
+    </button>
   );
 }
 
@@ -389,8 +439,9 @@ export function renderPrimeList(
   onClick: (item: PrimeContractCO) => void,
 ): ReactElement {
   return (
-    <div
-      className="flex cursor-pointer items-center justify-between rounded-md px-4 py-2 transition-colors hover:bg-muted/50"
+    <button
+      type="button"
+      className="flex w-full cursor-pointer items-center justify-between rounded-md px-4 py-2 text-left transition-colors hover:bg-muted/50"
       onClick={() => onClick(item)}
     >
       <div className="min-w-0 flex-1">
@@ -401,7 +452,7 @@ export function renderPrimeList(
         <span className="text-sm text-muted-foreground">{formatCurrency(item.total_amount)}</span>
         <StatusBadge status={statusLabel(item.status)} />
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -410,8 +461,9 @@ export function renderCommitmentCard(
   onClick: (item: CommitmentCO) => void,
 ): ReactElement {
   return (
-    <div
-      className="cursor-pointer rounded-lg border p-4 transition-colors hover:bg-muted/50"
+    <button
+      type="button"
+      className="w-full cursor-pointer rounded-lg border p-4 text-left transition-colors hover:bg-muted/50"
       onClick={() => onClick(item)}
     >
       <div className="mb-2 flex items-start justify-between gap-4">
@@ -419,12 +471,12 @@ export function renderCommitmentCard(
           <p className="text-xs uppercase text-muted-foreground">
             {item.change_order_number || "-"}
           </p>
-          <h3 className="font-medium line-clamp-2">{item.description || "Untitled"}</h3>
+          <h3 className="font-medium line-clamp-2">{item.title || item.description || "Untitled"}</h3>
         </div>
         <StatusBadge status={statusLabel(item.status)} />
       </div>
       <p className="mt-2 text-sm text-muted-foreground">{formatCurrency(item.amount)}</p>
-    </div>
+    </button>
   );
 }
 
@@ -433,20 +485,21 @@ export function renderCommitmentList(
   onClick: (item: CommitmentCO) => void,
 ): ReactElement {
   return (
-    <div
-      className="flex cursor-pointer items-center justify-between rounded-md px-4 py-2 transition-colors hover:bg-muted/50"
+    <button
+      type="button"
+      className="flex w-full cursor-pointer items-center justify-between rounded-md px-4 py-2 text-left transition-colors hover:bg-muted/50"
       onClick={() => onClick(item)}
     >
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium">{item.change_order_number || "-"}</p>
         <p className="truncate text-xs text-muted-foreground">
-          {item.description || "Untitled"}
+          {item.title || item.description || "Untitled"}
         </p>
       </div>
       <div className="ml-4 flex items-center gap-3">
         <span className="text-sm text-muted-foreground">{formatCurrency(item.amount)}</span>
         <StatusBadge status={statusLabel(item.status)} />
       </div>
-    </div>
+    </button>
   );
 }

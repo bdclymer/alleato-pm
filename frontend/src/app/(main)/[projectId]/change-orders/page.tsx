@@ -43,10 +43,11 @@ export default async function ProjectChangeOrdersPage({
     console.error("Error loading commitment change orders:", commitmentResponse.error);
   }
 
-  const primeCOs: PrimeContractCO[] = (primeResponse.data || []).map((co) => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const primeCOs: PrimeContractCO[] = (primeResponse.data || []).map((co: any) => ({
     id: co.id,
     pcco_number: co.pcco_number,
-    title: co.title,
+    title: co.title ?? null,
     status: co.status,
     total_amount: co.total_amount,
     contract_id: co.contract_id,
@@ -55,26 +56,32 @@ export default async function ProjectChangeOrdersPage({
     revision: co.revision ?? null,
     contract_company: co.contract_company ?? null,
     due_date: co.due_date ?? null,
-    submitted_at: co.submitted_at,
-    approved_at: co.approved_at,
-    created_at: co.created_at,
+    submitted_at: co.submitted_at ?? null,
+    approved_at: co.approved_at ?? null,
+    created_at: co.created_at ?? null,
     project_id: co.project_id,
+    designated_reviewer: co.designated_reviewer ?? null,
+    review_date: co.review_date ?? null,
   }));
 
-  const commitmentCOs: CommitmentCO[] = (commitmentResponse.data || []).map((co) => ({
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const commitmentCOs: CommitmentCO[] = (commitmentResponse.data || []).map((co: any) => ({
     id: co.id,
-    change_order_number: co.change_order_number,
-    description: co.description,
+    change_order_number: co.change_order_number ?? null,
+    title: co.title ?? null,
+    description: co.description ?? null,
     status: co.status,
     amount: co.amount,
     contract_id: co.contract_id,
     contract_type: co.contract_type ?? null,
-    requested_by: co.requested_by,
-    requested_date: co.requested_date,
-    approved_by: co.approved_by,
-    approved_date: co.approved_date,
-    rejection_reason: co.rejection_reason,
-    created_at: co.created_at,
+    requested_by: co.requested_by ?? null,
+    requested_date: co.requested_date ?? null,
+    approved_by: co.approved_by ?? null,
+    approved_date: co.approved_date ?? null,
+    rejection_reason: co.rejection_reason ?? null,
+    due_date: co.due_date ?? null,
+    designated_reviewer: co.designated_reviewer ?? null,
+    created_at: co.created_at ?? null,
   }));
 
   return (
