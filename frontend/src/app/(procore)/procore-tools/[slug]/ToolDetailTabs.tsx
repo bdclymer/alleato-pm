@@ -40,9 +40,6 @@ export function ToolDetailTabs({ slug, description, scenariosMarkdown }: Props) 
       <Tabs defaultValue={defaultTab}>
         <TabsList className="mb-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="screenshots">Screenshots</TabsTrigger>
-          <TabsTrigger value="spec">Spec</TabsTrigger>
-          <TabsTrigger value="gaps">Gap Analysis</TabsTrigger>
           <TabsTrigger value="scenarios">
             Test Scenarios
             {scenariosMarkdown && (
@@ -51,6 +48,9 @@ export function ToolDetailTabs({ slug, description, scenariosMarkdown }: Props) 
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="screenshots">Screenshots</TabsTrigger>
+          <TabsTrigger value="spec">Spec</TabsTrigger>
+          <TabsTrigger value="gaps">Gap Analysis</TabsTrigger>
           <TabsTrigger value="feedback">Feedback</TabsTrigger>
           <TabsTrigger value="chat">Ask AI</TabsTrigger>
         </TabsList>
