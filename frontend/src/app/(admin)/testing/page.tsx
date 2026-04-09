@@ -25,6 +25,7 @@ import {
 // ─── Types ───────────────────────────────────────────────────────────────────
 
 type TestStatus = "pass" | "fail" | "skip" | "not_tested";
+type Severity = "critical" | "major" | "minor" | "cosmetic" | "";
 
 interface TestCase {
   id: string;
@@ -87,7 +88,6 @@ type View = "home" | "start-run" | "running" | "complete" | "history" | "run-det
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
-
 function parseSteps(raw: string | null): string[] {
   if (!raw) return [];
   return raw.split("\n").filter(Boolean).map((s) => s.replace(/^\d+\.\s*/, "").trim());
@@ -104,23 +104,49 @@ export default function TestingPage() {
   const [results, setResults] = useState<TestResult[]>([]);
   const [cursor, setCursor] = useState(0);
   const [saving, setSaving] = useState(false);
-  const [issueNotes, setIssueNotes] = useState("");
-  const [showIssueBox, setShowIssueBox] = useState(false);
+  const [notesMap, setNotesMap] = useState<Record<string, string>>({});
+  const [severityMap, setSeverityMap] = useState<Record<string, Severity>>({});
   const [checkedSteps, setCheckedSteps] = useState<Record<number, boolean>>({});
   const [uploadingScreenshot, setUploadingScreenshot] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const notesRef = useRef<HTMLTextAreaElement>(null);
   const [historyRuns, setHistoryRuns] = useState<HistoryRun[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
-  const [expandedRunId, setExpandedRunId] = useState<string | null>(null);
   const [runDetail, setRunDetail] = useState<RunDetailResult[]>([]);
   const [runDetailLoading, setRunDetailLoading] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
+  const [showJumpList, setShowJumpList] = useState(false);
+  const [inProgressRuns, setInProgressRuns] = useState<{ run: HistoryRun; suiteName: string; suiteDisplayName: string }[]>([]);
+  const jumpListRef = useRef<HTMLDivElement>(null);
 
   // ── Load suites + pre-fill tester name from session ──
   useEffect(() => {
     fetch("/api/testing/suites")
       .then((r) => r.json())
-      .then((d) => setSuites((d.suites ?? []).filter((s: Suite) => s.scenario_count > 0)));
+      .then((d) => {
+        const loaded: Suite[] = (d.suites ?? []).filter((s: Suite) => s.scenario_count > 0);
+        setSuites(loaded);
+
+        // Fetch in-progress runs for each suite
+        Promise.all(
+          loaded.map((suite) =>
+            fetch(`/api/testing/runs?suite=${suite.tool_name}`)
+              .then((r) => r.ok ? r.json() : { runs: [] })
+              .then((data) => {
+                const incomplete = (data.runs ?? []).filter((run: HistoryRun) => run.not_tested > 0);
+                return incomplete.map((run: HistoryRun) => ({
+                  run,
+                  suiteName: suite.tool_name,
+                  suiteDisplayName: suite.display_name,
+                }));
+              })
+              .catch(() => [])
+          )
+        ).then((results) => {
+          const flat = results.flat();
+          setInProgressRuns(flat);
+        });
+      });
 
     const supabase = createClient();
     supabase.auth.getUser().then(({ data }) => {
@@ -134,6 +160,19 @@ export default function TestingPage() {
       setRunForm((f) => ({ ...f, tester: name }));
     });
   }, []);
+
+  // ── Restore notes from localStorage when runId changes ──
+  useEffect(() => {
+    if (!activeRunId) return;
+    const saved = localStorage.getItem(`testing-notes-${activeRunId}`);
+    if (saved) {
+      try {
+        setNotesMap(JSON.parse(saved));
+      } catch {
+        // ignore malformed
+      }
+    }
+  }, [activeRunId]);
 
   // ── Load history for a suite ──
   const openHistory = async (suite: Suite) => {
@@ -151,7 +190,6 @@ export default function TestingPage() {
 
   // ── Load detail for a single run ──
   const openRunDetail = async (runId: string) => {
-    setExpandedRunId(runId);
     setRunDetailLoading(true);
     setRunDetail([]);
     setView("run-detail");
@@ -163,12 +201,23 @@ export default function TestingPage() {
     setRunDetailLoading(false);
   };
 
-  // ── Reset step checkboxes when scenario changes ──
+  // ── Reset step checkboxes when scenario changes (notes persist per result ID) ──
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     setCheckedSteps({});
-    setIssueNotes("");
-    setShowIssueBox(false);
-  }, [cursor]);
+  }, [cursor]); // cursor is intentional — reset checkboxes when navigating tests
+
+  // ── Close jump list on outside click ──
+  useEffect(() => {
+    if (!showJumpList) return;
+    const handler = (e: MouseEvent) => {
+      if (jumpListRef.current && !jumpListRef.current.contains(e.target as Node)) {
+        setShowJumpList(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showJumpList]);
 
   const current = results[cursor] ?? null;
   const steps = parseSteps(current?.test_cases?.steps ?? null);
@@ -196,6 +245,8 @@ export default function TestingPage() {
       } else {
         setResults(loaded);
         setCursor(0);
+        setNotesMap({});
+        setSeverityMap({});
         setView("running");
       }
     } else {
@@ -205,14 +256,42 @@ export default function TestingPage() {
     setSaving(false);
   };
 
+  // ── Resume an in-progress run ──
+  const resumeRun = async (run: HistoryRun, suiteName: string) => {
+    const suite = suites.find((s) => s.tool_name === suiteName);
+    if (!suite) return;
+    setSelectedSuite(suite);
+    setActiveRunId(run.id);
+    const res = await fetch(`/api/testing/runs/${run.id}/results?type=scenario`);
+    const d = await res.json();
+    const loaded: TestResult[] = d.results ?? [];
+    setResults(loaded);
+    const firstUntested = loaded.findIndex((r) => r.status === "not_tested");
+    setCursor(firstUntested >= 0 ? firstUntested : 0);
+    const saved = localStorage.getItem(`testing-notes-${run.id}`);
+    if (saved) {
+      try {
+        setNotesMap(JSON.parse(saved));
+      } catch {
+        // ignore
+      }
+    } else {
+      setNotesMap({});
+    }
+    setSeverityMap({});
+    setView("running");
+  };
+
   // ── Record outcome ──
   const record = useCallback(async (status: TestStatus) => {
     if (!current || !activeRunId) return;
     setSaving(true);
+    const notes = notesMap[current.id] || null;
+    const severity = severityMap[current.id] || null;
     const res = await fetch(`/api/testing/runs/${activeRunId}/results/${current.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status, notes: issueNotes || null }),
+      body: JSON.stringify({ status, notes, severity }),
     });
     if (res.ok) {
       const { result } = await res.json();
@@ -226,7 +305,7 @@ export default function TestingPage() {
       }
     }
     setSaving(false);
-  }, [current, activeRunId, issueNotes, cursor, results.length]);
+  }, [current, activeRunId, notesMap, severityMap, cursor, results.length]);
 
   // ── Screenshot upload ──
   const handleFile = useCallback(async (file: File) => {
@@ -246,6 +325,68 @@ export default function TestingPage() {
     };
     reader.readAsDataURL(file);
   }, [current, activeRunId]);
+
+  // ── Keyboard shortcuts (running view only) ──
+  useEffect(() => {
+    if (view !== "running") return;
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement).tagName.toLowerCase();
+      if (tag === "input" || tag === "textarea" || tag === "select") return;
+      switch (e.key) {
+        case "p":
+        case "P":
+          e.preventDefault();
+          void record("pass");
+          break;
+        case "i":
+        case "I":
+          e.preventDefault();
+          void record("fail");
+          break;
+        case "s":
+        case "S":
+          e.preventDefault();
+          void record("skip");
+          break;
+        case "n":
+        case "N":
+          e.preventDefault();
+          notesRef.current?.focus();
+          break;
+        case "ArrowLeft":
+          e.preventDefault();
+          setCursor((c) => Math.max(c - 1, 0));
+          break;
+        case "ArrowRight":
+          e.preventDefault();
+          setCursor((c) => Math.min(c + 1, results.length - 1));
+          break;
+      }
+    };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [view, record, results.length]);
+
+  // ── Persist notes to localStorage on change ──
+  const updateNote = (resultId: string, value: string) => {
+    const updated = { ...notesMap, [resultId]: value };
+    setNotesMap(updated);
+    if (activeRunId) {
+      try {
+        localStorage.setItem(`testing-notes-${activeRunId}`, JSON.stringify(updated));
+      } catch {
+        // ignore quota errors
+      }
+    }
+  };
+
+  // ─── Status icon helper ───────────────────────────────────────────────────
+  const statusIcon = (s: TestStatus) => {
+    if (s === "pass") return <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />;
+    if (s === "fail") return <XCircle className="h-4 w-4 text-red-500 shrink-0" />;
+    if (s === "skip") return <MinusCircle className="h-4 w-4 text-muted-foreground shrink-0" />;
+    return <div className="h-4 w-4 rounded-full border-2 border-border shrink-0" />;
+  };
 
   // ─── View: HOME ────────────────────────────────────────────────────────────
   if (view === "home") {
@@ -269,7 +410,8 @@ export default function TestingPage() {
 
     const grouped = suites.reduce<Record<string, Suite[]>>((acc, s) => {
       const cat = categoryFor(s.tool_name);
-      (acc[cat] ||= []).push(s);
+      if (!acc[cat]) acc[cat] = [];
+      acc[cat].push(s);
       return acc;
     }, {});
     const order: Array<"Financial" | "Project Management"> = ["Financial", "Project Management"];
@@ -277,6 +419,45 @@ export default function TestingPage() {
     return (
       <PageShell variant="content" title="Testing" description="Browse scenarios or start an interactive test session">
         <div className="space-y-10">
+
+          {/* ── In-progress runs ── */}
+          {inProgressRuns.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">Resume</h2>
+              <div className="space-y-2">
+                {inProgressRuns.map(({ run, suiteName, suiteDisplayName }) => {
+                  const done = run.pass + run.fail + run.skip;
+                  const total = run.total;
+                  const pctDone = total > 0 ? Math.round((done / total) * 100) : 0;
+                  return (
+                    <div key={run.id} className="flex items-center justify-between gap-4 rounded-xl border border-border bg-card px-5 py-4">
+                      <div className="min-w-0 flex-1 space-y-1.5">
+                        <p className="text-sm font-medium">{suiteDisplayName}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {run.tester && `${run.tester} · `}
+                          {new Date(run.run_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                            <div className="h-full bg-primary rounded-full" style={{ width: `${pctDone}%` }} /> {/* eslint-disable-line react/forbid-component-props */}
+                          </div>
+                          <span className="text-xs text-muted-foreground shrink-0">{done}/{total}</span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => void resumeRun(run, suiteName)}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shrink-0"
+                      >
+                        Resume →
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {suites.length === 0 && (
             <p className="text-muted-foreground text-sm text-center py-12">No test scenarios available yet.</p>
           )}
@@ -471,7 +652,7 @@ export default function TestingPage() {
               <p className="text-2xl font-bold text-green-600">{passed}</p>
               <p className="text-xs text-green-700 dark:text-green-400 mt-0.5">Passed</p>
             </div>
-            <div className="rounded-xl bg-red-50 dark:bg-red-950/30 p-4">
+            <div className="rounded-xl bg-red-50 dark:bg-red-950/20 p-4">
               <p className="text-2xl font-bold text-red-500">{failed}</p>
               <p className="text-xs text-red-700 dark:text-red-400 mt-0.5">Failed</p>
             </div>
@@ -568,13 +749,6 @@ export default function TestingPage() {
       return acc;
     }, {});
 
-    const statusIcon = (s: TestStatus) => {
-      if (s === "pass") return <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />;
-      if (s === "fail") return <XCircle className="h-4 w-4 text-red-500 shrink-0" />;
-      if (s === "skip") return <MinusCircle className="h-4 w-4 text-muted-foreground shrink-0" />;
-      return <div className="h-4 w-4 rounded-full border-2 border-border shrink-0" />;
-    };
-
     return (
       <PageShell
         variant="content"
@@ -634,9 +808,35 @@ export default function TestingPage() {
           >
             <ChevronLeft className="h-5 w-5" />
           </button>
-          <span className="text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">{cursor + 1}</span> / {results.length}
-          </span>
+          {/* Jump-to-test popover */}
+          <div className="relative" ref={jumpListRef}>
+            <button
+              type="button"
+              onClick={() => setShowJumpList((v) => !v)}
+              className="text-sm text-muted-foreground hover:text-foreground transition-colors px-1 py-0.5 rounded"
+            >
+              <span className="font-medium text-foreground">{cursor + 1}</span> / {results.length}
+            </button>
+            {showJumpList && (
+              <div className="absolute top-full left-0 mt-1 z-50 w-72 max-h-80 overflow-y-auto rounded-xl border border-border bg-card shadow-sm">
+                {results.map((r, i) => (
+                  <button
+                    key={r.id}
+                    type="button"
+                    onClick={() => { setCursor(i); setShowJumpList(false); }}
+                    className={cn(
+                      "w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-muted/40 transition-colors",
+                      i === cursor && "bg-muted/60"
+                    )}
+                  >
+                    {statusIcon(r.status)}
+                    <span className="text-xs text-muted-foreground font-mono shrink-0">#{r.test_cases?.test_number}</span>
+                    <span className="text-xs truncate">{r.test_cases?.test_name}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
         <p className="text-sm font-medium">{selectedSuite?.display_name}</p>
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -674,8 +874,8 @@ export default function TestingPage() {
         {tc.setup_steps && (
           <div className="bg-amber-50 dark:bg-amber-950/20 rounded-xl px-4 py-3 space-y-1">
             <p className="text-sm font-semibold text-amber-900 dark:text-amber-300">Before you start</p>
-            {parseSteps(tc.setup_steps).map((s, i) => (
-              <p key={i} className="text-sm text-amber-900 dark:text-amber-300">· {s}</p>
+            {parseSteps(tc.setup_steps).map((s) => (
+              <p key={s} className="text-sm text-amber-900 dark:text-amber-300">· {s}</p>
             ))}
           </div>
         )}
@@ -685,15 +885,12 @@ export default function TestingPage() {
           <a
             href={(() => {
               try {
-                // Extract just the pathname from potentially full URL
                 const raw = new URL(tc.start_url ?? "").pathname;
-                // Replace the hardcoded project ID segment with the tester's project ID
                 if (runForm.projectId) {
                   return raw.replace(/^\/\d+\//, `/${runForm.projectId}/`);
                 }
                 return raw;
               } catch {
-                // Already a relative path — just swap project ID
                 const raw = tc.start_url ?? "#";
                 if (runForm.projectId) {
                   return raw.replace(/^\/\d+\//, `/${runForm.projectId}/`);
@@ -714,7 +911,7 @@ export default function TestingPage() {
           <p className="text-base font-semibold text-foreground">Steps</p>
           {steps.map((step, i) => (
             <label
-              key={i}
+              key={step}
               className={cn(
                 "flex items-start gap-3 cursor-pointer py-1.5 transition-all select-none",
                 checkedSteps[i] && "opacity-70"
@@ -753,22 +950,6 @@ export default function TestingPage() {
           </div>
         )}
 
-        {/* Issue notes box (shown when Fail is tapped) */}
-        {showIssueBox && (
-          <div className="space-y-2">
-            <Label className="text-sm font-semibold text-foreground">
-              Describe what went wrong
-            </Label>
-            <Textarea
-              autoFocus
-              value={issueNotes}
-              onChange={(e) => setIssueNotes(e.target.value)}
-              placeholder="e.g. The save button didn't respond, page showed an error message…"
-              className="resize-none h-24 text-sm"
-            />
-          </div>
-        )}
-
         {/* Screenshots */}
         {current.test_screenshots.length > 0 && (
           <div className="space-y-2">
@@ -787,11 +968,62 @@ export default function TestingPage() {
           </div>
         )}
 
-        {/* ── Verdict buttons ── */}
+        {/* ── Notes + Severity + Verdict ── */}
         <div className="pt-2 space-y-3">
+
+          {/* Always-visible notes */}
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">
+              Notes <span className="font-normal">(optional)</span>
+            </Label>
+            <Textarea
+              ref={notesRef}
+              value={notesMap[current.id] ?? ""}
+              onChange={(e) => updateNote(current.id, e.target.value)}
+              placeholder="Optional notes, observations, or anything unexpected…"
+              className="resize-none h-20 text-sm"
+            />
+          </div>
+
+          {/* Severity selector */}
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-xs text-muted-foreground">Severity:</span>
+            {(["critical", "major", "minor", "cosmetic"] as const).map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => setSeverityMap((prev) => ({ ...prev, [current.id]: prev[current.id] === s ? "" : s }))}
+                className={cn(
+                  "text-xs px-2 py-0.5 rounded-md border transition-colors",
+                  severityMap[current.id] === s
+                    ? s === "critical"
+                      ? "bg-red-600 text-white border-red-600"
+                      : s === "major"
+                      ? "bg-orange-500 text-white border-orange-500"
+                      : s === "minor"
+                      ? "bg-yellow-500 text-white border-yellow-500"
+                      : "bg-muted text-foreground border-border"
+                    : "bg-transparent text-muted-foreground border-border hover:border-foreground"
+                )}
+              >
+                {s.charAt(0).toUpperCase() + s.slice(1)}
+              </button>
+            ))}
+          </div>
+
+          {/* Keyboard hint bar */}
+          <div className="flex items-center gap-4 text-[10px] text-muted-foreground/60 pb-1">
+            <span><kbd className="font-mono">P</kbd> Pass</span>
+            <span><kbd className="font-mono">I</kbd> Issue</span>
+            <span><kbd className="font-mono">S</kbd> Skip</span>
+            <span><kbd className="font-mono">N</kbd> Notes</span>
+            <span><kbd className="font-mono">←→</kbd> Navigate</span>
+          </div>
+
+          {/* Verdict buttons */}
           <div className="grid grid-cols-3 gap-2">
             <Button
-              onClick={async () => { setShowIssueBox(false); await record("pass"); }}
+              onClick={() => void record("pass")}
               disabled={saving}
               className="gap-2 bg-green-600 hover:bg-green-700 text-white h-12 text-sm font-semibold"
             >
@@ -799,16 +1031,16 @@ export default function TestingPage() {
               Passed
             </Button>
             <Button
-              onClick={() => setShowIssueBox((v) => !v)}
+              onClick={() => void record("fail")}
               disabled={saving}
               variant="destructive"
               className="gap-2 h-12 text-sm font-semibold"
             >
               <XCircle className="h-4 w-4" />
-              {showIssueBox ? "Confirm →" : "Issue found"}
+              Issue found
             </Button>
             <Button
-              onClick={async () => { setShowIssueBox(false); await record("skip"); }}
+              onClick={() => void record("skip")}
               disabled={saving}
               variant="outline"
               className="gap-2 h-12 text-sm font-semibold"
@@ -817,18 +1049,6 @@ export default function TestingPage() {
               Skip
             </Button>
           </div>
-
-          {/* Confirm fail when issue box is open */}
-          {showIssueBox && (
-            <Button
-              onClick={() => record("fail")}
-              disabled={saving}
-              variant="destructive"
-              className="w-full h-10 text-sm"
-            >
-              Save issue &amp; continue →
-            </Button>
-          )}
 
           {/* Screenshot upload */}
           <div>

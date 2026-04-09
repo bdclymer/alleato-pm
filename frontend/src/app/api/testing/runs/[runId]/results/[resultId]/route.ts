@@ -13,22 +13,28 @@ export async function PATCH(
   const supabase = await createClient();
 
   const body = await req.json();
-  const { status, notes } = body as { status?: string; notes?: string };
+  const { status, notes, severity } = body as { status?: string; notes?: string; severity?: string | null };
 
   const validStatuses = ["pass", "fail", "skip", "not_tested"];
   if (status && !validStatuses.includes(status)) {
     return NextResponse.json({ error: "Invalid status" }, { status: 400 });
   }
 
+  const validSeverities = ["critical", "major", "minor", "cosmetic"];
+  if (severity && !validSeverities.includes(severity)) {
+    return NextResponse.json({ error: "Invalid severity" }, { status: 400 });
+  }
+
   const updates: Record<string, unknown> = {};
   if (status !== undefined) updates.status = status;
   if (notes !== undefined) updates.notes = notes;
+  if (severity !== undefined) updates.severity = severity ?? null;
 
   const { data, error } = await supabase
     .from("test_results")
     .update(updates)
     .eq("id", resultId)
-    .select("id, status, notes, updated_at")
+    .select("id, status, notes, severity, updated_at")
     .single();
 
   if (error) {
