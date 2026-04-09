@@ -35,7 +35,7 @@ import {
 import { useOwnerInvoicesList } from "@/hooks/use-invoicing";
 import { useSubcontractorInvoicesList } from "@/hooks/use-subcontractor-invoices";
 import { useBillingPeriodsList, useCreateBillingPeriod, type BillingPeriod } from "@/hooks/use-billing-periods";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PageTabs } from "@/components/layout/PageTabs";
 import {
   buildInvoiceTableColumns,
   invoiceColumns,
@@ -969,15 +969,14 @@ export default function ProjectInvoicesPage(): ReactElement {
             </DialogDescription>
           </DialogHeader>
 
-          <Tabs
-            value={bpMode}
-            onValueChange={(v) => setBpMode(v as "manual" | "automatic")}
-          >
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="manual">Manual</TabsTrigger>
-              <TabsTrigger value="automatic">Automatic</TabsTrigger>
-            </TabsList>
-          </Tabs>
+          <PageTabs
+            variant="inline"
+            onTabClick={(href) => setBpMode(href as "manual" | "automatic")}
+            tabs={[
+              { label: "Manual", href: "manual", isActive: bpMode === "manual" },
+              { label: "Automatic", href: "automatic", isActive: bpMode === "automatic" },
+            ]}
+          />
 
           {bpMode === "manual" ? (
             <div className="space-y-4 py-2">
