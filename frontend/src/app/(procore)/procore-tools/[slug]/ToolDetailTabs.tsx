@@ -1,7 +1,5 @@
 "use client";
 
-import * as React from "react";
-
 import { useSearchParams } from "next/navigation";
 
 import { ChatTab } from "@/components/dev-panel/ChatTab";
@@ -27,7 +25,7 @@ const VALID_TABS = ["overview", "screenshots", "spec", "gaps", "scenarios", "fee
 export function ToolDetailTabs({ slug, description, scenariosMarkdown }: Props) {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
-  const defaultTab = VALID_TABS.includes(tabParam ?? "") ? (tabParam as string) : "overview";
+  const defaultTab = VALID_TABS.includes(tabParam ?? "") ? (tabParam as string) : "scenarios";
 
   return (
     <div className="mt-4">
@@ -39,7 +37,6 @@ export function ToolDetailTabs({ slug, description, scenariosMarkdown }: Props) 
 
       <Tabs defaultValue={defaultTab}>
         <TabsList className="mb-6">
-          <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="scenarios">
             Test Scenarios
             {scenariosMarkdown && (
@@ -48,6 +45,7 @@ export function ToolDetailTabs({ slug, description, scenariosMarkdown }: Props) 
               </span>
             )}
           </TabsTrigger>
+          <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="screenshots">Screenshots</TabsTrigger>
           <TabsTrigger value="spec">Spec</TabsTrigger>
           <TabsTrigger value="gaps">Gap Analysis</TabsTrigger>
