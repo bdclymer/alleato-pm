@@ -452,13 +452,6 @@ export default function TestingPage() {
                       <p className="text-xs text-muted-foreground">{lifecycle.scenario_count} sequential test cases</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
-                      <Link
-                        href={`/procore-tools/${lifecycle.tool_name}?tab=test-scenarios`}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-border bg-background hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
-                      >
-                        <BookOpen className="h-3.5 w-3.5" />
-                        Review
-                      </Link>
                       <button
                         type="button"
                         onClick={() => { setSelectedSuite(lifecycle); setView("start-run"); }}
