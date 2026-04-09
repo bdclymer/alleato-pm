@@ -391,7 +391,7 @@ export default function TestingPage() {
         onBack={() => setView("home")}
       >
         <div className="space-y-6">
-          <div className="bg-muted/40 rounded-xl px-5 py-4 text-sm text-muted-foreground space-y-1">
+          <div className="text-sm text-muted-foreground space-y-1">
             <p className="font-medium text-foreground">Before you start</p>
             <p>Make sure you&apos;re logged into the app you&apos;re testing.</p>
             <p>Each test takes 1–3 minutes. You&apos;ll follow step-by-step instructions and mark each test passed, failed, or skipped.</p>
@@ -685,8 +685,8 @@ export default function TestingPage() {
         )}
 
         {/* Steps */}
-        <div className="space-y-3">
-          <p className="text-sm font-semibold text-foreground">Steps</p>
+        <div className="space-y-3 pt-2">
+          <p className="text-base font-semibold text-foreground">Steps</p>
           {steps.map((step, i) => (
             <label
               key={i}
@@ -768,7 +768,7 @@ export default function TestingPage() {
             <Button
               onClick={async () => { setShowIssueBox(false); await record("pass"); }}
               disabled={saving}
-              className="gap-2 bg-green-600 hover:bg-green-700 text-white h-12 text-sm font-semibold rounded-xl"
+              className="gap-2 bg-green-600 hover:bg-green-700 text-white h-12 text-sm font-semibold"
             >
               <CheckCircle2 className="h-4 w-4" />
               Passed
@@ -777,7 +777,7 @@ export default function TestingPage() {
               onClick={() => setShowIssueBox((v) => !v)}
               disabled={saving}
               variant="destructive"
-              className="gap-2 h-12 text-sm font-semibold rounded-xl"
+              className="gap-2 h-12 text-sm font-semibold"
             >
               <XCircle className="h-4 w-4" />
               {showIssueBox ? "Confirm →" : "Issue found"}
@@ -786,7 +786,7 @@ export default function TestingPage() {
               onClick={async () => { setShowIssueBox(false); await record("skip"); }}
               disabled={saving}
               variant="outline"
-              className="gap-2 h-12 text-sm font-semibold rounded-xl"
+              className="gap-2 h-12 text-sm font-semibold"
             >
               <MinusCircle className="h-4 w-4" />
               Skip
@@ -799,7 +799,7 @@ export default function TestingPage() {
               onClick={() => record("fail")}
               disabled={saving}
               variant="destructive"
-              className="w-full h-10 text-sm rounded-xl"
+              className="w-full h-10 text-sm"
             >
               Save issue &amp; continue →
             </Button>
@@ -820,7 +820,7 @@ export default function TestingPage() {
               type="button"
               onClick={() => fileRef.current?.click()}
               disabled={uploadingScreenshot}
-              className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors px-2 py-1.5 rounded-lg hover:bg-muted"
+              className="flex items-center gap-1.5 text-xs text-primary hover:text-primary/80 transition-colors px-2 py-1.5 rounded-md hover:bg-primary/10"
             >
               <Camera className="h-3.5 w-3.5" />
               {uploadingScreenshot ? "Uploading…" : "Attach screenshot"}

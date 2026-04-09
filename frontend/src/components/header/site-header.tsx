@@ -3,9 +3,9 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ChevronRight, ChevronsUpDown, GitCompare, Inbox, Menu, Sparkles } from "lucide-react";
+import Image from "next/image";
+import { ChevronRight, ChevronsUpDown, GitCompare, Inbox, Menu, Sparkles, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useSidebar } from "@/components/ui/sidebar";
 import { useProjectPermissions } from "@/hooks/use-project-permissions";
 import {
   Popover,
@@ -55,10 +55,19 @@ function ProcoreReferenceToggle() {
 export function SiteHeader() {
   const router = useRouter();
   const nav = useHeaderNav();
-  const { toggleSidebar } = useSidebar();
   const { permissions, userType, isAppAdmin } = useProjectPermissions(
     nav.projectId
   );
+  const [mobileNavOpen, setMobileNavOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!mobileNavOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mobileNavOpen]);
 
   return (
     <header
@@ -66,21 +75,22 @@ export function SiteHeader() {
       {...feedbackTargetProps("app.site-header")}
     >
       <div className="flex w-full items-center justify-between px-3 sm:px-5 lg:px-7 min-w-0">
-        {/* ── Left: Mobile hamburger + Breadcrumbs ── */}
+        {/* ── Left: Mobile logo + Breadcrumbs (desktop) ── */}
         <div className="flex items-center gap-2 min-w-0 flex-1">
-          {/* Mobile: Hamburger to open sidebar sheet */}
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={toggleSidebar}
-            className="-ml-2 h-12 w-12 p-2 text-muted-foreground hover:text-foreground md:hidden"
-            aria-label="Toggle menu"
-          >
-            <Menu />
-          </Button>
+          {/* Mobile: Logo on left */}
+          <Link href="/" className="flex items-center md:hidden" aria-label="Home">
+            <Image
+              src="/Alleato-Group-Logo_Dark.png"
+              alt="Alleato"
+              width={96}
+              height={24}
+              priority
+              className="h-6 w-auto dark:invert"
+            />
+          </Link>
 
           {/* Breadcrumbs — Desktop */}
-          {nav.activeToolName !== "Projects" && (
+          {nav.breadcrumbs.length > 1 && (
             <div className="hidden md:flex items-center gap-1 text-xs min-w-0 overflow-hidden">
               {nav.breadcrumbs.map((crumb, index) => (
                 <span
@@ -153,8 +163,144 @@ export function SiteHeader() {
             <NotificationBell />
           </React.Suspense>
         </div>
+
+        {/* Mobile: Menu button on right */}
+        <button
+          type="button"
+          onClick={() => setMobileNavOpen(true)}
+          aria-label="Open menu"
+          className="md:hidden inline-flex h-9 w-9 items-center justify-center rounded-md text-foreground"
+        >
+          <Menu style={{ width: 26, height: 26 }} />
+        </button>
       </div>
+
+      {/* Mobile full-screen nav overlay */}
+      <MobileNavOverlay
+        open={mobileNavOpen}
+        onClose={() => setMobileNavOpen(false)}
+        projectId={nav.projectId}
+        activeToolName={nav.activeToolName}
+        permissions={permissions}
+        isAppAdmin={isAppAdmin}
+        userType={userType}
+      />
     </header>
+  );
+}
+
+function MobileNavOverlay({
+  open,
+  onClose,
+  projectId,
+  activeToolName,
+  permissions,
+  isAppAdmin,
+  userType,
+}: {
+  open: boolean;
+  onClose: () => void;
+  projectId: number | null;
+  activeToolName: string;
+  permissions: Record<string, string[]>;
+  isAppAdmin: boolean;
+  userType: string | null;
+}) {
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    if (open) {
+      setMounted(true);
+    } else {
+      const t = setTimeout(() => setMounted(false), 300);
+      return () => clearTimeout(t);
+    }
+  }, [open]);
+
+  if (!mounted && !open) return null;
+
+  const groups = headerNavGroups.map((group) => ({
+    ...group,
+    visibleTools: filterToolsByPermission(
+      group.tools,
+      projectId,
+      permissions,
+      isAppAdmin,
+      userType
+    ),
+  }));
+
+  return (
+    <div
+      className={cn(
+        "fixed inset-0 z-50 md:hidden bg-background transition-all duration-300 ease-out",
+        open ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4 pointer-events-none"
+      )}
+    >
+      <div className="flex h-14 items-center justify-between px-4">
+        <Image
+          src="/Alleato-Group-Logo_Dark.png"
+          alt="Alleato"
+          width={96}
+          height={24}
+          className="h-6 w-auto dark:invert"
+        />
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close menu"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-md text-foreground"
+        >
+          <X style={{ width: 26, height: 26 }} />
+        </button>
+      </div>
+
+      <nav className="h-[calc(100svh-3.5rem)] overflow-y-auto px-6 pt-10 pb-12 flex flex-col items-center gap-10">
+        {groups.map((group) => (
+          <div key={group.id} className="flex flex-col items-center gap-6 w-full">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+              {group.label}
+            </p>
+            <div className="flex flex-col items-center gap-5 w-full">
+              {group.tools.map((tool) => {
+                const isDisabled =
+                  (tool.requiresProject && !projectId) ||
+                  !group.visibleTools.includes(tool);
+                const href = buildToolUrl(
+                  tool.path,
+                  projectId,
+                  tool.requiresProject
+                );
+                const isActive = tool.name === activeToolName;
+                return (
+                  <Link
+                    key={`${tool.path}:${tool.name}`}
+                    href={href}
+                    onClick={(e) => {
+                      if (isDisabled) {
+                        e.preventDefault();
+                        return;
+                      }
+                      onClose();
+                    }}
+                    className={cn(
+                      "text-xl tracking-tight transition-colors",
+                      isDisabled
+                        ? "pointer-events-none opacity-30"
+                        : isActive
+                        ? "text-foreground font-semibold"
+                        : "text-foreground/85"
+                    )}
+                  >
+                    {tool.name}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </nav>
+    </div>
   );
 }
 
