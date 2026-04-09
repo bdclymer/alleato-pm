@@ -1233,13 +1233,6 @@ export type Database = {
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "acumatica_purchase_orders_vendor_uuid_fkey"
-            columns: ["vendor_uuid"]
-            isOneToOne: false
-            referencedRelation: "vendors"
-            referencedColumns: ["id"]
-          },
         ]
       }
       acumatica_subcontracts: {
@@ -1400,7 +1393,7 @@ export type Database = {
             foreignKeyName: "acumatica_subcontracts_vendor_uuid_fkey"
             columns: ["vendor_uuid"]
             isOneToOne: false
-            referencedRelation: "vendors"
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -2988,6 +2981,7 @@ export type Database = {
           closed_by: string | null
           closed_date: string | null
           created_at: string | null
+          due_date: string | null
           end_date: string
           id: string
           is_closed: boolean | null
@@ -3001,6 +2995,7 @@ export type Database = {
           closed_by?: string | null
           closed_date?: string | null
           created_at?: string | null
+          due_date?: string | null
           end_date: string
           id?: string
           is_closed?: boolean | null
@@ -3014,6 +3009,7 @@ export type Database = {
           closed_by?: string | null
           closed_date?: string | null
           created_at?: string | null
+          due_date?: string | null
           end_date?: string
           id?: string
           is_closed?: boolean | null
@@ -4312,7 +4308,7 @@ export type Database = {
             foreignKeyName: "change_event_line_items_vendor_id_fkey"
             columns: ["vendor_id"]
             isOneToOne: false
-            referencedRelation: "vendors"
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -5442,63 +5438,218 @@ export type Database = {
           },
         ]
       }
+      commitment_related_items: {
+        Row: {
+          commitment_id: string
+          commitment_type: string
+          created_at: string
+          created_by: string | null
+          id: string
+          project_id: number
+          related_id: string
+          related_number: string | null
+          related_status: string | null
+          related_title: string
+          related_type: string
+          related_url: string | null
+          updated_at: string
+        }
+        Insert: {
+          commitment_id: string
+          commitment_type: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          project_id: number
+          related_id: string
+          related_number?: string | null
+          related_status?: string | null
+          related_title: string
+          related_type: string
+          related_url?: string | null
+          updated_at?: string
+        }
+        Update: {
+          commitment_id?: string
+          commitment_type?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          project_id?: number
+          related_id?: string
+          related_number?: string | null
+          related_status?: string | null
+          related_title?: string
+          related_type?: string
+          related_url?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commitment_related_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "commitment_related_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commitment_related_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commitment_related_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "commitment_related_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commitment_related_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commitment_related_items_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       companies: {
         Row: {
+          acumatica_sync_at: string | null
+          acumatica_vendor_id: string | null
           address: string | null
+          ap_account: string | null
+          cash_account: string | null
           city: string | null
+          contact_email: string | null
+          contact_name: string | null
+          contact_phone: string | null
+          country: string | null
           created_at: string | null
           currency_code: string | null
           currency_symbol: string | null
           customer_id: string | null
           id: string
+          is_1099_vendor: boolean | null
+          is_foreign_entity: boolean | null
+          is_labor_union: boolean | null
+          is_tax_agency: boolean | null
+          is_vendor: boolean
+          legal_name: string | null
           logo_url: string | null
           metadata: Json | null
           name: string
           notes: string | null
+          payment_method: string | null
           state: string | null
           status: string | null
+          tax_id: string | null
+          terms: string | null
           title: string | null
           type: string | null
           updated_at: string | null
+          vendor_class: string | null
           website: string | null
+          zip_code: string | null
         }
         Insert: {
+          acumatica_sync_at?: string | null
+          acumatica_vendor_id?: string | null
           address?: string | null
+          ap_account?: string | null
+          cash_account?: string | null
           city?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          country?: string | null
           created_at?: string | null
           currency_code?: string | null
           currency_symbol?: string | null
           customer_id?: string | null
           id?: string
+          is_1099_vendor?: boolean | null
+          is_foreign_entity?: boolean | null
+          is_labor_union?: boolean | null
+          is_tax_agency?: boolean | null
+          is_vendor?: boolean
+          legal_name?: string | null
           logo_url?: string | null
           metadata?: Json | null
           name: string
           notes?: string | null
+          payment_method?: string | null
           state?: string | null
           status?: string | null
+          tax_id?: string | null
+          terms?: string | null
           title?: string | null
           type?: string | null
           updated_at?: string | null
+          vendor_class?: string | null
           website?: string | null
+          zip_code?: string | null
         }
         Update: {
+          acumatica_sync_at?: string | null
+          acumatica_vendor_id?: string | null
           address?: string | null
+          ap_account?: string | null
+          cash_account?: string | null
           city?: string | null
+          contact_email?: string | null
+          contact_name?: string | null
+          contact_phone?: string | null
+          country?: string | null
           created_at?: string | null
           currency_code?: string | null
           currency_symbol?: string | null
           customer_id?: string | null
           id?: string
+          is_1099_vendor?: boolean | null
+          is_foreign_entity?: boolean | null
+          is_labor_union?: boolean | null
+          is_tax_agency?: boolean | null
+          is_vendor?: boolean
+          legal_name?: string | null
           logo_url?: string | null
           metadata?: Json | null
           name?: string
           notes?: string | null
+          payment_method?: string | null
           state?: string | null
           status?: string | null
+          tax_id?: string | null
+          terms?: string | null
           title?: string | null
           type?: string | null
           updated_at?: string | null
+          vendor_class?: string | null
           website?: string | null
+          zip_code?: string | null
         }
         Relationships: []
       }
@@ -7056,7 +7207,7 @@ export type Database = {
             foreignKeyName: "direct_costs_vendor_id_fkey"
             columns: ["vendor_id"]
             isOneToOne: false
-            referencedRelation: "vendors"
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -10600,6 +10751,267 @@ export type Database = {
           },
         ]
       }
+      invoice_attachments: {
+        Row: {
+          created_at: string
+          file_name: string
+          file_path: string
+          file_size: number | null
+          id: number
+          mime_type: string | null
+          owner_invoice_id: number | null
+          subcontractor_invoice_id: number | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          file_path: string
+          file_size?: number | null
+          id?: number
+          mime_type?: string | null
+          owner_invoice_id?: number | null
+          subcontractor_invoice_id?: number | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          file_path?: string
+          file_size?: number | null
+          id?: number
+          mime_type?: string | null
+          owner_invoice_id?: number | null
+          subcontractor_invoice_id?: number | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_attachments_owner_invoice_id_fkey"
+            columns: ["owner_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "owner_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_attachments_subcontractor_invoice_id_fkey"
+            columns: ["subcontractor_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractor_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoice_payments: {
+        Row: {
+          amount: number
+          check_number: string | null
+          created_at: string
+          id: number
+          notes: string | null
+          owner_invoice_id: number | null
+          payment_date: string | null
+          payment_method: string | null
+          payment_number: string | null
+          project_id: number
+          subcontractor_invoice_id: number | null
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          check_number?: string | null
+          created_at?: string
+          id?: number
+          notes?: string | null
+          owner_invoice_id?: number | null
+          payment_date?: string | null
+          payment_method?: string | null
+          payment_number?: string | null
+          project_id: number
+          subcontractor_invoice_id?: number | null
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          check_number?: string | null
+          created_at?: string
+          id?: number
+          notes?: string | null
+          owner_invoice_id?: number | null
+          payment_date?: string | null
+          payment_method?: string | null
+          payment_number?: string | null
+          project_id?: number
+          subcontractor_invoice_id?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoice_payments_owner_invoice_id_fkey"
+            columns: ["owner_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "owner_invoices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_payments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "invoice_payments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_payments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_payments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "invoice_payments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_payments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_payments_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoice_payments_subcontractor_invoice_id_fkey"
+            columns: ["subcontractor_invoice_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractor_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      invoicing_settings: {
+        Row: {
+          allow_over_billing: boolean | null
+          created_at: string
+          default_billing_due_day: number | null
+          default_billing_end_day: number | null
+          default_billing_start_day: number | null
+          default_retainage_percent: number | null
+          id: number
+          invitation_custom_message: string | null
+          invite_reminder_frequency_days: number | null
+          invoice_pdf_footer_text: string | null
+          notify_subs_on_approval: boolean | null
+          project_id: number
+          send_under_review_digest: boolean | null
+          updated_at: string
+        }
+        Insert: {
+          allow_over_billing?: boolean | null
+          created_at?: string
+          default_billing_due_day?: number | null
+          default_billing_end_day?: number | null
+          default_billing_start_day?: number | null
+          default_retainage_percent?: number | null
+          id?: number
+          invitation_custom_message?: string | null
+          invite_reminder_frequency_days?: number | null
+          invoice_pdf_footer_text?: string | null
+          notify_subs_on_approval?: boolean | null
+          project_id: number
+          send_under_review_digest?: boolean | null
+          updated_at?: string
+        }
+        Update: {
+          allow_over_billing?: boolean | null
+          created_at?: string
+          default_billing_due_day?: number | null
+          default_billing_end_day?: number | null
+          default_billing_start_day?: number | null
+          default_retainage_percent?: number | null
+          id?: number
+          invitation_custom_message?: string | null
+          invite_reminder_frequency_days?: number | null
+          invoice_pdf_footer_text?: string | null
+          notify_subs_on_approval?: boolean | null
+          project_id?: number
+          send_under_review_digest?: boolean | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "invoicing_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "invoicing_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoicing_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoicing_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "invoicing_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoicing_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "invoicing_settings_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: true
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       issues: {
         Row: {
           category: Database["public"]["Enums"]["issue_category"]
@@ -11607,32 +12019,68 @@ export type Database = {
         Row: {
           acumatica_line_nbr: number | null
           approved_amount: number | null
+          balance_to_finish: number | null
           category: string | null
           created_at: string | null
           description: string | null
           id: number
           invoice_id: number
+          materials_stored: number
+          net_amount_this_period: number | null
+          retainage_amount: number
+          retainage_pct: number
+          retainage_released: number
+          scheduled_value: number
+          sort_order: number
+          total_completed_stored: number | null
           updated_at: string
+          work_completed_pct: number
+          work_completed_period: number
+          work_completed_previous: number
         }
         Insert: {
           acumatica_line_nbr?: number | null
           approved_amount?: number | null
+          balance_to_finish?: number | null
           category?: string | null
           created_at?: string | null
           description?: string | null
           id?: number
           invoice_id: number
+          materials_stored?: number
+          net_amount_this_period?: number | null
+          retainage_amount?: number
+          retainage_pct?: number
+          retainage_released?: number
+          scheduled_value?: number
+          sort_order?: number
+          total_completed_stored?: number | null
           updated_at?: string
+          work_completed_pct?: number
+          work_completed_period?: number
+          work_completed_previous?: number
         }
         Update: {
           acumatica_line_nbr?: number | null
           approved_amount?: number | null
+          balance_to_finish?: number | null
           category?: string | null
           created_at?: string | null
           description?: string | null
           id?: number
           invoice_id?: number
+          materials_stored?: number
+          net_amount_this_period?: number | null
+          retainage_amount?: number
+          retainage_pct?: number
+          retainage_released?: number
+          scheduled_value?: number
+          sort_order?: number
+          total_completed_stored?: number | null
           updated_at?: string
+          work_completed_pct?: number
+          work_completed_period?: number
+          work_completed_previous?: number
         }
         Relationships: [
           {
@@ -11658,6 +12106,7 @@ export type Database = {
           id: number
           invoice_number: string | null
           net_amount: number | null
+          notes: string | null
           paid_amount: number | null
           percent_complete: number | null
           period_end: string | null
@@ -11680,6 +12129,7 @@ export type Database = {
           id?: number
           invoice_number?: string | null
           net_amount?: number | null
+          notes?: string | null
           paid_amount?: number | null
           percent_complete?: number | null
           period_end?: string | null
@@ -11702,6 +12152,7 @@ export type Database = {
           id?: number
           invoice_number?: string | null
           net_amount?: number | null
+          notes?: string | null
           paid_amount?: number | null
           percent_complete?: number | null
           period_end?: string | null
@@ -12434,6 +12885,7 @@ export type Database = {
         Row: {
           created_at: string | null
           description: string | null
+          granular_flags: string[]
           id: string
           is_system: boolean | null
           name: string
@@ -12444,6 +12896,7 @@ export type Database = {
         Insert: {
           created_at?: string | null
           description?: string | null
+          granular_flags?: string[]
           id?: string
           is_system?: boolean | null
           name: string
@@ -12454,6 +12907,7 @@ export type Database = {
         Update: {
           created_at?: string | null
           description?: string | null
+          granular_flags?: string[]
           id?: string
           is_system?: boolean | null
           name?: string
@@ -13650,7 +14104,7 @@ export type Database = {
             foreignKeyName: "prime_contracts_vendor_id_fkey"
             columns: ["vendor_id"]
             isOneToOne: false
-            referencedRelation: "vendors"
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -15743,7 +16197,7 @@ export type Database = {
             foreignKeyName: "project_vendors_vendor_id_fkey"
             columns: ["vendor_id"]
             isOneToOne: false
-            referencedRelation: "vendors"
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -16706,13 +17160,6 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "purchase_orders_contract_company_id_fkey"
-            columns: ["contract_company_id"]
-            isOneToOne: false
-            referencedRelation: "vendors"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "purchase_orders_project_id_fkey"
             columns: ["project_id"]
@@ -18465,6 +18912,213 @@ export type Database = {
           },
         ]
       }
+      subcontractor_invoice_line_items: {
+        Row: {
+          balance_to_finish: number | null
+          created_at: string
+          description: string | null
+          id: number
+          invoice_id: number
+          materials_stored: number
+          net_amount_this_period: number | null
+          retainage_amount: number
+          retainage_pct: number
+          retainage_released: number
+          scheduled_value: number
+          sort_order: number
+          total_completed_stored: number | null
+          updated_at: string
+          work_completed_pct: number
+          work_completed_period: number
+          work_completed_previous: number
+        }
+        Insert: {
+          balance_to_finish?: number | null
+          created_at?: string
+          description?: string | null
+          id?: number
+          invoice_id: number
+          materials_stored?: number
+          net_amount_this_period?: number | null
+          retainage_amount?: number
+          retainage_pct?: number
+          retainage_released?: number
+          scheduled_value?: number
+          sort_order?: number
+          total_completed_stored?: number | null
+          updated_at?: string
+          work_completed_pct?: number
+          work_completed_period?: number
+          work_completed_previous?: number
+        }
+        Update: {
+          balance_to_finish?: number | null
+          created_at?: string
+          description?: string | null
+          id?: number
+          invoice_id?: number
+          materials_stored?: number
+          net_amount_this_period?: number | null
+          retainage_amount?: number
+          retainage_pct?: number
+          retainage_released?: number
+          scheduled_value?: number
+          sort_order?: number
+          total_completed_stored?: number | null
+          updated_at?: string
+          work_completed_pct?: number
+          work_completed_period?: number
+          work_completed_previous?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subcontractor_invoice_line_items_invoice_id_fkey"
+            columns: ["invoice_id"]
+            isOneToOne: false
+            referencedRelation: "subcontractor_invoices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subcontractor_invoices: {
+        Row: {
+          approved_at: string | null
+          billing_date: string | null
+          billing_period_id: string | null
+          created_at: string
+          id: number
+          invoice_number: string | null
+          notes: string | null
+          period_end: string | null
+          period_start: string | null
+          project_id: number
+          purchase_order_id: string | null
+          status: Database["public"]["Enums"]["invoice_status"]
+          subcontract_id: string | null
+          submitted_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          approved_at?: string | null
+          billing_date?: string | null
+          billing_period_id?: string | null
+          created_at?: string
+          id?: number
+          invoice_number?: string | null
+          notes?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          project_id: number
+          purchase_order_id?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          subcontract_id?: string | null
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          approved_at?: string | null
+          billing_date?: string | null
+          billing_period_id?: string | null
+          created_at?: string
+          id?: number
+          invoice_number?: string | null
+          notes?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          project_id?: number
+          purchase_order_id?: string | null
+          status?: Database["public"]["Enums"]["invoice_status"]
+          subcontract_id?: string | null
+          submitted_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subcontractor_invoices_billing_period_id_fkey"
+            columns: ["billing_period_id"]
+            isOneToOne: false
+            referencedRelation: "billing_periods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontractor_invoices_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "subcontractor_invoices_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontractor_invoices_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontractor_invoices_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "subcontractor_invoices_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontractor_invoices_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontractor_invoices_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontractor_invoices_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontractor_invoices_purchase_order_id_fkey"
+            columns: ["purchase_order_id"]
+            isOneToOne: false
+            referencedRelation: "purchase_orders_with_totals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontractor_invoices_subcontract_id_fkey"
+            columns: ["subcontract_id"]
+            isOneToOne: false
+            referencedRelation: "subcontracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subcontractor_invoices_subcontract_id_fkey"
+            columns: ["subcontract_id"]
+            isOneToOne: false
+            referencedRelation: "subcontracts_with_totals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       subcontractor_projects: {
         Row: {
           completion_date: string | null
@@ -18830,13 +19484,6 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "subcontracts_contract_company_id_fkey"
-            columns: ["contract_company_id"]
-            isOneToOne: false
-            referencedRelation: "vendors"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "subcontracts_project_id_fkey"
             columns: ["project_id"]
@@ -20179,41 +20826,53 @@ export type Database = {
       test_cases: {
         Row: {
           category: string
+          context_note: string | null
           created_at: string
           expected_result: string | null
           id: string
           priority: string
+          setup_steps: string | null
+          start_url: string | null
           steps: string | null
           subcategory: string | null
           suite_id: string
           test_name: string
           test_number: string
+          test_type: string
           updated_at: string
         }
         Insert: {
           category: string
+          context_note?: string | null
           created_at?: string
           expected_result?: string | null
           id?: string
           priority?: string
+          setup_steps?: string | null
+          start_url?: string | null
           steps?: string | null
           subcategory?: string | null
           suite_id: string
           test_name: string
           test_number: string
+          test_type?: string
           updated_at?: string
         }
         Update: {
           category?: string
+          context_note?: string | null
           created_at?: string
           expected_result?: string | null
           id?: string
           priority?: string
+          setup_steps?: string | null
+          start_url?: string | null
           steps?: string | null
           subcategory?: string | null
           suite_id?: string
           test_name?: string
           test_number?: string
+          test_type?: string
           updated_at?: string
         }
         Relationships: [
@@ -20233,6 +20892,7 @@ export type Database = {
           id: string
           notes: string | null
           run_id: string
+          severity: string | null
           status: string
           updated_at: string
         }
@@ -20242,6 +20902,7 @@ export type Database = {
           id?: string
           notes?: string | null
           run_id: string
+          severity?: string | null
           status?: string
           updated_at?: string
         }
@@ -20251,6 +20912,7 @@ export type Database = {
           id?: string
           notes?: string | null
           run_id?: string
+          severity?: string | null
           status?: string
           updated_at?: string
         }
@@ -21214,137 +21876,36 @@ export type Database = {
       }
       vendor_contacts: {
         Row: {
+          company_id: string
           created_at: string
           id: string
           person_id: string
-          vendor_id: string
         }
         Insert: {
+          company_id: string
           created_at?: string
           id?: string
           person_id: string
-          vendor_id: string
         }
         Update: {
+          company_id?: string
           created_at?: string
           id?: string
           person_id?: string
-          vendor_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "vendor_contacts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "vendor_contacts_person_id_fkey"
             columns: ["person_id"]
             isOneToOne: false
             referencedRelation: "people"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "vendor_contacts_vendor_id_fkey"
-            columns: ["vendor_id"]
-            isOneToOne: false
-            referencedRelation: "vendors"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      vendors: {
-        Row: {
-          acumatica_sync_at: string | null
-          acumatica_vendor_id: string | null
-          address: string | null
-          ap_account: string | null
-          cash_account: string | null
-          city: string | null
-          company_id: string
-          contact_email: string | null
-          contact_name: string | null
-          contact_phone: string | null
-          country: string | null
-          created_at: string
-          id: string
-          is_1099_vendor: boolean | null
-          is_active: boolean
-          is_foreign_entity: boolean | null
-          is_labor_union: boolean | null
-          is_tax_agency: boolean | null
-          legal_name: string | null
-          name: string
-          notes: string | null
-          payment_method: string | null
-          state: string | null
-          tax_id: string | null
-          terms: string | null
-          updated_at: string
-          vendor_class: string | null
-          zip_code: string | null
-        }
-        Insert: {
-          acumatica_sync_at?: string | null
-          acumatica_vendor_id?: string | null
-          address?: string | null
-          ap_account?: string | null
-          cash_account?: string | null
-          city?: string | null
-          company_id: string
-          contact_email?: string | null
-          contact_name?: string | null
-          contact_phone?: string | null
-          country?: string | null
-          created_at?: string
-          id?: string
-          is_1099_vendor?: boolean | null
-          is_active?: boolean
-          is_foreign_entity?: boolean | null
-          is_labor_union?: boolean | null
-          is_tax_agency?: boolean | null
-          legal_name?: string | null
-          name: string
-          notes?: string | null
-          payment_method?: string | null
-          state?: string | null
-          tax_id?: string | null
-          terms?: string | null
-          updated_at?: string
-          vendor_class?: string | null
-          zip_code?: string | null
-        }
-        Update: {
-          acumatica_sync_at?: string | null
-          acumatica_vendor_id?: string | null
-          address?: string | null
-          ap_account?: string | null
-          cash_account?: string | null
-          city?: string | null
-          company_id?: string
-          contact_email?: string | null
-          contact_name?: string | null
-          contact_phone?: string | null
-          country?: string | null
-          created_at?: string
-          id?: string
-          is_1099_vendor?: boolean | null
-          is_active?: boolean
-          is_foreign_entity?: boolean | null
-          is_labor_union?: boolean | null
-          is_tax_agency?: boolean | null
-          legal_name?: string | null
-          name?: string
-          notes?: string | null
-          payment_method?: string | null
-          state?: string | null
-          tax_id?: string | null
-          terms?: string | null
-          updated_at?: string
-          vendor_class?: string | null
-          zip_code?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "vendors_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -21811,7 +22372,7 @@ export type Database = {
             foreignKeyName: "direct_costs_vendor_id_fkey"
             columns: ["vendor_id"]
             isOneToOne: false
-            referencedRelation: "vendors"
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -22779,13 +23340,6 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "purchase_orders_contract_company_id_fkey"
-            columns: ["contract_company_id"]
-            isOneToOne: false
-            referencedRelation: "vendors"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "purchase_orders_project_id_fkey"
             columns: ["project_id"]
             isOneToOne: false
@@ -22911,13 +23465,6 @@ export type Database = {
           updated_at: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "subcontracts_contract_company_id_fkey"
-            columns: ["contract_company_id"]
-            isOneToOne: false
-            referencedRelation: "vendors"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "subcontracts_project_id_fkey"
             columns: ["project_id"]
@@ -23120,6 +23667,16 @@ export type Database = {
           isSetofReturn: false
         }
       }
+      current_can_view_private_commitments: {
+        Args: { p_project_id: number }
+        Returns: boolean
+      }
+      current_is_app_admin: { Args: never; Returns: boolean }
+      current_is_project_member: {
+        Args: { p_project_id: number }
+        Returns: boolean
+      }
+      current_person_id: { Args: never; Returns: string }
       decay_memory_confidence: {
         Args: never
         Returns: {
@@ -24612,6 +25169,7 @@ export type Database = {
         | "revise_and_resubmit"
         | "not_invited"
         | "invited"
+        | "approved_as_noted"
       issue_category:
         | "Design"
         | "Submittal"
@@ -24794,6 +25352,7 @@ export const Constants = {
         "revise_and_resubmit",
         "not_invited",
         "invited",
+        "approved_as_noted",
       ],
       issue_category: [
         "Design",
