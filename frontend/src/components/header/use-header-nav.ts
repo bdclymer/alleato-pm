@@ -267,6 +267,10 @@ export function useHeaderNav(): UseHeaderNavReturn {
         label = companyTitle || "Company";
       } else if (isRfiDetailRoute && index === 2) {
         label = rfiTitle || "RFI";
+      } else if (index === 0 && segment === "directory") {
+        // Global directory routes (/directory/vendors, /directory/clients, etc.)
+        // — not project-scoped, so label as Company Directory
+        label = "Company Directory";
       } else {
         // Try to find a matching tool name
         const matchingTool = allTools.find((tool) => tool.path === segment);
