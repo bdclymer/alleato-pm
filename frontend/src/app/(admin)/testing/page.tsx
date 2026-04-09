@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { PageShell } from "@/components/layout";
+import Link from "next/link";
 import {
   CheckCircle2,
   XCircle,
@@ -15,7 +16,8 @@ import {
   Camera,
   ChevronLeft,
   ChevronRight,
-  ArrowRight,
+  BookOpen,
+  Play,
 } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -168,27 +170,41 @@ export default function TestingPage() {
   // ─── View: HOME ────────────────────────────────────────────────────────────
   if (view === "home") {
     return (
-      <PageShell variant="content" title="Testing" description="Select a tool to start a test session">
-        <div className="max-w-2xl space-y-3">
+      <PageShell variant="content" title="Testing" description="Browse scenarios or start an interactive test session">
+        <div className="max-w-2xl space-y-2">
           {suites.length === 0 && (
             <p className="text-muted-foreground text-sm text-center py-12">No test scenarios available yet.</p>
           )}
           {suites.map((suite) => (
-            <button
-              type="button"
+            <div
               key={suite.id}
-              onClick={() => { setSelectedSuite(suite); setView("start-run"); }}
-              className="w-full text-left flex items-center justify-between px-5 py-4 rounded-xl border border-border bg-card hover:border-primary/50 hover:bg-muted/40 transition-all group"
+              className="flex items-center justify-between px-5 py-4 rounded-xl border border-border bg-card"
             >
-              <div>
-                <p className="font-semibold text-base">{suite.display_name}</p>
-                <p className="text-sm text-muted-foreground mt-0.5">
+              <div className="min-w-0">
+                <p className="font-semibold text-sm">{suite.display_name}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
                   {suite.scenario_count} scenario{suite.scenario_count !== 1 ? "s" : ""}
                   {suite.feature_count > 0 && ` · ${suite.feature_count} feature checks`}
                 </p>
               </div>
-              <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
-            </button>
+              <div className="flex items-center gap-2 shrink-0 ml-4">
+                <Link
+                  href={`/procore-tools/${suite.tool_name}?tab=test-scenarios`}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-border bg-background hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
+                >
+                  <BookOpen className="h-3.5 w-3.5" />
+                  Browse
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => { setSelectedSuite(suite); setView("start-run"); }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                >
+                  <Play className="h-3.5 w-3.5" />
+                  Run
+                </button>
+              </div>
+            </div>
           ))}
         </div>
       </PageShell>

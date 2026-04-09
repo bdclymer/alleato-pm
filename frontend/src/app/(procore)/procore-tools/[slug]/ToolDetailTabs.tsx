@@ -2,6 +2,8 @@
 
 import * as React from "react";
 
+import { useSearchParams } from "next/navigation";
+
 import { ChatTab } from "@/components/dev-panel/ChatTab";
 import { FeedbackTab } from "@/components/dev-panel/FeedbackTab";
 import { GapsTab } from "@/components/dev-panel/GapsTab";
@@ -20,7 +22,13 @@ interface Props {
 // Height used only for constrained tabs (spec, gaps, feedback, chat, scenarios)
 const CONSTRAINED_HEIGHT = "h-[calc(100vh-320px)] min-h-[480px]";
 
+const VALID_TABS = ["overview", "screenshots", "spec", "gaps", "scenarios", "feedback", "chat"];
+
 export function ToolDetailTabs({ slug, description, scenariosMarkdown }: Props) {
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const defaultTab = VALID_TABS.includes(tabParam ?? "") ? (tabParam as string) : "overview";
+
   return (
     <div className="mt-4">
       {description && (
@@ -29,7 +37,7 @@ export function ToolDetailTabs({ slug, description, scenariosMarkdown }: Props) 
         </p>
       )}
 
-      <Tabs defaultValue="overview">
+      <Tabs defaultValue={defaultTab}>
         <TabsList className="mb-6">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="screenshots">Screenshots</TabsTrigger>
