@@ -23,6 +23,8 @@ export interface DrawingFilters {
   set_id?: string;
   page?: number;
   page_size?: number;
+  include_unpublished?: boolean;
+  include_obsolete?: boolean;
 }
 
 export interface DrawingCreateInput {
@@ -103,6 +105,8 @@ export class DrawingService {
       set_id,
       page = 1,
       page_size = 50,
+      include_unpublished = false,
+      include_obsolete = false,
     } = filters;
 
     const projectIdNum = Number.parseInt(projectId, 10);
@@ -114,6 +118,14 @@ export class DrawingService {
         .from("drawing_log")
         .select("*", { count: "exact" })
         .eq("project_id", projectIdNum);
+
+      // By default, exclude unpublished and obsolete drawings
+      if (!include_unpublished) {
+        query = query.eq("is_published", true);
+      }
+      if (!include_obsolete) {
+        query = query.eq("is_obsolete", false);
+      }
 
       // Apply filters
       if (area_id) {
@@ -860,6 +872,169 @@ export class DrawingService {
       }
 
       return { data: data || [], error: null };
+    } catch (err) {
+      return {
+        data: null,
+        error: {
+          type: "UNKNOWN",
+          message: err instanceof Error ? err.message : "an unexpected error occurred",
+        },
+      };
+    }
+  }
+
+  /**
+   * Publish a drawing (is_published = true)
+   */
+  async publish(
+    projectId: string,
+    drawingId: string,
+  ): Promise<Result<Drawing, DrawingError>> {
+    return this._setPublished(projectId, drawingId, true);
+  }
+
+  /**
+   * Unpublish a drawing (is_published = false)
+   */
+  async unpublish(
+    projectId: string,
+    drawingId: string,
+  ): Promise<Result<Drawing, DrawingError>> {
+    return this._setPublished(projectId, drawingId, false);
+  }
+
+  /**
+   * Mark a drawing as obsolete (is_obsolete = true)
+   */
+  async markObsolete(
+    projectId: string,
+    drawingId: string,
+  ): Promise<Result<Drawing, DrawingError>> {
+    return this._setObsolete(projectId, drawingId, true);
+  }
+
+  /**
+   * Restore a drawing from obsolete (is_obsolete = false)
+   */
+  async restoreObsolete(
+    projectId: string,
+    drawingId: string,
+  ): Promise<Result<Drawing, DrawingError>> {
+    return this._setObsolete(projectId, drawingId, false);
+  }
+
+  /**
+   * Update the revision_number on a drawing revision row
+   */
+  async updateRevisionNumber(
+    drawingId: string,
+    revisionId: string,
+    revisionNumber: string,
+  ): Promise<Result<DrawingRevision, DrawingError>> {
+    try {
+      const { data, error } = await this.supabase
+        .from("drawing_revisions")
+        .update({
+          revision_number: revisionNumber,
+        })
+        .eq("id", revisionId)
+        .eq("drawing_id", drawingId)
+        .select()
+        .single();
+
+      if (error) {
+        if (error.code === "PGRST116") {
+          return {
+            data: null,
+            error: {
+              type: "NOT_FOUND",
+              message: `Revision with ID ${revisionId} not found`,
+            },
+          };
+        }
+        return {
+          data: null,
+          error: { type: "UNKNOWN", message: error.message },
+        };
+      }
+
+      return { data, error: null };
+    } catch (err) {
+      return {
+        data: null,
+        error: {
+          type: "UNKNOWN",
+          message: err instanceof Error ? err.message : "an unexpected error occurred",
+        },
+      };
+    }
+  }
+
+  // ─── Private helpers ────────────────────────────────────────────────────────
+
+  private async _setPublished(
+    projectId: string,
+    drawingId: string,
+    isPublished: boolean,
+  ): Promise<Result<Drawing, DrawingError>> {
+    const projectIdNum = Number.parseInt(projectId, 10);
+    try {
+      const { data, error } = await this.supabase
+        .from("drawings")
+        .update({ is_published: isPublished, updated_at: new Date().toISOString() })
+        .eq("id", drawingId)
+        .eq("project_id", projectIdNum)
+        .select()
+        .single();
+
+      if (error) {
+        if (error.code === "PGRST116") {
+          return {
+            data: null,
+            error: { type: "NOT_FOUND", message: `Drawing with ID ${drawingId} not found` },
+          };
+        }
+        return { data: null, error: { type: "UNKNOWN", message: error.message } };
+      }
+
+      return { data, error: null };
+    } catch (err) {
+      return {
+        data: null,
+        error: {
+          type: "UNKNOWN",
+          message: err instanceof Error ? err.message : "an unexpected error occurred",
+        },
+      };
+    }
+  }
+
+  private async _setObsolete(
+    projectId: string,
+    drawingId: string,
+    isObsolete: boolean,
+  ): Promise<Result<Drawing, DrawingError>> {
+    const projectIdNum = Number.parseInt(projectId, 10);
+    try {
+      const { data, error } = await this.supabase
+        .from("drawings")
+        .update({ is_obsolete: isObsolete, updated_at: new Date().toISOString() })
+        .eq("id", drawingId)
+        .eq("project_id", projectIdNum)
+        .select()
+        .single();
+
+      if (error) {
+        if (error.code === "PGRST116") {
+          return {
+            data: null,
+            error: { type: "NOT_FOUND", message: `Drawing with ID ${drawingId} not found` },
+          };
+        }
+        return { data: null, error: { type: "UNKNOWN", message: error.message } };
+      }
+
+      return { data, error: null };
     } catch (err) {
       return {
         data: null,

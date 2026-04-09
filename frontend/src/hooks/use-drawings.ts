@@ -31,6 +31,10 @@ export function useDrawings(projectId: string, filters?: DrawingFilters) {
       if (filters?.page) params.set("page", filters.page.toString());
       if (filters?.page_size)
         params.set("page_size", filters.page_size.toString());
+      if (filters?.include_unpublished)
+        params.set("include_unpublished", "true");
+      if (filters?.include_obsolete)
+        params.set("include_obsolete", "true");
 
       const response = await fetch(
         `/api/projects/${projectId}/drawings?${params}`,
@@ -166,6 +170,38 @@ export function useUpdateDrawing(projectId: string) {
 }
 
 /**
+ * React Query mutation for uploading a new revision to an existing drawing
+ */
+export function useUploadRevision(projectId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      drawingId,
+      formData,
+    }: {
+      drawingId: string;
+      formData: FormData;
+    }) => {
+      const res = await fetch(
+        `/api/projects/${projectId}/drawings/${drawingId}/revisions`,
+        {
+          method: "POST",
+          body: formData,
+        },
+      );
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Failed to upload revision");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["drawings", projectId] });
+    },
+  });
+}
+
+/**
  * React Query mutation for deleting a drawing
  */
 export function useDeleteDrawing(projectId: string) {
@@ -197,6 +233,56 @@ export function useDeleteDrawing(projectId: string) {
       toast.error("Could not delete drawing", {
         description: error.message,
       });
+    },
+  });
+}
+
+/**
+ * React Query mutation for publishing or unpublishing a drawing
+ */
+export function usePublishDrawing(projectId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ drawingId, publish }: { drawingId: string; publish: boolean }) => {
+      const res = await fetch(
+        `/api/projects/${projectId}/drawings/${drawingId}/publish`,
+        { method: publish ? "PATCH" : "DELETE" },
+      );
+      if (!res.ok) throw new Error("Failed to update drawing");
+      return res.json();
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["drawings", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["drawing", projectId, variables.drawingId] });
+      toast.success("Drawing updated");
+    },
+    onError: (error: Error) => {
+      toast.error("Could not update drawing", { description: error.message });
+    },
+  });
+}
+
+/**
+ * React Query mutation for marking a drawing obsolete or restoring it
+ */
+export function useObsoleteDrawing(projectId: string) {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ drawingId, obsolete }: { drawingId: string; obsolete: boolean }) => {
+      const res = await fetch(
+        `/api/projects/${projectId}/drawings/${drawingId}/obsolete`,
+        { method: obsolete ? "PATCH" : "DELETE" },
+      );
+      if (!res.ok) throw new Error("Failed to update drawing");
+      return res.json();
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["drawings", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["drawing", projectId, variables.drawingId] });
+      toast.success("Drawing updated");
+    },
+    onError: (error: Error) => {
+      toast.error("Could not update drawing", { description: error.message });
     },
   });
 }

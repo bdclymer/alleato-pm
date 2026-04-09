@@ -36,6 +36,7 @@ import { FileUploadField } from "@/components/forms/FileUploadField";
 
 import { useDrawingUpload } from "@/hooks/use-drawing-upload";
 import { useDrawingSets } from "@/hooks/use-drawing-sets";
+import { useUploadRevision } from "@/hooks/use-drawings";
 import {
   uploadDrawingFormSchema,
   type UploadDrawingFormData,
@@ -63,6 +64,12 @@ interface FileInfo {
   file: File;
 }
 
+interface DuplicateDrawing {
+  id: string;
+  drawing_number: string;
+  title: string;
+}
+
 export function DrawingUploadDialog({
   projectId,
   open,
@@ -72,10 +79,13 @@ export function DrawingUploadDialog({
   const [selectedFiles, setSelectedFiles] = useState<FileInfo[]>([]);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [newSetName, setNewSetName] = useState("");
+  const [duplicateDrawing, setDuplicateDrawing] = useState<DuplicateDrawing | null>(null);
+  const [isUploadingRevision, setIsUploadingRevision] = useState(false);
 
   const { data: sets = [] } = useDrawingSets(projectId);
   const { data: areas = [] } = useDrawingAreas(projectId);
-  const { uploadDrawing, uploadMultipleDrawings, isUploading, errors, clearErrors } = useDrawingUpload(projectId);
+  const { uploadMultipleDrawings, isUploading, errors, clearErrors } = useDrawingUpload(projectId);
+  const uploadRevision = useUploadRevision(projectId);
 
   const form = useForm<UploadDrawingFormData>({
     resolver: zodResolver(uploadDrawingFormSchema),
@@ -101,6 +111,25 @@ export function DrawingUploadDialog({
     setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
+  const resolveSetId = async (rawSetId: string): Promise<string | null> => {
+    if (rawSetId !== "__new__") return rawSetId;
+    if (!newSetName.trim()) {
+      toast.error("Please enter a name for the new drawing set");
+      return null;
+    }
+    const res = await fetch(`/api/projects/${projectId}/drawings/sets`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: newSetName.trim(), issued_at: new Date().toISOString() }),
+    });
+    if (!res.ok) {
+      toast.error("Failed to create drawing set");
+      return null;
+    }
+    const newSet = await res.json();
+    return newSet.id as string;
+  };
+
   const handleUpload = async (data: UploadDrawingFormData) => {
     if (selectedFiles.length === 0) {
       toast.error("You must attach a file");
@@ -108,33 +137,47 @@ export function DrawingUploadDialog({
     }
 
     clearErrors();
+    setDuplicateDrawing(null);
 
     try {
-      let setId = data.drawing_set_id;
-
-      // Create new set if user typed a name instead of selecting existing
-      if (setId === "__new__") {
-        if (!newSetName.trim()) {
-          toast.error("Please enter a name for the new drawing set");
-          return;
-        }
-        const res = await fetch(`/api/projects/${projectId}/drawings/sets`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: newSetName.trim(), issued_at: new Date().toISOString() }),
-        });
-        if (!res.ok) {
-          toast.error("Failed to create drawing set");
-          return;
-        }
-        const newSet = await res.json();
-        setId = newSet.id;
-      }
+      const setId = await resolveSetId(data.drawing_set_id);
+      if (setId === null) return;
 
       const uploadData = { ...data, drawing_set_id: setId };
 
       if (selectedFiles.length === 1) {
-        await uploadDrawing(selectedFiles[0].file, uploadData);
+        // Build FormData manually so we can inspect a 409 before the hook swallows it
+        const file = selectedFiles[0].file;
+        const fileName = file.name.replace(/\.[^/.]+$/, "");
+        const fd = new FormData();
+        fd.append("file", file);
+        fd.append("drawing_number", uploadData.drawing_number || fileName);
+        fd.append("title", uploadData.title || fileName);
+        if (uploadData.discipline) fd.append("discipline", uploadData.discipline);
+        if (uploadData.drawing_type) fd.append("drawing_type", uploadData.drawing_type);
+        fd.append("revision_number", uploadData.revision_number || "A");
+        if (uploadData.drawing_date) fd.append("drawing_date", uploadData.drawing_date);
+        fd.append("received_date", uploadData.received_date || new Date().toISOString());
+        if (uploadData.drawing_set_id) fd.append("drawing_set_id", uploadData.drawing_set_id);
+        if (uploadData.description) fd.append("description", uploadData.description);
+        if (uploadData.area_id) fd.append("area_id", uploadData.area_id);
+
+        const res = await fetch(`/api/projects/${projectId}/drawings`, {
+          method: "POST",
+          body: fd,
+        });
+
+        if (res.status === 409) {
+          const body = await res.json();
+          setDuplicateDrawing(body.existing_drawing ?? null);
+          return;
+        }
+
+        if (!res.ok) {
+          const body = await res.json();
+          toast.error("Upload failed", { description: body.error || "An unexpected error occurred" });
+          return;
+        }
       } else {
         const fileList = new DataTransfer();
         selectedFiles.forEach((fileInfo) => fileList.items.add(fileInfo.file));
@@ -145,11 +188,7 @@ export function DrawingUploadDialog({
         `Successfully uploaded ${selectedFiles.length} drawing${selectedFiles.length > 1 ? "s" : ""}`
       );
 
-      form.reset();
-      setSelectedFiles([]);
-      setShowAdvanced(false);
-      onOpenChange(false);
-      onUploadComplete?.();
+      handleClose();
     } catch (error) {
       console.error("Upload failed:", error);
       toast.error("Upload failed", {
@@ -157,6 +196,50 @@ export function DrawingUploadDialog({
           error instanceof Error ? error.message : "An unexpected error occurred",
       });
     }
+  };
+
+  const handleUploadAsRevision = async () => {
+    if (!duplicateDrawing || selectedFiles.length === 0) return;
+
+    const data = form.getValues();
+    setIsUploadingRevision(true);
+
+    try {
+      const setId = await resolveSetId(data.drawing_set_id);
+      if (setId === null) {
+        setIsUploadingRevision(false);
+        return;
+      }
+
+      const file = selectedFiles[0].file;
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("revision_number", data.revision_number || "A");
+      fd.append("received_date", data.received_date || new Date().toISOString());
+      if (data.drawing_date) fd.append("drawing_date", data.drawing_date);
+      if (setId) fd.append("drawing_set_id", setId);
+      if (data.description) fd.append("description", data.description);
+
+      await uploadRevision.mutateAsync({ drawingId: duplicateDrawing.id, formData: fd });
+
+      toast.success("New revision uploaded successfully");
+      handleClose();
+    } catch (error) {
+      toast.error("Failed to upload revision", {
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
+      });
+    } finally {
+      setIsUploadingRevision(false);
+    }
+  };
+
+  const handleClose = () => {
+    form.reset();
+    setSelectedFiles([]);
+    setShowAdvanced(false);
+    setDuplicateDrawing(null);
+    onOpenChange(false);
+    onUploadComplete?.();
   };
 
   const formatFileSize = (bytes: number) => {
@@ -508,6 +591,44 @@ export function DrawingUploadDialog({
               )}
             </div>
 
+            {/* Duplicate drawing warning */}
+            {duplicateDrawing && (
+              <div className="rounded-md bg-muted p-3 text-sm space-y-2">
+                <p className="font-medium text-foreground">Drawing already exists</p>
+                <p className="text-muted-foreground">
+                  Drawing{" "}
+                  <span className="font-mono">{duplicateDrawing.drawing_number}</span>{" "}
+                  — {duplicateDrawing.title}
+                </p>
+                <div className="flex gap-2 pt-1">
+                  <Button
+                    type="button"
+                    size="sm"
+                    disabled={isUploadingRevision}
+                    onClick={handleUploadAsRevision}
+                  >
+                    {isUploadingRevision ? (
+                      <>
+                        <Loader2 className="mr-2 h-3 w-3 animate-spin" />
+                        Uploading...
+                      </>
+                    ) : (
+                      "Upload as New Revision"
+                    )}
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    disabled={isUploadingRevision}
+                    onClick={() => setDuplicateDrawing(null)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {/* Errors */}
             {errors.length > 0 && (
               <div className="space-y-1">
@@ -538,14 +659,14 @@ export function DrawingUploadDialog({
                 <Button
                   type="button"
                   variant="ghost"
-                  onClick={() => onOpenChange(false)}
-                  disabled={isUploading}
+                  onClick={handleClose}
+                  disabled={isUploading || isUploadingRevision}
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
-                  disabled={isUploading}
+                  disabled={isUploading || isUploadingRevision}
                 >
                   {isUploading ? (
                     <>

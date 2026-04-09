@@ -2,10 +2,13 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import {
+  Archive,
   ArrowLeft,
   Download,
   Eye,
+  EyeOff,
   FileText,
   History,
   Info,
@@ -15,6 +18,8 @@ import {
   MoreHorizontal,
   Pencil,
   PenLine,
+  Printer,
+  RotateCcw,
   Trash2,
   X,
   Check,
@@ -25,6 +30,7 @@ import { format } from "date-fns";
 
 import { PageShell } from "@/components/layout";
 import { StatusBadge } from "@/components/ds";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -65,8 +71,14 @@ import {
 import { EmptyState } from "@/components/ds";
 import { DrawingComments } from "@/components/drawings/DrawingComments";
 
-import { useDrawing, useUpdateDrawing } from "@/hooks/use-drawings";
+import {
+  useDrawing,
+  useUpdateDrawing,
+  usePublishDrawing,
+  useObsoleteDrawing,
+} from "@/hooks/use-drawings";
 import { useDrawingRevisions } from "@/hooks/use-drawing-revisions";
+import { useDrawingAreas } from "@/hooks/use-drawing-areas";
 import {
   DRAWING_DISCIPLINES,
   DRAWING_TYPES,
@@ -123,6 +135,7 @@ interface EditFormState {
   title: string;
   discipline: string;
   drawing_type: string;
+  area_id: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -157,6 +170,34 @@ interface RevisionRowProps {
 
 function RevisionRow({ revision, projectId, drawingId, onDownload }: RevisionRowProps) {
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const [editingRevNum, setEditingRevNum] = useState(false);
+  const [newRevNum, setNewRevNum] = useState(revision.revision_number);
+
+  const handleSaveRevNum = async () => {
+    if (!newRevNum.trim() || newRevNum === revision.revision_number) {
+      setEditingRevNum(false);
+      return;
+    }
+    try {
+      const res = await fetch(
+        `/api/projects/${projectId}/drawings/${drawingId}/revisions/${revision.id}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ revision_number: newRevNum }),
+        },
+      );
+      if (!res.ok) throw new Error("Failed to update");
+      await queryClient.invalidateQueries({
+        queryKey: ["drawing-revisions", projectId, drawingId],
+      });
+      setEditingRevNum(false);
+      toast.success("Revision number updated");
+    } catch {
+      toast.error("Failed to update revision number");
+    }
+  };
 
   return (
     <TableRow className={revision.is_current_revision ? "bg-muted/30" : undefined}>
@@ -187,9 +228,42 @@ function RevisionRow({ revision, projectId, drawingId, onDownload }: RevisionRow
         </Button>
       </TableCell>
       <TableCell className="font-medium text-foreground">
-        {revision.revision_number}
-        {revision.is_current_revision && (
-          <span className="ml-1.5 text-xs text-muted-foreground">(current)</span>
+        {editingRevNum ? (
+          <div className="flex items-center gap-1">
+            <Input
+              className="h-6 w-20 text-sm px-1"
+              value={newRevNum}
+              onChange={(e) => setNewRevNum(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSaveRevNum();
+                if (e.key === "Escape") setEditingRevNum(false);
+              }}
+              autoFocus
+            />
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+              onClick={handleSaveRevNum}
+            >
+              <Check className="h-3 w-3" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 w-6 p-0"
+              onClick={() => setEditingRevNum(false)}
+            >
+              <X className="h-3 w-3" />
+            </Button>
+          </div>
+        ) : (
+          <>
+            {revision.revision_number}
+            {revision.is_current_revision && (
+              <span className="ml-1.5 text-xs text-muted-foreground">(current)</span>
+            )}
+          </>
         )}
       </TableCell>
       <TableCell className="text-muted-foreground text-sm">
@@ -213,11 +287,7 @@ function RevisionRow({ revision, projectId, drawingId, onDownload }: RevisionRow
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              onClick={() =>
-                toast.info("Change drawing number — coming soon")
-              }
-            >
+            <DropdownMenuItem onClick={() => setEditingRevNum(true)}>
               Change drawing number
             </DropdownMenuItem>
           </DropdownMenuContent>
@@ -240,7 +310,10 @@ export default function DrawingDetailPage() {
   const { data: drawing, isLoading, error } = useDrawing(projectId, drawingId);
   const { data: revisions = [], isLoading: revisionsLoading } =
     useDrawingRevisions(projectId, drawingId);
+  const { data: areas = [] } = useDrawingAreas(projectId);
   const updateDrawing = useUpdateDrawing(projectId);
+  const publishDrawing = usePublishDrawing(projectId);
+  const obsoleteDrawing = useObsoleteDrawing(projectId);
 
   const [isEditing, setIsEditing] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
@@ -250,6 +323,7 @@ export default function DrawingDetailPage() {
     title: "",
     discipline: "",
     drawing_type: "",
+    area_id: "",
   });
 
   // Fetch signed preview URL once drawing is loaded
@@ -273,6 +347,7 @@ export default function DrawingDetailPage() {
       title: drawing.title ?? "",
       discipline: drawing.discipline ?? "",
       drawing_type: drawing.drawing_type ?? "",
+      area_id: drawing.area_id ?? "",
     });
     setIsEditing(true);
   };
@@ -289,6 +364,7 @@ export default function DrawingDetailPage() {
           title: editForm.title || undefined,
           discipline: editForm.discipline || undefined,
           drawing_type: editForm.drawing_type || undefined,
+          area_id: editForm.area_id || undefined,
         },
       });
       setIsEditing(false);
@@ -343,6 +419,29 @@ export default function DrawingDetailPage() {
     [projectId, drawingId],
   );
 
+  const currentRevision = drawing?.current_revision ?? null;
+
+  const handlePrint = useCallback(async () => {
+    if (!currentRevision?.file_url) return;
+    try {
+      const res = await fetch(
+        `/api/projects/${projectId}/drawings/${drawingId}/download`,
+      );
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.downloadUrl) {
+        const printWindow = window.open(data.downloadUrl, "_blank");
+        if (printWindow) {
+          printWindow.addEventListener("load", () => {
+            printWindow.print();
+          });
+        }
+      }
+    } catch {
+      // silently fail — print is best-effort
+    }
+  }, [projectId, drawingId, currentRevision]);
+
   // ---------------------------------------------------------------------------
   // Error / loading / not found states
   // ---------------------------------------------------------------------------
@@ -388,10 +487,24 @@ export default function DrawingDetailPage() {
 
   if (!drawing) return null;
 
-  const currentRevision = drawing.current_revision;
   const isPdf =
     currentRevision?.file_type?.toLowerCase().includes("pdf") ||
     currentRevision?.file_url?.toLowerCase().endsWith(".pdf");
+
+  // Build status badges for title area
+  const statusBadges = (
+    <div className="flex items-center gap-2">
+      {currentRevision?.status && (
+        <StatusBadge status={currentRevision.status} />
+      )}
+      {drawing.is_published === false && (
+        <Badge variant="secondary">Unpublished</Badge>
+      )}
+      {drawing.is_obsolete === true && (
+        <Badge variant="destructive">Obsolete</Badge>
+      )}
+    </div>
+  );
 
   // ---------------------------------------------------------------------------
   // Render
@@ -407,11 +520,7 @@ export default function DrawingDetailPage() {
           : undefined
       }
       onBack={() => router.back()}
-      statusBadge={
-        currentRevision?.status ? (
-          <StatusBadge status={currentRevision.status} />
-        ) : undefined
-      }
+      statusBadge={statusBadges}
       actions={
         <>
           <Button
@@ -435,6 +544,37 @@ export default function DrawingDetailPage() {
             Download
           </Button>
 
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handlePrint}
+            disabled={!currentRevision?.file_url}
+          >
+            <Printer className="h-4 w-4 mr-1.5" />
+            Print
+          </Button>
+
+          {drawing.is_published ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => publishDrawing.mutate({ drawingId, publish: false })}
+              disabled={publishDrawing.isPending}
+            >
+              <EyeOff className="h-4 w-4 mr-1.5" />
+              Unpublish
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              onClick={() => publishDrawing.mutate({ drawingId, publish: true })}
+              disabled={publishDrawing.isPending}
+            >
+              <Eye className="h-4 w-4 mr-1.5" />
+              Publish
+            </Button>
+          )}
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="sm" className="px-2">
@@ -449,6 +589,25 @@ export default function DrawingDetailPage() {
                 <Mail className="h-4 w-4 mr-2" />
                 Email
               </DropdownMenuItem>
+              {drawing.is_obsolete ? (
+                <DropdownMenuItem
+                  onClick={() =>
+                    obsoleteDrawing.mutate({ drawingId, obsolete: false })
+                  }
+                >
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Restore from Obsolete
+                </DropdownMenuItem>
+              ) : (
+                <DropdownMenuItem
+                  onClick={() =>
+                    obsoleteDrawing.mutate({ drawingId, obsolete: true })
+                  }
+                >
+                  <Archive className="h-4 w-4 mr-2" />
+                  Mark as Obsolete
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem
                 className="text-destructive focus:text-destructive"
                 onClick={() => toast.info("Move to Recycle Bin — coming soon")}
@@ -542,7 +701,18 @@ export default function DrawingDetailPage() {
                           label="Type"
                           value={drawing.drawing_type}
                         />
-                        <FieldRow label="Obsolete" value="No" />
+                        <FieldRow
+                          label="Area"
+                          value={
+                            drawing.area_id
+                              ? (areas.find((a) => a.id === drawing.area_id)?.name ?? "—")
+                              : "—"
+                          }
+                        />
+                        <FieldRow
+                          label="Obsolete"
+                          value={drawing.is_obsolete ? "Yes" : "No"}
+                        />
                       </div>
                     ) : (
                       /* Edit mode */
@@ -613,6 +783,32 @@ export default function DrawingDetailPage() {
                               {DRAWING_TYPES.map((t) => (
                                 <SelectItem key={t} value={t}>
                                   {t}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label htmlFor="area_id">Area</Label>
+                          <Select
+                            value={editForm.area_id}
+                            onValueChange={(val) =>
+                              setEditForm((f) => ({
+                                ...f,
+                                area_id: val === "__none__" ? "" : val,
+                              }))
+                            }
+                          >
+                            <SelectTrigger id="area_id">
+                              <SelectValue placeholder="Select area" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="__none__">
+                                None / No Area
+                              </SelectItem>
+                              {areas.map((area) => (
+                                <SelectItem key={area.id} value={area.id}>
+                                  {area.name}
                                 </SelectItem>
                               ))}
                             </SelectContent>

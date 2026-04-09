@@ -24,6 +24,7 @@ import { EmptyState } from "@/components/ds";
 const tabs = (projectId: string) => [
   { label: "Current Drawings", href: `/${projectId}/drawings`, isActive: false },
   { label: "Drawing Sets", href: `/${projectId}/drawings/sets`, isActive: true },
+  { label: "All Sets & Revisions", href: `/${projectId}/drawings/revisions-report`, isActive: false },
   { label: "Recycle Bin", href: `/${projectId}/drawings/recycle-bin`, isActive: false },
 ];
 

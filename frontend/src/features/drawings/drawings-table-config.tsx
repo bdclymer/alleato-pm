@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 import { useState, useEffect } from "react";
-import { FileText } from "lucide-react";
+import { FileText, MoreHorizontal } from "lucide-react";
 
 import type {
   ColumnConfig,
@@ -8,6 +8,14 @@ import type {
   TableColumn,
 } from "@/components/tables/unified";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   DRAWING_DISCIPLINES,
   DRAWING_TYPES,
@@ -44,6 +52,7 @@ export const drawingColumns: ColumnConfig[] = [
   { id: "discipline", label: "Discipline", defaultVisible: true },
   { id: "drawingType", label: "Type", defaultVisible: true },
   { id: "status", label: "Status", defaultVisible: true },
+  { id: "publishState", label: "State", defaultVisible: true },
   { id: "drawingDate", label: "Drawing Date", defaultVisible: true },
   { id: "receivedDate", label: "Received", defaultVisible: true },
   { id: "areaName", label: "Area", defaultVisible: true },
@@ -155,8 +164,23 @@ export function buildDrawingTableColumns(): TableColumn<DrawingLogTableRow>[] {
         ),
       sortValue: (item) => item.status ?? "",
     },
+    // State column: shows Unpublished / Obsolete badges
     {
       ...drawingColumns[6],
+      render: (item) => {
+        if (item.isObsolete) {
+          return <Badge variant="secondary">Obsolete</Badge>;
+        }
+        if (!item.isPublished) {
+          return <Badge variant="outline">Unpublished</Badge>;
+        }
+        return <span className="text-muted-foreground text-xs">-</span>;
+      },
+      sortValue: (item) =>
+        item.isObsolete ? "obsolete" : !item.isPublished ? "unpublished" : "",
+    },
+    {
+      ...drawingColumns[7],
       render: (item) => (
         <span className="text-sm">{formatDate(item.drawingDate)}</span>
       ),
@@ -164,7 +188,7 @@ export function buildDrawingTableColumns(): TableColumn<DrawingLogTableRow>[] {
         item.drawingDate ? new Date(item.drawingDate).getTime() : 0,
     },
     {
-      ...drawingColumns[7],
+      ...drawingColumns[8],
       render: (item) => (
         <span className="text-sm">{formatDate(item.receivedDate)}</span>
       ),
@@ -172,7 +196,7 @@ export function buildDrawingTableColumns(): TableColumn<DrawingLogTableRow>[] {
         item.receivedDate ? new Date(item.receivedDate).getTime() : 0,
     },
     {
-      ...drawingColumns[8],
+      ...drawingColumns[9],
       render: (item) => (
         <span className="text-sm text-muted-foreground">
           {item.areaName || "-"}
@@ -181,7 +205,7 @@ export function buildDrawingTableColumns(): TableColumn<DrawingLogTableRow>[] {
       sortValue: (item) => item.areaName ?? "",
     },
     {
-      ...drawingColumns[9],
+      ...drawingColumns[10],
       render: (item) => (
         <span className="text-sm text-muted-foreground">
           {item.setName || "-"}
@@ -190,7 +214,7 @@ export function buildDrawingTableColumns(): TableColumn<DrawingLogTableRow>[] {
       sortValue: (item) => item.setName ?? "",
     },
     {
-      ...drawingColumns[10],
+      ...drawingColumns[11],
       render: (item) => (
         <span className="text-xs text-muted-foreground truncate max-w-32 block">
           {item.fileName || "-"}
@@ -199,7 +223,7 @@ export function buildDrawingTableColumns(): TableColumn<DrawingLogTableRow>[] {
       sortValue: (item) => item.fileName ?? "",
     },
     {
-      ...drawingColumns[11],
+      ...drawingColumns[12],
       render: (item) => (
         <span className="text-sm text-muted-foreground">
           {item.uploadedByEmail || "-"}
@@ -208,6 +232,57 @@ export function buildDrawingTableColumns(): TableColumn<DrawingLogTableRow>[] {
       sortValue: (item) => item.uploadedByEmail ?? "",
     },
   ];
+}
+
+export interface DrawingRowActionCallbacks {
+  onPublish: (drawingId: string, publish: boolean) => void;
+  onObsolete: (drawingId: string, obsolete: boolean) => void;
+  onDelete: (item: DrawingLogTableRow) => void;
+}
+
+/**
+ * Returns a rowActions renderer for UnifiedTablePage that includes
+ * Publish/Unpublish, Mark Obsolete/Restore, and Delete actions.
+ */
+export function buildDrawingRowActions(callbacks: DrawingRowActionCallbacks) {
+  return (item: DrawingLogTableRow) => (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+          <MoreHorizontal className="h-4 w-4" />
+          <span className="sr-only">Open actions</span>
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem
+          onClick={(e) => {
+            e.stopPropagation();
+            callbacks.onPublish(item.id, !item.isPublished);
+          }}
+        >
+          {item.isPublished ? "Unpublish" : "Publish"}
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={(e) => {
+            e.stopPropagation();
+            callbacks.onObsolete(item.id, !item.isObsolete);
+          }}
+        >
+          {item.isObsolete ? "Restore" : "Mark Obsolete"}
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="text-destructive focus:text-destructive"
+          onClick={(e) => {
+            e.stopPropagation();
+            callbacks.onDelete(item);
+          }}
+        >
+          Delete
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
 }
 
 // ─── Card / List views ──────────────────────────────────────────────────────
@@ -237,10 +312,12 @@ function DrawingGridCard({ item, onClick }: DrawingGridCardProps) {
     item.fileType?.startsWith("image/") ||
     /\.(png|jpe?g|tiff?)$/i.test(item.fileUrl ?? "");
 
+  const dimmed = item.isObsolete || !item.isPublished;
+
   return (
     <button
       type="button"
-      className="w-full cursor-pointer rounded-lg border border-border text-left transition-shadow hover:shadow-sm overflow-hidden bg-card"
+      className={`w-full cursor-pointer rounded-lg border border-border text-left transition-shadow hover:shadow-sm overflow-hidden bg-card${dimmed ? " opacity-60" : ""}`}
       onClick={() => onClick(item)}
     >
       {/* Landscape PDF thumbnail (11 × 8.5) */}
@@ -261,6 +338,16 @@ function DrawingGridCard({ item, onClick }: DrawingGridCardProps) {
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-muted-foreground/40">
             <FileText className="h-12 w-12" />
+          </div>
+        )}
+        {/* State overlay badges */}
+        {(item.isObsolete || !item.isPublished) && (
+          <div className="absolute top-1.5 left-1.5">
+            {item.isObsolete ? (
+              <Badge variant="secondary" className="text-xs">Obsolete</Badge>
+            ) : (
+              <Badge variant="outline" className="text-xs bg-card">Unpublished</Badge>
+            )}
           </div>
         )}
       </div>
@@ -303,10 +390,12 @@ export function renderDrawingList(
   item: DrawingLogTableRow,
   onClick: (item: DrawingLogTableRow) => void,
 ): ReactElement {
+  const dimmed = item.isObsolete || !item.isPublished;
+
   return (
     <button
       type="button"
-      className="flex w-full cursor-pointer items-center justify-between rounded-md px-4 py-2 text-left transition-colors hover:bg-muted/50"
+      className={`flex w-full cursor-pointer items-center justify-between rounded-md px-4 py-2 text-left transition-colors hover:bg-muted/50${dimmed ? " opacity-60" : ""}`}
       onClick={() => onClick(item)}
     >
       <div>
@@ -319,11 +408,19 @@ export function renderDrawingList(
           {item.areaName ? ` · ${item.areaName}` : ""}
         </p>
       </div>
-      {item.status && (
-        <Badge variant={statusVariantMap[item.status] ?? "outline"}>
-          {formatStatus(item.status)}
-        </Badge>
-      )}
+      <div className="flex items-center gap-2 shrink-0">
+        {item.isObsolete && (
+          <Badge variant="secondary">Obsolete</Badge>
+        )}
+        {!item.isPublished && !item.isObsolete && (
+          <Badge variant="outline">Unpublished</Badge>
+        )}
+        {item.status && (
+          <Badge variant={statusVariantMap[item.status] ?? "outline"}>
+            {formatStatus(item.status)}
+          </Badge>
+        )}
+      </div>
     </button>
   );
 }

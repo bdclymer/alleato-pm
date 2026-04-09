@@ -38,6 +38,8 @@ export async function GET(
     page_size: searchParams.get("page_size")
       ? Number(searchParams.get("page_size"))
       : undefined,
+    include_unpublished: searchParams.get("include_unpublished") === "true",
+    include_obsolete: searchParams.get("include_obsolete") === "true",
   };
 
   const service = new DrawingService(createServiceClient());
@@ -94,7 +96,23 @@ export async function POST(
       );
     }
 
-    const service = new DrawingService(createServiceClient());
+    const serviceClient = createServiceClient();
+    const service = new DrawingService(serviceClient);
+
+    // Duplicate detection: check if drawing_number already exists in this project
+    const { data: existing } = await serviceClient
+      .from("drawings")
+      .select("id, drawing_number, title")
+      .eq("project_id", Number.parseInt(projectId, 10))
+      .eq("drawing_number", drawingNumber)
+      .maybeSingle();
+
+    if (existing) {
+      return NextResponse.json(
+        { error: "DUPLICATE_DRAWING_NUMBER", existing_drawing: existing },
+        { status: 409 },
+      );
+    }
 
     // Step 1: Create the drawing
     const createResult = await service.create(

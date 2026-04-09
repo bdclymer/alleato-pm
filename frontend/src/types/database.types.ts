@@ -8613,6 +8613,8 @@ export type Database = {
           drawing_number: string
           drawing_type: string | null
           id: string
+          is_obsolete: boolean
+          is_published: boolean
           project_id: number
           title: string
           updated_at: string
@@ -8626,6 +8628,8 @@ export type Database = {
           drawing_number: string
           drawing_type?: string | null
           id?: string
+          is_obsolete?: boolean
+          is_published?: boolean
           project_id: number
           title: string
           updated_at?: string
@@ -8639,6 +8643,8 @@ export type Database = {
           drawing_number?: string
           drawing_type?: string | null
           id?: string
+          is_obsolete?: boolean
+          is_published?: boolean
           project_id?: number
           title?: string
           updated_at?: string
@@ -22715,6 +22721,8 @@ export type Database = {
           file_type: string | null
           file_url: string | null
           id: string | null
+          is_obsolete: boolean | null
+          is_published: boolean | null
           project_id: number | null
           received_date: string | null
           revision_created_at: string | null

@@ -3,7 +3,8 @@
 import * as React from "react";
 import { useState } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { FileUp } from "lucide-react";
+import { Download, FileUp } from "lucide-react";
+import { toast } from "sonner";
 
 import {
   UnifiedTablePage,
@@ -12,10 +13,11 @@ import {
 } from "@/components/tables/unified";
 import { Button } from "@/components/ui/button";
 import { DrawingUploadDialog } from "@/components/drawings/DrawingUploadDialog";
-import { useDrawings, useDeleteDrawing } from "@/hooks/use-drawings";
+import { useDrawings, useDeleteDrawing, usePublishDrawing, useObsoleteDrawing } from "@/hooks/use-drawings";
 import type { DrawingLogTableRow } from "@/types/drawings.types";
 import {
   buildDrawingTableColumns,
+  buildDrawingRowActions,
   drawingColumns,
   drawingDefaultVisibleColumns,
   drawingFilters,
@@ -38,11 +40,14 @@ export default function ProjectDrawingsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [showUnpublished, setShowUnpublished] = useState(false);
+  const [showObsolete, setShowObsolete] = useState(false);
 
   const projectId = params.projectId ?? "";
-  const activeTab = searchParams.get("tab") || "log";
 
   const deleteDrawing = useDeleteDrawing(projectId);
+  const publishDrawing = usePublishDrawing(projectId);
+  const obsoleteDrawing = useObsoleteDrawing(projectId);
 
   const initialFilters: DrawingFilterState = {
     discipline: searchParams.get("discipline") ?? undefined,
@@ -69,17 +74,19 @@ export default function ProjectDrawingsPage() {
     },
   });
 
+  const activeFilters = tableState.activeFilters as DrawingFilterState;
+
   const { data: drawingsData, isLoading } = useDrawings(projectId, {
     page: tableState.page,
     page_size: tableState.perPage,
+    include_unpublished: showUnpublished,
+    include_obsolete: showObsolete,
   });
 
   const drawings: DrawingLogTableRow[] = React.useMemo(
     () => drawingsData?.drawings ?? [],
     [drawingsData],
   );
-
-  const activeFilters = tableState.activeFilters as DrawingFilterState;
 
   const filteredItems = React.useMemo(() => {
     const search = tableState.debouncedSearch.trim().toLowerCase();
@@ -126,6 +133,11 @@ export default function ProjectDrawingsPage() {
       isActive: false,
     },
     {
+      label: "All Sets & Revisions",
+      href: `/${projectId}/drawings/revisions-report`,
+      isActive: false,
+    },
+    {
       label: "Recycle Bin",
       href: `/${projectId}/drawings/recycle-bin`,
       isActive: false,
@@ -148,12 +160,33 @@ export default function ProjectDrawingsPage() {
     tableState.setPage(1);
   };
 
+  const handleSelectAll = (checked: boolean) => {
+    tableState.setSelectedIds(checked ? filteredItems.map((item) => item.id) : []);
+  };
+
+  const handleSelectRow = (id: string, checked: boolean) => {
+    tableState.setSelectedIds(
+      checked
+        ? [...tableState.selectedIds, id]
+        : tableState.selectedIds.filter((s) => s !== id),
+    );
+  };
+
+  const handleBulkDownload = () => {
+    const count = tableState.selectedIds.length;
+    if (count === 0) return;
+    toast.info(`Downloading ${count} drawing${count === 1 ? "" : "s"}…`);
+    // TODO: wire to a bulk-download API when available
+  };
+
   const isFiltered =
     Boolean(tableState.searchInput) ||
     Boolean(activeFilters.discipline) ||
     Boolean(activeFilters.drawingType) ||
     Boolean(activeFilters.status) ||
     Boolean(activeFilters.areaName);
+
+  const selectedCount = tableState.selectedIds.length;
 
   return (
     <UnifiedTablePage
@@ -162,8 +195,28 @@ export default function ProjectDrawingsPage() {
         description: "Manage construction drawings with revision tracking",
         actions: (
           <>
+            {selectedCount > 0 && (
+              <Button size="sm" variant="outline" onClick={handleBulkDownload}>
+                <Download className="h-4 w-4" />
+                Download ({selectedCount})
+              </Button>
+            )}
+            <Button
+              size="sm"
+              variant={showUnpublished ? "secondary" : "outline"}
+              onClick={() => setShowUnpublished((p) => !p)}
+            >
+              {showUnpublished ? "Hide Unpublished" : "Show Unpublished"}
+            </Button>
+            <Button
+              size="sm"
+              variant={showObsolete ? "secondary" : "outline"}
+              onClick={() => setShowObsolete((p) => !p)}
+            >
+              {showObsolete ? "Hide Obsolete" : "Show Obsolete"}
+            </Button>
             <Button size="sm" onClick={() => setUploadOpen(true)}>
-              <FileUp />
+              <FileUp className="h-4 w-4" />
               Upload
             </Button>
             <DrawingUploadDialog
@@ -206,7 +259,16 @@ export default function ProjectDrawingsPage() {
         getRowId: (item) => item.id,
         onRowClick: (item) =>
           router.push(`/${projectId}/drawings/viewer/${item.id}`),
-        onDelete: (item) => deleteDrawing.mutate(item.id),
+        rowActions: buildDrawingRowActions({
+          onPublish: (drawingId, publish) => publishDrawing.mutate({ drawingId, publish }),
+          onObsolete: (drawingId, obsolete) => obsoleteDrawing.mutate({ drawingId, obsolete }),
+          onDelete: (item) => deleteDrawing.mutate(item.id),
+        }),
+      }}
+      selection={{
+        selectedIds: tableState.selectedIds,
+        onSelectAll: handleSelectAll,
+        onSelectRow: handleSelectRow,
       }}
       sorting={{
         sortBy: tableState.sortBy,
@@ -234,7 +296,7 @@ export default function ProjectDrawingsPage() {
         isFiltered,
         action: (
           <Button size="sm" onClick={() => setUploadOpen(true)}>
-            <FileUp />
+            <FileUp className="h-4 w-4" />
             Upload your first drawing
           </Button>
         ),
@@ -242,7 +304,8 @@ export default function ProjectDrawingsPage() {
       features={{
         enableExport: true,
         enableBulkDelete: false,
-        enableRowSelection: false,
+        enableRowSelection: true,
+        enableRowActions: true,
       }}
     />
   );

@@ -233,6 +233,8 @@ export function mapDrawingLogRow(row: DrawingLogViewRow): DrawingLogTableRow {
     areaName: row.area_name ?? null,
     setName: row.set_name ?? null,
     uploadedByEmail: row.uploaded_by_email ?? null,
+    isPublished: row.is_published ?? true,
+    isObsolete: row.is_obsolete ?? false,
   };
 }
 
@@ -270,6 +272,8 @@ export interface DrawingLogTableRow {
   areaName: string | null;
   setName: string | null;
   uploadedByEmail: string | null;
+  isPublished: boolean;
+  isObsolete: boolean;
 }
 
 // Upload progress and error types
