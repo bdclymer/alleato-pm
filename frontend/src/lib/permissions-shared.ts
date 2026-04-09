@@ -1,0 +1,163 @@
+/**
+ * Permissions — shared types and constants.
+ *
+ * This file is safe to import from client components. It has no runtime
+ * dependency on server-only modules like `next/headers` or the server
+ * Supabase client. The server-side query/mutation helpers live in
+ * `./permissions.ts` which imports these types.
+ */
+
+export type PermissionLevel = "none" | "read" | "write" | "admin";
+
+export type PermissionModule =
+  | "directory"
+  | "budget"
+  | "contracts"
+  | "documents"
+  | "schedule"
+  | "submittals"
+  | "rfis"
+  | "change_orders";
+
+/**
+ * Granular capability flags layered on top of the base None/Read/Write/Admin
+ * levels. Modeled after Procore's granular permissions — named capabilities
+ * that can be toggled on a template independent of the base module level.
+ */
+export type GranularFlag =
+  | "view_private_commitments"
+  | "edit_own_ssov"
+  | "bulk_edit_subcontractor_invoice_status"
+  | "approve_change_orders"
+  | "approve_invoices"
+  | "create_change_events"
+  | "create_budget_modifications"
+  | "manage_project_directory";
+
+export const ALL_MODULES: PermissionModule[] = [
+  "directory",
+  "budget",
+  "contracts",
+  "documents",
+  "schedule",
+  "submittals",
+  "rfis",
+  "change_orders",
+];
+
+export const ALL_GRANULAR_FLAGS: GranularFlag[] = [
+  "view_private_commitments",
+  "edit_own_ssov",
+  "bulk_edit_subcontractor_invoice_status",
+  "approve_change_orders",
+  "approve_invoices",
+  "create_change_events",
+  "create_budget_modifications",
+  "manage_project_directory",
+];
+
+export const GRANULAR_FLAG_LABELS: Record<GranularFlag, string> = {
+  view_private_commitments:               "View private commitments",
+  edit_own_ssov:                          "Edit own schedule of values (invoice contact)",
+  bulk_edit_subcontractor_invoice_status: "Bulk edit subcontractor invoice status",
+  approve_change_orders:                  "Approve change orders",
+  approve_invoices:                       "Approve invoices",
+  create_change_events:                   "Create change events",
+  create_budget_modifications:            "Create budget modifications",
+  manage_project_directory:               "Manage project directory",
+};
+
+export interface UserPermissions {
+  userId: string;
+  personId: string;
+  projectId: number;
+  template?: {
+    id: string;
+    name: string;
+    rules: Record<PermissionModule, PermissionLevel[]>;
+    granularFlags: GranularFlag[];
+  };
+  overrides: Record<PermissionModule, PermissionLevel>;
+  isAdmin: boolean;
+}
+
+export interface PermissionTemplate {
+  id: string;
+  name: string;
+  description?: string;
+  rules_json: Record<PermissionModule, PermissionLevel[]>;
+  granular_flags: GranularFlag[];
+  is_system: boolean;
+  scope?: string;
+}
+
+// ---------------------------------------------------------------------------
+// Pure check helpers — safe to call from client or server.
+// ---------------------------------------------------------------------------
+
+/**
+ * Check if a user has a specific permission level for a module.
+ * Hierarchy: admin > write > read > none
+ */
+export function hasPermission(
+  permissions: UserPermissions,
+  module: PermissionModule,
+  level: PermissionLevel,
+): boolean {
+  if (permissions.isAdmin) return true;
+
+  if (permissions.overrides[module] && permissions.overrides[module] !== "none") {
+    return checkPermissionLevel(permissions.overrides[module], level);
+  }
+
+  if (permissions.template?.rules[module]) {
+    const templateLevels = permissions.template.rules[module];
+    return templateLevels.some((tl) => checkPermissionLevel(tl, level));
+  }
+
+  return false;
+}
+
+/**
+ * Get the highest permission level a user has for a module.
+ */
+export function getPermissionLevel(
+  permissions: UserPermissions,
+  module: PermissionModule,
+): PermissionLevel {
+  if (permissions.isAdmin) return "admin";
+
+  if (permissions.overrides[module] && permissions.overrides[module] !== "none") {
+    return permissions.overrides[module];
+  }
+
+  if (permissions.template?.rules[module]) {
+    const levels = permissions.template.rules[module];
+    if (levels.includes("admin")) return "admin";
+    if (levels.includes("write")) return "write";
+    if (levels.includes("read")) return "read";
+  }
+
+  return "none";
+}
+
+/**
+ * Check if a user has a specific granular capability flag.
+ * App admins always pass. Otherwise the flag must exist on the user's
+ * assigned template.
+ */
+export function hasGranular(
+  permissions: UserPermissions,
+  flag: GranularFlag,
+): boolean {
+  if (permissions.isAdmin) return true;
+  return permissions.template?.granularFlags.includes(flag) ?? false;
+}
+
+function checkPermissionLevel(
+  userLevel: PermissionLevel,
+  requiredLevel: PermissionLevel,
+): boolean {
+  const order: PermissionLevel[] = ["none", "read", "write", "admin"];
+  return order.indexOf(userLevel) >= order.indexOf(requiredLevel);
+}
