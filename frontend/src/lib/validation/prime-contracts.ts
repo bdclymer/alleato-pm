@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const clientSchema = z
   .object({
-    id: z.union([z.string(), z.number()]).transform((v) => String(v)),
+    id: z.string(),
     name: z.string().nullable().optional(),
   })
   .nullable()
@@ -10,11 +10,11 @@ const clientSchema = z
 
 export const primeContractSchema = z
   .object({
-    id: z.union([z.string(), z.number()]).transform((value) => String(value)),
+    id: z.string(),
     project_id: z.number(),
     contract_number: z.string().nullable().optional(),
     title: z.string().nullable().optional(),
-    client_id: z.union([z.string(), z.number()]).nullable().optional(),
+    client_id: z.string().nullable().optional(),
     vendor_id: z.string().nullable().optional(),
     description: z.string().nullable().optional(),
     status: z

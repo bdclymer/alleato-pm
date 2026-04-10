@@ -38,7 +38,12 @@ export function EmptyState({
         {description}
       </p>
       {action && (
-        <Button onClick={action.onClick} className="mt-3" size="sm" variant="outline">
+        <Button
+          onClick={action.onClick}
+          className="mt-3 border-primary/30 bg-primary/15 text-primary hover:bg-primary/25 hover:text-primary"
+          size="sm"
+          variant="outline"
+        >
           <Plus />
           {action.label}
         </Button>

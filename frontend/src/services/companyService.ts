@@ -30,6 +30,15 @@ export interface ProjectCompany {
   user_count?: number | null;
 }
 
+function withBusinessPhone<T extends { company?: Company | null }>(
+  row: T,
+): T & { business_phone: string | null } {
+  return {
+    ...row,
+    business_phone: row.company?.contact_phone ?? null,
+  };
+}
+
 export interface CompanyListResponse {
   data: ProjectCompany[];
   pagination: {
@@ -138,7 +147,9 @@ export class CompanyService {
         await this.supabase
           .from("companies")
           .select("id")
-          .ilike("name", `%${search}%`);
+          .or(
+            `name.ilike.%${search}%,contact_phone.ilike.%${search}%,contact_email.ilike.%${search}%`,
+          );
 
       if (companySearchError) throw companySearchError;
 
@@ -148,7 +159,6 @@ export class CompanyService {
           ? `company_id.in.(${matchingIds.join(",")})`
           : null,
         `email_address.ilike.%${search}%`,
-        `business_phone.ilike.%${search}%`,
       ]
         .filter(Boolean)
         .join(",");
@@ -195,7 +205,7 @@ export class CompanyService {
         }
 
         return {
-          ...pc,
+          ...withBusinessPhone(pc),
           primary_contact: primaryContact,
           user_count: userCount,
         } as ProjectCompany;
@@ -264,7 +274,7 @@ export class CompanyService {
     const userCount = users.length;
 
     return {
-      ...data,
+      ...withBusinessPhone(data),
       primary_contact: primaryContact,
       user_count: userCount,
     } as ProjectCompany;
@@ -287,6 +297,7 @@ export class CompanyService {
         address: data.address,
         city: data.city,
         state: data.state,
+        contact_phone: data.business_phone,
         website: data.website,
       })
       .select()
@@ -301,7 +312,6 @@ export class CompanyService {
       .insert({
         project_id: projectIdNum,
         company_id: company.id,
-        business_phone: data.business_phone,
         email_address: data.email_address,
         erp_vendor_id: data.erp_vendor_id,
         company_type: data.company_type || "VENDOR",
@@ -318,7 +328,7 @@ export class CompanyService {
     if (pcError) throw pcError;
 
     return {
-      ...projectCompany,
+      ...withBusinessPhone(projectCompany),
       user_count: 0,
     } as ProjectCompany;
   }
@@ -341,6 +351,8 @@ export class CompanyService {
     if (data.state !== undefined) globalFields.state = data.state;
     if (data.zip !== undefined) globalFields.zip = data.zip;
     if (data.website !== undefined) globalFields.website = data.website;
+    if (data.business_phone !== undefined)
+      globalFields.contact_phone = data.business_phone;
 
     if (Object.keys(globalFields).length > 0) {
       // Get the company_id first
@@ -362,8 +374,6 @@ export class CompanyService {
 
     // Update project-specific fields
     const projectFields: Record<string, unknown> = {};
-    if (data.business_phone !== undefined)
-      projectFields.business_phone = data.business_phone;
     if (data.email_address !== undefined)
       projectFields.email_address = data.email_address;
     if (data.primary_contact_id !== undefined)

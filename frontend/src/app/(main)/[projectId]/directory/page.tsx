@@ -65,9 +65,11 @@ import { type ColumnDef } from "@tanstack/react-table";
 import { useProjectRoles, type ProjectRole } from "@/hooks/use-project-roles";
 import { useProjectUsers } from "@/hooks/use-project-users";
 import { useProjectVendors } from "@/hooks/use-project-vendors";
+import { useProjectCompanies } from "@/hooks/use-project-companies";
 import { usePermissionTemplates } from "@/hooks/use-permissions";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
+import { CompanyEditDialog } from "@/components/directory/CompanyEditDialog";
 import {
   type PermissionModule,
   type PermissionLevel,
@@ -1417,25 +1419,31 @@ function VendorsSection({
 
 // ─── Companies Section ──────────────────────────────────────────
 
-function CompaniesSection({ members }: { members: PersonWithDetails[] }) {
-  const companies = React.useMemo(() => {
-    const map = new Map<string, { id: string; name: string; memberCount: number }>();
-    for (const m of members) {
-      if (m.company?.id && m.company?.name) {
-        const existing = map.get(m.company.id);
-        if (existing) {
-          existing.memberCount++;
-        } else {
-          map.set(m.company.id, {
-            id: m.company.id,
-            name: m.company.name,
-            memberCount: 1,
-          });
-        }
-      }
-    }
-    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
-  }, [members]);
+function CompaniesSection({
+  companies,
+  isLoading,
+  error,
+}: {
+  companies: Array<{
+    id: string;
+    company_id: string;
+    company?: { name: string | null } | null;
+    user_count?: number | null;
+  }>;
+  isLoading: boolean;
+  error: Error | null;
+}) {
+  const companyRows = React.useMemo(
+    () =>
+      companies
+        .map((projectCompany) => ({
+          id: projectCompany.company_id,
+          name: projectCompany.company?.name || "Untitled Company",
+          memberCount: projectCompany.user_count || 0,
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    [companies],
+  );
 
   const companiesColumns = React.useMemo<ColumnDef<{ id: string; name: string; memberCount: number }>[]>(
     () => [
@@ -1466,7 +1474,14 @@ function CompaniesSection({ members }: { members: PersonWithDetails[] }) {
     [],
   );
 
-  if (companies.length === 0) {
+  if (isLoading) return <SectionSkeleton rows={3} />;
+  if (error) {
+    return (
+      <p className="text-sm text-destructive py-4">Failed to load companies.</p>
+    );
+  }
+
+  if (companyRows.length === 0) {
     return (
       <p className="py-6 text-center text-sm text-muted-foreground">
         No companies found.
@@ -1477,9 +1492,9 @@ function CompaniesSection({ members }: { members: PersonWithDetails[] }) {
   return (
     <DataTable
       columns={companiesColumns}
-      data={companies}
+      data={companyRows}
       showToolbar={false}
-      showPagination={companies.length > 10}
+      showPagination={companyRows.length > 10}
       onRowClick={(row) => { window.location.href = `/directory/companies/${row.id}`; }}
     />
   );
@@ -1493,8 +1508,19 @@ export default function ProjectDirectoryPage() {
 
   const { users: members, refetch: refetchMembers } = useProjectUsers(projectId, { type: "all" });
   const [addMemberOpen, setAddMemberOpen] = React.useState(false);
+  const [addCompanyOpen, setAddCompanyOpen] = React.useState(false);
   const [addVendorOpen, setAddVendorOpen] = React.useState(false);
   const [manageRolesOpen, setManageRolesOpen] = React.useState(false);
+  const {
+    companies: projectCompanies,
+    isLoading: companiesLoading,
+    error: companiesError,
+    refetch: refetchCompanies,
+  } = useProjectCompanies(projectId, {
+    status: "all",
+    sort: "name",
+    per_page: 150,
+  });
   const { vendors, isLoading: vendorsLoading, error: vendorsError, addVendor, removeVendor } =
     useProjectVendors(projectId);
 
@@ -1506,6 +1532,7 @@ export default function ProjectDirectoryPage() {
     <PageShell
       variant="dashboard"
       title="Project Directory"
+      contentClassName="space-y-8"
       actions={
         <div className="flex items-center gap-1.5">
           <Button variant="outline" size="sm">
@@ -1536,9 +1563,16 @@ export default function ProjectDirectoryPage() {
 
         {/* Section 2: Companies — full width */}
         <section>
-          <SectionHeader title="Companies" />
+          <SectionHeader
+            title="Companies"
+            action={{ label: "Add Company", onClick: () => setAddCompanyOpen(true) }}
+          />
           <div className="mt-4">
-            <CompaniesSection members={members} />
+            <CompaniesSection
+              companies={projectCompanies}
+              isLoading={companiesLoading}
+              error={companiesError}
+            />
           </div>
         </section>
 
@@ -1559,6 +1593,14 @@ export default function ProjectDirectoryPage() {
         onOpenChange={setAddMemberOpen}
         projectId={projectId}
         onSuccess={refetchMembers}
+      />
+      <CompanyEditDialog
+        open={addCompanyOpen}
+        onOpenChange={setAddCompanyOpen}
+        projectId={projectId}
+        onSuccess={() => {
+          void refetchCompanies();
+        }}
       />
       <AddVendorDialog
         open={addVendorOpen}

@@ -63,7 +63,7 @@ function SectionCard({
 
 export default function PreferencesSettingsPage() {
   return (
-    <PageShell variant="content" title="Preferences">
+    <PageShell variant="dashboard" title="Preferences">
       <div className="space-y-8">
         {/* Notifications */}
         <SectionCard icon={Bell} title="Notifications">

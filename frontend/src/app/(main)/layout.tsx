@@ -38,15 +38,16 @@ export default function MainLayout({
 }) {
   const pathname = usePathname();
   const isTeamChatPage = pathname?.startsWith("/team-chat");
+  const isDrawingViewer = /\/drawings\/viewer\//.test(pathname ?? "");
   const showAlleatoAIWidget =
     !pathname?.startsWith("/procore-docs") && !isTeamChatPage;
 
   return (
     <SidebarProvider defaultOpen={false}>
-      <AppSidebar />
+      {!isDrawingViewer && <AppSidebar />}
       <SidebarInset className="h-svh overflow-hidden">
         <CreateProjectDevConfigProvider>
-          <SiteHeader />
+          {!isDrawingViewer && <SiteHeader />}
           <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
             <main
               className="flex flex-1 flex-col overflow-auto scrollbar-hide min-w-0 min-h-0"
@@ -54,7 +55,7 @@ export default function MainLayout({
             >
               {children}
             </main>
-            {!isTeamChatPage ? <SiteFooter /> : null}
+            {!isTeamChatPage && !isDrawingViewer ? <SiteFooter /> : null}
             <ProcoreReferencePanel />
           </div>
         </CreateProjectDevConfigProvider>

@@ -26,7 +26,7 @@ interface SplitButtonProps {
   onClick: () => void;
   /** Actions shown in the dropdown */
   actions: SplitButtonAction[];
-  variant?: "default" | "outline";
+  variant?: "default" | "outline" | "soft";
   size?: "sm" | "default";
   disabled?: boolean;
   isLoading?: boolean;
@@ -56,16 +56,22 @@ export function SplitButton({
   isLoading = false,
   className,
 }: SplitButtonProps) {
+  const buttonVariant = variant === "soft" ? "outline" : variant;
+  const softToneClass =
+    variant === "soft"
+      ? "border-primary/25 bg-primary/15 text-primary hover:bg-primary/25 hover:text-primary"
+      : "";
+
   return (
     <div className={cn("flex items-center", className)}>
       {/* Primary button */}
       <Button
         type="button"
-        variant={variant}
+        variant={buttonVariant}
         size={size}
         onClick={onClick}
         disabled={disabled || isLoading}
-        className="rounded-r-none border-r-0 focus-visible:z-10"
+        className={cn("rounded-r-none border-r-0 focus-visible:z-10", softToneClass)}
       >
         {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
         {label}
@@ -76,13 +82,14 @@ export function SplitButton({
         <DropdownMenuTrigger asChild>
           <Button
             type="button"
-            variant={variant}
+            variant={buttonVariant}
             size={size}
             disabled={disabled || isLoading}
             aria-label="More options"
             className={cn(
               "rounded-l-none px-2 focus-visible:z-10",
               size === "sm" ? "px-1.5" : "px-2",
+              softToneClass,
             )}
           >
             <ChevronDown className="h-4 w-4" />

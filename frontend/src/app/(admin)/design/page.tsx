@@ -27,7 +27,6 @@ import {
 // DS barrel — all components from one path
 import {
   // Layout
-  PageShell,
   PageTabs,
   Separator,
   Accordion,
@@ -150,17 +149,19 @@ import {
   DetailActions,
   EditModeActions,
   SplitButton,
+  MoneyField,
+  PageTabsV2,
 } from "@/components/ds";
 
 import { cn } from "@/lib/utils";
-import { PageTabsV2 } from "@/components/layout";
 import { SimplePagination } from "@/components/ui/pagination";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Calendar } from "@/components/ui/calendar";
 import { NumberInput } from "@/components/ui/number-input";
-import { MoneyField } from "@/components/forms/MoneyField";
+import { PageShell } from "@/components/layout";
+import { PageHeader } from "@/components/layout/page-header-unified";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -359,7 +360,12 @@ export default function DesignSystemComponentsPage() {
   ];
 
   return (
-    <PageShell variant="detailWide" title="Design System" description="Living inventory of every token and component. Import from @/components/ds.">
+    <PageShell
+      variant="detailWide"
+      title="Design System"
+      description="Living inventory of every token and component. Import from @/components/ds."
+      showHeader={false}
+    >
 
       {/* 2-column layout: sticky left nav + scrollable content */}
       <div className="flex gap-8 items-start">
@@ -388,6 +394,11 @@ export default function DesignSystemComponentsPage() {
 
         {/* Main content */}
         <div className="min-w-0 flex-1 space-y-16">
+      <PageHeader
+        title="Design System"
+        description="Living inventory of every token and component. Import from @/components/ds."
+        className="px-0 sm:px-0 lg:px-0"
+      />
 
       {/* ================================================================== */}
       {/* SECTION 0: DESIGN TOKENS                                            */}
@@ -816,7 +827,7 @@ export default function DesignSystemComponentsPage() {
 
       {/* PageTabsV2 */}
       <SubSection title="PageTabsV2 (pill style)">
-        <div className="inline-flex h-9 w-fit items-center justify-center rounded-lg bg-muted/50 p-[3px]">
+        <div className="inline-flex h-9 w-fit items-center justify-center rounded-lg bg-muted/50 p-1">
           {["Tab 1", "Tab 2", "Tab 3"].map((label, i) => {
             const key = `tab${i + 1}`;
             const isActive = activeTabV2 === key;
@@ -828,7 +839,7 @@ export default function DesignSystemComponentsPage() {
                 onClick={() => setActiveTabV2(key)}
                 className={`inline-flex h-[calc(100%-1px)] items-center justify-center rounded-md border px-4 py-1 text-sm font-medium whitespace-nowrap transition-all ${
                   isActive
-                    ? "bg-background text-foreground shadow-sm border-border"
+                    ? "bg-background text-foreground shadow-xs border-border"
                     : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
               >
@@ -1803,12 +1814,12 @@ export default function DesignSystemComponentsPage() {
 
       <div className="overflow-x-auto rounded-md border border-border">
         <table className="w-full text-sm">
-          <thead className="bg-muted/40">
+          <thead className="bg-primary/10">
             <tr className="border-b border-border">
-              <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.04em] text-foreground/85">
                 Component
               </th>
-              <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <th className="px-4 py-2.5 text-left text-[10px] font-semibold uppercase tracking-[0.04em] text-foreground/85">
                 Live Example
               </th>
             </tr>
@@ -1886,6 +1897,14 @@ export default function DesignSystemComponentsPage() {
       {/* ================================================================== */}
       <Separator />
       <DesignSection id="section-missing" title="10. New DS Components" description="Freshly built components ready to use. Import from @/components/ds.">
+        <div className="rounded-md border border-success/30 bg-success/10 px-4 py-3">
+          <p className="text-sm font-medium text-foreground">
+            All listed components are implemented and available in the design system.
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Use <code className="font-mono">@/components/ds</code> as the single import path.
+          </p>
+        </div>
 
         {/* BackButton */}
         <div className="space-y-3">
@@ -1932,9 +1951,9 @@ export default function DesignSystemComponentsPage() {
         {/* DetailActions */}
         <div className="space-y-3">
           <p className="text-sm font-semibold text-foreground">DetailActions</p>
-          <p className="text-xs text-muted-foreground">Standard icon action row for detail page headers. Edit and Share render as icon buttons; Delete and extras collapse into an overflow menu.</p>
+          <p className="text-xs text-muted-foreground">Overflow-only action menu for detail page headers. Uses a vertical 3-dot trigger with actions inside the menu.</p>
           <div className="flex items-center gap-6">
-            <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2">
+            <div className="flex items-center gap-2 px-4 py-2">
               <span className="text-sm font-medium text-foreground">Change Order #41</span>
               <DetailActions
                 onEdit={() => {}}
@@ -1942,7 +1961,7 @@ export default function DesignSystemComponentsPage() {
                 onShare={() => {}}
               />
             </div>
-            <div className="flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2">
+            <div className="flex items-center gap-2 px-4 py-2">
               <span className="text-sm font-medium text-foreground">Contract #12</span>
               <DetailActions
                 onEdit={() => {}}
@@ -1986,7 +2005,7 @@ export default function DesignSystemComponentsPage() {
         {/* SplitButton */}
         <div className="space-y-3">
           <p className="text-sm font-semibold text-foreground">SplitButton</p>
-          <p className="text-xs text-muted-foreground">Primary action + secondary actions dropdown. Keeps the header clean while exposing related actions.</p>
+          <p className="text-xs text-muted-foreground">Primary action + secondary actions dropdown. Includes default primary and a soft purple variant.</p>
           <div className="flex items-center gap-4">
             <SplitButton
               label="Save"
@@ -1999,7 +2018,7 @@ export default function DesignSystemComponentsPage() {
             />
             <SplitButton
               label="Submit"
-              variant="outline"
+              variant="soft"
               onClick={() => {}}
               actions={[
                 { label: "Submit for review", onClick: () => {} },

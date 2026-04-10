@@ -16,9 +16,11 @@ interface DetailFieldProps {
 export function DetailField({ label, value, emptyPlaceholder = "—", className }: DetailFieldProps) {
   const isEmpty = value === null || value === undefined || value === "";
   return (
-    <div className={cn("space-y-1", className)}>
-      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
-      <div className="text-sm text-foreground">
+    <div className={cn("flex items-start justify-between gap-4", className)}>
+      <p className="w-32 shrink-0 pt-0.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+        {label}
+      </p>
+      <div className="min-w-0 flex-1 text-sm text-foreground">
         {isEmpty ? <span className="text-muted-foreground/50">{emptyPlaceholder}</span> : value}
       </div>
     </div>

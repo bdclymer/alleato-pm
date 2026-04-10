@@ -31,6 +31,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { StatusBadge } from "@/components/ds";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
@@ -775,24 +776,76 @@ export default function ProjectContractDetailPage() {
       description={contract.contractor ? `Contractor: ${contract.contractor.name}` : contract.vendor ? `Contractor: ${contract.vendor.name}` : "No contractor assigned"}
       onBack={() => router.back()}
       actions={
-        <div className="flex items-center gap-2">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="default" size="sm"><Plus />Create<ChevronDown /></Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => router.push(`/${projectId}/change-events/new?contractId=${contractId}`)}><FileText className="h-4 w-4 mr-2" />Change Event</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push(`/${projectId}/change-orders/prime/new?contractId=${contractId}`)}><DollarSign className="h-4 w-4 mr-2" />Change Order</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push(`/${projectId}/commitments/new?type=purchase_order&contractId=${contractId}`)}><FileText className="h-4 w-4 mr-2" />Purchase Order</DropdownMenuItem>
-              <DropdownMenuItem onClick={() => router.push(`/${projectId}/commitments/new?type=subcontract&contractId=${contractId}`)}><FileText className="h-4 w-4 mr-2" />Subcontract</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-          <Button variant="outline" size="icon" disabled={isSyncing} onClick={handleErpSync} aria-label="Sync from Acumatica" title="Sync invoices & payments from Acumatica"><RefreshCw className={isSyncing ? "animate-spin" : undefined} /></Button>
-          <Button variant="outline" size="icon" disabled={isExporting} onClick={handleErpExport} aria-label="Export to Acumatica" title="Export invoices & payment applications to Acumatica"><Upload className={isExporting ? "animate-pulse" : undefined} /></Button>
-          <Button variant="outline" size="icon" onClick={() => { setDocumentDialogTab("email"); setIsDocumentDialogOpen(true); }} aria-label="Email" title="Email"><Mail /></Button>
-          <Button variant="outline" size="icon" onClick={() => { setDocumentDialogTab("download"); setIsDocumentDialogOpen(true); }} aria-label="Export" title="Export"><Download /></Button>
-          <Button variant="default" size="icon" onClick={() => setIsEditing(true)} aria-label="Edit Contract" title="Edit Contract"><Pencil /></Button>
-        </div>
+        <TooltipProvider delayDuration={150}>
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="default" size="sm"><Plus />Create<ChevronDown /></Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => router.push(`/${projectId}/change-events/new?contractId=${contractId}`)}><FileText className="h-4 w-4 mr-2" />Change Event</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push(`/${projectId}/change-orders/prime/new?contractId=${contractId}`)}><DollarSign className="h-4 w-4 mr-2" />Change Order</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push(`/${projectId}/commitments/new?type=purchase_order&contractId=${contractId}`)}><FileText className="h-4 w-4 mr-2" />Purchase Order</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => router.push(`/${projectId}/commitments/new?type=subcontract&contractId=${contractId}`)}><FileText className="h-4 w-4 mr-2" />Subcontract</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="icon" disabled={isSyncing} onClick={handleErpSync} aria-label="Sync to ERP">
+                  <RefreshCw className={isSyncing ? "animate-spin" : undefined} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="border border-border bg-background text-foreground shadow-sm">
+                Sync to ERP
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="icon" disabled={isExporting} onClick={handleErpExport} aria-label="Import">
+                  <Upload className={isExporting ? "animate-pulse" : undefined} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="border border-border bg-background text-foreground shadow-sm">
+                Import
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="icon" onClick={() => { setDocumentDialogTab("email"); setIsDocumentDialogOpen(true); }} aria-label="Email">
+                  <Mail />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="border border-border bg-background text-foreground shadow-sm">
+                Email
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="outline" size="icon" onClick={() => { setDocumentDialogTab("download"); setIsDocumentDialogOpen(true); }} aria-label="Export">
+                  <Download />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="border border-border bg-background text-foreground shadow-sm">
+                Export
+              </TooltipContent>
+            </Tooltip>
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="default" size="icon" onClick={() => setIsEditing(true)} aria-label="Edit">
+                  <Pencil />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="border border-border bg-background text-foreground shadow-sm">
+                Edit
+              </TooltipContent>
+            </Tooltip>
+          </div>
+        </TooltipProvider>
       }
     >
       <PageTabs

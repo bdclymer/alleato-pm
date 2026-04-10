@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Edit2, MoreHorizontal, Share2, Trash2 } from "lucide-react";
+import { MoreVertical, Share2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -29,43 +29,17 @@ interface DetailActionsProps {
 /**
  * DetailActions — standardized action icon row for detail page headers.
  *
- * Renders edit and share as icon buttons, collapses delete + extras into a
- * "More" overflow dropdown to keep the header tight.
+ * Renders a single overflow menu trigger (vertical dots) to keep the header
+ * compact and avoid inline edit icon usage.
  *
  * Usage:
  *   <DetailActions onEdit={...} onDelete={...} />
  */
 export function DetailActions({ onEdit, onDelete, onShare, extraActions, className }: DetailActionsProps) {
-  const hasOverflow = onDelete || (extraActions && extraActions.length > 0);
+  const hasOverflow = onEdit || onShare || onDelete || (extraActions && extraActions.length > 0);
 
   return (
     <div className={cn("flex items-center gap-1", className)}>
-      {onShare && (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={onShare}
-          aria-label="Share"
-          className="h-8 w-8 text-muted-foreground hover:text-foreground"
-        >
-          <Share2 className="h-4 w-4" />
-        </Button>
-      )}
-
-      {onEdit && (
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          onClick={onEdit}
-          aria-label="Edit"
-          className="h-8 w-8 text-muted-foreground hover:text-foreground"
-        >
-          <Edit2 className="h-4 w-4" />
-        </Button>
-      )}
-
       {hasOverflow && (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -74,12 +48,24 @@ export function DetailActions({ onEdit, onDelete, onShare, extraActions, classNa
               variant="ghost"
               size="icon"
               aria-label="More actions"
-              className="h-8 w-8 text-muted-foreground hover:text-foreground"
+              className="h-8 w-8 rounded-md border-0 text-muted-foreground shadow-none hover:text-foreground"
             >
-              <MoreHorizontal className="h-4 w-4" />
+              <MoreVertical className="h-4 w-4" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-40">
+            {onEdit && (
+              <DropdownMenuItem onClick={onEdit}>
+                Edit
+              </DropdownMenuItem>
+            )}
+            {onShare && (
+              <DropdownMenuItem onClick={onShare}>
+                <Share2 className="h-4 w-4" />
+                Share
+              </DropdownMenuItem>
+            )}
+            {(onEdit || onShare) && (extraActions?.length || onDelete) ? <DropdownMenuSeparator /> : null}
             {extraActions?.map((action) => (
               <DropdownMenuItem
                 key={action.label}

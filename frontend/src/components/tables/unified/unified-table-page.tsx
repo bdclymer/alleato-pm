@@ -176,6 +176,8 @@ export interface UnifiedTablePageProps<T> {
   views?: {
     card?: (item: T) => ReactElement;
     list?: (item: T) => ReactElement;
+    /** Group card items by a key. Returns the group label string (or "Ungrouped"). */
+    cardGroupBy?: (item: T) => string;
   };
   emptyState: {
     title: string;
@@ -226,6 +228,8 @@ export interface UnifiedTablePageProps<T> {
     toolbarInlineWithHeader?: boolean;
     maxWidth?: PageContainerProps["maxWidth"];
     containerClassName?: string;
+    /** Override the card-view grid className (default: grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4) */
+    cardGridClassName?: string;
   };
   features?: UnifiedTableFeatures;
   columnGroups?: Array<{ label: string; columnIds: string[] }>;
@@ -1506,18 +1510,46 @@ export function UnifiedTablePage<T>({
         </div>
       )}
 
-      {showTable && canRenderCardView && (
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {rowOrderedItems.map((item) => {
-            const CardView = views?.card;
-            return (
+      {showTable && canRenderCardView && (() => {
+        const CardView = views?.card;
+        const groupFn = views?.cardGroupBy;
+        const gridCls = cn("grid", layout?.cardGridClassName ?? "grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4");
+
+        if (groupFn) {
+          const groups = new Map<string, T[]>();
+          for (const item of rowOrderedItems) {
+            const key = groupFn(item);
+            const arr = groups.get(key);
+            if (arr) arr.push(item); else groups.set(key, [item]);
+          }
+          return (
+            <div className="mt-4 space-y-6">
+              {Array.from(groups.entries()).map(([label, items]) => (
+                <div key={label}>
+                  <h3 className="text-sm font-semibold text-foreground mb-3 px-0.5">{label}</h3>
+                  <div className={gridCls}>
+                    {items.map((item) => (
+                      <React.Fragment key={table.getRowId(item)}>
+                        {CardView ? CardView(item) : null}
+                      </React.Fragment>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          );
+        }
+
+        return (
+          <div className={cn("mt-4", gridCls)}>
+            {rowOrderedItems.map((item) => (
               <React.Fragment key={table.getRowId(item)}>
                 {CardView ? CardView(item) : null}
               </React.Fragment>
-            );
-          })}
-        </div>
-      )}
+            ))}
+          </div>
+        );
+      })()}
 
       {showTable && canRenderListView && (
         <div className="mt-4 space-y-1">

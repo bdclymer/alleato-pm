@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useState, useCallback, useRef } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Download, FileUp, Upload } from "lucide-react";
+import { Download, FileUp, Layers, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -12,9 +12,17 @@ import {
   type FilterValue,
 } from "@/components/tables/unified";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { DrawingUploadDialog } from "@/components/drawings/DrawingUploadDialog";
-import { useDrawings, useDeleteDrawing, usePublishDrawing, useObsoleteDrawing } from "@/hooks/use-drawings";
+import { useDrawings, useDeleteDrawing, usePublishDrawing, useObsoleteDrawing, useUpdateDrawing } from "@/hooks/use-drawings";
 import type { DrawingLogTableRow } from "@/types/drawings.types";
+import { DRAWING_DISCIPLINES } from "@/types/drawings.types";
 import {
   buildDrawingTableColumns,
   buildDrawingRowActions,
@@ -51,6 +59,11 @@ export default function ProjectDrawingsPage() {
   const deleteDrawing = useDeleteDrawing(projectId);
   const publishDrawing = usePublishDrawing(projectId);
   const obsoleteDrawing = useObsoleteDrawing(projectId);
+  const updateDrawing = useUpdateDrawing(projectId);
+
+  // Bulk edit state
+  const [bulkDisciplineSearch, setBulkDisciplineSearch] = useState("");
+  const [customDisciplines, setCustomDisciplines] = useState<string[]>([]);
 
   const initialFilters: DrawingFilterState = {
     discipline: searchParams.get("discipline") ?? undefined,
@@ -90,6 +103,32 @@ export default function ProjectDrawingsPage() {
     () => drawingsData?.drawings ?? [],
     [drawingsData],
   );
+
+  // Computed disciplines (standard + from data + custom)
+  const allDisciplines = React.useMemo(() => {
+    const fromData = new Set(drawings.map((d) => d.discipline).filter(Boolean) as string[]);
+    const merged = new Set([...DRAWING_DISCIPLINES, ...customDisciplines, ...fromData]);
+    return Array.from(merged).sort();
+  }, [drawings, customDisciplines]);
+
+  const handleBulkApply = async (field: "discipline" | "drawing_date", value: string) => {
+    if (!value || tableState.selectedIds.length === 0) return;
+    const count = tableState.selectedIds.length;
+    try {
+      await Promise.all(
+        tableState.selectedIds.map((id) =>
+          updateDrawing.mutateAsync({
+            drawingId: id,
+            data: field === "discipline" ? { discipline: value } : {},
+          })
+        )
+      );
+      toast.success(`Updated ${count} drawing${count === 1 ? "" : "s"}`);
+      tableState.setSelectedIds([]);
+    } catch {
+      toast.error("Failed to update some drawings");
+    }
+  };
 
   const filteredItems = React.useMemo(() => {
     const search = tableState.debouncedSearch.trim().toLowerCase();
@@ -283,29 +322,93 @@ export default function ProjectDrawingsPage() {
         actions: (
           <>
             {selectedCount > 0 && (
-              <Button size="sm" variant="outline" onClick={handleBulkDownload}>
-                <Download className="h-4 w-4" />
-                Download ({selectedCount})
-              </Button>
+              <>
+                <span className="text-xs text-muted-foreground">{selectedCount} selected</span>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button size="sm" variant="outline">
+                      <Layers className="h-3.5 w-3.5" />
+                      Discipline
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-56 p-3" align="end">
+                    <Label className="text-xs text-muted-foreground mb-2 block">Set discipline</Label>
+                    <Input
+                      value={bulkDisciplineSearch}
+                      onChange={(e) => setBulkDisciplineSearch(e.target.value)}
+                      placeholder="Search or create…"
+                      className="h-8 text-xs mb-2"
+                    />
+                    <div className="max-h-40 overflow-y-auto space-y-0.5">
+                      {allDisciplines
+                        .filter((d) => d.toLowerCase().includes(bulkDisciplineSearch.toLowerCase()))
+                        .map((d) => (
+                          <button
+                            key={d}
+                            type="button"
+                            className="w-full text-left text-xs px-2 py-1 rounded hover:bg-muted truncate"
+                            onClick={() => {
+                              handleBulkApply("discipline", d);
+                              setBulkDisciplineSearch("");
+                            }}
+                          >
+                            {d}
+                          </button>
+                        ))}
+                      {bulkDisciplineSearch.trim() &&
+                        !allDisciplines.some((d) => d.toLowerCase() === bulkDisciplineSearch.trim().toLowerCase()) && (
+                          <button
+                            type="button"
+                            className="w-full text-left text-xs px-2 py-1 rounded hover:bg-muted text-primary font-medium"
+                            onClick={() => {
+                              const newDisc = bulkDisciplineSearch.trim();
+                              setCustomDisciplines((prev) => [...prev, newDisc]);
+                              handleBulkApply("discipline", newDisc);
+                              setBulkDisciplineSearch("");
+                            }}
+                          >
+                            + Create &ldquo;{bulkDisciplineSearch.trim()}&rdquo;
+                          </button>
+                        )}
+                    </div>
+                  </PopoverContent>
+                </Popover>
+                <Button size="sm" variant="outline" onClick={handleBulkDownload}>
+                  <Download className="h-3.5 w-3.5" />
+                  Download
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 w-7 p-0"
+                  onClick={() => tableState.setSelectedIds([])}
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
+              </>
             )}
-            <Button
-              size="sm"
-              variant={showUnpublished ? "secondary" : "outline"}
-              onClick={() => setShowUnpublished((p) => !p)}
-            >
-              {showUnpublished ? "Hide Unpublished" : "Show Unpublished"}
-            </Button>
-            <Button
-              size="sm"
-              variant={showObsolete ? "secondary" : "outline"}
-              onClick={() => setShowObsolete((p) => !p)}
-            >
-              {showObsolete ? "Hide Obsolete" : "Show Obsolete"}
-            </Button>
-            <Button size="sm" onClick={() => setUploadOpen(true)}>
-              <FileUp className="h-4 w-4" />
-              Upload
-            </Button>
+            {selectedCount === 0 && (
+              <>
+                <Button
+                  size="sm"
+                  variant={showUnpublished ? "secondary" : "outline"}
+                  onClick={() => setShowUnpublished((p) => !p)}
+                >
+                  {showUnpublished ? "Hide Unpublished" : "Show Unpublished"}
+                </Button>
+                <Button
+                  size="sm"
+                  variant={showObsolete ? "secondary" : "outline"}
+                  onClick={() => setShowObsolete((p) => !p)}
+                >
+                  {showObsolete ? "Hide Obsolete" : "Show Obsolete"}
+                </Button>
+                <Button size="sm" onClick={() => setUploadOpen(true)}>
+                  <FileUp className="h-4 w-4" />
+                  Upload
+                </Button>
+              </>
+            )}
             <DrawingUploadDialog
               projectId={projectId}
               open={uploadOpen}
@@ -367,13 +470,21 @@ export default function ProjectDrawingsPage() {
           tableState.setSearchParams({ sort: sortBy, sort_dir: direction });
         },
       }}
+      layout={{
+        cardGridClassName: "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-3",
+      }}
       views={{
         card: (item) =>
           renderDrawingCard(
             item,
             (r) => router.push(`/${projectId}/drawings/viewer/${r.id}`),
             handleDeleteDrawing,
+            {
+              selected: tableState.selectedIds.includes(item.id),
+              onSelect: handleSelectRow,
+            },
           ),
+        cardGroupBy: (item) => item.discipline || "Ungrouped",
         list: (item) =>
           renderDrawingList(
             item,

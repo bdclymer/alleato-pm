@@ -292,9 +292,11 @@ export function buildDrawingRowActions(callbacks: DrawingRowActionCallbacks) {
 interface DrawingGridCardProps {
   item: DrawingLogTableRow;
   onClick: (item: DrawingLogTableRow) => void;
+  selected?: boolean;
+  onSelect?: (id: string, checked: boolean) => void;
 }
 
-function DrawingGridCard({ item, onClick }: DrawingGridCardProps) {
+function DrawingGridCard({ item, onClick, selected, onSelect }: DrawingGridCardProps) {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
 
   useEffect(() => {
@@ -317,11 +319,25 @@ function DrawingGridCard({ item, onClick }: DrawingGridCardProps) {
   return (
     <button
       type="button"
-      className={`w-full cursor-pointer rounded-lg border border-border text-left transition-shadow hover:shadow-sm overflow-hidden bg-card${dimmed ? " opacity-60" : ""}`}
+      className={`group/card relative w-full cursor-pointer rounded-lg border text-left transition-all hover:shadow-sm overflow-hidden bg-card${dimmed ? " opacity-60" : ""}${selected ? " border-primary ring-1 ring-primary" : " border-border"}`}
       onClick={() => onClick(item)}
     >
-      {/* Landscape PDF thumbnail (11 × 8.5) */}
-      <div className="relative w-full bg-muted" style={{ aspectRatio: "11 / 8.5" }}>
+      {/* Selection checkbox */}
+      {onSelect && (
+        <div
+          className={`absolute top-1.5 left-1.5 z-20 transition-opacity ${selected ? "opacity-100" : "opacity-0 group-hover/card:opacity-100"}`}
+          onClick={(e) => { e.stopPropagation(); onSelect(item.id, !selected); }}
+        >
+          <div className={`h-4.5 w-4.5 rounded border-2 flex items-center justify-center text-white transition-colors ${selected ? "bg-primary border-primary" : "bg-card/80 border-muted-foreground/40 backdrop-blur-sm"}`}>
+            {selected && (
+              <svg width="10" height="8" viewBox="0 0 10 8" fill="none"><path d="M1 4L3.5 6.5L9 1" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Square thumbnail */}
+      <div className="relative w-full bg-muted" style={{ aspectRatio: "1 / 1" }}>
         {previewUrl && isPdf ? (
           <iframe
             src={`${previewUrl}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`}
@@ -337,42 +353,29 @@ function DrawingGridCard({ item, onClick }: DrawingGridCardProps) {
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center text-muted-foreground/40">
-            <FileText className="h-12 w-12" />
+            <FileText className="h-8 w-8" />
           </div>
         )}
         {/* State overlay badges */}
         {(item.isObsolete || !item.isPublished) && (
-          <div className="absolute top-1.5 left-1.5">
+          <div className="absolute top-1.5 right-1.5">
             {item.isObsolete ? (
-              <Badge variant="secondary" className="text-xs">Obsolete</Badge>
+              <Badge variant="secondary" className="text-[10px] px-1 py-0">Obsolete</Badge>
             ) : (
-              <Badge variant="outline" className="text-xs bg-card">Unpublished</Badge>
+              <Badge variant="outline" className="text-[10px] px-1 py-0 bg-card">Unpublished</Badge>
             )}
           </div>
         )}
       </div>
 
-      {/* Minimal footer */}
-      <div className="px-2.5 py-2 border-t border-border">
-        <p className="text-xs font-medium text-foreground truncate leading-tight">
-          {item.title || "Untitled"}
+      {/* Compact footer */}
+      <div className="px-1.5 py-1.5 border-t border-border">
+        <p className="text-[11px] font-medium text-foreground truncate leading-tight">
+          {item.drawingNumber || item.title || "Untitled"}
         </p>
-        <p className="text-xs text-muted-foreground truncate mt-0.5">
-          {(() => {
-            const normalize = (s: string) => s.replace(/[-_]/g, " ").trim().toLowerCase();
-            const numberDiffersFromTitle =
-              item.drawingNumber && normalize(item.drawingNumber) !== normalize(item.title);
-            return (
-              <>
-                {numberDiffersFromTitle ? item.drawingNumber : null}
-                {numberDiffersFromTitle && item.revisionNumber
-                  ? ` · Rev ${item.revisionNumber}`
-                  : item.revisionNumber
-                  ? `Rev ${item.revisionNumber}`
-                  : null}
-              </>
-            );
-          })()}
+        <p className="text-[10px] text-muted-foreground truncate mt-0.5 leading-tight">
+          {item.drawingNumber ? (item.title || "") : ""}
+          {item.revisionNumber ? ` · Rev ${item.revisionNumber}` : ""}
         </p>
       </div>
     </button>
@@ -383,40 +386,39 @@ export function renderDrawingCard(
   item: DrawingLogTableRow,
   onClick: (item: DrawingLogTableRow) => void,
   onDelete?: (item: DrawingLogTableRow) => void,
+  options?: { selected?: boolean; onSelect?: (id: string, checked: boolean) => void },
 ): ReactElement {
-  if (!onDelete) {
-    return <DrawingGridCard item={item} onClick={onClick} />;
-  }
-
   return (
-    <div className="relative">
-      <div className="absolute right-2 top-2 z-20" onClick={(e) => e.stopPropagation()}>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button
-              variant="secondary"
-              size="sm"
-              className="h-7 w-7 p-0"
-              aria-label="Open drawing actions"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <MoreHorizontal className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem
-              className="text-destructive focus:text-destructive"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete(item);
-              }}
-            >
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      <DrawingGridCard item={item} onClick={onClick} />
+    <div className="relative group/wrapper">
+      {onDelete && (
+        <div className="absolute right-1.5 top-1.5 z-20 opacity-0 group-hover/wrapper:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="secondary"
+                size="sm"
+                className="h-6 w-6 p-0"
+                aria-label="Open drawing actions"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreHorizontal className="h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(item);
+                }}
+              >
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
+      <DrawingGridCard item={item} onClick={onClick} selected={options?.selected} onSelect={options?.onSelect} />
     </div>
   );
 }

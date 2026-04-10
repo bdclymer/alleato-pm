@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
+  ArrowLeft,
   ChevronLeft,
   ChevronRight,
   Download,
@@ -458,6 +459,7 @@ export default function DrawingViewerPage() {
   return (
     <PageShell
       variant="table"
+      title="Drawing Viewer"
       showHeader={false}
       className="h-screen overflow-hidden bg-background text-foreground !px-0 !py-0"
       contentClassName="h-full"
@@ -468,13 +470,29 @@ export default function DrawingViewerPage() {
         {/* ── Top bar ──────────────────────────────────────────────────────── */}
         <div className="h-11 shrink-0 flex items-center justify-between px-2 bg-card border-b border-border">
 
-          {/* Left: prev/next + drawing info */}
+          {/* Left: back + prev/next + drawing info */}
           <div className="flex items-center gap-1 min-w-0">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost" size="sm"
-                  className="h-7 w-7 p-0 text-foreground/80 hover:text-white hover:bg-muted disabled:opacity-30"
+                  className="h-7 px-2 gap-1 text-foreground/80 hover:text-foreground hover:bg-muted"
+                  onClick={handleClose}
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  <span className="text-xs">Drawings</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom">Back to Drawings</TooltipContent>
+            </Tooltip>
+
+            <div className="w-px h-4 bg-muted mx-0.5" />
+
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost" size="sm"
+                  className="h-7 w-7 p-0 text-foreground/80 hover:text-foreground hover:bg-muted disabled:opacity-30"
                   disabled={!prevDrawing}
                   onClick={() => prevDrawing && navigateToDrawing(prevDrawing.id)}
                 >
@@ -488,7 +506,7 @@ export default function DrawingViewerPage() {
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost" size="sm"
-                  className="h-7 w-7 p-0 text-foreground/80 hover:text-white hover:bg-muted disabled:opacity-30"
+                  className="h-7 w-7 p-0 text-foreground/80 hover:text-foreground hover:bg-muted disabled:opacity-30"
                   disabled={!nextDrawing}
                   onClick={() => nextDrawing && navigateToDrawing(nextDrawing.id)}
                 >
@@ -555,7 +573,7 @@ export default function DrawingViewerPage() {
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost" size="sm"
-                  className="h-7 w-7 p-0 text-foreground/80 hover:text-white hover:bg-muted"
+                  className="h-7 w-7 p-0 text-foreground/80 hover:text-foreground hover:bg-muted"
                   onClick={handleDownload}
                 >
                   <Download />
@@ -583,7 +601,7 @@ export default function DrawingViewerPage() {
                       "h-7 w-7 p-0 relative transition-colors",
                       activePanel === panel
                         ? "bg-muted text-white"
-                        : "text-foreground/80 hover:text-white hover:bg-muted"
+                        : "text-foreground/80 hover:text-foreground hover:bg-muted"
                     )}
                     onClick={() => togglePanel(panel)}
                   >
@@ -605,7 +623,7 @@ export default function DrawingViewerPage() {
               <TooltipTrigger asChild>
                 <Button
                   variant="ghost" size="sm"
-                  className="h-7 w-7 p-0 text-foreground/80 hover:text-white hover:bg-muted"
+                  className="h-7 w-7 p-0 text-foreground/80 hover:text-foreground hover:bg-muted"
                   onClick={handleClose}
                 >
                   <X className="h-4 w-4" />
@@ -625,7 +643,7 @@ export default function DrawingViewerPage() {
           )}
         >
 
-          {/* ── Left sidebar ─────────────────────────────────────────────── */}
+          {/* ── Tools sidebar (left) ──────────────────────────────────── */}
           <div className="w-14 shrink-0 flex flex-col items-center py-3 gap-1 bg-card border-r border-border">
             {ANNOTATION_TOOLS.map(({ tool, icon, label }) => (
               <Tooltip key={tool}>
@@ -789,7 +807,7 @@ export default function DrawingViewerPage() {
                     type="button"
                     variant="ghost"
                     onClick={handleRightPanelExpandToggle}
-                    className="h-6 w-6 flex items-center justify-center rounded text-muted-foreground hover:text-white hover:bg-muted transition-colors p-0"
+                    className="h-6 w-6 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors p-0"
                     aria-label={isRightPanelExpanded ? "Restore sidebar width" : "Expand sidebar"}
                   >
                     {isRightPanelExpanded ? (
@@ -802,7 +820,7 @@ export default function DrawingViewerPage() {
                     type="button"
                     variant="ghost"
                     onClick={() => setActivePanel(null)}
-                    className="h-6 w-6 flex items-center justify-center rounded text-muted-foreground hover:text-white hover:bg-muted transition-colors p-0"
+                    className="h-6 w-6 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors p-0"
                   >
                     <X className="h-3.5 w-3.5" />
                   </Button>
@@ -822,7 +840,7 @@ export default function DrawingViewerPage() {
                           type="button"
                           variant="ghost"
                           onClick={() => setActiveTool("link")}
-                          className="h-6 w-6 flex items-center justify-center rounded text-muted-foreground hover:text-white hover:bg-muted transition-colors p-0"
+                          className="h-6 w-6 flex items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted transition-colors p-0"
                         >
                           <Plus className="h-3.5 w-3.5" />
                         </Button>

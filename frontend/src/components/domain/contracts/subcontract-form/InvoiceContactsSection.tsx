@@ -98,7 +98,8 @@ export function InvoiceContactsSection({
   });
 
   const handleAddContact = async () => {
-    if (!vendorId || !newContact.first_name) return;
+    const vendorCompanyLinkId = vendorCompanyId || vendorId;
+    if (!vendorCompanyLinkId || !newContact.first_name) return;
     setIsSaving(true);
     try {
       const supabase = createClient();
@@ -121,7 +122,7 @@ export function InvoiceContactsSection({
       if (data?.id) {
         const { error: linkError } = await supabase
           .from("vendor_contacts")
-          .insert({ vendor_id: vendorId, person_id: data.id });
+          .insert({ company_id: vendorCompanyLinkId, person_id: data.id });
         if (linkError) throw new Error(linkError.message);
       }
 

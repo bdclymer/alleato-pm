@@ -237,7 +237,7 @@ export function DrawingViewer({
   const [pageNumber, setPageNumber] = useState(1);
   const [numPages, setNumPages] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [fitMode, setFitMode] = useState<"width" | "page" | "custom">("width");
+  const [fitMode, setFitMode] = useState<"width" | "page" | "custom">("page");
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [containerWidth, setContainerWidth] = useState(800);
@@ -272,6 +272,29 @@ export function DrawingViewer({
     if (containerRef.current) ro.observe(containerRef.current);
     return () => ro.disconnect();
   }, []);
+
+  // ── Trackpad pinch-to-zoom & scroll-wheel zoom ──
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      // ctrlKey is set by the browser for trackpad pinch gestures
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+        const delta = -e.deltaY * 0.005;
+        setScale((prev) => {
+          const next = Math.min(Math.max(prev * (1 + delta), 0.1), 5);
+          setFitMode("custom");
+          onScaleChange?.(next);
+          return next;
+        });
+      }
+    };
+
+    el.addEventListener("wheel", handleWheel, { passive: false });
+    return () => el.removeEventListener("wheel", handleWheel);
+  }, [onScaleChange]);
 
   // Sync controlled scale from parent
   useEffect(() => {
@@ -370,16 +393,15 @@ export function DrawingViewer({
     [containerWidth, fitMode, scale]
   );
 
-  // ── zoom helpers ──
-  const ZOOM_LEVELS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 2, 3, 4];
+  // ── zoom helpers (smooth 20% steps) ──
   const zoomIn = () => {
-    const next = Math.min(ZOOM_LEVELS.find((l) => l > scale) ?? scale * 1.25, 5);
+    const next = Math.min(scale * 1.2, 5);
     setScale(next);
     setFitMode("custom");
     onScaleChange?.(next);
   };
   const zoomOut = () => {
-    const next = Math.max([...ZOOM_LEVELS].reverse().find((l) => l < scale) ?? scale * 0.8, 0.1);
+    const next = Math.max(scale / 1.2, 0.1);
     setScale(next);
     setFitMode("custom");
     onScaleChange?.(next);
@@ -841,7 +863,7 @@ export function DrawingViewer({
                 width={pageSize.width}
                 height={pageSize.height}
                 className="absolute inset-0 z-10 w-full h-full"
-                style={{ cursor: canvasCursor, touchAction: "none" }}
+                style={{ cursor: canvasCursor, touchAction: "none", pointerEvents: textInput ? "none" : "auto" }}
                 onMouseDown={handleCanvasMouseDown}
                 onMouseMove={handleCanvasMouseMove}
                 onMouseUp={handleCanvasMouseUp}

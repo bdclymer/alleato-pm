@@ -22,7 +22,7 @@ export function SectionHeader({
   return (
     <div className={cn("flex items-center justify-between", className)}>
       <div className="flex items-baseline gap-2">
-        <h2 className="text-lg font-semibold tracking-tight text-foreground">
+        <h2 className="text-lg font-semibold text-foreground">
           {title}
         </h2>
         {count !== undefined && (

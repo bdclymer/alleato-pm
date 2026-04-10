@@ -632,29 +632,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         .from("subcontractor_sov_submissions")
         .update({
           invite_sent_at: new Date().toISOString(),
-          invite_sent_by: membership.personId,
           updated_at: new Date().toISOString(),
         })
         .eq("id", submission.id);
       if (inviteError) {
-        // Backward compatibility: some environments do not yet have invite_sent_by.
-        const isMissingInviteSentByColumn =
-          inviteError.code === "PGRST204" ||
-          inviteError.message?.includes("invite_sent_by");
-
-        if (!isMissingInviteSentByColumn) {
-          throw inviteError;
-        }
-
-        const { error: fallbackInviteError } = await supabase
-          .from("subcontractor_sov_submissions")
-          .update({
-            invite_sent_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", submission.id);
-
-        if (fallbackInviteError) throw fallbackInviteError;
+        throw inviteError;
       }
 
       return NextResponse.json({

@@ -400,7 +400,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {...props}
     >
       {/* ── Header ── */}
-      <SidebarHeader className={cn(isCollapsed ? "px-0 pt-6 pb-2" : "px-3 pt-5 pb-3")}>
+      <SidebarHeader className={cn(isCollapsed ? "px-0 pt-6 pb-4" : "px-3 pt-5 pb-5")}>
         {isCollapsed ? (
           // Collapsed: logo icon + expand toggle
           <div className="flex flex-col items-center gap-1.5">

@@ -662,6 +662,7 @@ export async function POST(
           .from("budget_lines")
           .update({
             original_amount: newAmount,
+            updated_by: user.id,
           })
           .eq("id", existingBudgetLine.id)
           .select()

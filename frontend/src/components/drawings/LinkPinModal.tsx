@@ -322,7 +322,8 @@ function PunchItemContent({
   const [selectedNumber, setSelectedNumber] = useState<string | null>(null);
 
   const projectIdNum = Number(projectId);
-  const { data: items, isLoading } = usePunchItems(projectIdNum);
+  const { data: itemsRaw, isLoading } = usePunchItems(projectIdNum);
+  const items = Array.isArray(itemsRaw) ? itemsRaw : (itemsRaw as any)?.data ?? [];
   const createItem = useCreatePunchItem(projectIdNum);
 
   const handleLink = () => {

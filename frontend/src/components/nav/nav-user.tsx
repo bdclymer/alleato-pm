@@ -120,7 +120,7 @@ export function NavUser({
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuItem asChild>
-                <Link href="/profile" className="flex items-center gap-2">
+                <Link href="/settingsprofile" className="flex items-center gap-2">
                   <BadgeCheck />
                   Profile
                 </Link>
