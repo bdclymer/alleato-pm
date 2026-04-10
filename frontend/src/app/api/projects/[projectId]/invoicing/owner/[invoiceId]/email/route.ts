@@ -59,7 +59,6 @@ export async function POST(
       );
     }
 
-    const projectIdNum = parseInt(projectId, 10);
     const invoiceIdNum = parseInt(invoiceId, 10);
 
     const data = await fetchInvoicePdfData(
