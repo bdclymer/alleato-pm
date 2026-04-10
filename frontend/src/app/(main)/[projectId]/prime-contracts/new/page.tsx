@@ -65,15 +65,16 @@ export default function NewContractPage() {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         console.error("Contract creation failed:", errorData);
-        if (errorData.details?.length > 0) {
+        if (Array.isArray(errorData.details) && errorData.details.length > 0) {
           const fieldErrors = errorData.details
             .map((d: { field: string; message: string }) => `${d.field}: ${d.message}`)
             .join("; ");
           throw new Error(`Validation failed — ${fieldErrors}`);
         }
-        throw new Error(errorData.error || "Failed to create contract");
+        const detail = typeof errorData.details === "string" ? ` — ${errorData.details}` : "";
+        throw new Error((errorData.error || "Failed to create contract") + detail);
       }
 
       const newContract = await response.json();

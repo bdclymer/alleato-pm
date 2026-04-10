@@ -27,7 +27,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       .select(
         `
         *,
-        vendor:companies(id, name, contact_name, contact_email, contact_phone),
+        vendor:companies!prime_contracts_vendor_id_fkey(id, name, contact_name, contact_email, contact_phone),
         client:companies!prime_contracts_client_company_id_fkey(id, name),
         contractor:companies!prime_contracts_contractor_id_fkey(id, name),
         architect_engineer:companies!prime_contracts_architect_engineer_id_fkey(id, name)
@@ -160,7 +160,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       .select("id, contract_number")
       .eq("id", contractId)
       .eq("project_id", parseInt(projectId, 10))
-      .single();
+      .maybeSingle();
 
     if (!existingContract) {
       return NextResponse.json(
@@ -180,7 +180,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         .eq("project_id", parseInt(projectId, 10))
         .eq("contract_number", validatedData.contract_number)
         .neq("id", contractId)
-        .single();
+        .maybeSingle();
 
       if (duplicateContract) {
         return NextResponse.json(
@@ -263,7 +263,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       .select("id")
       .eq("id", contractId)
       .eq("project_id", parseInt(projectId, 10))
-      .single();
+      .maybeSingle();
 
     if (!existingContract) {
       return NextResponse.json(

@@ -80,10 +80,27 @@ export function classifyError(error: unknown): { message: string; status: number
 
 /**
  * Helper to create a JSON error response with classified error.
+ * Always includes the raw error message in `details` so clients can display
+ * actionable information instead of a generic fallback.
  */
 export function apiErrorResponse(error: unknown): Response {
   const { message, status } = classifyError(error);
   // Always log the full error server-side for debugging
   console.error("[API Error]", error);
-  return Response.json({ error: message }, { status });
+
+  // Extract raw message for the details field
+  const rawMessage =
+    error instanceof Error
+      ? error.message
+      : typeof error === "object" && error !== null && "message" in error
+        ? String((error as { message: unknown }).message)
+        : typeof error === "string"
+          ? error
+          : undefined;
+
+  // Include raw message in details when it differs from the classified message
+  // so the client can display something actionable.
+  const details = rawMessage && rawMessage !== message ? rawMessage : undefined;
+
+  return Response.json({ error: message, ...(details ? { details } : {}) }, { status });
 }

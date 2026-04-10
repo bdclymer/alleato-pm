@@ -173,7 +173,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       .select("id")
       .eq("project_id", parseInt(projectId, 10))
       .eq("contract_number", validatedData.contract_number)
-      .single();
+      .maybeSingle();
 
     if (existingContract) {
       return NextResponse.json(
@@ -198,7 +198,15 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       .single();
 
     if (error) {
-      return apiErrorResponse(error);
+      console.error("[POST /contracts] DB insert error:", error);
+      return NextResponse.json(
+        {
+          error: "Failed to create contract",
+          details: error.message,
+          code: error.code,
+        },
+        { status: 500 },
+      );
     }
 
     return NextResponse.json(data, { status: 201 });
