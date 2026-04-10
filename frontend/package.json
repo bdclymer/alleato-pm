@@ -20,6 +20,8 @@
     "typecheck": "tsc --noEmit",
     "audit:db": "tsx scripts/audit/audit-db-inserts.ts",
     "audit:db:fk-types": "tsx scripts/audit/audit-db-fk-and-validation.ts",
+    "audit:db:ambiguous-embeds": "tsx scripts/audit/audit-db-ambiguous-embeds.ts",
+    "audit:forms": "tsx scripts/audit/audit-form-field-standards.ts",
     "test": "playwright test --config=config/playwright/playwright.config.ts",
     "test:ui": "playwright test --config=config/playwright/playwright.config.ts --ui",
     "test:headed": "playwright test --config=config/playwright/playwright.config.ts --headed",

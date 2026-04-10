@@ -781,7 +781,7 @@ export function CreatePurchaseOrderForm({
                           type="number"
                           step="0.01"
                           min="0"
-                          placeholder="$0.00"
+                          placeholder=""
                           value={line.unitCost || ""}
                           onChange={(e) =>
                             updateSOVLine(index, "unitCost", e.target.value === "" ? 0 : parseFloat(e.target.value) || 0)

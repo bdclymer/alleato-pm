@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import type { ZodError } from "@/app/api/types";
 import { z } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
+import { normalizeSubcontractStatus } from "@/lib/db/subcontracts";
 
 /**
  * Schema that matches what the commitment detail edit form actually sends.
@@ -398,7 +399,12 @@ export async function PUT(
     def(validatedData.contract_number, "contract_number");
     def(validatedData.title, "title");
     def(validatedData.contract_company_id, "contract_company_id");
-    def(validatedData.status, "status");
+    if (validatedData.status !== undefined) {
+      updatePayload.status =
+        unifiedData.commitment_type === "subcontract"
+          ? normalizeSubcontractStatus(validatedData.status)
+          : validatedData.status;
+    }
     def(validatedData.description, "description");
     def(validatedData.default_retainage_percent, "default_retainage_percent");
     def(validatedData.is_private, "is_private");
@@ -597,7 +603,10 @@ export async function PATCH(
       updatePayload.title = parsed.data.title;
     }
     if (parsed.data.status !== undefined) {
-      updatePayload.status = parsed.data.status;
+      updatePayload.status =
+        unifiedData.commitment_type === "subcontract"
+          ? normalizeSubcontractStatus(parsed.data.status)
+          : parsed.data.status;
     }
 
     const { data, error } = await supabase

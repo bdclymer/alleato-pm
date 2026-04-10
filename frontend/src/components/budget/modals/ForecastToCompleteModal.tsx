@@ -22,9 +22,9 @@ interface ForecastToCompleteModalProps {
   projectId: string;
   currentData?: {
     forecastMethod: "lump_sum" | "manual" | "monitored";
-    forecastAmount: number;
-    projectedBudget: number;
-    projectedCosts: number;
+    forecastAmount?: number;
+    projectedBudget?: number;
+    projectedCosts?: number;
   };
   onSave: (data: {
     budgetLineId: string;
@@ -66,7 +66,7 @@ export function ForecastToCompleteModal({
     "lump_sum" | "manual" | "monitored"
   >(currentData?.forecastMethod || "lump_sum");
   const [forecastAmount, setForecastAmount] = useState<string>(
-    currentData?.forecastAmount?.toString() || "0",
+    currentData?.forecastAmount?.toString() || "",
   );
   const [isSaving, setIsSaving] = useState(false);
 
@@ -84,7 +84,7 @@ export function ForecastToCompleteModal({
   useEffect(() => {
     if (open) {
       setForecastMethod(currentData?.forecastMethod || "lump_sum");
-      setForecastAmount(currentData?.forecastAmount?.toString() || "0");
+      setForecastAmount(currentData?.forecastAmount?.toString() || "");
       setActiveTab("forecast");
     }
   }, [open, currentData]);
@@ -239,6 +239,7 @@ export function ForecastToCompleteModal({
                       forecastAmount ? parseFloat(forecastAmount) : undefined
                     }
                     onChange={(val) => setForecastAmount(String(val ?? ""))}
+                    placeholder=""
                     inline
                     showCurrency={false}
                   />

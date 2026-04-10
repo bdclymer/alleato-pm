@@ -268,7 +268,7 @@ export default function NewEstimatePage() {
               error={errors.contingency_amount?.message}
               min={0}
               step="0.01"
-              placeholder="0.00"
+              placeholder=""
             />
           </FormGrid>
         </FormSection>

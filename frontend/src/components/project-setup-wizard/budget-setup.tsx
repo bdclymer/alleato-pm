@@ -470,7 +470,7 @@ export function BudgetSetup({ projectId, onNext, onSkip }: StepComponentProps) {
                               parseFloat(e.target.value) || null,
                             )
                           }
-                          placeholder="0"
+                          placeholder=""
                           className="h-8"
                         />
                       </TableCell>
@@ -501,7 +501,7 @@ export function BudgetSetup({ projectId, onNext, onSkip }: StepComponentProps) {
                                 parseFloat(e.target.value) || null,
                               )
                             }
-                            placeholder="0.00"
+                            placeholder=""
                             className="h-8 pl-7"
                           />
                         </div>
@@ -519,7 +519,7 @@ export function BudgetSetup({ projectId, onNext, onSkip }: StepComponentProps) {
                                 parseFloat(e.target.value) || 0,
                               )
                             }
-                            placeholder="0.00"
+                            placeholder=""
                             className="h-8 pl-7 font-medium"
                           />
                         </div>

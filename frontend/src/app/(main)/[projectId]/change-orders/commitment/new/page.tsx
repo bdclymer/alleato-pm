@@ -420,7 +420,7 @@ export default function NewCommitmentCOPage() {
                         <Input
                           type="number"
                           step="1"
-                          placeholder="0"
+                          placeholder=""
                           value={field.value ?? ""}
                           onChange={(e) =>
                             field.onChange(

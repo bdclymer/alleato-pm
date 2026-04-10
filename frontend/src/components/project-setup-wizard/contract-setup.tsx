@@ -200,7 +200,7 @@ export function ContractSetup({
                     )
                   }
                   className="pl-9"
-                  placeholder="0.00"
+                  placeholder=""
                 />
               </div>
               <p className="text-xs text-muted-foreground">

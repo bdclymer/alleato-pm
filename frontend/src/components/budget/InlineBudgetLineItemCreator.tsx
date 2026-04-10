@@ -525,7 +525,7 @@ export function InlineBudgetLineItemCreator({
                         addRow();
                       }
                     }}
-                    placeholder="0"
+                    placeholder=""
                     className="h-9"
                     disabled={isCreating}
                     tabIndex={index * 5 + 1}

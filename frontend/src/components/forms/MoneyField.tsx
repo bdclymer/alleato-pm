@@ -190,7 +190,7 @@ export function MoneyField({
           error && "border-destructive",
           className,
         )}
-        placeholder="0.00"
+        placeholder=""
         aria-invalid={!!error}
         aria-describedby={error ? `${inputId}-error` : undefined}
         id={inputId}

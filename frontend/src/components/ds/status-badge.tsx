@@ -44,7 +44,7 @@ const STATUS_TO_VARIANT: Record<string, StatusVariant> = {
   "revision requested": "warning",
   "revision_requested": "warning",
   submitted: "warning",
-  open: "warning",
+  open: "info",
   partial: "warning",
   "out for bid": "warning",
   "out for signature": "warning",

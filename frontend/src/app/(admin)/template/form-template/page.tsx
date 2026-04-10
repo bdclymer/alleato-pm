@@ -222,7 +222,7 @@ export default function StandardFormPage() {
                   control={control}
                   name="amount"
                   label="Amount"
-                  placeholder="0.00"
+                  placeholder=""
                   min={0}
                   step={0.01}
                   description="Standard number input example"
@@ -248,7 +248,7 @@ export default function StandardFormPage() {
                   control={control}
                   name="budget"
                   label="Budget"
-                  placeholder="0.00"
+                  placeholder=""
                   min={0}
                   description="Currency input example"
                 />
@@ -344,7 +344,7 @@ export default function StandardFormPage() {
                         name={`${rowName}.unitCost`}
                         label="Unit Cost"
                         min={0}
-                        placeholder="0.00"
+                        placeholder=""
                       />
                     ),
                   },

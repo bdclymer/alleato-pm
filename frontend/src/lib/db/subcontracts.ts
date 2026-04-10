@@ -11,6 +11,50 @@ import type { Database } from "@/types/database.types";
 type SubcontractRow = Database["public"]["Tables"]["subcontracts"]["Row"];
 type SubcontractInsert = Database["public"]["Tables"]["subcontracts"]["Insert"];
 
+const DB_SUBCONTRACT_STATUSES = [
+  "Draft",
+  "Sent",
+  "Pending",
+  "Approved",
+  "Executed",
+  "Closed",
+  "Void",
+] as const;
+
+const LEGACY_TO_DB_STATUS: Record<string, (typeof DB_SUBCONTRACT_STATUSES)[number]> = {
+  "out for bid": "Sent",
+  out_for_bid: "Sent",
+  "out for signature": "Pending",
+  out_for_signature: "Pending",
+  complete: "Closed",
+  completed: "Closed",
+  terminated: "Void",
+  draft: "Draft",
+  sent: "Sent",
+  pending: "Pending",
+  approved: "Approved",
+  executed: "Executed",
+  closed: "Closed",
+  void: "Void",
+};
+
+function isDbSubcontractStatus(
+  value: string,
+): value is (typeof DB_SUBCONTRACT_STATUSES)[number] {
+  return (DB_SUBCONTRACT_STATUSES as readonly string[]).includes(value);
+}
+
+export function normalizeSubcontractStatus(
+  rawStatus: string | null | undefined,
+): (typeof DB_SUBCONTRACT_STATUSES)[number] {
+  if (!rawStatus) return "Draft";
+  const normalized = rawStatus.trim();
+  if (!normalized) return "Draft";
+  if (isDbSubcontractStatus(normalized)) return normalized;
+  const mapped = LEGACY_TO_DB_STATUS[normalized.toLowerCase()];
+  return mapped ?? "Draft";
+}
+
 /**
  * Form data uses camelCase (JavaScript convention).
  * This type defines what the form submits.
@@ -98,7 +142,7 @@ export function mapFormToInsert(
     // Required fields
     project_id: projectId,
     contract_number: formData.contractNumber?.trim() || "",
-    status: formData.status || "Draft",
+    status: normalizeSubcontractStatus(formData.status),
     executed: formData.executed ?? false,
 
     // Optional fields - map camelCase to snake_case

@@ -224,7 +224,7 @@ export function GeneralInfoSection({
               })}
               disabled={isSubmitting}
               className="text-right"
-              placeholder="0.00"
+              placeholder=""
             />
             <InputGroupAddon align="inline-end">%</InputGroupAddon>
           </InputGroup>

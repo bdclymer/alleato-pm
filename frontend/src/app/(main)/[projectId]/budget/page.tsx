@@ -1193,9 +1193,9 @@ function BudgetPageContent() {
             projectId={projectId}
             currentData={{
               forecastMethod: "lump_sum",
-              forecastAmount: selectedLineItem.forecastToComplete || 0,
-              projectedBudget: selectedLineItem.projectedBudget || 0,
-              projectedCosts: selectedLineItem.projectedCosts || 0,
+              forecastAmount: selectedLineItem.forecastToComplete ?? undefined,
+              projectedBudget: selectedLineItem.projectedBudget ?? undefined,
+              projectedCosts: selectedLineItem.projectedCosts ?? undefined,
             }}
             onSave={handleForecastSave}
           />

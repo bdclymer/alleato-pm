@@ -496,7 +496,7 @@ export function SubmittalFormDialog({
                         <Input
                           type="number"
                           min={0}
-                          placeholder="0"
+                          placeholder=""
                           {...field}
                           value={field.value ?? ""}
                           onChange={(e) =>

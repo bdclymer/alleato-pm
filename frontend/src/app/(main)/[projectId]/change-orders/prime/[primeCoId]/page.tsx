@@ -1569,7 +1569,7 @@ export default function PrimeContractCODetailPage() {
                                       quantity: e.target.value,
                                     }))
                                   }
-                                  placeholder="0"
+                                  placeholder=""
                                   className="h-8 w-20 text-right"
                                 />
                               </td>
@@ -1597,7 +1597,7 @@ export default function PrimeContractCODetailPage() {
                                       unit_cost: e.target.value,
                                     }))
                                   }
-                                  placeholder="0.00"
+                                  placeholder=""
                                   className="h-8 w-28 text-right"
                                 />
                               </td>
@@ -1721,7 +1721,7 @@ export default function PrimeContractCODetailPage() {
                                     quantity: e.target.value,
                                   }))
                                 }
-                                placeholder="0"
+                                placeholder=""
                                 className="h-8 w-20 text-right"
                               />
                             </td>
@@ -1749,7 +1749,7 @@ export default function PrimeContractCODetailPage() {
                                     unit_cost: e.target.value,
                                   }))
                                 }
-                                placeholder="0.00"
+                                placeholder=""
                                 className="h-8 w-28 text-right"
                               />
                             </td>

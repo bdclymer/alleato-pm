@@ -231,7 +231,7 @@ export function CreateBudgetLineItemsModal({
                           onChange={(e) =>
                             updateLine(item.id, "quantity", e.target.value)
                           }
-                          placeholder="0.00"
+                          placeholder=""
                           className={cn(
                             "text-right",
                             !item.quantity && "border-destructive",

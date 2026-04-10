@@ -948,7 +948,7 @@ export default function CommitmentCODetailPage() {
                           <Input
                             type="number"
                             step="1"
-                            placeholder="0"
+                            placeholder=""
                             value={field.value ?? ""}
                             onChange={(e) =>
                               field.onChange(
@@ -1276,7 +1276,7 @@ export default function CommitmentCODetailPage() {
                               onChange={(e) =>
                                 setLineItemDraft((d) => ({ ...d, amount: e.target.value }))
                               }
-                              placeholder="0.00"
+                              placeholder=""
                               className="h-8 text-sm text-right"
                             />
                           </td>
@@ -1360,7 +1360,7 @@ export default function CommitmentCODetailPage() {
                             onChange={(e) =>
                               setLineItemDraft((d) => ({ ...d, amount: e.target.value }))
                             }
-                            placeholder="0.00"
+                            placeholder=""
                             className="h-8 text-sm text-right"
                           />
                         </td>

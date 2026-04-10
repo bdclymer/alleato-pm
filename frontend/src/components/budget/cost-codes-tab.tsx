@@ -81,7 +81,7 @@ function CurrencyInput({
         type="text"
         inputMode="decimal"
         value={focused ? displayValue : (value > 0 ? formatCurrency(value).replace("$", "") : "")}
-        placeholder="0.00"
+        placeholder=""
         disabled={disabled}
         onFocus={() => {
           setFocused(true);

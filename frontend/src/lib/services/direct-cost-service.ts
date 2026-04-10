@@ -19,6 +19,7 @@ import {
   DirectCostRow,
   DirectCostLineItemRow,
   DirectCostFilter,
+  normalizeDirectCostStatus,
 } from "@/lib/schemas/direct-costs";
 
 export class DirectCostService {
@@ -239,7 +240,7 @@ export class DirectCostService {
         vendor_id: data.vendor_id || null,
         employee_id: data.employee_id || null,
         invoice_number: data.invoice_number || null,
-        status: data.status || "Draft",
+        status: normalizeDirectCostStatus(data.status),
         description: data.description || null,
         terms: data.terms || null,
         received_date: data.received_date
@@ -373,8 +374,9 @@ export class DirectCostService {
     }
 
     if (data.status !== undefined) {
-      updateData.status = data.status;
-      if (data.status !== existing.status) {
+      const normalizedStatus = normalizeDirectCostStatus(data.status);
+      updateData.status = normalizedStatus;
+      if (normalizedStatus !== existing.status) {
         changedFields.status = { old: existing.status, new: data.status };
       }
     }

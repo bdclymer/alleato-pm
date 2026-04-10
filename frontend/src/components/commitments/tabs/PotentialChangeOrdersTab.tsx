@@ -151,7 +151,7 @@ function PcoForm({ initial = DEFAULT_FORM, onSave, onCancel, isSaving }: PcoForm
             step="0.01"
             value={form.amount}
             onChange={(e) => set('amount', e.target.value)}
-            placeholder="0.00"
+            placeholder=""
             disabled={isSaving}
           />
         </div>

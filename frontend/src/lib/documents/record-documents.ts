@@ -1099,7 +1099,7 @@ async function loadPrimeContractBundle(
         contract_company:companies!prime_contracts_contract_company_id_fkey(id, name),
         contractor:companies!prime_contracts_contractor_id_fkey(id, name),
         architect_engineer:companies!prime_contracts_architect_engineer_id_fkey(id, name),
-        vendor:companies(id, name, contact_email)
+        vendor:companies!prime_contracts_vendor_id_fkey(id, name, contact_email)
       `,
     )
     .eq("id", recordId)

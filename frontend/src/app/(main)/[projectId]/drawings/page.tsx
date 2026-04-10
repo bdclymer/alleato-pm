@@ -15,6 +15,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Popover,
   PopoverContent,
   PopoverTrigger,
@@ -60,6 +70,9 @@ export default function ProjectDrawingsPage() {
   const publishDrawing = usePublishDrawing(projectId);
   const obsoleteDrawing = useObsoleteDrawing(projectId);
   const updateDrawing = useUpdateDrawing(projectId);
+
+  // Delete confirmation state
+  const [deleteTarget, setDeleteTarget] = useState<DrawingLogTableRow | null>(null);
 
   // Bulk edit state
   const [bulkDisciplineSearch, setBulkDisciplineSearch] = useState("");
@@ -222,14 +235,14 @@ export default function ProjectDrawingsPage() {
   };
 
   const handleDeleteDrawing = (item: DrawingLogTableRow) => {
-    const label = item.drawingNumber
-      ? `${item.drawingNumber} — ${item.title || "Untitled"}`
-      : item.title || "this drawing";
-    const confirmed = window.confirm(
-      `Delete ${label}? This action cannot be undone.`,
-    );
-    if (!confirmed) return;
-    deleteDrawing.mutate(item.id);
+    setDeleteTarget(item);
+  };
+
+  const handleConfirmDelete = () => {
+    if (!deleteTarget) return;
+    deleteDrawing.mutate(deleteTarget.id, {
+      onSettled: () => setDeleteTarget(null),
+    });
   };
 
   // ─── Drag-and-drop handlers ──────────────────────────────────────────────
@@ -511,6 +524,34 @@ export default function ProjectDrawingsPage() {
         enableRowActions: true,
       }}
     />
+
+      <AlertDialog
+        open={deleteTarget !== null}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete drawing?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete &ldquo;
+              {deleteTarget?.drawingNumber
+                ? `${deleteTarget.drawingNumber} — ${deleteTarget.title || "Untitled"}`
+                : deleteTarget?.title || "this drawing"}
+              &rdquo;. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleConfirmDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteDrawing.isPending}
+            >
+              {deleteDrawing.isPending ? "Deleting…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

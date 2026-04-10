@@ -75,7 +75,7 @@ export function BudgetLineItemRow({
         <div className="w-16">
           <Input
             type="number"
-            placeholder="0"
+            placeholder=""
             value={item.qty}
             onChange={(e) => onFieldChange("qty", e.target.value)}
             onKeyDown={onKeyDown}
@@ -100,7 +100,7 @@ export function BudgetLineItemRow({
             </span>
             <Input
               type="number"
-              placeholder="0.00"
+              placeholder=""
               value={item.unitCost}
               onChange={(e) => onFieldChange("unitCost", e.target.value)}
               onKeyDown={onKeyDown}

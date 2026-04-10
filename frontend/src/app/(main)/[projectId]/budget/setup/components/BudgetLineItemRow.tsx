@@ -61,7 +61,7 @@ export function BudgetLineItemRow({
       <td className="px-4 py-4">
         <Input
           type="number"
-          placeholder="0"
+          placeholder=""
           value={lineItem.qty}
           onChange={(e) => onFieldChange("qty", e.target.value)}
           className="w-24"
@@ -87,7 +87,7 @@ export function BudgetLineItemRow({
       <td className="px-4 py-4">
         <Input
           type="number"
-          placeholder="$0.00"
+          placeholder=""
           value={lineItem.unitCost}
           onChange={(e) => onFieldChange("unitCost", e.target.value)}
           className="w-32"
@@ -96,7 +96,7 @@ export function BudgetLineItemRow({
       <td className="px-4 py-4">
         <Input
           type="number"
-          placeholder="$0.00"
+          placeholder=""
           value={lineItem.amount}
           onChange={(e) => onFieldChange("amount", e.target.value)}
           className="w-32"

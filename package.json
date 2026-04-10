@@ -26,7 +26,7 @@
     "schema:extract": "node scripts/database/generate-schema-from-types.js",
     "schema:docs": "npm run schema:extract && node scripts/database/generate-schema-docs.js",
     "db:types": "npx supabase gen types typescript --project-id lgveqfnpkxvzbnnwuled --schema public > frontend/src/types/database.types.ts && npm run devtools:sync-schema-fk",
-    "db:audit": "cd frontend && npm run audit:db && npm run audit:db:fk-types",
+    "db:audit": "cd frontend && npm run audit:db && npm run audit:db:fk-types && npm run audit:db:ambiguous-embeds",
     "db:push": "supabase db push && npm run db:types",
     "devtools:sync-schema-fk": "node scripts/dev-tools/generate-page-schema-fk-map.mjs",
     "check:routes": "bash scripts/check-route-conflicts.sh",

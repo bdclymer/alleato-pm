@@ -583,7 +583,7 @@ export default function NewSubcontractorInvoicePage() {
                                       min="0"
                                       className="h-8 w-28 text-right tabular-nums text-sm"
                                       value={e.work_completed_period}
-                                      placeholder="0.00"
+                                      placeholder=""
                                       onChange={(ev) =>
                                         setSovEdits((prev) => ({
                                           ...prev,
@@ -606,7 +606,7 @@ export default function NewSubcontractorInvoicePage() {
                                       min="0"
                                       className="h-8 w-28 text-right tabular-nums text-sm"
                                       value={e.materials_stored}
-                                      placeholder="0.00"
+                                      placeholder=""
                                       onChange={(ev) =>
                                         setSovEdits((prev) => ({
                                           ...prev,

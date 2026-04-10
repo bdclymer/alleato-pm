@@ -192,7 +192,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       .select(
         `
         *,
-        vendor:companies(id, name)
+        vendor:companies!prime_contracts_vendor_id_fkey(id, name)
       `,
       )
       .single();

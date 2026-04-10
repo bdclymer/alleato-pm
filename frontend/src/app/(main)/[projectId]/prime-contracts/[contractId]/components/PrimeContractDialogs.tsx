@@ -195,7 +195,7 @@ export function PrimeContractDialogs(props: PrimeContractDialogsProps) {
                   onChange={(e) =>
                     setLineItemForm({ ...lineItemForm, unitCost: e.target.value })
                   }
-                  placeholder="0.00"
+                  placeholder=""
                 />
               </div>
             </div>
@@ -288,7 +288,7 @@ export function PrimeContractDialogs(props: PrimeContractDialogsProps) {
                 step="0.01"
                 value={coForm.amount}
                 onChange={(e) => setCoForm((prev) => ({ ...prev, amount: e.target.value }))}
-                placeholder="0.00"
+                placeholder=""
               />
             </div>
             <div className="grid gap-2">
@@ -430,7 +430,7 @@ export function PrimeContractDialogs(props: PrimeContractDialogsProps) {
                 step="0.01"
                 value={editCoForm.amount}
                 onChange={(e) => setEditCoForm((prev) => ({ ...prev, amount: e.target.value }))}
-                placeholder="0.00"
+                placeholder=""
               />
             </div>
           </div>

@@ -199,7 +199,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       .select(
         `
         *,
-        vendor:companies(id, name, contact_name, contact_email, contact_phone)
+        vendor:companies!prime_contracts_vendor_id_fkey(id, name, contact_name, contact_email, contact_phone)
       `,
       )
       .single();

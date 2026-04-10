@@ -77,6 +77,16 @@ const UOM_OPTIONS = [
 
 type CalculationMethod = "manual" | "calculated";
 
+function toEditableNumberString(value: number | null | undefined): string {
+  if (value == null || Number.isNaN(value)) return "";
+  return value === 0 ? "" : String(value);
+}
+
+function parseNumberOrDefault(value: string, fallback: number): number {
+  const parsed = parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
 export function OriginalBudgetEditModal({
   open,
   onClose,
@@ -99,29 +109,31 @@ export function OriginalBudgetEditModal({
   // Form state
   const [calculationMethod, setCalculationMethod] =
     useState<CalculationMethod>("manual");
-  const [unitQty, setUnitQty] = useState((lineItem.unitQty ?? 1).toString());
+  const [unitQty, setUnitQty] = useState(toEditableNumberString(lineItem.unitQty));
   const [uom, setUom] = useState(lineItem.uom || "");
-  const [unitCost, setUnitCost] = useState(
-    (lineItem.unitCost ?? lineItem.originalBudgetAmount ?? 0).toString(),
-  );
+  const [unitCost, setUnitCost] = useState(toEditableNumberString(lineItem.unitCost));
   const [originalBudget, setOriginalBudget] = useState(
-    (lineItem.originalBudgetAmount ?? 0).toString(),
+    toEditableNumberString(lineItem.originalBudgetAmount),
   );
 
 
   const hasChanges =
-    (parseFloat(unitQty) || 1) !== (lineItem.unitQty ?? 1) ||
+    parseNumberOrDefault(unitQty, lineItem.unitQty ?? 0) !== (lineItem.unitQty ?? 0) ||
     uom !== (lineItem.uom || "") ||
-    (parseFloat(unitCost) || 0) !==
-      (lineItem.unitCost ?? lineItem.originalBudgetAmount ?? 0) ||
-    (parseFloat(originalBudget) || 0) !== lineItem.originalBudgetAmount;
+    parseNumberOrDefault(unitCost, lineItem.unitCost ?? 0) !== (lineItem.unitCost ?? 0) ||
+    parseNumberOrDefault(originalBudget, lineItem.originalBudgetAmount) !==
+      lineItem.originalBudgetAmount;
 
   // Calculate original budget when inputs change
   useEffect(() => {
     if (calculationMethod === "calculated") {
-      const qty = parseFloat(unitQty) || 0;
-      const cost = parseFloat(unitCost) || 0;
-      setOriginalBudget((qty * cost).toFixed(2));
+      const qty = parseFloat(unitQty);
+      const cost = parseFloat(unitCost);
+      if (Number.isFinite(qty) && Number.isFinite(cost)) {
+        setOriginalBudget((qty * cost).toFixed(2));
+      } else {
+        setOriginalBudget("");
+      }
     }
   }, [unitQty, unitCost, calculationMethod]);
 
@@ -129,12 +141,10 @@ export function OriginalBudgetEditModal({
   useEffect(() => {
     if (open) {
       setCalculationMethod("manual");
-      setUnitQty((lineItem.unitQty ?? 1).toString());
+      setUnitQty(toEditableNumberString(lineItem.unitQty));
       setUom(lineItem.uom || "");
-      setUnitCost(
-        (lineItem.unitCost ?? lineItem.originalBudgetAmount ?? 0).toString(),
-      );
-      setOriginalBudget((lineItem.originalBudgetAmount ?? 0).toString());
+      setUnitCost(toEditableNumberString(lineItem.unitCost));
+      setOriginalBudget(toEditableNumberString(lineItem.originalBudgetAmount));
     }
   }, [open, lineItem]);
 
@@ -171,10 +181,10 @@ export function OriginalBudgetEditModal({
     setSaving(true);
     try {
       const data = {
-        unitQty: parseFloat(unitQty) || 1,
+        unitQty: parseNumberOrDefault(unitQty, 0),
         uom,
-        unitCost: parseFloat(unitCost) || 0,
-        originalBudget: parseFloat(originalBudget) || 0,
+        unitCost: parseNumberOrDefault(unitCost, 0),
+        originalBudget: parseNumberOrDefault(originalBudget, 0),
       };
 
       if (onSave) {
@@ -413,6 +423,7 @@ export function OriginalBudgetEditModal({
                       label="Unit Cost"
                       value={unitCost ? parseFloat(unitCost) : undefined}
                       onChange={(val) => setUnitCost(String(val ?? ""))}
+                      placeholder=""
                       inline
                       showCurrency={false}
                       className="mt-1"
@@ -430,6 +441,7 @@ export function OriginalBudgetEditModal({
                       label="Original Budget"
                       value={originalBudget ? parseFloat(originalBudget) : undefined}
                       onChange={(val) => setOriginalBudget(String(val ?? ""))}
+                      placeholder=""
                       inline
                       showCurrency={false}
                       className="mt-1 bg-muted/50 font-semibold"

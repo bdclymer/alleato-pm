@@ -235,7 +235,7 @@ export function OriginalBudgetModal({
                       step="0.01"
                       value={unitQty}
                       onChange={(e) => setUnitQty(e.target.value)}
-                      placeholder="0.00"
+                      placeholder=""
                       className="mt-1"
                     />
                   </div>
@@ -279,7 +279,7 @@ export function OriginalBudgetModal({
                     step="0.01"
                     value={unitCost}
                     onChange={(e) => setUnitCost(e.target.value)}
-                    placeholder="$0.00"
+                    placeholder=""
                     className="mt-1"
                   />
                 </div>

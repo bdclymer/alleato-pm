@@ -512,7 +512,7 @@ export default function NewBudgetLineItemPage() {
                         onChange={(e) =>
                           handleRowChange(row.id, "qty", e.target.value)
                         }
-                        placeholder="0"
+                        placeholder=""
                         className="h-9"
                       />
                     </td>
@@ -550,7 +550,7 @@ export default function NewBudgetLineItemPage() {
                         onChange={(e) =>
                           handleRowChange(row.id, "unitCost", e.target.value)
                         }
-                        placeholder="0.00"
+                        placeholder=""
                         className="h-9"
                       />
                     </td>
@@ -564,7 +564,7 @@ export default function NewBudgetLineItemPage() {
                         onChange={(e) =>
                           handleRowChange(row.id, "amount", e.target.value)
                         }
-                        placeholder="0.00"
+                        placeholder=""
                         className="h-9 font-medium"
                       />
                     </td>

@@ -9,9 +9,7 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock,
-  MapPin,
   TrendingDown,
-  UserRound,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useBudgetData } from "@/hooks/use-budget-data";
@@ -20,6 +18,7 @@ import { KpiRow, StatusBadge, Skeleton } from "@/components/ds";
 import { ContentSectionStack } from "@/components/layout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { RealtimeCursors } from "@/components/realtime-cursors";
 import { EditProjectSidebar } from "@/components/project/edit-project-sidebar";
 import type { Database } from "@/types/database.types";
@@ -397,6 +396,35 @@ function ChangePipelineSection({
   potentialChangeOrders,
   approvedChangeOrders,
 }: ChangePipelineSectionProps) {
+  const pipelineRows = [
+    ...changeEvents.map((ce) => ({
+      id: `ce-${ce.id}`,
+      href: `/${projectId}/change-events/${ce.id}`,
+      type: "CE",
+      title: ce.title ?? `Change Event #${ce.number}`,
+      amount: null as number | null,
+      status: ce.status ?? "Draft",
+    })),
+    ...potentialChangeOrders.map((co: ChangeOrder) => ({
+      id: `pco-${co.id}`,
+      href: `/${projectId}/change-orders/prime/${co.id}`,
+      type: "PCO",
+      title: co.title ?? "Untitled PCO",
+      amount: co.total_amount ?? null,
+      status: co.status ?? "Proposed",
+    })),
+    ...approvedChangeOrders.map((co: ChangeOrder) => ({
+      id: `co-${co.id}`,
+      href: Boolean(co.change_order_number)
+        ? `/${projectId}/change-orders/commitment/${co.id}`
+        : `/${projectId}/change-orders/prime/${co.id}`,
+      type: "CO",
+      title: co.title ?? "Untitled CO",
+      amount: co.amount ?? co.total_amount ?? null,
+      status: co.status ?? "Pending",
+    })),
+  ];
+
   return (
     <section>
       <SectionHeading action={<ViewAllLink href={actionHref} label={actionLabel} />}>
@@ -406,65 +434,55 @@ function ChangePipelineSection({
       {!hasPipelineData ? (
         <p className="text-sm text-muted-foreground">No pipeline items</p>
       ) : (
-        <div className="divide-y divide-border overflow-hidden rounded-md border border-border">
-          {changeEvents.map((ce) => (
-            <Link
-              key={ce.id}
-              href={`/${projectId}/change-events/${ce.id}`}
-              className="flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-muted/50"
-            >
-              <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-muted-foreground">
-                CE
-              </span>
-              <span className="flex-1 truncate text-sm">
-                {ce.title ?? `Change Event #${ce.number}`}
-              </span>
-              <StatusBadge status={ce.status ?? "Draft"} />
-            </Link>
-          ))}
-
-          {potentialChangeOrders.map((co: ChangeOrder) => (
-            <Link
-              key={`pco-${co.id}`}
-              href={`/${projectId}/change-orders/prime/${co.id}`}
-              className="flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-muted/50"
-            >
-              <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-muted-foreground">
-                PCO
-              </span>
-              <span className="flex-1 truncate text-sm">{co.title ?? "Untitled PCO"}</span>
-              <div className="flex shrink-0 items-center gap-2">
-                <span className="tabular-nums text-xs text-muted-foreground">
-                  {fmtCompact(co.total_amount)}
-                </span>
-                <StatusBadge status={co.status ?? "Proposed"} />
-              </div>
-            </Link>
-          ))}
-
-          {approvedChangeOrders.map((co: ChangeOrder) => {
-            const href = Boolean(co.change_order_number)
-              ? `/${projectId}/change-orders/commitment/${co.id}`
-              : `/${projectId}/change-orders/prime/${co.id}`;
-            return (
-              <Link
-                key={`co-${co.id}`}
-                href={href}
-                className="flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-muted/50"
-              >
-                <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-muted-foreground">
-                  CO
-                </span>
-                <span className="flex-1 truncate text-sm">{co.title ?? "Untitled CO"}</span>
-                <div className="flex shrink-0 items-center gap-2">
-                  <span className="tabular-nums text-xs text-muted-foreground">
-                    {fmtCompact(co.amount ?? co.total_amount)}
-                  </span>
-                  <StatusBadge status={co.status ?? "Pending"} />
-                </div>
-              </Link>
-            );
-          })}
+        <div className="overflow-hidden rounded-md border border-border/70 bg-background">
+          <Table>
+            <TableHeader className="bg-muted/40">
+              <TableRow>
+                <TableHead className="w-16 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Type
+                </TableHead>
+                <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Title
+                </TableHead>
+                <TableHead className="w-28 text-right text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Amount
+                </TableHead>
+                <TableHead className="w-36 text-right text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Status
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {pipelineRows.map((row) => (
+                <TableRow key={row.id} className="hover:bg-muted/30">
+                  <TableCell className="py-2.5 align-middle">
+                    <span className="inline-flex rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-muted-foreground">
+                      {row.type}
+                    </span>
+                  </TableCell>
+                  <TableCell className="py-2.5 align-middle">
+                    <Link
+                      href={row.href}
+                      className="block truncate text-sm text-foreground transition-colors hover:text-primary"
+                    >
+                      {row.title}
+                    </Link>
+                  </TableCell>
+                  <TableCell className="py-2.5 text-right align-middle">
+                    <span className="text-xs tabular-nums text-muted-foreground">
+                      {row.amount == null ? "—" : fmtCompact(row.amount)}
+                    </span>
+                  </TableCell>
+                  <TableCell className="py-2.5 text-right align-middle">
+                    <StatusBadge
+                      status={row.status}
+                      variant={row.status.toLowerCase() === "open" ? "info" : undefined}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
     </section>
@@ -479,12 +497,16 @@ function AlertsSection({
   projectId,
   showPrimeContractMarkupAlert,
   changeOrdersWithoutChangeRequestCount,
+  pendingSsovReviews,
 }: {
   projectId: string;
   showPrimeContractMarkupAlert: boolean;
   changeOrdersWithoutChangeRequestCount: number;
+  pendingSsovReviews: NonNullable<ProjectCommandCenterProps["pendingSsovReviews"]>;
 }) {
-  const hasAlerts = showPrimeContractMarkupAlert || changeOrdersWithoutChangeRequestCount > 0;
+  const hasPendingSsov = pendingSsovReviews.length > 0;
+  const hasAlerts =
+    showPrimeContractMarkupAlert || changeOrdersWithoutChangeRequestCount > 0 || hasPendingSsov;
 
   return (
     <section>
@@ -497,6 +519,45 @@ function AlertsSection({
         </div>
       ) : (
         <div className="space-y-1.5">
+          {hasPendingSsov && (
+            <div className="overflow-hidden rounded-md border border-status-warning/30 bg-status-warning/5">
+              <Link
+                href={`/${projectId}/commitments`}
+                className="flex items-center justify-between px-3 py-2.5 transition-colors hover:bg-status-warning/10"
+              >
+                <div className="flex items-center gap-2">
+                  <Clock className="h-3.5 w-3.5 shrink-0 text-status-warning" />
+                  <span className="text-sm font-medium text-status-warning">
+                    {pendingSsovReviews.length} subcontractor SOV
+                    {pendingSsovReviews.length !== 1 ? "s" : ""} pending review
+                  </span>
+                </div>
+                <ChevronRight className="h-3.5 w-3.5 text-status-warning" />
+              </Link>
+              {pendingSsovReviews.slice(0, 3).map((item) => (
+                <Link
+                  key={item.commitmentId}
+                  href={`/${projectId}/commitments/${item.commitmentId}?tab=subcontractor-sov`}
+                  className="flex items-start justify-between gap-2 border-t border-status-warning/20 px-3 py-2.5 transition-colors hover:bg-status-warning/10"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">
+                      {item.commitmentNumber ? `${item.commitmentNumber} · ` : ""}
+                      {item.commitmentTitle} pending SSOV review
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      Submitted{" "}
+                      {item.submittedAt
+                        ? format(new Date(item.submittedAt), "MMM d, yyyy")
+                        : "recently"}
+                    </p>
+                  </div>
+                  <StatusBadge status="Under Review" />
+                </Link>
+              ))}
+            </div>
+          )}
+
           {showPrimeContractMarkupAlert && (
             <Link
               href={`/${projectId}/prime-contracts`}
@@ -540,17 +601,14 @@ interface ActionRequiredSectionProps {
   projectId: string;
   rfisOverdue: RFI[];
   overdueTasks: Task[];
-  pendingSsovReviews: NonNullable<ProjectCommandCenterProps["pendingSsovReviews"]>;
 }
 
 function ActionRequiredSection({
   projectId,
   rfisOverdue,
   overdueTasks,
-  pendingSsovReviews,
 }: ActionRequiredSectionProps) {
-  const hasPendingSsov = pendingSsovReviews.length > 0;
-  const hasActions = rfisOverdue.length > 0 || overdueTasks.length > 0 || hasPendingSsov;
+  const hasActions = rfisOverdue.length > 0 || overdueTasks.length > 0;
 
   return (
     <section>
@@ -562,49 +620,7 @@ function ActionRequiredSection({
           <span>No overdue items</span>
         </div>
       ) : (
-        <div className="space-y-1.5">
-          {hasPendingSsov && (
-            <Link
-              href={`/${projectId}/commitments`}
-              className="flex items-center justify-between rounded-md bg-status-warning/10 px-3 py-2.5 transition-colors hover:bg-status-warning/15"
-            >
-              <div className="flex items-center gap-2">
-                <Clock className="h-3.5 w-3.5 shrink-0 text-status-warning" />
-                <span className="text-sm font-medium text-status-warning">
-                  {pendingSsovReviews.length} subcontractor SOV
-                  {pendingSsovReviews.length !== 1 ? "s" : ""} awaiting review
-                </span>
-              </div>
-              <ChevronRight className="h-3.5 w-3.5 text-status-warning" />
-            </Link>
-          )}
-
-          {hasPendingSsov && (
-            <div className="overflow-hidden rounded-md border border-border/70 bg-background">
-              {pendingSsovReviews.slice(0, 3).map((item) => (
-                <Link
-                  key={item.commitmentId}
-                  href={`/${projectId}/commitments/${item.commitmentId}?tab=subcontractor-sov`}
-                  className="flex items-start justify-between gap-2 border-b border-border/60 px-3 py-2.5 last:border-b-0 transition-colors hover:bg-muted/40"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium">
-                      {item.commitmentNumber ? `${item.commitmentNumber} · ` : ""}
-                      {item.commitmentTitle}
-                    </p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      Submitted{" "}
-                      {item.submittedAt
-                        ? format(new Date(item.submittedAt), "MMM d, yyyy")
-                        : "recently"}
-                    </p>
-                  </div>
-                  <StatusBadge status="Under Review" />
-                </Link>
-              ))}
-            </div>
-          )}
-
+        <div className="space-y-3">
           {rfisOverdue.length > 0 && (
             <Link
               href={`/${projectId}/rfis`}
@@ -779,14 +795,7 @@ export function ProjectCommandCenter({
     homeAlerts?.changeOrdersWithoutChangeRequestCount ?? 0;
 
   /* ── Project meta ──────────────────────────────────────── */
-  const primaryContract = contracts[0] ?? null;
-  const completionDate =
-    (primaryContract?.substantial_completion_date as string | null) ??
-    project["est completion"] ??
-    null;
-  const infoDate = project["start date"] ?? completionDate;
   const jobNumber = project["job number"] ?? project.project_number;
-  const projectLocation = project.state ?? project.address;
 
   /* ── Meetings ──────────────────────────────────────────── */
   const recentMeetings = [...meetings]
@@ -811,29 +820,9 @@ export function ProjectCommandCenter({
                 Job # {jobNumber}
               </div>
             )}
-            <h1 className="text-lg font-semibold leading-snug text-foreground sm:text-xl">
+            <h1 className="text-xl font-semibold leading-snug text-foreground sm:text-2xl">
               {project.name ?? "Untitled Project"}
             </h1>
-            <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground sm:mt-3 sm:gap-4 sm:text-sm">
-              {project.client && (
-                <span className="inline-flex items-center gap-1.5">
-                  <UserRound className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  {project.client}
-                </span>
-              )}
-              {infoDate && (
-                <span className="inline-flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  {format(new Date(infoDate), "MMM d, yyyy")}
-                </span>
-              )}
-              {projectLocation && (
-                <span className="inline-flex items-center gap-1.5">
-                  <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-                  {projectLocation}
-                </span>
-              )}
-            </div>
           </div>
 
           <div className="flex shrink-0 flex-col items-end gap-2 sm:gap-3">
@@ -860,7 +849,7 @@ export function ProjectCommandCenter({
       </div>
 
       {/* Body — 2-col layout */}
-      <div className="flex-1 grid grid-cols-1 divide-y divide-border lg:grid-cols-[1fr_320px] lg:divide-x lg:divide-y-0">
+      <div className="flex-1 grid grid-cols-1 gap-y-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-x-12 lg:gap-y-0">
         {/* Left: Main */}
         <div className="min-w-0 px-4 py-4 sm:px-5 sm:py-5 lg:px-7">
           <ContentSectionStack>
@@ -895,18 +884,18 @@ export function ProjectCommandCenter({
         </div>
 
         {/* Right: Sidebar */}
-        <div className="bg-muted/20 px-4 py-4 sm:px-5 sm:py-5">
+        <div className="px-4 py-4 sm:px-5 sm:py-5">
           <ContentSectionStack>
             <AlertsSection
               projectId={projectId}
               showPrimeContractMarkupAlert={showPrimeContractMarkupAlert}
               changeOrdersWithoutChangeRequestCount={changeOrdersWithoutChangeRequestCount}
+              pendingSsovReviews={pendingSsovReviews}
             />
             <ActionRequiredSection
               projectId={projectId}
               rfisOverdue={rfisOverdue}
               overdueTasks={overdueTasks}
-              pendingSsovReviews={pendingSsovReviews}
             />
             <OpenRFIsSection
               projectId={projectId}

@@ -565,7 +565,7 @@ export function PCOWorkspace({
                     onMarkupChange(parseFloat(e.target.value) || 0)
                   }
                   className="w-20 text-right text-sm tabular-nums"
-                  placeholder="0"
+                  placeholder=""
                 />
                 <span className="text-muted-foreground">%</span>
               </div>

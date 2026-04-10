@@ -238,7 +238,7 @@ export function PrimeContractPaymentsTab({
                 <Input
                   id="pmt-amount"
                   type="number"
-                  placeholder="0.00"
+                  placeholder=""
                   value={paymentForm.amount}
                   onChange={(e) =>
                     setPaymentForm((f) => ({ ...f, amount: e.target.value }))

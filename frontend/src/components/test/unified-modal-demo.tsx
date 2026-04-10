@@ -139,7 +139,7 @@ export function UnifiedModalDemo() {
                           <Input
                             type="number"
                             step="0.01"
-                            placeholder="$0.00"
+                            placeholder=""
                             className="h-9"
                           />
                         </td>
@@ -147,7 +147,7 @@ export function UnifiedModalDemo() {
                           <Input
                             type="number"
                             step="0.01"
-                            placeholder="$0.00"
+                            placeholder=""
                             className="h-9 font-medium"
                             readOnly
                           />

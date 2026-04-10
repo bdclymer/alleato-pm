@@ -24,6 +24,25 @@ export type CostType = (typeof CostTypes)[number];
 export const CostStatuses = ['Draft', 'Pending', 'Revise and Resubmit', 'Approved'] as const;
 export type DirectCostStatus = (typeof CostStatuses)[number];
 
+export const DbDirectCostStatuses = ['Draft', 'Approved', 'Rejected', 'Paid'] as const;
+export type DbDirectCostStatus = (typeof DbDirectCostStatuses)[number];
+
+const DIRECT_COST_STATUS_TO_DB: Record<string, DbDirectCostStatus> = {
+  draft: 'Draft',
+  pending: 'Draft',
+  approved: 'Approved',
+  rejected: 'Rejected',
+  paid: 'Paid',
+  revise_and_resubmit: 'Rejected',
+  'revise and resubmit': 'Rejected',
+};
+
+export function normalizeDirectCostStatus(status: string | null | undefined): DbDirectCostStatus {
+  const normalized = (status ?? '').trim().toLowerCase();
+  if (!normalized) return 'Draft';
+  return DIRECT_COST_STATUS_TO_DB[normalized] ?? 'Draft';
+}
+
 export const UnitTypes = [
   'LOT',
   'HOUR',

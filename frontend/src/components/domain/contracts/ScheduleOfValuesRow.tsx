@@ -55,7 +55,7 @@ export function ScheduleOfValuesRow({
           type="number"
           value={item.scheduledValue || ""}
           onChange={(e) => handleNumberChange("scheduledValue", e.target.value)}
-          placeholder="0.00"
+          placeholder=""
           className="w-32 text-right"
         />
       </td>
@@ -64,7 +64,7 @@ export function ScheduleOfValuesRow({
           type="number"
           value={item.workCompleted || ""}
           onChange={(e) => handleNumberChange("workCompleted", e.target.value)}
-          placeholder="0.00"
+          placeholder=""
           className="w-32 text-right"
         />
       </td>
@@ -75,7 +75,7 @@ export function ScheduleOfValuesRow({
           onChange={(e) =>
             handleNumberChange("materialsStored", e.target.value)
           }
-          placeholder="0.00"
+          placeholder=""
           className="w-32 text-right"
         />
       </td>

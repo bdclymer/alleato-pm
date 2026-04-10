@@ -316,7 +316,7 @@ function LineItemRow({
                       'h-9 text-right border-none bg-transparent focus-visible:ring-1',
                       errorRecord?.quantity && 'text-destructive'
                     )}
-                    placeholder="0"
+                    placeholder=""
                     data-testid={`change-event-line-item-quantity-${index}`}
                   />
               </FormControl>
@@ -370,7 +370,7 @@ function LineItemRow({
                       'h-9 pl-6 text-right border-none bg-transparent focus-visible:ring-1',
                       errorRecord?.unit_cost && 'border-destructive'
                     )}
-                    placeholder="0.00"
+                    placeholder=""
                     data-testid={`change-event-line-item-unit-cost-${index}`}
                   />
                 </div>
@@ -432,7 +432,7 @@ function LineItemRow({
                       value={String(field.value ?? '')}
                       onChange={(e) => field.onChange(Number(e.target.value))}
                       className="h-9 pl-6 text-right border-none bg-transparent focus-visible:ring-1"
-                      placeholder="0.00"
+                      placeholder=""
                     />
                   </div>
                 </FormControl>
@@ -463,7 +463,7 @@ function LineItemRow({
                     value={String(field.value ?? '')}
                     onChange={(e) => field.onChange(Number(e.target.value))}
                     className="h-9 pl-6 text-right border-none bg-transparent focus-visible:ring-1"
-                    placeholder="0.00"
+                    placeholder=""
                     data-testid={`change-event-line-item-non-committed-${index}`}
                   />
                 </div>

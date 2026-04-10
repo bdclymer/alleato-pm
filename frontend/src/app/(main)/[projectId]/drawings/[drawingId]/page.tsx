@@ -68,12 +68,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { EmptyState } from "@/components/ds";
 import { DrawingComments } from "@/components/drawings/DrawingComments";
 
 import {
   useDrawing,
   useUpdateDrawing,
+  useDeleteDrawing,
   usePublishDrawing,
   useObsoleteDrawing,
 } from "@/hooks/use-drawings";
@@ -312,10 +323,12 @@ export default function DrawingDetailPage() {
     useDrawingRevisions(projectId, drawingId);
   const { data: areas = [] } = useDrawingAreas(projectId);
   const updateDrawing = useUpdateDrawing(projectId);
+  const deleteDrawing = useDeleteDrawing(projectId);
   const publishDrawing = usePublishDrawing(projectId);
   const obsoleteDrawing = useObsoleteDrawing(projectId);
 
   const [isEditing, setIsEditing] = useState(false);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [editForm, setEditForm] = useState<EditFormState>({
@@ -420,6 +433,14 @@ export default function DrawingDetailPage() {
   );
 
   const currentRevision = drawing?.current_revision ?? null;
+
+  const handleDelete = useCallback(() => {
+    deleteDrawing.mutate(drawingId, {
+      onSuccess: () => {
+        router.push(`/${projectId}/drawings`);
+      },
+    });
+  }, [deleteDrawing, drawingId, projectId, router]);
 
   const handlePrint = useCallback(async () => {
     if (!currentRevision?.file_url) return;
@@ -610,7 +631,7 @@ export default function DrawingDetailPage() {
               )}
               <DropdownMenuItem
                 className="text-destructive focus:text-destructive"
-                onClick={() => toast.info("Move to Recycle Bin — coming soon")}
+                onClick={() => setShowDeleteDialog(true)}
               >
                 <Trash2 className="h-4 w-4 mr-2" />
                 Move to Recycle Bin
@@ -1052,6 +1073,28 @@ export default function DrawingDetailPage() {
             </div>
           </TabsContent>
         </Tabs>
+
+      <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete drawing?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete &ldquo;{drawing.title || drawing.drawing_number}&rdquo;
+              and all associated revisions. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDelete}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              disabled={deleteDrawing.isPending}
+            >
+              {deleteDrawing.isPending ? "Deleting…" : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </PageShell>
   );
 }
