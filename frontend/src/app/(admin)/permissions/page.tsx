@@ -2,12 +2,12 @@
 
 import * as React from "react";
 import { useState, useMemo, useCallback } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -37,8 +37,6 @@ import { EmptyState } from "@/components/ds";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   UnifiedTablePage,
-  useUnifiedTableState,
-  type FilterValue,
 } from "@/components/tables/unified";
 import type { ColumnConfig, TableColumn } from "@/components/tables/unified";
 import { PermissionTemplateForm } from "./permission-template-form";
@@ -48,7 +46,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Check, Minus, MoreVertical, Plus, ShieldCheck, Trash2 } from "lucide-react";
+import { Check, Columns3, Minus, MoreVertical, Plus, Search, ShieldCheck, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ALL_MODULES, GRANULAR_FLAG_LABELS } from "@/lib/permissions-shared";
 import type {
@@ -256,6 +254,10 @@ export default function PermissionsAdminPage() {
     },
   });
 
+  // Search state shared between toolbar slot and users table
+  const [usersSearch, setUsersSearch] = useState("");
+  const [usersVisibleColumns, setUsersVisibleColumns] = useState(userDefaultVisibleColumns);
+
   const openCreateForScope = (scope: TemplateScope) => {
     setCreateScope(scope);
     setShowCreate(true);
@@ -263,42 +265,54 @@ export default function PermissionsAdminPage() {
 
   return (
     <PageShell
-      variant="content"
+      variant="dashboard"
       title="Permissions"
-      description="Manage permission templates and user access across the platform."
-      actions={
-        activeTab === "company" ? (
-          <Button onClick={() => openCreateForScope("company")}>
-            <Plus className="mr-1.5 h-4 w-4" />
-            New Company Template
-          </Button>
-        ) : activeTab === "project" ? (
-          <Button onClick={() => openCreateForScope("project")}>
-            <Plus className="mr-1.5 h-4 w-4" />
-            New Project Template
-          </Button>
-        ) : null
-      }
     >
       <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as typeof activeTab)}>
-        <TabsList className="mb-6">
-          <TabsTrigger value="users">User Permissions</TabsTrigger>
-          <TabsTrigger value="company">Company Templates</TabsTrigger>
-          <TabsTrigger value="project">Project Templates</TabsTrigger>
-        </TabsList>
+        <div className="flex items-center justify-between">
+          <TabsList variant="line">
+            <TabsTrigger value="users">User Permissions</TabsTrigger>
+            <TabsTrigger value="company">Company Templates</TabsTrigger>
+            <TabsTrigger value="project">Project Templates</TabsTrigger>
+          </TabsList>
+          <div className="flex items-center gap-2">
+            {activeTab === "users" && (
+              <UsersToolbarSlot
+              searchValue={usersSearch}
+              onSearchChange={setUsersSearch}
+              visibleColumns={usersVisibleColumns}
+              onVisibleColumnsChange={setUsersVisibleColumns}
+            />
+            )}
+            {activeTab === "company" && (
+              <Button size="sm" onClick={() => openCreateForScope("company")}>
+                <Plus className="mr-1.5 h-4 w-4" />
+                New Template
+              </Button>
+            )}
+            {activeTab === "project" && (
+              <Button size="sm" onClick={() => openCreateForScope("project")}>
+                <Plus className="mr-1.5 h-4 w-4" />
+                New Template
+              </Button>
+            )}
+          </div>
+        </div>
 
-        <TabsContent value="users">
+        <TabsContent value="users" className="mt-0">
           <UsersTableTab
             users={usersQuery.data ?? []}
             isLoading={usersQuery.isLoading}
             templates={allTemplatesQuery.data ?? []}
+            searchValue={usersSearch}
+            visibleColumns={usersVisibleColumns}
             onRefresh={() => {
               qc.invalidateQueries({ queryKey: ["permission-users"] });
             }}
           />
         </TabsContent>
 
-        <TabsContent value="company">
+        <TabsContent value="company" className="mt-4">
           <TemplatesTab
             scope="company"
             templates={companyTemplatesQuery.data ?? []}
@@ -311,7 +325,7 @@ export default function PermissionsAdminPage() {
           />
         </TabsContent>
 
-        <TabsContent value="project">
+        <TabsContent value="project" className="mt-4">
           <TemplatesTab
             scope="project"
             templates={projectTemplatesQuery.data ?? []}
@@ -399,6 +413,79 @@ export default function PermissionsAdminPage() {
 }
 
 // ---------------------------------------------------------------------------
+// UsersToolbarSlot — search + column toggle rendered inline with tabs
+// ---------------------------------------------------------------------------
+
+function UsersToolbarSlot({
+  searchValue,
+  onSearchChange,
+  visibleColumns,
+  onVisibleColumnsChange,
+}: {
+  searchValue: string;
+  onSearchChange: (value: string) => void;
+  visibleColumns: string[];
+  onVisibleColumnsChange: (cols: string[]) => void;
+}) {
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  return (
+    <div className="flex items-center gap-1.5">
+      {searchOpen ? (
+        <Input
+          autoFocus
+          value={searchValue}
+          onChange={(e) => onSearchChange(e.target.value)}
+          placeholder="Search users..."
+          className="h-8 w-48 text-sm"
+          onBlur={() => {
+            if (!searchValue) setSearchOpen(false);
+          }}
+        />
+      ) : (
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => setSearchOpen(true)}
+        >
+          <Search className="h-4 w-4" />
+        </Button>
+      )}
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Columns3 className="h-4 w-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          {userColumns.map((col) => (
+            <DropdownMenuItem
+              key={col.id}
+              onClick={() => {
+                onVisibleColumnsChange(
+                  visibleColumns.includes(col.id)
+                    ? visibleColumns.filter((c) => c !== col.id)
+                    : [...visibleColumns, col.id]
+                );
+              }}
+            >
+              <span className={cn(
+                "mr-2 h-4 w-4 flex items-center justify-center",
+                visibleColumns.includes(col.id) ? "text-primary" : "text-transparent"
+              )}>
+                <Check className="h-3.5 w-3.5" />
+              </span>
+              {col.label}
+            </DropdownMenuItem>
+          ))}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // UsersTableTab — UnifiedTablePage with avatar, admin toggle, template assign
 // ---------------------------------------------------------------------------
 
@@ -406,35 +493,17 @@ function UsersTableTab({
   users,
   isLoading,
   templates,
+  searchValue,
+  visibleColumns,
   onRefresh,
 }: {
   users: PermissionUser[];
   isLoading: boolean;
   templates: PermissionTemplate[];
+  searchValue: string;
+  visibleColumns: string[];
   onRefresh: () => void;
 }) {
-  const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
-
-  const tableState = useUnifiedTableState({
-    entityKey: "admin-permissions-users",
-    searchParams,
-    pathname,
-    router,
-    defaults: {
-      view: "table" as const,
-      allowedViews: ["table" as const],
-      page: 1,
-      perPage: 50,
-      search: "",
-      sortBy: "fullName",
-      sortDirection: "asc" as const,
-      visibleColumns: userDefaultVisibleColumns,
-      filters: {} as Record<string, FilterValue>,
-    },
-  });
-
   const adminMutation = useMutation({
     mutationFn: async ({ authUserId, isAdmin }: { authUserId: string; isAdmin: boolean }) => {
       const res = await fetch("/api/admin/set-admin-status", {
@@ -485,10 +554,16 @@ function UsersTableTab({
     },
   });
 
+  // Local sorting and pagination state (search + columns from parent)
+  const [sortBy, setSortBy] = useState<string | null>("fullName");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(50);
+
   // Transform to flat rows
-  const hasSearch = tableState.debouncedSearch.trim().length > 0;
+  const hasSearch = searchValue.trim().length > 0;
   const tableData = useMemo<UserTableRow[]>(() => {
-    const search = tableState.debouncedSearch.trim().toLowerCase();
+    const search = searchValue.trim().toLowerCase();
 
     return users
       .map((user) => {
@@ -521,10 +596,10 @@ function UsersTableTab({
           row.templateName.toLowerCase().includes(search)
         );
       });
-  }, [users, tableState.debouncedSearch]);
+  }, [users, searchValue]);
 
   // Pagination
-  const totalPages = Math.max(1, Math.ceil(tableData.length / tableState.perPage));
+  const totalPages = Math.max(1, Math.ceil(tableData.length / perPage));
 
   // Build columns with avatar
   const tableColumns = useMemo<TableColumn<UserTableRow>[]>(
@@ -664,28 +739,28 @@ function UsersTableTab({
   );
 
   return (
+    <div className="[&_thead]:!bg-primary/5 [&_thead_th]:!bg-primary/5">
     <UnifiedTablePage<UserTableRow>
-      header={{
-        title: "User Permissions",
-        description: "View and manage user access. Expand a row to assign templates per project.",
-        variant: "compact",
-      }}
+      header={{ title: "" }}
+      layout={{ toolbarInlineWithHeader: true, containerClassName: "pt-0" }}
       toolbar={{
         totalItems: users.length,
         filteredItems: tableData.length,
-        selectedCount: tableState.selectedIds.length,
-        searchValue: tableState.searchInput,
-        onSearchChange: tableState.setSearchInput,
-        searchPlaceholder: "Search users...",
-        currentView: tableState.currentView,
-        onViewChange: tableState.setCurrentView,
+        selectedCount: 0,
+        searchValue: searchValue,
+        onSearchChange: () => {},
+        currentView: "table" as const,
+        onViewChange: () => {},
         enabledViews: ["table"],
-        columns: userColumns,
-        visibleColumns: tableState.visibleColumns,
-        onColumnVisibilityChange: tableState.setVisibleColumns,
-        activeFilters: tableState.activeFilters,
-        onFilterChange: tableState.setActiveFilters,
-        onClearFilters: () => tableState.setActiveFilters({}),
+        visibleColumns,
+      }}
+      features={{
+        enableSearch: false,
+        enableViews: false,
+        enableColumnToggle: false,
+        enableFilters: false,
+        enableExport: false,
+        enableRowSelection: false,
       }}
       data={{
         items: tableData,
@@ -697,19 +772,19 @@ function UsersTableTab({
         renderExpandedRow,
       }}
       sorting={{
-        sortBy: tableState.sortBy,
-        sortDirection: tableState.sortDirection,
+        sortBy,
+        sortDirection,
         onSortChange: (col, dir) => {
-          tableState.setSortBy(col);
-          tableState.setSortDirection(dir);
+          setSortBy(col);
+          setSortDirection(dir);
         },
       }}
       pagination={{
-        page: tableState.page,
+        page,
         totalPages,
-        perPage: tableState.perPage,
-        onPageChange: tableState.setPage,
-        onPerPageChange: (val) => tableState.setPerPage(Number(val)),
+        perPage,
+        onPageChange: setPage,
+        onPerPageChange: (val) => setPerPage(Number(val)),
         clientSide: true,
       }}
       emptyState={{
@@ -719,6 +794,7 @@ function UsersTableTab({
         isFiltered: hasSearch,
       }}
     />
+    </div>
   );
 }
 
