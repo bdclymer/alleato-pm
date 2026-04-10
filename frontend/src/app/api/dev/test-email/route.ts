@@ -36,7 +36,7 @@ const TEMPLATES: Record<
     subject: "Reset your Alleato password",
     react: ForgotPassword({
       userName: "John",
-      resetUrl: `${SAMPLE_BASE}/auth/reset-password?token=test123`,
+      resetUrl: `${SAMPLE_BASE}/auth/update-password?token=test123`,
       expiresInMinutes: 60,
       requestIp: "192.168.1.1",
     }),

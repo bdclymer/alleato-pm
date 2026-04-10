@@ -157,15 +157,6 @@ Using the extracted features, produce the test matrix in this exact format:
 
 ---
 
-## How to Use This Document
-
-- Work through each section systematically
-- Mark each test: ✅ Pass | ❌ Fail | ⏭️ Skip (not applicable) | 🔲 Not tested
-- For failures, note the issue in the "Notes" column
-- Priority: HIGH items block release; MEDIUM reduce quality; LOW are polish
-
----
-
 ## Summary
 
 | Category | # Tests | Priority |

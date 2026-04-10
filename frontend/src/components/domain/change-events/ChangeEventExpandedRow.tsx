@@ -263,28 +263,23 @@ export function ChangeEventExpandedRow({
     key: string,
     getValue: (columnId: string) => React.ReactNode,
     actions?: React.ReactNode,
-    variant: "line-item" | "markup" = "line-item",
   ) => (
     <TableRow
       key={key}
-      className={`compact-subrow ${
-        variant === "markup"
-          ? "!bg-amber-50/50 hover:!bg-amber-50/70 border-b border-border/40 even:!bg-amber-50/50"
-          : "!bg-muted/10 hover:!bg-muted/20 border-b border-border/40 even:!bg-muted/10"
-      }`}
+      className="compact-subrow !bg-muted/10 hover:!bg-muted/20 border-b border-border/40 even:!bg-muted/10"
     >
-      {context.hasSelection && <TableCell className="py-0.5 px-2" />}
+      {context.hasSelection && <TableCell className="py-1 px-2" />}
       {context.columns.map((col) => (
         <TableCell
           key={col.id}
-          className="!py-0 !px-2 text-[10px] text-foreground/80 leading-none [&_*]:!text-[10px] [&_*]:!leading-none"
+          className="!py-1.5 !px-2 text-xs text-foreground/80 leading-4 [&_*]:!text-xs [&_*]:!leading-4"
           style={col.width ? { width: col.width, maxWidth: col.width } : undefined}
         >
           {getValue(col.id)}
         </TableCell>
       ))}
       {context.hasActions && (
-        <TableCell className="py-0.5 px-2 text-right" onClick={(e) => e.stopPropagation()}>
+        <TableCell className="py-1 px-2 text-right" onClick={(e) => e.stopPropagation()}>
           {actions}
         </TableCell>
       )}
@@ -343,7 +338,6 @@ export function ChangeEventExpandedRow({
           `mk-${markup.id}`,
           (columnId) => markupValueForColumn(markup, columnId),
           undefined,
-          "markup",
         ),
       )}
     </>

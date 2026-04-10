@@ -51,6 +51,7 @@ const invoiceTitleCache = new Map<string, string>();
 const rfiTitleCache = new Map<string, string>();
 const settingsUserTitleCache = new Map<string, string>();
 const subcontractorInvoiceTitleCache = new Map<string, { commitmentLabel: string; invoiceLabel: string }>();
+const drawingTitleCache = new Map<string, string>();
 
 const TABLE_ROUTE_ALIASES: Record<string, string> = {
   tasks: "tasks",
@@ -81,6 +82,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
   const [rfiTitle, setRfiTitle] = useState<string | null>(null);
   const [settingsUserTitle, setSettingsUserTitle] = useState<string | null>(null);
   const [subcontractorInvoiceInfo, setSubcontractorInvoiceInfo] = useState<{ commitmentLabel: string; invoiceLabel: string } | null>(null);
+  const [drawingTitle, setDrawingTitle] = useState<string | null>(null);
 
   // Extract project ID from URL path or query parameters
   const projectId = useMemo(() => {
@@ -231,6 +233,24 @@ export function useHeaderNav(): UseHeaderNavReturn {
       segments[1] === "invoicing" &&
       segments[2] === "subcontractor" &&
       segments[3] !== "new";
+    const isDrawingViewerRoute =
+      segments.length >= 4 &&
+      /^\d+$/.test(segments[0]) &&
+      segments[1] === "drawings" &&
+      segments[2] === "viewer";
+    const isDrawingDetailRoute =
+      segments.length >= 3 &&
+      /^\d+$/.test(segments[0]) &&
+      segments[1] === "drawings" &&
+      ![
+        "viewer",
+        "board",
+        "areas",
+        "sets",
+        "recycle-bin",
+        "revisions-report",
+        "new",
+      ].includes(segments[2]);
 
     // Always start with Projects
     crumbs.push({ label: "Projects", href: "/" });
@@ -297,6 +317,10 @@ export function useHeaderNav(): UseHeaderNavReturn {
         label = subcontractorInvoiceInfo?.commitmentLabel ?? "Subcontractor";
       } else if (isSubcontractorInvoiceDetailRoute && index === 3) {
         label = subcontractorInvoiceInfo?.invoiceLabel ?? `Invoice #${segment}`;
+      } else if (isDrawingDetailRoute && index === 2) {
+        label = drawingTitle || "Drawing";
+      } else if (isDrawingViewerRoute && index === 3) {
+        label = drawingTitle || "Drawing";
       } else if (index === 0 && segment === "directory") {
         // Global directory routes (/directory/vendors, /directory/clients, etc.)
         // — not project-scoped, so label as Company Directory
@@ -344,7 +368,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
     });
 
     return crumbs;
-  }, [pathname, companyTitle, vendorTitle, contactTitle, currentProject, meetingTitle, globalMeetingTitle, primeContractTitle, commitmentTitle, changeEventTitle, primeCoTitle, invoiceTitle, rfiTitle, settingsUserTitle, subcontractorInvoiceInfo]);
+  }, [pathname, companyTitle, vendorTitle, contactTitle, currentProject, meetingTitle, globalMeetingTitle, primeContractTitle, commitmentTitle, changeEventTitle, primeCoTitle, invoiceTitle, rfiTitle, settingsUserTitle, subcontractorInvoiceInfo, drawingTitle]);
   useEffect(() => {
     const segments = pathname?.split("/").filter(Boolean) ?? [];
     const isMeetingDetailRoute =
@@ -396,6 +420,85 @@ export function useHeaderNav(): UseHeaderNavReturn {
     };
 
     fetchMeetingTitle();
+    return () => {
+      isActive = false;
+    };
+  }, [pathname]);
+
+  useEffect(() => {
+    const segments = pathname?.split("/").filter(Boolean) ?? [];
+    const isDrawingViewerRoute =
+      segments.length >= 4 &&
+      /^\d+$/.test(segments[0]) &&
+      segments[1] === "drawings" &&
+      segments[2] === "viewer";
+    const isDrawingDetailRoute =
+      segments.length >= 3 &&
+      /^\d+$/.test(segments[0]) &&
+      segments[1] === "drawings" &&
+      ![
+        "viewer",
+        "board",
+        "areas",
+        "sets",
+        "recycle-bin",
+        "revisions-report",
+        "new",
+      ].includes(segments[2]);
+
+    if (!isDrawingViewerRoute && !isDrawingDetailRoute) {
+      setDrawingTitle(null);
+      return;
+    }
+
+    const projectId = segments[0];
+    const drawingId = isDrawingViewerRoute ? segments[3] : segments[2];
+    if (!drawingId) {
+      setDrawingTitle(null);
+      return;
+    }
+
+    const cacheKey = `${projectId}:${drawingId}`;
+    const cachedTitle = drawingTitleCache.get(cacheKey);
+    if (cachedTitle) {
+      setDrawingTitle(cachedTitle);
+      return;
+    }
+
+    let isActive = true;
+    const fetchDrawingTitle = async () => {
+      try {
+        const response = await fetch(
+          `/api/projects/${projectId}/drawings/${drawingId}`,
+        );
+        if (!response.ok) return;
+
+        const contentType = response.headers.get("content-type") || "";
+        if (!contentType.includes("application/json")) return;
+
+        const data = await response.json();
+        const resolvedTitle =
+          (typeof data?.title === "string" && data.title.trim().length > 0
+            ? data.title.trim()
+            : null) ||
+          (typeof data?.drawing_number === "string" &&
+          data.drawing_number.trim().length > 0
+            ? data.drawing_number.trim()
+            : null);
+
+        if (!isActive) return;
+        if (resolvedTitle) {
+          drawingTitleCache.set(cacheKey, resolvedTitle);
+          setDrawingTitle(resolvedTitle);
+        } else {
+          setDrawingTitle(null);
+        }
+      } catch {
+        // Best-effort only
+      }
+    };
+
+    fetchDrawingTitle();
     return () => {
       isActive = false;
     };

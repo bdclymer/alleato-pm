@@ -1,9 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { useState } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Download, FileUp } from "lucide-react";
+import { Download, FileUp, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import {
@@ -42,6 +42,9 @@ export default function ProjectDrawingsPage() {
   const [uploadOpen, setUploadOpen] = useState(false);
   const [showUnpublished, setShowUnpublished] = useState(false);
   const [showObsolete, setShowObsolete] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [droppedFiles, setDroppedFiles] = useState<File[]>([]);
+  const dragCounter = useRef(0);
 
   const projectId = params.projectId ?? "";
 
@@ -179,6 +182,66 @@ export default function ProjectDrawingsPage() {
     // TODO: wire to a bulk-download API when available
   };
 
+  const handleDeleteDrawing = (item: DrawingLogTableRow) => {
+    const label = item.drawingNumber
+      ? `${item.drawingNumber} — ${item.title || "Untitled"}`
+      : item.title || "this drawing";
+    const confirmed = window.confirm(
+      `Delete ${label}? This action cannot be undone.`,
+    );
+    if (!confirmed) return;
+    deleteDrawing.mutate(item.id);
+  };
+
+  // ─── Drag-and-drop handlers ──────────────────────────────────────────────
+  const ACCEPTED_TYPES = ["application/pdf", "image/png", "image/jpeg", "image/tiff"];
+
+  const handleDragEnter = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current += 1;
+    if (e.dataTransfer.types.includes("Files")) {
+      setIsDragging(true);
+    }
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current -= 1;
+    if (dragCounter.current === 0) {
+      setIsDragging(false);
+    }
+  }, []);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current = 0;
+    setIsDragging(false);
+
+    const files = Array.from(e.dataTransfer.files).filter(
+      (f) => ACCEPTED_TYPES.includes(f.type) || f.name.match(/\.(pdf|png|jpe?g|tiff?)$/i),
+    );
+    if (files.length > 0) {
+      setDroppedFiles(files);
+      setUploadOpen(true);
+    }
+  }, []);
+
+  // Clear dropped files when dialog closes
+  const handleUploadOpenChange = useCallback((open: boolean) => {
+    setUploadOpen(open);
+    if (!open) {
+      setDroppedFiles([]);
+    }
+  }, []);
+
   const isFiltered =
     Boolean(tableState.searchInput) ||
     Boolean(activeFilters.discipline) ||
@@ -189,6 +252,30 @@ export default function ProjectDrawingsPage() {
   const selectedCount = tableState.selectedIds.length;
 
   return (
+    <div
+      className="relative"
+      onDragEnter={handleDragEnter}
+      onDragLeave={handleDragLeave}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+    >
+      {/* Dropbox-style drag overlay */}
+      {isDragging && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm transition-all duration-200 animate-in fade-in">
+          <div className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-primary bg-primary/5 px-16 py-12 shadow-sm transition-transform duration-200 scale-100">
+            <div className="rounded-full bg-primary/10 p-4">
+              <Upload className="size-8 text-primary" />
+            </div>
+            <p className="text-lg font-semibold text-foreground">
+              Drop drawings to upload
+            </p>
+            <p className="text-sm text-muted-foreground">
+              PDF, PNG, JPG, or TIFF files
+            </p>
+          </div>
+        </div>
+      )}
+
     <UnifiedTablePage
       header={{
         title: "Drawings",
@@ -222,7 +309,8 @@ export default function ProjectDrawingsPage() {
             <DrawingUploadDialog
               projectId={projectId}
               open={uploadOpen}
-              onOpenChange={setUploadOpen}
+              onOpenChange={handleUploadOpenChange}
+              initialFiles={droppedFiles.length > 0 ? droppedFiles : undefined}
             />
           </>
         ),
@@ -262,7 +350,7 @@ export default function ProjectDrawingsPage() {
         rowActions: buildDrawingRowActions({
           onPublish: (drawingId, publish) => publishDrawing.mutate({ drawingId, publish }),
           onObsolete: (drawingId, obsolete) => obsoleteDrawing.mutate({ drawingId, obsolete }),
-          onDelete: (item) => deleteDrawing.mutate(item.id),
+          onDelete: handleDeleteDrawing,
         }),
       }}
       selection={{
@@ -281,17 +369,21 @@ export default function ProjectDrawingsPage() {
       }}
       views={{
         card: (item) =>
-          renderDrawingCard(item, (r) =>
-            router.push(`/${projectId}/drawings/viewer/${r.id}`),
+          renderDrawingCard(
+            item,
+            (r) => router.push(`/${projectId}/drawings/viewer/${r.id}`),
+            handleDeleteDrawing,
           ),
         list: (item) =>
-          renderDrawingList(item, (r) =>
-            router.push(`/${projectId}/drawings/viewer/${r.id}`),
+          renderDrawingList(
+            item,
+            (r) => router.push(`/${projectId}/drawings/viewer/${r.id}`),
+            handleDeleteDrawing,
           ),
       }}
       emptyState={{
         title: "No drawings found",
-        description: "Upload your first drawing to get started.",
+        description: "Drag and drop files here, or click Upload to get started.",
         filteredDescription: "Try adjusting your search or filters.",
         isFiltered,
         action: (
@@ -308,5 +400,6 @@ export default function ProjectDrawingsPage() {
         enableRowActions: true,
       }}
     />
+    </div>
   );
 }

@@ -82,7 +82,7 @@ test.describe('Comprehensive Form Testing', () => {
       await page.click('button[type="submit"]');
       
       // Wait for success message
-      await expect(page.locator('text=Password reset email sent')).toBeVisible({ timeout: 5000 });
+      await expect(page.locator('text=Password reset instructions sent')).toBeVisible({ timeout: 5000 });
       const screenshotSuccess = await takeScreenshot(page, 'forgot-password-success');
       console.log(`✅ Password reset sent - Screenshot: ${screenshotSuccess}`);
     });

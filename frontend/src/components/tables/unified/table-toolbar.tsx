@@ -188,7 +188,7 @@ function ViewSwitcher({
 
   return (
     <Tabs value={currentView} onValueChange={(value) => onViewChange(value as ViewMode)}>
-      <TabsList className="h-8 bg-muted/40 border border-border/60">
+      <TabsList className="h-8 bg-primary/10 border-0">
         {views
           .filter((view) => enabledViews.includes(view.mode))
           .map((view) => (

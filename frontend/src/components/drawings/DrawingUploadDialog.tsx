@@ -55,6 +55,8 @@ interface DrawingUploadDialogProps {
   onOpenChange: (open: boolean) => void;
   defaultAreaId?: string;
   onUploadComplete?: () => void;
+  /** Files pre-populated from drag-and-drop on the page */
+  initialFiles?: File[];
 }
 
 interface FileInfo {
@@ -75,8 +77,22 @@ export function DrawingUploadDialog({
   open,
   onOpenChange,
   onUploadComplete,
+  initialFiles,
 }: DrawingUploadDialogProps) {
   const [selectedFiles, setSelectedFiles] = useState<FileInfo[]>([]);
+
+  // When initialFiles are provided (from drag-and-drop), populate selectedFiles
+  React.useEffect(() => {
+    if (initialFiles && initialFiles.length > 0 && open) {
+      const mapped = initialFiles.map((file) => ({
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        file,
+      }));
+      setSelectedFiles(mapped);
+    }
+  }, [initialFiles, open]);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [newSetName, setNewSetName] = useState("");
   const [duplicateDrawing, setDuplicateDrawing] = useState<DuplicateDrawing | null>(null);

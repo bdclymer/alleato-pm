@@ -1,30 +1,18 @@
-# Drawings — Procore Feature Test Matrix
+# Drawings
 
-**Generated:** 2026-04-08
-
-## Summary
-
-| Category | # Tests |
-|----------|---------|
-| Core Actions | 18 |
-| Views & Navigation | 12 |
-| Fields & Data | 14 |
-| Viewer | 11 |
-| Revisions | 8 |
-| Filters & Search | 8 |
-| Permissions | 3 |
-| Integrations | 8 |
-| Reporting & Export | 3 |
-| Advanced Features | 16 |
-| **TOTAL** | **101** |
-
----
-
-## 1. Core Actions
-
-> Source: Drawings list page (`/[projectId]/drawings`), DrawingUploadDialog, API POST `/api/projects/[projectId]/drawings`
+> 1. **Core Actions**
 
 ### 1.1 Upload (Create)
+
+#### 1.1 Upload a drawing with all required fields
+
+- Navigate to /767/drawings
+- Click "Upload"
+3. Fill Drawing Number: A-101, Title: First Floor Plan, Discipline: Architectural, Revision Number: 0, Received Date: today
+4. Select a PDF file
+5. Click Upload
+
+**Expected:** Upload dialog closes; "A-101 — First Floor Plan" appears in the list with status badge and correct discipline
 
 | # | Test | Steps | Expected | Result | Notes |
 |---|------|-------|----------|--------|-------|

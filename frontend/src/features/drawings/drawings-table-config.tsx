@@ -382,45 +382,112 @@ function DrawingGridCard({ item, onClick }: DrawingGridCardProps) {
 export function renderDrawingCard(
   item: DrawingLogTableRow,
   onClick: (item: DrawingLogTableRow) => void,
+  onDelete?: (item: DrawingLogTableRow) => void,
 ): ReactElement {
-  return <DrawingGridCard item={item} onClick={onClick} />;
+  if (!onDelete) {
+    return <DrawingGridCard item={item} onClick={onClick} />;
+  }
+
+  return (
+    <div className="relative">
+      <div className="absolute right-2 top-2 z-20" onClick={(e) => e.stopPropagation()}>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="secondary"
+              size="sm"
+              className="h-7 w-7 p-0"
+              aria-label="Open drawing actions"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MoreHorizontal className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem
+              className="text-destructive focus:text-destructive"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(item);
+              }}
+            >
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+      <DrawingGridCard item={item} onClick={onClick} />
+    </div>
+  );
 }
 
 export function renderDrawingList(
   item: DrawingLogTableRow,
   onClick: (item: DrawingLogTableRow) => void,
+  onDelete?: (item: DrawingLogTableRow) => void,
 ): ReactElement {
   const dimmed = item.isObsolete || !item.isPublished;
 
   return (
-    <button
-      type="button"
-      className={`flex w-full cursor-pointer items-center justify-between rounded-md px-4 py-2 text-left transition-colors hover:bg-muted/50${dimmed ? " opacity-60" : ""}`}
-      onClick={() => onClick(item)}
-    >
-      <div>
-        <p className="text-sm font-medium">
-          {item.drawingNumber} — {item.title || "Untitled"}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {item.revisionNumber ? `Rev. ${item.revisionNumber}` : "No rev."}
-          {item.discipline ? ` · ${item.discipline}` : ""}
-          {item.areaName ? ` · ${item.areaName}` : ""}
-        </p>
-      </div>
-      <div className="flex items-center gap-2 shrink-0">
-        {item.isObsolete && (
-          <Badge variant="secondary">Obsolete</Badge>
-        )}
-        {!item.isPublished && !item.isObsolete && (
-          <Badge variant="outline">Unpublished</Badge>
-        )}
-        {item.status && (
-          <Badge variant={statusVariantMap[item.status] ?? "outline"}>
-            {formatStatus(item.status)}
-          </Badge>
-        )}
-      </div>
-    </button>
+    <div className={`relative${dimmed ? " opacity-60" : ""}`}>
+      {onDelete && (
+        <div className="absolute right-2 top-1/2 z-20 -translate-y-1/2" onClick={(e) => e.stopPropagation()}>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0"
+                aria-label="Open drawing actions"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                className="text-destructive focus:text-destructive"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete(item);
+                }}
+              >
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      )}
+
+      <button
+        type="button"
+        className={`flex w-full cursor-pointer items-center justify-between rounded-md px-4 py-2 text-left transition-colors hover:bg-muted/50${onDelete ? " pr-12" : ""}`}
+        onClick={() => onClick(item)}
+      >
+        <div>
+          <p className="text-sm font-medium">
+            {item.drawingNumber} — {item.title || "Untitled"}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            {item.revisionNumber ? `Rev. ${item.revisionNumber}` : "No rev."}
+            {item.discipline ? ` · ${item.discipline}` : ""}
+            {item.areaName ? ` · ${item.areaName}` : ""}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {item.isObsolete && (
+            <Badge variant="secondary">Obsolete</Badge>
+          )}
+          {!item.isPublished && !item.isObsolete && (
+            <Badge variant="outline">Unpublished</Badge>
+          )}
+          {item.status && (
+            <Badge variant={statusVariantMap[item.status] ?? "outline"}>
+              {formatStatus(item.status)}
+            </Badge>
+          )}
+        </div>
+      </button>
+    </div>
   );
 }

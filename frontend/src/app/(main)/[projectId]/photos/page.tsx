@@ -182,16 +182,18 @@ export default function ProjectPhotosPage() {
             onDragOver={handleDragOver}
             onDrop={handleDrop}
           >
-            {/* Drag-and-drop overlay */}
+            {/* Dropbox-style drag overlay */}
             {isDragging && (
-              <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm">
-                <div className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-primary bg-primary/5 px-12 py-10">
-                  <Upload className="size-10 text-primary" />
-                  <p className="text-lg font-medium text-foreground">
-                    Drop images to upload
+              <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm transition-all duration-200 animate-in fade-in">
+                <div className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-primary bg-primary/5 px-16 py-12 shadow-sm transition-transform duration-200 scale-100">
+                  <div className="rounded-full bg-primary/10 p-4">
+                    <Upload className="size-8 text-primary" />
+                  </div>
+                  <p className="text-lg font-semibold text-foreground">
+                    Drop photos to upload
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    Photos will be uploaded instantly — add details after
+                    Images will be uploaded instantly
                   </p>
                 </div>
               </div>
