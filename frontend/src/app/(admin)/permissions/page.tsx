@@ -1,10 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import * as React from "react";
+import { useState, useMemo, useCallback } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Dialog,
   DialogContent,
@@ -21,10 +26,23 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { EmptyState } from "@/components/ds";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  UnifiedTablePage,
+  useUnifiedTableState,
+  type FilterValue,
+} from "@/components/tables/unified";
+import type { ColumnConfig, TableColumn } from "@/components/tables/unified";
 import { PermissionTemplateForm } from "./permission-template-form";
-import { Check, Minus, ShieldCheck } from "lucide-react";
+import { Check, Minus, Pencil, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ALL_MODULES, GRANULAR_FLAG_LABELS } from "@/lib/permissions-shared";
 import type {
@@ -42,6 +60,7 @@ type PermissionUser = {
   firstName: string;
   lastName: string;
   email: string;
+  profilePhotoUrl: string | null;
   isAdmin: boolean;
   memberships: Array<{
     projectId: number | string;
@@ -50,6 +69,22 @@ type PermissionUser = {
     templateName: string | null;
   }>;
 };
+
+// Flat row type for the table — one row per user
+interface UserTableRow {
+  id: string;
+  personId: string;
+  authUserId: string | null;
+  fullName: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  profilePhotoUrl: string | null;
+  isAdmin: boolean;
+  projectCount: number;
+  templateName: string;
+  memberships: PermissionUser["memberships"];
+}
 
 const MODULE_LABELS: Record<PermissionModule, string> = {
   directory:     "Directory",
@@ -78,12 +113,47 @@ async function fetchTemplates(scope: TemplateScope): Promise<PermissionTemplate[
   return data;
 }
 
+async function fetchAllTemplates(): Promise<PermissionTemplate[]> {
+  const res = await fetch("/api/permissions/templates");
+  if (!res.ok) throw new Error("Failed to load templates");
+  const { data } = await res.json();
+  return data;
+}
+
 async function fetchUsers(): Promise<PermissionUser[]> {
   const res = await fetch("/api/permissions/users");
   if (!res.ok) throw new Error("Failed to load users");
   const { data } = await res.json();
   return data;
 }
+
+// ---------------------------------------------------------------------------
+// Column config for UnifiedTablePage
+// ---------------------------------------------------------------------------
+
+const userColumns: ColumnConfig[] = [
+  { id: "fullName", label: "Name", alwaysVisible: true },
+  { id: "email", label: "Email", defaultVisible: true },
+  { id: "isAdmin", label: "Admin", defaultVisible: true },
+  { id: "projectCount", label: "Projects", defaultVisible: true },
+  { id: "templateName", label: "Primary Template", defaultVisible: true },
+];
+
+const userDefaultVisibleColumns = userColumns
+  .filter((c) => c.defaultVisible !== false)
+  .map((c) => c.id);
+
+function getInitials(firstName: string, lastName: string): string {
+  return [firstName, lastName]
+    .map((n) => n.charAt(0))
+    .filter(Boolean)
+    .join("")
+    .toUpperCase() || "?";
+}
+
+// ---------------------------------------------------------------------------
+// Main page
+// ---------------------------------------------------------------------------
 
 export default function PermissionsAdminPage() {
   const qc = useQueryClient();
@@ -101,6 +171,10 @@ export default function PermissionsAdminPage() {
   const projectTemplatesQuery = useQuery({
     queryKey: ["permission-templates", "project"],
     queryFn: () => fetchTemplates("project"),
+  });
+  const allTemplatesQuery = useQuery({
+    queryKey: ["permission-templates", "all"],
+    queryFn: fetchAllTemplates,
   });
   const usersQuery = useQuery({
     queryKey: ["permission-users"],
@@ -125,8 +199,9 @@ export default function PermissionsAdminPage() {
       }
     },
     onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["permission-templates", createScope] });
+      qc.invalidateQueries({ queryKey: ["permission-templates"] });
       setShowCreate(false);
+      toast.success("Template created");
     },
   });
 
@@ -153,9 +228,10 @@ export default function PermissionsAdminPage() {
         throw new Error(error ?? "Failed to update template");
       }
     },
-    onSuccess: (_data, variables) => {
-      qc.invalidateQueries({ queryKey: ["permission-templates", variables.scope] });
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["permission-templates"] });
       setEditTarget(null);
+      toast.success("Template updated");
     },
   });
 
@@ -167,9 +243,10 @@ export default function PermissionsAdminPage() {
         throw new Error(error ?? "Failed to delete template");
       }
     },
-    onSuccess: (_data, variables) => {
-      qc.invalidateQueries({ queryKey: ["permission-templates", variables.scope] });
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["permission-templates"] });
       setDeleteTarget(null);
+      toast.success("Template deleted");
     },
   });
 
@@ -182,14 +259,16 @@ export default function PermissionsAdminPage() {
     <PageShell
       variant="content"
       title="Permissions"
-      description="Manage users, company permission templates, and project permission templates."
+      description="Manage permission templates and user access across the platform."
       actions={
         activeTab === "company" ? (
           <Button onClick={() => openCreateForScope("company")}>
+            <Plus className="mr-1.5 h-4 w-4" />
             New Company Template
           </Button>
         ) : activeTab === "project" ? (
           <Button onClick={() => openCreateForScope("project")}>
+            <Plus className="mr-1.5 h-4 w-4" />
             New Project Template
           </Button>
         ) : null
@@ -203,7 +282,14 @@ export default function PermissionsAdminPage() {
         </TabsList>
 
         <TabsContent value="users">
-          <UsersTab users={usersQuery.data ?? []} isLoading={usersQuery.isLoading} />
+          <UsersTableTab
+            users={usersQuery.data ?? []}
+            isLoading={usersQuery.isLoading}
+            templates={allTemplatesQuery.data ?? []}
+            onRefresh={() => {
+              qc.invalidateQueries({ queryKey: ["permission-users"] });
+            }}
+          />
         </TabsContent>
 
         <TabsContent value="company">
@@ -235,7 +321,7 @@ export default function PermissionsAdminPage() {
 
       {/* Create dialog */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               New {createScope === "company" ? "Company" : "Project"} Template
@@ -250,9 +336,14 @@ export default function PermissionsAdminPage() {
 
       {/* Edit dialog */}
       <Dialog open={!!editTarget} onOpenChange={() => setEditTarget(null)}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Template</DialogTitle>
+            <DialogTitle>
+              Edit Template — {editTarget?.name}
+              {editTarget?.is_system && (
+                <Badge variant="outline" className="ml-2 text-xs align-middle">System</Badge>
+              )}
+            </DialogTitle>
           </DialogHeader>
           {editTarget && (
             <PermissionTemplateForm
@@ -302,6 +393,330 @@ export default function PermissionsAdminPage() {
 }
 
 // ---------------------------------------------------------------------------
+// UsersTableTab — UnifiedTablePage with avatar, admin toggle, template assign
+// ---------------------------------------------------------------------------
+
+function UsersTableTab({
+  users,
+  isLoading,
+  templates,
+  onRefresh,
+}: {
+  users: PermissionUser[];
+  isLoading: boolean;
+  templates: PermissionTemplate[];
+  onRefresh: () => void;
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const tableState = useUnifiedTableState({
+    entityKey: "admin-permissions-users",
+    searchParams,
+    pathname,
+    router,
+    defaults: {
+      view: "table" as const,
+      allowedViews: ["table" as const],
+      page: 1,
+      perPage: 50,
+      search: "",
+      sortBy: "fullName",
+      sortDirection: "asc" as const,
+      visibleColumns: userDefaultVisibleColumns,
+      filters: {} as Record<string, FilterValue>,
+    },
+  });
+
+  const adminMutation = useMutation({
+    mutationFn: async ({ authUserId, isAdmin }: { authUserId: string; isAdmin: boolean }) => {
+      const res = await fetch("/api/admin/set-admin-status", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ auth_user_id: authUserId, is_admin: isAdmin }),
+      });
+      if (!res.ok) {
+        const { error } = await res.json();
+        throw new Error(error ?? "Failed to update admin status");
+      }
+    },
+    onSuccess: (_data, variables) => {
+      toast.success(variables.isAdmin ? "Admin access granted" : "Admin access removed");
+      onRefresh();
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "Failed to update");
+    },
+  });
+
+  const assignMutation = useMutation({
+    mutationFn: async ({
+      projectId,
+      personId,
+      templateId,
+    }: {
+      projectId: number | string;
+      personId: string;
+      templateId: string;
+    }) => {
+      const res = await fetch(`/api/projects/${projectId}/permissions/assign`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ person_id: personId, template_id: templateId }),
+      });
+      if (!res.ok) {
+        const { error } = await res.json();
+        throw new Error(error ?? "Failed to assign template");
+      }
+    },
+    onSuccess: () => {
+      toast.success("Template assigned");
+      onRefresh();
+    },
+    onError: (err) => {
+      toast.error(err instanceof Error ? err.message : "Failed to assign");
+    },
+  });
+
+  // Transform to flat rows
+  const hasSearch = tableState.debouncedSearch.trim().length > 0;
+  const tableData = useMemo<UserTableRow[]>(() => {
+    const search = tableState.debouncedSearch.trim().toLowerCase();
+
+    return users
+      .map((user) => {
+        const fullName =
+          [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email || "(no name)";
+        const primaryTemplate = user.memberships.length > 0
+          ? user.memberships[0].templateName ?? "No template"
+          : user.isAdmin ? "App Admin" : "No template";
+
+        return {
+          id: user.personId,
+          personId: user.personId,
+          authUserId: user.authUserId,
+          fullName,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          profilePhotoUrl: user.profilePhotoUrl,
+          isAdmin: user.isAdmin,
+          projectCount: user.memberships.length,
+          templateName: primaryTemplate,
+          memberships: user.memberships,
+        };
+      })
+      .filter((row) => {
+        if (!search) return true;
+        return (
+          row.fullName.toLowerCase().includes(search) ||
+          row.email.toLowerCase().includes(search) ||
+          row.templateName.toLowerCase().includes(search)
+        );
+      });
+  }, [users, tableState.debouncedSearch]);
+
+  // Pagination
+  const totalPages = Math.max(1, Math.ceil(tableData.length / tableState.perPage));
+
+  // Build columns with avatar
+  const tableColumns = useMemo<TableColumn<UserTableRow>[]>(
+    () => [
+      {
+        ...userColumns[0],
+        render: (item: UserTableRow) => (
+          <div className="flex items-center gap-3">
+            <Avatar size="sm">
+              {item.profilePhotoUrl && (
+                <AvatarImage src={item.profilePhotoUrl} alt={item.fullName} />
+              )}
+              <AvatarFallback>{getInitials(item.firstName, item.lastName)}</AvatarFallback>
+            </Avatar>
+            <span className="font-medium">{item.fullName}</span>
+          </div>
+        ),
+        sortValue: (item: UserTableRow) => item.fullName,
+        csvValue: (item: UserTableRow) => item.fullName,
+      },
+      {
+        ...userColumns[1],
+        render: (item: UserTableRow) => (
+          <span className="text-muted-foreground">{item.email || "—"}</span>
+        ),
+        sortValue: (item: UserTableRow) => item.email,
+        csvValue: (item: UserTableRow) => item.email,
+      },
+      {
+        ...userColumns[2],
+        render: (item: UserTableRow) =>
+          item.authUserId ? (
+            <Switch
+              checked={item.isAdmin}
+              disabled={adminMutation.isPending}
+              onCheckedChange={(checked) => {
+                adminMutation.mutate({
+                  authUserId: item.authUserId!,
+                  isAdmin: checked,
+                });
+              }}
+            />
+          ) : (
+            <span className="text-xs text-muted-foreground">No auth</span>
+          ),
+        sortValue: (item: UserTableRow) => (item.isAdmin ? 1 : 0),
+        csvValue: (item: UserTableRow) => (item.isAdmin ? "Yes" : "No"),
+      },
+      {
+        ...userColumns[3],
+        render: (item: UserTableRow) => (
+          <span>
+            {item.projectCount}
+            {item.projectCount === 1 ? " project" : " projects"}
+          </span>
+        ),
+        sortValue: (item: UserTableRow) => item.projectCount,
+        csvValue: (item: UserTableRow) => String(item.projectCount),
+      },
+      {
+        ...userColumns[4],
+        render: (item: UserTableRow) => {
+          if (item.isAdmin) {
+            return <Badge variant="default" className="text-xs">App Admin</Badge>;
+          }
+          if (item.memberships.length === 0) {
+            return <span className="text-xs text-muted-foreground">No projects</span>;
+          }
+          return (
+            <span className="text-sm">{item.templateName}</span>
+          );
+        },
+        sortValue: (item: UserTableRow) => item.templateName,
+        csvValue: (item: UserTableRow) => item.templateName,
+      },
+    ],
+    [adminMutation],
+  );
+
+  // Expanded row with per-project template assignments
+  const renderExpandedRow = useCallback(
+    (item: UserTableRow, _colSpan: number) => (
+      <div className="px-6 py-4 space-y-3">
+        {item.isAdmin && (
+          <p className="text-sm text-muted-foreground">
+            App admin — has full access to every project regardless of template.
+          </p>
+        )}
+        {item.memberships.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Not a member of any project.</p>
+        ) : (
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+              Project Assignments
+            </p>
+            {item.memberships.map((m) => (
+              <div
+                key={`${item.personId}-${m.projectId}`}
+                className="flex items-center justify-between gap-4 py-1"
+              >
+                <span className="text-sm text-foreground min-w-0 truncate">
+                  {m.projectName ?? `Project #${m.projectId}`}
+                </span>
+                <Select
+                  value={m.templateId ?? "none"}
+                  onValueChange={(value) => {
+                    if (value === "none") return;
+                    assignMutation.mutate({
+                      projectId: m.projectId,
+                      personId: item.personId,
+                      templateId: value,
+                    });
+                  }}
+                >
+                  <SelectTrigger className="w-52 h-8 text-xs shrink-0">
+                    <SelectValue placeholder="No template" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none" disabled>
+                      No template
+                    </SelectItem>
+                    {templates.map((tpl) => (
+                      <SelectItem key={tpl.id} value={tpl.id}>
+                        {tpl.name}
+                        {tpl.is_system ? " (System)" : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    ),
+    [templates, assignMutation],
+  );
+
+  return (
+    <UnifiedTablePage<UserTableRow>
+      header={{
+        title: "User Permissions",
+        description: "View and manage user access. Expand a row to assign templates per project.",
+        variant: "compact",
+      }}
+      toolbar={{
+        totalItems: users.length,
+        filteredItems: tableData.length,
+        selectedCount: tableState.selectedIds.length,
+        searchValue: tableState.searchInput,
+        onSearchChange: tableState.setSearchInput,
+        searchPlaceholder: "Search users...",
+        currentView: tableState.currentView,
+        onViewChange: tableState.setCurrentView,
+        enabledViews: ["table"],
+        columns: userColumns,
+        visibleColumns: tableState.visibleColumns,
+        onColumnVisibilityChange: tableState.setVisibleColumns,
+        activeFilters: tableState.activeFilters,
+        onFilterChange: tableState.setActiveFilters,
+        onClearFilters: () => tableState.setActiveFilters({}),
+      }}
+      data={{
+        items: tableData,
+        isLoading,
+      }}
+      table={{
+        columns: tableColumns,
+        getRowId: (item) => item.id,
+        renderExpandedRow,
+      }}
+      sorting={{
+        sortBy: tableState.sortBy,
+        sortDirection: tableState.sortDirection,
+        onSortChange: (col, dir) => {
+          tableState.setSortBy(col);
+          tableState.setSortDirection(dir);
+        },
+      }}
+      pagination={{
+        page: tableState.page,
+        totalPages,
+        perPage: tableState.perPage,
+        onPageChange: tableState.setPage,
+        onPerPageChange: (val) => tableState.setPerPage(Number(val)),
+        clientSide: true,
+      }}
+      emptyState={{
+        title: "No users found",
+        description: "No people in the directory have auth accounts yet.",
+        filteredDescription: "No users match your search. Try a different query.",
+        isFiltered: hasSearch,
+      }}
+    />
+  );
+}
+
+// ---------------------------------------------------------------------------
 // TemplatesTab — renders System + Custom sections for a given scope
 // ---------------------------------------------------------------------------
 
@@ -343,11 +758,10 @@ function TemplatesTab({
         icon={<ShieldCheck className="h-6 w-6" />}
         title={emptyTitle}
         description={emptyDescription}
-        action={
-          <Button onClick={onCreateEmpty}>
-            New {scope === "company" ? "Company" : "Project"} Template
-          </Button>
-        }
+        action={{
+          label: `New ${scope === "company" ? "Company" : "Project"} Template`,
+          onClick: onCreateEmpty,
+        }}
       />
     );
   }
@@ -359,9 +773,17 @@ function TemplatesTab({
           <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
             System Templates
           </h2>
+          <p className="text-xs text-muted-foreground">
+            Built-in templates that ship with the platform. You can customize their permission levels.
+          </p>
           <div className="space-y-3">
             {systemTemplates.map((tpl) => (
-              <TemplateCard key={tpl.id} template={tpl} readOnly />
+              <TemplateCard
+                key={tpl.id}
+                template={tpl}
+                isSystem
+                onEdit={() => onEdit(tpl)}
+              />
             ))}
           </div>
         </section>
@@ -393,109 +815,17 @@ function TemplatesTab({
 }
 
 // ---------------------------------------------------------------------------
-// UsersTab — list users with their role + per-project template assignments
-// ---------------------------------------------------------------------------
-
-function UsersTab({
-  users,
-  isLoading,
-}: {
-  users: PermissionUser[];
-  isLoading: boolean;
-}) {
-  if (isLoading) {
-    return (
-      <div className="space-y-3">
-        {[1, 2, 3].map((i) => (
-          <div key={i} className="h-20 bg-muted rounded-lg animate-pulse" />
-        ))}
-      </div>
-    );
-  }
-
-  if (users.length === 0) {
-    return (
-      <EmptyState
-        icon={<ShieldCheck className="h-6 w-6" />}
-        title="No users found"
-        description="No people in the directory have auth accounts yet."
-      />
-    );
-  }
-
-  return (
-    <div className="space-y-3">
-      {users.map((user) => {
-        const displayName =
-          [user.firstName, user.lastName].filter(Boolean).join(" ") || user.email || "(no name)";
-        return (
-          <div
-            key={user.personId}
-            className="rounded-lg border border-border bg-card p-5 space-y-3"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h3 className="text-base font-semibold text-foreground">{displayName}</h3>
-                  {user.isAdmin && (
-                    <Badge variant="default" className="shrink-0 text-xs">
-                      App Admin
-                    </Badge>
-                  )}
-                </div>
-                {user.email && (
-                  <p className="text-sm text-muted-foreground mt-0.5">{user.email}</p>
-                )}
-              </div>
-            </div>
-
-            {user.memberships.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                {user.isAdmin
-                  ? "App admin — full access to every project by default."
-                  : "Not a member of any project."}
-              </p>
-            ) : (
-              <div className="pt-2 border-t border-border">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-                  Project memberships
-                </p>
-                <ul className="space-y-1.5">
-                  {user.memberships.map((m) => (
-                    <li
-                      key={`${user.personId}-${m.projectId}`}
-                      className="flex items-center justify-between gap-3 text-sm"
-                    >
-                      <span className="text-foreground">
-                        {m.projectName ?? `Project #${m.projectId}`}
-                      </span>
-                      <span className="text-muted-foreground">
-                        {m.templateName ?? "— no template"}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // TemplateCard
 // ---------------------------------------------------------------------------
 
 function TemplateCard({
   template,
-  readOnly = false,
+  isSystem = false,
   onEdit,
   onDelete,
 }: {
   template: PermissionTemplate;
-  readOnly?: boolean;
+  isSystem?: boolean;
   onEdit?: () => void;
   onDelete?: () => void;
 }) {
@@ -505,7 +835,7 @@ function TemplateCard({
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <h3 className="text-base font-semibold text-foreground">{template.name}</h3>
-            {readOnly && (
+            {isSystem && (
               <Badge variant="outline" className="shrink-0 text-xs">System</Badge>
             )}
           </div>
@@ -513,19 +843,25 @@ function TemplateCard({
             <p className="text-sm text-muted-foreground mt-1">{template.description}</p>
           )}
         </div>
-        {!readOnly && (
-          <div className="flex gap-1.5 shrink-0">
-            <Button variant="ghost" size="sm" onClick={onEdit}>Edit</Button>
+        <div className="flex gap-1.5 shrink-0">
+          {onEdit && (
+            <Button variant="ghost" size="sm" onClick={onEdit}>
+              <Pencil className="h-3.5 w-3.5 mr-1" />
+              Edit
+            </Button>
+          )}
+          {!isSystem && onDelete && (
             <Button
               variant="ghost"
               size="sm"
               onClick={onDelete}
               className="text-destructive hover:text-destructive"
             >
+              <Trash2 className="h-3.5 w-3.5 mr-1" />
               Delete
             </Button>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <PermissionMatrix rules={template.rules_json} />
@@ -535,7 +871,7 @@ function TemplateCard({
 }
 
 // ---------------------------------------------------------------------------
-// GranularFlags — Procore-style named capabilities layered on top of modules
+// GranularFlags
 // ---------------------------------------------------------------------------
 
 function GranularFlags({ flags }: { flags: GranularFlag[] }) {

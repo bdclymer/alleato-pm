@@ -32,7 +32,7 @@ export async function GET() {
 
     const { data: people, error: peopleError } = await supabase
       .from("people")
-      .select("id, first_name, last_name, email, auth_user_id")
+      .select("id, first_name, last_name, email, auth_user_id, profile_photo_url")
       .not("auth_user_id", "is", null)
       .order("last_name", { ascending: true });
 
@@ -112,6 +112,7 @@ export async function GET() {
       firstName: p.first_name ?? "",
       lastName: p.last_name ?? "",
       email: p.email ?? "",
+      profilePhotoUrl: p.profile_photo_url ?? null,
       isAdmin: p.auth_user_id ? profileMap.get(p.auth_user_id) === true : false,
       memberships: membershipsByPerson.get(p.id) ?? [],
     }));

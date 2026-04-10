@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -12,7 +13,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { PermissionModule, PermissionLevel, PermissionTemplate } from "@/lib/permissions-shared";
+import {
+  ALL_GRANULAR_FLAGS,
+  GRANULAR_FLAG_LABELS,
+} from "@/lib/permissions-shared";
+import type {
+  PermissionModule,
+  PermissionLevel,
+  PermissionTemplate,
+  GranularFlag,
+} from "@/lib/permissions-shared";
 
 const MODULES: { key: PermissionModule; label: string }[] = [
   { key: "directory",     label: "Directory" },
@@ -43,7 +53,12 @@ function templateToRulesState(rules_json: Record<PermissionModule, PermissionLev
 
 interface Props {
   template?: PermissionTemplate;
-  onSave: (data: { name: string; description: string; rules_json: RulesState }) => Promise<void>;
+  onSave: (data: {
+    name: string;
+    description: string;
+    rules_json: RulesState;
+    granular_flags: GranularFlag[];
+  }) => Promise<void>;
   onCancel: () => void;
 }
 
@@ -52,6 +67,9 @@ export function PermissionTemplateForm({ template, onSave, onCancel }: Props) {
   const [description, setDescription] = useState(template?.description ?? "");
   const [rules, setRules] = useState<RulesState>(
     template ? templateToRulesState(template.rules_json) : defaultRules()
+  );
+  const [granularFlags, setGranularFlags] = useState<Set<GranularFlag>>(
+    new Set(template?.granular_flags ?? [])
   );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -74,13 +92,30 @@ export function PermissionTemplateForm({ template, onSave, onCancel }: Props) {
     setRules((prev) => ({ ...prev, [module]: expansion[level] }));
   }
 
+  function toggleFlag(flag: GranularFlag) {
+    setGranularFlags((prev) => {
+      const next = new Set(prev);
+      if (next.has(flag)) {
+        next.delete(flag);
+      } else {
+        next.add(flag);
+      }
+      return next;
+    });
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!name.trim()) { setError("Name is required"); return; }
     setSaving(true);
     setError(null);
     try {
-      await onSave({ name: name.trim(), description: description.trim(), rules_json: rules });
+      await onSave({
+        name: name.trim(),
+        description: description.trim(),
+        rules_json: rules,
+        granular_flags: Array.from(granularFlags),
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Save failed");
     } finally {
@@ -112,6 +147,7 @@ export function PermissionTemplateForm({ template, onSave, onCancel }: Props) {
         </div>
       </div>
 
+      {/* Module permissions */}
       <div className="space-y-2">
         <p className="text-sm font-medium text-foreground">Module Permissions</p>
         <div className="rounded-md border border-border divide-y divide-border">
@@ -137,6 +173,30 @@ export function PermissionTemplateForm({ template, onSave, onCancel }: Props) {
                 </SelectContent>
               </Select>
             </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Granular flags */}
+      <div className="space-y-2">
+        <p className="text-sm font-medium text-foreground">Granular Permissions</p>
+        <p className="text-xs text-muted-foreground">
+          Fine-grained capabilities layered on top of module access levels.
+        </p>
+        <div className="rounded-md border border-border divide-y divide-border">
+          {ALL_GRANULAR_FLAGS.map((flag) => (
+            <label
+              key={flag}
+              className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-muted/50 transition-colors"
+            >
+              <Checkbox
+                checked={granularFlags.has(flag)}
+                onCheckedChange={() => toggleFlag(flag)}
+              />
+              <span className="text-sm text-foreground">
+                {GRANULAR_FLAG_LABELS[flag]}
+              </span>
+            </label>
           ))}
         </div>
       </div>
