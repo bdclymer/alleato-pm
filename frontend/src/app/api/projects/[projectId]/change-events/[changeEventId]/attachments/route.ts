@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createAttachmentSchema } from "../../validation";
 import { ZodError } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
+import { requirePermission } from "@/lib/permissions-guard";
 
 interface RouteParams {
   params: Promise<{ projectId: string; changeEventId: string }>;
@@ -81,6 +82,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { projectId, changeEventId } = await params;
+    const projectIdNum = parseInt(projectId, 10);
+    const guard = await requirePermission(projectIdNum, "change_orders", "write");
+    if (guard.denied) return guard.response;
+
     const supabase = await createClient();
     const serviceClient = createServiceClient();
 
@@ -247,6 +252,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { projectId, changeEventId } = await params;
+    const projectIdNum = parseInt(projectId, 10);
+    const guard = await requirePermission(projectIdNum, "change_orders", "admin");
+    if (guard.denied) return guard.response;
+
     const supabase = await createClient();
     const serviceClient = createServiceClient();
     const body = await request.json();

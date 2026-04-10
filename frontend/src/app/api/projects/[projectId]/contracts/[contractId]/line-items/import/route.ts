@@ -1,6 +1,7 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
+import { requirePermission } from "@/lib/permissions-guard";
 
 interface RouteParams {
   params: Promise<{ projectId: string; contractId: string }>;
@@ -26,6 +27,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         { status: 400 },
       );
     }
+
+    const guard = await requirePermission(numericProjectId, "contracts", "write");
+    if (guard.denied) return guard.response;
 
     const authResult = await verifyProjectAccess(numericProjectId);
     if (isAuthError(authResult)) return authResult;

@@ -8,6 +8,7 @@ import {
   getReviewerAccessForProject,
   isReviewerAccessError,
 } from "@/lib/change-orders/reviewer-access";
+import { requirePermission } from "@/lib/permissions-guard";
 
 interface RouteParams {
   params: Promise<{ projectId: string; contractId: string; changeOrderId: string }>;
@@ -21,6 +22,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { projectId, contractId, changeOrderId } = await params;
     const numericProjectId = Number(projectId);
+    const guard = await requirePermission(numericProjectId, "contracts", "admin");
+    if (guard.denied) return guard.response;
+
     const reviewerAccess = await getReviewerAccessForProject(numericProjectId);
     if (isReviewerAccessError(reviewerAccess)) {
       return reviewerAccess;

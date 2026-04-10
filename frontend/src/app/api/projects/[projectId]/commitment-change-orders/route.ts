@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { requirePermission } from "@/lib/permissions-guard";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
@@ -96,6 +97,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { projectId } = await params;
+    const projectIdNum = Number(projectId);
     const supabase = await createClient();
 
     const {
@@ -106,6 +108,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const guard = await requirePermission(projectIdNum, "contracts", "write");
+    if (guard.denied) return guard.response;
 
     const body = await request.json();
 

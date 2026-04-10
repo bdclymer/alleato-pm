@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { renderInvoicePdfBuffer } from "@/lib/invoice-pdf";
 import { fetchInvoicePdfData } from "../pdf/route";
+import { requirePermission } from "@/lib/permissions-guard";
 
 // Node runtime required by @react-pdf/renderer
 export const runtime = "nodejs";
@@ -39,17 +40,13 @@ export async function POST(
   context: { params: Promise<{ projectId: string; invoiceId: string }> },
 ) {
   try {
-    const supabase = await createClient();
     const { projectId, invoiceId } = await context.params;
+    const projectIdNum = parseInt(projectId, 10);
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const guard = await requirePermission(projectIdNum, "contracts", "write");
+    if (guard.denied) return guard.response;
 
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    const supabase = await createClient();
 
     const body = (await request.json()) as EmailRequestBody;
     const toList = normalizeEmails(body.to);

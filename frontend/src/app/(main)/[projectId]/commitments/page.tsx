@@ -6,6 +6,7 @@ import { useParams, usePathname, useRouter, useSearchParams } from "next/navigat
 import { ChevronDown, Loader2, Plus, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
 
+import { PermissionGate } from "@/components/domain/permissions/PermissionGate";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -648,23 +649,25 @@ export default function ProjectCommitmentsPage(): ReactElement {
           title: "Commitments",
           description: "Manage purchase orders and subcontracts",
           actions: (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="sm">
-                  <Plus />
-                  Create
-                  <ChevronDown />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleCreateSubcontract}>
-                  Subcontract
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleCreatePurchaseOrder}>
-                  Purchase Order
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <PermissionGate projectId={projectId} module="contracts" level="write">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm">
+                    <Plus />
+                    Create
+                    <ChevronDown />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleCreateSubcontract}>
+                    Subcontract
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleCreatePurchaseOrder}>
+                    Purchase Order
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </PermissionGate>
           ),
         }}
         tabs={tabs}

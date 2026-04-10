@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { requirePermission } from "@/lib/permissions-guard";
 
 interface RouteParams {
   params: Promise<{ projectId: string; changeEventId: string }>;
@@ -212,6 +213,10 @@ function buildHtml(changeEvent: any, lineItems: any[], project: any): string {
 export async function POST(req: NextRequest, { params }: RouteParams) {
   try {
     const { projectId, changeEventId } = await params;
+    const projectIdNum = parseInt(projectId, 10);
+    const guard = await requirePermission(projectIdNum, "change_orders", "write");
+    if (guard.denied) return guard.response;
+
     const body = await req.json();
 
     const { recipients, subject, message } = body as {

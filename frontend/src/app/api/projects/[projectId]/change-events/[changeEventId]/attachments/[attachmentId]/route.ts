@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { apiErrorResponse } from "@/lib/api-error";
+import { requirePermission } from "@/lib/permissions-guard";
 
 interface RouteParams {
   params: Promise<{
@@ -96,6 +97,10 @@ export async function DELETE(
 ) {
   try {
     const { projectId, changeEventId, attachmentId } = await params;
+    const projectIdNum = parseInt(projectId, 10);
+    const guard = await requirePermission(projectIdNum, "change_orders", "admin");
+    if (guard.denied) return guard.response;
+
     const supabase = await createClient();
 
     // Get current user

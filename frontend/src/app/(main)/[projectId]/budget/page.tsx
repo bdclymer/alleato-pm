@@ -57,6 +57,7 @@ import {
 import type { QuickFilterType } from "@/components/budget/budget-filters";
 import { applyGrouping, type GroupingType } from "@/lib/budget-grouping";
 import { BudgetTableCommentsWrapper } from "@/components/budget/budget-table-comments-wrapper";
+import { PermissionGate } from "@/components/domain/permissions/PermissionGate";
 
 const EMPTY_GRAND_TOTALS = {
   originalBudgetAmount: 0,
@@ -1003,15 +1004,17 @@ function BudgetPageContent() {
                   <span className="text-sm text-primary font-medium">
                     {selectedIds.length} item(s) selected
                   </span>
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleDeleteSelected}
-                    disabled={isLocked}
-                  >
-                    <Trash2 className="w-4 h-4 mr-1" />
-                    Delete Selected
-                  </Button>
+                  <PermissionGate projectId={projectId} module="budget" level="admin">
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={handleDeleteSelected}
+                      disabled={isLocked}
+                    >
+                      <Trash2 className="w-4 h-4 mr-1" />
+                      Delete Selected
+                    </Button>
+                  </PermissionGate>
                 </div>
               )}
 

@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { apiErrorResponse } from "@/lib/api-error";
 import { NextRequest, NextResponse } from "next/server";
+import { requirePermission } from "@/lib/permissions-guard";
 
 interface RouteParams {
   params: Promise<{ projectId: string; contractId: string; attachmentId: string }>;
@@ -13,7 +14,11 @@ interface RouteParams {
  */
 export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
-    const { contractId, attachmentId } = await params;
+    const { projectId, contractId, attachmentId } = await params;
+    const projectIdNum = parseInt(projectId, 10);
+    const guard = await requirePermission(projectIdNum, "contracts", "admin");
+    if (guard.denied) return guard.response;
+
     const supabase = await createClient();
     const serviceClient = createServiceClient();
 

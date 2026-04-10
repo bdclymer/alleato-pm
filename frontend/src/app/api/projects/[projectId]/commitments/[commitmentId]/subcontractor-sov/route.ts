@@ -5,6 +5,7 @@ import { apiErrorResponse } from "@/lib/api-error";
 import { sendEmail } from "@/lib/email/send";
 import SOVInvitation from "@/emails/subcontractor/SOVInvitation";
 import { isAuthError, verifyProjectAccess } from "@/lib/supabase/auth-guard";
+import { requirePermission } from "@/lib/permissions-guard";
 
 interface RouteParams {
   params: Promise<{ projectId: string; commitmentId: string }>;
@@ -385,6 +386,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     if (isAuthError(authResult)) return authResult;
     const { serviceClient: supabase, membership } = authResult;
 
+    const guard = await requirePermission(numericProjectId, "contracts", "write");
+    if (guard.denied) return guard.response;
+
     const body = (await request.json()) as { lineItems: SsovLineItemInput[] };
     if (!Array.isArray(body.lineItems)) {
       return NextResponse.json(
@@ -501,6 +505,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const authResult = await verifyProjectAccess(numericProjectId);
     if (isAuthError(authResult)) return authResult;
     const { serviceClient: supabase, membership } = authResult;
+
+    const guard = await requirePermission(numericProjectId, "contracts", "write");
+    if (guard.denied) return guard.response;
 
     const body = (await request.json()) as {
       action:

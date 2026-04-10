@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { requirePermission } from "@/lib/permissions-guard";
 
 // GET /api/projects/[projectId]/invoicing/owner/[invoiceId]
 // Fetch a single owner invoice with line items
@@ -95,28 +96,14 @@ export async function PATCH(
   context: { params: Promise<{ projectId: string; invoiceId: string }> },
 ) {
   try {
-    const supabase = await createClient();
     const { projectId, invoiceId } = await context.params;
-
-    // Check authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError) {
-      return NextResponse.json(
-        { error: "Authentication failed", details: authError.message },
-        { status: 401 },
-      );
-    }
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 401 });
-    }
-
     const projectIdNum = parseInt(projectId, 10);
     const invoiceIdNum = parseInt(invoiceId, 10);
+
+    const guard = await requirePermission(projectIdNum, "contracts", "write");
+    if (guard.denied) return guard.response;
+
+    const supabase = await createClient();
 
     // Parse and validate the request body
     const body = await request.json();
@@ -202,28 +189,14 @@ export async function DELETE(
   context: { params: Promise<{ projectId: string; invoiceId: string }> },
 ) {
   try {
-    const supabase = await createClient();
     const { projectId, invoiceId } = await context.params;
-
-    // Check authentication
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError) {
-      return NextResponse.json(
-        { error: "Authentication failed", details: authError.message },
-        { status: 401 },
-      );
-    }
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 401 });
-    }
-
     const projectIdNum = parseInt(projectId, 10);
     const invoiceIdNum = parseInt(invoiceId, 10);
+
+    const guard = await requirePermission(projectIdNum, "contracts", "write");
+    if (guard.denied) return guard.response;
+
+    const supabase = await createClient();
 
     // First, verify the invoice exists and belongs to the project
     const { data: invoice, error: fetchError } = await supabase

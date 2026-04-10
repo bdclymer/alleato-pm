@@ -3,14 +3,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Check, Edit, MoreHorizontal, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { StatusBadge } from "@/components/ds";
 import { useMasterCostCodes, useCostCodeTypes } from "@/hooks/use-project-cost-codes";
-import type { CostCode as MasterCostCode, CostCodeType } from "@/hooks/use-project-cost-codes";
+import { useVerticalMarkup } from "@/hooks/use-vertical-markup";
 import { ContentSectionStack, LabelValueRow, PageShell, SectionRuleHeading } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -55,6 +55,18 @@ const CHANGE_REASONS = [
   "Value Engineering",
   "Other",
 ] as const;
+
+const MARKUP_TYPE_LABELS: Record<string, string> = {
+  insurance: "Insurance",
+  bond: "Bond",
+  fee: "Contractor Fee",
+  overhead: "Overhead",
+  custom: "Custom",
+};
+
+function getMarkupLabel(markupType: string): string {
+  return MARKUP_TYPE_LABELS[markupType.toLowerCase()] || markupType;
+}
 
 // ---------------------------------------------------------------------------
 // Types & schema
@@ -205,6 +217,39 @@ export default function CommitmentCODetailPage() {
   const { data: masterCostCodes = [] } = useMasterCostCodes();
   const { data: costCodeTypes = [] } = useCostCodeTypes();
   const [lineItemSaving, setLineItemSaving] = useState(false);
+
+  // Vertical markup
+  const numericProjectId = Number(projectId);
+  const { markupRows } = useVerticalMarkup(
+    Number.isFinite(numericProjectId) ? numericProjectId : undefined,
+  );
+
+  const lineItemSubtotal = useMemo(
+    () => lineItems.reduce((sum, item) => sum + (item.amount ?? 0), 0),
+    [lineItems],
+  );
+
+  const computedMarkups = useMemo(() => {
+    if (!markupRows.length) return [];
+    const sorted = [...markupRows].sort(
+      (a, b) => a.calculation_order - b.calculation_order,
+    );
+    let runningBase = lineItemSubtotal;
+    return sorted.map((markup) => {
+      const amount = runningBase * (markup.percentage / 100);
+      if (markup.compound) {
+        runningBase += amount;
+      }
+      return { ...markup, amount };
+    });
+  }, [markupRows, lineItemSubtotal]);
+
+  const markupTotal = useMemo(
+    () => computedMarkups.reduce((sum, m) => sum + m.amount, 0),
+    [computedMarkups],
+  );
+
+  const grandTotal = lineItemSubtotal + markupTotal;
 
   // Attachments
   interface Attachment {
@@ -1345,14 +1390,38 @@ export default function CommitmentCODetailPage() {
                         </td>
                       </tr>
                     )}
+                    {/* Subtotal row when markup rows exist */}
+                    {computedMarkups.length > 0 && (
+                      <tr className="border-t font-medium">
+                        <td colSpan={3} className="py-2">Subtotal</td>
+                        <td className="py-2 text-right">{formatCurrency(lineItemSubtotal)}</td>
+                        <td />
+                      </tr>
+                    )}
+                    {/* Vertical markup rows */}
+                    {computedMarkups.map((markup) => (
+                      <tr
+                        key={markup.id}
+                        className="bg-primary/5 text-muted-foreground"
+                      >
+                        <td colSpan={2} className="py-2 pl-4">
+                          {getMarkupLabel(markup.markup_type)}
+                        </td>
+                        <td className="py-2 text-right">
+                          {markup.percentage.toFixed(2)}%
+                        </td>
+                        <td className="py-2 text-right">
+                          {formatCurrency(markup.amount)}
+                        </td>
+                        <td />
+                      </tr>
+                    ))}
                   </tbody>
                   <tfoot>
                     <tr className="font-medium">
                       <td colSpan={3} className="pt-2">Total</td>
                       <td className="pt-2 text-right">
-                        {formatCurrency(
-                          lineItems.reduce((sum, item) => sum + (item.amount ?? 0), 0),
-                        )}
+                        {formatCurrency(grandTotal)}
                       </td>
                       <td />
                     </tr>

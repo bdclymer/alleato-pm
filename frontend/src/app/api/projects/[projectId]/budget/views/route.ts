@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import type { CreateBudgetViewRequest } from "@/types/budget-views";
 import { apiErrorResponse } from "@/lib/api-error";
+import { requirePermission } from "@/lib/permissions-guard";
 
 // GET /api/projects/[id]/budget/views
 // Fetch all budget views for a project

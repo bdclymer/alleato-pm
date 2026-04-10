@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 
 import { apiErrorResponse } from "@/lib/api-error";
 import { isAuthError, verifyProjectAccess } from "@/lib/supabase/auth-guard";
+import { requirePermission } from "@/lib/permissions-guard";
 
 interface RouteParams {
   params: Promise<{ projectId: string; commitmentId: string; pcoId: string }>;
@@ -64,6 +65,9 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     if (isAuthError(authResult)) return authResult;
     const { serviceClient: supabase } = authResult;
 
+    const guard = await requirePermission(numericProjectId, "contracts", "write");
+    if (guard.denied) return guard.response;
+
     const body = (await request.json()) as PcoUpdateBody;
 
     if (body.status && !VALID_STATUSES.includes(body.status)) {
@@ -111,6 +115,9 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     const authResult = await verifyProjectAccess(numericProjectId);
     if (isAuthError(authResult)) return authResult;
     const { serviceClient: supabase } = authResult;
+
+    const guard = await requirePermission(numericProjectId, "contracts", "admin");
+    if (guard.denied) return guard.response;
 
     const { error } = await supabase
       .from("commitment_pcos")

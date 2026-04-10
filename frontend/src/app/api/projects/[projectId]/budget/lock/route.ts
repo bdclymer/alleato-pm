@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { requirePermission } from "@/lib/permissions-guard";
 
 // POST /api/projects/[id]/budget/lock - Lock the budget
 export async function POST(
@@ -17,6 +18,10 @@ export async function POST(
         { status: 400 },
       );
     }
+
+    // Permission check: locking budget requires "admin" on budget
+    const guard = await requirePermission(projectIdNum, "budget", "admin");
+    if (guard.denied) return guard.response;
 
     const supabase = await createClient();
 
@@ -103,6 +108,10 @@ export async function DELETE(
         { status: 400 },
       );
     }
+
+    // Permission check: unlocking budget requires "admin" on budget
+    const guardDel = await requirePermission(projectIdNum, "budget", "admin");
+    if (guardDel.denied) return guardDel.response;
 
     const supabase = await createClient();
 

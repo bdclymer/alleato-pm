@@ -5,6 +5,7 @@ import { Download, Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { PermissionGate } from "@/components/domain/permissions/PermissionGate";
 
 interface PageActionsProps {
   projectId: string;
@@ -53,23 +54,27 @@ export function PageActions({ projectId, tab = "prime" }: PageActionsProps) {
           <Download />
           Export CSV
         </Button>
-        <Button asChild size="sm" data-testid="change-orders-create-button">
-          <Link href={createHref}>{label}</Link>
-        </Button>
+        <PermissionGate projectId={projectId} module="change_orders" level="write">
+          <Button asChild size="sm" data-testid="change-orders-create-button">
+            <Link href={createHref}>{label}</Link>
+          </Button>
+        </PermissionGate>
       </div>
 
       <div className="flex items-center gap-2 sm:hidden">
-        <Button
-          asChild
-          size="sm"
-          variant="outline"
-          className="h-9 w-9 rounded-full border-brand p-0 text-brand hover:bg-brand/10"
-          aria-label="Create change order"
-        >
-          <Link href={createHref}>
-            <Plus />
-          </Link>
-        </Button>
+        <PermissionGate projectId={projectId} module="change_orders" level="write">
+          <Button
+            asChild
+            size="sm"
+            variant="outline"
+            className="h-9 w-9 rounded-full border-brand p-0 text-brand hover:bg-brand/10"
+            aria-label="Create change order"
+          >
+            <Link href={createHref}>
+              <Plus />
+            </Link>
+          </Button>
+        </PermissionGate>
       </div>
     </>
   );

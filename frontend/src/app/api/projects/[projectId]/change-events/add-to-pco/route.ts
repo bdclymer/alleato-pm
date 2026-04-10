@@ -16,6 +16,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { z } from "zod";
+import { requirePermission } from "@/lib/permissions-guard";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
@@ -43,6 +44,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     if (Number.isNaN(projectId) || projectId <= 0) {
       return NextResponse.json({ error: "Invalid project ID" }, { status: 400 });
     }
+
+    const guard = await requirePermission(projectId, "change_orders", "write");
+    if (guard.denied) return guard.response;
 
     const rawBody = await request.json();
     const parsed = bodySchema.safeParse(rawBody);

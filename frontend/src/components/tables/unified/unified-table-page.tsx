@@ -221,6 +221,7 @@ export interface UnifiedTablePageProps<T> {
   layout?: {
     fullBleedTable?: boolean;
     removeTableFrame?: boolean;
+    plainFooterTotals?: boolean;
     headerAlignment?: "left" | "center";
     toolbarInlineWithHeader?: boolean;
     maxWidth?: PageContainerProps["maxWidth"];
@@ -295,6 +296,7 @@ export function UnifiedTablePage<T>({
     toolbar.currentView === "table" || (!canRenderCardView && !canRenderListView);
   const isFullBleedTable = layout?.fullBleedTable ?? false;
   const removeTableFrame = layout?.removeTableFrame ?? false;
+  const plainFooterTotals = layout?.plainFooterTotals ?? false;
   const headerAlignment = layout?.headerAlignment ?? "left";
   const toolbarInlineWithHeader = layout?.toolbarInlineWithHeader ?? false;
   const containerMaxWidth = layout?.maxWidth ?? "full";
@@ -1014,7 +1016,7 @@ export function UnifiedTablePage<T>({
                         className="bg-muted"
                       />
                     )}
-                    {columnGroups.map((group) => {
+                    {columnGroups.map((group, index) => {
                       const visibleCount = group.columnIds.filter((id) =>
                         orderedVisibleColumns.some((col) => col.id === id),
                       ).length;
@@ -1024,7 +1026,8 @@ export function UnifiedTablePage<T>({
                           key={`group-${group.label}-${group.columnIds.join("-")}`}
                           colSpan={visibleCount}
                           className={cn(
-                            "text-left text-[10px] font-semibold text-foreground/80 !bg-muted py-0 px-2 leading-tight border-b border-l border-border/50 normal-case",
+                            "text-left text-[11px] font-semibold text-foreground/80 !bg-muted py-0 px-2 leading-tight border-b border-border/70 normal-case",
+                            index > 0 && "border-l",
                             !group.label && "!bg-muted",
                           )}
                         >
@@ -1035,7 +1038,7 @@ export function UnifiedTablePage<T>({
                     {hasRowActions && <TableHead className="w-12.5 !bg-muted" />}
                   </TableRow>
                 )}
-                <TableRow className="!bg-muted">
+                <TableRow className="!bg-muted border-border/80">
                   {hasRowSelection && (
                     <TableHead
                       className={cn(
@@ -1090,7 +1093,6 @@ export function UnifiedTablePage<T>({
                               "relative align-middle",
                               headerAlignment === "left" ? "text-left" : "text-center",
                               isSortable && "cursor-pointer select-none group/th",
-                              isPinnedLeft && "shadow-[2px_0_0_hsl(var(--border))]",
                               (table.stickyHeader !== false) && "!bg-muted",
                             )}
                           aria-sort={
@@ -1134,7 +1136,7 @@ export function UnifiedTablePage<T>({
                                   type="button"
                                   className={cn(
                                     "flex items-center gap-1.5 bg-transparent border-0 p-0 font-semibold cursor-pointer uppercase tracking-wide",
-                                    table.density === "compact" ? "text-[10px]" : "text-[11px]",
+                                    table.density === "compact" ? "text-[11px]" : "text-xs",
                                     "text-foreground",
                                     headerAlignment === "left" ? "justify-start" : "justify-center",
                                   )}
@@ -1474,7 +1476,7 @@ export function UnifiedTablePage<T>({
               </TableBody>
               {footerTotals && (
                 <TableFooter>
-                  <TableRow className="bg-muted/50 font-medium">
+                  <TableRow className={cn("font-medium", plainFooterTotals ? "bg-transparent" : "bg-muted/50")}>
                     {hasRowSelection && <TableCell />}
                     {orderedVisibleColumns.map((column, index) => {
                         const width = columnWidths[column.id];

@@ -5,6 +5,7 @@ import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Loader2, MoreHorizontal, Plus, RefreshCw, Upload } from "lucide-react";
 import { toast } from "sonner";
+import { PermissionGate } from "@/components/domain/permissions/PermissionGate";
 import { UnifiedTablePage, useUnifiedTableState, type FilterValue } from "@/components/tables/unified";
 import {
   AlertDialog,
@@ -758,24 +759,26 @@ export function DirectCostsClient({
         header={{
           title: "Direct Costs",
           actions: (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="sm">
-                  <Plus />
-                  Create
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => router.push(`/${projectId}/direct-costs/new`)}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  New Direct Cost
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setIsImportDialogOpen(true)}>
-                  <Upload className="mr-2 h-4 w-4" />
-                  Import CSV
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <PermissionGate projectId={projectId} module="budget" level="write">
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button size="sm">
+                    <Plus />
+                    Create
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => router.push(`/${projectId}/direct-costs/new`)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    New Direct Cost
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setIsImportDialogOpen(true)}>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Import CSV
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </PermissionGate>
           ),
         }}
         layout={{

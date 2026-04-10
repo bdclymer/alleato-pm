@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createContractSchema } from "./validation";
 import { ZodError } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
+import { requirePermission } from "@/lib/permissions-guard";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
@@ -143,6 +144,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { projectId } = await params;
+    const projectIdNum = parseInt(projectId, 10);
+    const guard = await requirePermission(projectIdNum, "contracts", "write");
+    if (guard.denied) return guard.response;
+
     const supabase = await createClient();
     const body = await request.json();
 

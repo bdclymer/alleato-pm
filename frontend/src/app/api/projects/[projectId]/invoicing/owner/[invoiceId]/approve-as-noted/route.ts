@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { requirePermission } from "@/lib/permissions-guard";
 
 // POST /api/projects/[projectId]/invoicing/owner/[invoiceId]/approve-as-noted
 // Transition an owner invoice to approved_as_noted. Pre-condition: must be under_review.
@@ -9,27 +10,14 @@ export async function POST(
   context: { params: Promise<{ projectId: string; invoiceId: string }> },
 ) {
   try {
-    const supabase = await createClient();
     const { projectId, invoiceId } = await context.params;
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError) {
-      return NextResponse.json(
-        { error: "Authentication failed", details: authError.message },
-        { status: 401 },
-      );
-    }
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 401 });
-    }
-
     const projectIdNum = parseInt(projectId, 10);
     const invoiceIdNum = parseInt(invoiceId, 10);
+
+    const guard = await requirePermission(projectIdNum, "contracts", "admin");
+    if (guard.denied) return guard.response;
+
+    const supabase = await createClient();
 
     const { data: invoice, error: fetchError } = await supabase
       .from("owner_invoices")

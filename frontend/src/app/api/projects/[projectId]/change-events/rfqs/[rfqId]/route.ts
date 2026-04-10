@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { requirePermission } from "@/lib/permissions-guard";
 
 interface RouteParams {
   params: Promise<{ projectId: string; rfqId: string }>;
@@ -70,6 +71,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     if (!Number.isFinite(numericProjectId)) {
       return NextResponse.json({ error: "Invalid project id" }, { status: 400 });
     }
+
+    const guard = await requirePermission(numericProjectId, "change_orders", "write");
+    if (guard.denied) return guard.response;
 
     const body = await request.json();
     const parsed = updateRfqSchema.safeParse(body);
@@ -139,6 +143,9 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     if (!Number.isFinite(numericProjectId)) {
       return NextResponse.json({ error: "Invalid project id" }, { status: 400 });
     }
+
+    const guard = await requirePermission(numericProjectId, "change_orders", "admin");
+    if (guard.denied) return guard.response;
 
     const supabase = await createClient();
 

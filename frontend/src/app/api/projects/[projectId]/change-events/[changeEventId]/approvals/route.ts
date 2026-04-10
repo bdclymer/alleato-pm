@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { requirePermission } from "@/lib/permissions-guard";
 
 type RouteParams = {
   params: Promise<{ projectId: string; changeEventId: string }>;
@@ -73,6 +74,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
     const { projectId, changeEventId } = await params;
+    const projectIdNum = parseInt(projectId, 10);
+    const guard = await requirePermission(projectIdNum, "change_orders", "admin");
+    if (guard.denied) return guard.response;
+
     const supabase = await createClient();
 
     // Verify user authentication
@@ -148,6 +153,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 export async function PATCH(request: NextRequest, { params }: RouteParams) {
   try {
     const { projectId, changeEventId } = await params;
+    const projectIdNum = parseInt(projectId, 10);
+    const guard = await requirePermission(projectIdNum, "change_orders", "admin");
+    if (guard.denied) return guard.response;
+
     const supabase = await createClient();
 
     // Verify user authentication

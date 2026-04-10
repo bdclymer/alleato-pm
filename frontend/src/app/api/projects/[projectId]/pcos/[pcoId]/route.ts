@@ -12,6 +12,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { requirePermission } from "@/lib/permissions-guard";
 
 interface RouteParams {
   params: Promise<{ projectId: string; pcoId: string }>;
@@ -141,6 +142,9 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     if (isNaN(numericProjectId) || isNaN(numericPcoId)) {
       return NextResponse.json({ error: "Invalid ID" }, { status: 400 });
     }
+
+    const guard = await requirePermission(numericProjectId, "change_orders", "write");
+    if (guard.denied) return guard.response;
 
     const supabase = await createClient();
     const body = await request.json();

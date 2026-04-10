@@ -7,6 +7,7 @@ import { useQuery } from "@tanstack/react-query";
 import { ChevronDown, MoreHorizontal, Pencil, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
+import { PermissionGate } from "@/components/domain/permissions/PermissionGate";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -288,10 +289,12 @@ function BillingPeriodsTab({ projectId }: { projectId: string }) {
               : `${periods.length} billing period${periods.length !== 1 ? "s" : ""}`}
           </p>
         </div>
-        <Button size="sm" onClick={openCreate}>
-          <Plus />
-          New Billing Period
-        </Button>
+        <PermissionGate projectId={projectId} module="contracts" level="write">
+          <Button size="sm" onClick={openCreate}>
+            <Plus />
+            New Billing Period
+          </Button>
+        </PermissionGate>
       </div>
 
       {/* Table */}

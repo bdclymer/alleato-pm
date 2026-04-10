@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowLeft,
@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { EmptyState, StatusBadge } from "@/components/ds";
+import { useVerticalMarkup } from "@/hooks/use-vertical-markup";
 import {
   ContentSectionStack,
   LabelValueRow,
@@ -295,6 +296,11 @@ export default function PrimeContractCODetailPage() {
   });
 
   const apiBase = `/api/projects/${projectId}/prime-contract-change-orders/${primeCoId}`;
+
+  // ---- Vertical Markup ----------------------------------------------------
+  const { markupRows } = useVerticalMarkup(
+    projectId ? Number(projectId) : undefined,
+  );
 
   // ---- Line Items CRUD -----------------------------------------------------
   const fetchLineItems = useCallback(async () => {
@@ -649,6 +655,40 @@ export default function PrimeContractCODetailPage() {
       toast.error(err instanceof Error ? err.message : "Failed to reject");
     }
   }, [co, apiBase, rejectionReason]);
+
+  // ---- Vertical markup (must be before early returns) ----------------------
+  const lineItemsTotal =
+    lineItems.reduce((sum, li) => sum + (li.line_amount ?? 0), 0);
+
+  const MARKUP_LABELS: Record<string, string> = {
+    insurance: "Insurance",
+    bond: "Bond",
+    fee: "Contractor Fee",
+    overhead: "Overhead",
+    custom: "Custom",
+  };
+
+  const computedMarkups = useMemo(() => {
+    if (markupRows.length === 0) return [];
+    const sorted = [...markupRows].sort(
+      (a, b) => a.calculation_order - b.calculation_order,
+    );
+    let runningBase = lineItemsTotal;
+    return sorted.map((markup) => {
+      const amount = runningBase * (markup.percentage / 100);
+      if (markup.compound) {
+        runningBase += amount;
+      }
+      return { ...markup, amount };
+    });
+  }, [markupRows, lineItemsTotal]);
+
+  const markupTotal = useMemo(
+    () => computedMarkups.reduce((sum, m) => sum + m.amount, 0),
+    [computedMarkups],
+  );
+
+  const grandTotal = lineItemsTotal + markupTotal;
 
   // ---- Loading state -------------------------------------------------------
   if (isLoading) {
@@ -1191,8 +1231,6 @@ export default function PrimeContractCODetailPage() {
     ? `PCO for ${co.pcco_number} — ${co.title || "Untitled"}`
     : co.title || "Untitled Prime Contract CO";
 
-  const lineItemsTotal =
-    lineItems.reduce((sum, li) => sum + (li.line_amount ?? 0), 0);
   const changeOrderAmount = Number(co.total_amount) || 0;
   const changeOrderStatus = (co.status || "").toLowerCase();
   const approvedAmount = changeOrderStatus === "approved" ? changeOrderAmount : 0;
@@ -1206,31 +1244,29 @@ export default function PrimeContractCODetailPage() {
   return (
     <>
       <PageShell
-        variant="dashboard"
-        title={pageTitle}
+        variant="detail"
+        title=""
         onBack={handleBack}
-        actions={
-          <div className="flex items-center gap-2">
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => setIsEditing(true)}
-            >
-              <Edit className="mr-1 h-4 w-4" />
-              Edit
-            </Button>
+        titleContent={
+          <div className="flex w-full items-center justify-between">
+            <h1 className="min-w-0 truncate text-xl font-semibold">{pageTitle}</h1>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <MoreHorizontal />
+                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                  <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                  <Edit className="mr-2 h-4 w-4" />
+                  Edit
+                </DropdownMenuItem>
                 <DropdownMenuItem asChild>
                   <a
                     href={`/api/projects/${projectId}/prime-contract-change-orders/export?status=${co.status}`}
                     download
                   >
+                    <FileUp className="mr-2 h-4 w-4" />
                     Export CSV
                   </a>
                 </DropdownMenuItem>
@@ -1248,17 +1284,17 @@ export default function PrimeContractCODetailPage() {
         }
       >
         <Tabs defaultValue="general">
-          <TabsList variant="line" className="-mb-px mb-6 w-full justify-start">
-            <TabsTrigger value="general">
+          <TabsList variant="line" className="-mb-px mb-2 w-full justify-start gap-0">
+            <TabsTrigger value="general" className="px-3 py-1.5 text-xs">
               General
             </TabsTrigger>
-            <TabsTrigger value="related">
+            <TabsTrigger value="related" className="px-3 py-1.5 text-xs">
               Related Items (0)
             </TabsTrigger>
-            <TabsTrigger value="emails">
+            <TabsTrigger value="emails" className="px-3 py-1.5 text-xs">
               Emails (0)
             </TabsTrigger>
-            <TabsTrigger value="history">
+            <TabsTrigger value="history" className="px-3 py-1.5 text-xs">
               Change History
             </TabsTrigger>
           </TabsList>
@@ -1267,9 +1303,9 @@ export default function PrimeContractCODetailPage() {
             <ContentSectionStack>
               {/* ── General Section: Three-column layout parity with prime contract detail ── */}
               <section>
-                <div className="grid grid-cols-[minmax(0,1fr)_minmax(340px,420px)] gap-x-16 gap-y-10">
+                <div className="grid grid-cols-1 gap-x-16 gap-y-10 lg:grid-cols-[minmax(0,1fr)_minmax(340px,420px)]">
                   <div className="space-y-8">
-                    <div className="grid grid-cols-2 gap-x-14 gap-y-8">
+                    <div className="grid grid-cols-1 gap-x-14 gap-y-8 sm:grid-cols-2">
                       <div className="space-y-6">
                         <SectionRuleHeading
                           label="Details"
@@ -1465,16 +1501,7 @@ export default function PrimeContractCODetailPage() {
                     label="Line Items"
                     className="flex-1 [&_span]:text-primary"
                   />
-                  {!addingLineItem && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={startAddLineItem}
-                    >
-                      <Plus className="mr-1 h-4 w-4" />
-                      Add Line Item
-                    </Button>
-                  )}
+                  {/* Add button only shown in empty state below */}
                 </div>
 
                 {lineItemsLoading ? (
@@ -1753,13 +1780,53 @@ export default function PrimeContractCODetailPage() {
                             </td>
                           </tr>
                         )}
+                        {/* ── Vertical Markup rows (read-only) ── */}
+                        {computedMarkups.length > 0 && (
+                          <>
+                            {/* Subtotal separator */}
+                            <tr className="border-b">
+                              <td
+                                colSpan={6}
+                                className="py-2 text-right text-xs font-medium text-muted-foreground"
+                              >
+                                Subtotal
+                              </td>
+                              <td className="py-2 text-right text-xs font-medium">
+                                {formatCurrency(lineItemsTotal)}
+                              </td>
+                              <td />
+                            </tr>
+                            {computedMarkups.map((markup) => (
+                              <tr
+                                key={markup.id}
+                                className="border-b bg-primary/5"
+                              >
+                                <td />
+                                <td
+                                  colSpan={4}
+                                  className="py-2 text-sm text-muted-foreground"
+                                >
+                                  {MARKUP_LABELS[markup.markup_type] ??
+                                    markup.markup_type}
+                                </td>
+                                <td className="py-2 text-right text-sm text-muted-foreground">
+                                  {markup.percentage}%
+                                </td>
+                                <td className="py-2 text-right text-sm">
+                                  {formatCurrency(markup.amount)}
+                                </td>
+                                <td />
+                              </tr>
+                            ))}
+                          </>
+                        )}
                       </tbody>
                       <tfoot>
                         <tr className="font-medium">
                           <td colSpan={7} className="pt-2">
                             <div className="flex justify-between">
                               <span>Total</span>
-                              <span>{formatCurrency(lineItemsTotal)}</span>
+                              <span>{formatCurrency(grandTotal)}</span>
                             </div>
                           </td>
                           <td />

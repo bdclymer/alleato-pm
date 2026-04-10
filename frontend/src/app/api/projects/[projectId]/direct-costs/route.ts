@@ -19,6 +19,7 @@ import {
   DirectCostListParamsSchema,
 } from '@/lib/schemas/direct-costs';
 import { DirectCostService } from '@/lib/services/direct-cost-service';
+import { requirePermission } from "@/lib/permissions-guard";
 
 // =============================================================================
 // GET - Fetch Direct Costs (with filtering, pagination, sorting)
@@ -104,20 +105,12 @@ export async function POST(
 ) {
   try {
     const { projectId } = await params;
+    const projectIdNum = parseInt(projectId, 10);
+
+    const guard = await requirePermission(projectIdNum, "budget", "write");
+    if (guard.denied) return guard.response;
+
     const supabase = await createClient();
-
-    // Check authentication
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized - please log in" },
-        { status: 401 }
-      );
-    }
 
     const body = await request.json();
 

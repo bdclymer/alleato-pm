@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { requirePermission } from "@/lib/permissions-guard";
 
 interface RouteParams {
   params: Promise<{ projectId: string; primeCoId: string }>;
@@ -18,6 +19,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     if (!Number.isFinite(numericId) || numericId <= 0) {
       return NextResponse.json({ error: "Invalid ID" }, { status: 404 });
     }
+
+    const guard = await requirePermission(Number(projectId), "change_orders", "admin");
+    if (guard.denied) return guard.response;
 
     const supabase = await createClient();
 

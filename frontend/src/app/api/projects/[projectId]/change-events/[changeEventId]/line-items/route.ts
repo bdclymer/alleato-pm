@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createLineItemSchema, updateLineItemSchema } from '../../validation';
 import { ZodError } from 'zod';
 import { apiErrorResponse } from "@/lib/api-error";
+import { requirePermission } from "@/lib/permissions-guard";
 
 interface RouteParams {
   params: Promise<{
@@ -164,6 +165,10 @@ export async function POST(
 ) {
   try {
     const { projectId, changeEventId } = await params;
+    const projectIdNum = parseInt(projectId, 10);
+    const guard = await requirePermission(projectIdNum, "change_orders", "write");
+    if (guard.denied) return guard.response;
+
     const supabase = await createClient();
     const body = await request.json();
 
@@ -386,6 +391,10 @@ export async function PUT(
 ) {
   try {
     const { projectId, changeEventId } = await params;
+    const projectIdNum = parseInt(projectId, 10);
+    const guard = await requirePermission(projectIdNum, "change_orders", "write");
+    if (guard.denied) return guard.response;
+
     const supabase = await createClient();
     const body = await request.json();
 

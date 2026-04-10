@@ -39,6 +39,7 @@ import { ZodError } from 'zod'
 import type { Database } from '@/types/database.types'
 import type { PaginatedResponse } from '@/app/api/types'
 import { apiErrorResponse } from "@/lib/api-error";
+import { requirePermission } from "@/lib/permissions-guard";
 
 /**
  * Helper to get the appropriate Supabase client based on auth method
@@ -439,6 +440,10 @@ export async function POST(
 ) {
   try {
     const { projectId } = await params
+    const projectIdNum = parseInt(projectId, 10);
+    const guard = await requirePermission(projectIdNum, "change_orders", "write");
+    if (guard.denied) return guard.response;
+
     const { client: supabase, token } = await getSupabaseClient(request)
     const body = await request.json()
 

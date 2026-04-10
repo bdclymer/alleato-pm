@@ -33,6 +33,7 @@ import type { ChangeEventRfqFormValues } from "@/components/domain/change-events
 import { PageShell } from "@/components/layout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Text } from "@/components/ds/text";
+import { PermissionGate } from "@/components/domain/permissions/PermissionGate";
 
 type ChangeEventFilterState = Record<string, FilterValue>;
 
@@ -615,15 +616,17 @@ export default function ProjectChangeEventsPage(): ReactElement {
         title: "Change Events",
         description: "Track scope changes, approvals, and financial impact.",
         actions: (
-          <Button
-            size="sm"
-            onClick={() => router.push(`/${projectId}/change-events/new`)}
-            className="gap-2"
-            data-testid="change-events-new-button"
-          >
-            <Plus />
-            Create
-          </Button>
+          <PermissionGate projectId={projectId} module="change_orders" level="write">
+            <Button
+              size="sm"
+              onClick={() => router.push(`/${projectId}/change-events/new`)}
+              className="gap-2"
+              data-testid="change-events-new-button"
+            >
+              <Plus />
+              Create
+            </Button>
+          </PermissionGate>
         ),
       }}
       tabs={tabs}
@@ -741,6 +744,11 @@ export default function ProjectChangeEventsPage(): ReactElement {
       features={{
         enableExport: true,
         enableBulkDelete: activeTab !== "recycle_bin",
+      }}
+      layout={{
+        fullBleedTable: true,
+        removeTableFrame: true,
+        plainFooterTotals: true,
       }}
     />
     {deleteDialog.dialog}

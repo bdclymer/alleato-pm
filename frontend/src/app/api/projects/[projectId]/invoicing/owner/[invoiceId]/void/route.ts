@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { requirePermission } from "@/lib/permissions-guard";
 
 // POST /api/projects/[projectId]/invoicing/owner/[invoiceId]/void
 // Void an owner invoice. Pre-condition: must not already be paid or void.
@@ -9,24 +10,13 @@ export async function POST(
   context: { params: Promise<{ projectId: string; invoiceId: string }> },
 ) {
   try {
-    const supabase = await createClient();
     const { projectId, invoiceId } = await context.params;
+    const projectIdNum = parseInt(projectId, 10);
 
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
+    const guard = await requirePermission(projectIdNum, "contracts", "admin");
+    if (guard.denied) return guard.response;
 
-    if (authError) {
-      return NextResponse.json(
-        { error: "Authentication failed", details: authError.message },
-        { status: 401 },
-      );
-    }
-
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 401 });
-    }
+    const supabase = await createClient();
 
     let reason: string | null = null;
     try {
@@ -38,7 +28,6 @@ export async function POST(
       // No body is fine
     }
 
-    const projectIdNum = parseInt(projectId, 10);
     const invoiceIdNum = parseInt(invoiceId, 10);
 
     const { data: invoice, error: fetchError } = await supabase

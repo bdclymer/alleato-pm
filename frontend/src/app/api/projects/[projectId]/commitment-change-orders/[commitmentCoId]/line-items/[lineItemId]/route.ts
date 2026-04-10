@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { requirePermission } from "@/lib/permissions-guard";
 
 interface RouteParams {
   params: Promise<{ projectId: string; commitmentCoId: string; lineItemId: string }>;
@@ -14,7 +15,12 @@ interface RouteParams {
  */
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
-    const { commitmentCoId, lineItemId } = await params;
+    const { projectId, commitmentCoId, lineItemId } = await params;
+    const projectIdNum = Number(projectId);
+
+    const guard = await requirePermission(projectIdNum, "contracts", "write");
+    if (guard.denied) return guard.response;
+
     const body = await request.json();
     const supabase = await createClient();
 
@@ -46,7 +52,12 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
  */
 export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   try {
-    const { commitmentCoId, lineItemId } = await params;
+    const { projectId, commitmentCoId, lineItemId } = await params;
+    const projectIdNum = Number(projectId);
+
+    const guard = await requirePermission(projectIdNum, "contracts", "admin");
+    if (guard.denied) return guard.response;
+
     const supabase = await createClient();
 
     const { error } = await supabase

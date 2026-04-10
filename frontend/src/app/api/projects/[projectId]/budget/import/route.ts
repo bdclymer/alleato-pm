@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
+import { requirePermission } from "@/lib/permissions-guard";
 
 interface BudgetRow {
   "Cost Code": string;
@@ -90,6 +91,10 @@ export async function POST(
         { status: 400 },
       );
     }
+
+    // Permission check: importing budget data requires "write" on budget
+    const guard = await requirePermission(numericProjectId, "budget", "write");
+    if (guard.denied) return guard.response;
 
     const authResult = await verifyProjectAccess(numericProjectId);
     if (isAuthError(authResult)) return authResult;

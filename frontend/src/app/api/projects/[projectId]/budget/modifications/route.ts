@@ -5,6 +5,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { requirePermission } from "@/lib/permissions-guard";
 
 // Valid status transitions for the modification workflow
 const VALID_TRANSITIONS: Record<string, string[]> = {
@@ -184,6 +185,10 @@ export async function POST(
         { status: 400 },
       );
     }
+
+    // Permission check: creating budget modifications requires "write" on budget
+    const guard = await requirePermission(projectIdNum, "budget", "write");
+    if (guard.denied) return guard.response;
 
     const body = await request.json();
 
@@ -373,6 +378,10 @@ export async function PATCH(
       );
     }
 
+    // Permission check: updating budget modification status requires "write" on budget
+    const guard = await requirePermission(projectIdNum, "budget", "write");
+    if (guard.denied) return guard.response;
+
     const body = await request.json();
 
     // Normalize field names for backwards compatibility, then validate with Zod
@@ -525,6 +534,10 @@ export async function DELETE(
         { status: 400 },
       );
     }
+
+    // Permission check: deleting budget modifications requires "admin" on budget
+    const guard = await requirePermission(projectIdNum, "budget", "admin");
+    if (guard.denied) return guard.response;
 
     const { searchParams } = new URL(request.url);
     const modificationId = searchParams.get("modificationId");

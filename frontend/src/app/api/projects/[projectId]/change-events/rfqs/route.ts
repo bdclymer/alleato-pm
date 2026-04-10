@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { requirePermission } from "@/lib/permissions-guard";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
@@ -126,6 +127,9 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         { status: 400 },
       );
     }
+
+    const guard = await requirePermission(numericProjectId, "change_orders", "write");
+    if (guard.denied) return guard.response;
 
     const body = await request.json();
     const parsed = createRfqSchema.safeParse(body);

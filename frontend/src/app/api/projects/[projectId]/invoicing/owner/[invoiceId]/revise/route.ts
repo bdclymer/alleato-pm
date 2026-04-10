@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { requirePermission } from "@/lib/permissions-guard";
 
 // POST /api/projects/[projectId]/invoicing/owner/[invoiceId]/revise
 // Request revision of an invoice (UNDER REVIEW → REVISE AND RESUBMIT)
@@ -9,20 +10,14 @@ export async function POST(
   context: { params: Promise<{ projectId: string; invoiceId: string }> },
 ) {
   try {
-    const supabase = await createClient();
     const { projectId, invoiceId } = await context.params;
-
-    const {
-      data: { user },
-      error: authError,
-    } = await supabase.auth.getUser();
-
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     const projectIdNum = parseInt(projectId, 10);
     const invoiceIdNum = parseInt(invoiceId, 10);
+
+    const guard = await requirePermission(projectIdNum, "contracts", "write");
+    if (guard.denied) return guard.response;
+
+    const supabase = await createClient();
 
     const body = await request.json().catch(() => ({}));
     const { reason } = body;
