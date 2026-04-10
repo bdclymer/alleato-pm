@@ -42,7 +42,13 @@ import {
 } from "@/components/tables/unified";
 import type { ColumnConfig, TableColumn } from "@/components/tables/unified";
 import { PermissionTemplateForm } from "./permission-template-form";
-import { Check, Minus, Pencil, Plus, ShieldCheck, Trash2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Check, Minus, MoreVertical, Plus, ShieldCheck, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ALL_MODULES, GRANULAR_FLAG_LABELS } from "@/lib/permissions-shared";
 import type {
@@ -770,12 +776,6 @@ function TemplatesTab({
     <div className="space-y-8">
       {systemTemplates.length > 0 && (
         <section className="space-y-3">
-          <h2 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
-            System Templates
-          </h2>
-          <p className="text-xs text-muted-foreground">
-            Built-in templates that ship with the platform. You can customize their permission levels.
-          </p>
           <div className="space-y-3">
             {systemTemplates.map((tpl) => (
               <TemplateCard
@@ -843,25 +843,30 @@ function TemplateCard({
             <p className="text-sm text-muted-foreground mt-1">{template.description}</p>
           )}
         </div>
-        <div className="flex gap-1.5 shrink-0">
-          {onEdit && (
-            <Button variant="ghost" size="sm" onClick={onEdit}>
-              <Pencil className="h-3.5 w-3.5 mr-1" />
-              Edit
-            </Button>
-          )}
-          {!isSystem && onDelete && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onDelete}
-              className="text-destructive hover:text-destructive"
-            >
-              <Trash2 className="h-3.5 w-3.5 mr-1" />
-              Delete
-            </Button>
-          )}
-        </div>
+        {(onEdit || (!isSystem && onDelete)) && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              {onEdit && (
+                <DropdownMenuItem onClick={onEdit}>
+                  Edit
+                </DropdownMenuItem>
+              )}
+              {!isSystem && onDelete && (
+                <DropdownMenuItem
+                  onClick={onDelete}
+                  className="text-destructive focus:text-destructive"
+                >
+                  Delete
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
 
       <PermissionMatrix rules={template.rules_json} />
