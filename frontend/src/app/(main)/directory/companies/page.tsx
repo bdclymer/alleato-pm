@@ -47,7 +47,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { StatusBadge } from "@/components/ds";
 
 interface CompanyRow {
   id: string;
@@ -299,14 +298,16 @@ function CompanyPreviewPane({
       </div>
 
       {/* Scrollable content */}
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto px-5 py-5 space-y-6">
         {/* Company header */}
-        <div className="px-5 pt-5 pb-4">
+        <div className="space-y-2">
           <div className="min-w-0">
             <h3 className="text-sm font-semibold leading-tight truncate">{displayName}</h3>
-            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            <div className="mt-1.5 flex flex-wrap items-center gap-2">
               {typeLabel && (
-                <StatusBadge status={typeLabel} />
+                <span className="inline-flex items-center rounded-md border border-border bg-card px-2 py-0.5 text-[11px] font-medium text-foreground">
+                  {typeLabel}
+                </span>
               )}
               {company.status && (
                 <CellBadge value={company.status} colorMap={STATUS_COLORS} />
@@ -317,11 +318,11 @@ function CompanyPreviewPane({
 
         {/* Identity section */}
         {(company.business_phone || company.email_address || company.website) && (
-          <div className="px-5 pb-4">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
+          <div className="space-y-3 border-t border-border pt-4">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
               Contact
             </p>
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               {company.business_phone && (
                 <div className="flex items-center gap-2 text-sm">
                   <Phone className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
@@ -350,8 +351,8 @@ function CompanyPreviewPane({
 
         {/* Additional details */}
         {(company.erp_vendor_id || company.created_at) && (
-          <div className="px-5 pb-5">
-            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground mb-2">
+          <div className="space-y-3 border-t border-border pt-4">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
               Details
             </p>
             <dl className="space-y-2 text-sm">
@@ -757,6 +758,10 @@ export default function GlobalCompanyDirectoryPage(): ReactElement {
       features={{
         enableExport: false,
         enableBulkDelete: false,
+      }}
+      layout={{
+        fullBleedTable: true,
+        removeTableFrame: true,
       }}
     />
   );

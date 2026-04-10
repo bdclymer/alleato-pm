@@ -298,6 +298,55 @@ export function ChangeOrdersClient({
     };
   };
 
+  // --- Export handlers --------------------------------------------------------
+  const handleExportPrime = React.useCallback(() => {
+    const headers = ["PCCO #", "Title", "Status", "Amount", "Executed", "Due Date", "Submitted", "Approved", "Created"];
+    const rows = filteredPrime.map((co) => [
+      co.pcco_number ?? "",
+      co.title ?? "",
+      co.status ?? "",
+      String(co.total_amount ?? 0),
+      co.executed ? "Yes" : "No",
+      co.due_date ?? "",
+      co.submitted_at ?? "",
+      co.approved_at ?? "",
+      co.created_at ?? "",
+    ]);
+    const csv = [headers, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "prime-contract-change-orders.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${filteredPrime.length} prime contract CO${filteredPrime.length === 1 ? "" : "s"}`);
+  }, [filteredPrime]);
+
+  const handleExportCommitment = React.useCallback(() => {
+    const headers = ["CO #", "Title", "Status", "Amount", "Contract", "Due Date", "Requested", "Approved", "Created"];
+    const rows = filteredCommitment.map((co) => [
+      co.change_order_number ?? "",
+      co.title ?? co.description ?? "",
+      co.status ?? "",
+      String(co.amount ?? 0),
+      co.contract_id ?? "",
+      co.due_date ?? "",
+      co.requested_date ?? "",
+      co.approved_date ?? "",
+      co.created_at ?? "",
+    ]);
+    const csv = [headers, ...rows].map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "commitment-change-orders.csv";
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${filteredCommitment.length} commitment CO${filteredCommitment.length === 1 ? "" : "s"}`);
+  }, [filteredCommitment]);
+
   // --- Filter change handler -------------------------------------------------
   const handleFilterChange = (
     tableState: ReturnType<typeof useUnifiedTableState>,
@@ -347,6 +396,7 @@ export function ChangeOrdersClient({
           columns: primeColumns,
           visibleColumns: primeTableState.visibleColumns,
           onColumnVisibilityChange: primeTableState.setVisibleColumns,
+          onExport: handleExportPrime,
         }}
         data={{ items: filteredPrime, isLoading: false, isFetching: false }}
         table={{
@@ -386,7 +436,7 @@ export function ChangeOrdersClient({
           filteredDescription: "Try adjusting your search or filters.",
           isFiltered: isPrimeFiltered,
         }}
-        features={{ enableExport: false, enableBulkDelete: false }}
+        features={{ enableExport: true, enableBulkDelete: false }}
       />
     );
   }
@@ -425,6 +475,7 @@ export function ChangeOrdersClient({
         columns: commitmentColumns,
         visibleColumns: commitmentTableState.visibleColumns,
         onColumnVisibilityChange: commitmentTableState.setVisibleColumns,
+        onExport: handleExportCommitment,
       }}
       data={{ items: filteredCommitment, isLoading: false, isFetching: false }}
       table={{
@@ -471,7 +522,7 @@ export function ChangeOrdersClient({
         filteredDescription: "Try adjusting your search or filters.",
         isFiltered: isCommitmentFiltered,
       }}
-      features={{ enableExport: false, enableBulkDelete: false }}
+      features={{ enableExport: true, enableBulkDelete: false }}
     />
   );
 }

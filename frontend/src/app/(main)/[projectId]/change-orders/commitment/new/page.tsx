@@ -50,6 +50,7 @@ const schema = z.object({
   status: z.enum(["draft", "pending", "approved", "out_for_signature", "executed", "void"]),
   amount: z.number(),
   change_reason: z.string().optional(),
+  requested_by: z.string().optional(),
   due_date: z.string().optional(),
   invoiced_date: z.string().optional(),
   designated_reviewer: z.string().optional(),
@@ -87,6 +88,7 @@ export default function NewCommitmentCOPage() {
       status: "draft",
       amount: 0,
       change_reason: "",
+      requested_by: "",
       due_date: "",
       invoiced_date: "",
       designated_reviewer: "",
@@ -129,6 +131,7 @@ export default function NewCommitmentCOPage() {
             status: data.status,
             amount: data.amount,
             change_reason: data.change_reason || null,
+            requested_by: data.requested_by || null,
             due_date: data.due_date || null,
             invoiced_date: data.invoiced_date || null,
             designated_reviewer: data.designated_reviewer || null,
@@ -329,6 +332,21 @@ export default function NewCommitmentCOPage() {
                         value={field.value}
                         onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                       />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Request Received From */}
+              <FormField
+                control={form.control}
+                name="requested_by"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Request Received From</FormLabel>
+                    <FormControl>
+                      <Input {...field} value={field.value || ""} placeholder="Name of requester" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

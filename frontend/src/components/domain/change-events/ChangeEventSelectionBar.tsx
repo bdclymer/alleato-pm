@@ -3,8 +3,8 @@
 import { useState } from "react";
 
 import { ChevronDown } from "lucide-react";
-import { toast } from "sonner";
 
+import { AddToCommitmentCODialog } from "@/components/domain/change-events/AddToCommitmentCODialog";
 import { AddToPrimePCODialog } from "@/components/domain/change-events/AddToPrimePCODialog";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,11 +33,12 @@ export function ChangeEventSelectionBar({
   onSuccess,
 }: ChangeEventSelectionBarProps) {
   const [showAddToPcoDialog, setShowAddToPcoDialog] = useState(false);
+  const [showAddToCommitmentCODialog, setShowAddToCommitmentCODialog] = useState(false);
 
   if (selectedCount > 0) {
     return (
       <>
-        <div className="flex items-center gap-1.5 py-2 bg-muted/40 border-b border-border">
+        <div className="flex items-center gap-1.5 py-2 px-4">
           <TooltipProvider>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -59,11 +60,7 @@ export function ChangeEventSelectionBar({
                   <TooltipContent>Coming soon — link change event to a commitment</TooltipContent>
                 </Tooltip>
                 <DropdownMenuItem
-                  onSelect={() =>
-                    toast.info(
-                      "Commitment CO creation coming soon — contact your admin",
-                    )
-                  }
+                  onSelect={() => setShowAddToCommitmentCODialog(true)}
                 >
                   Commitment CO
                 </DropdownMenuItem>
@@ -84,6 +81,16 @@ export function ChangeEventSelectionBar({
         <AddToPrimePCODialog
           open={showAddToPcoDialog}
           onClose={() => setShowAddToPcoDialog(false)}
+          selectedChangeEventIds={selectedChangeEventIds}
+          projectId={projectId}
+          onSuccess={() => {
+            onSuccess?.();
+          }}
+        />
+
+        <AddToCommitmentCODialog
+          open={showAddToCommitmentCODialog}
+          onClose={() => setShowAddToCommitmentCODialog(false)}
           selectedChangeEventIds={selectedChangeEventIds}
           projectId={projectId}
           onSuccess={() => {

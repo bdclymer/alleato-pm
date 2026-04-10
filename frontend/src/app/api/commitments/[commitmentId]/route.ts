@@ -41,6 +41,7 @@ const commitmentInlinePatchSchema = z
   .object({
     number: z.string().trim().min(1).optional(),
     title: z.string().trim().min(1).optional(),
+    status: z.string().optional(),
   })
   .refine(
     (data) => Object.keys(data).length > 0,
@@ -595,12 +596,15 @@ export async function PATCH(
     if (parsed.data.title !== undefined) {
       updatePayload.title = parsed.data.title;
     }
+    if (parsed.data.status !== undefined) {
+      updatePayload.status = parsed.data.status;
+    }
 
     const { data, error } = await supabase
       .from(tableName)
       .update(updatePayload)
       .eq("id", commitmentId)
-      .select("id, contract_number, title, updated_at")
+      .select("id, contract_number, title, status, updated_at")
       .single();
 
     if (error) {
@@ -612,6 +616,7 @@ export async function PATCH(
         id: data.id,
         number: data.contract_number,
         title: data.title,
+        status: data.status,
         updated_at: data.updated_at,
       },
     });

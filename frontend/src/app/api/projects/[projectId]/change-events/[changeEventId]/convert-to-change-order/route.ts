@@ -190,6 +190,28 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       }
       newChangeOrderId = newCO.id;
 
+      // Copy line items from the change event to pcco_line_items
+      if (lineItems.length > 0) {
+        const pccoLineItems = lineItems.map((item: any) => ({
+          pcco_id: newCO.id,
+          description: item.description || null,
+          quantity: item.quantity || null,
+          uom: item.unit_of_measure || null,
+          unit_cost: item.unit_cost || null,
+          line_amount: item.revenue_rom || item.cost_rom || 0,
+          cost_code: item.budget_code_id || null,
+        }));
+
+        const { error: lineItemError } = await supabase
+          .from("pcco_line_items")
+          .insert(pccoLineItems);
+
+        if (lineItemError) {
+          console.error("Failed to copy line items to PCCO:", lineItemError);
+          // Non-fatal: CO header was created, log but continue
+        }
+      }
+
       // Track linkage in change_event_related_items
       await supabase.from("change_event_related_items").insert({
         project_id: numericProjectId,
@@ -238,6 +260,26 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         );
       }
       newChangeOrderId = newCO.id;
+
+      // Copy line items from the change event to commitment_change_order_lines
+      if (lineItems.length > 0) {
+        const ccoLineItems = lineItems.map((item: any) => ({
+          commitment_change_order_id: String(newCO.id),
+          description: item.description || null,
+          amount: item.cost_rom || item.revenue_rom || 0,
+          cost_code_id: null as string | null,
+          cost_type_id: null as string | null,
+        }));
+
+        const { error: lineItemError } = await supabase
+          .from("commitment_change_order_lines")
+          .insert(ccoLineItems);
+
+        if (lineItemError) {
+          console.error("Failed to copy line items to CCO:", lineItemError);
+          // Non-fatal: CO header was created, log but continue
+        }
+      }
 
       // Track linkage in change_event_related_items
       await supabase.from("change_event_related_items").insert({

@@ -64,7 +64,7 @@ const variantConfig: Record<
   PageShellVariant,
   { containerMaxWidth: "full" | "sm" | "md" | "lg" | "xl" | "2xl"; contentMaxWidth?: string; spacing: string }
 > = {
-  dashboard: { containerMaxWidth: "full", spacing: "space-y-6" },
+  dashboard: { containerMaxWidth: "full", spacing: "space-y-14" },
   table:     { containerMaxWidth: "full", spacing: "space-y-4" },
   form:      { containerMaxWidth: "full", contentMaxWidth: "max-w-7xl",  spacing: "space-y-8" },
   detail:    { containerMaxWidth: "full", contentMaxWidth: "max-w-6xl",  spacing: "space-y-6" },
@@ -117,12 +117,12 @@ export function PageShell({
     />
   ) : null;
 
-  // Table variant: no extra bottom padding, tight layout
+  // Table variant: tight layout
   if (variant === "table") {
     return (
       <PageContainer maxWidth={config.containerMaxWidth} className={cn(className)}>
         {header}
-        <div className={cn(contentClassName)}>{children}</div>
+        <div className={cn("pb-12", contentClassName)}>{children}</div>
       </PageContainer>
     );
   }
@@ -133,7 +133,7 @@ export function PageShell({
       <PageContainer maxWidth={config.containerMaxWidth} className={cn(className)}>
         <div className={cn("mx-auto w-full", config.contentMaxWidth)}>
           {header}
-          <div className={cn(config.spacing, contentClassName)}>{children}</div>
+          <div className={cn(config.spacing, "pb-12", contentClassName)}>{children}</div>
         </div>
       </PageContainer>
     );
@@ -143,7 +143,7 @@ export function PageShell({
   return (
     <PageContainer maxWidth={config.containerMaxWidth} className={cn(className)}>
       {header}
-      <div className={cn(config.spacing, contentClassName)}>{children}</div>
+      <div className={cn(config.spacing, "pt-4 pb-12", contentClassName)}>{children}</div>
     </PageContainer>
   );
 }

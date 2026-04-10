@@ -152,6 +152,170 @@ export function useCreateSubcontractorInvoice(projectId: string) {
 }
 
 /**
+ * Mutation hook for updating a subcontractor invoice (summary fields).
+ */
+export function useUpdateSubcontractorInvoice(projectId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      invoiceId,
+      ...fields
+    }: { invoiceId: number } & Record<string, unknown>) => {
+      const response = await fetch(
+        `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(fields),
+        },
+      );
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to update invoice");
+      }
+      return response.json();
+    },
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({
+        queryKey: subInvoiceKeys.detail(projectId, vars.invoiceId),
+      });
+      queryClient.invalidateQueries({ queryKey: subInvoiceKeys.lists() });
+    },
+    onError: (error: Error) => {
+      toast.error("Could not update invoice", { description: error.message });
+    },
+  });
+}
+
+/**
+ * Mutation hook for changing invoice status (submit, approve, revise, void).
+ */
+export function useSubcontractorInvoiceStatusChange(projectId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      invoiceId,
+      status,
+      notes,
+    }: {
+      invoiceId: number;
+      status: string;
+      notes?: string;
+    }) => {
+      const response = await fetch(
+        `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status, ...(notes !== undefined && { notes }) }),
+        },
+      );
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to update status");
+      }
+      return response.json();
+    },
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({
+        queryKey: subInvoiceKeys.detail(projectId, vars.invoiceId),
+      });
+      queryClient.invalidateQueries({ queryKey: subInvoiceKeys.lists() });
+    },
+    onError: (error: Error) => {
+      toast.error("Status update failed", { description: error.message });
+    },
+  });
+}
+
+/**
+ * Mutation hook for invoice workflow transitions that use dedicated endpoints
+ * (approve-as-noted, pending-owner-approval).
+ */
+export function useSubcontractorInvoiceTransition(projectId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      invoiceId,
+      action,
+    }: {
+      invoiceId: number;
+      action: "approve-as-noted" | "pending-owner-approval";
+    }) => {
+      const response = await fetch(
+        `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}/${action}`,
+        { method: "POST" },
+      );
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to update invoice");
+      }
+      return response.json();
+    },
+    onSuccess: (_data, vars) => {
+      queryClient.invalidateQueries({
+        queryKey: subInvoiceKeys.detail(projectId, vars.invoiceId),
+      });
+      queryClient.invalidateQueries({ queryKey: subInvoiceKeys.lists() });
+    },
+    onError: (error: Error) => {
+      toast.error("Transition failed", { description: error.message });
+    },
+  });
+}
+
+/**
+ * Mutation hook for batch-updating line items (SOV edits).
+ */
+export function useUpdateSubcontractorLineItems(
+  projectId: string,
+  invoiceId: number,
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (
+      updates: Array<{
+        id: number;
+        work_completed_period: number;
+        materials_stored: number;
+        retainage_pct: number;
+        materials_retainage_pct: number;
+      }>,
+    ) => {
+      const response = await fetch(
+        `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}/line-items`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ updates }),
+        },
+      );
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || "Failed to save line items");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: subInvoiceKeys.detail(projectId, invoiceId),
+      });
+      queryClient.invalidateQueries({ queryKey: subInvoiceKeys.lists() });
+      toast.success("SOV updated");
+    },
+    onError: (error: Error) => {
+      toast.error("Could not save line items", {
+        description: error.message,
+      });
+    },
+  });
+}
+
+/**
  * Mutation hook for deleting a subcontractor invoice.
  * Automatically invalidates list cache on success.
  */

@@ -1,0 +1,25 @@
+{
+  "generated_at": "2026-04-10T03:25:00Z",
+  "run_id": "change-workflow-20260410-031939",
+  "findings": [
+    {"gap_id": "GAP-001", "severity": "critical", "status": "open", "title": "No 'Add To' menu on Change Events list page", "layer": "ui"},
+    {"gap_id": "GAP-002", "severity": "critical", "status": "open", "title": "No SOV/Line Items on Change Orders (both types)", "layer": "ui+api"},
+    {"gap_id": "GAP-003", "severity": "high", "status": "open", "title": "Change Events Add To — Link to Existing items", "layer": "ui+api"},
+    {"gap_id": "GAP-004", "severity": "high", "status": "open", "title": "PCO → CO conversion UI verification needed", "layer": "ui"},
+    {"gap_id": "GAP-005", "severity": "high", "status": "open", "title": "Change Orders page Create button routing", "layer": "ui"},
+    {"gap_id": "GAP-006", "severity": "high", "status": "open", "title": "Missing PCO fields in database + form", "layer": "db+ui"},
+    {"gap_id": "GAP-007", "severity": "high", "status": "open", "title": "Prime CO Create form — missing ~15 fields", "layer": "ui"},
+    {"gap_id": "GAP-008", "severity": "high", "status": "open", "title": "Commitment CO Create form — missing ~9 fields", "layer": "ui"},
+    {"gap_id": "GAP-009", "severity": "high", "status": "open", "title": "Change Event detail — missing Clone action", "layer": "ui"},
+    {"gap_id": "GAP-010", "severity": "medium", "status": "open", "title": "Change Events — missing predefined views", "layer": "ui"},
+    {"gap_id": "GAP-011", "severity": "medium", "status": "open", "title": "Change Events — missing grouping capability", "layer": "ui"},
+    {"gap_id": "GAP-012", "severity": "medium", "status": "open", "title": "Prime CO detail — Approve/Reject UI verification", "layer": "ui"},
+    {"gap_id": "GAP-013", "severity": "medium", "status": "open", "title": "Change Events — missing Production Quantities", "layer": "ui+db"},
+    {"gap_id": "GAP-014", "severity": "medium", "status": "open", "title": "Change Orders list — export disabled", "layer": "ui"},
+    {"gap_id": "GAP-015", "severity": "medium", "status": "open", "title": "PCO — missing attachment support", "layer": "ui+api"},
+    {"gap_id": "GAP-016", "severity": "medium", "status": "open", "title": "CE line items — missing bulk add from commitments/CSV", "layer": "ui"},
+    {"gap_id": "GAP-017", "severity": "low", "status": "open", "title": "Column pinning and auto-sizing", "layer": "ui"},
+    {"gap_id": "GAP-018", "severity": "low", "status": "open", "title": "Row height options", "layer": "ui"},
+    {"gap_id": "GAP-019", "severity": "low", "status": "open", "title": "28+ filter fields on Change Events", "layer": "ui"}
+  ]
+}

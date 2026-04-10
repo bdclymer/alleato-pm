@@ -54,23 +54,35 @@ import {
   Badge,
   StatusBadge,
   SectionHeader,
-  Stack,
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
 } from "@/components/ds";
+import { DataTable } from "@/components/tables/DataTable";
+import { type ColumnDef } from "@tanstack/react-table";
 import { useProjectRoles, type ProjectRole } from "@/hooks/use-project-roles";
 import { useProjectUsers } from "@/hooks/use-project-users";
 import { useProjectVendors } from "@/hooks/use-project-vendors";
+import { usePermissionTemplates } from "@/hooks/use-permissions";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
-import { Check, ChevronsUpDown } from "lucide-react";
+import {
+  type PermissionModule,
+  type PermissionLevel,
+  type GranularFlag,
+  ALL_MODULES,
+  GRANULAR_FLAG_LABELS,
+} from "@/lib/permissions-shared";
+import type { PermissionTemplate } from "@/lib/permissions-shared";
+import { Check, ChevronsUpDown, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import type { PersonWithDetails } from "@/services/directoryService";
 
 // ─── Types ───────────────────────────────────────────────────────
+
+type RoleRow = { id: string; role: ProjectRole; member: ProjectRole["members"][0] | null };
 
 interface PersonOption {
   id: string;
@@ -139,20 +151,6 @@ function SectionSkeleton({ rows = 3 }: { rows?: number }) {
   );
 }
 
-function TeamCardSkeleton() {
-  return (
-    <div className="rounded-lg bg-card p-5 space-y-3 animate-pulse">
-      <div className="flex items-center gap-3">
-        <div className="h-12 w-12 rounded-full bg-muted" />
-        <div className="space-y-1.5">
-          <div className="h-4 w-28 rounded bg-muted" />
-          <div className="h-3 w-20 rounded bg-muted" />
-        </div>
-      </div>
-      <div className="h-3 w-40 rounded bg-muted" />
-    </div>
-  );
-}
 
 // ─── Dialogs ─────────────────────────────────────────────────────
 
@@ -665,19 +663,7 @@ function ProjectTeamSection({
     onManageRolesOpenChange?.(open);
   };
 
-  if (isLoading) {
-    return (
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <TeamCardSkeleton />
-        <TeamCardSkeleton />
-        <TeamCardSkeleton />
-      </div>
-    );
-  }
-
-  // Show roles that have members assigned as prominent team cards
-  const assignedRoles = roles.filter((r) => r.members.length > 0);
-  const emptyRoles = roles.filter((r) => r.members.length === 0);
+  if (isLoading) return <SectionSkeleton rows={3} />;
 
   const handleDeleteRole = async (role: ProjectRole) => {
     const confirmed = window.confirm(
@@ -704,136 +690,96 @@ function ProjectTeamSection({
     );
   }
 
+  const rows: RoleRow[] = roles.flatMap((role): RoleRow[] =>
+    role.members.length > 0
+      ? role.members.map((member) => ({ id: member.id, role, member }))
+      : [{ id: role.id, role, member: null }]
+  );
+
+  const teamColumns: ColumnDef<RoleRow>[] = [
+    {
+      id: "role",
+      header: "Role",
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground">{row.original.role.role_name}</span>
+      ),
+    },
+    {
+      id: "name",
+      header: "Name",
+      cell: ({ row }) => {
+        const { member, role } = row.original;
+        if (!member) {
+          return (
+            <button
+              type="button"
+              onClick={() => setAssignDialog({ open: true, role })}
+              className="text-sm text-primary hover:underline"
+            >
+              Assign
+            </button>
+          );
+        }
+        const p = member.person;
+        return (
+          <div className="flex items-center gap-2.5">
+            <Avatar className="h-7 w-7 shrink-0">
+              <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                {initials(p?.first_name, p?.last_name)}
+              </AvatarFallback>
+            </Avatar>
+            <span className="text-sm font-medium">{p?.full_name ?? "Unknown"}</span>
+          </div>
+        );
+      },
+    },
+    {
+      id: "email",
+      header: "Email",
+      cell: ({ row }) => (
+        <span className="text-sm text-muted-foreground">{row.original.member?.person?.email ?? "—"}</span>
+      ),
+    },
+    {
+      id: "phone",
+      header: "Phone",
+      cell: ({ row }) => {
+        const p = row.original.member?.person;
+        return (
+          <span className="text-sm text-muted-foreground">{p?.phone_mobile || p?.phone_business || "—"}</span>
+        );
+      },
+    },
+    {
+      id: "actions",
+      header: "",
+      cell: ({ row }) => {
+        const { role } = row.original;
+        return (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-8 w-8">
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem onClick={() => setAssignDialog({ open: true, role })}>
+                <Pencil className="mr-2 h-3.5 w-3.5" />
+                {row.original.member ? "Edit assignment" : "Assign someone"}
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteRole(role)}>
+                <Trash2 className="mr-2 h-3.5 w-3.5" />Delete role
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        );
+      },
+    },
+  ];
+
   return (
     <>
-      {/* Team members table */}
-      {assignedRoles.length > 0 && (
-        <div className="rounded-md border border-border/50 overflow-hidden">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-12" />
-                <TableHead>Name</TableHead>
-                <TableHead className="hidden md:table-cell">Role</TableHead>
-                <TableHead className="hidden md:table-cell">Email</TableHead>
-                <TableHead className="hidden lg:table-cell">Phone</TableHead>
-                <TableHead className="w-12" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {assignedRoles.flatMap((role) =>
-                role.members.map((member) => {
-                  const p = member.person;
-                  const phone = p?.phone_mobile || p?.phone_business;
-                  return (
-                    <TableRow key={member.id}>
-                      <TableCell className="w-12 pr-0">
-                        <Avatar className="h-8 w-8 shrink-0">
-                          <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
-                            {initials(p?.first_name, p?.last_name)}
-                          </AvatarFallback>
-                        </Avatar>
-                      </TableCell>
-                      <TableCell>
-                        <span className="text-sm font-medium text-foreground">
-                          {p?.full_name ?? "Unknown"}
-                        </span>
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                        {role.role_name}
-                      </TableCell>
-                      <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                        {p?.email ?? "—"}
-                      </TableCell>
-                      <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                        {phone ?? "—"}
-                      </TableCell>
-                      <TableCell>
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() => setAssignDialog({ open: true, role })}
-                            >
-                              <Pencil className="mr-2 h-3.5 w-3.5" />
-                              Edit assignment
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-destructive"
-                              onClick={() => handleDeleteRole(role)}
-                            >
-                              <Trash2 className="mr-2 h-3.5 w-3.5" />
-                              Delete role
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-
-      {/* Empty roles as dashed placeholders */}
-      {emptyRoles.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mt-4">
-          {emptyRoles.map((role) => (
-            <div
-              key={role.id}
-              className="relative rounded-lg border border-dashed border-border/70 p-5 hover:border-border hover:bg-accent/50 transition-colors"
-            >
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-2 top-2 h-8 w-8"
-                    aria-label={`Role actions for ${role.role_name}`}
-                  >
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    onClick={() => setAssignDialog({ open: true, role })}
-                  >
-                    <Pencil className="mr-2 h-3.5 w-3.5" />
-                    Edit assignment
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    className="text-destructive"
-                    onClick={() => handleDeleteRole(role)}
-                  >
-                    <Trash2 className="mr-2 h-3.5 w-3.5" />
-                    Delete role
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-              <Button
-                variant="ghost"
-                onClick={() => setAssignDialog({ open: true, role })}
-                className="h-auto w-full justify-start px-0 py-0 pr-10 text-left hover:bg-transparent"
-              >
-                <span className="flex flex-col items-start gap-1">
-                <p className="text-sm font-medium text-foreground">
-                  {role.role_name}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  + Assign someone
-                </p>
-                </span>
-              </Button>
-            </div>
-          ))}
-        </div>
-      )}
+      <DataTable columns={teamColumns} data={rows} showToolbar={false} showPagination={false} />
 
       <AssignMemberDialog
         open={assignDialog.open}
@@ -855,10 +801,331 @@ function ProjectTeamSection({
   );
 }
 
+// ─── Effective Permissions Dialog ────────────────────────────────
+
+const MODULE_LABELS: Record<PermissionModule, string> = {
+  directory:     "Directory",
+  budget:        "Budget",
+  contracts:     "Contracts",
+  documents:     "Documents",
+  schedule:      "Schedule",
+  submittals:    "Submittals",
+  rfis:          "RFIs",
+  change_orders: "Change Orders",
+};
+
+const LEVEL_LABELS: Record<PermissionLevel, string> = {
+  none:  "None",
+  read:  "Read",
+  write: "Write",
+  admin: "Admin",
+};
+
+function EffectivePermissionsDialog({
+  open,
+  onOpenChange,
+  person,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  person: PersonWithDetails | null;
+}) {
+  if (!person) return null;
+
+  const template = person.permission_template;
+  const rules = (template?.rules_json ?? {}) as Record<PermissionModule, PermissionLevel[]>;
+  const granularFlags = ((template?.granular_flags ?? []) as GranularFlag[]);
+
+  const getHighestLevel = (levels: PermissionLevel[]): PermissionLevel => {
+    if (levels.includes("admin")) return "admin";
+    if (levels.includes("write")) return "write";
+    if (levels.includes("read")) return "read";
+    return "none";
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <ShieldCheck className="h-5 w-5 text-primary" />
+            Effective Permissions
+          </DialogTitle>
+          <DialogDescription>
+            What {person.first_name} {person.last_name} can do on this project.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          {/* Template info */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-muted-foreground">Template:</span>
+            <Badge variant={template ? "secondary" : "outline"}>
+              {template?.name ?? "No template assigned"}
+            </Badge>
+          </div>
+
+          {/* Module access matrix */}
+          <div className="rounded-md border border-border overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-muted/50">
+                  <th className="text-left font-medium text-muted-foreground py-2 px-3">Module</th>
+                  <th className="text-left font-medium text-muted-foreground py-2 px-3">Access Level</th>
+                </tr>
+              </thead>
+              <tbody>
+                {ALL_MODULES.map((mod) => {
+                  const levels = rules[mod] ?? [];
+                  const highest = getHighestLevel(levels);
+                  return (
+                    <tr key={mod} className="border-t border-border/50">
+                      <td className="py-2 px-3 font-medium text-foreground">{MODULE_LABELS[mod]}</td>
+                      <td className="py-2 px-3">
+                        <Badge
+                          variant={highest === "none" ? "outline" : "secondary"}
+                          className={cn(
+                            "text-xs",
+                            highest === "admin" && "bg-primary/10 text-primary border-primary/20",
+                            highest === "write" && "bg-blue-500/10 text-blue-600 border-blue-500/20",
+                            highest === "read" && "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+                          )}
+                        >
+                          {LEVEL_LABELS[highest]}
+                        </Badge>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Granular flags */}
+          {granularFlags.length > 0 && (
+            <div>
+              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
+                Additional capabilities
+              </p>
+              <ul className="space-y-1">
+                {granularFlags.map((flag) => (
+                  <li key={flag} className="flex items-center gap-2 text-sm text-foreground">
+                    <Check className="h-3.5 w-3.5 text-primary shrink-0" strokeWidth={2.5} />
+                    {GRANULAR_FLAG_LABELS[flag] ?? flag}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ─── Inline Template Selector ───────────────────────────────────
+
+function TemplateSelector({
+  currentTemplateId,
+  personId,
+  projectId,
+  onAssigned,
+}: {
+  currentTemplateId: string | null;
+  personId: string;
+  projectId: string;
+  onAssigned: () => void;
+}) {
+  const { templates, assignTemplate } = usePermissionTemplates();
+  const [assigning, setAssigning] = React.useState(false);
+
+  const handleChange = async (templateId: string) => {
+    if (templateId === (currentTemplateId ?? "")) return;
+    setAssigning(true);
+    try {
+      await assignTemplate(projectId, personId, templateId);
+      toast.success("Permission template updated");
+      onAssigned();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to assign template");
+    } finally {
+      setAssigning(false);
+    }
+  };
+
+  return (
+    <Select
+      value={currentTemplateId ?? ""}
+      onValueChange={handleChange}
+      disabled={assigning}
+    >
+      <SelectTrigger className="h-7 w-40 text-xs">
+        <SelectValue placeholder="No template" />
+      </SelectTrigger>
+      <SelectContent>
+        {templates.map((t) => (
+          <SelectItem key={t.id} value={t.id} className="text-xs">
+            {t.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+}
+
+// ─── Members DataTable (stable component — avoids hook-in-render) ──
+
+function MembersDataTable({
+  filtered,
+  removingPersonId,
+  handleRemoveMember,
+  projectId,
+  onRefetch,
+}: {
+  filtered: PersonWithDetails[];
+  removingPersonId: string | null;
+  handleRemoveMember: (id: string) => Promise<void>;
+  projectId: string;
+  onRefetch: () => void;
+}) {
+  const [permDialog, setPermDialog] = React.useState<{
+    open: boolean;
+    person: PersonWithDetails | null;
+  }>({ open: false, person: null });
+
+  const columns = React.useMemo<ColumnDef<PersonWithDetails>[]>(
+    () => [
+      {
+        id: "name",
+        header: "Name",
+        cell: ({ row }) => {
+          const person = row.original;
+          const isEmployee = person.person_type === "employee";
+          return (
+            <div className="flex items-center gap-2.5">
+              <Avatar className="h-8 w-8 shrink-0">
+                <AvatarFallback
+                  className={cn(
+                    "text-xs font-medium",
+                    isEmployee ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground",
+                  )}
+                >
+                  {initials(person.first_name, person.last_name)}
+                </AvatarFallback>
+              </Avatar>
+              <span className="text-sm font-medium text-foreground">
+                {person.first_name} {person.last_name}
+              </span>
+            </div>
+          );
+        },
+      },
+      {
+        id: "role",
+        header: "Role / Job Title",
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground">{row.original.job_title ?? "—"}</span>
+        ),
+      },
+      {
+        id: "permission_template",
+        header: "Permission Template",
+        cell: ({ row }) => {
+          const person = row.original;
+          const templateId = person.membership?.permission_template_id ?? null;
+          return (
+            <TemplateSelector
+              currentTemplateId={templateId}
+              personId={person.id}
+              projectId={projectId}
+              onAssigned={onRefetch}
+            />
+          );
+        },
+      },
+      {
+        id: "email",
+        header: "Email",
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground">{row.original.email ?? "—"}</span>
+        ),
+      },
+      {
+        id: "phone",
+        header: "Phone",
+        cell: ({ row }) => {
+          const phone = row.original.phone_mobile || row.original.phone_business;
+          return <span className="text-sm text-muted-foreground">{phone ?? "—"}</span>;
+        },
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => {
+          const person = row.original;
+          return (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <MoreHorizontal />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setPermDialog({ open: true, person })}>
+                  <ShieldCheck className="mr-2 h-3.5 w-3.5" />View Permissions
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Pencil className="mr-2 h-3.5 w-3.5" />Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Mail className="mr-2 h-3.5 w-3.5" />Send Email
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  className="text-destructive"
+                  disabled={removingPersonId === person.id}
+                  onClick={() => void handleRemoveMember(person.id)}
+                >
+                  <UserX className="mr-2 h-3.5 w-3.5" />
+                  {removingPersonId === person.id ? "Removing..." : "Remove"}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          );
+        },
+      },
+    ],
+    [removingPersonId, handleRemoveMember, projectId, onRefetch],
+  );
+
+  return (
+    <>
+      <DataTable
+        columns={columns}
+        data={filtered}
+        showToolbar={false}
+        showPagination={filtered.length > 15}
+      />
+      <EffectivePermissionsDialog
+        open={permDialog.open}
+        onOpenChange={(open) => setPermDialog((prev) => ({ ...prev, open }))}
+        person={permDialog.person}
+      />
+    </>
+  );
+}
+
 // ─── External Members Section ────────────────────────────────────
 // Full table with search + filter (matches screenshot structure)
 
-function ExternalMembersSection({ projectId }: { projectId: string }) {
+function ExternalMembersSection({
+  projectId,
+  vendorCompanyIds,
+  onRefetch: externalRefetch,
+}: {
+  projectId: string;
+  vendorCompanyIds?: string[];
+  onRefetch?: () => void;
+}) {
   const {
     users: members,
     isLoading,
@@ -871,6 +1138,31 @@ function ExternalMembersSection({ projectId }: { projectId: string }) {
   const [removingPersonId, setRemovingPersonId] = React.useState<string | null>(
     null,
   );
+  const [vendorPeople, setVendorPeople] = React.useState<PersonWithDetails[]>([]);
+
+  React.useEffect(() => {
+    if (!vendorCompanyIds || vendorCompanyIds.length === 0) return;
+    const supabase = createClient();
+    supabase
+      .from("people")
+      .select("*, company:companies(*)")
+      .in("company_id", vendorCompanyIds)
+      .then(({ data }) => {
+        if (data) setVendorPeople(data as PersonWithDetails[]);
+      });
+  }, [vendorCompanyIds]);
+
+  const allMembers = React.useMemo(() => {
+    const seen = new Set<string>();
+    const merged: PersonWithDetails[] = [];
+    for (const m of [...members, ...vendorPeople]) {
+      if (!seen.has(m.id)) {
+        seen.add(m.id);
+        merged.push(m);
+      }
+    }
+    return merged;
+  }, [members, vendorPeople]);
 
   const handleRemoveMember = async (personId: string) => {
     if (removingPersonId) return;
@@ -912,13 +1204,13 @@ function ExternalMembersSection({ projectId }: { projectId: string }) {
   // Get unique companies for filter
   const companies = React.useMemo(() => {
     const names = new Set<string>();
-    members.forEach((p) => {
+    allMembers.forEach((p) => {
       if (p.company?.name) names.add(p.company.name);
     });
     return Array.from(names).sort();
-  }, [members]);
+  }, [allMembers]);
 
-  const filtered = members.filter((p) => {
+  const filtered = allMembers.filter((p) => {
     const q = search.toLowerCase();
     const matchesSearch =
       !q ||
@@ -940,7 +1232,7 @@ function ExternalMembersSection({ projectId }: { projectId: string }) {
     );
   }
 
-  if (members.length === 0) {
+  if (allMembers.length === 0) {
     return (
       <>
         <p className="py-6 text-center text-sm text-muted-foreground">
@@ -993,94 +1285,13 @@ function ExternalMembersSection({ projectId }: { projectId: string }) {
       </div>
 
       {/* Members table */}
-      <div className="rounded-md border border-border/50 overflow-hidden">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-12" />
-              <TableHead>Name</TableHead>
-              <TableHead className="hidden md:table-cell">Role / Job Title</TableHead>
-              <TableHead className="hidden md:table-cell">Email</TableHead>
-              <TableHead className="hidden lg:table-cell">Phone</TableHead>
-              <TableHead className="w-12">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filtered.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} className="text-center py-8 text-sm text-muted-foreground">
-                  No members match your search.
-                </TableCell>
-              </TableRow>
-            ) : (
-              filtered.map((person) => {
-                const isEmployee = person.person_type === "employee";
-                const phone = person.phone_mobile || person.phone_business;
-
-                return (
-                  <TableRow key={person.id}>
-                    <TableCell className="w-12 pr-0">
-                      <Avatar className="h-8 w-8 shrink-0">
-                        <AvatarFallback
-                          className={cn(
-                            "text-xs font-medium",
-                            isEmployee
-                              ? "bg-primary/10 text-primary"
-                              : "bg-muted text-muted-foreground"
-                          )}
-                        >
-                          {initials(person.first_name, person.last_name)}
-                        </AvatarFallback>
-                      </Avatar>
-                    </TableCell>
-                    <TableCell>
-                      <span className="text-sm font-medium text-foreground">
-                        {person.first_name} {person.last_name}
-                      </span>
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                      {person.job_title ?? "—"}
-                    </TableCell>
-                    <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                      {person.email ?? "—"}
-                    </TableCell>
-                    <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
-                      {phone ?? "—"}
-                    </TableCell>
-                    <TableCell>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <MoreHorizontal />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem>
-                            <Pencil className="mr-2 h-3.5 w-3.5" />
-                            Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuItem>
-                            <Mail className="mr-2 h-3.5 w-3.5" />
-                            Send Email
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            className="text-destructive"
-                            disabled={removingPersonId === person.id}
-                            onClick={() => void handleRemoveMember(person.id)}
-                          >
-                            <UserX className="mr-2 h-3.5 w-3.5" />
-                            {removingPersonId === person.id ? "Removing..." : "Remove"}
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                );
-              })
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      <MembersDataTable
+        filtered={filtered}
+        removingPersonId={removingPersonId}
+        handleRemoveMember={handleRemoveMember}
+        projectId={projectId}
+        onRefetch={() => { refetch(); externalRefetch?.(); }}
+      />
 
       <AddMemberDialog
         open={addOpen}
@@ -1110,7 +1321,7 @@ function VendorsSection({
   const [removingId, setRemovingId] = React.useState<string | null>(null);
 
   const handleRemove = async (pv: (typeof vendors)[0]) => {
-    const name = pv.vendor?.name ?? "this vendor";
+    const name = pv.companies?.name ?? "this vendor";
     const confirmed = window.confirm(`Remove "${name}" from this project?`);
     if (!confirmed) return;
 
@@ -1156,7 +1367,7 @@ function VendorsSection({
         </TableHeader>
         <TableBody>
           {vendors.map((pv) => {
-            const v = pv.vendor;
+            const v = pv.companies;
             const location = v?.city && v?.state ? `${v.city}, ${v.state}` : (v?.city ?? v?.state ?? "—");
             return (
               <TableRow key={pv.id}>
@@ -1226,6 +1437,35 @@ function CompaniesSection({ members }: { members: PersonWithDetails[] }) {
     return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name));
   }, [members]);
 
+  const companiesColumns = React.useMemo<ColumnDef<{ id: string; name: string; memberCount: number }>[]>(
+    () => [
+      {
+        id: "name",
+        header: "Company",
+        cell: ({ row }) => (
+          <Link href={`/directory/companies/${row.original.id}`} className="flex items-center gap-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted">
+              <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+            </div>
+            <span className="text-sm font-medium text-foreground hover:underline">
+              {row.original.name}
+            </span>
+          </Link>
+        ),
+      },
+      {
+        id: "memberCount",
+        header: "Members",
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground">
+            {row.original.memberCount} {row.original.memberCount === 1 ? "member" : "members"}
+          </span>
+        ),
+      },
+    ],
+    [],
+  );
+
   if (companies.length === 0) {
     return (
       <p className="py-6 text-center text-sm text-muted-foreground">
@@ -1235,45 +1475,13 @@ function CompaniesSection({ members }: { members: PersonWithDetails[] }) {
   }
 
   return (
-    <div className="rounded-md border border-border/50 overflow-hidden">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Company</TableHead>
-            <TableHead className="hidden md:table-cell">Members</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {companies.map((c) => (
-            <TableRow
-              key={c.id}
-              className="cursor-pointer hover:bg-muted/40"
-              onClick={() => {
-                window.location.href = `/directory/companies/${c.id}`;
-              }}
-            >
-              <TableCell>
-                <Link
-                  href={`/directory/companies/${c.id}`}
-                  className="flex items-center gap-3"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted">
-                    <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
-                  </div>
-                  <span className="text-sm font-medium text-foreground hover:underline">
-                    {c.name}
-                  </span>
-                </Link>
-              </TableCell>
-              <TableCell className="hidden md:table-cell text-sm text-muted-foreground">
-                {c.memberCount} {c.memberCount === 1 ? "member" : "members"}
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </div>
+    <DataTable
+      columns={companiesColumns}
+      data={companies}
+      showToolbar={false}
+      showPagination={companies.length > 10}
+      onRowClick={(row) => { window.location.href = `/directory/companies/${row.id}`; }}
+    />
   );
 }
 
@@ -1291,7 +1499,7 @@ export default function ProjectDirectoryPage() {
     useProjectVendors(projectId);
 
   const existingVendorIds = vendors
-    .map((v) => v.vendor?.id)
+    .map((v) => v.companies?.id)
     .filter(Boolean) as string[];
 
   return (
@@ -1311,7 +1519,6 @@ export default function ProjectDirectoryPage() {
         </div>
       }
     >
-      <Stack gap="xl">
         {/* Section 1: Project Team */}
         <section>
           <SectionHeader
@@ -1327,31 +1534,13 @@ export default function ProjectDirectoryPage() {
           </div>
         </section>
 
-        {/* Section 2: Companies (left) + Vendors (right) — two columns */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <section>
-            <SectionHeader title="Companies" />
-            <div className="mt-4">
-              <CompaniesSection members={members} />
-            </div>
-          </section>
-
-          <section>
-            <SectionHeader
-              title="Vendors"
-              action={{ label: "+ Add", onClick: () => setAddVendorOpen(true) }}
-            />
-            <div className="mt-4">
-              <VendorsSection
-                vendors={vendors}
-                isLoading={vendorsLoading}
-                error={vendorsError}
-                onAddVendorClick={() => setAddVendorOpen(true)}
-                onRemoveVendor={removeVendor}
-              />
-            </div>
-          </section>
-        </div>
+        {/* Section 2: Companies — full width */}
+        <section>
+          <SectionHeader title="Companies" />
+          <div className="mt-4">
+            <CompaniesSection members={members} />
+          </div>
+        </section>
 
         {/* Section 3: All Project Members */}
         <section>
@@ -1361,10 +1550,9 @@ export default function ProjectDirectoryPage() {
             action={{ label: "+ Add", onClick: () => setAddMemberOpen(true) }}
           />
           <div className="mt-4">
-            <ExternalMembersSection projectId={projectId} />
+            <ExternalMembersSection projectId={projectId} vendorCompanyIds={existingVendorIds} onRefetch={refetchMembers} />
           </div>
         </section>
-      </Stack>
 
       <AddMemberDialog
         open={addMemberOpen}

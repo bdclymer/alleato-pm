@@ -65,8 +65,34 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
   }
 }
 
+// --- API-008: Whitelist of fields allowed in PUT updates ---
+const allowedFields = new Set([
+  "title",
+  "description",
+  "change_reason",
+  "designated_reviewer",
+  "request_received_from",
+  "due_date",
+  "invoiced_date",
+  "schedule_impact",
+  "revised_substantial_completion_date",
+  "location",
+  "reference",
+  "field_change",
+  "is_private",
+  "paid_in_full",
+  "total_amount",
+  "executed",
+  "contract_id",
+  "prime_contract_id",
+  "contract_company",
+  "revision",
+  "signed_co_received_date",
+]);
+
 /**
  * PUT /api/projects/[projectId]/prime-contract-change-orders/[primeCoId]
+ * Update a PCCO — whitelisted fields only, status changes blocked (API-008)
  */
 export async function PUT(request: NextRequest, { params }: RouteParams) {
   try {
@@ -90,8 +116,31 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
     const body = await request.json();
 
-    // Strip out fields that shouldn't be directly updated
-    const { line_items: _li, contract: _c, id: _id, project_id: _pid, ...updateData } = body;
+    // --- API-008: Reject status changes through PUT ---
+    if ("status" in body) {
+      return NextResponse.json(
+        {
+          error:
+            "Status cannot be changed via update. Use the approve or reject endpoints.",
+        },
+        { status: 400 },
+      );
+    }
+
+    // --- API-008: Only allow whitelisted fields ---
+    const updateData: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(body)) {
+      if (allowedFields.has(key)) {
+        updateData[key] = value;
+      }
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json(
+        { error: "No valid fields to update" },
+        { status: 400 },
+      );
+    }
 
     const { data, error } = await supabase
       .from("prime_contract_change_orders")
@@ -132,6 +181,27 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
 
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Guard: only draft, pending, or rejected PCCOs can be deleted
+    const { data: existing, error: fetchError } = await supabase
+      .from("prime_contract_change_orders")
+      .select("id, status")
+      .eq("id", numericId)
+      .eq("project_id", Number(projectId))
+      .single();
+
+    if (fetchError || !existing) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    const normalizedStatus = (existing.status ?? "").toLowerCase();
+    const deletableStatuses = ["draft", "pending", "rejected"];
+    if (!deletableStatuses.includes(normalizedStatus)) {
+      return NextResponse.json(
+        { error: `Cannot delete a change order with status "${normalizedStatus}". Only draft, pending, or rejected change orders can be deleted.` },
+        { status: 409 },
+      );
     }
 
     const { error } = await supabase

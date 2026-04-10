@@ -575,6 +575,10 @@ export default function DistributionGroupsPage(): ReactElement {
           enableExport: false,
           enableBulkDelete: false,
         }}
+        layout={{
+          fullBleedTable: true,
+          removeTableFrame: true,
+        }}
       />
 
       {/* Add Group Dialog */}

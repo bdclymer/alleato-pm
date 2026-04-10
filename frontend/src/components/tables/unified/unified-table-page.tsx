@@ -220,6 +220,7 @@ export interface UnifiedTablePageProps<T> {
   };
   layout?: {
     fullBleedTable?: boolean;
+    removeTableFrame?: boolean;
     headerAlignment?: "left" | "center";
     toolbarInlineWithHeader?: boolean;
     maxWidth?: PageContainerProps["maxWidth"];
@@ -293,6 +294,7 @@ export function UnifiedTablePage<T>({
   const shouldRenderTableView =
     toolbar.currentView === "table" || (!canRenderCardView && !canRenderListView);
   const isFullBleedTable = layout?.fullBleedTable ?? false;
+  const removeTableFrame = layout?.removeTableFrame ?? false;
   const headerAlignment = layout?.headerAlignment ?? "left";
   const toolbarInlineWithHeader = layout?.toolbarInlineWithHeader ?? false;
   const containerMaxWidth = layout?.maxWidth ?? "full";
@@ -352,7 +354,7 @@ export function UnifiedTablePage<T>({
   } | null>(null);
   const [isResizingColumn, setIsResizingColumn] = React.useState(false);
   const hasUserManagedColumnOrderRef = React.useRef(false);
-  const selectionColumnWidth = 44;
+  const selectionColumnWidth = isFullBleedTable ? 72 : 44;
 
   // ── Side panel collapse & resize state ───────────────────────────────
   const panelStorageKey = sidePanel?.storageKey ?? "unified-table-side-panel";
@@ -986,9 +988,12 @@ export function UnifiedTablePage<T>({
         <div className={cn("hidden sm:block", data.isFetching && "opacity-70")}>
           <div
             className={cn(
-              "overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border/70 border border-border/50 rounded-md",
+              "overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-border/70",
+              removeTableFrame ? "border-0 rounded-none" : "",
               sidePanel
-                ? "mx-0 pl-0 lg:rounded-r-none lg:border-r-0"
+                ? removeTableFrame
+                  ? "mx-0 pl-0"
+                  : "mx-0 pl-0"
                 : isFullBleedTable
                   ? "-mx-4 sm:-mx-6 lg:-mx-8 lg:pl-2"
                   : "mx-0",
@@ -1000,13 +1005,13 @@ export function UnifiedTablePage<T>({
             style={resolvedFeatures.enableVirtualization ? { maxHeight: 640, overflowY: "auto" } : undefined}
           >
             <Table className={cn(table.density === "compact" && "compact-table")}>
-              <TableHeader className={cn((table.stickyHeader !== false) && "sticky top-0 z-20 bg-background")}>
+              <TableHeader className={cn((table.stickyHeader !== false) && "sticky top-0 z-20 !bg-muted")}>
                 {columnGroups && columnGroups.length > 0 && (
                   <TableRow className="border-b-0">
                     {hasRowSelection && (
                       <TableHead
                         style={{ width: selectionColumnWidth, minWidth: selectionColumnWidth, maxWidth: selectionColumnWidth }}
-                        className="bg-muted/40"
+                        className="bg-muted"
                       />
                     )}
                     {columnGroups.map((group) => {
@@ -1019,32 +1024,41 @@ export function UnifiedTablePage<T>({
                           key={`group-${group.label}-${group.columnIds.join("-")}`}
                           colSpan={visibleCount}
                           className={cn(
-                            "text-left text-[10px] font-semibold text-foreground/80 bg-muted/40 py-0 px-2 leading-tight border-b border-l border-border/50 normal-case",
-                            !group.label && "bg-muted/20",
+                            "text-left text-[10px] font-semibold text-foreground/80 !bg-muted py-0 px-2 leading-tight border-b border-l border-border/50 normal-case",
+                            !group.label && "!bg-muted",
                           )}
                         >
                           {group.label}
                         </TableHead>
                       );
                     })}
-                    {hasRowActions && <TableHead className="w-12.5 bg-muted/40" />}
+                    {hasRowActions && <TableHead className="w-12.5 !bg-muted" />}
                   </TableRow>
                 )}
-                <TableRow className="bg-muted/40">
+                <TableRow className="!bg-muted">
                   {hasRowSelection && (
                     <TableHead
-                      className="px-2"
+                      className={cn(
+                        "!bg-muted",
+                        isFullBleedTable ? "pl-8 pr-2" : "px-2",
+                      )}
                       style={{
                         width: selectionColumnWidth,
                         minWidth: selectionColumnWidth,
                         maxWidth: selectionColumnWidth,
+                        paddingLeft: isFullBleedTable ? "32px" : undefined,
                         position: "sticky",
                         left: 0,
                         zIndex: 3,
-                        background: "hsl(var(--muted) / 0.4)",
+                        background: "hsl(var(--muted))",
                       }}
                     >
-                      <div className="flex items-center justify-center">
+                      <div
+                        className={cn(
+                          "flex items-center",
+                          isFullBleedTable ? "justify-start pl-4" : "justify-center",
+                        )}
+                      >
                         <Checkbox
                           checked={allSelected ? true : someSelected ? "indeterminate" : false}
                           onCheckedChange={(checked) => handleSelectAll(Boolean(checked))}
@@ -1059,9 +1073,9 @@ export function UnifiedTablePage<T>({
                       const width = columnWidths[column.id] ?? column.width;
                       const isPinnedLeft = columnPinning.left.includes(column.id);
                       const pinnedStyle = getPinnedStyle(column.id);
-                      // Header row uses bg-muted/40 — override pinned background to match
+                      // Header row uses bg-muted — override pinned background to match
                       const headerPinnedStyle = pinnedStyle
-                        ? { ...pinnedStyle, background: "hsl(var(--muted) / 0.4)" }
+                        ? { ...pinnedStyle, background: "hsl(var(--muted))" }
                         : undefined;
                       const columnStyle =
                         width || headerPinnedStyle
@@ -1077,6 +1091,7 @@ export function UnifiedTablePage<T>({
                               headerAlignment === "left" ? "text-left" : "text-center",
                               isSortable && "cursor-pointer select-none group/th",
                               isPinnedLeft && "shadow-[2px_0_0_hsl(var(--border))]",
+                              (table.stickyHeader !== false) && "!bg-muted",
                             )}
                           aria-sort={
                             isSortable
@@ -1118,9 +1133,9 @@ export function UnifiedTablePage<T>({
                                 <button
                                   type="button"
                                   className={cn(
-                                    "flex items-center gap-1.5 bg-transparent border-0 p-0 font-medium cursor-pointer normal-case",
+                                    "flex items-center gap-1.5 bg-transparent border-0 p-0 font-semibold cursor-pointer uppercase tracking-wide",
                                     table.density === "compact" ? "text-[10px]" : "text-[11px]",
-                                    "text-foreground/80",
+                                    "text-foreground",
                                     headerAlignment === "left" ? "justify-start" : "justify-center",
                                   )}
                                   onContextMenu={(event) => {
@@ -1214,7 +1229,7 @@ export function UnifiedTablePage<T>({
                         </TableHead>
                       );
                     })}
-                  {hasRowActions && <TableHead className="w-[50px]" />}
+                  {hasRowActions && <TableHead className="w-[50px] !bg-muted" />}
                 </TableRow>
               </TableHeader>
               <TableBody
@@ -1292,11 +1307,14 @@ export function UnifiedTablePage<T>({
                   >
                     {hasRowSelection && (
                       <TableCell
-                        className="px-2"
+                        className={cn(
+                          isFullBleedTable ? "pl-8 pr-2" : "px-2",
+                        )}
                         style={{
                           width: selectionColumnWidth,
                           minWidth: selectionColumnWidth,
                           maxWidth: selectionColumnWidth,
+                          paddingLeft: isFullBleedTable ? "32px" : undefined,
                           position: "sticky",
                           left: 0,
                           zIndex: 2,
@@ -1304,7 +1322,12 @@ export function UnifiedTablePage<T>({
                         }}
                         onClick={(event) => event.stopPropagation()}
                       >
-                        <div className="flex items-center justify-center">
+                        <div
+                          className={cn(
+                            "flex items-center",
+                            isFullBleedTable ? "justify-start pl-4" : "justify-center",
+                          )}
+                        >
                           <Checkbox
                             checked={selectedIds.includes(table.getRowId(item))}
                             onCheckedChange={(checked) =>
@@ -1549,6 +1572,7 @@ export function UnifiedTablePage<T>({
       <PageContainer
         maxWidth={containerMaxWidth}
         className={cn(
+          "pb-12",
           sidePanel && "pt-0 overflow-x-visible",
           containerClassName,
         )}
@@ -1560,6 +1584,7 @@ export function UnifiedTablePage<T>({
               ref={gridRef}
               className={cn(
                 "relative grid grid-cols-1",
+                isFullBleedTable && "-mx-4 sm:-mx-6 lg:-mx-8",
                 !panelMounted && "lg:grid-cols-[minmax(0,1fr)_26rem]",
                 !panelMounted && sidePanel.columnClassName,
               )}
@@ -1581,7 +1606,7 @@ export function UnifiedTablePage<T>({
               {/* Side panel with resize handle */}
               <aside
                 className={cn(
-                  "hidden lg:flex lg:flex-col bg-muted border-y border-l border-border/50 relative",
+                  "hidden lg:flex lg:flex-col bg-muted border-b border-l border-border/50 relative",
                   panelSticky
                     ? "lg:sticky lg:top-12 lg:max-h-[calc(100dvh-3rem)]"
                     : "lg:relative lg:max-h-none",
@@ -1625,7 +1650,7 @@ export function UnifiedTablePage<T>({
                   }}
                   aria-label={panelCollapsed ? "Expand panel" : "Collapse panel"}
                 >
-                  <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-background border border-border/80 shadow-sm">
+                  <span className="inline-flex items-center justify-center h-5 w-5 rounded-full bg-background shadow-sm">
                     {panelCollapsed ? (
                       <PanelRightOpen className="h-3 w-3" />
                     ) : (

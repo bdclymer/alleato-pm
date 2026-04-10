@@ -4,13 +4,14 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Plus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { SectionHeader } from "@/components/ds";
+import { SectionRuleHeading } from "@/components/layout";
 import { MoneyField } from "@/components/forms/MoneyField";
 import { formatCurrency } from "@/config/tables";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TableHead, TableHeader } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -152,6 +153,10 @@ export function SubcontractorSovTab({
     () => items.reduce((sum, item) => sum + Number(item.amount ?? 0), 0),
     [items],
   );
+  const billedToDateTotal = useMemo(
+    () => items.reduce((sum, item) => sum + Number(item.billed_to_date ?? 0), 0),
+    [items],
+  );
   const totalRemaining = Math.max(targetAmount - allocatedTotal, 0);
 
   const isLocked = status === "under_review" || status === "approved" || !permissions.canEdit;
@@ -274,7 +279,7 @@ export function SubcontractorSovTab({
   if (isLoading) {
     return (
       <div className="space-y-4">
-        <SectionHeader title="Subcontractor Schedule of Values" />
+        <SectionRuleHeading label="Subcontractor Schedule of Values" className="[&_span]:text-primary" />
         <Skeleton className="h-10 w-full" />
         <Skeleton className="h-52 w-full" />
       </div>
@@ -287,7 +292,7 @@ export function SubcontractorSovTab({
 
   return (
     <div className="space-y-6">
-      <SectionHeader title="Subcontractor Schedule of Values" />
+      <SectionRuleHeading label="Subcontractor Schedule of Values" className="[&_span]:text-primary" />
 
       {/* Status + meta */}
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -339,16 +344,16 @@ export function SubcontractorSovTab({
       {/* Grouped SOV → SSOV table */}
       <div className="overflow-x-auto rounded-md border">
         <table className="w-full text-sm">
-          <thead className="bg-muted">
+          <TableHeader>
             <tr>
-              <th className="px-4 py-2.5 text-left font-medium text-muted-foreground w-16">#</th>
-              <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Budget Code</th>
-              <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Description</th>
-              <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">Billed To Date</th>
-              <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">Amount</th>
-              {!isLocked && <th className="px-4 py-2.5 w-px" />}
+              <TableHead className="w-16 px-4 py-2.5">#</TableHead>
+              <TableHead className="px-4 py-2.5">Budget Code</TableHead>
+              <TableHead className="px-4 py-2.5">Description</TableHead>
+              <TableHead className="px-4 py-2.5 text-right">Billed To Date</TableHead>
+              <TableHead className="px-4 py-2.5 text-right">Amount</TableHead>
+              {!isLocked && <TableHead className="px-4 py-2.5 w-px" />}
             </tr>
-          </thead>
+          </TableHeader>
           <tbody>
             {groups.length === 0 && orphans.length === 0 && (
               <tr>
@@ -416,7 +421,7 @@ export function SubcontractorSovTab({
                 ))}
 
                 {/* Per-parent footer: Add line + Remaining to Allocate */}
-                <tr className="border-t bg-background">
+                <tr className="border-t">
                   <td className="px-4 py-2" colSpan={3}>
                     {!isLocked && (
                       <Button
@@ -493,10 +498,13 @@ export function SubcontractorSovTab({
               </>
             )}
           </tbody>
-          <tfoot className="bg-muted/60">
+          <tfoot>
             <tr>
-              <td className="px-4 py-3 text-right font-semibold" colSpan={4}>
+              <td className="px-4 py-3 text-right font-semibold" colSpan={3}>
                 Grand Total
+              </td>
+              <td className="px-4 py-3 text-right font-semibold tabular-nums">
+                {formatCurrency(billedToDateTotal)}
               </td>
               <td className="px-4 py-3 text-right font-semibold tabular-nums">
                 {formatCurrency(allocatedTotal)}

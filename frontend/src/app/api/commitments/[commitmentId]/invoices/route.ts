@@ -66,7 +66,7 @@ async function fetchCommitmentContext(
   const { data: commitment, error: commitmentError } = await supabase
     .from(tableName)
     .select(
-      "project_id, default_retainage_percent, contract_number, title, status, advanced_settings",
+      "project_id, default_retainage_percent, contract_number, title, status",
     )
     .eq("id", commitmentId)
     .single();
@@ -75,21 +75,10 @@ async function fetchCommitmentContext(
     return { error: "Commitment not found" as const };
   }
 
-  const advancedSettings =
-    commitment.advanced_settings &&
-    typeof commitment.advanced_settings === "object" &&
-    !Array.isArray(commitment.advanced_settings)
-      ? (commitment.advanced_settings as Record<string, unknown>)
-      : {};
-
-  const retainageEnabled =
-    typeof advancedSettings.enable_completed_work_retainage === "boolean"
-      ? advancedSettings.enable_completed_work_retainage
-      : true;
-  const invoicesEnabled =
-    typeof advancedSettings.enable_invoices === "boolean"
-      ? advancedSettings.enable_invoices
-      : true;
+  // Commitment tables in this schema do not currently persist advanced_settings.
+  // Keep invoices/retainage enabled by default for read-only invoice summaries.
+  const retainageEnabled = true;
+  const invoicesEnabled = true;
 
   return {
     commitmentType,

@@ -157,6 +157,7 @@ const pcoFilters = [
   {
     id: "status",
     label: "Status",
+    type: "select" as const,
     options: [
       { label: "Draft", value: "DRAFT" },
       { label: "Submitted", value: "SUBMITTED" },
@@ -169,6 +170,7 @@ const pcoFilters = [
   {
     id: "type",
     label: "Type",
+    type: "select" as const,
     options: [
       { label: "Client Requested", value: "CLIENT_REQUESTED" },
       { label: "Internal", value: "INTERNAL" },

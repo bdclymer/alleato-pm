@@ -48,6 +48,10 @@ export default async function ProcoreToolDetailPage({ params }: Props) {
     notFound();
   }
 
+  const appLink = tool.new_link?.trim() || null;
+  const procoreLink = tool.procore_link?.trim() || null;
+  const testScenariosLink = `/procore-tools/${slug}?tab=scenarios`;
+
   const actions = (
     <div className="flex items-center gap-2 flex-wrap">
       <Link
@@ -107,6 +111,33 @@ export default async function ProcoreToolDetailPage({ params }: Props) {
       description={tool.category ?? undefined}
       actions={actions}
     >
+      <div className="mb-4 border-b border-border/60 pb-4">
+        <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          Quick Links
+        </p>
+        <div className="mt-2 flex flex-wrap items-center gap-x-6 gap-y-1 text-sm">
+          <a
+            href={appLink ?? "#"}
+            target={appLink ? "_blank" : undefined}
+            rel={appLink ? "noreferrer" : undefined}
+            className={appLink ? "text-primary hover:underline" : "text-muted-foreground"}
+          >
+            1. App Page
+          </a>
+          <Link href={testScenariosLink} className="text-primary hover:underline">
+            2. Testing Scenarios
+          </Link>
+          <a
+            href={procoreLink ?? "#"}
+            target={procoreLink ? "_blank" : undefined}
+            rel={procoreLink ? "noreferrer" : undefined}
+            className={procoreLink ? "text-primary hover:underline" : "text-muted-foreground"}
+          >
+            3. Procore Tool
+          </a>
+        </div>
+      </div>
+
       <ToolDetailTabs
         slug={slug}
         description={tool.description ?? null}

@@ -310,12 +310,12 @@ function FilterMenu({
           <TooltipTrigger asChild>
             <PopoverTrigger asChild>
               <Button
-                variant="outline"
+                variant="ghost"
                 size="sm"
-                className="relative h-8 gap-1.5 rounded-md border-border/70 px-2.5 text-muted-foreground hover:text-foreground"
+                className="relative h-8 w-8 rounded-md p-0 text-muted-foreground hover:text-foreground"
+                aria-label="Filters"
               >
                 <SlidersHorizontal className="h-4 w-4" />
-                <span className="text-xs font-medium">Filter</span>
                 {activeCount > 0 ? (
                   <span className="inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-muted px-1 text-[10px] font-semibold text-foreground">
                     {activeCount}

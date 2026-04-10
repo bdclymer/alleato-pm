@@ -2,7 +2,8 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
 import { apiErrorResponse } from "@/lib/api-error";
-import { sendDocumentEmail } from "@/lib/documents/email";
+import { sendEmail } from "@/lib/email/send";
+import SOVInvitation from "@/emails/subcontractor/SOVInvitation";
 import { isAuthError, verifyProjectAccess } from "@/lib/supabase/auth-guard";
 
 interface RouteParams {
@@ -177,33 +178,66 @@ async function getInvoiceContactEmails(supabase: any, invoiceContactIds: string[
     }));
 }
 
-async function sendSsovInviteEmail(params: {
-  recipientEmails: string[];
+async function sendSsovInviteEmail(args: {
+  recipients: Array<{ name: string; email: string }>;
   projectId: number;
+  projectName: string;
   commitmentId: string;
   commitmentNumber: string | null;
   commitmentTitle: string | null;
+  contractAmount: number;
+  pmName: string;
+  submissionId: string;
 }) {
-  const { recipientEmails, projectId, commitmentId, commitmentNumber, commitmentTitle } = params;
-  if (recipientEmails.length === 0) return;
+  const {
+    recipients,
+    projectId,
+    projectName,
+    commitmentId,
+    commitmentNumber,
+    commitmentTitle,
+    contractAmount,
+    pmName,
+    submissionId,
+  } = args;
+  if (recipients.length === 0) return;
 
-  const subject = `Subcontractor SOV Requested${commitmentNumber ? ` – ${commitmentNumber}` : ""}`;
-  const link = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/${projectId}/commitments/${commitmentId}?tab=subcontractor-sov`;
-  const title = commitmentTitle || "Commitment";
-  const number = commitmentNumber ? ` (${commitmentNumber})` : "";
-
-  const text = `Please complete and submit the Subcontractor Schedule of Values for ${title}${number}.\n\nOpen: ${link}`;
-  const html = `
-    <p>Please complete and submit the <strong>Subcontractor Schedule of Values</strong> for <strong>${title}${number}</strong>.</p>
-    <p><a href="${link}">Open Subcontractor SOV</a></p>
-  `;
-
-  await sendDocumentEmail({
-    to: recipientEmails,
-    subject,
-    html,
-    text,
+  const subject = `Submit your Schedule of Values${commitmentNumber ? ` — ${commitmentNumber}` : ""}`;
+  const submissionUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/${projectId}/commitments/${commitmentId}?tab=subcontractor-sov`;
+  const contractAmountFormatted = contractAmount.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
   });
+  // 14 days from now
+  const dueDate = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
+
+  // Send individually so each recipient gets personalized greeting + own idempotency key
+  await Promise.all(
+    recipients.map((recipient) =>
+      sendEmail({
+        template: "sov-invitation",
+        to: recipient.email,
+        subject,
+        react: SOVInvitation({
+          subcontractorName: recipient.name,
+          projectName,
+          commitmentNumber: commitmentNumber || "—",
+          contractAmount: contractAmountFormatted,
+          dueDate,
+          submissionUrl,
+          pmName,
+        }),
+        entity: { type: "sov_submission", id: submissionId },
+        idempotencyKey: `sov-invite/${submissionId}/${recipient.email}`,
+        metadata: { projectId, commitmentId, commitmentTitle },
+      }),
+    ),
+  );
 }
 
 async function createPmReviewTodos(params: {
@@ -556,12 +590,35 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         );
       }
 
+      // Fetch project name + PM name + contract amount for the email template
+      const [{ data: project }, { data: pmProfile }] = await Promise.all([
+        supabase
+          .from("projects")
+          .select("name")
+          .eq("id", numericProjectId)
+          .maybeSingle(),
+        supabase
+          .from("people")
+          .select("first_name, last_name")
+          .eq("id", membership.personId)
+          .maybeSingle(),
+      ]);
+
       await sendSsovInviteEmail({
-        recipientEmails: contacts.map((contact) => contact.email),
+        recipients: contacts.map((contact: { name: string; email: string }) => ({
+          name: contact.name,
+          email: contact.email,
+        })),
         projectId: numericProjectId,
+        projectName: project?.name || `Project #${numericProjectId}`,
         commitmentId,
         commitmentNumber: commitment.contract_number,
         commitmentTitle: commitment.title,
+        contractAmount: targetAmount,
+        pmName:
+          `${pmProfile?.first_name || ""} ${pmProfile?.last_name || ""}`.trim() ||
+          "Your project manager",
+        submissionId: submission.id,
       });
 
       const { error: inviteError } = await supabase
@@ -572,7 +629,26 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           updated_at: new Date().toISOString(),
         })
         .eq("id", submission.id);
-      if (inviteError) throw inviteError;
+      if (inviteError) {
+        // Backward compatibility: some environments do not yet have invite_sent_by.
+        const isMissingInviteSentByColumn =
+          inviteError.code === "PGRST204" ||
+          inviteError.message?.includes("invite_sent_by");
+
+        if (!isMissingInviteSentByColumn) {
+          throw inviteError;
+        }
+
+        const { error: fallbackInviteError } = await supabase
+          .from("subcontractor_sov_submissions")
+          .update({
+            invite_sent_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", submission.id);
+
+        if (fallbackInviteError) throw fallbackInviteError;
+      }
 
       return NextResponse.json({
         success: true,
@@ -624,12 +700,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         })
         .eq("id", submission.id);
       if (submitError) throw submitError;
-
-      const { data: commitment } = await supabase
-        .from("subcontracts")
-        .select("contract_number, title")
-        .eq("id", commitmentId)
-        .maybeSingle();
 
       await createPmReviewTodos({
         supabase,

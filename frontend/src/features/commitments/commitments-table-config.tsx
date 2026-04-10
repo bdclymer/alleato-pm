@@ -3,9 +3,15 @@ import type { ReactElement } from "react";
 import Link from "next/link";
 import { ChevronRight, MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
 import { StatusBadge } from "@/components/ds";
 import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -28,14 +34,14 @@ export const commitmentColumns: ColumnConfig[] = [
   { id: "executed", label: "Executed", defaultVisible: true },
   { id: "ssov_status", label: "SSOV Status", defaultVisible: true },
   { id: "original_amount", label: "Original Contract Amount", defaultVisible: true },
-  { id: "approved_change_orders", label: "Approved CO's", defaultVisible: true },
-  { id: "revised_contract_amount", label: "Revised Amount", defaultVisible: true },
-  { id: "pending_change_orders", label: "Pending CO's", defaultVisible: true },
-  { id: "draft_change_orders", label: "Draft CO's", defaultVisible: true },
+  { id: "approved_change_orders", label: "Approved Change Orders", defaultVisible: true },
+  { id: "revised_contract_amount", label: "Revised Contract Amount", defaultVisible: true },
+  { id: "pending_change_orders", label: "Pending Change Orders", defaultVisible: true },
+  { id: "draft_change_orders", label: "Draft Change Orders", defaultVisible: true },
   { id: "invoiced_amount", label: "Invoiced", defaultVisible: true },
-  { id: "payments_issued", label: "Pymts Issued", defaultVisible: true },
+  { id: "payments_issued", label: "Payments Issued", defaultVisible: true },
   { id: "percent_paid", label: "% Paid", defaultVisible: true },
-  { id: "remaining_balance", label: "Remaining Balance", defaultVisible: true },
+  { id: "remaining_balance", label: "Remaining Balance Outstanding", defaultVisible: true },
   { id: "is_private", label: "Private", defaultVisible: true },
   { id: "balance_to_finish", label: "Balance to Finish", defaultVisible: false },
   { id: "created_at", label: "Created", defaultVisible: false },
@@ -140,17 +146,6 @@ function statusLabel(status: string | null | undefined): string {
   return STATUS_LABELS[status.toLowerCase()] ?? status.replace(/_/g, " ");
 }
 
-function typeVariant(type: string | null | undefined): "default" | "secondary" | "outline" {
-  switch (type) {
-    case "subcontract":
-      return "default";
-    case "purchase_order":
-      return "secondary";
-    default:
-      return "outline";
-  }
-}
-
 function yesNo(value: boolean): string {
   return value ? "Yes" : "No";
 }
@@ -159,6 +154,7 @@ export function buildCommitmentTableColumns(
   projectId: string,
   expandedIds?: Set<string>,
   onToggleExpand?: (id: string) => void,
+  onStatusChange?: (id: string, status: string) => void,
 ): TableColumn<CommitmentListItem>[] {
   const col = (id: string) => {
     const found = commitmentColumns.find((c) => c.id === id);
@@ -212,13 +208,39 @@ export function buildCommitmentTableColumns(
     },
     type: {
       render: (item) => (
-        <Badge variant={typeVariant(item.type)}>{item.type.replace(/_/g, " ")}</Badge>
+        <span className="text-sm font-medium text-muted-foreground capitalize">
+          {item.type.replace(/_/g, " ")}
+        </span>
       ),
       csvValue: (item) => item.type,
       sortValue: (item) => item.type,
     },
     status: {
-      render: (item) => <StatusBadge status={statusLabel(item.status)} />,
+      render: (item) => {
+        if (!onStatusChange) return <StatusBadge status={statusLabel(item.status)} />;
+        return (
+          <Select
+            value={item.status ?? "draft"}
+            onValueChange={(value) => onStatusChange(item.id, value)}
+          >
+            <SelectTrigger
+              className="h-auto border-0 bg-transparent p-0 shadow-none focus:ring-0 focus:ring-offset-0"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <SelectValue>
+                <StatusBadge status={statusLabel(item.status)} />
+              </SelectValue>
+            </SelectTrigger>
+            <SelectContent>
+              {["draft", "out_for_bid", "out_for_signature", "approved", "complete", "terminated", "void"].map((s) => (
+                <SelectItem key={s} value={s}>
+                  <StatusBadge status={statusLabel(s)} />
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        );
+      },
       csvValue: (item) => item.status,
       sortValue: (item) => item.status,
     },

@@ -1,0 +1,86 @@
+{
+  "generated_at": "2026-04-10T03:25:00Z",
+  "run_id": "change-workflow-20260410-031939",
+  "tasks": [
+    {
+      "task_id": "TASK-001",
+      "gap_id": "GAP-001",
+      "title": "Implement 'Add To' dropdown on Change Events selection bar",
+      "severity": "critical",
+      "status": "open",
+      "description": "Add cascading 'Add To' dropdown to the selection toolbar that appears when rows are selected. Options: Prime Contract PCO (New), Commitment CO (New), Commitment (link). Opens appropriate creation form/dialog.",
+      "files": ["frontend/src/components/domain/change-events/ChangeEventSelectionBar.tsx", "frontend/src/app/(main)/[projectId]/change-events/page.tsx"],
+      "depends_on": []
+    },
+    {
+      "task_id": "TASK-002",
+      "gap_id": "GAP-002",
+      "title": "Add SOV/Line Items to Prime Contract CO detail page",
+      "severity": "critical",
+      "status": "open",
+      "description": "Create SOV line items API + UI for prime contract change orders. Table with: Budget Code, Description, Amount, Cost Type. API: GET/POST/PUT/DELETE under /prime-contract-change-orders/{id}/line-items.",
+      "files": ["frontend/src/app/(main)/[projectId]/change-orders/prime/[primeCoId]/page.tsx"],
+      "depends_on": []
+    },
+    {
+      "task_id": "TASK-003",
+      "gap_id": "GAP-002",
+      "title": "Add SOV/Line Items to Commitment CO detail page",
+      "severity": "critical",
+      "status": "open",
+      "description": "Create SOV line items API + UI for commitment change orders. Table with: Budget Code, Description, Amount, Change Event Line Item. API: GET/POST under commitment CO routes.",
+      "files": ["frontend/src/app/(main)/[projectId]/change-orders/commitment/[commitmentCoId]/page.tsx"],
+      "depends_on": []
+    },
+    {
+      "task_id": "TASK-004",
+      "gap_id": "GAP-007",
+      "title": "Expand Prime CO create form with all Procore fields",
+      "severity": "high",
+      "status": "open",
+      "description": "Add missing fields: change_reason, description, designated_reviewer, request_received_from, due_date, invoiced_date, schedule_impact, revised_substantial_completion_date, location, reference, executed, field_change, is_private, paid_in_full. DB columns already exist.",
+      "files": ["frontend/src/app/(main)/[projectId]/change-orders/prime/new/page.tsx"],
+      "depends_on": []
+    },
+    {
+      "task_id": "TASK-005",
+      "gap_id": "GAP-008",
+      "title": "Expand Commitment CO create form with all Procore fields",
+      "severity": "high",
+      "status": "open",
+      "description": "Add missing fields: designated_reviewer, request_received_from, schedule_impact, location, reference, is_private, executed, field_change, paid_in_full. DB columns already exist.",
+      "files": ["frontend/src/app/(main)/[projectId]/change-orders/commitment/new/page.tsx"],
+      "depends_on": []
+    },
+    {
+      "task_id": "TASK-006",
+      "gap_id": "GAP-006",
+      "title": "Add missing PCO database columns + form fields",
+      "severity": "high",
+      "status": "open",
+      "description": "Migration to add: change_reason, location, reference, request_received_from, due_date, is_private, field_change, paid_in_full. Then update PCO create/edit forms.",
+      "files": ["supabase/migrations/", "frontend/src/app/(main)/[projectId]/pcos/new/page.tsx"],
+      "depends_on": []
+    },
+    {
+      "task_id": "TASK-007",
+      "gap_id": "GAP-009",
+      "title": "Add Clone action to Change Event detail page",
+      "severity": "high",
+      "status": "open",
+      "description": "Add 'Clone' option to the vertical ellipsis dropdown. Should duplicate the CE with new number and 'Open' status.",
+      "files": ["frontend/src/app/(main)/[projectId]/change-events/[changeEventId]/page.tsx"],
+      "depends_on": []
+    },
+    {
+      "task_id": "TASK-008",
+      "gap_id": "GAP-014",
+      "title": "Enable export on Change Orders list page",
+      "severity": "medium",
+      "status": "open",
+      "description": "Set enableExport: true and implement CSV export handler for both Prime and Commitment tabs.",
+      "files": ["frontend/src/app/(main)/[projectId]/change-orders/change-orders-client.tsx"],
+      "depends_on": []
+    }
+  ]
+}

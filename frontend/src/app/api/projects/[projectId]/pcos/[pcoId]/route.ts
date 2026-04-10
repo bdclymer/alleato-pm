@@ -187,6 +187,14 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       "annotation_note",
       "root_cause",
       "prime_change_order_id",
+      "change_reason",
+      "location",
+      "reference",
+      "request_received_from",
+      "due_date",
+      "is_private",
+      "field_change",
+      "paid_in_full",
     ];
 
     const updates: Record<string, any> = {

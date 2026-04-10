@@ -35,6 +35,7 @@ import {
   useUnifiedTableState,
   type FilterValue,
 } from "@/components/tables/unified";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   useCommitmentsList,
   useDeleteCommitment,
@@ -251,6 +252,7 @@ export default function ProjectCommitmentsPage(): ReactElement {
   const router = useRouter();
   const searchParams = useSearchParams();
   const projectId = params.projectId ?? "";
+  const queryClient = useQueryClient();
 
   const [isExportDialogOpen, setIsExportDialogOpen] = React.useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
@@ -374,6 +376,25 @@ export default function ProjectCommitmentsPage(): ReactElement {
 
   // ─── Acumatica Sync ──────────────────────────────────────────────────────
 
+  const handleStatusChange = React.useCallback(
+    async (id: string, status: string) => {
+      try {
+        const resp = await fetch(`/api/commitments/${id}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ status }),
+        });
+        const data = await resp.json();
+        if (!resp.ok) throw new Error(data.error ?? "Failed to update status");
+        toast.success("Status updated");
+        await queryClient.invalidateQueries({ queryKey: ["commitments", projectId] });
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to update status");
+      }
+    },
+    [projectId, queryClient],
+  );
+
   const handleErpSync = React.useCallback(async () => {
     setIsSyncing(true);
     try {
@@ -446,8 +467,8 @@ export default function ProjectCommitmentsPage(): ReactElement {
   }, []);
 
   const tableColumns = React.useMemo(
-    () => buildCommitmentTableColumns(projectId, expandedIds, handleToggleExpand),
-    [projectId, expandedIds, handleToggleExpand],
+    () => buildCommitmentTableColumns(projectId, expandedIds, handleToggleExpand, handleStatusChange),
+    [projectId, expandedIds, handleToggleExpand, handleStatusChange],
   );
   const sortedCommitments = React.useMemo(() => {
     if (!tableState.sortBy) return commitments;

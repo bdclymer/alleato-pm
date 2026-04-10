@@ -1,6 +1,7 @@
 export interface SovLineItem {
   id: number;
   sort_order?: number | null;
+  budget_code?: string | null;
   description?: string | null;
   scheduled_value?: number | null;
   work_completed_previous?: number | null;
@@ -15,6 +16,8 @@ export interface SovLineItem {
   materials_retainage_amount?: number | null;
   previous_work_retainage?: number | null;
   previous_materials_retainage?: number | null;
+  work_retainage_released?: number | null;
+  materials_retainage_released?: number | null;
   net_amount_this_period?: number | null;
 }
 

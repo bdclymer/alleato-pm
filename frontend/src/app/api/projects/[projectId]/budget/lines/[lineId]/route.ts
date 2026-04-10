@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
+import { requirePermission } from "@/lib/permissions-guard";
 
 // Zod schema for budget line PATCH updates
 // All fields optional since PATCH allows partial updates
@@ -184,20 +185,11 @@ export async function PATCH(
       );
     }
 
+    // Permission check: editing budget lines requires "write" on budget
+    const guard = await requirePermission(projectIdNum, "budget", "write");
+    if (guard.denied) return guard.response;
+
     const supabase = await createClient();
-
-    // Get current user
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized - please log in" },
-        { status: 401 },
-      );
-    }
 
     // Parse and validate request body
     const body = await request.json();
@@ -366,20 +358,11 @@ export async function DELETE(
       );
     }
 
+    // Permission check: deleting budget lines requires "admin" on budget
+    const guard = await requirePermission(projectIdNum, "budget", "admin");
+    if (guard.denied) return guard.response;
+
     const supabase = await createClient();
-
-    // Get current user
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized - please log in" },
-        { status: 401 },
-      );
-    }
 
     // Check if budget is locked
     const { data: project, error: projectError } = await supabase

@@ -8,6 +8,11 @@
  * Converts an approved PCO into an official Prime Contract Change Order.
  * Also auto-creates Commitment Change Orders for each subcontractor
  * referenced in the PCO line items.
+ *
+ * Fixes applied:
+ *  - API-005: Queries `subcontracts` (not `prime_contracts`) to find
+ *    commitments for each subcontractor.
+ *  - API-014: Compensating rollback on partial failure; safe number parsing.
  */
 
 import { createClient } from "@/lib/supabase/server";
@@ -84,7 +89,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       .eq("pco_id", numericPcoId)
       .order("id", { ascending: true });
 
-    // 3. Auto-generate next PCCO number
+    // 3. Auto-generate next PCCO number (safe parsing — treat non-numeric as 0)
     const { data: existingCOs } = await supabase
       .from("prime_contract_change_orders")
       .select("pcco_number")
@@ -94,9 +99,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     let nextPccoNumber = "001";
     if (existingCOs && existingCOs.length > 0 && existingCOs[0].pcco_number) {
-      const lastNum = parseInt(existingCOs[0].pcco_number, 10);
-      if (!isNaN(lastNum)) {
-        nextPccoNumber = String(lastNum + 1).padStart(3, "0");
+      const parsed = Number(existingCOs[0].pcco_number);
+      // Only increment when the existing number is a valid positive integer
+      if (Number.isFinite(parsed) && parsed > 0) {
+        nextPccoNumber = String(Math.floor(parsed) + 1).padStart(3, "0");
       }
     }
 
@@ -138,9 +144,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // 5. Update the PCO with the new prime_change_order_id.
-    // NOTE: This is not wrapped in a DB transaction. If this step fails after
-    // the Prime CO was created, the PCO won't reference the CO. We attempt a
-    // compensating delete of the orphaned Prime CO to minimise inconsistency.
+    // If this fails we roll back the Prime CO to keep the DB consistent.
     const { error: updatePcoError } = await supabase
       .from("potential_change_orders")
       .update({
@@ -152,14 +156,15 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     if (updatePcoError) {
       console.error("Failed to update PCO with CO link:", updatePcoError);
-      // Compensating action: delete the orphaned Prime CO so the DB stays consistent
+      // Compensating action: delete the orphaned Prime CO
       await supabase
         .from("prime_contract_change_orders")
         .delete()
         .eq("id", primeCO.id);
       return NextResponse.json(
         {
-          error: "Conversion failed: could not link PCO to new Change Order. The Change Order was rolled back.",
+          error:
+            "Conversion failed: could not link PCO to new Change Order. The Change Order was rolled back.",
           details: updatePcoError.message,
         },
         { status: 500 }
@@ -167,7 +172,11 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     // 6. Create Commitment Change Orders for each unique subcontractor
+    //    FIX (API-005): Query `subcontracts` table — not `prime_contracts`.
+    //    `pco_line_items.subcontractor_id` maps to `subcontracts.contract_company_id`.
     const commitmentCOs: Array<Record<string, unknown>> = [];
+    const commitmentErrors: Array<{ subcontractorId: string; error: string }> =
+      [];
 
     if (lineItems && lineItems.length > 0) {
       // Group line items by subcontractor_id (skip null)
@@ -185,45 +194,75 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         }
       }
 
-      // Get the next commitment CO number
+      // Get the next commitment CO number — scoped to this project
       const { data: existingCommitmentCOs } = await supabase
         .from("contract_change_orders")
-        .select("change_order_number")
+        .select("change_order_number, contract_id")
+        .eq("prime_change_order_id", primeCO.id)
         .order("created_at", { ascending: false })
         .limit(1);
 
+      // Fall back to a broader project-scoped query: find the highest number
+      // across all commitment COs whose contract belongs to this project.
       let commitmentCoCounter = 1;
+
+      // We query subcontracts for the project first, then find their COs
+      const { data: projectSubcontracts } = await supabase
+        .from("subcontracts")
+        .select("id")
+        .eq("project_id", numericProjectId)
+        .is("deleted_at", null);
+
+      if (projectSubcontracts && projectSubcontracts.length > 0) {
+        const subcontractIds = projectSubcontracts.map((s) => s.id);
+        const { data: latestCO } = await supabase
+          .from("contract_change_orders")
+          .select("change_order_number")
+          .in("contract_id", subcontractIds)
+          .order("created_at", { ascending: false })
+          .limit(1);
+
+        if (latestCO && latestCO.length > 0 && latestCO[0].change_order_number) {
+          const parsed = Number(latestCO[0].change_order_number);
+          if (Number.isFinite(parsed) && parsed > 0) {
+            commitmentCoCounter = Math.floor(parsed) + 1;
+          }
+        }
+      }
+
+      // Also check the initial simple query result
       if (
         existingCommitmentCOs &&
         existingCommitmentCOs.length > 0 &&
         existingCommitmentCOs[0].change_order_number
       ) {
-        const lastNum = parseInt(
-          existingCommitmentCOs[0].change_order_number,
-          10
-        );
-        if (!isNaN(lastNum)) {
-          commitmentCoCounter = lastNum + 1;
+        const parsed = Number(existingCommitmentCOs[0].change_order_number);
+        if (Number.isFinite(parsed) && parsed >= commitmentCoCounter) {
+          commitmentCoCounter = Math.floor(parsed) + 1;
         }
       }
 
       for (const [subcontractorId, items] of Object.entries(
         subcontractorGroups
       )) {
-        // Look up the subcontractor's contract (commitment)
-        const { data: contract } = await supabase
-          .from("prime_contracts")
-          .select("id")
+        // FIX (API-005): Look up the subcontractor's commitment in `subcontracts`,
+        // matching on `contract_company_id` (the vendor/company assigned to the
+        // subcontract) instead of the old incorrect `prime_contracts` query.
+        const { data: commitments } = await supabase
+          .from("subcontracts")
+          .select("id, contract_number, title")
           .eq("project_id", numericProjectId)
-          .eq("vendor_id", subcontractorId)
-          .limit(1)
-          .single();
+          .eq("contract_company_id", subcontractorId)
+          .is("deleted_at", null);
 
-        if (!contract) {
-          // No contract found for this subcontractor — skip
+        if (!commitments || commitments.length === 0) {
           console.warn(
-            `No contract found for subcontractor ${subcontractorId} on project ${numericProjectId}, skipping commitment CO`
+            `No subcontract found for subcontractor ${subcontractorId} on project ${numericProjectId}, skipping commitment CO`
           );
+          commitmentErrors.push({
+            subcontractorId,
+            error: "No subcontract found for this subcontractor on the project",
+          });
           continue;
         }
 
@@ -232,31 +271,39 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           0
         );
 
-        const coNumber = String(commitmentCoCounter).padStart(3, "0");
-        commitmentCoCounter++;
+        // Create a commitment CO for each matching subcontract
+        // (usually one, but a vendor may hold multiple commitments)
+        for (const commitment of commitments) {
+          const coNumber = String(commitmentCoCounter).padStart(3, "0");
+          commitmentCoCounter++;
 
-        const { data: commitmentCO, error: commitmentError } = await supabase
-          .from("contract_change_orders")
-          .insert({
-            contract_id: contract.id,
-            change_order_number: coNumber,
-            description: `Commitment CO from PCO #${pco.number}`,
-            amount: subAmount,
-            status: "Draft",
-            prime_change_order_id: primeCO.id,
-            parallel_mode: false,
-            requested_date: new Date().toISOString(),
-          })
-          .select()
-          .single();
+          const { data: commitmentCO, error: commitmentError } = await supabase
+            .from("contract_change_orders")
+            .insert({
+              contract_id: commitment.id,
+              change_order_number: coNumber,
+              description: `Commitment CO from PCO #${pco.number}`,
+              amount: subAmount,
+              status: "Draft",
+              prime_change_order_id: primeCO.id,
+              parallel_mode: false,
+              requested_date: new Date().toISOString(),
+            })
+            .select()
+            .single();
 
-        if (commitmentError) {
-          console.error(
-            `Failed to create commitment CO for subcontractor ${subcontractorId}:`,
-            commitmentError
-          );
-        } else if (commitmentCO) {
-          commitmentCOs.push(commitmentCO);
+          if (commitmentError) {
+            console.error(
+              `Failed to create commitment CO for subcontractor ${subcontractorId} (subcontract ${commitment.id}):`,
+              commitmentError
+            );
+            commitmentErrors.push({
+              subcontractorId,
+              error: commitmentError.message,
+            });
+          } else if (commitmentCO) {
+            commitmentCOs.push(commitmentCO);
+          }
         }
       }
     }
@@ -292,6 +339,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({
       ...primeCO,
       commitmentChangeOrders: commitmentCOs,
+      // Surface any partial failures so the caller knows which subs were skipped
+      ...(commitmentErrors.length > 0
+        ? { commitmentErrors }
+        : {}),
       _links: {
         self: `/api/projects/${projectId}/change-orders/prime/${primeCO.id}`,
         pco: `/api/projects/${projectId}/pcos/${pcoId}`,

@@ -31,6 +31,7 @@ export interface PrimeContractCO {
   executed: boolean;
   revision: number | null;
   contract_company: string | null;
+  change_reason: string | null;
   due_date: string | null;
   submitted_at: string | null;
   approved_at: string | null;
@@ -49,6 +50,7 @@ export interface CommitmentCO {
   amount: number | null;
   contract_id: string | null;
   contract_type: string | null;
+  change_reason: string | null;
   requested_by: string | null;
   requested_date: string | null;
   approved_by: string | null;
@@ -95,6 +97,7 @@ export const primeColumns: ColumnConfig[] = [
   { id: "amount", label: "Amount", defaultVisible: true },
   { id: "revision", label: "Revision", defaultVisible: false },
   { id: "contract_company", label: "Contract Company", defaultVisible: true },
+  { id: "change_reason", label: "Change Reason", defaultVisible: true },
   { id: "due_date", label: "Due Date", defaultVisible: false },
   { id: "executed", label: "Executed" },
   { id: "designated_reviewer", label: "Designated Reviewer", defaultVisible: false },
@@ -155,6 +158,14 @@ export function buildPrimeTableColumns(): TableColumn<PrimeContractCO>[] {
         <TruncatedCell value={item.contract_company} maxWidth={180} />
       ),
       sortValue: (item) => item.contract_company ?? "",
+    },
+    {
+      ...col("change_reason"),
+      width: 160,
+      render: (item) => (
+        <TruncatedCell value={item.change_reason} maxWidth={160} />
+      ),
+      sortValue: (item) => item.change_reason ?? "",
     },
     {
       ...col("due_date"),
@@ -249,6 +260,7 @@ export const commitmentColumns: ColumnConfig[] = [
   { id: "status", label: "Status", defaultVisible: true },
   { id: "amount", label: "Amount", defaultVisible: true },
   { id: "contract_type", label: "Contract Type", defaultVisible: true },
+  { id: "change_reason", label: "Change Reason", defaultVisible: true },
   { id: "due_date", label: "Due Date", defaultVisible: false },
   { id: "designated_reviewer", label: "Designated Reviewer", defaultVisible: false },
   { id: "requested_date", label: "Requested Date", defaultVisible: true },
@@ -306,6 +318,14 @@ export function buildCommitmentTableColumns(): TableColumn<CommitmentCO>[] {
         </span>
       ),
       sortValue: (item) => item.contract_type ?? "",
+    },
+    {
+      ...col("change_reason"),
+      width: 160,
+      render: (item) => (
+        <TruncatedCell value={item.change_reason} maxWidth={160} />
+      ),
+      sortValue: (item) => item.change_reason ?? "",
     },
     {
       ...col("due_date"),

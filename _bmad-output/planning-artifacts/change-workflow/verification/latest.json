@@ -1,0 +1,10 @@
+{
+  "run_id": "change-workflow-20260410-031939",
+  "feature": "change-workflow",
+  "project_id": "562949954728542",
+  "git_sha": "f063656c",
+  "started_at": "2026-04-10T03:19:39Z",
+  "completed_at": "2026-04-10T08:15:00Z",
+  "verdict": "PASS_WITH_NOTES",
+  "artifact_root": "_bmad-output/planning-artifacts/change-workflow/verification/runs/change-workflow-20260410-031939/"
+}

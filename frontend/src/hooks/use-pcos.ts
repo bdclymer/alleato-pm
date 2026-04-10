@@ -20,7 +20,8 @@ export interface PCO {
     | "UNDER_REVIEW"
     | "REVISION_REQUESTED"
     | "APPROVED"
-    | "VOID";
+    | "VOID"
+    | "CONVERTED";
   current_version: number;
   created_by_id: string | null;
   estimated_value: number | null;
@@ -34,6 +35,14 @@ export interface PCO {
   annotation_note: string | null;
   root_cause: string | null;
   prime_change_order_id: number | null;
+  change_reason: string | null;
+  location: string | null;
+  reference: string | null;
+  request_received_from: string | null;
+  due_date: string | null;
+  is_private: boolean;
+  field_change: boolean;
+  paid_in_full: boolean;
   created_at: string;
   updated_at: string;
   submitted_at: string | null;

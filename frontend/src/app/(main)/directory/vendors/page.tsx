@@ -784,6 +784,10 @@ export default function DirectoryVendorsPage(): ReactElement {
         enableExport: false,
         enableBulkDelete: true,
       }}
+      layout={{
+        fullBleedTable: true,
+        removeTableFrame: true,
+      }}
       pagination={{
         page: tableState.page,
         totalPages: pagination.total_pages,

@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, Plus, Trash2, Save, AlertCircle } from "lucide-react";
+import { ArrowDown, ArrowUp, Plus, Trash2, Save } from "lucide-react";
 import { toast } from "sonner";
 
-import { SectionHeader } from "@/components/ds";
 import { Text } from "@/components/ds/text";
+import { SectionRuleHeading } from "@/components/layout";
 import { formatCurrency } from "@/config/tables";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCostCodes } from "@/hooks/use-cost-codes";
-import { Badge } from "@/components/ui/badge";
+import { TableHead, TableHeader } from "@/components/ui/table";
 
 interface LineItem {
   id: string;
@@ -311,21 +311,21 @@ export function ScheduleOfValuesTab({
 
   return (
     <div className="space-y-3">
-      {showHeader ? <SectionHeader title="Schedule of Values" /> : null}
+      {showHeader ? <SectionRuleHeading label="Schedule of Values" className="[&_span]:text-primary" /> : null}
 
-      <div className="overflow-x-auto rounded-md border">
+      <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead className="bg-muted">
+          <TableHeader>
             <tr>
-              <th className="w-10 px-3 py-3 text-left font-medium text-muted-foreground">#</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Budget Code</th>
-              <th className="px-4 py-3 text-left font-medium text-muted-foreground">Description</th>
-              <th className="px-4 py-3 text-right font-medium text-muted-foreground">Amount</th>
-              <th className="px-4 py-3 text-right font-medium text-muted-foreground">Billed to Date</th>
-              <th className="px-4 py-3 text-right font-medium text-muted-foreground">Remaining</th>
-              <th className="w-px px-3 py-3" />
+              <TableHead className="w-10 px-3 py-3">#</TableHead>
+              <TableHead className="px-4 py-3">Budget Code</TableHead>
+              <TableHead className="px-4 py-3">Description</TableHead>
+              <TableHead className="px-4 py-3 text-right">Amount</TableHead>
+              <TableHead className="px-4 py-3 text-right">Billed to Date</TableHead>
+              <TableHead className="px-4 py-3 text-right">Remaining</TableHead>
+              <TableHead className="w-px px-3 py-3" />
             </tr>
-          </thead>
+          </TableHeader>
           <tbody>
             {items.map((item, index) => {
               const amount = Number(item.amount ?? 0);
@@ -334,10 +334,10 @@ export function ScheduleOfValuesTab({
 
               return (
                 <tr key={item.id} className="border-t">
-                  <td className="px-3 py-2 text-muted-foreground tabular-nums text-xs">
+                  <td className="px-3 py-3 text-muted-foreground tabular-nums text-xs">
                     {index + 1}
                   </td>
-                  <td className="px-4 py-2 whitespace-nowrap min-w-[200px]">
+                  <td className="px-4 py-3 whitespace-nowrap min-w-[200px]">
                     <Select
                       value={item.budget_code || "none"}
                       onValueChange={(value) => updateItem(item.id, "budget_code", value === "none" ? "" : value)}
@@ -363,14 +363,14 @@ export function ScheduleOfValuesTab({
                       </SelectContent>
                     </Select>
                   </td>
-                  <td className="px-4 py-2 min-w-[200px]">
+                  <td className="px-4 py-3 min-w-[200px]">
                     <Input
                       aria-label={`Description ${index + 1}`}
                       value={item.description ?? ""}
                       onChange={(e) => updateItem(item.id, "description", e.target.value)}
                     />
                   </td>
-                  <td className="px-4 py-2 text-right">
+                  <td className="px-4 py-3 text-right">
                     <MoneyField
                       label={`Amount ${index + 1}`}
                       inline
@@ -379,11 +379,11 @@ export function ScheduleOfValuesTab({
                       onChange={(value) => updateItem(item.id, "amount", value)}
                     />
                   </td>
-                  <td className="px-4 py-2 text-right tabular-nums text-muted-foreground">
+                  <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">
                     {formatCurrency(billed)}
                   </td>
-                  <td className="px-4 py-2 text-right tabular-nums">{formatCurrency(remaining)}</td>
-                  <td className="px-3 py-2">
+                  <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(remaining)}</td>
+                  <td className="px-3 py-3">
                     <div className="flex items-center justify-end gap-0.5">
                       <Button
                         variant="ghost"
@@ -418,9 +418,9 @@ export function ScheduleOfValuesTab({
               );
             })}
           </tbody>
-          <tfoot className="bg-muted/60">
-            <tr className="font-semibold">
-              <td className="px-3 py-3" colSpan={3}>Totals</td>
+          <tfoot>
+            <tr className="font-semibold border-t border-border">
+              <td className="px-3 py-3 text-right" colSpan={3}>Totals</td>
               <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(totals.amount)}</td>
               <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(totals.billed)}</td>
               <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(amountRemaining)}</td>
@@ -433,7 +433,7 @@ export function ScheduleOfValuesTab({
       {/* Actions below table, left-aligned */}
       <div className="flex items-center gap-2">
         <Button
-          size="xs"
+          size="sm"
           variant="outline"
           onClick={handleAdd}
           disabled={isSaving}
@@ -442,7 +442,7 @@ export function ScheduleOfValuesTab({
           Add Line Item
         </Button>
         <Button
-          size="xs"
+          size="sm"
           variant="outline"
           onClick={handleImport}
           disabled={isImporting || isSaving}
@@ -451,19 +451,13 @@ export function ScheduleOfValuesTab({
         </Button>
         {hasUnsavedChanges && (
           <Button
-            size="xs"
+            size="sm"
             onClick={handleSave}
             disabled={isSaving}
           >
             <Save />
             {isSaving ? "Saving..." : "Save Changes"}
           </Button>
-        )}
-        {hasUnsavedChanges && (
-          <Badge variant="outline" className="text-amber-600 border-amber-600 text-xs">
-            <AlertCircle className="h-3 w-3 mr-1" />
-            Unsaved changes
-          </Badge>
         )}
       </div>
     </div>

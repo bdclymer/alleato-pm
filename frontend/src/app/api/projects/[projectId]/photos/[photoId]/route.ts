@@ -119,12 +119,13 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
 
 /**
  * DELETE /api/projects/[projectId]/photos/[photoId]
- * Soft-deletes a photo by setting deleted_at.
+ * Soft-deletes a photo by default. Pass ?permanent=true to hard-delete.
  */
-export async function DELETE(_request: NextRequest, { params }: RouteParams) {
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
   try {
     const { projectId, photoId } = await params;
     const supabase = await createClient();
+    const permanent = new URL(request.url).searchParams.get("permanent") === "true";
 
     const {
       data: { user },
@@ -133,6 +134,17 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
 
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    if (permanent) {
+      const { error } = await supabase
+        .from("project_photos")
+        .delete()
+        .eq("id", parseInt(photoId, 10))
+        .eq("project_id", parseInt(projectId, 10));
+
+      if (error) return apiErrorResponse(error);
+      return NextResponse.json({ success: true });
     }
 
     const { data, error } = await supabase

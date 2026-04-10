@@ -49,7 +49,7 @@ type InvoiceItem = {
   id: number;
   invoice_number: string | null;
   status: string | null;
-  contract_id: string | null;
+  prime_contract_id: string | null;
   contract_number: string | null;
   contract_title: string | null;
   project_id: number | null;
@@ -272,7 +272,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
         const { data: invoiceData, error: invoicesError } = await supabase
           .from("owner_invoices")
           .select("*")
-          .in("contract_id", contractIds)
+          .in("prime_contract_id", contractIds)
           .order("created_at", { ascending: false })
           .limit(100)
           .returns<OwnerInvoice[]>();
@@ -285,14 +285,14 @@ export async function GET(_request: Request, { params }: RouteParams) {
         }
 
         invoicesPayload = (invoiceData || []).map((invoice) => {
-          const contract = invoice.contract_id != null ? contractMap.get(invoice.contract_id) : undefined;
+          const contract = invoice.prime_contract_id != null ? contractMap.get(invoice.prime_contract_id) : undefined;
           const project = contract ? projectMap.get(contract.project_id) : null;
 
           return {
             id: invoice.id,
             invoice_number: invoice.invoice_number,
             status: invoice.status,
-            contract_id: invoice.contract_id,
+            prime_contract_id: invoice.prime_contract_id,
             contract_number: contract?.contract_number || null,
             contract_title: contract?.title || null,
             project_id: contract?.project_id ?? null,

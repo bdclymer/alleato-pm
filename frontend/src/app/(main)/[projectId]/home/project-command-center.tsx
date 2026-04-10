@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { useBudgetData } from "@/hooks/use-budget-data";
 import { useCurrentUserName } from "@/hooks/use-current-user-name";
 import { KpiRow, StatusBadge, Skeleton } from "@/components/ds";
+import { ContentSectionStack } from "@/components/layout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { RealtimeCursors } from "@/components/realtime-cursors";
@@ -30,7 +31,6 @@ import type { Database } from "@/types/database.types";
 type Project = Database["public"]["Tables"]["projects"]["Row"];
 type Task = Database["public"]["Tables"]["tasks"]["Row"];
 type Meeting = Database["public"]["Tables"]["document_metadata"]["Row"];
-// changeOrders merges prime_contract_change_orders + contract_change_orders (different shapes)
 type ChangeOrder = any;
 type RFI = Database["public"]["Tables"]["rfis"]["Row"];
 type Contract = Database["public"]["Tables"]["prime_contracts"]["Row"];
@@ -80,7 +80,6 @@ interface ProjectCommandCenterProps {
     commitmentTitle: string;
     submittedAt: string | null;
   }>;
-  // unused but accepted for API compatibility
   dailyLogs?: any[];
   budget?: any[];
   sov?: any[];
@@ -122,7 +121,7 @@ function initials(value: string | null | undefined): string {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Sub-components
+   Shared primitives
 ───────────────────────────────────────────────────────────── */
 
 function SectionHeading({
@@ -133,7 +132,7 @@ function SectionHeading({
   action?: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between mb-3">
+    <div className="mb-3 flex items-center justify-between">
       <span className="text-[11px] font-semibold uppercase tracking-wider text-primary">
         {children}
       </span>
@@ -142,32 +141,553 @@ function SectionHeading({
   );
 }
 
-function Divider() {
-  return <hr className="border-border my-8" />;
-}
-
-interface StatPillProps {
-  label: string;
-  value: string | number;
-  tone?: "neutral" | "warning" | "danger" | "success";
-}
-function StatPill({ label, value, tone = "neutral" }: StatPillProps) {
+function ViewAllLink({ href, label = "View All" }: { href: string; label?: string }) {
   return (
-    <span className="inline-flex items-baseline gap-1.5 rounded border border-border bg-muted/40 px-2.5 py-1 text-xs">
-      <span
-        className={cn(
-          "font-semibold tabular-nums",
-          tone === "danger" && "text-destructive",
-          (tone === "warning" || tone === "success" || tone === "neutral") && "text-foreground"
-        )}
-      >
-        {value}
-      </span>
-      <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</span>
-    </span>
+    <Link
+      href={href}
+      className="flex items-center gap-1 text-xs text-primary transition-colors hover:text-primary/80"
+    >
+      {label} <ChevronRight className="h-3 w-3" />
+    </Link>
   );
 }
 
+/* ─────────────────────────────────────────────────────────────
+   Section: Financial Overview
+───────────────────────────────────────────────────────────── */
+
+interface FinancialOverviewSectionProps {
+  projectId: string;
+  budgetLoading: boolean;
+  revisedBudget: number;
+  costToDate: number;
+  ecac: number;
+  variance: number;
+  spendPct: number;
+  varianceTone: "success" | "danger" | "warning";
+  originalBudgetAmount: number;
+  primeContractValue: number;
+  commitmentTotal: number;
+  commitments: Commitment[];
+  contracts: Contract[];
+  directCosts: number;
+}
+
+function FinancialOverviewSection({
+  projectId,
+  budgetLoading,
+  revisedBudget,
+  costToDate,
+  ecac,
+  variance,
+  spendPct,
+  varianceTone,
+  originalBudgetAmount,
+  primeContractValue,
+  commitmentTotal,
+  commitments,
+  contracts,
+  directCosts,
+}: FinancialOverviewSectionProps) {
+  return (
+    <section>
+      <SectionHeading action={<ViewAllLink href={`/${projectId}/budget`} label="View Budget" />}>
+        Financial Overview
+      </SectionHeading>
+
+      {budgetLoading ? (
+        <div className="space-y-3">
+          <Skeleton className="h-16 w-full" />
+          <Skeleton className="h-4 w-full" />
+        </div>
+      ) : (
+        <div className="space-y-4">
+          <KpiRow
+            metrics={[
+              {
+                label: "Budget",
+                value: fmtFull(revisedBudget),
+                href: `/${projectId}/budget`,
+                context: costToDate > 0
+                  ? `${fmtCompact(costToDate)} of ${fmtCompact(revisedBudget)} spent`
+                  : revisedBudget !== originalBudgetAmount
+                  ? `Original ${fmtFull(originalBudgetAmount)}`
+                  : undefined,
+                progress: {
+                  value: spendPct,
+                  tone: spendPct > 90 ? "danger" : spendPct > 75 ? "warning" : "neutral",
+                },
+              },
+              {
+                label: "Prime Contract",
+                value: fmtFull(primeContractValue || null),
+                href: `/${projectId}/prime-contracts`,
+                context: contracts.length > 0
+                  ? `${contracts.length} contract${contracts.length !== 1 ? "s" : ""}`
+                  : undefined,
+              },
+              {
+                label: "Commitments",
+                value: fmtFull(commitmentTotal || null),
+                href: `/${projectId}/commitments`,
+                context: commitments.length > 0
+                  ? `${commitments.length} commitment${commitments.length !== 1 ? "s" : ""}`
+                  : undefined,
+              },
+              {
+                label: "Direct Costs",
+                value: fmtFull(directCosts || null),
+                href: `/${projectId}/direct-costs`,
+                context: costToDate > 0
+                  ? `${pct(directCosts, costToDate)}% of cost to date`
+                  : undefined,
+              },
+            ]}
+          />
+
+          {variance !== 0 && (
+            <div
+              className={cn(
+                "flex items-center gap-2 rounded-md border px-3 py-2 text-sm",
+                varianceTone === "danger"
+                  ? "border-destructive/20 bg-destructive/5 text-destructive"
+                  : "border-border bg-muted text-foreground",
+              )}
+            >
+              {varianceTone === "success" ? (
+                <TrendingDown className="h-4 w-4 shrink-0" />
+              ) : (
+                <AlertTriangle className="h-4 w-4 shrink-0" />
+              )}
+              <span>
+                Forecast{" "}
+                <strong>
+                  {variance > 0 ? "under" : "over"} budget by {fmtCompact(Math.abs(variance))}
+                </strong>
+                {" · ECAC "}
+                {fmtFull(ecac)}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Section: Project Team
+───────────────────────────────────────────────────────────── */
+
+function ProjectTeamSection({
+  projectId,
+  team,
+}: {
+  projectId: string;
+  team: ProjectTeamMember[];
+}) {
+  return (
+    <section>
+      <SectionHeading action={<ViewAllLink href={`/${projectId}/directory`} label="View Team" />}>
+        Project Team
+      </SectionHeading>
+
+      {team.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No team members assigned</p>
+      ) : (
+        <div>
+          {team.slice(0, 6).map((member) => {
+            const displayName = member.full_name?.trim() || "Team Member";
+            const avatarSrc = member.person_id
+              ? `/api/avatar/${member.person_id}?projectId=${projectId}`
+              : undefined;
+            return (
+              <div
+                key={member.id}
+                className="flex items-center gap-3 border-b border-border/50 py-2.5 last:border-0"
+              >
+                <Avatar className="h-8 w-8 rounded-full">
+                  <AvatarImage src={avatarSrc} alt={displayName} />
+                  <AvatarFallback className="text-xs">{initials(displayName)}</AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium">{displayName}</p>
+                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                    {member.role || "Team Member"}
+                  </p>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Section: Recent Meetings
+───────────────────────────────────────────────────────────── */
+
+function RecentMeetingsSection({
+  projectId,
+  meetings,
+}: {
+  projectId: string;
+  meetings: Meeting[];
+}) {
+  return (
+    <section>
+      <SectionHeading action={<ViewAllLink href={`/${projectId}/meetings`} />}>
+        Recent Meetings
+      </SectionHeading>
+
+      {meetings.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No meetings recorded</p>
+      ) : (
+        <div className="space-y-1">
+          {meetings.map((m) => {
+            const dateLabel = m.date ? format(new Date(m.date), "MMM d") : null;
+            return (
+              <Link
+                key={m.id}
+                href={`/${projectId}/meetings/${m.id}`}
+                className="-mx-2 group flex items-center gap-3 rounded-md px-2 py-2 transition-colors hover:bg-muted/50"
+              >
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
+                  <Calendar className="h-3.5 w-3.5" />
+                </div>
+                <p className="min-w-0 flex-1 truncate text-sm transition-colors group-hover:text-primary">
+                  {m.title ?? "Meeting"}
+                </p>
+                {dateLabel && (
+                  <span className="shrink-0 tabular-nums text-xs text-muted-foreground">
+                    {dateLabel}
+                  </span>
+                )}
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Section: Change Pipeline
+───────────────────────────────────────────────────────────── */
+
+interface ChangePipelineSectionProps {
+  projectId: string;
+  hasPipelineData: boolean;
+  actionHref: string;
+  actionLabel: string;
+  changeEvents: ChangeEvent[];
+  potentialChangeOrders: ChangeOrder[];
+  approvedChangeOrders: ChangeOrder[];
+}
+
+function ChangePipelineSection({
+  projectId,
+  hasPipelineData,
+  actionHref,
+  actionLabel,
+  changeEvents,
+  potentialChangeOrders,
+  approvedChangeOrders,
+}: ChangePipelineSectionProps) {
+  return (
+    <section>
+      <SectionHeading action={<ViewAllLink href={actionHref} label={actionLabel} />}>
+        Change Pipeline
+      </SectionHeading>
+
+      {!hasPipelineData ? (
+        <p className="text-sm text-muted-foreground">No pipeline items</p>
+      ) : (
+        <div className="divide-y divide-border overflow-hidden rounded-md border border-border">
+          {changeEvents.map((ce) => (
+            <Link
+              key={ce.id}
+              href={`/${projectId}/change-events/${ce.id}`}
+              className="flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-muted/50"
+            >
+              <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-muted-foreground">
+                CE
+              </span>
+              <span className="flex-1 truncate text-sm">
+                {ce.title ?? `Change Event #${ce.number}`}
+              </span>
+              <StatusBadge status={ce.status ?? "Draft"} />
+            </Link>
+          ))}
+
+          {potentialChangeOrders.map((co: ChangeOrder) => (
+            <Link
+              key={`pco-${co.id}`}
+              href={`/${projectId}/change-orders/prime/${co.id}`}
+              className="flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-muted/50"
+            >
+              <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-muted-foreground">
+                PCO
+              </span>
+              <span className="flex-1 truncate text-sm">{co.title ?? "Untitled PCO"}</span>
+              <div className="flex shrink-0 items-center gap-2">
+                <span className="tabular-nums text-xs text-muted-foreground">
+                  {fmtCompact(co.total_amount)}
+                </span>
+                <StatusBadge status={co.status ?? "Proposed"} />
+              </div>
+            </Link>
+          ))}
+
+          {approvedChangeOrders.map((co: ChangeOrder) => {
+            const href = Boolean(co.change_order_number)
+              ? `/${projectId}/change-orders/commitment/${co.id}`
+              : `/${projectId}/change-orders/prime/${co.id}`;
+            return (
+              <Link
+                key={`co-${co.id}`}
+                href={href}
+                className="flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-muted/50"
+              >
+                <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-muted-foreground">
+                  CO
+                </span>
+                <span className="flex-1 truncate text-sm">{co.title ?? "Untitled CO"}</span>
+                <div className="flex shrink-0 items-center gap-2">
+                  <span className="tabular-nums text-xs text-muted-foreground">
+                    {fmtCompact(co.amount ?? co.total_amount)}
+                  </span>
+                  <StatusBadge status={co.status ?? "Pending"} />
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Section: Alerts
+───────────────────────────────────────────────────────────── */
+
+function AlertsSection({
+  projectId,
+  showPrimeContractMarkupAlert,
+  changeOrdersWithoutChangeRequestCount,
+}: {
+  projectId: string;
+  showPrimeContractMarkupAlert: boolean;
+  changeOrdersWithoutChangeRequestCount: number;
+}) {
+  const hasAlerts = showPrimeContractMarkupAlert || changeOrdersWithoutChangeRequestCount > 0;
+
+  return (
+    <section>
+      <SectionHeading>Alerts</SectionHeading>
+
+      {!hasAlerts ? (
+        <div className="flex items-center gap-2 rounded-md bg-status-success/10 px-3 py-2.5 text-sm text-status-success">
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
+          <span>No financial or change-order alerts</span>
+        </div>
+      ) : (
+        <div className="space-y-1.5">
+          {showPrimeContractMarkupAlert && (
+            <Link
+              href={`/${projectId}/prime-contracts`}
+              className="flex items-center justify-between rounded-md bg-destructive/10 px-3 py-2.5 transition-colors hover:bg-destructive/15"
+            >
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-destructive" />
+                <span className="text-sm font-medium text-destructive">
+                  Prime contract created without financial markup
+                </span>
+              </div>
+              <ChevronRight className="h-3.5 w-3.5 text-destructive" />
+            </Link>
+          )}
+          {changeOrdersWithoutChangeRequestCount > 0 && (
+            <Link
+              href={`/${projectId}/change-orders`}
+              className="flex items-center justify-between rounded-md bg-destructive/10 px-3 py-2.5 transition-colors hover:bg-destructive/15"
+            >
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-destructive" />
+                <span className="text-sm font-medium text-destructive">
+                  {changeOrdersWithoutChangeRequestCount} change order
+                  {changeOrdersWithoutChangeRequestCount !== 1 ? "s" : ""} without change request
+                </span>
+              </div>
+              <ChevronRight className="h-3.5 w-3.5 text-destructive" />
+            </Link>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Section: Action Required
+───────────────────────────────────────────────────────────── */
+
+interface ActionRequiredSectionProps {
+  projectId: string;
+  rfisOverdue: RFI[];
+  overdueTasks: Task[];
+  pendingSsovReviews: NonNullable<ProjectCommandCenterProps["pendingSsovReviews"]>;
+}
+
+function ActionRequiredSection({
+  projectId,
+  rfisOverdue,
+  overdueTasks,
+  pendingSsovReviews,
+}: ActionRequiredSectionProps) {
+  const hasPendingSsov = pendingSsovReviews.length > 0;
+  const hasActions = rfisOverdue.length > 0 || overdueTasks.length > 0 || hasPendingSsov;
+
+  return (
+    <section>
+      <SectionHeading>Action Required</SectionHeading>
+
+      {!hasActions ? (
+        <div className="flex items-center gap-2 rounded-md bg-status-success/10 px-3 py-2.5 text-sm text-status-success">
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
+          <span>No overdue items</span>
+        </div>
+      ) : (
+        <div className="space-y-1.5">
+          {hasPendingSsov && (
+            <Link
+              href={`/${projectId}/commitments`}
+              className="flex items-center justify-between rounded-md bg-status-warning/10 px-3 py-2.5 transition-colors hover:bg-status-warning/15"
+            >
+              <div className="flex items-center gap-2">
+                <Clock className="h-3.5 w-3.5 shrink-0 text-status-warning" />
+                <span className="text-sm font-medium text-status-warning">
+                  {pendingSsovReviews.length} subcontractor SOV
+                  {pendingSsovReviews.length !== 1 ? "s" : ""} awaiting review
+                </span>
+              </div>
+              <ChevronRight className="h-3.5 w-3.5 text-status-warning" />
+            </Link>
+          )}
+
+          {hasPendingSsov && (
+            <div className="overflow-hidden rounded-md border border-border/70 bg-background">
+              {pendingSsovReviews.slice(0, 3).map((item) => (
+                <Link
+                  key={item.commitmentId}
+                  href={`/${projectId}/commitments/${item.commitmentId}?tab=subcontractor-sov`}
+                  className="flex items-start justify-between gap-2 border-b border-border/60 px-3 py-2.5 last:border-b-0 transition-colors hover:bg-muted/40"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium">
+                      {item.commitmentNumber ? `${item.commitmentNumber} · ` : ""}
+                      {item.commitmentTitle}
+                    </p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      Submitted{" "}
+                      {item.submittedAt
+                        ? format(new Date(item.submittedAt), "MMM d, yyyy")
+                        : "recently"}
+                    </p>
+                  </div>
+                  <StatusBadge status="Under Review" />
+                </Link>
+              ))}
+            </div>
+          )}
+
+          {rfisOverdue.length > 0 && (
+            <Link
+              href={`/${projectId}/rfis`}
+              className="flex items-center justify-between rounded-md bg-destructive/10 px-3 py-2.5 transition-colors hover:bg-destructive/15"
+            >
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-destructive" />
+                <span className="text-sm font-medium text-destructive">
+                  {rfisOverdue.length} overdue RFI{rfisOverdue.length !== 1 ? "s" : ""}
+                </span>
+              </div>
+              <ChevronRight className="h-3.5 w-3.5 text-destructive" />
+            </Link>
+          )}
+
+          {overdueTasks.length > 0 && (
+            <div className="flex items-center gap-2 rounded-md bg-status-warning/10 px-3 py-2.5">
+              <Clock className="h-3.5 w-3.5 shrink-0 text-status-warning" />
+              <span className="text-sm font-medium text-status-warning">
+                {overdueTasks.length} overdue task{overdueTasks.length !== 1 ? "s" : ""}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Section: Open RFIs
+───────────────────────────────────────────────────────────── */
+
+function OpenRFIsSection({
+  projectId,
+  rfisOpen,
+  rfisSort,
+}: {
+  projectId: string;
+  rfisOpen: RFI[];
+  rfisSort: RFI[];
+}) {
+  return (
+    <section>
+      <SectionHeading action={<ViewAllLink href={`/${projectId}/rfis`} label="All RFIs" />}>
+        Open RFIs{rfisOpen.length > 0 ? ` (${rfisOpen.length})` : ""}
+      </SectionHeading>
+
+      {rfisSort.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No open RFIs</p>
+      ) : (
+        <div>
+          {rfisSort.slice(0, 5).map((rfi) => {
+            const overdue = rfi.due_date && isPast(new Date(rfi.due_date));
+            return (
+              <Link
+                key={rfi.id}
+                href={`/${projectId}/rfis/${rfi.id}`}
+                className="-mx-2 flex items-start gap-2.5 rounded-md border-b border-border/50 px-2 py-2.5 last:border-0 transition-colors hover:bg-muted/50"
+              >
+                <span
+                  className={cn(
+                    "mt-[5px] h-1.5 w-1.5 shrink-0 rounded-full",
+                    overdue ? "bg-destructive" : "bg-amber-500 dark:bg-amber-400",
+                  )}
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm">{rfi.subject}</p>
+                  {rfi.due_date && (
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      Due {format(new Date(rfi.due_date), "MMM d")}
+                    </p>
+                  )}
+                </div>
+                <StatusBadge status={rfi.status} />
+              </Link>
+            );
+          })}
+        </div>
+      )}
+    </section>
+  );
+}
 
 /* ─────────────────────────────────────────────────────────────
    Main component
@@ -184,7 +704,6 @@ export function ProjectCommandCenter({
   contracts,
   contractLineItems = [],
   changeEvents = [],
-  budget = [],
   team = [],
   homeAlerts,
   pendingSsovReviews = [],
@@ -195,10 +714,7 @@ export function ProjectCommandCenter({
   const currentUserName = useCurrentUserName();
   const { grandTotals, loading: budgetLoading } = useBudgetData(projectId, { silent: true });
 
-  /* ── Derived: Contract ─────────────────────────────── */
-  const primaryContract = contracts[0] ?? null;
-
-  /* ── Derived: Budget ───────────────────────────────── */
+  /* ── Budget ────────────────────────────────────────────── */
   const revisedBudget = grandTotals.revisedBudget || grandTotals.originalBudgetAmount;
   const costToDate = grandTotals.jobToDateCostDetail;
   const ecac = grandTotals.estimatedCostAtCompletion;
@@ -206,62 +722,43 @@ export function ProjectCommandCenter({
   const spendPct = pct(costToDate, revisedBudget);
   const varianceTone: "success" | "danger" | "warning" =
     variance > 0 ? "success" : variance < 0 ? "danger" : "warning";
-
-  /* ── Derived: Prime Contract value ────────────────── */
   const primeContractValue = contractLineItems.reduce(
     (sum, li) => sum + (li.total_cost ?? 0),
-    0
+    0,
   );
 
-  /* ── Derived: Change pipeline by status ────────────── */
-  const ceByStatus = changeEvents.reduce<Record<string, number>>((acc, ce) => {
-    const s = (ce.status ?? "draft").toLowerCase();
-    acc[s] = (acc[s] ?? 0) + 1;
-    return acc;
-  }, {});
-  const cePending = (ceByStatus["open"] ?? 0) + (ceByStatus["pending"] ?? 0);
-  const ceApproved = ceByStatus["approved"] ?? 0;
-  const ceRejected = ceByStatus["rejected"] ?? 0;
-  const ceDraft = ceByStatus["draft"] ?? 0;
-  const hasChangeEvents = changeEvents.length > 0;
-  const changeEventsHref = hasChangeEvents
-    ? `/${projectId}/change-events`
-    : `/${projectId}/change-events/new`;
-  const changeEventsActionLabel = hasChangeEvents ? "View All" : "Create Change Event";
+  /* ── Change pipeline ───────────────────────────────────── */
   const sortedChangeEvents = [...changeEvents]
     .filter((ce) => !["closed", "rejected"].includes((ce.status ?? "").toLowerCase()))
-    .sort((a, b) => {
-      const aTime = new Date(a.updated_at ?? a.created_at).getTime();
-      const bTime = new Date(b.updated_at ?? b.created_at).getTime();
-      return bTime - aTime;
-    })
+    .sort((a, b) => new Date(b.updated_at ?? b.created_at).getTime() - new Date(a.updated_at ?? a.created_at).getTime())
     .slice(0, 6);
   const potentialChangeOrders = [...changeOrders]
     .filter((co: ChangeOrder) => Boolean(co?.pcco_number))
-    .sort((a: ChangeOrder, b: ChangeOrder) => {
-      const aTime = new Date(a?.updated_at ?? a?.created_at ?? 0).getTime();
-      const bTime = new Date(b?.updated_at ?? b?.created_at ?? 0).getTime();
-      return bTime - aTime;
-    })
+    .sort((a: ChangeOrder, b: ChangeOrder) =>
+      new Date(b?.updated_at ?? b?.created_at ?? 0).getTime() -
+      new Date(a?.updated_at ?? a?.created_at ?? 0).getTime(),
+    )
     .slice(0, 6);
   const approvedChangeOrders = [...changeOrders]
     .filter((co: ChangeOrder) => !co?.pcco_number)
-    .sort((a: ChangeOrder, b: ChangeOrder) => {
-      const aTime = new Date(a?.updated_at ?? a?.created_at ?? 0).getTime();
-      const bTime = new Date(b?.updated_at ?? b?.created_at ?? 0).getTime();
-      return bTime - aTime;
-    })
+    .sort((a: ChangeOrder, b: ChangeOrder) =>
+      new Date(b?.updated_at ?? b?.created_at ?? 0).getTime() -
+      new Date(a?.updated_at ?? a?.created_at ?? 0).getTime(),
+    )
     .slice(0, 6);
   const hasPipelineData =
     sortedChangeEvents.length > 0 ||
     potentialChangeOrders.length > 0 ||
     approvedChangeOrders.length > 0;
+  const hasChangeEvents = changeEvents.length > 0;
+  const changeEventsHref = hasChangeEvents
+    ? `/${projectId}/change-events`
+    : `/${projectId}/change-events/new`;
+  const changeEventsActionLabel = hasChangeEvents ? "View All" : "Create Change Event";
 
-  /* ── Derived: RFIs ──────────────────────────────────── */
+  /* ── RFIs ──────────────────────────────────────────────── */
   const rfisOpen = rfis.filter((r) => r.status.toLowerCase() !== "closed");
-  const rfisOverdue = rfisOpen.filter(
-    (r) => r.due_date && isPast(new Date(r.due_date))
-  );
+  const rfisOverdue = rfisOpen.filter((r) => r.due_date && isPast(new Date(r.due_date)));
   const rfisSort = [...rfisOpen].sort((a, b) => {
     if (a.due_date && b.due_date)
       return new Date(a.due_date).getTime() - new Date(b.due_date).getTime();
@@ -270,22 +767,19 @@ export function ProjectCommandCenter({
     return 0;
   });
 
-  /* ── Derived: Tasks ─────────────────────────────────── */
+  /* ── Tasks ─────────────────────────────────────────────── */
   const openTasks = tasks
     .filter((t) => !["done", "cancelled"].includes(t.status.toLowerCase()))
     .slice(0, 6);
-  const overdueTasks = openTasks.filter(
-    (t) => t.due_date && isPast(new Date(t.due_date))
-  );
+  const overdueTasks = openTasks.filter((t) => t.due_date && isPast(new Date(t.due_date)));
+
+  /* ── Alerts ────────────────────────────────────────────── */
+  const showPrimeContractMarkupAlert = homeAlerts?.hasPrimeContractWithoutFinancialMarkup ?? false;
   const changeOrdersWithoutChangeRequestCount =
     homeAlerts?.changeOrdersWithoutChangeRequestCount ?? 0;
-  const showPrimeContractMarkupAlert =
-    homeAlerts?.hasPrimeContractWithoutFinancialMarkup ?? false;
-  const hasHomeAlerts =
-    showPrimeContractMarkupAlert || changeOrdersWithoutChangeRequestCount > 0;
-  const hasPendingSsovReviews = pendingSsovReviews.length > 0;
 
-  /* ── Derived: Days to completion ───────────────────── */
+  /* ── Project meta ──────────────────────────────────────── */
+  const primaryContract = contracts[0] ?? null;
   const completionDate =
     (primaryContract?.substantial_completion_date as string | null) ??
     project["est completion"] ??
@@ -294,7 +788,7 @@ export function ProjectCommandCenter({
   const jobNumber = project["job number"] ?? project.project_number;
   const projectLocation = project.state ?? project.address;
 
-  /* ── Recent meetings ────────────────────────────────── */
+  /* ── Meetings ──────────────────────────────────────────── */
   const recentMeetings = [...meetings]
     .filter((m) => m.type === "meeting")
     .sort((a, b) => {
@@ -303,42 +797,36 @@ export function ProjectCommandCenter({
       return 0;
     })
     .slice(0, 4);
-  /* ── Module nav — only routes that actually exist ──── */
 
   return (
-    <div className="flex flex-col min-h-0">
+    <div className="flex min-h-0 flex-col">
       <RealtimeCursors roomName={roomName} username={currentUserName} />
 
-      {/* ────────────────────────────────────────────────────
-          IDENTITY BAND
-      ──────────────────────────────────────────────────── */}
-      <div className="px-4 sm:px-5 lg:px-7 py-4">
-        <div className="flex items-start justify-between gap-3 sm:gap-4 flex-wrap">
+      {/* Identity Band */}
+      <div className="px-4 py-4 sm:px-5 lg:px-7">
+        <div className="flex flex-wrap items-start justify-between gap-3 sm:gap-4">
           <div className="min-w-0 flex-1">
             {jobNumber && (
-              <div className="text-xs font-semibold uppercase tracking-normal text-muted-foreground mb-1.5">
+              <div className="mb-1.5 text-xs font-semibold uppercase tracking-normal text-muted-foreground">
                 Job # {jobNumber}
               </div>
             )}
-            <h1 className="text-lg sm:text-xl font-semibold text-foreground leading-snug">
+            <h1 className="text-lg font-semibold leading-snug text-foreground sm:text-xl">
               {project.name ?? "Untitled Project"}
             </h1>
-
-            <div className="flex items-center gap-3 sm:gap-4 mt-2 sm:mt-3 text-xs sm:text-sm text-muted-foreground flex-wrap">
+            <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground sm:mt-3 sm:gap-4 sm:text-sm">
               {project.client && (
                 <span className="inline-flex items-center gap-1.5">
                   <UserRound className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   {project.client}
                 </span>
               )}
-
               {infoDate && (
                 <span className="inline-flex items-center gap-1.5">
                   <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   {format(new Date(infoDate), "MMM d, yyyy")}
                 </span>
               )}
-
               {projectLocation && (
                 <span className="inline-flex items-center gap-1.5">
                   <MapPin className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
@@ -348,512 +836,84 @@ export function ProjectCommandCenter({
             </div>
           </div>
 
-          <div className="flex flex-col items-end gap-2 sm:gap-3 shrink-0">
-            <div className="flex items-center gap-2">
-              <Button
-                variant="secondary"
-                size="sm"
-                onClick={() => setIsEditProjectSidebarOpen(true)}
-              >
-                Edit
-              </Button>
-            </div>
-
-            <div className="flex items-start gap-6">
-              {project.health_score != null && (
-                <div className="text-right shrink-0">
-                  <div className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-0.5">
-                    Health
-                  </div>
-                  <div className="text-xl sm:text-2xl font-semibold tabular-nums tracking-tight">
-                    {project.health_score}
-                    <span className="text-sm font-normal text-muted-foreground">/100</span>
-                  </div>
+          <div className="flex shrink-0 flex-col items-end gap-2 sm:gap-3">
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={() => setIsEditProjectSidebarOpen(true)}
+            >
+              Edit
+            </Button>
+            {project.health_score != null && (
+              <div className="text-right">
+                <div className="mb-0.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Health
                 </div>
-              )}
-            </div>
+                <div className="text-xl font-semibold tabular-nums tracking-tight sm:text-2xl">
+                  {project.health_score}
+                  <span className="text-sm font-normal text-muted-foreground">/100</span>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-
-      {/* ────────────────────────────────────────────────────
-          BODY — 2-col layout
-      ──────────────────────────────────────────────────── */}
-      <div className="flex-1 grid grid-cols-1 lg:grid-cols-[1fr_320px] divide-y lg:divide-y-0 lg:divide-x divide-border">
-        {/* ── LEFT: Main content ──────────────────────── */}
-        <div className="px-4 sm:px-5 lg:px-7 py-4 sm:py-5 space-y-5 sm:space-y-6 min-w-0">
-
-          {/* FINANCIAL OVERVIEW */}
-          <section>
-            <SectionHeading
-              action={
-                <Link
-                  href={`/${projectId}/budget`}
-                  className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
-                >
-                  View Budget <ChevronRight className="h-3 w-3" />
-                </Link>
-              }
-            >
-              Financial Overview
-            </SectionHeading>
-
-            {budgetLoading ? (
-              <div className="space-y-3">
-                <Skeleton className="h-16 w-full" />
-                <Skeleton className="h-4 w-full" />
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {/* KPI Blocks */}
-                <KpiRow
-                  metrics={[
-                    {
-                      label: "Budget",
-                      value: fmtFull(revisedBudget),
-                      href: `/${projectId}/budget`,
-                      context: costToDate > 0
-                        ? `${fmtCompact(costToDate)} of ${fmtCompact(revisedBudget)} spent`
-                        : revisedBudget !== grandTotals.originalBudgetAmount
-                        ? `Original ${fmtFull(grandTotals.originalBudgetAmount)}`
-                        : undefined,
-                      progress: {
-                        value: spendPct,
-                        tone: spendPct > 90 ? "danger" : spendPct > 75 ? "warning" : "neutral",
-                      },
-                    },
-                    {
-                      label: "Prime Contract",
-                      value: fmtFull(primeContractValue || null),
-                      href: `/${projectId}/prime-contracts`,
-                      context: contracts.length > 0
-                        ? `${contracts.length} contract${contracts.length !== 1 ? "s" : ""}`
-                        : undefined,
-                    },
-                    {
-                      label: "Commitments",
-                      value: fmtFull(commitmentTotal || null),
-                      href: `/${projectId}/commitments`,
-                      context: commitments.length > 0
-                        ? `${commitments.length} commitment${commitments.length !== 1 ? "s" : ""}`
-                        : undefined,
-                    },
-                    {
-                      label: "Direct Costs",
-                      value: fmtFull(grandTotals.directCosts || null),
-                      href: `/${projectId}/direct-costs`,
-                      context: costToDate > 0
-                        ? `${pct(grandTotals.directCosts, costToDate)}% of cost to date`
-                        : undefined,
-                    },
-                  ]}
-                />
-
-                {/* Variance callout */}
-                {variance !== 0 && (
-                  <div
-                    className={cn(
-                      "flex items-center gap-2 rounded-md border px-3 py-2 text-sm",
-                      varianceTone === "danger"
-                        ? "border-destructive/20 bg-destructive/5 text-destructive"
-                        : "border-border bg-muted text-foreground"
-                    )}
-                  >
-                    {varianceTone === "success" ? (
-                      <TrendingDown className="h-4 w-4 shrink-0" />
-                    ) : (
-                      <AlertTriangle className="h-4 w-4 shrink-0" />
-                    )}
-                    <span>
-                      Forecast{" "}
-                      <strong>
-                        {variance > 0 ? "under" : "over"} budget by{" "}
-                        {fmtCompact(Math.abs(variance))}
-                      </strong>
-                      {" "}· ECAC {fmtFull(ecac)}
-                    </span>
-                  </div>
-                )}
-
-              </div>
-            )}
-          </section>
-
-         {/* PROJECT TEAM */}
-          <section>
-            <SectionHeading
-              action={
-                <Link
-                  href={`/${projectId}/directory`}
-                  className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
-                >
-                  View Team <ChevronRight className="h-3 w-3" />
-                </Link>
-              }
-            >
-              Project Team
-            </SectionHeading>
-
-            {team.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No team members assigned</p>
-            ) : (
-              <div>
-                {team.slice(0, 6).map((member) => {
-                  const displayName = member.full_name?.trim() || "Team Member";
-                  const avatarSrc = member.person_id
-                    ? `/api/avatar/${member.person_id}?projectId=${projectId}`
-                    : undefined;
-
-                  return (
-                    <div
-                      key={member.id}
-                      className="flex items-center gap-3 py-2.5 border-b border-border/50 last:border-0"
-                    >
-                      <Avatar className="h-8 w-8 rounded-full">
-                        <AvatarImage src={avatarSrc} alt={displayName} />
-                        <AvatarFallback className="text-xs">{initials(displayName)}</AvatarFallback>
-                      </Avatar>
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">{displayName}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
-                          {member.role || "Team Member"}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-
-          <Divider />
-
-          {/* RECENT MEETINGS */}
-          <section>
-            <SectionHeading
-              action={
-                <Link
-                  href={`/${projectId}/meetings`}
-                  className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
-                >
-                  View All <ChevronRight className="h-3 w-3" />
-                </Link>
-              }
-            >
-              Recent Meetings
-            </SectionHeading>
-
-            {recentMeetings.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No meetings recorded</p>
-            ) : (
-              <div className="space-y-1">
-                {recentMeetings.map((m) => {
-                  const meetingDateLabel = m.date
-                    ? format(new Date(m.date), "MMM d")
-                    : null;
-
-                  return (
-                    <Link
-                      key={m.id}
-                      href={`/${projectId}/meetings/${m.id}`}
-                      className="group flex items-center gap-3 py-2 px-2 -mx-2 rounded-md hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-muted text-muted-foreground">
-                        <Calendar className="h-3.5 w-3.5" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm truncate group-hover:text-primary transition-colors">
-                          {m.title ?? "Meeting"}
-                        </p>
-                      </div>
-                      {meetingDateLabel && (
-                        <span className="text-xs text-muted-foreground tabular-nums shrink-0">
-                          {meetingDateLabel}
-                        </span>
-                      )}
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-
-          <Divider />
-
-          {/* CHANGE PIPELINE */}
-          <section>
-            <SectionHeading
-              action={
-                <Link
-                  href={changeEventsHref}
-                  className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
-                >
-                  {changeEventsActionLabel} <ChevronRight className="h-3 w-3" />
-                </Link>
-              }
-            >
-              Change Pipeline
-            </SectionHeading>
-
-            {!hasPipelineData ? (
-              <p className="text-sm text-muted-foreground">No pipeline items</p>
-            ) : (
-              <div className="space-y-3">
-                {/* Summary counts */}
-                <div className="flex flex-wrap gap-2">
-                  {ceDraft > 0 && <StatPill label="Draft CEs" value={ceDraft} tone="neutral" />}
-                  {cePending > 0 && <StatPill label="Pending" value={cePending} tone="warning" />}
-                  {ceApproved > 0 && <StatPill label="Approved" value={ceApproved} tone="success" />}
-                  {ceRejected > 0 && <StatPill label="Rejected" value={ceRejected} tone="danger" />}
-                </div>
-
-                {/* Unified flat list */}
-                <div className="divide-y divide-border rounded-md border border-border overflow-hidden">
-                  {sortedChangeEvents.map((ce) => (
-                    <Link
-                      key={ce.id}
-                      href={`/${projectId}/change-events/${ce.id}`}
-                      className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors"
-                    >
-                      <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-muted-foreground">
-                        CE
-                      </span>
-                      <span className="flex-1 truncate text-sm">
-                        {ce.title ?? `Change Event #${ce.number}`}
-                      </span>
-                      <StatusBadge status={ce.status ?? "Draft"} />
-                    </Link>
-                  ))}
-                  {potentialChangeOrders.map((co: ChangeOrder) => (
-                    <Link
-                      key={`pco-${co.id}`}
-                      href={`/${projectId}/change-orders/prime/${co.id}`}
-                      className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors"
-                    >
-                      <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-muted-foreground">
-                        PCO
-                      </span>
-                      <span className="flex-1 truncate text-sm">
-                        {co.title ?? "Untitled PCO"}
-                      </span>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-xs tabular-nums text-muted-foreground">
-                          {fmtCompact(co.total_amount)}
-                        </span>
-                        <StatusBadge status={co.status ?? "Proposed"} />
-                      </div>
-                    </Link>
-                  ))}
-                  {approvedChangeOrders.map((co: ChangeOrder) => {
-                    const isCommitmentCo = Boolean(co.change_order_number);
-                    const coHref = isCommitmentCo
-                      ? `/${projectId}/change-orders/commitment/${co.id}`
-                      : `/${projectId}/change-orders/prime/${co.id}`;
-                    return (
-                      <Link
-                        key={`co-${co.id}`}
-                        href={coHref}
-                        className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors"
-                      >
-                        <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-muted-foreground">
-                          CO
-                        </span>
-                        <span className="flex-1 truncate text-sm">
-                          {co.title ?? "Untitled CO"}
-                        </span>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <span className="text-xs tabular-nums text-muted-foreground">
-                            {fmtCompact(co.amount ?? co.total_amount)}
-                          </span>
-                          <StatusBadge status={co.status ?? "Pending"} />
-                        </div>
-                      </Link>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </section>
-
+      {/* Body — 2-col layout */}
+      <div className="flex-1 grid grid-cols-1 divide-y divide-border lg:grid-cols-[1fr_320px] lg:divide-x lg:divide-y-0">
+        {/* Left: Main */}
+        <div className="min-w-0 px-4 py-4 sm:px-5 sm:py-5 lg:px-7">
+          <ContentSectionStack>
+            <FinancialOverviewSection
+              projectId={projectId}
+              budgetLoading={budgetLoading}
+              revisedBudget={revisedBudget}
+              costToDate={costToDate}
+              ecac={ecac}
+              variance={variance}
+              spendPct={spendPct}
+              varianceTone={varianceTone}
+              originalBudgetAmount={grandTotals.originalBudgetAmount}
+              primeContractValue={primeContractValue}
+              commitmentTotal={commitmentTotal}
+              commitments={commitments}
+              contracts={contracts}
+              directCosts={grandTotals.directCosts}
+            />
+            <ProjectTeamSection projectId={projectId} team={team} />
+            <RecentMeetingsSection projectId={projectId} meetings={recentMeetings} />
+            <ChangePipelineSection
+              projectId={projectId}
+              hasPipelineData={hasPipelineData}
+              actionHref={changeEventsHref}
+              actionLabel={changeEventsActionLabel}
+              changeEvents={sortedChangeEvents}
+              potentialChangeOrders={potentialChangeOrders}
+              approvedChangeOrders={approvedChangeOrders}
+            />
+          </ContentSectionStack>
         </div>
 
-        {/* ── RIGHT: Sidebar ──────────────────────────── */}
-        <div className="px-4 sm:px-5 py-4 sm:py-5 space-y-5 sm:space-y-6 bg-muted/20">
-
-          {/* ALERTS */}
-          <section>
-            <SectionHeading>Alerts</SectionHeading>
-
-            {!hasHomeAlerts ? (
-              <div className="flex items-center gap-2 rounded-md px-3 py-2.5 bg-status-success/10 text-status-success text-sm">
-                <CheckCircle2 className="h-4 w-4 shrink-0" />
-                <span>No financial or change-order alerts</span>
-              </div>
-            ) : (
-              <div className="space-y-1.5">
-                {showPrimeContractMarkupAlert && (
-                  <Link
-                    href={`/${projectId}/prime-contracts`}
-                    className="flex items-center justify-between rounded-md px-3 py-2.5 bg-destructive/10 hover:bg-destructive/15 transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />
-                      <span className="text-sm font-medium text-destructive">
-                        Prime contract created without financial markup
-                      </span>
-                    </div>
-                    <ChevronRight className="h-3.5 w-3.5 text-destructive" />
-                  </Link>
-                )}
-                {changeOrdersWithoutChangeRequestCount > 0 && (
-                  <Link
-                    href={`/${projectId}/change-orders`}
-                    className="flex items-center justify-between rounded-md px-3 py-2.5 bg-destructive/10 hover:bg-destructive/15 transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />
-                      <span className="text-sm font-medium text-destructive">
-                        {changeOrdersWithoutChangeRequestCount} change order
-                        {changeOrdersWithoutChangeRequestCount !== 1 ? "s" : ""} without change request
-                      </span>
-                    </div>
-                    <ChevronRight className="h-3.5 w-3.5 text-destructive" />
-                  </Link>
-                )}
-              </div>
-            )}
-          </section>
-
-          <Divider />
-
-          {/* ACTION REQUIRED */}
-          <section>
-            <SectionHeading>Action Required</SectionHeading>
-
-            {rfisOverdue.length === 0 && overdueTasks.length === 0 && !hasPendingSsovReviews ? (
-              <div className="flex items-center gap-2 rounded-md px-3 py-2.5 bg-status-success/10 text-status-success text-sm">
-                <CheckCircle2 className="h-4 w-4 shrink-0" />
-                <span>No overdue items</span>
-              </div>
-            ) : (
-              <div className="space-y-1.5">
-                {hasPendingSsovReviews && (
-                  <Link
-                    href={`/${projectId}/commitments`}
-                    className="flex items-center justify-between rounded-md px-3 py-2.5 bg-status-warning/10 hover:bg-status-warning/15 transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <Clock className="h-3.5 w-3.5 text-status-warning shrink-0" />
-                      <span className="text-sm font-medium text-status-warning">
-                        {pendingSsovReviews.length} subcontractor SOV
-                        {pendingSsovReviews.length !== 1 ? "s" : ""} awaiting review
-                      </span>
-                    </div>
-                    <ChevronRight className="h-3.5 w-3.5 text-status-warning" />
-                  </Link>
-                )}
-                {hasPendingSsovReviews && (
-                  <div className="rounded-md border border-border/70 bg-background">
-                    {pendingSsovReviews.slice(0, 3).map((item) => (
-                      <Link
-                        key={item.commitmentId}
-                        href={`/${projectId}/commitments/${item.commitmentId}?tab=subcontractor-sov`}
-                        className="flex items-start justify-between gap-2 px-3 py-2.5 border-b border-border/60 last:border-b-0 hover:bg-muted/40 transition-colors"
-                      >
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium truncate">
-                            {item.commitmentNumber ? `${item.commitmentNumber} · ` : ""}
-                            {item.commitmentTitle}
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            Submitted {item.submittedAt ? format(new Date(item.submittedAt), "MMM d, yyyy") : "recently"}
-                          </p>
-                        </div>
-                        <StatusBadge status="Under Review" />
-                      </Link>
-                    ))}
-                  </div>
-                )}
-                {rfisOverdue.length > 0 && (
-                  <Link
-                    href={`/${projectId}/rfis`}
-                    className="flex items-center justify-between rounded-md px-3 py-2.5 bg-destructive/10 hover:bg-destructive/15 transition-colors"
-                  >
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="h-3.5 w-3.5 text-destructive shrink-0" />
-                      <span className="text-sm font-medium text-destructive">
-                        {rfisOverdue.length} overdue RFI
-                        {rfisOverdue.length !== 1 ? "s" : ""}
-                      </span>
-                    </div>
-                    <ChevronRight className="h-3.5 w-3.5 text-destructive" />
-                  </Link>
-                )}
-                {overdueTasks.length > 0 && (
-                  <div className="flex items-center gap-2 rounded-md px-3 py-2.5 bg-status-warning/10">
-                    <Clock className="h-3.5 w-3.5 text-status-warning shrink-0" />
-                    <span className="text-sm font-medium text-status-warning">
-                      {overdueTasks.length} overdue task
-                      {overdueTasks.length !== 1 ? "s" : ""}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-          </section>
-
-          <Divider />
-
-          {/* OPEN RFIs */}
-          <section>
-            <SectionHeading
-              action={
-                <Link
-                  href={`/${projectId}/rfis`}
-                  className="flex items-center gap-1 text-xs text-primary hover:text-primary/80 transition-colors"
-                >
-                  All RFIs <ChevronRight className="h-3 w-3" />
-                </Link>
-              }
-            >
-              Open RFIs{rfisOpen.length > 0 ? ` (${rfisOpen.length})` : ""}
-            </SectionHeading>
-
-            {rfisSort.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No open RFIs</p>
-            ) : (
-              <div>
-                {rfisSort.slice(0, 5).map((rfi) => {
-                  const overdue = rfi.due_date && isPast(new Date(rfi.due_date));
-                  return (
-                    <Link
-                      key={rfi.id}
-                      href={`/${projectId}/rfis/${rfi.id}`}
-                      className="flex items-start gap-2.5 py-2.5 border-b border-border/50 last:border-0 hover:bg-muted/50 -mx-2 px-2 rounded-md transition-colors"
-                    >
-                      <span
-                        className={cn(
-                          "mt-[5px] h-1.5 w-1.5 rounded-full shrink-0",
-                          overdue ? "bg-destructive" : "bg-amber-500 dark:bg-amber-400"
-                        )}
-                      />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm truncate">{rfi.subject}</p>
-                        {rfi.due_date && (
-                          <p className="text-xs text-muted-foreground mt-0.5">
-                            Due {format(new Date(rfi.due_date), "MMM d")}
-                          </p>
-                        )}
-                      </div>
-                      <StatusBadge status={rfi.status} />
-                    </Link>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-
+        {/* Right: Sidebar */}
+        <div className="bg-muted/20 px-4 py-4 sm:px-5 sm:py-5">
+          <ContentSectionStack>
+            <AlertsSection
+              projectId={projectId}
+              showPrimeContractMarkupAlert={showPrimeContractMarkupAlert}
+              changeOrdersWithoutChangeRequestCount={changeOrdersWithoutChangeRequestCount}
+            />
+            <ActionRequiredSection
+              projectId={projectId}
+              rfisOverdue={rfisOverdue}
+              overdueTasks={overdueTasks}
+              pendingSsovReviews={pendingSsovReviews}
+            />
+            <OpenRFIsSection
+              projectId={projectId}
+              rfisOpen={rfisOpen}
+              rfisSort={rfisSort}
+            />
+          </ContentSectionStack>
         </div>
       </div>
 

@@ -156,12 +156,31 @@ Spawn two subagents in parallel:
 - Output: `01-codebase-inventory.md`.
 
 2. `discover_procore_worker`
-- Read Procore docs/support context and current known reference material.
+- **MANDATORY: Run `procore-docs-rag` Tier 1 queries** before any other research.
+  Run from project root — all four mandatory queries plus feature-specific queries:
+  ```bash
+  node scripts/procore-docs-query.js "<feature> toolbar actions create button options"
+  node scripts/procore-docs-query.js "<feature> export pdf csv print"
+  node scripts/procore-docs-query.js "<feature> list view tabs navigation"
+  node scripts/procore-docs-query.js "<feature> row actions menu options"
+  node scripts/procore-docs-query.js "<feature> statuses and workflow transitions"
+  node scripts/procore-docs-query.js "<feature> required fields validation rules"
+  node scripts/procore-docs-query.js "<feature> line items and calculations"
+  ```
+- For any result with score < 60%, escalate to Tier 3 (WebFetch from `v2.support.procore.com`).
+- Read existing Procore manifests at `.claude/procore-manifests/<feature>/manifest.json` (Tier 2).
+- Synthesize all three tiers into `02-procore-reference.md` with explicit sections:
+  - **Business Rules & Workflows** (from Tier 1 RAG)
+  - **UI Structure & Fields** (from Tier 2 manifests)
+  - **Full Article Details** (from Tier 3 WebFetch, if used)
+  - **Source URLs** (every Procore support article consulted)
 - Output: `02-procore-reference.md`.
 
 Gate to proceed:
 - both artifacts exist and non-empty
 - codebase inventory includes sections for routes, hooks, schemas, DB types
+- procore reference includes at least Business Rules and UI Structure sections
+- procore reference lists source URLs for traceability
 
 ### Phase 2: CAPTURE_SOURCE_OF_TRUTH
 
@@ -192,16 +211,28 @@ Gate to proceed:
 
 ### Phase 4: GAP_ANALYZE (parallel lanes + synthesis)
 
+**Pre-step: RAG-grounded behavior baseline.**
+Before spawning comparison workers, load `02-procore-reference.md` (produced in Phase 1).
+Each worker MUST use this as the authoritative definition of expected behavior — not training data, not assumptions.
+If any worker encounters an ambiguous gap (e.g., "should this field be required?", "is this status transition valid?"), it MUST:
+1. Query `procore-docs-rag` Tier 1 with a targeted question.
+2. If score < 60%, escalate to Tier 3 (WebFetch the support article).
+3. Record the source URL and finding in the gap entry's `evidence` field.
+A gap without an authoritative source is flagged `needs-verification`, not `confirmed`.
+
 Parallel comparison workers:
 
 1. `db_parity_worker`
 - Compare corrected manifest vs DB schema/types/migrations.
+- Cross-reference field requirements against RAG findings (required/optional/conditional).
 
 2. `api_parity_worker`
 - Compare expected CRUD/workflow endpoints vs implemented routes/services.
+- Verify status transition logic against RAG-documented workflow rules.
 
 3. `ui_parity_worker`
 - Compare expected pages/forms/tables/tabs/actions vs implementation.
+- Verify field labels, dropdown options, and validation rules against RAG findings.
 
 Synthesis outputs:
 - `04-gap-analysis-report.md`
@@ -217,15 +248,32 @@ Gate to proceed:
 
 Goal: close `critical` and `high`, then `medium` as budget allows.
 
+**Pre-step: RAG-grounded fix planning.**
+Every `fix_worker` MUST consult `02-procore-reference.md` AND run targeted RAG queries
+before writing any code. The sequence is:
+1. Read the gap description and the corrected manifest entry.
+2. Query `procore-docs-rag` Tier 1 for the specific behavior being fixed:
+   ```bash
+   node scripts/procore-docs-query.js "<specific question about expected behavior>"
+   ```
+3. If the RAG result is ambiguous (score < 60%) or the fix involves workflow/status logic,
+   escalate to Tier 3 (WebFetch the relevant support article).
+4. Record the authoritative source in the remediation log entry for that fix.
+5. Only then implement the fix grounded in the documented behavior.
+
+**Do NOT implement fixes based on assumptions or training data.** If the correct
+Procore behavior cannot be determined from RAG + manifests + support articles,
+mark the task `blocked` with reason `needs-manual-verification` rather than guessing.
+
 Loop rules:
 1. Select next task by severity then dependency order.
 2. Claim lock per task:
    - `.claude/locks/<feature>/<run_id>/<task_id>.lock`
    - includes session id, owner, started_at, heartbeat
-3. Spawn `fix_worker` for each unlocked runnable task.
+3. Spawn `fix_worker` for each unlocked runnable task (with RAG pre-step above).
 4. After each fix:
    - run quality checks
-   - update `07-remediation-log.md`
+   - update `07-remediation-log.md` (include RAG source URL for each fix)
    - update task status in `06-task-list.json`
    - synchronize finding status in `05-verification-report.json`
 5. Release lock.

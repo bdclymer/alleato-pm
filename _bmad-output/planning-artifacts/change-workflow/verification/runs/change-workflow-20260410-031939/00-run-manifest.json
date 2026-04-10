@@ -1,0 +1,66 @@
+{
+  "run_id": "change-workflow-20260410-031939",
+  "feature": "change-workflow",
+  "feature_description": "Full lifecycle of changes: Change Events → Potential Change Orders → Official Change Orders, across two paths: Prime Contracts (owner invoices) and Commitments (subcontractor)",
+  "project_id": "562949954728542",
+  "mode": "full",
+  "git_sha": "f063656c",
+  "started_at": "2026-04-10T03:19:39Z",
+  "completed_at": "2026-04-10T08:15:00Z",
+  "verdict": "PASS_WITH_NOTES",
+  "sub_features": [
+    "change-events",
+    "change-orders-prime-contract",
+    "change-orders-commitment"
+  ],
+  "phases": [
+    {
+      "phase": "INIT_COMMAND",
+      "state": "completed",
+      "started_at": "2026-04-10T03:19:39Z",
+      "completed_at": "2026-04-10T03:20:00Z"
+    },
+    {
+      "phase": "DISCOVER",
+      "state": "completed",
+      "started_at": "2026-04-10T03:20:00Z",
+      "completed_at": "2026-04-10T03:35:00Z"
+    },
+    {
+      "phase": "CAPTURE_SOURCE_OF_TRUTH",
+      "state": "completed",
+      "started_at": "2026-04-10T03:35:00Z",
+      "completed_at": "2026-04-10T03:36:00Z"
+    },
+    {
+      "phase": "RECONCILE_MANIFEST",
+      "state": "completed",
+      "started_at": "2026-04-10T03:36:00Z",
+      "completed_at": "2026-04-10T03:37:00Z"
+    },
+    {
+      "phase": "GAP_ANALYZE",
+      "state": "completed",
+      "started_at": "2026-04-10T03:37:00Z",
+      "completed_at": "2026-04-10T04:00:00Z"
+    },
+    {
+      "phase": "REMEDIATE",
+      "state": "completed",
+      "started_at": "2026-04-10T04:00:00Z",
+      "completed_at": "2026-04-10T08:00:00Z"
+    },
+    {
+      "phase": "VERIFY_IMPLEMENTATION",
+      "state": "completed",
+      "started_at": "2026-04-10T08:00:00Z",
+      "completed_at": "2026-04-10T08:10:00Z"
+    },
+    {
+      "phase": "FINALIZE_AND_REPORT",
+      "state": "completed",
+      "started_at": "2026-04-10T08:10:00Z",
+      "completed_at": "2026-04-10T08:15:00Z"
+    }
+  ]
+}

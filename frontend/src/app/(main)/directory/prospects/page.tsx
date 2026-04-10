@@ -643,6 +643,10 @@ export default function DirectoryProspectsPage(): ReactElement {
         enableExport: false,
         enableBulkDelete: true,
       }}
+      layout={{
+        fullBleedTable: true,
+        removeTableFrame: true,
+      }}
     />
   );
 }

@@ -274,7 +274,13 @@ export async function POST(
       period_end,
       billing_date,
       notes,
+      status: statusRaw,
+      line_items,
     } = body;
+
+    // Validate status — only "draft" or "under_review" allowed on create
+    const allowedStatuses = ["draft", "under_review"];
+    const status = statusRaw && allowedStatuses.includes(statusRaw) ? statusRaw : "draft";
 
     // Exactly one of subcontract_id or purchase_order_id is required
     if (!subcontract_id && !purchase_order_id) {
@@ -335,7 +341,7 @@ export async function POST(
         period_end: period_end ?? null,
         billing_date: billing_date === "" ? null : (billing_date ?? null),
         notes: notes ?? null,
-        status: "draft",
+        status,
       })
       .select()
       .single();
@@ -345,6 +351,60 @@ export async function POST(
         { error: "Failed to create subcontractor invoice", details: insertError.message },
         { status: 500 },
       );
+    }
+
+    // Insert line items if provided
+    if (Array.isArray(line_items) && line_items.length > 0) {
+      const lineItemRows = line_items.map((item: {
+        description: string;
+        budget_code?: string | null;
+        scheduled_value: number;
+        work_completed_previous: number;
+        work_completed_period: number;
+        materials_stored: number;
+        retainage_pct: number;
+        materials_retainage_pct?: number;
+        sort_order?: number;
+      }, index: number) => {
+        const scheduled = Number(item.scheduled_value) || 0;
+        const previous = Number(item.work_completed_previous) || 0;
+        const thisPeriod = Number(item.work_completed_period) || 0;
+        const stored = Number(item.materials_stored) || 0;
+        const retainagePct = Number(item.retainage_pct) || 0;
+        const materialsRetainagePct = Number(item.materials_retainage_pct) || 0;
+
+        // Derived fields — total_completed_stored is GENERATED in Postgres, compute only for pct
+        const totalCompletedStored = previous + thisPeriod + stored;
+        const workCompletedPct = scheduled > 0 ? (totalCompletedStored / scheduled) * 100 : 0;
+        const retainageAmount = ((previous + thisPeriod) * retainagePct) / 100;
+        const materialsRetainageAmount = (stored * materialsRetainagePct) / 100;
+
+        return {
+          invoice_id: invoice.id,
+          description: item.description,
+          scheduled_value: scheduled,
+          work_completed_previous: previous,
+          work_completed_period: thisPeriod,
+          materials_stored: stored,
+          retainage_pct: retainagePct,
+          retainage_amount: retainageAmount,
+          materials_retainage_pct: materialsRetainagePct,
+          materials_retainage_amount: materialsRetainageAmount,
+          work_completed_pct: workCompletedPct,
+          sort_order: item.sort_order ?? index,
+        };
+      });
+
+      const { error: lineItemsError } = await supabase
+        .from("subcontractor_invoice_line_items")
+        .insert(lineItemRows);
+
+      if (lineItemsError) {
+        return NextResponse.json(
+          { error: "Invoice created but failed to insert line items", details: lineItemsError.message },
+          { status: 500 },
+        );
+      }
     }
 
     return NextResponse.json({ data: invoice }, { status: 201 });

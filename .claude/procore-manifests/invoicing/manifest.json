@@ -1,7 +1,7 @@
 {
   "feature": "invoicing",
   "featureName": "Invoicing",
-  "capturedAt": "2026-04-09T17:25:24.759Z",
+  "capturedAt": "2026-04-09T23:38:33.922Z",
   "states": {
     "list-owner": {
       "id": "list-owner",
@@ -89,7 +89,7 @@
           "variant": "default"
         },
         {
-          "label": "Was compliance with ASHRAE 170 discussed?CmdK",
+          "label": "Which attendees have not approved the meeting minutes?CmdK",
           "type": "button",
           "variant": "default"
         },
@@ -131,7 +131,7 @@
               "label": "Billing Period",
               "type": "select",
               "required": false,
-              "placeholder": "",
+              "placeholder": "Select Values",
               "options": [],
               "currentValue": "",
               "helpText": ""
@@ -141,7 +141,7 @@
               "label": "Contract Company",
               "type": "select",
               "required": false,
-              "placeholder": "",
+              "placeholder": "Select Values",
               "options": [],
               "currentValue": "",
               "helpText": ""
@@ -151,7 +151,7 @@
               "label": "Payment Status",
               "type": "select",
               "required": false,
-              "placeholder": "",
+              "placeholder": "Select Values",
               "options": [],
               "currentValue": "",
               "helpText": ""
@@ -161,7 +161,7 @@
               "label": "Invoice Status",
               "type": "select",
               "required": false,
-              "placeholder": "",
+              "placeholder": "Select Values",
               "options": [],
               "currentValue": "",
               "helpText": ""
@@ -171,7 +171,7 @@
               "label": "Contract Type",
               "type": "select",
               "required": false,
-              "placeholder": "",
+              "placeholder": "Select Values",
               "options": [],
               "currentValue": "",
               "helpText": ""
@@ -271,11 +271,6 @@
           "variant": "default"
         },
         {
-          "label": "What sub invoices do I have pending approval?CmdK",
-          "type": "button",
-          "variant": "default"
-        },
-        {
           "label": "More",
           "type": "dropdown",
           "variant": "default"
@@ -313,7 +308,7 @@
               "label": "Billing Period",
               "type": "select",
               "required": false,
-              "placeholder": "",
+              "placeholder": "Select Values",
               "options": [],
               "currentValue": "",
               "helpText": ""
@@ -323,7 +318,7 @@
               "label": "Contract Company",
               "type": "select",
               "required": false,
-              "placeholder": "",
+              "placeholder": "Select Values",
               "options": [],
               "currentValue": "",
               "helpText": ""
@@ -333,7 +328,7 @@
               "label": "Payment Status",
               "type": "select",
               "required": false,
-              "placeholder": "",
+              "placeholder": "Select Values",
               "options": [],
               "currentValue": "",
               "helpText": ""
@@ -343,7 +338,7 @@
               "label": "Invoice Status",
               "type": "select",
               "required": false,
-              "placeholder": "",
+              "placeholder": "Select Values",
               "options": [],
               "currentValue": "",
               "helpText": ""
@@ -353,7 +348,7 @@
               "label": "Contract Type",
               "type": "select",
               "required": false,
-              "placeholder": "",
+              "placeholder": "Select Values",
               "options": [],
               "currentValue": "",
               "helpText": ""
@@ -465,11 +460,6 @@
         {
           "label": "Project ToolsCommitments",
           "type": "dropdown",
-          "variant": "default"
-        },
-        {
-          "label": "Which RFI Manager has the most open RFIs?CmdK",
-          "type": "button",
           "variant": "default"
         },
         {
@@ -631,7 +621,7 @@
               "label": "Billing Period",
               "type": "select",
               "required": false,
-              "placeholder": "",
+              "placeholder": "Select Values",
               "options": [],
               "currentValue": "",
               "helpText": ""
@@ -641,7 +631,7 @@
               "label": "Contract Company",
               "type": "select",
               "required": false,
-              "placeholder": "",
+              "placeholder": "Select Values",
               "options": [],
               "currentValue": "",
               "helpText": ""
@@ -651,7 +641,7 @@
               "label": "Payment Status",
               "type": "select",
               "required": false,
-              "placeholder": "",
+              "placeholder": "Select Values",
               "options": [],
               "currentValue": "",
               "helpText": ""
@@ -661,7 +651,7 @@
               "label": "Invoice Status",
               "type": "select",
               "required": false,
-              "placeholder": "",
+              "placeholder": "Select Values",
               "options": [],
               "currentValue": "",
               "helpText": ""
@@ -671,7 +661,7 @@
               "label": "Contract Type",
               "type": "select",
               "required": false,
-              "placeholder": "",
+              "placeholder": "Select Values",
               "options": [],
               "currentValue": "",
               "helpText": ""
@@ -852,7 +842,7 @@
           "variant": "default"
         },
         {
-          "label": "Who is the Adjust duct routing instruction issued to?CmdK",
+          "label": "Did we go over workers taking a safety course?CmdK",
           "type": "button",
           "variant": "default"
         },
@@ -890,8 +880,8 @@
           "title": "",
           "fields": [
             {
-              "name": "who_is_the_adjust_duct_routing_instruction_issued_to?",
-              "label": "Who is the Adjust duct routing instruction issued to?",
+              "name": "did_we_go_over_workers_taking_a_safety_course?",
+              "label": "Did we go over workers taking a safety course?",
               "type": "custom",
               "required": false,
               "placeholder": "",
@@ -989,7 +979,7 @@
           "variant": "default"
         },
         {
-          "label": "What is the most recent RFI?CmdK",
+          "label": "Are there any RFIs that reference engine exhaust?CmdK",
           "type": "button",
           "variant": "default"
         },
@@ -1027,8 +1017,8 @@
           "title": "",
           "fields": [
             {
-              "name": "what_is_the_most_recent_rfi?",
-              "label": "What is the most recent RFI?",
+              "name": "are_there_any_rfis_that_reference_engine_exhaust?",
+              "label": "Are there any RFIs that reference engine exhaust?",
               "type": "custom",
               "required": false,
               "placeholder": "",
@@ -1098,11 +1088,6 @@
           "variant": "default"
         },
         {
-          "label": "Are there any RFIs that reference engine exhaust?CmdK",
-          "type": "button",
-          "variant": "default"
-        },
-        {
           "label": "More",
           "type": "dropdown",
           "variant": "default"
@@ -1135,15 +1120,6 @@
         {
           "title": "",
           "fields": [
-            {
-              "name": "are_there_any_rfis_that_reference_engine_exhaust?",
-              "label": "Are there any RFIs that reference engine exhaust?",
-              "type": "custom",
-              "required": false,
-              "placeholder": "",
-              "options": [],
-              "helpText": ""
-            },
             {
               "name": "cmdk",
               "label": "CmdK",
@@ -1312,6 +1288,11 @@
         {
           "label": "Project ToolsCommitments",
           "type": "dropdown",
+          "variant": "default"
+        },
+        {
+          "label": "Can you summarize the safety email?CmdK",
+          "type": "button",
           "variant": "default"
         },
         {

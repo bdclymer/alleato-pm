@@ -1,0 +1,84 @@
+/**
+ * Resend delivery webhook.
+ *
+ * Handles: email.sent, email.delivered, email.bounced, email.complained,
+ *          email.opened, email.clicked, email.delivery_delayed, email.suppressed
+ *
+ * Signature verification uses the Svix-compatible headers Resend sends.
+ * Configure the endpoint + secret in the Resend dashboard → Webhooks.
+ */
+import { NextResponse } from "next/server";
+import { getResend } from "@/lib/email/client";
+import { createServiceClient } from "@/lib/supabase/service";
+
+export const runtime = "nodejs";
+
+const EVENT_TO_STATUS: Record<string, string> = {
+  "email.sent": "sent",
+  "email.delivered": "delivered",
+  "email.bounced": "bounced",
+  "email.complained": "complained",
+  "email.opened": "opened",
+  "email.clicked": "clicked",
+  "email.delivery_delayed": "delivery_delayed",
+  "email.suppressed": "suppressed",
+};
+
+export async function POST(req: Request) {
+  const secret = process.env.RESEND_WEBHOOK_SECRET;
+  if (!secret) {
+    console.error("[resend-webhook] RESEND_WEBHOOK_SECRET not set");
+    return NextResponse.json({ error: "not configured" }, { status: 500 });
+  }
+
+  const payload = await req.text();
+  const svixId = req.headers.get("svix-id");
+  const svixTimestamp = req.headers.get("svix-timestamp");
+  const svixSignature = req.headers.get("svix-signature");
+
+  if (!svixId || !svixTimestamp || !svixSignature) {
+    return NextResponse.json({ error: "missing signature headers" }, { status: 400 });
+  }
+
+  let event: { type: string; data: Record<string, unknown> };
+  try {
+    const resend = getResend();
+    const verified = resend.webhooks.verify({
+      payload,
+      headers: {
+        id: svixId,
+        timestamp: svixTimestamp,
+        signature: svixSignature,
+      },
+      webhookSecret: secret,
+    });
+    event = verified as unknown as { type: string; data: Record<string, unknown> };
+  } catch (err) {
+    console.error("[resend-webhook] signature verification failed", err);
+    return NextResponse.json({ error: "invalid signature" }, { status: 401 });
+  }
+
+  const status = EVENT_TO_STATUS[event.type];
+  if (!status) {
+    // Not an email event we track (e.g. domain.*, contact.*)
+    return NextResponse.json({ ok: true, ignored: event.type });
+  }
+
+  const emailId =
+    (event.data.email_id as string | undefined) ??
+    (event.data.id as string | undefined);
+  if (!emailId) {
+    return NextResponse.json({ ok: true, ignored: "no email_id" });
+  }
+
+  const supabase = createServiceClient();
+  const update: Record<string, unknown> = { status };
+  if (status === "delivered") update.delivered_at = new Date().toISOString();
+  if (status === "bounced" || status === "complained") {
+    update.error = { type: event.type, data: event.data };
+  }
+
+  await supabase.from("email_events").update(update).eq("resend_id", emailId);
+
+  return NextResponse.json({ ok: true });
+}

@@ -7,6 +7,12 @@ import { Pencil, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import {
   Table,
   TableBody,
   TableCell,
@@ -20,6 +26,97 @@ import {
   type LineItemEdits,
   type SovLineItem,
 } from "./shared";
+
+/* ─── Bulk Retainage Sidebar ─── */
+
+function RetainageSidebar({
+  open,
+  onOpenChange,
+  onApply,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onApply: (type: "work" | "materials", pct: number) => void;
+}) {
+  const [workPct, setWorkPct] = useState("");
+  const [matPct, setMatPct] = useState("");
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-80">
+        <SheetHeader>
+          <SheetTitle>Set Retainage On All Line Items</SheetTitle>
+        </SheetHeader>
+        <div className="space-y-6 pt-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Work Completed</label>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                step="0.01"
+                value={workPct}
+                onChange={(e) => setWorkPct(e.target.value)}
+                placeholder="10.00"
+                className="h-8 w-24"
+              />
+              <span className="text-sm text-muted-foreground">%</span>
+              <Button
+                size="sm"
+                onClick={() => {
+                  const v = Number(workPct);
+                  if (!Number.isNaN(v) && v >= 0) onApply("work", v);
+                }}
+              >
+                Set
+              </Button>
+            </div>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Materials Stored</label>
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                step="0.01"
+                value={matPct}
+                onChange={(e) => setMatPct(e.target.value)}
+                placeholder="10.00"
+                className="h-8 w-24"
+              />
+              <span className="text-sm text-muted-foreground">%</span>
+              <Button
+                size="sm"
+                onClick={() => {
+                  const v = Number(matPct);
+                  if (!Number.isNaN(v) && v >= 0) onApply("materials", v);
+                }}
+              >
+                Set
+              </Button>
+            </div>
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+/* ─── Computed retainage helpers ─── */
+
+function getWorkCurrentlyRetained(li: SovLineItem) {
+  const prev = Number(li.previous_work_retainage) || 0;
+  const thisPeriod = Number(li.retainage_amount) || 0;
+  const released = Number(li.work_retainage_released) || 0;
+  return prev + thisPeriod - released;
+}
+
+function getMatCurrentlyRetained(li: SovLineItem) {
+  const prev = Number(li.previous_materials_retainage) || 0;
+  const thisPeriod = Number(li.materials_retainage_amount) || 0;
+  const released = Number(li.materials_retainage_released) || 0;
+  return prev + thisPeriod - released;
+}
+
+/* ─── Main Component ─── */
 
 interface DetailTabProps {
   projectId: string;
@@ -39,8 +136,8 @@ export function DetailTab({
   const [editing, setEditing] = useState(false);
   const [edits, setEdits] = useState<LineItemEdits>({});
   const [busy, setBusy] = useState(false);
+  const [retainageSidebarOpen, setRetainageSidebarOpen] = useState(false);
 
-  // Optimistic display list reflecting in-progress edits
   const displayLineItems = useMemo(() => {
     if (!editing) return lineItems;
     return lineItems.map((li) => {
@@ -82,6 +179,12 @@ export function DetailTab({
       acc.totalCompleted += li.total_completed_stored ?? 0;
       acc.workRetainage += li.retainage_amount ?? 0;
       acc.matRetainage += li.materials_retainage_amount ?? 0;
+      acc.prevWorkRet += li.previous_work_retainage ?? 0;
+      acc.prevMatRet += li.previous_materials_retainage ?? 0;
+      acc.workReleased += li.work_retainage_released ?? 0;
+      acc.matReleased += li.materials_retainage_released ?? 0;
+      acc.workCurrentlyRetained += getWorkCurrentlyRetained(li);
+      acc.matCurrentlyRetained += getMatCurrentlyRetained(li);
       acc.net += li.net_amount_this_period ?? 0;
       return acc;
     },
@@ -93,6 +196,12 @@ export function DetailTab({
       totalCompleted: 0,
       workRetainage: 0,
       matRetainage: 0,
+      prevWorkRet: 0,
+      prevMatRet: 0,
+      workReleased: 0,
+      matReleased: 0,
+      workCurrentlyRetained: 0,
+      matCurrentlyRetained: 0,
       net: 0,
     },
   );
@@ -114,6 +223,24 @@ export function DetailTab({
   function cancelEdit() {
     setEdits({});
     setEditing(false);
+  }
+
+  function applyBulkRetainage(type: "work" | "materials", pct: number) {
+    setEdits((prev) => {
+      const next = { ...prev };
+      for (const id of Object.keys(next)) {
+        next[Number(id)] = {
+          ...next[Number(id)],
+          ...(type === "work"
+            ? { retainage_pct: String(pct) }
+            : { materials_retainage_pct: String(pct) }),
+        };
+      }
+      return next;
+    });
+    toast.success(
+      `Set ${type === "work" ? "work" : "materials"} retainage to ${pct}% on all lines`,
+    );
   }
 
   async function saveEdits() {
@@ -150,8 +277,8 @@ export function DetailTab({
   }
 
   return (
-    <section className="bg-card border border-border rounded-lg overflow-hidden">
-      <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+    <section className="space-y-4">
+      <div className="flex items-center justify-between">
         <div>
           <h2 className="text-sm font-semibold text-foreground">
             Schedule of Values (G703)
@@ -165,6 +292,13 @@ export function DetailTab({
           <div className="flex items-center gap-2">
             {editing ? (
               <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setRetainageSidebarOpen(true)}
+                >
+                  Set Retainage
+                </Button>
                 <Button
                   size="sm"
                   variant="outline"
@@ -186,54 +320,173 @@ export function DetailTab({
         )}
       </div>
       {lineItems.length === 0 ? (
-        <div className="p-8 text-center text-sm text-muted-foreground">
+        <div className="py-8 text-center text-sm text-muted-foreground">
           No line items yet.
         </div>
       ) : (
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
+              {/* Row 1: Column group headers */}
+              <TableRow className="border-b-0">
+                <TableHead className="w-12" rowSpan={2} />
+                <TableHead className="text-center text-xs font-medium text-muted-foreground">
+                  A
+                </TableHead>
+                <TableHead className="text-center text-xs font-medium text-muted-foreground">
+                  B
+                </TableHead>
+                <TableHead className="text-center text-xs font-medium text-muted-foreground">
+                  C
+                </TableHead>
+                <TableHead
+                  colSpan={2}
+                  className="text-center text-xs font-medium text-muted-foreground"
+                >
+                  D &amp; E
+                </TableHead>
+                <TableHead className="text-center text-xs font-medium text-muted-foreground">
+                  F
+                </TableHead>
+                <TableHead
+                  colSpan={2}
+                  className="text-center text-xs font-medium text-muted-foreground"
+                >
+                  G
+                </TableHead>
+                <TableHead className="text-center text-xs font-medium text-muted-foreground">
+                  H
+                </TableHead>
+                <TableHead
+                  colSpan={3}
+                  className="text-center text-xs font-medium border-l border-border"
+                >
+                  From Previous Application
+                </TableHead>
+                <TableHead
+                  colSpan={4}
+                  className="text-center text-xs font-medium border-l border-border"
+                >
+                  Retained This Period
+                </TableHead>
+                <TableHead
+                  colSpan={2}
+                  className="text-center text-xs font-medium border-l border-border"
+                >
+                  Released This Period
+                </TableHead>
+                <TableHead
+                  colSpan={3}
+                  className="text-center text-xs font-medium border-l border-border"
+                >
+                  Currently Retained
+                </TableHead>
+              </TableRow>
+              {/* Row 2: Column labels */}
               <TableRow>
-                <TableHead className="w-12">#</TableHead>
-                <TableHead>Description Of Work</TableHead>
-                <TableHead className="text-right">Scheduled Value</TableHead>
-                <TableHead className="text-right">From Previous</TableHead>
-                <TableHead className="text-right">This Period</TableHead>
-                <TableHead className="text-right">Materials Stored</TableHead>
-                <TableHead className="text-right">Total Completed</TableHead>
-                <TableHead className="text-right">%</TableHead>
-                <TableHead className="text-right">Balance To Finish</TableHead>
-                <TableHead className="text-right">Work Retainage %</TableHead>
-                <TableHead className="text-right">Work Retainage $</TableHead>
-                <TableHead className="text-right">Materials Retainage %</TableHead>
-                <TableHead className="text-right">Materials Retainage $</TableHead>
-                <TableHead className="text-right">Net This Period</TableHead>
+                <TableHead className="text-right text-xs whitespace-nowrap">
+                  Budget Code
+                </TableHead>
+                <TableHead className="text-xs">Description Of Work</TableHead>
+                <TableHead className="text-right text-xs whitespace-nowrap">
+                  Scheduled Value
+                </TableHead>
+                <TableHead className="text-right text-xs whitespace-nowrap">
+                  From Previous
+                </TableHead>
+                <TableHead className="text-right text-xs whitespace-nowrap">
+                  This Period
+                </TableHead>
+                <TableHead className="text-right text-xs whitespace-nowrap">
+                  Materials Stored
+                </TableHead>
+                <TableHead className="text-right text-xs whitespace-nowrap">
+                  Total Completed
+                </TableHead>
+                <TableHead className="text-right text-xs whitespace-nowrap">
+                  %
+                </TableHead>
+                <TableHead className="text-right text-xs whitespace-nowrap">
+                  Balance To Finish
+                </TableHead>
+                {/* From Previous Application */}
+                <TableHead className="text-right text-xs whitespace-nowrap border-l border-border">
+                  Work $
+                </TableHead>
+                <TableHead className="text-right text-xs whitespace-nowrap">
+                  Materials $
+                </TableHead>
+                <TableHead className="text-right text-xs whitespace-nowrap">
+                  Total
+                </TableHead>
+                {/* Retained This Period */}
+                <TableHead className="text-right text-xs whitespace-nowrap border-l border-border">
+                  Work %
+                </TableHead>
+                <TableHead className="text-right text-xs whitespace-nowrap">
+                  Work $
+                </TableHead>
+                <TableHead className="text-right text-xs whitespace-nowrap">
+                  Materials %
+                </TableHead>
+                <TableHead className="text-right text-xs whitespace-nowrap">
+                  Materials $
+                </TableHead>
+                {/* Released This Period */}
+                <TableHead className="text-right text-xs whitespace-nowrap border-l border-border">
+                  Work $
+                </TableHead>
+                <TableHead className="text-right text-xs whitespace-nowrap">
+                  Materials $
+                </TableHead>
+                {/* Currently Retained */}
+                <TableHead className="text-right text-xs whitespace-nowrap border-l border-border">
+                  Work $
+                </TableHead>
+                <TableHead className="text-right text-xs whitespace-nowrap">
+                  Materials $
+                </TableHead>
+                <TableHead className="text-right text-xs whitespace-nowrap">
+                  Total
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {displayLineItems.map((li, idx) => {
                 const e = edits[li.id];
+                const prevWork = Number(li.previous_work_retainage) || 0;
+                const prevMat = Number(li.previous_materials_retainage) || 0;
+                const workCurRetained = getWorkCurrentlyRetained(li);
+                const matCurRetained = getMatCurrentlyRetained(li);
+
                 return (
                   <TableRow key={li.id}>
-                    <TableCell className="text-muted-foreground tabular-nums">
+                    <TableCell className="text-muted-foreground tabular-nums w-12">
                       {li.sort_order ?? idx + 1}
                     </TableCell>
-                    <TableCell className="font-medium">
+                    {/* A: Budget Code */}
+                    <TableCell className="text-xs tabular-nums whitespace-nowrap">
+                      {li.budget_code ?? "—"}
+                    </TableCell>
+                    {/* B: Description */}
+                    <TableCell className="font-medium text-xs">
                       {li.description ?? "—"}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">
+                    {/* C: Scheduled Value */}
+                    <TableCell className="text-right tabular-nums text-xs">
                       {formatCurrency(li.scheduled_value)}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">
+                    {/* D: From Previous */}
+                    <TableCell className="text-right tabular-nums text-xs">
                       {formatCurrency(li.work_completed_previous)}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">
+                    {/* E: This Period */}
+                    <TableCell className="text-right tabular-nums text-xs">
                       {editing && e ? (
                         <Input
                           type="number"
-                          inputMode="decimal"
                           step="0.01"
-                          className="h-8 w-28 ml-auto text-right tabular-nums"
+                          className="h-7 w-24 ml-auto text-right tabular-nums text-xs"
                           value={e.work_completed_period}
                           onChange={(ev) =>
                             setEdits((prev) => ({
@@ -249,13 +502,13 @@ export function DetailTab({
                         formatCurrency(li.work_completed_period)
                       )}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">
+                    {/* F: Materials Stored */}
+                    <TableCell className="text-right tabular-nums text-xs">
                       {editing && e ? (
                         <Input
                           type="number"
-                          inputMode="decimal"
                           step="0.01"
-                          className="h-8 w-28 ml-auto text-right tabular-nums"
+                          className="h-7 w-24 ml-auto text-right tabular-nums text-xs"
                           value={e.materials_stored}
                           onChange={(ev) =>
                             setEdits((prev) => ({
@@ -271,24 +524,39 @@ export function DetailTab({
                         formatCurrency(li.materials_stored)
                       )}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">
+                    {/* G: Total Completed */}
+                    <TableCell className="text-right tabular-nums text-xs">
                       {formatCurrency(li.total_completed_stored)}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">
+                    {/* G%: Percent */}
+                    <TableCell className="text-right tabular-nums text-xs">
                       {li.work_completed_pct != null
                         ? `${Number(li.work_completed_pct).toFixed(1)}%`
                         : "—"}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">
+                    {/* H: Balance To Finish */}
+                    <TableCell className="text-right tabular-nums text-xs">
                       {formatCurrency(li.balance_to_finish)}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">
+                    {/* From Previous: Work $ */}
+                    <TableCell className="text-right tabular-nums text-xs border-l border-border">
+                      {formatCurrency(prevWork)}
+                    </TableCell>
+                    {/* From Previous: Materials $ */}
+                    <TableCell className="text-right tabular-nums text-xs">
+                      {formatCurrency(prevMat)}
+                    </TableCell>
+                    {/* From Previous: Total */}
+                    <TableCell className="text-right tabular-nums text-xs">
+                      {formatCurrency(prevWork + prevMat)}
+                    </TableCell>
+                    {/* Retained This Period: Work % */}
+                    <TableCell className="text-right tabular-nums text-xs border-l border-border">
                       {editing && e ? (
                         <Input
                           type="number"
-                          inputMode="decimal"
                           step="0.01"
-                          className="h-8 w-20 ml-auto text-right tabular-nums"
+                          className="h-7 w-16 ml-auto text-right tabular-nums text-xs"
                           value={e.retainage_pct}
                           onChange={(ev) =>
                             setEdits((prev) => ({
@@ -306,16 +574,17 @@ export function DetailTab({
                         "—"
                       )}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">
+                    {/* Retained This Period: Work $ */}
+                    <TableCell className="text-right tabular-nums text-xs">
                       {formatCurrency(li.retainage_amount)}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">
+                    {/* Retained This Period: Materials % */}
+                    <TableCell className="text-right tabular-nums text-xs">
                       {editing && e ? (
                         <Input
                           type="number"
-                          inputMode="decimal"
                           step="0.01"
-                          className="h-8 w-20 ml-auto text-right tabular-nums"
+                          className="h-7 w-16 ml-auto text-right tabular-nums text-xs"
                           value={e.materials_retainage_pct}
                           onChange={(ev) =>
                             setEdits((prev) => ({
@@ -333,50 +602,111 @@ export function DetailTab({
                         "—"
                       )}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">
+                    {/* Retained This Period: Materials $ */}
+                    <TableCell className="text-right tabular-nums text-xs">
                       {formatCurrency(li.materials_retainage_amount)}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums font-medium">
-                      {formatCurrency(li.net_amount_this_period)}
+                    {/* Released This Period: Work $ */}
+                    <TableCell className="text-right tabular-nums text-xs border-l border-border">
+                      {formatCurrency(li.work_retainage_released)}
+                    </TableCell>
+                    {/* Released This Period: Materials $ */}
+                    <TableCell className="text-right tabular-nums text-xs">
+                      {formatCurrency(li.materials_retainage_released)}
+                    </TableCell>
+                    {/* Currently Retained: Work $ */}
+                    <TableCell className="text-right tabular-nums text-xs border-l border-border">
+                      {formatCurrency(workCurRetained)}
+                    </TableCell>
+                    {/* Currently Retained: Materials $ */}
+                    <TableCell className="text-right tabular-nums text-xs">
+                      {formatCurrency(matCurRetained)}
+                    </TableCell>
+                    {/* Currently Retained: Total */}
+                    <TableCell className="text-right tabular-nums text-xs">
+                      {formatCurrency(workCurRetained + matCurRetained)}
                     </TableCell>
                   </TableRow>
                 );
               })}
+              {/* Totals row */}
               <TableRow className="bg-muted/50 font-semibold">
-                <TableCell colSpan={2}>Totals</TableCell>
-                <TableCell className="text-right tabular-nums">
+                <TableCell colSpan={3} className="text-xs">
+                  Total
+                </TableCell>
+                <TableCell className="text-right tabular-nums text-xs">
                   {formatCurrency(totals.scheduled)}
                 </TableCell>
-                <TableCell className="text-right tabular-nums">
+                <TableCell className="text-right tabular-nums text-xs">
                   {formatCurrency(totals.previous)}
                 </TableCell>
-                <TableCell className="text-right tabular-nums">
+                <TableCell className="text-right tabular-nums text-xs">
                   {formatCurrency(totals.thisPeriod)}
                 </TableCell>
-                <TableCell className="text-right tabular-nums">
+                <TableCell className="text-right tabular-nums text-xs">
                   {formatCurrency(totals.stored)}
                 </TableCell>
-                <TableCell className="text-right tabular-nums">
+                <TableCell className="text-right tabular-nums text-xs">
                   {formatCurrency(totals.totalCompleted)}
                 </TableCell>
-                <TableCell />
-                <TableCell />
-                <TableCell />
-                <TableCell className="text-right tabular-nums">
+                <TableCell className="text-right tabular-nums text-xs">
+                  {totals.scheduled > 0
+                    ? `${((totals.totalCompleted / totals.scheduled) * 100).toFixed(1)}%`
+                    : "—"}
+                </TableCell>
+                <TableCell className="text-right tabular-nums text-xs">
+                  {formatCurrency(totals.scheduled - totals.totalCompleted)}
+                </TableCell>
+                {/* From Previous totals */}
+                <TableCell className="text-right tabular-nums text-xs border-l border-border">
+                  {formatCurrency(totals.prevWorkRet)}
+                </TableCell>
+                <TableCell className="text-right tabular-nums text-xs">
+                  {formatCurrency(totals.prevMatRet)}
+                </TableCell>
+                <TableCell className="text-right tabular-nums text-xs">
+                  {formatCurrency(totals.prevWorkRet + totals.prevMatRet)}
+                </TableCell>
+                {/* Retained This Period totals */}
+                <TableCell className="text-right tabular-nums text-xs border-l border-border" />
+                <TableCell className="text-right tabular-nums text-xs">
                   {formatCurrency(totals.workRetainage)}
                 </TableCell>
-                <TableCell />
-                <TableCell className="text-right tabular-nums">
+                <TableCell className="text-right tabular-nums text-xs" />
+                <TableCell className="text-right tabular-nums text-xs">
                   {formatCurrency(totals.matRetainage)}
                 </TableCell>
-                <TableCell className="text-right tabular-nums">
-                  {formatCurrency(totals.net)}
+                {/* Released This Period totals */}
+                <TableCell className="text-right tabular-nums text-xs border-l border-border">
+                  {formatCurrency(totals.workReleased)}
+                </TableCell>
+                <TableCell className="text-right tabular-nums text-xs">
+                  {formatCurrency(totals.matReleased)}
+                </TableCell>
+                {/* Currently Retained totals */}
+                <TableCell className="text-right tabular-nums text-xs border-l border-border">
+                  {formatCurrency(totals.workCurrentlyRetained)}
+                </TableCell>
+                <TableCell className="text-right tabular-nums text-xs">
+                  {formatCurrency(totals.matCurrentlyRetained)}
+                </TableCell>
+                <TableCell className="text-right tabular-nums text-xs">
+                  {formatCurrency(
+                    totals.workCurrentlyRetained + totals.matCurrentlyRetained,
+                  )}
                 </TableCell>
               </TableRow>
             </TableBody>
           </Table>
         </div>
       )}
+
+      {/* Bulk retainage sidebar */}
+      <RetainageSidebar
+        open={retainageSidebarOpen}
+        onOpenChange={setRetainageSidebarOpen}
+        onApply={applyBulkRetainage}
+      />
     </section>
   );
 }

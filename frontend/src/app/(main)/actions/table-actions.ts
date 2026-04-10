@@ -163,9 +163,14 @@ export async function createContact(data: Record<string, any>) {
   try {
     const supabase = await createSupabaseClient();
 
+    const personType =
+      data.person_type === "user" || data.person_type === "employee"
+        ? data.person_type
+        : "contact";
+
     const { data: contact, error } = await supabase
       .from("people")
-      .insert({ ...data, person_type: "contact" })
+      .insert({ ...data, person_type: personType })
       .select()
       .single();
 

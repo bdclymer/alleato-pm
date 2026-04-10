@@ -49,6 +49,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
+import { TableHead, TableHeader } from "@/components/ui/table";
 import {
   commitmentKeys,
   useCommitmentDetail,
@@ -68,6 +69,7 @@ type CommitmentDetail = Commitment & {
   pending_change_orders?: number;
   draft_change_orders?: number;
   payments_issued?: number;
+  retainage_released_amount?: number | null;
   remaining_balance?: number;
   actual_completion_date?: string;
   issued_on_date?: string;
@@ -248,6 +250,7 @@ const normalizeCommitment = (raw: unknown): CommitmentDetail | null => {
       typeof record.payments_issued === "number" || typeof record.payments_issued === "string"
         ? Number(record.payments_issued)
         : undefined,
+    retainage_released_amount: typeof record.retainage_released_amount === "number" ? record.retainage_released_amount : 0,
     remaining_balance:
       typeof record.remaining_balance === "number" || typeof record.remaining_balance === "string"
         ? Number(record.remaining_balance)
@@ -294,7 +297,7 @@ function safeNumber(n: string | undefined): string | undefined {
 // Contract Summary Report
 // ---------------------------------------------------------------------------
 
-function ContractSummaryReport({ commitment }: { commitment: CommitmentDetail }) {
+function ContractSummaryReportHorizontal({ commitment }: { commitment: CommitmentDetail }) {
   const approvedCOs = commitment.change_order_totals?.approved ?? commitment.approved_change_orders ?? 0;
   const pendingCOs = commitment.pending_change_orders ?? 0;
   const draftCOs = commitment.draft_change_orders ?? 0;
@@ -302,50 +305,55 @@ function ContractSummaryReport({ commitment }: { commitment: CommitmentDetail })
   const pendingRevised = revisedContract + pendingCOs;
   const invoiced = commitment.billed_to_date ?? 0;
   const paymentsIssued = commitment.payments_issued ?? 0;
+  const retainageReleased = commitment.retainage_released_amount ?? 0;
   const remainingBalance = commitment.remaining_balance !== undefined
     ? commitment.remaining_balance
     : revisedContract - paymentsIssued;
   const percentPaid = revisedContract > 0 ? (paymentsIssued / revisedContract) * 100 : 0;
 
-  const rows: Array<{ label: string; value: string; bold?: boolean; indent?: boolean; dividerAbove?: boolean }> = [
+  const cols: Array<{ label: string; value: string; bold?: boolean }> = [
     { label: "Original Contract", value: formatCurrency(commitment.original_amount) },
-    { label: "Approved Change Orders", value: formatCurrency(approvedCOs), indent: true },
-    { label: "Revised Contract", value: formatCurrency(revisedContract), bold: true, dividerAbove: true },
-    { label: "Pending Change Orders", value: formatCurrency(pendingCOs), indent: true },
-    { label: "Pending Revised Contract", value: formatCurrency(pendingRevised), bold: true, dividerAbove: true },
-    { label: "Draft Change Orders", value: formatCurrency(draftCOs), indent: true },
-    { label: "Invoices (Billed to Date)", value: formatCurrency(invoiced), dividerAbove: true },
+    { label: "Approved COs", value: formatCurrency(approvedCOs) },
+    { label: "Revised Contract", value: formatCurrency(revisedContract), bold: true },
+    { label: "Pending COs", value: formatCurrency(pendingCOs) },
+    { label: "Pending Revised", value: formatCurrency(pendingRevised), bold: true },
+    { label: "Draft COs", value: formatCurrency(draftCOs) },
+    { label: "Invoiced to Date", value: formatCurrency(invoiced) },
     { label: "Payments Issued", value: formatCurrency(paymentsIssued) },
-    { label: "Percent Paid", value: `${percentPaid.toFixed(1)}%` },
-    { label: "Remaining Balance Outstanding", value: formatCurrency(remainingBalance), bold: true, dividerAbove: true },
+    { label: "Retainage Released", value: formatCurrency(retainageReleased) },
+    { label: "% Paid", value: `${percentPaid.toFixed(1)}%` },
+    { label: "Remaining Balance", value: formatCurrency(remainingBalance), bold: true },
   ];
 
   return (
-    <table className="w-full text-sm">
-      <tbody>
-        {rows.map((row, i) => {
-          const isLast = row.label === "Remaining Balance Outstanding";
-          const isEven = i % 2 === 0;
-          return (
-            <tr
-              key={row.label}
-              className={isEven ? "bg-violet-50/60 dark:bg-violet-950/20" : ""}
-            >
-              <td
-                className={`px-4 py-2.5 ${row.indent ? "pl-8" : ""} ${isLast ? "font-bold text-foreground text-base" : row.bold ? "font-medium text-foreground" : "text-muted-foreground"}`}
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-max text-sm">
+        <TableHeader>
+          <tr className="border-b border-border">
+            {cols.map((col) => (
+              <TableHead
+                key={col.label}
+                className="whitespace-nowrap px-4 py-2.5 text-right first:text-left"
               >
-                {row.label}
-              </td>
+                {col.label}
+              </TableHead>
+            ))}
+          </tr>
+        </TableHeader>
+        <tbody>
+          <tr>
+            {cols.map((col) => (
               <td
-                className={`px-4 py-2.5 text-right tabular-nums ${isLast ? "font-extrabold text-foreground text-base" : row.bold ? "font-semibold text-foreground" : "text-foreground"}`}
+                key={col.label}
+                className={`whitespace-nowrap px-4 py-3 text-right tabular-nums first:text-left ${col.bold ? "font-semibold text-foreground" : "text-foreground"}`}
               >
-                {row.value}
+                {col.value}
               </td>
-            </tr>
-          );
-        })}
-      </tbody>
-    </table>
+            ))}
+          </tr>
+        </tbody>
+      </table>
+    </div>
   );
 }
 
@@ -376,7 +384,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
     <ContentSectionStack className="pb-20 space-y-16">
       <section>
         <div className="grid grid-cols-[minmax(0,1fr)_minmax(340px,420px)] gap-x-16 gap-y-10">
-          <div className="space-y-14">
+          <div className="space-y-6">
             <div className="grid grid-cols-2 gap-x-20 gap-y-8">
               <div className="space-y-6">
                 <SectionRuleHeading label="Details" className="[&_span]:text-primary" />
@@ -566,7 +574,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
       {/* Contract Summary Report */}
       <div className="space-y-4">
         <SectionRuleHeading label="Contract Summary" className="[&_span]:text-primary" />
-        <ContractSummaryReport commitment={commitment} />
+        <ContractSummaryReportHorizontal commitment={commitment} />
       </div>
 
       {/* Attachments */}
@@ -894,17 +902,22 @@ export default function CommitmentDetailPage() {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem
-            onClick={() => {
-              setActiveTab("change-orders");
-              toast.info("Navigate to Change Orders tab to create a change event");
+            onSelect={() => {
+              router.push(`/${projectId}/change-events/new`);
             }}
           >
             <FileText className="mr-2 h-4 w-4" />
             Change Event
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => {
-              setActiveTab("invoices");
+            onSelect={() => {
+              const commitmentType =
+                commitment.type === "purchase_order"
+                  ? "purchase_order"
+                  : "subcontract";
+              router.push(
+                `/${projectId}/invoicing/subcontractor/new?commitmentType=${encodeURIComponent(commitmentType)}&commitmentId=${encodeURIComponent(commitmentId)}`,
+              );
             }}
           >
             <Receipt className="mr-2 h-4 w-4" />
@@ -953,6 +966,7 @@ export default function CommitmentDetailPage() {
       actions={headerActions}
       statusBadge={<StatusBadge status={commitment.status ? commitment.status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "Draft"} />}
       onBack={() => router.back()}
+      contentClassName="space-y-4"
     >
 
       <PageTabs
@@ -982,7 +996,7 @@ export default function CommitmentDetailPage() {
         onTabClick={(href) => setActiveTab(href)}
       />
 
-      <div className="pt-6">
+      <div className="pt-2">
         {activeTab === "general" && (
           <GeneralTab
             commitment={commitment}
@@ -1026,7 +1040,7 @@ export default function CommitmentDetailPage() {
           <InvoicesTab
             commitmentId={commitment.id}
             projectId={projectId}
-            commitmentType={commitment.type}
+            commitmentType={commitment.type as "subcontract" | "purchase_order"}
           />
         )}
 

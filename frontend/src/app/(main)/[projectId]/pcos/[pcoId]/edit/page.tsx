@@ -58,6 +58,14 @@ export default function EditPCOPage() {
     type: "CLIENT_REQUESTED",
     description: "",
     rfqRequired: false,
+    changeReason: "",
+    location: "",
+    reference: "",
+    requestReceivedFrom: "",
+    dueDate: "",
+    isPrivate: false,
+    fieldChange: false,
+    paidInFull: false,
   });
   const [groupedCEs, setGroupedCEs] = React.useState<GroupedCE[]>([]);
   const [lineItems, setLineItems] = React.useState<LocalLineItem[]>([]);
@@ -75,6 +83,14 @@ export default function EditPCOPage() {
       type: pco.type ?? "CLIENT_REQUESTED",
       description: pco.description ?? "",
       rfqRequired: pco.rfq_required ?? false,
+      changeReason: pco.change_reason ?? "",
+      location: pco.location ?? "",
+      reference: pco.reference ?? "",
+      requestReceivedFrom: pco.request_received_from ?? "",
+      dueDate: pco.due_date ?? "",
+      isPrivate: pco.is_private ?? false,
+      fieldChange: pco.field_change ?? false,
+      paidInFull: pco.paid_in_full ?? false,
     });
 
     setMarkupPercentage(pco.markup_percentage ?? 0);
@@ -180,6 +196,14 @@ export default function EditPCOPage() {
         rfq_required: formValues.rfqRequired,
         markup_percentage: markupPercentage || null,
         estimated_value: total,
+        change_reason: formValues.changeReason.trim() || null,
+        location: formValues.location.trim() || null,
+        reference: formValues.reference.trim() || null,
+        request_received_from: formValues.requestReceivedFrom.trim() || null,
+        due_date: formValues.dueDate || null,
+        is_private: formValues.isPrivate,
+        field_change: formValues.fieldChange,
+        paid_in_full: formValues.paidInFull,
         ...(submitAfter ? { status: "SUBMITTED" as const } : {}),
       });
 

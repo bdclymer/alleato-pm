@@ -5,10 +5,12 @@ import { useParams } from "next/navigation";
 import {
   Camera,
   Clock,
+  Download,
   FolderOpen,
   Image,
-  Map,
+  MapPin,
   Plus,
+  RotateCcw,
   Search,
   Star,
   StarOff,
@@ -25,6 +27,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  EmptyState,
   Input,
   Select,
   SelectContent,
@@ -32,16 +35,19 @@ import {
   SelectTrigger,
   SelectValue,
   Skeleton,
-  EmptyState,
+  Textarea,
 } from "@/components/ds";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
-  usePhotos,
-  useUpdatePhoto,
   useDeletePhoto,
+  useDeletePhotoPermanently,
+  usePhotos,
+  useRestorePhoto,
+  useUpdatePhoto,
   useUploadPhotos,
 } from "@/hooks/use-photos";
 import type { PhotoSummary } from "@/hooks/use-photos";
+import { AlbumsTab } from "@/features/photos/albums-tab";
 import { PhotoUploadDialog } from "@/features/photos/photo-upload-dialog";
 import {
   ALBUM_OPTIONS,
@@ -56,12 +62,15 @@ export default function ProjectPhotosPage() {
 
   const [search, setSearch] = useState("");
   const [album, setAlbum] = useState("__all__");
+  const [isStarred, setIsStarred] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   const [lightboxPhoto, setLightboxPhoto] = useState<PhotoSummary | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
   const albumFilter = album === "__all__" ? undefined : album;
-  const { data: photos, isLoading } = usePhotos(projectId, albumFilter);
+  const { data: photos, isLoading } = usePhotos(projectId, albumFilter, {
+    starred: isStarred || undefined,
+  });
   const deletePhoto = useDeletePhoto(projectId);
   const uploadPhotos = useUploadPhotos(projectId);
 
@@ -120,8 +129,6 @@ export default function ProjectPhotosPage() {
         f.type.startsWith("image/"),
       );
       if (files.length > 0) {
-        // Upload directly — no form required.
-        // Title is derived from filename; user can edit details after.
         uploadPhotos.mutate(files);
       }
     },
@@ -141,33 +148,34 @@ export default function ProjectPhotosPage() {
     >
       <Tabs defaultValue="photos" className="space-y-4">
         <div className="overflow-x-auto -mx-3 px-3 sm:mx-0 sm:px-0">
-        <TabsList variant="line" className="w-max min-w-full">
-          <TabsTrigger value="photos">
-            <Image className="mr-1.5 size-4" />
-            Photos
-          </TabsTrigger>
-          <TabsTrigger value="map">
-            <Map className="mr-1.5 size-4" />
-            Map
-          </TabsTrigger>
-          <TabsTrigger value="timeline">
-            <Clock className="mr-1.5 size-4" />
-            Timeline
-          </TabsTrigger>
-          <TabsTrigger value="albums">
-            <FolderOpen className="mr-1.5 size-4" />
-            Albums
-          </TabsTrigger>
-          <TabsTrigger value="recycle-bin">
-            <Trash2 className="mr-1.5 size-4" />
-            Recycle Bin
-          </TabsTrigger>
-        </TabsList>
+          <TabsList variant="line" className="w-max min-w-full">
+            <TabsTrigger value="photos">
+              <Image className="mr-1.5 size-4" />
+              Photos
+            </TabsTrigger>
+            <TabsTrigger value="map">
+              <MapPin className="mr-1.5 size-4" />
+              Map
+            </TabsTrigger>
+            <TabsTrigger value="timeline">
+              <Clock className="mr-1.5 size-4" />
+              Timeline
+            </TabsTrigger>
+            <TabsTrigger value="albums">
+              <FolderOpen className="mr-1.5 size-4" />
+              Albums
+            </TabsTrigger>
+            <TabsTrigger value="recycle-bin">
+              <Trash2 className="mr-1.5 size-4" />
+              Recycle Bin
+            </TabsTrigger>
+          </TabsList>
         </div>
 
-        {/* ─── Photos Tab (main) ──────────────────────────────────────── */}
+        {/* ─── Photos Tab ─────────────────────────────────────────────── */}
         <TabsContent value="photos">
-          <div
+          <section
+            aria-label="Photo drop zone"
             className="space-y-4"
             onDragEnter={handleDragEnter}
             onDragLeave={handleDragLeave}
@@ -232,13 +240,23 @@ export default function ProjectPhotosPage() {
                   ))}
                 </SelectContent>
               </Select>
+
+              <Button
+                variant={isStarred ? "default" : "outline"}
+                size="sm"
+                onClick={() => setIsStarred((v) => !v)}
+                className="gap-1.5"
+              >
+                <Star className={cn("size-4", isStarred && "fill-current")} />
+                Starred
+              </Button>
             </div>
 
             {/* Loading state */}
             {isLoading && (
               <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="space-y-2">
+                {["a","b","c","d","e","f","g","h"].map((k) => (
+                  <div key={k} className="space-y-2">
                     <Skeleton className="aspect-video w-full rounded-lg" />
                     <Skeleton className="h-4 w-3/4" />
                     <Skeleton className="h-3 w-1/2" />
@@ -247,30 +265,27 @@ export default function ProjectPhotosPage() {
               </div>
             )}
 
-            {/* Empty state with drop zone */}
+            {/* Empty state */}
             {!isLoading && filteredPhotos.length === 0 && (
               <div
                 className={cn(
                   "rounded-lg border-2 border-dashed transition-colors",
-                  isDragging
-                    ? "border-primary bg-primary/5"
-                    : "border-transparent",
+                  isDragging ? "border-primary bg-primary/5" : "border-transparent",
                 )}
               >
                 <EmptyState
                   icon={<Camera />}
-                  title="No photos yet"
+                  title={isStarred ? "No starred photos" : "No photos yet"}
                   description={
-                    search || albumFilter
-                      ? "No photos match your current filters. Try adjusting your search or album selection."
-                      : "Drag and drop images here, or click Upload Photo to get started."
+                    isStarred
+                      ? "Star photos to find them quickly here."
+                      : search || albumFilter
+                        ? "No photos match your current filters."
+                        : "Drag and drop images here, or click Upload Photo to get started."
                   }
                   action={
-                    !search && !albumFilter
-                      ? {
-                          label: "Upload Photo",
-                          onClick: () => setUploadOpen(true),
-                        }
+                    !search && !albumFilter && !isStarred
+                      ? { label: "Upload Photo", onClick: () => setUploadOpen(true) }
                       : undefined
                   }
                 />
@@ -290,13 +305,13 @@ export default function ProjectPhotosPage() {
                 ))}
               </div>
             )}
-          </div>
+          </section>
         </TabsContent>
 
         {/* ─── Map Tab ────────────────────────────────────────────────── */}
         <TabsContent value="map">
           <EmptyState
-            icon={<Map />}
+            icon={<MapPin />}
             title="Map View"
             description="View geotagged photos on a project map. Photos with location data will appear as pins."
           />
@@ -313,24 +328,16 @@ export default function ProjectPhotosPage() {
 
         {/* ─── Albums Tab ─────────────────────────────────────────────── */}
         <TabsContent value="albums">
-          <EmptyState
-            icon={<FolderOpen />}
-            title="Albums"
-            description="Organize photos into albums for easy browsing. Create albums to group related photos together."
-          />
+          <AlbumsTab projectId={projectId} />
         </TabsContent>
 
         {/* ─── Recycle Bin Tab ─────────────────────────────────────────── */}
         <TabsContent value="recycle-bin">
-          <EmptyState
-            icon={<Trash2 />}
-            title="Recycle Bin"
-            description="Deleted photos are kept here for 30 days before permanent removal."
-          />
+          <RecycleBinTab projectId={projectId} />
         </TabsContent>
       </Tabs>
 
-      {/* Mobile FAB — always accessible on mobile when scrolled past header */}
+      {/* Mobile FAB */}
       <Button
         size="icon"
         onClick={() => setUploadOpen(true)}
@@ -340,20 +347,19 @@ export default function ProjectPhotosPage() {
         <Plus className="size-6" />
       </Button>
 
-      {/* Upload dialog */}
       <PhotoUploadDialog
         projectId={projectId}
         open={uploadOpen}
         onOpenChange={setUploadOpen}
       />
 
-      {/* Lightbox / detail modal */}
       {lightboxPhoto && (
         <PhotoLightbox
           photo={lightboxPhoto}
           projectId={projectId}
           onClose={() => setLightboxPhoto(null)}
           onDelete={handleDelete}
+          onUpdate={(updated) => setLightboxPhoto(updated)}
         />
       )}
     </PageShell>
@@ -379,19 +385,11 @@ function PhotoCard({
   };
 
   return (
-    <div
-      role="button"
-      tabIndex={0}
+    <button
+      type="button"
       onClick={onClick}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          onClick();
-        }
-      }}
-      className="group relative cursor-pointer overflow-hidden rounded-lg bg-muted text-left transition-shadow hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="group relative w-full cursor-pointer overflow-hidden rounded-lg bg-muted text-left transition-shadow hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
-      {/* Thumbnail */}
       <div className="relative aspect-video">
         <img
           src={photo.file_url}
@@ -400,7 +398,6 @@ function PhotoCard({
           loading="lazy"
         />
 
-        {/* Star button */}
         <Button
           type="button"
           variant="ghost"
@@ -415,7 +412,6 @@ function PhotoCard({
           )}
         </Button>
 
-        {/* Gradient overlay with title */}
         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-background/80 to-transparent px-3 pb-2 pt-6">
           <p className="truncate text-sm font-medium text-foreground">
             {photo.title}
@@ -423,7 +419,6 @@ function PhotoCard({
         </div>
       </div>
 
-      {/* Metadata */}
       <div className="flex items-center justify-between px-3 py-2">
         <span className="text-xs text-muted-foreground">
           {formatPhotoDate(photo.date_taken ?? photo.created_at)}
@@ -441,7 +436,7 @@ function PhotoCard({
           ) : null}
         </div>
       </div>
-    </div>
+    </button>
   );
 }
 
@@ -452,22 +447,42 @@ function PhotoLightbox({
   projectId,
   onClose,
   onDelete,
+  onUpdate,
 }: {
   photo: PhotoSummary;
   projectId: number;
   onClose: () => void;
   onDelete: (id: number) => void;
+  onUpdate: (updated: PhotoSummary) => void;
 }) {
   const updatePhoto = useUpdatePhoto(projectId, photo.id);
+  const [editDescription, setEditDescription] = useState(photo.description ?? "");
+  const [editAlbum, setEditAlbum] = useState(photo.album ?? "Default");
+  const [isDirty, setIsDirty] = useState(false);
+
+  const handleSave = () => {
+    updatePhoto.mutate(
+      { description: editDescription || null, album: editAlbum },
+      {
+        onSuccess: (updated) => {
+          onUpdate(updated);
+          setIsDirty(false);
+        },
+      },
+    );
+  };
 
   const toggleStar = () => {
-    updatePhoto.mutate({ starred: !photo.starred });
+    updatePhoto.mutate(
+      { starred: !photo.starred },
+      { onSuccess: (updated) => onUpdate(updated) },
+    );
   };
 
   return (
     <Dialog open onOpenChange={() => onClose()}>
-      <DialogContent className="max-w-3xl p-0 overflow-hidden">
-        <DialogHeader className="px-6 pt-6 pb-0">
+      <DialogContent className="max-w-3xl overflow-hidden p-0">
+        <DialogHeader className="px-6 pb-0 pt-6">
           <DialogTitle>{photo.title}</DialogTitle>
         </DialogHeader>
 
@@ -476,32 +491,69 @@ function PhotoLightbox({
           <img
             src={photo.file_url}
             alt={photo.title}
-            className="max-h-[60vh] w-full object-contain"
+            className="max-h-[55vh] w-full object-contain"
           />
         </div>
 
         {/* Details */}
-        <div className="space-y-3 px-6 pb-6">
-          {photo.description && (
-            <p className="text-sm text-muted-foreground">{photo.description}</p>
-          )}
+        <div className="space-y-4 px-6 pb-6">
+          {/* Editable description */}
+          <div className="space-y-1.5">
+            <label
+              htmlFor="lightbox-description"
+              className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+            >
+              Description
+            </label>
+            <Textarea
+              id="lightbox-description"
+              value={editDescription}
+              onChange={(e) => {
+                setEditDescription(e.target.value);
+                setIsDirty(true);
+              }}
+              placeholder="Add a description..."
+              rows={2}
+              className="resize-none text-sm"
+            />
+          </div>
 
+          {/* Editable album */}
+          <div className="space-y-1.5">
+            <label
+              htmlFor="lightbox-album"
+              className="text-xs font-medium uppercase tracking-wide text-muted-foreground"
+            >
+              Album
+            </label>
+            <Select
+              value={editAlbum}
+              onValueChange={(v) => {
+                setEditAlbum(v);
+                setIsDirty(true);
+              }}
+            >
+              <SelectTrigger id="lightbox-album" className="w-50">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {ALBUM_OPTIONS.filter((o) => o.value !== "__all__").map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Metadata chips */}
           <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-            {photo.album && (
-              <Badge variant="secondary">{photo.album}</Badge>
-            )}
             {photo.location && <span>{photo.location}</span>}
             {photo.trade && <span>{photo.trade}</span>}
-            {photo.file_size ? (
-              <span>{formatFileSize(photo.file_size)}</span>
-            ) : null}
-            {photo.date_taken && (
-              <span>{formatPhotoDate(photo.date_taken)}</span>
-            )}
+            {photo.file_size ? <span>{formatFileSize(photo.file_size)}</span> : null}
+            {photo.date_taken && <span>{formatPhotoDate(photo.date_taken)}</span>}
             {photo.width && photo.height && (
-              <span>
-                {photo.width} x {photo.height}
-              </span>
+              <span>{photo.width} × {photo.height}</span>
             )}
           </div>
 
@@ -516,7 +568,16 @@ function PhotoLightbox({
           )}
 
           {/* Actions */}
-          <div className="flex items-center gap-2 pt-2">
+          <div className="flex items-center gap-2 pt-1">
+            {isDirty && (
+              <Button
+                size="sm"
+                onClick={handleSave}
+                disabled={updatePhoto.isPending}
+              >
+                Save
+              </Button>
+            )}
             <Button variant="outline" size="sm" onClick={toggleStar}>
               {photo.starred ? (
                 <>
@@ -530,11 +591,17 @@ function PhotoLightbox({
                 </>
               )}
             </Button>
+            <Button variant="outline" size="sm" asChild>
+              <a href={photo.file_url} download={photo.file_name}>
+                <Download className="mr-1.5 size-4" />
+                Download
+              </a>
+            </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={() => onDelete(photo.id)}
-              className="text-destructive hover:bg-destructive/10"
+              className="ml-auto text-destructive hover:bg-destructive/10"
             >
               <Trash2 className="mr-1.5 size-4" />
               Delete
@@ -543,5 +610,94 @@ function PhotoLightbox({
         </div>
       </DialogContent>
     </Dialog>
+  );
+}
+
+// ─── Recycle Bin Tab ─────────────────────────────────────────────────────────
+
+function RecycleBinTab({ projectId }: { projectId: number }) {
+  const { data: deleted, isLoading } = usePhotos(projectId, undefined, {
+    deleted: true,
+  });
+  const restorePhoto = useRestorePhoto(projectId);
+  const deleteForever = useDeletePhotoPermanently(projectId);
+
+  if (isLoading) {
+    return (
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {["a","b","c","d"].map((k) => (
+          <div key={k} className="space-y-2">
+            <Skeleton className="aspect-video w-full rounded-lg" />
+            <Skeleton className="h-4 w-3/4" />
+          </div>
+        ))}
+      </div>
+    );
+  }
+
+  if (!deleted?.length) {
+    return (
+      <EmptyState
+        icon={<Trash2 />}
+        title="Recycle Bin is empty"
+        description="Deleted photos will appear here for 30 days before permanent removal."
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      <p className="text-sm text-muted-foreground">
+        {deleted.length} photo{deleted.length !== 1 ? "s" : ""} — deleted items are
+        removed permanently after 30 days.
+      </p>
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {deleted.map((photo) => (
+          <div
+            key={photo.id}
+            className="overflow-hidden rounded-lg bg-muted opacity-75"
+          >
+            <div className="relative aspect-video">
+              <img
+                src={photo.file_url}
+                alt={photo.title}
+                className="size-full object-cover"
+                loading="lazy"
+              />
+            </div>
+            <div className="space-y-2 p-3">
+              <p className="truncate text-sm font-medium text-foreground">
+                {photo.title}
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Deleted {formatPhotoDate(photo.deleted_at ?? photo.updated_at)}
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => restorePhoto.mutate(photo.id)}
+                  disabled={restorePhoto.isPending}
+                >
+                  <RotateCcw className="mr-1.5 size-3.5" />
+                  Restore
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1 text-destructive hover:bg-destructive/10"
+                  onClick={() => deleteForever.mutate(photo.id)}
+                  disabled={deleteForever.isPending}
+                >
+                  <Trash2 className="mr-1.5 size-3.5" />
+                  Delete Forever
+                </Button>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 }

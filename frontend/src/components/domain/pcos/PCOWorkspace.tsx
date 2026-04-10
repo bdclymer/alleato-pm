@@ -59,6 +59,14 @@ export interface PCOFormValues {
   type: "CLIENT_REQUESTED" | "INTERNAL" | "MIXED";
   description: string;
   rfqRequired: boolean;
+  changeReason: string;
+  location: string;
+  reference: string;
+  requestReceivedFrom: string;
+  dueDate: string;
+  isPrivate: boolean;
+  fieldChange: boolean;
+  paidInFull: boolean;
 }
 
 interface PCOWorkspaceProps {
@@ -274,6 +282,97 @@ export function PCOWorkspace({
               }
             />
             <Label htmlFor="pco-rfq">RFQ Required</Label>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label htmlFor="pco-change-reason">Change Reason</Label>
+              <Input
+                id="pco-change-reason"
+                placeholder="Reason for change"
+                value={formValues.changeReason}
+                onChange={(e) =>
+                  onFormChange({ ...formValues, changeReason: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="pco-location">Location</Label>
+              <Input
+                id="pco-location"
+                placeholder="Location"
+                value={formValues.location}
+                onChange={(e) =>
+                  onFormChange({ ...formValues, location: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="pco-reference">Reference</Label>
+              <Input
+                id="pco-reference"
+                placeholder="Reference number or note"
+                value={formValues.reference}
+                onChange={(e) =>
+                  onFormChange({ ...formValues, reference: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="pco-received-from">Request Received From</Label>
+              <Input
+                id="pco-received-from"
+                placeholder="Name or company"
+                value={formValues.requestReceivedFrom}
+                onChange={(e) =>
+                  onFormChange({ ...formValues, requestReceivedFrom: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="pco-due-date">Due Date</Label>
+              <Input
+                id="pco-due-date"
+                type="date"
+                value={formValues.dueDate}
+                onChange={(e) =>
+                  onFormChange({ ...formValues, dueDate: e.target.value })
+                }
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-6">
+            <div className="flex items-center gap-3">
+              <Switch
+                id="pco-private"
+                checked={formValues.isPrivate}
+                onCheckedChange={(checked) =>
+                  onFormChange({ ...formValues, isPrivate: checked })
+                }
+              />
+              <Label htmlFor="pco-private">Private</Label>
+            </div>
+            <div className="flex items-center gap-3">
+              <Switch
+                id="pco-field-change"
+                checked={formValues.fieldChange}
+                onCheckedChange={(checked) =>
+                  onFormChange({ ...formValues, fieldChange: checked })
+                }
+              />
+              <Label htmlFor="pco-field-change">Field Change</Label>
+            </div>
+            <div className="flex items-center gap-3">
+              <Switch
+                id="pco-paid-in-full"
+                checked={formValues.paidInFull}
+                onCheckedChange={(checked) =>
+                  onFormChange({ ...formValues, paidInFull: checked })
+                }
+              />
+              <Label htmlFor="pco-paid-in-full">Paid in Full</Label>
+            </div>
           </div>
         </section>
 

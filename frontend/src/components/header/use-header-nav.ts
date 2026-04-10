@@ -50,6 +50,7 @@ const primeCoTitleCache = new Map<string, string>();
 const invoiceTitleCache = new Map<string, string>();
 const rfiTitleCache = new Map<string, string>();
 const settingsUserTitleCache = new Map<string, string>();
+const subcontractorInvoiceTitleCache = new Map<string, { commitmentLabel: string; invoiceLabel: string }>();
 
 const TABLE_ROUTE_ALIASES: Record<string, string> = {
   tasks: "tasks",
@@ -79,6 +80,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
   const [invoiceTitle, setInvoiceTitle] = useState<string | null>(null);
   const [rfiTitle, setRfiTitle] = useState<string | null>(null);
   const [settingsUserTitle, setSettingsUserTitle] = useState<string | null>(null);
+  const [subcontractorInvoiceInfo, setSubcontractorInvoiceInfo] = useState<{ commitmentLabel: string; invoiceLabel: string } | null>(null);
 
   // Extract project ID from URL path or query parameters
   const projectId = useMemo(() => {
@@ -223,6 +225,12 @@ export function useHeaderNav(): UseHeaderNavReturn {
       segments[0] === "settings" &&
       segments[1] === "users" &&
       /^[0-9a-f-]{36}$/i.test(segments[2]);
+    const isSubcontractorInvoiceDetailRoute =
+      segments.length >= 4 &&
+      /^\d+$/.test(segments[0]) &&
+      segments[1] === "invoicing" &&
+      segments[2] === "subcontractor" &&
+      segments[3] !== "new";
 
     // Always start with Projects
     crumbs.push({ label: "Projects", href: "/" });
@@ -285,6 +293,10 @@ export function useHeaderNav(): UseHeaderNavReturn {
         label = rfiTitle || "RFI";
       } else if (isSettingsUserDetailRoute && index === 2) {
         label = settingsUserTitle || "User";
+      } else if (isSubcontractorInvoiceDetailRoute && index === 2) {
+        label = subcontractorInvoiceInfo?.commitmentLabel ?? "Subcontractor";
+      } else if (isSubcontractorInvoiceDetailRoute && index === 3) {
+        label = subcontractorInvoiceInfo?.invoiceLabel ?? `Invoice #${segment}`;
       } else if (index === 0 && segment === "directory") {
         // Global directory routes (/directory/vendors, /directory/clients, etc.)
         // — not project-scoped, so label as Company Directory
@@ -332,7 +344,7 @@ export function useHeaderNav(): UseHeaderNavReturn {
     });
 
     return crumbs;
-  }, [pathname, companyTitle, vendorTitle, contactTitle, currentProject, meetingTitle, globalMeetingTitle, primeContractTitle, commitmentTitle, changeEventTitle, primeCoTitle, invoiceTitle, rfiTitle, settingsUserTitle]);
+  }, [pathname, companyTitle, vendorTitle, contactTitle, currentProject, meetingTitle, globalMeetingTitle, primeContractTitle, commitmentTitle, changeEventTitle, primeCoTitle, invoiceTitle, rfiTitle, settingsUserTitle, subcontractorInvoiceInfo]);
   useEffect(() => {
     const segments = pathname?.split("/").filter(Boolean) ?? [];
     const isMeetingDetailRoute =
@@ -636,9 +648,10 @@ export function useHeaderNav(): UseHeaderNavReturn {
         const contentType = response.headers.get("content-type") || "";
         if (!contentType.includes("application/json")) return;
 
-        const data = await response.json();
-        const number = typeof data?.number === "string" && data.number.length > 0 && !/^[0-9a-f-]{36}$/i.test(data.number) ? data.number : null;
-        const title = number ?? (typeof data?.title === "string" && data.title.length > 0 ? data.title : null);
+        const json = await response.json();
+        const record = json?.data;
+        const number = typeof record?.contract_number === "string" && record.contract_number.length > 0 && !/^[0-9a-f-]{36}$/i.test(record.contract_number) ? record.contract_number : null;
+        const title = number ?? (typeof record?.title === "string" && record.title.length > 0 ? record.title : null);
 
         if (isActive) {
           if (title) {
@@ -1011,6 +1024,70 @@ export function useHeaderNav(): UseHeaderNavReturn {
     return () => {
       isActive = false;
     };
+  }, [pathname]);
+
+  // Fetch info for subcontractor invoice detail routes ([projectId]/invoicing/subcontractor/[invoiceId])
+  useEffect(() => {
+    const segments = pathname?.split("/").filter(Boolean) ?? [];
+    const isSubcontractorInvoiceDetailRoute =
+      segments.length >= 4 &&
+      /^\d+$/.test(segments[0]) &&
+      segments[1] === "invoicing" &&
+      segments[2] === "subcontractor" &&
+      segments[3] !== "new";
+
+    if (!isSubcontractorInvoiceDetailRoute) {
+      setSubcontractorInvoiceInfo(null);
+      return;
+    }
+
+    const projectId = segments[0];
+    const invoiceId = segments[3];
+    const cacheKey = `${projectId}:${invoiceId}`;
+    const cached = subcontractorInvoiceTitleCache.get(cacheKey);
+    if (cached) {
+      setSubcontractorInvoiceInfo(cached);
+      return;
+    }
+
+    let isActive = true;
+    const fetchInfo = async () => {
+      try {
+        const response = await fetch(
+          `/api/projects/${projectId}/invoicing/subcontractor/invoices/${invoiceId}`,
+        );
+        if (!response.ok) return;
+        const contentType = response.headers.get("content-type") || "";
+        if (!contentType.includes("application/json")) return;
+        const data = await response.json();
+        const invoice = data?.data;
+        if (!invoice || !isActive) return;
+
+        const sc = invoice.subcontracts as { contract_number: string | null; title: string | null } | null;
+        const po = invoice.purchase_orders as { contract_number: string | null; title: string | null } | null;
+        const contractNumber = sc?.contract_number ?? po?.contract_number ?? null;
+        const contractTitle = sc?.title ?? po?.title ?? null;
+
+        const commitmentLabel = contractNumber
+          ? contractTitle
+            ? `${contractNumber} — ${contractTitle}`
+            : contractNumber
+          : contractTitle ?? "Subcontractor Invoice";
+
+        const invoiceLabel = invoice.invoice_number
+          ? `Invoice #${invoice.invoice_number}`
+          : `Invoice #${invoice.id}`;
+
+        const info = { commitmentLabel, invoiceLabel };
+        subcontractorInvoiceTitleCache.set(cacheKey, info);
+        setSubcontractorInvoiceInfo(info);
+      } catch {
+        // Best-effort only
+      }
+    };
+
+    fetchInfo();
+    return () => { isActive = false; };
   }, [pathname]);
 
   // Auto-close panels on route change

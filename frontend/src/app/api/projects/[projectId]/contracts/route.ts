@@ -24,7 +24,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       .select(
         `
         *,
-        vendor:companies(id, name),
+        vendor:companies!prime_contracts_contractor_id_fkey(id, name),
         client:companies!prime_contracts_client_company_id_fkey(id, name),
         contract_company:companies!prime_contracts_contract_company_id_fkey(id, name)
       `,

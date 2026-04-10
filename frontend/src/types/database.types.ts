@@ -1,4 +1,3 @@
-Using workdir /Users/meganharrison/Documents/alleato-pm
 export type Json =
   | string
   | number
@@ -5439,6 +5438,125 @@ export type Database = {
           },
         ]
       }
+      commitment_pcos: {
+        Row: {
+          amount: number
+          cco_id: string | null
+          change_reason: string | null
+          commitment_id: string
+          created_at: string
+          created_by: string | null
+          description: string | null
+          id: string
+          number: string
+          project_id: number
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          amount?: number
+          cco_id?: string | null
+          change_reason?: string | null
+          commitment_id: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          number: string
+          project_id: number
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          cco_id?: string | null
+          change_reason?: string | null
+          commitment_id?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          id?: string
+          number?: string
+          project_id?: number
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commitment_pcos_cco_id_fkey"
+            columns: ["cco_id"]
+            isOneToOne: false
+            referencedRelation: "contract_change_orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commitment_pcos_commitment_id_fkey"
+            columns: ["commitment_id"]
+            isOneToOne: false
+            referencedRelation: "subcontracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commitment_pcos_commitment_id_fkey"
+            columns: ["commitment_id"]
+            isOneToOne: false
+            referencedRelation: "subcontracts_with_totals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commitment_pcos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "commitment_pcos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commitment_pcos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commitment_pcos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "commitment_pcos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commitment_pcos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commitment_pcos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       commitment_related_items: {
         Row: {
           commitment_id: string
@@ -6822,6 +6940,7 @@ export type Database = {
         Row: {
           category: string | null
           created_at: string | null
+          "documentation page": string | null
           fk_columns: string | null
           notes: string | null
           primary_keys: string | null
@@ -6837,6 +6956,7 @@ export type Database = {
         Insert: {
           category?: string | null
           created_at?: string | null
+          "documentation page"?: string | null
           fk_columns?: string | null
           notes?: string | null
           primary_keys?: string | null
@@ -6852,6 +6972,7 @@ export type Database = {
         Update: {
           category?: string | null
           created_at?: string | null
+          "documentation page"?: string | null
           fk_columns?: string | null
           notes?: string | null
           primary_keys?: string | null
@@ -8805,6 +8926,66 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      email_events: {
+        Row: {
+          created_at: string
+          delivered_at: string | null
+          entity_id: string | null
+          entity_type: string | null
+          error: Json | null
+          from_email: string | null
+          id: string
+          idempotency_key: string | null
+          metadata: Json | null
+          resend_id: string | null
+          sent_at: string | null
+          status: string
+          subject: string | null
+          template: string
+          to_email: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          delivered_at?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          error?: Json | null
+          from_email?: string | null
+          id?: string
+          idempotency_key?: string | null
+          metadata?: Json | null
+          resend_id?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          template: string
+          to_email: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          delivered_at?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          error?: Json | null
+          from_email?: string | null
+          id?: string
+          idempotency_key?: string | null
+          metadata?: Json | null
+          resend_id?: string | null
+          sent_at?: string | null
+          status?: string
+          subject?: string | null
+          template?: string
+          to_email?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       erp_sync_log: {
         Row: {
@@ -14647,6 +14828,7 @@ export type Database = {
           category: string
           created_at: string
           description: string | null
+          doc_page: string | null
           id: number
           name: string
           new_link: string | null
@@ -14666,6 +14848,7 @@ export type Database = {
           category: string
           created_at?: string
           description?: string | null
+          doc_page?: string | null
           id?: never
           name: string
           new_link?: string | null
@@ -14685,6 +14868,7 @@ export type Database = {
           category?: string
           created_at?: string
           description?: string | null
+          doc_page?: string | null
           id?: never
           name?: string
           new_link?: string | null
@@ -19423,6 +19607,7 @@ export type Database = {
           description: string | null
           id: string
           line_number: number | null
+          source_sov_item_id: string | null
           submission_id: string
           updated_at: string | null
         }
@@ -19434,6 +19619,7 @@ export type Database = {
           description?: string | null
           id?: string
           line_number?: number | null
+          source_sov_item_id?: string | null
           submission_id: string
           updated_at?: string | null
         }
@@ -19445,10 +19631,18 @@ export type Database = {
           description?: string | null
           id?: string
           line_number?: number | null
+          source_sov_item_id?: string | null
           submission_id?: string
           updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "subcontractor_sov_items_source_sov_item_id_fkey"
+            columns: ["source_sov_item_id"]
+            isOneToOne: false
+            referencedRelation: "subcontract_sov_items"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "subcontractor_sov_items_submission_id_fkey"
             columns: ["submission_id"]

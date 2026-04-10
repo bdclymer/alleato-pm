@@ -54,7 +54,7 @@ function SectionCard({
           <h3 className="text-sm font-semibold">{title}</h3>
         </div>
       </div>
-      <div className="rounded-lg border border-border bg-card px-5 divide-y divide-border">
+      <div className="rounded-lg border border-border px-5 divide-y divide-border">
         {children}
       </div>
     </div>
@@ -63,8 +63,7 @@ function SectionCard({
 
 export default function PreferencesSettingsPage() {
   return (
-    <PageShell variant="dashboard" title="Preferences">
-    <div className="px-8 py-8 max-w-6xl">
+    <PageShell variant="content" title="Preferences">
       <div className="space-y-8">
         {/* Notifications */}
         <SectionCard icon={Bell} title="Notifications">
@@ -207,7 +206,6 @@ export default function PreferencesSettingsPage() {
           <Button size="sm">Save preferences</Button>
         </div>
       </div>
-    </div>
     </PageShell>
   );
 }

@@ -12,13 +12,35 @@ interface RouteParams {
  */
 export async function DELETE(_request: NextRequest, { params }: RouteParams) {
   try {
-    const { commitmentCoId, attachmentId } = await params;
+    const { projectId, commitmentCoId, attachmentId } = await params;
     const supabase = await createClient();
 
     // Authenticate
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Verify the CCO belongs to this project via its commitment
+    const { data: cco, error: ccoError } = await supabase
+      .from("contract_change_orders")
+      .select("id, contract_id")
+      .eq("id", commitmentCoId)
+      .single();
+
+    if (ccoError || !cco) {
+      return NextResponse.json({ error: "Change order not found" }, { status: 404 });
+    }
+
+    const { data: commitment } = await supabase
+      .from("commitments_unified")
+      .select("id, project_id")
+      .eq("id", cco.contract_id)
+      .is("deleted_at", null)
+      .single();
+
+    if (!commitment || commitment.project_id !== Number(projectId)) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
     // Fetch the attachment row — scoped to the parent CCO to prevent cross-CO deletion

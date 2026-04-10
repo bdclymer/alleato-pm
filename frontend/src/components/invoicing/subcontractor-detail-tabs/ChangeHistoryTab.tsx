@@ -66,8 +66,8 @@ export function ChangeHistoryTab({
   }, [projectId, invoiceId]);
 
   return (
-    <section className="bg-card border border-border rounded-lg overflow-hidden">
-      <div className="px-6 py-4 border-b border-border">
+    <section className="space-y-4">
+      <div>
         <h2 className="text-sm font-semibold text-foreground">
           Change History
         </h2>
@@ -76,11 +76,11 @@ export function ChangeHistoryTab({
         </p>
       </div>
       {loading ? (
-        <div className="p-8 text-center text-sm text-muted-foreground">
+        <div className="py-8 text-center text-sm text-muted-foreground">
           Loading…
         </div>
       ) : rows.length === 0 ? (
-        <div className="p-12 text-center space-y-2">
+        <div className="py-12 text-center space-y-2">
           <History className="h-8 w-8 mx-auto text-muted-foreground" />
           <p className="text-sm text-muted-foreground">
             No changes logged yet.

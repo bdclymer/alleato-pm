@@ -41,12 +41,19 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const search = searchParams.get("search");
     const starred = searchParams.get("starred");
 
+    const deleted = searchParams.get("deleted") === "true";
+
     let query = supabase
       .from("project_photos")
       .select("*")
       .eq("project_id", parseInt(projectId, 10))
-      .is("deleted_at", null)
       .order("created_at", { ascending: false });
+
+    if (deleted) {
+      query = query.not("deleted_at", "is", null);
+    } else {
+      query = query.is("deleted_at", null);
+    }
 
     if (album) {
       query = query.eq("album", album);

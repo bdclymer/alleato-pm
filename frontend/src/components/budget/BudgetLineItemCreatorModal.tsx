@@ -612,14 +612,14 @@ export function BudgetLineItemCreatorModal({
                   <table className="w-full">
                     <thead>
                       <tr>
-                        <th className="py-2 pr-4 text-left text-xs font-medium text-foreground bg-primary/5 w-8">#</th>
-                        <th className="py-2 pr-3 text-left text-xs font-medium text-foreground bg-primary/5 w-72">
+                        <th className="py-2 pr-4 text-left text-[11px] font-semibold uppercase tracking-wide text-foreground bg-primary/5 w-8">#</th>
+                        <th className="py-2 pr-3 text-left text-[11px] font-semibold uppercase tracking-wide text-foreground bg-primary/5 w-72">
                           Budget Code <span className="text-destructive">*</span>
                         </th>
-                        <th className="py-2 pr-3 text-left text-xs font-medium text-foreground bg-primary/5 w-24">Qty</th>
-                        <th className="py-2 pr-3 text-left text-xs font-medium text-foreground bg-primary/5 w-24">UOM</th>
-                        <th className="py-2 pr-3 text-left text-xs font-medium text-foreground bg-primary/5 w-36">Unit Cost</th>
-                        <th className="py-2 pr-3 text-left text-xs font-medium text-foreground bg-primary/5 w-36">
+                        <th className="py-2 pr-3 text-left text-[11px] font-semibold uppercase tracking-wide text-foreground bg-primary/5 w-24">Qty</th>
+                        <th className="py-2 pr-3 text-left text-[11px] font-semibold uppercase tracking-wide text-foreground bg-primary/5 w-24">UOM</th>
+                        <th className="py-2 pr-3 text-left text-[11px] font-semibold uppercase tracking-wide text-foreground bg-primary/5 w-36">Unit Cost</th>
+                        <th className="py-2 pr-3 text-left text-[11px] font-semibold uppercase tracking-wide text-foreground bg-primary/5 w-36">
                           Amount <span className="text-destructive">*</span>
                         </th>
                         <th className="py-2 bg-primary/5 w-8" />

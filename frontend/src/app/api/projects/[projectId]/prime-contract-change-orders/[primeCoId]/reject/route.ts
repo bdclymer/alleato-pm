@@ -52,10 +52,37 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    if (co.status === "rejected") {
+    // --- API-009: Status transition guard ---
+    const currentStatus = (co.status ?? "").toLowerCase();
+    const rejectableStatuses = ["proposed", "pending", "submitted", "under_review", "revised"];
+
+    if (currentStatus === "rejected") {
       return NextResponse.json(
-        { error: "Already rejected" },
-        { status: 400 },
+        { error: "This change order is already rejected." },
+        { status: 409 },
+      );
+    }
+
+    if (currentStatus === "approved") {
+      return NextResponse.json(
+        { error: "Cannot reject an already approved change order." },
+        { status: 409 },
+      );
+    }
+
+    if (currentStatus === "voided") {
+      return NextResponse.json(
+        { error: "Cannot reject a voided change order." },
+        { status: 409 },
+      );
+    }
+
+    if (!rejectableStatuses.includes(currentStatus)) {
+      return NextResponse.json(
+        {
+          error: `Cannot reject a change order with status "${currentStatus}". Rejectable statuses: ${rejectableStatuses.join(", ")}.`,
+        },
+        { status: 409 },
       );
     }
 
@@ -65,6 +92,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       .update({
         status: "rejected",
         rejection_reason: rejectionReason.trim(),
+        review_date: new Date().toISOString(),
       })
       .eq("id", numericId)
       .eq("project_id", Number(projectId))

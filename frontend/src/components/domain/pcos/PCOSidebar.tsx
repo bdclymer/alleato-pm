@@ -173,6 +173,68 @@ export function PCOSidebar({ pco }: PCOSidebarProps) {
               </dd>
             </div>
           )}
+          {pco.change_reason && (
+            <div className="flex justify-between">
+              <dt className="text-muted-foreground">Change Reason</dt>
+              <dd className="text-foreground text-right max-w-[60%]">
+                {pco.change_reason}
+              </dd>
+            </div>
+          )}
+          {pco.location && (
+            <div className="flex justify-between">
+              <dt className="text-muted-foreground">Location</dt>
+              <dd className="text-foreground text-right max-w-[60%]">
+                {pco.location}
+              </dd>
+            </div>
+          )}
+          {pco.reference && (
+            <div className="flex justify-between">
+              <dt className="text-muted-foreground">Reference</dt>
+              <dd className="text-foreground text-right max-w-[60%]">
+                {pco.reference}
+              </dd>
+            </div>
+          )}
+          {pco.request_received_from && (
+            <div className="flex justify-between">
+              <dt className="text-muted-foreground">Request From</dt>
+              <dd className="text-foreground text-right max-w-[60%]">
+                {pco.request_received_from}
+              </dd>
+            </div>
+          )}
+          {pco.due_date && (
+            <div className="flex justify-between">
+              <dt className="text-muted-foreground">Due Date</dt>
+              <dd className="text-foreground">
+                {new Date(pco.due_date).toLocaleDateString("en-US", {
+                  month: "short",
+                  day: "numeric",
+                  year: "numeric",
+                })}
+              </dd>
+            </div>
+          )}
+          {pco.is_private && (
+            <div className="flex justify-between">
+              <dt className="text-muted-foreground">Private</dt>
+              <dd className="text-foreground">Yes</dd>
+            </div>
+          )}
+          {pco.field_change && (
+            <div className="flex justify-between">
+              <dt className="text-muted-foreground">Field Change</dt>
+              <dd className="text-foreground">Yes</dd>
+            </div>
+          )}
+          {pco.paid_in_full && (
+            <div className="flex justify-between">
+              <dt className="text-muted-foreground">Paid in Full</dt>
+              <dd className="text-foreground">Yes</dd>
+            </div>
+          )}
         </dl>
       </section>
 

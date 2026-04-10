@@ -1,0 +1,122 @@
+/**
+ * Dev-only endpoint to test email templates via Resend.
+ *
+ * POST /api/dev/test-email
+ * Body: { template: "user-invite" | "forgot-password" | "sov-invitation" | "invoice-submitted-to-pm", to?: string }
+ *
+ * Defaults `to` to "delivered@resend.dev" (Resend's test inbox — always succeeds).
+ * In production, this route is a no-op.
+ */
+
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { sendEmail } from "@/lib/email/send";
+import InviteUser from "@/emails/auth/InviteUser";
+import ForgotPassword from "@/emails/auth/ForgotPassword";
+import SOVInvitation from "@/emails/subcontractor/SOVInvitation";
+import InvoiceSubmittedToPM from "@/emails/subcontractor/InvoiceSubmittedToPM";
+
+const SAMPLE_BASE = "https://app.alleato.com";
+
+const TEMPLATES: Record<
+  string,
+  { subject: string; react: React.ReactElement }
+> = {
+  "user-invite": {
+    subject: "You've been invited to Alleato",
+    react: InviteUser({
+      inviterName: "Megan Harrison",
+      inviteeName: "John Smith",
+      role: "Project Manager",
+      acceptUrl: `${SAMPLE_BASE}/auth/accept-invite?token=test123`,
+      expiresInHours: 72,
+    }),
+  },
+  "forgot-password": {
+    subject: "Reset your Alleato password",
+    react: ForgotPassword({
+      userName: "John",
+      resetUrl: `${SAMPLE_BASE}/auth/reset-password?token=test123`,
+      expiresInMinutes: 60,
+      requestIp: "192.168.1.1",
+    }),
+  },
+  "sov-invitation": {
+    subject: "Submit your Schedule of Values — Vermillion Rise Warehouse",
+    react: SOVInvitation({
+      subcontractorName: "ABC Electrical",
+      projectName: "Vermillion Rise Warehouse",
+      projectNumber: "VRW-2026",
+      commitmentNumber: "SC-001",
+      contractAmount: "$245,000.00",
+      dueDate: "April 30, 2026",
+      submissionUrl: `${SAMPLE_BASE}/67/commitments/1/sov`,
+      pmName: "Megan Harrison",
+    }),
+  },
+  "invoice-submitted-to-pm": {
+    subject: "New invoice from ABC Electrical — Vermillion Rise Warehouse",
+    react: InvoiceSubmittedToPM({
+      pmName: "Megan",
+      subcontractorName: "ABC Electrical",
+      projectName: "Vermillion Rise Warehouse",
+      invoiceNumber: "INV-2026-004",
+      invoiceAmount: "$38,750.00",
+      billingPeriod: "March 2026",
+      reviewUrl: `${SAMPLE_BASE}/67/invoicing/subcontractor/invoices/1`,
+    }),
+  },
+};
+
+export async function POST(req: NextRequest) {
+  if (process.env.NODE_ENV === "production") {
+    return NextResponse.json({ error: "Not available in production" }, { status: 403 });
+  }
+
+  const body = await req.json().catch(() => ({}));
+  const template = body.template as string;
+  const to = (body.to as string) || "delivered@resend.dev";
+
+  if (!template || !TEMPLATES[template]) {
+    return NextResponse.json(
+      {
+        error: "Invalid template",
+        available: Object.keys(TEMPLATES),
+      },
+      { status: 400 },
+    );
+  }
+
+  const { subject, react } = TEMPLATES[template];
+
+  const result = await sendEmail({
+    template: template as Parameters<typeof sendEmail>[0]["template"],
+    to,
+    subject,
+    react,
+    from: "Alleato Test <onboarding@resend.dev>",
+    entity: { type: "test", id: "test-" + Date.now() },
+    idempotencyKey: `test/${template}/${Date.now()}`,
+    metadata: { source: "dev-test-endpoint" },
+  });
+
+  if (result.error) {
+    return NextResponse.json({ error: result.error.message }, { status: 500 });
+  }
+
+  return NextResponse.json({
+    success: true,
+    resendId: result.id,
+    template,
+    to,
+    message: `Email sent! Check ${to === "delivered@resend.dev" ? "Resend dashboard" : to} for delivery.`,
+  });
+}
+
+export async function GET() {
+  return NextResponse.json({
+    usage: "POST /api/dev/test-email with { template, to? }",
+    templates: Object.keys(TEMPLATES),
+    defaultTo: "delivered@resend.dev",
+  });
+}

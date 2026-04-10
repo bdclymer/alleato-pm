@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Check, Edit, MoreHorizontal, Trash2, X } from "lucide-react";
+import { ArrowLeft, Check, Edit, MoreHorizontal, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { useForm, type SubmitHandler } from "react-hook-form";
@@ -9,6 +9,8 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { StatusBadge } from "@/components/ds";
+import { useMasterCostCodes, useCostCodeTypes } from "@/hooks/use-project-cost-codes";
+import type { CostCode as MasterCostCode, CostCodeType } from "@/hooks/use-project-cost-codes";
 import { ContentSectionStack, LabelValueRow, PageShell, SectionRuleHeading } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -37,7 +39,6 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { createClient } from "@/lib/supabase/client";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -93,6 +94,7 @@ const editSchema = z.object({
   status: z.enum(["draft", "pending", "approved", "out_for_signature", "executed", "void"]),
   amount: z.number(),
   change_reason: z.string().optional().nullable(),
+  requested_by: z.string().optional().nullable(),
   due_date: z.string().optional().nullable(),
   invoiced_date: z.string().optional().nullable(),
   designated_reviewer: z.string().optional().nullable(),
@@ -159,6 +161,7 @@ export default function CommitmentCODetailPage() {
       status: "draft",
       amount: 0,
       change_reason: "",
+      requested_by: "",
       due_date: "",
       invoiced_date: "",
       designated_reviewer: "",
@@ -179,9 +182,29 @@ export default function CommitmentCODetailPage() {
     id: string;
     description: string | null;
     amount: number;
+    cost_code_id: string | null;
+    cost_type_id: string | null;
+    budget_line_id: string | null;
   }
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
   const [lineItemsLoading, setLineItemsLoading] = useState(true);
+
+  // Inline CRUD state for line items
+  interface LineItemDraft {
+    description: string;
+    amount: string;
+    cost_code_id: string;
+    cost_type_id: string;
+  }
+  const emptyDraft: LineItemDraft = { description: "", amount: "", cost_code_id: "", cost_type_id: "" };
+  const [addingLineItem, setAddingLineItem] = useState(false);
+  const [editingLineItemId, setEditingLineItemId] = useState<string | null>(null);
+  const [lineItemDraft, setLineItemDraft] = useState<LineItemDraft>(emptyDraft);
+
+  // Cost code & cost type lookups
+  const { data: masterCostCodes = [] } = useMasterCostCodes();
+  const { data: costCodeTypes = [] } = useCostCodeTypes();
+  const [lineItemSaving, setLineItemSaving] = useState(false);
 
   // Attachments
   interface Attachment {
@@ -221,29 +244,183 @@ export default function CommitmentCODetailPage() {
     fetchData();
   }, [projectId, commitmentCoId]);
 
-  // Fetch line items
-  useEffect(() => {
-    if (!co) return;
-    const fetchLineItems = async () => {
-      setLineItemsLoading(true);
-      try {
-        const supabase = createClient();
-        const { data, error: fetchErr } = await supabase
-          .from("commitment_change_order_lines")
-          .select("id, description, amount")
-          .eq("commitment_change_order_id", commitmentCoId)
-          .order("created_at", { ascending: true });
+  // Fetch line items via API
+  const fetchLineItemsFn = useCallback(async () => {
+    setLineItemsLoading(true);
+    try {
+      const res = await fetch(
+        `/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}/line-items`,
+      );
+      if (!res.ok) throw new Error("Failed to fetch line items");
+      const json = await res.json();
+      setLineItems(json.data ?? []);
+    } catch {
+      setLineItems([]);
+    } finally {
+      setLineItemsLoading(false);
+    }
+  }, [projectId, commitmentCoId]);
 
-        if (fetchErr) throw fetchErr;
-        setLineItems(data ?? []);
-      } catch {
-        setLineItems([]);
-      } finally {
-        setLineItemsLoading(false);
+  useEffect(() => {
+    if (co) fetchLineItemsFn();
+  }, [co, fetchLineItemsFn]);
+
+  // Line item CRUD handlers
+  const lineItemApiBase = `/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}/line-items`;
+
+  const handleAddLineItem = useCallback(async () => {
+    const amount = parseFloat(lineItemDraft.amount) || 0;
+    setLineItemSaving(true);
+    try {
+      const res = await fetch(lineItemApiBase, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          description: lineItemDraft.description || null,
+          amount,
+          cost_code_id: lineItemDraft.cost_code_id || null,
+          cost_type_id: lineItemDraft.cost_type_id || null,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as { error?: string }).error || "Failed to create line item");
       }
-    };
-    fetchLineItems();
-  }, [co, commitmentCoId]);
+      toast.success("Line item added");
+      setAddingLineItem(false);
+      setLineItemDraft(emptyDraft);
+      fetchLineItemsFn();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to add line item");
+    } finally {
+      setLineItemSaving(false);
+    }
+  }, [lineItemDraft, lineItemApiBase, fetchLineItemsFn]);
+
+  const handleUpdateLineItem = useCallback(async () => {
+    if (!editingLineItemId) return;
+    const amount = parseFloat(lineItemDraft.amount) || 0;
+    setLineItemSaving(true);
+    try {
+      const res = await fetch(`${lineItemApiBase}/${editingLineItemId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          description: lineItemDraft.description || null,
+          amount,
+          cost_code_id: lineItemDraft.cost_code_id || null,
+          cost_type_id: lineItemDraft.cost_type_id || null,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error((err as { error?: string }).error || "Failed to update line item");
+      }
+      toast.success("Line item updated");
+      setEditingLineItemId(null);
+      setLineItemDraft(emptyDraft);
+      fetchLineItemsFn();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to update line item");
+    } finally {
+      setLineItemSaving(false);
+    }
+  }, [editingLineItemId, lineItemDraft, lineItemApiBase, fetchLineItemsFn]);
+
+  const handleDeleteLineItem = useCallback(
+    async (lineItemId: string) => {
+      if (!confirm("Delete this line item?")) return;
+      try {
+        const res = await fetch(`${lineItemApiBase}/${lineItemId}`, {
+          method: "DELETE",
+        });
+        if (!res.ok) throw new Error("Failed to delete line item");
+        toast.success("Line item deleted");
+        fetchLineItemsFn();
+      } catch {
+        toast.error("Failed to delete line item");
+      }
+    },
+    [lineItemApiBase, fetchLineItemsFn],
+  );
+
+  const startEditLineItem = useCallback(
+    (item: LineItem) => {
+      setEditingLineItemId(item.id);
+      setAddingLineItem(false);
+      setLineItemDraft({
+        description: item.description || "",
+        amount: String(item.amount ?? 0),
+        cost_code_id: item.cost_code_id || "",
+        cost_type_id: item.cost_type_id || "",
+      });
+    },
+    [],
+  );
+
+  const cancelLineItemEdit = useCallback(() => {
+    setAddingLineItem(false);
+    setEditingLineItemId(null);
+    setLineItemDraft(emptyDraft);
+  }, []);
+
+  // Cost code / type display helpers
+  const costCodeLabel = useCallback(
+    (id: string | null) => {
+      if (!id) return "—";
+      const cc = masterCostCodes.find((c) => c.id === id);
+      return cc ? `${cc.id} - ${cc.title || ""}` : id;
+    },
+    [masterCostCodes],
+  );
+
+  const costTypeLabel = useCallback(
+    (id: string | null) => {
+      if (!id) return "—";
+      const ct = costCodeTypes.find((t) => t.id === id);
+      return ct ? `${ct.code} - ${ct.description}` : id;
+    },
+    [costCodeTypes],
+  );
+
+  // Inline cost code / cost type select fragment used in add & edit rows
+  const renderCostCodeSelect = (
+    <Select
+      value={lineItemDraft.cost_code_id || "none"}
+      onValueChange={(v) => setLineItemDraft((d) => ({ ...d, cost_code_id: v === "none" ? "" : v }))}
+    >
+      <SelectTrigger className="h-8 text-sm">
+        <SelectValue placeholder="Select..." />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="none">None</SelectItem>
+        {masterCostCodes.map((cc) => (
+          <SelectItem key={cc.id} value={cc.id}>
+            {cc.id} - {cc.title || "Untitled"}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+
+  const renderCostTypeSelect = (
+    <Select
+      value={lineItemDraft.cost_type_id || "none"}
+      onValueChange={(v) => setLineItemDraft((d) => ({ ...d, cost_type_id: v === "none" ? "" : v }))}
+    >
+      <SelectTrigger className="h-8 text-sm">
+        <SelectValue placeholder="Select..." />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="none">None</SelectItem>
+        {costCodeTypes.map((ct) => (
+          <SelectItem key={ct.id} value={ct.id}>
+            {ct.code} - {ct.description}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
 
   // Fetch attachments
   const fetchAttachmentsFn = useCallback(async () => {
@@ -330,6 +507,7 @@ export default function CommitmentCODetailPage() {
       status: (co.status as FormData["status"]) || "draft",
       amount: co.amount ?? 0,
       change_reason: co.change_reason || "",
+      requested_by: co.requested_by || "",
       due_date: co.due_date ? co.due_date.split("T")[0] : "",
       invoiced_date: co.invoiced_date ? co.invoiced_date.split("T")[0] : "",
       designated_reviewer: co.designated_reviewer || "",
@@ -366,6 +544,7 @@ export default function CommitmentCODetailPage() {
             status: data.status,
             amount: data.amount,
             change_reason: data.change_reason || null,
+            requested_by: data.requested_by || null,
             due_date: data.due_date || null,
             invoiced_date: data.invoiced_date || null,
             designated_reviewer: data.designated_reviewer || null,
@@ -640,6 +819,19 @@ export default function CommitmentCODetailPage() {
                           value={field.value}
                           onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
                         />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="requested_by"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Request Received From</FormLabel>
+                      <FormControl>
+                        <Input {...field} value={field.value ?? ""} placeholder="Name of requester" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -1002,37 +1194,185 @@ export default function CommitmentCODetailPage() {
             <SectionRuleHeading label="Line Items" className="[&_span]:text-primary" />
             {lineItemsLoading ? (
               <Skeleton className="h-20 w-full" />
-            ) : lineItems.length === 0 ? (
-              <p className="text-sm text-muted-foreground">No line items</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
                     <tr className="border-b text-left text-muted-foreground">
                       <th className="pb-2 font-medium">Description</th>
+                      <th className="pb-2 font-medium">Cost Code</th>
+                      <th className="pb-2 font-medium">Cost Type</th>
                       <th className="pb-2 text-right font-medium">Amount</th>
+                      <th className="pb-2 text-right font-medium w-24">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {lineItems.map((item) => (
-                      <tr key={item.id} className="border-b last:border-0">
-                        <td className="py-2">{item.description || "—"}</td>
-                        <td className="py-2 text-right">{formatCurrency(item.amount)}</td>
+                    {lineItems.map((item) =>
+                      editingLineItemId === item.id ? (
+                        <tr key={item.id} className="border-b">
+                          <td className="py-2 pr-2">
+                            <Input
+                              value={lineItemDraft.description}
+                              onChange={(e) =>
+                                setLineItemDraft((d) => ({ ...d, description: e.target.value }))
+                              }
+                              placeholder="Description"
+                              className="h-8 text-sm"
+                              autoFocus
+                            />
+                          </td>
+                          <td className="py-2 px-2">{renderCostCodeSelect}</td>
+                          <td className="py-2 px-2">{renderCostTypeSelect}</td>
+                          <td className="py-2 px-2">
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={lineItemDraft.amount}
+                              onChange={(e) =>
+                                setLineItemDraft((d) => ({ ...d, amount: e.target.value }))
+                              }
+                              placeholder="0.00"
+                              className="h-8 text-sm text-right"
+                            />
+                          </td>
+                          <td className="py-2 pl-2 text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 text-primary"
+                                onClick={handleUpdateLineItem}
+                                disabled={lineItemSaving}
+                                aria-label="Save line item"
+                              >
+                                <Check className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 text-muted-foreground"
+                                onClick={cancelLineItemEdit}
+                                disabled={lineItemSaving}
+                                aria-label="Cancel edit"
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ) : (
+                        <tr key={item.id} className="group border-b last:border-0">
+                          <td className="py-2">{item.description || "—"}</td>
+                          <td className="py-2 text-muted-foreground">{costCodeLabel(item.cost_code_id)}</td>
+                          <td className="py-2 text-muted-foreground">{costTypeLabel(item.cost_type_id)}</td>
+                          <td className="py-2 text-right">{formatCurrency(item.amount)}</td>
+                          <td className="py-2 text-right">
+                            <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                                onClick={() => startEditLineItem(item)}
+                                aria-label={`Edit line item ${item.description || ""}`}
+                              >
+                                <Pencil className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                                onClick={() => handleDeleteLineItem(item.id)}
+                                aria-label={`Delete line item ${item.description || ""}`}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      ),
+                    )}
+                    {/* Inline add row */}
+                    {addingLineItem && (
+                      <tr className="border-b">
+                        <td className="py-2 pr-2">
+                          <Input
+                            value={lineItemDraft.description}
+                            onChange={(e) =>
+                              setLineItemDraft((d) => ({ ...d, description: e.target.value }))
+                            }
+                            placeholder="Description"
+                            className="h-8 text-sm"
+                            autoFocus
+                          />
+                        </td>
+                        <td className="py-2 px-2">{renderCostCodeSelect}</td>
+                        <td className="py-2 px-2">{renderCostTypeSelect}</td>
+                        <td className="py-2 px-2">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={lineItemDraft.amount}
+                            onChange={(e) =>
+                              setLineItemDraft((d) => ({ ...d, amount: e.target.value }))
+                            }
+                            placeholder="0.00"
+                            className="h-8 text-sm text-right"
+                          />
+                        </td>
+                        <td className="py-2 pl-2 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-primary"
+                              onClick={handleAddLineItem}
+                              disabled={lineItemSaving}
+                              aria-label="Save new line item"
+                            >
+                              <Check className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-muted-foreground"
+                              onClick={cancelLineItemEdit}
+                              disabled={lineItemSaving}
+                              aria-label="Cancel add"
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                   <tfoot>
                     <tr className="font-medium">
-                      <td className="pt-2">Total</td>
+                      <td colSpan={3} className="pt-2">Total</td>
                       <td className="pt-2 text-right">
                         {formatCurrency(
                           lineItems.reduce((sum, item) => sum + (item.amount ?? 0), 0),
                         )}
                       </td>
+                      <td />
                     </tr>
                   </tfoot>
                 </table>
               </div>
+            )}
+            {!addingLineItem && !editingLineItemId && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setAddingLineItem(true);
+                  setEditingLineItemId(null);
+                  setLineItemDraft(emptyDraft);
+                }}
+              >
+                <Plus className="mr-1 h-4 w-4" />
+                Add Line Item
+              </Button>
             )}
           </section>
 

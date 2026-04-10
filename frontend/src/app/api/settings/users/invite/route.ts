@@ -1,12 +1,9 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { Resend } from "resend";
 
 import { createClient } from "@/lib/supabase/server";
-
-const resend = new Resend(process.env.RESEND_API_KEY);
-
-const FROM = "Alleato <noreply@alleato.group>";
+import { sendEmail } from "@/lib/email/send";
+import InviteUser from "@/emails/auth/InviteUser";
 
 export async function POST(req: NextRequest) {
   try {
@@ -78,74 +75,37 @@ export async function POST(req: NextRequest) {
     }
 
     // Send branded Resend email with context
-    const appUrl = process.env.NEXT_PUBLIC_BASE_URL ?? "https://app.alleato.group";
-    const displayName = fullName ?? email;
+    const appUrl =
+      process.env.NEXT_PUBLIC_APP_URL ??
+      process.env.NEXT_PUBLIC_BASE_URL ??
+      "https://app.alleato.group";
 
-    const { error: emailError } = await resend.emails.send(
-      {
-        from: FROM,
-        to: [email],
-        subject: "You've been invited to Alleato",
-        html: `
-<!DOCTYPE html>
-<html>
-<head><meta charset="utf-8" /></head>
-<body style="margin:0;padding:0;background:#F6F6F8;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="padding:40px 20px;">
-    <tr>
-      <td align="center">
-        <table width="520" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;overflow:hidden;">
+    // Get the inviter's display name for the template
+    const { data: inviterProfile } = await supabase
+      .from("user_profiles")
+      .select("full_name, email")
+      .eq("id", user.id)
+      .maybeSingle();
+    const inviterName =
+      inviterProfile?.full_name || inviterProfile?.email || "An Alleato admin";
 
-          <!-- Header -->
-          <tr>
-            <td style="padding:32px 40px 24px;border-bottom:1px solid #E8E8EC;">
-              <span style="font-size:18px;font-weight:600;color:#111118;letter-spacing:-0.01em;">Alleato</span>
-            </td>
-          </tr>
-
-          <!-- Body -->
-          <tr>
-            <td style="padding:32px 40px;">
-              <p style="margin:0 0 16px;font-size:15px;line-height:1.6;color:#111118;font-weight:600;">
-                Hi ${displayName},
-              </p>
-              <p style="margin:0 0 24px;font-size:14px;line-height:1.6;color:#6B6B80;">
-                You've been invited to join Alleato — a construction project management platform. Click the button below to accept your invitation and set up your account.
-              </p>
-              <p style="margin:0 0 32px;font-size:13px;line-height:1.6;color:#9898A6;">
-                This invitation link will expire in 24 hours.
-              </p>
-              <table cellpadding="0" cellspacing="0">
-                <tr>
-                  <td style="background:#5856D6;border-radius:6px;">
-                    <a href="${appUrl}" style="display:inline-block;padding:11px 24px;font-size:14px;font-weight:500;color:#ffffff;text-decoration:none;letter-spacing:-0.01em;">
-                      Accept Invitation
-                    </a>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td style="padding:20px 40px;border-top:1px solid #E8E8EC;background:#F6F6F8;">
-              <p style="margin:0;font-size:12px;color:#9898A6;line-height:1.5;">
-                If you didn't expect this invitation, you can ignore this email.<br />
-                © ${new Date().getFullYear()} Alleato Group
-              </p>
-            </td>
-          </tr>
-
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>`,
-      },
-      { idempotencyKey: `user-invite/${email}` }
-    );
+    const { error: emailError } = await sendEmail({
+      template: "user-invite",
+      to: email,
+      subject: "You've been invited to Alleato",
+      react: InviteUser({
+        inviterName,
+        inviteeName: fullName ?? undefined,
+        role: role ?? undefined,
+        acceptUrl: appUrl,
+        expiresInHours: 24,
+      }),
+      entity: inviteData.user
+        ? { type: "user_invite", id: inviteData.user.id }
+        : undefined,
+      userId: inviteData.user?.id,
+      idempotencyKey: `user-invite/${email}`,
+    });
 
     if (emailError) {
       // Don't fail the request — Supabase already sent the magic link

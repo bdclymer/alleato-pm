@@ -11,6 +11,7 @@ interface PCORecordHeaderProps {
   onEdit: () => void;
   onSubmit: () => void;
   onConvert: () => void;
+  converting?: boolean;
 }
 
 const STATUS_LABELS: Record<string, string> = {
@@ -20,6 +21,7 @@ const STATUS_LABELS: Record<string, string> = {
   APPROVED: "Approved",
   REVISION_REQUESTED: "Revision Requested",
   VOID: "Void",
+  CONVERTED: "Converted",
 };
 
 const typeLabels: Record<string, string> = {
@@ -33,6 +35,7 @@ export function PCORecordHeader({
   onEdit,
   onSubmit,
   onConvert,
+  converting,
 }: PCORecordHeaderProps) {
   const status = pco.status;
   const createdDate = pco.created_at
@@ -92,10 +95,10 @@ export function PCORecordHeader({
             Edit &amp; Revise
           </Button>
         )}
-        {status === "APPROVED" && (
-          <Button size="sm" onClick={onConvert}>
+        {status !== "VOID" && status !== "CONVERTED" && (
+          <Button size="sm" onClick={onConvert} disabled={converting}>
             <ArrowRight className="mr-1.5 h-4 w-4" />
-            Convert to Change Order
+            {converting ? "Converting\u2026" : "Convert to Change Order"}
           </Button>
         )}
       </Inline>

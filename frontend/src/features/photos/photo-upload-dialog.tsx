@@ -15,6 +15,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ds";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { useUploadPhotos } from "@/hooks/use-photos";
 import { ALBUM_OPTIONS } from "./photos-grid-config";
 
@@ -34,6 +36,7 @@ export function PhotoUploadDialog({
   const [dragging, setDragging] = useState(false);
   const [files, setFiles] = useState<File[]>([]);
   const [album, setAlbum] = useState("Default");
+  const [isPrivate, setIsPrivate] = useState(false);
 
   const addFiles = useCallback((incoming: FileList | File[]) => {
     const images = Array.from(incoming).filter((f) =>
@@ -59,13 +62,15 @@ export function PhotoUploadDialog({
 
   const handleSubmit = async () => {
     if (!files.length) return;
-    await uploadPhotos.mutateAsync(files);
+    await uploadPhotos.mutateAsync({ files, album, is_private: isPrivate });
     setFiles([]);
+    setIsPrivate(false);
     onOpenChange(false);
   };
 
   const handleClose = () => {
     setFiles([]);
+    setIsPrivate(false);
     onOpenChange(false);
   };
 
@@ -167,6 +172,18 @@ export function PhotoUploadDialog({
                 )}
               </SelectContent>
             </Select>
+          </div>
+
+          {/* Private toggle */}
+          <div className="flex items-center gap-2">
+            <Checkbox
+              id="is-private"
+              checked={isPrivate}
+              onCheckedChange={(v) => setIsPrivate(Boolean(v))}
+            />
+            <Label htmlFor="is-private" className="cursor-pointer text-sm font-normal">
+              Private — only visible to admins
+            </Label>
           </div>
 
           {/* Actions */}

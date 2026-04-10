@@ -36,6 +36,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const formData = await request.formData();
     const files = formData.getAll("files") as File[];
+    const album = (formData.get("album") as string | null) ?? "Default";
+    const isPrivate = formData.get("is_private") === "true";
 
     if (files.length === 0) {
       return NextResponse.json(
@@ -95,7 +97,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
           file_url: publicUrl,
           file_size: file.size,
           content_type: file.type,
-          album: "Default",
+          album,
+          is_private: isPrivate,
           uploaded_by: user.id,
           created_by: user.id,
         })

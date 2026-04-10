@@ -328,6 +328,28 @@ export async function GET(
       }
     }
 
+    // Batch-fetch PCO links from change_event_related_items for all CEs on
+    // the current page. We look for `related_type = 'potential_change_order'`.
+    const { data: pcoLinks } = eventIds.length
+      ? await (supabase as any)
+          .from('change_event_related_items')
+          .select('change_event_id, related_number, related_title')
+          .in('change_event_id', eventIds)
+          .eq('related_type', 'potential_change_order')
+      : { data: [] as any[] }
+
+    const pcoMap = new Map<string, { number: string | null; title: string | null }>()
+    for (const link of pcoLinks || []) {
+      const key = String(link.change_event_id)
+      // Keep the first (most recent insert) if a CE is linked to multiple PCOs
+      if (!pcoMap.has(key)) {
+        pcoMap.set(key, {
+          number: link.related_number || null,
+          title: link.related_title || null,
+        })
+      }
+    }
+
     const changeEventsWithTotals: ChangeEventWithTotals[] = events.map(
       (event: ChangeEvent & { change_event_line_items?: { count: number }[] }) => {
         const lineItemAgg = lineItemMap.get(String(event.id))
@@ -353,10 +375,8 @@ export async function GET(
           total: totalWithMarkup.toFixed(2),
           cost_rom: costRomWithMarkup.toFixed(2),
           lineItemsCount: lineItemAgg?.count ?? event.change_event_line_items?.[0]?.count ?? 0,
-          // Procore parity placeholders for Prime PCO fields remain null
-          // until a canonical CE -> PCO table is implemented.
-          prime_pco: null,
-          prime_pco_title: null,
+          prime_pco: pcoMap.get(String(event.id))?.number ?? null,
+          prime_pco_title: pcoMap.get(String(event.id))?.title ?? null,
           rfq_title: rfqMap.get(String(event.id)) || null,
           commitment: contractInfo?.contractNumber || null,
           commitment_title: contractInfo?.title || null,

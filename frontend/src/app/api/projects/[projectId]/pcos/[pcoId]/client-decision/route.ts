@@ -80,7 +80,20 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
 
     const now = new Date().toISOString();
 
-    // Update the latest pco_version with client decision
+    // The submit route inserts a pco_versions row at `current_version` and then
+    // increments current_version on the PCO record.  So by the time the client
+    // makes a decision, pco.current_version is already one ahead of the
+    // actually-submitted version row.  We must target (current_version - 1).
+    const submittedVersion = (pco.current_version ?? 1) - 1;
+
+    if (submittedVersion < 1) {
+      return NextResponse.json(
+        { error: "No submitted version found for this PCO" },
+        { status: 409 }
+      );
+    }
+
+    // Update the submitted pco_version with client decision
     const { error: versionUpdateError } = await supabase
       .from("pco_versions")
       .update({
@@ -89,7 +102,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         client_decision_note: body.note || null,
       })
       .eq("pco_id", numericPcoId)
-      .eq("version", pco.current_version);
+      .eq("version", submittedVersion);
 
     if (versionUpdateError) {
       console.error("Failed to update version decision:", versionUpdateError);
@@ -144,7 +157,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       metadata: {
         decision: body.decision,
         note: body.note || null,
-        version: pco.current_version,
+        version: submittedVersion,
       },
       created_at: now,
     });

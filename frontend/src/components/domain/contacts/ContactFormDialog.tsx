@@ -45,13 +45,17 @@ interface Contact {
   last_name: string | null;
   email: string | null;
   phone: string | null;
+  person_type: "user" | "contact" | "employee" | null;
   company_id: string | null;
   job_title: string | null;
-  department: string | null;
+  type: string | null;
   address: string | null;
+  address_line2: string | null;
   city: string | null;
   state: string | null;
   zip: string | null;
+  linkedin: string | null;
+  avatar: string | null;
   notes: string | null;
 }
 
@@ -140,13 +144,17 @@ export function ContactFormDialog({
       last_name: contact?.last_name || "",
       email: contact?.email || "",
       phone: contact?.phone || "",
+      person_type: contact?.person_type || "contact",
       company_id: contact?.company_id || "",
       job_title: contact?.job_title || "",
-      department: contact?.department || "",
+      type: contact?.type || "",
       address: contact?.address || "",
+      address_line2: contact?.address_line2 || "",
       city: contact?.city || "",
       state: contact?.state || "",
       zip: contact?.zip || "",
+      linkedin: contact?.linkedin || "",
+      avatar: contact?.avatar || "",
       notes: contact?.notes || "",
     },
   });
@@ -191,13 +199,17 @@ export function ContactFormDialog({
         last_name: contact?.last_name || "",
         email: contact?.email || "",
         phone: contact?.phone || "",
+        person_type: contact?.person_type || "contact",
         company_id: contact?.company_id || "",
         job_title: contact?.job_title || "",
-        department: contact?.department || "",
+        type: contact?.type || "",
         address: contact?.address || "",
+        address_line2: contact?.address_line2 || "",
         city: contact?.city || "",
         state: contact?.state || "",
         zip: contact?.zip || "",
+        linkedin: contact?.linkedin || "",
+        avatar: contact?.avatar || "",
         notes: contact?.notes || "",
       });
     }
@@ -211,16 +223,20 @@ export function ContactFormDialog({
         last_name: data.last_name,
         email: data.email || null,
         phone_mobile: data.phone || null,
+        person_type: data.person_type,
         company_id:
           data.company_id && data.company_id.trim() !== ""
             ? data.company_id
             : null,
         job_title: data.job_title || null,
-        business_unit: data.department || null,
+        business_unit: data.type || null,
         address_line1: data.address || null,
+        address_line2: data.address_line2 || null,
         city: data.city || null,
         state: data.state || null,
         zip: data.zip || null,
+        linkedin: data.linkedin || null,
+        profile_photo_url: data.avatar || null,
         notes: data.notes || null,
       };
 
@@ -252,7 +268,7 @@ export function ContactFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-xl max-h-dvh overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit Contact" : "New Contact"}</DialogTitle>
           <DialogDescription>
@@ -328,13 +344,38 @@ export function ContactFormDialog({
 
             <FormField
               control={form.control}
+              name="person_type"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Person Type</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select person type" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="contact">contact</SelectItem>
+                      <SelectItem value="employee">employee</SelectItem>
+                      <SelectItem value="user">user</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
               name="company_id"
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Company</FormLabel>
                   <Select
-                    onValueChange={field.onChange}
-                    value={field.value || ""}
+                    onValueChange={(value) =>
+                      field.onChange(value === "__none" ? "" : value)
+                    }
+                    value={field.value || "__none"}
                     disabled={isLoadingCompanies}
                   >
                     <FormControl>
@@ -349,6 +390,7 @@ export function ContactFormDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
+                      <SelectItem value="__none">No Company</SelectItem>
                       <div className="p-2 border-b">
                         <Button
                           type="button"
@@ -395,19 +437,21 @@ export function ContactFormDialog({
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="department"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Department</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Operations" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+              {!isEdit ? (
+                <FormField
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Type</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter type" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              ) : null}
             </div>
 
             <FormField
@@ -415,9 +459,23 @@ export function ContactFormDialog({
               name="address"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Address</FormLabel>
+                  <FormLabel>Address Line 1</FormLabel>
                   <FormControl>
                     <Input placeholder="Street address" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <FormField
+              control={form.control}
+              name="address_line2"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Address Line 2</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Suite, unit, floor, etc." {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -475,6 +533,36 @@ export function ContactFormDialog({
                     <FormLabel>ZIP</FormLabel>
                     <FormControl>
                       <Input placeholder="12345" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="linkedin"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>LinkedIn</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://linkedin.com/in/..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="avatar"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Avatar</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://..." {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

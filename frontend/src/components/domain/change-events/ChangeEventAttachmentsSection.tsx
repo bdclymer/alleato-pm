@@ -4,6 +4,16 @@ import { useState, useEffect, useCallback } from "react";
 import { Upload, X, FileText, Download, Loader2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Text } from "@/components/ds/text";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -25,6 +35,7 @@ export function ChangeEventAttachmentsSection({
   const [isLoading, setIsLoading] = useState(true);
   const [isUploading, setIsUploading] = useState(false);
   const [deletingIds, setDeletingIds] = useState<Set<string>>(new Set());
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   // Fetch attachments
   const fetchAttachments = useCallback(async () => {
@@ -90,11 +101,8 @@ export function ChangeEventAttachmentsSection({
 
   // Handle file delete
   const handleDelete = async (attachmentId: string) => {
-    if (!window.confirm("Are you sure you want to delete this attachment?")) {
-      return;
-    }
-
     setDeletingIds((prev) => new Set(prev).add(attachmentId));
+    setDeleteId(null);
 
     try {
       const response = await fetch(
@@ -250,7 +258,7 @@ export function ChangeEventAttachmentsSection({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => handleDelete(attachment.id)}
+                      onClick={() => setDeleteId(attachment.id)}
                       disabled={isDeleting}
                     >
                       {isDeleting ? (
@@ -266,6 +274,27 @@ export function ChangeEventAttachmentsSection({
           </div>
         )}
       </CardContent>
+
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete attachment?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this attachment? This action cannot
+              be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteId && handleDelete(deleteId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

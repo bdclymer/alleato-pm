@@ -88,3 +88,91 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     return apiErrorResponse(error);
   }
 }
+
+/**
+ * POST /api/projects/[projectId]/commitment-change-orders
+ * Create a new commitment change order.
+ */
+export async function POST(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { projectId } = await params;
+    const supabase = await createClient();
+
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const body = await request.json();
+
+    if (!body.contract_id) {
+      return NextResponse.json(
+        { error: "contract_id (commitment ID) is required" },
+        { status: 400 },
+      );
+    }
+
+    // Verify the commitment belongs to this project
+    const { data: commitment, error: commitmentError } = await supabase
+      .from("commitments_unified")
+      .select("id, project_id")
+      .eq("id", body.contract_id)
+      .is("deleted_at", null)
+      .single();
+
+    if (commitmentError || !commitment) {
+      return NextResponse.json(
+        { error: "Commitment not found" },
+        { status: 404 },
+      );
+    }
+
+    if (commitment.project_id !== Number(projectId)) {
+      return NextResponse.json(
+        { error: "Commitment does not belong to this project" },
+        { status: 400 },
+      );
+    }
+
+    const { data, error } = await supabase
+      .from("contract_change_orders")
+      .insert({
+        change_order_number: body.change_order_number,
+        description: body.description,
+        amount: body.amount ?? 0,
+        contract_id: body.contract_id,
+        status: body.status || "draft",
+        requested_date: body.requested_date ?? new Date().toISOString().split("T")[0],
+        title: body.title ?? null,
+        change_reason: body.change_reason ?? null,
+        designated_reviewer: body.designated_reviewer ?? null,
+        requested_by: body.requested_by ?? null,
+        due_date: body.due_date ?? null,
+        invoiced_date: body.invoiced_date ?? null,
+        schedule_impact: body.schedule_impact ?? null,
+        location: body.location ?? null,
+        reference: body.reference ?? null,
+        field_change: body.field_change ?? false,
+        is_private: body.is_private ?? false,
+        paid_in_full: body.paid_in_full ?? false,
+        executed: body.executed ?? false,
+        contract_company: body.contract_company ?? null,
+        contract_type: body.contract_type ?? null,
+        created_by: user.id,
+      })
+      .select("*")
+      .single();
+
+    if (error) {
+      return apiErrorResponse(error);
+    }
+
+    return NextResponse.json(data, { status: 201 });
+  } catch (error) {
+    return apiErrorResponse(error);
+  }
+}

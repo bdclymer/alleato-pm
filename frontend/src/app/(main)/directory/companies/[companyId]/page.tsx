@@ -81,7 +81,7 @@ interface InvoiceItem {
   id: number;
   invoice_number: string | null;
   status: string | null;
-  contract_id: number;
+  prime_contract_id: string | null;
   contract_number: string | null;
   contract_title: string | null;
   project_id: number | null;
@@ -243,6 +243,7 @@ export default function CompanyDetailsPage() {
   const [editContactOpen, setEditContactOpen] = React.useState(false);
   const [editingContactId, setEditingContactId] = React.useState<string>("");
   const [isUpdatingContact, setIsUpdatingContact] = React.useState(false);
+  const [removingContactId, setRemovingContactId] = React.useState<string | null>(null);
   const [editContactForm, setEditContactForm] = React.useState({
     first_name: "",
     last_name: "",
@@ -507,6 +508,33 @@ export default function CompanyDetailsPage() {
     }
   }
 
+  async function handleRemoveContactFromCompany(contact: Contact) {
+    if (!data?.company.id) return;
+
+    const confirmed = window.confirm(
+      `Remove ${contact.first_name || ""} ${contact.last_name || ""} from ${data.company.name}?`,
+    );
+    if (!confirmed) return;
+
+    try {
+      setRemovingContactId(contact.id);
+      const result = await updateContact(contact.id, {
+        company_id: null,
+      });
+
+      if (result.error) {
+        throw new Error(result.error);
+      }
+
+      toast.success("Contact removed from company");
+      await loadDetails();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to remove contact from company");
+    } finally {
+      setRemovingContactId(null);
+    }
+  }
+
   async function handleAddCompanyToProject() {
     if (!data?.company.id || !selectedProjectId) {
       toast.error("Select a project first");
@@ -624,8 +652,8 @@ export default function CompanyDetailsPage() {
         </DropdownMenu>
       }
     >
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="space-y-8">
+        <div className="grid gap-16 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="space-y-12">
             <section className="space-y-3">
               <div className="flex flex-wrap items-center gap-2">
                 <Badge variant={statusVariant(company.status)}>{company.status || "Unknown"}</Badge>
@@ -636,16 +664,14 @@ export default function CompanyDetailsPage() {
             <section className="space-y-4">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <SectionHeader title="Company Contacts" />
-                <Button
-                  size="sm"
-                  variant="ghost"
+                <button
+                  type="button"
                   onClick={() => void openAddContactModal()}
-                  className="h-8 w-8 p-0"
-                  aria-label="Add Contact"
-                  title="Add Contact"
+                  className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
                 >
-                  <Plus />
-                </Button>
+                  <Plus className="h-3.5 w-3.5" />
+                  Add Contact
+                </button>
               </div>
               {contacts.length === 0 ? (
                 <EmptyState message="No contacts associated with this company." />
@@ -654,32 +680,55 @@ export default function CompanyDetailsPage() {
                   <ul className="divide-y divide-border">
                     {contacts.map((contact) => (
                       <li key={contact.id}>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          onClick={() => router.push(`/directory/contacts/${contact.id}`)}
-                          className="grid w-full h-auto grid-cols-[auto_minmax(0,1fr)] items-center gap-3 py-3 text-left transition-colors hover:bg-muted/30 md:grid-cols-[auto_minmax(0,1fr)_minmax(220px,1fr)_180px] justify-start"
-                        >
-                          <Avatar className="h-9 w-9 border border-border">
-                            <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
-                              {getInitials(contact.first_name, contact.last_name)}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-medium text-foreground">
-                              {contact.first_name} {contact.last_name}
-                            </p>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            onClick={() => router.push(`/directory/contacts/${contact.id}`)}
+                            className="grid h-auto flex-1 grid-cols-[auto_minmax(0,1fr)] items-center gap-3 py-3 text-left transition-colors hover:bg-muted/30 md:grid-cols-[auto_minmax(0,1fr)_minmax(220px,1fr)_180px] justify-start"
+                          >
+                            <Avatar className="h-9 w-9 border border-border">
+                              <AvatarFallback className="bg-primary/10 text-xs font-semibold text-primary">
+                                {getInitials(contact.first_name, contact.last_name)}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0">
+                              <p className="truncate text-sm font-medium text-foreground">
+                                {contact.first_name} {contact.last_name}
+                              </p>
+                              <p className="truncate text-sm text-muted-foreground">
+                                {contact.job_title || "No job title"}
+                              </p>
+                            </div>
                             <p className="truncate text-sm text-muted-foreground">
-                              {contact.job_title || "No job title"}
+                              {contact.email || "No email"}
                             </p>
-                          </div>
-                          <p className="truncate text-sm text-muted-foreground">
-                            {contact.email || "No email"}
-                          </p>
-                          <p className="truncate text-sm text-muted-foreground md:text-right">
-                            {contact.phone_business || contact.phone_mobile || "No phone"}
-                          </p>
-                        </Button>
+                            <p className="truncate text-sm text-muted-foreground md:text-right">
+                              {contact.phone_business || contact.phone_mobile || "No phone"}
+                            </p>
+                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                aria-label="Contact actions"
+                                disabled={removingContactId === contact.id}
+                              >
+                                <MoreHorizontal />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem
+                                className="text-destructive"
+                                onSelect={() => void handleRemoveContactFromCompany(contact)}
+                              >
+                                Remove from Company
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
                       </li>
                     ))}
                   </ul>
@@ -689,19 +738,20 @@ export default function CompanyDetailsPage() {
 
             <section className="space-y-4">
               <div className="flex flex-wrap items-start justify-between gap-4">
-                <SectionHeader title="Projects" description="Projects where this company is involved." />
-                <Button
-                  size="sm"
-                  variant="outline"
+                <SectionHeader title="Projects" />
+                <button
+                  type="button"
                   onClick={async () => {
                     setAddToProjectOpen(true);
                     setProjectQuery("");
                     setProjectComboboxOpen(false);
                     await loadProjects();
                   }}
+                  className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
                 >
-                  Add to Project
-                </Button>
+                  <Plus className="h-3.5 w-3.5" />
+                  Add Project
+                </button>
               </div>
               {associatedProjects.length === 0 ? (
                 <EmptyState message="No projects associated with this company." />
@@ -745,23 +795,16 @@ export default function CompanyDetailsPage() {
 
             <section className="space-y-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <SectionHeader title="Invoices" description="Invoice activity across associated projects." />
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant={invoiceFilter === "open" ? "default" : "outline"}
-                    onClick={() => setInvoiceFilter("open")}
-                  >
-                    Open only
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant={invoiceFilter === "all" ? "default" : "outline"}
-                    onClick={() => setInvoiceFilter("all")}
-                  >
-                    All
-                  </Button>
-                </div>
+                <SectionHeader title="Invoices" />
+                <Tabs
+                  value={invoiceFilter}
+                  onValueChange={(value) => setInvoiceFilter(value as "open" | "all")}
+                >
+                  <TabsList>
+                    <TabsTrigger value="open">Open only</TabsTrigger>
+                    <TabsTrigger value="all">All</TabsTrigger>
+                  </TabsList>
+                </Tabs>
               </div>
               {filteredInvoices.length === 0 ? (
                 <EmptyState
@@ -790,7 +833,7 @@ export default function CompanyDetailsPage() {
                           <Badge variant={statusVariant(invoice.status)}>{invoice.status || "Unknown"}</Badge>
                         </TableCell>
                         <TableCell className="text-muted-foreground">
-                          {invoice.contract_number || invoice.contract_id}: {invoice.contract_title || "Untitled"}
+                          {invoice.contract_number || invoice.prime_contract_id}: {invoice.contract_title || "Untitled"}
                         </TableCell>
                         <TableCell className="text-muted-foreground">
                           {invoice.project_name || "Unknown project"} ({invoice.project_number || "-"})
@@ -806,10 +849,7 @@ export default function CompanyDetailsPage() {
             </section>
 
             <section className="space-y-4">
-              <SectionHeader
-                title="Meetings"
-                description="Recent meetings grouped by associated project."
-              />
+              <SectionHeader title="Meetings" />
               {meetingsByProject.length === 0 ? (
                 <EmptyState message="No meetings found for this company's projects." />
               ) : (
@@ -855,9 +895,9 @@ export default function CompanyDetailsPage() {
             </section>
           </div>
 
-          <aside className="space-y-6 lg:sticky lg:top-4 lg:self-start">
+          <aside className="space-y-10 lg:sticky lg:top-4 lg:self-start">
             <section className="space-y-4">
-              <SectionHeader title="Overview" description="Core company profile and contact information." />
+              <SectionHeader title="Overview" />
               <div>
                 <dl className="space-y-4">
                   <DetailField label="Address" value={company.address || "-"} />

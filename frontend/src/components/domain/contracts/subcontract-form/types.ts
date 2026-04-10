@@ -16,12 +16,14 @@ export interface VendorOption {
 
 export const UNIT_OF_MEASURES = [
   { value: "EA", label: "Each" },
+  { value: "LS", label: "Lump Sum" },
   { value: "LF", label: "Linear Foot" },
   { value: "SF", label: "Square Foot" },
   { value: "CY", label: "Cubic Yard" },
-  { value: "TON", label: "Ton" },
   { value: "HR", label: "Hour" },
-  { value: "LS", label: "Lump Sum" },
+  { value: "TON", label: "Ton" },
+  { value: "GAL", label: "Gallon" },
+  { value: "LB", label: "Pound" },
 ] as const;
 
 export const COST_TYPE_LABELS: Record<string, string> = {

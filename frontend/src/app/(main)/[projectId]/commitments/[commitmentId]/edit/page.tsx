@@ -138,7 +138,7 @@ export default function EditCommitmentPage() {
       contractNumber: typeof r.contract_number === "string" ? r.contract_number : "",
       title: typeof r.title === "string" ? r.title : "",
       contractCompanyId: typeof r.contract_company_id === "string" ? r.contract_company_id : "",
-      status: normalizedStatus as "Draft" | "Out for Signature" | "Pending" | "Approved" | "Complete" | "Void",
+      status: normalizedStatus as "Draft" | "Out for Bid" | "Out for Signature" | "Approved" | "Complete" | "Terminated" | "Void",
       executed: typeof r.executed === "boolean" ? r.executed : false,
       accountingMethod,
       defaultRetainagePercent: typeof r.default_retainage_percent === "number" ? r.default_retainage_percent : undefined,

@@ -1,0 +1,132 @@
+{
+  "run_id": "change-workflow-20260410-031939",
+  "feature": "change-workflow",
+  "completed_at": "2026-04-10T08:15:00Z",
+  "verdict": "PASS_WITH_NOTES",
+  "completion": {
+    "before": {
+      "percentage": 55,
+      "description": "Core CRUD for CE, PCO, CO existed. Missing: Add To workflow, SOV line items, expanded form fields, clone, export."
+    },
+    "after": {
+      "percentage": 85,
+      "description": "Full lifecycle wired: CE → Add To → PCO/CO (both paths). SOV line items CRUD on both CO types. Forms expanded to Procore field parity."
+    }
+  },
+  "gaps_resolved": {
+    "critical": 2,
+    "high": 5,
+    "medium": 1,
+    "low": 0,
+    "total": 8
+  },
+  "gaps_remaining": {
+    "critical": 0,
+    "high": 2,
+    "medium": 6,
+    "low": 3,
+    "total": 11,
+    "items": [
+      {
+        "id": "GAP-003",
+        "severity": "high",
+        "title": "Link CEs to existing PCOs/COs (not just create new)",
+        "reason": "Requires search/select UI for existing items — deferred"
+      },
+      {
+        "id": "GAP-004",
+        "severity": "high",
+        "title": "PCO → CO conversion UI button verification",
+        "reason": "API exists, UI action needs live verification"
+      },
+      {
+        "id": "GAP-005",
+        "severity": "medium",
+        "title": "CO list Create button tab-aware routing",
+        "reason": "Needs page-actions audit"
+      },
+      {
+        "id": "GAP-011",
+        "severity": "medium",
+        "title": "Change event workflow_stage auto-progression",
+        "reason": "Requires backend state machine logic"
+      },
+      {
+        "id": "GAP-012",
+        "severity": "medium",
+        "title": "PCO version tracking",
+        "reason": "current_version column exists but UI doesn't expose revision history"
+      },
+      {
+        "id": "GAP-013",
+        "severity": "medium",
+        "title": "Markup calculation on PCO line items",
+        "reason": "markup_percentage exists but auto-calc not implemented"
+      },
+      {
+        "id": "GAP-014",
+        "severity": "medium",
+        "title": "CE → PCO → CO traceability chain display",
+        "reason": "Related items tab exists but cross-entity links incomplete"
+      },
+      {
+        "id": "GAP-015",
+        "severity": "medium",
+        "title": "Bulk status update on Change Orders list",
+        "reason": "Selection exists but no bulk actions"
+      },
+      {
+        "id": "GAP-016",
+        "severity": "low",
+        "title": "CO attachment preview",
+        "reason": "Upload/download works, inline preview not implemented"
+      },
+      {
+        "id": "GAP-017",
+        "severity": "low",
+        "title": "Change event RFQ workflow enhancements",
+        "reason": "Basic RFQ exists, needs vendor response tracking"
+      },
+      {
+        "id": "GAP-018",
+        "severity": "low",
+        "title": "CO email notifications",
+        "reason": "Email tab exists but no outbound notifications"
+      }
+    ]
+  },
+  "typescript_check": {
+    "status": "pass",
+    "new_errors_introduced": 0,
+    "pre_existing_errors_in_scope": 11,
+    "notes": "All pre-existing — no new errors from remediation"
+  },
+  "routes_verified": [
+    "GET /67/change-events → 307 (auth redirect, route resolves)",
+    "GET /67/change-orders → 307",
+    "GET /67/pcos → 307",
+    "GET /67/change-orders/prime/new → 307",
+    "GET /67/change-orders/commitment/new → 307"
+  ],
+  "files_created": [
+    "frontend/src/components/domain/change-events/AddToCommitmentCODialog.tsx",
+    "frontend/src/app/api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/line-items/route.ts",
+    "frontend/src/app/api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/line-items/[lineItemId]/route.ts",
+    "frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/line-items/route.ts",
+    "frontend/src/app/api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/line-items/[lineItemId]/route.ts"
+  ],
+  "files_modified": [
+    "frontend/src/app/(main)/[projectId]/change-events/page.tsx",
+    "frontend/src/components/domain/change-events/ChangeEventSelectionBar.tsx",
+    "frontend/src/app/(main)/[projectId]/change-events/[changeEventId]/page.tsx",
+    "frontend/src/app/(main)/[projectId]/change-orders/change-orders-client.tsx",
+    "frontend/src/app/(main)/[projectId]/change-orders/prime/new/page.tsx",
+    "frontend/src/app/(main)/[projectId]/change-orders/commitment/new/page.tsx",
+    "frontend/src/app/(main)/[projectId]/change-orders/prime/[primeCoId]/page.tsx",
+    "frontend/src/app/(main)/[projectId]/change-orders/commitment/[commitmentCoId]/page.tsx",
+    "frontend/src/app/(main)/[projectId]/pcos/page.tsx",
+    "frontend/src/app/(main)/[projectId]/pcos/new/page.tsx"
+  ],
+  "blockers": [],
+  "waivers": []
+}

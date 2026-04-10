@@ -939,6 +939,10 @@ export default function DirectoryContactsPage(): ReactElement {
           enableRowSelection: true,
           enableRowActions: true,
         }}
+        layout={{
+          fullBleedTable: true,
+          removeTableFrame: true,
+        }}
       />
 
       <ContactFormDialog open={dialogOpen} onOpenChange={setDialogOpen} onSuccess={fetchContacts} />

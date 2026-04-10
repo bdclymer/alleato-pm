@@ -3,6 +3,7 @@ import { PageShell } from "@/components/layout";
 
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -200,7 +201,12 @@ export default function ContactDetailsPage() {
                       <Text tone="muted" className="text-sm mb-1">Company</Text>
                       <div className="flex items-center gap-2">
                         <Building className="h-4 w-4 text-muted-foreground" />
-                        <Text className="font-medium">{contact.company.name}</Text>
+                        <Link
+                          href={`/directory/companies/${contact.company.id}`}
+                          className="font-medium text-blue-600 hover:underline"
+                        >
+                          {contact.company.name}
+                        </Link>
                       </div>
                     </div>
                   )}
@@ -365,13 +371,17 @@ export default function ContactDetailsPage() {
           last_name: contact.last_name,
           email: contact.email,
           phone: contact.phone_mobile ?? contact.phone_business,
+          person_type: contact.person_type as "user" | "contact" | "employee" | null,
           company_id: contact.company_id,
           job_title: contact.job_title,
-          department: contact.business_unit,
+          type: contact.business_unit,
           address: contact.address_line1,
+          address_line2: contact.address_line2,
           city: contact.city,
           state: contact.state,
           zip: contact.zip,
+          linkedin: contact.linkedin,
+          avatar: contact.profile_photo_url,
           notes: contact.notes,
         }}
         onSuccess={() => {

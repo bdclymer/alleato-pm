@@ -17,6 +17,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -28,6 +29,19 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Card } from "@/components/ui/card";
 import { ChevronRight } from "lucide-react";
 
+/**
+ * A single footer cell definition for the totals row.
+ * - `colSpan` merges cells (e.g. a "Totals" label spanning the first few columns).
+ * - `align` controls text alignment (default "right").
+ * - `value` is the rendered content (string, number, ReactNode).
+ */
+export interface DataTableFooterCell {
+  value?: React.ReactNode;
+  colSpan?: number;
+  align?: "left" | "center" | "right";
+  className?: string;
+}
+
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
@@ -37,6 +51,8 @@ interface DataTableProps<TData, TValue> {
   className?: string;
   searchKey?: string;
   searchPlaceholder?: string;
+  /** Optional totals/footer row rendered as a `<tfoot>`. Cells align to columns. */
+  footerRow?: DataTableFooterCell[];
 }
 
 export function DataTable<TData, TValue>({
@@ -48,6 +64,7 @@ export function DataTable<TData, TValue>({
   className,
   searchKey,
   searchPlaceholder,
+  footerRow,
 }: DataTableProps<TData, TValue>) {
   const isMobile = useIsMobile();
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -153,7 +170,7 @@ export function DataTable<TData, TValue>({
           )}
         </div>
       ) : (
-        <div className="rounded-md border">
+        <div>
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
@@ -205,6 +222,29 @@ export function DataTable<TData, TValue>({
                 </TableRow>
               )}
             </TableBody>
+            {footerRow && footerRow.length > 0 && (
+              <TableFooter className="bg-muted/40">
+                <TableRow className="font-semibold">
+                  {footerRow.map((cell, i) => (
+                    <TableCell
+                      key={i}
+                      colSpan={cell.colSpan}
+                      className={cn(
+                        "tabular-nums",
+                        cell.align === "left"
+                          ? "text-left"
+                          : cell.align === "center"
+                            ? "text-center"
+                            : "text-right",
+                        cell.className,
+                      )}
+                    >
+                      {cell.value}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              </TableFooter>
+            )}
           </Table>
         </div>
       )}

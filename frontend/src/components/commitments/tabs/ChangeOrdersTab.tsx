@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo, memo } from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { DataTable } from '@/components/tables/DataTable'
@@ -10,7 +11,7 @@ import { formatCurrency } from '@/config/tables'
 import { formatDate } from '@/lib/table-config/formatters'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ColumnDef } from '@tanstack/react-table'
-import { ArrowUpDown, ExternalLink, FileText } from 'lucide-react'
+import { ArrowUpDown, ExternalLink, FileText, Plus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { StatusBadge } from '@/components/misc/status-badge'
 import Link from 'next/link'
@@ -40,6 +41,7 @@ interface ChangeOrdersTabProps {
 }
 
 export const ChangeOrdersTab = memo(function ChangeOrdersTab({ commitmentId, projectId }: ChangeOrdersTabProps) {
+  const router = useRouter()
   const [changeOrders, setChangeOrders] = useState<ChangeOrder[]>([])
   const [totals, setTotals] = useState<ChangeOrderTotals>({ approved: 0, pending: 0, draft: 0, total: 0 })
   const [isLoading, setIsLoading] = useState(true)
@@ -174,7 +176,13 @@ export const ChangeOrdersTab = memo(function ChangeOrdersTab({ commitmentId, pro
     return (
       <div>
         <CardHeader className="px-0">
-          <CardTitle>Change Orders</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Change Orders</CardTitle>
+            <Button size="sm" onClick={() => router.push(`/${projectId}/change-events/new`)}>
+              <Plus className="mr-1.5 h-4 w-4" />
+              Create Change Event
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="space-y-4 px-0">
           <Skeleton className="h-10 w-full" />
@@ -189,7 +197,13 @@ export const ChangeOrdersTab = memo(function ChangeOrdersTab({ commitmentId, pro
     return (
       <div>
         <CardHeader className="px-0">
-          <CardTitle>Change Orders</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Change Orders</CardTitle>
+            <Button size="sm" onClick={() => router.push(`/${projectId}/change-events/new`)}>
+              <Plus className="mr-1.5 h-4 w-4" />
+              Create Change Event
+            </Button>
+          </div>
         </CardHeader>
         <CardContent className="px-0">
           <Text tone="destructive">{error}</Text>
@@ -202,7 +216,13 @@ export const ChangeOrdersTab = memo(function ChangeOrdersTab({ commitmentId, pro
     return (
       <section className="space-y-4">
         <CardHeader className="px-0">
-          <CardTitle>Change Orders</CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle>Change Orders</CardTitle>
+            <Button size="sm" onClick={() => router.push(`/${projectId}/change-events/new`)}>
+              <Plus className="mr-1.5 h-4 w-4" />
+              Create Change Event
+            </Button>
+          </div>
           <CardDescription>
             No change orders have been created for this commitment yet.
           </CardDescription>
@@ -221,7 +241,13 @@ export const ChangeOrdersTab = memo(function ChangeOrdersTab({ commitmentId, pro
   return (
     <section className="space-y-4">
       <CardHeader className="px-0">
-        <CardTitle>Change Orders ({changeOrders.length})</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>Change Orders ({changeOrders.length})</CardTitle>
+          <Button size="sm" onClick={() => router.push(`/${projectId}/change-events/new`)}>
+            <Plus className="mr-1.5 h-4 w-4" />
+            Create Change Event
+          </Button>
+        </div>
         <CardDescription>
           Approved change orders automatically update the revised contract amount.
         </CardDescription>

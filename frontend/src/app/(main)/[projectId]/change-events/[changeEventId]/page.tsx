@@ -465,7 +465,48 @@ export default function ChangeEventDetailPage() {
             <Copy className="mr-2 h-4 w-4" />
             Copy ID
           </DropdownMenuItem>
-          {changeEvent.status?.toLowerCase() === "approved" && (
+          <DropdownMenuItem
+            onClick={async () => {
+              try {
+                toast.loading("Cloning change event...", { id: "clone-ce" });
+                const res = await fetch(
+                  `/api/projects/${projectId}/change-events`,
+                  {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      title: `${changeEvent.title} (Copy)`,
+                      type: changeEvent.type,
+                      scope: changeEvent.scope,
+                      reason: changeEvent.reason,
+                      origin: changeEvent.origin,
+                      description: changeEvent.description,
+                      expecting_revenue: changeEvent.expecting_revenue,
+                    }),
+                  },
+                );
+                if (!res.ok) {
+                  const err = await res.json().catch(() => ({}));
+                  throw new Error(err.error || "Failed to clone");
+                }
+                const cloned = await res.json();
+                const newId = cloned?.data?.id ?? cloned?.id;
+                toast.success("Change event cloned", { id: "clone-ce" });
+                if (newId) {
+                  router.push(`/${projectId}/change-events/${newId}`);
+                }
+              } catch (err) {
+                toast.error(
+                  err instanceof Error ? err.message : "Failed to clone",
+                  { id: "clone-ce" },
+                );
+              }
+            }}
+          >
+            <Copy className="mr-2 h-4 w-4" />
+            Clone
+          </DropdownMenuItem>
+          {normalizedStatus !== "void" && normalizedStatus !== "converted" && (
             <DropdownMenuItem onClick={() => setShowConvertDialog(true)}>
               <ArrowRight className="mr-2 h-4 w-4" />
               Convert to Change Order

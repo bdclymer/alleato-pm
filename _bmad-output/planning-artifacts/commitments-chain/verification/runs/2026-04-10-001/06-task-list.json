@@ -1,0 +1,127 @@
+{
+  "run_id": "2026-04-10-001",
+  "feature": "commitments-chain",
+  "generated_at": "2026-04-10T12:00:00Z",
+  "tasks": [
+    {
+      "task_id": "TASK-001",
+      "gap_id": "GAP-001",
+      "title": "Rebuild owner invoice detail page with tab structure",
+      "severity": "critical",
+      "status": "open",
+      "scope": "frontend/src/app/(main)/[projectId]/invoicing/[invoiceId]/page.tsx",
+      "description": "Replace monolithic page with PageShell variant=detail + tabs: Summary, Detail (G703), Related Items, Emails, Change History. Match SubcontractorInvoiceDetail pattern.",
+      "depends_on": []
+    },
+    {
+      "task_id": "TASK-002",
+      "gap_id": "GAP-002",
+      "title": "Add missing retainage fields to owner_invoice_line_items",
+      "severity": "critical",
+      "status": "open",
+      "scope": "supabase/migrations/",
+      "description": "Add materials_retainage_pct, materials_retainage_amount, previous_work_retainage, previous_materials_retainage columns.",
+      "depends_on": []
+    },
+    {
+      "task_id": "TASK-003",
+      "gap_id": "GAP-003",
+      "title": "Change owner_invoices.status to invoice_status enum",
+      "severity": "critical",
+      "status": "open",
+      "scope": "supabase/migrations/",
+      "description": "Migrate status column from string to invoice_status enum. Backfill existing values.",
+      "depends_on": []
+    },
+    {
+      "task_id": "TASK-004",
+      "gap_id": "GAP-004",
+      "title": "Add sub invoice workflow mutation hooks",
+      "severity": "critical",
+      "status": "open",
+      "scope": "frontend/src/hooks/use-subcontractor-invoices.ts",
+      "description": "Add useUpdateSubcontractorInvoice, useSubmitSubcontractorInvoice, useApproveSubcontractorInvoice, useReviseSubcontractorInvoice, useVoidSubcontractorInvoice",
+      "depends_on": []
+    },
+    {
+      "task_id": "TASK-005",
+      "gap_id": "GAP-005",
+      "title": "Add owner invoice workflow mutation hooks",
+      "severity": "critical",
+      "status": "open",
+      "scope": "frontend/src/hooks/use-invoicing.ts",
+      "description": "Add useCreateOwnerInvoice, useUpdateOwnerInvoice, useOwnerInvoiceDetail, useSubmitOwnerInvoice, useApproveOwnerInvoice, useReviseOwnerInvoice",
+      "depends_on": []
+    },
+    {
+      "task_id": "TASK-006",
+      "gap_id": "GAP-006",
+      "title": "Add Related Items tab to owner invoice detail",
+      "severity": "high",
+      "status": "open",
+      "scope": "frontend owner invoice detail",
+      "description": "Add RelatedItemsTab matching SubcontractorInvoiceDetail pattern",
+      "depends_on": ["TASK-001"]
+    },
+    {
+      "task_id": "TASK-007",
+      "gap_id": "GAP-007",
+      "title": "Add Change History tab to owner invoice detail",
+      "severity": "high",
+      "status": "open",
+      "scope": "frontend owner invoice detail",
+      "description": "Add ChangeHistoryTab matching SubcontractorInvoiceDetail pattern",
+      "depends_on": ["TASK-001"]
+    },
+    {
+      "task_id": "TASK-008",
+      "gap_id": "GAP-008",
+      "title": "Add Lien Rights tab to sub invoice detail",
+      "severity": "high",
+      "status": "open",
+      "scope": "frontend/src/components/invoicing/SubcontractorInvoiceDetail.tsx",
+      "description": "Add LienRightsTab placeholder",
+      "depends_on": []
+    },
+    {
+      "task_id": "TASK-009",
+      "gap_id": "GAP-009",
+      "title": "Add Requirements tab to sub invoice detail",
+      "severity": "high",
+      "status": "open",
+      "scope": "frontend/src/components/invoicing/SubcontractorInvoiceDetail.tsx",
+      "description": "Add RequirementsTab for compliance tracking",
+      "depends_on": []
+    },
+    {
+      "task_id": "TASK-010",
+      "gap_id": "GAP-010",
+      "title": "Add Related Items tab to prime contract detail",
+      "severity": "high",
+      "status": "open",
+      "scope": "frontend prime contract detail",
+      "description": "Add RelatedItemsTab",
+      "depends_on": []
+    },
+    {
+      "task_id": "TASK-011",
+      "gap_id": "GAP-011",
+      "title": "Add prime contract approve/status-change API endpoints",
+      "severity": "high",
+      "status": "open",
+      "scope": "frontend/src/app/api/projects/[projectId]/contracts/[contractId]/",
+      "description": "Add approve/route.ts and change-status/route.ts with proper validation",
+      "depends_on": []
+    },
+    {
+      "task_id": "TASK-012",
+      "gap_id": "GAP-012",
+      "title": "Add SOV line items to owner invoice create form",
+      "severity": "high",
+      "status": "open",
+      "scope": "frontend/src/app/(main)/[projectId]/invoicing/new/page.tsx",
+      "description": "Add SOV entry section matching sub invoice create pattern",
+      "depends_on": ["TASK-005"]
+    }
+  ]
+}

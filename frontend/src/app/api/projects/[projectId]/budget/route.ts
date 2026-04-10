@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { BudgetLineItemsPayloadSchema } from "@/lib/schemas/budget";
 import { apiErrorResponse } from "@/lib/api-error";
+import { requirePermission } from "@/lib/permissions-guard";
 
 /**
  * Cost types that count towards Job to Date Cost Detail (ALL approved types)
@@ -545,6 +546,10 @@ export async function POST(
         { status: 400 },
       );
     }
+
+    // Permission check: writing budget lines requires "write" on budget
+    const guard = await requirePermission(projectIdNum, "budget", "write");
+    if (guard.denied) return guard.response;
 
     const body = await request.json();
     const parsed = BudgetLineItemsPayloadSchema.safeParse(body);

@@ -53,8 +53,8 @@ export default function MainLayout({
               {...feedbackTargetProps("app.main-content")}
             >
               {children}
-              {!isTeamChatPage ? <SiteFooter /> : null}
             </main>
+            {!isTeamChatPage ? <SiteFooter /> : null}
             <ProcoreReferencePanel />
           </div>
         </CreateProjectDevConfigProvider>

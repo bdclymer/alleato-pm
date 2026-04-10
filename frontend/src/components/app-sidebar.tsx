@@ -99,7 +99,7 @@ function SidebarFlyout({
             const linkClass = cn(
               "flex items-center rounded-md px-2.5 py-1.5 text-[13px] transition-colors",
               isActive
-                ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
+                ? "font-medium text-sidebar-foreground"
                 : "text-foreground/80 hover:bg-sidebar-accent/60 hover:text-foreground"
             )
 
@@ -187,7 +187,7 @@ function CollapsedGroupIcon({
           isHovered
             ? "bg-sidebar-accent text-sidebar-accent-foreground"
             : hasActiveChild
-              ? "bg-sidebar-accent/70 text-sidebar-accent-foreground"
+              ? "text-sidebar-foreground"
               : "text-sidebar-foreground/60 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
         )}
         aria-label={group.label}
@@ -243,7 +243,7 @@ function ExpandedNavGroup({
         const linkClass = cn(
           "mx-2 flex items-center rounded-md px-2.5 py-[7px] text-[13px] transition-colors duration-150",
           isActive
-            ? "bg-sidebar-accent font-medium text-sidebar-accent-foreground"
+            ? "font-medium text-sidebar-foreground"
             : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground"
         )
 
@@ -484,7 +484,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                       className={cn(
                         "h-9 w-9 rounded-lg text-sidebar-foreground/65",
                         item.active
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                          ? "text-sidebar-foreground"
                           : "hover:bg-sidebar-accent/60 hover:text-sidebar-foreground"
                       )}
                     >

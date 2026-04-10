@@ -5,7 +5,6 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MoneyField } from "@/components/forms/MoneyField";
 import {
   Select,
   SelectContent,
@@ -15,7 +14,8 @@ import {
 } from "@/components/ui/select";
 import { GripVertical } from "lucide-react";
 import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
-import { formatCurrency } from "@/lib/utils";
+import { MoneyField } from "@/components/forms/MoneyField";
+import { formatCurrency, cn } from "@/lib/utils";
 import type { SovLineItem } from "@/lib/schemas/create-subcontract-schema";
 import { UNIT_OF_MEASURES, type BudgetCode } from "./types";
 
@@ -167,7 +167,9 @@ export function SovLineItemRow({
               <td className="px-1 py-1.5">
                 <Input
                   type="number"
-                  value={line.quantity || ""}
+                  min="0"
+                  step="0.001"
+                  value={line.quantity ?? ""}
                   placeholder="1"
                   onChange={(e) =>
                     onUpdate(index, {
@@ -196,15 +198,25 @@ export function SovLineItemRow({
                 </Select>
               </td>
               <td className="w-48 px-1 py-1.5">
-                <MoneyField
-                  inline
-                  label="Unit Cost"
-                  value={line.unitCost ?? undefined}
-                  onChange={(val) => onUpdate(index, { unitCost: val ?? 0 })}
-                  showCurrency={false}
-                  className="h-10"
-                  data-testid="sov-line-unit-cost"
-                />
+                <div className="relative">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground font-medium pointer-events-none">
+                    $
+                  </span>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="0.0001"
+                    value={line.unitCost ?? ""}
+                    placeholder="0.0000"
+                    onChange={(e) =>
+                      onUpdate(index, {
+                        unitCost: e.target.value === "" ? 0 : parseFloat(e.target.value) || 0,
+                      })
+                    }
+                    className={cn("h-10 pl-8 text-right")}
+                    data-testid="sov-line-unit-cost"
+                  />
+                </div>
               </td>
             </>
           )}

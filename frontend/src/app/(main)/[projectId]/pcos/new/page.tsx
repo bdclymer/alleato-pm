@@ -39,6 +39,14 @@ export default function NewPCOPage() {
     type: "CLIENT_REQUESTED",
     description: "",
     rfqRequired: false,
+    changeReason: "",
+    location: "",
+    reference: "",
+    requestReceivedFrom: "",
+    dueDate: "",
+    isPrivate: false,
+    fieldChange: false,
+    paidInFull: false,
   });
 
   const [groupedCEs, setGroupedCEs] = React.useState<GroupedCE[]>([]);
@@ -109,6 +117,14 @@ export default function NewPCOPage() {
       rfq_required: formValues.rfqRequired,
       markup_percentage: markupPercentage || null,
       estimated_value: total,
+      change_reason: formValues.changeReason.trim() || null,
+      location: formValues.location.trim() || null,
+      reference: formValues.reference.trim() || null,
+      request_received_from: formValues.requestReceivedFrom.trim() || null,
+      due_date: formValues.dueDate || null,
+      is_private: formValues.isPrivate,
+      field_change: formValues.fieldChange,
+      paid_in_full: formValues.paidInFull,
       // The API will handle grouping CEs and line items after creation
       change_event_ids: groupedCEs.map((ce) => ce.id),
       line_items: lineItems.map((li) => ({

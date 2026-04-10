@@ -508,44 +508,44 @@ hover:text-primary hover:before:!bg-primary ltr:before:mr-2 rtl:before:ml-2 dark
     table {
         @apply w-full !border-collapse;
     }
-    table thead tr,
-    table tfoot tr {
-        @apply border-b-0 !bg-[#f6f8fa]  dark:!bg-[#1a2941];
+    table:not([data-slot='table']) thead tr,
+    table:not([data-slot='table']) tfoot tr {
+        @apply border-b-0;
     }
-    table thead tr th,
-    table tfoot tr th,
-    table tbody tr td {
+    table:not([data-slot='table']) thead tr th,
+    table:not([data-slot='table']) tfoot tr th,
+    table:not([data-slot='table']) tbody tr td {
         @apply px-4 py-3 ltr:text-left rtl:text-right;
     }
     /* Compact density override — used by data-dense tables (e.g., change events) */
-    table.compact-table thead tr th,
-    table.compact-table tfoot tr th {
+    table.compact-table:not([data-slot='table']) thead tr th,
+    table.compact-table:not([data-slot='table']) tfoot tr th {
         padding: 3px 8px !important;
         font-size: 11px !important;
         line-height: 1.2 !important;
     }
-    table.compact-table tbody tr td {
+    table.compact-table:not([data-slot='table']) tbody tr td {
         padding: 5px 8px !important;
         font-size: 12px !important;
         line-height: 1.25 !important;
     }
     /* Expanded sub-rows: smaller than parent rows */
-    table.compact-table tbody tr.compact-subrow td {
+    table.compact-table:not([data-slot='table']) tbody tr.compact-subrow td {
         padding: 4px 8px !important;
         font-size: 11px !important;
         line-height: 1.2 !important;
     }
-    table thead tr th,
-    table tfoot tr th {
+    table:not([data-slot='table']) thead tr th,
+    table:not([data-slot='table']) tfoot tr th {
         @apply font-semibold;
     }
-    table tbody tr {
+    table:not([data-slot='table']) tbody tr {
         @apply border-b border-white-light/40! dark:border-[#191e3a]!;
     }
-    table.table-hover tbody tr {
+    table.table-hover:not([data-slot='table']) tbody tr {
         @apply hover:bg-white-light/20! dark:hover:bg-[#1a2941]/40!;
     }
-    table.table-striped tbody tr:nth-child(odd) {
+    table.table-striped:not([data-slot='table']) tbody tr:nth-child(odd) {
         @apply bg-white-light/20! dark:bg-[#1a2941]/40!;
     }
 

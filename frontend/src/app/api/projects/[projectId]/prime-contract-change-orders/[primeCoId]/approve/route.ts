@@ -42,10 +42,30 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    if (co.status === "approved") {
+    // --- API-009: Status transition guard ---
+    const currentStatus = (co.status ?? "").toLowerCase();
+    const approvableStatuses = ["proposed", "pending", "submitted", "under_review", "revised"];
+
+    if (currentStatus === "approved") {
       return NextResponse.json(
-        { error: "Already approved" },
-        { status: 400 },
+        { error: "This change order is already approved." },
+        { status: 409 },
+      );
+    }
+
+    if (currentStatus === "voided") {
+      return NextResponse.json(
+        { error: "Cannot approve a voided change order." },
+        { status: 409 },
+      );
+    }
+
+    if (!approvableStatuses.includes(currentStatus)) {
+      return NextResponse.json(
+        {
+          error: `Cannot approve a change order with status "${currentStatus}". Approvable statuses: ${approvableStatuses.join(", ")}.`,
+        },
+        { status: 409 },
       );
     }
 
@@ -55,6 +75,7 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
       .update({
         status: "approved",
         approved_at: new Date().toISOString(),
+        review_date: new Date().toISOString(),
       })
       .eq("id", numericId)
       .eq("project_id", Number(projectId))

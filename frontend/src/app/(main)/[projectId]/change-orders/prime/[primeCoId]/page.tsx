@@ -11,6 +11,8 @@ import {
   List,
   MoreHorizontal,
   Paperclip,
+  Pencil,
+  Plus,
   Trash2,
   X,
 } from "lucide-react";
@@ -249,6 +251,20 @@ export default function PrimeContractCODetailPage() {
   const [attachmentsLoading, setAttachmentsLoading] = useState(true);
   const [attachmentsError, setAttachmentsError] = useState<string | null>(null);
 
+  // Line Items (inline CRUD)
+  const [lineItems, setLineItems] = useState<LineItem[]>([]);
+  const [lineItemsLoading, setLineItemsLoading] = useState(true);
+  const [editingLineItemId, setEditingLineItemId] = useState<number | null>(null);
+  const [addingLineItem, setAddingLineItem] = useState(false);
+  const [lineItemForm, setLineItemForm] = useState({
+    description: "",
+    cost_code: "",
+    quantity: "",
+    uom: "",
+    unit_cost: "",
+  });
+  const [lineItemSaving, setLineItemSaving] = useState(false);
+
   const form = useForm<FormData>({
     resolver: zodResolver(editSchema),
     defaultValues: {
@@ -279,6 +295,133 @@ export default function PrimeContractCODetailPage() {
   });
 
   const apiBase = `/api/projects/${projectId}/prime-contract-change-orders/${primeCoId}`;
+
+  // ---- Line Items CRUD -----------------------------------------------------
+  const fetchLineItems = useCallback(async () => {
+    setLineItemsLoading(true);
+    try {
+      const res = await fetch(`${apiBase}/line-items`);
+      if (!res.ok) throw new Error("Failed to fetch line items");
+      const json = await res.json();
+      setLineItems(json.data ?? []);
+    } catch (err) {
+      console.error("Failed to fetch line items:", err);
+    } finally {
+      setLineItemsLoading(false);
+    }
+  }, [apiBase]);
+
+  const resetLineItemForm = useCallback(() => {
+    setLineItemForm({
+      description: "",
+      cost_code: "",
+      quantity: "",
+      uom: "",
+      unit_cost: "",
+    });
+  }, []);
+
+  const startAddLineItem = useCallback(() => {
+    setEditingLineItemId(null);
+    resetLineItemForm();
+    setAddingLineItem(true);
+  }, [resetLineItemForm]);
+
+  const startEditLineItem = useCallback((item: LineItem) => {
+    setAddingLineItem(false);
+    setEditingLineItemId(item.id);
+    setLineItemForm({
+      description: item.description ?? "",
+      cost_code: item.cost_code ?? "",
+      quantity: item.quantity != null ? String(item.quantity) : "",
+      uom: item.uom ?? "",
+      unit_cost: item.unit_cost != null ? String(item.unit_cost) : "",
+    });
+  }, []);
+
+  const cancelLineItemEdit = useCallback(() => {
+    setAddingLineItem(false);
+    setEditingLineItemId(null);
+    resetLineItemForm();
+  }, [resetLineItemForm]);
+
+  const handleSaveLineItem = useCallback(async () => {
+    setLineItemSaving(true);
+    try {
+      const payload = {
+        description: lineItemForm.description || null,
+        cost_code: lineItemForm.cost_code || null,
+        quantity: lineItemForm.quantity ? Number(lineItemForm.quantity) : 0,
+        uom: lineItemForm.uom || null,
+        unit_cost: lineItemForm.unit_cost ? Number(lineItemForm.unit_cost) : 0,
+      };
+
+      if (editingLineItemId) {
+        // Update existing
+        const res = await fetch(
+          `${apiBase}/line-items/${editingLineItemId}`,
+          {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          },
+        );
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: "Update failed" }));
+          throw new Error(err.error || "Failed to update line item");
+        }
+        toast.success("Line item updated");
+      } else {
+        // Create new
+        const res = await fetch(`${apiBase}/line-items`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: "Create failed" }));
+          throw new Error(err.error || "Failed to create line item");
+        }
+        toast.success("Line item added");
+      }
+
+      cancelLineItemEdit();
+      fetchLineItems();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to save line item");
+    } finally {
+      setLineItemSaving(false);
+    }
+  }, [
+    apiBase,
+    editingLineItemId,
+    lineItemForm,
+    cancelLineItemEdit,
+    fetchLineItems,
+  ]);
+
+  const handleDeleteLineItem = useCallback(
+    async (lineItemId: number) => {
+      try {
+        const res = await fetch(`${apiBase}/line-items/${lineItemId}`, {
+          method: "DELETE",
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({ error: "Delete failed" }));
+          throw new Error(err.error || "Failed to delete line item");
+        }
+        toast.success("Line item deleted");
+        fetchLineItems();
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Failed to delete line item");
+      }
+    },
+    [apiBase, fetchLineItems],
+  );
+
+  const computedLineItemAmount =
+    (lineItemForm.quantity ? Number(lineItemForm.quantity) : 0) *
+    (lineItemForm.unit_cost ? Number(lineItemForm.unit_cost) : 0);
 
   // ---- Fetch attachments ---------------------------------------------------
   const fetchAttachments = useCallback(async () => {
@@ -375,7 +518,8 @@ export default function PrimeContractCODetailPage() {
     };
     fetchData();
     fetchAttachments();
-  }, [apiBase, projectId, fetchAttachments]);
+    fetchLineItems();
+  }, [apiBase, projectId, fetchAttachments, fetchLineItems]);
 
   useEffect(() => {
     if (searchParams.get("edit") === "1") setIsEditing(true);
@@ -1048,7 +1192,7 @@ export default function PrimeContractCODetailPage() {
     : co.title || "Untitled Prime Contract CO";
 
   const lineItemsTotal =
-    co.line_items?.reduce((sum, li) => sum + (li.line_amount ?? 0), 0) ?? 0;
+    lineItems.reduce((sum, li) => sum + (li.line_amount ?? 0), 0);
   const changeOrderAmount = Number(co.total_amount) || 0;
   const changeOrderStatus = (co.status || "").toLowerCase();
   const approvedAmount = changeOrderStatus === "approved" ? changeOrderAmount : 0;
@@ -1314,13 +1458,28 @@ export default function PrimeContractCODetailPage() {
                 </div>
               </section>
 
-              {/* ── Line Items ────────────────────────────────────── */}
+              {/* ── Line Items (inline CRUD) ────────────────────── */}
               <section className="space-y-4">
-                <SectionRuleHeading
-                  label="Line Items"
-                  className="[&_span]:text-primary"
-                />
-                {co.line_items && co.line_items.length > 0 ? (
+                <div className="flex items-center justify-between">
+                  <SectionRuleHeading
+                    label="Line Items"
+                    className="flex-1 [&_span]:text-primary"
+                  />
+                  {!addingLineItem && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={startAddLineItem}
+                    >
+                      <Plus className="mr-1 h-4 w-4" />
+                      Add Line Item
+                    </Button>
+                  )}
+                </div>
+
+                {lineItemsLoading ? (
+                  <Skeleton className="h-24 w-full" />
+                ) : lineItems.length > 0 || addingLineItem ? (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
@@ -1334,39 +1493,276 @@ export default function PrimeContractCODetailPage() {
                             Unit Cost
                           </th>
                           <th className="pb-2 text-right font-medium">Amount</th>
+                          <th className="w-20 pb-2" />
                         </tr>
                       </thead>
                       <tbody>
-                        {co.line_items.map((item, idx) => (
-                          <tr key={item.id} className="border-b last:border-0">
+                        {lineItems.map((item, idx) =>
+                          editingLineItemId === item.id ? (
+                            <tr
+                              key={item.id}
+                              className="border-b bg-muted/50"
+                            >
+                              <td className="py-2 text-muted-foreground">
+                                {idx + 1}
+                              </td>
+                              <td className="py-2 pr-2">
+                                <Input
+                                  value={lineItemForm.description}
+                                  onChange={(e) =>
+                                    setLineItemForm((f) => ({
+                                      ...f,
+                                      description: e.target.value,
+                                    }))
+                                  }
+                                  placeholder="Description"
+                                  className="h-8"
+                                />
+                              </td>
+                              <td className="py-2 pr-2">
+                                <Input
+                                  value={lineItemForm.cost_code}
+                                  onChange={(e) =>
+                                    setLineItemForm((f) => ({
+                                      ...f,
+                                      cost_code: e.target.value,
+                                    }))
+                                  }
+                                  placeholder="Cost code"
+                                  className="h-8 w-28"
+                                />
+                              </td>
+                              <td className="py-2 pr-2">
+                                <Input
+                                  type="number"
+                                  value={lineItemForm.quantity}
+                                  onChange={(e) =>
+                                    setLineItemForm((f) => ({
+                                      ...f,
+                                      quantity: e.target.value,
+                                    }))
+                                  }
+                                  placeholder="0"
+                                  className="h-8 w-20 text-right"
+                                />
+                              </td>
+                              <td className="py-2 pr-2">
+                                <Input
+                                  value={lineItemForm.uom}
+                                  onChange={(e) =>
+                                    setLineItemForm((f) => ({
+                                      ...f,
+                                      uom: e.target.value,
+                                    }))
+                                  }
+                                  placeholder="UOM"
+                                  className="h-8 w-20"
+                                />
+                              </td>
+                              <td className="py-2 pr-2">
+                                <Input
+                                  type="number"
+                                  step="0.01"
+                                  value={lineItemForm.unit_cost}
+                                  onChange={(e) =>
+                                    setLineItemForm((f) => ({
+                                      ...f,
+                                      unit_cost: e.target.value,
+                                    }))
+                                  }
+                                  placeholder="0.00"
+                                  className="h-8 w-28 text-right"
+                                />
+                              </td>
+                              <td className="py-2 text-right text-muted-foreground">
+                                {formatCurrency(computedLineItemAmount)}
+                              </td>
+                              <td className="py-2 text-right">
+                                <div className="flex items-center justify-end gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    onClick={handleSaveLineItem}
+                                    disabled={lineItemSaving}
+                                  >
+                                    <Check className="h-4 w-4 text-primary" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    onClick={cancelLineItemEdit}
+                                    disabled={lineItemSaving}
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          ) : (
+                            <tr
+                              key={item.id}
+                              className="group border-b last:border-0"
+                            >
+                              <td className="py-2 text-muted-foreground">
+                                {idx + 1}
+                              </td>
+                              <td className="py-2">
+                                {item.description || "—"}
+                              </td>
+                              <td className="py-2">
+                                {item.cost_code || "—"}
+                              </td>
+                              <td className="py-2 text-right">
+                                {item.quantity ?? "—"}
+                              </td>
+                              <td className="py-2">{item.uom || "—"}</td>
+                              <td className="py-2 text-right">
+                                {item.unit_cost != null
+                                  ? formatCurrency(item.unit_cost)
+                                  : "—"}
+                              </td>
+                              <td className="py-2 text-right">
+                                {formatCurrency(item.line_amount)}
+                              </td>
+                              <td className="py-2 text-right">
+                                <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7"
+                                    onClick={() => startEditLineItem(item)}
+                                  >
+                                    <Pencil className="h-3.5 w-3.5" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-7 w-7 text-destructive hover:text-destructive"
+                                    onClick={() =>
+                                      handleDeleteLineItem(item.id)
+                                    }
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+                              </td>
+                            </tr>
+                          ),
+                        )}
+                        {/* Inline add row */}
+                        {addingLineItem && (
+                          <tr className="border-b bg-muted/50">
                             <td className="py-2 text-muted-foreground">
-                              {idx + 1}
+                              {lineItems.length + 1}
                             </td>
-                            <td className="py-2">{item.description || "—"}</td>
-                            <td className="py-2">{item.cost_code || "—"}</td>
-                            <td className="py-2 text-right">
-                              {item.quantity ?? "—"}
+                            <td className="py-2 pr-2">
+                              <Input
+                                value={lineItemForm.description}
+                                onChange={(e) =>
+                                  setLineItemForm((f) => ({
+                                    ...f,
+                                    description: e.target.value,
+                                  }))
+                                }
+                                placeholder="Description"
+                                className="h-8"
+                                autoFocus
+                              />
                             </td>
-                            <td className="py-2">{item.uom || "—"}</td>
-                            <td className="py-2 text-right">
-                              {item.unit_cost != null
-                                ? formatCurrency(item.unit_cost)
-                                : "—"}
+                            <td className="py-2 pr-2">
+                              <Input
+                                value={lineItemForm.cost_code}
+                                onChange={(e) =>
+                                  setLineItemForm((f) => ({
+                                    ...f,
+                                    cost_code: e.target.value,
+                                  }))
+                                }
+                                placeholder="Cost code"
+                                className="h-8 w-28"
+                              />
+                            </td>
+                            <td className="py-2 pr-2">
+                              <Input
+                                type="number"
+                                value={lineItemForm.quantity}
+                                onChange={(e) =>
+                                  setLineItemForm((f) => ({
+                                    ...f,
+                                    quantity: e.target.value,
+                                  }))
+                                }
+                                placeholder="0"
+                                className="h-8 w-20 text-right"
+                              />
+                            </td>
+                            <td className="py-2 pr-2">
+                              <Input
+                                value={lineItemForm.uom}
+                                onChange={(e) =>
+                                  setLineItemForm((f) => ({
+                                    ...f,
+                                    uom: e.target.value,
+                                  }))
+                                }
+                                placeholder="UOM"
+                                className="h-8 w-20"
+                              />
+                            </td>
+                            <td className="py-2 pr-2">
+                              <Input
+                                type="number"
+                                step="0.01"
+                                value={lineItemForm.unit_cost}
+                                onChange={(e) =>
+                                  setLineItemForm((f) => ({
+                                    ...f,
+                                    unit_cost: e.target.value,
+                                  }))
+                                }
+                                placeholder="0.00"
+                                className="h-8 w-28 text-right"
+                              />
+                            </td>
+                            <td className="py-2 text-right text-muted-foreground">
+                              {formatCurrency(computedLineItemAmount)}
                             </td>
                             <td className="py-2 text-right">
-                              {formatCurrency(item.line_amount)}
+                              <div className="flex items-center justify-end gap-1">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  onClick={handleSaveLineItem}
+                                  disabled={lineItemSaving}
+                                >
+                                  <Check className="h-4 w-4 text-primary" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  onClick={cancelLineItemEdit}
+                                  disabled={lineItemSaving}
+                                >
+                                  <X className="h-4 w-4" />
+                                </Button>
+                              </div>
                             </td>
                           </tr>
-                        ))}
+                        )}
                       </tbody>
                       <tfoot>
                         <tr className="font-medium">
-                          <td colSpan={6} className="pt-2">
-                            Total
+                          <td colSpan={7} className="pt-2">
+                            <div className="flex justify-between">
+                              <span>Total</span>
+                              <span>{formatCurrency(lineItemsTotal)}</span>
+                            </div>
                           </td>
-                          <td className="pt-2 text-right">
-                            {formatCurrency(lineItemsTotal)}
-                          </td>
+                          <td />
                         </tr>
                       </tfoot>
                     </table>
@@ -1376,6 +1772,10 @@ export default function PrimeContractCODetailPage() {
                     icon={<List />}
                     title="No line items"
                     description="Add cost line items to this change order"
+                    action={{
+                      label: "Add Line Item",
+                      onClick: startAddLineItem,
+                    }}
                   />
                 )}
               </section>

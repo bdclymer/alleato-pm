@@ -786,6 +786,11 @@
     @apply text-base font-semibold text-foreground;
   }
 
+  /* Global table column header baseline — uppercase, semi-bold, smaller, darker */
+  th {
+    @apply text-[11px] font-semibold uppercase tracking-wide text-foreground;
+  }
+
   .table-empty {
     @apply text-center text-muted-foreground py-8;
   }

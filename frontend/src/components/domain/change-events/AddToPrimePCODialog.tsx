@@ -121,7 +121,7 @@ export function AddToPrimePCODialog({
       // Navigate to the newly created PCO detail page
       const pcos = result?.pcos as { changeEventId: string; pcoId: number }[] | undefined;
       if (pcos && pcos.length > 0) {
-        router.push(`/${projectId}/change-orders/prime/${pcos[0].pcoId}`);
+        router.push(`/${projectId}/change-orders/pco/${pcos[0].pcoId}`);
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create PCOs");

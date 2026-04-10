@@ -627,6 +627,21 @@ export default function ProjectChangeEventsPage(): ReactElement {
         ),
       }}
       tabs={tabs}
+      topContent={
+        tableState.selectedIds.length > 0 && activeTab !== "recycle_bin" ? (
+          <ChangeEventSelectionBar
+            selectedCount={tableState.selectedIds.length}
+            hasItems={filteredEvents.length > 0}
+            onSendRfq={() => setShowRfqSheet(true)}
+            selectedChangeEventIds={tableState.selectedIds}
+            projectId={projectId}
+            onSuccess={() => {
+              tableState.setSelectedIds([]);
+              refetchChangeEvents();
+            }}
+          />
+        ) : undefined
+      }
       toolbar={{
         totalItems,
         filteredItems,

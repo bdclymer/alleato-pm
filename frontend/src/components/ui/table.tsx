@@ -23,7 +23,7 @@ function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
   return (
     <thead
       data-slot="table-header"
-      className={cn("bg-muted/40 [&_tr]:border-b [&_tr]:h-11 border-border", className)}
+      className={cn("[&_tr]:border-b [&_tr]:border-border [&_tr]:h-11", className)}
       {...props}
     />
   );
@@ -57,7 +57,7 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
     <tr
       data-slot="table-row"
       className={cn(
-        "hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors even:bg-muted/20",
+        "hover:bg-muted/50 data-[state=selected]:bg-muted border-b border-border/60 transition-colors",
         className,
       )}
       {...props}
@@ -70,7 +70,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     <th
       data-slot="table-head"
       className={cn(
-        "text-foreground/85 px-3 py-3 text-left align-middle text-[11px] font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        "text-muted-foreground/80 px-4 pb-2.5 pt-2.5 text-left align-middle text-[10px] font-semibold uppercase tracking-[0.04em] whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
         className,
       )}
       {...props}
@@ -85,7 +85,7 @@ function TableCell({ className, ...props }: React.ComponentProps<"td">) {
       className={cn(
         // Table baseline: keep data dense and scannable with single-line cells.
         // Avoid stacking multiple lines in table cells; use dedicated columns instead.
-        "px-2 py-1.5 align-middle text-sm text-foreground/80 whitespace-nowrap max-w-[280px] overflow-hidden text-ellipsis [&:has([role=checkbox])]:max-w-none [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        "px-4 py-2.5 align-middle text-sm text-foreground/80 whitespace-nowrap max-w-[280px] overflow-hidden text-ellipsis [&:has([role=checkbox])]:max-w-none [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
         className,
       )}
       {...props}

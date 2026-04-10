@@ -18,13 +18,33 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const url = new URL(request.url);
     const statusFilter = url.searchParams.get("status");
 
+    // Two-step query: get commitment IDs for this project, then fetch their COs
+    const { data: commitments, error: commitmentsError } = await supabase
+      .from("commitments_unified")
+      .select("id")
+      .eq("project_id", Number(projectId))
+      .is("deleted_at", null);
+
+    if (commitmentsError) {
+      return apiErrorResponse(commitmentsError);
+    }
+
+    const commitmentIds = (commitments ?? []).map((c) => c.id).filter(Boolean) as string[];
+
+    if (commitmentIds.length === 0) {
+      const csv = ["CO Number,Description,Status,Amount,Requested Date,Approved Date,Created"].join("\n");
+      return new NextResponse(csv, {
+        headers: {
+          "Content-Type": "text/csv",
+          "Content-Disposition": `attachment; filename="commitment-change-orders.csv"`,
+        },
+      });
+    }
+
     let query = supabase
       .from("contract_change_orders")
-      .select(`
-        *,
-        prime_contracts!inner(project_id)
-      `)
-      .eq("prime_contracts.project_id", Number(projectId))
+      .select("*")
+      .in("contract_id", commitmentIds)
       .order("change_order_number");
 
     if (statusFilter) {

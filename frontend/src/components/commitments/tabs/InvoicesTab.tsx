@@ -6,7 +6,7 @@ import { Paperclip } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { DataTable } from "@/components/tables/DataTable";
+import { DataTable, type DataTableFooterCell } from "@/components/tables/DataTable";
 import { Text } from "@/components/ds/text";
 import { InvoiceStatusBadge } from "@/components/invoicing/InvoiceStatusBadge";
 import { formatCurrency } from "@/config/tables";
@@ -105,6 +105,46 @@ export const InvoicesTab = memo(function InvoicesTab({
     return () => controller.abort();
   }, [commitmentId, commitmentType, projectId]);
 
+  const totals = useMemo(() => {
+    const sum = (key: keyof EnrichedInvoice) =>
+      invoices.reduce((acc, inv) => acc + (Number(inv[key]) || 0), 0);
+    const totalCompleted = sum("total_completed");
+    const totalRetainage = sum("total_retainage");
+    const totalEarnedLessRetainage = totalCompleted - totalRetainage;
+    const revisedContractSum = sum("revised_contract_sum");
+    return {
+      original_contract_sum: sum("original_contract_sum"),
+      net_change_by_cos: sum("net_change_by_cos"),
+      revised_contract_sum: revisedContractSum,
+      total_completed: totalCompleted,
+      total_retainage: totalRetainage,
+      total_earned_less_retainage: totalEarnedLessRetainage,
+      net_amount: sum("net_amount"),
+      balance_to_finish: sum("balance_to_finish"),
+      percent_complete:
+        revisedContractSum > 0
+          ? Math.round((totalEarnedLessRetainage / revisedContractSum) * 100)
+          : 0,
+    };
+  }, [invoices]);
+
+  const footerRow = useMemo<DataTableFooterCell[]>(
+    () => [
+      { value: "Totals", colSpan: 4, align: "right" },
+      { value: formatCurrency(totals.original_contract_sum) },
+      { value: formatCurrency(totals.net_change_by_cos) },
+      { value: formatCurrency(totals.revised_contract_sum) },
+      { value: formatCurrency(totals.total_completed) },
+      { value: formatCurrency(totals.total_retainage) },
+      { value: formatCurrency(totals.total_earned_less_retainage) },
+      { value: formatCurrency(totals.net_amount) },
+      { value: formatCurrency(totals.balance_to_finish) },
+      { value: `${totals.percent_complete}%` },
+      { value: "", align: "center" },
+    ],
+    [totals],
+  );
+
   const columns: ColumnDef<EnrichedInvoice>[] = useMemo(
     () => [
       {
@@ -112,7 +152,7 @@ export const InvoicesTab = memo(function InvoicesTab({
         header: "#",
         cell: ({ row }) => (
           <Link
-            href={`/${projectId}/invoicing/subcontractor/${row.original.id}`}
+            href={`/${projectId}/commitments/${commitmentId}/invoices/${row.original.id}`}
             className="font-medium text-primary hover:underline"
           >
             {row.original.invoice_number || `INV-${row.original.id}`}
@@ -238,7 +278,7 @@ export const InvoicesTab = memo(function InvoicesTab({
         size: 100,
       },
     ],
-    [projectId],
+    [projectId, commitmentId],
   );
 
   if (isLoading) {
@@ -261,6 +301,7 @@ export const InvoicesTab = memo(function InvoicesTab({
       data={invoices}
       showToolbar={false}
       showPagination={invoices.length > 25}
+      footerRow={invoices.length > 0 ? footerRow : undefined}
     />
   );
 });
