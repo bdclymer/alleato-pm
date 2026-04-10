@@ -750,6 +750,7 @@ export function CreatePurchaseOrderForm({
                         <Input
                           type="number"
                           step="0.01"
+                          min="0"
                           placeholder="1"
                           value={line.quantity || ""}
                           onChange={(e) =>
@@ -779,6 +780,7 @@ export function CreatePurchaseOrderForm({
                         <Input
                           type="number"
                           step="0.01"
+                          min="0"
                           placeholder="$0.00"
                           value={line.unitCost || ""}
                           onChange={(e) =>
@@ -790,7 +792,12 @@ export function CreatePurchaseOrderForm({
                     </>
                   )}
                   <td className="min-w-44 px-2 py-1.5 text-right text-sm whitespace-nowrap">
-                    {formatCurrency(line.amount || 0)}
+                    <div className={`flex flex-col items-end gap-0.5 ${(line.amount || 0) >= 1_000_000_000 ? "text-destructive" : ""}`}>
+                      <span>{formatCurrency(line.amount || 0)}</span>
+                      {(line.amount || 0) >= 1_000_000_000 && (
+                        <span className="text-xs font-normal text-destructive">⚠ Unusually large</span>
+                      )}
+                    </div>
                   </td>
                   <td className="min-w-44 px-2 py-1.5 text-right text-sm whitespace-nowrap">
                     {formatCurrency(line.billedToDate || 0)}

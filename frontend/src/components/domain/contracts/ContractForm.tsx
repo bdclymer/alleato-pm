@@ -208,8 +208,17 @@ export function ContractForm({
   const {
     options: companyOptions,
     isLoading: companiesLoading,
+    error: companiesError,
     createCompany,
   } = useCompanies();
+
+  // Surface company load failures so they're not silently swallowed
+  React.useEffect(() => {
+    if (companiesError) {
+      console.error("[ContractForm] Failed to load companies:", companiesError);
+      toast.error("Could not load company options", { description: companiesError.message });
+    }
+  }, [companiesError]);
   const { users: projectUsers } = useProjectUsers(projectId);
   const userOptions = projectUsers.map((u) => ({
     value: u.id,
