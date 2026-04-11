@@ -33,6 +33,20 @@ export { EmptyState } from "./empty-state";
 export { Eyebrow } from "./eyebrow";
 export { PageBadge } from "./page-badge";
 
+// Inline table primitives (SOV, line items, financial detail tables)
+export {
+  InlineTable,
+  InlineTableHeader,
+  InlineTableHeaderRow,
+  InlineTableHeaderCell,
+  InlineTableBody,
+  InlineTableRow,
+  InlineTableCell,
+  InlineTableFooter,
+  InlineTableFooterRow,
+  InlineTableFooterCell,
+} from "./inline-table";
+
 // Detail page primitives
 export { BackButton } from "./BackButton";
 export { InfoAlert } from "./InfoAlert";

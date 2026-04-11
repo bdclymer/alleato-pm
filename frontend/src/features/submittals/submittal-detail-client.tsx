@@ -6,7 +6,6 @@ import {
   Calendar,
   Clock,
   Copy,
-  Edit,
   FileText,
   MoreHorizontal,
   Package,
@@ -61,6 +60,7 @@ const responseVariantMap: Record<
   Revise: "destructive",
   Rejected: "destructive",
   Received: "secondary",
+  "Reviewed - No Exception": "success",
 };
 
 const RESPONSE_STATUSES = [
@@ -68,10 +68,10 @@ const RESPONSE_STATUSES = [
   "Approved as Noted",
   "Revise and Resubmit",
   "Rejected",
-  "Received",
+  "Reviewed - No Exception",
 ] as const;
 
-const STEP_TYPES = ["Approver", "Submitter"] as const;
+const STEP_TYPES = ["Approver", "Submitter", "Reviewer"] as const;
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -261,10 +261,6 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
 
   const actions = (
     <div className="flex items-center gap-1.5">
-      <Button size="sm" onClick={() => setEditOpen(true)}>
-        <Edit className="h-3.5 w-3.5" />
-        Edit
-      </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="outline" size="icon">
@@ -273,7 +269,6 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => setEditOpen(true)}>
-            <Edit className="mr-2 h-4 w-4" />
             Edit
           </DropdownMenuItem>
           <DropdownMenuItem
@@ -432,6 +427,51 @@ export function SubmittalDetailClient({ submittal, projectId }: SubmittalDetailC
                         Required On-Site
                       </p>
                       <p>{formatDate(submittal.required_on_site_date)}</p>
+                    </div>
+                    <Separator />
+                    <div>
+                      <p className="text-muted-foreground text-xs uppercase font-medium">
+                        Responsible Contractor
+                      </p>
+                      <p>
+                        {submittal.responsible_contractor?.name ?? "—"}
+                      </p>
+                    </div>
+                    <Separator />
+                    <div>
+                      <p className="text-muted-foreground text-xs uppercase font-medium">
+                        Received From
+                      </p>
+                      <p>
+                        {submittal.received_from_id
+                          ? resolveUserName(users, submittal.received_from_id)
+                          : "—"}
+                      </p>
+                    </div>
+                    <Separator />
+                    <div>
+                      <p className="text-muted-foreground text-xs uppercase font-medium">
+                        Submittal Manager
+                      </p>
+                      <p>
+                        {submittal.submittal_manager_id
+                          ? resolveUserName(users, submittal.submittal_manager_id)
+                          : "—"}
+                      </p>
+                    </div>
+                    <Separator />
+                    <div>
+                      <p className="text-muted-foreground text-xs uppercase font-medium">
+                        Sent Date
+                      </p>
+                      <p>{formatDate(submittal.sent_date)}</p>
+                    </div>
+                    <Separator />
+                    <div>
+                      <p className="text-muted-foreground text-xs uppercase font-medium">
+                        Private
+                      </p>
+                      <p>{submittal.is_private ? "Yes" : "No"}</p>
                     </div>
                   </CardContent>
                 </Card>

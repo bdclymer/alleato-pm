@@ -1,0 +1,19 @@
+{
+  "run_id": "run-20260410-124614",
+  "feature": "submittals",
+  "project_id": "562949954728542",
+  "git_sha": "858315f5",
+  "started_at": "2026-04-10T12:46:14Z",
+  "completed_at": "2026-04-10T17:30:00Z",
+  "result": "RELEASE_READY",
+  "artifact_root": "_bmad-output/planning-artifacts/submittals/verification/runs/run-20260410-124614/",
+  "summary": {
+    "resolved": 16,
+    "waived": 3,
+    "deferred": 16,
+    "critical_open": 0,
+    "high_open": 0,
+    "completion_before": 52,
+    "completion_after": 84
+  }
+}

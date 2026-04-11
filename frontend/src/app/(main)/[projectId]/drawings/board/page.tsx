@@ -30,7 +30,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { PageContainer, ProjectPageHeader } from "@/components/layout";
+import { PageShell } from "@/components/layout";
 import { Download, FileUp, GripVertical, Layers } from "lucide-react";
 import { useDrawings } from "@/hooks/use-drawings";
 import type { DrawingLogTableRow } from "@/types/drawings.types";
@@ -184,19 +184,17 @@ export default function DrawingsBoardPage() {
   };
 
   return (
-    <>
-      <ProjectPageHeader
-        title="Drawings Board"
-        description="Drag-and-drop drawing packages by status"
-        actions={
-          <Button size="sm" className="gap-2">
-            <FileUp />
-            Upload revisions
-          </Button>
-        }
-      />
-
-      <PageContainer>
+    <PageShell
+      variant="dashboard"
+      title="Drawings Board"
+      description="Drag-and-drop drawing packages by status"
+      actions={
+        <Button size="sm" className="gap-2">
+          <FileUp />
+          Upload revisions
+        </Button>
+      }
+    >
         <div className="space-y-6">
           <Card className="border-dashed border-2 border-border bg-card">
             <CardHeader className="flex flex-wrap items-center gap-4 justify-between pb-2">
@@ -273,8 +271,7 @@ export default function DrawingsBoardPage() {
             </CardContent>
           </Card>
         </div>
-      </PageContainer>
-    </>
+    </PageShell>
   );
 }
 

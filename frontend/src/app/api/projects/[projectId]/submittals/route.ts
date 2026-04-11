@@ -19,7 +19,7 @@ const createSubmittalSchema = z.object({
   submittal_type_id: z.string().uuid().nullable().optional(),
   division: z.string().nullable().optional(),
   submittal_package_id: z.string().uuid().nullable().optional(),
-  responsible_contractor_id: z.number().int().nullable().optional(),
+  responsible_contractor_id: z.string().nullable().optional(),
   received_from_id: z.string().uuid().nullable().optional(),
   submittal_manager_id: z.string().uuid().nullable().optional(),
   final_due_date: z.string().nullable().optional(),
@@ -54,7 +54,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       .select(
         `*,
          submittal_type:submittal_types(id, name),
-         submittal_package:submittal_packages(id, name)`,
+         submittal_package:submittal_packages(id, name),
+         submittal_workflow_steps(
+           id, step_order, step_type,
+           submittal_responses(id, responder_id, response_status)
+         )`,
       )
       .eq("project_id", parseInt(projectId, 10))
       .order("created_at", { ascending: false });
@@ -81,7 +85,34 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return apiErrorResponse(error);
     }
 
-    return NextResponse.json(data ?? []);
+    // Batch-resolve responsible_contractor names (no FK exists in DB)
+    const contractorIds = [
+      ...new Set(
+        (data ?? [])
+          .map((s: Record<string, unknown>) => s.responsible_contractor_id)
+          .filter(Boolean)
+          .map(String),
+      ),
+    ];
+    let companyMap: Record<string, string> = {};
+    if (contractorIds.length > 0) {
+      const { data: companies } = await supabase
+        .from("companies")
+        .select("id, name")
+        .in("id", contractorIds);
+      if (companies) {
+        companyMap = Object.fromEntries(companies.map((c) => [String(c.id), c.name]));
+      }
+    }
+
+    const enriched = (data ?? []).map((s: Record<string, unknown>) => ({
+      ...s,
+      responsible_contractor: s.responsible_contractor_id
+        ? { id: String(s.responsible_contractor_id), name: companyMap[String(s.responsible_contractor_id)] ?? null }
+        : null,
+    }));
+
+    return NextResponse.json(enriched);
   } catch (error) {
     return apiErrorResponse(error);
   }

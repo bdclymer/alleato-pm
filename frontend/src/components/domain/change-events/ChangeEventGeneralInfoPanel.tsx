@@ -39,6 +39,7 @@ export function ChangeEventGeneralInfoPanel({
     changeEvent.prime_contract_id ?? changeEvent.primeContractId;
   const primeContractNumber = changeEvent.primeContract?.contract_number;
   const primeContractTitle = changeEvent.primeContract?.title;
+  const primeContractDisplayName = (changeEvent.primeContract as { display_name?: string } | null)?.display_name;
   const lineItemRevenueSource =
     changeEvent.line_item_revenue_source ?? changeEvent.lineItemRevenueSource;
   const totals = (changeEvent as any).totals ?? { revenueRom: "0", costRom: "0", nonCommittedCost: "0" };
@@ -79,7 +80,10 @@ export function ChangeEventGeneralInfoPanel({
                         href={`/${projectId}/prime-contracts/${primeContractId}`}
                         className="text-primary hover:underline"
                       >
-                        {primeContractNumber || primeContractTitle || `#${primeContractId}`}
+                        {primeContractDisplayName ||
+                          (primeContractNumber && primeContractTitle
+                            ? `${primeContractNumber} - ${primeContractTitle}`
+                            : primeContractTitle || primeContractNumber || "Linked Prime Contract")}
                       </a>
                     ) : (
                       "Not set"

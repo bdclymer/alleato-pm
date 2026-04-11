@@ -37,8 +37,8 @@ export async function GET(
         `
         *,
         subcontractor_invoice_line_items(*),
-        subcontracts(contract_number, title, contract_company_id, default_retainage_percent),
-        purchase_orders(contract_number, title, contract_company_id, default_retainage_percent),
+        subcontracts(contract_number, title, contract_company_id, default_retainage_percent, contract_date),
+        purchase_orders(contract_number, title, contract_company_id, default_retainage_percent, contract_date),
         billing_periods(name, start_date, end_date)
         `,
       )
@@ -64,12 +64,14 @@ export async function GET(
       title: string | null;
       contract_company_id: string | null;
       default_retainage_percent: number | null;
+      contract_date: string | null;
     } | null;
     const po = invoice.purchase_orders as {
       contract_number: string | null;
       title: string | null;
       contract_company_id: string | null;
       default_retainage_percent: number | null;
+      contract_date: string | null;
     } | null;
     const bp = invoice.billing_periods as {
       name: string | null;
@@ -77,7 +79,7 @@ export async function GET(
       end_date: string | null;
     } | null;
 
-    const { subcontracts: _sc, purchase_orders: _po, billing_periods: _bp, ...invoiceData } = invoice;
+    const { subcontracts: _sc, purchase_orders: _po, billing_periods: _bp, subcontractor_invoice_line_items: _rawLineItems, ...invoiceData } = invoice;
 
     // ----- Application-for-Payment rollup -----
     // Compute the 9-line AIA G702-style header totals from source data so the
@@ -109,8 +111,46 @@ export async function GET(
         .reduce((sum, co) => sum + (Number(co.amount) || 0), 0);
     }
 
+    // Enrich line items with SOV data (budget_code, commitment_value, change_value)
+    const rawLineItems = (invoice.subcontractor_invoice_line_items ?? []) as Array<Record<string, unknown>>;
+    let sovItems: Array<{
+      sort_order: number | null;
+      budget_code: string | null;
+      description: string | null;
+      amount: number | null;
+    }> = [];
+    if (contractId) {
+      const { data: sov } = await supabase
+        .from("subcontract_sov_items")
+        .select("sort_order, budget_code, description, amount")
+        .eq("subcontract_id", contractId)
+        .order("sort_order", { ascending: true });
+      sovItems = sov ?? [];
+    }
+    // Map SOV items by sort_order for fast lookup
+    const sovBySort = new Map(
+      sovItems.map((s) => [s.sort_order, s]),
+    );
+    const enrichedLineItems = rawLineItems.map((li) => {
+      const sortOrder = Number(li.sort_order) || 0;
+      const sovMatch = sovBySort.get(sortOrder);
+      const commitmentValue = sovMatch ? (Number(sovMatch.amount) || 0) : null;
+      const scheduledValue = Number(li.scheduled_value) || 0;
+      const changeValue = commitmentValue != null ? scheduledValue - commitmentValue : null;
+      const workPrev = Number(li.work_completed_previous) || 0;
+      const workPrevPct = scheduledValue > 0 ? (workPrev / scheduledValue) * 100 : 0;
+      return {
+        ...li,
+        budget_code: sovMatch?.budget_code ?? (li.description as string) ?? null,
+        line_item_type: "SOV",
+        commitment_value: commitmentValue,
+        change_value: changeValue,
+        work_completed_previous_pct: workPrevPct,
+      };
+    });
+
     // This invoice's totals from its line items
-    const lineItems = (invoice.subcontractor_invoice_line_items ?? []) as Array<{
+    const lineItems = enrichedLineItems as Array<{
       total_completed_stored: number | null;
       retainage_amount: number | null;
       materials_retainage_amount: number | null;
@@ -211,17 +251,66 @@ export async function GET(
       change_history: historyCount ?? 0,
     };
 
-    // Resolve contract company name for display
+    // Resolve contract company (subcontractor) with full address
     const contractCompanyId =
       sc?.contract_company_id ?? po?.contract_company_id ?? null;
-    let contractCompanyName: string | null = null;
+    let contractCompany: {
+      name: string | null;
+      address: string | null;
+      city: string | null;
+      state: string | null;
+      zip_code: string | null;
+    } | null = null;
     if (contractCompanyId) {
       const { data: company } = await supabase
         .from("companies")
-        .select("name")
+        .select("name, address, city, state, zip_code")
         .eq("id", contractCompanyId)
         .maybeSingle();
-      contractCompanyName = (company?.name as string | null) ?? null;
+      contractCompany = company ?? null;
+    }
+
+    // Fetch project info (name, number, address)
+    const { data: project } = await supabase
+      .from("projects")
+      .select("name, project_number, address, company_id")
+      .eq("id", projectIdNum)
+      .maybeSingle();
+
+    // Fetch GC company (owner of the project) with address
+    let gcCompany: {
+      name: string | null;
+      address: string | null;
+      city: string | null;
+      state: string | null;
+      zip_code: string | null;
+    } | null = null;
+    if (project?.company_id) {
+      const { data: gc } = await supabase
+        .from("companies")
+        .select("name, address, city, state, zip_code")
+        .eq("id", project.company_id)
+        .maybeSingle();
+      gcCompany = gc ?? null;
+    }
+
+    // Contract date from subcontract or PO
+    const contractDate = sc?.contract_date ?? po?.contract_date ?? null;
+
+    // Change order breakdown: additions vs deductions
+    let coAdditions = 0;
+    let coDeductions = 0;
+    if (contractId) {
+      const { data: coRows } = await supabase
+        .from("contract_change_orders")
+        .select("amount, status")
+        .eq("contract_id", contractId)
+        .in("status", ["approved"]);
+      for (const co of coRows ?? []) {
+        const amt = Number(co.amount) || 0;
+        if (amt >= 0) coAdditions += amt;
+        else coDeductions += amt;
+      }
     }
 
     const percentComplete =
@@ -229,19 +318,53 @@ export async function GET(
         ? (totalCompletedAndStored / contractSumToDate) * 100
         : 0;
 
+    // Determine application number: count prior invoices on same commitment + 1
+    let applicationNumber = 1;
+    if (contractId) {
+      const foreignKey = invoice.subcontract_id
+        ? "subcontract_id"
+        : "purchase_order_id";
+      const { count: priorCount } = await supabase
+        .from("subcontractor_invoices")
+        .select("id", { count: "exact", head: true })
+        .eq(foreignKey, contractId)
+        .lt("created_at", invoice.created_at ?? new Date().toISOString());
+      applicationNumber = (priorCount ?? 0) + 1;
+    }
+
     return NextResponse.json({
       data: {
         ...invoiceData,
+        subcontractor_invoice_line_items: enrichedLineItems,
         contract_number: sc?.contract_number ?? po?.contract_number ?? null,
         contract_title: sc?.title ?? po?.title ?? null,
         contract_company_id: contractCompanyId,
-        contract_company_name: contractCompanyName,
+        contract_company_name: contractCompany?.name ?? null,
+        contract_company_address: contractCompany?.address ?? null,
+        contract_company_city: contractCompany?.city ?? null,
+        contract_company_state: contractCompany?.state ?? null,
+        contract_company_zip: contractCompany?.zip_code ?? null,
         contract_retainage_percent: sc?.default_retainage_percent ?? po?.default_retainage_percent ?? null,
+        contract_date: contractDate as string | null,
+        gc_company_name: gcCompany?.name ?? null,
+        gc_company_address: gcCompany?.address ?? null,
+        gc_company_city: gcCompany?.city ?? null,
+        gc_company_state: gcCompany?.state ?? null,
+        gc_company_zip: gcCompany?.zip_code ?? null,
+        project_name: project?.name ?? null,
+        project_number: project?.project_number ?? null,
+        project_address: project?.address ?? null,
+        application_number: applicationNumber,
         percent_complete: percentComplete,
         billing_period_name: bp?.name ?? null,
         billing_period_start: bp?.start_date ?? null,
         billing_period_end: bp?.end_date ?? null,
         rollup,
+        co_summary: {
+          additions: coAdditions,
+          deductions: coDeductions,
+          net: coAdditions + coDeductions,
+        },
         tab_counts,
       },
     });
@@ -334,6 +457,13 @@ export async function PATCH(
       );
     }
 
+    // Fetch current values for audit comparison (non-status fields)
+    const { data: currentData } = await supabase
+      .from("subcontractor_invoices")
+      .select("invoice_number, period_start, period_end, billing_date, notes")
+      .eq("id", invoiceIdNum)
+      .single();
+
     const { data: updated, error: updateError } = await supabase
       .from("subcontractor_invoices")
       .update(updatePayload)
@@ -352,6 +482,26 @@ export async function PATCH(
         { error: "Failed to update invoice", details: updateError.message },
         { status: 500 },
       );
+    }
+
+    // Log field-level edits to audit log (status changes handled by DB trigger)
+    if (currentData) {
+      const fieldsToLog = ["invoice_number", "period_start", "period_end", "billing_date", "notes"];
+      const auditRows = fieldsToLog
+        .filter((f) => f in updatePayload && (currentData as Record<string, unknown>)[f] !== updatePayload[f])
+        .map((f) => ({
+          invoice_id: invoiceIdNum,
+          event_type: "field.updated" as const,
+          field_name: f,
+          old_value: (currentData as Record<string, unknown>)[f] ?? null,
+          new_value: updatePayload[f] ?? null,
+          actor_user_id: user.id,
+          actor_email: user.email ?? null,
+          notes: `Updated ${f.replace(/_/g, " ")}`,
+        }));
+      if (auditRows.length > 0) {
+        await supabase.from("subcontractor_invoice_audit_log").insert(auditRows);
+      }
     }
 
     return NextResponse.json({ data: updated });

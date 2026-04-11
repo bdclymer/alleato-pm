@@ -7,6 +7,7 @@ import { Plus } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { apiFetch, summarizeBulkResults } from "@/lib/api-client";
 import { useConfirmationDialog } from "@/components/common/ConfirmationDialog";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { ChangeEventExpandedRow } from "@/components/domain/change-events/ChangeEventExpandedRow";
@@ -40,6 +41,7 @@ type ChangeEventFilterState = Record<string, FilterValue>;
 const EMPTY_FILTERS: ChangeEventFilterState = {
   status: undefined,
   scope: undefined,
+  conversion_state: undefined,
   over_under: undefined,
   budget: undefined,
   budget_code_segments: undefined,
@@ -75,9 +77,11 @@ export default function ProjectChangeEventsPage(): ReactElement {
 
   const initialStatus = searchParams.get("status") ?? "";
   const initialScope = searchParams.get("scope") ?? "";
+  const initialConversionState = searchParams.get("conversion_state") ?? "";
   const initialFilters: ChangeEventFilterState = {
     status: initialStatus || undefined,
     scope: initialScope || undefined,
+    conversion_state: initialConversionState || undefined,
   };
 
   const tableState = useUnifiedTableState({
@@ -101,16 +105,23 @@ export default function ProjectChangeEventsPage(): ReactElement {
   React.useEffect(() => {
     const nextStatus = searchParams.get("status") ?? "";
     const nextScope = searchParams.get("scope") ?? "";
+    const nextConversionState = searchParams.get("conversion_state") ?? "";
 
     tableState.setActiveFilters((prev) => {
       const normalizedStatus = nextStatus || undefined;
       const normalizedScope = nextScope || undefined;
-      if (prev.status === normalizedStatus && prev.scope === normalizedScope) {
+      const normalizedConversionState = nextConversionState || undefined;
+      if (
+        prev.status === normalizedStatus &&
+        prev.scope === normalizedScope &&
+        prev.conversion_state === normalizedConversionState
+      ) {
         return prev;
       }
       return {
         status: normalizedStatus,
         scope: normalizedScope,
+        conversion_state: normalizedConversionState,
       };
     });
   }, [searchParams, tableState.setActiveFilters]);
@@ -223,17 +234,9 @@ export default function ProjectChangeEventsPage(): ReactElement {
     (item: ChangeEvent) => {
       deleteDialog.confirm(async () => {
         try {
-          const response = await fetch(`/api/projects/${projectId}/change-events/${item.id}`, {
+          await apiFetch(`/api/projects/${projectId}/change-events/${item.id}`, {
             method: "DELETE",
           });
-
-          if (!response.ok) {
-            const message = await response.text();
-            throw new Error(
-              message || "Unable to delete change event. Check permissions and try again.",
-            );
-          }
-
           toast.success("Change event moved to recycle bin");
           refetchChangeEvents();
         } catch (err) {
@@ -254,31 +257,27 @@ export default function ProjectChangeEventsPage(): ReactElement {
     bulkDeleteDialog.confirm(async () => {
       try {
         const results = await Promise.allSettled(
-          selectedIds.map(async (id) => {
-            const response = await fetch(`/api/projects/${projectId}/change-events/${id}`, {
+          selectedIds.map((id) =>
+            apiFetch(`/api/projects/${projectId}/change-events/${id}`, {
               method: "DELETE",
-            });
-
-            if (!response.ok) {
-              const message = await response.text();
-              throw new Error(
-                message || `Unable to delete change event ${id}. Check permissions and try again.`,
-              );
-            }
-          }),
+            }),
+          ),
         );
 
-        const failedCount = results.filter((result) => result.status === "rejected").length;
-        const successCount = results.length - failedCount;
+        const { succeeded, failed, firstError } = summarizeBulkResults(results);
 
-        if (successCount > 0) {
+        if (succeeded > 0) {
           toast.success(
-            `${successCount} change event${successCount === 1 ? "" : "s"} moved to recycle bin`,
+            `${succeeded} change event${succeeded === 1 ? "" : "s"} moved to recycle bin`,
           );
         }
 
-        if (failedCount > 0) {
-          toast.error(`Failed to delete ${failedCount} change event${failedCount === 1 ? "" : "s"}.`);
+        if (failed > 0) {
+          toast.error(
+            failed === 1
+              ? firstError
+              : `Failed to delete ${failed} change event${failed === 1 ? "" : "s"}: ${firstError}`,
+          );
         }
 
         tableState.setSelectedIds([]);
@@ -354,6 +353,10 @@ export default function ProjectChangeEventsPage(): ReactElement {
       tableState.setSearchParams({
         status: typeof nextFilters.status === "string" ? nextFilters.status : null,
         scope: typeof nextFilters.scope === "string" ? nextFilters.scope : null,
+        conversion_state:
+          typeof nextFilters.conversion_state === "string"
+            ? nextFilters.conversion_state
+            : null,
         page: "1",
       });
       tableState.setPage(1);
@@ -366,6 +369,10 @@ export default function ProjectChangeEventsPage(): ReactElement {
     const searchTerm = tableState.debouncedSearch.trim().toLowerCase();
     const scopeFilter =
       typeof activeFilters.scope === "string" ? activeFilters.scope.toLowerCase() : "";
+    const conversionStateFilter =
+      typeof activeFilters.conversion_state === "string"
+        ? activeFilters.conversion_state
+        : "";
     const overUnderFilter =
       typeof activeFilters.over_under === "string" ? activeFilters.over_under : "";
     const budgetFilter =
@@ -378,6 +385,16 @@ export default function ProjectChangeEventsPage(): ReactElement {
     return tabFilteredEvents.filter((event) => {
       if (scopeFilter && (event.scope ?? "").toLowerCase() !== scopeFilter) {
         return false;
+      }
+
+      if (conversionStateFilter) {
+        const sentToPrime = Boolean(event.sent_to_prime_pco);
+        const sentToCommitment = Boolean(event.sent_to_commitment_pco);
+        const linkedCount = Number(sentToPrime) + Number(sentToCommitment);
+
+        if (conversionStateFilter === "unlinked" && linkedCount !== 0) return false;
+        if (conversionStateFilter === "partially_linked" && linkedCount !== 1) return false;
+        if (conversionStateFilter === "fully_linked" && linkedCount !== 2) return false;
       }
 
       if (overUnderFilter) {
@@ -410,6 +427,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
     });
   }, [
     activeFilters.scope,
+    activeFilters.conversion_state,
     activeFilters.over_under,
     activeFilters.budget,
     activeFilters.budget_code_segments,
@@ -553,6 +571,7 @@ export default function ProjectChangeEventsPage(): ReactElement {
     Boolean(tableState.searchInput) ||
     Boolean(activeFilters.status) ||
     Boolean(activeFilters.scope) ||
+    Boolean(activeFilters.conversion_state) ||
     Boolean(activeFilters.over_under) ||
     Boolean(activeFilters.budget) ||
     Boolean(activeFilters.budget_code_segments);
@@ -675,7 +694,6 @@ export default function ProjectChangeEventsPage(): ReactElement {
         error,
       }}
       table={{
-        density: "compact",
         columns: tableColumns,
         getRowId: (item) => String(item.id),
         onRowClick: handleView,

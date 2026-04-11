@@ -289,6 +289,7 @@ export function useChangeEventDetail(
             title: data.title,
             status: data.status,
             origin: data.origin,
+            originId: data.originId || null,
             type: data.type,
             reason,
             scope: data.scope,

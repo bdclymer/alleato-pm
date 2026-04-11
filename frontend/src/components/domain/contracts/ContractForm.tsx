@@ -15,6 +15,18 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { MoneyField } from "@/components/forms/MoneyField";
+import {
+  InlineTable,
+  InlineTableHeader,
+  InlineTableHeaderRow,
+  InlineTableHeaderCell,
+  InlineTableBody,
+  InlineTableRow,
+  InlineTableCell,
+  InlineTableFooter,
+  InlineTableFooterRow,
+  InlineTableFooterCell,
+} from "@/components/ds/inline-table";
 import { Plus, HelpCircle, Sparkles, Search, ChevronRight, ChevronDown, Trash2 } from "lucide-react";
 import { FormGrid, FormGridRow } from "@/components/forms";
 import {
@@ -938,70 +950,57 @@ export function ContractForm({
         }
       >
         {/* SOV Table */}
-        <div
-          className="overflow-x-auto overflow-hidden rounded-lg border border-border/70 bg-muted/20"
+        <InlineTable
           data-testid="sov-table"
           data-accounting-method={formData.accountingMethod}
         >
-          <table className="w-full">
-            <thead>
-              <tr className="bg-muted/70">
-                <th className="px-1 py-1.5 text-left text-[11px] font-normal normal-case tracking-normal text-muted-foreground min-w-[340px]">
-                  <div className="flex items-center gap-1">
-                    Budget Code
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Link to a budget code</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </div>
-                </th>
-                <th className="px-1 py-1.5 text-left text-[11px] font-normal normal-case tracking-normal text-muted-foreground min-w-[240px]">
-                  Description
-                </th>
-                <th className="px-1 py-1.5 text-left text-[11px] font-normal normal-case tracking-normal text-muted-foreground w-36">
-                  Amount
-                </th>
-                <th className="px-1 py-1.5 text-left text-[11px] font-normal normal-case tracking-normal text-muted-foreground w-36">
-                  Billed to Date
-                </th>
-                <th className="px-1 py-1.5 text-left text-[11px] font-normal normal-case tracking-normal text-muted-foreground w-36">
-                  Amount Remaining
-                </th>
-                <th className="w-10" />
-              </tr>
-            </thead>
-            <tbody>
+          <InlineTableHeader>
+            <InlineTableHeaderRow>
+              <InlineTableHeaderCell className="min-w-[340px]">
+                <div className="flex items-center gap-1">
+                  Budget Code
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Link to a budget code</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              </InlineTableHeaderCell>
+              <InlineTableHeaderCell className="min-w-[240px]">Description</InlineTableHeaderCell>
+              <InlineTableHeaderCell className="w-36">Amount</InlineTableHeaderCell>
+              <InlineTableHeaderCell className="w-36">Billed to Date</InlineTableHeaderCell>
+              <InlineTableHeaderCell className="w-36">Amount Remaining</InlineTableHeaderCell>
+              <InlineTableHeaderCell className="w-10" />
+            </InlineTableHeaderRow>
+          </InlineTableHeader>
+          <InlineTableBody>
               {(formData.sovItems || []).length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-8 text-center text-muted-foreground">
+                <InlineTableRow>
+                  <InlineTableCell colSpan={6} className="py-8 text-center text-muted-foreground">
                     <div className="flex flex-col items-center space-y-2">
                       <p className="text-sm text-muted-foreground">
                         No line items yet.
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        Click "Add Line Item" to get started.
+                        Click &quot;Add Line Item&quot; to get started.
                       </p>
                     </div>
-                  </td>
-                </tr>
+                  </InlineTableCell>
+                </InlineTableRow>
               ) : (
                 formData.sovItems?.map((item, index) => (
                   item.isGroup ? (
-                    <tr
+                    <InlineTableRow
                       key={item.id}
-                      className="border-b border-border bg-muted"
+                      type="group"
                       data-testid={`sov-group-${index}`}
                     >
-                      <td
-                        colSpan={5}
-                        className="py-2 pr-3"
-                      >
+                      <InlineTableCell colSpan={5}>
                         <Input
                           value={item.description}
                           onChange={(e) =>
@@ -1010,11 +1009,11 @@ export function ContractForm({
                             })
                           }
                           placeholder="Group name"
-                          className="h-8 border-border bg-background font-medium"
+                          className="h-10 font-semibold"
                           data-testid="sov-group-name"
                         />
-                      </td>
-                      <td className="px-1 py-2 align-middle">
+                      </InlineTableCell>
+                      <InlineTableCell>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -1024,17 +1023,16 @@ export function ContractForm({
                           aria-label="Remove group"
                           data-testid="sov-remove-group"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          &times;
                         </Button>
-                      </td>
-                    </tr>
+                      </InlineTableCell>
+                    </InlineTableRow>
                   ) : (
-                    <tr
+                    <InlineTableRow
                       key={item.id}
-                      className="border-b border-border last:border-b-0"
                       data-testid={`sov-line-${index}`}
                     >
-                      <td className="px-1 py-2 align-middle">
+                      <InlineTableCell>
                         <Popover
                           open={openBudgetCodePopover === item.id}
                           onOpenChange={(open) =>
@@ -1103,8 +1101,8 @@ export function ContractForm({
                             </Command>
                           </PopoverContent>
                         </Popover>
-                      </td>
-                      <td className="px-1 py-2 align-middle">
+                      </InlineTableCell>
+                      <InlineTableCell>
                         <Input
                           value={item.description}
                           onChange={(e) =>
@@ -1113,11 +1111,11 @@ export function ContractForm({
                             })
                           }
                           placeholder="Description"
-                          className="h-8 border-border bg-muted"
+                          className="h-10"
                           data-testid="sov-line-description"
                         />
-                      </td>
-                      <td className="px-1 py-2 align-middle">
+                      </InlineTableCell>
+                      <InlineTableCell>
                         <MoneyField
                           inline
                           label="Amount"
@@ -1128,23 +1126,24 @@ export function ContractForm({
                             })
                           }
                           showCurrency={false}
-                          className="h-8"
+                          className="h-10"
                           data-testid="sov-line-amount"
                           readOnly={
                             formData.accountingMethod === "unit_quantity"
                           }
                         />
-                      </td>
-                      <td className="px-1 py-2 text-right text-sm font-medium">
+                      </InlineTableCell>
+                      <InlineTableCell align="right" numeric>
                         ${(item.billedToDate || 0).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </td>
-                      <td
-                        className="px-1 py-2 text-right text-sm font-medium"
+                      </InlineTableCell>
+                      <InlineTableCell
+                        align="right"
+                        numeric
                         data-testid="sov-line-amount-remaining"
                       >
                         ${((item.amount || 0) - (item.billedToDate || 0)).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </td>
-                      <td className="px-1 py-2 align-middle">
+                      </InlineTableCell>
+                      <InlineTableCell>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -1154,63 +1153,63 @@ export function ContractForm({
                           aria-label="Remove line item"
                           data-testid="sov-remove-line"
                         >
-                          <Trash2 className="h-4 w-4" />
+                          &times;
                         </Button>
-                      </td>
-                    </tr>
+                      </InlineTableCell>
+                    </InlineTableRow>
                   )
                 ))
               )}
-            </tbody>
-            {(formData.sovItems || []).length > 0 ? (
-              <tr className="hover:bg-muted">
-                <td colSpan={2} className="px-1 py-3 text-xs font-semibold text-foreground">
-                  Totals
-                </td>
-                <td
-                  className="px-1 py-2 text-right text-sm font-semibold text-foreground"
+          </InlineTableBody>
+          <InlineTableFooter>
+            <InlineTableFooterRow type="action">
+              <InlineTableFooterCell colSpan={5} className="font-normal">
+                <Button
+                  type="button"
+                  variant="link"
+                  className="h-auto p-0 text-sm font-medium"
+                  onClick={addSOVLine}
+                  data-testid="sov-add-line-item"
+                >
+                  Add Line Item
+                </Button>
+                {(formData.sovItems || []).length > 1 && (
+                  <span className="ml-3 text-sm text-muted-foreground font-normal">
+                    {(formData.sovItems || []).length} line items
+                  </span>
+                )}
+              </InlineTableFooterCell>
+              <InlineTableFooterCell />
+            </InlineTableFooterRow>
+            {(formData.sovItems || []).length > 0 && (
+              <InlineTableFooterRow type="totals">
+                <InlineTableFooterCell colSpan={2}>Totals</InlineTableFooterCell>
+                <InlineTableFooterCell
+                  align="right"
+                  numeric
                   data-testid="sov-total-amount"
                 >
                   ${sovTotals.amount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </td>
-                <td
-                  className="px-1 py-2 text-right text-sm font-semibold text-foreground"
+                </InlineTableFooterCell>
+                <InlineTableFooterCell
+                  align="right"
+                  numeric
                   data-testid="sov-total-billed"
                 >
                   ${sovTotals.billedToDate.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </td>
-                <td
-                  className="px-1 py-2 text-right text-sm font-semibold text-foreground"
+                </InlineTableFooterCell>
+                <InlineTableFooterCell
+                  align="right"
+                  numeric
                   data-testid="sov-total-remaining"
                 >
                   ${sovTotals.amountRemaining.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </td>
-                <td />
-              </tr>
-            ) : null}
-          </table>
-        </div>
-
-        <div className="flex flex-col gap-4 pt-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-4">
-            <Button
-              type="button"
-              size="default"
-              onClick={addSOVLine}
-              className="h-10 gap-2 px-4"
-              data-testid="sov-add-line-item"
-            >
-              <Plus />
-              Add Line Item
-            </Button>
-
-            {(formData.sovItems || []).length > 1 ? (
-              <div className="text-sm text-muted-foreground">
-                {(formData.sovItems || []).length} line items
-              </div>
-            ) : null}
-          </div>
-        </div>
+                </InlineTableFooterCell>
+                <InlineTableFooterCell />
+              </InlineTableFooterRow>
+            )}
+          </InlineTableFooter>
+        </InlineTable>
 
       </FormSection>
 

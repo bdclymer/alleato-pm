@@ -972,13 +972,16 @@ export default function PortfolioPage() {
       selectedIds.map(async (projectId) => {
         const response = await fetch(`/api/projects/${projectId}`, { method: "DELETE" });
         if (!response.ok) {
-          throw new Error(`Failed to delete project ${projectId}`);
+          const body = await response.json().catch(() => ({}));
+          throw new Error(body.details || body.error || `Failed to delete project ${projectId}`);
         }
       }),
     );
 
-    const failedCount = deleteResults.filter((result) => result.status === "rejected").length;
-    const successCount = deleteResults.length - failedCount;
+    const failed = deleteResults.filter(
+      (r): r is PromiseRejectedResult => r.status === "rejected",
+    );
+    const successCount = deleteResults.length - failed.length;
 
     if (successCount > 0) {
       const deletedIds = new Set(
@@ -988,8 +991,13 @@ export default function PortfolioPage() {
       toast.success(`${successCount} project(s) deleted.`);
     }
 
-    if (failedCount > 0) {
-      toast.error(`Failed to delete ${failedCount} project(s).`);
+    if (failed.length > 0) {
+      const reason = failed[0].reason?.message || "Unknown error";
+      toast.error(
+        failed.length === 1
+          ? reason
+          : `Failed to delete ${failed.length} project(s): ${reason}`,
+      );
     }
 
     tableState.setSelectedIds([]);

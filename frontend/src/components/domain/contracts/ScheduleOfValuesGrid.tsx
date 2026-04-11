@@ -5,6 +5,18 @@ import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ScheduleOfValuesRow } from "./ScheduleOfValuesRow";
 import { cn } from "@/lib/utils";
+import {
+  InlineTable,
+  InlineTableHeader,
+  InlineTableHeaderRow,
+  InlineTableHeaderCell,
+  InlineTableBody,
+  InlineTableRow,
+  InlineTableCell,
+  InlineTableFooter,
+  InlineTableFooterRow,
+  InlineTableFooterCell,
+} from "@/components/ds/inline-table";
 
 export interface SOVItem {
   id: string;
@@ -76,81 +88,53 @@ export function ScheduleOfValuesGrid({
         </Button>
       </div>
 
-      <div className="rounded-lg border">
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b bg-muted">
-                <th className="px-4 py-4 text-left text-sm font-medium text-foreground">
-                  Description
-                </th>
-                <th className="px-4 py-4 text-left text-sm font-medium text-foreground">
-                  Cost Code
-                </th>
-                <th className="px-4 py-4 text-right text-sm font-medium text-foreground">
-                  Scheduled Value
-                </th>
-                <th className="px-4 py-4 text-right text-sm font-medium text-foreground">
-                  Work Completed
-                </th>
-                <th className="px-4 py-4 text-right text-sm font-medium text-foreground">
-                  Materials Stored
-                </th>
-                <th className="px-4 py-4 text-right text-sm font-medium text-foreground">
-                  % Complete
-                </th>
-                <th className="px-4 py-4 text-center text-sm font-medium text-foreground">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {values.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="px-4 py-8 text-center text-muted-foreground"
-                  >
-                    No line items added yet. Click &quot;Add Line Item&quot; to
-                    get started.
-                  </td>
-                </tr>
-              ) : (
-                values.map((row) => (
-                  <ScheduleOfValuesRow
-                    key={row.id}
-                    item={row}
-                    onChange={(updates) => updateRow(row.id, updates)}
-                    onRemove={() => removeRow(row.id)}
-                  />
-                ))
-              )}
-            </tbody>
-            {values.length > 0 && (
-              <tfoot className="border-t-2">
-                <tr className="bg-muted font-semibold">
-                  <td colSpan={2} className="px-4 py-4 text-right">
-                    Totals:
-                  </td>
-                  <td className="px-4 py-4 text-right">
-                    ${totalScheduled.toLocaleString()}
-                  </td>
-                  <td className="px-4 py-4 text-right">
-                    ${totalCompleted.toLocaleString()}
-                  </td>
-                  <td className="px-4 py-4 text-right">
-                    ${totalMaterials.toLocaleString()}
-                  </td>
-                  <td className="px-4 py-4 text-right">
-                    {overallPercent.toFixed(1)}%
-                  </td>
-                  <td></td>
-                </tr>
-              </tfoot>
-            )}
-          </table>
-        </div>
-      </div>
+      <InlineTable variant="edit">
+        <InlineTableHeader>
+          <InlineTableHeaderRow>
+            <InlineTableHeaderCell>Description</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Cost Code</InlineTableHeaderCell>
+            <InlineTableHeaderCell align="right">Scheduled Value</InlineTableHeaderCell>
+            <InlineTableHeaderCell align="right">Work Completed</InlineTableHeaderCell>
+            <InlineTableHeaderCell align="right">Materials Stored</InlineTableHeaderCell>
+            <InlineTableHeaderCell align="right">% Complete</InlineTableHeaderCell>
+            <InlineTableHeaderCell align="center">Actions</InlineTableHeaderCell>
+          </InlineTableHeaderRow>
+        </InlineTableHeader>
+        <InlineTableBody>
+          {values.length === 0 ? (
+            <InlineTableRow>
+              <InlineTableCell
+                colSpan={7}
+                className="py-8 text-center text-muted-foreground"
+              >
+                No line items added yet. Click &quot;Add Line Item&quot; to
+                get started.
+              </InlineTableCell>
+            </InlineTableRow>
+          ) : (
+            values.map((row) => (
+              <ScheduleOfValuesRow
+                key={row.id}
+                item={row}
+                onChange={(updates) => updateRow(row.id, updates)}
+                onRemove={() => removeRow(row.id)}
+              />
+            ))
+          )}
+        </InlineTableBody>
+        {values.length > 0 && (
+          <InlineTableFooter>
+            <InlineTableFooterRow type="totals">
+              <InlineTableFooterCell colSpan={2} align="right">Totals:</InlineTableFooterCell>
+              <InlineTableFooterCell align="right" numeric>${totalScheduled.toLocaleString()}</InlineTableFooterCell>
+              <InlineTableFooterCell align="right" numeric>${totalCompleted.toLocaleString()}</InlineTableFooterCell>
+              <InlineTableFooterCell align="right" numeric>${totalMaterials.toLocaleString()}</InlineTableFooterCell>
+              <InlineTableFooterCell align="right" numeric>{overallPercent.toFixed(1)}%</InlineTableFooterCell>
+              <InlineTableFooterCell />
+            </InlineTableFooterRow>
+          </InlineTableFooter>
+        )}
+      </InlineTable>
     </div>
   );
 }

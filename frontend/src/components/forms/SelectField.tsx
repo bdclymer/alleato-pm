@@ -9,6 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { FormField } from "./FormField";
+import type { FormFieldBaseProps } from "./FormField";
 import { cn } from "@/lib/utils";
 
 interface SelectOption {
@@ -16,18 +17,13 @@ interface SelectOption {
   label: string;
 }
 
-interface SelectFieldProps {
+interface SelectFieldProps extends FormFieldBaseProps {
   label: string;
   options: SelectOption[];
   value?: string;
   onValueChange?: (value: string) => void;
   placeholder?: string;
-  error?: string;
-  hint?: string;
-  required?: boolean;
-  fullWidth?: boolean;
   className?: string;
-  disabled?: boolean;
   dataTestId?: string;
 }
 

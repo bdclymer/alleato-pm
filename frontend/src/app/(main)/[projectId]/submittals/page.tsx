@@ -119,10 +119,10 @@ function PackagePickerDialog({
           ) : (
             <div className="flex flex-col gap-0.5 pr-2">
               {filtered.map((pkg) => (
-                <button
+                <Button
                   key={pkg.id}
-                  type="button"
-                  className="w-full rounded px-3 py-2 text-left text-sm hover:bg-muted/50 focus:outline-none focus:bg-muted/50"
+                  variant="ghost"
+                  className="w-full justify-start rounded px-3 py-2 text-left text-sm h-auto"
                   onClick={() => {
                     onSelect(pkg);
                     onOpenChange(false);
@@ -132,7 +132,7 @@ function PackagePickerDialog({
                   {pkg.description && (
                     <span className="ml-2 text-xs text-muted-foreground">{pkg.description}</span>
                   )}
-                </button>
+                </Button>
               ))}
             </div>
           )}
@@ -205,10 +205,10 @@ function SpecPickerDialog({
           ) : (
             <div className="flex flex-col gap-0.5 pr-2">
               {filtered.map((spec) => (
-                <button
+                <Button
                   key={spec.id}
-                  type="button"
-                  className="w-full rounded px-3 py-2 text-left text-sm hover:bg-muted/50 focus:outline-none focus:bg-muted/50"
+                  variant="ghost"
+                  className="w-full justify-start rounded px-3 py-2 text-left text-sm h-auto"
                   onClick={() => {
                     onSelect(spec);
                     onOpenChange(false);
@@ -220,7 +220,7 @@ function SpecPickerDialog({
                   {spec.division && (
                     <span className="ml-2 text-xs text-muted-foreground">{spec.division}</span>
                   )}
-                </button>
+                </Button>
               ))}
             </div>
           )}
@@ -237,6 +237,38 @@ const EMPTY_FILTERS: SubmittalFilterState = {
 };
 
 function toTableRow(item: SubmittalSummary): SubmittalTableRow {
+  // Resolve responsible contractor from joined company data
+  const itemAny = item as unknown as Record<string, unknown>;
+  const responsibleContractor =
+    typeof itemAny.responsible_contractor === "object" && itemAny.responsible_contractor
+      ? (itemAny.responsible_contractor as { name?: string })?.name ?? null
+      : null;
+
+  // Resolve approvers and latest response from joined workflow steps
+  const workflowSteps = itemAny.submittal_workflow_steps as
+    | { step_type: string; submittal_responses: { responder_id: string; response_status: string }[] }[]
+    | undefined;
+
+  let approverNames: string | null = null;
+  let latestResponse: string | null = null;
+
+  if (workflowSteps?.length) {
+    // Collect all approver responder IDs
+    const approverIds = new Set<string>();
+    for (const step of workflowSteps) {
+      for (const resp of step.submittal_responses ?? []) {
+        approverIds.add(resp.responder_id);
+        // Track latest non-Pending response
+        if (resp.response_status && resp.response_status !== "Pending") {
+          latestResponse = resp.response_status;
+        }
+      }
+    }
+    if (approverIds.size > 0) {
+      approverNames = `${approverIds.size} reviewer${approverIds.size > 1 ? "s" : ""}`;
+    }
+  }
+
   return {
     id: item.id,
     specification_section: item.specification_section ?? null,
@@ -248,11 +280,11 @@ function toTableRow(item: SubmittalSummary): SubmittalTableRow {
         ? (item.submittal_type as { name?: string } | null)?.name ?? null
         : item.submittal_type ?? null,
     status: item.status ?? "Draft",
-    responsible_contractor: null,
-    received_from: null,
+    responsible_contractor: responsibleContractor,
+    received_from: null, // TODO: resolve from received_from_id when user join is available
     ball_in_court: item.ball_in_court ?? null,
-    approvers: null,
-    latest_response: null,
+    approvers: approverNames,
+    latest_response: latestResponse,
     sent_date: item.sent_date ?? null,
     is_private: item.is_private ?? false,
     division: item.division ?? null,
@@ -373,6 +405,7 @@ export default function SubmittalsPage(): ReactElement {
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [packagePickerOpen, setPackagePickerOpen] = React.useState(false);
   const [specPickerOpen, setSpecPickerOpen] = React.useState(false);
+  const [formDefaults, setFormDefaults] = React.useState<{ submittal_package_id?: string; specification_section?: string } | undefined>(undefined);
   const deleteSubmittal = useDeleteSubmittal(projectId);
 
   const initialFilters: SubmittalFilterState = {
@@ -694,7 +727,7 @@ export default function SubmittalsPage(): ReactElement {
         open={packagePickerOpen}
         onOpenChange={setPackagePickerOpen}
         onSelect={(pkg) => {
-          console.log("[Submittals] Selected package:", pkg);
+          setFormDefaults({ submittal_package_id: pkg.id });
           setDialogOpen(true);
         }}
       />
@@ -703,7 +736,7 @@ export default function SubmittalsPage(): ReactElement {
         open={specPickerOpen}
         onOpenChange={setSpecPickerOpen}
         onSelect={(spec) => {
-          console.log("[Submittals] Selected spec section:", spec);
+          setFormDefaults({ specification_section: `${spec.section_number} - ${spec.section_title}` });
           setDialogOpen(true);
         }}
       />
@@ -823,7 +856,11 @@ export default function SubmittalsPage(): ReactElement {
       <SubmittalFormDialog
         projectId={projectId}
         open={dialogOpen}
-        onOpenChange={setDialogOpen}
+        onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open) setFormDefaults(undefined);
+        }}
+        defaultOverrides={formDefaults}
       />
     </>
   );

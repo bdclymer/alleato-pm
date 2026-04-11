@@ -69,6 +69,7 @@ export default function NewChangeEventPage() {
           scope: normalizedScope,
           reason: REASON_MAP[data.changeReason || ""] || data.changeReason || undefined,
           origin: ORIGIN_MAP[data.origin || ""] || "Internal",
+          originId: data.originId || undefined,
           expectingRevenue: data.expectingRevenue ?? true,
           lineItemRevenueSource: data.lineItemRevenueSource || undefined,
           primeContractId: data.primeContractId || undefined,

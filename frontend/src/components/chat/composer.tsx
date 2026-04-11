@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, type KeyboardEvent } from "react";
-import { AtSign, Link2, Paperclip, Send, Smile, Video } from "lucide-react";
+import { AtSign, Paperclip, Send, Smile } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -19,46 +19,40 @@ export function Composer({
   channelName,
   disabled,
   placeholder,
-  submitLabel = "Send",
 }: ComposerProps) {
   const [message, setMessage] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const handleSend = () => {
-    if (!message.trim() || disabled) {
-      return;
-    }
-
+    if (!message.trim() || disabled) return;
     onSend(message.trim());
     setMessage("");
-
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-    }
+    if (textareaRef.current) textareaRef.current.style.height = "auto";
   };
 
-  const handleKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === "Enter" && !event.shiftKey) {
-      event.preventDefault();
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
       handleSend();
     }
   };
 
-  const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setMessage(event.target.value);
-    const textarea = event.target;
-    textarea.style.height = "auto";
-    textarea.style.height = `${Math.min(textarea.scrollHeight, 176)}px`;
+  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setMessage(e.target.value);
+    const el = e.target;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 160)}px`;
   };
 
   return (
-    <div className="border-t border-border bg-background px-3 py-3">
-      <div className="rounded-md border border-border bg-muted/20 p-2">
-        <div className="mb-2 flex items-center gap-1">
+    <div className="border-t border-border bg-background px-4 py-3">
+      <div className="flex items-end gap-2 rounded-2xl border border-border bg-muted/30 px-3 py-2 transition-colors focus-within:border-primary/40 focus-within:bg-background">
+        {/* Toolbar icons */}
+        <div className="flex shrink-0 items-center gap-0.5 pb-1">
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
             disabled={disabled}
             title="Attach file"
           >
@@ -67,16 +61,7 @@ export function Composer({
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
-            disabled={disabled}
-            title="Mentions"
-          >
-            <AtSign className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
             disabled={disabled}
             title="Emoji"
           >
@@ -85,49 +70,44 @@ export function Composer({
           <Button
             variant="ghost"
             size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+            className="h-8 w-8 text-muted-foreground hover:text-foreground"
             disabled={disabled}
-            title="Insert link"
+            title="Mention"
           >
-            <Link2 className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-7 w-7 text-muted-foreground hover:text-foreground"
-            disabled={disabled}
-            title="Meet now"
-          >
-            <Video className="h-4 w-4" />
+            <AtSign className="h-4 w-4" />
           </Button>
         </div>
 
+        {/* Input */}
         <Textarea
           ref={textareaRef}
           value={message}
           onChange={handleInput}
           onKeyDown={handleKeyDown}
-          placeholder={placeholder ?? `Post to ${channelName}`}
+          placeholder={placeholder ?? `Message ${channelName}`}
           disabled={disabled}
-          className="min-h-20 max-h-44 resize-none border-0 bg-transparent px-1 py-1 text-sm shadow-none focus-visible:ring-0"
-          rows={2}
+          rows={1}
+          className="max-h-40 min-h-8 flex-1 resize-none border-0 bg-transparent px-1 py-1.5 text-sm shadow-none focus-visible:ring-0"
         />
 
-        <div className="mt-2 flex items-center justify-between">
-          <p className="text-xs text-muted-foreground">
-            Enter to send · Shift + Enter for new line
-          </p>
-
-          <Button
-            onClick={handleSend}
-            disabled={!message.trim() || disabled}
-            className={cn("h-8 gap-1.5 px-3", !message.trim() && "opacity-60")}
-          >
-            <Send className="h-3.5 w-3.5" />
-            <span>{submitLabel}</span>
-          </Button>
-        </div>
+        {/* Send button */}
+        <Button
+          onClick={handleSend}
+          disabled={!message.trim() || disabled}
+          size="icon"
+          className={cn(
+            "mb-0.5 h-8 w-8 shrink-0 rounded-xl transition-all",
+            message.trim() ? "opacity-100" : "opacity-40",
+          )}
+          title="Send (Enter)"
+        >
+          <Send className="h-3.5 w-3.5" />
+        </Button>
       </div>
+
+      <p className="mt-1.5 text-center text-[11px] text-muted-foreground/60">
+        Enter to send · Shift + Enter for new line
+      </p>
     </div>
   );
 }

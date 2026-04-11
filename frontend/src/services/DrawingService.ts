@@ -1,5 +1,47 @@
+/**
+ * DrawingService — Facade over domain-specific sub-services.
+ *
+ * All public methods are preserved for backward compatibility.
+ * New code should import sub-services directly from "@/services/drawings".
+ *
+ * Sub-services:
+ *   DrawingRevisionService  — revision CRUD
+ *   DrawingFileService      — upload, download, storage
+ *   DrawingRelatedService   — cross-tool links, sketches
+ */
 import type { createClient } from "@supabase/supabase-js";
 import type { Database } from "../types/database.types";
+
+import { DrawingRevisionService } from "./drawings/DrawingRevisionService";
+import { DrawingFileService } from "./drawings/DrawingFileService";
+import { DrawingRelatedService } from "./drawings/DrawingRelatedService";
+
+// Re-export types so existing `import { … } from "@/services/DrawingService"` keeps working
+export type {
+  DrawingFilters,
+  DrawingCreateInput,
+  DrawingUpdateInput,
+  RevisionCreateInput,
+  SketchCreateInput,
+  DrawingListResponse,
+  DrawingWithRevision,
+  FileUploadResult,
+  DrawingError,
+  Result,
+} from "./drawings/types";
+
+import type {
+  DrawingFilters,
+  DrawingCreateInput,
+  DrawingUpdateInput,
+  RevisionCreateInput,
+  SketchCreateInput,
+  DrawingListResponse,
+  DrawingWithRevision,
+  FileUploadResult,
+  DrawingError,
+  Result,
+} from "./drawings/types";
 
 type Tables = Database["public"]["Tables"];
 type Views = Database["public"]["Views"];
@@ -10,89 +52,26 @@ type DrawingSketch = Tables["drawing_sketches"]["Row"];
 type DrawingDownload = Tables["drawing_downloads"]["Row"];
 type DrawingRelatedItem = Tables["drawing_related_items"]["Row"];
 
-type DrawingError = { type: string; message: string };
-type Result<T, E = DrawingError> =
-  | { data: T; error: null }
-  | { data: null; error: E };
-
-export interface DrawingFilters {
-  search?: string;
-  area_id?: string;
-  discipline?: string;
-  status?: string;
-  set_id?: string;
-  page?: number;
-  page_size?: number;
-  include_unpublished?: boolean;
-  include_obsolete?: boolean;
-}
-
-export interface DrawingCreateInput {
-  drawing_number: string;
-  title: string;
-  discipline?: string;
-  drawing_type?: string;
-  area_id?: string;
-}
-
-export interface DrawingUpdateInput {
-  drawing_number?: string;
-  title?: string;
-  discipline?: string;
-  drawing_type?: string;
-  area_id?: string;
-}
-
-export interface RevisionCreateInput {
-  revision_number: string;
-  drawing_set_id?: string;
-  drawing_date?: string;
-  received_date: string;
-  status?: string;
-  file_url: string;
-  file_name: string;
-  file_size: number;
-  file_type: string;
-  description?: string;
-}
-
-export interface SketchCreateInput {
-  file_url: string;
-  name: string;
-  sketch_number: string;
-  description?: string;
-}
-
-export interface DrawingListResponse {
-  drawings: DrawingLogEntry[];
-  total_count: number;
-  page: number;
-  page_size: number;
-  has_next_page: boolean;
-  has_previous_page: boolean;
-}
-
-export interface DrawingWithRevision extends Drawing {
-  current_revision: DrawingRevision | null;
-}
-
-export interface FileUploadResult {
-  url: string;
-  path: string;
-}
+type SupabaseClientType = ReturnType<typeof createClient<Database>>;
 
 /**
- * Service class for drawing document management
- * Handles CRUD operations for drawings with revision tracking
+ * Facade service for drawing document management.
+ * Delegates revision, file, and related-item operations to sub-services.
  * CRITICAL: project_id is INTEGER (matches projects.id type)
  */
 export class DrawingService {
-  constructor(private supabase: ReturnType<typeof createClient<Database>>) {}
+  readonly revisions: DrawingRevisionService;
+  readonly files: DrawingFileService;
+  readonly related: DrawingRelatedService;
 
-  /**
-   * Get paginated list of drawings for a project with optional filters
-   * Returns drawings from the drawing_log view with full revision details
-   */
+  constructor(private supabase: SupabaseClientType) {
+    this.revisions = new DrawingRevisionService(supabase);
+    this.files = new DrawingFileService(supabase);
+    this.related = new DrawingRelatedService(supabase);
+  }
+
+  // ─── Drawing CRUD ───────────────────────────────────────────────────────────
+
   async list(
     projectId: string,
     filters: DrawingFilters = {},
@@ -113,13 +92,14 @@ export class DrawingService {
     const offset = (page - 1) * page_size;
 
     try {
-      // Base query on drawing_log view
       let query = this.supabase
         .from("drawing_log")
         .select("*", { count: "exact" })
         .eq("project_id", projectIdNum);
 
-      // By default, exclude unpublished and obsolete drawings
+      // Always exclude soft-deleted drawings from the main list
+      query = query.is("deleted_at", null);
+
       if (!include_unpublished) {
         query = query.eq("is_published", true);
       }
@@ -127,31 +107,17 @@ export class DrawingService {
         query = query.eq("is_obsolete", false);
       }
 
-      // Apply filters
-      if (area_id) {
-        query = query.eq("area_id", area_id);
-      }
+      if (area_id) query = query.eq("area_id", area_id);
+      if (discipline) query = query.eq("discipline", discipline);
+      if (status) query = query.eq("status", status);
+      if (set_id) query = query.eq("drawing_set_id", set_id);
 
-      if (discipline) {
-        query = query.eq("discipline", discipline);
-      }
-
-      if (status) {
-        query = query.eq("status", status);
-      }
-
-      if (set_id) {
-        query = query.eq("drawing_set_id", set_id);
-      }
-
-      // Full-text search on drawing_number and title
       if (search) {
         query = query.or(
           `drawing_number.ilike.%${search}%,title.ilike.%${search}%`,
         );
       }
 
-      // Apply pagination and ordering
       query = query
         .order("drawing_number", { ascending: true })
         .range(offset, offset + page_size - 1);
@@ -159,10 +125,7 @@ export class DrawingService {
       const { data, error, count } = await query;
 
       if (error) {
-        return {
-          data: null,
-          error: { type: "UNKNOWN", message: error.message },
-        };
+        return { data: null, error: { type: "UNKNOWN", message: error.message } };
       }
 
       return {
@@ -187,51 +150,24 @@ export class DrawingService {
     }
   }
 
-  /**
-   * Get a single drawing by ID with full details
-   * Includes current revision details
-   */
-  async getById(
+  async listDeleted(
     projectId: string,
-    drawingId: string,
-  ): Promise<Result<DrawingWithRevision, DrawingError>> {
+  ): Promise<Result<DrawingLogEntry[], DrawingError>> {
     const projectIdNum = Number.parseInt(projectId, 10);
 
     try {
       const { data, error } = await this.supabase
-        .from("drawings")
-        .select(
-          `
-          *,
-          current_revision:drawing_revisions!fk_drawings_current_revision(*)
-        `,
-        )
+        .from("drawing_log")
+        .select("*")
         .eq("project_id", projectIdNum)
-        .eq("id", drawingId)
-        .single();
+        .not("deleted_at", "is", null)
+        .order("deleted_at", { ascending: false });
 
       if (error) {
-        if (error.code === "PGRST116") {
-          return {
-            data: null,
-            error: {
-              type: "NOT_FOUND",
-              message: `Drawing with ID ${drawingId} not found`,
-            },
-          };
-        }
-        return {
-          data: null,
-          error: { type: "UNKNOWN", message: error.message },
-        };
+        return { data: null, error: { type: "DATABASE_ERROR", message: error.message } };
       }
 
-      const drawing: DrawingWithRevision = {
-        ...data,
-        current_revision: data.current_revision || null,
-      };
-
-      return { data: drawing, error: null };
+      return { data: data ?? [], error: null };
     } catch (err) {
       return {
         data: null,
@@ -243,9 +179,45 @@ export class DrawingService {
     }
   }
 
-  /**
-   * Create a new drawing
-   */
+  async getById(
+    projectId: string,
+    drawingId: string,
+  ): Promise<Result<DrawingWithRevision, DrawingError>> {
+    const projectIdNum = Number.parseInt(projectId, 10);
+
+    try {
+      const { data, error } = await this.supabase
+        .from("drawings")
+        .select(`*, current_revision:drawing_revisions!fk_drawings_current_revision(*)`)
+        .eq("project_id", projectIdNum)
+        .eq("id", drawingId)
+        .single();
+
+      if (error) {
+        if (error.code === "PGRST116") {
+          return {
+            data: null,
+            error: { type: "NOT_FOUND", message: `Drawing with ID ${drawingId} not found` },
+          };
+        }
+        return { data: null, error: { type: "UNKNOWN", message: error.message } };
+      }
+
+      return {
+        data: { ...data, current_revision: data.current_revision || null },
+        error: null,
+      };
+    } catch (err) {
+      return {
+        data: null,
+        error: {
+          type: "UNKNOWN",
+          message: err instanceof Error ? err.message : "an unexpected error occurred",
+        },
+      };
+    }
+  }
+
   async create(
     projectId: string,
     input: DrawingCreateInput,
@@ -287,10 +259,7 @@ export class DrawingService {
         .single();
 
       if (error) {
-        return {
-          data: null,
-          error: { type: "UNKNOWN", message: error.message },
-        };
+        return { data: null, error: { type: "UNKNOWN", message: error.message } };
       }
 
       return { data, error: null };
@@ -305,10 +274,6 @@ export class DrawingService {
     }
   }
 
-  /**
-   * Update drawing metadata (not file)
-   * For file updates, use createRevision()
-   */
   async update(
     projectId: string,
     drawingId: string,
@@ -317,7 +282,6 @@ export class DrawingService {
     const projectIdNum = Number.parseInt(projectId, 10);
 
     try {
-      // Check for duplicate drawing number if changing it
       if (input.drawing_number) {
         const { data: existing } = await this.supabase
           .from("drawings")
@@ -340,648 +304,7 @@ export class DrawingService {
 
       const { data, error } = await this.supabase
         .from("drawings")
-        .update({
-          ...input,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", drawingId)
-        .eq("project_id", projectIdNum)
-        .select()
-        .single();
-
-      if (error) {
-        if (error.code === "PGRST116") {
-          return {
-            data: null,
-            error: {
-              type: "NOT_FOUND",
-              message: `Drawing with ID ${drawingId} not found`,
-            },
-          };
-        }
-        return {
-          data: null,
-          error: { type: "UNKNOWN", message: error.message },
-        };
-      }
-
-      return { data, error: null };
-    } catch (err) {
-      return {
-        data: null,
-        error: {
-          type: "UNKNOWN",
-          message: err instanceof Error ? err.message : "an unexpected error occurred",
-        },
-      };
-    }
-  }
-
-  /**
-   * Delete a drawing and all associated data
-   * Cascading deletes handled by database foreign keys
-   * CRITICAL: Files in storage are NOT automatically deleted
-   */
-  async delete(
-    projectId: string,
-    drawingId: string,
-  ): Promise<Result<void, DrawingError>> {
-    const projectIdNum = Number.parseInt(projectId, 10);
-
-    try {
-      // Get all revision file URLs before deleting (for storage cleanup)
-      const { data: revisions } = await this.supabase
-        .from("drawing_revisions")
-        .select("file_url")
-        .eq("drawing_id", drawingId);
-
-      // Delete the drawing (cascades to revisions, sketches, downloads, related items)
-      const { error } = await this.supabase
-        .from("drawings")
-        .delete()
-        .eq("id", drawingId)
-        .eq("project_id", projectIdNum);
-
-      if (error) {
-        return {
-          data: null,
-          error: { type: "UNKNOWN", message: error.message },
-        };
-      }
-
-      // Clean up storage files
-      if (revisions && revisions.length > 0) {
-        const filePaths = revisions
-          .map((r) => {
-            // Extract path from URL
-            const url = new URL(r.file_url);
-            const pathMatch = url.pathname.match(/project-files\/(.+)$/);
-            return pathMatch ? pathMatch[1] : null;
-          })
-          .filter(Boolean) as string[];
-
-        if (filePaths.length > 0) {
-          await this.supabase.storage.from("project-files").remove(filePaths);
-        }
-      }
-
-      return { data: undefined as unknown as void, error: null };
-    } catch (err) {
-      return {
-        data: null,
-        error: {
-          type: "UNKNOWN",
-          message: err instanceof Error ? err.message : "an unexpected error occurred",
-        },
-      };
-    }
-  }
-
-  /**
-   * List all revisions for a drawing ordered by created_at desc
-   */
-  async listRevisions(
-    drawingId: string,
-  ): Promise<Result<DrawingRevision[], DrawingError>> {
-    try {
-      const { data, error } = await this.supabase
-        .from("drawing_revisions")
-        .select("*")
-        .eq("drawing_id", drawingId)
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        return {
-          data: null,
-          error: { type: "UNKNOWN", message: error.message },
-        };
-      }
-
-      return { data: data || [], error: null };
-    } catch (err) {
-      return {
-        data: null,
-        error: {
-          type: "UNKNOWN",
-          message: err instanceof Error ? err.message : "an unexpected error occurred",
-        },
-      };
-    }
-  }
-
-  /**
-   * Create a new revision for a drawing
-   * Database trigger handles unsetting other current revisions and updating drawings.current_revision_id
-   */
-  async createRevision(
-    drawingId: string,
-    input: RevisionCreateInput,
-    userId: string,
-  ): Promise<Result<DrawingRevision, DrawingError>> {
-    try {
-      const { data, error } = await this.supabase
-        .from("drawing_revisions")
-        .insert({
-          drawing_id: drawingId,
-          revision_number: input.revision_number,
-          drawing_set_id: input.drawing_set_id || null,
-          drawing_date: input.drawing_date || null,
-          received_date: input.received_date,
-          status: input.status || "approved",
-          file_url: input.file_url,
-          file_name: input.file_name,
-          file_size: input.file_size,
-          file_type: input.file_type,
-          description: input.description || null,
-          uploaded_by: userId,
-          is_current_revision: true,
-        })
-        .select()
-        .single();
-
-      if (error) {
-        return {
-          data: null,
-          error: { type: "UNKNOWN", message: error.message },
-        };
-      }
-
-      return { data, error: null };
-    } catch (err) {
-      return {
-        data: null,
-        error: {
-          type: "UNKNOWN",
-          message: err instanceof Error ? err.message : "an unexpected error occurred",
-        },
-      };
-    }
-  }
-
-  /**
-   * Upload file to Supabase Storage
-   * Returns URL and path for use in createRevision
-   */
-  async uploadFile(
-    projectId: string,
-    drawingId: string,
-    file: File,
-  ): Promise<Result<FileUploadResult, DrawingError>> {
-    try {
-      // Validate file size (50MB max)
-      if (file.size > 50 * 1024 * 1024) {
-        return {
-          data: null,
-          error: {
-            type: "FILE_TOO_LARGE",
-            message: "File must be under 50MB",
-          },
-        };
-      }
-
-      // Generate file path
-      const timestamp = Date.now();
-      const sanitizedFilename = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-      const filePath = `${projectId}/drawings/${drawingId}/${timestamp}_${sanitizedFilename}`;
-
-      // Upload to storage
-      const { data: uploadData, error: uploadError } =
-        await this.supabase.storage
-          .from("project-files")
-          .upload(filePath, file, {
-            cacheControl: "3600",
-            upsert: false,
-          });
-
-      if (uploadError) {
-        return {
-          data: null,
-          error: {
-            type: "STORAGE_ERROR",
-            message: `Failed to upload file: ${uploadError.message}`,
-          },
-        };
-      }
-
-      // Get public URL
-      const { data: urlData } = this.supabase.storage
-        .from("project-files")
-        .getPublicUrl(filePath);
-
-      return {
-        data: {
-          url: urlData.publicUrl,
-          path: filePath,
-        },
-        error: null,
-      };
-    } catch (err) {
-      return {
-        data: null,
-        error: {
-          type: "UNKNOWN",
-          message: err instanceof Error ? err.message : "an unexpected error occurred",
-        },
-      };
-    }
-  }
-
-  /**
-   * Create a signed URL for downloading a file
-   * Valid for 1 hour
-   */
-  async getDownloadUrl(
-    filePath: string,
-  ): Promise<Result<string, DrawingError>> {
-    try {
-      const { data, error } = await this.supabase.storage
-        .from("project-files")
-        .createSignedUrl(filePath, 3600); // 1 hour expiry
-
-      if (error) {
-        return {
-          data: null,
-          error: {
-            type: "STORAGE_ERROR",
-            message: `Failed to create download URL: ${error.message}`,
-          },
-        };
-      }
-
-      return { data: data.signedUrl, error: null };
-    } catch (err) {
-      return {
-        data: null,
-        error: {
-          type: "UNKNOWN",
-          message: err instanceof Error ? err.message : "an unexpected error occurred",
-        },
-      };
-    }
-  }
-
-  /**
-   * Record a download event
-   */
-  async recordDownload(
-    revisionId: string,
-    userId: string,
-  ): Promise<Result<DrawingDownload, DrawingError>> {
-    try {
-      const { data, error } = await this.supabase
-        .from("drawing_downloads")
-        .insert({
-          drawing_revision_id: revisionId,
-          downloaded_by: userId,
-        })
-        .select()
-        .single();
-
-      if (error) {
-        return {
-          data: null,
-          error: { type: "UNKNOWN", message: error.message },
-        };
-      }
-
-      return { data, error: null };
-    } catch (err) {
-      return {
-        data: null,
-        error: {
-          type: "UNKNOWN",
-          message: err instanceof Error ? err.message : "an unexpected error occurred",
-        },
-      };
-    }
-  }
-
-  /**
-   * List all downloads for a revision
-   */
-  async listDownloads(
-    revisionId: string,
-  ): Promise<Result<DrawingDownload[], DrawingError>> {
-    try {
-      const { data, error } = await this.supabase
-        .from("drawing_downloads")
-        .select("*")
-        .eq("drawing_revision_id", revisionId)
-        .order("downloaded_at", { ascending: false });
-
-      if (error) {
-        return {
-          data: null,
-          error: { type: "UNKNOWN", message: error.message },
-        };
-      }
-
-      return { data: data || [], error: null };
-    } catch (err) {
-      return {
-        data: null,
-        error: {
-          type: "UNKNOWN",
-          message: err instanceof Error ? err.message : "an unexpected error occurred",
-        },
-      };
-    }
-  }
-
-  /**
-   * List all sketches for a revision
-   */
-  async listSketches(
-    revisionId: string,
-  ): Promise<Result<DrawingSketch[], DrawingError>> {
-    try {
-      const { data, error } = await this.supabase
-        .from("drawing_sketches")
-        .select("*")
-        .eq("drawing_revision_id", revisionId)
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        return {
-          data: null,
-          error: { type: "UNKNOWN", message: error.message },
-        };
-      }
-
-      return { data: data || [], error: null };
-    } catch (err) {
-      return {
-        data: null,
-        error: {
-          type: "UNKNOWN",
-          message: err instanceof Error ? err.message : "an unexpected error occurred",
-        },
-      };
-    }
-  }
-
-  /**
-   * Create a sketch for a revision
-   */
-  async createSketch(
-    revisionId: string,
-    input: SketchCreateInput,
-    userId: string,
-  ): Promise<Result<DrawingSketch, DrawingError>> {
-    try {
-      const { data, error } = await this.supabase
-        .from("drawing_sketches")
-        .insert({
-          drawing_revision_id: revisionId,
-          file_url: input.file_url,
-          name: input.name,
-          sketch_number: input.sketch_number,
-          description: input.description || null,
-          created_by: userId,
-        })
-        .select()
-        .single();
-
-      if (error) {
-        return {
-          data: null,
-          error: { type: "UNKNOWN", message: error.message },
-        };
-      }
-
-      return { data, error: null };
-    } catch (err) {
-      return {
-        data: null,
-        error: {
-          type: "UNKNOWN",
-          message: err instanceof Error ? err.message : "an unexpected error occurred",
-        },
-      };
-    }
-  }
-
-  /**
-   * Link a related item to a drawing
-   */
-  async linkRelatedItem(
-    drawingId: string,
-    relatedType: string,
-    relatedId: string,
-    userId: string,
-  ): Promise<Result<DrawingRelatedItem, DrawingError>> {
-    try {
-      const { data, error } = await this.supabase
-        .from("drawing_related_items")
-        .insert({
-          drawing_id: drawingId,
-          related_type: relatedType,
-          related_id: relatedId,
-          created_by: userId,
-        })
-        .select()
-        .single();
-
-      if (error) {
-        // Check if already linked (unique constraint violation)
-        if (error.code === "23505") {
-          // Fetch the existing linked item and return it
-          const { data: existingData } = await this.supabase
-            .from("drawing_related_items")
-            .select("*")
-            .eq("drawing_id", drawingId)
-            .eq("related_type", relatedType)
-            .eq("related_id", relatedId)
-            .single();
-
-          if (existingData) {
-            return { data: existingData, error: null };
-          }
-        }
-        return {
-          data: null,
-          error: { type: "UNKNOWN", message: error.message },
-        };
-      }
-
-      return { data, error: null };
-    } catch (err) {
-      return {
-        data: null,
-        error: {
-          type: "UNKNOWN",
-          message: err instanceof Error ? err.message : "an unexpected error occurred",
-        },
-      };
-    }
-  }
-
-  /**
-   * Unlink a related item from a drawing
-   */
-  async unlinkRelatedItem(
-    drawingId: string,
-    relatedType: string,
-    relatedId: string,
-  ): Promise<Result<void, DrawingError>> {
-    try {
-      const { error } = await this.supabase
-        .from("drawing_related_items")
-        .delete()
-        .eq("drawing_id", drawingId)
-        .eq("related_type", relatedType)
-        .eq("related_id", relatedId);
-
-      if (error) {
-        return {
-          data: null,
-          error: { type: "UNKNOWN", message: error.message },
-        };
-      }
-
-      return { data: undefined as unknown as void, error: null };
-    } catch (err) {
-      return {
-        data: null,
-        error: {
-          type: "UNKNOWN",
-          message: err instanceof Error ? err.message : "an unexpected error occurred",
-        },
-      };
-    }
-  }
-
-  /**
-   * List all related items for a drawing
-   */
-  async listRelatedItems(
-    drawingId: string,
-  ): Promise<Result<DrawingRelatedItem[], DrawingError>> {
-    try {
-      const { data, error } = await this.supabase
-        .from("drawing_related_items")
-        .select("*")
-        .eq("drawing_id", drawingId)
-        .order("created_at", { ascending: false });
-
-      if (error) {
-        return {
-          data: null,
-          error: { type: "UNKNOWN", message: error.message },
-        };
-      }
-
-      return { data: data || [], error: null };
-    } catch (err) {
-      return {
-        data: null,
-        error: {
-          type: "UNKNOWN",
-          message: err instanceof Error ? err.message : "an unexpected error occurred",
-        },
-      };
-    }
-  }
-
-  /**
-   * Publish a drawing (is_published = true)
-   */
-  async publish(
-    projectId: string,
-    drawingId: string,
-  ): Promise<Result<Drawing, DrawingError>> {
-    return this._setPublished(projectId, drawingId, true);
-  }
-
-  /**
-   * Unpublish a drawing (is_published = false)
-   */
-  async unpublish(
-    projectId: string,
-    drawingId: string,
-  ): Promise<Result<Drawing, DrawingError>> {
-    return this._setPublished(projectId, drawingId, false);
-  }
-
-  /**
-   * Mark a drawing as obsolete (is_obsolete = true)
-   */
-  async markObsolete(
-    projectId: string,
-    drawingId: string,
-  ): Promise<Result<Drawing, DrawingError>> {
-    return this._setObsolete(projectId, drawingId, true);
-  }
-
-  /**
-   * Restore a drawing from obsolete (is_obsolete = false)
-   */
-  async restoreObsolete(
-    projectId: string,
-    drawingId: string,
-  ): Promise<Result<Drawing, DrawingError>> {
-    return this._setObsolete(projectId, drawingId, false);
-  }
-
-  /**
-   * Update the revision_number on a drawing revision row
-   */
-  async updateRevisionNumber(
-    drawingId: string,
-    revisionId: string,
-    revisionNumber: string,
-  ): Promise<Result<DrawingRevision, DrawingError>> {
-    try {
-      const { data, error } = await this.supabase
-        .from("drawing_revisions")
-        .update({
-          revision_number: revisionNumber,
-        })
-        .eq("id", revisionId)
-        .eq("drawing_id", drawingId)
-        .select()
-        .single();
-
-      if (error) {
-        if (error.code === "PGRST116") {
-          return {
-            data: null,
-            error: {
-              type: "NOT_FOUND",
-              message: `Revision with ID ${revisionId} not found`,
-            },
-          };
-        }
-        return {
-          data: null,
-          error: { type: "UNKNOWN", message: error.message },
-        };
-      }
-
-      return { data, error: null };
-    } catch (err) {
-      return {
-        data: null,
-        error: {
-          type: "UNKNOWN",
-          message: err instanceof Error ? err.message : "an unexpected error occurred",
-        },
-      };
-    }
-  }
-
-  // ─── Private helpers ────────────────────────────────────────────────────────
-
-  private async _setPublished(
-    projectId: string,
-    drawingId: string,
-    isPublished: boolean,
-  ): Promise<Result<Drawing, DrawingError>> {
-    const projectIdNum = Number.parseInt(projectId, 10);
-    try {
-      const { data, error } = await this.supabase
-        .from("drawings")
-        .update({ is_published: isPublished, updated_at: new Date().toISOString() })
+        .update({ ...input, updated_at: new Date().toISOString() })
         .eq("id", drawingId)
         .eq("project_id", projectIdNum)
         .select()
@@ -1009,16 +332,193 @@ export class DrawingService {
     }
   }
 
-  private async _setObsolete(
+  // ─── Soft-delete / Recycle Bin ──────────────────────────────────────────────
+
+  async delete(
     projectId: string,
     drawingId: string,
-    isObsolete: boolean,
+    userId?: string,
+  ): Promise<Result<void, DrawingError>> {
+    const projectIdNum = Number.parseInt(projectId, 10);
+
+    try {
+      const { error } = await this.supabase
+        .from("drawings")
+        .update({
+          deleted_at: new Date().toISOString(),
+          deleted_by: userId ?? null,
+        } as Record<string, unknown>)
+        .eq("id", drawingId)
+        .eq("project_id", projectIdNum);
+
+      if (error) {
+        return { data: null, error: { type: "UNKNOWN", message: error.message } };
+      }
+
+      return { data: undefined as unknown as void, error: null };
+    } catch (err) {
+      return {
+        data: null,
+        error: {
+          type: "UNKNOWN",
+          message: err instanceof Error ? err.message : "an unexpected error occurred",
+        },
+      };
+    }
+  }
+
+  async restore(
+    projectId: string,
+    drawingId: string,
+  ): Promise<Result<void, DrawingError>> {
+    const projectIdNum = Number.parseInt(projectId, 10);
+
+    try {
+      const { error } = await this.supabase
+        .from("drawings")
+        .update({
+          deleted_at: null,
+          deleted_by: null,
+        } as Record<string, unknown>)
+        .eq("id", drawingId)
+        .eq("project_id", projectIdNum);
+
+      if (error) {
+        return { data: null, error: { type: "UNKNOWN", message: error.message } };
+      }
+
+      return { data: undefined as unknown as void, error: null };
+    } catch (err) {
+      return {
+        data: null,
+        error: {
+          type: "UNKNOWN",
+          message: err instanceof Error ? err.message : "an unexpected error occurred",
+        },
+      };
+    }
+  }
+
+  async permanentDelete(
+    projectId: string,
+    drawingId: string,
+  ): Promise<Result<void, DrawingError>> {
+    const projectIdNum = Number.parseInt(projectId, 10);
+
+    try {
+      const { data: revisions } = await this.supabase
+        .from("drawing_revisions")
+        .select("file_url")
+        .eq("drawing_id", drawingId);
+
+      const { error } = await this.supabase
+        .from("drawings")
+        .delete()
+        .eq("id", drawingId)
+        .eq("project_id", projectIdNum);
+
+      if (error) {
+        return { data: null, error: { type: "UNKNOWN", message: error.message } };
+      }
+
+      // Clean up storage files
+      if (revisions && revisions.length > 0) {
+        await this.files.removeFiles(revisions.map((r) => r.file_url));
+      }
+
+      return { data: undefined as unknown as void, error: null };
+    } catch (err) {
+      return {
+        data: null,
+        error: {
+          type: "UNKNOWN",
+          message: err instanceof Error ? err.message : "an unexpected error occurred",
+        },
+      };
+    }
+  }
+
+  // ─── Publish / Obsolete ─────────────────────────────────────────────────────
+
+  async publish(projectId: string, drawingId: string): Promise<Result<Drawing, DrawingError>> {
+    return this._setFlag(projectId, drawingId, "is_published", true);
+  }
+
+  async unpublish(projectId: string, drawingId: string): Promise<Result<Drawing, DrawingError>> {
+    return this._setFlag(projectId, drawingId, "is_published", false);
+  }
+
+  async markObsolete(projectId: string, drawingId: string): Promise<Result<Drawing, DrawingError>> {
+    return this._setFlag(projectId, drawingId, "is_obsolete", true);
+  }
+
+  async restoreObsolete(projectId: string, drawingId: string): Promise<Result<Drawing, DrawingError>> {
+    return this._setFlag(projectId, drawingId, "is_obsolete", false);
+  }
+
+  // ─── Delegated methods (backward-compatible wrappers) ───────────────────────
+
+  async listRevisions(drawingId: string) {
+    return this.revisions.list(drawingId);
+  }
+
+  async createRevision(drawingId: string, input: RevisionCreateInput, userId: string) {
+    return this.revisions.create(drawingId, input, userId);
+  }
+
+  async updateRevisionNumber(drawingId: string, revisionId: string, revisionNumber: string) {
+    return this.revisions.updateNumber(drawingId, revisionId, revisionNumber);
+  }
+
+  async uploadFile(projectId: string, drawingId: string, file: File) {
+    return this.files.upload(projectId, drawingId, file);
+  }
+
+  async getDownloadUrl(filePath: string) {
+    return this.files.getDownloadUrl(filePath);
+  }
+
+  async recordDownload(revisionId: string, userId: string) {
+    return this.files.recordDownload(revisionId, userId);
+  }
+
+  async listDownloads(revisionId: string) {
+    return this.files.listDownloads(revisionId);
+  }
+
+  async listSketches(revisionId: string) {
+    return this.related.listSketches(revisionId);
+  }
+
+  async createSketch(revisionId: string, input: SketchCreateInput, userId: string) {
+    return this.related.createSketch(revisionId, input, userId);
+  }
+
+  async linkRelatedItem(drawingId: string, relatedType: string, relatedId: string, userId: string) {
+    return this.related.link(drawingId, relatedType, relatedId, userId);
+  }
+
+  async unlinkRelatedItem(drawingId: string, relatedType: string, relatedId: string) {
+    return this.related.unlink(drawingId, relatedType, relatedId);
+  }
+
+  async listRelatedItems(drawingId: string) {
+    return this.related.list(drawingId);
+  }
+
+  // ─── Private helpers ────────────────────────────────────────────────────────
+
+  private async _setFlag(
+    projectId: string,
+    drawingId: string,
+    field: "is_published" | "is_obsolete",
+    value: boolean,
   ): Promise<Result<Drawing, DrawingError>> {
     const projectIdNum = Number.parseInt(projectId, 10);
     try {
       const { data, error } = await this.supabase
         .from("drawings")
-        .update({ is_obsolete: isObsolete, updated_at: new Date().toISOString() })
+        .update({ [field]: value, updated_at: new Date().toISOString() })
         .eq("id", drawingId)
         .eq("project_id", projectIdNum)
         .select()

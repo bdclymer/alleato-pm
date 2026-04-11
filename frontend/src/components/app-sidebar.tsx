@@ -80,7 +80,7 @@ function SidebarFlyout({
     >
       <div className="w-52 rounded-lg border border-border/60 bg-popover py-2 shadow-sm">
         <div className="px-3 pb-1.5 pt-0.5">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-primary">
             {group.label}
           </span>
         </div>
@@ -225,7 +225,7 @@ function ExpandedNavGroup({
   return (
     <div className="flex flex-col gap-0.5">
       <div className="px-3 pb-1 pt-4 first:pt-2">
-        <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground/60">
+        <span className="text-[11px] font-semibold uppercase tracking-wider text-primary">
           {group.label}
         </span>
       </div>
@@ -298,7 +298,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
 
   const handleMouseLeave = React.useCallback(() => {
     if (hoverTimerRef.current) clearTimeout(hoverTimerRef.current)
-    setIsHovering(false)
+    hoverTimerRef.current = setTimeout(() => setIsHovering(false), 350)
   }, [])
 
   // Clean up timer on unmount
@@ -400,7 +400,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {...props}
     >
       {/* ── Header ── */}
-      <SidebarHeader className={cn(isCollapsed ? "px-0 pt-6 pb-4" : "px-3 pt-5 pb-5")}>
+      <SidebarHeader className={cn(isCollapsed ? "px-0 pt-6 pb-4" : "px-6 pt-7 pb-6")}>
         {isCollapsed ? (
           // Collapsed: logo icon + expand toggle
           <div className="flex flex-col items-center gap-1.5">
@@ -424,9 +424,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             </button>
           </div>
         ) : (
-          // Expanded: logo + project selector + toggle
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center justify-between">
+          // Expanded: logo (centered) + project selector + toggle
+          <div className="flex flex-col gap-4">
+            <div className="relative flex items-center justify-center">
               <Link href="/" className="flex items-center hover:opacity-80 transition-opacity">
                 <Image
                   src="/Alleato-Group-Logo_Dark.png"
@@ -440,7 +440,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               <button
                 type="button"
                 onClick={toggleSidebar}
-                className="flex h-7 w-7 items-center justify-center rounded-md text-sidebar-foreground/40 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                className="absolute right-0 flex h-7 w-7 items-center justify-center rounded-md text-sidebar-foreground/40 transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
                 aria-label="Collapse sidebar"
               >
                 <ChevronsLeft className="h-4 w-4" strokeWidth={1.6} />
@@ -463,7 +463,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {/* ── Content ── */}
       <SidebarContent
         className={cn(
-          isCollapsed ? "items-center pl-1 pr-0 py-2" : "pl-2 pr-1 py-1",
+          isCollapsed ? "items-center pl-1 pr-0 py-2" : "pl-6 pr-2 py-1",
           "group-data-[hover-expanded=true]:overflow-y-auto"
         )}
       >
@@ -523,9 +523,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarContent>
 
       {/* ── Footer ── */}
-      <SidebarFooter className={cn(isCollapsed ? "px-0 py-1.5" : "p-2")}>
+      <SidebarFooter className={cn(isCollapsed ? "px-0 py-3" : "px-4 pt-2 pb-6")}>
         {/* User menu — works in both collapsed and expanded */}
-        {userData && <NavUser user={userData} />}
+        {userData && <NavUser user={userData} isCollapsed={isCollapsed} />}
       </SidebarFooter>
 
       <SidebarRail />

@@ -37,6 +37,7 @@ export interface ChangeEventFormData {
   title: string;
   status: ChangeEventStatus | string;
   origin?: ChangeEventOrigin | string;
+  originId?: string;
   type?: ChangeEventType | string;
   changeReason?: ChangeReason | string;
   scope?: string;

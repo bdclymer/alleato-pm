@@ -1,3 +1,6 @@
+import { getErrorCatalogEntry } from "@/lib/guardrails/error-catalog";
+import { generateRequestId } from "@/lib/guardrails/observability";
+
 /**
  * Classifies database/service errors into safe, user-facing responses.
  * Prevents leaking internal details (table names, constraints, etc.) to clients.
@@ -85,8 +88,19 @@ export function classifyError(error: unknown): { message: string; status: number
  */
 export function apiErrorResponse(error: unknown): Response {
   const { message, status } = classifyError(error);
+  const requestId = generateRequestId();
   // Always log the full error server-side for debugging
-  console.error("[API Error]", error);
+  console.error(
+    JSON.stringify({
+      event: "api_error_response",
+      request_id: requestId,
+      timestamp: new Date().toISOString(),
+      status,
+      where: "api-route",
+      error:
+        error instanceof Error ? error.message : typeof error === "string" ? error : "unknown",
+    }),
+  );
 
   // Extract raw message for the details field
   const rawMessage =
@@ -102,5 +116,23 @@ export function apiErrorResponse(error: unknown): Response {
   // so the client can display something actionable.
   const details = rawMessage && rawMessage !== message ? rawMessage : undefined;
 
-  return Response.json({ error: message, ...(details ? { details } : {}) }, { status });
+  const catalog = getErrorCatalogEntry("INTERNAL_ERROR");
+  const responseBody = {
+    success: false as const,
+    error_code: catalog.code,
+    error_message: message,
+    where_it_failed: "api-route",
+    request_id: requestId,
+    timestamp: new Date().toISOString(),
+    ...(details ? { details } : {}),
+    // Backward compatibility for existing clients
+    error: message,
+  };
+
+  return Response.json(responseBody, {
+    status,
+    headers: {
+      "x-request-id": requestId,
+    },
+  });
 }

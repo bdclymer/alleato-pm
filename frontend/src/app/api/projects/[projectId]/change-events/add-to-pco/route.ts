@@ -1,41 +1,66 @@
 /**
  * POST /api/projects/[projectId]/change-events/add-to-pco
  *
- * Creates a Potential Change Order (PCO) for each selected change event and
- * links them via change_event_related_items.
+ * Routes selected change events to a PCO (Potential Change Order).
+ * Supports both creating a NEW PCO and adding to an EXISTING PCO.
+ * Handles both prime contract PCOs (revenue side) and commitment PCOs (cost side).
  *
- * Optionally accepts an existing pcoId to link CEs to an existing PCO instead
- * of creating new ones.
- *
- * Body (create new):  { changeEventIds: string[], contractId: string }
- * Body (link existing): { changeEventIds: string[], pcoId: number }
- * Returns: { created: number, pcos: { changeEventId: string, pcoId: number }[] }
+ * Uses the two-tier tables: prime_contract_pcos / commitment_pcos,
+ * pco_line_items, and change_event_pco_links.
  */
 
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { z } from "zod";
-import { requirePermission } from "@/lib/permissions-guard";
 
 interface RouteParams {
   params: Promise<{ projectId: string }>;
 }
 
-const bodySchema = z.union([
-  // Create new PCOs — requires a prime contract to associate the PCOs with
-  z.object({
-    changeEventIds: z.array(z.string().uuid()).min(1),
-    contractId: z.string().uuid(),
-    pcoId: z.undefined().optional(),
-  }),
-  // Link to an existing PCO
-  z.object({
-    changeEventIds: z.array(z.string().uuid()).min(1),
-    pcoId: z.number().int().positive(),
-    contractId: z.undefined().optional(),
-  }),
-]);
+// --- Zod validation ---
+
+const createNewSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  prime_contract_id: z.string().uuid().optional(),
+  commitment_id: z.string().uuid().optional(),
+  commitment_type: z.enum(["subcontract", "purchase_order"]).optional(),
+  description: z.string().optional(),
+});
+
+const bodySchema = z
+  .object({
+    change_event_ids: z.array(z.string().uuid()).min(1, "At least one change event is required"),
+    pco_type: z.enum(["prime", "commitment"]),
+    create_new: createNewSchema.optional(),
+    existing_pco_id: z.string().uuid().optional(),
+  })
+  .refine(
+    (data) => {
+      const hasNew = !!data.create_new;
+      const hasExisting = !!data.existing_pco_id;
+      return (hasNew && !hasExisting) || (!hasNew && hasExisting);
+    },
+    { message: "Provide either create_new or existing_pco_id, not both and not neither" },
+  )
+  .refine(
+    (data) => {
+      if (data.pco_type === "prime" && data.create_new) {
+        return !!data.create_new.prime_contract_id;
+      }
+      return true;
+    },
+    { message: "prime_contract_id is required when creating a new prime PCO" },
+  )
+  .refine(
+    (data) => {
+      if (data.pco_type === "commitment" && data.create_new) {
+        return !!data.create_new.commitment_id && !!data.create_new.commitment_type;
+      }
+      return true;
+    },
+    { message: "commitment_id and commitment_type are required when creating a new commitment PCO" },
+  );
 
 export async function POST(request: NextRequest, { params }: RouteParams) {
   try {
@@ -45,9 +70,18 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Invalid project ID" }, { status: 400 });
     }
 
-    const guard = await requirePermission(projectId, "change_orders", "write");
-    if (guard.denied) return guard.response;
+    const supabase = await createClient();
 
+    // Auth
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Parse & validate body
     const rawBody = await request.json();
     const parsed = bodySchema.safeParse(rawBody);
     if (!parsed.success) {
@@ -57,15 +91,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    const { changeEventIds } = parsed.data;
-    const supabase = await createClient();
+    const { change_event_ids, pco_type, create_new, existing_pco_id } = parsed.data;
 
-    // Fetch the selected change events (with line items) so we can compute totals
-    // and use their titles/descriptions in PCOs.
+    // Fetch selected change events with their line items
     const { data: changeEvents, error: fetchError } = await supabase
       .from("change_events")
-      .select("id, number, title, description, change_event_line_items(*)")
-      .in("id", changeEventIds)
+      .select("id, number, title, description, sent_to_prime_pco, sent_to_commitment_pco, change_event_line_items(*)")
+      .in("id", change_event_ids)
       .eq("project_id", projectId)
       .is("deleted_at", null);
 
@@ -80,15 +112,97 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // ── Link to an existing PCO ──────────────────────────────────────────
-    if ("pcoId" in parsed.data && parsed.data.pcoId) {
-      const existingPcoId = parsed.data.pcoId;
+    // Check that we found all requested CEs
+    const foundIds = new Set(changeEvents.map((ce) => ce.id));
+    const missingIds = change_event_ids.filter((id) => !foundIds.has(id));
+    if (missingIds.length > 0) {
+      return NextResponse.json(
+        { error: `Change events not found: ${missingIds.join(", ")}` },
+        { status: 404 },
+      );
+    }
 
-      // Verify the PCO exists in this project
+    let pcoId: string;
+    let pcoRecord: Record<string, unknown>;
+
+    // ── Create NEW PCO or verify EXISTING PCO ───────────────────────────
+
+    if (create_new) {
+      // Generate PCO number via RPC
+      const { data: pcoNumber, error: rpcError } = await supabase.rpc("generate_pco_number", {
+        p_project_id: projectId,
+        p_type: pco_type,
+      });
+
+      if (rpcError) {
+        console.error("[add-to-pco] generate_pco_number RPC error:", rpcError);
+        return NextResponse.json(
+          { error: "Failed to generate PCO number", details: rpcError.message },
+          { status: 500 },
+        );
+      }
+
+      if (pco_type === "prime") {
+        const { data: pco, error: insertError } = await supabase
+          .from("prime_contract_pcos")
+          .insert({
+            project_id: projectId,
+            prime_contract_id: create_new.prime_contract_id!,
+            pco_number: pcoNumber,
+            title: create_new.title,
+            description: create_new.description ?? null,
+            status: "draft",
+            created_by: user.id,
+          })
+          .select()
+          .single();
+
+        if (insertError || !pco) {
+          console.error("[add-to-pco] prime_contract_pcos insert error:", insertError);
+          return NextResponse.json(
+            { error: "Failed to create prime PCO", details: insertError?.message },
+            { status: 500 },
+          );
+        }
+
+        pcoId = pco.id;
+        pcoRecord = pco;
+      } else {
+        // commitment
+        const { data: pco, error: insertError } = await supabase
+          .from("commitment_pcos")
+          .insert({
+            project_id: projectId,
+            commitment_id: create_new.commitment_id!,
+            commitment_type: create_new.commitment_type!,
+            pco_number: pcoNumber,
+            title: create_new.title,
+            description: create_new.description ?? null,
+            status: "draft",
+            created_by: user.id,
+          })
+          .select()
+          .single();
+
+        if (insertError || !pco) {
+          console.error("[add-to-pco] commitment_pcos insert error:", insertError);
+          return NextResponse.json(
+            { error: "Failed to create commitment PCO", details: insertError?.message },
+            { status: 500 },
+          );
+        }
+
+        pcoId = pco.id;
+        pcoRecord = pco;
+      }
+    } else {
+      // Verify the existing PCO exists and is in an editable status
+      const table = pco_type === "prime" ? "prime_contract_pcos" : "commitment_pcos";
+
       const { data: existingPco, error: pcoErr } = await supabase
-        .from("potential_change_orders")
-        .select("id, number, title, status")
-        .eq("id", existingPcoId)
+        .from(table)
+        .select("*")
+        .eq("id", existing_pco_id!)
         .eq("project_id", projectId)
         .single();
 
@@ -99,157 +213,203 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         );
       }
 
-      const linked: { changeEventId: string; pcoId: number }[] = [];
-      const errors: string[] = [];
-
-      for (const event of changeEvents) {
-        const { error: linkError } = await supabase
-          .from("change_event_related_items")
-          .insert({
-            change_event_id: event.id,
-            project_id: projectId,
-            related_id: String(existingPco.id),
-            related_type: "potential_change_order",
-            related_number: existingPco.number,
-            related_title: existingPco.title,
-            related_status: existingPco.status,
-          });
-
-        if (linkError) {
-          errors.push(
-            `Failed to link CE ${event.id} to PCO ${existingPco.id}: ${linkError.message}`,
-          );
-          continue;
-        }
-
-        linked.push({ changeEventId: event.id, pcoId: existingPco.id });
-      }
-
-      if (linked.length === 0) {
+      const editableStatuses = ["draft", "pending"];
+      if (!editableStatuses.includes(existingPco.status)) {
         return NextResponse.json(
-          { error: "Failed to link any change events", details: errors },
-          { status: 500 },
+          { error: `PCO is in '${existingPco.status}' status and cannot be modified. Only draft or pending PCOs can accept new change events.` },
+          { status: 400 },
         );
       }
 
-      return NextResponse.json({
-        created: linked.length,
-        pcos: linked,
-        ...(errors.length > 0 ? { warnings: errors } : {}),
-      });
+      pcoId = existingPco.id;
+      pcoRecord = existingPco;
     }
 
-    // ── Create new PCOs ──────────────────────────────────────────────────
-    const contractId = (parsed.data as { contractId: string }).contractId;
+    // ── Process each change event ───────────────────────────────────────
 
-    // Resolve the prime contract so we know it's valid for this project
-    const { data: primeContract, error: contractError } = await supabase
-      .from("prime_contracts")
-      .select("id, contract_number")
-      .eq("id", contractId)
-      .eq("project_id", projectId)
-      .single();
-
-    if (contractError || !primeContract) {
-      return NextResponse.json(
-        { error: "Prime contract not found or does not belong to this project" },
-        { status: 404 },
-      );
-    }
-
-    // Seed PCO numbering from the highest existing number in this project.
-    const { data: existingPCOs } = await supabase
-      .from("potential_change_orders")
-      .select("number")
-      .eq("project_id", projectId);
-
-    let pcoSeed = 0;
-    for (const row of existingPCOs ?? []) {
-      const m = String(row?.number ?? "").match(/(\d+)\s*$/);
-      if (m) {
-        const n = parseInt(m[1], 10);
-        if (Number.isFinite(n) && n > pcoSeed) pcoSeed = n;
-      }
-    }
-
-    const pcos: { changeEventId: string; pcoId: number }[] = [];
+    const linkResults: { change_event_id: string; line_items_created: number }[] = [];
     const errors: string[] = [];
 
+    // Track sort order for PCO line items (start after existing items if adding to existing PCO)
+    let sortOrder = 0;
+    if (existing_pco_id) {
+      const { count } = await supabase
+        .from("pco_line_items")
+        .select("id", { count: "exact", head: true })
+        .eq("pco_id", pcoId)
+        .eq("pco_type", pco_type);
+      sortOrder = count ?? 0;
+    }
+
     for (const event of changeEvents) {
-      const pcoTitle = event.title
-        ? `PCO for CE #${event.number ?? event.id} — ${event.title}`
-        : `PCO for CE #${event.number ?? event.id}`;
-
-      // Compute estimated_value from change event line items (revenue_rom preferred)
-      const lineItems = (event as any).change_event_line_items || [];
-      const estimatedValue = lineItems.reduce(
-        (sum: number, item: any) =>
-          sum + (Number(item.revenue_rom) || Number(item.cost_rom) || 0),
-        0,
-      );
-
-      // Generate next PCO number
-      pcoSeed += 1;
-      const pcoNumber = `PCO-${String(pcoSeed).padStart(3, "0")}`;
-
-      // Insert into potential_change_orders (the actual PCO table)
-      const { data: pco, error: pcoError } = await supabase
-        .from("potential_change_orders")
-        .insert({
-          project_id: projectId,
-          number: pcoNumber,
-          title: pcoTitle,
-          description: event.description ?? null,
-          estimated_value: estimatedValue,
-          status: "Draft",
-          type: "Owner Change",
-        })
-        .select("id, number, title, status")
-        .single();
-
-      if (pcoError || !pco) {
-        errors.push(
-          `Failed to create PCO for change event ${event.id}: ${pcoError?.message ?? "unknown error"}`,
-        );
-        continue;
-      }
-
-      // Link the PCO back to the change event via change_event_related_items
+      // 1. Create the change_event_pco_links row
       const { error: linkError } = await supabase
-        .from("change_event_related_items")
+        .from("change_event_pco_links")
         .insert({
           change_event_id: event.id,
-          project_id: projectId,
-          related_id: String(pco.id),
-          related_type: "potential_change_order",
-          related_number: pco.number,
-          related_title: pco.title,
-          related_status: pco.status,
+          pco_id: pcoId,
+          pco_type: pco_type,
+          linked_by: user.id,
         });
 
       if (linkError) {
-        console.error(
-          `PCO ${pco.id} created but linking to change event ${event.id} failed:`,
-          linkError.message,
-        );
+        // Duplicate link (unique constraint) — skip gracefully
+        if (linkError.message?.includes("duplicate") || linkError.message?.includes("unique")) {
+          errors.push(`CE ${event.number ?? event.id} is already linked to this PCO`);
+          continue;
+        }
+        errors.push(`Failed to link CE ${event.number ?? event.id}: ${linkError.message}`);
+        continue;
       }
 
-      pcos.push({ changeEventId: event.id, pcoId: pco.id });
+      // 2. Fetch line items for this change event
+      const lineItems = (event as Record<string, unknown>).change_event_line_items as Array<{
+        id: string;
+        budget_code_id: string | null;
+        description: string | null;
+        quantity: number | null;
+        unit_of_measure: string | null;
+        unit_cost: number | null;
+        cost_rom: number | null;
+        revenue_rom: number | null;
+      }> ?? [];
+
+      // 3. Create pco_line_items for each CE line item
+      const pcoLineItemsToInsert = lineItems.map((li) => {
+        // Prime PCO uses revenue_rom (Latest Price); Commitment PCO uses cost_rom (Latest Cost)
+        const amount = pco_type === "prime"
+          ? (li.revenue_rom ?? li.cost_rom ?? 0)
+          : (li.cost_rom ?? li.revenue_rom ?? 0);
+
+        sortOrder += 1;
+        return {
+          pco_id: pcoId,
+          pco_type: pco_type,
+          change_event_id: event.id,
+          change_event_line_item_id: li.id,
+          budget_code_id: li.budget_code_id,
+          description: li.description,
+          quantity: li.quantity,
+          unit_of_measure: li.unit_of_measure,
+          unit_cost: li.unit_cost,
+          amount: amount,
+          sort_order: sortOrder,
+        };
+      });
+
+      if (pcoLineItemsToInsert.length > 0) {
+        const { error: lineItemError } = await supabase
+          .from("pco_line_items")
+          .insert(pcoLineItemsToInsert);
+
+        if (lineItemError) {
+          errors.push(`Failed to create line items for CE ${event.number ?? event.id}: ${lineItemError.message}`);
+          // Still count the link as created even if line items failed
+        }
+      }
+
+      // 4. Update change event tracking columns
+      const trackingUpdate =
+        pco_type === "prime"
+          ? { sent_to_prime_pco: true }
+          : { sent_to_commitment_pco: true };
+
+      const { error: updateError } = await supabase
+        .from("change_events")
+        .update(trackingUpdate)
+        .eq("id", event.id);
+
+      if (updateError) {
+        console.error(`[add-to-pco] Failed to update tracking for CE ${event.id}:`, updateError);
+      }
+
+      linkResults.push({
+        change_event_id: event.id,
+        line_items_created: pcoLineItemsToInsert.length,
+      });
     }
 
-    if (pcos.length === 0) {
+    if (linkResults.length === 0) {
       return NextResponse.json(
-        { error: "Failed to create any PCOs", details: errors },
+        { error: "Failed to link any change events to the PCO", details: errors },
         { status: 500 },
       );
     }
 
-    return NextResponse.json({
-      created: pcos.length,
-      pcos,
-      ...(errors.length > 0 ? { warnings: errors } : {}),
-    });
+    // ── Recalculate and update PCO total_amount ─────────────────────────
+
+    const { data: allLineItems } = await supabase
+      .from("pco_line_items")
+      .select("amount")
+      .eq("pco_id", pcoId)
+      .eq("pco_type", pco_type);
+
+    const lineItemsBaseAmount = (allLineItems ?? []).reduce(
+      (sum, item) => sum + (Number(item.amount) || 0),
+      0,
+    );
+
+    let totalAmount = lineItemsBaseAmount;
+    if (pco_type === "prime") {
+      const { data: markupRows, error: markupError } = await supabase
+        .from("vertical_markup")
+        .select("percentage, compound, calculation_order")
+        .eq("project_id", projectId)
+        .order("calculation_order", { ascending: true });
+
+      if (markupError) {
+        console.error("[add-to-pco] Failed to fetch vertical markup rows:", markupError);
+      } else if (markupRows && markupRows.length > 0) {
+        let runningBase = lineItemsBaseAmount;
+        let markupTotal = 0;
+        for (const markup of markupRows) {
+          const markupAmount = runningBase * (Number(markup.percentage) / 100);
+          markupTotal += markupAmount;
+          if (markup.compound) {
+            runningBase += markupAmount;
+          }
+        }
+        totalAmount += markupTotal;
+      }
+    }
+
+    const pcoTable = pco_type === "prime" ? "prime_contract_pcos" : "commitment_pcos";
+    const { error: totalUpdateError } = await supabase
+      .from(pcoTable)
+      .update({ total_amount: totalAmount, updated_by: user.id })
+      .eq("id", pcoId);
+
+    if (totalUpdateError) {
+      console.error("[add-to-pco] Failed to update PCO total_amount:", totalUpdateError);
+    }
+
+    // ── Fetch the final PCO with its line items to return ───────────────
+
+    const { data: finalPco } = await supabase
+      .from(pcoTable)
+      .select("*")
+      .eq("id", pcoId)
+      .single();
+
+    const { data: finalLineItems } = await supabase
+      .from("pco_line_items")
+      .select("*")
+      .eq("pco_id", pcoId)
+      .eq("pco_type", pco_type)
+      .order("sort_order", { ascending: true });
+
+    return NextResponse.json(
+      {
+        pco: finalPco ?? pcoRecord,
+        line_items: finalLineItems ?? [],
+        linked_change_events: linkResults,
+        total_amount: totalAmount,
+        ...(errors.length > 0 ? { warnings: errors } : {}),
+      },
+      { status: create_new ? 201 : 200 },
+    );
   } catch (error) {
+    console.error("[add-to-pco] Unhandled error:", error);
     return apiErrorResponse(error);
   }
 }

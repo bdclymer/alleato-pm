@@ -13,9 +13,9 @@ export type InvoiceStatus =
   | "not_invited"
   | "invited";
 
-const STATUS_CONFIG: Record<InvoiceStatus, { label: string; variant: "default" | "secondary" | "success" | "destructive" | "warning" | "outline" }> = {
+const STATUS_CONFIG: Record<InvoiceStatus, { label: string; variant: "default" | "secondary" | "success" | "destructive" | "warning" | "outline"; className?: string }> = {
   draft:                { label: "Draft",                variant: "secondary" },
-  under_review:         { label: "Under Review",         variant: "default" },
+  under_review:         { label: "Under Review",         variant: "outline", className: "bg-purple-100 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300 dark:border-purple-800" },
   approved:             { label: "Approved",             variant: "success" },
   approved_as_noted:    { label: "Approved as Noted",    variant: "success" },
   pending_owner_approval: { label: "Pending Owner Approval", variant: "warning" },
@@ -35,7 +35,7 @@ export function InvoiceStatusBadge({ status, className }: InvoiceStatusBadgeProp
   const config = STATUS_CONFIG[status as InvoiceStatus] ?? { label: status, variant: "secondary" as const };
 
   return (
-    <Badge variant={config.variant} className={cn(className)}>
+    <Badge variant={config.variant} className={cn(config.className, className)}>
       {config.label}
     </Badge>
   );

@@ -13,6 +13,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Plus, Trash2 } from "lucide-react";
+import {
+  InlineTable,
+  InlineTableHeader,
+  InlineTableHeaderRow,
+  InlineTableHeaderCell,
+  InlineTableBody,
+  InlineTableRow,
+  InlineTableCell,
+} from "@/components/ds/inline-table";
 import { cn } from "@/lib/utils";
 
 interface BudgetLineItem {
@@ -175,104 +184,99 @@ export function CreateBudgetLineItemsModal({
           // Table with line items
           <div className="space-y-4">
             {/* Mobile: Cards, Desktop: Table */}
-            <div className="hidden overflow-x-auto rounded-lg border border-border bg-background sm:block">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/50 border-b border-border">
-                  <tr>
-                    <th className="w-1/2 px-4 py-4 text-left font-semibold text-foreground">
-                      Budget Code <span className="text-destructive">*</span>
-                    </th>
-                    <th className="w-1/4 px-4 py-4 text-right font-semibold text-foreground">
-                      Qty <span className="text-destructive">*</span>
-                    </th>
-                    <th className="w-1/4 px-4 py-4 text-left font-semibold text-foreground">
-                      UOM
-                    </th>
-                    <th className="w-12 px-4 py-4"></th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {items.map((item, index) => (
-                    <tr
-                      key={item.id}
-                      className="transition-colors hover:bg-muted/40"
-                    >
-                      <td className="px-4 py-4">
-                        <Select
-                          value={item.costCode}
-                          onValueChange={(value) =>
-                            updateLine(item.id, "costCode", value)
-                          }
+            <InlineTable variant="read" className="hidden sm:block">
+              <InlineTableHeader>
+                <InlineTableHeaderRow>
+                  <InlineTableHeaderCell className="w-1/2">
+                    Budget Code <span className="text-destructive">*</span>
+                  </InlineTableHeaderCell>
+                  <InlineTableHeaderCell align="right" className="w-1/4">
+                    Qty <span className="text-destructive">*</span>
+                  </InlineTableHeaderCell>
+                  <InlineTableHeaderCell className="w-1/4">
+                    UOM
+                  </InlineTableHeaderCell>
+                  <InlineTableHeaderCell className="w-12" />
+                </InlineTableHeaderRow>
+              </InlineTableHeader>
+              <InlineTableBody>
+                {items.map((item) => (
+                  <InlineTableRow key={item.id}>
+                    <InlineTableCell>
+                      <Select
+                        value={item.costCode}
+                        onValueChange={(value) =>
+                          updateLine(item.id, "costCode", value)
+                        }
+                      >
+                        <SelectTrigger
+                          className={cn(!item.costCode && "border-destructive")}
                         >
-                          <SelectTrigger
-                            className={cn(!item.costCode && "border-destructive")}
-                          >
-                            <SelectValue placeholder="Select Cost Code" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableCostCodes.map((code) => (
-                              <SelectItem key={code.code} value={code.code}>
-                                {code.code} - {code.description}
-                              </SelectItem>
-                            ))}
-                            {availableCostCodes.length === 0 && (
-                              <SelectItem value="01-1000">
-                                01-1000 - General Conditions
-                              </SelectItem>
-                            )}
-                          </SelectContent>
-                        </Select>
-                      </td>
-                      <td className="px-4 py-4">
-                        <Input
-                          type="number"
-                          step="0.01"
-                          value={item.quantity}
-                          onChange={(e) =>
-                            updateLine(item.id, "quantity", e.target.value)
-                          }
-                          placeholder=""
-                          className={cn(
-                            "text-right",
-                            !item.quantity && "border-destructive",
+                          <SelectValue placeholder="Select Cost Code" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {availableCostCodes.map((code) => (
+                            <SelectItem key={code.code} value={code.code}>
+                              {code.code} - {code.description}
+                            </SelectItem>
+                          ))}
+                          {availableCostCodes.length === 0 && (
+                            <SelectItem value="01-1000">
+                              01-1000 - General Conditions
+                            </SelectItem>
                           )}
-                        />
-                      </td>
-                      <td className="px-4 py-4">
-                        <Select
-                          value={item.uom}
-                          onValueChange={(value) =>
-                            updateLine(item.id, "uom", value)
-                          }
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="EA">EA</SelectItem>
-                            <SelectItem value="SF">SF</SelectItem>
-                            <SelectItem value="LF">LF</SelectItem>
-                            <SelectItem value="CY">CY</SelectItem>
-                            <SelectItem value="LS">LS</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </td>
-                      <td className="px-4 py-4 text-center">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeLine(item.id)}
-                          className="text-destructive hover:text-destructive h-7 w-7"
-                          aria-label="Delete line"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                        </SelectContent>
+                      </Select>
+                    </InlineTableCell>
+                    <InlineTableCell>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={item.quantity}
+                        onChange={(e) =>
+                          updateLine(item.id, "quantity", e.target.value)
+                        }
+                        placeholder=""
+                        className={cn(
+                          "text-right",
+                          !item.quantity && "border-destructive",
+                        )}
+                      />
+                    </InlineTableCell>
+                    <InlineTableCell>
+                      <Select
+                        value={item.uom}
+                        onValueChange={(value) =>
+                          updateLine(item.id, "uom", value)
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="EA">EA</SelectItem>
+                          <SelectItem value="SF">SF</SelectItem>
+                          <SelectItem value="LF">LF</SelectItem>
+                          <SelectItem value="CY">CY</SelectItem>
+                          <SelectItem value="LS">LS</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </InlineTableCell>
+                    <InlineTableCell align="center">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeLine(item.id)}
+                        className="text-destructive hover:text-destructive h-7 w-7"
+                        aria-label="Delete line"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </InlineTableCell>
+                  </InlineTableRow>
+                ))}
+              </InlineTableBody>
+            </InlineTable>
 
             {/* Mobile Cards */}
             <div className="sm:hidden space-y-4">

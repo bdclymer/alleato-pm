@@ -68,7 +68,7 @@ function parseConstraintValues(
   const start = schemaDump.indexOf(marker);
   if (start === -1) return [];
   const snippet = schemaDump.slice(start, start + 1200);
-  const arrayMatch = /ARRAY\[(.*?)\]/s.exec(snippet);
+  const arrayMatch = /ARRAY\[([\s\S]*?)\]/.exec(snippet);
   if (!arrayMatch) return [];
 
   const values: string[] = [];

@@ -16,7 +16,6 @@ import {
   Mail,
   MessageSquare,
   MoreHorizontal,
-  Pencil,
   PenLine,
   Printer,
   RotateCcw,
@@ -679,7 +678,6 @@ export default function DrawingDetailPage() {
                         size="sm"
                         onClick={handleStartEdit}
                       >
-                        <Pencil />
                         Edit
                       </Button>
                     ) : (

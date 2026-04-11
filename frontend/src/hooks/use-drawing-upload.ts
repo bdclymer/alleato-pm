@@ -38,11 +38,11 @@ export function useDrawingUpload(projectId: string) {
       };
     }
 
-    const maxSize = 500 * 1024 * 1024; // 500MB
+    const maxSize = 100 * 1024 * 1024; // 100MB — must match drawing-schemas.ts
     if (file.size > maxSize) {
       return {
         fileName: file.name,
-        error: "File too large. Maximum size is 500MB.",
+        error: "File too large. Maximum size is 100MB.",
         code: "FILE_TOO_LARGE",
       };
     }

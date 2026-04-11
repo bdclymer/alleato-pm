@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+
 import {
   FormGrid,
   FormSection,
@@ -23,12 +25,20 @@ import {
   REVENUE_SOURCE_OPTIONS,
 } from "./types";
 
+interface OriginOption {
+  id: string;
+  label: string;
+  number: string | null;
+  status: string | null;
+}
+
 interface GeneralInfoSectionProps {
   formData: ChangeEventFormData;
   errors: Partial<Record<keyof ChangeEventFormData, string>>;
   updateFormData: (updates: Partial<ChangeEventFormData>) => void;
   primeContractSelectOptions: Array<{ value: string; label: string }>;
   hasPrimeContracts: boolean;
+  projectId: number;
 }
 
 export function GeneralInfoSection({
@@ -37,7 +47,39 @@ export function GeneralInfoSection({
   updateFormData,
   primeContractSelectOptions,
   hasPrimeContracts,
+  projectId,
 }: GeneralInfoSectionProps) {
+  const [originRecordOptions, setOriginRecordOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [loadingOriginRecords, setLoadingOriginRecords] = useState(false);
+
+  useEffect(() => {
+    if (!formData.origin) {
+      setOriginRecordOptions([]);
+      return;
+    }
+
+    let cancelled = false;
+    setLoadingOriginRecords(true);
+
+    fetch(`/api/projects/${projectId}/change-events/origin-options?type=${formData.origin}`)
+      .then((res) => res.json())
+      .then((json) => {
+        if (cancelled) return;
+        const options = (json.data || []).map((opt: OriginOption) => ({
+          value: opt.id,
+          label: opt.label,
+        }));
+        setOriginRecordOptions(options);
+      })
+      .catch(() => {
+        if (!cancelled) setOriginRecordOptions([]);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingOriginRecords(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [formData.origin, projectId]);
   return (
     <FormSection title="General Information">
       <FormGrid columns={3}>
@@ -69,9 +111,21 @@ export function GeneralInfoSection({
           label="Origin"
           options={ORIGIN_OPTIONS}
           value={formData.origin || ""}
-          onValueChange={(value) => updateFormData({ origin: value as ChangeEventOrigin })}
+          onValueChange={(value) => {
+            updateFormData({ origin: value as ChangeEventOrigin, originId: undefined });
+          }}
           placeholder="Select Origin"
         />
+        {formData.origin && (
+          <SelectField
+            label="Origin Record"
+            options={originRecordOptions}
+            value={formData.originId || ""}
+            onValueChange={(value) => updateFormData({ originId: value })}
+            placeholder={loadingOriginRecords ? "Loading..." : `Select ${ORIGIN_OPTIONS.find((o) => o.value === formData.origin)?.label || "record"}`}
+            disabled={loadingOriginRecords || originRecordOptions.length === 0}
+          />
+        )}
         <SelectField
           label="Type"
           options={TYPE_OPTIONS}

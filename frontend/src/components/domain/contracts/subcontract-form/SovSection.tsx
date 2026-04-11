@@ -23,6 +23,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  InlineTableHeader,
+  InlineTableHeaderRow,
+  InlineTableHeaderCell,
+  InlineTableBody,
+  InlineTableFooter,
+  InlineTableFooterRow,
+  InlineTableFooterCell,
+} from "@/components/ds/inline-table";
 import { ChevronDown } from "lucide-react";
 import {
   Tooltip,
@@ -173,7 +182,7 @@ export function SovSection({
   };
 
   return (
-    <section className="border-b border-border/70 pb-8" data-testid="sov-section">
+    <section className="border-b pb-8" data-testid="sov-section">
       <input ref={csvInputRef} type="file" accept=".csv" className="hidden" onChange={handleCSVImport} />
 
       <h2 className="text-lg font-semibold text-foreground">Schedule of Values</h2>
@@ -212,17 +221,17 @@ export function SovSection({
         </div>
 
         <div
-          className="overflow-x-auto overflow-hidden rounded-lg border border-border/70 bg-muted/20"
+          className="overflow-x-auto"
           data-testid="sov-table"
           data-accounting-method={accountingMethod}
         >
           <DndContext sensors={dndSensors} collisionDetection={closestCenter} onDragEnd={handleSovDragEnd}>
             <SortableContext items={sovSortableIds} strategy={verticalListSortingStrategy}>
-              <table className="w-full">
-                <thead className="border-y-0">
-                  <tr className="bg-muted/70 hover:bg-muted/70">
-                    <th className="w-12 px-1 py-1.5 text-left text-[11px] font-normal tracking-normal text-muted-foreground" />
-                    <th className="min-w-72 px-1 py-1.5 text-left text-[11px] font-normal tracking-normal text-muted-foreground">
+              <table className="w-full text-sm">
+                <InlineTableHeader>
+                  <InlineTableHeaderRow>
+                    <InlineTableHeaderCell className="w-12" />
+                    <InlineTableHeaderCell className="min-w-72">
                       <div className="flex items-center gap-1">
                         <TooltipProvider>
                           <Tooltip>
@@ -235,22 +244,22 @@ export function SovSection({
                           </Tooltip>
                         </TooltipProvider>
                       </div>
-                    </th>
-                    <th className="min-w-64 px-1 py-1.5 text-left text-[11px] font-normal tracking-normal text-muted-foreground">Description</th>
+                    </InlineTableHeaderCell>
+                    <InlineTableHeaderCell className="min-w-64">Description</InlineTableHeaderCell>
                     {accountingMethod === "unit_quantity" && (
                       <>
-                        <th className="w-32 px-1 py-1.5 text-right text-[11px] font-normal tracking-normal text-muted-foreground">Qty</th>
-                        <th className="w-32 px-1 py-1.5 text-left text-[11px] font-normal tracking-normal text-muted-foreground">UOM</th>
-                        <th className="w-48 px-1 py-1.5 text-right text-[11px] font-normal tracking-normal text-muted-foreground">Unit Cost</th>
+                        <InlineTableHeaderCell className="w-32" align="right">Qty</InlineTableHeaderCell>
+                        <InlineTableHeaderCell className="w-32">UOM</InlineTableHeaderCell>
+                        <InlineTableHeaderCell className="w-48" align="right">Unit Cost</InlineTableHeaderCell>
                       </>
                     )}
-                    <th className="w-48 px-1 py-1.5 text-right text-[11px] font-normal tracking-normal text-muted-foreground">Amount</th>
-                    <th className="w-40 px-1 py-1.5 text-right text-[11px] font-normal tracking-normal text-muted-foreground">Billed to Date</th>
-                    <th className="w-40 px-1 py-1.5 text-right text-[11px] font-normal tracking-normal text-muted-foreground">Amount Remaining</th>
-                    <th className="w-12 px-1 py-1.5" />
-                  </tr>
-                </thead>
-                <tbody>
+                    <InlineTableHeaderCell className="w-48" align="right">Amount</InlineTableHeaderCell>
+                    <InlineTableHeaderCell className="w-40" align="right">Billed to Date</InlineTableHeaderCell>
+                    <InlineTableHeaderCell className="w-40" align="right">Amount Remaining</InlineTableHeaderCell>
+                    <InlineTableHeaderCell className="w-12" />
+                  </InlineTableHeaderRow>
+                </InlineTableHeader>
+                <InlineTableBody>
                   {sovLines.map((line, index) =>
                     line.isGroup ? (
                       <SovGroupRow
@@ -276,13 +285,13 @@ export function SovSection({
                       />
                     ),
                   )}
-                </tbody>
-                <tfoot>
-                  <tr>
-                    <td className="px-1 pt-2 pb-1" />
-                    <td
+                </InlineTableBody>
+                <InlineTableFooter>
+                  <InlineTableFooterRow type="action">
+                    <InlineTableFooterCell className="pt-2 pb-1" />
+                    <InlineTableFooterCell
                       colSpan={accountingMethod === "unit_quantity" ? 8 : 5}
-                      className="px-1 pt-2 pb-1"
+                      className="pt-2 pb-1"
                     >
                       <Button
                         type="button"
@@ -294,18 +303,18 @@ export function SovSection({
                       >
                         Add Line Item
                       </Button>
-                    </td>
-                    <td className="px-1 pt-2 pb-1" />
-                  </tr>
-                  <tr>
-                    <td className="px-1 py-2" />
-                    <td colSpan={accountingMethod === "unit_quantity" ? 5 : 2} className="px-1 py-3 text-xs font-semibold text-foreground">Totals</td>
-                    <td className="px-1 py-2 text-right text-sm font-semibold text-foreground" data-testid="sov-total-amount">{formatCurrency(totals.amount)}</td>
-                    <td className="px-1 py-2 text-right text-sm font-semibold text-foreground" data-testid="sov-total-billed">{formatCurrency(totals.billedToDate)}</td>
-                    <td className="px-1 py-2 text-right text-sm font-semibold text-foreground" data-testid="sov-total-remaining">{formatCurrency(totals.amountRemaining)}</td>
-                    <td className="px-1 py-2" />
-                  </tr>
-                </tfoot>
+                    </InlineTableFooterCell>
+                    <InlineTableFooterCell className="pt-2 pb-1" />
+                  </InlineTableFooterRow>
+                  <InlineTableFooterRow type="totals">
+                    <InlineTableFooterCell />
+                    <InlineTableFooterCell colSpan={accountingMethod === "unit_quantity" ? 5 : 2} className="py-3 text-xs">Totals</InlineTableFooterCell>
+                    <InlineTableFooterCell align="right" numeric data-testid="sov-total-amount">{formatCurrency(totals.amount)}</InlineTableFooterCell>
+                    <InlineTableFooterCell align="right" numeric data-testid="sov-total-billed">{formatCurrency(totals.billedToDate)}</InlineTableFooterCell>
+                    <InlineTableFooterCell align="right" numeric data-testid="sov-total-remaining">{formatCurrency(totals.amountRemaining)}</InlineTableFooterCell>
+                    <InlineTableFooterCell />
+                  </InlineTableFooterRow>
+                </InlineTableFooter>
               </table>
             </SortableContext>
           </DndContext>

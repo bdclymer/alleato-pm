@@ -1,5 +1,7 @@
 import type { NotificationEvent } from "@liveblocks/node";
 import type { InboxNotificationData } from "@liveblocks/client";
+import { fetchWithPolicy } from "@/lib/guardrails/dependency";
+import { generateRequestId } from "@/lib/guardrails/observability";
 
 type TeamsNotificationPayload = {
   event: NotificationEvent;
@@ -142,21 +144,25 @@ function buildPlainTextFallback(payload: TeamsNotificationPayload): string {
 }
 
 async function postJson(url: string, body: unknown): Promise<Response> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10_000);
-
-  try {
-    return await fetch(url, {
+  const requestId = generateRequestId();
+  return fetchWithPolicy(
+    requestId,
+    "teams-notifications#postJson",
+    "teams-webhook",
+    url,
+    {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(body),
-      signal: controller.signal,
-    });
-  } finally {
-    clearTimeout(timeout);
-  }
+    },
+    {
+      timeoutMs: 10_000,
+      maxRetries: 2,
+      backoffMs: 500,
+    },
+  );
 }
 
 export type TeamsWebhookUrls = {

@@ -13,6 +13,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { FormField } from "./FormField";
+import type { FormFieldBaseProps } from "./FormField";
 
 const DATE_FORMATS = [
   "MM/dd/yyyy",
@@ -32,16 +33,11 @@ function parseInputDate(input: string): Date | undefined {
   return undefined;
 }
 
-interface DateFieldProps {
+interface DateFieldProps extends FormFieldBaseProps {
   label: string;
   value?: Date;
   onChange?: (date: Date | undefined) => void;
-  error?: string;
-  hint?: string;
-  required?: boolean;
-  fullWidth?: boolean;
   className?: string;
-  disabled?: boolean;
   placeholder?: string;
 }
 

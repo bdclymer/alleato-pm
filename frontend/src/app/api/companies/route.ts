@@ -1,76 +1,125 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import type { Company } from "@/app/api/types";
-import { apiErrorResponse } from "@/lib/api-error";
+import { z } from "zod";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import {
+  parseJsonBody,
+  validateResponseContract,
+  withApiGuardrails,
+} from "@/lib/guardrails/api";
 
-export async function GET(request: Request) {
-  try {
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const { searchParams } = new URL(request.url);
+const CreateCompanySchema = z.object({
+  name: z.string().min(1, "Company name is required"),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  website: z.string().optional(),
+  notes: z.string().optional(),
+});
 
-    const type = searchParams.get("type");
-    const search = searchParams.get("search");
+const CompanyResponseSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  type: z.string().nullable().optional(),
+});
 
-    let query = supabase
-      .from("companies")
-      .select("*")
-      .order("name", { ascending: true });
-
-    if (type) {
-      // Allow filtering by multiple types using comma separation
-      const types = type.split(",");
-      query = query.in("type", types);
-    }
-
-    if (search) {
-      query = query.ilike("name", `%${search}%`);
-    }
-
-    const { data, error } = await query;
-
-    if (error) {
-      return apiErrorResponse(error);
-    }
-
-    const companies: Company[] = data || [];
-    return NextResponse.json(companies);
-  } catch (error) {
-    return apiErrorResponse(error);
+export const GET = withApiGuardrails("/api/companies#GET", async ({ request }) => {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user) {
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where: "/api/companies#GET",
+      message: "Unauthorized companies request.",
+      status: 401,
+      severity: "medium",
+    });
   }
-}
+  const { searchParams } = new URL(request.url);
 
-export async function POST(request: Request) {
-  try {
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const body = await request.json();
+  const type = searchParams.get("type");
+  const search = searchParams.get("search");
 
-    const { data, error } = await supabase
-      .from("companies")
-      .insert({
-        name: body.name,
-        address: body.address,
-        city: body.city,
-        state: body.state,
-        website: body.website,
-        notes: body.notes,
-      })
-      .select()
-      .single();
+  let query = supabase.from("companies").select("*").order("name", { ascending: true });
 
-    if (error) {
-      return apiErrorResponse(error);
-    }
-
-    return NextResponse.json(data, { status: 201 });
-  } catch (error) {
-    return apiErrorResponse(error);
+  if (type) {
+    // Allow filtering by multiple types using comma separation
+    const types = type.split(",");
+    query = query.in("type", types);
   }
-}
+
+  if (search) {
+    query = query.ilike("name", `%${search}%`);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/companies#GET",
+      message: "Failed to fetch companies.",
+      details: { reason: error.message },
+      cause: error,
+    });
+  }
+
+  const companies: Company[] = data || [];
+  validateResponseContract(
+    z.array(CompanyResponseSchema),
+    companies,
+    "/api/companies#GET",
+  );
+  return NextResponse.json(companies);
+});
+
+export const POST = withApiGuardrails("/api/companies#POST", async ({ request }) => {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user) {
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where: "/api/companies#POST",
+      message: "Unauthorized company creation request.",
+      status: 401,
+      severity: "medium",
+    });
+  }
+  const body = await parseJsonBody(
+    request,
+    CreateCompanySchema,
+    "/api/companies#POST",
+  );
+
+  const { data, error } = await supabase
+    .from("companies")
+    .insert({
+      name: body.name,
+      address: body.address,
+      city: body.city,
+      state: body.state,
+      website: body.website,
+      notes: body.notes,
+    })
+    .select()
+    .single();
+
+  if (error) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/companies#POST",
+      message: "Failed to create company.",
+      details: { reason: error.message },
+      cause: error,
+    });
+  }
+
+  return NextResponse.json(data, { status: 201 });
+});

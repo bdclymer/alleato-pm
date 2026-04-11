@@ -7,6 +7,18 @@ import { toast } from 'sonner'
 import { SectionHeader } from '@/components/ds/section-header'
 import { StatusBadge } from '@/components/ds/status-badge'
 import { EmptyState } from '@/components/ds/empty-state'
+import {
+  InlineTable,
+  InlineTableHeader,
+  InlineTableHeaderRow,
+  InlineTableHeaderCell,
+  InlineTableBody,
+  InlineTableRow,
+  InlineTableCell,
+  InlineTableFooter,
+  InlineTableFooterRow,
+  InlineTableFooterCell,
+} from '@/components/ds/inline-table'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -394,101 +406,99 @@ export const PotentialChangeOrdersTab = memo(function PotentialChangeOrdersTab({
           }
         />
       ) : (
-        <div className="overflow-hidden rounded-lg border border-border">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/50">
-                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Number</th>
-                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Title</th>
-                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Status</th>
-                <th className="px-4 py-2.5 text-right font-medium text-muted-foreground tabular-nums">Amount</th>
-                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Change Reason</th>
-                <th className="px-4 py-2.5 text-left font-medium text-muted-foreground">Created</th>
-                {!isReadOnly && (
-                  <th className="px-4 py-2.5 text-right font-medium text-muted-foreground">
-                    <span className="sr-only">Actions</span>
-                  </th>
-                )}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {pcos.map((pco) => (
-                <>
-                  <tr key={pco.id} className="bg-card hover:bg-muted/30 transition-colors">
-                    <td className="px-4 py-3 font-medium text-foreground">{pco.number}</td>
-                    <td className="px-4 py-3 text-foreground">{pco.title}</td>
-                    <td className="px-4 py-3">
-                      <StatusBadge status={STATUS_LABELS[pco.status] ?? pco.status} />
-                    </td>
-                    <td className="px-4 py-3 text-right tabular-nums text-foreground">
-                      {formatCurrency(pco.amount)}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {pco.change_reason || <span className="text-muted-foreground/50">—</span>}
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground">
-                      {formatDate(pco.created_at)}
-                    </td>
-                    {!isReadOnly && (
-                      <td className="px-4 py-3 text-right">
-                        <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-7 w-7">
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">PCO actions</span>
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem
-                              onClick={() =>
-                                setEditingId(editingId === pco.id ? null : pco.id)
-                              }
-                            >
-                              <Pencil className="mr-2 h-4 w-4" />
-                              Edit
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                              className="text-destructive focus:text-destructive"
-                              onClick={() => void handleDelete(pco)}
-                            >
-                              <Trash2 className="mr-2 h-4 w-4" />
-                              Delete
-                            </DropdownMenuItem>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
-                      </td>
-                    )}
-                  </tr>
-                  {editingId === pco.id && (
-                    <tr key={`${pco.id}-edit`}>
-                      <td colSpan={isReadOnly ? 6 : 7} className="px-4 py-3">
-                        <PcoForm
-                          initial={editFormFor(pco)}
-                          onSave={(values) => handleUpdate(pco.id, values)}
-                          onCancel={() => setEditingId(null)}
-                          isSaving={isSaving}
-                        />
-                      </td>
-                    </tr>
+        <InlineTable variant="read">
+          <InlineTableHeader>
+            <InlineTableHeaderRow>
+              <InlineTableHeaderCell>Number</InlineTableHeaderCell>
+              <InlineTableHeaderCell>Title</InlineTableHeaderCell>
+              <InlineTableHeaderCell>Status</InlineTableHeaderCell>
+              <InlineTableHeaderCell align="right">Amount</InlineTableHeaderCell>
+              <InlineTableHeaderCell>Change Reason</InlineTableHeaderCell>
+              <InlineTableHeaderCell>Created</InlineTableHeaderCell>
+              {!isReadOnly && (
+                <InlineTableHeaderCell align="right">
+                  <span className="sr-only">Actions</span>
+                </InlineTableHeaderCell>
+              )}
+            </InlineTableHeaderRow>
+          </InlineTableHeader>
+          <InlineTableBody>
+            {pcos.map((pco) => (
+              <>
+                <InlineTableRow key={pco.id}>
+                  <InlineTableCell className="font-medium text-foreground">{pco.number}</InlineTableCell>
+                  <InlineTableCell className="text-foreground">{pco.title}</InlineTableCell>
+                  <InlineTableCell>
+                    <StatusBadge status={STATUS_LABELS[pco.status] ?? pco.status} />
+                  </InlineTableCell>
+                  <InlineTableCell align="right" numeric>
+                    {formatCurrency(pco.amount)}
+                  </InlineTableCell>
+                  <InlineTableCell className="text-muted-foreground">
+                    {pco.change_reason || <span className="text-muted-foreground/50">—</span>}
+                  </InlineTableCell>
+                  <InlineTableCell className="text-muted-foreground">
+                    {formatDate(pco.created_at)}
+                  </InlineTableCell>
+                  {!isReadOnly && (
+                    <InlineTableCell align="right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-7 w-7">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">PCO actions</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem
+                            onClick={() =>
+                              setEditingId(editingId === pco.id ? null : pco.id)
+                            }
+                          >
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-destructive focus:text-destructive"
+                            onClick={() => void handleDelete(pco)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </InlineTableCell>
                   )}
-                </>
-              ))}
-            </tbody>
-            {pcos.length > 0 && (
-              <tfoot>
-                <tr className="border-t border-border bg-muted/50">
-                  <td colSpan={3} className="px-4 py-2.5 text-sm font-medium text-muted-foreground">
-                    Total ({pcos.length} PCO{pcos.length !== 1 ? 's' : ''})
-                  </td>
-                  <td className="px-4 py-2.5 text-right text-sm font-semibold text-foreground tabular-nums">
-                    {formatCurrency(totalAmount)}
-                  </td>
-                  <td colSpan={isReadOnly ? 2 : 3} />
-                </tr>
-              </tfoot>
-            )}
-          </table>
-        </div>
+                </InlineTableRow>
+                {editingId === pco.id && (
+                  <tr key={`${pco.id}-edit`}>
+                    <td colSpan={isReadOnly ? 6 : 7} className="px-3 py-3">
+                      <PcoForm
+                        initial={editFormFor(pco)}
+                        onSave={(values) => handleUpdate(pco.id, values)}
+                        onCancel={() => setEditingId(null)}
+                        isSaving={isSaving}
+                      />
+                    </td>
+                  </tr>
+                )}
+              </>
+            ))}
+          </InlineTableBody>
+          {pcos.length > 0 && (
+            <InlineTableFooter>
+              <InlineTableFooterRow type="totals">
+                <InlineTableFooterCell colSpan={3} className="text-muted-foreground font-medium">
+                  Total ({pcos.length} PCO{pcos.length !== 1 ? 's' : ''})
+                </InlineTableFooterCell>
+                <InlineTableFooterCell align="right" numeric>
+                  {formatCurrency(totalAmount)}
+                </InlineTableFooterCell>
+                <InlineTableFooterCell colSpan={isReadOnly ? 2 : 3} />
+              </InlineTableFooterRow>
+            </InlineTableFooter>
+          )}
+        </InlineTable>
       )}
     </section>
   )

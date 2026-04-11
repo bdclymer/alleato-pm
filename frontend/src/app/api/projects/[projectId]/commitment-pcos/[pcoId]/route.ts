@@ -1,0 +1,300 @@
+import { createClient } from "@/lib/supabase/server";
+import { NextRequest, NextResponse } from "next/server";
+import { z, ZodError } from "zod";
+import { apiErrorResponse } from "@/lib/api-error";
+
+interface RouteParams {
+  params: Promise<{ projectId: string; pcoId: string }>;
+}
+
+const updateCommitmentPcoSchema = z.object({
+  title: z.string().min(1).max(500).optional(),
+  description: z.string().max(5000).nullish(),
+  status: z.enum(["draft", "pending", "approved", "void"]).optional(),
+  schedule_impact: z.number().int().nullish(),
+  due_date: z.string().nullish(),
+  designated_reviewer_id: z.string().uuid().nullish(),
+});
+
+/**
+ * GET /api/projects/[projectId]/commitment-pcos/[pcoId]
+ * Get a single commitment PCO with full details
+ */
+export async function GET(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { projectId, pcoId } = await params;
+    const projectIdNum = parseInt(projectId, 10);
+    const supabase = await createClient();
+
+    // Auth check
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Get the PCO
+    const { data: pco, error } = await supabase
+      .from("commitment_pcos")
+      .select("*")
+      .eq("project_id", projectIdNum)
+      .eq("id", pcoId)
+      .single();
+
+    if (error || !pco) {
+      return NextResponse.json(
+        { error: "Commitment PCO not found" },
+        { status: 404 },
+      );
+    }
+
+    // Get commitment info
+    let commitment = null;
+    if (pco.commitment_type === "subcontract") {
+      const { data } = await supabase
+        .from("subcontracts")
+        .select("id, contract_number, title, vendor:companies!subcontracts_vendor_id_fkey(id, name)")
+        .eq("id", pco.commitment_id)
+        .maybeSingle();
+      commitment = data;
+    } else if (pco.commitment_type === "purchase_order") {
+      const { data } = await supabase
+        .from("purchase_orders")
+        .select("id, contract_number, title, vendor:companies!purchase_orders_vendor_id_fkey(id, name)")
+        .eq("id", pco.commitment_id)
+        .maybeSingle();
+      commitment = data;
+    }
+
+    // Get linked change events
+    const { data: links } = await supabase
+      .from("change_event_pco_links")
+      .select("change_event_id, linked_at, linked_by")
+      .eq("pco_id", pcoId)
+      .eq("pco_type", "commitment");
+
+    let linkedChangeEvents: Array<Record<string, any>> = [];
+    if (links && links.length > 0) {
+      const ceIds = links.map((l) => l.change_event_id);
+      const { data: ces } = await supabase
+        .from("change_events")
+        .select("id, number, title, status, type, total_revenue_rom, total_cost_rom")
+        .in("id", ceIds)
+        .is("deleted_at", null);
+
+      linkedChangeEvents = (ces || []).map((ce) => {
+        const link = links.find((l) => l.change_event_id === ce.id);
+        return {
+          ...ce,
+          linked_at: link?.linked_at,
+          linked_by: link?.linked_by,
+        };
+      });
+    }
+
+    // Get promoted CO info if applicable
+    let promotedCo = null;
+    if (pco.promoted_to_co_id) {
+      const { data } = await supabase
+        .from("contract_change_orders")
+        .select("id, change_order_number, title, status, amount")
+        .eq("id", pco.promoted_to_co_id)
+        .maybeSingle();
+      promotedCo = data;
+    }
+
+    return NextResponse.json({
+      ...pco,
+      commitment,
+      linked_change_events: linkedChangeEvents,
+      promoted_co: promotedCo,
+    });
+  } catch (error) {
+    return apiErrorResponse(error);
+  }
+}
+
+/**
+ * PATCH /api/projects/[projectId]/commitment-pcos/[pcoId]
+ * Update a commitment PCO (only draft or pending)
+ */
+export async function PATCH(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { projectId, pcoId } = await params;
+    const projectIdNum = parseInt(projectId, 10);
+    const supabase = await createClient();
+
+    // Auth check
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Get existing PCO
+    const { data: existing, error: fetchError } = await supabase
+      .from("commitment_pcos")
+      .select("id, status")
+      .eq("project_id", projectIdNum)
+      .eq("id", pcoId)
+      .single();
+
+    if (fetchError || !existing) {
+      return NextResponse.json(
+        { error: "Commitment PCO not found" },
+        { status: 404 },
+      );
+    }
+
+    // Only allow updates on draft or pending
+    if (existing.status !== "draft" && existing.status !== "pending") {
+      return NextResponse.json(
+        {
+          error: "Cannot update PCO",
+          details: "Only PCOs with status 'draft' or 'pending' can be updated",
+        },
+        { status: 409 },
+      );
+    }
+
+    const body = await request.json();
+    const validatedData = updateCommitmentPcoSchema.parse(body);
+
+    // Build update object
+    const updates: Record<string, any> = {
+      updated_at: new Date().toISOString(),
+      updated_by: user.id,
+    };
+
+    if (validatedData.title !== undefined) updates.title = validatedData.title;
+    if (validatedData.description !== undefined)
+      updates.description = validatedData.description;
+    if (validatedData.status !== undefined) updates.status = validatedData.status;
+    if (validatedData.schedule_impact !== undefined)
+      updates.schedule_impact = validatedData.schedule_impact;
+    if (validatedData.due_date !== undefined)
+      updates.due_date = validatedData.due_date;
+    if (validatedData.designated_reviewer_id !== undefined)
+      updates.designated_reviewer_id = validatedData.designated_reviewer_id;
+    // Handle approval
+    if (validatedData.status === "approved" && existing.status !== "approved") {
+      updates.approved_at = new Date().toISOString();
+      updates.approved_by = user.id;
+    }
+
+    const { data, error } = await supabase
+      .from("commitment_pcos")
+      .update(updates)
+      .eq("id", pcoId)
+      .select("*")
+      .single();
+
+    if (error) {
+      return apiErrorResponse(error);
+    }
+
+    return NextResponse.json(data);
+  } catch (error) {
+    if (error instanceof ZodError) {
+      return NextResponse.json(
+        {
+          error: "Validation error",
+          details: error.issues.map((e) => ({
+            field: e.path.join("."),
+            message: e.message,
+          })),
+        },
+        { status: 400 },
+      );
+    }
+    return apiErrorResponse(error);
+  }
+}
+
+/**
+ * DELETE /api/projects/[projectId]/commitment-pcos/[pcoId]
+ * Delete a commitment PCO (only draft status)
+ */
+export async function DELETE(request: NextRequest, { params }: RouteParams) {
+  try {
+    const { projectId, pcoId } = await params;
+    const projectIdNum = parseInt(projectId, 10);
+    const supabase = await createClient();
+
+    // Auth check
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+    if (authError || !user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Get existing PCO
+    const { data: existing, error: fetchError } = await supabase
+      .from("commitment_pcos")
+      .select("id, status")
+      .eq("project_id", projectIdNum)
+      .eq("id", pcoId)
+      .single();
+
+    if (fetchError || !existing) {
+      return NextResponse.json(
+        { error: "Commitment PCO not found" },
+        { status: 404 },
+      );
+    }
+
+    // Only allow delete on draft
+    if (existing.status !== "draft") {
+      return NextResponse.json(
+        {
+          error: "Cannot delete PCO",
+          details: "Only PCOs with status 'draft' can be deleted",
+        },
+        { status: 409 },
+      );
+    }
+
+    // Delete linked change event associations first
+    const { error: linkDeleteError } = await supabase
+      .from("change_event_pco_links")
+      .delete()
+      .eq("pco_id", pcoId)
+      .eq("pco_type", "commitment");
+
+    if (linkDeleteError) {
+      console.error("[commitment-pcos DELETE] Failed to delete links:", linkDeleteError);
+      return apiErrorResponse(linkDeleteError);
+    }
+
+    // Delete line items
+    const { error: lineItemDeleteError } = await supabase
+      .from("pco_line_items")
+      .delete()
+      .eq("pco_id", pcoId)
+      .eq("pco_type", "commitment");
+
+    if (lineItemDeleteError) {
+      console.error("[commitment-pcos DELETE] Failed to delete line items:", lineItemDeleteError);
+      return apiErrorResponse(lineItemDeleteError);
+    }
+
+    // Delete the PCO
+    const { error } = await supabase
+      .from("commitment_pcos")
+      .delete()
+      .eq("id", pcoId);
+
+    if (error) {
+      return apiErrorResponse(error);
+    }
+
+    return new NextResponse(null, { status: 204 });
+  } catch (error) {
+    return apiErrorResponse(error);
+  }
+}

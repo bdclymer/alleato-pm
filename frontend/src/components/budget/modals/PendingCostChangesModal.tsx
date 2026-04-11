@@ -8,6 +8,15 @@ import {
   SidebarTabs,
 } from "./BaseSidebar";
 import { Button } from "@/components/ui/button";
+import {
+  InlineTable,
+  InlineTableHeader,
+  InlineTableHeaderRow,
+  InlineTableHeaderCell,
+  InlineTableBody,
+  InlineTableRow,
+  InlineTableCell,
+} from "@/components/ds/inline-table";
 import { cn } from "@/lib/utils";
 import { AlertCircle } from "lucide-react";
 
@@ -209,87 +218,72 @@ export function PendingCostChangesModal({
             </div>
 
             {/* Changes Table */}
-            <div className="overflow-x-auto scrollbar-hide rounded-lg border border-border bg-background">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/50 border-b border-border">
+            <InlineTable variant="read">
+              <InlineTableHeader>
+                <InlineTableHeaderRow>
+                  <InlineTableHeaderCell>Number</InlineTableHeaderCell>
+                  <InlineTableHeaderCell>Type</InlineTableHeaderCell>
+                  <InlineTableHeaderCell>Description</InlineTableHeaderCell>
+                  <InlineTableHeaderCell>Status</InlineTableHeaderCell>
+                  <InlineTableHeaderCell align="right">Amount</InlineTableHeaderCell>
+                  <InlineTableHeaderCell>Requested</InlineTableHeaderCell>
+                </InlineTableHeaderRow>
+              </InlineTableHeader>
+              <InlineTableBody>
+                {loading ? (
                   <tr>
-                    <th className="text-left px-4 py-3 font-semibold text-foreground">
-                      Number
-                    </th>
-                    <th className="text-left px-4 py-3 font-semibold text-foreground">
-                      Type
-                    </th>
-                    <th className="text-left px-4 py-3 font-semibold text-foreground">
-                      Description
-                    </th>
-                    <th className="text-left px-4 py-3 font-semibold text-foreground">
-                      Status
-                    </th>
-                    <th className="text-right px-4 py-3 font-semibold text-foreground">
-                      Amount
-                    </th>
-                    <th className="text-left px-4 py-3 font-semibold text-foreground">
-                      Requested
-                    </th>
+                    <td
+                      colSpan={6}
+                      className="px-3 py-10 text-center text-muted-foreground"
+                    >
+                      Loading pending cost changes...
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {loading ? (
-                    <tr>
-                      <td
-                        colSpan={6}
-                        className="px-4 py-10 text-center text-muted-foreground"
+                ) : changes.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="px-3 py-10 text-center text-muted-foreground"
+                    >
+                      No pending cost changes found for this cost code.
+                    </td>
+                  </tr>
+                ) : (
+                  changes.map((change) => (
+                    <InlineTableRow key={change.id}>
+                      <InlineTableCell className="font-medium text-primary">
+                        {change.number}
+                      </InlineTableCell>
+                      <InlineTableCell>{getTypeBadge(change)}</InlineTableCell>
+                      <InlineTableCell
+                        className="max-w-xs truncate"
+                        title={change.description}
                       >
-                        Loading pending cost changes...
-                      </td>
-                    </tr>
-                  ) : changes.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={6}
-                        className="px-4 py-10 text-center text-muted-foreground"
+                        {change.description}
+                      </InlineTableCell>
+                      <InlineTableCell>
+                        {getStatusBadge(change.status)}
+                      </InlineTableCell>
+                      <InlineTableCell
+                        align="right"
+                        numeric
+                        className={cn(
+                          "font-semibold",
+                          change.amount < 0
+                            ? "text-destructive"
+                            : "text-foreground",
+                        )}
                       >
-                        No pending cost changes found for this cost code.
-                      </td>
-                    </tr>
-                  ) : (
-                    changes.map((change) => (
-                      <tr
-                        key={change.id}
-                        className="hover:bg-muted/50 transition-colors"
-                      >
-                        <td className="px-4 py-3 font-medium text-primary">
-                          {change.number}
-                        </td>
-                        <td className="px-4 py-3">{getTypeBadge(change)}</td>
-                        <td
-                          className="px-4 py-3 text-foreground max-w-xs truncate"
-                          title={change.description}
-                        >
-                          {change.description}
-                        </td>
-                        <td className="px-4 py-3">
-                          {getStatusBadge(change.status)}
-                        </td>
-                        <td
-                          className={cn(
-                            "px-4 py-3 text-right font-semibold tabular-nums",
-                            change.amount < 0
-                              ? "text-destructive"
-                              : "text-foreground",
-                          )}
-                        >
-                          {formatCurrency(change.amount)}
-                        </td>
-                        <td className="px-4 py-3 text-foreground">
-                          {formatDate(change.requestedDate)}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                        {formatCurrency(change.amount)}
+                      </InlineTableCell>
+                      <InlineTableCell>
+                        {formatDate(change.requestedDate)}
+                      </InlineTableCell>
+                    </InlineTableRow>
+                  ))
+                )}
+              </InlineTableBody>
+            </InlineTable>
           </div>
         ) : (
           <div className="p-4 sm:p-6 space-y-4">

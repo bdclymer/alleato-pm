@@ -15,6 +15,7 @@ interface ChatMainProps {
   onToggleSidebar: () => void;
   onToggleRightPanel: () => void;
   onMessageSelect?: (message: TeamChatMessage) => void;
+  onMessageSent?: () => void;
   selectedMessageId?: string | null;
   threadReplyCountByMessage?: Record<string, number>;
 }
@@ -32,6 +33,7 @@ export function ChatMain({
   onToggleSidebar,
   onToggleRightPanel,
   onMessageSelect,
+  onMessageSent,
   selectedMessageId,
   threadReplyCountByMessage = {},
 }: ChatMainProps) {
@@ -109,9 +111,11 @@ export function ChatMain({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ channelId: channel.id, content, userName: username }),
-    }).catch(() => {
-      // Broadcast already sent; leave optimistic message in view.
-    });
+    })
+      .then(() => onMessageSent?.())
+      .catch(() => {
+        // Broadcast already sent; leave optimistic message in view.
+      });
   };
 
   const handleAddReaction = (messageId: string, emoji: string) => {
@@ -130,7 +134,7 @@ export function ChatMain({
   };
 
   return (
-    <div className="flex h-full min-h-0 flex-col">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <ChatHeader
         channelName={channel.name}
         topic={channel.topic}
@@ -143,11 +147,7 @@ export function ChatMain({
         onMessageQueryChange={setMessageQuery}
       />
 
-      <div className="border-b border-border bg-muted/20 px-4 py-2 text-xs text-muted-foreground">
-        Pinned · Weekly owner update due today at 4:00 PM. Mention <span className="font-semibold text-primary">@field-support</span> for logistics issues.
-      </div>
-
-      <div className="flex-1 overflow-hidden">
+<div className="flex-1 overflow-hidden">
         <MessageList
           messages={filteredMessages}
           currentUsername={username}
@@ -163,7 +163,7 @@ export function ChatMain({
       <Composer
         onSend={handleSend}
         channelName={channel.name}
-        placeholder={`Message #${channel.name}`}
+        placeholder={`Message ${channel.name}`}
         disabled={!isConnected}
       />
     </div>

@@ -253,6 +253,25 @@ No borders/cards around chat sections. Only the input field gets a border.
 - Assistant avatar: `bg-primary/10 text-primary` with "A"
 - Loading: animated dots, not spinners
 
+### 13. API Fetch Gate — Use apiFetch
+
+**NEVER use raw `fetch()` for API calls in pages, components, or hooks.** Use `apiFetch` from `@/lib/api-client`:
+
+```tsx
+import { apiFetch, summarizeBulkResults } from "@/lib/api-client";
+
+// Single operation — throws ApiError with real message on failure
+await apiFetch(`/api/projects/${id}`, { method: "DELETE" });
+
+// Bulk operation — extracts real error reasons
+const results = await Promise.allSettled(ids.map(id => apiFetch(`/api/.../${id}`, { method: "DELETE" })));
+const { succeeded, failed, firstError } = summarizeBulkResults(results);
+```
+
+**Why:** Raw `fetch` requires manual JSON error parsing that every developer does differently (or forgets). `apiFetch` guarantees the actual server error message reaches the user — never "Failed to X" with no details.
+
+**ESLint enforces this:** `require-api-client` rule warns on raw `fetch("/api/...")` calls.
+
 ---
 
 ## Behavioral Rules

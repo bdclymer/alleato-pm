@@ -91,7 +91,7 @@ export function DrawingAreaSelector({
           className={cn(
             "flex items-center gap-2 p-2 rounded-md hover:bg-muted cursor-pointer transition-colors group",
             paddingClass,
-            isSelected && "bg-blue-50 border border-blue-200"
+            isSelected && "bg-primary/10 border border-primary/20"
           )}
           onClick={() => onSelectArea(area.id)}
         >
@@ -123,9 +123,9 @@ export function DrawingAreaSelector({
           <div className="flex-shrink-0">
             {hasChildren ? (
               isExpanded ? (
-                <FolderOpen className="h-4 w-4 text-blue-600" />
+                <FolderOpen className="h-4 w-4 text-primary" />
               ) : (
-                <Folder className="h-4 w-4 text-blue-600" />
+                <Folder className="h-4 w-4 text-primary" />
               )
             ) : (
               <Folder className="h-4 w-4 text-muted-foreground" />
@@ -136,7 +136,7 @@ export function DrawingAreaSelector({
           <div className="flex-1 min-w-0">
             <span className={cn(
               "text-sm font-medium truncate",
-              isSelected ? "text-blue-900" : "text-foreground"
+              isSelected ? "text-primary" : "text-foreground"
             )}>
               {area.name}
             </span>
@@ -175,7 +175,7 @@ export function DrawingAreaSelector({
               {onDeleteArea && area.drawing_count === 0 && (
                 <DropdownMenuItem
                   onClick={() => onDeleteArea(area)}
-                  className="text-red-600 focus:text-red-600"
+                  className="text-destructive focus:text-destructive"
                 >
                   <Trash2 className="h-3 w-3 mr-2" />
                   Delete Area
@@ -235,7 +235,7 @@ export function DrawingAreaSelector({
           <div
             className={cn(
               "flex items-center gap-2 p-2 rounded-md hover:bg-muted cursor-pointer transition-colors",
-              !selectedAreaId && "bg-blue-50 border border-blue-200"
+              !selectedAreaId && "bg-primary/10 border border-primary/20"
             )}
             onClick={() => onSelectArea(null)}
           >
@@ -243,7 +243,7 @@ export function DrawingAreaSelector({
             <Folder className="h-4 w-4 text-muted-foreground" />
             <span className={cn(
               "text-sm font-medium",
-              !selectedAreaId ? "text-blue-900" : "text-foreground"
+              !selectedAreaId ? "text-primary" : "text-foreground"
             )}>
               All Drawings
             </span>

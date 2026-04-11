@@ -1,20 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { FileText, Plus, Trash2 } from "lucide-react";
+import type { ColumnDef } from "@tanstack/react-table";
 
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { StatusBadge } from "@/components/ds";
+import { DataTable, type DataTableFooterCell } from "@/components/tables/DataTable";
 import { CreateInvoiceDialog } from "@/components/domain/invoices/CreateInvoiceDialog";
 import type { PaymentApplication, Contract } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
 
@@ -59,6 +53,126 @@ export function PrimeContractInvoicesTab({
 }: PrimeContractInvoicesTabProps) {
   const router = useRouter();
   const [showAddInvoiceDialog, setShowAddInvoiceDialog] = useState(false);
+  const totalAmount = useMemo(
+    () => paymentApplications.reduce((sum, app) => sum + app.amount, 0),
+    [paymentApplications],
+  );
+  const totalRetainage = useMemo(
+    () => paymentApplications.reduce((sum, app) => sum + app.retention_amount, 0),
+    [paymentApplications],
+  );
+  const totalPaymentDue = useMemo(
+    () =>
+      paymentApplications.reduce(
+        (sum, app) => sum + (app.net_amount ?? app.amount - app.retention_amount),
+        0,
+      ),
+    [paymentApplications],
+  );
+
+  const columns: ColumnDef<PaymentApplication>[] = useMemo(
+    () => [
+      {
+        accessorKey: "application_number",
+        header: "Invoice #",
+        cell: ({ row }) => (
+          <div className="font-medium text-primary">{row.original.application_number}</div>
+        ),
+      },
+      {
+        id: "billing_period",
+        header: "Billing Period",
+        cell: ({ row }) => (
+          <div className="text-sm text-muted-foreground">
+            {row.original.period_from && row.original.period_to
+              ? `${new Date(row.original.period_from).toLocaleDateString()} – ${new Date(row.original.period_to).toLocaleDateString()}`
+              : row.original.period_from
+                ? `From ${new Date(row.original.period_from).toLocaleDateString()}`
+                : "--"}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "status",
+        header: "Status",
+        cell: ({ row }) => (
+          <StatusBadge status={row.original.status.replace(/_/g, " ")} />
+        ),
+      },
+      {
+        accessorKey: "amount",
+        header: () => <div className="text-right">Amount</div>,
+        cell: ({ row }) => (
+          <div className="text-right">{formatCurrency(row.original.amount)}</div>
+        ),
+      },
+      {
+        accessorKey: "retention_amount",
+        header: () => <div className="text-right">Retainage</div>,
+        cell: ({ row }) => (
+          <div className="text-right text-muted-foreground">
+            {row.original.retention_amount > 0
+              ? formatCurrency(row.original.retention_amount)
+              : "--"}
+          </div>
+        ),
+      },
+      {
+        id: "payment_due",
+        header: () => <div className="text-right">Payment Due</div>,
+        cell: ({ row }) => (
+          <div className="text-right">
+            {formatCurrency(
+              row.original.net_amount ?? row.original.amount - row.original.retention_amount,
+            )}
+          </div>
+        ),
+      },
+      {
+        id: "percent_complete",
+        header: () => <div className="text-right">% Complete</div>,
+        cell: ({ row }) => (
+          <div className="text-right">
+            {contract.revised_contract_value > 0
+              ? `${((row.original.amount / contract.revised_contract_value) * 100).toFixed(1)}%`
+              : "--"}
+          </div>
+        ),
+      },
+      {
+        id: "actions",
+        header: "",
+        cell: ({ row }) => (
+          <div className="flex justify-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive"
+              onClick={(e) => {
+                e.stopPropagation();
+                void onDeleteInvoice(row.original.id);
+              }}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [contract.revised_contract_value, formatCurrency, onDeleteInvoice],
+  );
+
+  const footerRow = useMemo<DataTableFooterCell[]>(
+    () => [
+      { value: "Total", colSpan: 3, align: "left" },
+      { value: formatCurrency(totalAmount) },
+      { value: formatCurrency(totalRetainage) },
+      { value: formatCurrency(totalPaymentDue) },
+      { value: "" },
+      { value: "" },
+    ],
+    [formatCurrency, totalAmount, totalPaymentDue, totalRetainage],
+  );
 
   return (
     <div>
@@ -101,114 +215,16 @@ export function PrimeContractInvoicesTab({
             </p>
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Invoice #</TableHead>
-                <TableHead>Billing Period</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead className="text-right">Retainage</TableHead>
-                <TableHead className="text-right">Payment Due</TableHead>
-                <TableHead className="text-right">% Complete</TableHead>
-                <TableHead></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {paymentApplications.map((app) => (
-                <TableRow
-                  key={app.id}
-                  className="cursor-pointer"
-                  onClick={() =>
-                    router.push(
-                      `/${projectId}/prime-contracts/${contractId}/invoices/${app.id}`,
-                    )
-                  }
-                >
-                  <TableCell className="font-medium text-primary">
-                    {app.application_number}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {app.period_from && app.period_to
-                      ? `${new Date(app.period_from).toLocaleDateString()} – ${new Date(app.period_to).toLocaleDateString()}`
-                      : app.period_from
-                        ? `From ${new Date(app.period_from).toLocaleDateString()}`
-                        : "--"}
-                  </TableCell>
-                  <TableCell>
-                    <StatusBadge
-                      status={app.status.replace(/_/g, " ")}
-                    />
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {formatCurrency(app.amount)}
-                  </TableCell>
-                  <TableCell className="text-right text-muted-foreground">
-                    {app.retention_amount > 0
-                      ? formatCurrency(app.retention_amount)
-                      : "--"}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {formatCurrency(
-                      app.net_amount ??
-                        app.amount - app.retention_amount,
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {contract.revised_contract_value > 0
-                      ? `${((app.amount / contract.revised_contract_value) * 100).toFixed(1)}%`
-                      : "--"}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive hover:text-destructive"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onDeleteInvoice(app.id);
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-            <tfoot>
-              <TableRow className="bg-muted font-medium">
-                <TableCell colSpan={3}>Total</TableCell>
-                <TableCell className="text-right">
-                  {formatCurrency(
-                    paymentApplications.reduce(
-                      (s, a) => s + a.amount,
-                      0,
-                    ),
-                  )}
-                </TableCell>
-                <TableCell className="text-right">
-                  {formatCurrency(
-                    paymentApplications.reduce(
-                      (s, a) => s + a.retention_amount,
-                      0,
-                    ),
-                  )}
-                </TableCell>
-                <TableCell className="text-right">
-                  {formatCurrency(
-                    paymentApplications.reduce(
-                      (s, a) =>
-                        s +
-                        (a.net_amount ??
-                          a.amount - a.retention_amount),
-                      0,
-                    ),
-                  )}
-                </TableCell>
-                <TableCell colSpan={2}></TableCell>
-              </TableRow>
-            </tfoot>
-          </Table>
+          <DataTable
+            columns={columns}
+            data={paymentApplications}
+            showToolbar={false}
+            showPagination={paymentApplications.length > 25}
+            onRowClick={(app) =>
+              router.push(`/${projectId}/prime-contracts/${contractId}/invoices/${app.id}`)
+            }
+            footerRow={footerRow}
+          />
         )}
       </div>
 

@@ -27,18 +27,34 @@ export async function GET(req: Request) {
   }
 
   // Runs with result counts
-  const { data: runs, error: runsErr } = await supabase
+  const withDepthRuns = await supabase
     .from("test_runs")
     .select(`
-      id, run_date, tester, environment, branch, notes,
+      id, run_date, tester, environment, branch, notes, scenario_depth,
       test_results (status)
     `)
     .eq("suite_id", suite.id)
     .order("run_date", { ascending: false })
     .limit(20);
 
-  if (runsErr) {
-    return NextResponse.json({ error: runsErr.message }, { status: 500 });
+  let runs = withDepthRuns.data;
+  let depthAvailable = !withDepthRuns.error;
+
+  if (withDepthRuns.error) {
+    const fallbackRuns = await supabase
+      .from("test_runs")
+      .select(`
+        id, run_date, tester, environment, branch, notes,
+        test_results (status)
+      `)
+      .eq("suite_id", suite.id)
+      .order("run_date", { ascending: false })
+      .limit(20);
+    if (fallbackRuns.error) {
+      return NextResponse.json({ error: fallbackRuns.error.message }, { status: 500 });
+    }
+    runs = fallbackRuns.data;
+    depthAvailable = false;
   }
 
   const enriched = (runs ?? []).map((r) => {
@@ -50,6 +66,7 @@ export async function GET(req: Request) {
       environment: r.environment,
       branch: r.branch,
       notes: r.notes,
+      scenario_depth: depthAvailable ? r.scenario_depth : "all",
       total: results.length,
       pass: results.filter((x) => x.status === "pass").length,
       fail: results.filter((x) => x.status === "fail").length,
@@ -64,17 +81,25 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   const supabase = await createClient();
   const body = await req.json();
-  const { suite, tester, environment, branch, notes } = body as {
+  const { suite, tester, environment, branch, notes, scenarioDepth, testType } = body as {
     suite: string;
     tester?: string;
     environment?: string;
     branch?: string;
     notes?: string;
+    scenarioDepth?: "broad" | "detailed" | "all";
+    testType?: "scenario" | "feature" | "all";
   };
 
   if (!suite) {
     return NextResponse.json({ error: "suite required" }, { status: 400 });
   }
+
+  const allowedDepths = ["broad", "detailed", "all"] as const;
+  const normalizedDepth = allowedDepths.includes((scenarioDepth ?? "broad") as (typeof allowedDepths)[number])
+    ? (scenarioDepth ?? "broad")
+    : "broad";
+  const requestedType = testType ?? "all";
 
   // Look up suite and its cases
   const { data: suiteRow, error: suiteErr } = await supabase
@@ -87,25 +112,64 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Suite not found" }, { status: 404 });
   }
 
-  const { data: cases, error: casesErr } = await supabase
+  const withDepthCases = await supabase
     .from("test_cases")
-    .select("id")
+    .select("id, test_type, scenario_depth")
     .eq("suite_id", suiteRow.id);
 
-  if (casesErr) {
-    return NextResponse.json({ error: casesErr.message }, { status: 500 });
+  let cases = withDepthCases.data;
+  let caseDepthAvailable = !withDepthCases.error;
+
+  if (withDepthCases.error) {
+    const fallbackCases = await supabase
+      .from("test_cases")
+      .select("id, test_type")
+      .eq("suite_id", suiteRow.id);
+    if (fallbackCases.error) {
+      return NextResponse.json({ error: fallbackCases.error.message }, { status: 500 });
+    }
+    cases = fallbackCases.data;
+    caseDepthAvailable = false;
+  }
+
+  let selectedCases = (cases ?? []).filter((c) => {
+    if (requestedType === "feature") return c.test_type === "feature";
+    if (requestedType === "scenario") {
+      if (c.test_type !== "scenario") return false;
+      if (normalizedDepth === "all") return true;
+      if (!caseDepthAvailable) return true;
+      return (c.scenario_depth ?? "detailed") === normalizedDepth;
+    }
+    return true;
+  });
+
+  let effectiveDepth: "broad" | "detailed" | "all" = normalizedDepth;
+  if (
+    requestedType === "scenario" &&
+    normalizedDepth === "broad" &&
+    selectedCases.length === 0
+  ) {
+    selectedCases = (cases ?? []).filter(
+      (c) => c.test_type === "scenario" && (c.scenario_depth ?? "detailed") === "detailed"
+    );
+    effectiveDepth = "detailed";
   }
 
   // Create the run
+  const baseRunPayload = {
+    suite_id: suiteRow.id,
+    tester: tester ?? null,
+    environment: environment ?? "localhost:3000",
+    branch: branch ?? null,
+    notes: notes ?? null,
+  };
+  const runInsertPayload = caseDepthAvailable
+    ? { ...baseRunPayload, scenario_depth: effectiveDepth }
+    : baseRunPayload;
+
   const { data: run, error: runErr } = await supabase
     .from("test_runs")
-    .insert({
-      suite_id: suiteRow.id,
-      tester: tester ?? null,
-      environment: environment ?? "localhost:3000",
-      branch: branch ?? null,
-      notes: notes ?? null,
-    })
+    .insert(runInsertPayload)
     .select("id, run_date")
     .single();
 
@@ -114,7 +178,7 @@ export async function POST(req: Request) {
   }
 
   // Seed test_results for every case (status=not_tested)
-  const resultRows = (cases ?? []).map((c) => ({
+  const resultRows = selectedCases.map((c) => ({
     run_id: run.id,
     case_id: c.id,
     status: "not_tested",
@@ -127,5 +191,11 @@ export async function POST(req: Request) {
     }
   }
 
-  return NextResponse.json({ run_id: run.id, run_date: run.run_date, case_count: resultRows.length });
+  return NextResponse.json({
+    run_id: run.id,
+    run_date: run.run_date,
+    case_count: resultRows.length,
+    effective_depth: effectiveDepth,
+    requested_depth: normalizedDepth,
+  });
 }

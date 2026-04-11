@@ -3,8 +3,12 @@ export interface SovLineItem {
   sort_order?: number | null;
   budget_code?: string | null;
   description?: string | null;
+  line_item_type?: string | null;
+  commitment_value?: number | null;
+  change_value?: number | null;
   scheduled_value?: number | null;
   work_completed_previous?: number | null;
+  work_completed_previous_pct?: number | null;
   work_completed_period?: number | null;
   materials_stored?: number | null;
   total_completed_stored?: number | null;

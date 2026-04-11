@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { useCurrentUserProfile } from "@/hooks/use-current-user-profile";
 import { getBestAvatarUrl } from "@/lib/gravatar";
 
+
 function InfoRow({ label, value }: { label: string; value?: string }) {
   return (
     <div className="grid gap-1 sm:grid-cols-[160px_1fr] sm:gap-4">

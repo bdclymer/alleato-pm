@@ -42,13 +42,14 @@ import {
 import { MoneyField } from "@/components/forms/MoneyField";
 import { Input } from "@/components/ui/input";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  InlineTable,
+  InlineTableBody,
+  InlineTableCell,
+  InlineTableHeader,
+  InlineTableHeaderCell,
+  InlineTableHeaderRow,
+  InlineTableRow,
+} from "@/components/ds/inline-table";
 import { getCostTypeLabel } from "@/constants/budget";
 import type {
   BudgetCode,
@@ -498,35 +499,35 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                 strategy={verticalListSortingStrategy}
               >
                 <div className="overflow-x-auto overflow-hidden rounded-md border border-border/70 bg-muted/20">
-                  <Table>
-                    <TableHeader className="border-y-0 [&_tr]:border-b-0">
-                      <TableRow className="bg-muted/70 hover:bg-muted/70">
-                        <TableHead className="w-10 px-1 py-1.5" />
-                        <TableHead className="min-w-72 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                  <InlineTable variant="edit">
+                    <InlineTableHeader className="border-y-0 [&_tr]:border-b-0">
+                      <InlineTableHeaderRow className="bg-muted/70 hover:bg-muted/70">
+                        <InlineTableHeaderCell className="w-10 px-1 py-1.5" />
+                        <InlineTableHeaderCell className="min-w-72 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
                           Budget Code
-                        </TableHead>
-                        <TableHead className="min-w-64 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                        </InlineTableHeaderCell>
+                        <InlineTableHeaderCell className="min-w-64 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
                           Description
-                        </TableHead>
-                        <TableHead className="w-20 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                        </InlineTableHeaderCell>
+                        <InlineTableHeaderCell align="right" className="w-20 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
                           Qty
-                        </TableHead>
-                        <TableHead className="w-16 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                        </InlineTableHeaderCell>
+                        <InlineTableHeaderCell className="w-16 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
                           UOM
-                        </TableHead>
-                        <TableHead className="w-40 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                        </InlineTableHeaderCell>
+                        <InlineTableHeaderCell align="right" className="w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
                           Amount
-                        </TableHead>
-                        <TableHead className="w-40 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                        </InlineTableHeaderCell>
+                        <InlineTableHeaderCell align="right" className="w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
                           Bill to Date
-                        </TableHead>
-                        <TableHead className="w-40 px-1 py-1.5 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
+                        </InlineTableHeaderCell>
+                        <InlineTableHeaderCell align="right" className="w-40 px-1 py-1.5 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
                           Amount Remaining
-                        </TableHead>
-                        <TableHead className="w-24 px-1 py-1.5" />
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
+                        </InlineTableHeaderCell>
+                        <InlineTableHeaderCell className="w-24 px-1 py-1.5" />
+                      </InlineTableHeaderRow>
+                    </InlineTableHeader>
+                    <InlineTableBody>
                       {displayedSovItems.map((item) => {
                         if (item.is_group_header) {
                           return (
@@ -537,7 +538,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                             >
                               {({ attributes, listeners }) => (
                                 <>
-                              <TableCell className="w-10 px-1 py-1">
+                              <InlineTableCell className="w-10 px-1 py-1">
                                 <div
                                   className="mt-1 cursor-grab rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted active:cursor-grabbing"
                                   {...attributes}
@@ -545,8 +546,8 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                                 >
                                   <GripVertical className="h-4 w-4" />
                                 </div>
-                              </TableCell>
-                              <TableCell colSpan={7} className="px-1 py-1">
+                              </InlineTableCell>
+                              <InlineTableCell colSpan={7} className="px-1 py-1">
                                 {isSovEditing ? (
                                   <Input
                                     value={item.group_name || item.description || ""}
@@ -561,8 +562,8 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                                     {item.group_name || item.description || "Unnamed Group"}
                                   </span>
                                 )}
-                              </TableCell>
-                              <TableCell className="w-24 px-1 py-1">
+                              </InlineTableCell>
+                              <InlineTableCell className="w-24 px-1 py-1">
                                 {isSovEditing && (
                                   <div className="flex justify-end">
                                     <Button
@@ -575,7 +576,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                                     </Button>
                                   </div>
                                 )}
-                              </TableCell>
+                              </InlineTableCell>
                                 </>
                               )}
                             </SortableSovRow>
@@ -612,7 +613,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                           >
                             {({ attributes, listeners }) => (
                               <>
-                            <TableCell className="w-10 px-1 py-1 align-top">
+                            <InlineTableCell className="w-10 px-1 py-1 align-top">
                               <div
                                 className="mt-1 cursor-grab rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted active:cursor-grabbing"
                                 {...attributes}
@@ -621,8 +622,8 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                               >
                                 <GripVertical className="h-4 w-4" />
                               </div>
-                            </TableCell>
-                            <TableCell className="min-w-72 px-1 py-1 align-top">
+                            </InlineTableCell>
+                            <InlineTableCell className="min-w-72 px-1 py-1 align-top">
                               {isSovEditing ? (
                                 <BudgetCodeSelector
                                   value={selectedBudgetCodeId}
@@ -645,8 +646,8 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                                   </div>
                                 </div>
                               )}
-                            </TableCell>
-                            <TableCell className="min-w-64 px-1 py-1 align-top">
+                            </InlineTableCell>
+                            <InlineTableCell className="min-w-64 px-1 py-1 align-top">
                               {isSovEditing ? (
                                 <Input
                                   value={item.description || ""}
@@ -660,8 +661,8 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                               ) : (
                                 <div className="pt-2 text-xs leading-tight">{item.description || "--"}</div>
                               )}
-                            </TableCell>
-                            <TableCell className="w-20 px-1 py-1 align-top">
+                            </InlineTableCell>
+                            <InlineTableCell align="right" className="w-20 px-1 py-1 align-top">
                               {isSovEditing ? (
                                 <Input
                                   type="number"
@@ -681,8 +682,8 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                                   {item.quantity ?? 1}
                                 </div>
                               )}
-                            </TableCell>
-                            <TableCell className="w-16 px-1 py-1 align-top">
+                            </InlineTableCell>
+                            <InlineTableCell className="w-16 px-1 py-1 align-top">
                               {isSovEditing ? (
                                 <Input
                                   className="h-10"
@@ -699,8 +700,8 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                                   {item.unit_of_measure || "EA"}
                                 </div>
                               )}
-                            </TableCell>
-                            <TableCell className="w-40 px-1 py-1 align-top">
+                            </InlineTableCell>
+                            <InlineTableCell align="right" className="w-40 px-1 py-1 align-top">
                               {isSovEditing ? (
                                 <MoneyField
                                   inline
@@ -727,18 +728,18 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                                   {formatCurrency(lineTotal)}
                                 </div>
                               )}
-                            </TableCell>
-                            <TableCell className="w-40 px-1 py-1 align-top">
+                            </InlineTableCell>
+                            <InlineTableCell align="right" className="w-40 px-1 py-1 align-top">
                               <div className="pt-2 text-right text-xs tabular-nums">
                                 {formatCurrency(lineBilledToDate)}
                               </div>
-                            </TableCell>
-                            <TableCell className="w-40 px-1 py-1 align-top">
+                            </InlineTableCell>
+                            <InlineTableCell align="right" className="w-40 px-1 py-1 align-top">
                               <div className="pt-2 text-right text-xs font-semibold tabular-nums">
                                 {formatCurrency(lineAmountRemaining)}
                               </div>
-                            </TableCell>
-                            <TableCell className="w-24 px-1 py-1 align-top">
+                            </InlineTableCell>
+                            <InlineTableCell className="w-24 px-1 py-1 align-top">
                               {isSovEditing ? (
                                 <div className="flex justify-end">
                                   <Button
@@ -780,14 +781,14 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
                                   </DropdownMenu>
                                 </div>
                               )}
-                            </TableCell>
+                            </InlineTableCell>
                               </>
                             )}
                           </SortableSovRow>
                         );
                       })}
-                    </TableBody>
-                  </Table>
+                    </InlineTableBody>
+                  </InlineTable>
                 </div>
               </SortableContext>
             </DndContext>
@@ -843,12 +844,12 @@ function SortableSovRow({ id, className, children }: SortableSovRowProps) {
   };
 
   return (
-    <TableRow
+    <InlineTableRow
       ref={setNodeRef}
       style={style}
       className={`${className || ""}${isDragging ? " opacity-80 bg-muted/30" : ""}`}
     >
       {children({ attributes, listeners })}
-    </TableRow>
+    </InlineTableRow>
   );
 }

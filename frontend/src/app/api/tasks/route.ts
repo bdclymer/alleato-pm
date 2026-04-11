@@ -1,8 +1,15 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
-import { apiErrorResponse } from "@/lib/api-error";
+import { z } from "zod";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { validateResponseContract, withApiGuardrails } from "@/lib/guardrails/api";
 
-export async function GET() {
+const TaskResponseSchema = z.object({
+  project_name: z.string().nullable(),
+  meeting_title: z.string().nullable(),
+});
+
+export const GET = withApiGuardrails("/api/tasks#GET", async () => {
   const supabase = await createClient();
 
   // Tasks table contains mixed sources (tests/manual/system backfills).
@@ -13,10 +20,13 @@ export async function GET() {
     .or("type.eq.interview,title.ilike.%test%");
 
   if (interviewError) {
-    return NextResponse.json(
-      { error: interviewError.message },
-      { status: 500 },
-    );
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/tasks#GET",
+      message: "Failed to load interview metadata.",
+      details: { reason: interviewError.message },
+      cause: interviewError,
+    });
   }
 
   let query = supabase
@@ -38,7 +48,13 @@ export async function GET() {
   const { data, error } = await query;
 
   if (error) {
-    return apiErrorResponse(error);
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/tasks#GET",
+      message: "Failed to load tasks.",
+      details: { reason: error.message },
+      cause: error,
+    });
   }
 
   const tasks = (data ?? []).map((task) => {
@@ -52,5 +68,11 @@ export async function GET() {
     };
   });
 
+  validateResponseContract(
+    z.array(TaskResponseSchema.passthrough()),
+    tasks,
+    "/api/tasks#GET",
+  );
+
   return NextResponse.json({ data: tasks });
-}
+});

@@ -110,9 +110,12 @@ export function useDropdownData({ projectId }: UseDropdownDataOptions) {
           const poPayload = await poRes.json();
           const poData = poPayload.data || poPayload || [];
           for (const po of poData) {
+            // Skip deleted or voided commitments
+            if (po.deleted_at || po.status === "Void") continue;
+            const companyLabel = po.company_name ? ` (${po.company_name})` : "";
             contractList.push({
               id: `po-${po.id}`,
-              label: `${po.contract_number || po.number || "PO"} - ${po.title || "Untitled"}`,
+              label: `${po.contract_number || po.number || "PO"} - ${po.title || "Untitled"}${companyLabel}`,
               type: "purchase_order",
               vendorId: po.contract_company_id || null,
               vendorName: po.company_name || null,
@@ -124,9 +127,12 @@ export function useDropdownData({ projectId }: UseDropdownDataOptions) {
           const subPayload = await subRes.json();
           const subData = subPayload.data || subPayload || [];
           for (const sub of subData) {
+            // Skip deleted or voided commitments
+            if (sub.deleted_at || sub.status === "Void") continue;
+            const companyLabel = sub.company_name ? ` (${sub.company_name})` : "";
             contractList.push({
               id: `sub-${sub.id}`,
-              label: `${sub.contract_number || sub.number || "SC"} - ${sub.title || "Untitled"}`,
+              label: `${sub.contract_number || sub.number || "SC"} - ${sub.title || "Untitled"}${companyLabel}`,
               type: "subcontract",
               vendorId: sub.contract_company_id || null,
               vendorName: sub.company_name || null,

@@ -112,7 +112,7 @@ export function DrawingAreaCard({
                 disabled={isLoading}
               />
               {form.formState.errors.name && (
-                <p className="text-sm text-red-600 mt-1">
+                <p className="text-sm text-destructive mt-1">
                   {form.formState.errors.name.message}
                 </p>
               )}
@@ -130,7 +130,7 @@ export function DrawingAreaCard({
                 disabled={isLoading}
               />
               {form.formState.errors.description && (
-                <p className="text-sm text-red-600 mt-1">
+                <p className="text-sm text-destructive mt-1">
                   {form.formState.errors.description.message}
                 </p>
               )}
@@ -191,7 +191,7 @@ export function DrawingAreaCard({
             <AlertDialogDescription>
               Are you sure you want to delete "{area?.name}"? This action cannot be undone.
               {area?.drawing_count != null && area.drawing_count > 0 && (
-                <span className="block mt-2 text-red-600 font-medium">
+                <span className="block mt-2 text-destructive font-medium">
                   This area contains {area.drawing_count} drawings and cannot be deleted.
                 </span>
               )}
@@ -202,7 +202,7 @@ export function DrawingAreaCard({
             <AlertDialogAction
               onClick={handleDelete}
               disabled={isLoading || (area?.drawing_count != null && area.drawing_count > 0)}
-              className="bg-red-600 hover:bg-red-700"
+              className="bg-destructive hover:bg-destructive/90"
             >
               {isLoading ? "Deleting..." : "Delete Area"}
             </AlertDialogAction>

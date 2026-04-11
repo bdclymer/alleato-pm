@@ -127,7 +127,7 @@ function getDispatchHistory(item: FeedbackItem): DispatchHistoryEntry[] {
     .map((entry) => {
       const record = entry as Record<string, unknown>;
       return {
-        target: record.target === "claude_code" ? "claude_code" : "codex",
+        target: (record.target === "claude_code" ? "claude_code" : "codex") as AgentTarget,
         at: typeof record.at === "string" ? record.at : "",
         by: typeof record.by === "string" ? record.by : "",
         status: typeof record.status === "string" ? record.status : "",
@@ -231,7 +231,7 @@ export default function AnnotationInboxPage() {
     id: string,
     payload: { status?: "open" | "in_progress" | "resolved"; metadata?: Record<string, unknown> },
   ) {
-    const res = await fetch("/api/admin/feedback", {
+    const res = await fetch("/api/agentation/inbox", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ id, ...payload }),
@@ -298,25 +298,27 @@ export default function AnnotationInboxPage() {
   }, [selected?.id]);
 
   useEffect(() => {
-    let cancelled = false;
-    async function loadComments() {
-      if (!selected) {
+    // Replies are stored in dev_annotations.ai_reply — no separate comments table.
+    // Pre-populate the reply box with any existing AI reply so it's visible.
+    if (selected) {
+      const aiReply = selected.metadata?.aiReply;
+      if (typeof aiReply === "string" && aiReply.trim()) {
+        setComments([
+          {
+            id: `ai-${selected.id}`,
+            body: aiReply,
+            created_at: selected.updated_at,
+            author: { full_name: "AI Reply", email: "" },
+          },
+        ]);
+      } else {
         setComments([]);
-        return;
       }
-      setLoadingComments(true);
-      const res = await fetch(`/api/admin/feedback/comments?feedbackItemId=${selected.id}`);
-      const data = await res.json();
-      if (!cancelled) {
-        setComments(Array.isArray(data.comments) ? (data.comments as FeedbackComment[]) : []);
-        setLoadingComments(false);
-      }
+    } else {
+      setComments([]);
     }
-    void loadComments();
-    return () => {
-      cancelled = true;
-    };
-  }, [selected?.id]);
+    setLoadingComments(false);
+  }, [selected?.id, selected?.metadata?.aiReply]);
 
   const counts = useMemo(
     () => ({
@@ -378,12 +380,13 @@ export default function AnnotationInboxPage() {
   async function submitReply() {
     if (!selected || !replyBody.trim()) return;
     setSavingReply(true);
-    const res = await fetch("/api/admin/feedback/comments", {
-      method: "POST",
+    const res = await fetch("/api/dev/annotate", {
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        feedbackItemId: selected.id,
-        body: replyBody.trim(),
+        id: selected.id,
+        reply: replyBody.trim(),
+        status: "replied",
       }),
     });
     setSavingReply(false);
@@ -393,45 +396,49 @@ export default function AnnotationInboxPage() {
       return;
     }
 
-    const data = await res.json();
-    const comment = data?.comment as FeedbackComment | undefined;
-    if (comment) {
-      setComments((prev) => [...prev, comment]);
-    }
+    setComments([
+      {
+        id: `ai-${selected.id}`,
+        body: replyBody.trim(),
+        created_at: new Date().toISOString(),
+        author: { full_name: "AI Reply", email: "" },
+      },
+    ]);
     setReplyBody("");
+    await loadItems();
     toast.success("Reply posted");
   }
 
   async function dispatchToAgent() {
     if (!selected) return;
     setDispatching(true);
-    const res = await fetch("/api/admin/feedback/dispatch", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        id: selected.id,
-        target: assignedAgent,
-        markInProgress: true,
-      }),
-    });
-    setDispatching(false);
+    try {
+      // Mark in-progress in dev_annotations
+      await patchFeedback(selected.id, { status: "in_progress", metadata: {
+        assignedAgent,
+        assignedAt: new Date().toISOString(),
+      }});
 
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      toast.error((data as { error?: string }).error || "Dispatch failed");
-      return;
+      // Build a prompt Claude Code / Codex can act on directly
+      const agentationId = getAgentationId(selected);
+      const prompt = [
+        `Fix annotation: ${selected.title}`,
+        `Page: ${selected.page_path}`,
+        selected.comment !== selected.title ? `Details: ${selected.comment}` : "",
+        selected.target_selector ? `Element: ${selected.target_selector}` : "",
+        agentationId ? `Annotation ID: ${agentationId}` : "",
+      ].filter(Boolean).join("\n");
+
+      const cliCommand = `claude "${prompt.replace(/"/g, '\\"')}"`;
+      setLastDispatchCommand(cliCommand);
+      await loadItems();
+      void navigator.clipboard.writeText(prompt);
+      toast.success(`Copied prompt for ${agentLabel(assignedAgent)}`);
+    } catch {
+      toast.error("Dispatch failed");
+    } finally {
+      setDispatching(false);
     }
-
-    const data = (await res.json()) as {
-      prompt: string;
-      cliCommand: string;
-      target: AgentTarget;
-    };
-
-    setLastDispatchCommand(data.cliCommand);
-    await loadItems();
-    void navigator.clipboard.writeText(data.prompt);
-    toast.success(`Dispatched to ${data.target === "codex" ? "Codex" : "Claude Code"} and copied prompt`);
   }
 
   function copyLastCommand() {

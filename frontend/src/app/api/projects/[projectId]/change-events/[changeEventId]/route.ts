@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { NextRequest, NextResponse } from "next/server";
 import { updateChangeEventSchema } from "../validation";
 import { ZodError } from "zod";
@@ -16,7 +17,7 @@ interface VerticalMarkupRow {
 }
 
 function computeMarkupAdditions(
-  baseCost: number,
+  _baseCost: number,
   baseRevenue: number,
   markups: VerticalMarkupRow[],
 ): { cost: number; revenue: number } {
@@ -28,9 +29,7 @@ function computeMarkupAdditions(
     (a, b) => (a.calculation_order ?? 0) - (b.calculation_order ?? 0),
   );
 
-  let runningCostBase = baseCost;
   let runningRevenueBase = baseRevenue;
-  let totalCostMarkup = 0;
   let totalRevenueMarkup = 0;
 
   for (const markup of sortedMarkups) {
@@ -40,20 +39,17 @@ function computeMarkupAdditions(
     }
 
     const rate = percentage / 100;
-    const costMarkup = runningCostBase * rate;
+    // Markups (contractor fee, insurance) apply to Revenue ROM only
     const revenueMarkup = runningRevenueBase * rate;
-
-    totalCostMarkup += costMarkup;
     totalRevenueMarkup += revenueMarkup;
 
     if (markup.compound) {
-      runningCostBase += costMarkup;
       runningRevenueBase += revenueMarkup;
     }
   }
 
   return {
-    cost: totalCostMarkup,
+    cost: 0,
     revenue: totalRevenueMarkup,
   };
 }
@@ -66,6 +62,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   try {
     const { projectId, changeEventId } = await params;
     const supabase = await createClient();
+    const serviceSupabase = createServiceClient();
 
     // Get change event with related data including budget_line and vendor joins
     const { data: changeEvent, error } = await supabase
@@ -76,7 +73,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         prime_contract:prime_contracts!prime_contract_id(
           id,
           contract_number,
-          title
+          title,
+          contract_company_id
         ),
         change_event_line_items(
           id,
@@ -110,6 +108,12 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
           vendor:companies!vendor_id(
             id,
             name
+          ),
+          contract:prime_contracts!contract_id(
+            id,
+            contract_number,
+            title,
+            contract_company_id
           )
         ),
         change_event_history(
@@ -135,29 +139,125 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    // Fallback prime contract lookup if join didn't resolve
+    let primeContractData = (changeEvent.prime_contract as {
+      id: string;
+      contract_number: string | null;
+      title: string | null;
+      contract_company_id?: string | null;
+    } | null) || null;
+    if (!primeContractData && changeEvent.prime_contract_id) {
+      const { data: pc } = await serviceSupabase
+        .from("prime_contracts")
+        .select("id, contract_number, title, contract_company_id")
+        .eq("id", changeEvent.prime_contract_id)
+        .maybeSingle();
+      primeContractData = pc || null;
+    }
+
     // Resolve commitment names for line items
     const lineItems = changeEvent.change_event_line_items || [];
-    const commitmentIds = [...new Set(lineItems.filter((li: any) => li.commitment_id).map((li: any) => li.commitment_id))];
-    const commitmentMap: Record<string, { contract_number: string; title: string }> = {};
+    const commitmentIds = [...new Set(lineItems.filter((li: any) => li.commitment_id).map((li: any) => li.commitment_id))] as string[];
+    const commitmentMap: Record<
+      string,
+      {
+        contract_number: string | null;
+        title: string | null;
+        contract_company_id: string | null;
+        company_name: string | null;
+        display_name: string;
+      }
+    > = {};
+    const companyIds = new Set<string>();
 
     if (commitmentIds.length > 0) {
       // Check subcontracts
       const { data: subs } = await supabase
         .from("subcontracts")
-        .select("id, contract_number, title")
+        .select("id, contract_number, title, contract_company_id")
         .in("id", commitmentIds);
-      (subs || []).forEach((s: any) => { commitmentMap[s.id] = s; });
+      (subs || []).forEach((s: any) => {
+        if (s.contract_company_id) companyIds.add(s.contract_company_id);
+        commitmentMap[s.id] = {
+          contract_number: s.contract_number ?? null,
+          title: s.title ?? null,
+          contract_company_id: s.contract_company_id ?? null,
+          company_name: null,
+          display_name: s.title || s.contract_number || s.id,
+        };
+      });
 
       // Check purchase orders for any not found in subcontracts
       const remainingIds = commitmentIds.filter((id: string) => !commitmentMap[id]);
       if (remainingIds.length > 0) {
         const { data: pos } = await supabase
           .from("purchase_orders")
-          .select("id, contract_number, title")
+          .select("id, contract_number, title, contract_company_id")
           .in("id", remainingIds);
-        (pos || []).forEach((p: any) => { commitmentMap[p.id] = p; });
+        (pos || []).forEach((p: any) => {
+          if (p.contract_company_id) companyIds.add(p.contract_company_id);
+          commitmentMap[p.id] = {
+            contract_number: p.contract_number ?? null,
+            title: p.title ?? null,
+            contract_company_id: p.contract_company_id ?? null,
+            company_name: null,
+            display_name: p.title || p.contract_number || p.id,
+          };
+        });
       }
     }
+
+    // Gather contract company IDs from event-level and line-item prime contracts
+    if (primeContractData?.contract_company_id) {
+      companyIds.add(primeContractData.contract_company_id);
+    }
+    for (const item of lineItems) {
+      if (item.contract?.contract_company_id) {
+        const companyId = item.contract.contract_company_id as string;
+        companyIds.add(companyId);
+      }
+    }
+
+    const companyNameById: Record<string, string> = {};
+    if (companyIds.size > 0) {
+      const { data: companies } = await serviceSupabase
+        .from("companies")
+        .select("id, name")
+        .in("id", Array.from(companyIds));
+      for (const company of companies || []) {
+        companyNameById[company.id] = company.name || "";
+      }
+    }
+
+    // Hydrate commitment labels with company names when title is missing
+    for (const commitmentId of Object.keys(commitmentMap)) {
+      const existing = commitmentMap[commitmentId];
+      if (!existing) continue;
+      const resolvedCompanyName =
+        (existing.contract_company_id &&
+          companyNameById[existing.contract_company_id]) ||
+        existing.company_name ||
+        null;
+      commitmentMap[commitmentId] = {
+        ...existing,
+        company_name: resolvedCompanyName,
+        display_name:
+          existing.title ||
+          resolvedCompanyName ||
+          existing.contract_number ||
+          commitmentId,
+      };
+    }
+
+    const primeContractCompanyName =
+      (primeContractData?.contract_company_id &&
+        companyNameById[primeContractData.contract_company_id]) ||
+      null;
+    const primeContractDisplayName =
+      primeContractData?.title ||
+      primeContractCompanyName ||
+      primeContractData?.contract_number ||
+      null;
 
     // Map budget_lines IDs to project_cost_codes IDs for edit form compatibility
     // budget_code_id on line items references budget_lines.id, but the BudgetCodeSelector uses project_cost_codes.id
@@ -262,11 +362,18 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       status: changeEvent.status,
       workflowStage: (changeEvent as any).workflow_stage ?? null,
       origin: changeEvent.origin,
+      originId: changeEvent.origin_id,
       description: changeEvent.description,
       expectingRevenue: changeEvent.expecting_revenue,
       lineItemRevenueSource: changeEvent.line_item_revenue_source,
       primeContractId: changeEvent.prime_contract_id,
-      primeContract: changeEvent.prime_contract || null,
+      primeContract: primeContractData
+        ? {
+            ...primeContractData,
+            company_name: primeContractCompanyName,
+            display_name: primeContractDisplayName,
+          }
+        : null,
       totals,
       lineItems: lineItems.map((item: any) => {
         const quantity = item.quantity || 0;
@@ -288,6 +395,21 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
           vendorId: item.vendor_id,
           vendor: item.vendor || null,
           contractId: item.contract_id,
+          contract: item.contract
+            ? {
+                ...item.contract,
+                company_name:
+                  (item.contract.contract_company_id &&
+                    companyNameById[item.contract.contract_company_id]) ||
+                  null,
+                display_name:
+                  item.contract.title ||
+                  (item.contract.contract_company_id &&
+                    companyNameById[item.contract.contract_company_id]) ||
+                  item.contract.contract_number ||
+                  null,
+              }
+            : null,
           commitmentId: item.commitment_id,
           commitmentType: item.commitment_type,
           commitmentLineItemId: item.commitment_line_item_id,
@@ -380,6 +502,8 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     if (validatedData.scope !== undefined) updates.scope = validatedData.scope;
     if (validatedData.origin !== undefined)
       updates.origin = validatedData.origin;
+    if ("originId" in body)
+      updates.origin_id = typeof body.originId === "string" ? body.originId : null;
     if (validatedData.description !== undefined)
       updates.description = validatedData.description;
     if (validatedData.status !== undefined)

@@ -42,6 +42,19 @@ export default function MainLayout({
   const showAlleatoAIWidget =
     !pathname?.startsWith("/procore-docs") && !isTeamChatPage;
 
+  if (isTeamChatPage) {
+    return (
+      <SidebarProvider defaultOpen={false}>
+        <AppSidebar />
+        <SidebarInset className="h-svh overflow-hidden">
+          <CreateProjectDevConfigProvider>
+            {children}
+          </CreateProjectDevConfigProvider>
+        </SidebarInset>
+      </SidebarProvider>
+    );
+  }
+
   return (
     <SidebarProvider defaultOpen={false}>
       {!isDrawingViewer && <AppSidebar />}
@@ -55,7 +68,7 @@ export default function MainLayout({
             >
               {children}
             </main>
-            {!isTeamChatPage && !isDrawingViewer ? <SiteFooter /> : null}
+            {!isDrawingViewer ? <SiteFooter /> : null}
             <ProcoreReferencePanel />
           </div>
         </CreateProjectDevConfigProvider>

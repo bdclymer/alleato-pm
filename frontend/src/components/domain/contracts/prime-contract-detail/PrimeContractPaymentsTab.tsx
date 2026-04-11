@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { DollarSign, Plus, X } from "lucide-react";
 import { toast } from "sonner";
+import type { ColumnDef } from "@tanstack/react-table";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,13 +18,9 @@ import {
   ModalTitle,
 } from "@/components/ui/unified-modal";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  DataTable,
+  type DataTableFooterCell,
+} from "@/components/tables/DataTable";
 import type {
   Payment,
   PaymentApplication,
@@ -63,6 +60,10 @@ export function PrimeContractPaymentsTab({
     notes: "",
   });
   const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
+  const totalPaymentsReceived = useMemo(
+    () => payments.reduce((sum, payment) => sum + payment.amount, 0),
+    [payments],
+  );
 
   const handleCreatePayment = async () => {
     if (!paymentForm.amount || !paymentForm.payment_date) return;
@@ -131,6 +132,84 @@ export function PrimeContractPaymentsTab({
     if (contractRes.ok) setContract(await contractRes.json());
   };
 
+  const columns: ColumnDef<Payment>[] = useMemo(
+    () => [
+      {
+        accessorKey: "payment_number",
+        header: "Payment #",
+        cell: ({ row }) => (
+          <div className="font-medium">{row.original.payment_number || "--"}</div>
+        ),
+      },
+      {
+        accessorKey: "payment_date",
+        header: "Date",
+        cell: ({ row }) => <div>{new Date(row.original.payment_date).toLocaleDateString()}</div>,
+      },
+      {
+        accessorKey: "amount",
+        header: () => <div className="text-right">Amount</div>,
+        cell: ({ row }) => (
+          <div className="text-right">{formatCurrency(row.original.amount)}</div>
+        ),
+      },
+      {
+        accessorKey: "method",
+        header: "Method",
+        cell: ({ row }) => (
+          <div className="capitalize text-muted-foreground">{row.original.method || "--"}</div>
+        ),
+      },
+      {
+        accessorKey: "reference_number",
+        header: "Reference",
+        cell: ({ row }) => (
+          <div className="text-muted-foreground">{row.original.reference_number || "--"}</div>
+        ),
+      },
+      {
+        id: "linked_invoice",
+        header: "Linked Invoice",
+        cell: ({ row }) => (
+          <div className="text-sm text-muted-foreground">
+            {row.original.payment_application
+              ? `App #${row.original.payment_application.application_number}`
+              : "--"}
+          </div>
+        ),
+      },
+      {
+        id: "actions",
+        header: "",
+        cell: ({ row }) => (
+          <div className="flex justify-end">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-destructive hover:text-destructive"
+              onClick={(event) => {
+                event.stopPropagation();
+                void handleDeletePayment(row.original.id);
+              }}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [formatCurrency],
+  );
+
+  const footerRow = useMemo<DataTableFooterCell[]>(
+    () => [
+      { value: "Total Received", colSpan: 2, align: "left" },
+      { value: formatCurrency(totalPaymentsReceived) },
+      { value: "", colSpan: 4 },
+    ],
+    [formatCurrency, totalPaymentsReceived],
+  );
+
   return (
     <div>
       <div className="bg-background">
@@ -139,9 +218,7 @@ export function PrimeContractPaymentsTab({
             <h3 className="text-lg font-semibold">Payments Received</h3>
             <p className="text-sm text-muted-foreground">
               {payments.length} payment{payments.length === 1 ? "" : "s"} •{" "}
-              Total received: {formatCurrency(
-                payments.reduce((sum, p) => sum + p.amount, 0),
-              )}
+              Total received: {formatCurrency(totalPaymentsReceived)}
             </p>
           </div>
           <Button size="sm" onClick={() => setShowAddPaymentDialog(true)}>
@@ -161,64 +238,13 @@ export function PrimeContractPaymentsTab({
             <p className="text-xs mt-2">Record a payment when funds are received</p>
           </div>
         ) : (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Payment #</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
-                <TableHead>Method</TableHead>
-                <TableHead>Reference</TableHead>
-                <TableHead>Linked Invoice</TableHead>
-                <TableHead></TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {payments.map((pmt) => (
-                <TableRow key={pmt.id}>
-                  <TableCell className="font-medium">
-                    {pmt.payment_number || "--"}
-                  </TableCell>
-                  <TableCell>
-                    {new Date(pmt.payment_date).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {formatCurrency(pmt.amount)}
-                  </TableCell>
-                  <TableCell className="capitalize text-muted-foreground">
-                    {pmt.method || "--"}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {pmt.reference_number || "--"}
-                  </TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {pmt.payment_application
-                      ? `App #${pmt.payment_application.application_number}`
-                      : "--"}
-                  </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-destructive hover:text-destructive"
-                      onClick={() => handleDeletePayment(pmt.id)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-            <tfoot>
-              <TableRow className="bg-muted font-medium">
-                <TableCell colSpan={2}>Total Received</TableCell>
-                <TableCell className="text-right">
-                  {formatCurrency(payments.reduce((s, p) => s + p.amount, 0))}
-                </TableCell>
-                <TableCell colSpan={4}></TableCell>
-              </TableRow>
-            </tfoot>
-          </Table>
+          <DataTable
+            columns={columns}
+            data={payments}
+            showToolbar={false}
+            showPagination={payments.length > 25}
+            footerRow={footerRow}
+          />
         )}
       </div>
 

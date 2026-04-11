@@ -7,6 +7,15 @@ import {
   SidebarFooter,
 } from "./BaseSidebar";
 import { Button } from "@/components/ui/button";
+import {
+  InlineTable,
+  InlineTableHeader,
+  InlineTableHeaderRow,
+  InlineTableHeaderCell,
+  InlineTableBody,
+  InlineTableRow,
+  InlineTableCell,
+} from "@/components/ds/inline-table";
 
 interface Commitment {
   id: string;
@@ -104,96 +113,77 @@ export function CommittedCostsModal({
           </div>
 
           {/* Commitments Table */}
-          <div className="overflow-x-auto scrollbar-hide rounded-lg border border-border bg-background">
-            <table className="w-full text-sm">
-              <thead className="bg-muted/50 border-b border-border">
+          <InlineTable variant="read">
+            <InlineTableHeader>
+              <InlineTableHeaderRow>
+                <InlineTableHeaderCell>Number</InlineTableHeaderCell>
+                <InlineTableHeaderCell>Type</InlineTableHeaderCell>
+                <InlineTableHeaderCell>Vendor</InlineTableHeaderCell>
+                <InlineTableHeaderCell>Description</InlineTableHeaderCell>
+                <InlineTableHeaderCell align="right">Amount</InlineTableHeaderCell>
+                <InlineTableHeaderCell align="center">COs</InlineTableHeaderCell>
+                <InlineTableHeaderCell>Executed</InlineTableHeaderCell>
+              </InlineTableHeaderRow>
+            </InlineTableHeader>
+            <InlineTableBody>
+              {loading ? (
                 <tr>
-                  <th className="text-left px-4 py-3 font-semibold text-foreground">
-                    Number
-                  </th>
-                  <th className="text-left px-4 py-3 font-semibold text-foreground">
-                    Type
-                  </th>
-                  <th className="text-left px-4 py-3 font-semibold text-foreground">
-                    Vendor
-                  </th>
-                  <th className="text-left px-4 py-3 font-semibold text-foreground">
-                    Description
-                  </th>
-                  <th className="text-right px-4 py-3 font-semibold text-foreground">
-                    Amount
-                  </th>
-                  <th className="text-center px-4 py-3 font-semibold text-foreground">
-                    COs
-                  </th>
-                  <th className="text-left px-4 py-3 font-semibold text-foreground">
-                    Executed
-                  </th>
+                  <td
+                    colSpan={7}
+                    className="px-3 py-10 text-center text-muted-foreground"
+                  >
+                    Loading commitments...
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {loading ? (
-                  <tr>
-                    <td
-                      colSpan={7}
-                      className="px-4 py-10 text-center text-muted-foreground"
+              ) : commitments.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="px-3 py-10 text-center text-muted-foreground"
+                  >
+                    No committed costs found for this cost code.
+                  </td>
+                </tr>
+              ) : (
+                commitments.map((commitment) => (
+                  <InlineTableRow key={commitment.id}>
+                    <InlineTableCell className="font-medium text-primary">
+                      {commitment.commitmentNumber}
+                    </InlineTableCell>
+                    <InlineTableCell>
+                      <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full border border-border bg-muted text-foreground">
+                        {commitment.type === "subcontract" ? "SC" : "PO"}
+                      </span>
+                    </InlineTableCell>
+                    <InlineTableCell>
+                      {commitment.vendor || "-"}
+                    </InlineTableCell>
+                    <InlineTableCell
+                      className="max-w-xs truncate"
+                      title={commitment.description}
                     >
-                      Loading commitments...
-                    </td>
-                  </tr>
-                ) : commitments.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={7}
-                      className="px-4 py-10 text-center text-muted-foreground"
-                    >
-                      No committed costs found for this cost code.
-                    </td>
-                  </tr>
-                ) : (
-                  commitments.map((commitment) => (
-                    <tr
-                      key={commitment.id}
-                      className="hover:bg-muted/50 transition-colors"
-                    >
-                      <td className="px-4 py-3 font-medium text-primary">
-                        {commitment.commitmentNumber}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full border border-border bg-muted text-foreground">
-                          {commitment.type === "subcontract" ? "SC" : "PO"}
+                      {commitment.description}
+                    </InlineTableCell>
+                    <InlineTableCell align="right" numeric className="font-semibold">
+                      {formatCurrency(commitment.amount)}
+                    </InlineTableCell>
+                    <InlineTableCell align="center">
+                      {commitment.changeOrders > 0 ? (
+                        <span className="text-foreground text-xs font-medium">
+                          {commitment.changeOrders}
                         </span>
-                      </td>
-                      <td className="px-4 py-3 text-foreground text-xs">
-                        {commitment.vendor || "-"}
-                      </td>
-                      <td
-                        className="px-4 py-3 text-foreground max-w-xs truncate"
-                        title={commitment.description}
-                      >
-                        {commitment.description}
-                      </td>
-                      <td className="px-4 py-3 text-right font-semibold tabular-nums text-foreground">
-                        {formatCurrency(commitment.amount)}
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        {commitment.changeOrders > 0 ? (
-                          <span className="text-foreground text-xs font-medium">
-                            {commitment.changeOrders}
-                          </span>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </td>
-                      <td className="px-4 py-3 text-foreground">
-                        {formatDate(commitment.executedDate)}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </InlineTableCell>
+                    <InlineTableCell>
+                      {formatDate(commitment.executedDate)}
+                    </InlineTableCell>
+                  </InlineTableRow>
+                ))
+              )}
+            </InlineTableBody>
+          </InlineTable>
         </div>
       </SidebarBody>
 

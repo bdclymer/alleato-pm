@@ -40,6 +40,15 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  InlineTable,
+  InlineTableHeader,
+  InlineTableHeaderRow,
+  InlineTableHeaderCell,
+  InlineTableBody,
+  InlineTableRow,
+  InlineTableCell,
+} from "@/components/ds/inline-table";
 
 interface BudgetCode {
   id: string;
@@ -536,42 +545,27 @@ export function BudgetLineItemForm({
 
       <form onSubmit={handleSubmit} className="flex flex-col">
         <div className="flex-1 overflow-y-auto py-4">
-          <div className="bg-background dark:bg-neutral-900 border rounded-lg overflow-hidden">
-            <div className="overflow-x-auto scrollbar-hide">
-              <table className="w-full">
-                <thead className="bg-muted border-b">
-                  <tr>
-                    <th className="px-4 py-4 text-left text-xs font-medium text-foreground w-12">
-                      #
-                    </th>
-                    <th className="px-4 py-4 text-left text-xs font-medium text-foreground min-w-[300px]">
-                      Budget Code*
-                    </th>
-                    <th className="px-4 py-4 text-left text-xs font-medium text-foreground w-24">
-                      Qty
-                    </th>
-                    <th className="px-4 py-4 text-left text-xs font-medium text-foreground w-28">
-                      UOM
-                    </th>
-                    <th className="px-4 py-4 text-left text-xs font-medium text-foreground w-32">
-                      Unit Cost
-                    </th>
-                    <th className="px-4 py-4 text-left text-xs font-medium text-foreground w-32">
-                      Amount*
-                    </th>
-                    <th className="px-4 py-4 w-12">
-                      <span className="sr-only">Actions</span>
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y">
+          <div>
+            <InlineTable variant="edit">
+              <InlineTableHeader>
+                <InlineTableHeaderRow>
+                  <InlineTableHeaderCell className="w-12">#</InlineTableHeaderCell>
+                  <InlineTableHeaderCell className="min-w-[300px]">Budget Code*</InlineTableHeaderCell>
+                  <InlineTableHeaderCell className="w-24">Qty</InlineTableHeaderCell>
+                  <InlineTableHeaderCell className="w-28">UOM</InlineTableHeaderCell>
+                  <InlineTableHeaderCell className="w-32">Unit Cost</InlineTableHeaderCell>
+                  <InlineTableHeaderCell className="w-32">Amount*</InlineTableHeaderCell>
+                  <InlineTableHeaderCell className="w-12"><span className="sr-only">Actions</span></InlineTableHeaderCell>
+                </InlineTableHeaderRow>
+              </InlineTableHeader>
+              <InlineTableBody>
                   {rows.map((row, index) => (
-                    <tr key={row.id} className="hover:bg-muted">
-                      <td className="px-4 py-4 text-sm text-foreground">
+                    <InlineTableRow key={row.id}>
+                      <InlineTableCell className="text-sm text-muted-foreground">
                         {index + 1}
-                      </td>
+                      </InlineTableCell>
 
-                      <td className="px-4 py-4">
+                      <InlineTableCell>
                         <Popover
                           open={openPopoverId === row.id}
                           onOpenChange={(open) =>
@@ -662,9 +656,9 @@ export function BudgetLineItemForm({
                             </Command>
                           </PopoverContent>
                         </Popover>
-                      </td>
+                      </InlineTableCell>
 
-                      <td className="px-4 py-4">
+                      <InlineTableCell>
                         <NumberInput
                           step="0.001"
                           value={row.qty}
@@ -675,9 +669,9 @@ export function BudgetLineItemForm({
                           className="h-9 text-center"
                           clearZeroOnFocus={true}
                         />
-                      </td>
+                      </InlineTableCell>
 
-                      <td className="px-4 py-4">
+                      <InlineTableCell>
                         <Select
                           value={row.uom}
                           onValueChange={(value) =>
@@ -710,9 +704,9 @@ export function BudgetLineItemForm({
                             <SelectItem value="M3">M³ - Cubic Meter</SelectItem>
                           </SelectContent>
                         </Select>
-                      </td>
+                      </InlineTableCell>
 
-                      <td className="px-4 py-4">
+                      <InlineTableCell>
                         <MoneyField
                           label="Unit cost"
                           value={row.unitCost ? parseFloat(String(row.unitCost)) : undefined}
@@ -723,9 +717,9 @@ export function BudgetLineItemForm({
                           showCurrency={false}
                           className="h-9"
                         />
-                      </td>
+                      </InlineTableCell>
 
-                      <td className="px-4 py-4">
+                      <InlineTableCell>
                         <div className="space-y-2">
                           <MoneyField
                             label="Amount"
@@ -747,36 +741,33 @@ export function BudgetLineItemForm({
                             </Alert>
                           )}
                         </div>
-                      </td>
+                      </InlineTableCell>
 
-                      <td className="px-4 py-4">
+                      <InlineTableCell>
                         {rows.length > 1 && (
                           <Button
                             type="button"
                             variant="ghost"
                             size="sm"
                             onClick={() => removeRow(row.id)}
-                            className="h-9 w-9 p-0 text-muted-foreground hover:text-destructive"
+                            className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
                           >
-                            <Trash2 className="h-4 w-4" />
+                            &times;
                           </Button>
                         )}
-                      </td>
-                    </tr>
+                      </InlineTableCell>
+                    </InlineTableRow>
                   ))}
-                </tbody>
-              </table>
-            </div>
+              </InlineTableBody>
+            </InlineTable>
 
-            <div className="px-4 py-4 border-t bg-muted">
+            <div className="px-2 py-3">
               <Button
                 type="button"
-                variant="outline"
-                size="sm"
+                variant="link"
+                className="h-auto p-0 text-sm font-medium"
                 onClick={addRow}
-                className="gap-2"
               >
-                <Plus />
                 Add Row
               </Button>
             </div>

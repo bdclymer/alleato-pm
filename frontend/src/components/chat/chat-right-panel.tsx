@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { format, parseISO } from "date-fns";
-import { MessageSquare, Send, X } from "lucide-react";
+import { Send, X } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -53,7 +53,7 @@ export function ChatRightPanel({
 
   return (
     <div className="flex h-full flex-col bg-background">
-      <div className="flex h-14 items-center justify-between border-b border-border px-4">
+      <div className="flex h-14 items-center justify-between px-4">
         <div className="min-w-0">
           <h3 className="truncate text-sm font-semibold text-foreground">Thread</h3>
           <p className="truncate text-xs text-muted-foreground">#{channel.name}</p>
@@ -115,10 +115,9 @@ export function ChatRightPanel({
               </div>
             </>
           ) : (
-            <div className="mt-10 text-center">
-              <MessageSquare className="mx-auto mb-3 h-10 w-10 text-muted-foreground/60" />
+            <div className="mt-10 text-center px-4">
               <p className="text-sm text-muted-foreground">
-                Select a message from the timeline to open its thread.
+                Select a message to open its thread.
               </p>
             </div>
           )}

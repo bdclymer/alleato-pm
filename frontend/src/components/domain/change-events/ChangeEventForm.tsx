@@ -89,6 +89,7 @@ export function ChangeEventForm({
             updateFormData={updateFormData}
             primeContractSelectOptions={primeContractSelectOptions}
             hasPrimeContracts={primeContractOptions.length > 0}
+            projectId={projectId}
           />
 
           <LineItemsSection

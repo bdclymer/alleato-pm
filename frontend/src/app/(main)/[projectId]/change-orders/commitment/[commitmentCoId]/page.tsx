@@ -8,7 +8,19 @@ import { useForm, type SubmitHandler } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { StatusBadge } from "@/components/ds";
+import {
+  InlineTable,
+  InlineTableBody,
+  InlineTableCell,
+  InlineTableFooter,
+  InlineTableFooterCell,
+  InlineTableFooterRow,
+  InlineTableHeader,
+  InlineTableHeaderCell,
+  InlineTableHeaderRow,
+  InlineTableRow,
+  StatusBadge,
+} from "@/components/ds";
 import { useMasterCostCodes, useCostCodeTypes } from "@/hooks/use-project-cost-codes";
 import { useVerticalMarkup } from "@/hooks/use-vertical-markup";
 import { ContentSectionStack, LabelValueRow, PageShell, SectionRuleHeading } from "@/components/layout";
@@ -1240,106 +1252,21 @@ export default function CommitmentCODetailPage() {
             {lineItemsLoading ? (
               <Skeleton className="h-20 w-full" />
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b text-left text-muted-foreground">
-                      <th className="pb-2 font-medium">Description</th>
-                      <th className="pb-2 font-medium">Cost Code</th>
-                      <th className="pb-2 font-medium">Cost Type</th>
-                      <th className="pb-2 text-right font-medium">Amount</th>
-                      <th className="pb-2 text-right font-medium w-24">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {lineItems.map((item) =>
-                      editingLineItemId === item.id ? (
-                        <tr key={item.id} className="border-b">
-                          <td className="py-2 pr-2">
-                            <Input
-                              value={lineItemDraft.description}
-                              onChange={(e) =>
-                                setLineItemDraft((d) => ({ ...d, description: e.target.value }))
-                              }
-                              placeholder="Description"
-                              className="h-8 text-sm"
-                              autoFocus
-                            />
-                          </td>
-                          <td className="py-2 px-2">{renderCostCodeSelect}</td>
-                          <td className="py-2 px-2">{renderCostTypeSelect}</td>
-                          <td className="py-2 px-2">
-                            <Input
-                              type="number"
-                              step="0.01"
-                              value={lineItemDraft.amount}
-                              onChange={(e) =>
-                                setLineItemDraft((d) => ({ ...d, amount: e.target.value }))
-                              }
-                              placeholder=""
-                              className="h-8 text-sm text-right"
-                            />
-                          </td>
-                          <td className="py-2 pl-2 text-right">
-                            <div className="flex items-center justify-end gap-1">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 w-7 p-0 text-primary"
-                                onClick={handleUpdateLineItem}
-                                disabled={lineItemSaving}
-                                aria-label="Save line item"
-                              >
-                                <Check className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 w-7 p-0 text-muted-foreground"
-                                onClick={cancelLineItemEdit}
-                                disabled={lineItemSaving}
-                                aria-label="Cancel edit"
-                              >
-                                <X className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ) : (
-                        <tr key={item.id} className="group border-b last:border-0">
-                          <td className="py-2">{item.description || "—"}</td>
-                          <td className="py-2 text-muted-foreground">{costCodeLabel(item.cost_code_id)}</td>
-                          <td className="py-2 text-muted-foreground">{costTypeLabel(item.cost_type_id)}</td>
-                          <td className="py-2 text-right">{formatCurrency(item.amount)}</td>
-                          <td className="py-2 text-right">
-                            <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
-                                onClick={() => startEditLineItem(item)}
-                                aria-label={`Edit line item ${item.description || ""}`}
-                              >
-                                <Pencil className="h-3.5 w-3.5" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                                onClick={() => handleDeleteLineItem(item.id)}
-                                aria-label={`Delete line item ${item.description || ""}`}
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ),
-                    )}
-                    {/* Inline add row */}
-                    {addingLineItem && (
-                      <tr className="border-b">
-                        <td className="py-2 pr-2">
+              <InlineTable variant="read">
+                <InlineTableHeader>
+                  <InlineTableHeaderRow>
+                    <InlineTableHeaderCell>Description</InlineTableHeaderCell>
+                    <InlineTableHeaderCell>Cost Code</InlineTableHeaderCell>
+                    <InlineTableHeaderCell>Cost Type</InlineTableHeaderCell>
+                    <InlineTableHeaderCell align="right">Amount</InlineTableHeaderCell>
+                    <InlineTableHeaderCell align="right" className="w-24">Actions</InlineTableHeaderCell>
+                  </InlineTableHeaderRow>
+                </InlineTableHeader>
+                <InlineTableBody>
+                  {lineItems.map((item) =>
+                    editingLineItemId === item.id ? (
+                      <InlineTableRow key={item.id}>
+                        <InlineTableCell className="pr-2">
                           <Input
                             value={lineItemDraft.description}
                             onChange={(e) =>
@@ -1349,10 +1276,10 @@ export default function CommitmentCODetailPage() {
                             className="h-8 text-sm"
                             autoFocus
                           />
-                        </td>
-                        <td className="py-2 px-2">{renderCostCodeSelect}</td>
-                        <td className="py-2 px-2">{renderCostTypeSelect}</td>
-                        <td className="py-2 px-2">
+                        </InlineTableCell>
+                        <InlineTableCell className="px-2">{renderCostCodeSelect}</InlineTableCell>
+                        <InlineTableCell className="px-2">{renderCostTypeSelect}</InlineTableCell>
+                        <InlineTableCell className="px-2">
                           <Input
                             type="number"
                             step="0.01"
@@ -1363,16 +1290,16 @@ export default function CommitmentCODetailPage() {
                             placeholder=""
                             className="h-8 text-sm text-right"
                           />
-                        </td>
-                        <td className="py-2 pl-2 text-right">
+                        </InlineTableCell>
+                        <InlineTableCell align="right" className="pl-2">
                           <div className="flex items-center justify-end gap-1">
                             <Button
                               variant="ghost"
                               size="sm"
                               className="h-7 w-7 p-0 text-primary"
-                              onClick={handleAddLineItem}
+                              onClick={handleUpdateLineItem}
                               disabled={lineItemSaving}
-                              aria-label="Save new line item"
+                              aria-label="Save line item"
                             >
                               <Check className="h-4 w-4" />
                             </Button>
@@ -1382,52 +1309,136 @@ export default function CommitmentCODetailPage() {
                               className="h-7 w-7 p-0 text-muted-foreground"
                               onClick={cancelLineItemEdit}
                               disabled={lineItemSaving}
-                              aria-label="Cancel add"
+                              aria-label="Cancel edit"
                             >
                               <X className="h-4 w-4" />
                             </Button>
                           </div>
-                        </td>
-                      </tr>
-                    )}
-                    {/* Subtotal row when markup rows exist */}
-                    {computedMarkups.length > 0 && (
-                      <tr className="border-t font-medium">
-                        <td colSpan={3} className="py-2">Subtotal</td>
-                        <td className="py-2 text-right">{formatCurrency(lineItemSubtotal)}</td>
-                        <td />
-                      </tr>
-                    )}
-                    {/* Vertical markup rows */}
-                    {computedMarkups.map((markup) => (
-                      <tr
-                        key={markup.id}
-                        className="bg-primary/5 text-muted-foreground"
-                      >
-                        <td colSpan={2} className="py-2 pl-4">
-                          {getMarkupLabel(markup.markup_type)}
-                        </td>
-                        <td className="py-2 text-right">
-                          {markup.percentage.toFixed(2)}%
-                        </td>
-                        <td className="py-2 text-right">
-                          {formatCurrency(markup.amount)}
-                        </td>
-                        <td />
-                      </tr>
-                    ))}
-                  </tbody>
-                  <tfoot>
-                    <tr className="font-medium">
-                      <td colSpan={3} className="pt-2">Total</td>
-                      <td className="pt-2 text-right">
-                        {formatCurrency(grandTotal)}
-                      </td>
-                      <td />
-                    </tr>
-                  </tfoot>
-                </table>
-              </div>
+                        </InlineTableCell>
+                      </InlineTableRow>
+                    ) : (
+                      <InlineTableRow key={item.id}>
+                        <InlineTableCell>{item.description || "—"}</InlineTableCell>
+                        <InlineTableCell className="text-muted-foreground">{costCodeLabel(item.cost_code_id)}</InlineTableCell>
+                        <InlineTableCell className="text-muted-foreground">{costTypeLabel(item.cost_type_id)}</InlineTableCell>
+                        <InlineTableCell align="right">{formatCurrency(item.amount)}</InlineTableCell>
+                        <InlineTableCell align="right">
+                          <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                              onClick={() => startEditLineItem(item)}
+                              aria-label={`Edit line item ${item.description || ""}`}
+                            >
+                              <Pencil className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                              onClick={() => handleDeleteLineItem(item.id)}
+                              aria-label={`Delete line item ${item.description || ""}`}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </InlineTableCell>
+                      </InlineTableRow>
+                    ),
+                  )}
+                  {/* Inline add row */}
+                  {addingLineItem && (
+                    <InlineTableRow>
+                      <InlineTableCell className="pr-2">
+                        <Input
+                          value={lineItemDraft.description}
+                          onChange={(e) =>
+                            setLineItemDraft((d) => ({ ...d, description: e.target.value }))
+                          }
+                          placeholder="Description"
+                          className="h-8 text-sm"
+                          autoFocus
+                        />
+                      </InlineTableCell>
+                      <InlineTableCell className="px-2">{renderCostCodeSelect}</InlineTableCell>
+                      <InlineTableCell className="px-2">{renderCostTypeSelect}</InlineTableCell>
+                      <InlineTableCell className="px-2">
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={lineItemDraft.amount}
+                          onChange={(e) =>
+                            setLineItemDraft((d) => ({ ...d, amount: e.target.value }))
+                          }
+                          placeholder=""
+                          className="h-8 text-sm text-right"
+                        />
+                      </InlineTableCell>
+                      <InlineTableCell align="right" className="pl-2">
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 text-primary"
+                            onClick={handleAddLineItem}
+                            disabled={lineItemSaving}
+                            aria-label="Save new line item"
+                          >
+                            <Check className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 w-7 p-0 text-muted-foreground"
+                            onClick={cancelLineItemEdit}
+                            disabled={lineItemSaving}
+                            aria-label="Cancel add"
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </InlineTableCell>
+                    </InlineTableRow>
+                  )}
+                  {/* Subtotal row when markup rows exist */}
+                  {computedMarkups.length > 0 && (
+                    <InlineTableRow className="border-t font-medium">
+                      <InlineTableCell colSpan={3}>Subtotal</InlineTableCell>
+                      <InlineTableCell align="right">{formatCurrency(lineItemSubtotal)}</InlineTableCell>
+                      <InlineTableCell />
+                    </InlineTableRow>
+                  )}
+                  {/* Vertical markup rows */}
+                  {computedMarkups.map((markup) => (
+                    <InlineTableRow
+                      key={markup.id}
+                      type="markup"
+                      className="text-muted-foreground"
+                    >
+                      <InlineTableCell colSpan={2} className="pl-4">
+                        {getMarkupLabel(markup.markup_type)}
+                      </InlineTableCell>
+                      <InlineTableCell align="right">
+                        {markup.percentage.toFixed(2)}%
+                      </InlineTableCell>
+                      <InlineTableCell align="right">
+                        {formatCurrency(markup.amount)}
+                      </InlineTableCell>
+                      <InlineTableCell />
+                    </InlineTableRow>
+                  ))}
+                </InlineTableBody>
+                <InlineTableFooter>
+                  <InlineTableFooterRow type="totals">
+                    <InlineTableFooterCell colSpan={3}>Total</InlineTableFooterCell>
+                    <InlineTableFooterCell align="right">
+                      {formatCurrency(grandTotal)}
+                    </InlineTableFooterCell>
+                    <InlineTableFooterCell />
+                  </InlineTableFooterRow>
+                </InlineTableFooter>
+              </InlineTable>
             )}
             {!addingLineItem && !editingLineItemId && (
               <Button

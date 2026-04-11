@@ -30,7 +30,8 @@ export interface SubmittalSummary {
 export interface SubmittalDetail extends SubmittalSummary {
   description: string | null;
   received_from_id: string | null;
-  responsible_contractor_id: number | null;
+  responsible_contractor_id: string | null;
+  responsible_contractor: { id: string; name: string } | null;
   submittal_manager_id: string | null;
   lead_time: number | null;
   required_on_site_date: string | null;
@@ -92,7 +93,7 @@ export interface CreateSubmittalInput {
   submittal_type_id?: string | null;
   division?: string | null;
   submittal_package_id?: string | null;
-  responsible_contractor_id?: number | null;
+  responsible_contractor_id?: string | null;
   received_from_id?: string | null;
   submittal_manager_id?: string | null;
   final_due_date?: string | null;

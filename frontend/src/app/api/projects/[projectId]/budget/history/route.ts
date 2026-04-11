@@ -28,7 +28,7 @@ export async function GET(request: NextRequest, { params }: HistoryParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Fetch change history
+    // Fetch change history (no FK from changed_by → auth.users, so join separately)
     const { data: changes, error: changesError } = await supabase
       .from("budget_line_history")
       .select(
@@ -48,9 +48,6 @@ export async function GET(request: NextRequest, { params }: HistoryParams) {
             id,
             title
           )
-        ),
-        users:changed_by (
-          email
         )
       `,
       )
@@ -65,6 +62,19 @@ export async function GET(request: NextRequest, { params }: HistoryParams) {
       );
     }
 
+    // Look up user emails from user_profiles for the unique changed_by UUIDs
+    const changedByIds = [...new Set((changes || []).map((c) => c.changed_by).filter(Boolean))];
+    const userEmailMap: Record<string, string> = {};
+    if (changedByIds.length > 0) {
+      const { data: profiles } = await supabase
+        .from("user_profiles")
+        .select("id, email, full_name")
+        .in("id", changedByIds as string[]);
+      for (const p of profiles ?? []) {
+        userEmailMap[p.id] = p.full_name || p.email || p.id;
+      }
+    }
+
     // Format changes for display
     const formattedChanges = (changes || []).map((change) => {
       const budgetLine = change.budget_lines as unknown as {
@@ -72,12 +82,10 @@ export async function GET(request: NextRequest, { params }: HistoryParams) {
         description: string;
       } | null;
 
-      const userInfo = change.users as unknown as { email: string } | null;
-
       return {
         id: change.id,
         timestamp: change.changed_at,
-        user: userInfo?.email || "Unknown User",
+        user: (change.changed_by ? userEmailMap[change.changed_by] : null) ?? "Unknown User",
         action: change.change_type,
         field: change.field_name,
         oldValue: change.old_value,

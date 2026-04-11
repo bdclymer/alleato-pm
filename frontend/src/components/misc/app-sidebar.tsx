@@ -74,6 +74,8 @@ const financialManagementTools = [
   { name: "Budget", path: "budget", icon: IconReportMoney, requiresProject: true },
   { name: "Commitments", path: "commitments", icon: IconBriefcase, requiresProject: true },
   { name: "Change Orders", path: "change-orders", icon: IconFileInvoice, requiresProject: true },
+  { name: "Prime PCOs", path: "prime-contract-pcos", icon: IconFileInvoice, requiresProject: true },
+  { name: "Commitment PCOs", path: "commitment-pcos", icon: IconFileInvoice, requiresProject: true },
   { name: "Change Events", path: "change-events", icon: IconCoin, requiresProject: true },
   { name: "Direct Costs", path: "direct-costs", icon: IconBuildingBank, requiresProject: true },
   { name: "Invoicing", path: "invoices", icon: IconBuildingBank, requiresProject: true },

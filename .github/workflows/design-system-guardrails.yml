@@ -48,5 +48,11 @@ jobs:
       - name: Block new design-system disables
         run: pnpm --dir frontend run design:no-new-disables -- "${{ steps.base.outputs.base_ref }}"
 
+      - name: Block new changed-file form violations
+        run: pnpm --dir frontend run design:no-new-form-violations -- "${{ steps.base.outputs.base_ref }}"
+
       - name: Enforce design lint ratchet
         run: pnpm --dir frontend run design:ratchet
+
+      - name: Enforce form-field standards
+        run: pnpm --dir frontend run audit:forms

@@ -17,6 +17,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { FormField } from "./FormField";
+import type { FormFieldBaseProps } from "./FormField";
 import { cn } from "@/lib/utils";
 
 export interface AutocompleteOption {
@@ -25,7 +26,7 @@ export interface AutocompleteOption {
   description?: string;
 }
 
-interface AutocompleteFieldProps {
+interface AutocompleteFieldProps extends FormFieldBaseProps {
   label: string;
   options: AutocompleteOption[];
   value?: string;
@@ -33,12 +34,7 @@ interface AutocompleteFieldProps {
   placeholder?: string;
   searchPlaceholder?: string;
   emptyMessage?: string;
-  error?: string;
-  hint?: string;
-  required?: boolean;
-  fullWidth?: boolean;
   className?: string;
-  disabled?: boolean;
   clearable?: boolean;
   loading?: boolean;
   onSearch?: (search: string) => void;

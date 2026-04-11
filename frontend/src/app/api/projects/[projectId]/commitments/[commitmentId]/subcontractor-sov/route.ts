@@ -4,6 +4,8 @@ import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { sendEmail } from "@/lib/email/send";
 import SOVInvitation from "@/emails/subcontractor/SOVInvitation";
+import SSOVSubmittedToPM from "@/emails/subcontractor/SSOVSubmittedToPM";
+import { APP_BASE_URL } from "@/lib/email/client";
 import { isAuthError, verifyProjectAccess } from "@/lib/supabase/auth-guard";
 import { requirePermission } from "@/lib/permissions-guard";
 
@@ -236,6 +238,118 @@ async function sendSsovInviteEmail(args: {
         entity: { type: "sov_submission", id: submissionId },
         idempotencyKey: `sov-invite/${submissionId}/${recipient.email}`,
         metadata: { projectId, commitmentId, commitmentTitle },
+      }),
+    ),
+  );
+}
+
+async function notifyPMsOfSsovSubmission(args: {
+  supabase: any;
+  projectId: number;
+  commitmentId: string;
+  commitmentNumber: string | null;
+  commitmentTitle: string | null;
+  contractAmount: number;
+  submissionId: string;
+}) {
+  const {
+    supabase,
+    projectId,
+    commitmentId,
+    commitmentNumber,
+    commitmentTitle,
+    contractAmount,
+    submissionId,
+  } = args;
+
+  // Find PMs on the project
+  const { data: pmMembers } = await supabase
+    .from("project_directory_memberships")
+    .select("person_id, role")
+    .eq("project_id", projectId)
+    .eq("status", "active");
+
+  const pmPersonIds = (pmMembers || [])
+    .filter((m: { role: string | null }) => {
+      const r = (m.role || "").toLowerCase();
+      return r.includes("project manager") || r === "pm";
+    })
+    .map((m: { person_id: string }) => m.person_id);
+
+  if (pmPersonIds.length === 0) return;
+
+  const [{ data: people }, { data: project }, { data: subcontract }] =
+    await Promise.all([
+      supabase
+        .from("people")
+        .select("id, first_name, last_name, email")
+        .in("id", pmPersonIds),
+      supabase
+        .from("projects")
+        .select("name")
+        .eq("id", projectId)
+        .maybeSingle(),
+      supabase
+        .from("subcontracts")
+        .select("contract_company_id")
+        .eq("id", commitmentId)
+        .maybeSingle(),
+    ]);
+
+  const recipients: Array<{ name: string; email: string }> = (people || [])
+    .filter((p: { email: string | null }) => !!p.email)
+    .map(
+      (p: {
+        first_name: string | null;
+        last_name: string | null;
+        email: string | null;
+      }) => ({
+        name:
+          `${p.first_name || ""} ${p.last_name || ""}`.trim() ||
+          "Project manager",
+        email: p.email as string,
+      }),
+    );
+
+  if (recipients.length === 0) return;
+
+  // Resolve subcontractor display name
+  let subcontractorName = commitmentTitle || "A subcontractor";
+  if (subcontract?.contract_company_id) {
+    const { data: vendor } = await supabase
+      .from("companies")
+      .select("name")
+      .eq("id", subcontract.contract_company_id)
+      .maybeSingle();
+    if (vendor?.name) subcontractorName = vendor.name;
+  }
+
+  const projectName = project?.name || `Project #${projectId}`;
+  const reviewUrl = `${APP_BASE_URL}/${projectId}/commitments/${commitmentId}?tab=subcontractor-sov`;
+  const contractAmountFormatted = contractAmount.toLocaleString("en-US", {
+    style: "currency",
+    currency: "USD",
+    minimumFractionDigits: 2,
+  });
+  const subject = `Subcontractor SOV submitted${commitmentNumber ? ` — ${commitmentNumber}` : ""} — review needed`;
+
+  await Promise.all(
+    recipients.map((r) =>
+      sendEmail({
+        template: "sov-submitted-to-pm",
+        to: r.email,
+        subject,
+        react: SSOVSubmittedToPM({
+          pmName: r.name,
+          subcontractorName,
+          projectName,
+          commitmentNumber: commitmentNumber || "—",
+          commitmentTitle: commitmentTitle || "—",
+          contractAmount: contractAmountFormatted,
+          reviewUrl,
+        }),
+        entity: { type: "sov_submission", id: submissionId },
+        idempotencyKey: `sov-submitted/${submissionId}/${r.email}`,
       }),
     ),
   );
@@ -690,12 +804,27 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         .eq("id", submission.id);
       if (submitError) throw submitError;
 
-      await createPmReviewTodos({
+      // Fire-and-forget: create PM todos + send PM email notifications
+      createPmReviewTodos({
         supabase,
         projectId: numericProjectId,
         commitmentId,
         commitmentNumber: commitment.contract_number || null,
         commitmentTitle: commitment.title || null,
+      }).catch((err) => {
+        console.error("[ssov-submit] PM review todos failed", err);
+      });
+
+      notifyPMsOfSsovSubmission({
+        supabase,
+        projectId: numericProjectId,
+        commitmentId,
+        commitmentNumber: commitment.contract_number,
+        commitmentTitle: commitment.title,
+        contractAmount: targetAmount,
+        submissionId: submission.id,
+      }).catch((err) => {
+        console.error("[ssov-submit] PM email notification failed", err);
       });
 
       return NextResponse.json({

@@ -226,11 +226,13 @@ export default function DrawingSetsPage() {
                     </TableCell>
                     <TableCell className="text-center">
                       <Badge variant="secondary">
-                        {(set as { revisionCount?: number }).revisionCount ?? 0}
+                        {(set as { publishedCount?: number }).publishedCount ?? 0}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-center">
-                      <Badge variant="outline">0</Badge>
+                      <Badge variant="outline">
+                        {(set as { unpublishedCount?: number }).unpublishedCount ?? 0}
+                      </Badge>
                     </TableCell>
                     <TableCell onClick={(e) => e.stopPropagation()}>
                       {editingId === set.id ? (

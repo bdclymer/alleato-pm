@@ -85,14 +85,22 @@ export function AddToPrimePCODialog({
 
     setIsSubmitting(true);
     try {
+      // Find the first selected CE's title for the PCO name
+      const selectedContract = contracts.find((c) => c.id === selectedContractId);
+      const pcoTitle = `PCO for ${count} change event${count === 1 ? "" : "s"} — ${selectedContract?.title || selectedContract?.contract_number || ""}`.trim();
+
       const res = await fetch(
         `/api/projects/${projectId}/change-events/add-to-pco`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            changeEventIds: selectedChangeEventIds,
-            contractId: selectedContractId,
+            change_event_ids: selectedChangeEventIds,
+            pco_type: "prime",
+            create_new: {
+              title: pcoTitle,
+              prime_contract_id: selectedContractId,
+            },
           }),
         },
       );
@@ -102,26 +110,20 @@ export function AddToPrimePCODialog({
         const message =
           payload && typeof payload === "object" && "error" in payload
             ? String(payload.error)
-            : "Failed to create PCOs";
+            : "Failed to create PCO";
         throw new Error(message);
       }
 
       const result = await res.json();
-      const createdCount: number =
-        result && typeof result === "object" && "created" in result
-          ? Number(result.created)
-          : count;
 
-      toast.success(
-        `${createdCount} PCO${createdCount === 1 ? "" : "s"} created successfully`,
-      );
+      toast.success("Prime Contract PCO created successfully");
       onSuccess();
       onClose();
 
       // Navigate to the newly created PCO detail page
-      const pcos = result?.pcos as { changeEventId: string; pcoId: number }[] | undefined;
-      if (pcos && pcos.length > 0) {
-        router.push(`/${projectId}/change-orders/pco/${pcos[0].pcoId}`);
+      const pcoId = result?.pco?.id;
+      if (pcoId) {
+        router.push(`/${projectId}/prime-contract-pcos/${pcoId}`);
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create PCOs");

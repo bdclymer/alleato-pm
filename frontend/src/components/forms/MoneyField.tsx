@@ -3,20 +3,17 @@
 import * as React from "react";
 import { Input } from "@/components/ui/input";
 import { FormField } from "./FormField";
+import type { FormFieldBaseProps } from "./FormField";
 import { cn } from "@/lib/utils";
 
-interface MoneyFieldProps extends Omit<
+interface MoneyFieldProps extends FormFieldBaseProps, Omit<
   React.InputHTMLAttributes<HTMLInputElement>,
-  "type" | "onChange"
+  "type" | "onChange" | "required" | "disabled"
 > {
   label: string;
   /** Canonical value in dollars (number). undefined = empty, 0 = zero. */
   value?: number;
   onChange?: (value: number | undefined) => void;
-  error?: string;
-  hint?: string;
-  required?: boolean;
-  fullWidth?: boolean;
   currency?: string;
   showCurrency?: boolean;
   allowNegative?: boolean;

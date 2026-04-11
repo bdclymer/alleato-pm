@@ -44,6 +44,7 @@ import { PageShell } from "@/components/layout";
 import { StatusBadge, EmptyState } from "@/components/ds";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import type { ChangeEventFormData } from "@/components/domain/change-events/ChangeEventForm";
+import { apiFetch, apiFetchBlob } from "@/lib/api-client";
 
 import { useChangeEventDetail } from "@/hooks/use-change-event-detail";
 import { useVerticalMarkup } from "@/hooks/use-vertical-markup";
@@ -51,11 +52,10 @@ import { ChangeEventConvertDialog } from "@/components/domain/change-events/Chan
 import { ChangeEventEmailDialog } from "@/components/domain/change-events/ChangeEventEmailDialog";
 import { ChangeEventForm } from "@/components/domain/change-events/ChangeEventForm";
 import { ChangeEventGeneralInfoPanel } from "@/components/domain/change-events/ChangeEventGeneralInfoPanel";
+import { ChangeEventLineagePanel } from "@/components/domain/change-events/ChangeEventLineagePanel";
 import { ChangeEventLineItemsTable } from "@/components/domain/change-events/ChangeEventLineItemsTable";
 import { ChangeEventHistoryTab } from "@/components/domain/change-events/ChangeEventHistoryTab";
 import { ChangeEventRelatedItemsTab } from "@/components/domain/change-events/ChangeEventRelatedItemsTab";
-import { ChangeEventPrimeContractCOsTab } from "@/components/domain/change-events/ChangeEventPrimeContractCOsTab";
-import { ChangeEventApprovalWorkflow } from "@/components/domain/change-events/ChangeEventApprovalWorkflow";
 import { EntityComments, EntityRoom } from "@/components/comments/entity-comments";
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
@@ -138,25 +138,63 @@ export default function ChangeEventDetailPage() {
   const [showConvertDialog, setShowConvertDialog] = useState(false);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
+  const [lineageCount, setLineageCount] = useState(0);
+  const [lineageRefreshSignal, setLineageRefreshSignal] = useState(0);
+
+  const fetchLineageSummary = useCallback(async () => {
+    const payload = await apiFetch<{ summary?: { count?: number } }>(
+      `/api/projects/${projectId}/change-events/${changeEventId}/lineage`,
+      { cache: "no-store" as RequestCache },
+    );
+    setLineageCount(Number(payload.summary?.count ?? 0));
+  }, [projectId, changeEventId]);
+
+  const refreshLineage = useCallback(async () => {
+    try {
+      await fetchLineageSummary();
+    } catch {
+      setLineageCount(0);
+    } finally {
+      setLineageRefreshSignal((prev) => prev + 1);
+    }
+  }, [fetchLineageSummary]);
+
+  useEffect(() => {
+    void refreshLineage();
+  }, [refreshLineage]);
+
+  useEffect(() => {
+    const onFocus = () => {
+      void refreshLineage();
+    };
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        void refreshLineage();
+      }
+    };
+
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+
+    return () => {
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+    };
+  }, [refreshLineage]);
 
   const handleUploadAttachment = useCallback(async (file: File) => {
     setIsUploadingAttachment(true);
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const res = await fetch(
+      await apiFetch(
         `/api/projects/${projectId}/change-events/${changeEventId}/attachments`,
         { method: "POST", body: formData },
       );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        toast.error(err.error || "Failed to upload attachment");
-        return;
-      }
       toast.success("Attachment uploaded");
       actions.refetch();
-    } catch {
-      toast.error("Failed to upload attachment");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to upload attachment");
     } finally {
       setIsUploadingAttachment(false);
     }
@@ -164,23 +202,17 @@ export default function ChangeEventDetailPage() {
 
   const handleDeleteAttachment = useCallback(async (attachmentId: string) => {
     try {
-      const res = await fetch(
+      await apiFetch(
         `/api/projects/${projectId}/change-events/${changeEventId}/attachments`,
         {
           method: "DELETE",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ attachmentIds: [attachmentId] }),
         },
       );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        toast.error(err.error || "Failed to delete attachment");
-        return;
-      }
       toast.success("Attachment deleted");
       actions.refetch();
-    } catch {
-      toast.error("Failed to delete attachment");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to delete attachment");
     }
   }, [projectId, changeEventId, actions]);
 
@@ -249,14 +281,9 @@ export default function ChangeEventDetailPage() {
     if (!changeEvent) return;
     try {
       toast.loading("Generating PDF...", { id: "pdf-export" });
-      const res = await fetch(
+      const blob = await apiFetchBlob(
         `/api/projects/${projectId}/change-events/${changeEventId}/pdf`,
       );
-      if (!res.ok) {
-        toast.error("Failed to generate PDF", { id: "pdf-export" });
-        return;
-      }
-      const blob = await res.blob();
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -264,8 +291,10 @@ export default function ChangeEventDetailPage() {
       a.click();
       URL.revokeObjectURL(url);
       toast.success("PDF downloaded", { id: "pdf-export" });
-    } catch {
-      toast.error("Failed to generate PDF", { id: "pdf-export" });
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to generate PDF", {
+        id: "pdf-export",
+      });
     }
   }, [changeEvent, projectId, changeEventId]);
 
@@ -287,14 +316,18 @@ export default function ChangeEventDetailPage() {
       title: changeEvent.title || "",
       status: mapApiStatusToFormStatus(changeEvent.status),
       origin: mapApiOriginToFormOrigin(changeEvent.origin),
+      originId: changeEvent.originId || changeEvent.origin_id || undefined,
       type: mapApiTypeToFormType(changeEvent.type),
       changeReason: mapApiReasonToFormReason(changeEvent.reason),
       scope: changeEvent.scope || undefined,
       expectingRevenue: changeEvent.expectingRevenue ?? changeEvent.expecting_revenue ?? true,
       lineItemRevenueSource:
         changeEvent.lineItemRevenueSource || changeEvent.line_item_revenue_source || "",
-      primeContractId:
-        changeEvent.primeContractId || changeEvent.prime_contract_id || "",
+      primeContractId: changeEvent.primeContractId != null
+        ? String(changeEvent.primeContractId)
+        : changeEvent.prime_contract_id != null
+          ? String(changeEvent.prime_contract_id)
+          : "",
       description: changeEvent.description || undefined,
       attachments: [],
       lineItems:
@@ -398,6 +431,11 @@ export default function ChangeEventDetailPage() {
 
   const ceNumber = changeEvent.number || `CE-${changeEvent.id}`;
   const ceTitle = `Change Event #${ceNumber}: ${changeEvent.title || "Untitled"}`;
+  const primeContractDisplayName =
+    (changeEvent.primeContract as { display_name?: string } | null)?.display_name ||
+    changeEvent.primeContract?.title ||
+    changeEvent.primeContract?.contract_number ||
+    null;
 
   const headerActions = (
     <Inline gap="sm">
@@ -469,11 +507,10 @@ export default function ChangeEventDetailPage() {
             onClick={async () => {
               try {
                 toast.loading("Cloning change event...", { id: "clone-ce" });
-                const res = await fetch(
+                const cloned = await apiFetch<{ data?: { id?: string }; id?: string }>(
                   `/api/projects/${projectId}/change-events`,
                   {
                     method: "POST",
-                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
                       title: `${changeEvent.title} (Copy)`,
                       type: changeEvent.type,
@@ -485,11 +522,6 @@ export default function ChangeEventDetailPage() {
                     }),
                   },
                 );
-                if (!res.ok) {
-                  const err = await res.json().catch(() => ({}));
-                  throw new Error(err.error || "Failed to clone");
-                }
-                const cloned = await res.json();
                 const newId = cloned?.data?.id ?? cloned?.id;
                 toast.success("Change event cloned", { id: "clone-ce" });
                 if (newId) {
@@ -509,7 +541,7 @@ export default function ChangeEventDetailPage() {
           {normalizedStatus !== "void" && normalizedStatus !== "converted" && (
             <DropdownMenuItem onClick={() => setShowConvertDialog(true)}>
               <ArrowRight className="mr-2 h-4 w-4" />
-              Convert to Change Order
+              Add to Potential Change Order
             </DropdownMenuItem>
           )}
           <DropdownMenuSeparator />
@@ -539,10 +571,8 @@ export default function ChangeEventDetailPage() {
           <TabsTrigger value="general" data-testid="change-event-tab-general">
             General
           </TabsTrigger>
-          <TabsTrigger value="prime-contract-cos">
-            Prime Contract Change Orders
-          </TabsTrigger>
-          <TabsTrigger value="related-items">
+          <TabsTrigger value="lineage">Lineage ({lineageCount})</TabsTrigger>
+<TabsTrigger value="related-items">
             Related Items ({relatedItems.length})
           </TabsTrigger>
           <TabsTrigger value="comments">Comments (0)</TabsTrigger>
@@ -567,27 +597,21 @@ export default function ChangeEventDetailPage() {
                 lineItems={lineItems}
                 markupRows={markupRows}
                 expectingRevenue={(changeEvent.expectingRevenue ?? changeEvent.expecting_revenue) !== false}
+                primeContractDisplayName={primeContractDisplayName}
                 onDeleteLineItem={actions.deleteLineItem}
               />
             </div>
-            <div className="mt-10">
-              <ChangeEventApprovalWorkflow
-                changeEventId={changeEventId}
-                projectId={projectId}
-                currentStatus={changeEvent.status ?? "open"}
-                onStatusChange={actions.updateStatus}
-              />
-            </div>
           </TabsContent>
 
-          <TabsContent value="prime-contract-cos">
-            <ChangeEventPrimeContractCOsTab
-              changeEventId={changeEventId}
+          <TabsContent value="lineage">
+            <ChangeEventLineagePanel
               projectId={projectId}
+              changeEventId={changeEventId}
+              refreshSignal={lineageRefreshSignal}
             />
           </TabsContent>
 
-          <TabsContent value="related-items">
+<TabsContent value="related-items">
             <ChangeEventRelatedItemsTab
               relatedItems={relatedItems}
               isLoading={false}
@@ -633,6 +657,8 @@ export default function ChangeEventDetailPage() {
         changeEventId={changeEventId}
         projectId={projectId}
         lineItems={lineItems}
+        markupRows={markupRows}
+        expectingRevenue={(changeEvent.expectingRevenue ?? changeEvent.expecting_revenue) !== false}
       />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

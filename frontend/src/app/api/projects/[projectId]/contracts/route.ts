@@ -133,6 +133,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     return NextResponse.json(enrichedContracts);
   } catch (error) {
+    console.error("[contracts GET] Error:", error);
     return apiErrorResponse(error);
   }
 }

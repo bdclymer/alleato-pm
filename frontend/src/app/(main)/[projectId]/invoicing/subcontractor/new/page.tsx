@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, useParams, useSearchParams } from "next/navigation";
+import { format } from "date-fns";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { ChevronDown, ChevronUp, Paperclip } from "lucide-react";
@@ -16,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { DateField } from "@/components/forms/DateField";
 import {
   Table,
   TableBody,
@@ -109,9 +111,9 @@ export default function NewSubcontractorInvoicePage() {
   const commitmentType = urlCommitmentType ?? pickerType;
 
   // Header fields
-  const [periodStart, setPeriodStart] = useState("");
-  const [periodEnd, setPeriodEnd] = useState("");
-  const [billingDate, setBillingDate] = useState("");
+  const [periodStart, setPeriodStart] = useState<Date | undefined>(undefined);
+  const [periodEnd, setPeriodEnd] = useState<Date | undefined>(undefined);
+  const [billingDate, setBillingDate] = useState<Date | undefined>(undefined);
   const [invoiceNumber, setInvoiceNumber] = useState("");
 
   // SOV line item edits: { [itemId]: { work_completed_period, materials_stored } }
@@ -326,9 +328,9 @@ export default function NewSubcontractorInvoicePage() {
 
       const body = {
         [contractKey]: commitmentId,
-        period_start: periodStart || null,
-        period_end: periodEnd || null,
-        billing_date: billingDate || null,
+        period_start: periodStart ? format(periodStart, "yyyy-MM-dd") : null,
+        period_end: periodEnd ? format(periodEnd, "yyyy-MM-dd") : null,
+        billing_date: billingDate ? format(billingDate, "yyyy-MM-dd") : null,
         invoice_number: invoiceNumber || null,
         status,
         line_items: lineItems,
@@ -462,33 +464,21 @@ export default function NewSubcontractorInvoicePage() {
               Header fields — Period Start, Period End, Billing Date, Invoice #
           ---------------------------------------------------------------- */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-            <div className="space-y-1.5">
-              <Label htmlFor="period-start">Period Start:</Label>
-              <Input
-                id="period-start"
-                type="date"
-                value={periodStart}
-                onChange={(e) => setPeriodStart(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="period-end">Period End:</Label>
-              <Input
-                id="period-end"
-                type="date"
-                value={periodEnd}
-                onChange={(e) => setPeriodEnd(e.target.value)}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="billing-date">Billing Date:</Label>
-              <Input
-                id="billing-date"
-                type="date"
-                value={billingDate}
-                onChange={(e) => setBillingDate(e.target.value)}
-              />
-            </div>
+            <DateField
+              label="Period Start"
+              value={periodStart}
+              onChange={setPeriodStart}
+            />
+            <DateField
+              label="Period End"
+              value={periodEnd}
+              onChange={setPeriodEnd}
+            />
+            <DateField
+              label="Billing Date"
+              value={billingDate}
+              onChange={setBillingDate}
+            />
             <div className="space-y-1.5">
               <Label htmlFor="invoice-number">Invoice #:</Label>
               <Input

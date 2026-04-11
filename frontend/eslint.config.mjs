@@ -75,7 +75,9 @@ const config = [
       'design-system/require-page-shell': 'error',
       'design-system/no-oversized-shadows': 'error',
       'design-system/no-raw-button': 'error',
+      'design-system/no-raw-form-controls': 'error',
       'design-system/require-money-field': 'error',
+      'design-system/require-api-client': 'warn',
     },
   },
 ]

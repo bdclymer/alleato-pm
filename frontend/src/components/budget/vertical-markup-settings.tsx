@@ -401,22 +401,25 @@ export function VerticalMarkupSettings({
         )}
 
         {/* Explanation */}
-        <div className="mt-6 p-4 bg-muted rounded-lg">
-          <h4 className="font-medium mb-2">How Vertical Markup Works</h4>
-          <ul className="text-sm text-muted-foreground space-y-1">
-            <li>
-              <strong>Simple Markup:</strong> Calculated on the original base
-              amount only
-            </li>
-            <li>
-              <strong>Compound Markup:</strong> Calculated on the running total
-              (base + previous markups)
-            </li>
-            <li>
-              <strong>Order matters:</strong> Markups are applied in the order
-              shown above
-            </li>
-          </ul>
+        <div className="mt-6 rounded-lg border border-primary/20 bg-primary/5 px-6 py-5 flex items-start gap-4">
+          <Info className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+          <div>
+            <h4 className="text-sm font-semibold text-foreground mb-1.5">How Vertical Markup Works</h4>
+            <ul className="text-sm text-muted-foreground space-y-1">
+              <li>
+                <strong>Simple Markup:</strong> Calculated on the original base
+                amount only
+              </li>
+              <li>
+                <strong>Compound Markup:</strong> Calculated on the running total
+                (base + previous markups)
+              </li>
+              <li>
+                <strong>Order matters:</strong> Markups are applied in the order
+                shown above
+              </li>
+            </ul>
+          </div>
         </div>
       </CardContent>
 

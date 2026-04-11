@@ -39,16 +39,18 @@ const defaultUser = {
 
 export function NavUser({
   user,
+  isCollapsed: isCollapsedProp,
 }: {
   user?: {
     name?: unknown
     email?: unknown
     avatar?: unknown
   }
+  isCollapsed?: boolean
 }) {
   const router = useRouter()
   const { isMobile, state } = useSidebar()
-  const isCollapsed = state === "collapsed"
+  const isCollapsed = isCollapsedProp ?? state === "collapsed"
 
   // Use default values if user is undefined or properties are missing
   const safeName =

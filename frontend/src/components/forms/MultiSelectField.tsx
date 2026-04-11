@@ -17,6 +17,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { FormField } from "./FormField";
+import type { FormFieldBaseProps } from "./FormField";
 import { Badge } from "@/components/ui/badge";
 
 interface Option {
@@ -24,18 +25,13 @@ interface Option {
   label: string;
 }
 
-interface MultiSelectFieldProps {
+interface MultiSelectFieldProps extends FormFieldBaseProps {
   label: string;
   options: Option[];
   value?: string[];
   onChange?: (values: string[]) => void;
   placeholder?: string;
-  error?: string;
-  hint?: string;
-  required?: boolean;
-  fullWidth?: boolean;
   className?: string;
-  disabled?: boolean;
 }
 
 export function MultiSelectField({

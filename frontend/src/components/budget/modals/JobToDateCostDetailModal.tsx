@@ -8,6 +8,15 @@ import {
   SidebarTabs,
 } from "./BaseSidebar";
 import { Button } from "@/components/ui/button";
+import {
+  InlineTable,
+  InlineTableHeader,
+  InlineTableHeaderRow,
+  InlineTableHeaderCell,
+  InlineTableBody,
+  InlineTableRow,
+  InlineTableCell,
+} from "@/components/ds/inline-table";
 import { cn } from "@/lib/utils";
 import { DollarSign } from "lucide-react";
 
@@ -158,84 +167,67 @@ export function JobToDateCostDetailModal({
             </div>
 
             {/* Costs Table */}
-            <div className="overflow-x-auto scrollbar-hide rounded-lg border border-border bg-background">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/50 border-b border-border">
+            <InlineTable variant="read">
+              <InlineTableHeader>
+                <InlineTableHeaderRow>
+                  <InlineTableHeaderCell>Description</InlineTableHeaderCell>
+                  <InlineTableHeaderCell>Type</InlineTableHeaderCell>
+                  <InlineTableHeaderCell>Vendor</InlineTableHeaderCell>
+                  <InlineTableHeaderCell>Invoice #</InlineTableHeaderCell>
+                  <InlineTableHeaderCell align="right">Amount</InlineTableHeaderCell>
+                  <InlineTableHeaderCell>Date</InlineTableHeaderCell>
+                </InlineTableHeaderRow>
+              </InlineTableHeader>
+              <InlineTableBody>
+                {loading ? (
                   <tr>
-                    <th className="text-left px-4 py-3 font-semibold text-foreground">
-                      Description
-                    </th>
-                    <th className="text-left px-4 py-3 font-semibold text-foreground">
-                      Type
-                    </th>
-                    <th className="text-left px-4 py-3 font-semibold text-foreground">
-                      Vendor
-                    </th>
-                    <th className="text-left px-4 py-3 font-semibold text-foreground">
-                      Invoice #
-                    </th>
-                    <th className="text-right px-4 py-3 font-semibold text-foreground">
-                      Amount
-                    </th>
-                    <th className="text-left px-4 py-3 font-semibold text-foreground">
-                      Date
-                    </th>
+                    <td
+                      colSpan={6}
+                      className="px-3 py-10 text-center text-muted-foreground"
+                    >
+                      Loading costs...
+                    </td>
                   </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {loading ? (
-                    <tr>
-                      <td
-                        colSpan={6}
-                        className="px-4 py-10 text-center text-muted-foreground"
+                ) : costs.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={6}
+                      className="px-3 py-10 text-center text-muted-foreground"
+                    >
+                      No approved costs found for this cost code.
+                    </td>
+                  </tr>
+                ) : (
+                  costs.map((cost) => (
+                    <InlineTableRow key={cost.id}>
+                      <InlineTableCell
+                        className="max-w-xs truncate"
+                        title={cost.description || "-"}
                       >
-                        Loading costs...
-                      </td>
-                    </tr>
-                  ) : costs.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={6}
-                        className="px-4 py-10 text-center text-muted-foreground"
-                      >
-                        No approved costs found for this cost code.
-                      </td>
-                    </tr>
-                  ) : (
-                    costs.map((cost) => (
-                      <tr
-                        key={cost.id}
-                        className="hover:bg-muted/50 transition-colors"
-                      >
-                        <td
-                          className="px-4 py-3 text-foreground max-w-xs truncate"
-                          title={cost.description || "-"}
-                        >
-                          {cost.description || "-"}
-                        </td>
-                        <td className="px-4 py-3 text-foreground text-xs">
-                          <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full border border-border bg-muted text-foreground">
-                            {cost.costType || "Other"}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-foreground text-xs">
-                          {cost.vendor || "-"}
-                        </td>
-                        <td className="px-4 py-3 text-foreground text-xs font-mono">
-                          {cost.invoiceNumber || "-"}
-                        </td>
-                        <td className="px-4 py-3 text-right font-semibold tabular-nums text-foreground">
-                          {formatCurrency(cost.amount)}
-                        </td>
-                        <td className="px-4 py-3 text-foreground">
-                          {formatDate(cost.incurredDate)}
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
+                        {cost.description || "-"}
+                      </InlineTableCell>
+                      <InlineTableCell>
+                        <span className="inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full border border-border bg-muted text-foreground">
+                          {cost.costType || "Other"}
+                        </span>
+                      </InlineTableCell>
+                      <InlineTableCell>
+                        {cost.vendor || "-"}
+                      </InlineTableCell>
+                      <InlineTableCell className="font-mono">
+                        {cost.invoiceNumber || "-"}
+                      </InlineTableCell>
+                      <InlineTableCell align="right" numeric className="font-semibold">
+                        {formatCurrency(cost.amount)}
+                      </InlineTableCell>
+                      <InlineTableCell>
+                        {formatDate(cost.incurredDate)}
+                      </InlineTableCell>
+                    </InlineTableRow>
+                  ))
+                )}
+              </InlineTableBody>
+            </InlineTable>
           </div>
         ) : (
           <div className="p-4 sm:p-6 space-y-4">
@@ -243,50 +235,37 @@ export function JobToDateCostDetailModal({
               Cost breakdown by type for this budget line.
             </p>
 
-            <div className="overflow-x-auto scrollbar-hide rounded-lg border border-border bg-background">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/50 border-b border-border">
-                  <tr>
-                    <th className="text-left px-4 py-3 font-semibold text-foreground">
-                      Cost Type
-                    </th>
-                    <th className="text-right px-4 py-3 font-semibold text-foreground">
-                      Count
-                    </th>
-                    <th className="text-right px-4 py-3 font-semibold text-foreground">
-                      Total Amount
-                    </th>
-                    <th className="text-right px-4 py-3 font-semibold text-foreground">
-                      % of Total
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {Object.entries(costsByType).map(([type, data]) => (
-                    <tr
-                      key={type}
-                      className="hover:bg-muted/50 transition-colors"
-                    >
-                      <td className="px-4 py-3 font-medium text-foreground">
-                        {type}
-                      </td>
-                      <td className="px-4 py-3 text-right text-foreground">
-                        {data.count}
-                      </td>
-                      <td className="px-4 py-3 text-right font-semibold tabular-nums text-foreground">
-                        {formatCurrency(data.total)}
-                      </td>
-                      <td className="px-4 py-3 text-right text-foreground">
-                        {totalAmount > 0
-                          ? ((data.total / totalAmount) * 100).toFixed(1)
-                          : "0.0"}
-                        %
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <InlineTable variant="read">
+              <InlineTableHeader>
+                <InlineTableHeaderRow>
+                  <InlineTableHeaderCell>Cost Type</InlineTableHeaderCell>
+                  <InlineTableHeaderCell align="right">Count</InlineTableHeaderCell>
+                  <InlineTableHeaderCell align="right">Total Amount</InlineTableHeaderCell>
+                  <InlineTableHeaderCell align="right">% of Total</InlineTableHeaderCell>
+                </InlineTableHeaderRow>
+              </InlineTableHeader>
+              <InlineTableBody>
+                {Object.entries(costsByType).map(([type, data]) => (
+                  <InlineTableRow key={type}>
+                    <InlineTableCell className="font-medium">
+                      {type}
+                    </InlineTableCell>
+                    <InlineTableCell align="right">
+                      {data.count}
+                    </InlineTableCell>
+                    <InlineTableCell align="right" numeric className="font-semibold">
+                      {formatCurrency(data.total)}
+                    </InlineTableCell>
+                    <InlineTableCell align="right">
+                      {totalAmount > 0
+                        ? ((data.total / totalAmount) * 100).toFixed(1)
+                        : "0.0"}
+                      %
+                    </InlineTableCell>
+                  </InlineTableRow>
+                ))}
+              </InlineTableBody>
+            </InlineTable>
           </div>
         )}
       </SidebarBody>

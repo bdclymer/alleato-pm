@@ -101,7 +101,7 @@ export async function DELETE(
   }
 
   const service = new DrawingService(createServiceClient());
-  const result = await service.delete(projectId, drawingId);
+  const result = await service.delete(projectId, drawingId, user.id);
 
   if (result.error) {
     return apiErrorResponse(result.error);

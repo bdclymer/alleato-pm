@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { FileCheck, ArrowRight } from "lucide-react";
 import { Text } from "@/components/ds/text";
+import type { VerticalMarkup } from "@/hooks/use-vertical-markup";
 
 interface ChangeEventConvertDialogProps {
   open: boolean;
@@ -29,6 +30,20 @@ interface ChangeEventConvertDialogProps {
     costRom: number | null;
     revenueRom?: number | null;
   }>;
+  markupRows: VerticalMarkup[];
+  expectingRevenue?: boolean;
+}
+
+const MARKUP_TYPE_LABELS: Record<string, string> = {
+  insurance: "Insurance",
+  bond: "Bond",
+  fee: "Contractor Fee",
+  overhead: "Overhead",
+  custom: "Custom",
+};
+
+function getMarkupLabel(markupType: string): string {
+  return MARKUP_TYPE_LABELS[markupType.toLowerCase()] || markupType;
 }
 
 export function ChangeEventConvertDialog({
@@ -37,10 +52,12 @@ export function ChangeEventConvertDialog({
   changeEventId,
   projectId,
   lineItems = [],
+  markupRows,
+  expectingRevenue = true,
 }: ChangeEventConvertDialogProps) {
   const router = useRouter();
   const [isConverting, setIsConverting] = useState(false);
-  const [conversionType, setConversionType] = useState("commitment");
+  const [conversionType, setConversionType] = useState("commitment_pco");
   const [targetContractId, setTargetContractId] = useState<string>("");
   const [contracts, setContracts] = useState<Array<{
     id: string;
@@ -49,8 +66,39 @@ export function ChangeEventConvertDialog({
     title: string | null;
     company_name: string | null;
     type: "prime_contract" | "commitment";
+    commitment_type?: "subcontract" | "purchase_order";
   }>>([]);
   const [isLoadingContracts, setIsLoadingContracts] = useState(false);
+
+  const basePrimeAmount = lineItems.reduce(
+    (sum, item) => sum + (item.revenueRom ?? 0),
+    0,
+  );
+  const baseCommitmentAmount = lineItems.reduce(
+    (sum, item) => sum + (item.costRom ?? 0),
+    0,
+  );
+
+  const computedMarkups = (() => {
+    if (conversionType !== "prime_pco" || !expectingRevenue) return [];
+    const sorted = [...markupRows].sort((a, b) => a.calculation_order - b.calculation_order);
+    let runningRevenueBase = basePrimeAmount;
+    return sorted.map((markup) => {
+      const revenueAmount = runningRevenueBase * (markup.percentage / 100);
+      if (markup.compound) runningRevenueBase += revenueAmount;
+      return { ...markup, revenueAmount };
+    });
+  })();
+
+  const markupTotal = computedMarkups.reduce(
+    (sum, markup) => sum + markup.revenueAmount,
+    0,
+  );
+  const displayedTotal =
+    conversionType === "prime_pco"
+      ? basePrimeAmount + markupTotal
+      : baseCommitmentAmount;
+  const usesRevenueAmounts = conversionType === "prime_pco";
 
   // Fetch contracts when dialog opens
   useEffect(() => {
@@ -97,6 +145,7 @@ export function ChangeEventConvertDialog({
               title: commitment.title,
               company_name: commitment.contract_company?.name || null,
               type: "commitment",
+              commitment_type: commitment.commitment_type === "purchase_order" ? "purchase_order" : "subcontract",
               label: `${commitment.number || commitment.contract_number || "N/A"} - ${commitment.contract_company?.name || "Unknown"}`,
             });
           });
@@ -123,38 +172,50 @@ export function ChangeEventConvertDialog({
     setIsConverting(true);
 
     try {
-      const response = await fetch(
-        `/api/projects/${projectId}/change-events/${changeEventId}/convert-to-change-order`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            type: conversionType,
-            target_contract_id: targetContractId || null,
-          }),
-        }
-      );
+      const selectedContract = contracts.find((contract) => contract.id === targetContractId);
+      const pcoTitle = selectedContract
+        ? `PCO for change event — ${selectedContract.title || selectedContract.contract_number}`
+        : "PCO for change event";
+
+      const response = await fetch(`/api/projects/${projectId}/change-events/add-to-pco`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          change_event_ids: [changeEventId],
+          pco_type: conversionType === "prime_pco" ? "prime" : "commitment",
+          create_new:
+            conversionType === "prime_pco"
+              ? {
+                  title: pcoTitle,
+                  prime_contract_id: targetContractId,
+                }
+              : {
+                  title: pcoTitle,
+                  commitment_id: targetContractId,
+                  commitment_type: selectedContract?.commitment_type ?? "subcontract",
+                },
+        }),
+      });
 
       if (!response.ok) {
-        throw new Error("Failed to convert to change order");
+        throw new Error("Failed to create potential change order");
       }
 
       const result = await response.json();
-      toast.success("Successfully converted to change order");
+      toast.success("Successfully created potential change order");
       onOpenChange(false);
 
-      // Navigate to the new change order. PCCOs and CCOs live under
-      // different sub-routes — there is no /change-orders/[id] route.
-      if (result.change_order_id) {
-        const subPath = conversionType === "prime" ? "prime" : "commitment";
-        router.push(
-          `/${projectId}/change-orders/${subPath}/${result.change_order_id}`,
-        );
+      if (result?.pco?.id) {
+        const path =
+          conversionType === "prime_pco"
+            ? `/${projectId}/prime-contract-pcos/${result.pco.id}`
+            : `/${projectId}/commitment-pcos/${result.pco.id}`;
+        router.push(path);
       }
     } catch {
-      toast.error("Failed to convert to change order");
+      toast.error("Failed to create potential change order");
     } finally {
       setIsConverting(false);
     }
@@ -164,10 +225,11 @@ export function ChangeEventConvertDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Convert to Change Order</DialogTitle>
+          <DialogTitle>Add to Potential Change Order</DialogTitle>
           <DialogDescription>
-            Convert this approved change event into a formal change order. This
-            action cannot be undone.
+            This project uses a two-tier change process. Convert this approved
+            change event into a Potential Change Order (PCO) first. You can
+            create the formal change order from approved PCOs.
           </DialogDescription>
         </DialogHeader>
 
@@ -177,22 +239,22 @@ export function ChangeEventConvertDialog({
             <Label>Change Order Type</Label>
             <RadioGroup value={conversionType} onValueChange={setConversionType}>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="commitment" id="commitment" />
-                <Label htmlFor="commitment" className="cursor-pointer">
-                  Commitment Change Order (Subcontractor/Vendor)
+                <RadioGroupItem value="commitment_pco" id="commitment_pco" />
+                <Label htmlFor="commitment_pco" className="cursor-pointer">
+                  Commitment Potential Change Order (Subcontractor/Vendor)
                 </Label>
               </div>
               <div className="flex items-center space-x-2">
-                <RadioGroupItem value="prime" id="prime" />
-                <Label htmlFor="prime" className="cursor-pointer">
-                  Prime Contract Change Order (Owner)
+                <RadioGroupItem value="prime_pco" id="prime_pco" />
+                <Label htmlFor="prime_pco" className="cursor-pointer">
+                  Prime Contract Potential Change Order (Owner)
                 </Label>
               </div>
             </RadioGroup>
           </div>
 
           {/* Target Contract Selection */}
-          {conversionType === "commitment" && (
+          {conversionType === "commitment_pco" && (
             <SelectField
               label="Target Contract"
               value={targetContractId}
@@ -210,7 +272,7 @@ export function ChangeEventConvertDialog({
           )}
 
           {/* Target Contract for Prime */}
-          {conversionType === "prime" && (
+          {conversionType === "prime_pco" && (
             <SelectField
               label="Target Contract"
               value={targetContractId}
@@ -235,17 +297,26 @@ export function ChangeEventConvertDialog({
                 <div key={item.id} className="flex justify-between text-sm">
                   <span className="truncate flex-1">{item.description}</span>
                   <span className="font-mono">
-                    ${(item.costRom ?? 0).toLocaleString()}
+                    $
+                    {(usesRevenueAmounts
+                      ? (item.revenueRom ?? item.costRom ?? 0)
+                      : (item.costRom ?? 0)
+                    ).toLocaleString()}
                   </span>
+                </div>
+              ))}
+              {computedMarkups.map((markup) => (
+                <div key={markup.id} className="flex justify-between text-sm text-muted-foreground">
+                  <span className="truncate flex-1">
+                    {getMarkupLabel(markup.markup_type)} ({markup.percentage}%)
+                  </span>
+                  <span className="font-mono">+${markup.revenueAmount.toLocaleString()}</span>
                 </div>
               ))}
               <div className="border-t pt-2 flex justify-between font-medium">
                 <span>Total</span>
                 <span className="font-mono">
-                  $
-                  {lineItems
-                    .reduce((sum, item) => sum + (item.costRom ?? 0), 0)
-                    .toLocaleString()}
+                  ${displayedTotal.toLocaleString()}
                 </span>
               </div>
             </div>
@@ -256,10 +327,9 @@ export function ChangeEventConvertDialog({
             <Text as="div" size="sm" className="flex items-start gap-2">
               <FileCheck className="h-4 w-4 mt-0.5 flex-shrink-0" />
               <span>
-                After conversion, this change event will be marked as
-                &quot;Converted&quot; and will be linked to the new change
-                order. All line items and attachments will be copied to the
-                change order.
+                This change event will be linked to the newly created PCO.
+                Line items and attachments remain available for review before
+                final CO conversion.
               </span>
             </Text>
           </div>
@@ -278,7 +348,7 @@ export function ChangeEventConvertDialog({
             disabled={isConverting || !targetContractId || isLoadingContracts}
           >
             <ArrowRight />
-            Convert to Change Order
+            Create Potential Change Order
           </Button>
         </DialogFooter>
       </DialogContent>

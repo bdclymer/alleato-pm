@@ -1,0 +1,408 @@
+{
+  "generated_at": "2026-04-10T12:55:00Z",
+  "run_id": "run-20260410-124614",
+  "tasks": [
+    {
+      "task_id": "T-001",
+      "gap_id": "DB-001",
+      "severity": "critical",
+      "title": "Add required column to submittal_workflow_steps",
+      "status": "open",
+      "description": "Add a migration to create the required boolean column (NOT NULL DEFAULT false) on submittal_workflow_steps so the API-accepted field is actually persisted.",
+      "files": [
+        "supabase/migrations/YYYYMMDD_add_required_to_workflow_steps.sql",
+        "frontend/src/types/database.types.ts",
+        "frontend/src/app/api/projects/[projectId]/submittals/[submittalId]/workflow-steps/route.ts"
+      ]
+    },
+    {
+      "task_id": "T-002",
+      "gap_id": "DB-002",
+      "severity": "critical",
+      "title": "Pass submittal_id in submittal_responses INSERT",
+      "status": "open",
+      "description": "Fix the workflow-steps POST handler to include submittal_id in the submittal_responses insert payload, matching the non-nullable column requirement.",
+      "files": [
+        "frontend/src/app/api/projects/[projectId]/submittals/[submittalId]/workflow-steps/route.ts"
+      ]
+    },
+    {
+      "task_id": "T-003",
+      "gap_id": "DB-004",
+      "severity": "critical",
+      "title": "Fix responsible_contractor_id type mismatch",
+      "status": "open",
+      "description": "Change responsible_contractor_id from integer to UUID in the submittals table and add a proper FK constraint to companies.id.",
+      "files": [
+        "supabase/migrations/YYYYMMDD_fix_responsible_contractor_id_type.sql",
+        "frontend/src/types/database.types.ts"
+      ]
+    },
+    {
+      "task_id": "T-004",
+      "gap_id": "DB-003",
+      "severity": "high",
+      "title": "Standardize ball_in_court on UUID with user dropdown",
+      "status": "open",
+      "description": "Standardize ball_in_court to store user UUIDs consistently. Replace the free-text Input with a user select dropdown in the form.",
+      "files": [
+        "frontend/src/components/domain/submittals/SubmittalForm.tsx",
+        "frontend/src/app/api/projects/[projectId]/submittals/route.ts",
+        "frontend/src/app/api/projects/[projectId]/submittals/[submittalId]/route.ts"
+      ]
+    },
+    {
+      "task_id": "T-005",
+      "gap_id": "DB-005",
+      "severity": "high",
+      "title": "Resolve status CHECK constraint vs API value conflict",
+      "status": "open",
+      "description": "Verify live DB CHECK constraint on submittal status. Drop old lowercase constraint if present and align with API title-case values (Draft, Open, Distributed, Closed).",
+      "files": [
+        "supabase/migrations/YYYYMMDD_fix_submittal_status_check.sql",
+        "frontend/src/types/database.types.ts"
+      ]
+    },
+    {
+      "task_id": "T-006",
+      "gap_id": "DB-006",
+      "severity": "high",
+      "title": "Add unique constraint for submittal_responses upsert",
+      "status": "open",
+      "description": "Add a migration creating a unique constraint on (workflow_step_id, responder_id) in submittal_responses to support the existing upsert logic.",
+      "files": [
+        "supabase/migrations/YYYYMMDD_add_unique_constraint_responses.sql"
+      ]
+    },
+    {
+      "task_id": "T-007",
+      "gap_id": "API-001",
+      "severity": "high",
+      "title": "Create POST distribute endpoint",
+      "status": "open",
+      "description": "Create the distribute route handler that transitions submittal status to Distributed and notifies the distribution list.",
+      "files": [
+        "frontend/src/app/api/projects/[projectId]/submittals/[submittalId]/distribute/route.ts"
+      ]
+    },
+    {
+      "task_id": "T-008",
+      "gap_id": "API-002",
+      "severity": "high",
+      "title": "Create POST revisions endpoint",
+      "status": "open",
+      "description": "Create the revisions route handler to support creating new revisions of an existing submittal.",
+      "files": [
+        "frontend/src/app/api/projects/[projectId]/submittals/[submittalId]/revisions/route.ts"
+      ]
+    },
+    {
+      "task_id": "T-009",
+      "gap_id": "API-008",
+      "severity": "high",
+      "title": "Fix response status vocabulary to match Procore",
+      "status": "open",
+      "description": "Remove Received from the response status enum and add Reviewed - No Exception to align with Procore vocabulary.",
+      "files": [
+        "frontend/src/app/api/projects/[projectId]/submittals/[submittalId]/workflow-steps/route.ts",
+        "frontend/src/components/domain/submittals/SubmittalForm.tsx",
+        "frontend/src/lib/schemas/submittal.ts"
+      ]
+    },
+    {
+      "task_id": "T-010",
+      "gap_id": "API-009",
+      "severity": "high",
+      "title": "Fix BIC advancement to check all group responses",
+      "status": "open",
+      "description": "Update ball-in-court advancement logic to verify all required responders in the current step have responded before advancing to the next step.",
+      "files": [
+        "frontend/src/app/api/projects/[projectId]/submittals/[submittalId]/workflow-steps/route.ts"
+      ]
+    },
+    {
+      "task_id": "T-011",
+      "gap_id": "UI-001",
+      "severity": "high",
+      "title": "Resolve 4 always-null table columns via API joins",
+      "status": "open",
+      "description": "Add joins in the submittals list API to resolve responsible_contractor, received_from, approvers, and latest_response from related tables.",
+      "files": [
+        "frontend/src/app/api/projects/[projectId]/submittals/route.ts",
+        "frontend/src/hooks/use-submittals.ts"
+      ]
+    },
+    {
+      "task_id": "T-012",
+      "gap_id": "UI-002",
+      "severity": "high",
+      "title": "Replace ball_in_court text Input with user select",
+      "status": "open",
+      "description": "Change the ball_in_court form field from a free-text Input to a user select dropdown that stores the UUID.",
+      "files": [
+        "frontend/src/components/domain/submittals/SubmittalForm.tsx"
+      ]
+    },
+    {
+      "task_id": "T-013",
+      "gap_id": "UI-004",
+      "severity": "high",
+      "title": "Wire Package/Spec pickers to form state",
+      "status": "open",
+      "description": "Connect picker components to React Hook Form state via setValue or Controller so selections persist through submission.",
+      "files": [
+        "frontend/src/components/domain/submittals/SubmittalForm.tsx"
+      ]
+    },
+    {
+      "task_id": "T-014",
+      "gap_id": "UI-005",
+      "severity": "high",
+      "title": "Add missing form fields",
+      "status": "open",
+      "description": "Add submittal_package_id, cost_code_id, location_id, linked_drawings, distribution_list, and attachments to the Zod schema and form UI.",
+      "files": [
+        "frontend/src/lib/schemas/submittal.ts",
+        "frontend/src/components/domain/submittals/SubmittalForm.tsx"
+      ]
+    },
+    {
+      "task_id": "T-015",
+      "gap_id": "UI-010",
+      "severity": "high",
+      "title": "Add attachment upload UI",
+      "status": "open",
+      "description": "Add file upload input to the create/edit form and an attachments section to the detail view, wired to a storage upload endpoint.",
+      "files": [
+        "frontend/src/components/domain/submittals/SubmittalForm.tsx",
+        "frontend/src/app/(main)/[projectId]/submittals/[submittalId]/page.tsx"
+      ]
+    },
+    {
+      "task_id": "T-016",
+      "gap_id": "UI-011",
+      "severity": "high",
+      "title": "Add distribution creation UI",
+      "status": "open",
+      "description": "Create a distribute dialog accessible from the detail view toolbar with a user/company multi-select for the distribution list.",
+      "files": [
+        "frontend/src/components/domain/submittals/DistributeDialog.tsx",
+        "frontend/src/app/(main)/[projectId]/submittals/[submittalId]/page.tsx"
+      ]
+    },
+    {
+      "task_id": "T-017",
+      "gap_id": "DB-007",
+      "severity": "medium",
+      "title": "Expand history trigger to capture field edits",
+      "status": "open",
+      "description": "Expand the submittal_history trigger to capture changes to all significant columns, not just status.",
+      "files": [
+        "supabase/migrations/YYYYMMDD_expand_submittal_history_trigger.sql"
+      ]
+    },
+    {
+      "task_id": "T-018",
+      "gap_id": "DB-008",
+      "severity": "medium",
+      "title": "Add Reviewer to STEP_TYPES constant",
+      "status": "open",
+      "description": "Add Reviewer as a valid workflow step type in the frontend STEP_TYPES constant.",
+      "files": [
+        "frontend/src/components/domain/submittals/SubmittalForm.tsx"
+      ]
+    },
+    {
+      "task_id": "T-019",
+      "gap_id": "DB-009",
+      "severity": "medium",
+      "title": "Add Reviewed - No Exception to response status enum",
+      "status": "open",
+      "description": "Add the Reviewed - No Exception value to the response status enum to match Procore vocabulary.",
+      "files": [
+        "frontend/src/lib/schemas/submittal.ts",
+        "frontend/src/app/api/projects/[projectId]/submittals/[submittalId]/workflow-steps/route.ts"
+      ]
+    },
+    {
+      "task_id": "T-020",
+      "gap_id": "DB-011",
+      "severity": "medium",
+      "title": "Resolve submittal_type_id NOT NULL ambiguity",
+      "status": "open",
+      "description": "Either add Zod validation requiring submittal_type_id, or make the column nullable with a default value.",
+      "files": [
+        "frontend/src/lib/schemas/submittal.ts",
+        "supabase/migrations/YYYYMMDD_fix_submittal_type_id_nullable.sql"
+      ]
+    },
+    {
+      "task_id": "T-021",
+      "gap_id": "API-003",
+      "severity": "medium",
+      "title": "Create DELETE workflow-steps endpoint",
+      "status": "open",
+      "description": "Add a DELETE handler to the workflow-steps route to allow removing individual steps from a submittal workflow.",
+      "files": [
+        "frontend/src/app/api/projects/[projectId]/submittals/[submittalId]/workflow-steps/route.ts"
+      ]
+    },
+    {
+      "task_id": "T-022",
+      "gap_id": "API-004",
+      "severity": "medium",
+      "title": "Create PUT reorder workflow-steps endpoint",
+      "status": "open",
+      "description": "Add a PUT handler for reordering workflow steps by accepting an ordered array of step IDs.",
+      "files": [
+        "frontend/src/app/api/projects/[projectId]/submittals/[submittalId]/workflow-steps/route.ts"
+      ]
+    },
+    {
+      "task_id": "T-023",
+      "gap_id": "API-005",
+      "severity": "medium",
+      "title": "Create POST submittal packages endpoint",
+      "status": "open",
+      "description": "Create a route handler to support creating submittal packages via the API.",
+      "files": [
+        "frontend/src/app/api/projects/[projectId]/submittal-packages/route.ts"
+      ]
+    },
+    {
+      "task_id": "T-024",
+      "gap_id": "API-006",
+      "severity": "medium",
+      "title": "Create POST attachments upload endpoint",
+      "status": "open",
+      "description": "Create an attachments route handler using Supabase Storage for file uploads on submittals.",
+      "files": [
+        "frontend/src/app/api/projects/[projectId]/submittals/[submittalId]/attachments/route.ts"
+      ]
+    },
+    {
+      "task_id": "T-025",
+      "gap_id": "API-010",
+      "severity": "medium",
+      "title": "Add auto-close on final workflow step completion",
+      "status": "open",
+      "description": "Add logic in the response handler to check if all steps are complete and auto-transition submittal status to Closed.",
+      "files": [
+        "frontend/src/app/api/projects/[projectId]/submittals/[submittalId]/workflow-steps/route.ts"
+      ]
+    },
+    {
+      "task_id": "T-026",
+      "gap_id": "UI-003",
+      "severity": "medium",
+      "title": "Add Submittal Package option to create dropdown",
+      "status": "open",
+      "description": "Add a Submittal Package option to the create/new dropdown menu on the submittals list page.",
+      "files": [
+        "frontend/src/app/(main)/[projectId]/submittals/page.tsx"
+      ]
+    },
+    {
+      "task_id": "T-027",
+      "gap_id": "UI-006",
+      "severity": "medium",
+      "title": "Add Create & Send submit button",
+      "status": "open",
+      "description": "Add a secondary Create & Send button that triggers creation followed by immediate distribution.",
+      "files": [
+        "frontend/src/components/domain/submittals/SubmittalForm.tsx"
+      ]
+    },
+    {
+      "task_id": "T-028",
+      "gap_id": "UI-007",
+      "severity": "medium",
+      "title": "Add Emails tab to detail view",
+      "status": "open",
+      "description": "Add an Emails tab to the submittal detail view to match Procore's tab structure.",
+      "files": [
+        "frontend/src/app/(main)/[projectId]/submittals/[submittalId]/page.tsx"
+      ]
+    },
+    {
+      "task_id": "T-029",
+      "gap_id": "UI-008",
+      "severity": "medium",
+      "title": "Add 7 missing fields to detail sidebar",
+      "status": "open",
+      "description": "Add received_from, responsible_contractor, cost_code, location, linked_drawings, distribution_list, and revision_number to the detail sidebar.",
+      "files": [
+        "frontend/src/app/(main)/[projectId]/submittals/[submittalId]/page.tsx"
+      ]
+    },
+    {
+      "task_id": "T-030",
+      "gap_id": "UI-012",
+      "severity": "medium",
+      "title": "Enable selection and bulk actions in grouped views",
+      "status": "open",
+      "description": "Add row selection checkboxes and bulk action toolbars to the grouped display mode for submittals.",
+      "files": [
+        "frontend/src/app/(main)/[projectId]/submittals/page.tsx"
+      ]
+    },
+    {
+      "task_id": "T-031",
+      "gap_id": "UI-013",
+      "severity": "medium",
+      "title": "Add 10 missing filters to submittals list",
+      "status": "open",
+      "description": "Add missing filter definitions (responsible contractor, received from, ball in court, package, cost code, location, etc.) to the table configuration.",
+      "files": [
+        "frontend/src/app/(main)/[projectId]/submittals/page.tsx"
+      ]
+    },
+    {
+      "task_id": "T-032",
+      "gap_id": "DB-010",
+      "severity": "low",
+      "title": "Build API endpoints for 4 unused tables",
+      "status": "open",
+      "description": "Create API endpoints for submittal_packages, submittal_types, submittal_spec_sections, and submittal_linked_drawings tables.",
+      "files": [
+        "frontend/src/app/api/projects/[projectId]/submittal-packages/route.ts",
+        "frontend/src/app/api/projects/[projectId]/submittal-types/route.ts",
+        "frontend/src/app/api/projects/[projectId]/submittal-spec-sections/route.ts"
+      ]
+    },
+    {
+      "task_id": "T-033",
+      "gap_id": "API-007",
+      "severity": "low",
+      "title": "Create related-items management endpoint",
+      "status": "open",
+      "description": "Create a related-items sub-route with GET/POST/DELETE handlers to manage links between submittals and other entities.",
+      "files": [
+        "frontend/src/app/api/projects/[projectId]/submittals/[submittalId]/related-items/route.ts"
+      ]
+    },
+    {
+      "task_id": "T-034",
+      "gap_id": "UI-009",
+      "severity": "low",
+      "title": "Add Redistribute toolbar action",
+      "status": "open",
+      "description": "Add a Redistribute button to the detail view toolbar that calls the distribute endpoint with updated parameters.",
+      "files": [
+        "frontend/src/app/(main)/[projectId]/submittals/[submittalId]/page.tsx"
+      ]
+    },
+    {
+      "task_id": "T-035",
+      "gap_id": "UI-014",
+      "severity": "low",
+      "title": "Add PDF and Excel export options",
+      "status": "open",
+      "description": "Add server-side PDF export and client-side Excel export (via xlsx library) alongside the existing CSV export.",
+      "files": [
+        "frontend/src/app/(main)/[projectId]/submittals/page.tsx",
+        "frontend/src/app/api/projects/[projectId]/submittals/export/route.ts"
+      ]
+    }
+  ]
+}

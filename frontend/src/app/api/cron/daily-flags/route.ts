@@ -14,6 +14,10 @@
 
 import { createServiceClient } from "@/lib/supabase/service";
 import type { Database } from "@/types/database.types";
+import { NextResponse } from "next/server";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { logEvent } from "@/lib/guardrails/observability";
 
 export const maxDuration = 120;
 
@@ -28,12 +32,18 @@ interface FlagStats {
 
 const BATCH_SIZE = 10;
 
-export async function POST(request: Request) {
+export const POST = withApiGuardrails("/api/cron/daily-flags#POST", async ({ request, requestId }) => {
   // OWASP A07:2021 - Identification and Authentication Failures:
   // Always require CRON_SECRET; never skip validation when env var is unset.
   const cronSecret = request.headers.get("authorization")?.replace("Bearer ", "");
   if (!process.env.CRON_SECRET || cronSecret !== process.env.CRON_SECRET) {
-    return new Response("Unauthorized", { status: 401 });
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where: "/api/cron/daily-flags#POST",
+      message: "Unauthorized cron invocation.",
+      status: 401,
+      severity: "medium",
+    });
   }
 
   const supabase = createServiceClient();
@@ -49,12 +59,19 @@ export async function POST(request: Request) {
     .eq("archived", false);
 
   if (projectsError) {
-    console.error("[cron/daily-flags] Failed to fetch projects:", projectsError);
-    return Response.json({ success: false, error: projectsError.message }, { status: 500 });
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/cron/daily-flags#POST",
+      message: "Failed to fetch projects for daily flag job.",
+      details: {
+        reason: projectsError.message,
+      },
+      cause: projectsError,
+    });
   }
 
   if (!projects || projects.length === 0) {
-    return Response.json({ success: true, projectsChecked: 0, flagsCreated: 0, breakdown: { budgetFlags: 0, rfiFlags: 0, scheduleFlags: 0, changeEventFlags: 0 } });
+    return NextResponse.json({ success: true, projectsChecked: 0, flagsCreated: 0, breakdown: { budgetFlags: 0, rfiFlags: 0, scheduleFlags: 0, changeEventFlags: 0 } });
   }
 
   const stats: FlagStats = { budgetFlags: 0, rfiFlags: 0, scheduleFlags: 0, changeEventFlags: 0 };
@@ -248,13 +265,25 @@ export async function POST(request: Request) {
     }));
   }
 
-  console.log(`[cron/daily-flags] checked=${projects.length} flags=${totalFlagsCreated} budget=${stats.budgetFlags} rfi=${stats.rfiFlags} schedule=${stats.scheduleFlags} ce=${stats.changeEventFlags}`);
+  logEvent({
+    event: "background_job_completed",
+    requestId,
+    where: "/api/cron/daily-flags#POST",
+    details: {
+      checked: projects.length,
+      flags_created: totalFlagsCreated,
+      budget_flags: stats.budgetFlags,
+      rfi_flags: stats.rfiFlags,
+      schedule_flags: stats.scheduleFlags,
+      change_event_flags: stats.changeEventFlags,
+    },
+  });
 
-  return Response.json({
+  return NextResponse.json({
     success: true,
     projectsChecked: projects.length,
     flagsCreated: totalFlagsCreated,
     breakdown: stats,
     runAt: now.toISOString(),
   });
-}
+});

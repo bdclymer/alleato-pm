@@ -12,7 +12,10 @@ const noDesignViolations = require('./rules/no-design-violations');
 const requirePageShell = require('./rules/require-page-shell');
 const noOversizedShadows = require('./rules/no-oversized-shadows');
 const noRawButton = require('./rules/no-raw-button');
+const noRawFormControls = require('./rules/no-raw-form-controls');
+const requireApprovedFormComponents = require('./rules/require-approved-form-components');
 const requireMoneyField = require('./rules/require-money-field');
+const requireApiClient = require('./rules/require-api-client');
 
 module.exports = {
   rules: {
@@ -23,7 +26,10 @@ module.exports = {
     'require-page-shell': requirePageShell,
     'no-oversized-shadows': noOversizedShadows,
     'no-raw-button': noRawButton,
+    'no-raw-form-controls': noRawFormControls,
+    'require-approved-form-components': requireApprovedFormComponents,
     'require-money-field': requireMoneyField,
+    'require-api-client': requireApiClient,
   },
   configs: {
     recommended: {
@@ -36,7 +42,9 @@ module.exports = {
         'design-system/require-page-shell': 'warn',
         'design-system/no-oversized-shadows': 'error',
         'design-system/no-raw-button': 'error',
+        'design-system/no-raw-form-controls': 'error',
         'design-system/require-money-field': 'error',
+        'design-system/require-api-client': 'warn',
       },
     },
     strict: {
@@ -48,7 +56,9 @@ module.exports = {
         'design-system/require-page-shell': 'error',
         'design-system/no-oversized-shadows': 'error',
         'design-system/no-raw-button': 'error',
+        'design-system/no-raw-form-controls': 'error',
         'design-system/require-money-field': 'error',
+        'design-system/require-api-client': 'error',
       },
     },
   },

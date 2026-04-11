@@ -145,10 +145,14 @@ while read -r file; do
     if grep -q '\.eq("project_id", projectId)' "$file" 2>/dev/null; then
       # Check if ALL occurrences are inside functions with projectId: number param
       # If file has parseInt or numericProjectId, only flag if raw projectId is still used in route handlers
-      HAS_PARSE=$(grep -c 'parseInt(projectId' "$file" 2>/dev/null || echo "0")
-      HAS_NUMERIC=$(grep -c 'numericProjectId\|projectIdNum' "$file" 2>/dev/null || echo "0")
-      RAW_COUNT=$(grep -c '\.eq("project_id", projectId)' "$file" 2>/dev/null || echo "0")
-      TYPED_PARAM=$(grep -c 'projectId: number' "$file" 2>/dev/null || echo "0")
+      HAS_PARSE=$(grep -c 'parseInt(projectId' "$file" 2>/dev/null || true)
+      HAS_NUMERIC=$(grep -c 'numericProjectId\|projectIdNum' "$file" 2>/dev/null || true)
+      RAW_COUNT=$(grep -c '\.eq("project_id", projectId)' "$file" 2>/dev/null || true)
+      TYPED_PARAM=$(grep -c 'projectId: number' "$file" 2>/dev/null || true)
+      HAS_PARSE=${HAS_PARSE:-0}
+      HAS_NUMERIC=${HAS_NUMERIC:-0}
+      RAW_COUNT=${RAW_COUNT:-0}
+      TYPED_PARAM=${TYPED_PARAM:-0}
       # If file has typed params (helper functions) and no raw string usage from route handlers, skip
       if [ "$TYPED_PARAM" -gt 0 ] && [ "$HAS_PARSE" -gt 0 ] || [ "$HAS_NUMERIC" -gt 0 ]; then
         : # Skip - file already handles conversion, remaining uses are in typed helper functions
@@ -200,7 +204,7 @@ while read -r file; do
       ERRORS=$((ERRORS + 1))
       ERROR_ISSUES=1
     fi
-    if ! grep -q "status: 500" "$file" 2>/dev/null && ! grep -q "Internal server error" "$file" 2>/dev/null && ! grep -q "apiErrorResponse" "$file" 2>/dev/null; then
+    if ! grep -q "status: 500" "$file" 2>/dev/null && ! grep -q "Internal server error" "$file" 2>/dev/null && ! grep -q "apiErrorResponse" "$file" 2>/dev/null && ! grep -q "withApiGuardrails" "$file" 2>/dev/null; then
       echo -e "${YELLOW}WARN${NC}: No 500 error handler in $file"
       WARNINGS=$((WARNINGS + 1))
       ERROR_ISSUES=1

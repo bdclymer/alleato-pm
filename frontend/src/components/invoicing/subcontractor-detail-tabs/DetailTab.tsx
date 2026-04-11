@@ -172,6 +172,8 @@ export function DetailTab({
 
   const totals = displayLineItems.reduce(
     (acc, li) => {
+      acc.commitmentValue += li.commitment_value ?? 0;
+      acc.changeValue += li.change_value ?? 0;
       acc.scheduled += li.scheduled_value ?? 0;
       acc.previous += li.work_completed_previous ?? 0;
       acc.thisPeriod += li.work_completed_period ?? 0;
@@ -189,6 +191,8 @@ export function DetailTab({
       return acc;
     },
     {
+      commitmentValue: 0,
+      changeValue: 0,
       scheduled: 0,
       previous: 0,
       thisPeriod: 0,
@@ -336,11 +340,14 @@ export function DetailTab({
                 <TableHead className="text-center text-xs font-medium text-muted-foreground">
                   B
                 </TableHead>
+                <TableHead className="text-center text-xs font-medium text-muted-foreground" />
+                <TableHead className="text-center text-xs font-medium text-muted-foreground" />
+                <TableHead className="text-center text-xs font-medium text-muted-foreground" />
                 <TableHead className="text-center text-xs font-medium text-muted-foreground">
                   C
                 </TableHead>
                 <TableHead
-                  colSpan={2}
+                  colSpan={3}
                   className="text-center text-xs font-medium text-muted-foreground"
                 >
                   D &amp; E
@@ -388,11 +395,23 @@ export function DetailTab({
                   Budget Code
                 </TableHead>
                 <TableHead className="text-xs">Description Of Work</TableHead>
-                <TableHead className="text-right text-xs whitespace-nowrap">
-                  Scheduled Value
+                <TableHead className="text-xs whitespace-nowrap">
+                  Line Item Type
                 </TableHead>
                 <TableHead className="text-right text-xs whitespace-nowrap">
-                  From Previous
+                  Commitment Value
+                </TableHead>
+                <TableHead className="text-right text-xs whitespace-nowrap">
+                  Change Value
+                </TableHead>
+                <TableHead className="text-right text-xs whitespace-nowrap">
+                  Schedule Value
+                </TableHead>
+                <TableHead className="text-right text-xs whitespace-nowrap">
+                  From Previous %
+                </TableHead>
+                <TableHead className="text-right text-xs whitespace-nowrap">
+                  From Previous $
                 </TableHead>
                 <TableHead className="text-right text-xs whitespace-nowrap">
                   This Period
@@ -472,11 +491,29 @@ export function DetailTab({
                     <TableCell className="font-medium text-xs">
                       {li.description ?? "—"}
                     </TableCell>
-                    {/* C: Scheduled Value */}
+                    {/* Line Item Type */}
+                    <TableCell className="text-xs whitespace-nowrap">
+                      {li.line_item_type ?? "SOV"}
+                    </TableCell>
+                    {/* Commitment Value */}
+                    <TableCell className="text-right tabular-nums text-xs">
+                      {li.commitment_value != null ? formatCurrency(li.commitment_value) : "—"}
+                    </TableCell>
+                    {/* Change Value */}
+                    <TableCell className="text-right tabular-nums text-xs">
+                      {li.change_value != null ? formatCurrency(li.change_value) : "—"}
+                    </TableCell>
+                    {/* C: Schedule Value */}
                     <TableCell className="text-right tabular-nums text-xs">
                       {formatCurrency(li.scheduled_value)}
                     </TableCell>
-                    {/* D: From Previous */}
+                    {/* D: From Previous % */}
+                    <TableCell className="text-right tabular-nums text-xs">
+                      {li.work_completed_previous_pct != null
+                        ? `${Number(li.work_completed_previous_pct).toFixed(1)}%`
+                        : "—"}
+                    </TableCell>
+                    {/* D: From Previous $ */}
                     <TableCell className="text-right tabular-nums text-xs">
                       {formatCurrency(li.work_completed_previous)}
                     </TableCell>
@@ -634,8 +671,22 @@ export function DetailTab({
                 <TableCell colSpan={3} className="text-xs">
                   Total
                 </TableCell>
+                {/* Line Item Type - empty */}
+                <TableCell />
+                <TableCell className="text-right tabular-nums text-xs">
+                  {formatCurrency(totals.commitmentValue)}
+                </TableCell>
+                <TableCell className="text-right tabular-nums text-xs">
+                  {formatCurrency(totals.changeValue)}
+                </TableCell>
                 <TableCell className="text-right tabular-nums text-xs">
                   {formatCurrency(totals.scheduled)}
+                </TableCell>
+                {/* From Previous % */}
+                <TableCell className="text-right tabular-nums text-xs">
+                  {totals.scheduled > 0
+                    ? `${((totals.previous / totals.scheduled) * 100).toFixed(1)}%`
+                    : "—"}
                 </TableCell>
                 <TableCell className="text-right tabular-nums text-xs">
                   {formatCurrency(totals.previous)}

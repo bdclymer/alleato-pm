@@ -1,0 +1,19 @@
+{
+  "run_id": "run-20260410-124614",
+  "feature": "submittals",
+  "project_id": "562949954728542",
+  "mode": "full",
+  "git_sha": "858315f5",
+  "started_at": "2026-04-10T12:46:14Z",
+  "completed_at": null,
+  "phases": [
+    { "phase": "INIT_COMMAND", "state": "passed", "started_at": "2026-04-10T12:46:14Z", "completed_at": "2026-04-10T12:46:14Z", "owner": "orchestrator", "result": "initialized", "evidence": ["00-run-manifest.json"], "errors": [] },
+    { "phase": "DISCOVER", "state": "pending", "started_at": null, "completed_at": null, "owner": null, "result": null, "evidence": [], "errors": [] },
+    { "phase": "CAPTURE_SOURCE_OF_TRUTH", "state": "pending", "started_at": null, "completed_at": null, "owner": null, "result": null, "evidence": [], "errors": [] },
+    { "phase": "RECONCILE_MANIFEST", "state": "pending", "started_at": null, "completed_at": null, "owner": null, "result": null, "evidence": [], "errors": [] },
+    { "phase": "GAP_ANALYZE", "state": "pending", "started_at": null, "completed_at": null, "owner": null, "result": null, "evidence": [], "errors": [] },
+    { "phase": "REMEDIATE", "state": "pending", "started_at": null, "completed_at": null, "owner": null, "result": null, "evidence": [], "errors": [] },
+    { "phase": "VERIFY_IMPLEMENTATION", "state": "pending", "started_at": null, "completed_at": null, "owner": null, "result": null, "evidence": [], "errors": [] },
+    { "phase": "FINALIZE_AND_REPORT", "state": "pending", "started_at": null, "completed_at": null, "owner": null, "result": null, "evidence": [], "errors": [] }
+  ]
+}

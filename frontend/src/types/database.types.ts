@@ -4313,6 +4313,48 @@ export type Database = {
           },
         ]
       }
+      change_event_pco_links: {
+        Row: {
+          change_event_id: string
+          id: string
+          linked_at: string
+          linked_by: string | null
+          pco_id: string
+          pco_type: string
+        }
+        Insert: {
+          change_event_id: string
+          id?: string
+          linked_at?: string
+          linked_by?: string | null
+          pco_id: string
+          pco_type: string
+        }
+        Update: {
+          change_event_id?: string
+          id?: string
+          linked_at?: string
+          linked_by?: string | null
+          pco_id?: string
+          pco_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "change_event_pco_links_change_event_id_fkey"
+            columns: ["change_event_id"]
+            isOneToOne: false
+            referencedRelation: "change_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "change_event_pco_links_change_event_id_fkey"
+            columns: ["change_event_id"]
+            isOneToOne: false
+            referencedRelation: "change_events_summary"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       change_event_related_items: {
         Row: {
           change_event_id: string
@@ -4641,12 +4683,15 @@ export type Database = {
           line_item_revenue_source: string | null
           number: string
           origin: string | null
+          origin_id: string | null
           originator_role: string | null
           potential_change_order_id: number | null
           prime_contract_id: string | null
           project_id: number
           reason: string | null
           scope: string
+          sent_to_commitment_pco: boolean | null
+          sent_to_prime_pco: boolean | null
           status: string
           title: string
           type: string
@@ -4665,12 +4710,15 @@ export type Database = {
           line_item_revenue_source?: string | null
           number: string
           origin?: string | null
+          origin_id?: string | null
           originator_role?: string | null
           potential_change_order_id?: number | null
           prime_contract_id?: string | null
           project_id: number
           reason?: string | null
           scope: string
+          sent_to_commitment_pco?: boolean | null
+          sent_to_prime_pco?: boolean | null
           status?: string
           title: string
           type: string
@@ -4689,12 +4737,15 @@ export type Database = {
           line_item_revenue_source?: string | null
           number?: string
           origin?: string | null
+          origin_id?: string | null
           originator_role?: string | null
           potential_change_order_id?: number | null
           prime_contract_id?: string | null
           project_id?: number
           reason?: string | null
           scope?: string
+          sent_to_commitment_pco?: boolean | null
+          sent_to_prime_pco?: boolean | null
           status?: string
           title?: string
           type?: string
@@ -5440,72 +5491,72 @@ export type Database = {
       }
       commitment_pcos: {
         Row: {
-          amount: number
-          cco_id: string | null
-          change_reason: string | null
+          approved_at: string | null
+          approved_by: string | null
           commitment_id: string
+          commitment_type: string
           created_at: string
           created_by: string | null
           description: string | null
+          designated_reviewer_id: string | null
+          due_date: string | null
           id: string
-          number: string
+          pco_number: string | null
           project_id: number
+          promoted_at: string | null
+          promoted_to_co_id: string | null
+          schedule_impact: number | null
           status: string
           title: string
+          total_amount: number | null
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
-          amount?: number
-          cco_id?: string | null
-          change_reason?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           commitment_id: string
+          commitment_type: string
           created_at?: string
           created_by?: string | null
           description?: string | null
+          designated_reviewer_id?: string | null
+          due_date?: string | null
           id?: string
-          number: string
+          pco_number?: string | null
           project_id: number
+          promoted_at?: string | null
+          promoted_to_co_id?: string | null
+          schedule_impact?: number | null
           status?: string
-          title?: string
+          title: string
+          total_amount?: number | null
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
-          amount?: number
-          cco_id?: string | null
-          change_reason?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
           commitment_id?: string
+          commitment_type?: string
           created_at?: string
           created_by?: string | null
           description?: string | null
+          designated_reviewer_id?: string | null
+          due_date?: string | null
           id?: string
-          number?: string
+          pco_number?: string | null
           project_id?: number
+          promoted_at?: string | null
+          promoted_to_co_id?: string | null
+          schedule_impact?: number | null
           status?: string
           title?: string
+          total_amount?: number | null
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "commitment_pcos_cco_id_fkey"
-            columns: ["cco_id"]
-            isOneToOne: false
-            referencedRelation: "contract_change_orders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "commitment_pcos_commitment_id_fkey"
-            columns: ["commitment_id"]
-            isOneToOne: false
-            referencedRelation: "subcontracts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "commitment_pcos_commitment_id_fkey"
-            columns: ["commitment_id"]
-            isOneToOne: false
-            referencedRelation: "subcontracts_with_totals"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "commitment_pcos_project_id_fkey"
             columns: ["project_id"]
@@ -5553,6 +5604,13 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commitment_pcos_promoted_to_co_id_fkey"
+            columns: ["promoted_to_co_id"]
+            isOneToOne: false
+            referencedRelation: "contract_change_orders"
             referencedColumns: ["id"]
           },
         ]
@@ -7084,6 +7142,7 @@ export type Database = {
       }
       dev_annotations: {
         Row: {
+          agentation_id: string | null
           ai_replied_at: string | null
           ai_reply: string | null
           comment: string
@@ -7092,12 +7151,14 @@ export type Database = {
           created_by: string | null
           element_selector: string | null
           id: string
+          metadata: Json | null
           resolved_at: string | null
           route: string
           screenshot_url: string | null
           status: string | null
         }
         Insert: {
+          agentation_id?: string | null
           ai_replied_at?: string | null
           ai_reply?: string | null
           comment: string
@@ -7106,12 +7167,14 @@ export type Database = {
           created_by?: string | null
           element_selector?: string | null
           id?: string
+          metadata?: Json | null
           resolved_at?: string | null
           route: string
           screenshot_url?: string | null
           status?: string | null
         }
         Update: {
+          agentation_id?: string | null
           ai_replied_at?: string | null
           ai_reply?: string | null
           comment?: string
@@ -7120,6 +7183,7 @@ export type Database = {
           created_by?: string | null
           element_selector?: string | null
           id?: string
+          metadata?: Json | null
           resolved_at?: string | null
           route?: string
           screenshot_url?: string | null
@@ -8776,6 +8840,8 @@ export type Database = {
           created_at: string
           created_by: string
           current_revision_id: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           discipline: string | null
           drawing_number: string
           drawing_type: string | null
@@ -8791,6 +8857,8 @@ export type Database = {
           created_at?: string
           created_by: string
           current_revision_id?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           discipline?: string | null
           drawing_number: string
           drawing_type?: string | null
@@ -8806,6 +8874,8 @@ export type Database = {
           created_at?: string
           created_by?: string
           current_revision_id?: string | null
+          deleted_at?: string | null
+          deleted_by?: string | null
           discipline?: string | null
           drawing_number?: string
           drawing_type?: string | null
@@ -12845,56 +12915,73 @@ export type Database = {
       }
       pco_line_items: {
         Row: {
-          category: string | null
-          change_event_line_item_id: number | null
-          cost_code: string | null
-          created_at: string | null
+          amount: number | null
+          budget_code_id: string | null
+          change_event_id: string | null
+          change_event_line_item_id: string | null
+          created_at: string
           description: string | null
-          id: number
-          line_amount: number | null
-          line_type: string | null
-          pco_id: number
+          id: string
+          pco_id: string
+          pco_type: string
           quantity: number | null
-          subcontractor_id: string | null
+          sort_order: number | null
           unit_cost: number | null
-          uom: string | null
+          unit_of_measure: string | null
+          updated_at: string
         }
         Insert: {
-          category?: string | null
-          change_event_line_item_id?: number | null
-          cost_code?: string | null
-          created_at?: string | null
+          amount?: number | null
+          budget_code_id?: string | null
+          change_event_id?: string | null
+          change_event_line_item_id?: string | null
+          created_at?: string
           description?: string | null
-          id?: number
-          line_amount?: number | null
-          line_type?: string | null
-          pco_id: number
+          id?: string
+          pco_id: string
+          pco_type: string
           quantity?: number | null
-          subcontractor_id?: string | null
+          sort_order?: number | null
           unit_cost?: number | null
-          uom?: string | null
+          unit_of_measure?: string | null
+          updated_at?: string
         }
         Update: {
-          category?: string | null
-          change_event_line_item_id?: number | null
-          cost_code?: string | null
-          created_at?: string | null
+          amount?: number | null
+          budget_code_id?: string | null
+          change_event_id?: string | null
+          change_event_line_item_id?: string | null
+          created_at?: string
           description?: string | null
-          id?: number
-          line_amount?: number | null
-          line_type?: string | null
-          pco_id?: number
+          id?: string
+          pco_id?: string
+          pco_type?: string
           quantity?: number | null
-          subcontractor_id?: string | null
+          sort_order?: number | null
           unit_cost?: number | null
-          uom?: string | null
+          unit_of_measure?: string | null
+          updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "pco_line_items_pco_id_fkey"
-            columns: ["pco_id"]
+            foreignKeyName: "pco_line_items_change_event_id_fkey"
+            columns: ["change_event_id"]
             isOneToOne: false
-            referencedRelation: "potential_change_orders"
+            referencedRelation: "change_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pco_line_items_change_event_id_fkey"
+            columns: ["change_event_id"]
+            isOneToOne: false
+            referencedRelation: "change_events_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pco_line_items_change_event_line_item_id_fkey"
+            columns: ["change_event_line_item_id"]
+            isOneToOne: false
+            referencedRelation: "change_event_line_items"
             referencedColumns: ["id"]
           },
         ]
@@ -14017,6 +14104,143 @@ export type Database = {
             columns: ["project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prime_contract_pcos: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          designated_reviewer_id: string | null
+          due_date: string | null
+          id: string
+          pco_number: string | null
+          prime_contract_id: string
+          project_id: number
+          promoted_at: string | null
+          promoted_to_co_id: number | null
+          schedule_impact: number | null
+          status: string
+          title: string
+          total_amount: number | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          designated_reviewer_id?: string | null
+          due_date?: string | null
+          id?: string
+          pco_number?: string | null
+          prime_contract_id: string
+          project_id: number
+          promoted_at?: string | null
+          promoted_to_co_id?: number | null
+          schedule_impact?: number | null
+          status?: string
+          title: string
+          total_amount?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          designated_reviewer_id?: string | null
+          due_date?: string | null
+          id?: string
+          pco_number?: string | null
+          prime_contract_id?: string
+          project_id?: number
+          promoted_at?: string | null
+          promoted_to_co_id?: number | null
+          schedule_impact?: number | null
+          status?: string
+          title?: string
+          total_amount?: number | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "prime_contract_pcos_prime_contract_id_fkey"
+            columns: ["prime_contract_id"]
+            isOneToOne: false
+            referencedRelation: "prime_contract_financial_summary"
+            referencedColumns: ["contract_id"]
+          },
+          {
+            foreignKeyName: "prime_contract_pcos_prime_contract_id_fkey"
+            columns: ["prime_contract_id"]
+            isOneToOne: false
+            referencedRelation: "prime_contracts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contract_pcos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "prime_contract_pcos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contract_pcos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contract_pcos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "prime_contract_pcos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contract_pcos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contract_pcos_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "prime_contract_pcos_promoted_to_co_id_fkey"
+            columns: ["promoted_to_co_id"]
+            isOneToOne: false
+            referencedRelation: "prime_contract_change_orders"
             referencedColumns: ["id"]
           },
         ]
@@ -21427,6 +21651,7 @@ export type Database = {
           expected_result: string | null
           id: string
           priority: string
+          scenario_depth: string
           setup_steps: string | null
           start_url: string | null
           steps: string | null
@@ -21444,6 +21669,7 @@ export type Database = {
           expected_result?: string | null
           id?: string
           priority?: string
+          scenario_depth?: string
           setup_steps?: string | null
           start_url?: string | null
           steps?: string | null
@@ -21461,6 +21687,7 @@ export type Database = {
           expected_result?: string | null
           id?: string
           priority?: string
+          scenario_depth?: string
           setup_steps?: string | null
           start_url?: string | null
           steps?: string | null
@@ -21537,6 +21764,7 @@ export type Database = {
           id: string
           notes: string | null
           run_date: string
+          scenario_depth: string
           suite_id: string
           tester: string | null
         }
@@ -21547,6 +21775,7 @@ export type Database = {
           id?: string
           notes?: string | null
           run_date?: string
+          scenario_depth?: string
           suite_id: string
           tester?: string | null
         }
@@ -21557,6 +21786,7 @@ export type Database = {
           id?: string
           notes?: string | null
           run_date?: string
+          scenario_depth?: string
           suite_id?: string
           tester?: string | null
         }
@@ -23303,6 +23533,8 @@ export type Database = {
         Row: {
           area_id: string | null
           area_name: string | null
+          deleted_at: string | null
+          deleted_by: string | null
           discipline: string | null
           drawing_created_at: string | null
           drawing_date: string | null
@@ -24444,6 +24676,10 @@ export type Database = {
           optimization_type: string
           title: string
         }[]
+      }
+      generate_pco_number: {
+        Args: { p_project_id: number; p_type: string }
+        Returns: string
       }
       get_all_project_documents: {
         Args: { in_project_id: number }

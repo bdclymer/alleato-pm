@@ -53,14 +53,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     let query = supabase
       .from("potential_change_orders")
-      .select(
-        `
-        *,
-        pco_change_events(count),
-        pco_line_items(count)
-      `,
-        { count: "exact" }
-      )
+      .select("*", { count: "exact" })
       .eq("project_id", numericProjectId)
       .order("created_at", { ascending: false });
 
@@ -89,10 +82,35 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       return apiErrorResponse(error);
     }
 
-    const pcos = (data || []).map((pco: any) => ({
+    // Batch-fetch change event and line item counts (no FK join available for pco_line_items)
+    const pcoIds = (data || []).map((pco: Record<string, unknown>) => String(pco.id));
+    let ceCountMap: Record<string, number> = {};
+    let liCountMap: Record<string, number> = {};
+
+    if (pcoIds.length > 0) {
+      const [ceResult, liResult] = await Promise.all([
+        supabase.from("pco_change_events").select("pco_id").in("pco_id", pcoIds),
+        supabase.from("pco_line_items").select("pco_id").in("pco_id", pcoIds),
+      ]);
+
+      if (ceResult.data) {
+        for (const row of ceResult.data) {
+          const id = String(row.pco_id);
+          ceCountMap[id] = (ceCountMap[id] || 0) + 1;
+        }
+      }
+      if (liResult.data) {
+        for (const row of liResult.data) {
+          const id = String(row.pco_id);
+          liCountMap[id] = (liCountMap[id] || 0) + 1;
+        }
+      }
+    }
+
+    const pcos = (data || []).map((pco: Record<string, unknown>) => ({
       ...pco,
-      changeEventsCount: pco.pco_change_events?.[0]?.count ?? 0,
-      lineItemsCount: pco.pco_line_items?.[0]?.count ?? 0,
+      changeEventsCount: ceCountMap[String(pco.id)] ?? 0,
+      lineItemsCount: liCountMap[String(pco.id)] ?? 0,
     }));
 
     return NextResponse.json({

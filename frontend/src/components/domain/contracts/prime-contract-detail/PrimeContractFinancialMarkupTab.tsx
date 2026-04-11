@@ -22,13 +22,14 @@ import {
   ModalTitle,
 } from "@/components/ui/unified-modal";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  InlineTable,
+  InlineTableHeader,
+  InlineTableHeaderRow,
+  InlineTableHeaderCell,
+  InlineTableBody,
+  InlineTableRow,
+  InlineTableCell,
+} from "@/components/ds/inline-table";
 import type { BudgetCode, VerticalMarkup } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
 
 const ALLOWED_MARKUP_TYPES = ["insurance", "bond", "fee", "overhead", "custom"] as const;
@@ -455,257 +456,243 @@ export function PrimeContractFinancialMarkupTab({
           </div>
         </div>
 
-        <div className="overflow-x-auto overflow-hidden rounded-lg border border-border/70 bg-muted/20">
-          <Table>
-            <TableHeader className="border-y-0 [&_tr]:border-b-0">
-              <TableRow className="bg-muted/70 hover:bg-muted/70">
-                <TableHead className="px-3 py-2 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
-                  Markup Name
-                </TableHead>
-                <TableHead className="px-3 py-2 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
-                  Display In
-                </TableHead>
-                <TableHead className="px-3 py-2 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
-                  Maps To
-                </TableHead>
-                <TableHead className="px-3 py-2 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
-                  %
-                </TableHead>
-                <TableHead className="px-3 py-2 text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
-                  Calculation Type
-                </TableHead>
-                <TableHead className="px-3 py-2 text-right text-[11px] font-normal normal-case tracking-normal text-muted-foreground">
-                  Actions
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {markupsLoading ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
-                    Loading markup settings...
-                  </TableCell>
-                </TableRow>
-              ) : verticalMarkups.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
-                    No markup items configured. Click &quot;Add Markup&quot; to get started.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                [...verticalMarkups]
-                  .sort((a, b) => a.calculation_order - b.calculation_order)
-                  .map((markup) => {
-                    const isEditingRow = Boolean(editingMarkupRowIds[markup.id]);
-                    const rowDraft = markupRowDrafts[markup.id];
-                    const displayIn = markupDisplayById[markup.id] ?? "horizontal";
-                    const mapsTo = markupMapsToById[markup.id] ?? "all";
-                    const mapsToLabel =
-                      mapsTo === "all"
-                        ? "All Budget Codes"
-                        : budgetCodes.find((code) => code.id === mapsTo)?.fullLabel ?? "All Budget Codes";
+        <InlineTable variant="edit">
+          <InlineTableHeader>
+            <InlineTableHeaderRow>
+              <InlineTableHeaderCell>Markup Name</InlineTableHeaderCell>
+              <InlineTableHeaderCell>Display In</InlineTableHeaderCell>
+              <InlineTableHeaderCell>Maps To</InlineTableHeaderCell>
+              <InlineTableHeaderCell align="right">%</InlineTableHeaderCell>
+              <InlineTableHeaderCell>Calculation Type</InlineTableHeaderCell>
+              <InlineTableHeaderCell align="right">Actions</InlineTableHeaderCell>
+            </InlineTableHeaderRow>
+          </InlineTableHeader>
+          <InlineTableBody>
+            {markupsLoading ? (
+              <InlineTableRow>
+                <InlineTableCell colSpan={6} className="py-8 text-center text-muted-foreground">
+                  Loading markup settings...
+                </InlineTableCell>
+              </InlineTableRow>
+            ) : verticalMarkups.length === 0 ? (
+              <InlineTableRow>
+                <InlineTableCell colSpan={6} className="py-8 text-center text-muted-foreground">
+                  No markup items configured. Click &quot;Add Markup&quot; to get started.
+                </InlineTableCell>
+              </InlineTableRow>
+            ) : (
+              [...verticalMarkups]
+                .sort((a, b) => a.calculation_order - b.calculation_order)
+                .map((markup) => {
+                  const isEditingRow = Boolean(editingMarkupRowIds[markup.id]);
+                  const rowDraft = markupRowDrafts[markup.id];
+                  const displayIn = markupDisplayById[markup.id] ?? "horizontal";
+                  const mapsTo = markupMapsToById[markup.id] ?? "all";
+                  const mapsToLabel =
+                    mapsTo === "all"
+                      ? "All Budget Codes"
+                      : budgetCodes.find((code) => code.id === mapsTo)?.fullLabel ?? "All Budget Codes";
 
-                    return (
-                      <TableRow key={markup.id} className="border-b border-border/60 bg-background hover:bg-muted/20">
-                        <TableCell className="px-3 py-2.5">
+                  return (
+                    <InlineTableRow key={markup.id}>
+                      <InlineTableCell>
+                        {isEditingRow ? (
+                          <select
+                            value={rowDraft?.markup_type ?? markup.markup_type}
+                            onChange={(e) =>
+                              setMarkupRowDrafts((prev) => ({
+                                ...prev,
+                                [markup.id]: {
+                                  ...(prev[markup.id] ?? {
+                                    markup_type: markup.markup_type,
+                                    percentage: Number(markup.percentage) || 0,
+                                    compound: Boolean(markup.compound),
+                                    displayIn,
+                                    mapsTo,
+                                  }),
+                                  markup_type: e.target.value,
+                                },
+                              }))
+                            }
+                            className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                          >
+                            <option value="insurance">Insurance</option>
+                            <option value="bond">Bond</option>
+                            <option value="fee">Fee</option>
+                            <option value="overhead">Overhead</option>
+                            <option value="custom">Custom</option>
+                          </select>
+                        ) : (
+                          <span className="text-sm text-foreground capitalize">{markup.markup_type}</span>
+                        )}
+                      </InlineTableCell>
+                      <InlineTableCell>
+                        {isEditingRow ? (
+                          <select
+                            value={rowDraft?.displayIn ?? displayIn}
+                            onChange={(e) =>
+                              setMarkupRowDrafts((prev) => ({
+                                ...prev,
+                                [markup.id]: {
+                                  ...(prev[markup.id] ?? {
+                                    markup_type: markup.markup_type,
+                                    percentage: Number(markup.percentage) || 0,
+                                    compound: Boolean(markup.compound),
+                                    displayIn,
+                                    mapsTo,
+                                  }),
+                                  displayIn: e.target.value as "horizontal" | "vertical",
+                                },
+                              }))
+                            }
+                            className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                          >
+                            <option value="horizontal">Horizontal</option>
+                            <option value="vertical">Vertical</option>
+                          </select>
+                        ) : (
+                          <span className="text-sm text-foreground capitalize">{displayIn}</span>
+                        )}
+                      </InlineTableCell>
+                      <InlineTableCell>
+                        {isEditingRow ? (
+                          <select
+                            value={rowDraft?.mapsTo ?? mapsTo}
+                            onChange={(e) =>
+                              setMarkupRowDrafts((prev) => ({
+                                ...prev,
+                                [markup.id]: {
+                                  ...(prev[markup.id] ?? {
+                                    markup_type: markup.markup_type,
+                                    percentage: Number(markup.percentage) || 0,
+                                    compound: Boolean(markup.compound),
+                                    displayIn,
+                                    mapsTo,
+                                  }),
+                                  mapsTo: e.target.value,
+                                },
+                              }))
+                            }
+                            className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                          >
+                            <option value="all">All Budget Codes</option>
+                            {budgetCodes.map((code) => (
+                              <option key={code.id} value={code.id}>
+                                {code.fullLabel}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <span className="text-sm text-foreground">{mapsToLabel}</span>
+                        )}
+                      </InlineTableCell>
+                      <InlineTableCell align="right">
+                        {isEditingRow ? (
+                          <Input
+                            type="number"
+                            min="0"
+                            max="100"
+                            step="0.001"
+                            value={String(rowDraft?.percentage ?? markup.percentage)}
+                            onChange={(e) =>
+                              setMarkupRowDrafts((prev) => ({
+                                ...prev,
+                                [markup.id]: {
+                                  ...(prev[markup.id] ?? {
+                                    markup_type: markup.markup_type,
+                                    percentage: Number(markup.percentage) || 0,
+                                    compound: Boolean(markup.compound),
+                                    displayIn,
+                                    mapsTo,
+                                  }),
+                                  percentage: Number(e.target.value || 0),
+                                },
+                              }))
+                            }
+                            className="h-8 text-right"
+                          />
+                        ) : (
+                          <span className="text-sm text-foreground">{Number(markup.percentage).toFixed(2)}%</span>
+                        )}
+                      </InlineTableCell>
+                      <InlineTableCell>
+                        {isEditingRow ? (
+                          <select
+                            value={(rowDraft?.compound ?? markup.compound) ? "compound" : "basic"}
+                            onChange={(e) =>
+                              setMarkupRowDrafts((prev) => ({
+                                ...prev,
+                                [markup.id]: {
+                                  ...(prev[markup.id] ?? {
+                                    markup_type: markup.markup_type,
+                                    percentage: Number(markup.percentage) || 0,
+                                    compound: Boolean(markup.compound),
+                                    displayIn,
+                                    mapsTo,
+                                  }),
+                                  compound: e.target.value === "compound",
+                                },
+                              }))
+                            }
+                            className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                          >
+                            <option value="basic">Basic Calculation</option>
+                            <option value="compound">Compounds All Above</option>
+                          </select>
+                        ) : (
+                          <span className="text-sm text-foreground">
+                            {markup.compound ? "Compounds All Above" : "Basic Calculation"}
+                          </span>
+                        )}
+                      </InlineTableCell>
+                      <InlineTableCell align="right">
+                        <div className="flex items-center justify-end gap-1">
                           {isEditingRow ? (
-                            <select
-                              value={rowDraft?.markup_type ?? markup.markup_type}
-                              onChange={(e) =>
-                                setMarkupRowDrafts((prev) => ({
-                                  ...prev,
-                                  [markup.id]: {
-                                    ...(prev[markup.id] ?? {
-                                      markup_type: markup.markup_type,
-                                      percentage: Number(markup.percentage) || 0,
-                                      compound: Boolean(markup.compound),
-                                      displayIn,
-                                      mapsTo,
-                                    }),
-                                    markup_type: e.target.value,
-                                  },
-                                }))
-                              }
-                              className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                            >
-                              <option value="insurance">Insurance</option>
-                              <option value="bond">Bond</option>
-                              <option value="fee">Fee</option>
-                              <option value="overhead">Overhead</option>
-                              <option value="custom">Custom</option>
-                            </select>
-                          ) : (
-                            <span className="text-sm text-foreground capitalize">{markup.markup_type}</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="px-3 py-2.5">
-                          {isEditingRow ? (
-                            <select
-                              value={rowDraft?.displayIn ?? displayIn}
-                              onChange={(e) =>
-                                setMarkupRowDrafts((prev) => ({
-                                  ...prev,
-                                  [markup.id]: {
-                                    ...(prev[markup.id] ?? {
-                                      markup_type: markup.markup_type,
-                                      percentage: Number(markup.percentage) || 0,
-                                      compound: Boolean(markup.compound),
-                                      displayIn,
-                                      mapsTo,
-                                    }),
-                                    displayIn: e.target.value as "horizontal" | "vertical",
-                                  },
-                                }))
-                              }
-                              className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                            >
-                              <option value="horizontal">Horizontal</option>
-                              <option value="vertical">Vertical</option>
-                            </select>
-                          ) : (
-                            <span className="text-sm text-foreground capitalize">{displayIn}</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="px-3 py-2.5">
-                          {isEditingRow ? (
-                            <select
-                              value={rowDraft?.mapsTo ?? mapsTo}
-                              onChange={(e) =>
-                                setMarkupRowDrafts((prev) => ({
-                                  ...prev,
-                                  [markup.id]: {
-                                    ...(prev[markup.id] ?? {
-                                      markup_type: markup.markup_type,
-                                      percentage: Number(markup.percentage) || 0,
-                                      compound: Boolean(markup.compound),
-                                      displayIn,
-                                      mapsTo,
-                                    }),
-                                    mapsTo: e.target.value,
-                                  },
-                                }))
-                              }
-                              className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                            >
-                              <option value="all">All Budget Codes</option>
-                              {budgetCodes.map((code) => (
-                                <option key={code.id} value={code.id}>
-                                  {code.fullLabel}
-                                </option>
-                              ))}
-                            </select>
-                          ) : (
-                            <span className="text-sm text-foreground">{mapsToLabel}</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="px-3 py-2.5 text-right">
-                          {isEditingRow ? (
-                            <Input
-                              type="number"
-                              min="0"
-                              max="100"
-                              step="0.001"
-                              value={String(rowDraft?.percentage ?? markup.percentage)}
-                              onChange={(e) =>
-                                setMarkupRowDrafts((prev) => ({
-                                  ...prev,
-                                  [markup.id]: {
-                                    ...(prev[markup.id] ?? {
-                                      markup_type: markup.markup_type,
-                                      percentage: Number(markup.percentage) || 0,
-                                      compound: Boolean(markup.compound),
-                                      displayIn,
-                                      mapsTo,
-                                    }),
-                                    percentage: Number(e.target.value || 0),
-                                  },
-                                }))
-                              }
-                              className="h-8 text-right"
-                            />
-                          ) : (
-                            <span className="text-sm text-foreground">{Number(markup.percentage).toFixed(2)}%</span>
-                          )}
-                        </TableCell>
-                        <TableCell className="px-3 py-2.5">
-                          {isEditingRow ? (
-                            <select
-                              value={(rowDraft?.compound ?? markup.compound) ? "compound" : "basic"}
-                              onChange={(e) =>
-                                setMarkupRowDrafts((prev) => ({
-                                  ...prev,
-                                  [markup.id]: {
-                                    ...(prev[markup.id] ?? {
-                                      markup_type: markup.markup_type,
-                                      percentage: Number(markup.percentage) || 0,
-                                      compound: Boolean(markup.compound),
-                                      displayIn,
-                                      mapsTo,
-                                    }),
-                                    compound: e.target.value === "compound",
-                                  },
-                                }))
-                              }
-                              className="flex h-8 w-full rounded-md border border-input bg-background px-2 py-1 text-xs shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                            >
-                              <option value="basic">Basic Calculation</option>
-                              <option value="compound">Compounds All Above</option>
-                            </select>
-                          ) : (
-                            <span className="text-sm text-foreground">
-                              {markup.compound ? "Compounds All Above" : "Basic Calculation"}
-                            </span>
-                          )}
-                        </TableCell>
-                        <TableCell className="px-3 py-2.5 text-right">
-                          <div className="flex items-center justify-end gap-1">
-                            {isEditingRow ? (
-                              <>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 px-2"
-                                  onClick={() => handleSaveMarkupRowEdit(markup.id)}
-                                >
-                                  <Check className="h-3.5 w-3.5" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 px-2"
-                                  onClick={() => handleCancelMarkupRowEdit(markup.id)}
-                                >
-                                  <X className="h-3.5 w-3.5" />
-                                </Button>
-                              </>
-                            ) : (
+                            <>
                               <Button
                                 variant="ghost"
                                 size="sm"
                                 className="h-7 px-2"
-                                onClick={() => handleStartMarkupRowEdit(markup)}
+                                onClick={() => handleSaveMarkupRowEdit(markup.id)}
                               >
-                                <Pencil className="h-3.5 w-3.5" />
+                                <Check className="h-3.5 w-3.5" />
                               </Button>
-                            )}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-7 px-2"
+                                onClick={() => handleCancelMarkupRowEdit(markup.id)}
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </Button>
+                            </>
+                          ) : (
                             <Button
                               variant="ghost"
                               size="sm"
-                              className="h-7 px-2 text-destructive hover:text-destructive"
-                              onClick={() => handleDeleteMarkup(markup.id)}
-                              disabled={deletingMarkupId === markup.id}
+                              className="h-7 px-2"
+                              onClick={() => handleStartMarkupRowEdit(markup)}
                             >
-                              <Trash2 className="h-3.5 w-3.5" />
+                              <Pencil className="h-3.5 w-3.5" />
                             </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-destructive hover:text-destructive"
+                            onClick={() => handleDeleteMarkup(markup.id)}
+                            disabled={deletingMarkupId === markup.id}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </InlineTableCell>
+                    </InlineTableRow>
+                  );
+                })
+            )}
+          </InlineTableBody>
+        </InlineTable>
       </section>
 
       {/* Add/Edit Markup Dialog */}

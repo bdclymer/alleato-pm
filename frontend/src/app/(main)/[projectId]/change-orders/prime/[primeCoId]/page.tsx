@@ -21,7 +21,20 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { z } from "zod";
 
-import { EmptyState, StatusBadge } from "@/components/ds";
+import {
+  EmptyState,
+  InlineTable,
+  InlineTableBody,
+  InlineTableCell,
+  InlineTableFooter,
+  InlineTableFooterCell,
+  InlineTableFooterRow,
+  InlineTableHeader,
+  InlineTableHeaderCell,
+  InlineTableHeaderRow,
+  InlineTableRow,
+  StatusBadge,
+} from "@/components/ds";
 import { useVerticalMarkup } from "@/hooks/use-vertical-markup";
 import {
   ContentSectionStack,
@@ -1507,184 +1520,27 @@ export default function PrimeContractCODetailPage() {
                 {lineItemsLoading ? (
                   <Skeleton className="h-24 w-full" />
                 ) : lineItems.length > 0 || addingLineItem ? (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead>
-                        <tr className="border-b text-left text-muted-foreground">
-                          <th className="pb-2 font-medium">#</th>
-                          <th className="pb-2 font-medium">Description</th>
-                          <th className="pb-2 font-medium">Cost Code</th>
-                          <th className="pb-2 text-right font-medium">Qty</th>
-                          <th className="pb-2 font-medium">UOM</th>
-                          <th className="pb-2 text-right font-medium">
-                            Unit Cost
-                          </th>
-                          <th className="pb-2 text-right font-medium">Amount</th>
-                          <th className="w-20 pb-2" />
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {lineItems.map((item, idx) =>
-                          editingLineItemId === item.id ? (
-                            <tr
-                              key={item.id}
-                              className="border-b bg-muted/50"
-                            >
-                              <td className="py-2 text-muted-foreground">
-                                {idx + 1}
-                              </td>
-                              <td className="py-2 pr-2">
-                                <Input
-                                  value={lineItemForm.description}
-                                  onChange={(e) =>
-                                    setLineItemForm((f) => ({
-                                      ...f,
-                                      description: e.target.value,
-                                    }))
-                                  }
-                                  placeholder="Description"
-                                  className="h-8"
-                                />
-                              </td>
-                              <td className="py-2 pr-2">
-                                <Input
-                                  value={lineItemForm.cost_code}
-                                  onChange={(e) =>
-                                    setLineItemForm((f) => ({
-                                      ...f,
-                                      cost_code: e.target.value,
-                                    }))
-                                  }
-                                  placeholder="Cost code"
-                                  className="h-8 w-28"
-                                />
-                              </td>
-                              <td className="py-2 pr-2">
-                                <Input
-                                  type="number"
-                                  value={lineItemForm.quantity}
-                                  onChange={(e) =>
-                                    setLineItemForm((f) => ({
-                                      ...f,
-                                      quantity: e.target.value,
-                                    }))
-                                  }
-                                  placeholder=""
-                                  className="h-8 w-20 text-right"
-                                />
-                              </td>
-                              <td className="py-2 pr-2">
-                                <Input
-                                  value={lineItemForm.uom}
-                                  onChange={(e) =>
-                                    setLineItemForm((f) => ({
-                                      ...f,
-                                      uom: e.target.value,
-                                    }))
-                                  }
-                                  placeholder="UOM"
-                                  className="h-8 w-20"
-                                />
-                              </td>
-                              <td className="py-2 pr-2">
-                                <Input
-                                  type="number"
-                                  step="0.01"
-                                  value={lineItemForm.unit_cost}
-                                  onChange={(e) =>
-                                    setLineItemForm((f) => ({
-                                      ...f,
-                                      unit_cost: e.target.value,
-                                    }))
-                                  }
-                                  placeholder=""
-                                  className="h-8 w-28 text-right"
-                                />
-                              </td>
-                              <td className="py-2 text-right text-muted-foreground">
-                                {formatCurrency(computedLineItemAmount)}
-                              </td>
-                              <td className="py-2 text-right">
-                                <div className="flex items-center justify-end gap-1">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7"
-                                    onClick={handleSaveLineItem}
-                                    disabled={lineItemSaving}
-                                  >
-                                    <Check className="h-4 w-4 text-primary" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7"
-                                    onClick={cancelLineItemEdit}
-                                    disabled={lineItemSaving}
-                                  >
-                                    <X className="h-4 w-4" />
-                                  </Button>
-                                </div>
-                              </td>
-                            </tr>
-                          ) : (
-                            <tr
-                              key={item.id}
-                              className="group border-b last:border-0"
-                            >
-                              <td className="py-2 text-muted-foreground">
-                                {idx + 1}
-                              </td>
-                              <td className="py-2">
-                                {item.description || "—"}
-                              </td>
-                              <td className="py-2">
-                                {item.cost_code || "—"}
-                              </td>
-                              <td className="py-2 text-right">
-                                {item.quantity ?? "—"}
-                              </td>
-                              <td className="py-2">{item.uom || "—"}</td>
-                              <td className="py-2 text-right">
-                                {item.unit_cost != null
-                                  ? formatCurrency(item.unit_cost)
-                                  : "—"}
-                              </td>
-                              <td className="py-2 text-right">
-                                {formatCurrency(item.line_amount)}
-                              </td>
-                              <td className="py-2 text-right">
-                                <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7"
-                                    onClick={() => startEditLineItem(item)}
-                                  >
-                                    <Pencil className="h-3.5 w-3.5" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7 text-destructive hover:text-destructive"
-                                    onClick={() =>
-                                      handleDeleteLineItem(item.id)
-                                    }
-                                  >
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                  </Button>
-                                </div>
-                              </td>
-                            </tr>
-                          ),
-                        )}
-                        {/* Inline add row */}
-                        {addingLineItem && (
-                          <tr className="border-b bg-muted/50">
-                            <td className="py-2 text-muted-foreground">
-                              {lineItems.length + 1}
-                            </td>
-                            <td className="py-2 pr-2">
+                  <InlineTable variant="read">
+                    <InlineTableHeader>
+                      <InlineTableHeaderRow>
+                        <InlineTableHeaderCell>#</InlineTableHeaderCell>
+                        <InlineTableHeaderCell>Description</InlineTableHeaderCell>
+                        <InlineTableHeaderCell>Cost Code</InlineTableHeaderCell>
+                        <InlineTableHeaderCell align="right">Qty</InlineTableHeaderCell>
+                        <InlineTableHeaderCell>UOM</InlineTableHeaderCell>
+                        <InlineTableHeaderCell align="right">Unit Cost</InlineTableHeaderCell>
+                        <InlineTableHeaderCell align="right">Amount</InlineTableHeaderCell>
+                        <InlineTableHeaderCell className="w-20" />
+                      </InlineTableHeaderRow>
+                    </InlineTableHeader>
+                    <InlineTableBody>
+                      {lineItems.map((item, idx) =>
+                        editingLineItemId === item.id ? (
+                          <InlineTableRow key={item.id} className="bg-muted/50">
+                            <InlineTableCell className="text-muted-foreground">
+                              {idx + 1}
+                            </InlineTableCell>
+                            <InlineTableCell className="pr-2">
                               <Input
                                 value={lineItemForm.description}
                                 onChange={(e) =>
@@ -1695,10 +1551,9 @@ export default function PrimeContractCODetailPage() {
                                 }
                                 placeholder="Description"
                                 className="h-8"
-                                autoFocus
                               />
-                            </td>
-                            <td className="py-2 pr-2">
+                            </InlineTableCell>
+                            <InlineTableCell className="pr-2">
                               <Input
                                 value={lineItemForm.cost_code}
                                 onChange={(e) =>
@@ -1710,8 +1565,8 @@ export default function PrimeContractCODetailPage() {
                                 placeholder="Cost code"
                                 className="h-8 w-28"
                               />
-                            </td>
-                            <td className="py-2 pr-2">
+                            </InlineTableCell>
+                            <InlineTableCell className="pr-2">
                               <Input
                                 type="number"
                                 value={lineItemForm.quantity}
@@ -1724,8 +1579,8 @@ export default function PrimeContractCODetailPage() {
                                 placeholder=""
                                 className="h-8 w-20 text-right"
                               />
-                            </td>
-                            <td className="py-2 pr-2">
+                            </InlineTableCell>
+                            <InlineTableCell className="pr-2">
                               <Input
                                 value={lineItemForm.uom}
                                 onChange={(e) =>
@@ -1737,8 +1592,8 @@ export default function PrimeContractCODetailPage() {
                                 placeholder="UOM"
                                 className="h-8 w-20"
                               />
-                            </td>
-                            <td className="py-2 pr-2">
+                            </InlineTableCell>
+                            <InlineTableCell className="pr-2">
                               <Input
                                 type="number"
                                 step="0.01"
@@ -1752,11 +1607,11 @@ export default function PrimeContractCODetailPage() {
                                 placeholder=""
                                 className="h-8 w-28 text-right"
                               />
-                            </td>
-                            <td className="py-2 text-right text-muted-foreground">
+                            </InlineTableCell>
+                            <InlineTableCell align="right" className="text-muted-foreground">
                               {formatCurrency(computedLineItemAmount)}
-                            </td>
-                            <td className="py-2 text-right">
+                            </InlineTableCell>
+                            <InlineTableCell align="right">
                               <div className="flex items-center justify-end gap-1">
                                 <Button
                                   variant="ghost"
@@ -1777,63 +1632,209 @@ export default function PrimeContractCODetailPage() {
                                   <X className="h-4 w-4" />
                                 </Button>
                               </div>
-                            </td>
-                          </tr>
-                        )}
-                        {/* ── Vertical Markup rows (read-only) ── */}
-                        {computedMarkups.length > 0 && (
-                          <>
-                            {/* Subtotal separator */}
-                            <tr className="border-b">
-                              <td
-                                colSpan={6}
-                                className="py-2 text-right text-xs font-medium text-muted-foreground"
-                              >
-                                Subtotal
-                              </td>
-                              <td className="py-2 text-right text-xs font-medium">
-                                {formatCurrency(lineItemsTotal)}
-                              </td>
-                              <td />
-                            </tr>
-                            {computedMarkups.map((markup) => (
-                              <tr
-                                key={markup.id}
-                                className="border-b bg-primary/5"
-                              >
-                                <td />
-                                <td
-                                  colSpan={4}
-                                  className="py-2 text-sm text-muted-foreground"
+                            </InlineTableCell>
+                          </InlineTableRow>
+                        ) : (
+                          <InlineTableRow key={item.id}>
+                            <InlineTableCell className="text-muted-foreground">
+                              {idx + 1}
+                            </InlineTableCell>
+                            <InlineTableCell>
+                              {item.description || "—"}
+                            </InlineTableCell>
+                            <InlineTableCell>
+                              {item.cost_code || "—"}
+                            </InlineTableCell>
+                            <InlineTableCell align="right">
+                              {item.quantity ?? "—"}
+                            </InlineTableCell>
+                            <InlineTableCell>{item.uom || "—"}</InlineTableCell>
+                            <InlineTableCell align="right">
+                              {item.unit_cost != null
+                                ? formatCurrency(item.unit_cost)
+                                : "—"}
+                            </InlineTableCell>
+                            <InlineTableCell align="right">
+                              {formatCurrency(item.line_amount)}
+                            </InlineTableCell>
+                            <InlineTableCell align="right">
+                              <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7"
+                                  onClick={() => startEditLineItem(item)}
                                 >
-                                  {MARKUP_LABELS[markup.markup_type] ??
-                                    markup.markup_type}
-                                </td>
-                                <td className="py-2 text-right text-sm text-muted-foreground">
-                                  {markup.percentage}%
-                                </td>
-                                <td className="py-2 text-right text-sm">
-                                  {formatCurrency(markup.amount)}
-                                </td>
-                                <td />
-                              </tr>
-                            ))}
-                          </>
-                        )}
-                      </tbody>
-                      <tfoot>
-                        <tr className="font-medium">
-                          <td colSpan={7} className="pt-2">
-                            <div className="flex justify-between">
-                              <span>Total</span>
-                              <span>{formatCurrency(grandTotal)}</span>
+                                  <Pencil className="h-3.5 w-3.5" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-7 w-7 text-destructive hover:text-destructive"
+                                  onClick={() =>
+                                    handleDeleteLineItem(item.id)
+                                  }
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              </div>
+                            </InlineTableCell>
+                          </InlineTableRow>
+                        ),
+                      )}
+                      {/* Inline add row */}
+                      {addingLineItem && (
+                        <InlineTableRow className="bg-muted/50">
+                          <InlineTableCell className="text-muted-foreground">
+                            {lineItems.length + 1}
+                          </InlineTableCell>
+                          <InlineTableCell className="pr-2">
+                            <Input
+                              value={lineItemForm.description}
+                              onChange={(e) =>
+                                setLineItemForm((f) => ({
+                                  ...f,
+                                  description: e.target.value,
+                                }))
+                              }
+                              placeholder="Description"
+                              className="h-8"
+                              autoFocus
+                            />
+                          </InlineTableCell>
+                          <InlineTableCell className="pr-2">
+                            <Input
+                              value={lineItemForm.cost_code}
+                              onChange={(e) =>
+                                setLineItemForm((f) => ({
+                                  ...f,
+                                  cost_code: e.target.value,
+                                }))
+                              }
+                              placeholder="Cost code"
+                              className="h-8 w-28"
+                            />
+                          </InlineTableCell>
+                          <InlineTableCell className="pr-2">
+                            <Input
+                              type="number"
+                              value={lineItemForm.quantity}
+                              onChange={(e) =>
+                                setLineItemForm((f) => ({
+                                  ...f,
+                                  quantity: e.target.value,
+                                }))
+                              }
+                              placeholder=""
+                              className="h-8 w-20 text-right"
+                            />
+                          </InlineTableCell>
+                          <InlineTableCell className="pr-2">
+                            <Input
+                              value={lineItemForm.uom}
+                              onChange={(e) =>
+                                setLineItemForm((f) => ({
+                                  ...f,
+                                  uom: e.target.value,
+                                }))
+                              }
+                              placeholder="UOM"
+                              className="h-8 w-20"
+                            />
+                          </InlineTableCell>
+                          <InlineTableCell className="pr-2">
+                            <Input
+                              type="number"
+                              step="0.01"
+                              value={lineItemForm.unit_cost}
+                              onChange={(e) =>
+                                setLineItemForm((f) => ({
+                                  ...f,
+                                  unit_cost: e.target.value,
+                                }))
+                              }
+                              placeholder=""
+                              className="h-8 w-28 text-right"
+                            />
+                          </InlineTableCell>
+                          <InlineTableCell align="right" className="text-muted-foreground">
+                            {formatCurrency(computedLineItemAmount)}
+                          </InlineTableCell>
+                          <InlineTableCell align="right">
+                            <div className="flex items-center justify-end gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={handleSaveLineItem}
+                                disabled={lineItemSaving}
+                              >
+                                <Check className="h-4 w-4 text-primary" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={cancelLineItemEdit}
+                                disabled={lineItemSaving}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
                             </div>
-                          </td>
-                          <td />
-                        </tr>
-                      </tfoot>
-                    </table>
-                  </div>
+                          </InlineTableCell>
+                        </InlineTableRow>
+                      )}
+                      {/* Vertical Markup rows (read-only) */}
+                      {computedMarkups.length > 0 && (
+                        <>
+                          {/* Subtotal separator */}
+                          <InlineTableRow>
+                            <InlineTableCell
+                              colSpan={6}
+                              align="right"
+                              className="text-xs font-medium text-muted-foreground"
+                            >
+                              Subtotal
+                            </InlineTableCell>
+                            <InlineTableCell align="right" className="text-xs font-medium">
+                              {formatCurrency(lineItemsTotal)}
+                            </InlineTableCell>
+                            <InlineTableCell />
+                          </InlineTableRow>
+                          {computedMarkups.map((markup) => (
+                            <InlineTableRow key={markup.id} type="markup">
+                              <InlineTableCell />
+                              <InlineTableCell
+                                colSpan={4}
+                                className="text-sm text-muted-foreground"
+                              >
+                                {MARKUP_LABELS[markup.markup_type] ??
+                                  markup.markup_type}
+                              </InlineTableCell>
+                              <InlineTableCell align="right" className="text-sm text-muted-foreground">
+                                {markup.percentage}%
+                              </InlineTableCell>
+                              <InlineTableCell align="right" className="text-sm">
+                                {formatCurrency(markup.amount)}
+                              </InlineTableCell>
+                              <InlineTableCell />
+                            </InlineTableRow>
+                          ))}
+                        </>
+                      )}
+                    </InlineTableBody>
+                    <InlineTableFooter>
+                      <InlineTableFooterRow type="totals">
+                        <InlineTableFooterCell colSpan={7}>
+                          <div className="flex justify-between">
+                            <span>Total</span>
+                            <span>{formatCurrency(grandTotal)}</span>
+                          </div>
+                        </InlineTableFooterCell>
+                        <InlineTableFooterCell />
+                      </InlineTableFooterRow>
+                    </InlineTableFooter>
+                  </InlineTable>
                 ) : (
                   <EmptyState
                     icon={<List />}

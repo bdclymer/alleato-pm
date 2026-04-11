@@ -405,7 +405,7 @@ export function AdminFeedbackWidget() {
       <div
         {...feedbackTargetProps("admin.feedback-widget")}
         {...{ [ADMIN_FEEDBACK_OVERLAY_ATTRIBUTE]: "true" }}
-        className="fixed bottom-5 right-5 z-[9999] flex items-center gap-2"
+        className="fixed bottom-5 right-20 z-[9999] flex items-center gap-2"
       >
         {isSelecting && (
           <div className="hidden rounded-full bg-foreground px-3 py-1.5 text-xs text-background shadow-sm md:block">

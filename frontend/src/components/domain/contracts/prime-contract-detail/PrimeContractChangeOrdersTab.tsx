@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import type { ColumnDef } from "@tanstack/react-table";
 import {
   Check,
   Download,
@@ -14,14 +15,7 @@ import { toast } from "sonner";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { DataTable, type DataTableFooterCell } from "@/components/tables/DataTable";
 import type { PrimeContractCO, ChangeOrderFormState } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
 
 interface PrimeContractChangeOrdersTabProps {
@@ -99,6 +93,10 @@ export function PrimeContractChangeOrdersTab({
     () => changeOrders.filter((co) => co.status === "rejected"),
     [changeOrders],
   );
+  const totalChangeOrderAmount = useMemo(
+    () => changeOrders.reduce((sum, co) => sum + (co.amount ?? 0), 0),
+    [changeOrders],
+  );
 
   const handleApproveCo = async (coId: string) => {
     try {
@@ -121,6 +119,162 @@ export function PrimeContractChangeOrdersTab({
       toast.error("Failed to approve change order");
     }
   };
+
+  const columns: ColumnDef<PrimeContractCO>[] = useMemo(
+    () => [
+      {
+        accessorKey: "change_order_number",
+        header: "CO Number",
+        cell: ({ row }) => (
+          <div className="font-medium">{row.original.change_order_number || "--"}</div>
+        ),
+      },
+      {
+        accessorKey: "description",
+        header: "Description",
+      },
+      {
+        accessorKey: "amount",
+        header: () => <div className="text-right">Amount</div>,
+        cell: ({ row }) => (
+          <div className="text-right">
+            <span className={(row.original.amount ?? 0) < 0 ? "text-destructive" : ""}>
+              {formatCurrency(row.original.amount ?? 0)}
+            </span>
+          </div>
+        ),
+      },
+      {
+        accessorKey: "status",
+        header: "Status",
+        cell: ({ row }) => (
+          <Badge
+            variant={
+              row.original.status === "approved"
+                ? "default"
+                : row.original.status === "pending"
+                  ? "secondary"
+                  : "destructive"
+            }
+          >
+            {row.original.status
+              ? row.original.status.charAt(0).toUpperCase() + row.original.status.slice(1)
+              : "--"}
+          </Badge>
+        ),
+      },
+      {
+        accessorKey: "created_at",
+        header: "Requested",
+        cell: ({ row }) => (
+          <div className="text-sm">
+            {row.original.created_at ? new Date(row.original.created_at).toLocaleDateString() : "--"}
+          </div>
+        ),
+      },
+      {
+        accessorKey: "approved_date",
+        header: "Approved/Rejected",
+        cell: ({ row }) => (
+          <div className="text-sm">
+            {row.original.approved_date
+              ? new Date(row.original.approved_date).toLocaleDateString()
+              : "--"}
+          </div>
+        ),
+      },
+      {
+        id: "actions",
+        header: "Actions",
+        cell: ({ row }) => (
+          <div className="flex items-center gap-1">
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7"
+              onClick={(event) => {
+                event.stopPropagation();
+                onStartEditCo(row.original);
+              }}
+              title="Edit"
+            >
+              <Pencil className="h-3.5 w-3.5" />
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7"
+              onClick={(event) => {
+                event.stopPropagation();
+                void downloadPrimeContractChangeOrderPdf(row.original);
+              }}
+              title="Download PDF"
+              aria-label={`Download ${row.original.change_order_number || "change order"} PDF`}
+            >
+              <Download />
+            </Button>
+            {row.original.status !== "approved" && row.original.status !== "rejected" && (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-2 text-xs"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    void handleApproveCo(row.original.id);
+                  }}
+                >
+                  <Check />
+                  Approve
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 px-2 text-xs text-destructive"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onSetRejectingCoId(row.original.id);
+                    onShowRejectCoDialog();
+                  }}
+                >
+                  <X className="h-3 w-3 mr-1" />
+                  Reject
+                </Button>
+              </>
+            )}
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7 text-destructive hover:text-destructive"
+              onClick={(event) => {
+                event.stopPropagation();
+                onSetDeletingCo(row.original);
+              }}
+              title="Delete"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        ),
+      },
+    ],
+    [
+      formatCurrency,
+      onSetDeletingCo,
+      onSetRejectingCoId,
+      onShowRejectCoDialog,
+      onStartEditCo,
+    ],
+  );
+
+  const footerRow = useMemo<DataTableFooterCell[]>(
+    () => [
+      { value: "Total Change Orders", colSpan: 2, align: "left" },
+      { value: formatCurrency(totalChangeOrderAmount) },
+      { value: "", colSpan: 4 },
+    ],
+    [formatCurrency, totalChangeOrderAmount],
+  );
 
   return (
     <div>
@@ -153,123 +307,13 @@ export function PrimeContractChangeOrdersTab({
               </p>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>CO Number</TableHead>
-                  <TableHead>Description</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Requested</TableHead>
-                  <TableHead>Approved/Rejected</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {changeOrders.map((co) => (
-                  <TableRow key={co.id}>
-                    <TableCell className="font-medium">
-                      {co.change_order_number || "--"}
-                    </TableCell>
-                    <TableCell>{co.description}</TableCell>
-                    <TableCell className="text-right">
-                      <span className={(co.amount ?? 0) < 0 ? "text-destructive" : ""}>
-                        {formatCurrency(co.amount ?? 0)}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          co.status === "approved"
-                            ? "default"
-                            : co.status === "pending"
-                              ? "secondary"
-                              : "destructive"
-                        }
-                      >
-                        {co.status ? co.status.charAt(0).toUpperCase() + co.status.slice(1) : "--"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {co.created_at ? new Date(co.created_at).toLocaleDateString() : "--"}
-                    </TableCell>
-                    <TableCell className="text-sm">
-                      {co.approved_date
-                        ? new Date(co.approved_date).toLocaleDateString()
-                        : "--"}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7"
-                          onClick={() => onStartEditCo(co)}
-                          title="Edit"
-                        >
-                          <Pencil className="h-3.5 w-3.5" />
-                        </Button>
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7"
-                          onClick={() => void downloadPrimeContractChangeOrderPdf(co)}
-                          title="Download PDF"
-                          aria-label={`Download ${co.change_order_number || "change order"} PDF`}
-                        >
-                          <Download />
-                        </Button>
-                        {co.status !== "approved" && co.status !== "rejected" && (
-                          <>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-7 px-2 text-xs"
-                              onClick={() => handleApproveCo(co.id)}
-                            >
-                              <Check />
-                              Approve
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              className="h-7 px-2 text-xs text-destructive"
-                              onClick={() => {
-                                onSetRejectingCoId(co.id);
-                                onShowRejectCoDialog();
-                              }}
-                            >
-                              <X className="h-3 w-3 mr-1" />
-                              Reject
-                            </Button>
-                          </>
-                        )}
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-7 w-7 text-destructive hover:text-destructive"
-                          onClick={() => onSetDeletingCo(co)}
-                          title="Delete"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-              <tfoot>
-                <TableRow className="bg-muted font-medium">
-                  <TableCell colSpan={2}>Total Change Orders</TableCell>
-                  <TableCell className="text-right">
-                    {formatCurrency(
-                      changeOrders.reduce((sum, co) => sum + (co.amount ?? 0), 0),
-                    )}
-                  </TableCell>
-                  <TableCell colSpan={4}></TableCell>
-                </TableRow>
-              </tfoot>
-            </Table>
+            <DataTable
+              columns={columns}
+              data={changeOrders}
+              showToolbar={false}
+              showPagination={changeOrders.length > 25}
+              footerRow={footerRow}
+            />
           )}
         </div>
       </div>

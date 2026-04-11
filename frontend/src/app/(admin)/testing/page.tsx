@@ -27,6 +27,7 @@ import {
 
 type TestStatus = "pass" | "fail" | "skip" | "not_tested";
 type Severity = "critical" | "major" | "minor" | "cosmetic" | "";
+type ScenarioDepth = "broad" | "detailed" | "all";
 
 interface TestCase {
   id: string;
@@ -40,6 +41,7 @@ interface TestCase {
   expected_result: string | null;
   priority: "HIGH" | "MEDIUM" | "LOW";
   start_url: string | null;
+  scenario_depth?: "broad" | "detailed" | null;
 }
 
 interface TestResult {
@@ -55,6 +57,8 @@ interface Suite {
   tool_name: string;
   display_name: string;
   scenario_count: number;
+  broad_scenario_count: number;
+  detailed_scenario_count: number;
   feature_count: number;
 }
 
@@ -64,6 +68,7 @@ interface HistoryRun {
   tester: string | null;
   environment: string | null;
   branch: string | null;
+  scenario_depth: ScenarioDepth;
   total: number;
   pass: number;
   fail: number;
@@ -94,13 +99,26 @@ function parseSteps(raw: string | null): string[] {
   return raw.split("\n").filter(Boolean).map((s) => s.replace(/^\d+\.\s*/, "").trim());
 }
 
+function depthLabel(depth: ScenarioDepth): string {
+  if (depth === "broad") return "Broad";
+  if (depth === "detailed") return "Detailed";
+  return "All";
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function TestingPage() {
   const [view, setView] = useState<View>("home");
   const [suites, setSuites] = useState<Suite[]>([]);
   const [selectedSuite, setSelectedSuite] = useState<Suite | null>(null);
-  const [runForm, setRunForm] = useState({ tester: "", environment: typeof window !== "undefined" ? window.location.host : "", branch: "main", notes: "", projectId: "" });
+  const [runForm, setRunForm] = useState({
+    tester: "",
+    environment: typeof window !== "undefined" ? window.location.host : "",
+    branch: "main",
+    notes: "",
+    projectId: "",
+    scenarioDepth: "broad" as ScenarioDepth,
+  });
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
   const [results, setResults] = useState<TestResult[]>([]);
   const [cursor, setCursor] = useState(0);
@@ -233,16 +251,23 @@ export default function TestingPage() {
     const res = await fetch("/api/testing/runs", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ suite: selectedSuite.tool_name, ...runForm }),
+      body: JSON.stringify({ suite: selectedSuite.tool_name, testType: "scenario", ...runForm }),
     });
     if (res.ok) {
-      const { run_id } = await res.json();
+      const { run_id, effective_depth } = await res.json();
+      if (effective_depth && effective_depth !== runForm.scenarioDepth) {
+        setRunForm((f) => ({ ...f, scenarioDepth: effective_depth as ScenarioDepth }));
+      }
       setActiveRunId(run_id);
       const r2 = await fetch(`/api/testing/runs/${run_id}/results?type=scenario`);
       const d2 = await r2.json();
       const loaded = d2.results ?? [];
       if (loaded.length === 0) {
-        setStartError("No scenario test cases found for this tool. Check that the test suite has been seeded.");
+        setStartError(
+          runForm.scenarioDepth === "broad"
+            ? "No broad scenarios found for this tool yet. Switch to Detailed or All, or seed broad scenarios."
+            : "No scenario test cases found for this tool. Check that the test suite has been seeded."
+        );
       } else {
         setResults(loaded);
         setCursor(0);
@@ -263,6 +288,7 @@ export default function TestingPage() {
     if (!suite) return;
     setSelectedSuite(suite);
     setActiveRunId(run.id);
+    setRunForm((f) => ({ ...f, scenarioDepth: run.scenario_depth ?? "broad" }));
     const res = await fetch(`/api/testing/runs/${run.id}/results?type=scenario`);
     const d = await res.json();
     const loaded: TestResult[] = d.results ?? [];
@@ -487,6 +513,8 @@ export default function TestingPage() {
                           <p className="font-medium text-sm">{suite.display_name}</p>
                           <p className="text-xs text-muted-foreground mt-0.5">
                             {suite.scenario_count} scenarios
+                            {suite.broad_scenario_count > 0 ? ` · ${suite.broad_scenario_count} broad` : ""}
+                            {suite.detailed_scenario_count > 0 ? ` · ${suite.detailed_scenario_count} detailed` : ""}
                             {suite.feature_count ? ` · ${suite.feature_count} feature checks` : ""}
                           </p>
                         </div>
@@ -526,6 +554,7 @@ export default function TestingPage() {
                         <tr>
                           <th style={{ fontSize: "10px" }} className="text-left font-semibold uppercase tracking-wider text-foreground px-5 py-2">Tool</th>
                           <th style={{ fontSize: "10px" }} className="text-left font-semibold uppercase tracking-wider text-foreground px-5 py-2 w-28">Scenarios</th>
+                          <th style={{ fontSize: "10px" }} className="text-left font-semibold uppercase tracking-wider text-foreground px-5 py-2 w-40">Depth Mix</th>
                           <th style={{ fontSize: "10px" }} className="text-left font-semibold uppercase tracking-wider text-foreground px-5 py-2 w-44">Feature checks</th>
                           <th style={{ fontSize: "10px" }} className="text-right font-semibold uppercase tracking-wider text-foreground px-5 py-2 w-72">Actions</th>
                         </tr>
@@ -535,6 +564,9 @@ export default function TestingPage() {
                           <tr key={suite.id} className="hover:bg-muted/20 transition-colors">
                             <td className="px-5 py-3 font-medium">{suite.display_name}</td>
                             <td className="px-5 py-3 text-muted-foreground">{suite.scenario_count}</td>
+                            <td className="px-5 py-3 text-muted-foreground">
+                              {suite.broad_scenario_count} broad · {suite.detailed_scenario_count} detailed
+                            </td>
                             <td className="px-5 py-3 text-muted-foreground">{suite.feature_count || "—"}</td>
                             <td className="px-5 py-3">
                               <div className="flex items-center gap-2 justify-end">
@@ -589,6 +621,8 @@ export default function TestingPage() {
                         <p className="text-xs text-muted-foreground">
                           {run.tester && `${run.tester} · `}
                           {new Date(run.run_date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                          {" · "}
+                          {depthLabel(run.scenario_depth)}
                         </p>
                         <div className="flex items-center gap-2">
                           <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
@@ -629,6 +663,7 @@ export default function TestingPage() {
             <p className="font-medium text-foreground">Before you start</p>
             <p>Make sure you&apos;re logged into the app you&apos;re testing.</p>
             <p>Each test takes 1–3 minutes. You&apos;ll follow step-by-step instructions and mark each test passed, failed, or skipped.</p>
+            <p><span className="font-medium text-foreground">Broad</span> is recommended for fast team testing. Use Detailed later for deeper coverage.</p>
           </div>
 
           <div className="space-y-4">
@@ -665,6 +700,31 @@ export default function TestingPage() {
                 placeholder="e.g. 67"
               />
             </div>
+            <div className="space-y-1.5">
+              <Label>Scenario depth</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  { value: "broad" as const, label: "Broad", hint: "Fastest, high-signal workflows" },
+                  { value: "detailed" as const, label: "Detailed", hint: "Longer, deeper checks" },
+                  { value: "all" as const, label: "All", hint: "Everything in suite" },
+                ]).map((option) => (
+                  <button
+                    key={option.value}
+                    type="button"
+                    onClick={() => setRunForm((f) => ({ ...f, scenarioDepth: option.value }))}
+                    className={cn(
+                      "rounded-lg border px-3 py-2 text-left transition-colors",
+                      runForm.scenarioDepth === option.value
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-foreground/30"
+                    )}
+                  >
+                    <p className="text-sm font-medium">{option.label}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{option.hint}</p>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
           {startError && (
@@ -698,7 +758,7 @@ export default function TestingPage() {
         <div className="text-center space-y-6">
           <div className="text-5xl">{failed === 0 ? "🎉" : "📋"}</div>
           <p className="text-muted-foreground">
-            {selectedSuite?.display_name} · {runForm.tester}
+            {selectedSuite?.display_name} · {runForm.tester} · {depthLabel(runForm.scenarioDepth)}
           </p>
           <div className="grid grid-cols-3 gap-3">
             <div className="rounded-xl bg-green-50 dark:bg-green-950/30 p-4">
@@ -770,6 +830,7 @@ export default function TestingPage() {
                   <p className="text-xs text-muted-foreground mt-0.5">
                     {run.environment ?? "localhost:3000"}
                     {run.branch && ` · ${run.branch}`}
+                    {` · ${depthLabel(run.scenario_depth)}`}
                   </p>
                 </div>
                 <div className="flex items-center gap-4 shrink-0 ml-4">
@@ -893,6 +954,9 @@ export default function TestingPage() {
         </div>
         <p className="text-sm font-medium">{selectedSuite?.display_name}</p>
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
+          <span className="rounded-full border border-border px-2 py-0.5">
+            {depthLabel(runForm.scenarioDepth)}
+          </span>
           <div className="flex items-center gap-1.5">
             <label htmlFor="runner-project-id" className="text-muted-foreground shrink-0">Project ID:</label>
             <input

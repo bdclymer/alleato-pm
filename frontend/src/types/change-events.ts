@@ -18,6 +18,7 @@ export interface ChangeEvent {
   scope: string;
   status: ChangeEventStatus | null;
   origin: string | null;
+  origin_id?: string | null;
   description: string | null;
   expecting_revenue: boolean;
   line_item_revenue_source: string | null;
@@ -34,6 +35,9 @@ export interface ChangeEvent {
   rfq_title?: string | null;
   commitment?: string | null;
   commitment_title?: string | null;
+  sent_to_prime_pco?: boolean | null;
+  sent_to_commitment_pco?: boolean | null;
+  workflow_stage?: string | null;
   // Enrichment fields from API
   lineItemsCount?: number;
   rom?: string | number | null;
@@ -124,9 +128,18 @@ export interface ChangeEventDetailLineItem {
   extendedAmount: number;
   sortOrder: number;
   contractId?: number | string | null;
+  contract?: {
+    id: string | number;
+    contract_number?: string | null;
+    title?: string | null;
+    company_name?: string | null;
+    display_name?: string | null;
+  } | null;
   vendorId?: string | null;
+  formVendorId?: string | null;
   vendor?: { id: string; name: string } | null;
   budgetCodeId?: string | null;
+  projectBudgetCodeId?: string | null;
   budgetLine?: {
     id: string;
     description: string | null;
@@ -142,8 +155,10 @@ export interface ChangeEventDetailLineItem {
   commitmentLineItemId?: string | null;
   commitment?: {
     id: string;
-    contract_number: string;
-    title: string;
+    contract_number?: string | null;
+    title?: string | null;
+    company_name?: string | null;
+    display_name?: string | null;
   } | null;
 }
 
@@ -192,10 +207,13 @@ export interface ChangeEventDetail extends ChangeEvent {
   attachments?: ChangeEventAttachment[];
   history?: Array<Record<string, unknown>>;
   expectingRevenue?: boolean;
+  originId?: string | null;
   lineItemRevenueSource?: string | null;
   primeContractId?: number | string | null;
   primeContract?: {
-    contract_number?: string;
-    title?: string;
+    contract_number?: string | null;
+    title?: string | null;
+    company_name?: string | null;
+    display_name?: string | null;
   } | null;
 }

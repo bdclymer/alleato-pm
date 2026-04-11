@@ -22,6 +22,7 @@
     "audit:db:fk-types": "tsx scripts/audit/audit-db-fk-and-validation.ts",
     "audit:db:ambiguous-embeds": "tsx scripts/audit/audit-db-ambiguous-embeds.ts",
     "audit:forms": "tsx scripts/audit/audit-form-field-standards.ts",
+    "audit:forms:components": "node scripts/audit/audit-form-components.mjs",
     "test": "playwright test --config=config/playwright/playwright.config.ts",
     "test:ui": "playwright test --config=config/playwright/playwright.config.ts --ui",
     "test:headed": "playwright test --config=config/playwright/playwright.config.ts --headed",
@@ -56,14 +57,16 @@
     "seed:test:clear": "npx tsx ../scripts/seed-db/seed-test-data.ts --clean",
     "prepare": "cd .. && husky",
     "lint:fix": "eslint . --fix",
-    "quality": "npm run typecheck && npm run lint",
-    "quality:fix": "npm run typecheck && npm run lint:fix",
+    "quality": "npm run typecheck && npm run lint && npm run audit:forms",
+    "quality:fix": "npm run typecheck && npm run lint:fix && npm run audit:forms",
     "log:ts-errors": "npx tsx scripts/log-typescript-errors.ts",
     "audit:table-layouts": "node scripts/audit-table-layouts.mjs",
     "audit:modals": "node scripts/audit-modals.mjs",
     "design:ratchet": "node scripts/design-system/check-ratchet.mjs",
     "design:ratchet:update-baseline": "node scripts/design-system/check-ratchet.mjs --write-baseline",
-    "design:no-new-disables": "node scripts/design-system/check-no-new-disables.mjs"
+    "design:no-new-disables": "node scripts/design-system/check-no-new-disables.mjs",
+    "design:no-new-form-violations": "node scripts/design-system/check-no-new-form-violations.mjs",
+    "codemod:forms:placeholder-zero": "node scripts/codemods/normalize-zero-placeholders.mjs"
   },
   "dependencies": {
     "@ai-sdk/devtools": "^0.0.15",

@@ -11,19 +11,19 @@ import { PIN_TYPE_CONFIG } from "./LinkPinModal";
 // ── Status color map ─────────────────────────────────────────────────────────
 
 const STATUS_COLORS: Record<string, string> = {
-  draft: "bg-zinc-500",
-  open: "bg-blue-500",
-  in_review: "bg-yellow-500",
-  closed: "bg-green-500",
-  void: "bg-zinc-600",
+  draft: "bg-muted-foreground",
+  open: "bg-primary",
+  in_review: "bg-warning",
+  closed: "bg-success",
+  void: "bg-muted-foreground",
   // coordination issue statuses
-  released: "bg-blue-500",
-  elevated: "bg-red-500",
+  released: "bg-primary",
+  elevated: "bg-destructive",
 };
 
 function StatusDot({ status }: { status: string | null }) {
   if (!status) return null;
-  const cls = STATUS_COLORS[status.toLowerCase()] ?? "bg-zinc-500";
+  const cls = STATUS_COLORS[status.toLowerCase()] ?? "bg-muted-foreground";
   return <span className={cn("h-2 w-2 rounded-full shrink-0 inline-block", cls)} />;
 }
 
@@ -60,11 +60,11 @@ export function DrawingLinksPanel({
   if (pins.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-10 px-4 text-center">
-        <div className="h-10 w-10 rounded-full bg-zinc-700 flex items-center justify-center mb-3">
-          <span className="text-zinc-400 text-lg">🔗</span>
+        <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center mb-3">
+          <span className="text-muted-foreground text-lg">🔗</span>
         </div>
-        <p className="text-sm font-medium text-zinc-300 mb-1">No links yet</p>
-        <p className="text-xs text-zinc-500">
+        <p className="text-sm font-medium text-foreground mb-1">No links yet</p>
+        <p className="text-xs text-muted-foreground">
           Use the pin tool in the left sidebar to link RFIs, punch items, and more.
         </p>
       </div>
@@ -86,7 +86,7 @@ export function DrawingLinksPanel({
   };
 
   return (
-    <div className="flex-1 overflow-y-auto divide-y divide-zinc-700/50">
+    <div className="flex-1 overflow-y-auto divide-y divide-border">
       {Object.entries(grouped).map(([type, typePins]) => {
         const config = PIN_TYPE_CONFIG[type as DrawingMarkupPin["pin_type"]];
         if (!config) return null;
@@ -97,7 +97,7 @@ export function DrawingLinksPanel({
                 className="h-2 w-2 rounded-full"
                 style={{ backgroundColor: config.color }}
               />
-              <span className="text-[10px] uppercase tracking-wider text-zinc-500 font-medium">
+              <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
                 {config.label}s ({typePins.length})
               </span>
             </div>
@@ -107,7 +107,7 @@ export function DrawingLinksPanel({
                 onMouseEnter={() => onPinHover?.(pin.id)}
                 onMouseLeave={() => onPinHover?.(null)}
                 className={cn(
-                  "group px-3 py-2 flex items-start gap-2 hover:bg-zinc-700/40 transition-colors cursor-default",
+                  "group px-3 py-2 flex items-start gap-2 hover:bg-muted transition-colors cursor-default",
                   pin.page !== currentPage && "opacity-50"
                 )}
               >
@@ -124,22 +124,22 @@ export function DrawingLinksPanel({
                 {/* Info */}
                 <div className="flex-1 min-w-0">
                   {pin.entity_number && (
-                    <p className="text-[10px] text-zinc-500 leading-none mb-0.5">
+                    <p className="text-[10px] text-muted-foreground leading-none mb-0.5">
                       {pin.entity_number}
                     </p>
                   )}
-                  <p className="text-xs text-zinc-200 leading-snug truncate">
+                  <p className="text-xs text-foreground leading-snug truncate">
                     {pin.entity_label ?? config.label}
                   </p>
                   <div className="flex items-center gap-1.5 mt-0.5">
                     {pin.entity_status && <StatusDot status={pin.entity_status} />}
                     {pin.entity_status && (
-                      <span className="text-[10px] text-zinc-500 capitalize">
+                      <span className="text-[10px] text-muted-foreground capitalize">
                         {pin.entity_status.replace("_", " ")}
                       </span>
                     )}
                     {pin.page !== currentPage && (
-                      <span className="text-[10px] text-zinc-500">
+                      <span className="text-[10px] text-muted-foreground">
                         · Page {pin.page}
                       </span>
                     )}
@@ -152,7 +152,7 @@ export function DrawingLinksPanel({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-6 w-6 p-0 text-zinc-400 hover:text-white hover:bg-zinc-600"
+                      className="h-6 w-6 p-0 text-muted-foreground hover:text-foreground hover:bg-muted"
                       onClick={() => navigateToEntity(pin)}
                       title="Open in tool"
                     >
@@ -162,7 +162,7 @@ export function DrawingLinksPanel({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-6 w-6 p-0 text-zinc-400 hover:text-red-400 hover:bg-zinc-600"
+                    className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive hover:bg-muted"
                     onClick={() => deletePin.mutate(pin.id)}
                     title="Remove link"
                   >

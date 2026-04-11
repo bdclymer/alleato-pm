@@ -27,14 +27,22 @@ interface AuditRow {
 
 function describe(row: AuditRow): string {
   switch (row.event_type) {
+    case "invoice.created":
+      return "Invoice created";
+    case "field.updated":
+      return `Updated ${(row.field_name ?? "field").replace(/_/g, " ")}`;
     case "line_item.updated":
       return `Updated ${row.field_name ?? "line item"}`;
     case "email.sent":
       return "Sent email";
     case "erp.resend_requested":
       return "Requested ERP resend";
-    case "status.changed":
+    case "status.changed": {
+      const from = typeof row.old_value === "string" ? row.old_value : "";
+      const to = typeof row.new_value === "string" ? row.new_value : "";
+      if (from && to) return `Status: ${from.replace(/_/g, " ")} → ${to.replace(/_/g, " ")}`;
       return "Status changed";
+    }
     default:
       return row.event_type.replace(/[._]/g, " ");
   }

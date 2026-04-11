@@ -3,6 +3,18 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 
+/**
+ * Shared base props for all form field components.
+ * Import this and extend it to avoid repeating error/hint/required/fullWidth/disabled.
+ */
+export interface FormFieldBaseProps {
+  error?: string;
+  hint?: string;
+  required?: boolean;
+  fullWidth?: boolean;
+  disabled?: boolean;
+}
+
 interface FormFieldProps {
   label: React.ReactNode;
   children: React.ReactNode;

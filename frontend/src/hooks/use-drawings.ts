@@ -227,7 +227,10 @@ export function useDeleteDrawing(projectId: string) {
       queryClient.invalidateQueries({
         queryKey: ["drawings", projectId],
       });
-      toast.success("Drawing deleted successfully");
+      queryClient.invalidateQueries({
+        queryKey: ["drawings-recycle-bin", projectId],
+      });
+      toast.success("Drawing moved to Recycle Bin");
     },
     onError: (error: Error) => {
       toast.error("Could not delete drawing", {
@@ -283,6 +286,88 @@ export function useObsoleteDrawing(projectId: string) {
     },
     onError: (error: Error) => {
       toast.error("Could not update drawing", { description: error.message });
+    },
+  });
+}
+
+/**
+ * React Query hook for fetching soft-deleted drawings (recycle bin)
+ */
+export function useDeletedDrawings(projectId: string) {
+  return useQuery({
+    queryKey: ["drawings-recycle-bin", projectId],
+    queryFn: async () => {
+      const response = await fetch(
+        `/api/projects/${projectId}/drawings/recycle-bin`,
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch deleted drawings");
+      }
+
+      return response.json();
+    },
+    enabled: !!projectId,
+  });
+}
+
+/**
+ * React Query mutation for restoring a soft-deleted drawing
+ */
+export function useRestoreDrawing(projectId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (drawingId: string) => {
+      const response = await fetch(
+        `/api/projects/${projectId}/drawings/${drawingId}/restore`,
+        { method: "PATCH" },
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to restore drawing");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["drawings", projectId] });
+      queryClient.invalidateQueries({ queryKey: ["drawings-recycle-bin", projectId] });
+      toast.success("Drawing restored successfully");
+    },
+    onError: (error: Error) => {
+      toast.error("Could not restore drawing", { description: error.message });
+    },
+  });
+}
+
+/**
+ * React Query mutation for permanently deleting a drawing
+ */
+export function usePermanentDeleteDrawing(projectId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (drawingId: string) => {
+      const response = await fetch(
+        `/api/projects/${projectId}/drawings/${drawingId}/restore`,
+        { method: "DELETE" },
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to permanently delete drawing");
+      }
+
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["drawings-recycle-bin", projectId] });
+      toast.success("Drawing permanently deleted");
+    },
+    onError: (error: Error) => {
+      toast.error("Could not delete drawing", { description: error.message });
     },
   });
 }

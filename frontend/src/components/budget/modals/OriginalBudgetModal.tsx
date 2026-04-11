@@ -14,6 +14,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  InlineTable,
+  InlineTableHeader,
+  InlineTableHeaderRow,
+  InlineTableHeaderCell,
+  InlineTableBody,
+  InlineTableRow,
+  InlineTableCell,
+} from "@/components/ds/inline-table";
 import { Grid, AlertTriangle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -330,65 +339,53 @@ export function OriginalBudgetModal({
                 View the audit trail of every change to this budget line.
               </p>
 
-              <div className="overflow-x-auto scrollbar-hide rounded-lg border border-border bg-background">
-                <table className="w-full text-sm">
-                  <thead className="bg-muted/50 border-b border-border">
-                    <tr>
-                      <th className="text-left px-4 py-3 font-semibold text-foreground">
-                        Snapshot Name
-                      </th>
-                      <th className="text-right px-4 py-3 font-semibold text-foreground">
-                        Unit Qty
-                      </th>
-                      <th className="text-left px-4 py-3 font-semibold text-foreground">
-                        UOM
-                      </th>
-                      <th className="text-right px-4 py-3 font-semibold text-foreground">
-                        Unit Cost
-                      </th>
-                      <th className="text-right px-4 py-3 font-semibold text-foreground">
-                        Original Budget
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border">
-                    <tr className="hover:bg-muted/50 transition-colors">
-                      <td className="px-4 py-3">
-                        Current -{" "}
-                        {new Date().toLocaleDateString("en-US", {
-                          month: "2-digit",
-                          day: "2-digit",
-                          year: "2-digit",
-                        })}{" "}
-                        at{" "}
-                        {new Date().toLocaleTimeString("en-US", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          hour12: true,
-                        })}
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        {currentData?.unitQty?.toFixed(2) || "0.00"}
-                      </td>
-                      <td className="px-4 py-3">{currentData?.uom || "-"}</td>
-                      <td className="px-4 py-3 text-right">
-                        ${currentData?.unitCost?.toFixed(2) || "0.00"}
-                      </td>
-                      <td className="px-4 py-3 text-right font-semibold">
-                        ${currentData?.originalBudget?.toFixed(2) || "0.00"}
-                      </td>
-                    </tr>
-                    <tr>
-                      <td
-                        colSpan={5}
-                        className="px-4 py-10 text-center text-muted-foreground"
-                      >
-                        No previous snapshots available
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
+              <InlineTable variant="read">
+                <InlineTableHeader>
+                  <InlineTableHeaderRow>
+                    <InlineTableHeaderCell>Snapshot Name</InlineTableHeaderCell>
+                    <InlineTableHeaderCell align="right">Unit Qty</InlineTableHeaderCell>
+                    <InlineTableHeaderCell>UOM</InlineTableHeaderCell>
+                    <InlineTableHeaderCell align="right">Unit Cost</InlineTableHeaderCell>
+                    <InlineTableHeaderCell align="right">Original Budget</InlineTableHeaderCell>
+                  </InlineTableHeaderRow>
+                </InlineTableHeader>
+                <InlineTableBody>
+                  <InlineTableRow>
+                    <InlineTableCell>
+                      Current -{" "}
+                      {new Date().toLocaleDateString("en-US", {
+                        month: "2-digit",
+                        day: "2-digit",
+                        year: "2-digit",
+                      })}{" "}
+                      at{" "}
+                      {new Date().toLocaleTimeString("en-US", {
+                        hour: "2-digit",
+                        minute: "2-digit",
+                        hour12: true,
+                      })}
+                    </InlineTableCell>
+                    <InlineTableCell align="right" numeric>
+                      {currentData?.unitQty?.toFixed(2) || "0.00"}
+                    </InlineTableCell>
+                    <InlineTableCell>{currentData?.uom || "-"}</InlineTableCell>
+                    <InlineTableCell align="right" numeric>
+                      ${currentData?.unitCost?.toFixed(2) || "0.00"}
+                    </InlineTableCell>
+                    <InlineTableCell align="right" numeric className="font-semibold">
+                      ${currentData?.originalBudget?.toFixed(2) || "0.00"}
+                    </InlineTableCell>
+                  </InlineTableRow>
+                  <tr>
+                    <td
+                      colSpan={5}
+                      className="px-3 py-10 text-center text-muted-foreground"
+                    >
+                      No previous snapshots available
+                    </td>
+                  </tr>
+                </InlineTableBody>
+              </InlineTable>
             </div>
           </TabsContent>
         </SidebarBody>

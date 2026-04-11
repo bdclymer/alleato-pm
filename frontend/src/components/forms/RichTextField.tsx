@@ -2,21 +2,17 @@
 
 import * as React from "react";
 import { FormField } from "./FormField";
+import type { FormFieldBaseProps } from "./FormField";
 import { cn } from "@/lib/utils";
 import { Bold, Italic, Underline, List, ListOrdered, RemoveFormatting } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
-interface RichTextFieldProps {
+interface RichTextFieldProps extends FormFieldBaseProps {
   label: string;
   value?: string;
   onChange?: (value: string) => void;
-  error?: string;
-  hint?: string;
-  required?: boolean;
-  fullWidth?: boolean;
   className?: string;
-  disabled?: boolean;
   placeholder?: string;
 }
 
@@ -246,7 +242,7 @@ export function RichTextField({
           contentEditable={!disabled}
           onInput={handleInput}
           onPaste={handlePaste}
-          className="min-h-[120px] max-h-[320px] overflow-y-auto px-3 py-2.5 focus:outline-none [&_p]:my-0"
+          className="min-h-30 max-h-80 overflow-y-auto px-3 py-2.5 focus:outline-none [&_p]:my-0"
           data-placeholder={placeholder}
           suppressContentEditableWarning={true}
         />

@@ -14,22 +14,39 @@ export async function GET(
   const typeFilter = searchParams.get("type"); // "scenario" | "feature" | null (all)
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  const withDepth = await supabase
     .from("test_results")
     .select(`
       id, status, notes, updated_at,
       test_cases (
         id, test_number, category, subcategory, test_name,
         steps, setup_steps, context_note, expected_result, priority,
-        test_type, start_url
+        test_type, start_url, scenario_depth
       ),
       test_screenshots (id, public_url, label, created_at)
     `)
     .eq("run_id", runId)
     .order("id");
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  let data = withDepth.data;
+  if (withDepth.error) {
+    const fallback = await supabase
+      .from("test_results")
+      .select(`
+        id, status, notes, updated_at,
+        test_cases (
+          id, test_number, category, subcategory, test_name,
+          steps, setup_steps, context_note, expected_result, priority,
+          test_type, start_url
+        ),
+        test_screenshots (id, public_url, label, created_at)
+      `)
+      .eq("run_id", runId)
+      .order("id");
+    if (fallback.error) {
+      return NextResponse.json({ error: fallback.error.message }, { status: 500 });
+    }
+    data = fallback.data;
   }
 
   type ResultRow = (typeof data)[number];

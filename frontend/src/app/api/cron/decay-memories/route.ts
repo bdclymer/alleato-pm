@@ -11,13 +11,23 @@
  */
 
 import { createServiceClient } from "@/lib/supabase/service";
+import { NextResponse } from "next/server";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { logEvent } from "@/lib/guardrails/observability";
 
-export async function POST(request: Request) {
+export const POST = withApiGuardrails("/api/cron/decay-memories#POST", async ({ request, requestId }) => {
   // OWASP A07:2021 - Identification and Authentication Failures:
   // Always require CRON_SECRET; never skip validation when env var is unset.
   const cronSecret = request.headers.get("authorization")?.replace("Bearer ", "");
   if (!process.env.CRON_SECRET || cronSecret !== process.env.CRON_SECRET) {
-    return new Response("Unauthorized", { status: 401 });
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where: "/api/cron/decay-memories#POST",
+      message: "Unauthorized cron invocation.",
+      status: 401,
+      severity: "medium",
+    });
   }
 
   const supabase = createServiceClient();
@@ -25,17 +35,32 @@ export async function POST(request: Request) {
   const { data, error } = await supabase.rpc("decay_memory_confidence");
 
   if (error) {
-    console.error("[cron/decay-memories] failed:", error);
-    return Response.json({ success: false, error: error.message }, { status: 500 });
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/cron/decay-memories#POST",
+      message: "Failed to execute memory decay job.",
+      details: {
+        reason: error.message,
+      },
+      cause: error,
+    });
   }
 
   const result = data?.[0] ?? { decayed_count: 0, expired_count: 0 };
-  console.log(`[cron/decay-memories] decayed=${result.decayed_count} expired=${result.expired_count}`);
+  logEvent({
+    event: "background_job_completed",
+    requestId,
+    where: "/api/cron/decay-memories#POST",
+    details: {
+      decayed: result.decayed_count,
+      expired: result.expired_count,
+    },
+  });
 
-  return Response.json({
+  return NextResponse.json({
     success: true,
     decayed: result.decayed_count,
     expired: result.expired_count,
     runAt: new Date().toISOString(),
   });
-}
+});

@@ -1,39 +1,33 @@
 "use client";
 
-import * as React from "react";
-import type { ReactElement, ReactNode } from "react";
 import { useEffect, useRef, useState } from "react";
+import type { ReactElement, ReactNode } from "react";
+
 import {
-  Search,
-  LayoutGrid,
-  Table2,
-  List,
-  SlidersHorizontal,
   Columns3,
   Download,
+  LayoutGrid,
+  List,
+  Search,
+  SlidersHorizontal,
+  Table2,
   Trash2,
   X,
 } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
+
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
   DropdownMenu,
-  DropdownMenuContent,
   DropdownMenuCheckboxItem,
-  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Select,
   SelectContent,
@@ -41,8 +35,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+
 import { TableCountIndicator } from "./table-primitives";
 
 export type ViewMode = "table" | "card" | "list";
@@ -63,6 +65,21 @@ export interface ColumnConfig {
 }
 
 type FilterValue = string | string[] | number | boolean | null | undefined;
+
+/**
+ * Feature flags for TableToolbar. Pass a partial object to opt out of specific
+ * capabilities — omitted flags default to `true`.
+ *
+ * Prefer this over the old flat `enableSearch`, `enableViews`, … boolean props.
+ */
+export interface TableToolbarFeatures {
+  search?: boolean;
+  views?: boolean;
+  filters?: boolean;
+  columnToggle?: boolean;
+  export?: boolean;
+  bulkDelete?: boolean;
+}
 
 export interface TableToolbarProps {
   totalItems: number;
@@ -86,11 +103,19 @@ export interface TableToolbarProps {
   mobilePanelActions?: ReactNode;
   /** Extra action buttons rendered in the toolbar icon row (e.g. ERP sync) */
   customActions?: ReactNode;
+  /** Feature flags. Omitted flags default to enabled. */
+  features?: TableToolbarFeatures;
+  /** @deprecated Use `features.search` instead */
   enableSearch?: boolean;
+  /** @deprecated Use `features.views` instead */
   enableViews?: boolean;
+  /** @deprecated Use `features.filters` instead */
   enableFilters?: boolean;
+  /** @deprecated Use `features.columnToggle` instead */
   enableColumnToggle?: boolean;
+  /** @deprecated Use `features.export` instead */
   enableExport?: boolean;
+  /** @deprecated Use `features.bulkDelete` instead */
   enableBulkDelete?: boolean;
   className?: string;
 }
@@ -148,7 +173,7 @@ function ExpandableSearch({
               if (!value) setIsExpanded(false);
             }}
             placeholder={placeholder}
-            className="h-8 w-[200px] pl-8 pr-8 text-sm"
+            className="h-8 w-50 pl-8 pr-8 text-sm"
             aria-label="Search table"
           />
           {value && (
@@ -237,7 +262,7 @@ function FilterFields({
                 })
               }
             >
-              <SelectTrigger className="h-8 w-[180px] bg-background text-sm">
+              <SelectTrigger className="h-8 w-45 bg-background text-sm">
                 <SelectValue placeholder="All" />
               </SelectTrigger>
               <SelectContent>
@@ -266,7 +291,7 @@ function FilterFields({
           <Input
             id={`filter-${filter.id}`}
             type={filter.type === "date" ? "date" : filter.type === "number" ? "number" : "text"}
-            className="h-8 w-[180px] text-sm"
+            className="h-8 w-45 text-sm"
             min={filter.type === "number" ? "0" : undefined}
             step={filter.type === "number" ? "0.01" : undefined}
             placeholder={filter.placeholder}
@@ -328,7 +353,7 @@ function FilterMenu({
           <TooltipContent>Filter</TooltipContent>
         </Tooltip>
       </TooltipProvider>
-      <PopoverContent align="start" className="w-[340px] p-0">
+      <PopoverContent align="start" className="w-85 p-0">
         <div className="space-y-0">
           <div className="flex items-center justify-between border-b px-3 py-2.5">
             <p className="text-sm font-medium text-foreground">View settings</p>
@@ -448,14 +473,26 @@ export function TableToolbar({
   onBulkDelete,
   mobilePanelActions,
   customActions,
-  enableSearch = true,
-  enableViews = true,
-  enableFilters = true,
-  enableColumnToggle = true,
-  enableExport = true,
-  enableBulkDelete = true,
+  features,
+  enableSearch,
+  enableViews,
+  enableFilters,
+  enableColumnToggle,
+  enableExport,
+  enableBulkDelete,
   className,
 }: TableToolbarProps): ReactElement {
+  // Resolve feature flags: new `features` object takes precedence,
+  // legacy flat props are honoured for backwards-compatibility, default is enabled.
+  const feat = {
+    search:        features?.search        ?? enableSearch        ?? true,
+    views:         features?.views         ?? enableViews         ?? true,
+    filters:       features?.filters       ?? enableFilters       ?? true,
+    columnToggle:  features?.columnToggle  ?? enableColumnToggle  ?? true,
+    export:        features?.export        ?? enableExport        ?? true,
+    bulkDelete:    features?.bulkDelete    ?? enableBulkDelete    ?? true,
+  };
+
   const [isMobile, setIsMobile] = useState(false);
   const [mobilePanelOpen, setMobilePanelOpen] = useState(false);
 
@@ -471,10 +508,10 @@ export function TableToolbar({
   }, []);
 
   const hasRightActions =
-    (enableFilters && filters.length > 0) ||
-    (enableColumnToggle && columns.length > 0) ||
-    (enableExport && Boolean(onExport)) ||
-    (enableBulkDelete && Boolean(onBulkDelete));
+    (feat.filters && filters.length > 0) ||
+    (feat.columnToggle && columns.length > 0) ||
+    (feat.export && Boolean(onExport)) ||
+    (feat.bulkDelete && Boolean(onBulkDelete));
 
   const activeFilterCount = Object.values(activeFilters).filter(
     (value) => value !== undefined && value !== "" && value !== null,
@@ -484,7 +521,7 @@ export function TableToolbar({
     return (
       <div className={cn("py-2", className)}>
         <div className="flex items-center gap-2">
-          {enableSearch && (
+          {feat.search && (
             <div className="relative min-w-0 flex-1">
               <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -520,7 +557,7 @@ export function TableToolbar({
                 <TableCountIndicator count={activeFilterCount} className="absolute -right-1 -top-1" />
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[320px] p-0 sm:w-[360px]">
+            <SheetContent side="right" className="w-80 p-0 sm:w-90">
               <SheetHeader className="border-b px-4 py-4">
                 <SheetTitle>Table Controls</SheetTitle>
               </SheetHeader>
@@ -550,7 +587,7 @@ export function TableToolbar({
                   </div>
                 </div>
 
-                {enableViews && (
+                {feat.views && (
                   <div className="space-y-2">
                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">View</p>
                     <ViewSwitcher
@@ -561,7 +598,7 @@ export function TableToolbar({
                   </div>
                 )}
 
-                {enableFilters && filters.length > 0 && (
+                {feat.filters && filters.length > 0 && (
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Filters</p>
@@ -579,15 +616,16 @@ export function TableToolbar({
                   </div>
                 )}
 
-                {enableColumnToggle && columns.length > 0 && (
+                {feat.columnToggle && columns.length > 0 && (
                   <div className="space-y-2">
                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Columns</p>
                     <div className="space-y-2 rounded-md border p-3">
                       {columns
                         .filter((column) => !column.alwaysVisible)
                         .map((column) => (
-                          <label key={column.id} className="flex items-center gap-2 text-sm text-foreground">
+                          <label key={column.id} htmlFor={`col-toggle-${column.id}`} className="flex items-center gap-2 text-sm text-foreground">
                             <Checkbox
+                              id={`col-toggle-${column.id}`}
                               checked={visibleColumns.includes(column.id)}
                               onCheckedChange={(checked) => {
                                 if (checked) {
@@ -606,18 +644,18 @@ export function TableToolbar({
                   </div>
                 )}
 
-                {(enableExport && onExport) || mobilePanelActions || (enableBulkDelete && onBulkDelete) ? (
+                {(feat.export && onExport) || mobilePanelActions || (feat.bulkDelete && onBulkDelete) ? (
                   <div className="space-y-2">
                     <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Actions</p>
                     <div className="space-y-2">
                       {mobilePanelActions}
-                      {enableExport && onExport ? (
+                      {feat.export && onExport ? (
                         <Button variant="outline" size="sm" className="w-full justify-start" onClick={onExport}>
                           <Download />
                           Export
                         </Button>
                       ) : null}
-                      {enableBulkDelete && onBulkDelete ? (
+                      {feat.bulkDelete && onBulkDelete ? (
                         <Button
                           variant="destructive"
                           size="sm"
@@ -649,7 +687,7 @@ export function TableToolbar({
   return (
     <div className={cn("py-2", className)}>
       <div className="flex items-center gap-2 overflow-x-auto whitespace-nowrap pr-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {enableViews && (
+        {feat.views && (
           <div className="shrink-0">
             <ViewSwitcher
               currentView={currentView}
@@ -659,10 +697,10 @@ export function TableToolbar({
           </div>
         )}
 
-        {enableViews && <div className="mx-0.5 h-4 w-px shrink-0 bg-border/60" />}
+        {feat.views && <div className="mx-0.5 h-4 w-px shrink-0 bg-border/60" />}
 
         <div className="flex items-center gap-1 shrink-0">
-          {enableSearch && (
+          {feat.search && (
             <ExpandableSearch
               value={searchValue}
               onChange={onSearchChange}
@@ -670,7 +708,7 @@ export function TableToolbar({
             />
           )}
 
-          {enableFilters && filters.length > 0 && (
+          {feat.filters && filters.length > 0 && (
             <FilterMenu
               filters={filters}
               activeFilters={activeFilters}
@@ -679,7 +717,7 @@ export function TableToolbar({
             />
           )}
 
-          {enableColumnToggle && columns.length > 0 && (
+          {feat.columnToggle && columns.length > 0 && (
             <ColumnToggle
               columns={columns}
               visibleColumns={visibleColumns}
@@ -689,7 +727,7 @@ export function TableToolbar({
 
           {customActions}
 
-          {enableExport && onExport && (
+          {feat.export && onExport && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -708,7 +746,7 @@ export function TableToolbar({
             </TooltipProvider>
           )}
 
-          {enableBulkDelete && onBulkDelete && (
+          {feat.bulkDelete && onBulkDelete && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>

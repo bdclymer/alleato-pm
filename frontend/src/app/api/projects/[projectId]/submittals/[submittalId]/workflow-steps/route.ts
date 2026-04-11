@@ -66,6 +66,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     const { error: responseError } = await supabase
       .from("submittal_responses")
       .insert({
+        submittal_id: submittalId,
         workflow_step_id: step.id,
         responder_id: user_id,
         response_status: "Pending",

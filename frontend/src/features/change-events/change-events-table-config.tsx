@@ -74,6 +74,12 @@ const EXPECTING_REVENUE_FILTER_OPTIONS = [
   { value: "false", label: "No" },
 ];
 
+const CONVERSION_STATE_FILTER_OPTIONS = [
+  { value: "unlinked", label: "Unlinked" },
+  { value: "partially_linked", label: "Partially Linked" },
+  { value: "fully_linked", label: "Fully Linked" },
+];
+
 export const changeEventFilters: FilterConfig[] = [
   {
     id: "status",
@@ -104,6 +110,12 @@ export const changeEventFilters: FilterConfig[] = [
     label: "Expecting Revenue",
     type: "select",
     options: EXPECTING_REVENUE_FILTER_OPTIONS,
+  },
+  {
+    id: "conversion_state",
+    label: "Conversion State",
+    type: "select",
+    options: CONVERSION_STATE_FILTER_OPTIONS,
   },
   {
     id: "over_under",

@@ -15,7 +15,7 @@ const respondSchema = z.object({
     "Approved as Noted",
     "Revise and Resubmit",
     "Rejected",
-    "Received",
+    "Reviewed - No Exception",
   ]),
   comments: z.string().nullable().optional(),
 });
@@ -47,6 +47,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       .from("submittal_responses")
       .upsert(
         {
+          submittal_id: submittalId,
           workflow_step_id: stepId,
           responder_id: user.id,
           response_status,
@@ -62,33 +63,56 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       return apiErrorResponse(responseError);
     }
 
-    // Advance ball_in_court: find next step's first pending responder
+    // Advance ball_in_court: only advance when ALL responses on current step are non-Pending
     const { data: steps } = await supabase
       .from("submittal_workflow_steps")
       .select(
-        `id, step_order, submittal_responses(responder_id, response_status)`,
+        `id, step_order, step_type, submittal_responses(responder_id, response_status)`,
       )
       .eq("submittal_id", submittalId)
       .order("step_order", { ascending: true });
 
     if (steps) {
       const currentStep = steps.find((s) => s.id === stepId);
-      const nextStep = currentStep
-        ? steps.find((s) => s.step_order > currentStep.step_order)
-        : undefined;
 
-      const pendingResponder = nextStep?.submittal_responses?.find(
-        (r) => r.response_status === "Pending",
-      );
+      if (currentStep) {
+        // Check if ALL responses on current step are non-Pending
+        const currentResponses = currentStep.submittal_responses ?? [];
+        const allCurrentResolved =
+          currentResponses.length > 0 &&
+          currentResponses.every((r) => r.response_status !== "Pending");
 
-      if (pendingResponder) {
-        await supabase
-          .from("submittals")
-          .update({
-            ball_in_court: pendingResponder.responder_id,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", submittalId);
+        if (allCurrentResolved) {
+          // Find next step with pending responses
+          const nextStep = steps.find(
+            (s) => s.step_order > currentStep.step_order,
+          );
+
+          const pendingResponder = nextStep?.submittal_responses?.find(
+            (r) => r.response_status === "Pending",
+          );
+
+          if (pendingResponder) {
+            // Advance BIC to next step's first pending responder
+            await supabase
+              .from("submittals")
+              .update({
+                ball_in_court: pendingResponder.responder_id,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", submittalId);
+          } else {
+            // No more pending steps — auto-close the submittal
+            await supabase
+              .from("submittals")
+              .update({
+                status: "Closed",
+                ball_in_court: null,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", submittalId);
+          }
+        }
       }
     }
 

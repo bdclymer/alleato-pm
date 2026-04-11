@@ -5,6 +5,18 @@ import { ArrowDown, ArrowUp, Plus, Trash2, Save } from "lucide-react";
 import { toast } from "sonner";
 
 import { Text } from "@/components/ds/text";
+import {
+  InlineTable,
+  InlineTableBody,
+  InlineTableCell,
+  InlineTableFooter,
+  InlineTableFooterCell,
+  InlineTableFooterRow,
+  InlineTableHeader,
+  InlineTableHeaderCell,
+  InlineTableHeaderRow,
+  InlineTableRow,
+} from "@/components/ds/inline-table";
 import { SectionRuleHeading } from "@/components/layout";
 import { formatCurrency } from "@/config/tables";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -19,7 +31,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useCostCodes } from "@/hooks/use-cost-codes";
-import { TableHead, TableHeader } from "@/components/ui/table";
 
 interface LineItem {
   id: string;
@@ -313,122 +324,122 @@ export function ScheduleOfValuesTab({
     <div className="space-y-3">
       {showHeader ? <SectionRuleHeading label="Schedule of Values" className="[&_span]:text-primary" /> : null}
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <TableHeader>
-            <tr>
-              <TableHead className="w-10 px-3 py-3">#</TableHead>
-              <TableHead className="px-4 py-3">Budget Code</TableHead>
-              <TableHead className="px-4 py-3">Description</TableHead>
-              <TableHead className="px-4 py-3 text-right">Amount</TableHead>
-              <TableHead className="px-4 py-3 text-right">Billed to Date</TableHead>
-              <TableHead className="px-4 py-3 text-right">Remaining</TableHead>
-              <TableHead className="w-px px-3 py-3" />
-            </tr>
-          </TableHeader>
-          <tbody>
-            {items.map((item, index) => {
-              const amount = Number(item.amount ?? 0);
-              const billed = Number(item.billed_to_date ?? 0);
-              const remaining = Math.max(amount - billed, 0);
+      <InlineTable variant="edit">
+        <InlineTableHeader>
+          <InlineTableHeaderRow>
+            <InlineTableHeaderCell className="w-10">#</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Budget Code</InlineTableHeaderCell>
+            <InlineTableHeaderCell>Description</InlineTableHeaderCell>
+            <InlineTableHeaderCell align="right">Amount</InlineTableHeaderCell>
+            <InlineTableHeaderCell align="right">Billed to Date</InlineTableHeaderCell>
+            <InlineTableHeaderCell align="right">Remaining</InlineTableHeaderCell>
+            <InlineTableHeaderCell className="w-px" />
+          </InlineTableHeaderRow>
+        </InlineTableHeader>
+        <InlineTableBody>
+          {items.map((item, index) => {
+            const amount = Number(item.amount ?? 0);
+            const billed = Number(item.billed_to_date ?? 0);
+            const remaining = Math.max(amount - billed, 0);
 
-              return (
-                <tr key={item.id} className="border-t">
-                  <td className="px-3 py-3 text-muted-foreground tabular-nums text-xs">
-                    {index + 1}
-                  </td>
-                  <td className="px-4 py-3 whitespace-nowrap min-w-[200px]">
-                    <Select
-                      value={item.budget_code || "none"}
-                      onValueChange={(value) => updateItem(item.id, "budget_code", value === "none" ? "" : value)}
-                      disabled={costCodesLoading}
+            return (
+              <InlineTableRow key={item.id}>
+                <InlineTableCell className="text-muted-foreground text-xs">
+                  {index + 1}
+                </InlineTableCell>
+                <InlineTableCell className="whitespace-nowrap min-w-[200px]">
+                  <Select
+                    value={item.budget_code || "none"}
+                    onValueChange={(value) => updateItem(item.id, "budget_code", value === "none" ? "" : value)}
+                    disabled={costCodesLoading}
+                  >
+                    <SelectTrigger className="w-full" aria-label={`Budget code ${index + 1}`}>
+                      <SelectValue placeholder={costCodesLoading ? "Loading..." : "Select budget code"}>
+                        {item.budget_code
+                          ? (() => {
+                              const match = costCodeOptions.find((o) => o.value === item.budget_code);
+                              return match ? match.label : item.budget_code;
+                            })()
+                          : "No budget code"}
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No budget code</SelectItem>
+                      {costCodeOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </InlineTableCell>
+                <InlineTableCell className="min-w-[200px]">
+                  <Input
+                    aria-label={`Description ${index + 1}`}
+                    value={item.description ?? ""}
+                    onChange={(e) => updateItem(item.id, "description", e.target.value)}
+                  />
+                </InlineTableCell>
+                <InlineTableCell align="right">
+                  <MoneyField
+                    label={`Amount ${index + 1}`}
+                    inline
+                    showCurrency={false}
+                    value={item.amount ?? undefined}
+                    onChange={(value) => updateItem(item.id, "amount", value)}
+                  />
+                </InlineTableCell>
+                <InlineTableCell align="right" numeric className="text-muted-foreground">
+                  {formatCurrency(billed)}
+                </InlineTableCell>
+                <InlineTableCell align="right" numeric>
+                  {formatCurrency(remaining)}
+                </InlineTableCell>
+                <InlineTableCell>
+                  <div className="flex items-center justify-end gap-0.5">
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      aria-label={`Move line ${index + 1} up`}
+                      disabled={index === 0}
+                      onClick={() => moveItem(item.id, "up")}
                     >
-                      <SelectTrigger className="w-full" aria-label={`Budget code ${index + 1}`}>
-                        <SelectValue placeholder={costCodesLoading ? "Loading..." : "Select budget code"}>
-                          {item.budget_code
-                            ? (() => {
-                                const match = costCodeOptions.find((o) => o.value === item.budget_code);
-                                return match ? match.label : item.budget_code;
-                              })()
-                            : "No budget code"}
-                        </SelectValue>
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">No budget code</SelectItem>
-                        {costCodeOptions.map((option) => (
-                          <SelectItem key={option.value} value={option.value}>
-                            {option.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </td>
-                  <td className="px-4 py-3 min-w-[200px]">
-                    <Input
-                      aria-label={`Description ${index + 1}`}
-                      value={item.description ?? ""}
-                      onChange={(e) => updateItem(item.id, "description", e.target.value)}
-                    />
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <MoneyField
-                      label={`Amount ${index + 1}`}
-                      inline
-                      showCurrency={false}
-                      value={item.amount ?? undefined}
-                      onChange={(value) => updateItem(item.id, "amount", value)}
-                    />
-                  </td>
-                  <td className="px-4 py-3 text-right tabular-nums text-muted-foreground">
-                    {formatCurrency(billed)}
-                  </td>
-                  <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(remaining)}</td>
-                  <td className="px-3 py-3">
-                    <div className="flex items-center justify-end gap-0.5">
-                      <Button
-                        variant="ghost"
-                        size="icon-xs"
-                        aria-label={`Move line ${index + 1} up`}
-                        disabled={index === 0}
-                        onClick={() => moveItem(item.id, "up")}
-                      >
-                        <ArrowUp />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon-xs"
-                        aria-label={`Move line ${index + 1} down`}
-                        disabled={index === items.length - 1}
-                        onClick={() => moveItem(item.id, "down")}
-                      >
-                        <ArrowDown />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon-xs"
-                        aria-label={`Delete line ${index + 1}`}
-                        onClick={() => handleDelete(item.id)}
-                        className="text-destructive hover:text-destructive"
-                      >
-                        <Trash2 />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-          <tfoot>
-            <tr className="font-semibold border-t border-border">
-              <td className="px-3 py-3 text-right" colSpan={3}>Totals</td>
-              <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(totals.amount)}</td>
-              <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(totals.billed)}</td>
-              <td className="px-4 py-3 text-right tabular-nums">{formatCurrency(amountRemaining)}</td>
-              <td className="px-3 py-3" />
-            </tr>
-          </tfoot>
-        </table>
-      </div>
+                      <ArrowUp />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      aria-label={`Move line ${index + 1} down`}
+                      disabled={index === items.length - 1}
+                      onClick={() => moveItem(item.id, "down")}
+                    >
+                      <ArrowDown />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon-xs"
+                      aria-label={`Delete line ${index + 1}`}
+                      onClick={() => handleDelete(item.id)}
+                      className="text-destructive hover:text-destructive"
+                    >
+                      <Trash2 />
+                    </Button>
+                  </div>
+                </InlineTableCell>
+              </InlineTableRow>
+            );
+          })}
+        </InlineTableBody>
+        <InlineTableFooter>
+          <InlineTableFooterRow type="totals">
+            <InlineTableFooterCell align="right" colSpan={3}>Totals</InlineTableFooterCell>
+            <InlineTableFooterCell align="right" numeric>{formatCurrency(totals.amount)}</InlineTableFooterCell>
+            <InlineTableFooterCell align="right" numeric>{formatCurrency(totals.billed)}</InlineTableFooterCell>
+            <InlineTableFooterCell align="right" numeric>{formatCurrency(amountRemaining)}</InlineTableFooterCell>
+            <InlineTableFooterCell />
+          </InlineTableFooterRow>
+        </InlineTableFooter>
+      </InlineTable>
 
       {/* Actions below table, left-aligned */}
       <div className="flex items-center gap-2">

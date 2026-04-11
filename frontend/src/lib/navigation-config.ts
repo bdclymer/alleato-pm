@@ -213,7 +213,10 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
     id: "operations",
     label: "Operations",
     icon: ClipboardList,
-    tools: projectManagementTools,
+    tools: [
+      { name: "Project Directory", path: "directory", icon: Users, requiresProject: true, module: "directory" as PermissionModule },
+      ...projectManagementTools,
+    ],
   },
   {
     id: "company",
@@ -249,7 +252,6 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
         requiresProject: false,
         onlyWithoutProject: true,
       },
-      { name: "Project Directory", path: "directory", icon: Users, requiresProject: true, module: "directory" },
       { name: "Meetings", path: "meetings", icon: Calendar, requiresProject: true },
       { name: "Knowledge Base", path: "/knowledge", icon: Brain, requiresProject: false },
       { name: "AI Strategist", path: "/ai-assistant", icon: Bot, requiresProject: false },
@@ -261,7 +263,12 @@ export const sidebarNavGroups: SidebarNavGroup[] = [
     label: "Admin",
     icon: Settings,
     tools: adminTools.filter(
-      (tool) => tool.path !== "/admin/documents/pipeline"
+      (tool) =>
+        tool.path !== "/admin/documents/pipeline" &&
+        tool.path !== "/procore-docs" &&
+        tool.path !== "http://localhost:4983" &&
+        tool.path !== "/updates" &&
+        tool.path !== "/docs"
     ),
   },
 ];

@@ -8,6 +8,15 @@ import {
   SidebarTabs,
 } from "./BaseSidebar";
 import { Button } from "@/components/ui/button";
+import {
+  InlineTable,
+  InlineTableHeader,
+  InlineTableHeaderRow,
+  InlineTableHeaderCell,
+  InlineTableBody,
+  InlineTableRow,
+  InlineTableCell,
+} from "@/components/ds/inline-table";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Check, X, Send, Ban, Loader2 } from "lucide-react";
@@ -421,41 +430,40 @@ export function BudgetModificationsModal({
                       </p>
                     </div>
 
-                    <div className="overflow-x-auto scrollbar-hide rounded-b-lg border-t border-border bg-background">
-                      <table className="w-full text-sm">
-                        <thead className="bg-muted/50 border-b border-border">
-                          <tr>
-                            <th className="text-left px-4 py-3 font-semibold text-foreground">Cost Code</th>
-                            <th className="text-left px-4 py-3 font-semibold text-foreground">Description</th>
-                            <th className="text-right px-4 py-3 font-semibold text-foreground">Amount</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-border">
+                    <div className="border-t border-border">
+                      <InlineTable variant="read">
+                        <InlineTableHeader>
+                          <InlineTableHeaderRow>
+                            <InlineTableHeaderCell>Cost Code</InlineTableHeaderCell>
+                            <InlineTableHeaderCell>Description</InlineTableHeaderCell>
+                            <InlineTableHeaderCell align="right">Amount</InlineTableHeaderCell>
+                          </InlineTableHeaderRow>
+                        </InlineTableHeader>
+                        <InlineTableBody>
                           {mod.lines.map((line) => (
-                            <tr
-                              key={line.id}
-                              className="hover:bg-muted/50 transition-colors"
-                            >
-                              <td className="px-4 py-3 font-medium text-foreground">
+                            <InlineTableRow key={line.id}>
+                              <InlineTableCell className="font-medium">
                                 {line.costCodeId}
-                              </td>
-                              <td className="px-4 py-3 text-foreground">
+                              </InlineTableCell>
+                              <InlineTableCell>
                                 {line.description || line.costCodeTitle || "-"}
-                              </td>
-                              <td
+                              </InlineTableCell>
+                              <InlineTableCell
+                                align="right"
+                                numeric
                                 className={cn(
-                                  "px-4 py-3 text-right font-semibold tabular-nums",
+                                  "font-semibold",
                                   line.amount < 0
                                     ? "text-destructive"
                                     : "text-foreground",
                                 )}
                               >
                                 {formatCurrency(line.amount)}
-                              </td>
-                            </tr>
+                              </InlineTableCell>
+                            </InlineTableRow>
                           ))}
-                        </tbody>
-                      </table>
+                        </InlineTableBody>
+                      </InlineTable>
                     </div>
                   </div>
                 ))}

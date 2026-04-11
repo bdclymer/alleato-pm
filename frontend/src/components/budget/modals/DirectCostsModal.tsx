@@ -10,6 +10,15 @@ import {
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import {
+  InlineTable,
+  InlineTableHeader,
+  InlineTableHeaderRow,
+  InlineTableHeaderCell,
+  InlineTableBody,
+  InlineTableRow,
+  InlineTableCell,
+} from "@/components/ds/inline-table";
 import { cn } from "@/lib/utils";
 import { Receipt } from "lucide-react";
 
@@ -216,92 +225,73 @@ export function DirectCostsModal({
             </div>
 
             {/* Costs Table */}
-            <div className="overflow-x-auto scrollbar-hide rounded-lg border border-border bg-background">
-              <table className="w-full text-sm">
-                <thead className="bg-muted/50 border-b border-border">
-                  <tr>
-                    <th className="text-left px-4 py-3 font-semibold text-foreground">
-                      Description
-                    </th>
-                    <th className="text-left px-4 py-3 font-semibold text-foreground">
-                      Type
-                    </th>
-                    <th className="text-left px-4 py-3 font-semibold text-foreground">
-                      Status
-                    </th>
-                    <th className="text-left px-4 py-3 font-semibold text-foreground">
-                      Vendor
-                    </th>
-                    <th className="text-right px-4 py-3 font-semibold text-foreground">
-                      Amount
-                    </th>
-                    {showPayments && (
-                      <th className="text-right px-4 py-3 font-semibold text-foreground">
-                        Payments
-                      </th>
-                    )}
-                    <th className="text-left px-4 py-3 font-semibold text-foreground">
-                      Date
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {loading ? (
-                    <tr>
-                      <td
-                        colSpan={showPayments ? 7 : 6}
-                        className="px-4 py-10 text-center text-muted-foreground"
-                      >
-                        Loading costs...
-                      </td>
-                    </tr>
-                  ) : costs.length === 0 ? (
-                    <tr>
-                      <td
-                        colSpan={showPayments ? 7 : 6}
-                        className="px-4 py-10 text-center text-muted-foreground"
-                      >
-                        No direct costs found for this cost code.
-                      </td>
-                    </tr>
-                  ) : (
-                    costs.map((cost) => (
-                      <tr
-                        key={cost.id}
-                        className="hover:bg-muted/50 transition-colors"
-                      >
-                        <td
-                          className="px-4 py-3 text-foreground max-w-xs truncate"
-                          title={cost.description || "-"}
-                        >
-                          {cost.description || "-"}
-                        </td>
-                        <td className="px-4 py-3 text-foreground text-xs">
-                          {cost.costType || "-"}
-                        </td>
-                        <td className="px-4 py-3">
-                          {getStatusBadge(cost.status)}
-                        </td>
-                        <td className="px-4 py-3 text-foreground text-xs">
-                          {cost.vendor || "-"}
-                        </td>
-                        <td className="px-4 py-3 text-right font-semibold tabular-nums text-foreground">
-                          {formatCurrency(cost.amount)}
-                        </td>
-                        {showPayments && (
-                          <td className="px-4 py-3 text-right font-medium tabular-nums text-foreground">
-                            {formatCurrency(cost.payments)}
-                          </td>
-                        )}
-                        <td className="px-4 py-3 text-foreground">
-                          {formatDate(cost.incurredDate)}
-                        </td>
-                      </tr>
-                    ))
+            <InlineTable variant="read">
+              <InlineTableHeader>
+                <InlineTableHeaderRow>
+                  <InlineTableHeaderCell>Description</InlineTableHeaderCell>
+                  <InlineTableHeaderCell>Type</InlineTableHeaderCell>
+                  <InlineTableHeaderCell>Status</InlineTableHeaderCell>
+                  <InlineTableHeaderCell>Vendor</InlineTableHeaderCell>
+                  <InlineTableHeaderCell align="right">Amount</InlineTableHeaderCell>
+                  {showPayments && (
+                    <InlineTableHeaderCell align="right">Payments</InlineTableHeaderCell>
                   )}
-                </tbody>
-              </table>
-            </div>
+                  <InlineTableHeaderCell>Date</InlineTableHeaderCell>
+                </InlineTableHeaderRow>
+              </InlineTableHeader>
+              <InlineTableBody>
+                {loading ? (
+                  <tr>
+                    <td
+                      colSpan={showPayments ? 7 : 6}
+                      className="px-3 py-10 text-center text-muted-foreground"
+                    >
+                      Loading costs...
+                    </td>
+                  </tr>
+                ) : costs.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={showPayments ? 7 : 6}
+                      className="px-3 py-10 text-center text-muted-foreground"
+                    >
+                      No direct costs found for this cost code.
+                    </td>
+                  </tr>
+                ) : (
+                  costs.map((cost) => (
+                    <InlineTableRow key={cost.id}>
+                      <InlineTableCell
+                        className="max-w-xs truncate"
+                        title={cost.description || "-"}
+                      >
+                        {cost.description || "-"}
+                      </InlineTableCell>
+                      <InlineTableCell>
+                        {cost.costType || "-"}
+                      </InlineTableCell>
+                      <InlineTableCell>
+                        {getStatusBadge(cost.status)}
+                      </InlineTableCell>
+                      <InlineTableCell>
+                        {cost.vendor || "-"}
+                      </InlineTableCell>
+                      <InlineTableCell align="right" numeric className="font-semibold">
+                        {formatCurrency(cost.amount)}
+                      </InlineTableCell>
+                      {showPayments && (
+                        <InlineTableCell align="right" numeric className="font-medium">
+                          {formatCurrency(cost.payments)}
+                        </InlineTableCell>
+                      )}
+                      <InlineTableCell>
+                        {formatDate(cost.incurredDate)}
+                      </InlineTableCell>
+                    </InlineTableRow>
+                  ))
+                )}
+              </InlineTableBody>
+            </InlineTable>
           </div>
         ) : (
           <div className="p-4 sm:p-6 space-y-4">

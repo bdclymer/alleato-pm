@@ -19,7 +19,7 @@ const updateSubmittalSchema = z.object({
   submittal_type_id: z.string().uuid().nullable().optional(),
   division: z.string().nullable().optional(),
   submittal_package_id: z.string().uuid().nullable().optional(),
-  responsible_contractor_id: z.number().int().nullable().optional(),
+  responsible_contractor_id: z.string().nullable().optional(),
   received_from_id: z.string().uuid().nullable().optional(),
   submittal_manager_id: z.string().uuid().nullable().optional(),
   final_due_date: z.string().nullable().optional(),
@@ -94,7 +94,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       )
       .eq("project_id", parseInt(projectId, 10))
       .eq("id", submittalId)
-      .single();
+      .maybeSingle();
 
     if (error) {
       return apiErrorResponse(error);
@@ -104,7 +104,20 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       return NextResponse.json({ error: "Submittal not found" }, { status: 404 });
     }
 
-    return NextResponse.json(data);
+    // Resolve responsible_contractor name via secondary lookup (no FK exists)
+    let responsible_contractor: { id: string; name: string } | null = null;
+    if (data.responsible_contractor_id) {
+      const { data: company } = await supabase
+        .from("companies")
+        .select("id, name")
+        .eq("id", String(data.responsible_contractor_id))
+        .single();
+      if (company) {
+        responsible_contractor = company;
+      }
+    }
+
+    return NextResponse.json({ ...data, responsible_contractor });
   } catch (error) {
     return apiErrorResponse(error);
   }

@@ -80,7 +80,7 @@ interface VerticalMarkupRow {
 }
 
 function computeMarkupAdditions(
-  baseCost: number,
+  _baseCost: number,
   baseRevenue: number,
   markups: VerticalMarkupRow[]
 ): { cost: number; revenue: number } {
@@ -92,9 +92,7 @@ function computeMarkupAdditions(
     (a, b) => (a.calculation_order ?? 0) - (b.calculation_order ?? 0)
   )
 
-  let runningCostBase = baseCost
   let runningRevenueBase = baseRevenue
-  let totalCostMarkup = 0
   let totalRevenueMarkup = 0
 
   for (const markup of sortedMarkups) {
@@ -104,20 +102,17 @@ function computeMarkupAdditions(
     }
 
     const rate = percentage / 100
-    const costMarkup = runningCostBase * rate
+    // Markups (contractor fee, insurance) apply to Revenue ROM only
     const revenueMarkup = runningRevenueBase * rate
-
-    totalCostMarkup += costMarkup
     totalRevenueMarkup += revenueMarkup
 
     if (markup.compound) {
-      runningCostBase += costMarkup
       runningRevenueBase += revenueMarkup
     }
   }
 
   return {
-    cost: totalCostMarkup,
+    cost: 0,
     revenue: totalRevenueMarkup,
   }
 }
@@ -473,6 +468,8 @@ export async function POST(
       description,
     } = createChangeEventSchema.parse(body)
 
+    const originId = typeof body.originId === "string" ? body.originId : null;
+
     // Generate change event number
     const eventNumber = await generateChangeEventNumber(
       supabase,
@@ -497,6 +494,7 @@ export async function POST(
       scope,
       status: status || "Open",
       origin: origin || 'Internal',
+      origin_id: originId,
       expecting_revenue: expectingRevenue,
       line_item_revenue_source: lineItemRevenueSource || null,
       prime_contract_id: primeContractId || null,

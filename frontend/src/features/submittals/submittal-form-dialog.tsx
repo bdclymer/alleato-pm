@@ -79,9 +79,10 @@ const submittalFormSchema = z.object({
   description: z.string().nullable().optional(),
   is_private: z.boolean(),
   ball_in_court: z.string().nullable().optional(),
-  responsible_contractor_id: z.number().int().nullable().optional(),
+  responsible_contractor_id: z.string().nullable().optional(),
   received_from_id: z.string().nullable().optional(),
   submittal_manager_id: z.string().nullable().optional(),
+  submittal_package_id: z.string().nullable().optional(),
 });
 
 type SubmittalFormValues = z.infer<typeof submittalFormSchema>;
@@ -93,6 +94,7 @@ interface SubmittalFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   submittal?: SubmittalSummary; // undefined = create, defined = edit
+  defaultOverrides?: { submittal_package_id?: string; specification_section?: string };
 }
 
 const STATUS_OPTIONS = ["Draft", "Open", "Distributed", "Closed"] as const;
@@ -105,13 +107,13 @@ function getSubmittalTypeId(v: SubmittalSummary["submittal_type"] | undefined): 
   return null;
 }
 
-function buildDefaults(submittal: SubmittalSummary | undefined): SubmittalFormValues {
+function buildDefaults(submittal: SubmittalSummary | undefined, overrides?: { submittal_package_id?: string; specification_section?: string }): SubmittalFormValues {
   return {
     title: submittal?.title ?? "",
     submittal_number: submittal?.submittal_number ?? "",
     revision: submittal?.revision ?? 0,
     status: (submittal?.status as "Draft" | "Open" | "Distributed" | "Closed") ?? "Draft",
-    specification_section: submittal?.specification_section ?? "",
+    specification_section: overrides?.specification_section ?? submittal?.specification_section ?? "",
     submittal_type_id: getSubmittalTypeId(submittal?.submittal_type),
     division: submittal?.division ?? "",
     final_due_date: submittal?.final_due_date ?? "",
@@ -123,6 +125,7 @@ function buildDefaults(submittal: SubmittalSummary | undefined): SubmittalFormVa
     responsible_contractor_id: null,
     received_from_id: null,
     submittal_manager_id: null,
+    submittal_package_id: overrides?.submittal_package_id ?? (typeof submittal?.submittal_package === "object" ? (submittal?.submittal_package as any)?.id : null) ?? null,
   };
 }
 
@@ -133,6 +136,7 @@ export function SubmittalFormDialog({
   open,
   onOpenChange,
   submittal,
+  defaultOverrides,
 }: SubmittalFormDialogProps) {
   const isEditing = Boolean(submittal);
   const createMutation = useCreateSubmittal(projectId);
@@ -145,18 +149,26 @@ export function SubmittalFormDialog({
   );
   const { users, isLoading: usersLoading } = useAuthUsers(String(projectId));
   const { data: submittalTypes, isLoading: typesLoading } = useSubmittalTypes();
+  const { data: packages, isLoading: packagesLoading } = useQuery({
+    queryKey: ["submittal-packages", projectId],
+    queryFn: async () => {
+      const res = await fetch(`/api/projects/${projectId}/submittals/packages`);
+      if (!res.ok) throw new Error("Failed to load packages");
+      return res.json() as Promise<{ id: string; name: string }[]>;
+    },
+  });
 
   const form = useForm<SubmittalFormValues>({
     resolver: zodResolver(submittalFormSchema),
-    defaultValues: buildDefaults(submittal),
+    defaultValues: buildDefaults(submittal, defaultOverrides),
   });
 
   // Reset when dialog opens
   React.useEffect(() => {
     if (open) {
-      form.reset(buildDefaults(submittal));
+      form.reset(buildDefaults(submittal, defaultOverrides));
     }
-  }, [open, submittal, form]);
+  }, [open, submittal, defaultOverrides, form]);
 
   async function onSubmit(values: SubmittalFormValues) {
     const payload = {
@@ -171,6 +183,7 @@ export function SubmittalFormDialog({
       responsible_contractor_id: values.responsible_contractor_id ?? null,
       received_from_id: values.received_from_id || null,
       submittal_manager_id: values.submittal_manager_id || null,
+      submittal_package_id: values.submittal_package_id || null,
     };
 
     if (isEditing) {
@@ -341,6 +354,35 @@ export function SubmittalFormDialog({
                   )}
                 />
               </div>
+
+              <FormField
+                control={form.control}
+                name="submittal_package_id"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Submittal Package</FormLabel>
+                    <Select
+                      onValueChange={(val) => field.onChange(val === "__none__" ? null : val)}
+                      value={field.value ?? "__none__"}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={packagesLoading ? "Loading..." : "Select package"} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="__none__">None</SelectItem>
+                        {(packages ?? []).map((p) => (
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </section>
 
             {/* ── People & Companies ── */}
@@ -358,7 +400,7 @@ export function SubmittalFormDialog({
                     <FormLabel>Responsible Contractor</FormLabel>
                     <Select
                       onValueChange={(val) =>
-                        field.onChange(val === "__none__" ? null : parseInt(val, 10))
+                        field.onChange(val === "__none__" ? null : val)
                       }
                       value={field.value != null ? String(field.value) : "__none__"}
                     >
@@ -530,13 +572,29 @@ export function SubmittalFormDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Ball In Court</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="e.g. Architect"
-                        {...field}
-                        value={field.value ?? ""}
-                      />
-                    </FormControl>
+                    <Select
+                      onValueChange={(val) => field.onChange(val === "__none__" ? null : val)}
+                      value={field.value ?? "__none__"}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder={usersLoading ? "Loading..." : "Select person"} />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="__none__">None</SelectItem>
+                        {users.map((u) => {
+                          const name = u.first_name || u.last_name
+                            ? `${u.first_name ?? ""} ${u.last_name ?? ""}`.trim()
+                            : u.email;
+                          return (
+                            <SelectItem key={u.id} value={u.id}>
+                              {name} ({u.email})
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

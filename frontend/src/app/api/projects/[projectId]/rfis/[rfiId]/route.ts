@@ -7,8 +7,12 @@
  */
 
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
+import { sendEmail } from "@/lib/email/send";
+import { APP_BASE_URL } from "@/lib/email/client";
+import RFIClosedNotification from "@/emails/rfi/RFIClosedNotification";
 import { rfiEditSchema } from "@/lib/schemas/rfi-schema";
 import { ZodError } from "zod";
 
@@ -159,6 +163,19 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       return apiErrorResponse(error);
     }
 
+    // Fire-and-forget: notify relevant people when RFI is closed
+    const newStatus = updateData.status as string | undefined;
+    if (newStatus === "closed" || newStatus === "closed-draft") {
+      const { projectId } = await params;
+      notifyRfiClosed({
+        projectId: parseInt(projectId, 10),
+        rfiId,
+        closedByUserId: user.id,
+      }).catch((err) => {
+        console.error("[rfi-close] notification failed", err);
+      });
+    }
+
     return NextResponse.json(data);
   } catch (error) {
     if (error instanceof ZodError) {
@@ -169,6 +186,101 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     }
     return apiErrorResponse(error);
   }
+}
+
+// ── RFI closed notification ────────────────────────────────────────────────
+
+async function notifyRfiClosed(args: {
+  projectId: number;
+  rfiId: string;
+  closedByUserId: string;
+}) {
+  const { projectId, rfiId, closedByUserId } = args;
+  const supabase = createServiceClient();
+
+  // Load the RFI
+  const { data: rfi } = await supabase
+    .from("rfis")
+    .select(
+      "id, number, subject, created_by, assignees, distribution_list, rfi_manager",
+    )
+    .eq("id", rfiId)
+    .maybeSingle();
+  if (!rfi) return;
+
+  // Build a unique set of person IDs to notify:
+  // creator, assignees, distribution list, RFI manager
+  const personIds = new Set<string>();
+  if (rfi.created_by) personIds.add(rfi.created_by);
+  if (rfi.rfi_manager) personIds.add(rfi.rfi_manager);
+  for (const a of rfi.assignees || []) personIds.add(a);
+  for (const d of rfi.distribution_list || []) personIds.add(d);
+
+  if (personIds.size === 0) return;
+
+  // Resolve people to emails and the closer's name
+  const [{ data: people }, { data: project }, { data: closerProfile }] =
+    await Promise.all([
+      supabase
+        .from("people")
+        .select("id, first_name, last_name, email")
+        .in("id", [...personIds]),
+      supabase
+        .from("projects")
+        .select("name")
+        .eq("id", projectId)
+        .maybeSingle(),
+      supabase
+        .from("user_profiles")
+        .select("full_name, email")
+        .eq("id", closedByUserId)
+        .maybeSingle(),
+    ]);
+
+  const closedBy =
+    closerProfile?.full_name?.trim() ||
+    closerProfile?.email?.split("@")[0] ||
+    "A team member";
+
+  const recipients: Array<{ name: string; email: string }> = (people || [])
+    .filter((p: { email: string | null }) => !!p.email)
+    .map(
+      (p: {
+        first_name: string | null;
+        last_name: string | null;
+        email: string | null;
+      }) => ({
+        name:
+          `${p.first_name || ""} ${p.last_name || ""}`.trim() || "Team member",
+        email: p.email as string,
+      }),
+    );
+
+  if (recipients.length === 0) return;
+
+  const projectName = project?.name || `Project #${projectId}`;
+  const viewUrl = `${APP_BASE_URL}/${projectId}/rfis/${rfiId}`;
+  const subject = `RFI #${rfi.number} closed — ${rfi.subject}`;
+
+  await Promise.all(
+    recipients.map((r) =>
+      sendEmail({
+        template: "rfi-closed",
+        to: r.email,
+        subject,
+        react: RFIClosedNotification({
+          recipientName: r.name,
+          projectName,
+          rfiNumber: rfi.number,
+          rfiSubject: rfi.subject,
+          closedBy,
+          viewUrl,
+        }),
+        entity: { type: "rfi", id: rfiId },
+        idempotencyKey: `rfi-closed/${rfiId}/${r.email}`,
+      }),
+    ),
+  );
 }
 
 /**

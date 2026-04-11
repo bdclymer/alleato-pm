@@ -291,7 +291,7 @@ export function DrawingUploadDialog({
               label=""
               accept=".pdf,.png,.jpg,.jpeg,.tiff,.tif"
               multiple
-              maxSize={500 * 1024 * 1024}
+              maxSize={100 * 1024 * 1024}
               onFilesSelected={handleFilesSelected}
               hint="or Drag & Drop"
               required
@@ -306,7 +306,7 @@ export function DrawingUploadDialog({
                     className="flex items-center justify-between p-3 bg-muted/50 rounded-md"
                   >
                     <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium truncate">{file.name}</p>
                         <div className="flex items-center gap-2">
