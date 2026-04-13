@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import type { ReactElement } from "react";
 import { useState } from "react";
 import { useParams, usePathname, useRouter, useSearchParams } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
@@ -17,6 +18,7 @@ import {
 } from "@/components/tables/unified";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { StatusBadge } from "@/components/ds";
 
 import {
   SpecificationUploadDialog,
@@ -50,7 +52,7 @@ function formatFileSize(bytes: number) {
   return (bytes / (1024 * 1024)).toFixed(1) + " MB";
 }
 
-function StatusBadge({ status }: { status: string }) {
+function SpecStatusBadge({ status }: { status: string }) {
   switch (status) {
     case "active":
       return <Badge variant="default">Active</Badge>;
@@ -61,6 +63,96 @@ function StatusBadge({ status }: { status: string }) {
     default:
       return <Badge variant="secondary">{status}</Badge>;
   }
+}
+
+function renderSpecCard(
+  spec: SpecificationWithRevision,
+  onView: (id: number) => void,
+): ReactElement {
+  return (
+    <div
+      className="cursor-pointer rounded-lg border border-border p-4 transition-colors hover:bg-muted/50"
+      onClick={() => onView(spec.id)}
+    >
+      <div className="mb-2 flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium">{spec.title}</p>
+          <p className="mt-0.5 font-mono text-xs text-muted-foreground">
+            {spec.section_number}
+          </p>
+        </div>
+        <StatusBadge status={spec.status} />
+      </div>
+      {spec.description && (
+        <p className="mb-2 line-clamp-2 text-xs text-muted-foreground">
+          {spec.description}
+        </p>
+      )}
+      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+        {spec.current_revision && (
+          <span className="flex items-center gap-1">
+            <FileText className="h-3 w-3" />
+            Rev {spec.current_revision.revision_number}
+          </span>
+        )}
+        {spec.current_revision && (
+          <span>{formatFileSize(spec.current_revision.file_size)}</span>
+        )}
+        {spec.area_count > 0 && (
+          <span>
+            {spec.area_count} area{spec.area_count !== 1 ? "s" : ""}
+          </span>
+        )}
+        <span>
+          {formatDistanceToNow(new Date(spec.updated_at || spec.created_at), {
+            addSuffix: true,
+          })}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function renderSpecList(
+  spec: SpecificationWithRevision,
+  onView: (id: number) => void,
+): ReactElement {
+  return (
+    <div
+      className="flex cursor-pointer items-center justify-between px-4 py-2.5 transition-colors hover:bg-muted/50"
+      onClick={() => onView(spec.id)}
+    >
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-xs text-muted-foreground">
+            {spec.section_number}
+          </span>
+          <span className="truncate text-sm font-medium">{spec.title}</span>
+        </div>
+        <p className="mt-0.5 text-xs text-muted-foreground">
+          {[
+            spec.current_revision
+              ? `Rev ${spec.current_revision.revision_number}`
+              : null,
+            spec.current_revision
+              ? formatFileSize(spec.current_revision.file_size)
+              : null,
+            spec.area_count > 0
+              ? `${spec.area_count} area${spec.area_count !== 1 ? "s" : ""}`
+              : null,
+            formatDistanceToNow(new Date(spec.updated_at || spec.created_at), {
+              addSuffix: true,
+            }),
+          ]
+            .filter(Boolean)
+            .join(" · ")}
+        </p>
+      </div>
+      <div className="ml-3 shrink-0">
+        <StatusBadge status={spec.status} />
+      </div>
+    </div>
+  );
 }
 
 export default function ProjectSpecificationsPage() {
@@ -87,7 +179,7 @@ export default function ProjectSpecificationsPage() {
     router,
     defaults: {
       view: "table",
-      allowedViews: ["table"],
+      allowedViews: ["table", "card", "list"],
       page: 1,
       perPage: 25,
       search: "",
@@ -166,7 +258,7 @@ export default function ProjectSpecificationsPage() {
       {
         id: "status",
         label: "Status",
-        render: (spec) => <StatusBadge status={spec.status} />,
+        render: (spec) => <SpecStatusBadge status={spec.status} />,
         sortValue: (spec) => spec.status,
         sortable: true,
       },
@@ -284,8 +376,11 @@ export default function ProjectSpecificationsPage() {
           onSearchChange: tableState.setSearchInput,
           searchPlaceholder: "Search by section number or title...",
           currentView: tableState.currentView,
-          onViewChange: tableState.setCurrentView,
-          enabledViews: ["table"],
+          onViewChange: (view) => {
+            tableState.setCurrentView(view);
+            tableState.setSearchParams({ view });
+          },
+          enabledViews: ["table", "card", "list"],
           filters,
           activeFilters,
           onFilterChange: handleFilterChange,
@@ -338,6 +433,10 @@ export default function ProjectSpecificationsPage() {
             ];
             return <TableRowActionsMenu items={items} />;
           },
+        }}
+        views={{
+          card: (item) => renderSpecCard(item, handleView),
+          list: (item) => renderSpecList(item, handleView),
         }}
         sorting={{
           sortBy: tableState.sortBy,
