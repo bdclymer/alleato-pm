@@ -1,4 +1,7 @@
 import { NextResponse } from "next/server";
+import { z } from "zod";
+import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -7,24 +10,54 @@ import { createClient } from "@/lib/supabase/server";
  */
 async function requireAdminAuth() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) {
-    return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user) {
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where: "/api/admin/company-knowledge#auth",
+      message: "Unauthorized request.",
+      status: 401,
+    });
   }
   const { data: profile } = await supabase.from("user_profiles").select("is_admin").eq("id", user.id).single();
   if (!profile?.is_admin) {
-    return { error: NextResponse.json({ error: "Admin access required" }, { status: 403 }) };
+    throw new GuardrailError({
+      code: "AUTH_FORBIDDEN",
+      where: "/api/admin/company-knowledge#auth",
+      message: "Admin access required.",
+      status: 403,
+    });
   }
   return { supabase, user };
 }
+
+const CompanyKnowledgeCreateSchema = z.object({
+  title: z.string().trim().min(1),
+  content: z.string().trim().min(1),
+  category: z.string().trim().min(1),
+  tags: z.array(z.string().trim().min(1)).optional(),
+  source: z.string().trim().min(1).nullable().optional(),
+});
+
+const CompanyKnowledgePatchSchema = z.object({
+  id: z.string().trim().min(1),
+  title: z.string().trim().min(1).optional(),
+  content: z.string().trim().min(1).optional(),
+  category: z.string().trim().min(1).optional(),
+  tags: z.array(z.string().trim().min(1)).optional(),
+  source: z.string().trim().min(1).nullable().optional(),
+  is_active: z.boolean().optional(),
+});
 
 /**
  * GET /api/admin/company-knowledge
  * Fetch all knowledge articles (paginated).
  */
-export async function GET(request: Request) {
+export const GET = withApiGuardrails("/api/admin/company-knowledge#GET", async ({ request }) => {
   const auth = await requireAdminAuth();
-  if ("error" in auth) return auth.error;
   const { supabase } = auth;
 
   const url = new URL(request.url);
@@ -50,22 +83,29 @@ export async function GET(request: Request) {
   const { data, error } = await query;
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/admin/company-knowledge#GET",
+      message: "Failed to load company knowledge.",
+      details: { reason: error.message },
+    });
   }
 
   return NextResponse.json({ data: data ?? [] });
-}
+});
 
 /**
  * POST /api/admin/company-knowledge
  * Create a new knowledge article.
  */
-export async function POST(request: Request) {
+export const POST = withApiGuardrails("/api/admin/company-knowledge#POST", async ({ request }) => {
   const auth = await requireAdminAuth();
-  if ("error" in auth) return auth.error;
   const { supabase, user } = auth;
-
-  const body = await request.json();
+  const body = await parseJsonBody(
+    request,
+    CompanyKnowledgeCreateSchema,
+    "/api/admin/company-knowledge#POST",
+  );
 
   const { data, error } = await supabase
     .from("company_knowledge")
@@ -82,30 +122,31 @@ export async function POST(request: Request) {
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/admin/company-knowledge#POST",
+      message: "Failed to create company knowledge record.",
+      details: { reason: error.message },
+    });
   }
 
   return NextResponse.json({ data });
-}
+});
 
 /**
  * PATCH /api/admin/company-knowledge
  * Update an existing knowledge article (pass `id` in body).
  */
-export async function PATCH(request: Request) {
+export const PATCH = withApiGuardrails("/api/admin/company-knowledge#PATCH", async ({ request }) => {
   const auth = await requireAdminAuth();
-  if ("error" in auth) return auth.error;
   const { supabase } = auth;
 
-  const body = await request.json();
+  const body = await parseJsonBody(
+    request,
+    CompanyKnowledgePatchSchema,
+    "/api/admin/company-knowledge#PATCH",
+  );
   const { id, ...updates } = body;
-
-  if (!id) {
-    return NextResponse.json(
-      { error: "Missing article id" },
-      { status: 400 },
-    );
-  }
 
   const { data, error } = await supabase
     .from("company_knowledge")
@@ -115,29 +156,35 @@ export async function PATCH(request: Request) {
     .single();
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/admin/company-knowledge#PATCH",
+      message: "Failed to update company knowledge record.",
+      details: { reason: error.message },
+    });
   }
 
   return NextResponse.json({ data });
-}
+});
 
 /**
  * DELETE /api/admin/company-knowledge
  * Soft-delete (deactivate) a knowledge article.
  */
-export async function DELETE(request: Request) {
+export const DELETE = withApiGuardrails("/api/admin/company-knowledge#DELETE", async ({ request }) => {
   const auth = await requireAdminAuth();
-  if ("error" in auth) return auth.error;
   const { supabase } = auth;
 
   const url = new URL(request.url);
   const id = url.searchParams.get("id");
 
   if (!id) {
-    return NextResponse.json(
-      { error: "Missing article id" },
-      { status: 400 },
-    );
+    throw new GuardrailError({
+      code: "INVALID_PAYLOAD",
+      where: "/api/admin/company-knowledge#DELETE",
+      message: "Missing article id.",
+      status: 400,
+    });
   }
 
   const { error } = await supabase
@@ -146,8 +193,13 @@ export async function DELETE(request: Request) {
     .eq("id", id);
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/admin/company-knowledge#DELETE",
+      message: "Failed to delete company knowledge record.",
+      details: { reason: error.message },
+    });
   }
 
   return NextResponse.json({ success: true });
-}
+});

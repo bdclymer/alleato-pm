@@ -30,6 +30,16 @@ All server-side failures must return:
 - `timestamp`
 - optional `details`
 
+## Alerting behavior
+- Immediate alert for `critical` and `high` severity failures.
+- Escalation alert for repeated failures: same `where + error_code` 3+ times within 5 minutes.
+- Smoke-contract failures should alert with endpoint-level failure details.
+
+## Enforcement gates
+- `scripts/check-changed-route-guardrails.mjs` enforces route guardrails.
+- `GUARDRAIL_SCOPE=all` runs full-repo compliance against baseline debt list.
+- Baseline debt is tracked in `scripts/guardrail-route-debt-baseline.txt` and must ratchet down over time.
+
 ## Agent rules
 1. Do not ship silent failures.
 2. Do not return generic errors.
@@ -38,4 +48,3 @@ All server-side failures must return:
 5. Every failure write-up includes cause, detection gap, and prevention step.
 6. Before closing a task, answer: "How does this fail loudly?"
 7. Before closing a bug, answer: "What makes this never happen again?"
-

@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { getErrorCatalogEntry } from "@/lib/guardrails/error-catalog";
 import { asGuardrailError, GuardrailError } from "@/lib/guardrails/errors";
+import { validateEnvVars } from "@/lib/guardrails/env";
 import { getOrCreateRequestId, logEvent, notifyOnError } from "@/lib/guardrails/observability";
 
 export interface ErrorEnvelope {
@@ -23,6 +24,19 @@ interface HandlerContext<TParams = unknown> {
 type WrappedHandler<TParams = unknown> = (
   context: HandlerContext<TParams>,
 ) => Promise<Response>;
+
+let runtimeEnvValidated = false;
+
+function ensureRuntimeEnv(where: string): void {
+  if (runtimeEnvValidated) return;
+  validateEnvVars(where, [
+    "NEXT_PUBLIC_SUPABASE_URL",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+  ], {
+    urlVars: ["NEXT_PUBLIC_SUPABASE_URL", "BACKEND_URL", "PYTHON_BACKEND_URL"],
+  });
+  runtimeEnvValidated = true;
+}
 
 function errorEnvelopeFrom(
   error: GuardrailError,
@@ -47,17 +61,19 @@ export function withApiGuardrails<TParams = unknown>(
     const startedAt = Date.now();
     const requestId = getOrCreateRequestId(request.headers);
 
-    logEvent({
-      event: "api_request_started",
-      requestId,
-      where,
-      details: {
-        method: request.method,
-        path: request.nextUrl.pathname,
-      },
-    });
-
     try {
+      ensureRuntimeEnv(where);
+
+      logEvent({
+        event: "api_request_started",
+        requestId,
+        where,
+        details: {
+          method: request.method,
+          path: request.nextUrl.pathname,
+        },
+      });
+
       const response = await handler({
         request,
         params: (args?.params ?? ({} as TParams)),

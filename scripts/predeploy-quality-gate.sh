@@ -15,6 +15,8 @@ if git rev-parse --verify HEAD~1 >/dev/null 2>&1; then
 else
   echo "Skipping changed-route guardrail check (no prior commit available)."
 fi
+echo "2c) Full-route guardrail debt gate"
+GUARDRAIL_SCOPE=all node scripts/check-changed-route-guardrails.mjs
 
 echo "3) Frontend lint + typecheck + build"
 cd frontend

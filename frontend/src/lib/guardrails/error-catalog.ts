@@ -20,6 +20,15 @@ export const ERROR_CATALOG: Record<string, ErrorCatalogEntry> = {
     httpStatus: 401,
     safeToRetry: true,
   },
+  AUTH_FORBIDDEN: {
+    code: "AUTH_FORBIDDEN",
+    humanMessage: "You do not have permission to perform this action.",
+    typicalCause: "Authenticated user is missing required role/scope.",
+    preventionRule: "Apply role/permission checks at route entry and return explicit denial.",
+    alertSeverity: "medium",
+    httpStatus: 403,
+    safeToRetry: false,
+  },
   MISSING_ENV_VAR: {
     code: "MISSING_ENV_VAR",
     humanMessage: "Service configuration is incomplete.",
@@ -97,4 +106,3 @@ export const ERROR_CATALOG: Record<string, ErrorCatalogEntry> = {
 export function getErrorCatalogEntry(code: string): ErrorCatalogEntry {
   return ERROR_CATALOG[code] ?? ERROR_CATALOG.INTERNAL_ERROR;
 }
-

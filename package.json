@@ -38,6 +38,7 @@
     "verify:browser:cleanup": "node scripts/agent-browser/agent-browser-cleanup.mjs --hours 48",
     "verify:api:contracts": "node scripts/api-smoke-contracts.mjs",
     "verify:changed-route-guardrails": "node scripts/check-changed-route-guardrails.mjs",
+    "verify:all-route-guardrails": "GUARDRAIL_SCOPE=all node scripts/check-changed-route-guardrails.mjs",
     "validate:runtime-config": "node scripts/validate-runtime-config.mjs",
     "quality:predeploy": "bash scripts/predeploy-quality-gate.sh",
     "verify:postdeploy": "bash scripts/postdeploy-verify.sh",

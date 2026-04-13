@@ -22,3 +22,7 @@ jobs:
           GUARDRAIL_BASE_REF: origin/${{ github.base_ref }}
         run: node scripts/check-changed-route-guardrails.mjs
 
+      - name: Guardrail full-route debt gate
+        env:
+          GUARDRAIL_SCOPE: all
+        run: node scripts/check-changed-route-guardrails.mjs

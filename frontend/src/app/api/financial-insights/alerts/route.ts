@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
@@ -13,22 +15,26 @@ import { createServiceClient } from "@/lib/supabase/service";
  *   ?project_id=67       — optional project filter
  *   ?limit=50            — pagination limit (default: 50, max: 200)
  */
-export async function GET(request: NextRequest) {
+export const GET = withApiGuardrails("/api/financial-insights/alerts#GET", async ({ request }) => {
   const user = await getApiRouteUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where: "/api/financial-insights/alerts#GET",
+      message: "Unauthorized request.",
+      status: 401,
+    });
   }
 
-  try {
-    const { searchParams } = new URL(request.url);
+  const { searchParams } = new URL(request.url);
 
-    const status = searchParams.get("status") ?? "open";
-    const severity = searchParams.get("severity");
-    const projectId = searchParams.get("project_id");
-    const limitParam = searchParams.get("limit");
-    const limit = Math.min(Math.max(parseInt(limitParam ?? "50", 10) || 50, 1), 200);
+  const status = searchParams.get("status") ?? "open";
+  const severity = searchParams.get("severity");
+  const projectId = searchParams.get("project_id");
+  const limitParam = searchParams.get("limit");
+  const limit = Math.min(Math.max(parseInt(limitParam ?? "50", 10) || 50, 1), 200);
 
-    const supabase = createServiceClient();
+  const supabase = createServiceClient();
 
     // Build the query — financial insights use insight_type values that
     // start with "budget_" or specific financial types.
@@ -56,36 +62,33 @@ export async function GET(request: NextRequest) {
       query = query.eq("severity", severity);
     }
 
-    if (projectId) {
-      const projectIdNum = parseInt(projectId, 10);
-      if (Number.isNaN(projectIdNum)) {
-        return NextResponse.json(
-          { error: "Invalid project_id — must be a number" },
-          { status: 400 },
-        );
-      }
-      query = query.eq("project_id", projectIdNum);
+  if (projectId) {
+    const projectIdNum = parseInt(projectId, 10);
+    if (Number.isNaN(projectIdNum)) {
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "/api/financial-insights/alerts#GET",
+        message: "Invalid project_id; must be a number.",
+        status: 400,
+        details: { project_id: projectId },
+      });
     }
-
-    const { data, error, count } = await query;
-
-    if (error) {
-      console.error("[financial-insights/alerts] Query error:", error);
-      return NextResponse.json(
-        { error: "Failed to fetch financial alerts" },
-        { status: 500 },
-      );
-    }
-
-    return NextResponse.json({
-      alerts: data ?? [],
-      total: count ?? 0,
-    });
-  } catch (err) {
-    console.error("[financial-insights/alerts] Unexpected error:", err);
-    return NextResponse.json(
-      { error: "An unexpected error occurred" },
-      { status: 500 },
-    );
+    query = query.eq("project_id", projectIdNum);
   }
-}
+
+  const { data, error, count } = await query;
+
+  if (error) {
+    throw new GuardrailError({
+      code: "INTERNAL_ERROR",
+      where: "/api/financial-insights/alerts#GET",
+      message: "Failed to fetch financial alerts.",
+      details: { reason: error.message },
+    });
+  }
+
+  return NextResponse.json({
+    alerts: data ?? [],
+    total: count ?? 0,
+  });
+});

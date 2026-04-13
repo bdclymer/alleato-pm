@@ -1,8 +1,23 @@
 import { type NextRequest } from 'next/server'
 
 import { updateSession } from '@/lib/supabase/middleware'
+import { validateEnvVars } from '@/lib/guardrails/env'
+
+let runtimeEnvValidated = false
+
+function ensureRuntimeEnv() {
+  if (runtimeEnvValidated) return
+  validateEnvVars('/middleware', [
+    'NEXT_PUBLIC_SUPABASE_URL',
+    'NEXT_PUBLIC_SUPABASE_ANON_KEY',
+  ], {
+    urlVars: ['NEXT_PUBLIC_SUPABASE_URL', 'BACKEND_URL', 'PYTHON_BACKEND_URL'],
+  })
+  runtimeEnvValidated = true
+}
 
 export async function middleware(request: NextRequest) {
+  ensureRuntimeEnv()
   return await updateSession(request)
 }
 

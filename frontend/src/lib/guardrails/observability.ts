@@ -22,6 +22,10 @@ interface AlertPayload {
   timestamp: string;
 }
 
+const RECENT_ERROR_WINDOW_MS = 5 * 60 * 1000;
+const REPEATED_ERROR_THRESHOLD = 3;
+const recentErrorEvents = new Map<string, number[]>();
+
 export function generateRequestId(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return crypto.randomUUID();
@@ -62,8 +66,21 @@ export function shouldAlert(severity: AlertSeverity): boolean {
   return severity === "critical" || severity === "high";
 }
 
+function shouldEscalateRepeated(payload: AlertPayload): boolean {
+  const key = `${payload.where}::${payload.errorCode}`;
+  const now = Date.now();
+  const timestamps = recentErrorEvents.get(key) ?? [];
+  const pruned = timestamps.filter((ts) => now - ts <= RECENT_ERROR_WINDOW_MS);
+  pruned.push(now);
+  recentErrorEvents.set(key, pruned);
+  return pruned.length >= REPEATED_ERROR_THRESHOLD;
+}
+
 export async function notifyOnError(payload: AlertPayload): Promise<void> {
-  if (!shouldAlert(payload.severity)) {
+  const alertDueToSeverity = shouldAlert(payload.severity);
+  const alertDueToRepetition = shouldEscalateRepeated(payload);
+
+  if (!alertDueToSeverity && !alertDueToRepetition) {
     return;
   }
 
@@ -93,6 +110,7 @@ export async function notifyOnError(payload: AlertPayload): Promise<void> {
         details: {
           status: response.status,
           errorCode: payload.errorCode,
+          escalated_by_repetition: alertDueToRepetition,
         },
       });
     }
@@ -105,10 +123,10 @@ export async function notifyOnError(payload: AlertPayload): Promise<void> {
       details: {
         reason: error instanceof Error ? error.message : String(error),
         errorCode: payload.errorCode,
+        escalated_by_repetition: alertDueToRepetition,
       },
     });
   } finally {
     clearTimeout(timeout);
   }
 }
-

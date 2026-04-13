@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 // Types for monitoring data
 interface Initiative {
@@ -66,6 +68,9 @@ async function parseMonitoringData(): Promise<{
     const aiInsights = generateAIInsights(initiatives, activityLog);
     return { initiatives, systemHealth, activityLog, aiInsights };
   } catch (error) {
+    console.error("[monitoring/dashboard] Failed to parse monitoring data", {
+      reason: error instanceof Error ? error.message : String(error),
+    });
     return {
       initiatives: [],
       systemHealth: {
@@ -345,19 +350,21 @@ function determineEntryType(entryText: string): ActivityLogEntry["type"] {
     return "success";
   return "info";
 }
-export async function GET() {
-  try {
-    const supabase = await createClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
-    if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    const data = await parseMonitoringData();
-    return NextResponse.json(data);
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to load monitoring data" },
-      { status: 500 },
-    );
+export const GET = withApiGuardrails("/api/monitoring/dashboard#GET", async () => {
+  const supabase = await createClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+  if (authError || !user) {
+    throw new GuardrailError({
+      code: "AUTH_EXPIRED",
+      where: "/api/monitoring/dashboard#GET",
+      message: "Unauthorized request.",
+      status: 401,
+    });
   }
-}
+
+  const data = await parseMonitoringData();
+  return NextResponse.json(data);
+});
