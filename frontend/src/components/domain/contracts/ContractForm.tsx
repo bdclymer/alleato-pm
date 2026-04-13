@@ -1021,19 +1021,7 @@ export function ContractForm({
           <InlineTableHeader>
             <InlineTableHeaderRow>
               <InlineTableHeaderCell className="min-w-[340px]">
-                <div className="flex items-center gap-1">
-                  Budget Code
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Link to a budget code</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
-                </div>
+                Budget Code
               </InlineTableHeaderCell>
               <InlineTableHeaderCell className="min-w-[240px]">Description</InlineTableHeaderCell>
               {isUnitQuantityMode && (
@@ -1114,7 +1102,7 @@ export function ContractForm({
                               type="button"
                               variant="outline"
                               role="combobox"
-                              className="h-8 w-full justify-between border-border bg-muted text-left text-sm font-normal"
+                              className="h-8 w-full justify-between border-border bg-background text-left text-sm font-normal"
                               data-testid="sov-line-budget-code"
                             >
                               <span className="truncate">
