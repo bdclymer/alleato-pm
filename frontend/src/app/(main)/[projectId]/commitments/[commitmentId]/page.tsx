@@ -933,9 +933,8 @@ export default function CommitmentDetailPage() {
             Payment
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => {
-              setActiveTab("rfqs");
-              toast.info("Navigate to RFQs tab to create an RFQ");
+            onSelect={() => {
+              router.push(`/${projectId}/change-events`);
             }}
           >
             <FileText className="mr-2 h-4 w-4" />
