@@ -63,7 +63,7 @@ function getDivisionName(divisionCode: string): string {
     "44": "Pollution & Waste Control",
     "46": "Water & Wastewater",
     "48": "Electrical Power Generation",
-    "55": "Individual Testing/Special Inspections",
+    "55": "Contractor Fee",
   };
 
   return divisionNames[divisionCode] || `Division ${divisionCode}`;

@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useForm, useWatch, FormProvider } from "react-hook-form";
+import { useForm, useWatch, FormProvider, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,6 +21,8 @@ import {
   Package,
   ChevronRight,
   ChevronDown,
+  Check,
+  ChevronsUpDown,
 } from "lucide-react";
 import {
   InlineTable,
@@ -47,8 +49,23 @@ import {
   type PurchaseOrderSovLineItem,
 } from "@/lib/schemas/create-purchase-order-schema";
 import type { CompanyOption } from "@/hooks/use-companies";
-import { useProjectUsers } from "@/hooks/use-project-users";
+import { useContacts } from "@/hooks/use-contacts";
+import { useCompanyContacts } from "@/hooks/use-company-contacts";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { RichTextField } from "@/components/forms/RichTextField";
 import { BudgetCodeSelector } from "@/components/budget/budget-code-selector";
 import { createClient } from "@/lib/supabase/client";
@@ -148,11 +165,11 @@ export function CreatePurchaseOrderForm({
     "unit-quantity" | "amount"
   >((initialData?.accountingMethod as "unit-quantity" | "amount") || "unit-quantity");
   const [attachments, setAttachments] = React.useState<File[]>([]);
-  const { users: projectUsers } = useProjectUsers(String(projectId));
-  const userOptions = projectUsers.map((u) => ({
-    value: u.id,
-    label: [u.first_name, u.last_name].filter(Boolean).join(" ") || u.email || "Unnamed",
-  }));
+  // Project directory contacts — no form dependency, fetch immediately
+  const { options: projectContactOptions, isLoading: loadingProjectContacts } = useContacts({
+    projectId: String(projectId),
+    enabled: true,
+  });
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [budgetCodes, setBudgetCodes] = React.useState<BudgetCode[]>([]);
   const [budgetCodesLoaded, setBudgetCodesLoaded] = React.useState(false);
@@ -237,6 +254,23 @@ export function CreatePurchaseOrderForm({
   const contractCompanyId = useWatch({ control, name: "contractCompanyId" });
   const privacyIsPrivate = useWatch({ control, name: "privacy.isPrivate" }) ?? true;
   const descriptionValue = useWatch({ control, name: "description" });
+
+  // Company contacts for the selected contract company
+  const { options: companyContactOptions, isLoading: loadingCompanyContacts } = useCompanyContacts({
+    vendorId: contractCompanyId || undefined,
+    enabled: !!contractCompanyId,
+  });
+
+  // Merged contact options: project directory + company contacts, deduped by id
+  const contactOptions = React.useMemo(() => {
+    const seen = new Set<string>();
+    return [...projectContactOptions, ...companyContactOptions].filter((o) => {
+      if (seen.has(o.value)) return false;
+      seen.add(o.value);
+      return true;
+    });
+  }, [projectContactOptions, companyContactOptions]);
+  const loadingContacts = loadingProjectContacts || loadingCompanyContacts;
 
   React.useEffect(() => {
     let isMounted = true;
@@ -526,7 +560,7 @@ export function CreatePurchaseOrderForm({
             control={control}
             name="title"
             label="Title"
-            placeholder="Enter purchase order title"
+            placeholder="Enter title"
             disabled={isSubmitting}
           />
 
@@ -558,13 +592,13 @@ export function CreatePurchaseOrderForm({
           />
         </FormGrid>
 
-        <RHFSelectField
+        <RHFComboboxField
           control={control}
           name="assignedTo"
           label="Assigned To"
-          placeholder="Select assignee..."
-          options={userOptions}
-          disabled={isSubmitting}
+          placeholder={loadingContacts ? "Loading contacts..." : "Select assignee..."}
+          options={contactOptions}
+          disabled={isSubmitting || loadingContacts}
         />
 
         <FormGrid columns={2}>
@@ -966,14 +1000,70 @@ export function CreatePurchaseOrderForm({
         />
 
         <div className="flex w-full flex-col gap-2">
-          <Label htmlFor="privacy.nonAdminUserIds">Access for Non-Admin Users</Label>
-          <Input
-            id="privacy.nonAdminUserIds"
-            className="w-full"
-            disabled={isSubmitting || !privacyIsPrivate}
-            placeholder={
-              privacyIsPrivate ? "Select users..." : "Enable Private to use this field"
-            }
+          <Label>Access for Non-Admin Users</Label>
+          <Controller
+            name="privacy.nonAdminUserIds"
+            control={control}
+            render={({ field }) => {
+              const value: string[] = field.value ?? [];
+              const handleSelect = (optionValue: string) => {
+                field.onChange(
+                  value.includes(optionValue)
+                    ? value.filter((v) => v !== optionValue)
+                    : [...value, optionValue],
+                );
+              };
+              const selectedLabels = value
+                .map((id) => contactOptions.find((o) => o.value === id)?.label)
+                .filter(Boolean) as string[];
+              return (
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      role="combobox"
+                      className="h-auto min-h-10 w-full justify-between"
+                      disabled={isSubmitting || !privacyIsPrivate || loadingContacts}
+                    >
+                      <div className="flex flex-wrap gap-1">
+                        {value.length > 0
+                          ? selectedLabels.map((label) => (
+                              <Badge key={label} variant="secondary">{label}</Badge>
+                            ))
+                          : <span className="text-muted-foreground text-sm">
+                              {privacyIsPrivate
+                                ? loadingContacts ? "Loading contacts..." : "Select contacts..."
+                                : "Enable Private to use this field"}
+                            </span>
+                        }
+                      </div>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-(--radix-popover-trigger-width) p-0">
+                    <Command>
+                      <CommandInput placeholder="Search contacts..." />
+                      <CommandList className="max-h-64">
+                        <CommandEmpty>No contacts found.</CommandEmpty>
+                        <CommandGroup>
+                          {contactOptions.map((option) => (
+                            <CommandItem
+                              key={option.value}
+                              value={[option.label, option.value].join(" ")}
+                              onSelect={() => handleSelect(option.value)}
+                            >
+                              <Check className={cn("mr-2 h-4 w-4", value.includes(option.value) ? "opacity-100" : "opacity-0")} />
+                              {option.label}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              );
+            }}
           />
         </div>
 
@@ -990,20 +1080,76 @@ export function CreatePurchaseOrderForm({
         title="Invoice Contacts"
         description="Define who can submit and manage invoice communication."
       >
-        {!contractCompanyId ? (
-          <p className="rounded-md bg-muted/50 p-4 text-sm text-muted-foreground">
-            Select a contract company to enable invoice contacts.
-          </p>
-        ) : (
-          <div className="space-y-2">
-            <Label htmlFor="invoiceContacts">Invoice Contacts</Label>
-            <Input
-              id="invoiceContacts"
-              disabled={isSubmitting}
-              placeholder="Select invoice contacts..."
-            />
-          </div>
-        )}
+        <Controller
+          name="invoiceContactIds"
+          control={control}
+          render={({ field }) => {
+            const value: string[] = field.value ?? [];
+            const handleSelect = (optionValue: string) => {
+              field.onChange(
+                value.includes(optionValue)
+                  ? value.filter((v) => v !== optionValue)
+                  : [...value, optionValue],
+              );
+            };
+            const selectedLabels = value
+              .map((id) => contactOptions.find((o) => o.value === id)?.label)
+              .filter(Boolean) as string[];
+            return (
+              <div className="space-y-2">
+                <Label>Invoice Contacts</Label>
+                {!contractCompanyId && (
+                  <p className="rounded-md bg-muted/50 p-3 text-sm text-muted-foreground">
+                    Select a contract company to load company contacts.
+                  </p>
+                )}
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      role="combobox"
+                      className="h-auto min-h-10 w-full justify-between"
+                      disabled={isSubmitting || loadingContacts}
+                    >
+                      <div className="flex flex-wrap gap-1">
+                        {value.length > 0
+                          ? selectedLabels.map((label) => (
+                              <Badge key={label} variant="secondary">{label}</Badge>
+                            ))
+                          : <span className="text-muted-foreground text-sm">
+                              {loadingContacts ? "Loading contacts..." : "Select invoice contacts..."}
+                            </span>
+                        }
+                      </div>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-(--radix-popover-trigger-width) p-0">
+                    <Command>
+                      <CommandInput placeholder="Search contacts..." />
+                      <CommandList className="max-h-64">
+                        <CommandEmpty>No contacts found.</CommandEmpty>
+                        <CommandGroup>
+                          {contactOptions.map((option) => (
+                            <CommandItem
+                              key={option.value}
+                              value={[option.label, option.value].join(" ")}
+                              onSelect={() => handleSelect(option.value)}
+                            >
+                              <Check className={cn("mr-2 h-4 w-4", value.includes(option.value) ? "opacity-100" : "opacity-0")} />
+                              {option.label}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+            );
+          }}
+        />
       </FormSection>
 
       <FormServerError message={errors.root?.message} />

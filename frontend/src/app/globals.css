@@ -389,14 +389,14 @@
   input::placeholder,
   textarea::placeholder {
     color: hsl(var(--muted-foreground));
+    -webkit-text-fill-color: hsl(var(--muted-foreground));
   }
 
-  [data-placeholder] {
+  /* Contenteditable placeholder via ::before when empty */
+  [data-placeholder]:empty::before {
+    content: attr(data-placeholder);
     color: hsl(var(--muted-foreground));
-  }
-
-  [role="combobox"][data-placeholder-style] {
-    color: hsl(var(--muted-foreground));
+    pointer-events: none;
   }
 
   /* Contenteditable readability */

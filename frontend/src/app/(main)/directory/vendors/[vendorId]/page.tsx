@@ -91,7 +91,7 @@ export default function VendorDetailPage() {
   const [availableContacts, setAvailableContacts] = React.useState<Contact[]>([]);
   const [isLoadingContacts, setIsLoadingContacts] = React.useState(false);
 
-  type CommitmentRow = { id: string; number: string; title: string | null; status: string; contract_amount: number | null; type: string; project_id: number; projects: { id: number; name: string } | null };
+      type CommitmentRow = { id: string; contract_number: string; title: string | null; status: string; project_id: number; projects: { id: number; name: string } | null };
   type DirectCostRow = { id: string; description: string | null; total_amount: number; date: string; invoice_number: string | null; status: string; project_id: number; projects: { id: number; name: string } | null };
   const [commitments, setCommitments] = React.useState<CommitmentRow[]>([]);
   const [vendorDirectCosts, setVendorDirectCosts] = React.useState<DirectCostRow[]>([]);
@@ -162,7 +162,7 @@ export default function VendorDetailPage() {
     }
   }, []);
 
-  const loadAvailableContacts = React.useCallback(async (companyId: string) => {
+  const loadAvailableContacts = React.useCallback(async (_companyId: string) => {
     try {
       const supabase = createClient();
       const { data, error: queryError } = await supabase
@@ -199,7 +199,7 @@ export default function VendorDetailPage() {
           vendor.id
             ? supabase
                 .from("subcontracts")
-                .select("id, number, title, status, contract_amount, type, project_id, projects(id, name)")
+                .select("id, contract_number, title, status, project_id, projects(id, name)")
                 .eq("contract_company_id", vendor.id)
                 .order("created_at", { ascending: false })
             : Promise.resolve({ data: [] }),
@@ -361,18 +361,18 @@ export default function VendorDetailPage() {
         </Link>
       }
     >
-      <div className="space-y-6">
-        <section className="space-y-6">
-          <div className="space-y-3">
-            <div className="mt-2 flex flex-wrap items-center gap-2">
-              <StatusBadge status={vendor.status === "active" ? "Active" : "Inactive"} />
+      <div className="space-y-10">
+        <section className="space-y-8">
+          <div>
+            <div className="flex flex-wrap items-center gap-2">
+              <StatusBadge status={vendor.status?.toLowerCase() === "active" ? "Active" : "Inactive"} />
             </div>
           </div>
 
           {(contactName || phone || email) && (
-            <div className="space-y-3 border-b border-border pb-6">
+            <div className="space-y-3 border-b border-border pb-8">
               <h3 className="text-sm font-semibold text-foreground">Primary Contact</h3>
-              <div className="px-0 py-0 space-y-2">
+              <div className="space-y-2">
                 {contactName ? <p className="text-sm font-medium">{contactName}</p> : null}
                 {phone ? (
                   <div className="flex items-center gap-2 text-sm">
@@ -392,24 +392,11 @@ export default function VendorDetailPage() {
             </div>
           )}
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-5 sm:grid-cols-2">
             <DetailField label="Legal Name" value={normalizeVendorField(vendor.legal_name) || "-"} />
             <DetailField
-              label="Acumatica Vendor ID"
-              value={
-                normalizeVendorField(vendor.acumatica_vendor_id) ? (
-                  <a
-                    href={`https://alleatogroup.acumatica.com/Main?ScreenId=AP303000&AcctCD=${encodeURIComponent(vendor.acumatica_vendor_id ?? "")}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline font-mono text-sm"
-                  >
-                    {vendor.acumatica_vendor_id}
-                  </a>
-                ) : (
-                  "-"
-                )
-              }
+              label="Customer ID"
+              value={normalizeVendorField(vendor.customer_id) || "-"}
             />
             <DetailField label="Payment Method" value={normalizeVendorField(vendor.payment_method) || "-"} />
             <DetailField label="Terms" value={normalizeVendorField(vendor.terms) || "-"} />
@@ -430,7 +417,7 @@ export default function VendorDetailPage() {
             </div>
           ) : null}
 
-          <section className="mt-8 space-y-3">
+          <section className="space-y-4">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold text-foreground">Company Contacts</h3>
               <Popover
@@ -554,7 +541,7 @@ export default function VendorDetailPage() {
             )}
           </section>
           {/* Projects & Activity */}
-          <section className="mt-8 space-y-6">
+          <section className="space-y-6">
             <h3 className="text-sm font-semibold text-foreground">Projects & Activity</h3>
 
             {isLoadingProjects ? (
@@ -580,18 +567,13 @@ export default function VendorDetailPage() {
                           className="flex items-center gap-3 px-3 py-2.5 hover:bg-muted/50 transition-colors"
                         >
                           <span className="shrink-0 rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-muted-foreground">
-                            {c.type === "purchase_order" ? "PO" : "SC"}
+                            SC
                           </span>
                           <span className="flex-1 min-w-0">
-                            <span className="block truncate text-sm">{c.title ?? `Commitment #${c.number}`}</span>
+                            <span className="block truncate text-sm">{c.title ?? c.contract_number}</span>
                             <span className="text-xs text-muted-foreground">{c.projects?.name ?? `Project ${c.project_id}`}</span>
                           </span>
                           <div className="flex items-center gap-2 shrink-0">
-                            {c.contract_amount != null && (
-                              <span className="text-xs tabular-nums text-muted-foreground">
-                                {new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(c.contract_amount)}
-                              </span>
-                            )}
                             <StatusBadge status={c.status} />
                           </div>
                         </Link>

@@ -82,6 +82,44 @@ export function useSubcontractFormState({
   const contractCompanyId = useWatch({ control, name: "contractCompanyId" });
   const accountingMethod = useWatch({ control, name: "accountingMethod" });
 
+  // --- Auto-generate contract number in create mode ---
+  React.useEffect(() => {
+    if (mode !== "create" || initialData?.contractNumber) return;
+
+    const generate = async () => {
+      try {
+        const res = await fetch(`/api/projects/${projectId}/subcontracts`);
+        if (!res.ok) return;
+        const payload = (await res.json()) as
+          | { data?: Array<{ contract_number?: string | null }> }
+          | Array<{ contract_number?: string | null }>;
+        const rows = Array.isArray(payload)
+          ? payload
+          : Array.isArray(payload.data)
+            ? payload.data
+            : [];
+
+        // Parse existing SC-### numbers and find the highest
+        const SC_RE = /^SC-(\d+)$/i;
+        let max = 0;
+        for (const row of rows) {
+          const match = SC_RE.exec(row.contract_number ?? "");
+          if (match) {
+            const n = parseInt(match[1], 10);
+            if (n > max) max = n;
+          }
+        }
+
+        const next = `SC-${String(max + 1).padStart(3, "0")}`;
+        setValue("contractNumber", next, { shouldDirty: false });
+      } catch {
+        // Non-critical — leave field blank if generation fails
+      }
+    };
+
+    generate();
+  }, [projectId, mode, initialData?.contractNumber, setValue]);
+
   // --- Fetch companies (contract companies) ---
   React.useEffect(() => {
     const fetchCompanies = async () => {

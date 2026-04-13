@@ -86,9 +86,9 @@ export function RHFComboboxField<TFieldValues extends FieldValues>({
               role="combobox"
               disabled={disabled}
               className={cn(
-                "h-11 w-full justify-between"
+                "h-11 w-full justify-between",
+                !displayLabel && "text-muted-foreground"
               )}
-              {...(!displayLabel && { "data-placeholder-style": "" })}
             >
               <span className="truncate">
                 {displayLabel ?? placeholder}

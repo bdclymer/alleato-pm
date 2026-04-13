@@ -44,6 +44,7 @@ function toCompanyVendorFields(v: FlatVendor, now: string) {
     is_labor_union: v.VendorIsLaborUnion ?? null,
     is_tax_agency: v.VendorIsTaxAgency ?? null,
     is_vendor: true as const,
+    status: "active",
     acumatica_sync_at: now,
   };
 }

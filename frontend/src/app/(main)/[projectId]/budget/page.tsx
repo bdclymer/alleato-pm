@@ -186,42 +186,43 @@ function BudgetPageContent() {
   }, [projectId]);
 
   // Fetch budget data
-  React.useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
+  const fetchBudgetData = React.useCallback(async () => {
+    if (!projectId) return;
+    try {
+      setLoading(true);
 
-        // Fetch budget data and lock status in parallel
-        const [budgetResponse] = await Promise.all([
-          fetch(`/api/projects/${projectId}/budget`),
-          fetchLockStatus(),
-        ]);
+      // Fetch budget data and lock status in parallel
+      const [budgetResponse] = await Promise.all([
+        fetch(`/api/projects/${projectId}/budget`),
+        fetchLockStatus(),
+      ]);
 
-        if (budgetResponse.ok) {
-          const budgetDataResponse = await budgetResponse.json();
-          setBudgetData(budgetDataResponse.lineItems || []);
-          setGrandTotals(budgetDataResponse.grandTotals || EMPTY_GRAND_TOTALS);
-        } else {
-          setBudgetData([]);
-          setGrandTotals(EMPTY_GRAND_TOTALS);
-        }
-      } catch (error) {
-        console.error("Failed to fetch budget data:", error);
+      if (budgetResponse.ok) {
+        const budgetDataResponse = await budgetResponse.json();
+        setBudgetData(budgetDataResponse.lineItems || []);
+        setGrandTotals(budgetDataResponse.grandTotals || EMPTY_GRAND_TOTALS);
+      } else {
         setBudgetData([]);
         setGrandTotals(EMPTY_GRAND_TOTALS);
-        toast.error("Failed to load budget", { description: "Please try again." });
-      } finally {
-        setLoading(false);
       }
-    };
+    } catch (error) {
+      console.error("Failed to fetch budget data:", error);
+      setBudgetData([]);
+      setGrandTotals(EMPTY_GRAND_TOTALS);
+      toast.error("Failed to load budget", { description: "Please try again." });
+    } finally {
+      setLoading(false);
+    }
+  }, [projectId, fetchLockStatus]);
 
+  React.useEffect(() => {
     if (projectId) {
-      fetchData();
+      fetchBudgetData();
       // Load saved quick filter preference
       const savedFilter = loadQuickFilterPreference(projectId);
       setQuickFilter(savedFilter);
     }
-  }, [projectId, fetchLockStatus]);
+  }, [projectId, fetchBudgetData]);
 
   // Apply quick filter to budget data
   // Apply filtering and grouping to budget data
@@ -964,7 +965,7 @@ function BudgetPageContent() {
           </div>
         ) : activeTab === "cost-codes" ? (
           <div className="flex-1 p-6">
-            <CostCodesTab projectId={projectId} />
+            <CostCodesTab projectId={projectId} onSave={fetchBudgetData} />
           </div>
         ) : activeTab === "forecasting" ? (
           <div className="flex-1">

@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -122,13 +123,15 @@ export function GeneralInfoSection({
                 type="button"
                 variant="outline"
                 role="combobox"
-                className="w-full justify-between text-left font-normal"
+                className={cn(
+                  "w-full justify-between text-left font-normal",
+                  !selectedVendor && "text-muted-foreground"
+                )}
                 disabled={isSubmitting || isLoadingVendors}
-                {...(!selectedVendor && { "data-placeholder-style": "" })}
               >
                 <span className="truncate">
                   {isLoadingVendors ? (
-                    <span className="flex items-center gap-2 text-muted-foreground">
+                    <span className="flex items-center gap-2">
                       <Loader2 className="h-4 w-4 animate-spin" />
                       Loading companies...
                     </span>

@@ -33,6 +33,7 @@ import {
 
 interface CostCodesTabProps {
   projectId: string;
+  onSave?: () => void;
 }
 
 /** A cost_code_id + cost_type_id composite key for tracking selections */
@@ -41,8 +42,8 @@ type SelectionKey = `${string}::${string}`;
 const makeKey = (costCodeId: string, costTypeId: string): SelectionKey =>
   `${costCodeId}::${costTypeId}`;
 
-/** Cost types to exclude from the UI */
-const EXCLUDED_TYPE_CODES = new Set(["O", "Other"]);
+/** Cost types to exclude from the UI (only E, L, M, R, S, X are valid) */
+const EXCLUDED_TYPE_CODES = new Set(["O", "Other", "OH", "Overhead", "P", "Profit"]);
 
 /** Format a number as currency display */
 const formatCurrency = (value: number) =>
@@ -185,10 +186,10 @@ function AllDivisionGroup({
             {costTypes.map((ct) => (
               <div
                 key={ct.id}
-                className="w-16 text-center text-xs font-medium text-muted-foreground uppercase tracking-wide"
+                className="w-20 text-center text-xs font-medium text-muted-foreground uppercase tracking-wide"
                 title={ct.description}
               >
-                {ct.code === "R" ? "Rev" : ct.description.slice(0, 6)}
+                {ct.code === "R" ? "Revenue" : ct.description}
               </div>
             ))}
             <div className="w-28 text-center text-xs font-medium text-muted-foreground uppercase tracking-wide">
@@ -210,16 +211,16 @@ function AllDivisionGroup({
                 }`}
               >
                 <div className="w-64 text-sm truncate">
-                  <span className="font-medium text-foreground">{code.id}</span>
+                  <span className="font-medium text-foreground">{code.title || code.id}</span>
                   {code.title && (
-                    <span className="text-muted-foreground"> — {code.title}</span>
+                    <span className="text-muted-foreground"> — {code.id}</span>
                   )}
                 </div>
                 {costTypes.map((ct) => {
                   const key = makeKey(code.id, ct.id);
                   const isSelected = selectedSet.has(key);
                   return (
-                    <div key={ct.id} className="w-16 flex justify-center">
+                    <div key={ct.id} className="w-20 flex justify-center">
                       <Checkbox
                         checked={isSelected}
                         onCheckedChange={() => onToggleCode(code.id, ct.id)}
@@ -393,12 +394,12 @@ function SelectedOverviewTab({
                       >
                         <span>
                           <span className="font-medium text-foreground">
-                            {code.id}
+                            {code.title || code.id}
                           </span>
                           {code.title && (
                             <span className="text-muted-foreground">
                               {" "}
-                              — {code.title}
+                              — {code.id}
                             </span>
                           )}
                         </span>
@@ -435,7 +436,7 @@ function SelectedOverviewTab({
 // Main Component
 // =============================================================================
 
-export function CostCodesTab({ projectId }: CostCodesTabProps) {
+export function CostCodesTab({ projectId, onSave }: CostCodesTabProps) {
   const { data: masterCodes, isLoading: loadingCodes } = useMasterCostCodes();
   const { data: rawCostTypes, isLoading: loadingTypes } = useCostCodeTypes();
   const { data: projectCodes, isLoading: loadingProject } =
@@ -622,6 +623,9 @@ export function CostCodesTab({ projectId }: CostCodesTabProps) {
             : "Cost codes saved successfully",
         );
       }
+
+      // Notify parent so the budget tab can refetch
+      onSave?.();
     } catch (err) {
       if (err instanceof Error) {
         toast.error(err.message);
@@ -629,7 +633,7 @@ export function CostCodesTab({ projectId }: CostCodesTabProps) {
     } finally {
       setIsSaving(false);
     }
-  }, [masterCodes, costTypes, selectedSet, savedSet, amounts, savedAmounts, bulkSync, projectId]);
+  }, [masterCodes, costTypes, selectedSet, savedSet, amounts, savedAmounts, bulkSync, projectId, onSave]);
 
   // Group master codes by division
   const grouped = useMemo(() => {
