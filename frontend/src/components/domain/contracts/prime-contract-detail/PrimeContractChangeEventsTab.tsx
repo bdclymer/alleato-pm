@@ -81,6 +81,15 @@ export function PrimeContractChangeEventsTab({
           </span>
         ),
       },
+      {
+        id: "prime_pco",
+        label: "Potential PCO",
+        render: (ce) => (
+          <span className="text-sm text-muted-foreground">
+            {ce.prime_pco || "—"}
+          </span>
+        ),
+      },
     ],
     [projectId, formatCurrency],
   );
