@@ -266,7 +266,7 @@ export function RelatedItemsTab({ commitmentId, projectId, commitmentType = "sub
         </div>
       ) : (
         <EmptyState
-          icon={Link2}
+          icon={<Link2 className="h-8 w-8" />}
           title="No related items"
           description="Link related records such as RFIs, submittals, drawings, or change events."
         />

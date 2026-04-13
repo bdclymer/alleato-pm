@@ -1012,13 +1012,13 @@ export function UnifiedTablePage<T>({
             style={resolvedFeatures.enableVirtualization ? { maxHeight: 640, overflowY: "auto" } : undefined}
           >
             <Table className={cn(table.density === "compact" && "compact-table")}>
-              <TableHeader className={cn((table.stickyHeader !== false) && "sticky top-0 z-20 bg-primary/5!")}>
+              <TableHeader className={cn((table.stickyHeader !== false) && "sticky top-0 z-20 bg-primary/[2%]!")}>
                 {columnGroups && columnGroups.length > 0 && (
                   <TableRow className="border-b-0">
                     {hasRowSelection && (
                       <TableHead
                         style={{ width: selectionColumnWidth, minWidth: selectionColumnWidth, maxWidth: selectionColumnWidth }}
-                        className="bg-primary/5"
+                        className="bg-primary/[2%]"
                       />
                     )}
                     {columnGroups.map((group, index) => {
@@ -1031,23 +1031,23 @@ export function UnifiedTablePage<T>({
                           key={`group-${group.label}-${group.columnIds.join("-")}`}
                           colSpan={visibleCount}
                           className={cn(
-                            "text-left text-[11px] font-semibold text-foreground/80 bg-primary/5! py-0 px-2 leading-tight border-b border-border/70 normal-case",
+                            "text-left text-[11px] font-semibold text-foreground/80 bg-primary/[2%]! py-0 px-2 leading-tight border-b border-border/70 normal-case",
                             index > 0 && "border-l",
-                            !group.label && "bg-primary/5!",
+                            !group.label && "bg-primary/[2%]!",
                           )}
                         >
                           {group.label}
                         </TableHead>
                       );
                     })}
-                    {hasRowActions && <TableHead className="w-12.5 bg-primary/5!" />}
+                    {hasRowActions && <TableHead className="w-12.5 bg-primary/[2%]!" />}
                   </TableRow>
                 )}
-                <TableRow className="bg-primary/5! border-border/80">
+                <TableRow className="bg-primary/[2%]! border-border/80">
                   {hasRowSelection && (
                     <TableHead
                       className={cn(
-                        "bg-primary/5!",
+                        "bg-primary/[2%]!",
                         isFullBleedTable ? "pl-8 pr-2" : "px-2",
                       )}
                       style={{
@@ -1058,7 +1058,7 @@ export function UnifiedTablePage<T>({
                         position: "sticky",
                         left: 0,
                         zIndex: 3,
-                        background: "hsl(var(--primary) / 0.05)",
+                        background: "hsl(var(--primary) / 0.02)",
                       }}
                     >
                       <div
@@ -1081,9 +1081,9 @@ export function UnifiedTablePage<T>({
                       const width = columnWidths[column.id] ?? column.width;
                       const isPinnedLeft = columnPinning.left.includes(column.id);
                       const pinnedStyle = getPinnedStyle(column.id);
-                      // Header row uses bg-primary/5 — override pinned background to match
+                      // Header row uses bg-primary/[2%] — override pinned background to match
                       const headerPinnedStyle = pinnedStyle
-                        ? { ...pinnedStyle, background: "hsl(var(--primary) / 0.05)" }
+                        ? { ...pinnedStyle, background: "hsl(var(--primary) / 0.02)" }
                         : undefined;
                       const columnStyle =
                         width || headerPinnedStyle
@@ -1098,7 +1098,7 @@ export function UnifiedTablePage<T>({
                               "relative align-middle",
                               headerAlignment === "left" ? "text-left" : "text-center",
                               isSortable && "cursor-pointer select-none group/th",
-                              (table.stickyHeader !== false) && "bg-primary/5!",
+                              (table.stickyHeader !== false) && "bg-primary/[2%]!",
                             )}
                           aria-sort={
                             isSortable
@@ -1236,7 +1236,7 @@ export function UnifiedTablePage<T>({
                         </TableHead>
                       );
                     })}
-                  {hasRowActions && <TableHead className="w-[50px] bg-primary/5!" />}
+                  {hasRowActions && <TableHead className="w-[50px] bg-primary/[2%]!" />}
                 </TableRow>
               </TableHeader>
               <TableBody
@@ -1481,7 +1481,7 @@ export function UnifiedTablePage<T>({
               </TableBody>
               {footerTotals && (
                 <TableFooter>
-                  <TableRow className={cn("font-medium", plainFooterTotals ? "bg-transparent" : "bg-muted/50")}>
+                  <TableRow className={cn("font-medium", "bg-transparent")}>
                     {hasRowSelection && <TableCell />}
                     {orderedVisibleColumns.map((column, index) => {
                         const width = columnWidths[column.id];

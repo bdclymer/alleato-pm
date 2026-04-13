@@ -201,7 +201,7 @@ export function RelatedItemsTab({
         </div>
       ) : items.length === 0 ? (
         <EmptyState
-          icon={Link2}
+          icon={<Link2 className="h-8 w-8" />}
           title="No related items"
           description="Link change events, RFIs, drawings, submittals, and more to this invoice."
         />
