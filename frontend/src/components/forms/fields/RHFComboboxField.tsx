@@ -48,6 +48,8 @@ interface Props<TFieldValues extends FieldValues> {
   label: string
   options: ComboboxOption[]
   placeholder?: string
+  /** Fallback label shown when field.value is set but no matching option exists yet (e.g. options still loading) */
+  selectedLabel?: string
   searchPlaceholder?: string
   emptyMessage?: string
   description?: string
@@ -60,6 +62,7 @@ export function RHFComboboxField<TFieldValues extends FieldValues>({
   label,
   options,
   placeholder = "Select an option",
+  selectedLabel,
   searchPlaceholder = "Search...",
   emptyMessage = "No results found.",
   description,
@@ -74,6 +77,7 @@ export function RHFComboboxField<TFieldValues extends FieldValues>({
       name={name}
       render={({ field }) => {
         const selected = options.find(option => option.value === field.value)
+        const displayLabel = selected?.label ?? (field.value && selectedLabel ? selectedLabel : null)
         const trigger = (
           <FormControl>
             <Button
@@ -84,10 +88,10 @@ export function RHFComboboxField<TFieldValues extends FieldValues>({
               className={cn(
                 "h-11 w-full justify-between"
               )}
-              {...(!field.value && { "data-placeholder-style": "" })}
+              {...(!displayLabel && { "data-placeholder-style": "" })}
             >
               <span className="truncate">
-                {selected ? selected.label : placeholder}
+                {displayLabel ?? placeholder}
               </span>
               <ChevronsUpDown className="shrink-0 opacity-50" />
             </Button>

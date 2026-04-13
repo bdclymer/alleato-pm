@@ -78,9 +78,37 @@ export async function GET(
       );
     }
 
+    // Fetch budget lines — try materialized view first, fall back to base table
+    const budgetLineSelect = `
+      *,
+      cost_code:cost_codes(id, title, division_id),
+      cost_type:cost_code_types(code, description),
+      sub_job:sub_jobs(code, name)
+    `;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let budgetLinesRes = await (supabase as any)
+      .from("v_budget_lines")
+      .select(budgetLineSelect)
+      .eq("project_id", numericProjectId)
+      .order("cost_code_id", { ascending: true });
+
+    if (budgetLinesRes.error) {
+      const errStr = JSON.stringify(budgetLinesRes.error);
+      const isMissingView =
+        errStr.includes("v_budget_lines") ||
+        errStr.includes("PGRST205") ||
+        errStr.includes("schema cache");
+      if (isMissingView) {
+        budgetLinesRes = await supabase
+          .from("budget_lines")
+          .select(budgetLineSelect)
+          .eq("project_id", numericProjectId)
+          .order("cost_code_id", { ascending: true });
+      }
+    }
+
     // Fetch budget data using the same logic as the main budget API
     const [
-      budgetLinesRes,
       directCostsRes,
       subcontractSovRes,
       poSovRes,
@@ -90,19 +118,6 @@ export async function GET(
       pendingCommitmentCOsRes,
       approvedCommitmentCOsRes,
     ] = await Promise.all([
-      // Budget lines from materialized view
-      supabase
-        .from("v_budget_lines" as any)
-        .select(
-          `
-          *,
-          cost_code:cost_codes(id, title, division_id),
-          cost_type:cost_code_types(code, description),
-          sub_job:sub_jobs(code, name)
-        `,
-        )
-        .eq("project_id", numericProjectId)
-        .order("cost_code_id", { ascending: true }),
 
       // Direct costs for calculations
       // eslint-disable-next-line @typescript-eslint/no-explicit-any

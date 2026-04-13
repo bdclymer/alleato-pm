@@ -195,7 +195,7 @@ export function PageHeader({
 
         {/* Title and Actions */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-3 pb-4 min-w-0">
-          <div className="min-w-0 flex-1 overflow-hidden">
+          <div className="min-w-0 flex-1">
             {/* Project Name */}
             {shouldShowProjectName && (
               <div className="mb-1">
@@ -217,7 +217,7 @@ export function PageHeader({
               titleContent
             ) : (
               <Inline gap="md" align="center">
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold sm:truncate break-words">
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold line-clamp-2 wrap-break-word">
                   {title}
                 </h1>
                 {statusBadge}

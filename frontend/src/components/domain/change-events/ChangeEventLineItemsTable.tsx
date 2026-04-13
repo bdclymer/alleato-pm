@@ -175,6 +175,7 @@ export function ChangeEventLineItemsTable({
   /* Filters */
   const activeFilterCount = [filterVendorOnly, filterNonZero].filter(Boolean).length;
   const activeControlCount = activeFilterCount + (groupBy !== "none" ? 1 : 0);
+  const isFiltered = !!search.trim() || filterVendorOnly || filterNonZero || groupBy !== "none";
 
   const filteredItems = useMemo(() => {
     let items = lineItems;
@@ -265,7 +266,7 @@ export function ChangeEventLineItemsTable({
     return (
       <div
         aria-hidden="true"
-        className="absolute right-0 top-0 h-full w-1 cursor-col-resize opacity-0 transition-opacity hover:opacity-100 hover:bg-border/60"
+        className="absolute right-0 top-0 h-full w-1 cursor-col-resize opacity-20 transition-opacity hover:opacity-100 hover:bg-border/60"
         onMouseDown={(e) => startResize(col, e)}
       />
     );
@@ -277,8 +278,15 @@ export function ChangeEventLineItemsTable({
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-baseline gap-2">
           <h2 className="text-lg font-semibold text-foreground">Line Items</h2>
-          <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
-            {lineItems.length}
+          <span
+            className={cn(
+              "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
+              isFiltered
+                ? "bg-primary/10 text-primary"
+                : "bg-muted text-muted-foreground",
+            )}
+          >
+            {isFiltered ? `${filteredItems.length} of ${lineItems.length}` : lineItems.length}
           </span>
         </div>
 
@@ -376,7 +384,7 @@ export function ChangeEventLineItemsTable({
                     onCheckedChange={(v) => setFilterNonZero(!!v)}
                   />
                   <Label htmlFor="filter-nonzero" className="cursor-pointer text-sm font-normal">
-                    Non-zero amount
+                    Hide $0 lines
                   </Label>
                 </div>
               </div>
@@ -389,6 +397,8 @@ export function ChangeEventLineItemsTable({
                     setFilterVendorOnly(false);
                     setFilterNonZero(false);
                     setGroupBy("none");
+                    setSearch("");
+                    setSearchOpen(false);
                   }}
                 >
                   Clear all
@@ -405,36 +415,6 @@ export function ChangeEventLineItemsTable({
               </Button>
             </PopoverTrigger>
             <PopoverContent className="w-56 p-3" align="end">
-              {/* Revenue group */}
-              <div className="mb-3">
-                <div className="mb-1.5 flex items-center justify-between">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                    Revenue
-                  </p>
-                  <button
-                    type="button"
-                    className="text-[10px] text-primary hover:underline"
-                    onClick={toggleRevGroup}
-                  >
-                    {allRevVisible ? "Hide all" : "Show all"}
-                  </button>
-                </div>
-                <div className="space-y-1.5">
-                  {REV_COLS.map((col) => (
-                    <div key={col} className="flex items-center gap-2">
-                      <Checkbox
-                        id={`col-${col}`}
-                        checked={visibleCols[col]}
-                        onCheckedChange={() => toggleCol(col)}
-                      />
-                      <Label htmlFor={`col-${col}`} className="cursor-pointer text-sm font-normal">
-                        {COL_LABELS[col]}
-                      </Label>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
               {/* Cost group */}
               <div className="mb-3">
                 <div className="mb-1.5 flex items-center justify-between">
@@ -451,6 +431,36 @@ export function ChangeEventLineItemsTable({
                 </div>
                 <div className="space-y-1.5">
                   {COST_COLS.map((col) => (
+                    <div key={col} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`col-${col}`}
+                        checked={visibleCols[col]}
+                        onCheckedChange={() => toggleCol(col)}
+                      />
+                      <Label htmlFor={`col-${col}`} className="cursor-pointer text-sm font-normal">
+                        {COL_LABELS[col]}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Revenue group */}
+              <div className="mb-3">
+                <div className="mb-1.5 flex items-center justify-between">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    Revenue
+                  </p>
+                  <button
+                    type="button"
+                    className="text-[10px] text-primary hover:underline"
+                    onClick={toggleRevGroup}
+                  >
+                    {allRevVisible ? "Hide all" : "Show all"}
+                  </button>
+                </div>
+                <div className="space-y-1.5">
+                  {REV_COLS.map((col) => (
                     <div key={col} className="flex items-center gap-2">
                       <Checkbox
                         id={`col-${col}`}
@@ -494,7 +504,24 @@ export function ChangeEventLineItemsTable({
         </div>
       </div>
 
-      {filteredItems.length > 0 || computedMarkups.length > 0 ? (
+      {filteredItems.length === 0 && lineItems.length > 0 ? (
+        <div className="flex flex-col items-center justify-center gap-3 py-12">
+          <span className="text-sm text-muted-foreground">No line items match your filters</span>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => {
+              setSearch("");
+              setSearchOpen(false);
+              setFilterVendorOnly(false);
+              setFilterNonZero(false);
+              setGroupBy("none");
+            }}
+          >
+            Clear filters
+          </Button>
+        </div>
+      ) : filteredItems.length > 0 || computedMarkups.length > 0 ? (
         <InlineTable variant="read">
           <colgroup>
             <col style={{ width: colWidths.budgetCode }} />
@@ -502,8 +529,8 @@ export function ChangeEventLineItemsTable({
             <col style={{ width: colWidths.vendor }} />
             <col style={{ width: colWidths.contract }} />
             <col style={{ width: colWidths.uom }} />
-            {REV_COLS.map((c) => visibleCols[c] && <col key={c} style={{ width: colWidths[c] }} />)}
             {COST_COLS.map((c) => visibleCols[c] && <col key={c} style={{ width: colWidths[c] }} />)}
+            {REV_COLS.map((c) => visibleCols[c] && <col key={c} style={{ width: colWidths[c] }} />)}
             {visibleCols.overUnder && <col style={{ width: colWidths.overUnder }} />}
             {visibleCols.budgetMod && <col style={{ width: colWidths.budgetMod }} />}
             {onDeleteLineItem && <col style={{ width: colWidths.action }} />}
@@ -513,20 +540,20 @@ export function ChangeEventLineItemsTable({
             {/* Group header row */}
             <InlineTableHeaderRow type="group">
               <InlineTableHeaderCell colSpan={detailSpan}>Detail</InlineTableHeaderCell>
-              {showRevenue && (
-                <InlineTableHeaderCell colSpan={revenueSpan} divider>Revenue</InlineTableHeaderCell>
-              )}
               {showCost && (
                 <InlineTableHeaderCell colSpan={costSpan} divider>Cost</InlineTableHeaderCell>
               )}
-              {visibleCols.overUnder && <InlineTableHeaderCell divider>O/U</InlineTableHeaderCell>}
+              {showRevenue && (
+                <InlineTableHeaderCell colSpan={revenueSpan} divider>Revenue</InlineTableHeaderCell>
+              )}
+              {visibleCols.overUnder && <InlineTableHeaderCell divider>Variance</InlineTableHeaderCell>}
               {visibleCols.budgetMod && <InlineTableHeaderCell divider>Mod</InlineTableHeaderCell>}
               {onDeleteLineItem && <InlineTableHeaderCell />}
             </InlineTableHeaderRow>
 
             {/* Column header row */}
             <InlineTableHeaderRow className="border-t border-border/50">
-              <InlineTableHeaderCell className="relative">
+              <InlineTableHeaderCell className="sticky left-0 z-10 bg-card">
                 Budget Code <RH col="budgetCode" />
               </InlineTableHeaderCell>
               <InlineTableHeaderCell className="relative">
@@ -542,6 +569,20 @@ export function ChangeEventLineItemsTable({
                 UOM <RH col="uom" />
               </InlineTableHeaderCell>
 
+              {COST_COLS.map((col) =>
+                visibleCols[col] ? (
+                  <InlineTableHeaderCell
+                    key={col}
+                    align={col === "cost_commitment" ? undefined : "right"}
+                    divider={col === firstCostCol}
+                    className="relative"
+                  >
+                    {COL_LABELS[col]}
+                    <RH col={col} />
+                  </InlineTableHeaderCell>
+                ) : null,
+              )}
+
               {REV_COLS.map((col) =>
                 visibleCols[col] ? (
                   <InlineTableHeaderCell
@@ -556,23 +597,9 @@ export function ChangeEventLineItemsTable({
                 ) : null,
               )}
 
-              {COST_COLS.map((col) =>
-                visibleCols[col] ? (
-                  <InlineTableHeaderCell
-                    key={col}
-                    align="right"
-                    divider={col === firstCostCol}
-                    className="relative"
-                  >
-                    {COL_LABELS[col]}
-                    <RH col={col} />
-                  </InlineTableHeaderCell>
-                ) : null,
-              )}
-
               {visibleCols.overUnder && (
                 <InlineTableHeaderCell align="right" divider className="relative">
-                  O/U <RH col="overUnder" />
+                  Variance <RH col="overUnder" />
                 </InlineTableHeaderCell>
               )}
               {visibleCols.budgetMod && (
@@ -610,7 +637,7 @@ export function ChangeEventLineItemsTable({
 
                   return (
                     <InlineTableRow key={li.id}>
-                      <InlineTableCell className="align-top">
+                      <InlineTableCell className="sticky left-0 z-10 bg-card align-top">
                         <BudgetCodeCell li={li} />
                       </InlineTableCell>
                       <InlineTableCell className="max-w-30 truncate">
@@ -629,32 +656,6 @@ export function ChangeEventLineItemsTable({
                       <InlineTableCell className="truncate">
                         {li.unitOfMeasure || "--"}
                       </InlineTableCell>
-
-                      {visibleCols.rev_qty && (
-                        <InlineTableCell align="right" numeric divider={firstRevCol === "rev_qty"}>
-                          {li.quantity ?? "--"}
-                        </InlineTableCell>
-                      )}
-                      {visibleCols.rev_unitCost && (
-                        <InlineTableCell align="right" numeric divider={firstRevCol === "rev_unitCost"}>
-                          {li.unitCost != null ? formatCurrency(li.unitCost) : "--"}
-                        </InlineTableCell>
-                      )}
-                      {visibleCols.rev_rom && (
-                        <InlineTableCell align="right" numeric divider={firstRevCol === "rev_rom"}>
-                          {formatCurrency(li.revenueRom)}
-                        </InlineTableCell>
-                      )}
-                      {visibleCols.rev_primePco && (
-                        <InlineTableCell align="right" numeric divider={firstRevCol === "rev_primePco"}>
-                          --
-                        </InlineTableCell>
-                      )}
-                      {visibleCols.rev_latestPrice && (
-                        <InlineTableCell align="right" numeric divider={firstRevCol === "rev_latestPrice"}>
-                          {formatCurrency(latestPrice)}
-                        </InlineTableCell>
-                      )}
 
                       {visibleCols.cost_qty && (
                         <InlineTableCell align="right" numeric divider={firstCostCol === "cost_qty"}>
@@ -680,6 +681,13 @@ export function ChangeEventLineItemsTable({
                         <InlineTableCell
                           divider={firstCostCol === "cost_commitment"}
                           className="max-w-22.5 truncate"
+                          title={li.commitment
+                            ? (li.commitment.display_name ||
+                              li.commitment.title ||
+                              li.commitment.company_name ||
+                              li.commitment.contract_number ||
+                              undefined)
+                            : undefined}
                         >
                           {li.commitment
                             ? (li.commitment.display_name ||
@@ -698,6 +706,32 @@ export function ChangeEventLineItemsTable({
                       {visibleCols.cost_latestCost && (
                         <InlineTableCell align="right" numeric divider={firstCostCol === "cost_latestCost"}>
                           {formatCurrency(latestCost)}
+                        </InlineTableCell>
+                      )}
+
+                      {visibleCols.rev_qty && (
+                        <InlineTableCell align="right" numeric divider={firstRevCol === "rev_qty"}>
+                          {li.quantity ?? "--"}
+                        </InlineTableCell>
+                      )}
+                      {visibleCols.rev_unitCost && (
+                        <InlineTableCell align="right" numeric divider={firstRevCol === "rev_unitCost"}>
+                          {li.unitCost != null ? formatCurrency(li.unitCost) : "--"}
+                        </InlineTableCell>
+                      )}
+                      {visibleCols.rev_rom && (
+                        <InlineTableCell align="right" numeric divider={firstRevCol === "rev_rom"}>
+                          {formatCurrency(li.revenueRom)}
+                        </InlineTableCell>
+                      )}
+                      {visibleCols.rev_primePco && (
+                        <InlineTableCell align="right" numeric divider={firstRevCol === "rev_primePco"}>
+                          --
+                        </InlineTableCell>
+                      )}
+                      {visibleCols.rev_latestPrice && (
+                        <InlineTableCell align="right" numeric divider={firstRevCol === "rev_latestPrice"}>
+                          {formatCurrency(latestPrice)}
                         </InlineTableCell>
                       )}
 
@@ -749,20 +783,6 @@ export function ChangeEventLineItemsTable({
                 <InlineTableCell />
                 <InlineTableCell />
 
-                {visibleCols.rev_qty && <InlineTableCell divider={firstRevCol === "rev_qty"} />}
-                {visibleCols.rev_unitCost && <InlineTableCell divider={firstRevCol === "rev_unitCost"} />}
-                {visibleCols.rev_rom && (
-                  <InlineTableCell align="right" numeric divider={firstRevCol === "rev_rom"}>
-                    {formatCurrency(markup.revenueAmount)}
-                  </InlineTableCell>
-                )}
-                {visibleCols.rev_primePco && <InlineTableCell divider={firstRevCol === "rev_primePco"} />}
-                {visibleCols.rev_latestPrice && (
-                  <InlineTableCell align="right" numeric divider={firstRevCol === "rev_latestPrice"}>
-                    {formatCurrency(markup.revenueAmount)}
-                  </InlineTableCell>
-                )}
-
                 {visibleCols.cost_qty && <InlineTableCell divider={firstCostCol === "cost_qty"} />}
                 {visibleCols.cost_unitCost && <InlineTableCell divider={firstCostCol === "cost_unitCost"} />}
                 {visibleCols.cost_rom && (
@@ -776,6 +796,20 @@ export function ChangeEventLineItemsTable({
                 {visibleCols.cost_latestCost && (
                   <InlineTableCell align="right" numeric divider={firstCostCol === "cost_latestCost"}>
                     {formatCurrency(markup.costAmount)}
+                  </InlineTableCell>
+                )}
+
+                {visibleCols.rev_qty && <InlineTableCell divider={firstRevCol === "rev_qty"} />}
+                {visibleCols.rev_unitCost && <InlineTableCell divider={firstRevCol === "rev_unitCost"} />}
+                {visibleCols.rev_rom && (
+                  <InlineTableCell align="right" numeric divider={firstRevCol === "rev_rom"}>
+                    {formatCurrency(markup.revenueAmount)}
+                  </InlineTableCell>
+                )}
+                {visibleCols.rev_primePco && <InlineTableCell divider={firstRevCol === "rev_primePco"} />}
+                {visibleCols.rev_latestPrice && (
+                  <InlineTableCell align="right" numeric divider={firstRevCol === "rev_latestPrice"}>
+                    {formatCurrency(markup.revenueAmount)}
                   </InlineTableCell>
                 )}
 
@@ -793,25 +827,11 @@ export function ChangeEventLineItemsTable({
           {/* Totals row */}
           <InlineTableFooter>
             <InlineTableFooterRow type="totals">
-              <InlineTableFooterCell>Totals</InlineTableFooterCell>
+              <InlineTableFooterCell className="sticky left-0 z-10 bg-card">Totals</InlineTableFooterCell>
               <InlineTableFooterCell />
               <InlineTableFooterCell />
               <InlineTableFooterCell />
               <InlineTableFooterCell />
-
-              {visibleCols.rev_qty && <InlineTableFooterCell divider={firstRevCol === "rev_qty"} />}
-              {visibleCols.rev_unitCost && <InlineTableFooterCell divider={firstRevCol === "rev_unitCost"} />}
-              {visibleCols.rev_rom && (
-                <InlineTableFooterCell align="right" numeric divider={firstRevCol === "rev_rom"}>
-                  {formatCurrency(totals.revenueRom)}
-                </InlineTableFooterCell>
-              )}
-              {visibleCols.rev_primePco && <InlineTableFooterCell divider={firstRevCol === "rev_primePco"} />}
-              {visibleCols.rev_latestPrice && (
-                <InlineTableFooterCell align="right" numeric divider={firstRevCol === "rev_latestPrice"}>
-                  {formatCurrency(totals.latestPrice)}
-                </InlineTableFooterCell>
-              )}
 
               {visibleCols.cost_qty && <InlineTableFooterCell divider={firstCostCol === "cost_qty"} />}
               {visibleCols.cost_unitCost && <InlineTableFooterCell divider={firstCostCol === "cost_unitCost"} />}
@@ -830,6 +850,20 @@ export function ChangeEventLineItemsTable({
               {visibleCols.cost_latestCost && (
                 <InlineTableFooterCell align="right" numeric divider={firstCostCol === "cost_latestCost"}>
                   {formatCurrency(totals.latestCost)}
+                </InlineTableFooterCell>
+              )}
+
+              {visibleCols.rev_qty && <InlineTableFooterCell divider={firstRevCol === "rev_qty"} />}
+              {visibleCols.rev_unitCost && <InlineTableFooterCell divider={firstRevCol === "rev_unitCost"} />}
+              {visibleCols.rev_rom && (
+                <InlineTableFooterCell align="right" numeric divider={firstRevCol === "rev_rom"}>
+                  {formatCurrency(totals.revenueRom)}
+                </InlineTableFooterCell>
+              )}
+              {visibleCols.rev_primePco && <InlineTableFooterCell divider={firstRevCol === "rev_primePco"} />}
+              {visibleCols.rev_latestPrice && (
+                <InlineTableFooterCell align="right" numeric divider={firstRevCol === "rev_latestPrice"}>
+                  {formatCurrency(totals.latestPrice)}
                 </InlineTableFooterCell>
               )}
 
@@ -855,6 +889,7 @@ export function ChangeEventLineItemsTable({
           <span className="text-sm text-muted-foreground">No line items added yet</span>
         </div>
       )}
+
     </div>
   );
 }

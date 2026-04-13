@@ -109,7 +109,7 @@ export async function GET(
         ),
         cost_code_types(
           id,
-          name,
+          description,
           category
         )
       `,

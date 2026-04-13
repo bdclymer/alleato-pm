@@ -34,7 +34,8 @@ crawl-punch-list/
     ├── detailed-report.json     # Full metadata for all pages
     ├── link-graph.json          # Navigation structure
     └── summary.json             # Statistics summary
-```markdown
+```
+
 ## Key Pages Captured
 
 | Page | Description | Path |

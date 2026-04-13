@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, type ComponentPropsWithoutRef } from "react";
+import { type ComponentPropsWithoutRef, Component, type ReactNode, useMemo, useState } from "react";
 import {
   ClientSideSuspense,
   useThreads,
@@ -9,8 +9,49 @@ import {
 import { useOthers, useSelf } from "@liveblocks/react";
 import { Composer, Thread, Comment } from "@liveblocks/react-ui";
 import type { ThreadData } from "@liveblocks/client";
-import { Check, MessageSquarePlus } from "lucide-react";
+import { AlertCircle, Check, MessageSquarePlus } from "lucide-react";
 import { getIssueIdFromRoom } from "./utils";
+
+// ── Error boundary ────────────────────────────────────────────────────────────
+
+class CommentsErrorBoundary extends Component<
+  { children: ReactNode },
+  { error: string | null }
+> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { error: null };
+  }
+
+  static getDerivedStateFromError(error: unknown) {
+    const msg =
+      error instanceof Error ? error.message : "Unknown error";
+    return { error: msg };
+  }
+
+  componentDidCatch(error: unknown) {
+    console.warn("[EntityComments] Liveblocks error:", error);
+  }
+
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="flex flex-col items-center gap-3 py-10 text-center">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-destructive/10">
+            <AlertCircle className="h-5 w-5 text-destructive" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-foreground">Comments unavailable</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Unable to connect to the comments service. Check that your Liveblocks secret key is valid.
+            </p>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // ── Public component ─────────────────────────────────────────────────────────
 
@@ -53,30 +94,32 @@ export function EntityComments({
           </div>
         </div>
       ) : null}
-      <ClientSideSuspense
-        fallback={
-          <div className="space-y-6">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-start gap-4">
-                <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-muted" />
-                <div className="flex-1 space-y-2 pt-1">
-                  <div className="flex items-center gap-2">
-                    <div className="h-3 w-20 animate-pulse rounded-md bg-muted" />
-                    <div className="h-2.5 w-16 animate-pulse rounded-md bg-muted/60" />
+      <CommentsErrorBoundary>
+        <ClientSideSuspense
+          fallback={
+            <div className="space-y-6">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="flex items-start gap-4">
+                  <div className="h-10 w-10 shrink-0 animate-pulse rounded-full bg-muted" />
+                  <div className="flex-1 space-y-2 pt-1">
+                    <div className="flex items-center gap-2">
+                      <div className="h-3 w-20 animate-pulse rounded-md bg-muted" />
+                      <div className="h-2.5 w-16 animate-pulse rounded-md bg-muted/60" />
+                    </div>
+                    <div className="h-3 w-4/5 animate-pulse rounded-md bg-muted/80" />
+                    <div className="h-3 w-3/5 animate-pulse rounded-md bg-muted/60" />
                   </div>
-                  <div className="h-3 w-4/5 animate-pulse rounded-md bg-muted/80" />
-                  <div className="h-3 w-3/5 animate-pulse rounded-md bg-muted/60" />
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          }
+        >
+          <ThreadList />
+          <div className="mt-6">
+            <Composer className="lb-composer-alleato" />
           </div>
-        }
-      >
-        <ThreadList />
-        <div className="mt-6">
-          <Composer className="lb-composer-alleato" />
-        </div>
-      </ClientSideSuspense>
+        </ClientSideSuspense>
+      </CommentsErrorBoundary>
     </div>
   );
 }

@@ -46,7 +46,9 @@ import { PrimeContractOverviewTab } from "./components/PrimeContractOverviewTab"
 import { PrimeContractDialogs } from "./components/PrimeContractDialogs";
 import { ContractForm } from "@/components/domain/contracts";
 import {
+  PrimeContractChangeEventsTab,
   PrimeContractChangeOrdersTab,
+  PrimeContractCommitmentsTab,
   PrimeContractInvoicesTab,
   PrimeContractPaymentsTab,
   PrimeContractFinancialMarkupTab,
@@ -300,23 +302,30 @@ export default function ProjectContractDetailPage() {
         ]);
         const ccos: PrimeContractCO[] = ccoResponse.ok ? await ccoResponse.json() : [];
         const pccoRaw = pccoResponse.ok ? await pccoResponse.json() : [];
-        const pccos: PrimeContractCO[] = (pccoRaw || [])
-          .filter((p: { id: number; contract_id: number | null }) => String(p.contract_id) === String(contractId))
-          .map((p: { id: number; contract_id: number | null; pcco_number: string | null; title: string | null; total_amount: number | null; status: string | null; submitted_at: string | null; approved_at: string | null; created_at: string | null }) => ({
-            id: String(p.id),
-            contract_id: String(p.contract_id ?? contractId),
-            change_order_number: p.pcco_number || "",
-            description: p.title || "",
-            amount: p.total_amount ?? 0,
-            status: (p.status || "proposed").toLowerCase(),
-            requested_by: null,
-            requested_date: p.submitted_at || p.created_at || "",
-            approved_by: null,
-            approved_date: p.approved_at || null,
-            rejection_reason: null,
-            created_at: p.created_at || "",
-            updated_at: p.created_at || "",
-          }));
+        const pccoList: unknown[] = Array.isArray(pccoRaw) ? pccoRaw : (Array.isArray(pccoRaw?.data) ? pccoRaw.data : []);
+        const pccos: PrimeContractCO[] = pccoList
+          .filter((p: unknown) => {
+            const item = p as { id: number; contract_id: string | null; prime_contract_id: string | null };
+            return String(item.prime_contract_id ?? item.contract_id) === String(contractId);
+          })
+          .map((p: unknown) => {
+            const item = p as { id: number; contract_id: string | null; prime_contract_id: string | null; pcco_number: string | null; title: string | null; total_amount: number | null; status: string | null; submitted_at: string | null; approved_at: string | null; created_at: string | null };
+            return {
+              id: String(item.id),
+              contract_id: String(item.prime_contract_id ?? item.contract_id ?? contractId),
+              change_order_number: item.pcco_number || "",
+              description: item.title || "",
+              amount: item.total_amount ?? 0,
+              status: (item.status || "proposed").toLowerCase(),
+              requested_by: null,
+              requested_date: item.submitted_at || item.created_at || "",
+              approved_by: null,
+              approved_date: item.approved_at || null,
+              rejection_reason: null,
+              created_at: item.created_at || "",
+              updated_at: item.created_at || "",
+            };
+          });
         setChangeOrders([...ccos, ...pccos]);
       } catch (err) {
         console.error("Failed to load data:", err);
@@ -772,7 +781,7 @@ export default function ProjectContractDetailPage() {
   return (
     <PageShell
       variant="detailWide"
-      title={`${contract.title} - #${contract.contract_number || contract.id.slice(0, 8)}`}
+      title={`#${contract.contract_number || contract.id.slice(0, 8)} — ${contract.title}`}
       description={contract.contractor ? `Contractor: ${contract.contractor.name}` : contract.vendor ? `Contractor: ${contract.vendor.name}` : "No contractor assigned"}
       onBack={() => router.back()}
       actions={
@@ -854,6 +863,8 @@ export default function ProjectContractDetailPage() {
         tabs={[
           { label: "General", href: "overview", isActive: activeTab === "overview" },
           { label: "Change Orders", href: "change-orders", isActive: activeTab === "change-orders", count: changeOrders.length || undefined },
+          { label: "Commitments", href: "commitments", isActive: activeTab === "commitments" },
+          { label: "Change Events", href: "change-events", isActive: activeTab === "change-events" },
           { label: "Invoices", href: "invoices", isActive: activeTab === "invoices", count: paymentApplications.length || undefined },
           { label: "Payments Received", href: "payments", isActive: activeTab === "payments", count: payments.length || undefined },
           { label: "Emails", href: "emails", isActive: activeTab === "emails" },
@@ -885,6 +896,22 @@ export default function ProjectContractDetailPage() {
             setChangeOrders={setChangeOrders} formatCurrency={formatCurrency}
             onShowNewCoDialog={() => setShowNewCoDialog(true)} onStartEditCo={handleStartEditCo}
             onSetDeletingCo={setDeletingCo} onSetRejectingCoId={setRejectingCoId} onShowRejectCoDialog={() => setShowRejectCoDialog(true)}
+          />
+        )}
+
+        {activeTab === "commitments" && (
+          <PrimeContractCommitmentsTab
+            projectId={projectId}
+            contractId={contractId}
+            formatCurrency={formatCurrency}
+          />
+        )}
+
+        {activeTab === "change-events" && (
+          <PrimeContractChangeEventsTab
+            projectId={projectId}
+            contractId={contractId}
+            formatCurrency={formatCurrency}
           />
         )}
 

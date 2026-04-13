@@ -29,7 +29,7 @@ interface DirectCostParent {
   vendor_id: string | null;
   invoice_number: string | null;
   date: string | null;
-  vendors: { name: string }[] | { name: string } | null;
+  companies: { name: string }[] | { name: string } | null;
 }
 
 interface DirectCostWithRelations {
@@ -50,11 +50,11 @@ function getDirectCost(raw: DirectCostWithRelations["direct_costs"]): DirectCost
   return raw;
 }
 
-/** Normalize vendors (could be object or array) */
-function getVendorName(vendors: DirectCostParent["vendors"]): string | null {
-  if (!vendors) return null;
-  if (Array.isArray(vendors)) return vendors[0]?.name ?? null;
-  return (vendors as { name: string }).name ?? null;
+/** Normalize companies (could be object or array) */
+function getVendorName(companies: DirectCostParent["companies"]): string | null {
+  if (!companies) return null;
+  if (Array.isArray(companies)) return companies[0]?.name ?? null;
+  return (companies as { name: string }).name ?? null;
 }
 
 interface CostBreakdown {
@@ -158,7 +158,7 @@ export async function GET(
           vendor_id,
           invoice_number,
           date,
-          vendors (
+          companies (
             name
           )
         )
@@ -244,7 +244,7 @@ export async function GET(
         const status = isApprovedStatus(directCost?.status || null)
           ? "approved"
           : "pending";
-        const vendor = directCost ? getVendorName(directCost.vendors) : null;
+        const vendor = directCost ? getVendorName(directCost.companies) : null;
 
         return {
           id: cost.id,

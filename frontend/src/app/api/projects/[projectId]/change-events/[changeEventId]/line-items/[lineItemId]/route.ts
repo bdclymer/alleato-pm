@@ -155,23 +155,8 @@ export async function PATCH(
       );
     }
 
-    // Guard: budget code and contract cannot be changed on commitment-linked line items
-    if (existingItem.commitment_id) {
-      if (validatedData.budgetCodeId !== undefined && validatedData.budgetCodeId !== existingItem.budget_code_id) {
-        return NextResponse.json(
-          { error: 'Cannot change the budget code on a line item linked to a commitment' },
-          { status: 409 }
-        );
-      }
-      if (validatedData.contractId !== undefined && validatedData.contractId !== existingItem.commitment_id) {
-        return NextResponse.json(
-          { error: 'Cannot change the commitment on a line item linked to a commitment' },
-          { status: 409 }
-        );
-      }
-    }
-
     // Resolve budgetCodeId: could be budget_lines.id OR project_cost_codes.id
+    // Must resolve BEFORE the commitment guard so we compare budget_lines.id to budget_lines.id.
     let resolvedBudgetCodeId: string | null = validatedData.budgetCodeId ?? null;
     if (validatedData.budgetCodeId) {
       // First try budget_lines directly
@@ -231,6 +216,23 @@ export async function PATCH(
             { status: 400 },
           );
         }
+      }
+    }
+
+    // Guard: budget code and contract cannot be changed on commitment-linked line items.
+    // Placed after ID resolution so we compare budget_lines.id to budget_lines.id.
+    if (existingItem.commitment_id) {
+      if (resolvedBudgetCodeId !== null && resolvedBudgetCodeId !== existingItem.budget_code_id) {
+        return NextResponse.json(
+          { error: 'Cannot change the budget code on a line item linked to a commitment' },
+          { status: 409 }
+        );
+      }
+      if (validatedData.contractId !== undefined && validatedData.contractId !== existingItem.commitment_id) {
+        return NextResponse.json(
+          { error: 'Cannot change the commitment on a line item linked to a commitment' },
+          { status: 409 }
+        );
       }
     }
 

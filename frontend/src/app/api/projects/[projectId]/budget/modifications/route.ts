@@ -423,7 +423,7 @@ export async function PATCH(
     }
 
     // Verify project ownership
-    if (currentMod.project_id !== projectId) {
+    if (currentMod.project_id !== projectIdNum) {
       return NextResponse.json(
         { error: "Modification not found in this project" },
         { status: 404 },
@@ -566,7 +566,7 @@ export async function DELETE(
     }
 
     // Verify project ownership
-    if (modification.project_id !== projectId) {
+    if (modification.project_id !== projectIdNum) {
       return NextResponse.json(
         { error: "Modification not found in this project" },
         { status: 404 },

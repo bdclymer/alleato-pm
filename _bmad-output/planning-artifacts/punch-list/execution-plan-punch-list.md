@@ -1,289 +1,37 @@
 # PUNCH LIST APPLICATION - Development Instructions for AI Coding Agent
 
-Procore App URL: <https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/punchlist/list?p=1&s=&so%5Battribute%5D=number&so%5Bdirection%5D=desc>
+**File Path:** `frontend/src/app/(main)/[projectId]/punch-list/`
 
-## Core Overview & Purpose
+**URL:** http://localhost:3000/767/punch-list
+
+**Procore URL:** <https://us02.procore.com/webclients/host/companies/562949953443325/projects/562949954728542/tools/punchlist/list?p=1&s=&so%5Battribute%5D=number&so%5Bdirection%5D=desc>
+
+## 1. Core Overview & Purpose
 
 The Punch List tool is used at the end of construction/project phases to track remaining work items, assign responsibilities, set due dates, and maintain a real-time history of all actions. It should support both web and mobile (iOS/Android) platforms.
 
 This specification provides a comprehensive blueprint for developing a Procore-like punch list system with all documented features and workflows.
 
-## Key Features & Functionality to Implement
-
-A. Item Management
-
-Create punch list items with customizable fields (title, description, location, trade, priority, status)
-Edit existing punch list items (assignee, due dates, descriptions, custom fields)
-Delete punch list items with recycle bin recovery option
-Bulk actions on multiple items simultaneously
-Quick Capture feature for rapid mobile item creation
-Import punch items from CSV/Excel files
-
-B. Item Details & Metadata
-
-Configurable fieldsets (which fields are visible/required/optional/hidden)
-Custom fields support (multi-tiered locations, custom data types)
-Status tracking: Open, Closed, In Dispute, Draft, Ready to Close, Pending
-Color-coded items on drawings based on status
-Item assignment to specific users/contractors/subcontractors
-Default Punch Item Manager assignment
-
-C. Communication & Notifications
-
-Comment system on punch list items
-Email notifications for assignees with attachment links (with expiration)
-Overdue email notifications for responsible parties
-Notification preference controls (which emails are sent)
-Response functionality for assignees to provide updates
-Notify assignees button/action
-
-D. Attachment & Photo Management
-
-Attach photos to punch list items from mobile devices
-Photos auto-populate in the Photos Tool
-Attach multiple document types (PDFs, Excel, images, etc.)
-Photo viewer and management interface
-Support for drawing attachments
-
-E. Workflow & Status Management
-
-Multi-stage workflow: Draft → Sent → In Progress → Ready to Close → Closed
-Dispute resolution workflow
-Acceptance/rejection workflows
-Status filtering and dashboard tracking
-Change history with full audit trail (timestamps, user actions, modifications)
-Real-time action history display
-
-F. Filtering & Search
-
-Advanced search with keyword matching
-Filter by status (open, closed, pending)
-Filter by assignee
-Filter by due date ranges
-Filter by custom fields and multi-tiered locations
-Filter by contractor/trade type
-Filter by private items (user-specific access)
-
-G. Templates
-
-Project-level punch item templates
-Template categories and hierarchies
-Template activation/deactivation per project
-Bulk template creation for consistency
-Template editing and deletion with category management
-
-H. Reporting & Export
-
-Export punch list items as PDFs
-Export punch list log as CSV
-Export punch list log as PDF
-Custom punch list report generation
-Dashboard view with summary metrics
-Real-time status tracking dashboard
-
-I. Access Control & Permissions
-
-Role-based permissions:
-
-```yaml
-Admin: Full access to all features
-Standard: Create/edit items they own, respond if assigned
-Read Only: View items with limited response capability
-Special roles: Superintendent, Owner, Specialty Contractor
-```text
-Granular permissions for specific actions (e.g., "Respond to Punch Items Assigned to Users within Same Company")
-Private punch list items (visible only to creator/assignees)
-Permission templates for quick role assignment
-
-J. Distribution & Notification
-
-```text
-Distribution groups and distribution lists
-Send items to multiple assignees
-Track item delivery status ("Date Notified" field)
-Email batch operations
-```
-
-1. Technical Data Model
-Core Entities:
-
-PunchListItem (id, title, description, status, priority, assignee, created_by, date_created, due_date, date_notified, final_approver, punch_manager)
-PunchListTemplate (id, name, category_id, active, fields, default_values)
-PunchListComment (id, item_id, user_id, text, timestamp)
-PunchListAttachment (id, item_id, file_path, file_type, upload_date)
-PunchListHistory (id, item_id, change_type, changed_by, timestamp, old_value, new_value)
-User (id, name, email, role, permissions)
-Project (id, name, punch_list_settings)
-
-Key Fields in Item Model:
-
-title (string)
-description (text)
-status (enum: Draft, Open, In Progress, Ready to Close, Closed, In Dispute, Pending)
-priority (enum: Low, Medium, High)
-assignee (user_id)
-punch_item_manager (user_id)
-final_approver (user_id)
-due_date (datetime)
-date_notified (datetime)
-location (multi-tiered location reference)
-trade (enum of standard construction trades)
-is_private (boolean)
-created_by (user_id)
-created_at (timestamp)
-updated_at (timestamp)
-attachments (array of attachment_ids)
-custom_fields (JSON for flexibility)
-
-1. Platform-Specific Features
-Web Platform:
-
-Full CRUD operations on all items
-Advanced filtering and search UI
-Dashboard with status summaries
-Drag-and-drop template management
-Bulk import interface
-Report generation and export
-Settings/configuration panel
-Column customization for list view
-
-Mobile Platforms (iOS/Android):
-
-Quick Capture feature (camera-to-punch-list)
-Create punch list items offline (sync when online)
-View assigned items with photo galleries
-Respond to items in the field
-Close items with final approval
-Download items for offline access
-GPS-based location tagging (optional)
-Push notifications for updates
-Simplified UI optimized for touch
-
-1. Integration Points
-
-Drawing Tool integration (mark punch items on drawings, color-coded by status)
-Photos Tool integration (auto-populate photos attached to items)
-Maps integration (optional - visualize items by location)
-Directory Tool integration (user/contractor lookup)
-Reports Tool integration (custom punch list reports)
-Email system (notifications, batch delivery, link expiration)
-Import system (CSV/Excel parsing and validation)
-
-1. Key Workflows to Implement
-Create & Assign Workflow:
-
-User creates item (Draft status)
-System validates required fields based on fieldset configuration
-User assigns to team member
-System sends notification email
-Date Notified field auto-populates
-
-### Response & Resolution Workflow:
-
-Assignee receives notification
-Assignee views item details, attachments, comments
-Assignee provides response/update via comment
-Punch Manager reviews
-Item moves to "Ready to Close"
-Final Approver accepts/rejects
-Status changes to Closed or In Dispute
-
-### Bulk Import Workflow:
-
-Admin uploads CSV/Excel file
-System validates data format
-Preview import before committing
-Create items in batch
-Auto-assign based on template rules
-
-1. Security & Compliance
-
-Audit trail for all actions (who, what, when)
-Recycle bin for deleted items (configurable retention)
-Email link expiration (default 30 days)
-Private item visibility restrictions
-Role-based access control enforcement
-Data validation on all inputs
-CSRF protection
-SQL injection prevention
-
-#### 8. UI/UX Components Needed
-
-Punch list item form (create/edit)
-Item detail view with expandable sections
-List/grid view with sorting and filtering
-Status timeline/workflow visualization
-Comment thread component
-File upload/gallery component
-Template builder interface
-Settings panel for configuration
-Dashboard with KPI cards
-Search bar with advanced options
-Mobile-optimized navigation
-Notification center
-
-#### 9. API Endpoints (RESTful)
-
-POST /api/punch-items (create)
-GET /api/punch-items (list with filters)
-GET /api/punch-items/{id} (detail)
-PATCH /api/punch-items/{id} (update)
-DELETE /api/punch-items/{id} (delete)
-POST /api/punch-items/{id}/comments (add comment)
-POST /api/punch-items/{id}/attachments (add file)
-GET /api/punch-items/{id}/history (change log)
-POST /api/punch-items/import (batch import)
-GET /api/punch-items/export (export to CSV/PDF)
-POST /api/templates (create template)
-GET /api/templates (list templates)
-PATCH /api/templates/{id} (update template)
-
-#### 10. Testing Checklist
-
-CRUD operations on all user roles
-Permission enforcement by role
-Email notification delivery and formatting
-File attachment upload/download
-Search and filter accuracy
-Import validation and error handling
-Mobile responsiveness
-Offline functionality (mobile)
-Status workflow transitions
-Recycle bin recovery
-Template application to new items
-Bulk operations
-Performance with large datasets (1000+ items)
-
-# PUNCH LIST APPLICATION - Updated Development Specification
-
-This specification provides a comprehensive blueprint for developing a Procore-like punch list system with all documented features and workflows.
-
-Based on Live Procore Implementation Analysis
-
-## 1. Core Overview & Purpose
-
-The Punch List tool tracks remaining work items at the end of construction projects, manages assigned responsibilities, maintains due dates, and preserves a complete audit trail of all actions. Supports web and mobile (iOS/Android) platforms.
-
 ## 2. Verified Key Features & Functionality
 
 ### A. Item Management (Core CRUD)
 
-Create Punch List Items with auto-generated sequential numbers (starting from 1)
-Edit Punch List Items - modify any field after creation
-Delete Punch List Items with recovery via Recycle Bin
-Bulk Actions on multiple items (select via checkboxes)
-Status Transitions: Draft → Work Required → Initiated → Closed
-Reopen Items - change closed items back to open status
-Quick Capture (mobile) - rapid field-based item creation with photo
+- Create Punch List Items with auto-generated sequential numbers (starting from 1)
+- Edit Punch List Items - modify any field after creation
+- Delete Punch List Items with recovery via Recycle Bin
+- Bulk Actions on multiple items (select via checkboxes)
+- Status Transitions: Draft → Work Required → Initiated → Closed
+- Reopen Items - change closed items back to open status
+- Quick Capture (mobile) - rapid field-based item creation with photo
 
 ### B. Complete Field Structure (Verified)
 
-General Information Section:
+#### General Information Section:
 
-Title (required) - full text field
-Number (auto-generated) - read-only sequential integer
-Punch Item Manager (required) - single user assignment with clear button
-Type (dropdown) - configurable item types
+- Title (required) - full text field
+- Number (auto-generated) - read-only sequential integer
+- Punch Item Manager (required) - single user assignment with clear button
+- Type (dropdown) - configurable item types
 Assignee(s) (optional) - multi-select user assignment with company affiliation display
 Due Date (date picker) - with clear button
 Location (dropdown/hierarchical) - multi-tiered location support
@@ -293,13 +41,13 @@ Distribution List (dropdown) - pre-configured distribution groups
 
 #### Additional Fields:
 
-Trade (dropdown) - standard construction trades
-Schedule Impact (dropdown)
-Cost Impact (dropdown)
-Cost Codes (dropdown/searchable)
-Reference (text) - free-form reference number/identifier
-Description (rich text editor) - with formatting toolbar (Bold, Italic, Underline, Strikethrough, Lists, etc.)
-Private (checkbox) - boolean flag for visibility control
+- Trade (dropdown) - standard construction trades
+- Schedule Impact (dropdown)
+- Cost Impact (dropdown)
+- Cost Codes (dropdown/searchable)
+- Reference (text) - free-form reference number/identifier
+- Description (rich text editor) - with formatting toolbar (Bold, Italic, Underline, Strikethrough, Lists, etc.)
+- Private (checkbox) - boolean flag for visibility control
 
 #### Auto-Managed Fields:
 
@@ -315,9 +63,9 @@ Email Sent? (boolean) - tracks if notification email was sent
 Attachments (drag & drop or file upload) - supports PDF, images, Excel, etc.
 Linked Drawings (reference to drawings in Drawings tool)
 
-Workflow Tracking Fields:
+#### Workflow Tracking Fields:
 
-Assignees Table with columns:
+**Assignees Table with columns:**
 
 Name
 Date Notified
@@ -327,7 +75,7 @@ Date Resolved
 Response (status display)
 Comments
 
-C. Dashboard & Analytics
+### C. Dashboard & Analytics
 Status Widget (Pie Chart):
 
 Work Required (percentage)
@@ -349,7 +97,8 @@ Total Overdue Items Card:
 
 Count of items past due date
 
-D. List View & Columns
+### D. List View & Columns
+
 Visible Columns:
 
 Checkbox (for bulk selection)
@@ -369,7 +118,8 @@ PDF export icon (per item)
 Link icon (copy-to-clipboard)
 
 Customizable Columns - Users can adjust which columns display
-E. Search & Filtering
+
+### E. Search & Filtering
 Search Bar:
 
 Full-text search across Title, Description, and other fields
@@ -403,7 +153,8 @@ Clearable selections with X button
 Active filters display as applied chips
 Pagination: "1-75 of 75", with page controls
 
-F. Activity Feed & Comments
+### F. Activity Feed & Comments
+
 Right-Side Activity Column:
 
 Add Comment text area (expandable)
@@ -416,7 +167,7 @@ Action type ("Status Update:")
 Status badge (color-coded: Closed=green, Work Required=orange, Initiated=blue)
 Activity date separator
 
-G. Change History (Audit Trail)
+### G. Change History (Audit Trail)
 Change History Tab Contents:
 
 Sortable table with columns:
@@ -427,29 +178,29 @@ Changed (field name that was modified)
 From (previous value)
 To (new value)
 
-Examples tracked:
-
-Status changes
-Date Closed assignments
-Ball In Court transitions
-Email Sent flag changes
-Assignment changes
-Item creation events
+**Examples tracked:**
+- Status changes
+- Date Closed assignments
+- Ball In Court transitions
+- Email Sent flag changes
+- Assignment changes
+- Item creation events
 
 Timestamp format: "Mon Apr 14, 2025 at 08:34 am EDT"
+
 Pagination support for large histories
 
-H. Related Items Tab
+### H. Related Items Tab
 
 Shows count of related items (0) in tab
 Used for linking punch items to other items
 
-I. Emails Tab
+### I. Emails Tab
 
 Shows count of email notifications sent
 Tracks email distribution history
 
-J. Export Functionality
+### J. Export Functionality
 Export Options (from Export button):
 
 PDF - Basic punch list as PDF
@@ -461,32 +212,34 @@ Per-Item Export:
 
 PDF icon next to each item in list view
 
-K. Bulk Operations
-Bulk Actions Dropdown:
+### K. Bulk Operations
 
-Multi-select items via checkboxes
-Common operations:
+**Bulk Actions Dropdown:**
+- Multi-select items via checkboxes
+- Common operations:
 
 Mass status updates
 Mass assign
 Mass delete
 Export selected items
 
-L. Item Detail View Tabs
+### L. Item Detail View Tabs
 
 General Tab (primary content)
 Related Items - Link to other punch items
 Emails - Track email notifications and delivery
 Change History - Complete audit trail with 9+ entries shown
 
-M. View Modes
-Tab Navigation:
+### M. View Modes
 
-My Items (0) - Personal/assigned items
-All Items (75) - Complete list
-Recycle Bin (0) - Deleted items for recovery
+**Tab Navigation:**
 
-1. Technical Data Model - Updated
+- My Items (0) - Personal/assigned items
+- All Items (75) - Complete list
+- Recycle Bin (0) - Deleted items for recovery
+
+## 3. Technical Data Model - Updated
+
 PunchListItem {
   id: UUID
   project_id: UUID
@@ -575,15 +328,16 @@ Attachment {
   url: String (time-limited, expires in ~30 days)
 }
 
-1. UI/UX Component Library Needed
-Layout Components:
+## 4.UI/UX Component Library Needed
+
+### Layout Components:
 
 Responsive grid layout (2-column for desktop)
 Left panel for Item Information (60%)
 Right panel for Activity Feed (40%)
 Mobile responsive stacking
 
-Form Components:
+### Form Components:
 
 Text input with clear button
 Rich text editor with toolbar
@@ -595,7 +349,7 @@ User picker/selector
 File upload with drag & drop
 Notification badges (colored status indicators)
 
-List Components:
+### List Components:
 
 Data table with sortable columns
 Bulk select checkboxes
@@ -604,7 +358,7 @@ Filter chip display
 Status indicators with color coding
 Avatar images for users
 
-Widget Components:
+### Widget Components:
 
 Donut/pie chart (Status distribution)
 Horizontal bar chart (Company distribution)
@@ -612,20 +366,20 @@ Metric cards (response time, overdue count)
 Activity feed timeline
 Tabs interface
 
-Navigation Components:
+### Navigation Components:
 
 Breadcrumb trail (Punch List > Item #1 > Title)
 Tab switcher (General, Related Items, Emails, Change History)
 Filter dropdown menu
 
-Buttons & Actions:
+### Buttons & Actions:
 
 Primary action button (Create, Save)
 Secondary buttons (Cancel, Edit, View)
 Dropdown menus (Bulk Actions, More Options)
 Icon buttons (PDF, Link)
 
-1. API Endpoints (RESTful)
+## 5. API Endpoints (RESTful)
 // CRUD Operations
 POST   /api/v1/projects/{projectId}/punch-items
 GET    /api/v1/projects/{projectId}/punch-items (paginated, filterable)
@@ -671,8 +425,9 @@ POST   /api/v1/projects/{projectId}/punch-items/{itemId}/restore
 POST   /api/v1/projects/{projectId}/punch-items/{itemId}/send-notification
 GET    /api/v1/projects/{projectId}/punch-items/{itemId}/email-history
 
-1. Key Workflows to Implement
-Workflow 1: Create & Distribute
+## 6. Key Workflows to Implement
+
+### Workflow 1: Create & Distribute
 
 User clicks "+ Create" button
 Form opens with required fields: Title, Punch Item Manager, Final Approver
@@ -684,7 +439,7 @@ Date Notified field auto-populates
 Email Sent flag set to True
 Status remains "Draft" until first response
 
-Workflow 2: Respond to Assignment
+### Workflow 2: Respond to Assignment
 
 Assignee receives notification email
 Clicks link to item detail view
@@ -695,7 +450,7 @@ System records status change in Change History
 Updates Assignee Tracker with Date Ready for Review
 Original creator notified of response
 
-Workflow 3: Close Item
+### Workflow 3: Close Item
 
 Final Approver views item
 Reviews responses and completion status
@@ -705,7 +460,7 @@ Sets "Closed By" field to current user
 Sends closure notification
 Item moved to "Closed" section on dashboard
 
-Workflow 4: Reopen Item
+### Workflow 4: Reopen Item
 
 User clicks "Reopen" button on closed item
 Status returns to previous state (Work Required/Initiated)
@@ -714,7 +469,7 @@ Status returns to previous state (Work Required/Initiated)
 Change log entry created
 Notification sent to stakeholders
 
-Workflow 5: Bulk Operations
+### Workflow 5: Bulk Operations
 
 User selects multiple items via checkboxes
 Clicks "Bulk Actions" dropdown
@@ -724,15 +479,15 @@ System updates all selected items
 Change log created for each item
 Summary notification sent to user
 
-Workflow 6: Export
+### Workflow 6: Export
 
-User clicks "Export" button
-Selects format (PDF, PDF w/ descriptions, PDF w/ photos, CSV)
-System generates document with applied filters
-Triggers browser download
-File named with timestamp: punch-list-2025-01-06.pdf
+- User clicks "Export" button
+- Selects format (PDF, PDF w/ descriptions, PDF w/ photos, CSV)
+- System generates document with applied filters
+- Triggers browser download
+- File named with timestamp: punch-list-2025-01-06.pdf
 
-1. Mobile-Specific Features
+## 7. Mobile-Specific Features
 
 Quick Capture: Take photo → auto-creates punch item with location
 Offline Mode: Items saved locally, sync when reconnected
@@ -742,7 +497,7 @@ Simplified UI: Touch-optimized forms
 Field Photos: Attach photos directly from camera
 Bulk Download: Download items for offline access
 
-1. Security & Compliance
+## 8. Security & Compliance
 
 Role-Based Access Control:
 
@@ -759,7 +514,7 @@ File Size Limit: Display "0/2000" indicating max attachment size
 CSRF Protection: On all state-changing operations
 SQL Injection Prevention: Parameterized queries
 
-1. Performance & Data Considerations
+## 9. Performance & Data Considerations
 
 Pagination: Default 75 items per page (as observed in UI: "1-75 of 75")
 Lazy Loading: Comments and attachments load on demand
@@ -769,7 +524,7 @@ Sort Support: By number (default), title, status, due date
 Bulk Operations: Support operations on 100+ items
 Change History: Paginate history beyond 9 entries
 
-1. Testing Checklist
+## 10. Testing Checklist
 
  Create item with all field combinations
  Edit each field individually
@@ -793,4 +548,270 @@ Change History: Paginate history beyond 9 entries
  Dashboard widget calculations
  Multi-user concurrent editing
 
-This updated specification reflects the actual Procore implementation and provides a comprehensive blueprint for developing a production-grade Punch List system.
+
+## Merged punch-list.md
+
+## 1. Top Action Bar (Global Controls)
+
+### Primary Actions
+
+- **Create Punch Item -** Opens create form (modal or new page)
+- **Export -** PDF / CSV export. Export scope options (all items / filtered / selected)
+
+### Tabbed Views
+
+- My Items
+- All Items
+- Recycle Bin
+
+Each tab maps to a different filtered dataset
+
+## 2. Search & Filtering System
+
+### Global Search
+
+- Keyword search across:
+  - Title
+  - Description
+  - Reference
+  - Assignee
+- Debounced input
+- Server-side or indexed search
+
+### Filters (Multi-select, combinable)
+
+Each filter requires:
+
+- UI selector
+- Backend query support
+- Persistent state (URL or local state)
+
+Filter capability for all columns
+
+---
+
+## 3. Column Management System
+
+### Column Chooser
+
+- Show / hide columns
+- Reorder columns (drag & drop)
+- “Reset to default”
+- “Select all”
+
+### Column State
+
+- Per-user saved preferences
+- Persisted across sessions
+
+---
+
+## 4. Data Table (Core System)
+
+**Bulk Actions -** Enabled only when rows are selected
+
+- Close
+- Edit
+- Delete / move to recycle bin
+- Reopen
+
+### Row Structure
+
+Each row represents **one punch list item** and supports:
+
+- Checkbox selection
+- Row-level actions:
+  - View
+  - Edit
+- Clickable title (detail view)
+
+### Columns (Data Binding Required)
+
+| Column Name          | Description                                                         |
+| -------------------- | ------------------------------------------------------------------- |
+| `#`                  | Punch list item number (system-generated identifier)                |
+| `Title`              | Short description of the punch list item                            |
+| `Status`             | Current status of the item (e.g., Initiated, Work Required, Closed) |
+| `Ball In Court`      | Person or company currently responsible for next action             |
+| `Assignee Name`      | Individual assigned to complete the punch item                      |
+| `Assignee Company`   | Company responsible for completing the item                         |
+| `Assignee Response`  | Latest response or acknowledgment from the assignee                 |
+| `Date Notified`      | Date the assignee was notified                                      |
+| `Date Resolved`      | Date the item was marked as resolved                                |
+| `Due Date`           | Deadline for completing the item                                    |
+| `Creator`            | User who created the punch list item                                |
+| `Date Created`       | Date the punch list item was created                                |
+| `Punch Item Manager` | Person managing or overseeing the punch item                        |
+| `Final Approver`     | Person responsible for final approval                               |
+| `Closed By`          | User who closed the punch list item                                 |
+| `Date Closed`        | Date the item was officially closed                                 |
+| `Type`               | Classification/type of punch item                                   |
+| `Trade`              | Trade responsible (e.g., Painting, Electrical, Mechanical)          |
+| `Location`           | Physical location within the project                                |
+| `Reference`          | Reference info (drawings, specs, or related IDs)                    |
+| `Priority`           | Priority level (e.g., High, Medium, Low)                            |
+| `Description`        | Detailed description of the issue or required work                  |
+
+Each column needs:
+
+- Sorting logic
+- Null/empty state handling
+- Formatting rules (dates, badges, truncation)
+
+---
+
+## 6. Sorting & Pagination
+
+### Sorting
+
+- Click-to-sort on most columns
+- Asc / Desc state
+- Server-side sorting for scale
+
+### Pagination
+
+- Page numbers
+- Next / previous
+- Page size selector
+- Total count display (“1–75 of 75”)
+
+---
+
+## 7. Status & Workflow Engine (Critical)
+
+### Status Lifecycle
+
+**Statuses observed:**
+
+- Initiated
+- Work Required
+- Ready for Review
+- Closed
+
+**Each status requires:**
+
+- Allowed transitions
+- Role permissions
+- Auto-updates to:
+  - Ball in Court
+  - Date Resolved
+  - Date Closed
+  - Closed By
+
+---
+
+## 8. Assignment & Responsibility Logic
+
+### Assignment Model
+
+- One or more assignees
+- Assignee company linkage
+- Ball-in-court calculation logic
+
+### Notifications
+
+- Triggered on:
+  - Assignment
+  - Status change
+  - Due date changes
+- Delivery:
+  - Email
+  - In-app notifications
+
+---
+
+## 9. Charts & Analytics Widgets
+
+### Items by Assignee Company
+
+- Bar chart
+- Grouping logic
+- Status-based counts
+
+### Status Breakdown
+
+- Percentage-based visualization
+- Real-time reflection of filters
+
+### KPIs
+
+- Average response time
+- Total overdue items
+
+All require:
+
+- Aggregation queries
+- Filter-aware recalculation
+
+---
+
+## 10. PDF & Document Generation
+
+### Punch Item PDFs
+
+- Per-item printable PDF
+- Batch PDF export
+- Must include:
+  - Item details
+  - Metadata
+  - Images (if supported)
+
+---
+
+## 11. Permissions & Roles
+
+### Role-Based Access Control
+
+Controls:
+
+- Who can:
+  - Create
+  - Edit
+  - Close
+  - Assign
+  - Bulk edit
+- Field-level editability by role
+
+---
+
+## 12. Performance & UX Considerations
+
+- Virtualized table rows (large datasets)
+- Optimistic UI updates
+- Loading & empty states
+- Error handling
+- Autosave for edits
+- Mobile responsiveness (at least read-only)
+
+---
+
+## 13. Backend Systems Required
+
+### Core Tables
+
+- Punch Items
+- Users
+- Companies
+- Trades
+- Locations
+- Status History (audit log)
+- Attachments (optional)
+- Notifications
+
+### APIs
+
+- List / filter / search
+- Bulk update
+- Status transitions
+- Export endpoints
+- Analytics endpoints
+
+---
+
+## 14. Non-Obvious but Critical Features
+
+- Audit trail (who changed what, when)
+- Time-based SLA logic (overdue calculation)
+- Soft delete (Recycle Bin)
+- Data permissions across companies
+- Project-scoped isolation
