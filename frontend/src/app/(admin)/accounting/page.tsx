@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import Link from "next/link";
 import { PageShell } from "@/components/layout";
 import { KpiRow } from "@/components/ds";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,29 @@ import {
   ArrowUpRight,
   ArrowDownRight,
   AlertTriangle,
+  ExternalLink,
+  ChevronDown,
+  FileText,
+  Receipt,
+  CreditCard,
+  FolderKanban,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Cell,
+} from "recharts";
 import { cn } from "@/lib/utils";
 import { apiFetch } from "@/lib/api-client";
 
@@ -74,6 +97,7 @@ interface DashboardResponse {
   apAging: AgingResult;
   cashPosition: CashPosition;
   revenueByProject: ProjectRevenue[];
+  arByProject: ProjectRevenue[];
   recentActivity: {
     payments: RecentPayment[];
     checks: RecentCheck[];
@@ -123,18 +147,27 @@ function AgingChart({
   title,
   buckets,
   icon,
+  href,
 }: {
   title: string;
   buckets: Array<{ label: string; count: number; amount: number }>;
   icon: React.ReactNode;
+  href?: string;
 }) {
   const maxAmount = Math.max(...buckets.map((b) => b.amount), 1);
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-        {icon}
-        {title}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
+          {icon}
+          {title}
+        </div>
+        {href && (
+          <Link href={href} className="flex items-center gap-1 text-xs text-primary hover:underline">
+            View all <ExternalLink className="h-3 w-3" />
+          </Link>
+        )}
       </div>
       <div className="space-y-3">
         {buckets.map((bucket) => (
@@ -176,15 +209,24 @@ function PaymentList({
   title,
   items,
   type,
+  href,
 }: {
   title: string;
   items: Array<{ referenceNbr: string; label: string | null; amount: number; date: string | null }>;
   type: "payment" | "check";
+  href?: string;
 }) {
   if (items.length === 0) {
     return (
       <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+          {href && (
+            <Link href={href} className="flex items-center gap-1 text-xs text-primary hover:underline">
+              View all <ExternalLink className="h-3 w-3" />
+            </Link>
+          )}
+        </div>
         <p className="text-xs text-muted-foreground">No recent activity</p>
       </div>
     );
@@ -192,7 +234,14 @@ function PaymentList({
 
   return (
     <div className="space-y-3">
-      <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+        {href && (
+          <Link href={href} className="flex items-center gap-1 text-xs text-primary hover:underline">
+            View all <ExternalLink className="h-3 w-3" />
+          </Link>
+        )}
+      </div>
       <div className="space-y-1.5">
         {items.map((item) => (
           <div
@@ -299,6 +348,117 @@ function ProjectTable({ projects }: { projects: ProjectRevenue[] }) {
 }
 
 // ---------------------------------------------------------------------------
+// AR by Project Bar Chart
+// ---------------------------------------------------------------------------
+
+const BAR_COLORS = [
+  "hsl(var(--primary))",
+  "hsl(var(--primary) / 0.8)",
+  "hsl(var(--primary) / 0.65)",
+  "hsl(var(--primary) / 0.5)",
+  "hsl(var(--primary) / 0.4)",
+  "hsl(var(--primary) / 0.3)",
+];
+
+function ArByProjectChart({ projects }: { projects: ProjectRevenue[] }) {
+  // Use all projects — already filtered & sorted by API
+  const chartData = projects.slice(0, 15).map((p) => ({
+    name: p.description
+      ? `${p.projectCode} ${p.description}`.slice(0, 28)
+      : p.projectCode,
+    outstanding: p.outstandingBalance,
+    project: p.projectCode,
+    customer: p.customer,
+    fullName: p.description ?? p.projectCode,
+  }));
+
+  if (chartData.length === 0) {
+    return <p className="text-xs text-muted-foreground">No outstanding AR by project</p>;
+  }
+
+  const total = projects.reduce((sum, d) => sum + d.outstandingBalance, 0);
+  const barHeight = Math.max(chartData.length * 22, 80);
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <h3 className="text-xs font-semibold text-foreground">
+          AR Outstanding by Project
+          <span className="ml-2 font-normal text-muted-foreground">
+            {formatCurrencyFull(total)} · {projects.length} projects
+          </span>
+        </h3>
+        <Link
+          href="/accounting/invoices?balance=positive"
+          className="flex items-center gap-1 text-[11px] text-primary hover:underline"
+        >
+          View all <ExternalLink className="h-2.5 w-2.5" />
+        </Link>
+      </div>
+      <div style={{ height: barHeight }} className="w-full">
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart
+            data={chartData}
+            layout="vertical"
+            margin={{ top: 0, right: 8, bottom: 0, left: 0 }}
+            barCategoryGap={2}
+          >
+            <CartesianGrid
+              horizontal={false}
+              strokeDasharray="3 3"
+              className="stroke-border/40"
+            />
+            <XAxis
+              type="number"
+              tickFormatter={(v: number) => formatCurrency(v)}
+              tick={{ fontSize: 10 }}
+              className="fill-muted-foreground"
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis
+              type="category"
+              dataKey="name"
+              width={160}
+              tick={{ fontSize: 10 }}
+              className="fill-muted-foreground"
+              axisLine={false}
+              tickLine={false}
+            />
+            <Tooltip
+              cursor={{ fill: "hsl(var(--muted) / 0.5)" }}
+              content={({ active, payload }) => {
+                if (!active || !payload?.length) return null;
+                const d = payload[0].payload;
+                return (
+                  <div className="rounded-lg bg-background border border-border/50 px-3 py-2 shadow-sm text-xs space-y-1">
+                    <div className="font-medium text-foreground">{d.fullName}</div>
+                    {d.customer && (
+                      <div className="text-muted-foreground">{d.customer}</div>
+                    )}
+                    <div className="font-semibold tabular-nums text-foreground">
+                      {formatCurrencyFull(d.outstanding)}
+                    </div>
+                  </div>
+                );
+              }}
+            />
+            <Bar dataKey="outstanding" radius={[0, 3, 3, 0]} maxBarSize={16}>
+              {chartData.map((_, index) => (
+                <Cell
+                  key={index}
+                  fill={BAR_COLORS[index % BAR_COLORS.length]}
+                />
+              ))}
+            </Bar>
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Main Page
 // ---------------------------------------------------------------------------
 
@@ -369,27 +529,68 @@ export default function AccountingDashboardPage() {
 
   if (!data) return null;
 
-  const { cashPosition, arAging, apAging, revenueByProject, recentActivity } = data;
+  const { cashPosition, arAging, apAging, revenueByProject, arByProject, recentActivity } = data;
 
   return (
     <PageShell
       variant="dashboard"
       title="Accounting"
       actions={
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           <span className="text-xs text-muted-foreground">
             {new Date(data.generatedAt).toLocaleString()}
           </span>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline" size="sm">
+                View Tables
+                <ChevronDown className="ml-1.5 h-3.5 w-3.5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuItem asChild>
+                <Link href="/accounting/invoices" className="flex items-center gap-2">
+                  <FileText className="h-3.5 w-3.5" />
+                  AR Invoices
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/accounting/payments" className="flex items-center gap-2">
+                  <ArrowDownRight className="h-3.5 w-3.5" />
+                  AR Payments
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/accounting/bills" className="flex items-center gap-2">
+                  <Receipt className="h-3.5 w-3.5" />
+                  AP Bills
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/accounting/checks" className="flex items-center gap-2">
+                  <CreditCard className="h-3.5 w-3.5" />
+                  AP Checks
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/accounting/projects" className="flex items-center gap-2">
+                  <FolderKanban className="h-3.5 w-3.5" />
+                  Projects
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Button
-            variant="outline"
-            size="sm"
+            variant="ghost"
+            size="icon"
             onClick={handleSync}
             disabled={syncing}
+            title={syncing ? "Syncing..." : "Sync from Acumatica"}
+            className="h-8 w-8"
           >
             <RefreshCw
-              className={cn("mr-1.5 h-3.5 w-3.5", syncing && "animate-spin")}
+              className={cn("h-4 w-4", syncing && "animate-spin")}
             />
-            {syncing ? "Syncing..." : "Sync Now"}
           </Button>
         </div>
       }
@@ -401,11 +602,13 @@ export default function AccountingDashboardPage() {
             label: "AR OUTSTANDING",
             value: formatCurrency(cashPosition.totalArOutstanding),
             context: "Receivables from customers",
+            href: "/accounting/invoices",
           },
           {
             label: "AP OUTSTANDING",
             value: formatCurrency(cashPosition.totalApOutstanding),
             context: "Payables to vendors",
+            href: "/accounting/bills",
           },
           {
             label: "NET POSITION",
@@ -419,9 +622,19 @@ export default function AccountingDashboardPage() {
             label: "RECEIVED THIS MONTH",
             value: formatCurrency(cashPosition.paymentsReceivedThisMonth),
             context: `${formatCurrency(cashPosition.checksIssuedThisMonth)} paid out`,
+            href: "/accounting/payments",
           },
         ]}
       />
+
+      {/* ── AR by Project Chart ── */}
+      <div className="grid gap-6 md:grid-cols-2">
+        <Card>
+          <CardContent className="p-5">
+            <ArByProjectChart projects={arByProject} />
+          </CardContent>
+        </Card>
+      </div>
 
       {/* ── Aging Charts ── */}
       <div className="grid gap-6 md:grid-cols-2">
@@ -431,6 +644,7 @@ export default function AccountingDashboardPage() {
               title="Accounts Receivable Aging"
               buckets={agingToArray(arAging)}
               icon={<TrendingUp className="h-4 w-4 text-green-600" />}
+              href="/accounting/invoices"
             />
           </CardContent>
         </Card>
@@ -441,6 +655,7 @@ export default function AccountingDashboardPage() {
               title="Accounts Payable Aging"
               buckets={agingToArray(apAging)}
               icon={<TrendingDown className="h-4 w-4 text-blue-600" />}
+              href="/accounting/bills"
             />
           </CardContent>
         </Card>
@@ -449,12 +664,17 @@ export default function AccountingDashboardPage() {
       {/* ── Revenue by Project ── */}
       <Card>
         <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-semibold">
-            Revenue by Project
-            <Badge variant="secondary" className="ml-2 text-xs font-normal">
-              Top {revenueByProject.length}
-            </Badge>
-          </CardTitle>
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-sm font-semibold">
+              Revenue by Project
+              <Badge variant="secondary" className="ml-2 text-xs font-normal">
+                Top {revenueByProject.length}
+              </Badge>
+            </CardTitle>
+            <Link href="/accounting/projects" className="flex items-center gap-1 text-xs text-primary hover:underline">
+              View all <ExternalLink className="h-3 w-3" />
+            </Link>
+          </div>
         </CardHeader>
         <CardContent className="px-5 pb-5">
           <ProjectTable projects={revenueByProject} />
@@ -474,6 +694,7 @@ export default function AccountingDashboardPage() {
                 date: p.date,
               }))}
               type="payment"
+              href="/accounting/payments"
             />
           </CardContent>
         </Card>
@@ -489,6 +710,7 @@ export default function AccountingDashboardPage() {
                 date: c.date,
               }))}
               type="check"
+              href="/accounting/checks"
             />
           </CardContent>
         </Card>

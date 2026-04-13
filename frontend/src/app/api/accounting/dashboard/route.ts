@@ -59,6 +59,7 @@ interface DashboardResponse {
   apAging: AgingResult;
   cashPosition: CashPositionSummary;
   revenueByProject: RevenueByProject[];
+  arByProject: RevenueByProject[];
   recentActivity: {
     payments: RecentPayment[];
     checks: RecentCheck[];
@@ -304,16 +305,10 @@ export async function GET() {
     });
   }
 
-  const topProjectCodes = [...invoicesByProject.entries()]
-    .sort((a, b) => b[1].totalInvoiced - a[1].totalInvoiced)
-    .slice(0, 15)
-    .map(([code]) => code);
-
-  const revenueByProject: RevenueByProject[] = topProjectCodes.map((code) => {
-    const inv = invoicesByProject.get(code)!;
+  // Build full list for chart (all projects with outstanding balance) + top 15 by invoiced for table
+  const allProjectEntries = [...invoicesByProject.entries()].map(([code, inv]) => {
     const projMeta = projectDescMap.get(code);
     const collected = collectedByProject.get(code) ?? 0;
-
     return {
       projectCode: code,
       description: projMeta?.description ?? null,
@@ -323,6 +318,10 @@ export async function GET() {
       outstandingBalance: Math.round(inv.totalBalance * 100) / 100,
     };
   });
+
+  const revenueByProject: RevenueByProject[] = allProjectEntries
+    .sort((a, b) => b.totalInvoiced - a.totalInvoiced)
+    .slice(0, 15);
 
   // ---------------------------------------------------------------------------
   // 5. Recent Activity
@@ -347,11 +346,17 @@ export async function GET() {
   // ---------------------------------------------------------------------------
   // Response
   // ---------------------------------------------------------------------------
+  // All projects with outstanding balance, sorted by outstanding desc — for bar chart
+  const arByProject = allProjectEntries
+    .filter((p) => p.outstandingBalance > 0)
+    .sort((a, b) => b.outstandingBalance - a.outstandingBalance);
+
   const response: DashboardResponse = {
     arAging,
     apAging,
     cashPosition,
     revenueByProject,
+    arByProject,
     recentActivity: {
       payments: recentPayments,
       checks: recentChecks,

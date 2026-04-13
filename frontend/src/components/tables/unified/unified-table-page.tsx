@@ -910,12 +910,14 @@ export function UnifiedTablePage<T>({
     />
   );
 
+  const isCompactDensity = table.density === "compact";
+
   const headerContent = (
     <PageHeader
       title={header.title}
-      description={header.description}
+      description={isCompactDensity ? undefined : header.description}
       variant={header.variant}
-      className="px-0 sm:px-0 lg:px-0"
+      className={cn("px-0 sm:px-0 lg:px-0", isCompactDensity && "[&>div]:pt-2 [&>div]:pb-2")}
       actions={
         toolbarInlineWithHeader ? (
           <div className="flex items-center gap-2">
@@ -935,7 +937,7 @@ export function UnifiedTablePage<T>({
     <>
       {header.title ? headerContent : null}
       {(tabs || !toolbarInlineWithHeader) && (
-        <div className={cn("pb-3 flex flex-col gap-2 lg:flex-row lg:items-end", containerPadding ? "pt-1 sm:pt-2" : "pt-0", tabs ? "lg:justify-between" : "lg:justify-end")}>
+        <div className={cn("flex flex-col gap-2 lg:flex-row lg:items-end", isCompactDensity ? "pb-1 pt-0" : cn("pb-3", containerPadding ? "pt-1 sm:pt-2" : "pt-0"), tabs ? "lg:justify-between" : "lg:justify-end")}>
           {tabs && <PageTabs tabs={tabs} variant="inline" className="lg:flex-1" />}
           {!toolbarInlineWithHeader ? tableToolbar : null}
         </div>
@@ -1014,7 +1016,7 @@ export function UnifiedTablePage<T>({
             ref={tableScrollRef}
             style={resolvedFeatures.enableVirtualization ? { maxHeight: 640, overflowY: "auto" } : undefined}
           >
-            <Table className={cn(table.density === "compact" && "compact-table")}>
+            <Table className={cn(table.density === "compact" && "[&_thead_tr]:h-9 [&_th]:py-1.5 [&_th]:px-3 [&_td]:py-1.5 [&_td]:px-3 [&_td]:text-xs")}>
               <TableHeader className={cn((table.stickyHeader !== false) && "sticky top-0 z-20 bg-primary/[2%]!")}>
                 {columnGroups && columnGroups.length > 0 && (
                   <TableRow className="border-b-0">
@@ -1144,7 +1146,7 @@ export function UnifiedTablePage<T>({
                                   type="button"
                                   className={cn(
                                     "flex items-center gap-1.5 bg-transparent border-0 p-0 font-semibold cursor-pointer uppercase tracking-wide",
-                                    table.density === "compact" ? "text-[11px]" : "text-xs",
+                                    "text-xs",
                                     "text-foreground",
                                     headerAlignment === "left" ? "justify-start" : "justify-center",
                                   )}
@@ -1371,8 +1373,6 @@ export function UnifiedTablePage<T>({
                             setEditingValue(inlineEdits[cellKey] ?? column.editValue(item));
                           }}
                           className={cn(
-                            table.density === "compact" &&
-                              "!py-0 text-[10px] leading-none [&_*]:!text-[10px] [&_*]:!leading-none",
                             resolvedFeatures.enableInlineEditing && column.editable && column.editValue
                               ? "cursor-text hover:bg-muted/60 transition-colors"
                               : "",

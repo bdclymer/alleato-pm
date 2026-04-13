@@ -855,7 +855,54 @@ export async function syncAllMirrorEntities(
     results.push(...tierResults);
   }
 
+  // Post-sync enrichment: backfill customer_name on AR invoices from acumatica_customers
+  // (Acumatica's Invoice entity doesn't return CustomerName, only Customer ID)
+  await enrichInvoiceCustomerNames(db);
+
   return results;
+}
+
+/**
+ * Backfill customer_name on AR invoices by joining against acumatica_customers.
+ * Only updates rows where customer_name is null.
+ */
+async function enrichInvoiceCustomerNames(db: SupabaseClient): Promise<void> {
+  try {
+    const { data: customers } = await db
+      .from("acumatica_customers")
+      .select("customer_id, customer_name");
+
+    if (!customers?.length) return;
+
+    const nameMap = new Map<string, string>();
+    for (const c of customers) {
+      if (c.customer_id && c.customer_name) {
+        nameMap.set(c.customer_id, c.customer_name);
+      }
+    }
+
+    const { data: nullNameInvoices } = await db
+      .from("acumatica_ar_invoices")
+      .select("id, customer")
+      .is("customer_name", null);
+
+    if (!nullNameInvoices?.length) return;
+
+    let updated = 0;
+    for (const inv of nullNameInvoices) {
+      const name = nameMap.get(inv.customer);
+      if (name) {
+        await db.from("acumatica_ar_invoices").update({ customer_name: name }).eq("id", inv.id);
+        updated++;
+      }
+    }
+
+    if (updated > 0) {
+      console.log(`[mirror-sync] Enriched ${updated} invoice(s) with customer names`);
+    }
+  } catch (err) {
+    console.error("[mirror-sync] Failed to enrich invoice customer names:", err);
+  }
 }
 
 // ---------------------------------------------------------------------------

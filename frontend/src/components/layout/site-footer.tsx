@@ -101,7 +101,7 @@ function AdminDropdown() {
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-border/50">
+    <footer className="mt-auto border-t border-border/50">
       <div className="flex flex-col items-center gap-3 px-4 py-3 sm:flex-row sm:justify-between sm:px-6 lg:px-8">
         <nav className="flex flex-wrap items-center gap-x-4 gap-y-1">
           <AdminDropdown />
