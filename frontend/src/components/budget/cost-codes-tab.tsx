@@ -650,14 +650,6 @@ export function CostCodesTab({ projectId }: CostCodesTabProps) {
   }, [grouped, searchQuery]);
 
   // Count of unique codes selected (have at least one type)
-  const selectedCodeCount = useMemo(() => {
-    const codeIds = new Set<string>();
-    for (const key of selectedSet) {
-      const [codeId] = key.split("::") as [string, string];
-      codeIds.add(codeId);
-    }
-    return codeIds.size;
-  }, [selectedSet]);
 
   const isLoading = loadingCodes || loadingTypes || loadingProject;
 
@@ -744,12 +736,7 @@ export function CostCodesTab({ projectId }: CostCodesTabProps) {
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList>
-          <TabsTrigger value="selected">
-            Selected
-            <Badge variant="secondary" className="ml-1.5 text-xs px-1.5 py-0">
-              {selectedCodeCount}
-            </Badge>
-          </TabsTrigger>
+          <TabsTrigger value="selected">Selected</TabsTrigger>
           <TabsTrigger value="all">All</TabsTrigger>
         </TabsList>
 
