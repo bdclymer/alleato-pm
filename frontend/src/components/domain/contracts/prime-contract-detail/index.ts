@@ -1,5 +1,6 @@
 export { PrimeContractChangeEventsTab } from "./PrimeContractChangeEventsTab";
 export { PrimeContractChangeOrdersTab } from "./PrimeContractChangeOrdersTab";
+export { PrimeContractPcosSection } from "./PrimeContractPcosSection";
 export { PrimeContractCommitmentsTab } from "./PrimeContractCommitmentsTab";
 export { PrimeContractInvoicesTab } from "./PrimeContractInvoicesTab";
 export { PrimeContractPaymentsTab } from "./PrimeContractPaymentsTab";

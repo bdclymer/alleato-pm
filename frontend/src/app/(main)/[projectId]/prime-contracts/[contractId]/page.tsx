@@ -48,6 +48,7 @@ import { ContractForm } from "@/components/domain/contracts";
 import {
   PrimeContractChangeEventsTab,
   PrimeContractChangeOrdersTab,
+  PrimeContractPcosSection,
   PrimeContractCommitmentsTab,
   PrimeContractInvoicesTab,
   PrimeContractPaymentsTab,
@@ -891,12 +892,19 @@ export default function ProjectContractDetailPage() {
         )}
 
         {activeTab === "change-orders" && (
-          <PrimeContractChangeOrdersTab
-            projectId={projectId} contractId={contractId} changeOrders={changeOrders} changeOrdersLoading={changeOrdersLoading}
-            setChangeOrders={setChangeOrders} formatCurrency={formatCurrency}
-            onShowNewCoDialog={() => setShowNewCoDialog(true)} onStartEditCo={handleStartEditCo}
-            onSetDeletingCo={setDeletingCo} onSetRejectingCoId={setRejectingCoId} onShowRejectCoDialog={() => setShowRejectCoDialog(true)}
-          />
+          <div className="space-y-10">
+            <PrimeContractPcosSection
+              projectId={projectId}
+              contractId={contractId}
+              formatCurrency={formatCurrency}
+            />
+            <PrimeContractChangeOrdersTab
+              projectId={projectId} contractId={contractId} changeOrders={changeOrders} changeOrdersLoading={changeOrdersLoading}
+              setChangeOrders={setChangeOrders} formatCurrency={formatCurrency}
+              onShowNewCoDialog={() => setShowNewCoDialog(true)} onStartEditCo={handleStartEditCo}
+              onSetDeletingCo={setDeletingCo} onSetRejectingCoId={setRejectingCoId} onShowRejectCoDialog={() => setShowRejectCoDialog(true)}
+            />
+          </div>
         )}
 
         {activeTab === "commitments" && (
