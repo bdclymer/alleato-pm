@@ -40,19 +40,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Fetch approvals with approver details
+    // Fetch approvals
     const { data, error } = await supabase
       .from("change_event_approvals")
-      .select(
-        `
-        *,
-        approver:approver_id (
-          id,
-          email,
-          full_name
-        )
-      `,
-      )
+      .select("*")
       .eq("change_event_id", changeEventId)
       .order("created_at", { ascending: false });
 
@@ -123,16 +114,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         approval_status: "pending",
         comments: comments || null,
       })
-      .select(
-        `
-        *,
-        approver:approver_id (
-          id,
-          email,
-          full_name
-        )
-      `,
-      )
+      .select("*")
       .single();
 
     if (error) {
@@ -218,16 +200,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       })
       .eq("id", approval_id)
       .eq("change_event_id", changeEventId)
-      .select(
-        `
-        *,
-        approver:approver_id (
-          id,
-          email,
-          full_name
-        )
-      `,
-      )
+      .select("*")
       .single();
 
     if (error) {

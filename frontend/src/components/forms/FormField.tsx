@@ -53,7 +53,7 @@ export function FormField({
         <div className="mt-1">
           {children}
           {hint && !error && <p className="mt-2 text-sm text-muted-foreground">{hint}</p>}
-          {error && <p className="mt-2 text-sm text-destructive">{error}</p>}
+          {error && <p className="mt-2 text-sm text-destructive" data-field-error="">{error}</p>}
         </div>
       </div>
     </FormFieldContext.Provider>

@@ -64,7 +64,16 @@ export function ChangeEventForm({
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!validate()) return;
+    if (!validate()) {
+      // Scroll to the first visible field error so it's not hidden below the fold
+      requestAnimationFrame(() => {
+        const firstError = document.querySelector<HTMLElement>("[data-field-error]");
+        if (firstError) {
+          firstError.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+      });
+      return;
+    }
     await onSubmit(formData);
   };
 

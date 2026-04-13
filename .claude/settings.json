@@ -82,7 +82,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "if echo \"$TOOL_INPUT\" | grep -q 'supabase/migrations'; then echo '⚠️ Migration file changed — run `npm run db:types` to regenerate database types'; fi"
+            "command": "if echo \"$TOOL_INPUT\" | grep -q 'supabase/migrations'; then echo '\u26a0\ufe0f Migration file changed \u2014 run `npm run db:types` to regenerate database types'; fi"
           }
         ]
       },
@@ -92,6 +92,42 @@
           {
             "type": "command",
             "command": "HOOK=\"${CLAUDE_PROJECT_DIR:-$PWD}/.claude/hooks/verify-feature-gate.py\"; [ -f \"$HOOK\" ] && CLAUDE_HOOK_EVENT=PostToolUse echo \"$TOOL_INPUT\" | CLAUDE_HOOK_EVENT=PostToolUse python3 \"$HOOK\" || exit 0"
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --directory claude-memory-compiler-main python hooks/session-start.py",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --directory claude-memory-compiler-main python hooks/pre-compact.py",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "uv run --directory claude-memory-compiler-main python hooks/session-end.py",
+            "timeout": 10
           }
         ]
       }

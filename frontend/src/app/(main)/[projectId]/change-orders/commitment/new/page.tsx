@@ -110,6 +110,7 @@ export default function NewCommitmentCOPage() {
         .from("commitments_unified")
         .select("id, contract_number, title")
         .eq("project_id", Number(projectId))
+        .is("deleted_at", null)
         .order("contract_number");
       if (data) setCommitments(data.filter((d) => d.id != null) as CommitmentOption[]);
     };
@@ -120,11 +121,12 @@ export default function NewCommitmentCOPage() {
     setIsSubmitting(true);
     try {
       const res = await fetch(
-        `/api/commitments/${data.contract_id}/change-orders`,
+        `/api/projects/${projectId}/commitment-change-orders`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            contract_id: data.contract_id,
             title: data.title,
             change_order_number: data.change_order_number,
             description: data.description || null,

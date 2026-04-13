@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { toPng } from "html-to-image";
 import { usePathname } from "next/navigation";
 import { Camera, ImagePlus, ListFilter, RefreshCw, Sparkles, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
@@ -91,6 +90,7 @@ async function captureTargetScreenshot(target: HTMLElement) {
   });
 
   try {
+    const { toPng } = await import("html-to-image");
     const dataUrl = await toPng(captureRoot, {
       backgroundColor: "#ffffff",
       pixelRatio: Math.min(window.devicePixelRatio || 1, 2),

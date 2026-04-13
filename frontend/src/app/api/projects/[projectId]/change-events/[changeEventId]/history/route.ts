@@ -52,8 +52,7 @@ export async function GET(
       .from('change_event_history')
       .select(
         `
-        *,
-        user:users(id, email)
+        *
         `,
         { count: 'exact' }
       )
@@ -73,7 +72,7 @@ export async function GET(
       fieldName: formatFieldName(entry.field_name),
       oldValue: formatFieldValue(entry.field_name, entry.old_value),
       newValue: formatFieldValue(entry.field_name, entry.new_value),
-      changedBy: entry.user,
+      changedBy: entry.changed_by,
       changedAt: entry.changed_at,
       description: generateChangeDescription(entry),
     }));

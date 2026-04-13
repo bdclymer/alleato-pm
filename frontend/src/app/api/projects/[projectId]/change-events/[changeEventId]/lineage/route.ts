@@ -27,7 +27,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 
     const { data: links, error: linksError } = await supabase
       .from("change_event_pco_links")
-      .select("pco_id, pco_type, created_at")
+      .select("pco_id, pco_type, linked_at")
       .eq("change_event_id", changeEventId);
 
     if (linksError) return apiErrorResponse(linksError);
@@ -44,7 +44,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 
     const linkedAtMap = new Map<string, string | null>();
     for (const link of links) {
-      linkedAtMap.set(`${link.pco_type}:${link.pco_id}`, link.created_at);
+      linkedAtMap.set(`${link.pco_type}:${link.pco_id}`, link.linked_at);
     }
 
     const { data: primePcos, error: primePcosError } = primePcoIds.length
