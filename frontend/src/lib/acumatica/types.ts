@@ -228,6 +228,7 @@ export interface RawInvoice {
   Customer?: AcuField<string>;
   CustomerName?: AcuField<string>;
   CustomerRef?: AcuField<string>;
+  Project?: AcuField<string>;
   Date: AcuField<string>;
   DueDate?: AcuField<string>;
   FinancialPeriod?: AcuField<string>;
@@ -264,6 +265,7 @@ export interface FlatInvoice {
   Customer?: string;
   CustomerName?: string;
   CustomerRef?: string;
+  Project?: string;
   Date: string;
   DueDate?: string;
   FinancialPeriod?: string;

@@ -259,7 +259,7 @@ const arInvoiceConfig: EntityConfig<FlatInvoice> = {
     post_period: aStr(r.FinancialPeriod),
     customer: aStr(r.Customer),
     customer_name: aStr(r.CustomerName),
-    project: null, // not available on FlatInvoice header — line-level resolution only
+    project: aStr(r.Project),
     description: aStr(r.Description),
     amount: aNum(r.Amount),
     balance: aNum(r.Balance),

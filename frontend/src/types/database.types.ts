@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       __drizzle_migrations: {
@@ -51,6 +26,51 @@ export type Database = {
         Update: {
           created_at?: string | null
           hash?: string
+        }
+        Relationships: []
+      }
+      acumatica_accounts: {
+        Row: {
+          account_cd: string | null
+          account_id: string
+          active: boolean | null
+          acumatica_sync_at: string | null
+          created_at: string
+          currency_id: string | null
+          description: string | null
+          external_key: string
+          id: number
+          last_modified_at: string | null
+          type: string | null
+          updated_at: string
+        }
+        Insert: {
+          account_cd?: string | null
+          account_id: string
+          active?: boolean | null
+          acumatica_sync_at?: string | null
+          created_at?: string
+          currency_id?: string | null
+          description?: string | null
+          external_key: string
+          id?: number
+          last_modified_at?: string | null
+          type?: string | null
+          updated_at?: string
+        }
+        Update: {
+          account_cd?: string | null
+          account_id?: string
+          active?: boolean | null
+          acumatica_sync_at?: string | null
+          created_at?: string
+          currency_id?: string | null
+          description?: string | null
+          external_key?: string
+          id?: number
+          last_modified_at?: string | null
+          type?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -349,16 +369,21 @@ export type Database = {
           billing_period_id: string | null
           company_id: string | null
           created_at: string | null
+          currency_id: string | null
           customer: string | null
+          customer_name: string | null
           date: string | null
           description: string | null
           due_date: string | null
+          external_key: string
           hold: boolean | null
           id: number
+          last_modified_at: string | null
           link_ar_account: string | null
           post_period: string | null
           project: string | null
           project_id: number | null
+          raw_payload: Json | null
           reference_nbr: string
           status: string | null
           tax_total: number | null
@@ -373,16 +398,21 @@ export type Database = {
           billing_period_id?: string | null
           company_id?: string | null
           created_at?: string | null
+          currency_id?: string | null
           customer?: string | null
+          customer_name?: string | null
           date?: string | null
           description?: string | null
           due_date?: string | null
+          external_key: string
           hold?: boolean | null
           id?: number
+          last_modified_at?: string | null
           link_ar_account?: string | null
           post_period?: string | null
           project?: string | null
           project_id?: number | null
+          raw_payload?: Json | null
           reference_nbr: string
           status?: string | null
           tax_total?: number | null
@@ -397,16 +427,21 @@ export type Database = {
           billing_period_id?: string | null
           company_id?: string | null
           created_at?: string | null
+          currency_id?: string | null
           customer?: string | null
+          customer_name?: string | null
           date?: string | null
           description?: string | null
           due_date?: string | null
+          external_key?: string
           hold?: boolean | null
           id?: number
+          last_modified_at?: string | null
           link_ar_account?: string | null
           post_period?: string | null
           project?: string | null
           project_id?: number | null
+          raw_payload?: Json | null
           reference_nbr?: string
           status?: string | null
           tax_total?: number | null
@@ -629,7 +664,9 @@ export type Database = {
         Row: {
           acumatica_sync_at: string | null
           application_date: string | null
+          applied_to_documents: number | null
           cash_account: string | null
+          company_id: string | null
           created_at: string
           currency_id: string | null
           description: string | null
@@ -650,7 +687,9 @@ export type Database = {
         Insert: {
           acumatica_sync_at?: string | null
           application_date?: string | null
+          applied_to_documents?: number | null
           cash_account?: string | null
+          company_id?: string | null
           created_at?: string
           currency_id?: string | null
           description?: string | null
@@ -671,7 +710,9 @@ export type Database = {
         Update: {
           acumatica_sync_at?: string | null
           application_date?: string | null
+          applied_to_documents?: number | null
           cash_account?: string | null
+          company_id?: string | null
           created_at?: string
           currency_id?: string | null
           description?: string | null
@@ -688,6 +729,68 @@ export type Database = {
           updated_at?: string
           vendor_id?: string | null
           vendor_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acumatica_checks_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      acumatica_customers: {
+        Row: {
+          acumatica_sync_at: string | null
+          created_at: string
+          currency_id: string | null
+          customer_id: string
+          customer_name: string
+          email: string | null
+          external_key: string
+          id: number
+          last_modified_at: string | null
+          phone: string | null
+          raw_payload: Json | null
+          status: string | null
+          tax_zone: string | null
+          terms: string | null
+          updated_at: string
+        }
+        Insert: {
+          acumatica_sync_at?: string | null
+          created_at?: string
+          currency_id?: string | null
+          customer_id: string
+          customer_name: string
+          email?: string | null
+          external_key: string
+          id?: number
+          last_modified_at?: string | null
+          phone?: string | null
+          raw_payload?: Json | null
+          status?: string | null
+          tax_zone?: string | null
+          terms?: string | null
+          updated_at?: string
+        }
+        Update: {
+          acumatica_sync_at?: string | null
+          created_at?: string
+          currency_id?: string | null
+          customer_id?: string
+          customer_name?: string
+          email?: string | null
+          external_key?: string
+          id?: number
+          last_modified_at?: string | null
+          phone?: string | null
+          raw_payload?: Json | null
+          status?: string | null
+          tax_zone?: string | null
+          terms?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -804,6 +907,51 @@ export type Database = {
           },
         ]
       }
+      acumatica_payment_applications: {
+        Row: {
+          amount_applied: number | null
+          balance: number | null
+          created_at: string | null
+          customer_id: string | null
+          id: number
+          invoice_reference_nbr: string
+          invoice_type: string | null
+          payment_external_key: string
+          payment_reference_nbr: string
+          payment_type: string | null
+          resolution_method: string | null
+          resolved_project_code: string | null
+        }
+        Insert: {
+          amount_applied?: number | null
+          balance?: number | null
+          created_at?: string | null
+          customer_id?: string | null
+          id?: number
+          invoice_reference_nbr: string
+          invoice_type?: string | null
+          payment_external_key: string
+          payment_reference_nbr: string
+          payment_type?: string | null
+          resolution_method?: string | null
+          resolved_project_code?: string | null
+        }
+        Update: {
+          amount_applied?: number | null
+          balance?: number | null
+          created_at?: string | null
+          customer_id?: string | null
+          id?: number
+          invoice_reference_nbr?: string
+          invoice_type?: string | null
+          payment_external_key?: string
+          payment_reference_nbr?: string
+          payment_type?: string | null
+          resolution_method?: string | null
+          resolved_project_code?: string | null
+        }
+        Relationships: []
+      }
       acumatica_payments: {
         Row: {
           acumatica_sync_at: string | null
@@ -814,6 +962,7 @@ export type Database = {
           created_at: string
           currency_id: string | null
           customer_id: string | null
+          customer_name: string | null
           description: string | null
           document_type: string | null
           external_key: string
@@ -840,6 +989,7 @@ export type Database = {
           created_at?: string
           currency_id?: string | null
           customer_id?: string | null
+          customer_name?: string | null
           description?: string | null
           document_type?: string | null
           external_key: string
@@ -866,6 +1016,7 @@ export type Database = {
           created_at?: string
           currency_id?: string | null
           customer_id?: string | null
+          customer_name?: string | null
           description?: string | null
           document_type?: string | null
           external_key?: string
@@ -1107,6 +1258,167 @@ export type Database = {
           {
             foreignKeyName: "acumatica_project_budgets_project_id_fkey"
             columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "submittal_project_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      acumatica_project_tasks: {
+        Row: {
+          acumatica_sync_at: string | null
+          created_at: string
+          description: string | null
+          external_key: string
+          external_ref_nbr: string | null
+          id: number
+          is_default: boolean | null
+          last_modified_at: string | null
+          project_id: string
+          project_task_id: string
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          acumatica_sync_at?: string | null
+          created_at?: string
+          description?: string | null
+          external_key: string
+          external_ref_nbr?: string | null
+          id?: number
+          is_default?: boolean | null
+          last_modified_at?: string | null
+          project_id: string
+          project_task_id: string
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          acumatica_sync_at?: string | null
+          created_at?: string
+          description?: string | null
+          external_key?: string
+          external_ref_nbr?: string | null
+          id?: number
+          is_default?: boolean | null
+          last_modified_at?: string | null
+          project_id?: string
+          project_task_id?: string
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      acumatica_projects: {
+        Row: {
+          acumatica_sync_at: string | null
+          assets: number | null
+          created_at: string
+          customer: string | null
+          description: string | null
+          expenses: number | null
+          external_key: string
+          external_ref_nbr: string | null
+          hold: boolean | null
+          id: number
+          income: number | null
+          last_modified_at: string | null
+          liabilities: number | null
+          local_project_id: number | null
+          project_id: string
+          raw_payload: Json | null
+          status: string | null
+          template_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          acumatica_sync_at?: string | null
+          assets?: number | null
+          created_at?: string
+          customer?: string | null
+          description?: string | null
+          expenses?: number | null
+          external_key: string
+          external_ref_nbr?: string | null
+          hold?: boolean | null
+          id?: number
+          income?: number | null
+          last_modified_at?: string | null
+          liabilities?: number | null
+          local_project_id?: number | null
+          project_id: string
+          raw_payload?: Json | null
+          status?: string | null
+          template_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          acumatica_sync_at?: string | null
+          assets?: number | null
+          created_at?: string
+          customer?: string | null
+          description?: string | null
+          expenses?: number | null
+          external_key?: string
+          external_ref_nbr?: string | null
+          hold?: boolean | null
+          id?: number
+          income?: number | null
+          last_modified_at?: string | null
+          liabilities?: number | null
+          local_project_id?: number | null
+          project_id?: string
+          raw_payload?: Json | null
+          status?: string | null
+          template_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acumatica_projects_local_project_id_fkey"
+            columns: ["local_project_id"]
+            isOneToOne: false
+            referencedRelation: "project_activity_view"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "acumatica_projects_local_project_id_fkey"
+            columns: ["local_project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_projects_local_project_id_fkey"
+            columns: ["local_project_id"]
+            isOneToOne: false
+            referencedRelation: "project_health_dashboard_no_summary"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_projects_local_project_id_fkey"
+            columns: ["local_project_id"]
+            isOneToOne: false
+            referencedRelation: "project_issue_summary"
+            referencedColumns: ["project_id"]
+          },
+          {
+            foreignKeyName: "acumatica_projects_local_project_id_fkey"
+            columns: ["local_project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_projects_local_project_id_fkey"
+            columns: ["local_project_id"]
+            isOneToOne: false
+            referencedRelation: "projects_with_counts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acumatica_projects_local_project_id_fkey"
+            columns: ["local_project_id"]
             isOneToOne: false
             referencedRelation: "submittal_project_dashboard"
             referencedColumns: ["id"]
@@ -26226,9 +26538,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       billing_period_status: ["open", "closed", "approved"],
