@@ -86,6 +86,7 @@ function extractTextFromParts(parts: UIMessage["parts"]): string {
 }
 
 export async function POST(request: Request) {
+  try {
   const user = await getApiRouteUser();
   if (!user) {
     return new Response("Unauthorized", { status: 401 });
@@ -268,4 +269,7 @@ export async function POST(request: Request) {
   after(() => runPostResponseTasks(sessionId, user.id));
 
   return createUIMessageStreamResponse({ stream });
+  } catch {
+    return new Response("Internal server error", { status: 500 });
+  }
 }

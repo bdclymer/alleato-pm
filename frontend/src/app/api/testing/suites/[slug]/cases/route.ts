@@ -10,6 +10,7 @@ export async function GET(
   req: Request,
   { params }: { params: Promise<{ slug: string }> }
 ) {
+  try {
   const { slug } = await params;
   const { searchParams } = new URL(req.url);
   const typeFilter = searchParams.get("type") ?? "scenario";
@@ -65,4 +66,7 @@ export async function GET(
     categories: categoryOrder,
     grouped,
   });
+  } catch {
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }

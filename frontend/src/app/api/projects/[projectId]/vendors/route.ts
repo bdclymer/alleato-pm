@@ -9,7 +9,8 @@ import { createClient } from "@/lib/supabase/server";
 export const GET = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/vendors#GET",
   async ({ request, params }) => {
-  const { projectId } = await params;
+  const { projectId: projectIdStr } = await params;
+  const projectId = parseInt(projectIdStr, 10);
   const supabase = await createClient();
 
   const { data, error } = await supabase

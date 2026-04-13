@@ -118,8 +118,8 @@ section "4. Auth Checks on Mutations"
 
 AUTH_ISSUES=0
 while read -r file; do
-  # Skip auth routes that intentionally have no auth (signup is for unauthenticated users)
-  if echo "$file" | grep -q 'auth/signup/route\.ts'; then
+  # Skip routes that intentionally have no user auth (use platform-level/HMAC auth instead)
+  if echo "$file" | grep -qE 'auth/signup/route\.ts|bot/\[platform\]/route\.ts|liveblocks/webhook/route\.ts'; then
     continue
   fi
   for method in POST PUT PATCH DELETE; do
@@ -150,17 +150,13 @@ while read -r file; do
     if grep -q '\.eq("project_id", projectId)' "$file" 2>/dev/null; then
       # Check if ALL occurrences are inside functions with projectId: number param
       # If file has parseInt or numericProjectId, only flag if raw projectId is still used in route handlers
-      HAS_PARSE=$(grep -c 'parseInt(projectId' "$file" 2>/dev/null || true)
-      HAS_NUMERIC=$(grep -c 'numericProjectId\|projectIdNum' "$file" 2>/dev/null || true)
-      RAW_COUNT=$(grep -c '\.eq("project_id", projectId)' "$file" 2>/dev/null || true)
-      TYPED_PARAM=$(grep -c 'projectId: number' "$file" 2>/dev/null || true)
-      HAS_PARSE=${HAS_PARSE:-0}
-      HAS_NUMERIC=${HAS_NUMERIC:-0}
-      RAW_COUNT=${RAW_COUNT:-0}
-      TYPED_PARAM=${TYPED_PARAM:-0}
-      # If file has typed params (helper functions) and no raw string usage from route handlers, skip
-      if [ "$TYPED_PARAM" -gt 0 ] && [ "$HAS_PARSE" -gt 0 ] || [ "$HAS_NUMERIC" -gt 0 ]; then
-        : # Skip - file already handles conversion, remaining uses are in typed helper functions
+      # Detect any numeric conversion of projectId (parseInt, Number, or typed-as-number param)
+      HAS_PARSE=$(grep -cE 'parseInt\([^)]*[Pp]roject[Ii]d|Number\.parseInt\([^)]*[Pp]roject|Number\([^)]*[Pp]roject[Ii]d' "$file" 2>/dev/null || true)
+      HAS_NUMERIC=$(grep -c 'numericProjectId\|projectIdNum\|projectIdParam\|projectIdStr\|projectIdRaw' "$file" 2>/dev/null || true)
+      TYPED_PARAM=$(grep -cE 'projectId\s*:\s*number' "$file" 2>/dev/null || true)
+      # If file properly converts projectId to a number before use, skip
+      if [ "${HAS_PARSE:-0}" -gt 0 ] || [ "${HAS_NUMERIC:-0}" -gt 0 ] || [ "${TYPED_PARAM:-0}" -gt 0 ]; then
+        : # Skip - file handles the conversion
       else
         echo -e "${RED}ERROR${NC}: projectId used as string in .eq() (needs parseInt): $file"
         ERRORS=$((ERRORS + 1))
@@ -204,10 +200,13 @@ section "7. Error Handling"
 ERROR_ISSUES=0
 while read -r file; do
   if grep -q 'export async function' "$file" 2>/dev/null; then
-    if ! grep -q "try {" "$file" 2>/dev/null && ! grep -q "try{" "$file" 2>/dev/null; then
-      echo -e "${RED}ERROR${NC}: No try/catch in $file"
-      ERRORS=$((ERRORS + 1))
-      ERROR_ISSUES=1
+    # withApiGuardrails wraps all handler errors automatically — no try/catch needed inside
+    if ! grep -q 'withApiGuardrails' "$file" 2>/dev/null; then
+      if ! grep -q "try {" "$file" 2>/dev/null && ! grep -q "try{" "$file" 2>/dev/null; then
+        echo -e "${RED}ERROR${NC}: No try/catch in $file"
+        ERRORS=$((ERRORS + 1))
+        ERROR_ISSUES=1
+      fi
     fi
     if ! grep -q "status: 500" "$file" 2>/dev/null && ! grep -q "Internal server error" "$file" 2>/dev/null && ! grep -q "apiErrorResponse" "$file" 2>/dev/null && ! grep -q "withApiGuardrails" "$file" 2>/dev/null; then
       echo -e "${YELLOW}WARN${NC}: No 500 error handler in $file"

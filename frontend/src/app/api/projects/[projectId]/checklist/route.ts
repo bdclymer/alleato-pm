@@ -7,7 +7,8 @@ export const GET = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/checklist#GET",
   async ({ request, params }) => {
   
-    const { projectId } = await params;
+    const { projectId: projectIdStr } = await params;
+    const projectId = parseInt(projectIdStr, 10);
     const supabase = await createClient();
 
     // Check each feature for data existence
