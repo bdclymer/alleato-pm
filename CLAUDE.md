@@ -272,6 +272,54 @@ const { succeeded, failed, firstError } = summarizeBulkResults(results);
 
 **ESLint enforces this:** `require-api-client` rule warns on raw `fetch("/api/...")` calls.
 
+### 14. Bug Fix Completion Gate
+
+**A bug fix is NOT complete without at least one of the following:**
+- A test (unit, integration, or E2E) that would have caught the bug
+- A validation rule that prevents the bad input
+- A smoke test entry covering the broken endpoint
+- A monitor or alert wired to the failure class
+- An improvement to the shared wrapper that handles the error pattern
+
+**After every fix, answer these three questions:**
+1. What would have caught this before it reached production?
+2. What guardrail am I adding now so this class of bug cannot recur?
+3. Does this reveal a pattern that needs a system-level fix, not just a local patch?
+
+If you cannot answer them, the fix is incomplete.
+
+### 15. Regression Test Gate
+
+**Any bug that escaped to production must leave a permanent scar in the codebase.**
+
+Options in priority order:
+1. Add an entry to `scripts/api-smoke-contracts.mjs` if it was an endpoint failure
+2. Add a Playwright E2E test for the broken user flow
+3. Add a unit test for the broken logic
+4. Add a Zod validation that rejects the bad input
+
+**The regression test must fail before the fix and pass after it.**
+A fix with no regression test is a fix that will recur.
+
+### 16. External Calls Gate — Use fetchWithGuardrails
+
+**NEVER use raw `fetch()` in API routes for calls to external services** (Render backend, OpenAI, Supabase admin, webhooks). Use `fetchWithGuardrails` from `@/lib/fetch-with-guardrails`:
+
+```ts
+import { fetchWithGuardrails } from "@/lib/fetch-with-guardrails";
+
+const data = await fetchWithGuardrails("https://backend.onrender.com/api/...", {
+  method: "POST",
+  body: JSON.stringify(payload),
+  requestId,           // propagates x-request-id header
+  timeoutMs: 10_000,   // default; 30_000 for AI calls
+  retries: 2,          // default; 0 for non-idempotent writes
+  where: "route/name", // for structured error logging
+});
+```
+
+**Why:** Raw `fetch` to external services has no timeout (can hang forever), no retry, no structured error output, and loses the request ID chain. `fetchWithGuardrails` enforces all four.
+
 ---
 
 ## Behavioral Rules
