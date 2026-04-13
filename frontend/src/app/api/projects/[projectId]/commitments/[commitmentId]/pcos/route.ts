@@ -20,6 +20,17 @@ const PcoCreateSchema = z.object({
   description: z.string().optional(),
   change_reason: z.string().optional(),
   status: PcoStatusSchema.optional(),
+  revision: z.number().int().optional(),
+  is_private: z.boolean().optional(),
+  executed: z.boolean().optional(),
+  signed_co_received_date: z.string().nullable().optional(),
+  requested_by: z.string().nullable().optional(),
+  location: z.string().nullable().optional(),
+  schedule_impact: z.number().int().nullable().optional(),
+  field_change: z.boolean().optional(),
+  reference: z.string().nullable().optional(),
+  paid_in_full: z.boolean().optional(),
+  due_date: z.string().nullable().optional(),
 });
 
 const API_TO_DB_STATUS: Record<PcoStatus, "draft" | "pending" | "approved" | "void"> = {
@@ -178,7 +189,19 @@ export const POST = withApiGuardrails<Promise<{ projectId: string; commitmentId:
         title: body.title.trim(),
         total_amount: body.amount ?? 0,
         description: body.description ?? null,
+        change_reason: body.change_reason ?? null,
         status: API_TO_DB_STATUS[body.status ?? "open"],
+        revision: body.revision ?? 0,
+        is_private: body.is_private ?? false,
+        executed: body.executed ?? false,
+        signed_co_received_date: body.signed_co_received_date ?? null,
+        requested_by: body.requested_by ?? null,
+        location: body.location ?? null,
+        schedule_impact: body.schedule_impact ?? null,
+        field_change: body.field_change ?? false,
+        reference: body.reference ?? null,
+        paid_in_full: body.paid_in_full ?? false,
+        due_date: body.due_date ?? null,
         created_by: user?.id ?? null,
       })
       .select("*")

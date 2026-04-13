@@ -1,3 +1,5 @@
+Using workdir /Users/meganharrison/Documents/alleato-pm
+Initialising login role...
 export type Json =
   | string
   | number
@@ -11,6 +13,31 @@ export type Database = {
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "13.0.4"
+  }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -5493,19 +5520,30 @@ export type Database = {
         Row: {
           approved_at: string | null
           approved_by: string | null
+          change_reason: string | null
           commitment_id: string
           commitment_type: string
+          contract_company: string | null
           created_at: string
           created_by: string | null
           description: string | null
           designated_reviewer_id: string | null
           due_date: string | null
+          executed: boolean | null
+          field_change: boolean | null
           id: string
+          is_private: boolean | null
+          location: string | null
+          paid_in_full: boolean | null
           pco_number: string | null
           project_id: number
           promoted_at: string | null
           promoted_to_co_id: string | null
+          reference: string | null
+          requested_by: string | null
+          revision: number | null
           schedule_impact: number | null
+          signed_co_received_date: string | null
           status: string
           title: string
           total_amount: number | null
@@ -5515,19 +5553,30 @@ export type Database = {
         Insert: {
           approved_at?: string | null
           approved_by?: string | null
+          change_reason?: string | null
           commitment_id: string
           commitment_type: string
+          contract_company?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           designated_reviewer_id?: string | null
           due_date?: string | null
+          executed?: boolean | null
+          field_change?: boolean | null
           id?: string
+          is_private?: boolean | null
+          location?: string | null
+          paid_in_full?: boolean | null
           pco_number?: string | null
           project_id: number
           promoted_at?: string | null
           promoted_to_co_id?: string | null
+          reference?: string | null
+          requested_by?: string | null
+          revision?: number | null
           schedule_impact?: number | null
+          signed_co_received_date?: string | null
           status?: string
           title: string
           total_amount?: number | null
@@ -5537,19 +5586,30 @@ export type Database = {
         Update: {
           approved_at?: string | null
           approved_by?: string | null
+          change_reason?: string | null
           commitment_id?: string
           commitment_type?: string
+          contract_company?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           designated_reviewer_id?: string | null
           due_date?: string | null
+          executed?: boolean | null
+          field_change?: boolean | null
           id?: string
+          is_private?: boolean | null
+          location?: string | null
+          paid_in_full?: boolean | null
           pco_number?: string | null
           project_id?: number
           promoted_at?: string | null
           promoted_to_co_id?: string | null
+          reference?: string | null
+          requested_by?: string | null
+          revision?: number | null
           schedule_impact?: number | null
+          signed_co_received_date?: string | null
           status?: string
           title?: string
           total_amount?: number | null
@@ -26168,6 +26228,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       billing_period_status: ["open", "closed", "approved"],

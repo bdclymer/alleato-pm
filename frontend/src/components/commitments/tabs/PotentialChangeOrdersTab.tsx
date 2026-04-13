@@ -1,6 +1,7 @@
 'use client'
 
 import { memo, useCallback, useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -233,6 +234,7 @@ export const PotentialChangeOrdersTab = memo(function PotentialChangeOrdersTab({
   projectId,
   isReadOnly = false,
 }: PotentialChangeOrdersTabProps) {
+  const router = useRouter()
   const [pcos, setPcos] = useState<CommitmentPco[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -374,24 +376,16 @@ export const PotentialChangeOrdersTab = memo(function PotentialChangeOrdersTab({
         title="Potential Change Orders"
         count={pcos.length}
         action={
-          !isReadOnly && !showCreateForm
+          !isReadOnly
             ? {
                 label: '+ Add PCO',
-                onClick: () => setShowCreateForm(true),
+                onClick: () => router.push(`/${projectId}/commitments/${commitmentId}/pcos/new`),
               }
             : undefined
         }
       />
 
-      {showCreateForm && (
-        <PcoForm
-          onSave={handleCreate}
-          onCancel={() => setShowCreateForm(false)}
-          isSaving={isSaving}
-        />
-      )}
-
-      {pcos.length === 0 && !showCreateForm ? (
+      {pcos.length === 0 ? (
         <EmptyState
           icon={<Plus className="h-5 w-5" />}
           title="No potential change orders yet"
@@ -400,7 +394,7 @@ export const PotentialChangeOrdersTab = memo(function PotentialChangeOrdersTab({
             !isReadOnly
               ? {
                   label: 'Add PCO',
-                  onClick: () => setShowCreateForm(true),
+                  onClick: () => router.push(`/${projectId}/commitments/${commitmentId}/pcos/new`),
                 }
               : undefined
           }
