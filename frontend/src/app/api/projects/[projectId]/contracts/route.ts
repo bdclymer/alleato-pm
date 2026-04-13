@@ -23,8 +23,14 @@ export const GET = withApiGuardrails(
     const supabase = await createClient();
     const { searchParams } = new URL(request.url);
 
-    // Build query with optional filters
-    let query = supabase
+    const projectIdNum = parseInt(projectId, 10);
+
+    // Optional filters
+    const status = searchParams.get("status");
+    const search = searchParams.get("search");
+
+    // Build contract query with optional filters
+    let contractQuery = supabase
       .from("prime_contracts")
       .select(
         `
@@ -34,104 +40,59 @@ export const GET = withApiGuardrails(
         contract_company:companies!prime_contracts_contract_company_id_fkey(id, name)
       `,
       )
-      .eq("project_id", parseInt(projectId, 10))
+      .eq("project_id", projectIdNum)
       .order("created_at", { ascending: false });
 
-    // Optional filters
-    const status = searchParams.get("status");
-    const search = searchParams.get("search");
-
     if (status) {
-      query = query.eq("status", status);
+      contractQuery = contractQuery.eq("status", status);
     }
 
     if (search) {
-      query = query.or(
+      // Use OR with ilike — GIN trigram indexes (idx_prime_contracts_contract_number_trgm
+      // and idx_prime_contracts_title_trgm) make %term% patterns index-scannable.
+      contractQuery = contractQuery.or(
         `contract_number.ilike.%${search}%,title.ilike.%${search}%,description.ilike.%${search}%`,
       );
     }
 
-    const { data: contracts, error } = await query;
+    // Fetch contracts and financial summaries in parallel.
+    // prime_contract_financial_summary handles all aggregation in Postgres,
+    // eliminating 3 extra round-trips and JS aggregation over all rows.
+    const [contractsResult, financialResult] = await Promise.all([
+      contractQuery,
+      supabase
+        .from("prime_contract_financial_summary")
+        .select("contract_id, approved_change_orders, pending_change_orders, draft_change_orders, revised_contract_amount, invoiced_amount, payments_received, remaining_balance, percent_paid")
+        .eq("project_id", projectIdNum),
+    ]);
 
-    if (error) {
-      return apiErrorResponse(error);
+    if (contractsResult.error) {
+      return apiErrorResponse(contractsResult.error);
     }
 
-    // Aggregate financial data from contract_change_orders, payment applications, and payments
-    // NOTE: contract_financial_summary_mv uses the integer-PK contracts table — not prime_contracts (UUID)
-    const contractIds = (contracts || []).map((c) => c.id);
+    // Build a lookup map for O(1) merge
+    const financialByContractId = new Map(
+      (financialResult.data ?? []).map((f) => [f.contract_id, f]),
+    );
 
-    const coAggregates: Record<string, { approved: number; pending: number; draft: number }> = {};
-    const invoicedAggregates: Record<string, number> = {};
-    const paymentsAggregates: Record<string, number> = {};
-
-    if (contractIds.length > 0) {
-      const [coResult, invoiceResult, paymentResult] = await Promise.all([
-        supabase
-          .from("contract_change_orders")
-          .select("contract_id, amount, status")
-          .in("contract_id", contractIds),
-        supabase
-          .from("prime_contract_payment_applications")
-          .select("contract_id, amount, status")
-          .in("contract_id", contractIds),
-        supabase
-          .from("prime_contract_payments")
-          .select("contract_id, amount")
-          .in("contract_id", contractIds),
-      ]);
-
-      if (coResult.data) {
-        for (const co of coResult.data) {
-          if (!coAggregates[co.contract_id]) {
-            coAggregates[co.contract_id] = { approved: 0, pending: 0, draft: 0 };
-          }
-          const amount = co.amount ?? 0;
-          if (co.status === "approved") coAggregates[co.contract_id].approved += amount;
-          else if (co.status === "pending") coAggregates[co.contract_id].pending += amount;
-          else if (co.status === "draft") coAggregates[co.contract_id].draft += amount;
-        }
-      }
-
-      if (invoiceResult.data) {
-        for (const inv of invoiceResult.data) {
-          if (inv.status === "approved") {
-            invoicedAggregates[inv.contract_id] =
-              (invoicedAggregates[inv.contract_id] ?? 0) + (inv.amount ?? 0);
-          }
-        }
-      }
-
-      if (paymentResult.data) {
-        for (const pmt of paymentResult.data) {
-          paymentsAggregates[pmt.contract_id] =
-            (paymentsAggregates[pmt.contract_id] ?? 0) + (pmt.amount ?? 0);
-        }
-      }
-    }
-
-    // Merge contract data with calculated financial values
-    const enrichedContracts = (contracts || []).map((contract) => {
-      const agg = coAggregates[contract.id] ?? { approved: 0, pending: 0, draft: 0 };
-      const revisedValue = (contract.original_contract_value ?? 0) + agg.approved;
-      const invoicedAmount = invoicedAggregates[contract.id] ?? 0;
-      const paymentsReceived = paymentsAggregates[contract.id] ?? 0;
+    const enrichedContracts = (contractsResult.data ?? []).map((contract) => {
+      const fin = financialByContractId.get(contract.id);
+      const originalValue = contract.original_contract_value ?? 0;
       // Use contract_company as fallback when client_id is not set
-      const clientData = (contract as Record<string, unknown>).client ?? (contract as Record<string, unknown>).contract_company ?? null;
+      const clientData = (contract as Record<string, unknown>).client
+        ?? (contract as Record<string, unknown>).contract_company
+        ?? null;
       return {
         ...contract,
         client: clientData,
-        approved_change_orders: agg.approved,
-        pending_change_orders: agg.pending,
-        draft_change_orders: agg.draft,
-        revised_contract_value: revisedValue,
-        invoiced_amount: invoicedAmount,
-        payments_received: paymentsReceived,
-        remaining_balance: revisedValue - paymentsReceived,
-        percent_paid:
-          revisedValue > 0
-            ? Math.round((paymentsReceived / revisedValue) * 10000) / 100
-            : 0,
+        approved_change_orders: fin?.approved_change_orders ?? 0,
+        pending_change_orders: fin?.pending_change_orders ?? 0,
+        draft_change_orders: fin?.draft_change_orders ?? 0,
+        revised_contract_value: fin?.revised_contract_amount ?? originalValue,
+        invoiced_amount: fin?.invoiced_amount ?? 0,
+        payments_received: fin?.payments_received ?? 0,
+        remaining_balance: fin?.remaining_balance ?? originalValue,
+        percent_paid: fin?.percent_paid ?? 0,
       };
     });
 

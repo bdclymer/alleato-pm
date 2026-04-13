@@ -139,7 +139,7 @@ export function PunchItemFormDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {/* eslint-disable-next-line design-system/no-arbitrary-spacing */}
-      <DialogContent className="sm:max-w-2xl max-h-[85vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-3xl max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {mode === "create" ? "Create Punch Item" : "Edit Punch Item"}

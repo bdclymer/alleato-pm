@@ -18,6 +18,27 @@ const addStepSchema = z.object({
 });
 
 /**
+ * GET /api/projects/[projectId]/submittals/[submittalId]/workflow-steps
+ * Returns all workflow steps for a submittal, with their responses.
+ */
+export const GET = withApiGuardrails(
+  "projects/[projectId]/submittals/[submittalId]/workflow-steps#GET",
+  async ({ params }) => {
+    const { submittalId } = await params;
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+      .from("submittal_workflow_steps")
+      .select(`*, submittal_responses(*)`)
+      .eq("submittal_id", submittalId)
+      .order("step_order", { ascending: true });
+
+    if (error) return apiErrorResponse(error);
+    return NextResponse.json(data ?? []);
+  },
+);
+
+/**
  * POST /api/projects/[projectId]/submittals/[submittalId]/workflow-steps
  * Adds a new workflow step and creates a Pending response row for the user.
  */
@@ -37,7 +58,7 @@ export const POST = withApiGuardrails(
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/submittals/[submittalId]/workflow-steps#POST", message: "Authentication required." });
     }
 
-    const body = await req.json();
+    const body = await request.json();
     const { user_id, step_type } = addStepSchema.parse(body);
 
     // Determine next step_order

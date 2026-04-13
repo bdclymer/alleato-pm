@@ -27,7 +27,20 @@ const createNewSchema = z.object({
   prime_contract_id: z.string().uuid().optional(),
   commitment_id: z.string().uuid().optional(),
   commitment_type: z.enum(["subcontract", "purchase_order"]).optional(),
-  description: z.string().optional(),
+  description: z.string().optional().nullable(),
+  // Extended prime PCO fields
+  status: z.enum(["draft", "pending", "approved", "void"]).optional(),
+  change_reason: z.string().optional().nullable(),
+  revision: z.number().int().optional().nullable(),
+  is_private: z.boolean().optional(),
+  executed: z.boolean().optional(),
+  signed_co_received_date: z.string().optional().nullable(),
+  request_received_from: z.string().optional().nullable(),
+  location: z.string().optional().nullable(),
+  field_change: z.boolean().optional(),
+  reference: z.string().optional().nullable(),
+  paid_in_full: z.boolean().optional(),
+  promoted_to_co_id: z.number().int().optional().nullable(),
 });
 
 const bodySchema = z
@@ -155,7 +168,18 @@ export const POST = withApiGuardrails(
             pco_number: pcoNumber,
             title: create_new.title,
             description: create_new.description ?? null,
-            status: "draft",
+            status: create_new.status ?? "draft",
+            change_reason: create_new.change_reason ?? null,
+            revision: create_new.revision ?? null,
+            is_private: create_new.is_private ?? false,
+            executed: create_new.executed ?? false,
+            signed_co_received_date: create_new.signed_co_received_date ?? null,
+            request_received_from: create_new.request_received_from ?? null,
+            location: create_new.location ?? null,
+            field_change: create_new.field_change ?? false,
+            reference: create_new.reference ?? null,
+            paid_in_full: create_new.paid_in_full ?? false,
+            promoted_to_co_id: create_new.promoted_to_co_id ?? null,
             created_by: user.id,
           })
           .select()

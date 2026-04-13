@@ -405,24 +405,34 @@ export const GET = withApiGuardrails(
       }
     }
 
-    // Batch-fetch PCO links from change_event_related_items for all CEs on
-    // the current page. We look for `related_type = 'potential_change_order'`.
-    const { data: pcoLinks } = eventIds.length
-      ? await (supabase as any)
-          .from('change_event_related_items')
-          .select('change_event_id, related_number, related_title')
+    // Batch-fetch prime PCO links from change_event_pco_links, then join
+    // with prime_contract_pcos to get number + title. Two queries beat a
+    // polymorphic join since pco_id has no FK the PostgREST can follow.
+    const { data: rawPcoLinks } = eventIds.length
+      ? await supabase
+          .from('change_event_pco_links')
+          .select('change_event_id, pco_id')
           .in('change_event_id', eventIds)
-          .eq('related_type', 'potential_change_order')
-      : { data: [] as any[] }
+          .eq('pco_type', 'prime')
+      : { data: [] as Array<{ change_event_id: string; pco_id: string }> }
 
+    const primePcoIds = [...new Set((rawPcoLinks ?? []).map((l) => l.pco_id))]
+    const { data: primePcosData } = primePcoIds.length
+      ? await supabase
+          .from('prime_contract_pcos')
+          .select('id, pco_number, title')
+          .in('id', primePcoIds)
+      : { data: [] as Array<{ id: string; pco_number: string | null; title: string | null }> }
+
+    const pcoById = new Map((primePcosData ?? []).map((p) => [p.id, p]))
     const pcoMap = new Map<string, { number: string | null; title: string | null }>()
-    for (const link of pcoLinks || []) {
+    for (const link of rawPcoLinks ?? []) {
       const key = String(link.change_event_id)
-      // Keep the first (most recent insert) if a CE is linked to multiple PCOs
       if (!pcoMap.has(key)) {
+        const pco = pcoById.get(link.pco_id)
         pcoMap.set(key, {
-          number: link.related_number || null,
-          title: link.related_title || null,
+          number: pco?.pco_number ?? null,
+          title: pco?.title ?? null,
         })
       }
     }

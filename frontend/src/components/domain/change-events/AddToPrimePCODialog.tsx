@@ -17,6 +17,7 @@ import { StatusBadge } from "@/components/ds";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { FileText } from "lucide-react";
+import { apiFetch } from "@/lib/api-client";
 
 interface PrimeContract {
   id: string;
@@ -60,11 +61,7 @@ export function AddToPrimePCODialog({
     const fetchContracts = async () => {
       setIsLoadingContracts(true);
       try {
-        const res = await fetch(`/api/projects/${projectId}/contracts`);
-        if (!res.ok) {
-          throw new Error("Failed to load prime contracts");
-        }
-        const data: PrimeContract[] = await res.json();
+        const data = await apiFetch<PrimeContract[]>(`/api/projects/${projectId}/contracts`);
         setContracts(data);
       } catch {
         toast.error("Could not load prime contracts. Please try again.");
@@ -89,11 +86,10 @@ export function AddToPrimePCODialog({
       const selectedContract = contracts.find((c) => c.id === selectedContractId);
       const pcoTitle = `PCO for ${count} change event${count === 1 ? "" : "s"} — ${selectedContract?.title || selectedContract?.contract_number || ""}`.trim();
 
-      const res = await fetch(
+      const result = await apiFetch<{ pco?: { id?: string } }>(
         `/api/projects/${projectId}/change-events/add-to-pco`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             change_event_ids: selectedChangeEventIds,
             pco_type: "prime",
@@ -104,17 +100,6 @@ export function AddToPrimePCODialog({
           }),
         },
       );
-
-      if (!res.ok) {
-        const payload = await res.json().catch(() => null);
-        const message =
-          payload && typeof payload === "object" && "error" in payload
-            ? String(payload.error)
-            : "Failed to create PCO";
-        throw new Error(message);
-      }
-
-      const result = await res.json();
 
       toast.success("Prime Contract PCO created successfully");
       onSuccess();

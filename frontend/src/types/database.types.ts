@@ -14492,18 +14492,28 @@ export type Database = {
         Row: {
           approved_at: string | null
           approved_by: string | null
+          change_reason: string | null
           created_at: string
           created_by: string | null
           description: string | null
           designated_reviewer_id: string | null
           due_date: string | null
+          executed: boolean
+          field_change: boolean
           id: string
+          is_private: boolean
+          location: string | null
           pco_number: string | null
+          paid_in_full: boolean
           prime_contract_id: string
           project_id: number
           promoted_at: string | null
           promoted_to_co_id: number | null
+          reference: string | null
+          request_received_from: string | null
+          revision: number | null
           schedule_impact: number | null
+          signed_co_received_date: string | null
           status: string
           title: string
           total_amount: number | null
@@ -14513,18 +14523,28 @@ export type Database = {
         Insert: {
           approved_at?: string | null
           approved_by?: string | null
+          change_reason?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           designated_reviewer_id?: string | null
           due_date?: string | null
+          executed?: boolean
+          field_change?: boolean
           id?: string
+          is_private?: boolean
+          location?: string | null
           pco_number?: string | null
+          paid_in_full?: boolean
           prime_contract_id: string
           project_id: number
           promoted_at?: string | null
           promoted_to_co_id?: number | null
+          reference?: string | null
+          request_received_from?: string | null
+          revision?: number | null
           schedule_impact?: number | null
+          signed_co_received_date?: string | null
           status?: string
           title: string
           total_amount?: number | null
@@ -14534,18 +14554,28 @@ export type Database = {
         Update: {
           approved_at?: string | null
           approved_by?: string | null
+          change_reason?: string | null
           created_at?: string
           created_by?: string | null
           description?: string | null
           designated_reviewer_id?: string | null
           due_date?: string | null
+          executed?: boolean
+          field_change?: boolean
           id?: string
+          is_private?: boolean
+          location?: string | null
           pco_number?: string | null
+          paid_in_full?: boolean
           prime_contract_id?: string
           project_id?: number
           promoted_at?: string | null
           promoted_to_co_id?: number | null
+          reference?: string | null
+          request_received_from?: string | null
+          revision?: number | null
           schedule_impact?: number | null
+          signed_co_received_date?: string | null
           status?: string
           title?: string
           total_amount?: number | null

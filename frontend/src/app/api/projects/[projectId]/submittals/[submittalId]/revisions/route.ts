@@ -11,6 +11,40 @@ interface RouteParams {
 }
 
 /**
+ * GET /api/projects/[projectId]/submittals/[submittalId]/revisions
+ * Returns all revisions sharing the same submittal_number (including the current one).
+ */
+export const GET = withApiGuardrails(
+  "projects/[projectId]/submittals/[submittalId]/revisions#GET",
+  async ({ params }) => {
+    const { projectId, submittalId } = await params;
+    const supabase = await createClient();
+
+    // Fetch the base submittal to get its number
+    const { data: base, error: baseError } = await supabase
+      .from("submittals")
+      .select("submittal_number")
+      .eq("id", submittalId)
+      .single();
+
+    if (baseError || !base) {
+      return NextResponse.json({ error: "Submittal not found" }, { status: 404 });
+    }
+
+    const { data, error } = await supabase
+      .from("submittals")
+      .select("id, submittal_number, revision, title, status, created_at")
+      .eq("project_id", parseInt(projectId, 10))
+      .eq("submittal_number", base.submittal_number)
+      .is("deleted_at", null)
+      .order("revision", { ascending: true });
+
+    if (error) return apiErrorResponse(error);
+    return NextResponse.json(data ?? []);
+  },
+);
+
+/**
  * POST /api/projects/[projectId]/submittals/[submittalId]/revisions
  * Creates a new revision of the submittal (increments revision, resets status).
  */

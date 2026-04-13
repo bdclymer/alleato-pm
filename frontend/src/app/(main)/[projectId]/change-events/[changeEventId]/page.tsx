@@ -34,6 +34,9 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -48,7 +51,8 @@ import { apiFetch, apiFetchBlob } from "@/lib/api-client";
 
 import { useChangeEventDetail } from "@/hooks/use-change-event-detail";
 import { useVerticalMarkup } from "@/hooks/use-vertical-markup";
-import { ChangeEventConvertDialog } from "@/components/domain/change-events/ChangeEventConvertDialog";
+import { AddToCommitmentCODialog } from "@/components/domain/change-events/AddToCommitmentCODialog";
+import { AddToPrimePCODialog } from "@/components/domain/change-events/AddToPrimePCODialog";
 import { ChangeEventEmailDialog } from "@/components/domain/change-events/ChangeEventEmailDialog";
 import { ChangeEventForm } from "@/components/domain/change-events/ChangeEventForm";
 import { ChangeEventGeneralInfoPanel } from "@/components/domain/change-events/ChangeEventGeneralInfoPanel";
@@ -57,6 +61,8 @@ import { ChangeEventLineItemsTable } from "@/components/domain/change-events/Cha
 import { ChangeEventApprovalWorkflow } from "@/components/domain/change-events/ChangeEventApprovalWorkflow";
 import { ChangeEventHistoryTab } from "@/components/domain/change-events/ChangeEventHistoryTab";
 import { ChangeEventRelatedItemsTab } from "@/components/domain/change-events/ChangeEventRelatedItemsTab";
+import { ChangeEventPrimePCOsSection } from "@/components/domain/change-events/ChangeEventPrimePCOsSection";
+import { ChangeEventCommitmentPCOsSection } from "@/components/domain/change-events/ChangeEventCommitmentPCOsSection";
 import { EntityComments, EntityRoom } from "@/components/comments/entity-comments";
 
 /* ── Helpers ──────────────────────────────────────────────────────── */
@@ -136,11 +142,14 @@ export default function ChangeEventDetailPage() {
   const [activeTab, setActiveTab] = useState("general");
   const [isEditing, setIsEditing] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [showConvertDialog, setShowConvertDialog] = useState(false);
+  const [showCommitmentCODialog, setShowCommitmentCODialog] = useState(false);
+  const [showPrimePCODialog, setShowPrimePCODialog] = useState(false);
   const [showEmailDialog, setShowEmailDialog] = useState(false);
   const [isUploadingAttachment, setIsUploadingAttachment] = useState(false);
   const [lineageCount, setLineageCount] = useState(0);
   const [lineageRefreshSignal, setLineageRefreshSignal] = useState(0);
+  const [existingPrimePCOs, setExistingPrimePCOs] = useState<Array<{id: string; pco_number: string; title: string; status: string}>>([]);
+  const [hasFetchedPCOs, setHasFetchedPCOs] = useState(false);
 
   const fetchLineageSummary = useCallback(async () => {
     const payload = await apiFetch<{ summary?: { count?: number } }>(
@@ -163,6 +172,41 @@ export default function ChangeEventDetailPage() {
   useEffect(() => {
     void refreshLineage();
   }, [refreshLineage]);
+
+  const fetchExistingPCOs = useCallback(async () => {
+    if (hasFetchedPCOs) return;
+    try {
+      const pcos = await apiFetch<Array<{id: string; pco_number: string; title: string; status: string}>>(
+        `/api/projects/${projectId}/prime-contract-pcos`,
+      );
+      // Show all non-void PCOs — server validates if the action is allowed
+      setExistingPrimePCOs(pcos.filter((p) => p.status !== "void"));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not load existing PCOs");
+    } finally {
+      setHasFetchedPCOs(true);
+    }
+  }, [projectId, hasFetchedPCOs]);
+
+  const handleAddToExistingPCO = useCallback(async (pcoId: string, pcoLabel: string) => {
+    try {
+      await apiFetch(
+        `/api/projects/${projectId}/change-events/add-to-pco`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            change_event_ids: [changeEventId],
+            pco_type: "prime",
+            existing_pco_id: pcoId,
+          }),
+        },
+      );
+      toast.success(`Added to ${pcoLabel}`);
+      void refreshLineage();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to add to PCO");
+    }
+  }, [projectId, changeEventId, refreshLineage]);
 
   useEffect(() => {
     const onFocus = () => {
@@ -540,10 +584,49 @@ export default function ChangeEventDetailPage() {
             Clone
           </DropdownMenuItem>
           {normalizedStatus !== "void" && normalizedStatus !== "converted" && (
-            <DropdownMenuItem onClick={() => setShowConvertDialog(true)}>
-              <ArrowRight className="mr-2 h-4 w-4" />
-              Add to Potential Change Order
-            </DropdownMenuItem>
+            <DropdownMenuSub>
+              <DropdownMenuSubTrigger>
+                <ArrowRight className="mr-2 h-4 w-4" />
+                Add to
+              </DropdownMenuSubTrigger>
+              <DropdownMenuSubContent>
+                <DropdownMenuSub>
+                  <DropdownMenuSubTrigger>Add to Commitment</DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem onSelect={() => router.push(`/${projectId}/commitments/new?type=purchase_order`)}>
+                      New Purchase Order
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => router.push(`/${projectId}/commitments/new?type=subcontract`)}>
+                      New Subcontract
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+                <DropdownMenuItem onSelect={() => setShowCommitmentCODialog(true)}>
+                  Add to Commitment Change Order
+                </DropdownMenuItem>
+                <DropdownMenuSub onOpenChange={(open) => { if (open) void fetchExistingPCOs(); }}>
+                  <DropdownMenuSubTrigger>Add to Prime Contract PCO</DropdownMenuSubTrigger>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem onSelect={() => setShowPrimePCODialog(true)}>
+                      New Prime Contract PCO
+                    </DropdownMenuItem>
+                    {existingPrimePCOs.length > 0 && (
+                      <>
+                        <DropdownMenuSeparator />
+                        {existingPrimePCOs.map((pco) => (
+                          <DropdownMenuItem
+                            key={pco.id}
+                            onSelect={() => void handleAddToExistingPCO(pco.id, `${pco.pco_number} – ${pco.title}`)}
+                          >
+                            {pco.pco_number} – {pco.title}
+                          </DropdownMenuItem>
+                        ))}
+                      </>
+                    )}
+                  </DropdownMenuSubContent>
+                </DropdownMenuSub>
+              </DropdownMenuSubContent>
+            </DropdownMenuSub>
           )}
           <DropdownMenuSeparator />
           <DropdownMenuItem
@@ -601,6 +684,18 @@ export default function ChangeEventDetailPage() {
                 expectingRevenue={(changeEvent.expectingRevenue ?? changeEvent.expecting_revenue) !== false}
                 primeContractDisplayName={primeContractDisplayName}
                 onDeleteLineItem={actions.deleteLineItem}
+              />
+            </div>
+            <div className="mt-10">
+              <ChangeEventPrimePCOsSection
+                projectId={projectId}
+                changeEventId={changeEventId}
+              />
+            </div>
+            <div className="mt-10">
+              <ChangeEventCommitmentPCOsSection
+                projectId={projectId}
+                changeEventId={changeEventId}
               />
             </div>
           </TabsContent>
@@ -664,14 +759,26 @@ export default function ChangeEventDetailPage() {
         changeEventId={changeEventId}
       />
 
-      <ChangeEventConvertDialog
-        open={showConvertDialog}
-        onOpenChange={setShowConvertDialog}
-        changeEventId={changeEventId}
+      <AddToCommitmentCODialog
+        open={showCommitmentCODialog}
+        onClose={() => setShowCommitmentCODialog(false)}
+        selectedChangeEventIds={[changeEventId]}
         projectId={projectId}
-        lineItems={lineItems}
-        markupRows={markupRows}
-        expectingRevenue={(changeEvent.expectingRevenue ?? changeEvent.expecting_revenue) !== false}
+        onSuccess={() => {
+          setShowCommitmentCODialog(false);
+          void refreshLineage();
+        }}
+      />
+
+      <AddToPrimePCODialog
+        open={showPrimePCODialog}
+        onClose={() => setShowPrimePCODialog(false)}
+        selectedChangeEventIds={[changeEventId]}
+        projectId={projectId}
+        onSuccess={() => {
+          setShowPrimePCODialog(false);
+          void refreshLineage();
+        }}
       />
 
       <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>

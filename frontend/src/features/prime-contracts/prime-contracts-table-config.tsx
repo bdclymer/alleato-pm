@@ -291,6 +291,14 @@ export interface PccoSummary {
   total_amount: number | null;
 }
 
+export interface PcoSummary {
+  id: string;
+  pco_number: string | null;
+  title: string | null;
+  status: string | null;
+  total_amount: number | null;
+}
+
 export interface ListChangeOrderData {
   isExpanded: boolean;
   onToggle: (id: string) => void;

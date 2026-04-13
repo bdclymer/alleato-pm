@@ -43,10 +43,10 @@ export const POST = withApiGuardrails(
 
     let baseCommitmentsQuery = supabase
       .from("commitments_unified")
-      .select("id, commitment_number, title, status, vendor_name, commitment_type")
+      .select("id, commitment_number:contract_number, title, status, commitment_type, contract_company_id")
       .eq("project_id", projectId)
       .is("deleted_at", null)
-      .order("commitment_number", { ascending: true });
+      .order("contract_number", { ascending: true });
 
     if (body.commitment_type_filter !== "any") {
       baseCommitmentsQuery = baseCommitmentsQuery.eq(
@@ -60,7 +60,35 @@ export const POST = withApiGuardrails(
       return apiErrorResponse(commitmentsError);
     }
 
-    const allCommitments = commitments ?? [];
+    // Resolve vendor names from contract_company_id in a single batch query
+    const companyIds = [
+      ...new Set(
+        (commitments ?? [])
+          .map((c) => (c as Record<string, unknown>).contract_company_id as string | null)
+          .filter((id): id is string => !!id),
+      ),
+    ];
+
+    const vendorNameById = new Map<string, string>();
+    if (companyIds.length > 0) {
+      const { data: companies } = await supabase
+        .from("companies")
+        .select("id, name")
+        .in("id", companyIds);
+      for (const company of companies ?? []) {
+        if (company.id && company.name) {
+          vendorNameById.set(company.id, company.name);
+        }
+      }
+    }
+
+    const allCommitments = (commitments ?? []).map((c) => {
+      const companyId = (c as Record<string, unknown>).contract_company_id as string | null;
+      return {
+        ...c,
+        vendor_name: companyId ? (vendorNameById.get(companyId) ?? null) : null,
+      };
+    });
 
     if (body.scope === "matching_cost_codes") {
       const { data: lineItems, error: lineItemsError } = await supabase

@@ -618,7 +618,7 @@ export function EmployeesDataTable({
           open={!!editingEmployee}
           onOpenChange={() => setEditingEmployee(null)}
         >
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-3xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Edit Employee</DialogTitle>
               <DialogDescription>

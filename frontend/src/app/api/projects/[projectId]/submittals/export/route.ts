@@ -21,7 +21,7 @@ export const GET = withApiGuardrails(
   
     const { projectId } = await params;
     const supabase = await createClient();
-    const format = new URL(req.url).searchParams.get("format") ?? "csv";
+    const format = new URL(request.url).searchParams.get("format") ?? "csv";
 
     const { data, error } = await supabase
       .from("submittals")

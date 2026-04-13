@@ -35,6 +35,7 @@ import {
   renderPrimeContractList,
   renderPrimeContractRowActions,
   type PccoSummary,
+  type PcoSummary,
 } from "@/features/prime-contracts/prime-contracts-table-config";
 import {
   primeContractsSchema,
@@ -94,10 +95,10 @@ export default function ProjectContractsPage(): ReactElement {
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = React.useState(false);
   const [isBulkDeleting, setIsBulkDeleting] = React.useState(false);
 
-  // Expandable PCCO sub-rows
+  // Expandable sub-rows (PCCOs + PCOs)
   const [expandedIds, setExpandedIds] = React.useState<Set<string>>(new Set());
   const [pccoCache, setPccoCache] = React.useState<
-    Record<string, { loading: boolean; data: PccoSummary[] }>
+    Record<string, { loading: boolean; data: PccoSummary[]; pcos: PcoSummary[] }>
   >({});
 
   const toggleExpand = React.useCallback(
@@ -112,17 +113,20 @@ export default function ProjectContractsPage(): ReactElement {
         return next;
       });
 
-      // Fetch PCCOs if not cached
+      // Fetch PCCOs + PCOs if not cached
       if (!pccoCache[contractId]) {
-        setPccoCache((prev) => ({ ...prev, [contractId]: { loading: true, data: [] } }));
+        setPccoCache((prev) => ({ ...prev, [contractId]: { loading: true, data: [], pcos: [] } }));
         try {
-          const res = await fetch(`/api/projects/${projectId}/prime-contract-change-orders`);
-          const all: Array<{ id: number; contract_id: number | null; prime_contract_id: string | null; pcco_number: string | null; title: string | null; status: string | null; total_amount: number | null }> = res.ok ? await res.json() : [];
-          // Filter to only PCCOs belonging to this specific contract
-          const filtered = all.filter((p) => p.prime_contract_id == null || String(p.prime_contract_id) === String(contractId));
-          setPccoCache((prev) => ({ ...prev, [contractId]: { loading: false, data: filtered } }));
+          const [pccoRes, pcoRes] = await Promise.all([
+            fetch(`/api/projects/${projectId}/prime-contract-change-orders`),
+            fetch(`/api/projects/${projectId}/prime-contract-pcos?prime_contract_id=${contractId}`),
+          ]);
+          const allPccos: Array<{ id: number; prime_contract_id: string | null; pcco_number: string | null; title: string | null; status: string | null; total_amount: number | null }> = pccoRes.ok ? await pccoRes.json() : [];
+          const allPcos: Array<{ id: string; prime_contract_id: string | null; pco_number: string | null; title: string | null; status: string | null; total_amount: number | null }> = pcoRes.ok ? await pcoRes.json() : [];
+          const filteredPccos = allPccos.filter((p) => p.prime_contract_id == null || String(p.prime_contract_id) === String(contractId));
+          setPccoCache((prev) => ({ ...prev, [contractId]: { loading: false, data: filteredPccos, pcos: allPcos } }));
         } catch {
-          setPccoCache((prev) => ({ ...prev, [contractId]: { loading: false, data: [] } }));
+          setPccoCache((prev) => ({ ...prev, [contractId]: { loading: false, data: [], pcos: [] } }));
         }
       }
     },
@@ -540,43 +544,73 @@ export default function ProjectContractsPage(): ReactElement {
               <TableRow className="bg-muted/30 hover:bg-muted/30">
                 <TableCell colSpan={colSpan} className="px-8 py-3">
                   {!cached || cached.loading ? (
-                    <p className="text-sm text-muted-foreground">Loading change orders...</p>
-                  ) : cached.data.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No change orders</p>
+                    <p className="text-sm text-muted-foreground">Loading...</p>
+                  ) : cached.data.length === 0 && cached.pcos.length === 0 ? (
+                    <p className="text-sm text-muted-foreground">No change orders or potential change orders</p>
                   ) : (
-                    <div className="space-y-1">
-                      <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                        Prime Contract Change Orders ({cached.data.length})
-                      </p>
-                      <table className="w-full text-sm">
-                        <thead>
-                          <tr className="text-left text-xs text-muted-foreground">
-                            <th className="pb-1 pr-4 font-medium">Number</th>
-                            <th className="pb-1 pr-4 font-medium">Title</th>
-                            <th className="pb-1 pr-4 font-medium">Status</th>
-                            <th className="pb-1 text-right font-medium">Amount</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {cached.data.map((co) => (
-                            <tr
-                              key={co.id}
-                              className="cursor-pointer border-t border-border/50 hover:bg-muted/50"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                router.push(`/${projectId}/change-orders/prime/${co.id}`);
-                              }}
-                            >
-                              <td className="py-1.5 pr-4 font-medium">{co.pcco_number || "—"}</td>
-                              <td className="max-w-md truncate py-1.5 pr-4">{co.title || "—"}</td>
-                              <td className="py-1.5 pr-4">
-                                <StatusBadge status={co.status || "Unknown"} />
-                              </td>
-                              <td className="py-1.5 text-right">{formatCurrency(co.total_amount)}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                    <div className="space-y-4">
+                      {cached.data.length > 0 && (
+                        <div className="space-y-1">
+                          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                            Change Orders ({cached.data.length})
+                          </p>
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="text-left text-xs text-muted-foreground">
+                                <th className="pb-1 pr-4 font-medium">Number</th>
+                                <th className="pb-1 pr-4 font-medium">Title</th>
+                                <th className="pb-1 pr-4 font-medium">Status</th>
+                                <th className="pb-1 text-right font-medium">Amount</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {cached.data.map((co) => (
+                                <tr
+                                  key={co.id}
+                                  className="cursor-pointer border-t border-border/50 hover:bg-muted/50"
+                                  onClick={(e) => { e.stopPropagation(); router.push(`/${projectId}/change-orders/prime/${co.id}`); }}
+                                >
+                                  <td className="py-1.5 pr-4 font-medium">{co.pcco_number || "—"}</td>
+                                  <td className="max-w-md truncate py-1.5 pr-4">{co.title || "—"}</td>
+                                  <td className="py-1.5 pr-4"><StatusBadge status={co.status || "Unknown"} /></td>
+                                  <td className="py-1.5 text-right">{formatCurrency(co.total_amount)}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
+                      {cached.pcos.length > 0 && (
+                        <div className="space-y-1">
+                          <p className="mb-2 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                            Potential Change Orders ({cached.pcos.length})
+                          </p>
+                          <table className="w-full text-sm">
+                            <thead>
+                              <tr className="text-left text-xs text-muted-foreground">
+                                <th className="pb-1 pr-4 font-medium">Number</th>
+                                <th className="pb-1 pr-4 font-medium">Title</th>
+                                <th className="pb-1 pr-4 font-medium">Status</th>
+                                <th className="pb-1 text-right font-medium">Amount</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {cached.pcos.map((pco) => (
+                                <tr
+                                  key={pco.id}
+                                  className="cursor-pointer border-t border-border/50 hover:bg-muted/50"
+                                  onClick={(e) => { e.stopPropagation(); router.push(`/${projectId}/prime-contract-pcos/${pco.id}`); }}
+                                >
+                                  <td className="py-1.5 pr-4 font-medium">{pco.pco_number || "—"}</td>
+                                  <td className="max-w-md truncate py-1.5 pr-4">{pco.title || "—"}</td>
+                                  <td className="py-1.5 pr-4"><StatusBadge status={pco.status || "Unknown"} /></td>
+                                  <td className="py-1.5 text-right">{formatCurrency(pco.total_amount)}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
                     </div>
                   )}
                 </TableCell>

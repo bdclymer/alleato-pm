@@ -2389,7 +2389,7 @@ export function GenericDataTable({
           ======================================== */}
       {config.editConfig && (
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-3xl max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>
                 Edit {config.title?.slice(0, -1) || "Item"}

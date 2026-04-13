@@ -43,7 +43,7 @@ interface PrimeContractPcosSectionProps {
 
 export function PrimeContractPcosSection({
   projectId,
-  contractId: _contractId,
+  contractId,
   formatCurrency,
 }: PrimeContractPcosSectionProps) {
   const [pcos, setPcos] = useState<PrimePco[]>([]);
@@ -54,14 +54,19 @@ export function PrimeContractPcosSection({
       setIsLoading(true);
       try {
         const res = await fetch(
-          `/api/projects/${projectId}/commitment-pcos`,
+          `/api/projects/${projectId}/prime-contract-pcos`,
         );
         if (!res.ok) throw new Error("Failed to fetch PCOs");
         const json = await res.json();
         const allPcos: PrimePco[] = json.data ?? json ?? [];
-        // Use all PCOs — the API scopes by project; client-side filtering by
-        // prime_contract_id was causing the empty state when IDs didn't match.
-        setPcos(allPcos);
+        // Filter client-side to only show PCOs belonging to this prime contract
+        setPcos(
+          contractId
+            ? allPcos.filter(
+                (p) => (p as unknown as Record<string, unknown>).prime_contract_id === contractId,
+              )
+            : allPcos,
+        );
       } catch {
         toast.error("Failed to load potential change orders");
       } finally {
@@ -69,7 +74,7 @@ export function PrimeContractPcosSection({
       }
     };
     fetchPcos();
-  }, [projectId]);
+  }, [projectId, contractId]);
 
   const columns: TableColumn<PrimePco>[] = useMemo(
     () => [
@@ -79,7 +84,7 @@ export function PrimeContractPcosSection({
         alwaysVisible: true,
         render: (pco) => (
           <Link
-            href={`/${projectId}/commitment-pcos/${pco.id}`}
+            href={`/${projectId}/prime-contract-pcos/${pco.id}`}
             className="text-primary hover:underline font-medium"
           >
             {pco.pco_number ?? "—"}

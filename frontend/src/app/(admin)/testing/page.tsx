@@ -21,6 +21,8 @@ import {
   Play,
   History,
   ChevronDown,
+  Pencil,
+  Send,
 } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -118,11 +120,14 @@ export default function TestingPage() {
     notes: "",
     projectId: "",
     scenarioDepth: "broad" as ScenarioDepth,
+    autoSubmitFeedback: true,
   });
   const [activeRunId, setActiveRunId] = useState<string | null>(null);
   const [results, setResults] = useState<TestResult[]>([]);
   const [cursor, setCursor] = useState(0);
   const [saving, setSaving] = useState(false);
+  const [feedbackSentIds, setFeedbackSentIds] = useState<Set<string>>(new Set());
+  const [feedbackSendingIds, setFeedbackSendingIds] = useState<Set<string>>(new Set());
   const [notesMap, setNotesMap] = useState<Record<string, string>>({});
   const [severityMap, setSeverityMap] = useState<Record<string, Severity>>({});
   const [checkedSteps, setCheckedSteps] = useState<Record<number, boolean>>({});
@@ -137,6 +142,9 @@ export default function TestingPage() {
   const [showJumpList, setShowJumpList] = useState(false);
   const [inProgressRuns, setInProgressRuns] = useState<{ run: HistoryRun; suiteName: string; suiteDisplayName: string }[]>([]);
   const jumpListRef = useRef<HTMLDivElement>(null);
+  const [editingCase, setEditingCase] = useState(false);
+  const [editSaving, setEditSaving] = useState(false);
+  const [editForm, setEditForm] = useState({ steps: "", setup_steps: "", context_note: "", expected_result: "", start_url: "" });
 
   // ── Load suites + pre-fill tester name from session ──
   useEffect(() => {
@@ -220,11 +228,13 @@ export default function TestingPage() {
     setRunDetailLoading(false);
   };
 
-  // ── Reset step checkboxes when scenario changes (notes persist per result ID) ──
+  // ── Reset step checkboxes + close edit mode when scenario changes ──
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     setCheckedSteps({});
-  }, [cursor]); // cursor is intentional — reset checkboxes when navigating tests
+    setEditingCase(false);
+  }, [cursor]); // cursor is intentional — reset per-test state when navigating
+
 
   // ── Close jump list on outside click ──
   useEffect(() => {
@@ -309,6 +319,68 @@ export default function TestingPage() {
     setView("running");
   };
 
+  // ── Send a failed test result to the feedback inbox ──
+  const sendToFeedback = useCallback(async (result: TestResult) => {
+    const tc = result.test_cases;
+    if (feedbackSentIds.has(result.id)) return;
+    setFeedbackSendingIds((prev) => new Set([...prev, result.id]));
+
+    const notes = notesMap[result.id] || null;
+    const sev = severityMap[result.id] || null;
+    const feedbackSeverity: "low" | "medium" | "high" =
+      sev === "critical" || sev === "major" ? "high" :
+      sev === "minor" ? "medium" : "low";
+
+    const startPath = (() => {
+      const raw = tc.start_url ?? "/testing";
+      if (runForm.projectId) return raw.replace(/^\/\d+\//, `/${runForm.projectId}/`);
+      return raw;
+    })();
+    const pageUrl =
+      typeof window !== "undefined"
+        ? `${window.location.origin}${startPath}`
+        : startPath;
+
+    try {
+      await fetch("/api/admin/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: `[Test] ${tc.test_name}`,
+          comment: notes ?? `Test failed: ${tc.test_name}`,
+          pageUrl,
+          pagePath: startPath,
+          pageTitle: `${selectedSuite?.display_name ?? "Testing"} — ${tc.test_name}`,
+          requestType: "bug",
+          severity: feedbackSeverity,
+          target: {
+            selector: "#test-runner",
+            text: tc.test_name,
+            id: `test-case-${tc.id}`,
+          },
+          metadata: {
+            test_case_id: tc.id,
+            test_number: tc.test_number,
+            run_id: activeRunId,
+            suite: selectedSuite?.tool_name,
+            suite_display: selectedSuite?.display_name,
+            tester: runForm.tester,
+            source: "test-runner",
+          },
+        }),
+      });
+      setFeedbackSentIds((prev) => new Set([...prev, result.id]));
+    } catch {
+      // non-blocking — don't surface errors for background sends
+    } finally {
+      setFeedbackSendingIds((prev) => {
+        const next = new Set(prev);
+        next.delete(result.id);
+        return next;
+      });
+    }
+  }, [feedbackSentIds, notesMap, severityMap, runForm, selectedSuite, activeRunId]);
+
   // ── Record outcome ──
   const record = useCallback(async (status: TestStatus) => {
     if (!current || !activeRunId) return;
@@ -322,9 +394,14 @@ export default function TestingPage() {
     });
     if (res.ok) {
       const { result } = await res.json();
+      const updatedResult = { ...current, status: result.status, notes: result.notes };
       setResults((prev) =>
-        prev.map((r) => r.id === current.id ? { ...r, status: result.status, notes: result.notes } : r)
+        prev.map((r) => r.id === current.id ? updatedResult : r)
       );
+      // Auto-send to feedback inbox on fail if toggle is on
+      if (status === "fail" && runForm.autoSubmitFeedback) {
+        void sendToFeedback(updatedResult);
+      }
       if (cursor < results.length - 1) {
         setCursor((c) => c + 1);
       } else {
@@ -332,7 +409,7 @@ export default function TestingPage() {
       }
     }
     setSaving(false);
-  }, [current, activeRunId, notesMap, severityMap, cursor, results.length]);
+  }, [current, activeRunId, notesMap, severityMap, cursor, results.length, runForm.autoSubmitFeedback, sendToFeedback]);
 
   // ── Screenshot upload ──
   const handleFile = useCallback(async (file: File) => {
@@ -393,6 +470,42 @@ export default function TestingPage() {
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [view, record, results.length]);
+
+  // ── Sync edit form when navigating to a new test case ──
+  useEffect(() => {
+    if (!current) return;
+    const tc = current.test_cases;
+    setEditForm({
+      steps: tc.steps ?? "",
+      setup_steps: tc.setup_steps ?? "",
+      context_note: tc.context_note ?? "",
+      expected_result: tc.expected_result ?? "",
+      start_url: tc.start_url ?? "",
+    });
+  }, [current]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Save edited test case ──
+  const saveEdit = async () => {
+    if (!current) return;
+    setEditSaving(true);
+    const res = await fetch(`/api/testing/cases/${current.test_cases.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(editForm),
+    });
+    if (res.ok) {
+      const { case: updated } = await res.json();
+      setResults((prev) =>
+        prev.map((r) =>
+          r.id === current.id
+            ? { ...r, test_cases: { ...r.test_cases, ...updated } }
+            : r
+        )
+      );
+      setEditingCase(false);
+    }
+    setEditSaving(false);
+  };
 
   // ── Persist notes to localStorage on change ──
   const updateNote = (resultId: string, value: string) => {
@@ -705,11 +818,10 @@ export default function TestingPage() {
             </div>
             <div className="space-y-1.5">
               <Label>Scenario depth</Label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-2 gap-2">
                 {([
                   { value: "broad" as const, label: "Broad", hint: "Fastest, high-signal workflows" },
                   { value: "detailed" as const, label: "Detailed", hint: "Longer, deeper checks" },
-                  { value: "all" as const, label: "All", hint: "Everything in suite" },
                 ]).map((option) => (
                   <button
                     key={option.value}
@@ -729,6 +841,31 @@ export default function TestingPage() {
               </div>
             </div>
           </div>
+
+          {/* Auto-submit feedback toggle */}
+          <label className="flex items-start gap-3 cursor-pointer group">
+            <div className="relative mt-0.5 shrink-0">
+              <input
+                type="checkbox"
+                className="sr-only peer"
+                checked={runForm.autoSubmitFeedback}
+                onChange={(e) => setRunForm((f) => ({ ...f, autoSubmitFeedback: e.target.checked }))}
+              />
+              <div className={cn(
+                "h-5 w-9 rounded-full border-2 transition-colors",
+                runForm.autoSubmitFeedback ? "bg-primary border-primary" : "bg-muted border-border"
+              )}>
+                <div className={cn(
+                  "absolute top-0.5 h-3.5 w-3.5 rounded-full bg-white shadow-xs transition-transform duration-150",
+                  runForm.autoSubmitFeedback ? "translate-x-4" : "translate-x-0.5"
+                )} />
+              </div>
+            </div>
+            <div>
+              <p className="text-sm font-medium text-foreground">Auto-submit failures to feedback inbox</p>
+              <p className="text-xs text-muted-foreground mt-0.5">When you mark a test as &quot;Issue found&quot;, it&apos;s automatically sent to the admin feedback inbox and creates a GitHub issue.</p>
+            </div>
+          </label>
 
           {startError && (
             <p className="text-sm text-red-500 bg-red-50 dark:bg-red-950/30 rounded-lg px-4 py-3">{startError}</p>
@@ -782,8 +919,28 @@ export default function TestingPage() {
               <p className="text-sm font-medium">Failed tests:</p>
               {results.filter((r) => r.status === "fail").map((r) => (
                 <div key={r.id} className="text-sm bg-red-50 dark:bg-red-950/20 rounded-lg px-3 py-2">
-                  <p className="font-medium">{r.test_cases?.test_name}</p>
-                  {r.notes && <p className="text-muted-foreground text-xs mt-0.5">{r.notes}</p>}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-medium">{r.test_cases?.test_name}</p>
+                      {r.notes && <p className="text-muted-foreground text-xs mt-0.5">{r.notes}</p>}
+                    </div>
+                    {feedbackSentIds.has(r.id) ? (
+                      <span className="flex items-center gap-1 text-xs text-green-600 shrink-0 mt-0.5">
+                        <CheckCircle2 className="h-3.5 w-3.5" />
+                        Sent
+                      </span>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => void sendToFeedback(r)}
+                        disabled={feedbackSendingIds.has(r.id)}
+                        className="flex items-center gap-1 text-xs text-orange-600 hover:text-orange-700 shrink-0 mt-0.5 transition-colors"
+                      >
+                        <Send className="h-3.5 w-3.5" />
+                        {feedbackSendingIds.has(r.id) ? "Sending…" : "→ Feedback"}
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
@@ -978,107 +1135,191 @@ export default function TestingPage() {
 
       <div className="space-y-6 pb-12">
 
-        {/* Category chip + test number */}
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="text-xs bg-muted text-muted-foreground rounded-full px-2.5 py-0.5 font-medium">
-            {tc.category}{tc.subcategory ? ` · ${tc.subcategory}` : ""}
-          </span>
-          <span className="text-xs text-muted-foreground font-mono">#{tc.test_number}</span>
-          {tc.priority === "HIGH" && (
-            <span className="text-xs bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400 rounded-full px-2.5 py-0.5 font-medium">
-              High priority
+        {/* Category chip + test number + edit toggle */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-xs bg-muted text-muted-foreground rounded-full px-2.5 py-0.5 font-medium">
+              {tc.category}{tc.subcategory ? ` · ${tc.subcategory}` : ""}
             </span>
-          )}
+            <span className="text-xs text-muted-foreground font-mono">#{tc.test_number}</span>
+            {tc.priority === "HIGH" && (
+              <span className="text-xs bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400 rounded-full px-2.5 py-0.5 font-medium">
+                High priority
+              </span>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => setEditingCase((v) => !v)}
+            title="Edit test instructions"
+            className={cn(
+              "flex items-center gap-1 text-xs px-2 py-1 rounded-md border transition-colors shrink-0",
+              editingCase
+                ? "border-primary bg-primary/5 text-primary"
+                : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
+            )}
+          >
+            <Pencil className="h-3 w-3" />
+            {editingCase ? "Editing" : "Edit"}
+          </button>
         </div>
 
         {/* Title */}
         <h2 className="text-lg sm:text-xl font-semibold leading-snug tracking-tight">{tc.test_name}</h2>
 
-        {/* Context note (plain English "what this tests") */}
-        {tc.context_note && (
-          <div className="bg-blue-50 dark:bg-blue-950/30 rounded-xl px-4 py-3 text-sm text-blue-800 dark:text-blue-300">
-            <span className="font-medium">What this checks: </span>{tc.context_note}
-          </div>
-        )}
+        {/* ── Edit mode ── */}
+        {editingCase ? (
+          <div className="space-y-4 rounded-xl border border-primary/20 bg-primary/5 px-4 py-4">
+            <p className="text-xs font-semibold text-primary uppercase tracking-wide">Editing test instructions</p>
 
-        {/* Setup steps ("Before you start") */}
-        {tc.setup_steps && (
-          <div className="bg-amber-50 dark:bg-amber-950/20 rounded-xl px-4 py-3 space-y-1">
-            <p className="text-sm font-semibold text-amber-900 dark:text-amber-300">Before you start</p>
-            {parseSteps(tc.setup_steps).map((s) => (
-              <p key={s} className="text-sm text-amber-900 dark:text-amber-300">· {s}</p>
-            ))}
-          </div>
-        )}
-
-        {/* Open in app button */}
-        {tc.start_url && (
-          <a
-            href={(() => {
-              try {
-                const raw = new URL(tc.start_url ?? "").pathname;
-                if (runForm.projectId) {
-                  return raw.replace(/^\/\d+\//, `/${runForm.projectId}/`);
-                }
-                return raw;
-              } catch {
-                const raw = tc.start_url ?? "#";
-                if (runForm.projectId) {
-                  return raw.replace(/^\/\d+\//, `/${runForm.projectId}/`);
-                }
-                return raw;
-              }
-            })()}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm font-medium text-primary hover:underline"
-          >
-            Open the app at the right page →
-          </a>
-        )}
-
-        {/* Steps */}
-        <div className="space-y-3 pt-2">
-          <p className="text-base font-semibold text-foreground">Steps</p>
-          {steps.map((step, i) => (
-            <label
-              key={step}
-              className={cn(
-                "flex items-start gap-3 cursor-pointer py-1.5 transition-all select-none",
-                checkedSteps[i] && "opacity-70"
-              )}
-            >
-              <div className={cn(
-                "mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 flex items-center justify-center transition-all",
-                checkedSteps[i] ? "border-green-500 bg-green-500" : "border-muted-foreground/40"
-              )}>
-                {checkedSteps[i] && <CheckCircle2 className="h-4 w-4 text-white" />}
-              </div>
-              <input
-                type="checkbox"
-                className="sr-only"
-                checked={!!checkedSteps[i]}
-                onChange={(e) => setCheckedSteps((prev) => ({ ...prev, [i]: e.target.checked }))}
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">What this checks (context note)</Label>
+              <Textarea
+                value={editForm.context_note}
+                onChange={(e) => setEditForm((f) => ({ ...f, context_note: e.target.value }))}
+                placeholder="Plain English description of what this test verifies…"
+                className="resize-none h-16 text-sm"
               />
-              <span className={cn(
-                "text-sm leading-relaxed",
-                checkedSteps[i] && "line-through text-muted-foreground"
-              )}>
-                <span className="font-medium text-muted-foreground mr-2">{i + 1}.</span>
-                {step}
-              </span>
-            </label>
-          ))}
-        </div>
+            </div>
 
-        {/* Expected result */}
-        {tc.expected_result && (
-          <div className="space-y-2">
-            <p className="text-sm font-semibold text-foreground">What should happen</p>
-            <p className="text-sm leading-relaxed text-muted-foreground">
-              {tc.expected_result}
-            </p>
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Before you start (setup steps)</Label>
+              <Textarea
+                value={editForm.setup_steps}
+                onChange={(e) => setEditForm((f) => ({ ...f, setup_steps: e.target.value }))}
+                placeholder="Prerequisites, one per line…"
+                className="resize-none h-16 text-sm"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Start URL</Label>
+              <Input
+                value={editForm.start_url}
+                onChange={(e) => setEditForm((f) => ({ ...f, start_url: e.target.value }))}
+                placeholder="/67/budget"
+                className="text-sm font-mono"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">Steps (one per line, no leading numbers)</Label>
+              <Textarea
+                value={editForm.steps}
+                onChange={(e) => setEditForm((f) => ({ ...f, steps: e.target.value }))}
+                placeholder="Click the Create button&#10;Fill in the Name field&#10;Click Save"
+                className="resize-none h-40 text-sm font-mono"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs text-muted-foreground">What should happen (expected result)</Label>
+              <Textarea
+                value={editForm.expected_result}
+                onChange={(e) => setEditForm((f) => ({ ...f, expected_result: e.target.value }))}
+                placeholder="The record appears in the list…"
+                className="resize-none h-16 text-sm"
+              />
+            </div>
+
+            <div className="flex gap-2">
+              <Button type="button" size="sm" onClick={saveEdit} disabled={editSaving} className="flex-1">
+                {editSaving ? "Saving…" : "Save instructions"}
+              </Button>
+              <Button type="button" size="sm" variant="outline" onClick={() => setEditingCase(false)} disabled={editSaving}>
+                Cancel
+              </Button>
+            </div>
           </div>
+        ) : (
+          <>
+            {/* Context note (plain English "what this tests") */}
+            {tc.context_note && (
+              <div className="bg-blue-50 dark:bg-blue-950/30 rounded-xl px-4 py-3 text-sm text-blue-800 dark:text-blue-300">
+                <span className="font-medium">What this checks: </span>{tc.context_note}
+              </div>
+            )}
+
+            {/* Setup steps ("Before you start") */}
+            {tc.setup_steps && (
+              <div className="bg-amber-50 dark:bg-amber-950/20 rounded-xl px-4 py-3 space-y-1">
+                <p className="text-sm font-semibold text-amber-900 dark:text-amber-300">Before you start</p>
+                {parseSteps(tc.setup_steps).map((s) => (
+                  <p key={s} className="text-sm text-amber-900 dark:text-amber-300">· {s}</p>
+                ))}
+              </div>
+            )}
+
+            {/* Open in app button */}
+            {tc.start_url && (
+              <a
+                href={(() => {
+                  try {
+                    const raw = new URL(tc.start_url ?? "").pathname;
+                    if (runForm.projectId) {
+                      return raw.replace(/^\/\d+\//, `/${runForm.projectId}/`);
+                    }
+                    return raw;
+                  } catch {
+                    const raw = tc.start_url ?? "#";
+                    if (runForm.projectId) {
+                      return raw.replace(/^\/\d+\//, `/${runForm.projectId}/`);
+                    }
+                    return raw;
+                  }
+                })()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-sm font-medium text-primary hover:underline"
+              >
+                Open the app at the right page →
+              </a>
+            )}
+
+            {/* Steps */}
+            <div className="space-y-3 pt-2">
+              <p className="text-base font-semibold text-foreground">Steps</p>
+              {steps.map((step, i) => (
+                <label
+                  key={step}
+                  className={cn(
+                    "flex items-start gap-3 cursor-pointer py-1.5 transition-all select-none",
+                    checkedSteps[i] && "opacity-70"
+                  )}
+                >
+                  <div className={cn(
+                    "mt-0.5 h-5 w-5 shrink-0 rounded-full border-2 flex items-center justify-center transition-all",
+                    checkedSteps[i] ? "border-green-500 bg-green-500" : "border-muted-foreground/40"
+                  )}>
+                    {checkedSteps[i] && <CheckCircle2 className="h-4 w-4 text-white" />}
+                  </div>
+                  <input
+                    type="checkbox"
+                    className="sr-only"
+                    checked={!!checkedSteps[i]}
+                    onChange={(e) => setCheckedSteps((prev) => ({ ...prev, [i]: e.target.checked }))}
+                  />
+                  <span className={cn(
+                    "text-sm leading-relaxed",
+                    checkedSteps[i] && "line-through text-muted-foreground"
+                  )}>
+                    <span className="font-medium text-muted-foreground mr-2">{i + 1}.</span>
+                    {step}
+                  </span>
+                </label>
+              ))}
+            </div>
+
+            {/* Expected result */}
+            {tc.expected_result && (
+              <div className="space-y-2">
+                <p className="text-sm font-semibold text-foreground">What should happen</p>
+                <p className="text-sm leading-relaxed text-muted-foreground">
+                  {tc.expected_result}
+                </p>
+              </div>
+            )}
+          </>
         )}
 
         {/* Screenshots */}
@@ -1182,7 +1423,7 @@ export default function TestingPage() {
           </div>
 
           {/* Screenshot upload */}
-          <div>
+          <div className="flex items-center gap-3 flex-wrap">
             <input
               ref={fileRef}
               type="file"
@@ -1201,6 +1442,34 @@ export default function TestingPage() {
               <Camera className="h-3.5 w-3.5" />
               {uploadingScreenshot ? "Uploading…" : "Attach screenshot"}
             </button>
+
+            {/* Manual send-to-feedback — shown when this test is already marked fail */}
+            {current.status === "fail" && !runForm.autoSubmitFeedback && (
+              feedbackSentIds.has(current.id) ? (
+                <span className="flex items-center gap-1 text-xs text-green-600">
+                  <CheckCircle2 className="h-3.5 w-3.5" />
+                  Sent to feedback inbox
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => void sendToFeedback(current)}
+                  disabled={feedbackSendingIds.has(current.id)}
+                  className="flex items-center gap-1.5 text-xs text-orange-600 hover:text-orange-700 transition-colors px-2 py-1.5 rounded-md hover:bg-orange-50 dark:hover:bg-orange-950/20"
+                >
+                  <Send className="h-3.5 w-3.5" />
+                  {feedbackSendingIds.has(current.id) ? "Sending…" : "Send to feedback inbox"}
+                </button>
+              )
+            )}
+
+            {/* Auto-submit confirmation — shown when auto-submit is on and test is already fail */}
+            {current.status === "fail" && runForm.autoSubmitFeedback && feedbackSentIds.has(current.id) && (
+              <span className="flex items-center gap-1 text-xs text-green-600">
+                <CheckCircle2 className="h-3.5 w-3.5" />
+                Sent to feedback inbox
+              </span>
+            )}
           </div>
         </div>
 

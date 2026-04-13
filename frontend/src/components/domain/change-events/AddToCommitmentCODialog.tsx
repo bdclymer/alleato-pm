@@ -17,6 +17,7 @@ import { StatusBadge } from "@/components/ds";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { FileText } from "lucide-react";
+import { apiFetch } from "@/lib/api-client";
 
 interface Commitment {
   id: string;
@@ -65,11 +66,10 @@ export function AddToCommitmentCODialog({
     const fetchCommitments = async () => {
       setIsLoadingCommitments(true);
       try {
-        const res = await fetch(
+        const data = await apiFetch<unknown>(
           `/api/projects/${projectId}/change-events/commitment-options`,
           {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               change_event_ids: selectedChangeEventIds,
               scope: contractScope,
@@ -77,9 +77,7 @@ export function AddToCommitmentCODialog({
             }),
           },
         );
-        if (!res.ok) throw new Error("Failed to load commitments");
-        const data = await res.json();
-        const items = Array.isArray(data) ? data : data.data ?? [];
+        const items = Array.isArray(data) ? data : (data as { data?: unknown[] }).data ?? [];
         setCommitments(
           items.map((c: Record<string, unknown>) => ({
             id: String(c.id),
@@ -90,8 +88,8 @@ export function AddToCommitmentCODialog({
             commitment_type: (c.commitment_type as string) ?? (c.type as string) ?? null,
           })),
         );
-      } catch {
-        toast.error("Could not load commitments. Please try again.");
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : "Could not load commitments. Please try again.");
         setCommitments([]);
       } finally {
         setIsLoadingCommitments(false);
@@ -129,30 +127,21 @@ export function AddToCommitmentCODialog({
             const pcoTitle =
               `Bulk Draft PCO — ${commitment.title || commitment.commitment_number || commitment.id}`.trim();
 
-            const response = await fetch(`/api/projects/${projectId}/change-events/add-to-pco`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                change_event_ids: selectedChangeEventIds,
-                pco_type: "commitment",
-                create_new: {
-                  title: pcoTitle,
-                  commitment_id: commitment.id,
-                  commitment_type: commitmentType,
-                },
-              }),
-            });
-
-            if (!response.ok) {
-              const payload = await response.json().catch(() => null);
-              const message =
-                payload && typeof payload === "object" && "error" in payload
-                  ? String(payload.error)
-                  : "Failed to create commitment PCO";
-              throw new Error(message);
-            }
-
-            return response.json();
+            return apiFetch(
+              `/api/projects/${projectId}/change-events/add-to-pco`,
+              {
+                method: "POST",
+                body: JSON.stringify({
+                  change_event_ids: selectedChangeEventIds,
+                  pco_type: "commitment",
+                  create_new: {
+                    title: pcoTitle,
+                    commitment_id: commitment.id,
+                    commitment_type: commitmentType,
+                  },
+                }),
+              },
+            );
           }),
         );
 
@@ -185,11 +174,10 @@ export function AddToCommitmentCODialog({
       const pcoTitle =
         `PCO for ${count} change event${count === 1 ? "" : "s"} — ${selectedCommitment?.title || selectedCommitment?.commitment_number || ""}`.trim();
 
-      const res = await fetch(
+      const result = await apiFetch<{ pco?: { id?: string } }>(
         `/api/projects/${projectId}/change-events/add-to-pco`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             change_event_ids: selectedChangeEventIds,
             pco_type: "commitment",
@@ -201,17 +189,6 @@ export function AddToCommitmentCODialog({
           }),
         },
       );
-
-      if (!res.ok) {
-        const payload = await res.json().catch(() => null);
-        const message =
-          payload && typeof payload === "object" && "error" in payload
-            ? String(payload.error)
-            : "Failed to create commitment PCO";
-        throw new Error(message);
-      }
-
-      const result = await res.json();
       toast.success(
         isBulkDraftMode
           ? "Bulk draft commitment PCO created successfully"

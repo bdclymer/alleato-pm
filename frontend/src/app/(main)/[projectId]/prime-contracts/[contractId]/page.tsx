@@ -11,6 +11,7 @@ import {
   FileText,
   History,
   Mail,
+  MoreVertical,
   Pencil,
   Plus,
   RefreshCw,
@@ -31,7 +32,6 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import {
@@ -810,10 +810,9 @@ export default function ProjectContractDetailPage() {
       variant="dashboard"
       title={`#${contract.contract_number || contract.id.slice(0, 8)} — ${contract.title}`}
       description={contract.contractor ? `Contractor: ${contract.contractor.name}` : contract.vendor ? `Contractor: ${contract.vendor.name}` : "No contractor assigned"}
-      onBack={() => router.back()}
+      onBack={() => router.push(`/${projectId}/prime-contracts`)}
       actions={
-        <TooltipProvider delayDuration={150}>
-          <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="default" size="sm"><Plus />Create<ChevronDown /></Button>
@@ -826,62 +825,36 @@ export default function ProjectContractDetailPage() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="icon" disabled={isSyncing} onClick={handleErpSync} aria-label="Sync to ERP">
-                  <RefreshCw className={isSyncing ? "animate-spin" : undefined} />
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="icon" aria-label="More actions">
+                  <MoreVertical className="h-4 w-4" />
                 </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="border border-border bg-background text-foreground shadow-sm">
-                Sync to ERP
-              </TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="icon" disabled={isExporting} onClick={handleErpExport} aria-label="Import">
-                  <Upload className={isExporting ? "animate-pulse" : undefined} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="border border-border bg-background text-foreground shadow-sm">
-                Import
-              </TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="icon" onClick={() => { setDocumentDialogTab("email"); setIsDocumentDialogOpen(true); }} aria-label="Email">
-                  <Mail />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="border border-border bg-background text-foreground shadow-sm">
-                Email
-              </TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="outline" size="icon" onClick={() => { setDocumentDialogTab("download"); setIsDocumentDialogOpen(true); }} aria-label="Export">
-                  <Download />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="border border-border bg-background text-foreground shadow-sm">
-                Export
-              </TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="default" size="icon" onClick={() => setIsEditing(true)} aria-label="Edit">
-                  <Pencil />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="border border-border bg-background text-foreground shadow-sm">
-                Edit
-              </TooltipContent>
-            </Tooltip>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem disabled={isSyncing} onClick={handleErpSync}>
+                  <RefreshCw className={`h-4 w-4 mr-2${isSyncing ? " animate-spin" : ""}`} />
+                  Resync to ERP
+                </DropdownMenuItem>
+                <DropdownMenuItem disabled={isExporting} onClick={handleErpExport}>
+                  <Upload className={`h-4 w-4 mr-2${isExporting ? " animate-pulse" : ""}`} />
+                  Import
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setDocumentDialogTab("download"); setIsDocumentDialogOpen(true); }}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setDocumentDialogTab("email"); setIsDocumentDialogOpen(true); }}>
+                  <Mail className="h-4 w-4 mr-2" />
+                  Email
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setIsEditing(true)}>
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Edit
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-        </TooltipProvider>
       }
     >
       <PageTabs
@@ -901,7 +874,7 @@ export default function ProjectContractDetailPage() {
         onTabClick={(href) => setActiveTab(href as ContractTab)}
       />
 
-      <div className="pt-8">
+      <div className="pt-1">
         {activeTab === "overview" && (
           <PrimeContractOverviewTab
             contract={contract} changeOrders={changeOrders} attachments={attachments} attachmentsLoading={attachmentsLoading}

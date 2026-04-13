@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo } from "react";
 
-import { Check, Download, Pencil, Trash2, X } from "lucide-react";
+import { Check, Download, MoreVertical, Pencil, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 
 import type { PrimeContractCO } from "@/app/(main)/[projectId]/prime-contracts/[contractId]/types";
@@ -10,6 +10,13 @@ import { SectionHeader } from "@/components/ds/section-header";
 import { StatusBadge } from "@/components/ds";
 import { UnifiedTablePage, type TableColumn } from "@/components/tables/unified/unified-table-page";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface PrimeContractChangeOrdersTabProps {
   projectId: string;
@@ -206,74 +213,46 @@ export function PrimeContractChangeOrdersTab({
           columns,
           getRowId: (co) => co.id,
           rowActions: (co) => (
-            <div className="flex items-center gap-1">
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-7 w-7"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onStartEditCo(co);
-                }}
-                title="Edit"
-              >
-                <Pencil className="h-3.5 w-3.5" />
-              </Button>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-7 w-7"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  void downloadPrimeContractChangeOrderPdf(co);
-                }}
-                title="Download PDF"
-                aria-label={`Download ${co.change_order_number || "change order"} PDF`}
-              >
-                <Download className="h-3.5 w-3.5" />
-              </Button>
-              {co.status !== "approved" && co.status !== "rejected" && (
-                <>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 px-2 text-xs"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      void handleApproveCo(co.id);
-                    }}
-                  >
-                    <Check className="h-3 w-3 mr-1" />
-                    Approve
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 px-2 text-xs text-destructive"
-                    onClick={(event) => {
-                      event.stopPropagation();
-                      onSetRejectingCoId(co.id);
-                      onShowRejectCoDialog();
-                    }}
-                  >
-                    <X className="h-3 w-3 mr-1" />
-                    Reject
-                  </Button>
-                </>
-              )}
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-7 w-7 text-destructive hover:text-destructive"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onSetDeletingCo(co);
-                }}
-                title="Delete"
-              >
-                <Trash2 className="h-3.5 w-3.5" />
-              </Button>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button size="icon" variant="ghost" className="h-7 w-7" onClick={(e) => e.stopPropagation()}>
+                  <MoreVertical className="h-3.5 w-3.5" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                <DropdownMenuItem onClick={() => onStartEditCo(co)}>
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Edit
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => void downloadPrimeContractChangeOrderPdf(co)}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Download PDF
+                </DropdownMenuItem>
+                {co.status !== "approved" && co.status !== "rejected" && (
+                  <>
+                    <DropdownMenuItem onClick={() => void handleApproveCo(co.id)}>
+                      <Check className="h-4 w-4 mr-2" />
+                      Approve
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() => { onSetRejectingCoId(co.id); onShowRejectCoDialog(); }}
+                      className="text-destructive focus:text-destructive"
+                    >
+                      <X className="h-4 w-4 mr-2" />
+                      Reject
+                    </DropdownMenuItem>
+                  </>
+                )}
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => onSetDeletingCo(co)}
+                  className="text-destructive focus:text-destructive"
+                >
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Delete
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           ),
         }}
         features={{

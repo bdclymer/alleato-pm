@@ -3,7 +3,6 @@
 import { AppSidebar } from "@/components/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/header";
-import { AIChatWidgetLazy } from "@/components/chat/ai-chat-widget-lazy";
 import { SiteFooter } from "@/components/layout/site-footer";
 
 

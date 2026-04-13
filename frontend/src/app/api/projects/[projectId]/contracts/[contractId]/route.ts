@@ -19,112 +19,75 @@ interface RouteParams {
 export const GET = withApiGuardrails(
   "projects/[projectId]/contracts/[contractId]#GET",
   async ({ request, params }) => {
-  
+
     const { projectId, contractId } = await params;
     const supabase = await createClient();
 
-    // Fetch contract with vendor and client relations
-    // Note: look up by UUID only (no project_id filter) so direct navigation
-    // from bookmarks or cross-project links still resolves the contract.
-    const { data: contract, error } = await supabase
-      .from("prime_contracts")
-      .select(
-        `
-        *,
-        vendor:companies!prime_contracts_vendor_id_fkey(id, name, contact_name, contact_email, contact_phone),
-        client:companies!prime_contracts_client_company_id_fkey(id, name),
-        contractor:companies!prime_contracts_contractor_id_fkey(id, name),
-        architect_engineer:companies!prime_contracts_architect_engineer_id_fkey(id, name)
-      `,
-      )
-      .eq("id", contractId)
-      .single();
+    // Fetch contract and financial summary in parallel.
+    // contract_company is now included in the initial join (fixes N+1).
+    // prime_contract_financial_summary view handles all aggregation in Postgres
+    // (eliminates 3 extra round-trips + JS aggregation).
+    const [contractResult, financialResult] = await Promise.all([
+      supabase
+        .from("prime_contracts")
+        .select(
+          `
+          *,
+          vendor:companies!prime_contracts_vendor_id_fkey(id, name, contact_name, contact_email, contact_phone),
+          client:companies!prime_contracts_client_company_id_fkey(id, name),
+          contractor:companies!prime_contracts_contractor_id_fkey(id, name),
+          architect_engineer:companies!prime_contracts_architect_engineer_id_fkey(id, name),
+          contract_company:companies!prime_contracts_contract_company_id_fkey(id, name)
+        `,
+        )
+        .eq("id", contractId)
+        .single(),
+      supabase
+        .from("prime_contract_financial_summary")
+        .select("approved_change_orders, pending_change_orders, draft_change_orders, revised_contract_amount, pending_revised_contract_amount, invoiced_amount, payments_received, remaining_balance, percent_paid")
+        .eq("contract_id", contractId)
+        .single(),
+    ]);
 
-    if (error) {
-      if (error.code === "PGRST116") {
+    if (contractResult.error) {
+      if (contractResult.error.code === "PGRST116") {
         return NextResponse.json(
           { error: "Contract not found" },
           { status: 404 },
         );
       }
       return NextResponse.json(
-        { error: "Failed to fetch contract", details: error.message },
+        { error: "Failed to fetch contract", details: contractResult.error.message },
         { status: 400 },
       );
     }
 
-    let contractCompany: { id: string; name: string } | null = null;
-    if (contract.contract_company_id) {
-      const { data: company } = await supabase
-        .from("companies")
-        .select("id, name")
-        .eq("id", contract.contract_company_id)
-        .single();
-      contractCompany = company ?? null;
-    }
-
-    // Aggregate financial data from contract_change_orders (UUID contract_id matches prime_contracts.id)
-    // NOTE: contract_financial_summary_mv uses the integer-PK contracts table — not prime_contracts (UUID)
-    const [coResult, invoiceResult, paymentResult] = await Promise.all([
-      supabase
-        .from("contract_change_orders")
-        .select("amount, status")
-        .eq("contract_id", contractId),
-      supabase
-        .from("prime_contract_payment_applications")
-        .select("amount, status")
-        .eq("contract_id", contractId),
-      supabase
-        .from("prime_contract_payments")
-        .select("amount")
-        .eq("contract_id", contractId),
-    ]);
-
-    let approvedCOs = 0;
-    let pendingCOs = 0;
-    let draftCOs = 0;
-
-    if (coResult.data) {
-      for (const co of coResult.data) {
-        const amount = co.amount ?? 0;
-        if (co.status === "approved") approvedCOs += amount;
-        else if (co.status === "pending") pendingCOs += amount;
-        else if (co.status === "draft") draftCOs += amount;
-      }
-    }
-
-    const invoicedAmount = (invoiceResult.data ?? [])
-      .filter((a) => a.status === "approved")
-      .reduce((sum, a) => sum + (a.amount ?? 0), 0);
-
-    const paymentsReceived = (paymentResult.data ?? []).reduce(
-      (sum, p) => sum + (p.amount ?? 0),
-      0,
-    );
-
-    const originalAmount = contract.original_contract_value ?? 0;
-    const revisedAmount = originalAmount + approvedCOs;
-    const remainingBalance = revisedAmount - paymentsReceived;
-    const percentPaid = revisedAmount > 0
-      ? Math.round((paymentsReceived / revisedAmount) * 10000) / 100
-      : 0;
-
-    // Merge contract with calculated financial data
-    const enrichedContract = {
-      ...contract,
-      contract_company: contractCompany,
-      approved_change_orders: approvedCOs,
-      pending_change_orders: pendingCOs,
-      draft_change_orders: draftCOs,
-      pending_revised_contract_amount: revisedAmount + pendingCOs,
-      revised_contract_value: revisedAmount,
-      invoiced_amount: invoicedAmount,
-      payments_received: paymentsReceived,
-      remaining_balance: remainingBalance,
-      percent_paid: percentPaid,
+    const contract = contractResult.data;
+    // Financial summary may not exist yet for brand-new contracts with no COs/payments
+    const fin = financialResult.data ?? {
+      approved_change_orders: 0,
+      pending_change_orders: 0,
+      draft_change_orders: 0,
+      revised_contract_amount: contract.original_contract_value ?? 0,
+      pending_revised_contract_amount: contract.original_contract_value ?? 0,
+      invoiced_amount: 0,
+      payments_received: 0,
+      remaining_balance: contract.original_contract_value ?? 0,
+      percent_paid: 0,
     };
 
-    return NextResponse.json(enrichedContract);
+    return NextResponse.json({
+      ...contract,
+      approved_change_orders: fin.approved_change_orders,
+      pending_change_orders: fin.pending_change_orders,
+      draft_change_orders: fin.draft_change_orders,
+      pending_revised_contract_amount: fin.pending_revised_contract_amount,
+      revised_contract_value: fin.revised_contract_amount,
+      invoiced_amount: fin.invoiced_amount,
+      payments_received: fin.payments_received,
+      remaining_balance: fin.remaining_balance,
+      percent_paid: fin.percent_paid,
+    });
     },
 );
 
@@ -244,29 +207,21 @@ export const DELETE = withApiGuardrails(
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/contracts/[contractId]#DELETE", message: "Authentication required." });
     }
 
-    // Check if contract exists before deleting
-    // Note: contract_line_items, contract_change_orders, and contract_billing_periods
-    // all have ON DELETE CASCADE FKs to prime_contracts, so the DB handles cleanup automatically.
-    const { data: existingContract } = await supabase
+    // Delete directly — cascade FKs handle child cleanup automatically.
+    // Skipping the pre-check eliminates a race condition and a round-trip;
+    // "0 rows affected" is treated the same as a 404 (contract not found).
+    const { error, count } = await supabase
       .from("prime_contracts")
-      .select("id")
+      .delete({ count: "exact" })
       .eq("id", contractId)
-      .eq("project_id", parseInt(projectId, 10))
-      .maybeSingle();
+      .eq("project_id", parseInt(projectId, 10));
 
-    if (!existingContract) {
+    if (!error && count === 0) {
       return NextResponse.json(
         { error: "Contract not found" },
         { status: 404 },
       );
     }
-
-    // Delete the contract
-    const { error } = await supabase
-      .from("prime_contracts")
-      .delete()
-      .eq("id", contractId)
-      .eq("project_id", parseInt(projectId, 10));
 
     if (error) {
       console.error("[DELETE /contracts/:id] Supabase error:", error);

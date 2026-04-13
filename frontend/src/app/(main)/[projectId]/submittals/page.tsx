@@ -40,7 +40,6 @@ import {
   renderSubmittalList,
   type SubmittalTableRow,
 } from "@/features/submittals/submittals-table-config";
-import { SubmittalFormDialog } from "@/features/submittals/submittal-form-dialog";
 
 type SubmittalFilterState = Record<string, FilterValue>;
 
@@ -402,10 +401,8 @@ export default function SubmittalsPage(): ReactElement {
 
   useProjectTitle("Submittals");
 
-  const [dialogOpen, setDialogOpen] = React.useState(false);
   const [packagePickerOpen, setPackagePickerOpen] = React.useState(false);
   const [specPickerOpen, setSpecPickerOpen] = React.useState(false);
-  const [formDefaults, setFormDefaults] = React.useState<{ submittal_package_id?: string; specification_section?: string } | undefined>(undefined);
   const deleteSubmittal = useDeleteSubmittal(projectId);
 
   const initialFilters: SubmittalFilterState = {
@@ -727,8 +724,7 @@ export default function SubmittalsPage(): ReactElement {
         open={packagePickerOpen}
         onOpenChange={setPackagePickerOpen}
         onSelect={(pkg) => {
-          setFormDefaults({ submittal_package_id: pkg.id });
-          setDialogOpen(true);
+          router.push(`/${projectId}/submittals/new?package_id=${encodeURIComponent(pkg.id)}`);
         }}
       />
       <SpecPickerDialog
@@ -736,8 +732,8 @@ export default function SubmittalsPage(): ReactElement {
         open={specPickerOpen}
         onOpenChange={setSpecPickerOpen}
         onSelect={(spec) => {
-          setFormDefaults({ specification_section: `${spec.section_number} - ${spec.section_title}` });
-          setDialogOpen(true);
+          const section = encodeURIComponent(`${spec.section_number} - ${spec.section_title}`);
+          router.push(`/${projectId}/submittals/new?specification_section=${section}`);
         }}
       />
       <UnifiedTablePage
@@ -754,7 +750,7 @@ export default function SubmittalsPage(): ReactElement {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setDialogOpen(true)}>
+                <DropdownMenuItem onClick={() => router.push(`/${projectId}/submittals/new`)}>
                   Create Submittal
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => setPackagePickerOpen(true)}>
@@ -839,7 +835,7 @@ export default function SubmittalsPage(): ReactElement {
           isFiltered: isFiltered && !isGroupedTab,
           action:
             isGroupedTab || activeTab === "recycle-bin" ? undefined : (
-              <Button size="sm" onClick={() => setDialogOpen(true)}>
+              <Button size="sm" onClick={() => router.push(`/${projectId}/submittals/new`)}>
                 <Plus />
                 Create your first submittal
               </Button>
@@ -853,15 +849,6 @@ export default function SubmittalsPage(): ReactElement {
         topContent={groupedTopContent}
       />
 
-      <SubmittalFormDialog
-        projectId={projectId}
-        open={dialogOpen}
-        onOpenChange={(open) => {
-          setDialogOpen(open);
-          if (!open) setFormDefaults(undefined);
-        }}
-        defaultOverrides={formDefaults}
-      />
     </>
   );
 }

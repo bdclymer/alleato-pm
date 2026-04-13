@@ -36,10 +36,20 @@ const statusVariantMap: Record<
   string,
   "default" | "secondary" | "destructive" | "outline" | "success"
 > = {
+  // Form enum values
   Draft: "secondary",
   Open: "default",
   Distributed: "outline",
   Closed: "success",
+  // Legacy / seeded values
+  approved: "success",
+  "approved as noted": "success",
+  requires_revision: "destructive",
+  revise_and_resubmit: "destructive",
+  rejected: "destructive",
+  under_review: "default",
+  submitted: "secondary",
+  pending: "outline",
 };
 
 const responseVariantMap: Record<

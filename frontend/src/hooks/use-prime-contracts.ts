@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 import type { CreateContractInput, UpdateContractInput } from "@/app/api/projects/[projectId]/contracts/validation";
 
 // =============================================================================
@@ -75,14 +76,7 @@ export function usePrimeContracts(
 
   return useQuery<PrimeContractListResponse>({
     queryKey: primeContractKeys.list(projectId, params),
-    queryFn: async () => {
-      const res = await fetch(url);
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to fetch prime contracts");
-      }
-      return res.json();
-    },
+    queryFn: () => apiFetch<PrimeContractListResponse>(url),
     enabled: !!projectId,
   });
 }
@@ -94,16 +88,8 @@ export function usePrimeContracts(
 export function usePrimeContract(projectId: number, contractId: string) {
   return useQuery<PrimeContract>({
     queryKey: primeContractKeys.detail(projectId, contractId),
-    queryFn: async () => {
-      const res = await fetch(
-        `/api/projects/${projectId}/contracts/${contractId}`,
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to fetch contract");
-      }
-      return res.json();
-    },
+    queryFn: () =>
+      apiFetch<PrimeContract>(`/api/projects/${projectId}/contracts/${contractId}`),
     enabled: !!projectId && !!contractId,
   });
 }
@@ -116,18 +102,11 @@ export function useCreatePrimeContract(projectId: number) {
   const queryClient = useQueryClient();
 
   return useMutation<PrimeContract, Error, CreateContractInput>({
-    mutationFn: async (data) => {
-      const res = await fetch(`/api/projects/${projectId}/contracts`, {
+    mutationFn: (data) =>
+      apiFetch<PrimeContract>(`/api/projects/${projectId}/contracts`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to create contract");
-      }
-      return res.json();
-    },
+      }),
     onSuccess: (contract) => {
       queryClient.invalidateQueries({
         queryKey: primeContractKeys.all(projectId),
@@ -148,21 +127,14 @@ export function useUpdatePrimeContract(projectId: number, contractId: string) {
   const queryClient = useQueryClient();
 
   return useMutation<PrimeContract, Error, UpdateContractInput>({
-    mutationFn: async (data) => {
-      const res = await fetch(
+    mutationFn: (data) =>
+      apiFetch<PrimeContract>(
         `/api/projects/${projectId}/contracts/${contractId}`,
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         },
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to update contract");
-      }
-      return res.json();
-    },
+      ),
     onSuccess: (contract) => {
       queryClient.invalidateQueries({
         queryKey: primeContractKeys.all(projectId),
@@ -187,16 +159,11 @@ export function useDeletePrimeContract(projectId: number) {
   const queryClient = useQueryClient();
 
   return useMutation<void, Error, string>({
-    mutationFn: async (contractId) => {
-      const res = await fetch(
+    mutationFn: (contractId) =>
+      apiFetch<void>(
         `/api/projects/${projectId}/contracts/${contractId}`,
         { method: "DELETE" },
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to delete contract");
-      }
-    },
+      ),
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: primeContractKeys.all(projectId),

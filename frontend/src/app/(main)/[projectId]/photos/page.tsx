@@ -583,7 +583,7 @@ function PhotoLightbox({
             <Button variant="outline" size="sm" onClick={toggleStar}>
               {photo.starred ? (
                 <>
-                  <Star className="mr-1.5 size-4 fill-current text-yellow-500" />
+                  <Star className="mr-1.5 size-4 fill-current text-warning" />
                   Starred
                 </>
               ) : (

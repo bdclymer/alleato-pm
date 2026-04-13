@@ -4,7 +4,6 @@ import * as React from "react";
 import { usePathname } from "next/navigation";
 import { AppSidebar } from "@/components/app-sidebar";
 import { CreateProjectDevConfigProvider } from "@/components/project/create-project-dev-config";
-import { AIChatWidgetLazy } from "@/components/chat/ai-chat-widget-lazy";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/header";
 import { ProcoreReferencePanel } from "@/components/header/procore-reference-panel";
@@ -14,15 +13,11 @@ import { LiveCursors } from "@/components/live-cursors/LiveCursors";
 import { feedbackTargetProps } from "@/lib/admin-feedback/constants";
 
 /** Floating overlays extracted to a single component to avoid mixed static/dynamic children key warnings. */
-function Overlays({ showChat }: { showChat: boolean }) {
+function Overlays() {
   return (
-    <>
-      {showChat && <AIChatWidgetLazy />}
-      <React.Suspense fallback={null}>
-        <LiveCursors />
-      </React.Suspense>
-      {/* AdminFeedbackWidget moved to UnifiedFeedbackWidget in root layout */}
-    </>
+    <React.Suspense fallback={null}>
+      <LiveCursors />
+    </React.Suspense>
   );
 }
 
@@ -39,9 +34,6 @@ export default function MainLayout({
   const pathname = usePathname();
   const isTeamChatPage = pathname?.startsWith("/team-chat");
   const isDrawingViewer = /\/drawings\/viewer\//.test(pathname ?? "");
-  const showAlleatoAIWidget =
-    !pathname?.startsWith("/procore-docs") && !isTeamChatPage;
-
   if (isTeamChatPage) {
     return (
       <SidebarProvider defaultOpen={false}>
@@ -72,7 +64,7 @@ export default function MainLayout({
             <ProcoreReferencePanel />
           </div>
         </CreateProjectDevConfigProvider>
-        <Overlays showChat={showAlleatoAIWidget} />
+        <Overlays />
       </SidebarInset>
     </SidebarProvider>
   );
