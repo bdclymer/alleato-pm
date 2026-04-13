@@ -77,6 +77,10 @@ const config = [
       'design-system/no-raw-button': 'warn',
       'design-system/no-raw-form-controls': 'warn',
       'design-system/require-money-field': 'warn',
+      // WARN globally (300+ existing violations — tracked as debt, fix incrementally).
+      // ENFORCED as ERROR on changed files via lint-staged (.lintstagedrc.js).
+      // New/modified files MUST use apiFetch. Regression: use-rfis.ts raw fetch
+      // caused "Failed to fetch" instead of real error messages (2026-04-13).
       'design-system/require-api-client': 'warn',
     },
   },

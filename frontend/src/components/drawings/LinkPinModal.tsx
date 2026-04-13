@@ -323,7 +323,7 @@ function PunchItemContent({
 
   const projectIdNum = Number(projectId);
   const { data: itemsRaw, isLoading } = usePunchItems(projectIdNum);
-  const items = Array.isArray(itemsRaw) ? itemsRaw : (itemsRaw as any)?.data ?? [];
+  const items = Array.isArray(itemsRaw) ? itemsRaw : (itemsRaw as any)?.items ?? [];
   const createItem = useCreatePunchItem(projectIdNum);
 
   const handleLink = () => {
@@ -340,7 +340,7 @@ function PunchItemContent({
 
   const handleCreate = async () => {
     if (!position || !title.trim()) return;
-    const item = await createItem.mutateAsync({ title: title.trim(), status: "open" });
+    const item = await createItem.mutateAsync({ title: title.trim(), status: "draft" });
     onConfirm({
       ...posToPin(position),
       pin_type: "punch_item",

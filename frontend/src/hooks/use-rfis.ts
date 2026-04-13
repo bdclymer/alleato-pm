@@ -3,6 +3,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 import type { RFI } from "@/types/database-extensions";
 import type { RfiFormValues } from "@/lib/schemas/rfi-schema";
 
@@ -14,13 +15,8 @@ export function useRfis(projectId: number) {
   return useQuery<RFI[]>({
     queryKey: ["rfis", projectId],
     queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/rfis`);
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to fetch RFIs");
-      }
-      const json = await res.json();
-      return json.data ?? json;
+      const json = await apiFetch<RFI[] | { data: RFI[] }>(`/api/projects/${projectId}/rfis`);
+      return Array.isArray(json) ? json : (json as { data: RFI[] }).data;
     },
     enabled: !!projectId,
   });
@@ -29,14 +25,7 @@ export function useRfis(projectId: number) {
 export function useRfi(projectId: number, rfiId: string) {
   return useQuery<RFI>({
     queryKey: ["rfi", rfiId],
-    queryFn: async () => {
-      const res = await fetch(`/api/projects/${projectId}/rfis/${rfiId}`);
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to fetch RFI");
-      }
-      return res.json();
-    },
+    queryFn: () => apiFetch<RFI>(`/api/projects/${projectId}/rfis/${rfiId}`),
     enabled: !!projectId && !!rfiId,
   });
 }
@@ -50,18 +39,11 @@ export function useCreateRfi(projectId: number) {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: async (data: RfiFormValues & { status: string }) => {
-      const res = await fetch(`/api/projects/${projectId}/rfis`, {
+    mutationFn: (data: RfiFormValues & { status: string }) =>
+      apiFetch<RFI>(`/api/projects/${projectId}/rfis`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...data, project_id: projectId }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to create RFI");
-      }
-      return res.json();
-    },
+      }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["rfis", projectId] });
       router.refresh();
@@ -78,24 +60,11 @@ export function useUpdateRfi(projectId: number) {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: async ({
-      rfiId,
-      data,
-    }: {
-      rfiId: string;
-      data: Partial<RfiFormValues> & { status?: string };
-    }) => {
-      const res = await fetch(`/api/projects/${projectId}/rfis/${rfiId}`, {
+    mutationFn: ({ rfiId, data }: { rfiId: string; data: Partial<RfiFormValues> & { status?: string } }) =>
+      apiFetch<RFI>(`/api/projects/${projectId}/rfis/${rfiId}`, {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to update RFI");
-      }
-      return res.json();
-    },
+      }),
     onSuccess: (_data, variables) => {
       queryClient.invalidateQueries({ queryKey: ["rfis", projectId] });
       queryClient.invalidateQueries({
@@ -115,16 +84,8 @@ export function useDeleteRfi(projectId: number) {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: async (rfiId: string) => {
-      const res = await fetch(`/api/projects/${projectId}/rfis/${rfiId}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to delete RFI");
-      }
-      return res.json();
-    },
+    mutationFn: (rfiId: string) =>
+      apiFetch(`/api/projects/${projectId}/rfis/${rfiId}`, { method: "DELETE" }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["rfis", projectId] });
       router.refresh();

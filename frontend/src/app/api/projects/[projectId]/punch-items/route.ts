@@ -1,10 +1,29 @@
-import { withApiGuardrails } from "@/lib/guardrails/api";
+import { withApiGuardrails, parseJsonBody } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { PunchItemService } from "@/services/PunchItemService";
 import type { PunchItemFilters } from "@/services/PunchItemService";
 import { apiErrorResponse } from "@/lib/api-error";
+
+const PUNCH_ITEM_STATUSES = ["draft", "work_required", "initiated", "closed"] as const;
+
+const createPunchItemSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().optional().nullable(),
+  status: z.enum(PUNCH_ITEM_STATUSES).default("draft"),
+  priority: z.enum(["low", "medium", "high"]).optional().nullable(),
+  assignee_id: z.string().uuid().optional().nullable(),
+  assignee_company: z.string().optional().nullable(),
+  ball_in_court: z.string().optional().nullable(),
+  due_date: z.string().optional().nullable(),
+  location: z.string().optional().nullable(),
+  trade: z.string().optional().nullable(),
+  type: z.string().optional().nullable(),
+  reference: z.string().optional().nullable(),
+  drawing_reference: z.string().optional().nullable(),
+});
 
 /**
  * GET /api/projects/[projectId]/punch-items
@@ -71,40 +90,16 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/punch-items#POST", message: "Authentication required." });
   }
 
-  try {
-    const body = await request.json();
+  // Zod validates all fields including status enum — rejects "open", "complete", etc.
+  const body = await parseJsonBody(request, createPunchItemSchema, "projects/[projectId]/punch-items#POST");
 
-    if (!body.title || typeof body.title !== "string" || !body.title.trim()) {
-      return NextResponse.json(
-        { error: "Title is required" },
-        { status: 400 },
-      );
-    }
+  const service = new PunchItemService(supabase);
+  const result = await service.create(numericProjectId, body, user.id);
 
-    // Normalize empty strings for nullable date/string fields
-    const sanitized = { ...body };
-    if (sanitized.due_date === "") sanitized.due_date = null;
-    if (sanitized.description === "") sanitized.description = null;
-    if (sanitized.assignee_company === "") sanitized.assignee_company = null;
-    if (sanitized.ball_in_court === "") sanitized.ball_in_court = null;
-    if (sanitized.location === "") sanitized.location = null;
-    if (sanitized.trade === "") sanitized.trade = null;
-    if (sanitized.type === "") sanitized.type = null;
-    if (sanitized.reference === "") sanitized.reference = null;
-
-    const service = new PunchItemService(supabase);
-    const result = await service.create(numericProjectId, sanitized, user.id);
-
-    if (result.error) {
-      return apiErrorResponse(result.error);
-    }
-
-    return NextResponse.json(result.data, { status: 201 });
-  } catch {
-    return NextResponse.json(
-      { error: "Failed to create punch item" },
-      { status: 500 },
-    );
+  if (result.error) {
+    return apiErrorResponse(result.error);
   }
+
+  return NextResponse.json(result.data, { status: 201 });
   },
 );

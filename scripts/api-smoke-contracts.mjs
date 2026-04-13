@@ -140,6 +140,7 @@ const ENDPOINTS = [
 
   // Punch Items
   ["GET", `/api/projects/${PROJECT_ID}/punch-items`, "Punch items", [200, 401]],
+  ["POST", `/api/projects/${PROJECT_ID}/punch-items`, "Punch items create (auth check)", [400, 401]],
   ["GET", `/api/projects/${PROJECT_ID}/checklist`, "Checklist", [200, 401]],
 
   // Other project-scoped

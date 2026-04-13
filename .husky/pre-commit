@@ -6,7 +6,7 @@
 # ── Root file guard ──────────────────────────────────────────────
 # Only these files are allowed at the project root. Everything else
 # (especially .md, .js, .ts, .py, .sh) must go in docs/, scripts/, etc.
-ALLOWED_ROOT="README.md|CLAUDE.md|AGENTS.md|CONTRIBUTING.md|WORKING_CONTEXT.md|DESIGN.md|CHANGELOG.md|LICENSE|LICENSE.md"
+ALLOWED_ROOT="README.md|CLAUDE.md|AGENTS.md|CONTRIBUTING.md|WORKING_CONTEXT.md|DESIGN.md|CHANGELOG.md|LICENSE|LICENSE.md|.lintstagedrc.js"
 
 STRAY_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E "^[^/]+\.(md|js|ts|py|sh|html)$" | grep -Ev "^($ALLOWED_ROOT)$" || true)
 
