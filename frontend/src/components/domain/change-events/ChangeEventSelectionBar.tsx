@@ -1,11 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { ChevronDown } from "lucide-react";
 
-import { AddToCommitmentCODialog } from "@/components/domain/change-events/AddToCommitmentCODialog";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -36,8 +34,6 @@ export function ChangeEventSelectionBar({
   onSuccess,
 }: ChangeEventSelectionBarProps) {
   const router = useRouter();
-  const [showAddToCommitmentCODialog, setShowAddToCommitmentCODialog] = useState(false);
-
   if (selectedCount > 0) {
     return (
       <>
@@ -70,20 +66,16 @@ export function ChangeEventSelectionBar({
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
 
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>Add to Commitment Change Order</DropdownMenuSubTrigger>
-                <DropdownMenuSubContent>
-                  <DropdownMenuItem onSelect={() => setShowAddToCommitmentCODialog(true)}>
-                    New Commitment Potential Change Order (PCO) - Contracts matching cost codes
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => setShowAddToCommitmentCODialog(true)}>
-                    New Commitment Potential Change Order (PCO) - Contracts
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onSelect={() => setShowAddToCommitmentCODialog(true)}>
-                    Create Bulk Draft Commitment Potential Change Orders
-                  </DropdownMenuItem>
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
+              <DropdownMenuItem
+                onSelect={() => {
+                  const ids = selectedChangeEventIds.join(",");
+                  router.push(
+                    `/${projectId}/change-orders/commitment/new?changeEventIds=${encodeURIComponent(ids)}`,
+                  );
+                }}
+              >
+                Add to Commitment Change Order
+              </DropdownMenuItem>
 
               <DropdownMenuItem
                 onSelect={() => {
@@ -103,15 +95,6 @@ export function ChangeEventSelectionBar({
           </Button>
         </div>
 
-        <AddToCommitmentCODialog
-          open={showAddToCommitmentCODialog}
-          onClose={() => setShowAddToCommitmentCODialog(false)}
-          selectedChangeEventIds={selectedChangeEventIds}
-          projectId={projectId}
-          onSuccess={() => {
-            onSuccess?.();
-          }}
-        />
       </>
     );
   }

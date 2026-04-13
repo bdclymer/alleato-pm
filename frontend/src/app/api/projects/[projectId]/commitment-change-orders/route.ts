@@ -180,6 +180,35 @@ export const POST = withApiGuardrails(
       return apiErrorResponse(error);
     }
 
+    // Link change events if provided (2-tier: CE → CCO directly)
+    const changeEventIds: string[] = body.change_event_ids ?? [];
+    if (changeEventIds.length > 0 && data?.id) {
+      // Mark each change event as sent to commitment CO
+      const { error: ceUpdateError } = await supabase
+        .from("change_events")
+        .update({ sent_to_commitment_pco: true })
+        .in("id", changeEventIds);
+
+      if (ceUpdateError) {
+        console.error("Failed to update change event tracking flags:", ceUpdateError);
+      }
+
+      // Create link records in change_event_pco_links
+      const links = changeEventIds.map((ceId) => ({
+        change_event_id: ceId,
+        pco_id: data.id,
+        pco_type: "commitment_co",
+      }));
+
+      const { error: linkError } = await supabase
+        .from("change_event_pco_links")
+        .insert(links);
+
+      if (linkError) {
+        console.error("Failed to create CE→CCO links:", linkError);
+      }
+    }
+
     return NextResponse.json(data, { status: 201 });
     },
 );
