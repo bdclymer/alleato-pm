@@ -231,6 +231,8 @@ export interface ChangeOrderFormState {
 export type ContractTab =
   | "overview"
   | "change-orders"
+  | "commitments"
+  | "change-events"
   | "invoices"
   | "payments"
   | "emails"

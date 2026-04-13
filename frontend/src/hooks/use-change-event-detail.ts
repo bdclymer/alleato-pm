@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import type {
@@ -556,6 +556,26 @@ export function useChangeEventDetail(
 
   /* ── Return ───────────────────────────────────────────────────── */
 
+  const actions = useMemo(() => ({
+    refetch,
+    updateStatus,
+    deleteChangeEvent,
+    deleteLineItem,
+    submitEdit,
+    fetchRelatedItemOptions,
+    linkRelatedItem,
+    unlinkRelatedItem,
+  }), [
+    refetch,
+    updateStatus,
+    deleteChangeEvent,
+    deleteLineItem,
+    submitEdit,
+    fetchRelatedItemOptions,
+    linkRelatedItem,
+    unlinkRelatedItem,
+  ]);
+
   return {
     // Data
     changeEvent,
@@ -569,15 +589,6 @@ export function useChangeEventDetail(
     error,
 
     // Actions
-    actions: {
-      refetch,
-      updateStatus,
-      deleteChangeEvent,
-      deleteLineItem,
-      submitEdit,
-      fetchRelatedItemOptions,
-      linkRelatedItem,
-      unlinkRelatedItem,
-    },
+    actions,
   };
 }

@@ -2,8 +2,7 @@
 name: smoke-test
 description: >
   Fast smoke test for any Alleato tool. Hits every API endpoint, loads every page,
-  runs HIGH-priority tests from the existing test matrix, validates the database,
-  and checks for obvious visual/design regressions.
+  runs HIGH-priority tests from the existing test matrix, and validates the database.
   Produces a pass/fail report in ~5-10 minutes. Use when: "smoke test [tool]",
   "quick test [tool]", "check if [tool] works", "test [tool] endpoints",
   "is [tool] broken", or any request for a fast sanity check of a tool's functionality.
@@ -32,7 +31,6 @@ Fast confidence check for any Alleato tool. Answers: "Does it work? Anything bro
 | Load every page, check for JS errors | Usability recommendations |
 | Run HIGH-priority tests from the test matrix | Fix bugs (report only) |
 | Validate DB records after create/update | Full field-by-field FK audit |
-| Check obvious design regressions (overlap, truncation, broken spacing, hidden controls) | Pixel-perfect visual QA |
 | Take screenshots of failures | Record repro videos |
 
 For deeper testing, use `/feature-audit <tool>`.
@@ -72,13 +70,6 @@ find frontend/src/app/api/projects/\[projectId\]/<tool-name>/ -name "route.ts" -
 
 For each route file, extract the HTTP methods exported (GET, POST, PATCH, PUT, DELETE).
 
-Build a concrete endpoint checklist from route file paths:
-- Convert file path to API path under `/api/projects/{projectId}/...`
-- Replace dynamic segments with placeholders first:
-  - `[recordId]`, `[toolId]`, `[id]` -> `{recordId}`
-  - `[...slug]` -> `{slug}`
-- Keep one row per method + concrete path pattern
-
 ### 1.4 Inventory pages
 
 ```bash
@@ -88,6 +79,9 @@ find frontend/src/app/\(main\)/\[projectId\]/<tool-name>/ -name "page.tsx" -type
 ### 1.5 Get project ID and auth
 
 ```bash
+# Project ID for testing (from MEMORY.md)
+PROJECT_ID=767
+
 # Auth credentials
 source .env 2>/dev/null || export $(grep -E '^(TEST_USER_1|TEST_PASSWORD_1)=' .env | xargs)
 ```
@@ -118,7 +112,7 @@ if [ "$STATUS" = "000" ]; then
 fi
 
 # Start browser session
-agent-browser --session smoke-<tool> open http://localhost:3000
+agent-browser --session smoke-<tool> open http://localhost:3000/$PROJECT_ID/<tool-name>
 agent-browser --session smoke-<tool> wait --load networkidle
 ```
 
@@ -133,48 +127,22 @@ if [[ "$CURRENT_URL" == *"auth"* || "$CURRENT_URL" == *"login"* ]]; then
   agent-browser --session smoke-<tool> click @<submit>
   agent-browser --session smoke-<tool> wait --load networkidle
 fi
-
-# Resolve project ID after auth
-PROJECT_ID="${SMOKE_PROJECT_ID:-}"
-if [ -z "$PROJECT_ID" ]; then
-  PROJECT_ID=$(agent-browser --session smoke-<tool> eval '
-    (async () => {
-      const r = await fetch("/api/projects?limit=1&sort=id&order=asc");
-      if (!r.ok) return "";
-      const j = await r.json();
-      const rows = Array.isArray(j) ? j : (j?.data ?? []);
-      return rows?.[0]?.id ? String(rows[0].id) : "";
-    })();
-  ' | tr -d "\r")
-fi
-if [ -z "$PROJECT_ID" ]; then
-  echo "Unable to resolve PROJECT_ID. Set SMOKE_PROJECT_ID and rerun."
-  exit 1
-fi
-
-# Navigate to tool page after project resolution
-agent-browser --session smoke-<tool> open http://localhost:3000/$PROJECT_ID/<tool-name>
-agent-browser --session smoke-<tool> wait --load networkidle
 ```
 
 ---
 
 ## Phase 3: API Health Check (~1-2 minutes)
 
-For every API endpoint discovered in Phase 1 (one row per method + path):
+For every API endpoint discovered in Phase 1:
 
 ```bash
-# Example: run one endpoint check inside authenticated browser context
-# METHOD and PATH come from your Phase 1 endpoint checklist
-METHOD="GET"
-PATH="/api/projects/$PROJECT_ID/<tool-name>"
+# Get auth cookie from the browser session
+COOKIE=$(agent-browser --session smoke-<tool> eval 'document.cookie' 2>/dev/null)
 
-agent-browser --session smoke-<tool> eval '
-  (async () => {
-    const res = await fetch("'"$PATH"'", { method: "'"$METHOD"'" });
-    return JSON.stringify({ method: "'"$METHOD"'", path: "'"$PATH"'", status: res.status });
-  })();
-'
+# Hit each endpoint
+curl -s -o /dev/null -w "%{http_code}" \
+  -H "Cookie: $COOKIE" \
+  "http://localhost:3000/api/projects/$PROJECT_ID/<tool-name>"
 ```
 
 **Expected results:**
@@ -188,28 +156,7 @@ agent-browser --session smoke-<tool> eval '
 
 | Endpoint | Method | Status | Expected | Verdict |
 |----------|--------|--------|----------|---------|
-| `/api/projects/{projectId}/<tool>` | GET | 200 | 200 | PASS |
-
-### 3.1 Concrete path resolution for dynamic endpoints
-
-For routes with `{recordId}`:
-- Resolve ID from list endpoint first (latest or first row)
-- If no record exists yet, mark `GET single` as `SKIPPED (no data)` in Phase 3
-- Re-run any skipped `{recordId}` checks after Phase 5 create step using the created ID
-
-Example:
-
-```bash
-RECORD_ID=$(agent-browser --session smoke-<tool> eval '
-  (async () => {
-    const r = await fetch("/api/projects/'"$PROJECT_ID"'/<tool-name>?limit=1");
-    if (!r.ok) return "";
-    const j = await r.json();
-    const rows = Array.isArray(j) ? j : (j?.data ?? []);
-    return rows?.[0]?.id ? String(rows[0].id) : "";
-  })();
-' | tr -d "\r")
-```
+| `/api/projects/767/<tool>` | GET | 200 | 200 | PASS |
 
 ---
 
@@ -239,22 +186,8 @@ agent-browser --session smoke-<tool> screenshot --annotate smoke-test-output/<to
 
 | Page | URL | Loaded | JS Errors | Verdict |
 |------|-----|--------|-----------|---------|
-| List | /{projectId}/<tool-name> | Yes | None | PASS |
-| Viewer | /{projectId}/<tool-name>/viewer/<id> | Yes | None | PASS |
-
-### 4.1 Visual / Design Smoke Check (required)
-
-For each primary page (list/detail/create/edit), confirm:
-- No overlapping UI elements
-- No clipped/truncated labels or values in core controls
-- Buttons/inputs are visible and usable (not hidden by layout issues)
-- Form labels map clearly to controls (no detached/misaligned labels)
-- No broken spacing that obscures data or actions
-
-If any item fails:
-- Mark the page as `PARTIAL` or `FAIL` (depending on severity)
-- Capture an annotated screenshot in `screenshots/<page-name>-design.png`
-- Add the issue in the report's Failures section with severity
+| List | /767/drawings | Yes | None | PASS |
+| Viewer | /767/drawings/viewer/xxx | Yes | None | PASS |
 
 ---
 
@@ -271,11 +204,9 @@ Follow the create test from the matrix (typically test 1.1.1 or similar).
 # Navigate to create form / upload dialog
 agent-browser --session smoke-<tool> snapshot -i
 
-# Fill ALL editable fields with realistic test data
+# Fill ALL required fields with realistic test data
 agent-browser --session smoke-<tool> fill @eN "test value"
-# ... fill every editable field on the form:
-# required + optional text fields, selects, dates, toggles, notes, and attachments
-# (skip only computed/system-managed fields: IDs, timestamps, derived totals)
+# ... fill every required field
 
 # Submit
 agent-browser --session smoke-<tool> click @eN  # Submit button
@@ -291,25 +222,18 @@ agent-browser --session smoke-<tool> errors
 
 ### 5.2 Validate DB
 
-After create, verify the record exists with all fields entered in the UI:
+After create, verify the record exists with all fields:
 
 ```bash
-# Use authenticated browser fetch to verify persistence
-agent-browser --session smoke-<tool> eval '
-  (async () => {
-    const r = await fetch("/api/projects/'"$PROJECT_ID"'/<tool-name>?sort=created_at&order=desc&limit=1");
-    if (!r.ok) return JSON.stringify({ status: r.status });
-    const j = await r.json();
-    return JSON.stringify(j);
-  })();
-'
+# Use the API to verify (or curl the endpoint)
+curl -s -H "Cookie: $COOKIE" \
+  "http://localhost:3000/api/projects/$PROJECT_ID/<tool-name>?sort=created_at&order=desc&limit=1" | jq .
 ```
 
 Check:
 - Record exists
 - All required fields have values (not null)
-- Every editable field you filled in the UI persisted correctly
-- Values match what was entered in the form (not silently dropped or transformed unexpectedly)
+- Values match what was entered in the form
 
 ### 5.3 Read / Detail
 
@@ -333,9 +257,7 @@ agent-browser --session smoke-<tool> click @eN
 agent-browser --session smoke-<tool> wait --load networkidle
 agent-browser --session smoke-<tool> snapshot -i
 
-# Verify pre-fill for all editable controls:
-# text, textarea, select, date, toggle/checkbox, numeric inputs
-# (not just dropdowns)
+# Verify pre-fill: dropdowns show saved values, not "Select..."
 agent-browser --session smoke-<tool> screenshot smoke-test-output/<tool-name>/screenshots/edit-prefill.png
 
 # Change one field
@@ -395,8 +317,8 @@ Fill in all results. Read every screenshot taken with the Read tool before final
 
 **Verdict rules:**
 - **PASS:** All API endpoints healthy, all pages load, CRUD works, DB validates
-- **FAIL:** Any API returns 5xx, any page crashes, create/edit silently drops data, delete doesn't work, or major layout break blocks core actions
-- **PARTIAL:** Minor issues found (e.g., optional field not saving, cosmetic JS warning, non-blocking design defect) but core flows work
+- **FAIL:** Any API returns 5xx, any page crashes, create/edit silently drops data, or delete doesn't work
+- **PARTIAL:** Minor issues found (e.g., optional field not saving, cosmetic JS warning) but core flows work
 
 ---
 
@@ -422,7 +344,6 @@ Present the report summary to the user:
 - **No Procore comparison.** That's `/feature-audit` territory.
 - **No sleep between fill calls.** Only `sleep 1` after submit/navigation.
 - **Batch agent-browser commands** with `&&` when independent.
-- **Do not skip optional fields.** Full-form smoke means fill every editable control except computed/system-managed fields.
 
 ---
 

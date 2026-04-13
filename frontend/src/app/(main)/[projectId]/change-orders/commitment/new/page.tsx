@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 import { z } from "zod";
 
 import { PageShell } from "@/components/layout";
@@ -110,6 +111,7 @@ export default function NewCommitmentCOPage() {
         .from("commitments_unified")
         .select("id, contract_number, title")
         .eq("project_id", Number(projectId))
+        .is("deleted_at", null)
         .order("contract_number");
       if (data) setCommitments(data.filter((d) => d.id != null) as CommitmentOption[]);
     };
@@ -119,12 +121,13 @@ export default function NewCommitmentCOPage() {
   const handleSubmit: SubmitHandler<FormData> = async (data) => {
     setIsSubmitting(true);
     try {
-      const res = await fetch(
-        `/api/commitments/${data.contract_id}/change-orders`,
+      const created = await apiFetch(
+        `/api/projects/${projectId}/commitment-change-orders`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            contract_id: data.contract_id,
             title: data.title,
             change_order_number: data.change_order_number,
             description: data.description || null,
@@ -146,14 +149,8 @@ export default function NewCommitmentCOPage() {
         },
       );
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error((err as { error?: string }).error || "Failed to create");
-      }
-
-      const created = await res.json();
       toast.success("Change order created");
-      router.push(`/${projectId}/change-orders/commitment/${created.id}`);
+      router.push(`/${projectId}/change-orders/commitment/${(created as { id: string }).id}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create");
     } finally {

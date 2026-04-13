@@ -516,6 +516,7 @@ export function CreatePurchaseOrderForm({
             label="Contract Company"
             options={vendorOptions}
             placeholder={isLoadingVendors ? "Loading vendors..." : "Search vendors..."}
+            selectedLabel={initialData?.contractCompanyName}
             searchPlaceholder="Type vendor name..."
             emptyMessage="No vendors found."
             disabled={isSubmitting || isLoadingVendors}

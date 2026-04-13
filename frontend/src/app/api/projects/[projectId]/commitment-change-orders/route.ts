@@ -147,7 +147,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       .from("contract_change_orders")
       .insert({
         change_order_number: body.change_order_number,
-        description: body.description,
+        description: body.description ?? "",
         amount: body.amount ?? 0,
         contract_id: body.contract_id,
         status: body.status || "draft",

@@ -550,7 +550,7 @@ export default function PrimeContractCODetailPage() {
       pcco_number: co.pcco_number || "",
       title: co.title || "",
       description: co.description || "",
-      status: co.status || "draft",
+      status: (co.status || "draft") as FormData["status"],
       total_amount: co.total_amount ?? 0,
       prime_contract_id: co.prime_contract_id ?? null,
       revision: co.revision ?? 0,
@@ -571,6 +571,9 @@ export default function PrimeContractCODetailPage() {
       review_date: co.review_date ?? null,
       revised_substantial_completion_date: co.revised_substantial_completion_date ?? null,
     });
+    // Explicitly set status after reset — shadcn Select doesn't always pick up
+    // the value from form.reset() when the field was previously untouched.
+    form.setValue("status", (co.status || "draft") as FormData["status"]);
   }, [co, form]);
 
   // ---- Handlers ------------------------------------------------------------
@@ -581,10 +584,12 @@ export default function PrimeContractCODetailPage() {
   const handleSave: SubmitHandler<FormData> = async (data) => {
     setIsSaving(true);
     try {
+      // Status changes must go through approve/reject endpoints, not PUT
+      const { status: _status, ...updateData } = data;
       const res = await fetch(apiBase, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify(updateData),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -875,6 +880,7 @@ export default function PrimeContractCODetailPage() {
                       <Select
                         onValueChange={field.onChange}
                         value={field.value}
+                        disabled
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -889,6 +895,9 @@ export default function PrimeContractCODetailPage() {
                           ))}
                         </SelectContent>
                       </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Use Approve / Reject actions to change status.
+                      </p>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -1274,6 +1283,16 @@ export default function PrimeContractCODetailPage() {
                   <Edit className="mr-2 h-4 w-4" />
                   Edit
                 </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleApprove}>
+                  <Check className="mr-2 h-4 w-4" />
+                  Approve
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setShowRejectDialog(true)}>
+                  <X className="mr-2 h-4 w-4" />
+                  Reject
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
                   <a
                     href={`/api/projects/${projectId}/prime-contract-change-orders/export?status=${co.status}`}

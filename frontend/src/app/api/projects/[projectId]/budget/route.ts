@@ -606,34 +606,36 @@ export async function POST(
     // Create a map of code ID to verify existence
     const validCostCodeIds = new Set((costCodeData || []).map((cc) => cc.id));
 
-    // Look up cost type IDs if provided
-    const costTypeIds = normalizedLineItems
+    // Resolve cost type letter codes (e.g. "L", "M", "S") to UUIDs via cost_code_types.code
+    const costTypeCodes = normalizedLineItems
       .map((item) => item.costTypeId)
-      .filter((id): id is string => id !== null);
+      .filter((code): code is string => code !== null);
 
-    let validCostTypeIds = new Set<string>();
-    if (costTypeIds.length > 0) {
+    let codeToUuidMap = new Map<string, string>();
+    if (costTypeCodes.length > 0) {
       const { data: costTypeData, error: typeError } = await supabase
         .from("cost_code_types")
-        .select("id")
-        .in("id", costTypeIds);
+        .select("id, code")
+        .in("code", costTypeCodes);
 
       if (typeError) {
         return apiErrorResponse(typeError);
       }
-      validCostTypeIds = new Set((costTypeData || []).map((ct) => ct.id));
+      codeToUuidMap = new Map((costTypeData || []).map((ct) => [ct.code, ct.id]));
     }
+
+    // Replace letter codes with resolved UUIDs
+    const resolvedLineItems = normalizedLineItems.map((item) => ({
+      ...item,
+      costTypeId: item.costTypeId ? (codeToUuidMap.get(item.costTypeId) ?? null) : null,
+    }));
 
     // Create budget_lines using new schema
     const results = [];
 
-    for (const item of normalizedLineItems) {
+    for (const item of resolvedLineItems) {
       if (!validCostCodeIds.has(item.costCodeId)) {
         throw new Error(`Cost code not found: ${item.costCodeId}`);
-      }
-
-      if (item.costTypeId && !validCostTypeIds.has(item.costTypeId)) {
-        throw new Error(`Cost type not found: ${item.costTypeId}`);
       }
 
       // Create or update budget_line

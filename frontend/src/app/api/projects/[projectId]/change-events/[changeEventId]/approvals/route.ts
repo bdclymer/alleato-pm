@@ -40,19 +40,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       );
     }
 
-    // Fetch approvals with approver details
+    // Fetch approvals
     const { data, error } = await supabase
       .from("change_event_approvals")
-      .select(
-        `
-        *,
-        approver:approver_id (
-          id,
-          email,
-          full_name
-        )
-      `,
-      )
+      .select("*")
       .eq("change_event_id", changeEventId)
       .order("created_at", { ascending: false });
 
@@ -99,12 +90,16 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    if (Number.isNaN(projectIdNum)) {
+      return NextResponse.json({ error: "Invalid project ID" }, { status: 400 });
+    }
+
     // Verify the change event exists and belongs to the project
     const { data: changeEvent, error: ceError } = await supabase
       .from("change_events")
       .select("id, project_id")
       .eq("id", changeEventId)
-      .eq("project_id", parseInt(projectId, 10))
+      .eq("project_id", projectIdNum)
       .single();
 
     if (ceError || !changeEvent) {
@@ -123,16 +118,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         approval_status: "pending",
         comments: comments || null,
       })
-      .select(
-        `
-        *,
-        approver:approver_id (
-          id,
-          email,
-          full_name
-        )
-      `,
-      )
+      .select("*")
       .single();
 
     if (error) {
@@ -208,6 +194,14 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    // Prevent changing a decision that has already been made
+    if (existingApproval.approval_status !== "pending") {
+      return NextResponse.json(
+        { error: "Approval has already been decided and cannot be changed" },
+        { status: 409 },
+      );
+    }
+
     // Update the approval
     const { data, error } = await supabase
       .from("change_event_approvals")
@@ -218,16 +212,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       })
       .eq("id", approval_id)
       .eq("change_event_id", changeEventId)
-      .select(
-        `
-        *,
-        approver:approver_id (
-          id,
-          email,
-          full_name
-        )
-      `,
-      )
+      .select("*")
       .single();
 
     if (error) {

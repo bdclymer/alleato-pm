@@ -28,24 +28,12 @@ export async function GET(request: NextRequest, { params }: SnapshotsParams) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Fetch snapshots
-    const { data: snapshots, error: snapshotsError } = await supabase
+    // Fetch snapshots — totals are stored in the grand_totals JSON column
+    const { data: rawSnapshots, error: snapshotsError } = await supabase
       .from("budget_snapshots")
-      .select(
-        `
-        id,
-        name,
-        description,
-        snapshot_date,
-        total_budget,
-        total_costs,
-        variance,
-        created_by,
-        created_at
-      `,
-      )
+      .select("id, name, description, grand_totals, created_by, created_at")
       .eq("project_id", parseInt(projectId, 10))
-      .order("snapshot_date", { ascending: false });
+      .order("created_at", { ascending: false });
 
     if (snapshotsError) {
       return NextResponse.json(
@@ -54,25 +42,34 @@ export async function GET(request: NextRequest, { params }: SnapshotsParams) {
       );
     }
 
-    // Get current budget state for comparison
+    // Flatten grand_totals JSON into the shape the UI expects
+    const snapshots = (rawSnapshots || []).map((s) => {
+      const totals = (s.grand_totals as Record<string, unknown>) ?? {};
+      return {
+        id: s.id,
+        name: s.name,
+        description: s.description,
+        snapshot_date: (totals.snapshot_date as string) ?? s.created_at,
+        total_budget: Number(totals.total_budget ?? 0),
+        total_costs: Number(totals.total_costs ?? 0),
+        variance: Number(totals.variance ?? 0),
+        created_by: s.created_by,
+        created_at: s.created_at,
+      };
+    });
+
+    // Get current budget state for comparison (only original_amount exists on base table)
     const { data: budgetLines, error: budgetError } = await supabase
       .from("budget_lines")
-      .select("original_amount, revised_budget, direct_costs, committed_costs")
+      .select("original_amount")
       .eq("project_id", parseInt(projectId, 10));
 
     let currentTotalBudget = 0;
-    let currentTotalCosts = 0;
+    const currentTotalCosts = 0;
 
     if (!budgetError && budgetLines) {
       budgetLines.forEach((line) => {
-        const revised =
-          Number(line.revised_budget) || Number(line.original_amount) || 0;
-        const costs =
-          (Number(line.direct_costs) || 0) +
-          (Number(line.committed_costs) || 0);
-
-        currentTotalBudget += revised;
-        currentTotalCosts += costs;
+        currentTotalBudget += Number(line.original_amount) || 0;
       });
     }
 
@@ -116,10 +113,10 @@ export async function POST(request: NextRequest, { params }: SnapshotsParams) {
     const body = await request.json();
     const { name, description } = body;
 
-    // Calculate current budget totals
+    // Calculate current budget totals from base table columns only
     const { data: budgetLines, error: budgetError } = await supabase
       .from("budget_lines")
-      .select("original_amount, revised_budget, direct_costs, committed_costs")
+      .select("original_amount")
       .eq("project_id", parseInt(projectId, 10));
 
     if (budgetError) {
@@ -130,16 +127,10 @@ export async function POST(request: NextRequest, { params }: SnapshotsParams) {
     }
 
     let totalBudget = 0;
-    let totalCosts = 0;
+    const totalCosts = 0;
 
     budgetLines?.forEach((line) => {
-      const revised =
-        Number(line.revised_budget) || Number(line.original_amount) || 0;
-      const costs =
-        (Number(line.direct_costs) || 0) + (Number(line.committed_costs) || 0);
-
-      totalBudget += revised;
-      totalCosts += costs;
+      totalBudget += Number(line.original_amount) || 0;
     });
 
     const variance = totalBudget - totalCosts;
