@@ -8,6 +8,8 @@ import {
   type ToolSet,
 } from "ai";
 import { after } from "next/server";
+
+import { apiErrorResponse } from "@/lib/api-error";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { getLanguageModel } from "@/lib/ai/providers";
@@ -269,7 +271,7 @@ export async function POST(request: Request) {
   after(() => runPostResponseTasks(sessionId, user.id));
 
   return createUIMessageStreamResponse({ stream });
-  } catch {
-    return new Response("Internal server error", { status: 500 });
+  } catch (error) {
+    return apiErrorResponse(error);
   }
 }
