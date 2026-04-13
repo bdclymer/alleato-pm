@@ -44,8 +44,8 @@ interface SetRetainageDialogProps {
 }
 
 function SetRetainageDialog({ open, onOpenChange, onApply }: SetRetainageDialogProps) {
-  const [workPct, setWorkPct] = useState("10");
-  const [materialsPct, setMaterialsPct] = useState("10");
+  const [workPct, setWorkPct] = useState("0");
+  const [materialsPct, setMaterialsPct] = useState("0");
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

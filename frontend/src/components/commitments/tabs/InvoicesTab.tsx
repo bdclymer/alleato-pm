@@ -2,14 +2,18 @@
 
 import Link from "next/link";
 import { memo, useEffect, useMemo, useState } from "react";
-import { Paperclip } from "lucide-react";
+import { Paperclip, Plus } from "lucide-react";
 import type { ColumnDef } from "@tanstack/react-table";
+import { toast } from "sonner";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { DataTable, type DataTableFooterCell } from "@/components/tables/DataTable";
 import { Text } from "@/components/ds/text";
 import { InvoiceStatusBadge } from "@/components/invoicing/InvoiceStatusBadge";
 import { formatCurrency } from "@/config/tables";
+import { apiFetch } from "@/lib/api-client";
 
 interface CommitmentInvoiceRow {
   id: number;
@@ -18,6 +22,7 @@ interface CommitmentInvoiceRow {
   period_end: string | null;
   billing_date: string | null;
   status: string;
+  is_retainage_release: boolean;
   total_completed: number;
   total_retainage: number;
   net_amount: number;
@@ -64,7 +69,27 @@ export const InvoicesTab = memo(function InvoicesTab({
 }: InvoicesTabProps) {
   const [invoices, setInvoices] = useState<EnrichedInvoice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const createRetainageReleaseInvoice = async () => {
+    setIsCreating(true);
+    try {
+      const filterKey = commitmentType === "subcontract" ? "subcontract_id" : "purchase_order_id";
+      await apiFetch(`/api/projects/${projectId}/invoicing/subcontractor/invoices`, {
+        method: "POST",
+        body: JSON.stringify({ [filterKey]: commitmentId, is_retainage_release: true }),
+      });
+      toast.success("Retainage release invoice created");
+      setRefreshKey((k) => k + 1);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to create retainage release invoice");
+    } finally {
+      setIsCreating(false);
+    }
+  };
 
   useEffect(() => {
     const controller = new AbortController();
@@ -103,7 +128,7 @@ export const InvoicesTab = memo(function InvoicesTab({
 
     void load();
     return () => controller.abort();
-  }, [commitmentId, commitmentType, projectId]);
+  }, [commitmentId, commitmentType, projectId, refreshKey]);
 
   const totals = useMemo(() => {
     const sum = (key: keyof EnrichedInvoice) =>
@@ -151,14 +176,21 @@ export const InvoicesTab = memo(function InvoicesTab({
         accessorKey: "invoice_number",
         header: "#",
         cell: ({ row }) => (
-          <Link
-            href={`/${projectId}/commitments/${commitmentId}/invoices/${row.original.id}`}
-            className="font-medium text-primary hover:underline"
-          >
-            {row.original.invoice_number || `INV-${row.original.id}`}
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href={`/${projectId}/commitments/${commitmentId}/invoices/${row.original.id}`}
+              className="font-medium text-primary hover:underline"
+            >
+              {row.original.invoice_number || `INV-${row.original.id}`}
+            </Link>
+            {row.original.is_retainage_release && (
+              <Badge variant="outline" className="text-xs">
+                Retainage Release
+              </Badge>
+            )}
+          </div>
         ),
-        size: 120,
+        size: 180,
       },
       {
         id: "invoice_dates",
@@ -296,13 +328,26 @@ export const InvoicesTab = memo(function InvoicesTab({
   }
 
   return (
-    <DataTable
-      columns={columns}
-      data={invoices}
-      showToolbar={false}
-      showPagination={invoices.length > 25}
-      footerRow={invoices.length > 0 ? footerRow : undefined}
-    />
+    <div className="space-y-3">
+      <div className="flex justify-end">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={createRetainageReleaseInvoice}
+          disabled={isCreating}
+        >
+          <Plus className="mr-2 h-4 w-4" />
+          {isCreating ? "Creating..." : "Create Retainage Release Invoice"}
+        </Button>
+      </div>
+      <DataTable
+        columns={columns}
+        data={invoices}
+        showToolbar={false}
+        showPagination={invoices.length > 25}
+        footerRow={invoices.length > 0 ? footerRow : undefined}
+      />
+    </div>
   );
 });
 

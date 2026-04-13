@@ -19,7 +19,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
 
     const supabase = await createClient();
     const body = await request.json();
-    const { prime_contract_id, invoice_number, period_start, period_end, billing_period_id, billing_date, status } = body;
+    const { prime_contract_id, invoice_number, period_start, period_end, billing_period_id, billing_date, status, payment_application_id } = body;
 
     // Validate required fields
     if (!prime_contract_id) {
@@ -55,6 +55,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         billing_period_id: billing_period_id ?? null,
         billing_date: billing_date === "" ? null : (billing_date ?? null),
         status: status ?? "draft",
+        payment_application_id: payment_application_id ?? null,
       })
       .select()
       .single();
@@ -104,13 +105,15 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     const primeContractId = searchParams.get("prime_contract_id");
 
     // Build query scoped to the project via prime_contracts join
+    // Also join linked payment_application for canonical retainage figures
     let query = supabase
       .from("owner_invoices")
       .select(
         `
         *,
         owner_invoice_line_items(*),
-        prime_contracts!inner(id, project_id, contract_number, title, original_contract_value, revised_contract_value)
+        prime_contracts!inner(id, project_id, contract_number, title, original_contract_value, revised_contract_value),
+        prime_contract_payment_applications(id, amount, retention_amount, net_amount, percent_complete, status)
       `,
       )
       .eq("prime_contracts.project_id", projectIdNum)
@@ -180,11 +183,28 @@ export const GET = withApiGuardrails<{ projectId: string }>(
         (sum: number, item: { scheduled_value: number | null }) => sum + (item.scheduled_value || 0),
         0,
       );
-      const net_amount = lineItems.reduce(
+      const net_amount_from_line_items = lineItems.reduce(
         (sum: number, item: { approved_amount: number | null }) => sum + (item.approved_amount || 0),
         0,
       );
-      const total_amount = net_amount;
+
+      // If linked to a payment application, use its canonical retainage figures
+      const linkedPayApp = Array.isArray(invoice.prime_contract_payment_applications)
+        ? (invoice.prime_contract_payment_applications as Array<{
+            id: string;
+            amount: number | null;
+            retention_amount: number | null;
+            net_amount: number | null;
+            percent_complete: number | null;
+            status: string | null;
+          }>)[0]
+        : null;
+
+      const canonical_gross = linkedPayApp?.amount ?? invoice.gross_amount ?? gross_amount;
+      const canonical_retention = linkedPayApp?.retention_amount ?? null;
+      const canonical_net = linkedPayApp?.net_amount ?? invoice.net_amount ?? net_amount_from_line_items;
+      const canonical_percent_complete = linkedPayApp?.percent_complete ?? invoice.percent_complete ?? null;
+      const total_amount = canonical_net;
 
       const pc = Array.isArray(invoice.prime_contracts)
         ? invoice.prime_contracts[0]
@@ -195,7 +215,7 @@ export const GET = withApiGuardrails<{ projectId: string }>(
             revised_contract_value: number | null;
           } | null;
 
-      const { prime_contracts: _pc, ...invoiceData } = invoice;
+      const { prime_contracts: _pc, prime_contract_payment_applications: _ppa, ...invoiceData } = invoice;
 
       // Compute previous / current changes from approved prime contract COs
       let previous_changes = 0;
@@ -239,15 +259,18 @@ export const GET = withApiGuardrails<{ projectId: string }>(
         contract_number: pc?.contract_number ?? null,
         contract_title: pc?.title ?? null,
         total_contract_amount: pc?.revised_contract_value ?? pc?.original_contract_value ?? null,
-        gross_amount: invoice.gross_amount ?? gross_amount,
-        net_amount: invoice.net_amount ?? net_amount,
+        gross_amount: canonical_gross,
+        retention_amount: canonical_retention,
+        net_amount: canonical_net,
         paid_amount: invoice.paid_amount ?? total_paid,
-        percent_complete: invoice.percent_complete ?? null,
+        percent_complete: canonical_percent_complete,
         total_amount,
         previous_changes,
         current_changes,
         total_paid,
         payment_status,
+        // Indicate whether retainage figures are canonical (from payment application)
+        retainage_from_payment_application: linkedPayApp !== null,
       };
     });
 

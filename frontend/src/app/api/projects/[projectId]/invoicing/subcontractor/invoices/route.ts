@@ -274,6 +274,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       notes,
       status: statusRaw,
       line_items,
+      is_retainage_release,
     } = body;
 
     // Validate status — only "draft" or "under_review" allowed on create
@@ -340,6 +341,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         billing_date: billing_date === "" ? null : (billing_date ?? null),
         notes: notes ?? null,
         status,
+        is_retainage_release: is_retainage_release === true,
       })
       .select()
       .single();

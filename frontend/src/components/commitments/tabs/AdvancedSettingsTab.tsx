@@ -61,7 +61,7 @@ const DEFAULT_SETTINGS: CommitmentAdvancedSettings = {
   enable_invoices: true,
   enable_comments: true,
   enable_payments: true,
-  enable_completed_work_retainage: true,
+  enable_completed_work_retainage: false,
   enable_stored_materials_retainage: false,
   show_cost_codes_on_pdf: true,
   allow_overbilling: false,
@@ -71,7 +71,7 @@ const DEFAULT_SETTINGS: CommitmentAdvancedSettings = {
   show_markup_criteria_on_pdf: false,
   send_invoice_approval_notifications: true,
   send_payment_notifications: true,
-  default_retainage_percent: 10,
+  default_retainage_percent: 0,
   billing_period: "monthly",
 };
 

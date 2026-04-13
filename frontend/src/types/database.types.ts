@@ -12808,6 +12808,7 @@ export type Database = {
           net_amount: number | null
           notes: string | null
           paid_amount: number | null
+          payment_application_id: string | null
           percent_complete: number | null
           period_end: string | null
           period_start: string | null
@@ -12831,6 +12832,7 @@ export type Database = {
           net_amount?: number | null
           notes?: string | null
           paid_amount?: number | null
+          payment_application_id?: string | null
           percent_complete?: number | null
           period_end?: string | null
           period_start?: string | null
@@ -12854,6 +12856,7 @@ export type Database = {
           net_amount?: number | null
           notes?: string | null
           paid_amount?: number | null
+          payment_application_id?: string | null
           percent_complete?: number | null
           period_end?: string | null
           period_start?: string | null
@@ -12868,6 +12871,13 @@ export type Database = {
             columns: ["billing_period_id"]
             isOneToOne: false
             referencedRelation: "billing_periods"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "owner_invoices_payment_application_id_fkey"
+            columns: ["payment_application_id"]
+            isOneToOne: false
+            referencedRelation: "prime_contract_payment_applications"
             referencedColumns: ["id"]
           },
           {
@@ -14624,6 +14634,9 @@ export type Database = {
           default_distribution_pcco: string | null
           default_distribution_pco: string | null
           default_distribution_prime_contract: string | null
+          default_retainage_percent: number
+          enable_completed_work_retainage: boolean
+          enable_stored_materials_retainage: boolean
           id: string
           project_id: number
           show_markup_on_co_pdf: boolean
@@ -14639,6 +14652,9 @@ export type Database = {
           default_distribution_pcco?: string | null
           default_distribution_pco?: string | null
           default_distribution_prime_contract?: string | null
+          default_retainage_percent?: number
+          enable_completed_work_retainage?: boolean
+          enable_stored_materials_retainage?: boolean
           id?: string
           project_id: number
           show_markup_on_co_pdf?: boolean
@@ -14654,6 +14670,9 @@ export type Database = {
           default_distribution_pcco?: string | null
           default_distribution_pco?: string | null
           default_distribution_prime_contract?: string | null
+          default_retainage_percent?: number
+          enable_completed_work_retainage?: boolean
+          enable_stored_materials_retainage?: boolean
           id?: string
           project_id?: number
           show_markup_on_co_pdf?: boolean
@@ -20001,6 +20020,7 @@ export type Database = {
           created_at: string
           id: number
           invoice_number: string | null
+          is_retainage_release: boolean
           notes: string | null
           period_end: string | null
           period_start: string | null
@@ -20018,6 +20038,7 @@ export type Database = {
           created_at?: string
           id?: number
           invoice_number?: string | null
+          is_retainage_release?: boolean
           notes?: string | null
           period_end?: string | null
           period_start?: string | null
@@ -20035,6 +20056,7 @@ export type Database = {
           created_at?: string
           id?: number
           invoice_number?: string | null
+          is_retainage_release?: boolean
           notes?: string | null
           period_end?: string | null
           period_start?: string | null

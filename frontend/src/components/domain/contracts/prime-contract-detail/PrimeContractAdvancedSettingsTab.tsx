@@ -228,7 +228,7 @@ export function PrimeContractAdvancedSettingsTab({
                     min={0}
                     max={100}
                     step="0.01"
-                    value={advancedSettings?.default_retainage_percent ?? 10}
+                    value={advancedSettings?.default_retainage_percent ?? 0}
                     onChange={(e) =>
                       updateAdvancedSetting(
                         "default_retainage_percent",

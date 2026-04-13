@@ -9,7 +9,7 @@ const DEFAULT_SETTINGS = {
   enable_invoices: true,
   enable_comments: true,
   enable_payments: true,
-  enable_completed_work_retainage: true,
+  enable_completed_work_retainage: false,
   enable_stored_materials_retainage: false,
   show_cost_codes_on_pdf: true,
   allow_overbilling: false,
@@ -19,7 +19,7 @@ const DEFAULT_SETTINGS = {
   show_markup_criteria_on_pdf: false,
   send_invoice_approval_notifications: true,
   send_payment_notifications: true,
-  default_retainage_percent: 10,
+  default_retainage_percent: 0,
   billing_period: "monthly",
 };
 
@@ -88,9 +88,11 @@ export const GET = withApiGuardrails<{ commitmentId: string }>(
       .single();
 
     if (error) {
-      // If the column doesn't exist or there's an error, return defaults
       console.error("Error fetching advanced settings:", error);
-      return NextResponse.json({ data: DEFAULT_SETTINGS });
+      return NextResponse.json(
+        { error: "Failed to load settings", details: error.message },
+        { status: 500 },
+      );
     }
 
     // If settings exist, merge with defaults to ensure all keys are present
