@@ -604,17 +604,20 @@ export const POST = withApiGuardrails<{ projectId: string }>(
     // Create a map of code ID to verify existence
     const validCostCodeIds = new Set((costCodeData || []).map((cc) => cc.id));
 
-    // Resolve cost type letter codes (e.g. "L", "M", "S") to UUIDs via cost_code_types.code
-    const costTypeCodes = normalizedLineItems
+    // Resolve cost type values to UUIDs.
+    // The client may send either a letter code ("L", "M", "S") or an already-resolved UUID.
+    // UUIDs are passed through; letter codes are looked up via cost_code_types.code.
+    const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const letterCodesToResolve = normalizedLineItems
       .map((item) => item.costTypeId)
-      .filter((code): code is string => code !== null);
+      .filter((code): code is string => code !== null && !UUID_REGEX.test(code));
 
     let codeToUuidMap = new Map<string, string>();
-    if (costTypeCodes.length > 0) {
+    if (letterCodesToResolve.length > 0) {
       const { data: costTypeData, error: typeError } = await supabase
         .from("cost_code_types")
         .select("id, code")
-        .in("code", costTypeCodes);
+        .in("code", letterCodesToResolve);
 
       if (typeError) {
         return apiErrorResponse(typeError);
@@ -622,10 +625,12 @@ export const POST = withApiGuardrails<{ projectId: string }>(
       codeToUuidMap = new Map((costTypeData || []).map((ct) => [ct.code, ct.id]));
     }
 
-    // Replace letter codes with resolved UUIDs
+    // Replace letter codes with resolved UUIDs; pass UUIDs through unchanged
     const resolvedLineItems = normalizedLineItems.map((item) => ({
       ...item,
-      costTypeId: item.costTypeId ? (codeToUuidMap.get(item.costTypeId) ?? null) : null,
+      costTypeId: item.costTypeId
+        ? (UUID_REGEX.test(item.costTypeId) ? item.costTypeId : (codeToUuidMap.get(item.costTypeId) ?? null))
+        : null,
     }));
 
     // Create budget_lines using new schema
