@@ -5,12 +5,11 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { SiteHeader } from "@/components/header";
 import { SiteFooter } from "@/components/layout/site-footer";
 
-
 /**
- * Layout for all table pages.
+ * Layout for admin pages.
  * Includes the full app chrome (sidebar, header, footer) for consistency.
  */
-export default function TablesLayout({
+export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -24,7 +23,6 @@ export default function TablesLayout({
           <div className="flex-1">{children}</div>
           <SiteFooter />
         </div>
-        <AIChatWidgetLazy />
       </SidebarInset>
     </SidebarProvider>
   );
