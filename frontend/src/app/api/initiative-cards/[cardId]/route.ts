@@ -1,86 +1,168 @@
+import { NextResponse } from "next/server";
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
-import { apiErrorResponse } from "@/lib/api-error";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import {
+  parseJsonBody,
+  validateResponseContract,
+  withApiGuardrails,
+} from "@/lib/guardrails/api";
 
-export async function GET(
-  _req: NextRequest,
-  { params }: { params: Promise<{ cardId: string }> },
-) {
-  const { cardId } = await params;
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("initiative_cards")
-    .select("*")
-    .eq("id", cardId)
-    .single();
+const CardParamsSchema = z.object({
+  cardId: z.string().min(1),
+});
 
-  if (error) {
-    return apiErrorResponse(error);
-  }
+const InitiativeCardSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  status: z.string(),
+  priority: z.string().nullable().optional(),
+  sort_order: z.number().nullable().optional(),
+});
 
-  return NextResponse.json(data);
-}
+const UpdateCardSchema = z.object({
+  title: z.string().min(1).optional(),
+  description: z.string().nullable().optional(),
+  status: z.string().optional(),
+  priority: z.string().nullable().optional(),
+  labels: z.array(z.string()).optional(),
+  sort_order: z.number().nullable().optional(),
+  linked_record_type: z.string().nullable().optional(),
+  linked_record_id: z.string().nullable().optional(),
+  assignee: z.string().nullable().optional(),
+  assignee_id: z.string().nullable().optional(),
+  due_date: z.string().nullable().optional(),
+  github_issue_url: z.string().nullable().optional(),
+  dispatch_status: z.string().nullable().optional(),
+});
 
-export async function PATCH(
-  req: NextRequest,
-  { params }: { params: Promise<{ cardId: string }> },
-) {
-  const { cardId } = await params;
-  const supabase = await createClient();
-  const body = await req.json();
-
-  // Only allow updating known fields
-  const allowedFields = [
-    "title",
-    "description",
-    "status",
-    "priority",
-    "labels",
-    "sort_order",
-    "linked_record_type",
-    "linked_record_id",
-    "assignee",
-    "assignee_id",
-    "due_date",
-    "github_issue_url",
-    "dispatch_status",
-  ] as const;
-
-  const updates: Record<string, unknown> = {};
-  for (const field of allowedFields) {
-    if (body[field] !== undefined) {
-      updates[field] = body[field];
+export const GET = withApiGuardrails<Promise<{ cardId: string }>>(
+  "/api/initiative-cards/[cardId]#GET",
+  async ({ params }) => {
+    const parsedParams = CardParamsSchema.safeParse(await params);
+    if (!parsedParams.success) {
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "/api/initiative-cards/[cardId]#GET",
+        message: "Invalid initiative card id.",
+        details: parsedParams.error.issues.map((issue) => issue.message),
+      });
     }
-  }
 
-  const { data, error } = await supabase
-    .from("initiative_cards")
-    .update(updates)
-    .eq("id", cardId)
-    .select()
-    .single();
+    const { cardId } = parsedParams.data;
+    const supabase = await createClient();
+    const { data, error } = await supabase
+      .from("initiative_cards")
+      .select("*")
+      .eq("id", cardId)
+      .single();
 
-  if (error) {
-    return apiErrorResponse(error);
-  }
+    if (error) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "/api/initiative-cards/[cardId]#GET",
+        message: "Failed to fetch initiative card.",
+        details: { reason: error.message, cardId },
+        cause: error,
+      });
+    }
 
-  return NextResponse.json(data);
-}
+    validateResponseContract(
+      InitiativeCardSchema.passthrough(),
+      data,
+      "/api/initiative-cards/[cardId]#GET",
+    );
 
-export async function DELETE(
-  _req: NextRequest,
-  { params }: { params: Promise<{ cardId: string }> },
-) {
-  const { cardId } = await params;
-  const supabase = await createClient();
-  const { error } = await supabase
-    .from("initiative_cards")
-    .delete()
-    .eq("id", cardId);
+    return NextResponse.json(data);
+  },
+);
 
-  if (error) {
-    return apiErrorResponse(error);
-  }
+export const PATCH = withApiGuardrails<Promise<{ cardId: string }>>(
+  "/api/initiative-cards/[cardId]#PATCH",
+  async ({ request, params }) => {
+    const parsedParams = CardParamsSchema.safeParse(await params);
+    if (!parsedParams.success) {
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "/api/initiative-cards/[cardId]#PATCH",
+        message: "Invalid initiative card id.",
+        details: parsedParams.error.issues.map((issue) => issue.message),
+      });
+    }
 
-  return NextResponse.json({ success: true });
-}
+    const { cardId } = parsedParams.data;
+    const supabase = await createClient();
+    const updates = await parseJsonBody(
+      request,
+      UpdateCardSchema,
+      "/api/initiative-cards/[cardId]#PATCH",
+    );
+
+    if (Object.keys(updates).length === 0) {
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "/api/initiative-cards/[cardId]#PATCH",
+        message: "No updatable fields were provided.",
+      });
+    }
+
+    const { data, error } = await supabase
+      .from("initiative_cards")
+      .update(updates)
+      .eq("id", cardId)
+      .select()
+      .single();
+
+    if (error) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "/api/initiative-cards/[cardId]#PATCH",
+        message: "Failed to update initiative card.",
+        details: { reason: error.message, cardId },
+        cause: error,
+      });
+    }
+
+    validateResponseContract(
+      InitiativeCardSchema.passthrough(),
+      data,
+      "/api/initiative-cards/[cardId]#PATCH",
+    );
+
+    return NextResponse.json(data);
+  },
+);
+
+export const DELETE = withApiGuardrails<Promise<{ cardId: string }>>(
+  "/api/initiative-cards/[cardId]#DELETE",
+  async ({ params }) => {
+    const parsedParams = CardParamsSchema.safeParse(await params);
+    if (!parsedParams.success) {
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "/api/initiative-cards/[cardId]#DELETE",
+        message: "Invalid initiative card id.",
+        details: parsedParams.error.issues.map((issue) => issue.message),
+      });
+    }
+
+    const { cardId } = parsedParams.data;
+    const supabase = await createClient();
+    const { error } = await supabase
+      .from("initiative_cards")
+      .delete()
+      .eq("id", cardId);
+
+    if (error) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "/api/initiative-cards/[cardId]#DELETE",
+        message: "Failed to delete initiative card.",
+        details: { reason: error.message, cardId },
+        cause: error,
+      });
+    }
+
+    return NextResponse.json({ success: true });
+  },
+);

@@ -7,15 +7,16 @@
  * Supports filtering, templates, and SOV items inclusion
  */
 
-import { NextRequest, NextResponse } from 'next/server';
-import * as XLSX from 'xlsx';
-import { createClient } from '@/lib/supabase/server';
-import { apiErrorResponse } from "@/lib/api-error";
+import { NextResponse } from "next/server";
+import * as XLSX from "xlsx";
+import { createClient } from "@/lib/supabase/server";
+import { parseJsonBody, withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import {
   CommitmentExportSchema,
   type CommitmentExportRow,
   type CommitmentDetailForPDF,
-} from '@/lib/schemas/commitment-export-schema';
+} from "@/lib/schemas/commitment-export-schema";
 
 /**
  * POST /api/projects/[projectId]/commitments/export
@@ -56,123 +57,126 @@ import {
  * @returns {object} 404 - No commitments found matching filters
  * @returns {object} 500 - Export generation error
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> }
-) {
-  try {
+export const POST = withApiGuardrails<Promise<{ projectId: string }>>(
+  "/api/projects/[projectId]/commitments/export#POST",
+  async ({ request, params }) => {
     const { projectId } = await params;
-    const supabase = await createClient();
+    const projectIdNum = Number.parseInt(projectId, 10);
+    if (Number.isNaN(projectIdNum)) {
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "/api/projects/[projectId]/commitments/export#POST",
+        message: "Invalid project ID.",
+      });
+    }
 
-    // Check authentication
+    const supabase = await createClient();
     const {
       data: { user },
       error: userError,
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized - please log in' },
-        { status: 401 }
-      );
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "/api/projects/[projectId]/commitments/export#POST",
+        message: "Unauthorized export request.",
+        status: 401,
+        severity: "medium",
+      });
     }
 
-    const body = await request.json();
+    const exportParams = await parseJsonBody(
+      request,
+      CommitmentExportSchema,
+      "/api/projects/[projectId]/commitments/export#POST",
+    );
 
-    // Validate request data
-    const validation = CommitmentExportSchema.safeParse(body);
-    if (!validation.success) {
-      return NextResponse.json(
-        {
-          error: 'Invalid export parameters',
-          details: validation.error.format(),
-        },
-        { status: 400 }
-      );
-    }
-
-    const exportParams = validation.data;
-    const projectIdNum = parseInt(projectId, 10);
-
-    // If exporting individual PDF, fetch that commitment
-    if (exportParams.format === 'pdf' && exportParams.commitmentId) {
+    if (exportParams.format === "pdf" && exportParams.commitmentId) {
       const commitmentDetail = await fetchCommitmentDetail(
         supabase,
         exportParams.commitmentId,
-        projectIdNum
+        projectIdNum,
       );
 
       if (!commitmentDetail) {
-        return NextResponse.json(
-          { error: 'Commitment not found' },
-          { status: 404 }
-        );
+        throw new GuardrailError({
+          code: "ROUTE_BINDING_MISSING",
+          where: "/api/projects/[projectId]/commitments/export#POST",
+          message: "Commitment not found.",
+          status: 404,
+          severity: "low",
+        });
       }
 
       const html = generateCommitmentPDFHTML(commitmentDetail);
       return new NextResponse(html, {
         status: 200,
         headers: {
-          'Content-Type': 'text/html; charset=utf-8',
-          'Content-Disposition': `inline; filename="commitment-${commitmentDetail.number || commitmentDetail.id}.html"`,
+          "Content-Type": "text/html; charset=utf-8",
+          "Content-Disposition": `inline; filename="commitment-${commitmentDetail.number || commitmentDetail.id}.html"`,
         },
       });
     }
 
-    // Fetch list data
     const commitments = await fetchCommitmentsForExport(
       supabase,
       projectIdNum,
-      exportParams.filters
+      exportParams.filters,
     );
 
     if (commitments.length === 0) {
-      return NextResponse.json(
-        { error: 'No commitments found matching the filters' },
-        { status: 404 }
-      );
+      throw new GuardrailError({
+        code: "ROUTE_BINDING_MISSING",
+        where: "/api/projects/[projectId]/commitments/export#POST",
+        message: "No commitments found matching the filters.",
+        status: 404,
+        severity: "low",
+      });
     }
 
-    // Generate export based on format
-    if (exportParams.format === 'csv') {
+    if (exportParams.format === "csv") {
       const csv = generateCSV(commitments, exportParams);
       return new NextResponse(csv, {
         status: 200,
         headers: {
-          'Content-Type': 'text/csv; charset=utf-8',
-          'Content-Disposition': `attachment; filename="commitments-${new Date().toISOString().split('T')[0]}.csv"`,
+          "Content-Type": "text/csv; charset=utf-8",
+          "Content-Disposition": `attachment; filename="commitments-${new Date().toISOString().split("T")[0]}.csv"`,
         },
       });
-    } else if (exportParams.format === 'excel') {
+    }
+
+    if (exportParams.format === "excel") {
       const excelBuffer = generateExcel(commitments, exportParams);
       const excelBlob = new Blob([excelBuffer]);
       return new NextResponse(excelBlob, {
         status: 200,
         headers: {
-          'Content-Type':
-            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-          'Content-Disposition': `attachment; filename="commitments-${new Date().toISOString().split('T')[0]}.xlsx"`,
-        },
-      });
-    } else if (exportParams.format === 'pdf') {
-      const html = generateListPDFHTML(commitments, exportParams);
-      return new NextResponse(html, {
-        status: 200,
-        headers: {
-          'Content-Type': 'text/html; charset=utf-8',
-          'Content-Disposition': `inline; filename="commitments-${new Date().toISOString().split('T')[0]}.html"`,
+          "Content-Type":
+            "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "Content-Disposition": `attachment; filename="commitments-${new Date().toISOString().split("T")[0]}.xlsx"`,
         },
       });
     }
 
-    return NextResponse.json(
-      { error: 'Unsupported export format' },
-      { status: 400 }
-    );
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    if (exportParams.format === "pdf") {
+      const html = generateListPDFHTML(commitments, exportParams);
+      return new NextResponse(html, {
+        status: 200,
+        headers: {
+          "Content-Type": "text/html; charset=utf-8",
+          "Content-Disposition": `inline; filename="commitments-${new Date().toISOString().split("T")[0]}.html"`,
+        },
+      });
+    }
+
+    throw new GuardrailError({
+      code: "INVALID_PAYLOAD",
+      where: "/api/projects/[projectId]/commitments/export#POST",
+      message: "Unsupported export format.",
+    });
+  },
+);
 
 // =============================================================================
 // DATA FETCHING
@@ -192,7 +196,6 @@ async function fetchCommitmentsForExport(
       .from('subcontracts_with_totals')
       .select('*')
       .eq('project_id', projectId)
-      .is('deleted_at', null)
       .order('contract_number', { ascending: true });
 
     if (filters?.status) {
@@ -207,7 +210,8 @@ async function fetchCommitmentsForExport(
       );
     }
 
-    const { data: scData } = await scQuery;
+    const { data: scData, error: scError } = await scQuery;
+    if (scError) throw scError;
 
     (scData || []).forEach((row: any) => {
       allCommitments.push(mapRowToExport(row, 'subcontract'));
@@ -220,7 +224,6 @@ async function fetchCommitmentsForExport(
       .from('purchase_orders_with_totals')
       .select('*')
       .eq('project_id', projectId)
-      .is('deleted_at', null)
       .order('contract_number', { ascending: true });
 
     if (filters?.status) {
@@ -235,7 +238,8 @@ async function fetchCommitmentsForExport(
       );
     }
 
-    const { data: poData } = await poQuery;
+    const { data: poData, error: poError } = await poQuery;
+    if (poError) throw poError;
 
     (poData || []).forEach((row: any) => {
       allCommitments.push(mapRowToExport(row, 'purchase_order'));

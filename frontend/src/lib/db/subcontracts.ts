@@ -78,6 +78,19 @@ export interface SubcontractFormData {
     signedContractReceivedDate?: string | Date;
     issuedOnDate?: string | Date;
   };
+  // Legacy/top-level fallbacks used by older form payloads and API callers
+  startDate?: string | Date;
+  estimatedCompletionDate?: string | Date;
+  actualCompletionDate?: string | Date;
+  contractDate?: string | Date;
+  signedContractReceivedDate?: string | Date;
+  issuedOnDate?: string | Date;
+  start_date?: string | Date;
+  estimated_completion_date?: string | Date;
+  actual_completion_date?: string | Date;
+  contract_date?: string | Date;
+  signed_contract_received_date?: string | Date;
+  issued_on_date?: string | Date;
   privacy?: {
     isPrivate?: boolean;
     nonAdminUserIds?: string[];
@@ -138,6 +151,12 @@ export function mapFormToInsert(
   projectId: number,
   userId: string,
 ): SubcontractInsert {
+  const resolveDate = (
+    nested: string | Date | undefined,
+    camel: string | Date | undefined,
+    snake: string | Date | undefined,
+  ) => parseFormDate(nested ?? camel ?? snake);
+
   return {
     // Required fields
     project_id: projectId,
@@ -154,16 +173,36 @@ export function mapFormToInsert(
     exclusions: formData.exclusions || null,
 
     // Date fields - convert mm/dd/yyyy to ISO
-    start_date: parseFormDate(formData.dates?.startDate),
-    estimated_completion_date: parseFormDate(
+    start_date: resolveDate(
+      formData.dates?.startDate,
+      formData.startDate,
+      formData.start_date,
+    ),
+    estimated_completion_date: resolveDate(
       formData.dates?.estimatedCompletionDate,
+      formData.estimatedCompletionDate,
+      formData.estimated_completion_date,
     ),
-    actual_completion_date: parseFormDate(formData.dates?.actualCompletionDate),
-    contract_date: parseFormDate(formData.dates?.contractDate),
-    signed_contract_received_date: parseFormDate(
+    actual_completion_date: resolveDate(
+      formData.dates?.actualCompletionDate,
+      formData.actualCompletionDate,
+      formData.actual_completion_date,
+    ),
+    contract_date: resolveDate(
+      formData.dates?.contractDate,
+      formData.contractDate,
+      formData.contract_date,
+    ),
+    signed_contract_received_date: resolveDate(
       formData.dates?.signedContractReceivedDate,
+      formData.signedContractReceivedDate,
+      formData.signed_contract_received_date,
     ),
-    issued_on_date: parseFormDate(formData.dates?.issuedOnDate),
+    issued_on_date: resolveDate(
+      formData.dates?.issuedOnDate,
+      formData.issuedOnDate,
+      formData.issued_on_date,
+    ),
 
     // Privacy fields
     is_private: formData.privacy?.isPrivate ?? true,

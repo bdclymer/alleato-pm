@@ -1,37 +1,88 @@
-import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-
-import { apiErrorResponse } from "@/lib/api-error";
+import { z } from "zod";
+import { withApiGuardrails, parseJsonBody, validateResponseContract } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { isAuthError, verifyProjectAccess } from "@/lib/supabase/auth-guard";
 import { requirePermission } from "@/lib/permissions-guard";
 
-interface RouteParams {
-  params: Promise<{ projectId: string; commitmentId: string }>;
+const ParamsSchema = z.object({
+  projectId: z.string().regex(/^\d+$/, "Project ID must be numeric"),
+  commitmentId: z.string().min(1),
+});
+
+const PcoStatusSchema = z.enum(["open", "pending", "approved", "rejected", "void"]);
+type PcoStatus = z.infer<typeof PcoStatusSchema>;
+
+const PcoCreateSchema = z.object({
+  number: z.string().trim().min(1, "PCO number is required"),
+  title: z.string().trim().min(1, "PCO title is required"),
+  amount: z.number().optional(),
+  description: z.string().optional(),
+  change_reason: z.string().optional(),
+  status: PcoStatusSchema.optional(),
+});
+
+const API_TO_DB_STATUS: Record<PcoStatus, "draft" | "pending" | "approved" | "void"> = {
+  open: "draft",
+  pending: "pending",
+  approved: "approved",
+  rejected: "void",
+  void: "void",
+};
+
+function toApiStatus(status: string | null | undefined): PcoStatus {
+  switch (status) {
+    case "draft":
+      return "open";
+    case "pending":
+      return "pending";
+    case "approved":
+      return "approved";
+    case "void":
+      return "void";
+    default:
+      return "open";
+  }
 }
 
-const VALID_STATUSES = ["open", "pending", "approved", "rejected", "void"] as const;
-type PcoStatus = (typeof VALID_STATUSES)[number];
-
-interface PcoCreateBody {
-  number: string;
-  title: string;
-  amount?: number;
-  description?: string;
-  change_reason?: string;
-  status?: PcoStatus;
+function normalizePcoRow(row: Record<string, unknown>) {
+  return {
+    ...row,
+    number: row.pco_number ?? null,
+    amount: row.total_amount ?? null,
+    cco_id: row.promoted_to_co_id ?? null,
+    status: toApiStatus(typeof row.status === "string" ? row.status : null),
+  };
 }
 
-// GET — list all PCOs for a commitment
-export async function GET(_request: NextRequest, { params }: RouteParams) {
-  try {
-    const { projectId, commitmentId } = await params;
-    const numericProjectId = Number.parseInt(projectId, 10);
-    if (Number.isNaN(numericProjectId)) {
-      return NextResponse.json({ error: "Invalid project ID" }, { status: 400 });
+const PcoListResponseSchema = z.object({
+  data: z.array(z.record(z.string(), z.unknown())),
+});
+
+const PcoSingleResponseSchema = z.object({
+  data: z.record(z.string(), z.unknown()),
+});
+
+export const GET = withApiGuardrails<Promise<{ projectId: string; commitmentId: string }>>(
+  "/api/projects/[projectId]/commitments/[commitmentId]/pcos#GET",
+  async ({ params }) => {
+    const parsedParams = ParamsSchema.safeParse(await params);
+    if (!parsedParams.success) {
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "/api/projects/[projectId]/commitments/[commitmentId]/pcos#GET",
+        message: "Invalid path parameters.",
+        details: parsedParams.error.issues.map((issue) => issue.message),
+      });
     }
 
+    const { projectId, commitmentId } = parsedParams.data;
+    const numericProjectId = Number.parseInt(projectId, 10);
+
     const authResult = await verifyProjectAccess(numericProjectId);
-    if (isAuthError(authResult)) return authResult;
+    if (isAuthError(authResult)) {
+      return authResult;
+    }
     const { serviceClient: supabase } = authResult;
 
     const { data, error } = await supabase
@@ -41,65 +92,115 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       .eq("project_id", numericProjectId)
       .order("created_at", { ascending: false });
 
-    if (error) throw error;
-
-    return NextResponse.json({ data: data ?? [] });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
-
-// POST — create a new PCO
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
-    const { projectId, commitmentId } = await params;
-    const numericProjectId = Number.parseInt(projectId, 10);
-    if (Number.isNaN(numericProjectId)) {
-      return NextResponse.json({ error: "Invalid project ID" }, { status: 400 });
+    if (error) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "/api/projects/[projectId]/commitments/[commitmentId]/pcos#GET",
+        message: "Failed to list commitment PCOs.",
+        details: { reason: error.message, projectId: numericProjectId, commitmentId },
+        cause: error,
+      });
     }
 
+    const payload = {
+      data: (data ?? []).map((row: Record<string, unknown>) => normalizePcoRow(row)),
+    };
+    validateResponseContract(
+      PcoListResponseSchema,
+      payload,
+      "/api/projects/[projectId]/commitments/[commitmentId]/pcos#GET",
+    );
+
+    return NextResponse.json(payload);
+  },
+);
+
+export const POST = withApiGuardrails<Promise<{ projectId: string; commitmentId: string }>>(
+  "/api/projects/[projectId]/commitments/[commitmentId]/pcos#POST",
+  async ({ request, params }) => {
+    const parsedParams = ParamsSchema.safeParse(await params);
+    if (!parsedParams.success) {
+      throw new GuardrailError({
+        code: "INVALID_PAYLOAD",
+        where: "/api/projects/[projectId]/commitments/[commitmentId]/pcos#POST",
+        message: "Invalid path parameters.",
+        details: parsedParams.error.issues.map((issue) => issue.message),
+      });
+    }
+
+    const { projectId, commitmentId } = parsedParams.data;
+    const numericProjectId = Number.parseInt(projectId, 10);
     const authResult = await verifyProjectAccess(numericProjectId);
-    if (isAuthError(authResult)) return authResult;
+    if (isAuthError(authResult)) {
+      return authResult;
+    }
     const { serviceClient: supabase } = authResult;
 
     const guard = await requirePermission(numericProjectId, "contracts", "write");
-    if (guard.denied) return guard.response;
-
-    const body = (await request.json()) as PcoCreateBody;
-
-    if (!body.number?.trim()) {
-      return NextResponse.json({ error: "PCO number is required." }, { status: 400 });
-    }
-    if (!body.title?.trim()) {
-      return NextResponse.json({ error: "PCO title is required." }, { status: 400 });
-    }
-    if (body.status && !VALID_STATUSES.includes(body.status)) {
-      return NextResponse.json({ error: "Invalid status value." }, { status: 400 });
+    if (guard.denied) {
+      return guard.response;
     }
 
-    // Retrieve current user id for created_by
-    const { data: { user } } = await supabase.auth.getUser();
+    const body = await parseJsonBody(
+      request,
+      PcoCreateSchema,
+      "/api/projects/[projectId]/commitments/[commitmentId]/pcos#POST",
+    );
+
+    const { data: commitment, error: commitmentError } = await supabase
+      .from("commitments_unified")
+      .select("commitment_type")
+      .eq("id", commitmentId)
+      .eq("project_id", numericProjectId)
+      .single();
+
+    if (commitmentError || !commitment?.commitment_type) {
+      throw new GuardrailError({
+        code: "ROUTE_BINDING_MISSING",
+        where: "/api/projects/[projectId]/commitments/[commitmentId]/pcos#POST",
+        message: "Commitment not found.",
+        status: 404,
+        severity: "low",
+      });
+    }
+
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     const { data, error } = await supabase
       .from("commitment_pcos")
       .insert({
         project_id: numericProjectId,
         commitment_id: commitmentId,
-        number: body.number.trim(),
+        commitment_type: commitment.commitment_type,
+        pco_number: body.number.trim(),
         title: body.title.trim(),
-        amount: body.amount ?? 0,
+        total_amount: body.amount ?? 0,
         description: body.description ?? null,
-        change_reason: body.change_reason ?? null,
-        status: body.status ?? "open",
+        status: API_TO_DB_STATUS[body.status ?? "open"],
         created_by: user?.id ?? null,
       })
       .select("*")
       .single();
 
-    if (error) throw error;
+    if (error) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "/api/projects/[projectId]/commitments/[commitmentId]/pcos#POST",
+        message: "Failed to create commitment PCO.",
+        details: { reason: error.message, projectId: numericProjectId, commitmentId },
+        cause: error,
+      });
+    }
 
-    return NextResponse.json({ data }, { status: 201 });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    const payload = { data: normalizePcoRow(data as Record<string, unknown>) };
+    validateResponseContract(
+      PcoSingleResponseSchema,
+      payload,
+      "/api/projects/[projectId]/commitments/[commitmentId]/pcos#POST",
+    );
+
+    return NextResponse.json(payload, { status: 201 });
+  },
+);
