@@ -1,10 +1,11 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ vendorId: string }> }
-) {
+export const GET = withApiGuardrails<{ vendorId: string }>(
+  "directory/vendors/[vendorId]#GET",
+  async ({ request, params }) => {
   const { vendorId } = await params;
   const supabase = await createClient();
 
@@ -20,12 +21,12 @@ export async function GET(
   }
 
   return NextResponse.json(data);
-}
+  },
+);
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ vendorId: string }> }
-) {
+export const PATCH = withApiGuardrails<{ vendorId: string }>(
+  "directory/vendors/[vendorId]#PATCH",
+  async ({ request, params }) => {
   const { vendorId } = await params;
   const supabase = await createClient();
   const body = await request.json();
@@ -43,12 +44,12 @@ export async function PATCH(
   }
 
   return NextResponse.json(data);
-}
+  },
+);
 
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: Promise<{ vendorId: string }> }
-) {
+export const DELETE = withApiGuardrails<{ vendorId: string }>(
+  "directory/vendors/[vendorId]#DELETE",
+  async ({ request, params }) => {
   const { vendorId } = await params;
   const supabase = await createClient();
 
@@ -63,4 +64,5 @@ export async function DELETE(
   }
 
   return NextResponse.json({ success: true });
-}
+  },
+);

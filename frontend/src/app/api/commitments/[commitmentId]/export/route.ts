@@ -7,7 +7,9 @@
  * Supports various templates and options for SOV, change orders, and invoices
  */
 
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 import { createClient } from "@/lib/supabase/server";
 import { renderPdfFromHtml } from "@/lib/documents/pdf";
@@ -117,11 +119,10 @@ interface CommitmentData {
  * @returns {object} 404 - Commitment not found
  * @returns {object} 500 - Export generation error
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ commitmentId: string }> }
-) {
-  try {
+export const POST = withApiGuardrails<{ commitmentId: string }>(
+  "commitments/[commitmentId]/export#POST",
+  async ({ request, params }) => {
+  
     const { commitmentId } = await params;
     const supabase = await createClient();
 
@@ -132,10 +133,7 @@ export async function POST(
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized - please log in" },
-        { status: 401 }
-      );
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "commitments/[commitmentId]/export#POST", message: "Authentication required." });
     }
 
     const body = await request.json();
@@ -195,17 +193,8 @@ export async function POST(
       { error: "Unsupported export format" },
       { status: 400 }
     );
-  } catch (error) {
-    console.error("Export error:", error);
-    return NextResponse.json(
-      {
-        error: "Failed to export commitment",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
-  }
-}
+    },
+);
 
 // =============================================================================
 // DATA FETCHING

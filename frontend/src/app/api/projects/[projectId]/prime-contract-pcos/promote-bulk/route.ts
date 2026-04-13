@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { apiErrorResponse } from "@/lib/api-error";
@@ -14,8 +16,10 @@ const requestSchema = z.object({
   description: z.string().max(5000).optional(),
 });
 
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/prime-contract-pcos/promote-bulk#POST",
+  async ({ request, params }) => {
+  
     const { projectId: projectIdParam } = await params;
     const projectId = Number.parseInt(projectIdParam, 10);
 
@@ -29,7 +33,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/prime-contract-pcos/promote-bulk#POST", message: "Authentication required." });
     }
 
     const body = requestSchema.parse(await request.json());
@@ -186,8 +190,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       },
       { status: 201 },
     );
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 

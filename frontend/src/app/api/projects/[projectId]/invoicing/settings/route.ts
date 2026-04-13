@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -56,11 +58,10 @@ async function requireUser() {
 }
 
 // GET /api/projects/[projectId]/invoicing/settings
-export async function GET(
-  _request: NextRequest,
-  context: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/invoicing/settings#GET",
+  async ({ request }) => {
+  
     const { supabase, user, errorResponse } = await requireUser();
     if (!user) return errorResponse!;
 
@@ -105,17 +106,14 @@ export async function GET(
         updated_at: data.updated_at,
       },
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 // PATCH /api/projects/[projectId]/invoicing/settings
-export async function PATCH(
-  request: NextRequest,
-  context: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const PATCH = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/invoicing/settings#PATCH",
+  async ({ request }) => {
+  
     const { supabase, user, errorResponse } = await requireUser();
     if (!user) return errorResponse!;
 
@@ -192,7 +190,5 @@ export async function PATCH(
     }
 
     return NextResponse.json({ data });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

@@ -5,15 +5,19 @@
  * GET   — list violations (for inbox page + Claude Code reading)
  * PATCH — update status (Claude Code marks fixed, Megan marks wont_fix)
  */
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { apiErrorResponse } from "@/lib/api-error";
 
-export async function POST(req: Request) {
+export const POST = withApiGuardrails(
+  "dev/violations#POST",
+  async ({ request }) => {
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
-  if (authError || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (authError || !user) throw new GuardrailError({ code: "AUTH_EXPIRED", where: "dev/violations#POST", message: "Authentication required." });
 
   const body = await req.json();
   const { route, elementDescription, elementSelector, violationType, notes, screenshotDataUrl, priority } = body;
@@ -57,9 +61,12 @@ export async function POST(req: Request) {
 
   if (error) return apiErrorResponse(error);
   return NextResponse.json({ success: true, violation: data });
-}
+  },
+);
 
-export async function GET(req: Request) {
+export const GET = withApiGuardrails(
+  "dev/violations#GET",
+  async ({ request }) => {
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status") ?? "open";
   const service = createServiceClient();
@@ -77,9 +84,12 @@ export async function GET(req: Request) {
   const { data, error } = await query;
   if (error) return apiErrorResponse(error);
   return NextResponse.json({ violations: data ?? [], total: data?.length ?? 0 });
-}
+  },
+);
 
-export async function PATCH(req: Request) {
+export const PATCH = withApiGuardrails(
+  "dev/violations#PATCH",
+  async ({ request }) => {
   const body = await req.json();
   const { id, status, fixedInFile } = body;
   if (!id || !status) return NextResponse.json({ error: "id and status required" }, { status: 400 });
@@ -103,4 +113,5 @@ export async function PATCH(req: Request) {
 
   if (error) return apiErrorResponse(error);
   return NextResponse.json({ success: true, violation: data });
-}
+  },
+);

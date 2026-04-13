@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -8,11 +10,10 @@ import { APP_BASE_URL } from "@/lib/email/client";
 
 // POST /api/projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/submit
 // Transition invoice to under_review. Pre-condition: must be draft or revise_and_resubmit.
-export async function POST(
-  request: NextRequest,
-  context: { params: Promise<{ projectId: string; invoiceId: string }> },
-) {
-  try {
+export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
+  "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/submit#POST",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { projectId, invoiceId } = await context.params;
 
@@ -29,7 +30,7 @@ export async function POST(
     }
 
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/submit#POST", message: "Authentication required." });
     }
 
     const projectIdNum = parseInt(projectId, 10);
@@ -98,10 +99,8 @@ export async function POST(
       data: updated,
       message: "Invoice submitted successfully",
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 async function notifyProjectManagersOfInvoiceSubmission(args: {
   projectId: number;

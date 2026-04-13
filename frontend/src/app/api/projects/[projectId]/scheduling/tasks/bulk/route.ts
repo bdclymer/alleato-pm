@@ -9,7 +9,9 @@
  * - Bulk delete
  */
 
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { SchedulingService } from "@/lib/services/scheduling-service";
 import { TaskStatus } from "@/types/scheduling";
@@ -29,11 +31,10 @@ interface BulkUpdateRequest {
   };
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> }
-) {
-  try {
+export const POST = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/scheduling/tasks/bulk#POST",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
 
@@ -44,10 +45,7 @@ export async function POST(
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized - please log in" },
-        { status: 401 }
-      );
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/scheduling/tasks/bulk#POST", message: "Authentication required." });
     }
 
     const body: BulkUpdateRequest = await request.json();
@@ -153,24 +151,17 @@ export async function POST(
       message: `Bulk update completed: ${results.updated} updated, ${results.failed} failed`,
       ...results,
     });
-  } catch (error) {
-    console.error("Failed to bulk update schedule tasks:", error);
-    return NextResponse.json(
-      { error: "Failed to bulk update schedule tasks" },
-      { status: 500 }
-    );
-  }
-}
+    },
+);
 
 // =============================================================================
 // DELETE - Bulk Delete Tasks
 // =============================================================================
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> }
-) {
-  try {
+export const DELETE = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/scheduling/tasks/bulk#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
 
@@ -181,10 +172,7 @@ export async function DELETE(
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized - please log in" },
-        { status: 401 }
-      );
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/scheduling/tasks/bulk#DELETE", message: "Authentication required." });
     }
 
     const body = await request.json();
@@ -232,11 +220,5 @@ export async function DELETE(
       message: `Bulk delete completed: ${results.deleted} deleted, ${results.failed} failed`,
       ...results,
     });
-  } catch (error) {
-    console.error("Failed to bulk delete schedule tasks:", error);
-    return NextResponse.json(
-      { error: "Failed to bulk delete schedule tasks" },
-      { status: 500 }
-    );
-  }
-}
+    },
+);

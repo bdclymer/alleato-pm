@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
@@ -16,8 +18,10 @@ interface ImportSource {
  * POST /api/projects/[id]/contracts/[contractId]/line-items/import
  * Imports line items from budget into contract SOV
  */
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/contracts/[contractId]/line-items/import#POST",
+  async ({ request, params }) => {
+  
     const { projectId, contractId } = await params;
     const numericProjectId = parseInt(projectId, 10);
 
@@ -199,16 +203,5 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       errors: errors.length > 0 ? errors : undefined,
       message: `Imported ${importedItems.length} item${importedItems.length !== 1 ? "s" : ""}${skippedCount > 0 ? `, skipped ${skippedCount} already present` : ""}.`,
     });
-  } catch (error) {
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to import line items",
-        details: error instanceof Error ? error.stack : undefined,
-      },
-      { status: 500 },
-    );
-  }
-}
+    },
+);

@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { BudgetLineItemsPayloadSchema } from "@/lib/schemas/budget";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -156,11 +158,10 @@ async function fetchBudgetRows(
 }
 
 // GET /api/projects/[id]/budget - Fetch budget data for a project
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/budget#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -526,17 +527,14 @@ export async function GET(
       lineItems,
       grandTotals,
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 // POST /api/projects/[id]/budget - Create budget line items
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const POST = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/budget#POST",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -732,7 +730,5 @@ export async function POST(
       totalBudget,
       message: `Successfully created ${results.length} budget line(s)`,
     });
-  } catch (error: unknown) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

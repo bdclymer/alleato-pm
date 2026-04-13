@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -11,8 +13,10 @@ interface RouteParams {
 /**
  * POST /api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/approve
  */
-export async function POST(_request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/prime-contract-change-orders/[primeCoId]/approve#POST",
+  async ({ request, params }) => {
+  
     const { projectId, primeCoId } = await params;
     const numericId = Number(primeCoId);
 
@@ -31,7 +35,7 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/prime-contract-change-orders/[primeCoId]/approve#POST", message: "Authentication required." });
     }
 
     // Fetch the PCCO
@@ -124,7 +128,5 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(updated);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

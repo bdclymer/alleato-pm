@@ -1,6 +1,8 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod";
 import { ZodError } from "zod";
 import { requirePermission } from "@/lib/permissions-guard";
@@ -94,8 +96,10 @@ async function getRetainageCapabilities(
  * GET /api/projects/[projectId]/contracts/[contractId]/payment-applications/[applicationId]
  * Fetch a single payment application with billing period data
  */
-export async function GET(_request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/contracts/[contractId]/payment-applications/[applicationId]#GET",
+  async ({ request, params }) => {
+  
     const { projectId, contractId, applicationId } = await params;
     const supabase = await createClient();
 
@@ -120,10 +124,8 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       ...data,
       ...retainageCapabilities,
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 const updatePaymentApplicationSchema = z.object({
   application_number: z.string().min(1).optional(),
@@ -147,8 +149,10 @@ const updatePaymentApplicationSchema = z.object({
  * PATCH /api/projects/[projectId]/contracts/[contractId]/payment-applications/[applicationId]
  * Updates a payment application
  */
-export async function PATCH(request: NextRequest, { params }: RouteParams) {
-  try {
+export const PATCH = withApiGuardrails(
+  "projects/[projectId]/contracts/[contractId]/payment-applications/[applicationId]#PATCH",
+  async ({ request, params }) => {
+  
     const { projectId, contractId, applicationId } = await params;
     const projectIdNum = parseInt(projectId, 10);
     const guard = await requirePermission(projectIdNum, "contracts", "write");
@@ -189,29 +193,17 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(data);
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        {
-          error: "Validation error",
-          details: error.issues.map((e) => ({
-            field: e.path.join("."),
-            message: e.message,
-          })),
-        },
-        { status: 400 },
-      );
-    }
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * DELETE /api/projects/[projectId]/contracts/[contractId]/payment-applications/[applicationId]
  * Deletes a payment application
  */
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  try {
+export const DELETE = withApiGuardrails(
+  "projects/[projectId]/contracts/[contractId]/payment-applications/[applicationId]#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId, contractId, applicationId } = await params;
     const projectIdNum = parseInt(projectId, 10);
     const guard = await requirePermission(projectIdNum, "contracts", "admin");
@@ -247,7 +239,5 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ message: "Payment application deleted" });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

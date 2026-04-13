@@ -12,7 +12,9 @@
  * - Type-safe request/response handling
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import {
   DirectCostCreateSchema,
@@ -25,11 +27,10 @@ import { requirePermission } from "@/lib/permissions-guard";
 // GET - Fetch Direct Costs (with filtering, pagination, sorting)
 // =============================================================================
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> }
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/direct-costs#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
 
@@ -40,10 +41,7 @@ export async function GET(
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized - please log in" },
-        { status: 401 }
-      );
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/direct-costs#GET", message: "Authentication required." });
     }
 
     const { searchParams } = new URL(request.url);
@@ -87,23 +85,17 @@ export async function GET(
     }
 
     return NextResponse.json(result);
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to fetch direct costs' },
-      { status: 500 }
-    );
-  }
-}
+    },
+);
 
 // =============================================================================
 // POST - Create New Direct Cost
 // =============================================================================
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> }
-) {
-  try {
+export const POST = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/direct-costs#POST",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -133,27 +125,5 @@ export async function POST(
     const directCost = await service.create(projectId, validation.data);
 
     return NextResponse.json(directCost, { status: 201 });
-  } catch (error) {
-    // Handle specific database errors
-    if (error instanceof Error) {
-      if (error.message.includes('foreign key')) {
-        return NextResponse.json(
-          { error: 'Invalid reference to budget code, vendor, or employee' },
-          { status: 400 }
-        );
-      }
-
-      if (error.message.includes('permission')) {
-        return NextResponse.json(
-          { error: 'Insufficient permissions to create direct cost' },
-          { status: 403 }
-        );
-      }
-    }
-
-    return NextResponse.json(
-      { error: 'Failed to create direct cost' },
-      { status: 500 }
-    );
-  }
-}
+    },
+);

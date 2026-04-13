@@ -1,9 +1,11 @@
-import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
 import { getPostLoginRedirect } from "@/lib/auth/post-login-router";
+import { createClient } from "@/lib/supabase/server";
+import { NextResponse } from "next/server";
 
-export async function GET() {
-  try {
+export const GET = withApiGuardrails(
+  "auth/post-login-redirect#GET",
+  async () => {
     const supabase = await createClient();
     const {
       data: { user },
@@ -15,7 +17,5 @@ export async function GET() {
 
     const redirect = await getPostLoginRedirect(supabase, user.id);
     return NextResponse.json({ redirect });
-  } catch {
-    return NextResponse.json({ redirect: "/" });
-  }
-}
+  },
+);

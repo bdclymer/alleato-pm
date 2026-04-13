@@ -24,9 +24,9 @@ Items are ordered by impact: things that prevent the most recurring failures com
 **What it does:** Any bug that escaped to production must leave behind a permanent guardrail (test, smoke entry, contract check, or validation rule).
 
 ### 3. Migrate remaining 105 debt routes to `withApiGuardrails`
-**Status:** IN PROGRESS — Agent migrating ~85 routes; 20 complex/streaming routes need manual review
-**What it does:** Closes the gap where 105 routes can still throw unhandled 500s with no structured error, no request ID, no alerting.
-**Debt baseline:** `scripts/guardrail-route-debt-baseline.txt`
+**Status:** DONE — 371/392 routes now use `withApiGuardrails`
+**What it does:** Closes the gap where 105 routes could throw unhandled 500s with no structured error, no request ID, no alerting.
+**Remaining (21 intentional skips):** Streaming routes, webhooks, and proxy patterns incompatible with the wrapper — tracked in `scripts/guardrail-route-debt-baseline.txt`
 
 ### 4. Response shape contract validation for critical endpoints
 **Status:** DONE — Enhanced `api-smoke-contracts.mjs` with body shape assertions for key endpoints

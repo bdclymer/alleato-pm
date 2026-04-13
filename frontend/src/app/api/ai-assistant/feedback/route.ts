@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { ingestThumbsFeedbackLearning } from "@/lib/ai/services/agent-learning-service";
@@ -8,10 +10,10 @@ import { ingestThumbsFeedbackLearning } from "@/lib/ai/services/agent-learning-s
  * Persists user feedback (thumbs up/down) on AI assistant responses.
  * Stored in chat_history.metadata alongside tool traces and model info.
  */
-export async function POST(request: Request) {
+export const POST = withApiGuardrails("/api/ai-assistant/feedback#POST", async ({ request }) => {
   const user = await getApiRouteUser();
   if (!user) {
-    return new Response("Unauthorized", { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "/api/ai-assistant/feedback#POST", message: "Authentication required.", status: 401 });
   }
 
   const body = await request.json();
@@ -28,7 +30,6 @@ export async function POST(request: Request) {
 
   const supabase = createServiceClient();
 
-  // Store feedback as a dedicated row in chat_history
   const { error } = await supabase.from("chat_history").insert({
     session_id: sessionId,
     user_id: user.id,
@@ -44,19 +45,14 @@ export async function POST(request: Request) {
   });
 
   if (error) {
-    console.error("[Feedback] Failed to persist:", error);
-    return new Response("Failed to save feedback", { status: 500 });
+    throw new GuardrailError({ code: "INTERNAL_ERROR", where: "/api/ai-assistant/feedback#POST", message: error.message });
   }
 
   try {
-    await ingestThumbsFeedbackLearning({
-      sessionId,
-      feedback,
-      messageContent,
-    });
+    await ingestThumbsFeedbackLearning({ sessionId, feedback, messageContent });
   } catch (learningError) {
     console.error("[Feedback] Learning ingestion failed:", learningError);
   }
 
   return Response.json({ success: true });
-}
+});

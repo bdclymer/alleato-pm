@@ -1,6 +1,8 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { requirePermission } from "@/lib/permissions-guard";
 
 interface RouteParams {
@@ -16,8 +18,10 @@ interface RouteParams {
  * Auto-populate line items from the contract's SOV + approved change orders.
  * Carries forward previous application amounts when applicable.
  */
-export async function POST(_request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/contracts/[contractId]/payment-applications/[applicationId]/populate-sov#POST",
+  async ({ request, params }) => {
+  
     const { projectId, contractId, applicationId } = await params;
     const projectIdNum = parseInt(projectId, 10);
     const guard = await requirePermission(projectIdNum, "contracts", "write");
@@ -236,10 +240,8 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(inserted, { status: 201 });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 // Type helpers
 interface PreviousCarryForward {

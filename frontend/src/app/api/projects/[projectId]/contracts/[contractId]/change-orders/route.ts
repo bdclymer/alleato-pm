@@ -1,6 +1,8 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createChangeOrderSchema } from "./validation";
 import { ZodError } from "zod";
 import { requirePermission } from "@/lib/permissions-guard";
@@ -13,8 +15,10 @@ interface RouteParams {
  * GET /api/projects/[id]/contracts/[contractId]/change-orders
  * Returns all change orders for a specific contract
  */
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/contracts/[contractId]/change-orders#GET",
+  async ({ request, params }) => {
+  
     const { projectId, contractId } = await params;
     const supabase = await createClient();
 
@@ -48,17 +52,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(data || []);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * POST /api/projects/[id]/contracts/[contractId]/change-orders
  * Creates a new change order for a contract
  */
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/contracts/[contractId]/change-orders#POST",
+  async ({ request, params }) => {
+  
     const { projectId, contractId } = await params;
     const projectIdNum = parseInt(projectId, 10);
     const guard = await requirePermission(projectIdNum, "contracts", "write");
@@ -80,7 +84,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/contracts/[contractId]/change-orders#POST", message: "Authentication required." });
     }
 
     // Verify contract exists and belongs to project
@@ -131,20 +135,5 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(data, { status: 201 });
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        {
-          error: "Validation error",
-          details: error.issues.map((e) => ({
-            field: e.path.join("."),
-            message: e.message,
-          })),
-        },
-        { status: 400 },
-      );
-    }
-
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

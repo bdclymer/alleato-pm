@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
@@ -27,8 +29,10 @@ interface OriginOption {
  * Returns specific records for a given origin type so the user can pick
  * the exact meeting, email, or RFI that originated the change event.
  */
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/change-events/origin-options#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const parsedProjectId = Number.parseInt(projectId, 10);
     if (Number.isNaN(parsedProjectId)) {
@@ -124,7 +128,5 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ data: options });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

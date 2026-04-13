@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -5,11 +7,10 @@ import { requirePermission } from "@/lib/permissions-guard";
 
 // POST /api/projects/[projectId]/invoicing/owner
 // Create a new owner invoice for a project
-export async function POST(
-  request: NextRequest,
-  context: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const POST = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/invoicing/owner#POST",
+  async ({ request }) => {
+  
     const { projectId } = await context.params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -66,18 +67,15 @@ export async function POST(
     }
 
     return NextResponse.json({ data: invoice }, { status: 201 });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 // GET /api/projects/[projectId]/invoicing/owner
 // Fetch all owner invoices for a project with their line items
-export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/invoicing/owner#GET",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { projectId } = await context.params;
 
@@ -95,7 +93,7 @@ export async function GET(
     }
 
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/invoicing/owner#GET", message: "Authentication required." });
     }
 
     const projectIdNum = parseInt(projectId, 10);
@@ -254,7 +252,5 @@ export async function GET(
     });
 
     return NextResponse.json({ data: invoicesWithTotals });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

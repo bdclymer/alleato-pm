@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
@@ -5,14 +7,16 @@ import { createClient } from "@/lib/supabase/server";
 import { sendEmail } from "@/lib/email/send";
 import InviteUser from "@/emails/auth/InviteUser";
 
-export async function POST(req: NextRequest) {
-  try {
+export const POST = withApiGuardrails(
+  "settings/users/invite#POST",
+  async ({ request }) => {
+  
     const supabase = await createClient();
 
     // Auth check
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "settings/users/invite#POST", message: "Authentication required." });
     }
 
     const body = (await req.json()) as {
@@ -113,7 +117,5 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({ success: true });
-  } catch {
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
-  }
-}
+    },
+);

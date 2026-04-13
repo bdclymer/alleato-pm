@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -7,7 +9,9 @@ import { apiErrorResponse } from "@/lib/api-error";
  * Only accessible in development/local environments.
  */
 
-export async function GET() {
+export const GET = withApiGuardrails(
+  "dev/schema#GET",
+  async () => {
   if (
     process.env.NODE_ENV === "production" &&
     process.env.VERCEL_ENV === "production"
@@ -25,7 +29,7 @@ export async function GET() {
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "dev/schema#GET", message: "Authentication required." });
   }
 
   try {
@@ -74,7 +78,8 @@ export async function GET() {
   } catch (error) {
     return apiErrorResponse(error);
   }
-}
+  },
+);
 
 /**
  * Fallback: probe a list of common table names to see which exist.
@@ -175,7 +180,9 @@ async function discoverTablesByProbing(
 /**
  * Get column information for a specific table.
  */
-export async function POST(request: Request) {
+export const POST = withApiGuardrails(
+  "dev/schema#POST",
+  async ({ request }) => {
   if (
     process.env.NODE_ENV === "production" &&
     process.env.VERCEL_ENV === "production"
@@ -193,7 +200,7 @@ export async function POST(request: Request) {
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "dev/schema#POST", message: "Authentication required." });
   }
 
   try {
@@ -285,4 +292,5 @@ export async function POST(request: Request) {
   } catch (error) {
     return apiErrorResponse(error);
   }
-}
+  },
+);

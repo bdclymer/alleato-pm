@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import OpenAI from "openai";
@@ -30,13 +32,15 @@ async function generateEmbedding(text: string): Promise<number[]> {
 // GET /api/knowledge — list knowledge articles
 // ---------------------------------------------------------------------------
 
-export async function GET(request: Request) {
+export const GET = withApiGuardrails(
+  "knowledge#GET",
+  async ({ request }) => {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "knowledge#GET", message: "Authentication required." });
   }
 
   const url = new URL(request.url);
@@ -82,19 +86,22 @@ export async function GET(request: Request) {
   }
 
   return NextResponse.json({ data: data ?? [] });
-}
+  },
+);
 
 // ---------------------------------------------------------------------------
 // POST /api/knowledge — create a knowledge article + generate embedding
 // ---------------------------------------------------------------------------
 
-export async function POST(request: Request) {
+export const POST = withApiGuardrails(
+  "knowledge#POST",
+  async ({ request }) => {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "knowledge#POST", message: "Authentication required." });
   }
 
   const body = await request.json();
@@ -132,19 +139,22 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({ data }, { status: 201 });
-}
+  },
+);
 
 // ---------------------------------------------------------------------------
 // PATCH /api/knowledge — update a knowledge article + re-embed if content changed
 // ---------------------------------------------------------------------------
 
-export async function PATCH(request: Request) {
+export const PATCH = withApiGuardrails(
+  "knowledge#PATCH",
+  async ({ request }) => {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "knowledge#PATCH", message: "Authentication required." });
   }
 
   const body = await request.json();
@@ -190,19 +200,22 @@ export async function PATCH(request: Request) {
   }
 
   return NextResponse.json({ data });
-}
+  },
+);
 
 // ---------------------------------------------------------------------------
 // DELETE /api/knowledge — soft-delete a knowledge article
 // ---------------------------------------------------------------------------
 
-export async function DELETE(request: Request) {
+export const DELETE = withApiGuardrails(
+  "knowledge#DELETE",
+  async ({ request }) => {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "knowledge#DELETE", message: "Authentication required." });
   }
 
   const url = new URL(request.url);
@@ -225,4 +238,5 @@ export async function DELETE(request: Request) {
   }
 
   return NextResponse.json({ success: true });
-}
+  },
+);

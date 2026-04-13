@@ -8,7 +8,9 @@
  * - Context-aware responses with citations
  */
 
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { generateText } from "ai";
 import { createClient as createAuthClient } from "@/lib/supabase/server";
 import { createClient } from "@supabase/supabase-js";
@@ -192,13 +194,15 @@ Remember: You're an intelligent assistant with construction expertise, not just 
  *
  * Query the Procore documentation using enhanced RAG
  */
-export async function POST(request: NextRequest) {
-  try {
+export const POST = withApiGuardrails(
+  "procore-docs/ask#POST",
+  async ({ request }) => {
+  
     const supabase = getServiceSupabase();
     const authSupabase = await createAuthClient();
     const { data: { user }, error: authError } = await authSupabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "procore-docs/ask#POST", message: "Authentication required." });
     }
     const body = await request.json();
     const { query, topK = 5, conversationHistory = [] } = body;
@@ -314,7 +318,5 @@ Please use your expertise to:
     };
 
     return NextResponse.json(response);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

@@ -1,22 +1,21 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 // DELETE /api/projects/[projectId]/invoicing/owner/[invoiceId]/line-items/[lineItemId]
 // Delete a single line item. Only allowed when invoice is draft or revise_and_resubmit.
-export async function DELETE(
-  _request: NextRequest,
-  context: {
-    params: Promise<{ projectId: string; invoiceId: string; lineItemId: string }>;
-  },
-) {
-  try {
+export const DELETE = withApiGuardrails<{ projectId: string; invoiceId: string; lineItemId: string }>(
+  "projects/[projectId]/invoicing/owner/[invoiceId]/line-items/[lineItemId]#DELETE",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { projectId, invoiceId, lineItemId } = await context.params;
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/invoicing/owner/[invoiceId]/line-items/[lineItemId]#DELETE", message: "Authentication required." });
     }
 
     const projectIdNum = parseInt(projectId, 10);
@@ -71,7 +70,5 @@ export async function DELETE(
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

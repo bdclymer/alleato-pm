@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { InviteService } from "@/services/inviteService";
@@ -16,8 +18,10 @@ interface RouteParams {
  * @param params.personId - The ID of the person to invite
  * @returns On success, JSON containing the invite service result. On failure, JSON with an `error` message and an appropriate HTTP status (401 for unauthorized, 403 for forbidden, 400 for bad request, 500 for server error).
  */
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/directory/people/[personId]/invite#POST",
+  async ({ request, params }) => {
+  
     const { projectId, personId } = await params;
     const supabase = await createClient();
 
@@ -27,7 +31,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/directory/people/[personId]/invite#POST", message: "Authentication required." });
     }
 
     // Check permissions
@@ -40,7 +44,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     );
 
     if (!hasPermission) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      throw new GuardrailError({ code: "FORBIDDEN", where: "projects/[projectId]/directory/people/[personId]/invite#POST", message: "Access denied." });
     }
 
     // Send invite
@@ -55,7 +59,5 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(result);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

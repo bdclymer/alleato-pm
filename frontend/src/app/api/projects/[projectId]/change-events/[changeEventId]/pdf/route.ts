@@ -1,5 +1,7 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
@@ -233,8 +235,10 @@ function buildHtml(changeEvent: any, lineItems: any[], project: any): string {
 </html>`;
 }
 
-export async function GET(_req: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/change-events/[changeEventId]/pdf#GET",
+  async ({ request, params }) => {
+  
     const { projectId, changeEventId } = await params;
     const supabase = await createClient();
 
@@ -320,14 +324,12 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
     await browser.close();
 
     const ceNumber = changeEvent.number || changeEvent.id;
-    return new NextResponse(pdfBuffer, {
+    return new NextResponse(Buffer.from(pdfBuffer), {
       status: 200,
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `attachment; filename="change-event-${ceNumber}.pdf"`,
       },
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

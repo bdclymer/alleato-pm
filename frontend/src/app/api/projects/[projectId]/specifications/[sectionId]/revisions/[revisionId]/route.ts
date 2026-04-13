@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { SpecificationRevisionService } from "@/services/SpecificationRevisionService";
@@ -8,18 +10,13 @@ import { apiErrorResponse } from "@/lib/api-error";
  * GET /api/projects/[projectId]/specifications/[sectionId]/revisions/[revisionId]
  * Get a specific revision
  */
-export async function GET(
-  request: NextRequest,
-  {
-    params,
-  }: {
-    params: Promise<{ projectId: string; sectionId: string; revisionId: string }>;
-  },
-) {
+export const GET = withApiGuardrails<{ projectId: string; sectionId: string; revisionId: string }>(
+  "projects/[projectId]/specifications/[sectionId]/revisions/[revisionId]#GET",
+  async ({ request, params }) => {
   const { revisionId } = await params;
   const user = await getApiRouteUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/specifications/[sectionId]/revisions/[revisionId]#GET", message: "Authentication required." });
   }
 
   // Use service role client for data queries (bypasses RLS)
@@ -32,24 +29,20 @@ export async function GET(
   }
 
   return NextResponse.json(result.data);
-}
+  },
+);
 
 /**
  * DELETE /api/projects/[projectId]/specifications/[sectionId]/revisions/[revisionId]
  * Delete a revision (except current revision)
  */
-export async function DELETE(
-  request: NextRequest,
-  {
-    params,
-  }: {
-    params: Promise<{ projectId: string; sectionId: string; revisionId: string }>;
-  },
-) {
+export const DELETE = withApiGuardrails<{ projectId: string; sectionId: string; revisionId: string }>(
+  "projects/[projectId]/specifications/[sectionId]/revisions/[revisionId]#DELETE",
+  async ({ request, params }) => {
   const { projectId, sectionId, revisionId } = await params;
   const user = await getApiRouteUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/specifications/[sectionId]/revisions/[revisionId]#DELETE", message: "Authentication required." });
   }
 
   // Use service role client for write operations (bypasses RLS)
@@ -69,24 +62,20 @@ export async function DELETE(
   }
 
   return NextResponse.json({ success: true }, { status: 200 });
-}
+  },
+);
 
 /**
  * PATCH /api/projects/[projectId]/specifications/[sectionId]/revisions/[revisionId]
  * Set as current revision
  */
-export async function PATCH(
-  request: NextRequest,
-  {
-    params,
-  }: {
-    params: Promise<{ projectId: string; sectionId: string; revisionId: string }>;
-  },
-) {
+export const PATCH = withApiGuardrails<{ projectId: string; sectionId: string; revisionId: string }>(
+  "projects/[projectId]/specifications/[sectionId]/revisions/[revisionId]#PATCH",
+  async ({ request, params }) => {
   const { projectId, sectionId, revisionId } = await params;
   const user = await getApiRouteUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/specifications/[sectionId]/revisions/[revisionId]#PATCH", message: "Authentication required." });
   }
 
   // Use service role client for write operations (bypasses RLS)
@@ -106,4 +95,5 @@ export async function PATCH(
   }
 
   return NextResponse.json({ success: true }, { status: 200 });
-}
+  },
+);

@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -5,8 +7,10 @@ import { apiErrorResponse } from "@/lib/api-error";
 type RouteParams = { params: Promise<{ projectId: string; meetingId: string }> };
 
 // GET: Fetch existing meeting prep
-export async function GET(_request: Request, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/meetings/[meetingId]/prep#GET",
+  async ({ request, params }) => {
+  
     const { meetingId } = await params;
     const supabase = await createClient();
     const {
@@ -14,7 +18,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/meetings/[meetingId]/prep#GET", message: "Authentication required." });
     }
 
     const { data, error } = await supabase
@@ -35,14 +39,14 @@ export async function GET(_request: Request, { params }: RouteParams) {
     }
 
     return NextResponse.json({ data });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 // PUT: Save/update meeting prep content (auto-save from editor)
-export async function PUT(request: Request, { params }: RouteParams) {
-  try {
+export const PUT = withApiGuardrails(
+  "projects/[projectId]/meetings/[meetingId]/prep#PUT",
+  async ({ request, params }) => {
+  
     const { projectId, meetingId } = await params;
     const supabase = await createClient();
     const {
@@ -50,7 +54,7 @@ export async function PUT(request: Request, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/meetings/[meetingId]/prep#PUT", message: "Authentication required." });
     }
 
     const numericProjectId = parseInt(projectId, 10);
@@ -110,7 +114,5 @@ export async function PUT(request: Request, { params }: RouteParams) {
     }
 
     return NextResponse.json({ data });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

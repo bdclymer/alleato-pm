@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { SpecificationService } from "@/services/SpecificationService";
@@ -13,14 +15,13 @@ import { apiErrorResponse } from "@/lib/api-error";
  * GET /api/projects/[projectId]/specifications
  * List specifications with optional filters
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
+export const GET = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/specifications#GET",
+  async ({ request, params }) => {
   const { projectId } = await params;
   const user = await getApiRouteUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/specifications#GET", message: "Authentication required." });
   }
 
   // Parse query parameters
@@ -51,20 +52,20 @@ export async function GET(
   }
 
   return NextResponse.json(result.data);
-}
+  },
+);
 
 /**
  * POST /api/projects/[projectId]/specifications
  * Create a new specification with file upload
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
+export const POST = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/specifications#POST",
+  async ({ request, params }) => {
   const { projectId } = await params;
   const user = await getApiRouteUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/specifications#POST", message: "Authentication required." });
   }
 
   try {
@@ -119,4 +120,5 @@ export async function POST(
       { status: 500 },
     );
   }
-}
+  },
+);

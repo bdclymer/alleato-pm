@@ -1,6 +1,8 @@
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 
 // Screenshots are sent as base64 data URLs which can be several MB.
 // App Router route handlers use the native Request API with no built-in
@@ -50,18 +52,6 @@ const feedbackPayloadSchema = z.object({
 type FeedbackInsert =
   Database["public"]["Tables"]["admin_feedback_items"]["Insert"];
 type JsonValue = Database["public"]["Tables"]["admin_feedback_items"]["Row"]["metadata"];
-
-type ApiErrorPayload = {
-  error: string;
-  code?: string;
-  hint?: string;
-  details?: string;
-  github_issue_url?: string | null;
-};
-
-function jsonError(status: number, payload: ApiErrorPayload) {
-  return NextResponse.json(payload, { status });
-}
 
 function toErrorDetails(value: unknown) {
   if (typeof value === "object" && value !== null) {
@@ -266,202 +256,151 @@ async function requireAdminUser() {
   return requestUser;
 }
 
-export async function POST(request: Request) {
+export const POST = withApiGuardrails("/api/admin/feedback#POST", async ({ request }) => {
+  const requestUser = await requireAdminUser();
+  if (!requestUser) {
+    throw new GuardrailError({ code: "FORBIDDEN", where: "/api/admin/feedback#POST", message: "Admin access required.", status: 403 });
+  }
+
+  const rawBody = await request.json();
+  const parsed = feedbackPayloadSchema.safeParse(rawBody);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid feedback payload", details: parsed.error.flatten() },
+      { status: 400 },
+    );
+  }
+
+  const payload = parsed.data;
+  const metadata = toJsonValue(payload.metadata ?? {});
+  let screenshotPath: string | null = null;
+  let screenshotUrl: string | null = null;
+
+  if (payload.screenshotDataUrl) {
+    const uploaded = await uploadScreenshot(requestUser.id, payload.screenshotDataUrl);
+    screenshotPath = uploaded.screenshotPath;
+    screenshotUrl = uploaded.screenshotUrl;
+  }
+
+  const title = buildTitle(
+    payload.title,
+    payload.requestType,
+    payload.target.text,
+    payload.pageTitle,
+  );
+
+  const matchedTool = await matchFeedbackToTool(
+    title,
+    payload.comment,
+    payload.pagePath,
+    payload.pageUrl,
+  );
+  const toolContext = matchedTool ? resolveToolContext(matchedTool) : null;
+  const agentContext = toolContext ? toJsonValue(contextToAgentPayload(toolContext)) : null;
+
+  const insertPayload: FeedbackInsert = {
+    created_by: requestUser.id,
+    project_id: payload.projectId ?? null,
+    page_url: payload.pageUrl,
+    page_path: payload.pagePath,
+    page_title: payload.pageTitle ?? null,
+    target_id: payload.target.id ?? null,
+    target_selector: payload.target.selector,
+    target_text: payload.target.text ?? null,
+    target_tag: payload.target.tagName ?? null,
+    dom_path: payload.target.domPath ?? null,
+    target_rect: payload.target.rect ?? null,
+    title,
+    comment: payload.comment,
+    request_type: payload.requestType,
+    severity: payload.severity,
+    status: "open",
+    screenshot_path: screenshotPath,
+    screenshot_url: screenshotUrl,
+    metadata,
+    ...(matchedTool ? { tool_id: matchedTool.id } : {}),
+    ...(agentContext ? { agent_context: agentContext } : {}),
+  };
+
+  const serviceSupabase = createServiceClient();
+  const { data: inserted, error: insertError } = await serviceSupabase
+    .from("admin_feedback_items")
+    .insert(insertPayload)
+    .select("id, title, status, github_issue_number, github_issue_url, github_issue_state")
+    .single();
+
+  if (insertError) {
+    const details = toErrorDetails(insertError);
+    throw new GuardrailError({ code: "INTERNAL_ERROR", where: "/api/admin/feedback#POST", message: details.message });
+  }
+
   try {
-    const requestUser = await requireAdminUser();
-    if (!requestUser) {
-      return jsonError(403, {
-        error: "Admin access required",
-        hint: "Only admin users can submit production feedback.",
-      });
-    }
-
-    const rawBody = await request.json();
-    const parsed = feedbackPayloadSchema.safeParse(rawBody);
-    if (!parsed.success) {
-      return NextResponse.json(
-        {
-          error: "Invalid feedback payload",
-          details: parsed.error.flatten(),
-        },
-        { status: 400 },
-      );
-    }
-
-    const payload = parsed.data;
-    const metadata = toJsonValue(payload.metadata ?? {});
-    let screenshotPath: string | null = null;
-    let screenshotUrl: string | null = null;
-
-    if (payload.screenshotDataUrl) {
-      try {
-        const uploaded = await uploadScreenshot(
-          requestUser.id,
-          payload.screenshotDataUrl,
-        );
-        screenshotPath = uploaded.screenshotPath;
-        screenshotUrl = uploaded.screenshotUrl;
-      } catch (error) {
-        const details = toErrorDetails(error);
-        return jsonError(500, {
-          error: "Failed to store feedback screenshot",
-          details: details.message,
-        });
-      }
-    }
-
-    const title = buildTitle(
-      payload.title,
-      payload.requestType,
-      payload.target.text,
-      payload.pageTitle,
-    );
-
-    // Auto-match to a procore_tools row (URL path is strongest signal)
-    const matchedTool = await matchFeedbackToTool(
-      title,
-      payload.comment,
-      payload.pagePath,
-      payload.pageUrl,
-    );
-    const toolContext = matchedTool ? resolveToolContext(matchedTool) : null;
-    const agentContext = toolContext
-      ? toJsonValue(contextToAgentPayload(toolContext))
-      : null;
-
-    const insertPayload: FeedbackInsert = {
-      created_by: requestUser.id,
-      project_id: payload.projectId ?? null,
-      page_url: payload.pageUrl,
-      page_path: payload.pagePath,
-      page_title: payload.pageTitle ?? null,
-      target_id: payload.target.id ?? null,
-      target_selector: payload.target.selector,
-      target_text: payload.target.text ?? null,
-      target_tag: payload.target.tagName ?? null,
-      dom_path: payload.target.domPath ?? null,
-      target_rect: payload.target.rect ?? null,
+    await ingestAdminFeedbackLearning({
+      feedbackItemId: inserted.id,
       title,
       comment: payload.comment,
-      request_type: payload.requestType,
-      severity: payload.severity,
-      status: "open",
-      screenshot_path: screenshotPath,
-      screenshot_url: screenshotUrl,
-      metadata,
-      ...(matchedTool ? { tool_id: matchedTool.id } : {}),
-      ...(agentContext ? { agent_context: agentContext } : {}),
-    };
+      pagePath: payload.pagePath,
+      toolId: matchedTool?.id ?? null,
+      projectId: payload.projectId ?? null,
+      status: "candidate",
+    });
+  } catch (learningError) {
+    console.error("[AdminFeedback] Candidate learning ingestion failed", learningError);
+  }
 
-    const serviceSupabase = createServiceClient();
-    const { data: inserted, error: insertError } = await serviceSupabase
-      .from("admin_feedback_items")
-      .insert(insertPayload)
-      .select(
-        "id, title, status, github_issue_number, github_issue_url, github_issue_state",
-      )
-      .single();
+  let githubIssue: { number: number; url: string; state: string } | null = null;
+  let githubWarning: string | null = null;
 
-    if (insertError) {
-      const details = toErrorDetails(insertError);
-      return jsonError(500, {
-        error: "Failed to save feedback",
-        code: details.code,
-        hint: "Apply the admin feedback migration before using this endpoint.",
-        details: details.message,
-      });
-    }
-
-    try {
-      await ingestAdminFeedbackLearning({
-        feedbackItemId: inserted.id,
-        title,
-        comment: payload.comment,
-        pagePath: payload.pagePath,
-        toolId: matchedTool?.id ?? null,
-        projectId: payload.projectId ?? null,
-        status: "candidate",
-      });
-    } catch (learningError) {
-      console.error("[AdminFeedback] Candidate learning ingestion failed", learningError);
-    }
-
-    let githubIssue:
-      | {
-          number: number;
-          url: string;
-          state: string;
-        }
-      | null = null;
-    let githubWarning: string | null = null;
-
-    try {
-      githubIssue = await createGitHubIssue({
-        title,
-        comment: payload.comment,
-        pageUrl: payload.pageUrl,
-        pagePath: payload.pagePath,
-        pageTitle: payload.pageTitle ?? null,
-        requestType: payload.requestType,
-        severity: payload.severity,
-        targetId: payload.target.id ?? null,
-        targetSelector: payload.target.selector,
-        targetTag: payload.target.tagName ?? null,
-        targetText: payload.target.text ?? null,
-        domPath: payload.target.domPath ?? null,
-        screenshotUrl,
-        projectId: payload.projectId ?? null,
-        metadata: payload.metadata ?? {},
-        toolContext,
-      });
-    } catch (error) {
-      githubWarning =
-        error instanceof Error
-          ? error.message
-          : "GitHub issue creation failed";
-    }
-
-    if (githubIssue) {
-      await serviceSupabase
-        .from("admin_feedback_items")
-        .update({
-          github_issue_number: githubIssue.number,
-          github_issue_url: githubIssue.url,
-          github_issue_state: githubIssue.state,
-          status: "submitted",
-        })
-        .eq("id", inserted.id);
-    } else if (githubWarning) {
-      await serviceSupabase
-        .from("admin_feedback_items")
-        .update({
-          status: "github_failed",
-        })
-        .eq("id", inserted.id);
-    }
-
-    return NextResponse.json({
-      feedbackId: inserted.id,
+  try {
+    githubIssue = await createGitHubIssue({
       title,
+      comment: payload.comment,
+      pageUrl: payload.pageUrl,
+      pagePath: payload.pagePath,
+      pageTitle: payload.pageTitle ?? null,
+      requestType: payload.requestType,
+      severity: payload.severity,
+      targetId: payload.target.id ?? null,
+      targetSelector: payload.target.selector,
+      targetTag: payload.target.tagName ?? null,
+      targetText: payload.target.text ?? null,
+      domPath: payload.target.domPath ?? null,
       screenshotUrl,
-      githubIssue,
-      githubWarning:
-        githubWarning ??
-        (githubIssue
-          ? null
-          : "GitHub feedback integration is not configured in this environment."),
+      projectId: payload.projectId ?? null,
+      metadata: payload.metadata ?? {},
+      toolContext,
     });
   } catch (error) {
-    console.error("[AdminFeedback] Submission failed", error);
-    const message =
-      error instanceof Error ? error.message : "Failed to submit feedback";
-
-    return jsonError(500, {
-      error: "Feedback submission failed",
-      details: message,
-    });
+    githubWarning = error instanceof Error ? error.message : "GitHub issue creation failed";
   }
-}
+
+  if (githubIssue) {
+    await serviceSupabase
+      .from("admin_feedback_items")
+      .update({
+        github_issue_number: githubIssue.number,
+        github_issue_url: githubIssue.url,
+        github_issue_state: githubIssue.state,
+        status: "submitted",
+      })
+      .eq("id", inserted.id);
+  } else if (githubWarning) {
+    await serviceSupabase
+      .from("admin_feedback_items")
+      .update({ status: "github_failed" })
+      .eq("id", inserted.id);
+  }
+
+  return NextResponse.json({
+    feedbackId: inserted.id,
+    title,
+    screenshotUrl,
+    githubIssue,
+    githubWarning:
+      githubWarning ??
+      (githubIssue ? null : "GitHub feedback integration is not configured in this environment."),
+  });
+});
 
 // ---------------------------------------------------------------------------
 // GET — List feedback items with optional filters
@@ -474,71 +413,55 @@ const listQuerySchema = z.object({
   offset: z.coerce.number().int().min(0).optional(),
 });
 
-export async function GET(request: Request) {
-  try {
-    const requestUser = await requireAdminUser();
-    if (!requestUser) {
-      return jsonError(403, {
-        error: "Admin access required",
-        hint: "Only admin users can view production feedback.",
-      });
-    }
-
-    const url = new URL(request.url);
-    const parsed = listQuerySchema.safeParse(
-      Object.fromEntries(url.searchParams),
-    );
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Invalid query parameters", details: parsed.error.flatten() },
-        { status: 400 },
-      );
-    }
-
-    const { status, requestType, limit = 100, offset = 0 } = parsed.data;
-    const serviceSupabase = createServiceClient();
-
-    let query = serviceSupabase
-      .from("admin_feedback_items")
-      .select(
-        "id, created_at, updated_at, created_by, project_id, page_url, page_path, page_title, target_id, target_selector, target_text, target_tag, dom_path, target_rect, title, comment, request_type, severity, status, screenshot_url, screenshot_path, github_issue_number, github_issue_url, github_issue_state, metadata, tool_id, agent_context",
-        { count: "exact" },
-      )
-      .order("created_at", { ascending: false })
-      .range(offset, offset + limit - 1);
-
-    if (status) {
-      const statuses = status.split(",").map((s) => s.trim()).filter(Boolean);
-      if (statuses.length === 1) {
-        query = query.eq("status", statuses[0]);
-      } else if (statuses.length > 1) {
-        query = query.in("status", statuses);
-      }
-    }
-
-    if (requestType) {
-      query = query.eq("request_type", requestType);
-    }
-
-    const { data, error, count } = await query;
-
-    if (error) {
-      const details = toErrorDetails(error);
-      return jsonError(500, {
-        error: "Failed to fetch feedback items",
-        code: details.code,
-        details: details.message,
-      });
-    }
-
-    return NextResponse.json({ items: data ?? [], total: count ?? 0 });
-  } catch (error) {
-    console.error("[AdminFeedback] List failed", error);
-    const message =
-      error instanceof Error ? error.message : "Failed to list feedback";
-    return jsonError(500, { error: "Failed to list feedback", details: message });
+export const GET = withApiGuardrails("/api/admin/feedback#GET", async ({ request }) => {
+  const requestUser = await requireAdminUser();
+  if (!requestUser) {
+    throw new GuardrailError({ code: "FORBIDDEN", where: "/api/admin/feedback#GET", message: "Admin access required.", status: 403 });
   }
-}
+
+  const url = new URL(request.url);
+  const parsed = listQuerySchema.safeParse(Object.fromEntries(url.searchParams));
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid query parameters", details: parsed.error.flatten() },
+      { status: 400 },
+    );
+  }
+
+  const { status, requestType, limit = 100, offset = 0 } = parsed.data;
+  const serviceSupabase = createServiceClient();
+
+  let query = serviceSupabase
+    .from("admin_feedback_items")
+    .select(
+      "id, created_at, updated_at, created_by, project_id, page_url, page_path, page_title, target_id, target_selector, target_text, target_tag, dom_path, target_rect, title, comment, request_type, severity, status, screenshot_url, screenshot_path, github_issue_number, github_issue_url, github_issue_state, metadata, tool_id, agent_context",
+      { count: "exact" },
+    )
+    .order("created_at", { ascending: false })
+    .range(offset, offset + limit - 1);
+
+  if (status) {
+    const statuses = status.split(",").map((s) => s.trim()).filter(Boolean);
+    if (statuses.length === 1) {
+      query = query.eq("status", statuses[0]);
+    } else if (statuses.length > 1) {
+      query = query.in("status", statuses);
+    }
+  }
+
+  if (requestType) {
+    query = query.eq("request_type", requestType);
+  }
+
+  const { data, error, count } = await query;
+
+  if (error) {
+    const details = toErrorDetails(error);
+    throw new GuardrailError({ code: "INTERNAL_ERROR", where: "/api/admin/feedback#GET", message: details.message });
+  }
+
+  return NextResponse.json({ items: data ?? [], total: count ?? 0 });
+});
 
 // ---------------------------------------------------------------------------
 // PATCH — Update feedback item status
@@ -556,153 +479,119 @@ const LEGACY_STATUS_FALLBACKS: Record<string, string> = {
   resolved: "closed",
 };
 
-export async function PATCH(request: Request) {
-  try {
-    const requestUser = await requireAdminUser();
-    if (!requestUser) {
-      return jsonError(403, {
-        error: "Admin access required",
-        hint: "Only admin users can update feedback.",
-      });
-    }
+export const PATCH = withApiGuardrails("/api/admin/feedback#PATCH", async ({ request }) => {
+  const requestUser = await requireAdminUser();
+  if (!requestUser) {
+    throw new GuardrailError({ code: "FORBIDDEN", where: "/api/admin/feedback#PATCH", message: "Admin access required.", status: 403 });
+  }
 
-    const body = await request.json();
-    const parsed = patchSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Invalid payload", details: parsed.error.flatten() },
-        { status: 400 },
-      );
-    }
+  const body = await request.json();
+  const parsed = patchSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid payload", details: parsed.error.flatten() },
+      { status: 400 },
+    );
+  }
 
-    const { id, metadata, ...updates } = parsed.data;
-    if (Object.keys(updates).length === 0) {
-      if (!metadata) {
-        return jsonError(400, { error: "No fields to update" });
-      }
-    }
+  const { id, metadata, ...updates } = parsed.data;
+  if (Object.keys(updates).length === 0 && !metadata) {
+    return NextResponse.json({ error: "No fields to update" }, { status: 400 });
+  }
 
-    const serviceSupabase = createServiceClient();
-    const mergedUpdates: Record<string, unknown> = { ...updates };
+  const serviceSupabase = createServiceClient();
+  const mergedUpdates: Record<string, unknown> = { ...updates };
 
-    if (metadata) {
-      const { data: existingItem, error: existingError } = await serviceSupabase
-        .from("admin_feedback_items")
-        .select("metadata")
-        .eq("id", id)
-        .maybeSingle();
-
-      if (existingError) {
-        const details = toErrorDetails(existingError);
-        return jsonError(500, {
-          error: "Failed to fetch existing feedback metadata",
-          code: details.code,
-          details: details.message,
-        });
-      }
-
-      const currentMetadata =
-        existingItem?.metadata && typeof existingItem.metadata === "object"
-          ? (existingItem.metadata as Record<string, unknown>)
-          : {};
-
-      mergedUpdates.metadata = toJsonValue({
-        ...currentMetadata,
-        ...metadata,
-      });
-    }
-
-    let { data, error } = await serviceSupabase
+  if (metadata) {
+    const { data: existingItem, error: existingError } = await serviceSupabase
       .from("admin_feedback_items")
-      .update(mergedUpdates)
+      .select("metadata")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (existingError) {
+      throw new GuardrailError({ code: "INTERNAL_ERROR", where: "/api/admin/feedback#PATCH", message: existingError.message });
+    }
+
+    const currentMetadata =
+      existingItem?.metadata && typeof existingItem.metadata === "object"
+        ? (existingItem.metadata as Record<string, unknown>)
+        : {};
+
+    mergedUpdates.metadata = toJsonValue({ ...currentMetadata, ...metadata });
+  }
+
+  let { data, error } = await serviceSupabase
+    .from("admin_feedback_items")
+    .update(mergedUpdates)
+    .eq("id", id)
+    .select("id, status, title")
+    .single();
+
+  if (
+    error &&
+    updates.status &&
+    toErrorDetails(error).code === "23514" &&
+    LEGACY_STATUS_FALLBACKS[updates.status]
+  ) {
+    const fallbackStatus = LEGACY_STATUS_FALLBACKS[updates.status];
+    const fallbackUpdates = { ...mergedUpdates, status: fallbackStatus };
+    const fallbackResult = await serviceSupabase
+      .from("admin_feedback_items")
+      .update(fallbackUpdates)
       .eq("id", id)
       .select("id, status, title")
       .single();
+    data = fallbackResult.data;
+    error = fallbackResult.error;
+  }
 
-    if (
-      error &&
-      updates.status &&
-      toErrorDetails(error).code === "23514" &&
-      LEGACY_STATUS_FALLBACKS[updates.status]
-    ) {
-      const fallbackStatus = LEGACY_STATUS_FALLBACKS[updates.status];
-      const fallbackUpdates = { ...mergedUpdates, status: fallbackStatus };
-
-      const fallbackResult = await serviceSupabase
-        .from("admin_feedback_items")
-        .update(fallbackUpdates)
-        .eq("id", id)
-        .select("id, status, title")
-        .single();
-
-      data = fallbackResult.data;
-      error = fallbackResult.error;
+  if (error) {
+    const details = toErrorDetails(error);
+    if (details.code === "23514") {
+      return NextResponse.json({ error: "Invalid feedback status", code: details.code, details: details.message }, { status: 400 });
     }
+    throw new GuardrailError({ code: "INTERNAL_ERROR", where: "/api/admin/feedback#PATCH", message: details.message });
+  }
 
-    if (error) {
-      const details = toErrorDetails(error);
-      if (details.code === "23514") {
-        return jsonError(400, {
-          error: "Invalid feedback status",
-          code: details.code,
-          details: details.message,
+  if (data?.status === "resolved") {
+    try {
+      const { data: fullItem } = await serviceSupabase
+        .from("admin_feedback_items")
+        .select("id, title, comment, page_path, tool_id, project_id, metadata")
+        .eq("id", id)
+        .maybeSingle();
+
+      if (fullItem) {
+        const itemMeta =
+          fullItem.metadata &&
+          typeof fullItem.metadata === "object" &&
+          !Array.isArray(fullItem.metadata)
+            ? (fullItem.metadata as Record<string, unknown>)
+            : null;
+        const resolutionSummary =
+          itemMeta && "resolution_summary" in itemMeta
+            ? String(itemMeta.resolution_summary ?? "")
+            : null;
+
+        await ingestAdminFeedbackLearning({
+          feedbackItemId: fullItem.id,
+          title: fullItem.title,
+          comment: fullItem.comment,
+          pagePath: fullItem.page_path,
+          toolId: typeof fullItem.tool_id === "number" ? fullItem.tool_id : null,
+          projectId: typeof fullItem.project_id === "number" ? fullItem.project_id : null,
+          status: "active",
+          resolutionSummary,
         });
       }
-      return jsonError(500, {
-        error: "Failed to update feedback item",
-        code: details.code,
-        details: details.message,
-      });
+    } catch (learningError) {
+      console.error("[AdminFeedback] Resolved learning ingestion failed", learningError);
     }
-
-    if (data?.status === "resolved") {
-      try {
-        const { data: fullItem } = await serviceSupabase
-          .from("admin_feedback_items")
-          .select("id, title, comment, page_path, tool_id, project_id, metadata")
-          .eq("id", id)
-          .maybeSingle();
-
-        if (fullItem) {
-          const metadata =
-            fullItem.metadata &&
-            typeof fullItem.metadata === "object" &&
-            !Array.isArray(fullItem.metadata)
-              ? (fullItem.metadata as Record<string, unknown>)
-              : null;
-          const resolutionSummary =
-            metadata && "resolution_summary" in metadata
-              ? String(metadata.resolution_summary ?? "")
-              : null;
-
-          await ingestAdminFeedbackLearning({
-            feedbackItemId: fullItem.id,
-            title: fullItem.title,
-            comment: fullItem.comment,
-            pagePath: fullItem.page_path,
-            toolId:
-              typeof fullItem.tool_id === "number" ? fullItem.tool_id : null,
-            projectId:
-              typeof fullItem.project_id === "number"
-                ? fullItem.project_id
-                : null,
-            status: "active",
-            resolutionSummary,
-          });
-        }
-      } catch (learningError) {
-        console.error("[AdminFeedback] Resolved learning ingestion failed", learningError);
-      }
-    }
-
-    return NextResponse.json({ item: data });
-  } catch (error) {
-    console.error("[AdminFeedback] Patch failed", error);
-    const message =
-      error instanceof Error ? error.message : "Failed to update feedback";
-    return jsonError(500, { error: "Failed to update feedback", details: message });
   }
-}
+
+  return NextResponse.json({ item: data });
+});
 
 // ---------------------------------------------------------------------------
 // PUT — Send existing feedback item to GitHub as an issue
@@ -712,125 +601,97 @@ const sendToGitHubSchema = z.object({
   id: z.string().uuid(),
 });
 
-export async function PUT(request: Request) {
-  try {
-    const requestUser = await requireAdminUser();
-    if (!requestUser) {
-      return jsonError(403, {
-        error: "Admin access required",
-        hint: "Only admin users can send feedback to GitHub.",
-      });
-    }
-
-    const body = await request.json();
-    const parsed = sendToGitHubSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Invalid payload", details: parsed.error.flatten() },
-        { status: 400 },
-      );
-    }
-
-    const { id } = parsed.data;
-    const serviceSupabase = createServiceClient();
-
-    // Fetch the full feedback item
-    const { data: item, error: fetchError } = await serviceSupabase
-      .from("admin_feedback_items")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (fetchError || !item) {
-      return jsonError(404, { error: "Feedback item not found" });
-    }
-
-    if (item.github_issue_number) {
-      return jsonError(400, {
-        error: "Already submitted",
-        details: `GitHub issue #${item.github_issue_number} already exists.`,
-        github_issue_url: item.github_issue_url,
-      });
-    }
-
-    // Resolve tool context if a tool is assigned
-    let sendToolContext = null;
-    const itemToolId = (item as Record<string, unknown>).tool_id;
-    if (typeof itemToolId === "number") {
-      const tool = await getToolById(itemToolId);
-      if (tool) {
-        sendToolContext = resolveToolContext(tool);
-      }
-    } else {
-      // Try auto-matching if no tool assigned (use URL path as primary signal)
-      const autoMatch = await matchFeedbackToTool(
-        item.title,
-        item.comment,
-        item.page_path,
-        item.page_url,
-      );
-      if (autoMatch) {
-        sendToolContext = resolveToolContext(autoMatch);
-      }
-    }
-
-    // Create GitHub issue
-    const githubIssue = await createGitHubIssue({
-      title: item.title,
-      comment: item.comment,
-      pageUrl: item.page_url,
-      pagePath: item.page_path,
-      pageTitle: item.page_title ?? null,
-      requestType: item.request_type as Parameters<typeof createGitHubIssue>[0]["requestType"],
-      severity: (item.severity ?? "medium") as Parameters<typeof createGitHubIssue>[0]["severity"],
-      targetId: item.target_id ?? null,
-      targetSelector: item.target_selector,
-      targetTag: item.target_tag ?? null,
-      targetText: item.target_text ?? null,
-      domPath: item.dom_path ?? null,
-      screenshotUrl: item.screenshot_url ?? null,
-      projectId: item.project_id ?? null,
-      metadata: (item.metadata as Record<string, unknown>) ?? {},
-      toolContext: sendToolContext,
-    });
-
-    if (!githubIssue) {
-      return jsonError(500, {
-        error: "GitHub integration not configured",
-        hint: "Set GITHUB_FEEDBACK_REPO_OWNER, GITHUB_FEEDBACK_REPO_NAME, and GITHUB_FEEDBACK_TOKEN environment variables.",
-      });
-    }
-
-    // Update the feedback item with GitHub issue info
-    const { data: updated, error: updateError } = await serviceSupabase
-      .from("admin_feedback_items")
-      .update({
-        github_issue_number: githubIssue.number,
-        github_issue_url: githubIssue.url,
-        github_issue_state: githubIssue.state,
-        status: "submitted",
-      })
-      .eq("id", id)
-      .select("id, status, github_issue_number, github_issue_url, github_issue_state")
-      .single();
-
-    if (updateError) {
-      // Issue was created but DB update failed — still return the issue info
-      return NextResponse.json({
-        item: { id, status: "submitted" },
-        githubIssue,
-        warning: "GitHub issue created but failed to update local record.",
-      });
-    }
-
-    return NextResponse.json({ item: updated, githubIssue });
-  } catch (error) {
-    console.error("[AdminFeedback] Send to GitHub failed", error);
-    const message =
-      error instanceof Error ? error.message : "Failed to create GitHub issue";
-    return jsonError(500, { error: "Failed to send to GitHub", details: message });
+export const PUT = withApiGuardrails("/api/admin/feedback#PUT", async ({ request }) => {
+  const requestUser = await requireAdminUser();
+  if (!requestUser) {
+    throw new GuardrailError({ code: "FORBIDDEN", where: "/api/admin/feedback#PUT", message: "Admin access required.", status: 403 });
   }
-}
+
+  const body = await request.json();
+  const parsed = sendToGitHubSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid payload", details: parsed.error.flatten() },
+      { status: 400 },
+    );
+  }
+
+  const { id } = parsed.data;
+  const serviceSupabase = createServiceClient();
+
+  const { data: item, error: fetchError } = await serviceSupabase
+    .from("admin_feedback_items")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if (fetchError || !item) {
+    return NextResponse.json({ error: "Feedback item not found" }, { status: 404 });
+  }
+
+  if (item.github_issue_number) {
+    return NextResponse.json({
+      error: "Already submitted",
+      details: `GitHub issue #${item.github_issue_number} already exists.`,
+      github_issue_url: item.github_issue_url,
+    }, { status: 400 });
+  }
+
+  let sendToolContext = null;
+  const itemToolId = (item as Record<string, unknown>).tool_id;
+  if (typeof itemToolId === "number") {
+    const tool = await getToolById(itemToolId);
+    if (tool) sendToolContext = resolveToolContext(tool);
+  } else {
+    const autoMatch = await matchFeedbackToTool(item.title, item.comment, item.page_path, item.page_url);
+    if (autoMatch) sendToolContext = resolveToolContext(autoMatch);
+  }
+
+  const githubIssue = await createGitHubIssue({
+    title: item.title,
+    comment: item.comment,
+    pageUrl: item.page_url,
+    pagePath: item.page_path,
+    pageTitle: item.page_title ?? null,
+    requestType: item.request_type as Parameters<typeof createGitHubIssue>[0]["requestType"],
+    severity: (item.severity ?? "medium") as Parameters<typeof createGitHubIssue>[0]["severity"],
+    targetId: item.target_id ?? null,
+    targetSelector: item.target_selector,
+    targetTag: item.target_tag ?? null,
+    targetText: item.target_text ?? null,
+    domPath: item.dom_path ?? null,
+    screenshotUrl: item.screenshot_url ?? null,
+    projectId: item.project_id ?? null,
+    metadata: (item.metadata as Record<string, unknown>) ?? {},
+    toolContext: sendToolContext,
+  });
+
+  if (!githubIssue) {
+    throw new GuardrailError({ code: "INTERNAL_ERROR", where: "/api/admin/feedback#PUT", message: "GitHub integration not configured. Set GITHUB_FEEDBACK_REPO_OWNER, GITHUB_FEEDBACK_REPO_NAME, and GITHUB_FEEDBACK_TOKEN." });
+  }
+
+  const { data: updated, error: updateError } = await serviceSupabase
+    .from("admin_feedback_items")
+    .update({
+      github_issue_number: githubIssue.number,
+      github_issue_url: githubIssue.url,
+      github_issue_state: githubIssue.state,
+      status: "submitted",
+    })
+    .eq("id", id)
+    .select("id, status, github_issue_number, github_issue_url, github_issue_state")
+    .single();
+
+  if (updateError) {
+    return NextResponse.json({
+      item: { id, status: "submitted" },
+      githubIssue,
+      warning: "GitHub issue created but failed to update local record.",
+    });
+  }
+
+  return NextResponse.json({ item: updated, githubIssue });
+});
 
 // ---------------------------------------------------------------------------
 // DELETE — Delete a feedback item and its related data
@@ -840,81 +701,55 @@ const deleteSchema = z.object({
   id: z.string().uuid(),
 });
 
-export async function DELETE(request: Request) {
-  try {
-    const requestUser = await requireAdminUser();
-    if (!requestUser) {
-      return jsonError(403, {
-        error: "Admin access required",
-        hint: "Only admin users can delete feedback.",
-      });
-    }
-
-    const body = await request.json();
-    const parsed = deleteSchema.safeParse(body);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Invalid payload", details: parsed.error.flatten() },
-        { status: 400 },
-      );
-    }
-
-    const { id } = parsed.data;
-    const serviceSupabase = createServiceClient();
-
-    // Fetch the feedback item to get screenshot_path before deleting
-    const { data: item, error: fetchError } = await serviceSupabase
-      .from("admin_feedback_items")
-      .select("id, screenshot_path")
-      .eq("id", id)
-      .maybeSingle();
-
-    if (fetchError || !item) {
-      return jsonError(404, { error: "Feedback item not found" });
-    }
-
-    // Delete related comments first (FK constraint)
-    const { error: commentsError } = await serviceSupabase
-      .from("admin_feedback_comments")
-      .delete()
-      .eq("feedback_item_id", id);
-
-    if (commentsError) {
-      const details = toErrorDetails(commentsError);
-      return jsonError(500, {
-        error: "Failed to delete feedback comments",
-        code: details.code,
-        details: details.message,
-      });
-    }
-
-    // Delete the feedback item
-    const { error: deleteError } = await serviceSupabase
-      .from("admin_feedback_items")
-      .delete()
-      .eq("id", id);
-
-    if (deleteError) {
-      const details = toErrorDetails(deleteError);
-      return jsonError(500, {
-        error: "Failed to delete feedback item",
-        code: details.code,
-        details: details.message,
-      });
-    }
-
-    // Delete screenshot from storage if it exists
-    if (item.screenshot_path) {
-      await serviceSupabase.storage
-        .from(ADMIN_FEEDBACK_BUCKET)
-        .remove([item.screenshot_path]);
-    }
-
-    return NextResponse.json({ deleted: true });
-  } catch (error) {
-    console.error("[AdminFeedback] Delete failed", error);
-    const message =
-      error instanceof Error ? error.message : "Failed to delete feedback";
-    return jsonError(500, { error: "Failed to delete feedback", details: message });
+export const DELETE = withApiGuardrails("/api/admin/feedback#DELETE", async ({ request }) => {
+  const requestUser = await requireAdminUser();
+  if (!requestUser) {
+    throw new GuardrailError({ code: "FORBIDDEN", where: "/api/admin/feedback#DELETE", message: "Admin access required.", status: 403 });
   }
-}
+
+  const body = await request.json();
+  const parsed = deleteSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid payload", details: parsed.error.flatten() },
+      { status: 400 },
+    );
+  }
+
+  const { id } = parsed.data;
+  const serviceSupabase = createServiceClient();
+
+  const { data: item, error: fetchError } = await serviceSupabase
+    .from("admin_feedback_items")
+    .select("id, screenshot_path")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (fetchError || !item) {
+    return NextResponse.json({ error: "Feedback item not found" }, { status: 404 });
+  }
+
+  const { error: commentsError } = await serviceSupabase
+    .from("admin_feedback_comments")
+    .delete()
+    .eq("feedback_item_id", id);
+
+  if (commentsError) {
+    throw new GuardrailError({ code: "INTERNAL_ERROR", where: "/api/admin/feedback#DELETE", message: commentsError.message });
+  }
+
+  const { error: deleteError } = await serviceSupabase
+    .from("admin_feedback_items")
+    .delete()
+    .eq("id", id);
+
+  if (deleteError) {
+    throw new GuardrailError({ code: "INTERNAL_ERROR", where: "/api/admin/feedback#DELETE", message: deleteError.message });
+  }
+
+  if (item.screenshot_path) {
+    await serviceSupabase.storage.from(ADMIN_FEEDBACK_BUCKET).remove([item.screenshot_path]);
+  }
+
+  return NextResponse.json({ deleted: true });
+});

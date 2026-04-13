@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
 import { loadUserPermissions } from "@/lib/permissions";
 
@@ -10,8 +12,10 @@ interface RouteParams {
  * GET /api/projects/[projectId]/permissions
  * Get the current user's permissions for this project
  */
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/permissions#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -30,11 +34,5 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ data: permissions });
-  } catch (error) {
-    console.error("Error loading permissions:", error);
-    return NextResponse.json(
-      { error: "Failed to load permissions" },
-      { status: 500 }
-    );
-  }
-}
+    },
+);

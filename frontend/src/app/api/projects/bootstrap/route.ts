@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -88,8 +90,10 @@ const WAREHOUSE_TEMPLATE = {
   },
 };
 
-export async function POST(request: Request) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/bootstrap#POST",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const body = await request.json().catch(() => ({}));
 
@@ -101,7 +105,7 @@ export async function POST(request: Request) {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/bootstrap#POST", message: "Authentication required." });
     }
 
     // Use warehouse template (only one for now)
@@ -288,7 +292,5 @@ export async function POST(request: Request) {
     };
 
     return NextResponse.json(response, { status: 201 });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

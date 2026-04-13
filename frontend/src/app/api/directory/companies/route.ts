@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -14,8 +16,10 @@ import { apiErrorResponse } from "@/lib/api-error";
  * - company_type: Filter by company type
  * - search: Search by company name, email, or phone
  */
-export async function GET(request: NextRequest) {
-  try {
+export const GET = withApiGuardrails(
+  "directory/companies#GET",
+  async ({ request }) => {
+  
     const supabase = await createClient();
 
     // Check authentication
@@ -24,7 +28,7 @@ export async function GET(request: NextRequest) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "directory/companies#GET", message: "Authentication required." });
     }
 
     // Parse query parameters
@@ -96,18 +100,8 @@ export async function GET(request: NextRequest) {
         total_pages,
       },
     });
-  } catch (error) {
-    console.error("Unexpected error:", error);
-    return NextResponse.json(
-      {
-        error: "server_error",
-        message: "An unexpected error occurred",
-        code: "INTERNAL_ERROR",
-      },
-      { status: 500 }
-    );
-  }
-}
+    },
+);
 
 /**
  * POST /api/directory/companies
@@ -122,8 +116,10 @@ export async function GET(request: NextRequest) {
  * - company_type: YOUR_COMPANY, VENDOR, SUBCONTRACTOR, SUPPLIER
  * - website: Company website
  */
-export async function POST(request: NextRequest) {
-  try {
+export const POST = withApiGuardrails(
+  "directory/companies#POST",
+  async ({ request }) => {
+  
     const supabase = await createClient();
 
     // Check authentication
@@ -132,7 +128,7 @@ export async function POST(request: NextRequest) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "directory/companies#POST", message: "Authentication required." });
     }
 
     // Parse request body
@@ -180,15 +176,5 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(company, { status: 201 });
-  } catch (error) {
-    console.error("Unexpected error:", error);
-    return NextResponse.json(
-      {
-        error: "server_error",
-        message: "An unexpected error occurred",
-        code: "INTERNAL_ERROR",
-      },
-      { status: 500 }
-    );
-  }
-}
+    },
+);

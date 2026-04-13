@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -12,8 +14,10 @@ interface RouteParams {
  * GET /api/projects/[projectId]/prime-contract-change-orders/[primeCoId]
  * Returns the PCCO with related contract info and line items.
  */
-export async function GET(_request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/prime-contract-change-orders/[primeCoId]#GET",
+  async ({ request, params }) => {
+  
     const { projectId, primeCoId } = await params;
     const numericId = Number(primeCoId);
 
@@ -61,10 +65,8 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       line_items: lineItems ?? [],
       contract: contractInfo,
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 // --- API-008: Whitelist of fields allowed in PUT updates ---
 const allowedFields = new Set([
@@ -95,8 +97,10 @@ const allowedFields = new Set([
  * PUT /api/projects/[projectId]/prime-contract-change-orders/[primeCoId]
  * Update a PCCO — whitelisted fields only, status changes blocked (API-008)
  */
-export async function PUT(request: NextRequest, { params }: RouteParams) {
-  try {
+export const PUT = withApiGuardrails(
+  "projects/[projectId]/prime-contract-change-orders/[primeCoId]#PUT",
+  async ({ request, params }) => {
+  
     const { projectId, primeCoId } = await params;
     const numericId = Number(primeCoId);
 
@@ -115,7 +119,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/prime-contract-change-orders/[primeCoId]#PUT", message: "Authentication required." });
     }
 
     const body = await request.json();
@@ -159,16 +163,16 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(data);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * DELETE /api/projects/[projectId]/prime-contract-change-orders/[primeCoId]
  */
-export async function DELETE(_request: NextRequest, { params }: RouteParams) {
-  try {
+export const DELETE = withApiGuardrails(
+  "projects/[projectId]/prime-contract-change-orders/[primeCoId]#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId, primeCoId } = await params;
     const numericId = Number(primeCoId);
 
@@ -187,7 +191,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/prime-contract-change-orders/[primeCoId]#DELETE", message: "Authentication required." });
     }
 
     // Guard: only draft, pending, or rejected PCCOs can be deleted
@@ -222,7 +226,5 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ message: "Deleted successfully" });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

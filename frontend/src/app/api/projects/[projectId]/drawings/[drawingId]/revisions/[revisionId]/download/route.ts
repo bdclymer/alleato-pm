@@ -1,5 +1,7 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteContext {
@@ -10,16 +12,15 @@ interface RouteContext {
   }>;
 }
 
-export async function GET(
-  request: NextRequest,
-  context: RouteContext
-) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/drawings/[drawingId]/revisions/[revisionId]/download#GET",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/drawings/[drawingId]/revisions/[revisionId]/download#GET", message: "Authentication required." });
     }
 
     const { revisionId } = await context.params;
@@ -64,7 +65,5 @@ export async function GET(
       expiresAt: new Date(Date.now() + 3600 * 1000).toISOString(),
     });
 
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

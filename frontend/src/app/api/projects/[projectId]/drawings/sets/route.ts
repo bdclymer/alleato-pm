@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { DrawingSetService } from "@/services/DrawingSetService";
@@ -8,10 +10,9 @@ import { apiErrorResponse } from "@/lib/api-error";
  * GET /api/projects/[projectId]/drawing-sets
  * List all drawing sets for a project
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
+export const GET = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/drawings/sets#GET",
+  async ({ request, params }) => {
   const { projectId } = await params;
   const supabase = await createClient();
 
@@ -20,7 +21,7 @@ export async function GET(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/drawings/sets#GET", message: "Authentication required." });
   }
 
   const serviceClient = createServiceClient();
@@ -32,16 +33,16 @@ export async function GET(
   }
 
   return NextResponse.json(result.data);
-}
+  },
+);
 
 /**
  * POST /api/projects/[projectId]/drawing-sets
  * Create a new drawing set
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
+export const POST = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/drawings/sets#POST",
+  async ({ request, params }) => {
   const { projectId } = await params;
   const supabase = await createClient();
 
@@ -50,7 +51,7 @@ export async function POST(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/drawings/sets#POST", message: "Authentication required." });
   }
 
   try {
@@ -82,4 +83,5 @@ export async function POST(
       { status: 500 },
     );
   }
-}
+  },
+);

@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { CompanyService } from "@/services/companyService";
@@ -10,8 +12,10 @@ interface RouteParams {
 /**
  * Get detailed information for a specific company.
  */
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/directory/companies/[companyId]#GET",
+  async ({ request, params }) => {
+  
     const { projectId, companyId } = await params;
     const supabase = await createClient();
 
@@ -21,7 +25,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/directory/companies/[companyId]#GET", message: "Authentication required." });
     }
 
     // Check permissions
@@ -66,17 +70,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       }
       throw getError;
     }
-  } catch (error) {
-    return NextResponse.json(
-      {
-        error: "server_error",
-        message: "An unexpected error occurred",
-        code: "INTERNAL_ERROR",
-      },
-      { status: 500 },
-    );
-  }
-}
+    },
+);
 
 /**
  * Update company information.
@@ -92,8 +87,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
  * - status: ACTIVE or INACTIVE
  * - logo_url: Company logo URL
  */
-export async function PATCH(request: NextRequest, { params }: RouteParams) {
-  try {
+export const PATCH = withApiGuardrails(
+  "projects/[projectId]/directory/companies/[companyId]#PATCH",
+  async ({ request, params }) => {
+  
     const { projectId, companyId } = await params;
     const supabase = await createClient();
 
@@ -103,7 +100,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/directory/companies/[companyId]#PATCH", message: "Authentication required." });
     }
 
     // Check permissions
@@ -179,25 +176,18 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       }
       throw updateError;
     }
-  } catch (error) {
-    return NextResponse.json(
-      {
-        error: "server_error",
-        message: "An unexpected error occurred",
-        code: "INTERNAL_ERROR",
-      },
-      { status: 500 },
-    );
-  }
-}
+    },
+);
 
 /**
  * Delete a company from the project.
  *
  * Note: Companies with assigned users cannot be deleted.
  */
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  try {
+export const DELETE = withApiGuardrails(
+  "projects/[projectId]/directory/companies/[companyId]#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId, companyId } = await params;
     const supabase = await createClient();
 
@@ -207,7 +197,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/directory/companies/[companyId]#DELETE", message: "Authentication required." });
     }
 
     // Check permissions (admin required for delete)
@@ -278,14 +268,5 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     if (deleteError) throw deleteError;
 
     return new NextResponse(null, { status: 204 });
-  } catch (error) {
-    return NextResponse.json(
-      {
-        error: "server_error",
-        message: "An unexpected error occurred",
-        code: "INTERNAL_ERROR",
-      },
-      { status: 500 },
-    );
-  }
-}
+    },
+);

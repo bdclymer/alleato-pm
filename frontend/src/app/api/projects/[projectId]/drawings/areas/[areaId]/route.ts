@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { DrawingAreaService } from "@/services/DrawingAreaService";
@@ -8,10 +10,9 @@ import { apiErrorResponse } from "@/lib/api-error";
  * PATCH /api/projects/[projectId]/drawing-areas/[areaId]
  * Update a drawing area
  */
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string; areaId: string }> },
-) {
+export const PATCH = withApiGuardrails<{ projectId: string; areaId: string }>(
+  "projects/[projectId]/drawings/areas/[areaId]#PATCH",
+  async ({ request, params }) => {
   const { areaId } = await params;
   const supabase = await createClient();
 
@@ -20,7 +21,7 @@ export async function PATCH(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/drawings/areas/[areaId]#PATCH", message: "Authentication required." });
   }
 
   try {
@@ -50,16 +51,16 @@ export async function PATCH(
       { status: 500 },
     );
   }
-}
+  },
+);
 
 /**
  * DELETE /api/projects/[projectId]/drawing-areas/[areaId]
  * Delete a drawing area
  */
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string; areaId: string }> },
-) {
+export const DELETE = withApiGuardrails<{ projectId: string; areaId: string }>(
+  "projects/[projectId]/drawings/areas/[areaId]#DELETE",
+  async ({ request, params }) => {
   const { areaId } = await params;
   const supabase = await createClient();
 
@@ -68,7 +69,7 @@ export async function DELETE(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/drawings/areas/[areaId]#DELETE", message: "Authentication required." });
   }
 
   const service = new DrawingAreaService(createServiceClient());
@@ -79,4 +80,5 @@ export async function DELETE(
   }
 
   return NextResponse.json(result.data, { status: 200 });
-}
+  },
+);

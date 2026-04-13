@@ -1,5 +1,7 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 /**
@@ -65,11 +67,10 @@ interface CostBreakdown {
 }
 
 // GET /api/projects/[id]/budget/direct-costs
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/budget/direct-costs#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -88,7 +89,7 @@ export async function GET(
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/budget/direct-costs#GET", message: "Authentication required." });
     }
 
     // Resolve cost_code_ids to filter by.
@@ -280,7 +281,5 @@ export async function GET(
         statusFilter: statusFilter || "all",
       },
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

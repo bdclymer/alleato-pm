@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { SpecificationAreaService } from "@/services/SpecificationAreaService";
 import {
@@ -11,10 +13,9 @@ import { apiErrorResponse } from "@/lib/api-error";
  * GET /api/projects/[projectId]/specifications/areas/[areaId]
  * Get a single area with section count
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string; areaId: string }> },
-) {
+export const GET = withApiGuardrails<{ projectId: string; areaId: string }>(
+  "projects/[projectId]/specifications/areas/[areaId]#GET",
+  async ({ request, params }) => {
   const { projectId, areaId } = await params;
   const supabase = await createClient();
 
@@ -23,7 +24,7 @@ export async function GET(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/specifications/areas/[areaId]#GET", message: "Authentication required." });
   }
 
   const service = new SpecificationAreaService(supabase);
@@ -34,16 +35,16 @@ export async function GET(
   }
 
   return NextResponse.json(result.data);
-}
+  },
+);
 
 /**
  * PATCH /api/projects/[projectId]/specifications/areas/[areaId]
  * Update an area
  */
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string; areaId: string }> },
-) {
+export const PATCH = withApiGuardrails<{ projectId: string; areaId: string }>(
+  "projects/[projectId]/specifications/areas/[areaId]#PATCH",
+  async ({ request, params }) => {
   const { projectId, areaId } = await params;
   const supabase = await createClient();
 
@@ -52,7 +53,7 @@ export async function PATCH(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/specifications/areas/[areaId]#PATCH", message: "Authentication required." });
   }
 
   try {
@@ -80,16 +81,16 @@ export async function PATCH(
     }
     return NextResponse.json({ error: "Failed to update area" }, { status: 500 });
   }
-}
+  },
+);
 
 /**
  * DELETE /api/projects/[projectId]/specifications/areas/[areaId]
  * Delete an area
  */
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string; areaId: string }> },
-) {
+export const DELETE = withApiGuardrails<{ projectId: string; areaId: string }>(
+  "projects/[projectId]/specifications/areas/[areaId]#DELETE",
+  async ({ request, params }) => {
   const { projectId, areaId } = await params;
   const supabase = await createClient();
 
@@ -98,7 +99,7 @@ export async function DELETE(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/specifications/areas/[areaId]#DELETE", message: "Authentication required." });
   }
 
   const service = new SpecificationAreaService(supabase);
@@ -109,4 +110,5 @@ export async function DELETE(
   }
 
   return NextResponse.json({ success: true }, { status: 200 });
-}
+  },
+);

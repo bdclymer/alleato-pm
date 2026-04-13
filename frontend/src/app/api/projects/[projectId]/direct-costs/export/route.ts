@@ -7,7 +7,9 @@
  * Supports filtering, templates, and line items inclusion
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from 'next/server';
 import * as XLSX from 'xlsx';
 import { createClient } from '@/lib/supabase/server';
 import { apiErrorResponse } from "@/lib/api-error";
@@ -21,11 +23,10 @@ import { DirectCostService } from '@/lib/services/direct-cost-service';
 // POST - Export Direct Costs
 // =============================================================================
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> }
-) {
-  try {
+export const POST = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/direct-costs/export#POST",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
 
@@ -36,10 +37,7 @@ export async function POST(
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized - please log in" },
-        { status: 401 }
-      );
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/direct-costs/export#POST", message: "Authentication required." });
     }
 
     const body = await request.json();
@@ -116,10 +114,8 @@ export async function POST(
       { error: 'Unsupported export format' },
       { status: 400 }
     );
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 // =============================================================================
 // CSV GENERATION

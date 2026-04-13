@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -7,8 +9,10 @@ interface BulkDeleteRequest {
   task_ids: string[];
 }
 
-export async function DELETE(request: NextRequest) {
-  try {
+export const DELETE = withApiGuardrails(
+  "tasks/bulk#DELETE",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const {
       data: { user },
@@ -16,7 +20,7 @@ export async function DELETE(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "tasks/bulk#DELETE", message: "Authentication required." });
     }
 
     const body = (await request.json()) as BulkDeleteRequest;
@@ -38,7 +42,5 @@ export async function DELETE(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true, deleted: taskIds.length });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

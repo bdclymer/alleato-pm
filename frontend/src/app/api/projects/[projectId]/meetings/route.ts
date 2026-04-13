@@ -1,18 +1,19 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 // GET: List meetings for a project
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ projectId: string }> }
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/meetings#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/meetings#GET", message: "Authentication required." });
     }
 
     const numericProjectId = parseInt(projectId, 10);
@@ -41,22 +42,19 @@ export async function GET(
     }
 
     return NextResponse.json({ data: data || [] });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 // POST: Create a new meeting
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ projectId: string }> }
-) {
-  try {
+export const POST = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/meetings#POST",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/meetings#POST", message: "Authentication required." });
     }
 
     const numericProjectId = parseInt(projectId, 10);
@@ -106,7 +104,5 @@ export async function POST(
     }
 
     return NextResponse.json({ data }, { status: 201 });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

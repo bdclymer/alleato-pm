@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -11,8 +13,10 @@ interface RouteParams {
  * GET /api/projects/[projectId]/commitment-change-orders/export
  * Export CCOs as CSV
  */
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/commitment-change-orders/export#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
     const url = new URL(request.url);
@@ -88,7 +92,5 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         "Content-Disposition": `attachment; filename="commitment-change-orders.csv"`,
       },
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

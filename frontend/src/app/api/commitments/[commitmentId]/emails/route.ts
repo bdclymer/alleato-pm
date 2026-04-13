@@ -1,11 +1,12 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ commitmentId: string }> },
-) {
+export const GET = withApiGuardrails<{ commitmentId: string }>(
+  "commitments/[commitmentId]/emails#GET",
+  async ({ request, params }) => {
   const supabase = await createClient();
   const { commitmentId } = await params;
 
@@ -14,7 +15,7 @@ export async function GET(
   } = await supabase.auth.getUser();
 
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "commitments/[commitmentId]/emails#GET", message: "Authentication required." });
   }
 
   const { data: emails, error } = await supabase
@@ -35,4 +36,5 @@ export async function GET(
     data: emails ?? [],
     meta: { total_count: emails?.length ?? 0 },
   });
-}
+  },
+);

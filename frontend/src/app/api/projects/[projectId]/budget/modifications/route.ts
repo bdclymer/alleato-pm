@@ -1,9 +1,11 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import {
   BudgetModificationPayloadSchema,
   BudgetModificationActionSchema,
 } from "@/lib/schemas/budget";
 import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
 
@@ -16,11 +18,10 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
 };
 
 // GET /api/projects/[id]/budget/modifications - Fetch budget modifications
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/budget/modifications#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -165,17 +166,14 @@ export async function GET(
     return NextResponse.json({
       modifications,
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 // POST /api/projects/[id]/budget/modifications - Create a budget modification
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const POST = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/budget/modifications#POST",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -357,17 +355,14 @@ export async function POST(
       },
       message: "Budget modification created as draft",
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 // PATCH /api/projects/[id]/budget/modifications - Update modification status
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const PATCH = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/budget/modifications#PATCH",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -514,17 +509,14 @@ export async function PATCH(
       },
       message: actionMessages[action],
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 // DELETE /api/projects/[id]/budget/modifications - Delete a draft modification
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const DELETE = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/budget/modifications#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -614,7 +606,5 @@ export async function DELETE(
       success: true,
       message: "Budget modification deleted successfully",
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

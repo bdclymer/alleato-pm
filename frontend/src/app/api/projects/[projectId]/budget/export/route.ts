@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import * as XLSX from "xlsx";
@@ -48,11 +50,10 @@ interface ExportBudgetRow {
   "Projected Over/Under": number;
 }
 
-export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/budget/export#GET",
+  async ({ request }) => {
+  
     const { projectId } = await context.params;
     const numericProjectId = parseInt(projectId, 10);
 
@@ -563,7 +564,5 @@ export async function GET(
         },
       });
     }
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

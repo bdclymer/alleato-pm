@@ -2,9 +2,11 @@
  * @deprecated Use the canonical route at /api/commitments/[commitmentId]/change-orders/[changeOrderId] instead.
  * This route is kept for backward compatibility with existing integrations.
  */
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { updateChangeOrderSchema } from "../validation";
 import { ZodError } from "zod";
 import { requirePermission } from "@/lib/permissions-guard";
@@ -17,8 +19,10 @@ interface RouteParams {
  * GET /api/projects/[id]/contracts/[contractId]/change-orders/[changeOrderId]
  * Returns a single change order by ID
  */
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/contracts/[contractId]/change-orders/[changeOrderId]#GET",
+  async ({ request, params }) => {
+  
     const { projectId, contractId, changeOrderId } = await params;
     const supabase = await createClient();
 
@@ -58,17 +62,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(data);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * PUT /api/projects/[id]/contracts/[contractId]/change-orders/[changeOrderId]
  * Updates a change order
  */
-export async function PUT(request: NextRequest, { params }: RouteParams) {
-  try {
+export const PUT = withApiGuardrails(
+  "projects/[projectId]/contracts/[contractId]/change-orders/[changeOrderId]#PUT",
+  async ({ request, params }) => {
+  
     const { projectId, contractId, changeOrderId } = await params;
     const projectIdNum = parseInt(projectId, 10);
     const guard = await requirePermission(projectIdNum, "contracts", "write");
@@ -87,7 +91,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/contracts/[contractId]/change-orders/[changeOrderId]#PUT", message: "Authentication required." });
     }
 
     // Verify contract exists and belongs to project
@@ -159,30 +163,17 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(data);
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        {
-          error: "Validation error",
-          details: error.issues.map((e) => ({
-            field: e.path.join("."),
-            message: e.message,
-          })),
-        },
-        { status: 400 },
-      );
-    }
-
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * DELETE /api/projects/[id]/contracts/[contractId]/change-orders/[changeOrderId]
  * Deletes a change order
  */
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  try {
+export const DELETE = withApiGuardrails(
+  "projects/[projectId]/contracts/[contractId]/change-orders/[changeOrderId]#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId, contractId, changeOrderId } = await params;
     const projectIdNum = parseInt(projectId, 10);
     const guard = await requirePermission(projectIdNum, "contracts", "admin");
@@ -197,7 +188,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/contracts/[contractId]/change-orders/[changeOrderId]#DELETE", message: "Authentication required." });
     }
 
     // Verify contract exists and belongs to project
@@ -248,7 +239,5 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       { message: "Change order deleted successfully" },
       { status: 200 },
     );
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

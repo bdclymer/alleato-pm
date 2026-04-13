@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
 import { apiErrorResponse } from "@/lib/api-error";
 
@@ -8,8 +10,10 @@ interface RouteParams {
 
 // GET /api/projects/[id]/directory/permissions
 // Fetches all users in the project with their directory permission levels
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/directory/permissions#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -128,18 +132,15 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ data: filteredUsers });
-  } catch (error) {
-    return NextResponse.json(
-      { error: "An unexpected error occurred" },
-      { status: 500 },
-    );
-  }
-}
+    },
+);
 
 // PUT /api/projects/[id]/directory/permissions
 // Updates a user's directory permission level
-export async function PUT(request: NextRequest, { params }: RouteParams) {
-  try {
+export const PUT = withApiGuardrails(
+  "projects/[projectId]/directory/permissions#PUT",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -188,18 +189,15 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ data });
-  } catch (error) {
-    return NextResponse.json(
-      { error: "An unexpected error occurred" },
-      { status: 500 },
-    );
-  }
-}
+    },
+);
 
 // DELETE /api/projects/[id]/directory/permissions
 // Removes explicit permission override (falls back to template)
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  try {
+export const DELETE = withApiGuardrails(
+  "projects/[projectId]/directory/permissions#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -228,10 +226,5 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    return NextResponse.json(
-      { error: "An unexpected error occurred" },
-      { status: 500 },
-    );
-  }
-}
+    },
+);

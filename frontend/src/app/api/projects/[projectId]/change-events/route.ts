@@ -32,12 +32,13 @@
  * - change_event_history (one-to-many)
  */
 
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient, createClientWithToken } from '@/lib/supabase/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { createChangeEventSchema, changeEventQuerySchema } from './validation'
 import { ZodError } from 'zod'
 import type { Database } from '@/types/database.types'
-import type { PaginatedResponse } from '@/app/api/types'
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
 
@@ -164,11 +165,10 @@ async function generateChangeEventNumber(
  * - order: Sort order (asc, desc)
  * - includeDeleted: Include soft-deleted records (default: false)
  */
-export async function GET(
-  request: NextRequest,
-  { params }: RouteParams
-) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/change-events#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params
     const { client: supabase } = await getSupabaseClient(request)
     const { searchParams } = new URL(request.url)
@@ -178,7 +178,73 @@ export async function GET(
       Object.fromEntries(searchParams.entries())
     )
 
-    // Build base query
+    const projectIdNum = parseInt(projectId, 10)
+
+    // ── Tab pre-queries (lightweight) ──────────────────────────────────────
+    // When a tab filter is requested, we need to resolve which CE IDs belong
+    // to that tab so we can apply an IN filter on the main paginated query.
+    // We also compute tab counts for the response meta in one pass.
+    let tabFilterIds: string[] | null = null
+    let tabSummary = { lineItems: 0, noLineItems: 0, rfqs: 0, recycleBin: 0 }
+
+    if (queryParams.tab && queryParams.tab !== 'all') {
+      // 1. Fetch all CE IDs for the project (active and deleted)
+      const { data: projectCEs } = await (supabase as any)
+        .from('change_events')
+        .select('id, deleted_at')
+        .eq('project_id', projectIdNum)
+
+      const activeCEIds: string[] = (projectCEs || [])
+        .filter((r: { id: string; deleted_at: string | null }) => !r.deleted_at)
+        .map((r: { id: string }) => r.id)
+
+      tabSummary.recycleBin = (projectCEs || []).filter(
+        (r: { deleted_at: string | null }) => r.deleted_at
+      ).length
+
+      // 2. CE IDs that have at least one line item
+      const idsWithItemsSet = new Set<string>()
+      if (activeCEIds.length > 0) {
+        const { data: ceWithItems } = await (supabase as any)
+          .from('change_event_line_items')
+          .select('change_event_id')
+          .in('change_event_id', activeCEIds)
+
+        for (const row of ceWithItems || []) {
+          idsWithItemsSet.add(String(row.change_event_id))
+        }
+      }
+
+      tabSummary.lineItems = idsWithItemsSet.size
+      tabSummary.noLineItems = activeCEIds.length - idsWithItemsSet.size
+
+      // 3. CE IDs that have an RFQ
+      const idsWithRfqSet = new Set<string>()
+      if (activeCEIds.length > 0) {
+        const { data: ceWithRfqs } = await (supabase as any)
+          .from('change_event_rfqs')
+          .select('change_event_id')
+          .in('change_event_id', activeCEIds)
+
+        for (const row of ceWithRfqs || []) {
+          idsWithRfqSet.add(String(row.change_event_id))
+        }
+      }
+
+      tabSummary.rfqs = idsWithRfqSet.size
+
+      // 4. Resolve tab filter IDs
+      if (queryParams.tab === 'line_items') {
+        tabFilterIds = activeCEIds.filter((id) => idsWithItemsSet.has(id))
+      } else if (queryParams.tab === 'no_line_items') {
+        tabFilterIds = activeCEIds.filter((id) => !idsWithItemsSet.has(id))
+      } else if (queryParams.tab === 'rfqs') {
+        tabFilterIds = activeCEIds.filter((id) => idsWithRfqSet.has(id))
+      }
+      // recycle_bin is handled via includeDeleted + deleted_at filter below
+    }
+
+    // ── Build base query ────────────────────────────────────────────────────
     let query = (supabase as any)
       .from('change_events')
       .select(
@@ -188,11 +254,26 @@ export async function GET(
       `,
         { count: 'exact' }
       )
-      .eq('project_id', parseInt(projectId, 10))
+      .eq('project_id', projectIdNum)
 
     // Apply filters
-    if (!queryParams.includeDeleted) {
+    if (queryParams.tab === 'recycle_bin') {
+      // Recycle bin shows only deleted records
+      query = query.not('deleted_at', 'is', null)
+    } else if (!queryParams.includeDeleted) {
       query = query.is('deleted_at', null)
+    }
+
+    // Apply tab ID filter for line_items / no_line_items / rfqs
+    if (tabFilterIds !== null) {
+      if (tabFilterIds.length === 0) {
+        // No records match — short-circuit
+        return NextResponse.json({
+          data: [],
+          meta: { page: queryParams.page, limit: queryParams.limit, total: 0, totalPages: 0, tabSummary },
+        })
+      }
+      query = query.in('id', tabFilterIds)
     }
 
     if (queryParams.status) {
@@ -383,34 +464,20 @@ export async function GET(
     // Format response with pagination
     const totalPages = count ? Math.ceil(count / queryParams.limit) : 0
 
-    const response: PaginatedResponse<ChangeEventWithTotals> = {
+    const response = {
       data: changeEventsWithTotals,
       meta: {
         page: queryParams.page,
         limit: queryParams.limit,
         total: count || 0,
         totalPages,
+        ...(queryParams.tab ? { tabSummary } : {}),
       },
     }
 
     return NextResponse.json(response)
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        {
-          error: 'Invalid query parameters',
-          details: error.issues.map((e) => ({
-            field: e.path.join('.'),
-            message: e.message,
-          })),
-        },
-        { status: 400 }
-      )
-    }
-
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * POST /api/projects/[id]/change-events
@@ -429,11 +496,10 @@ export async function GET(
  *
  * Updated: 2026-01-10 - Fixed authentication for Playwright tests
  */
-export async function POST(
-  request: NextRequest,
-  { params }: RouteParams
-) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/change-events#POST",
+  async ({ request, params }) => {
+  
     const { projectId } = await params
     const projectIdNum = parseInt(projectId, 10);
     const guard = await requirePermission(projectIdNum, "change_orders", "write");
@@ -497,7 +563,7 @@ export async function POST(
       origin_id: originId,
       expecting_revenue: expectingRevenue,
       line_item_revenue_source: lineItemRevenueSource || null,
-      prime_contract_id: primeContractId || null,
+      prime_contract_id: primeContractId != null ? String(primeContractId) : null,
       description: description || null,
       created_at: new Date().toISOString(),
       // Only set created_by if user exists in profiles table
@@ -556,20 +622,5 @@ export async function POST(
     }
 
     return NextResponse.json(response, { status: 201 })
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        {
-          error: 'Validation error',
-          details: error.issues.map((e) => ({
-            field: e.path.join('.'),
-            message: e.message,
-          })),
-        },
-        { status: 400 }
-      )
-    }
-
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

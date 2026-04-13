@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -17,11 +19,10 @@ import { apiErrorResponse } from "@/lib/api-error";
  * @returns {object} 404 - Attachment not found
  * @returns {object} 500 - Internal server error
  */
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ commitmentId: string; attachmentId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ commitmentId: string; attachmentId: string }>(
+  "commitments/[commitmentId]/attachments/[attachmentId]#GET",
+  async ({ request, params }) => {
+  
     const { commitmentId, attachmentId } = await params;
     const supabase = await createClient();
 
@@ -42,10 +43,8 @@ export async function GET(
     }
 
     return NextResponse.json({ data: attachment });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * DELETE /api/commitments/[commitmentId]/attachments/[attachmentId]
@@ -64,11 +63,10 @@ export async function GET(
  * @returns {object} 400 - Database deletion error
  * @returns {object} 500 - Internal server error
  */
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ commitmentId: string; attachmentId: string }> },
-) {
-  try {
+export const DELETE = withApiGuardrails<{ commitmentId: string; attachmentId: string }>(
+  "commitments/[commitmentId]/attachments/[attachmentId]#DELETE",
+  async ({ request, params }) => {
+  
     const { commitmentId, attachmentId } = await params;
     const supabase = await createClient();
 
@@ -77,7 +75,7 @@ export async function DELETE(
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "commitments/[commitmentId]/attachments/[attachmentId]#DELETE", message: "Authentication required." });
     }
 
     // Get attachment info first to delete from storage
@@ -128,7 +126,5 @@ export async function DELETE(
     }
 
     return NextResponse.json({ message: "Attachment deleted successfully" });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

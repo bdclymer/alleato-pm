@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
@@ -7,8 +9,10 @@ interface RouteParams {
   params: Promise<{ taskId: string }>;
 }
 
-export async function DELETE(_request: Request, { params }: RouteParams) {
-  try {
+export const DELETE = withApiGuardrails(
+  "tasks/[taskId]#DELETE",
+  async ({ request, params }) => {
+  
     const { taskId } = await params;
     if (!taskId) {
       return NextResponse.json({ error: "Task ID is required" }, { status: 400 });
@@ -21,7 +25,7 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "tasks/[taskId]#DELETE", message: "Authentication required." });
     }
 
     const { error } = await supabase.from("tasks").delete().eq("id", taskId);
@@ -31,7 +35,5 @@ export async function DELETE(_request: Request, { params }: RouteParams) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

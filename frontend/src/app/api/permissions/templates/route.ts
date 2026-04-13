@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import {
   getPermissionTemplates,
@@ -9,8 +11,10 @@ import {
  * GET /api/permissions/templates
  * Get all available permission templates
  */
-export async function GET(request: NextRequest) {
-  try {
+export const GET = withApiGuardrails(
+  "permissions/templates#GET",
+  async ({ request }) => {
+  
     const scopeParam = request.nextUrl.searchParams.get("scope");
     const scope =
       scopeParam === "project" || scopeParam === "company" || scopeParam === "global"
@@ -19,27 +23,23 @@ export async function GET(request: NextRequest) {
 
     const templates = await getPermissionTemplates(scope);
     return NextResponse.json({ data: templates });
-  } catch (error) {
-    console.error("Error loading permission templates:", error);
-    return NextResponse.json(
-      { error: "Failed to load permission templates" },
-      { status: 500 }
-    );
-  }
-}
+    },
+);
 
 /**
  * POST /api/permissions/templates
  * Create a new permission template (admin only)
  */
-export async function POST(request: NextRequest) {
-  try {
+export const POST = withApiGuardrails(
+  "permissions/templates#POST",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "permissions/templates#POST", message: "Authentication required." });
     }
 
     const { data: profile } = await supabase
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (!profile?.is_admin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      throw new GuardrailError({ code: "FORBIDDEN", where: "permissions/templates#POST", message: "Access denied." });
     }
 
     const body = await request.json();
@@ -81,11 +81,5 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ data: result.data }, { status: 201 });
-  } catch (error) {
-    console.error("Error creating permission template:", error);
-    return NextResponse.json(
-      { error: "Failed to create permission template" },
-      { status: 500 }
-    );
-  }
-}
+    },
+);

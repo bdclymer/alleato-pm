@@ -1,13 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 // GET → list audit log entries for this invoice, newest first
-export async function GET(
-  _request: NextRequest,
-  context: { params: Promise<{ projectId: string; invoiceId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
+  "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/change-history#GET",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { invoiceId } = await context.params;
     const invoiceIdNum = parseInt(invoiceId, 10);
@@ -27,7 +28,5 @@ export async function GET(
     }
 
     return NextResponse.json({ data: data ?? [] });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

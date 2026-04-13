@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -21,8 +23,10 @@ function optionSort(a: RelatedItemOption, b: RelatedItemOption): number {
   });
 }
 
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/related-items/options#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const parsedProjectId = Number.parseInt(projectId, 10);
     if (Number.isNaN(parsedProjectId)) {
@@ -387,7 +391,5 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ data: options.sort(optionSort) });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

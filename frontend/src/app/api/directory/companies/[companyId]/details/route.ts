@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import type { Database } from "@/types/database.types";
@@ -74,8 +76,10 @@ type MeetingItem = {
   created_at: string | null;
 };
 
-export async function GET(_request: Request, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "directory/companies/[companyId]/details#GET",
+  async ({ request, params }) => {
+  
     const { companyId } = await params;
     const supabase = await createClient();
 
@@ -84,7 +88,7 @@ export async function GET(_request: Request, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "directory/companies/[companyId]/details#GET", message: "Authentication required." });
     }
 
     const { data: company, error: companyError } = await supabase
@@ -356,7 +360,5 @@ export async function GET(_request: Request, { params }: RouteParams) {
         meeting_count: meetingsPayload.length,
       },
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

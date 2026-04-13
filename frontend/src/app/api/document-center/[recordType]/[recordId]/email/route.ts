@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { sendDocumentEmail } from "@/lib/documents/email";
@@ -36,8 +38,10 @@ function isDocumentRecordType(value: string): value is DocumentRecordType {
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "document-center/[recordType]/[recordId]/email#POST",
+  async ({ request, params }) => {
+  
     const { recordType, recordId } = await params;
     if (!isDocumentRecordType(recordType)) {
       return NextResponse.json({ error: "Unsupported record type" }, { status: 400 });
@@ -50,7 +54,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "document-center/[recordType]/[recordId]/email#POST", message: "Authentication required." });
     }
 
     const body = await request.json();
@@ -119,7 +123,5 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       id: result.id,
       recipients: recipients.map((recipient) => recipient.email.trim()),
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

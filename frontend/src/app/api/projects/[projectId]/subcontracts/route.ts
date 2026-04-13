@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { CreateSubcontractSchema } from "@/lib/schemas/create-subcontract-schema";
 import { mapFormToInsert } from "@/lib/db/subcontracts";
@@ -8,11 +10,10 @@ import { apiErrorResponse } from "@/lib/api-error";
  * GET /api/projects/[id]/subcontracts
  * Fetch all subcontracts for a project
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/subcontracts#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
 
@@ -23,7 +24,7 @@ export async function GET(
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/subcontracts#GET", message: "Authentication required." });
     }
 
     // Fetch subcontracts with totals view
@@ -42,19 +43,16 @@ export async function GET(
     }
 
     return NextResponse.json({ data });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * POST /api/projects/[id]/subcontracts
  * Create a new subcontract
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
+export const POST = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/subcontracts#POST",
+  async ({ request, params }) => {
   const { projectId } = await params;
   console.warn(
     `[Subcontracts API] POST /api/projects/${projectId}/subcontracts - Starting`,
@@ -235,4 +233,5 @@ export async function POST(
   } catch (error) {
     return apiErrorResponse(error);
   }
-}
+  },
+);

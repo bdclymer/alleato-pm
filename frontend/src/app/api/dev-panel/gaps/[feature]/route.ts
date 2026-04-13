@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { readFile, readdir } from "fs/promises";
 import path from "path";
@@ -94,10 +96,9 @@ async function readArtifact(feature: string, filename: string): Promise<string |
   return null;
 }
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ feature: string }> },
-) {
+export const GET = withApiGuardrails<{ feature: string }>(
+  "dev-panel/gaps/[feature]#GET",
+  async ({ request, params }) => {
   const { feature } = await params;
 
   if (!/^[\w-]+$/.test(feature)) {
@@ -179,4 +180,5 @@ export async function GET(
     summary,
     generated_at: report.generated_at ?? null,
   });
-}
+  },
+);

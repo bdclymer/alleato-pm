@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -47,11 +49,10 @@ const updateChangeOrderSchema = z.object({
  * @returns {object} 400 - Database query error
  * @returns {object} 500 - Internal server error
  */
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ commitmentId: string; changeOrderId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ commitmentId: string; changeOrderId: string }>(
+  "commitments/[commitmentId]/change-orders/[changeOrderId]#GET",
+  async ({ request, params }) => {
+  
     const { commitmentId, changeOrderId } = await params;
     const supabase = await createClient();
 
@@ -73,10 +74,8 @@ export async function GET(
     }
 
     return NextResponse.json({ data: changeOrder });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * PUT /api/commitments/[commitmentId]/change-orders/[changeOrderId]
@@ -103,11 +102,10 @@ export async function GET(
  * @returns {object} 404 - Change order not found
  * @returns {object} 500 - Internal server error
  */
-export async function PUT(
-  request: Request,
-  { params }: { params: Promise<{ commitmentId: string; changeOrderId: string }> },
-) {
-  try {
+export const PUT = withApiGuardrails<{ commitmentId: string; changeOrderId: string }>(
+  "commitments/[commitmentId]/change-orders/[changeOrderId]#PUT",
+  async ({ request, params }) => {
+  
     const { commitmentId, changeOrderId } = await params;
     const supabase = await createClient();
     const body = await request.json();
@@ -117,7 +115,7 @@ export async function PUT(
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "commitments/[commitmentId]/change-orders/[changeOrderId]#PUT", message: "Authentication required." });
     }
 
     // Validate request body
@@ -174,10 +172,8 @@ export async function PUT(
     }
 
     return NextResponse.json({ data: updatedCO });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * DELETE /api/commitments/[commitmentId]/change-orders/[changeOrderId]
@@ -196,11 +192,10 @@ export async function PUT(
  * @returns {object} 404 - Change order not found
  * @returns {object} 500 - Internal server error
  */
-export async function DELETE(
-  _request: Request,
-  { params }: { params: Promise<{ commitmentId: string; changeOrderId: string }> },
-) {
-  try {
+export const DELETE = withApiGuardrails<{ commitmentId: string; changeOrderId: string }>(
+  "commitments/[commitmentId]/change-orders/[changeOrderId]#DELETE",
+  async ({ request, params }) => {
+  
     const { commitmentId, changeOrderId } = await params;
     const supabase = await createClient();
 
@@ -209,7 +204,7 @@ export async function DELETE(
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "commitments/[commitmentId]/change-orders/[changeOrderId]#DELETE", message: "Authentication required." });
     }
 
     // Verify the change order exists and belongs to this commitment
@@ -253,7 +248,5 @@ export async function DELETE(
       success: true,
       message: "Change order deleted successfully",
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

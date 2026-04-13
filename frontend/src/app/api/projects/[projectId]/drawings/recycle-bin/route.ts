@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { DrawingService } from "@/services/DrawingService";
@@ -8,10 +10,9 @@ import { apiErrorResponse } from "@/lib/api-error";
  * GET /api/projects/[projectId]/drawings/recycle-bin
  * List all soft-deleted drawings for the recycle bin
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
+export const GET = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/drawings/recycle-bin#GET",
+  async ({ request, params }) => {
   const { projectId } = await params;
   const supabase = await createClient();
 
@@ -19,7 +20,7 @@ export async function GET(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/drawings/recycle-bin#GET", message: "Authentication required." });
   }
 
   const service = new DrawingService(createServiceClient());
@@ -30,4 +31,5 @@ export async function GET(
   }
 
   return NextResponse.json(result.data);
-}
+  },
+);

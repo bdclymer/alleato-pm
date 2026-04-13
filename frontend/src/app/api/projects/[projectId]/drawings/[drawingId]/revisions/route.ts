@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { DrawingService } from "@/services/DrawingService";
@@ -8,10 +10,9 @@ import { apiErrorResponse } from "@/lib/api-error";
  * GET /api/projects/[projectId]/drawings/[drawingId]/revisions
  * List all revisions for a drawing
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string; drawingId: string }> },
-) {
+export const GET = withApiGuardrails<{ projectId: string; drawingId: string }>(
+  "projects/[projectId]/drawings/[drawingId]/revisions#GET",
+  async ({ request, params }) => {
   const { drawingId } = await params;
   const supabase = await createClient();
 
@@ -20,7 +21,7 @@ export async function GET(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/drawings/[drawingId]/revisions#GET", message: "Authentication required." });
   }
 
   const service = new DrawingService(createServiceClient());
@@ -31,16 +32,16 @@ export async function GET(
   }
 
   return NextResponse.json(result.data);
-}
+  },
+);
 
 /**
  * POST /api/projects/[projectId]/drawings/[drawingId]/revisions
  * Create a new revision for a drawing with file upload
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string; drawingId: string }> },
-) {
+export const POST = withApiGuardrails<{ projectId: string; drawingId: string }>(
+  "projects/[projectId]/drawings/[drawingId]/revisions#POST",
+  async ({ request, params }) => {
   const { projectId, drawingId } = await params;
   const supabase = await createClient();
 
@@ -49,7 +50,7 @@ export async function POST(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/drawings/[drawingId]/revisions#POST", message: "Authentication required." });
   }
 
   try {
@@ -119,4 +120,5 @@ export async function POST(
       { status: 500 },
     );
   }
-}
+  },
+);

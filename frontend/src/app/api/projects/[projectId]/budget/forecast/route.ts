@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 interface ForecastParams {
@@ -17,8 +19,10 @@ interface ForecastParams {
  * - Projected variance
  * - Forecast by cost code
  */
-export async function GET(request: NextRequest, { params }: ForecastParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/budget/forecast#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const origin = request.nextUrl.origin;
     const budgetResponse = await fetch(`${origin}/api/projects/${projectId}/budget`, {
@@ -102,7 +106,5 @@ export async function GET(request: NextRequest, { params }: ForecastParams) {
       forecastByCostCode,
       generatedAt: new Date().toISOString(),
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

@@ -1,14 +1,15 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
 
 // POST /api/projects/[id]/budget/lock - Lock the budget
-export async function POST(
-  _request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const POST = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/budget/lock#POST",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const projectIdNum = Number.parseInt(projectId, 10);
 
@@ -88,17 +89,14 @@ export async function POST(
         budget_locked_by: updatedProject.budget_locked_by,
       },
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 // DELETE /api/projects/[id]/budget/lock - Unlock the budget
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const DELETE = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/budget/lock#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const projectIdNum = Number.parseInt(projectId, 10);
 
@@ -199,17 +197,14 @@ export async function DELETE(
         budget_locked_by: updatedProject.budget_locked_by,
       },
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 // GET /api/projects/[id]/budget/lock - Get budget lock status
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/budget/lock#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const projectIdNum = Number.parseInt(projectId, 10);
 
@@ -237,7 +232,5 @@ export async function GET(
       lockedAt: project.budget_locked_at,
       lockedBy: project.budget_locked_by,
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

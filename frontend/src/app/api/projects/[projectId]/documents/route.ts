@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
@@ -29,8 +31,10 @@ const createDocumentSchema = z.object({
 // GET - List documents with filters
 // =============================================================================
 
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/documents#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
 
@@ -40,7 +44,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/documents#GET", message: "Authentication required." });
     }
 
     const { searchParams } = new URL(request.url);
@@ -81,17 +85,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(data ?? []);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 // =============================================================================
 // POST - Create a document record
 // =============================================================================
 
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/documents#POST",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
 
@@ -101,7 +105,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/documents#POST", message: "Authentication required." });
     }
 
     const body = await request.json();
@@ -123,13 +127,5 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(data, { status: 201 });
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        { error: "Validation failed", details: error.format() },
-        { status: 400 },
-      );
-    }
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

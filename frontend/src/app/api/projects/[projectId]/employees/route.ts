@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
@@ -9,11 +11,10 @@ import { apiErrorResponse } from "@/lib/api-error";
  * Returns people with person_type='employee' for use in form dropdowns.
  * Queries the people table directly, case-insensitive on person_type.
  */
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/employees#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const projectIdNum = Number.parseInt(projectId, 10);
 
@@ -38,7 +39,5 @@ export async function GET(
     }
 
     return NextResponse.json(data || []);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

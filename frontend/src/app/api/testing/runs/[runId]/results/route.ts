@@ -2,13 +2,14 @@
  * /api/testing/runs/[runId]/results
  * GET  — all results for a run, with case details, grouped by category
  */
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-export async function GET(
-  req: Request,
-  { params }: { params: Promise<{ runId: string }> }
-) {
+export const GET = withApiGuardrails<{ runId: string }>(
+  "testing/runs/[runId]/results#GET",
+  async ({ request, params }) => {
   const { runId } = await params;
   const { searchParams } = new URL(req.url);
   const typeFilter = searchParams.get("type"); // "scenario" | "feature" | null (all)
@@ -72,4 +73,5 @@ export async function GET(
   });
 
   return NextResponse.json({ results: sorted });
-}
+  },
+);

@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import {
   deleteMemory,
@@ -5,52 +7,72 @@ import {
 } from "@/lib/ai/services/ai-memory-service";
 
 /** PATCH /api/ai-assistant/memories/[id] — edit content or importance */
-export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const user = await getApiRouteUser();
-  if (!user) return new Response("Unauthorized", { status: 401 });
+export const PATCH = withApiGuardrails(
+  "ai-assistant/memories/[id]#PATCH",
+  async ({ request, params }) => {
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "ai-assistant/memories/[id]#PATCH",
+        message: "Authentication required.",
+      });
+    }
 
-  const { id } = await params;
-  const body = await request.json();
-  const { content, importance } = body as {
-    content?: string;
-    importance?: number;
-  };
+    const { id } = params as { id: string };
+    const body = await request.json();
+    const { content, importance } = body as {
+      content?: string;
+      importance?: number;
+    };
 
-  if (!content?.trim() && importance === undefined) {
-    return new Response("content or importance is required", { status: 400 });
-  }
+    if (!content?.trim() && importance === undefined) {
+      return new Response("content or importance is required", { status: 400 });
+    }
 
-  const result = await updateMemoryContent(
-    user.id,
-    id,
-    content?.trim() ?? "",
-    importance,
-  );
+    const result = await updateMemoryContent(
+      user.id,
+      id,
+      content?.trim() ?? "",
+      importance,
+    );
 
-  if (!result.success) {
-    return new Response(result.error ?? "Update failed", { status: 500 });
-  }
+    if (!result.success) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "ai-assistant/memories/[id]#PATCH",
+        message: result.error ?? "Update failed",
+      });
+    }
 
-  return Response.json({ success: true });
-}
+    return Response.json({ success: true });
+  },
+);
 
 /** DELETE /api/ai-assistant/memories/[id] — soft-delete (is_active = false) */
-export async function DELETE(
-  _request: Request,
-  { params }: { params: Promise<{ id: string }> },
-) {
-  const user = await getApiRouteUser();
-  if (!user) return new Response("Unauthorized", { status: 401 });
+export const DELETE = withApiGuardrails(
+  "ai-assistant/memories/[id]#DELETE",
+  async ({ params }) => {
+    const user = await getApiRouteUser();
+    if (!user) {
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "ai-assistant/memories/[id]#DELETE",
+        message: "Authentication required.",
+      });
+    }
 
-  const { id } = await params;
-  const result = await deleteMemory(user.id, id);
+    const { id } = params as { id: string };
+    const result = await deleteMemory(user.id, id);
 
-  if (!result.success) {
-    return new Response(result.error ?? "Delete failed", { status: 500 });
-  }
+    if (!result.success) {
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "ai-assistant/memories/[id]#DELETE",
+        message: result.error ?? "Delete failed",
+      });
+    }
 
-  return Response.json({ success: true });
-}
+    return Response.json({ success: true });
+  },
+);

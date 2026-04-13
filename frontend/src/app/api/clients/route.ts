@@ -1,13 +1,17 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
-export async function GET(request: Request) {
-  try {
+export const GET = withApiGuardrails(
+  "clients#GET",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "clients#GET", message: "Authentication required." });
     }
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search");
@@ -25,17 +29,17 @@ export async function GET(request: Request) {
     const { data, error } = await query;
     if (error) return apiErrorResponse(error);
     return NextResponse.json(data || []);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
-export async function POST(request: Request) {
-  try {
+export const POST = withApiGuardrails(
+  "clients#POST",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "clients#POST", message: "Authentication required." });
     }
     const body = await request.json();
 
@@ -47,7 +51,5 @@ export async function POST(request: Request) {
 
     if (error) return apiErrorResponse(error);
     return NextResponse.json(data, { status: 201 });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

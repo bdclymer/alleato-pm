@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
@@ -12,8 +14,10 @@ interface RouteParams {
  * PATCH /api/projects/[projectId]/submittals/[submittalId]/restore
  * Restores a soft-deleted submittal (clears deleted_at).
  */
-export async function PATCH(_req: NextRequest, { params }: RouteParams) {
-  try {
+export const PATCH = withApiGuardrails(
+  "projects/[projectId]/submittals/[submittalId]/restore#PATCH",
+  async ({ request, params }) => {
+  
     const { projectId, submittalId } = await params;
     const supabase = await createClient();
 
@@ -23,7 +27,7 @@ export async function PATCH(_req: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/submittals/[submittalId]/restore#PATCH", message: "Authentication required." });
     }
 
     const { data, error } = await supabase
@@ -43,7 +47,5 @@ export async function PATCH(_req: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(data);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

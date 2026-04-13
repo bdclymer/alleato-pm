@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
@@ -13,8 +15,10 @@ interface RouteParams {
  * Server-side fallback: returns CSV of all non-deleted submittals for the project.
  * The primary export path is client-side (handled in the page component).
  */
-export async function GET(req: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/submittals/export#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
     const format = new URL(req.url).searchParams.get("format") ?? "csv";
@@ -93,7 +97,5 @@ export async function GET(req: NextRequest, { params }: RouteParams) {
         "Content-Disposition": `attachment; filename="submittals-${projectId}.csv"`,
       },
     });
-  } catch (err) {
-    return apiErrorResponse(err);
-  }
-}
+    },
+);

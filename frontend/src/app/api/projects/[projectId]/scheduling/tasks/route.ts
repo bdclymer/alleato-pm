@@ -11,7 +11,9 @@
  * - Get Gantt chart data
  */
 
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { SchedulingService } from "@/lib/services/scheduling-service";
 import { ScheduleTaskListParams, ScheduleTaskCreate } from "@/types/scheduling";
@@ -21,11 +23,10 @@ import { apiErrorResponse } from "@/lib/api-error";
 // GET - Fetch Schedule Tasks
 // =============================================================================
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> }
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/scheduling/tasks#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
 
@@ -36,10 +37,7 @@ export async function GET(
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized - please log in" },
-        { status: 401 }
-      );
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/scheduling/tasks#GET", message: "Authentication required." });
     }
 
     const { searchParams } = new URL(request.url);
@@ -95,24 +93,17 @@ export async function GET(
     }
 
     return NextResponse.json(result);
-  } catch (error) {
-    console.error("Failed to fetch schedule tasks:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch schedule tasks" },
-      { status: 500 }
-    );
-  }
-}
+    },
+);
 
 // =============================================================================
 // POST - Create New Schedule Task
 // =============================================================================
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> }
-) {
-  try {
+export const POST = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/scheduling/tasks#POST",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
 
@@ -123,10 +114,7 @@ export async function POST(
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized - please log in" },
-        { status: 401 }
-      );
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/scheduling/tasks#POST", message: "Authentication required." });
     }
 
     const body = await request.json();
@@ -179,60 +167,5 @@ export async function POST(
     const task = await service.createTask(projectId, taskData);
 
     return NextResponse.json(task, { status: 201 });
-  } catch (error) {
-    console.error("Failed to create schedule task:", error);
-
-    if (error instanceof Error) {
-      const message = error.message.toLowerCase();
-
-      // RLS policy violation - user not authorized for this project
-      if (message.includes("new row violates row-level security") ||
-          message.includes("rls") ||
-          message.includes("policy")) {
-        // Include project ID for debugging
-        const { projectId: pid } = await params;
-        return NextResponse.json(
-          {
-            error: `You don't have permission to create tasks in project ${pid}. You need to be added as a team member to this project.`,
-            code: "PERMISSION_DENIED",
-            projectId: pid
-          },
-          { status: 403 }
-        );
-      }
-
-      // Foreign key violation - invalid parent task
-      if (message.includes("foreign key") || message.includes("violates foreign key")) {
-        return NextResponse.json(
-          {
-            error: "Invalid parent task reference. The parent task may have been deleted.",
-            code: "INVALID_REFERENCE"
-          },
-          { status: 400 }
-        );
-      }
-
-      // Authentication required
-      if (message.includes("authentication required") || message.includes("not authenticated")) {
-        return NextResponse.json(
-          {
-            error: "You must be logged in to create tasks. Please sign in and try again.",
-            code: "AUTH_REQUIRED"
-          },
-          { status: 401 }
-        );
-      }
-
-      // All other errors (validation, unknown, etc.)
-      return apiErrorResponse(error);
-    }
-
-    return NextResponse.json(
-      {
-        error: "An unexpected error occurred while creating the task. Please try again.",
-        code: "UNKNOWN_ERROR"
-      },
-      { status: 500 }
-    );
-  }
-}
+    },
+);

@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { PermissionService } from "@/services/permissionService";
@@ -7,8 +9,10 @@ interface RouteParams {
   params: Promise<{ companyId: string }>;
 }
 
-export async function POST(request: Request, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "directory/companies/[companyId]/add-to-project#POST",
+  async ({ request, params }) => {
+  
     const { companyId } = await params;
     const body = (await request.json()) as { project_id?: number | string };
     const projectId = Number.parseInt(String(body.project_id), 10);
@@ -27,7 +31,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "directory/companies/[companyId]/add-to-project#POST", message: "Authentication required." });
     }
 
     const permissionService = new PermissionService(supabase);
@@ -84,14 +88,6 @@ export async function POST(request: Request, { params }: RouteParams) {
       },
       { status: 201 },
     );
-  } catch (error) {
-    return NextResponse.json(
-      {
-        error: "server_error",
-        message: "An unexpected error occurred while assigning company to project.",
-      },
-      { status: 500 },
-    );
-  }
-}
+    },
+);
 

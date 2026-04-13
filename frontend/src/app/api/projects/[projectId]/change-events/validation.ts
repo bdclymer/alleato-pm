@@ -150,6 +150,7 @@ export const changeEventQuerySchema = z.object({
     .default("createdAt"),
   order: z.enum(["asc", "desc"]).default("desc"),
   includeDeleted: z.coerce.boolean().default(false),
+  tab: z.enum(["line_items", "no_line_items", "rfqs", "recycle_bin", "all"]).optional(),
 }); // Attachment Schema
 export const createAttachmentSchema = z.object({
   fileName: z.string().max(255),

@@ -1,5 +1,7 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 interface RouteParams {
@@ -10,8 +12,10 @@ interface RouteParams {
  * POST /api/projects/[projectId]/commitment-pcos/[pcoId]/promote
  * Promote a commitment PCO to an official Commitment Change Order (CCO)
  */
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/commitment-pcos/[pcoId]/promote#POST",
+  async ({ request, params }) => {
+  
     const { projectId, pcoId } = await params;
     const projectIdNum = parseInt(projectId, 10);
     const supabase = await createClient();
@@ -22,7 +26,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/commitment-pcos/[pcoId]/promote#POST", message: "Authentication required." });
     }
 
     // Get the PCO
@@ -128,7 +132,5 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       change_order: newCo,
       message: `PCO successfully promoted to Change Order #${coNumber}`,
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

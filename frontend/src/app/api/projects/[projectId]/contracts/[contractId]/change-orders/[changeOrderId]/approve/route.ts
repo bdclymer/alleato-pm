@@ -1,6 +1,8 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { approveChangeOrderSchema } from "../../validation";
 import { ZodError } from "zod";
 import {
@@ -18,8 +20,10 @@ interface RouteParams {
  * POST /api/projects/[id]/contracts/[contractId]/change-orders/[changeOrderId]/approve
  * Approves a change order and updates the contract value
  */
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/contracts/[contractId]/change-orders/[changeOrderId]/approve#POST",
+  async ({ request, params }) => {
+  
     const { projectId, contractId, changeOrderId } = await params;
     const numericProjectId = Number(projectId);
     const guard = await requirePermission(numericProjectId, "contracts", "admin");
@@ -45,7 +49,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       data: { user },
     } = await requestSupabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/contracts/[contractId]/change-orders/[changeOrderId]/approve#POST", message: "Authentication required." });
     }
 
     // Verify contract exists and belongs to project
@@ -151,20 +155,5 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       contract_updated: true,
       new_contract_value: newRevisedValue,
     });
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        {
-          error: "Validation error",
-          details: error.issues.map((e) => ({
-            field: e.path.join("."),
-            message: e.message,
-          })),
-        },
-        { status: 400 },
-      );
-    }
-
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

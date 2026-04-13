@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from 'next/server';
 import * as fs from 'fs';
 import * as path from 'path';
 import { createClient } from "@/lib/supabase/server";
@@ -14,12 +16,14 @@ const ALLOWED_DIRECTORIES = [
   "frontend/public",
 ];
 
-export async function GET(request: NextRequest) {
-  try {
+export const GET = withApiGuardrails(
+  "files/read#GET",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "files/read#GET", message: "Authentication required." });
     }
 
     const searchParams = request.nextUrl.searchParams;
@@ -85,10 +89,5 @@ export async function GET(request: NextRequest) {
         'Content-Type': 'text/plain; charset=utf-8',
       },
     });
-  } catch (error) {
-    return NextResponse.json(
-      { error: 'Failed to read file' },
-      { status: 500 }
-    );
-  }
-}
+    },
+);

@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 
 /**
@@ -6,16 +8,15 @@ import { createClient } from "@/lib/supabase/server";
  * Returns the latest L1 and L2 eval baselines from disk.
  * Only works in local development (reads files from repo root).
  */
-export async function GET() {
-  // OWASP A01:2021 - Broken Access Control: require authenticated admin
+export const GET = withApiGuardrails("/api/admin/rag-eval/results#GET", async () => {
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "/api/admin/rag-eval/results#GET", message: "Authentication required.", status: 401 });
   }
   const { data: profile } = await supabase.from("user_profiles").select("is_admin").eq("id", user.id).single();
   if (!profile?.is_admin) {
-    return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+    throw new GuardrailError({ code: "FORBIDDEN", where: "/api/admin/rag-eval/results#GET", message: "Admin access required.", status: 403 });
   }
 
   if (process.env.VERCEL) {
@@ -67,4 +68,4 @@ export async function GET() {
       file: l2Path ? path.relative(REPO_ROOT, l2Path) : null,
     },
   });
-}
+});

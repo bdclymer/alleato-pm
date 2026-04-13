@@ -17,8 +17,10 @@
  * - created_at, updated_at, submitted_at, approved_at
  */
 
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
 
@@ -35,8 +37,10 @@ interface RouteParams {
  * - type: Filter by type
  * - search: Search number/title/description
  */
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/pcos#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const numericProjectId = parseInt(projectId, 10);
 
@@ -117,10 +121,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       data: pcos,
       meta: { total: count || 0 },
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * POST /api/projects/[projectId]/pcos
@@ -140,8 +142,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
  * - annotation_note?: string
  * - prime_change_order_id?: number
  */
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/pcos#POST",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const numericProjectId = parseInt(projectId, 10);
 
@@ -227,7 +231,5 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     });
 
     return NextResponse.json(data, { status: 201 });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

@@ -1,5 +1,7 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from '@/lib/supabase/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
 
@@ -15,11 +17,10 @@ interface RouteParams {
  * GET /api/projects/[id]/change-events/[changeEventId]/attachments/[attachmentId]
  * Returns a single attachment metadata
  */
-export async function GET(
-  request: NextRequest,
-  { params }: RouteParams
-) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]#GET",
+  async ({ request, params }) => {
+  
     const { projectId, changeEventId, attachmentId } = await params;
     const supabase = await createClient();
 
@@ -82,20 +83,17 @@ export async function GET(
     };
 
     return NextResponse.json(response);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * DELETE /api/projects/[id]/change-events/[changeEventId]/attachments/[attachmentId]
  * Deletes a single attachment
  */
-export async function DELETE(
-  request: NextRequest,
-  { params }: RouteParams
-) {
-  try {
+export const DELETE = withApiGuardrails(
+  "projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId, changeEventId, attachmentId } = await params;
     const projectIdNum = parseInt(projectId, 10);
     const guard = await requirePermission(projectIdNum, "change_orders", "admin");
@@ -110,7 +108,7 @@ export async function DELETE(
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/change-events/[changeEventId]/attachments/[attachmentId]#DELETE", message: "Authentication required." });
     }
 
     // Verify change event exists
@@ -184,7 +182,5 @@ export async function DELETE(
     });
 
     return new NextResponse(null, { status: 204 });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

@@ -1,15 +1,16 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 // GET → list related items for this invoice
 // POST → link a related item  { related_type, related_id, description? }
 // DELETE ?id=123 → unlink
-export async function GET(
-  _request: NextRequest,
-  context: { params: Promise<{ projectId: string; invoiceId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
+  "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/related-items#GET",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { invoiceId } = await context.params;
     const invoiceIdNum = parseInt(invoiceId, 10);
@@ -28,22 +29,19 @@ export async function GET(
     }
 
     return NextResponse.json({ data: data ?? [] });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
-export async function POST(
-  request: NextRequest,
-  context: { params: Promise<{ projectId: string; invoiceId: string }> },
-) {
-  try {
+export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
+  "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/related-items#POST",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { invoiceId } = await context.params;
     const invoiceIdNum = parseInt(invoiceId, 10);
 
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!user) throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/related-items#POST", message: "Authentication required." });
 
     const body = await request.json().catch(() => ({}));
     const { related_type, related_id, description } = body ?? {};
@@ -74,16 +72,13 @@ export async function POST(
     }
 
     return NextResponse.json({ data });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
-export async function DELETE(
-  request: NextRequest,
-  context: { params: Promise<{ projectId: string; invoiceId: string }> },
-) {
-  try {
+export const DELETE = withApiGuardrails<{ projectId: string; invoiceId: string }>(
+  "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/related-items#DELETE",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { invoiceId } = await context.params;
     const invoiceIdNum = parseInt(invoiceId, 10);
@@ -108,7 +103,5 @@ export async function DELETE(
     }
 
     return NextResponse.json({ message: "Unlinked" });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

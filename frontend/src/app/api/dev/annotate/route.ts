@@ -13,17 +13,21 @@
  * on dev_annotations handles data security.
  */
 
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { apiErrorResponse } from "@/lib/api-error";
 
 // POST — create annotation from overlay
-export async function POST(req: Request) {
+export const POST = withApiGuardrails(
+  "dev/annotate#POST",
+  async ({ request }) => {
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "dev/annotate#POST", message: "Authentication required." });
   }
 
   const body = await req.json();
@@ -69,10 +73,13 @@ export async function POST(req: Request) {
 
   if (error) return apiErrorResponse(error);
   return NextResponse.json({ success: true, annotation: data });
-}
+  },
+);
 
 // GET — list open/in-progress annotations (for Claude Code watcher)
-export async function GET(req: Request) {
+export const GET = withApiGuardrails(
+  "dev/annotate#GET",
+  async ({ request }) => {
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status") ?? "open";
 
@@ -87,10 +94,13 @@ export async function GET(req: Request) {
 
   if (error) return apiErrorResponse(error);
   return NextResponse.json({ annotations: data ?? [] });
-}
+  },
+);
 
 // PATCH — Claude Code posts its reply
-export async function PATCH(req: Request) {
+export const PATCH = withApiGuardrails(
+  "dev/annotate#PATCH",
+  async ({ request }) => {
   const body = await req.json();
   const { id, reply, status } = body;
 
@@ -112,4 +122,5 @@ export async function PATCH(req: Request) {
 
   if (error) return apiErrorResponse(error);
   return NextResponse.json({ success: true, annotation: data });
-}
+  },
+);

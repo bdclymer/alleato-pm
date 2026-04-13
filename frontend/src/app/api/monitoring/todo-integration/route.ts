@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import fs from "fs/promises";
 import path from "path";
 import { createClient } from "@/lib/supabase/server";
@@ -30,12 +32,14 @@ interface TodoUpdate {
 /**
  * GET: Retrieve all todos (mock data for now)
  */
-export async function GET() {
-  try {
+export const GET = withApiGuardrails(
+  "monitoring/todo-integration#GET",
+  async () => {
+  
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "monitoring/todo-integration#GET", message: "Authentication required." });
     }
     // In a real implementation, this would integrate with your TodoWrite system
     // For now, we'll return mock data based on the monitoring system
@@ -49,23 +53,20 @@ export async function GET() {
     const todos = extractTodosFromMonitoring(content);
 
     return NextResponse.json({ todos });
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to fetch todos" },
-      { status: 500 },
-    );
-  }
-}
+    },
+);
 
 /**
  * POST: Create new todo or update existing todo
  */
-export async function POST(request: NextRequest) {
-  try {
+export const POST = withApiGuardrails(
+  "monitoring/todo-integration#POST",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "monitoring/todo-integration#POST", message: "Authentication required." });
     }
     const body = await request.json();
 
@@ -78,13 +79,8 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Request failed" },
-      { status: 500 },
-    );
-  }
-}
+    },
+);
 
 /**
  * Extract todos from monitoring content

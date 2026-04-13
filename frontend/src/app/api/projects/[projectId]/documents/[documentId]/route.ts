@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
@@ -28,8 +30,10 @@ const updateDocumentSchema = z.object({
 // GET - Fetch a single document
 // =============================================================================
 
-export async function GET(_request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/documents/[documentId]#GET",
+  async ({ request, params }) => {
+  
     const { projectId, documentId } = await params;
     const supabase = await createClient();
 
@@ -39,7 +43,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/documents/[documentId]#GET", message: "Authentication required." });
     }
 
     const { data, error } = await supabase
@@ -58,17 +62,17 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(data);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 // =============================================================================
 // PUT - Update a document
 // =============================================================================
 
-export async function PUT(request: NextRequest, { params }: RouteParams) {
-  try {
+export const PUT = withApiGuardrails(
+  "projects/[projectId]/documents/[documentId]#PUT",
+  async ({ request, params }) => {
+  
     const { projectId, documentId } = await params;
     const supabase = await createClient();
 
@@ -78,7 +82,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/documents/[documentId]#PUT", message: "Authentication required." });
     }
 
     const body = await request.json();
@@ -104,23 +108,17 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(data);
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        { error: "Validation failed", details: error.format() },
-        { status: 400 },
-      );
-    }
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 // =============================================================================
 // DELETE - Soft delete a document
 // =============================================================================
 
-export async function DELETE(_request: NextRequest, { params }: RouteParams) {
-  try {
+export const DELETE = withApiGuardrails(
+  "projects/[projectId]/documents/[documentId]#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId, documentId } = await params;
     const supabase = await createClient();
 
@@ -130,7 +128,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/documents/[documentId]#DELETE", message: "Authentication required." });
     }
 
     const { data, error } = await supabase
@@ -150,7 +148,5 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ success: true, id: data.id });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

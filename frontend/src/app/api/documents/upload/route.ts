@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { v4 as uuidv4 } from "uuid";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -21,8 +23,10 @@ import { apiErrorResponse } from "@/lib/api-error";
  *   - project_id: number (optional, associate with a project)
  *   - tags: string (optional, comma-separated)
  */
-export async function POST(request: NextRequest) {
-  try {
+export const POST = withApiGuardrails(
+  "documents/upload#POST",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const {
       data: { user },
@@ -30,7 +34,7 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "documents/upload#POST", message: "Authentication required." });
     }
 
     const formData = await request.formData();
@@ -151,7 +155,5 @@ export async function POST(request: NextRequest) {
         pipelineStatus: "queued",
       },
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

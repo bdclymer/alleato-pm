@@ -1,5 +1,7 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 interface MarkupItem {
@@ -72,11 +74,10 @@ function calculateMarkups(
 }
 
 // POST /api/projects/[id]/vertical-markup/calculate - Calculate vertical markup for a given amount
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const POST = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/vertical-markup/calculate#POST",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -100,7 +101,7 @@ export async function POST(
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/vertical-markup/calculate#POST", message: "Authentication required." });
     }
 
     // Fetch project's vertical markup settings
@@ -133,7 +134,5 @@ export async function POST(
       baseAmount,
       ...result,
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

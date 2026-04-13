@@ -1,6 +1,8 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod";
 import { ZodError } from "zod";
 import { requirePermission } from "@/lib/permissions-guard";
@@ -30,8 +32,10 @@ const updatePaymentSchema = z.object({
  * PATCH /api/projects/[projectId]/contracts/[contractId]/payments/[paymentId]
  * Updates a payment record
  */
-export async function PATCH(request: NextRequest, { params }: RouteParams) {
-  try {
+export const PATCH = withApiGuardrails(
+  "projects/[projectId]/contracts/[contractId]/payments/[paymentId]#PATCH",
+  async ({ request, params }) => {
+  
     const { projectId, contractId, paymentId } = await params;
     const projectIdNum = parseInt(projectId, 10);
     const guard = await requirePermission(projectIdNum, "contracts", "write");
@@ -69,29 +73,17 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(data);
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        {
-          error: "Validation error",
-          details: error.issues.map((e) => ({
-            field: e.path.join("."),
-            message: e.message,
-          })),
-        },
-        { status: 400 },
-      );
-    }
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * DELETE /api/projects/[projectId]/contracts/[contractId]/payments/[paymentId]
  * Deletes a payment record
  */
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  try {
+export const DELETE = withApiGuardrails(
+  "projects/[projectId]/contracts/[contractId]/payments/[paymentId]#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId, contractId, paymentId } = await params;
     const projectIdNum = parseInt(projectId, 10);
     const guard = await requirePermission(projectIdNum, "contracts", "admin");
@@ -124,7 +116,5 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ message: "Payment deleted" });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

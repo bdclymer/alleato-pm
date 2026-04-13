@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server"
 import { exec } from "child_process"
 import { promisify } from "util"
@@ -5,7 +7,9 @@ import path from "path"
 
 const execAsync = promisify(exec)
 
-export async function GET() {
+export const GET = withApiGuardrails(
+  "dev-tools/check-routes#GET",
+  async () => {
   // Only allow in development
   if (process.env.NODE_ENV !== "development") {
     return NextResponse.json(
@@ -49,4 +53,5 @@ export async function GET() {
       { status: 500 }
     )
   }
-}
+  },
+);

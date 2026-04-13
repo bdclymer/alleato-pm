@@ -1,7 +1,11 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-export async function GET(request: NextRequest) {
+export const GET = withApiGuardrails(
+  "directory/vendors#GET",
+  async ({ request }) => {
   const supabase = await createClient();
   const { searchParams } = new URL(request.url);
 
@@ -58,4 +62,5 @@ export async function GET(request: NextRequest) {
       total_pages: Math.ceil((count ?? 0) / perPage),
     },
   });
-}
+  },
+);

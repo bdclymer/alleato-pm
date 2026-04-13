@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -14,8 +16,10 @@ interface RouteParams {
  * Direct lookup of a contract_change_orders row by UUID,
  * verified against the project via the linked commitment.
  */
-export async function GET(_request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/commitment-change-orders/[commitmentCoId]#GET",
+  async ({ request, params }) => {
+  
     const { projectId, commitmentCoId } = await params;
     const supabase = await createClient();
 
@@ -53,17 +57,17 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       ...co,
       commitment_number: commitment.contract_number,
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * PUT /api/projects/[projectId]/commitment-change-orders/[commitmentCoId]
  * Update a commitment change order.
  */
-export async function PUT(request: NextRequest, { params }: RouteParams) {
-  try {
+export const PUT = withApiGuardrails(
+  "projects/[projectId]/commitment-change-orders/[commitmentCoId]#PUT",
+  async ({ request, params }) => {
+  
     const { projectId, commitmentCoId } = await params;
     const projectIdNum = Number(projectId);
     const supabase = await createClient();
@@ -74,7 +78,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/commitment-change-orders/[commitmentCoId]#PUT", message: "Authentication required." });
     }
 
     const guard = await requirePermission(projectIdNum, "contracts", "write");
@@ -125,17 +129,17 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(data);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * DELETE /api/projects/[projectId]/commitment-change-orders/[commitmentCoId]
  * Delete a commitment change order.
  */
-export async function DELETE(_request: NextRequest, { params }: RouteParams) {
-  try {
+export const DELETE = withApiGuardrails(
+  "projects/[projectId]/commitment-change-orders/[commitmentCoId]#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId, commitmentCoId } = await params;
     const projectIdNum = Number(projectId);
     const supabase = await createClient();
@@ -146,7 +150,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/commitment-change-orders/[commitmentCoId]#DELETE", message: "Authentication required." });
     }
 
     const guard = await requirePermission(projectIdNum, "contracts", "admin");
@@ -184,7 +188,5 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ message: "Deleted successfully" });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

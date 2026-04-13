@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { CreatePurchaseOrderSchema } from "@/lib/schemas/create-purchase-order-schema";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -7,11 +9,10 @@ import { apiErrorResponse } from "@/lib/api-error";
  * GET /api/projects/[id]/purchase-orders
  * Fetch all purchase orders for a project
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/purchase-orders#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
 
@@ -21,7 +22,7 @@ export async function GET(
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/purchase-orders#GET", message: "Authentication required." });
     }
 
     const { data, error } = await supabase
@@ -38,19 +39,16 @@ export async function GET(
     }
 
     return NextResponse.json({ data });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * POST /api/projects/[id]/purchase-orders
  * Create a new purchase order
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
+export const POST = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/purchase-orders#POST",
+  async ({ request, params }) => {
   const { projectId } = await params;
 
   try {
@@ -180,4 +178,5 @@ export async function POST(
   } catch (error) {
     return apiErrorResponse(error);
   }
-}
+  },
+);

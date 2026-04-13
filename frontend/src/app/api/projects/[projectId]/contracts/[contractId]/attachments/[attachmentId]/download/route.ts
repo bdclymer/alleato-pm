@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { NextResponse } from "next/server";
@@ -10,8 +12,10 @@ interface RouteParams {
  * GET /api/projects/[projectId]/contracts/[contractId]/attachments/[attachmentId]/download
  * Resolves attachment URL and redirects for download/open.
  */
-export async function GET(_request: Request, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/contracts/[contractId]/attachments/[attachmentId]/download#GET",
+  async ({ request, params }) => {
+  
     const { projectId, contractId, attachmentId } = await params;
     const supabase = await createClient();
 
@@ -78,7 +82,5 @@ export async function GET(_request: Request, { params }: RouteParams) {
     }
 
     return NextResponse.redirect(redirectTo);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

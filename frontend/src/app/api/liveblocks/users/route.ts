@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { buildLiveblocksUserInfo } from "@/lib/liveblocks/user-info";
 import { AI_USER_ID, AI_USER_INFO } from "@/lib/liveblocks/ai-user";
@@ -9,7 +11,9 @@ import { AI_USER_ID, AI_USER_INFO } from "@/lib/liveblocks/ai-user";
  * Resolves Liveblocks user IDs to display names and avatars.
  * Called by the LiveblocksProvider's `resolveUsers` callback.
  */
-export async function GET(request: NextRequest) {
+export const GET = withApiGuardrails(
+  "liveblocks/users#GET",
+  async ({ request }) => {
   const userIds = request.nextUrl.searchParams.get("userIds");
   if (!userIds) {
     return NextResponse.json([]);
@@ -52,4 +56,5 @@ export async function GET(request: NextRequest) {
     console.error("[liveblocks/users] Error resolving users:", error);
     return NextResponse.json([]);
   }
-}
+  },
+);

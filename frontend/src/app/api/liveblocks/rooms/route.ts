@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { Liveblocks } from "@liveblocks/node";
 import {
   parseRoomId,
@@ -36,7 +38,9 @@ function buildRoomUrl(entityType: string, entityId: string): string {
  *
  * Returns an array of { id, name, url } for each room.
  */
-export async function GET(request: NextRequest) {
+export const GET = withApiGuardrails(
+  "liveblocks/rooms#GET",
+  async ({ request }) => {
   const roomIdsParam = request.nextUrl.searchParams.get("roomIds");
   if (!roomIdsParam) {
     return NextResponse.json([]);
@@ -90,4 +94,5 @@ export async function GET(request: NextRequest) {
   );
 
   return NextResponse.json(rooms);
-}
+  },
+);

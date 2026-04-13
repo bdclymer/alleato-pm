@@ -1,13 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 const ALLOWED_FIELDS = new Set(["category", "primary_keys", "table_comment"]);
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ schemaName: string; tableName: string }> },
-) {
+export const PATCH = withApiGuardrails<{ schemaName: string; tableName: string }>(
+  "database-tables-catalog/[schemaName]/[tableName]#PATCH",
+  async ({ request, params }) => {
   const supabase = await createClient();
   const {
     data: { user },
@@ -15,7 +16,7 @@ export async function PATCH(
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "database-tables-catalog/[schemaName]/[tableName]#PATCH", message: "Authentication required." });
   }
 
   const { schemaName, tableName } = await params;
@@ -54,4 +55,5 @@ export async function PATCH(
   }
 
   return NextResponse.json({ success: true, data });
-}
+  },
+);

@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -9,10 +11,12 @@ type Params = { params: Promise<{ projectId: string; drawingId: string }> };
  * GET /api/projects/[projectId]/drawings/[drawingId]/pins
  * List all markup pins for a drawing.
  */
-export async function GET(_req: NextRequest, { params }: Params) {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/drawings/[drawingId]/pins#GET",
+  async ({ request, params }) => {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/drawings/[drawingId]/pins#GET", message: "Authentication required." });
 
   const { drawingId } = await params;
   const service = createServiceClient();
@@ -25,17 +29,20 @@ export async function GET(_req: NextRequest, { params }: Params) {
 
   if (error) return apiErrorResponse(error);
   return NextResponse.json({ pins: data });
-}
+  },
+);
 
 /**
  * POST /api/projects/[projectId]/drawings/[drawingId]/pins
  * Create a new markup pin.
  * Body: { x_pct, y_pct, page, pin_type, entity_id?, entity_label?, entity_number?, entity_status?, color? }
  */
-export async function POST(req: NextRequest, { params }: Params) {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/drawings/[drawingId]/pins#POST",
+  async ({ request, params }) => {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user) throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/drawings/[drawingId]/pins#POST", message: "Authentication required." });
 
   const { projectId, drawingId } = await params;
   const body = await req.json();
@@ -62,4 +69,5 @@ export async function POST(req: NextRequest, { params }: Params) {
 
   if (error) return apiErrorResponse(error);
   return NextResponse.json({ pin: data }, { status: 201 });
-}
+  },
+);

@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
@@ -31,11 +33,10 @@ const updateEmailSchema = z.object({
  * GET /api/projects/[projectId]/emails/[emailId]
  * Fetch a single email by ID
  */
-export async function GET(
-  _request: NextRequest,
-  { params }: RouteParams,
-) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/emails/[emailId]#GET",
+  async ({ request, params }) => {
+  
     const { projectId, emailId } = await params;
     const supabase = await createClient();
 
@@ -45,7 +46,7 @@ export async function GET(
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/emails/[emailId]#GET", message: "Authentication required." });
     }
 
     const { data, error } = await supabase
@@ -64,20 +65,17 @@ export async function GET(
     }
 
     return NextResponse.json(data);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * PUT /api/projects/[projectId]/emails/[emailId]
  * Update an email
  */
-export async function PUT(
-  request: NextRequest,
-  { params }: RouteParams,
-) {
-  try {
+export const PUT = withApiGuardrails(
+  "projects/[projectId]/emails/[emailId]#PUT",
+  async ({ request, params }) => {
+  
     const { projectId, emailId } = await params;
     const supabase = await createClient();
 
@@ -87,7 +85,7 @@ export async function PUT(
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/emails/[emailId]#PUT", message: "Authentication required." });
     }
 
     const body = await request.json();
@@ -120,32 +118,17 @@ export async function PUT(
     }
 
     return NextResponse.json(data);
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        {
-          error: "Validation failed",
-          details: error.issues.map((issue) => ({
-            field: issue.path.join("."),
-            message: issue.message,
-          })),
-        },
-        { status: 400 },
-      );
-    }
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * DELETE /api/projects/[projectId]/emails/[emailId]
  * Soft-delete an email (sets deleted_at)
  */
-export async function DELETE(
-  _request: NextRequest,
-  { params }: RouteParams,
-) {
-  try {
+export const DELETE = withApiGuardrails(
+  "projects/[projectId]/emails/[emailId]#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId, emailId } = await params;
     const supabase = await createClient();
 
@@ -155,7 +138,7 @@ export async function DELETE(
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/emails/[emailId]#DELETE", message: "Authentication required." });
     }
 
     const { data, error } = await supabase
@@ -175,7 +158,5 @@ export async function DELETE(
     }
 
     return NextResponse.json({ message: "Email deleted", id: data.id });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

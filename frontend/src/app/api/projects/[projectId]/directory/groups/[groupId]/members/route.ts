@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
@@ -21,8 +23,10 @@ interface RouteParams {
  * @param params.groupId - The distribution group ID from the route parameters
  * @returns An HTTP JSON NextResponse describing the result. On success the body is `{ success: true }`. On error the body is `{ error: string }` with an appropriate status code: 400 (bad request), 401 (unauthorized), 403 (forbidden), or 500 (internal server error).
  */
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/directory/groups/[groupId]/members#POST",
+  async ({ request, params }) => {
+  
     const { projectId, groupId } = await params;
     const supabase = await createClient();
 
@@ -32,7 +36,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/directory/groups/[groupId]/members#POST", message: "Authentication required." });
     }
 
     // Check permissions
@@ -45,7 +49,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     );
 
     if (!hasPermission) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      throw new GuardrailError({ code: "FORBIDDEN", where: "projects/[projectId]/directory/groups/[groupId]/members#POST", message: "Access denied." });
     }
 
     // Parse request body
@@ -74,7 +78,5 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

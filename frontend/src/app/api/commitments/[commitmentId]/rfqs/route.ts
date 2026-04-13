@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 
 import { apiErrorResponse } from "@/lib/api-error";
@@ -24,11 +26,10 @@ interface CommitmentRfqPayload {
  * Returns RFQs related to a commitment by traversing:
  * commitment -> change_event_line_items.commitment_id -> change_event_rfqs
  */
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ commitmentId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ commitmentId: string }>(
+  "commitments/[commitmentId]/rfqs#GET",
+  async ({ request, params }) => {
+  
     const { commitmentId } = await params;
     const supabase = await createClient();
 
@@ -132,7 +133,5 @@ export async function GET(
     return NextResponse.json({
       data: payload,
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

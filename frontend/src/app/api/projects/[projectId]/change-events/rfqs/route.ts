@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
@@ -99,8 +101,10 @@ async function generateNextRfqNumber(
   return `RFQ-${paddedBase}-${paddedSequence}`;
 }
 
-export async function GET(_request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/change-events/rfqs#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const numericProjectId = parseInt(projectId, 10);
     if (!Number.isFinite(numericProjectId)) {
@@ -112,13 +116,13 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
 
     const payload = await buildRfqPayload(numericProjectId);
     return NextResponse.json({ data: payload });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/change-events/rfqs#POST",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const numericProjectId = parseInt(projectId, 10);
     if (!Number.isFinite(numericProjectId)) {
@@ -146,7 +150,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/change-events/rfqs#POST", message: "Authentication required." });
     }
 
     const { data: changeEvent, error: changeEventError } = await supabase
@@ -207,8 +211,6 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         response_count: 0,
       },
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 

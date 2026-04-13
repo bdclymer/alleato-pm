@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { z } from "zod";
 import { requirePermission } from "@/lib/permissions-guard";
@@ -45,11 +47,10 @@ const budgetLinePatchSchema = z
   );
 
 // GET /api/projects/[id]/budget/lines/[lineId] - Fetch a single budget line item
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ projectId: string; lineId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string; lineId: string }>(
+  "projects/[projectId]/budget/lines/[lineId]#GET",
+  async ({ request, params }) => {
+  
     const { projectId, lineId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -162,19 +163,14 @@ export async function GET(
       cost_code: budgetLine.cost_codes,
       cost_type: budgetLine.cost_code_types,
     });
-  } catch (error: unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Failed to fetch budget line";
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
-  }
-}
+    },
+);
 
 // PATCH /api/projects/[id]/budget/lines/[lineId] - Update a budget line item
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string; lineId: string }> },
-) {
-  try {
+export const PATCH = withApiGuardrails<{ projectId: string; lineId: string }>(
+  "projects/[projectId]/budget/lines/[lineId]#PATCH",
+  async ({ request, params }) => {
+  
     const { projectId, lineId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -335,19 +331,14 @@ export async function PATCH(
         updated_by: updatedLine.updated_by,
       },
     });
-  } catch (error: unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Failed to update budget line";
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
-  }
-}
+    },
+);
 
 // DELETE /api/projects/[id]/budget/lines/[lineId] - Delete a budget line item
-export async function DELETE(
-  _request: NextRequest,
-  { params }: { params: Promise<{ projectId: string; lineId: string }> },
-) {
-  try {
+export const DELETE = withApiGuardrails<{ projectId: string; lineId: string }>(
+  "projects/[projectId]/budget/lines/[lineId]#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId, lineId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -423,9 +414,5 @@ export async function DELETE(
       success: true,
       message: "Budget line deleted successfully",
     });
-  } catch (error: unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Failed to delete budget line";
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
-  }
-}
+    },
+);

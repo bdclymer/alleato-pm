@@ -1,5 +1,7 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
 
@@ -11,8 +13,10 @@ interface RouteParams {
  * PUT /api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/line-items/[lineItemId]
  * Update a line item. Recalculates line_amount = quantity * unit_cost.
  */
-export async function PUT(request: NextRequest, { params }: RouteParams) {
-  try {
+export const PUT = withApiGuardrails(
+  "projects/[projectId]/prime-contract-change-orders/[primeCoId]/line-items/[lineItemId]#PUT",
+  async ({ request, params }) => {
+  
     const { projectId, primeCoId, lineItemId } = await params;
 
     const guard = await requirePermission(Number(projectId), "change_orders", "write");
@@ -25,7 +29,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/prime-contract-change-orders/[primeCoId]/line-items/[lineItemId]#PUT", message: "Authentication required." });
     }
 
     // Verify the PCCO belongs to the requested project
@@ -76,17 +80,17 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ data: lineItem });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * DELETE /api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/line-items/[lineItemId]
  * Delete a line item.
  */
-export async function DELETE(_request: NextRequest, { params }: RouteParams) {
-  try {
+export const DELETE = withApiGuardrails(
+  "projects/[projectId]/prime-contract-change-orders/[primeCoId]/line-items/[lineItemId]#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId, primeCoId, lineItemId } = await params;
 
     const guard = await requirePermission(Number(projectId), "change_orders", "admin");
@@ -99,7 +103,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/prime-contract-change-orders/[primeCoId]/line-items/[lineItemId]#DELETE", message: "Authentication required." });
     }
 
     // Verify the PCCO belongs to the requested project
@@ -128,7 +132,5 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

@@ -1,5 +1,7 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 const ALLOWED_MARKUP_TYPES = ["insurance", "bond", "fee", "overhead", "custom"] as const;
@@ -25,11 +27,10 @@ export interface VerticalMarkupItem {
 }
 
 // GET /api/projects/[id]/vertical-markup - Fetch vertical markup settings
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/vertical-markup#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -43,7 +44,7 @@ export async function GET(
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/vertical-markup#GET", message: "Authentication required." });
     }
 
     const { data, error } = await supabase
@@ -62,17 +63,14 @@ export async function GET(
     return NextResponse.json({
       markups: data || [],
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 // POST /api/projects/[id]/vertical-markup - Create a new vertical markup
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const POST = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/vertical-markup#POST",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -112,7 +110,7 @@ export async function POST(
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/vertical-markup#POST", message: "Authentication required." });
     }
 
     // Get the next calculation order
@@ -158,17 +156,14 @@ export async function POST(
       success: true,
       data,
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 // PUT /api/projects/[id]/vertical-markup - Update vertical markup (bulk update for reordering)
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const PUT = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/vertical-markup#PUT",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -192,7 +187,7 @@ export async function PUT(
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/vertical-markup#PUT", message: "Authentication required." });
     }
 
     // Validate payload first so we do not partially update rows.
@@ -286,17 +281,14 @@ export async function PUT(
       success: true,
       markups: data,
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 // DELETE /api/projects/[id]/vertical-markup - Delete a vertical markup
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const DELETE = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/vertical-markup#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -320,7 +312,7 @@ export async function DELETE(
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/vertical-markup#DELETE", message: "Authentication required." });
     }
 
     const { error } = await supabase
@@ -340,7 +332,5 @@ export async function DELETE(
       success: true,
       message: "Vertical markup deleted successfully",
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

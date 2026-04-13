@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -6,11 +8,10 @@ type RouteContext = { params: Promise<{ projectId: string }> };
 
 // GET /api/projects/[projectId]/billing-periods
 // Fetches project-level billing_periods (not contract_billing_periods)
-export async function GET(
-  _request: NextRequest,
-  context: RouteContext,
-) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/billing-periods#GET",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { projectId } = await context.params;
 
@@ -20,7 +21,7 @@ export async function GET(
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/billing-periods#GET", message: "Authentication required." });
     }
 
     const projectIdNum = parseInt(projectId, 10);
@@ -52,18 +53,14 @@ export async function GET(
     }));
 
     return NextResponse.json({ items, total: items.length });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
+    },
+);
 
 // POST /api/projects/[projectId]/billing-periods
-export async function POST(
-  request: NextRequest,
-  context: RouteContext,
-) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/billing-periods#POST",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { projectId } = await context.params;
 
@@ -73,7 +70,7 @@ export async function POST(
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/billing-periods#POST", message: "Authentication required." });
     }
 
     const projectIdNum = parseInt(projectId, 10);
@@ -110,8 +107,5 @@ export async function POST(
     }
 
     return NextResponse.json({ item: data }, { status: 201 });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return NextResponse.json({ error: message }, { status: 500 });
-  }
-}
+    },
+);

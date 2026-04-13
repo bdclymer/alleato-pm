@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
@@ -31,8 +33,10 @@ const updatePhotoSchema = z.object({
  * GET /api/projects/[projectId]/photos/[photoId]
  * Returns a single photo by ID.
  */
-export async function GET(_request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/photos/[photoId]#GET",
+  async ({ request, params }) => {
+  
     const { projectId, photoId } = await params;
     const supabase = await createClient();
 
@@ -53,17 +57,17 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(data);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * PUT /api/projects/[projectId]/photos/[photoId]
  * Updates a photo record.
  */
-export async function PUT(request: NextRequest, { params }: RouteParams) {
-  try {
+export const PUT = withApiGuardrails(
+  "projects/[projectId]/photos/[photoId]#PUT",
+  async ({ request, params }) => {
+  
     const { projectId, photoId } = await params;
     const supabase = await createClient();
     const body = await request.json();
@@ -74,7 +78,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/photos/[photoId]#PUT", message: "Authentication required." });
     }
 
     const validatedData = updatePhotoSchema.parse(body);
@@ -100,29 +104,17 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(data);
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        {
-          error: "Validation error",
-          details: error.issues.map((e) => ({
-            field: e.path.join("."),
-            message: e.message,
-          })),
-        },
-        { status: 400 },
-      );
-    }
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * DELETE /api/projects/[projectId]/photos/[photoId]
  * Soft-deletes a photo by default. Pass ?permanent=true to hard-delete.
  */
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  try {
+export const DELETE = withApiGuardrails(
+  "projects/[projectId]/photos/[photoId]#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId, photoId } = await params;
     const supabase = await createClient();
     const permanent = new URL(request.url).searchParams.get("permanent") === "true";
@@ -133,7 +125,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/photos/[photoId]#DELETE", message: "Authentication required." });
     }
 
     if (permanent) {
@@ -165,7 +157,5 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

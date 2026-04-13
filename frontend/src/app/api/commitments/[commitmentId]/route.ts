@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import type { ZodError } from "@/app/api/types";
@@ -74,11 +76,10 @@ const commitmentInlinePatchSchema = z
  * @returns {object} 400 - Database query error
  * @returns {object} 500 - Internal server error
  */
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ commitmentId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ commitmentId: string }>(
+  "commitments/[commitmentId]#GET",
+  async ({ request, params }) => {
+  
     const { commitmentId } = await params;
     const supabase = await createClient();
 
@@ -312,10 +313,8 @@ export async function GET(
         "Cache-Control": "private, max-age=5, stale-while-revalidate=30",
       },
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * PUT /api/commitments/[commitmentId]
@@ -338,11 +337,10 @@ export async function GET(
  * @returns {object} 404 - Commitment not found
  * @returns {object} 500 - Internal server error
  */
-export async function PUT(
-  request: Request,
-  { params }: { params: Promise<{ commitmentId: string }> },
-) {
-  try {
+export const PUT = withApiGuardrails<{ commitmentId: string }>(
+  "commitments/[commitmentId]#PUT",
+  async ({ request, params }) => {
+  
     const { commitmentId } = await params;
     const supabase = await createClient();
     const body = await request.json();
@@ -362,7 +360,7 @@ export async function PUT(
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "commitments/[commitmentId]#PUT", message: "Authentication required." });
     }
 
     // Determine the commitment type from the unified view
@@ -447,18 +445,8 @@ export async function PUT(
     }
 
     return NextResponse.json({ data });
-  } catch (error) {
-    if (error instanceof Error && error.name === "ZodError") {
-      const zodError = error as ZodError;
-      return NextResponse.json(
-        { error: "Validation error", issues: zodError.errors },
-        { status: 400 },
-      );
-    }
-
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * DELETE /api/commitments/[commitmentId]
@@ -469,11 +457,10 @@ export async function PUT(
  *
  * For permanent deletion, use DELETE /api/commitments/[commitmentId]/permanent-delete
  */
-export async function DELETE(
-  _request: Request,
-  { params }: { params: Promise<{ commitmentId: string }> },
-) {
-  try {
+export const DELETE = withApiGuardrails<{ commitmentId: string }>(
+  "commitments/[commitmentId]#DELETE",
+  async ({ request, params }) => {
+  
     const { commitmentId } = await params;
     const supabase = await createClient();
 
@@ -482,7 +469,7 @@ export async function DELETE(
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "commitments/[commitmentId]#DELETE", message: "Authentication required." });
     }
 
     // Determine the commitment type from the unified view
@@ -540,10 +527,8 @@ export async function DELETE(
         canRestore: true,
       },
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * PATCH /api/commitments/[commitmentId]
@@ -551,11 +536,10 @@ export async function DELETE(
  * Lightweight partial update endpoint used by inline editing in list views.
  * Only supports safe, text-based fields that can be edited from a table cell.
  */
-export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ commitmentId: string }> },
-) {
-  try {
+export const PATCH = withApiGuardrails<{ commitmentId: string }>(
+  "commitments/[commitmentId]#PATCH",
+  async ({ request, params }) => {
+  
     const { commitmentId } = await params;
     const supabase = await createClient();
     const body = await request.json();
@@ -575,7 +559,7 @@ export async function PATCH(
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "commitments/[commitmentId]#PATCH", message: "Authentication required." });
     }
 
     const { data: unifiedData, error: unifiedError } = await supabase
@@ -629,7 +613,5 @@ export async function PATCH(
         updated_at: data.updated_at,
       },
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

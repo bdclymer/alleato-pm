@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import {
@@ -104,11 +106,10 @@ export async function fetchInvoicePdfData(
   };
 }
 
-export async function GET(
-  _request: NextRequest,
-  context: { params: Promise<{ projectId: string; invoiceId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
+  "projects/[projectId]/invoicing/owner/[invoiceId]/pdf#GET",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { projectId, invoiceId } = await context.params;
 
@@ -118,7 +119,7 @@ export async function GET(
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/invoicing/owner/[invoiceId]/pdf#GET", message: "Authentication required." });
     }
 
     const projectIdNum = parseInt(projectId, 10);
@@ -140,7 +141,5 @@ export async function GET(
         "Cache-Control": "private, no-store",
       },
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

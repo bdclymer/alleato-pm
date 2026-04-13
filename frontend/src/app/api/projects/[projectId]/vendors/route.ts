@@ -1,13 +1,14 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { type NextRequest, NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 
 // Returns vendor companies for this project (used by form dropdowns).
 // If the project has no vendors in project_vendors, returns all vendor companies globally.
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> }
-) {
+export const GET = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/vendors#GET",
+  async ({ request, params }) => {
   const { projectId } = await params;
   const supabase = await createClient();
 
@@ -53,4 +54,5 @@ export async function GET(
       };
     })
   );
-}
+  },
+);

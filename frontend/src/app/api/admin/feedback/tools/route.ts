@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { matchFeedbackToTool, getToolById, listTools } from "@/lib/admin-feedback/tool-matcher";
@@ -29,11 +31,9 @@ async function requireAdmin() {
   return profile?.is_admin ? user : null;
 }
 
-export async function GET(request: Request) {
+export const GET = withApiGuardrails("/api/admin/feedback/tools#GET", async ({ request }) => {
   const admin = await requireAdmin();
-  if (!admin) {
-    return NextResponse.json({ error: "Admin access required" }, { status: 403 });
-  }
+  if (!admin) throw new GuardrailError({ code: "FORBIDDEN", where: "/api/admin/feedback/tools#GET", message: "Admin access required.", status: 403 });
 
   const url = new URL(request.url);
   const parsed = querySchema.safeParse(Object.fromEntries(url.searchParams));
@@ -63,12 +63,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Feedback item not found" }, { status: 404 });
     }
 
-    const match = await matchFeedbackToTool(
-      item.title,
-      item.comment,
-      item.page_path,
-      item.page_url,
-    );
+    const match = await matchFeedbackToTool(item.title, item.comment, item.page_path, item.page_url);
     if (!match) {
       return NextResponse.json({ match: null, message: "No tool matched above threshold" });
     }
@@ -87,7 +82,7 @@ export async function GET(request: Request) {
   }
 
   return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
-}
+});
 
 // ---------------------------------------------------------------------------
 // POST — Assign a tool to a feedback item (manual or auto)
@@ -99,11 +94,9 @@ const assignSchema = z.object({
   auto: z.boolean().optional(),
 });
 
-export async function POST(request: Request) {
+export const POST = withApiGuardrails("/api/admin/feedback/tools#POST", async ({ request }) => {
   const admin = await requireAdmin();
-  if (!admin) {
-    return NextResponse.json({ error: "Admin access required" }, { status: 403 });
-  }
+  if (!admin) throw new GuardrailError({ code: "FORBIDDEN", where: "/api/admin/feedback/tools#POST", message: "Admin access required.", status: 403 });
 
   const body = await request.json();
   const parsed = assignSchema.safeParse(body);
@@ -118,7 +111,6 @@ export async function POST(request: Request) {
   let { toolId } = parsed.data;
   const supabase = createServiceClient();
 
-  // Auto-match if requested
   if (auto) {
     const { data: item } = await supabase
       .from("admin_feedback_items")
@@ -130,16 +122,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Feedback item not found" }, { status: 404 });
     }
 
-    const match = await matchFeedbackToTool(
-      item.title,
-      item.comment,
-      item.page_path,
-      item.page_url,
-    );
+    const match = await matchFeedbackToTool(item.title, item.comment, item.page_path, item.page_url);
     toolId = match?.id ?? null;
   }
 
-  // Resolve context for the tool
   let agentContext: Record<string, unknown> | null = null;
   if (toolId) {
     const tool = await getToolById(toolId);
@@ -160,11 +146,8 @@ export async function POST(request: Request) {
     .maybeSingle();
 
   if (error) {
-    return NextResponse.json(
-      { error: "Failed to assign tool", details: error.message },
-      { status: 500 },
-    );
+    throw new GuardrailError({ code: "INTERNAL_ERROR", where: "/api/admin/feedback/tools#POST", message: error.message });
   }
 
   return NextResponse.json({ item: updated });
-}
+});

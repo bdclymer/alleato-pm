@@ -1,13 +1,14 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 // GET: Get the post-meeting digest for a specific meeting
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ projectId: string; meetingId: string }> }
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string; meetingId: string }>(
+  "projects/[projectId]/meetings/[meetingId]/digest#GET",
+  async ({ request, params }) => {
+  
     const { meetingId } = await params;
     const supabase = await createClient();
     const {
@@ -15,7 +16,7 @@ export async function GET(
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/meetings/[meetingId]/digest#GET", message: "Authentication required." });
     }
 
     const { data, error } = await supabase
@@ -36,7 +37,5 @@ export async function GET(
     }
 
     return NextResponse.json({ data });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

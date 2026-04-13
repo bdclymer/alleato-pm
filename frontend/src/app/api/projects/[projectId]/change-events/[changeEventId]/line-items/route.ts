@@ -1,5 +1,7 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from '@/lib/supabase/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { createLineItemSchema, updateLineItemSchema } from '../../validation';
 import { ZodError } from 'zod';
 import { apiErrorResponse } from "@/lib/api-error";
@@ -16,11 +18,10 @@ interface RouteParams {
  * GET /api/projects/[id]/change-events/[changeEventId]/line-items
  * Returns all line items for a change event
  */
-export async function GET(
-  request: NextRequest,
-  { params }: RouteParams
-) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/change-events/[changeEventId]/line-items#GET",
+  async ({ request, params }) => {
+  
     const { projectId, changeEventId } = await params;
     const supabase = await createClient();
 
@@ -150,20 +151,17 @@ export async function GET(
         changeEvent: `/api/projects/${projectId}/change-events/${changeEventId}`,
       },
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * POST /api/projects/[id]/change-events/[changeEventId]/line-items
  * Creates a new line item for a change event
  */
-export async function POST(
-  request: NextRequest,
-  { params }: RouteParams
-) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/change-events/[changeEventId]/line-items#POST",
+  async ({ request, params }) => {
+  
     const { projectId, changeEventId } = await params;
     const projectIdNum = parseInt(projectId, 10);
     const guard = await requirePermission(projectIdNum, "change_orders", "write");
@@ -175,10 +173,7 @@ export async function POST(
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/change-events/[changeEventId]/line-items#POST", message: "Authentication required." });
     }
 
     // Validate request body
@@ -363,33 +358,17 @@ export async function POST(
     };
 
     return NextResponse.json(response, { status: 201 });
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        {
-          error: 'Validation error',
-          details: error.issues.map(e => ({
-            field: e.path.join('.'),
-            message: e.message
-          })),
-        },
-        { status: 400 }
-      );
-    }
-
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * PUT /api/projects/[id]/change-events/[changeEventId]/line-items
  * Bulk update line items (for reordering)
  */
-export async function PUT(
-  request: NextRequest,
-  { params }: RouteParams
-) {
-  try {
+export const PUT = withApiGuardrails(
+  "projects/[projectId]/change-events/[changeEventId]/line-items#PUT",
+  async ({ request, params }) => {
+  
     const { projectId, changeEventId } = await params;
     const projectIdNum = parseInt(projectId, 10);
     const guard = await requirePermission(projectIdNum, "change_orders", "write");
@@ -401,10 +380,7 @@ export async function PUT(
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/change-events/[changeEventId]/line-items#PUT", message: "Authentication required." });
     }
 
     // Verify change event exists
@@ -458,7 +434,5 @@ export async function PUT(
       .eq('id', changeEventId);
 
     return NextResponse.json({ message: 'Line items reordered successfully' });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

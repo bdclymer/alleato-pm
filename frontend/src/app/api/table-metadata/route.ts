@@ -1,14 +1,18 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
-export async function GET() {
-  try {
+export const GET = withApiGuardrails(
+  "table-metadata#GET",
+  async () => {
+  
     // Use authenticated client — table_metadata requires a logged-in user.
     // OWASP A01:2021 - Broken Access Control: removed unauthenticated service client.
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "table-metadata#GET", message: "Authentication required." });
     }
 
     const { data, error } = await supabase
@@ -26,11 +30,5 @@ export async function GET() {
     }
 
     return NextResponse.json(data);
-  } catch (error) {
-    console.error("Unexpected error:", error);
-    return NextResponse.json(
-      { error: "An unexpected error occurred" },
-      { status: 500 }
-    );
-  }
-}
+    },
+);

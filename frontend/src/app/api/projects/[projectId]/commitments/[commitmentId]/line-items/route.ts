@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
@@ -44,8 +46,10 @@ interface UpdatePayload {
  * @returns {object} 404 - Commitment not found
  * @returns {object} 500 - Internal server error
  */
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/commitments/[commitmentId]/line-items#GET",
+  async ({ request, params }) => {
+  
     const { projectId, commitmentId } = await params;
     const numericProjectId = Number.parseInt(projectId, 10);
 
@@ -98,10 +102,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       data: lineItems || [],
       commitmentType: unifiedData.commitment_type,
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * PUT /api/projects/[projectId]/commitments/[commitmentId]/line-items
@@ -139,8 +141,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
  * @returns {object} 401/403 - Unauthorized or insufficient project access
  * @returns {object} 500 - Internal server error
  */
-export async function PUT(request: NextRequest, { params }: RouteParams) {
-  try {
+export const PUT = withApiGuardrails(
+  "projects/[projectId]/commitments/[commitmentId]/line-items#PUT",
+  async ({ request, params }) => {
+  
     const { projectId, commitmentId } = await params;
     const numericProjectId = Number.parseInt(projectId, 10);
 
@@ -280,16 +284,5 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
         idsToDelete.length > 0 ? `, deleted ${idsToDelete.length}` : ""
       }`,
     });
-  } catch (error) {
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to save line items",
-        details: error instanceof Error ? error.stack : undefined,
-      },
-      { status: 500 },
-    );
-  }
-}
+    },
+);

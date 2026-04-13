@@ -1,12 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 // GET /api/projects/[id]/budget/lines/[lineId]/history - Get change history for a budget line item
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ projectId: string; lineId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string; lineId: string }>(
+  "projects/[projectId]/budget/lines/[lineId]/history#GET",
+  async ({ request, params }) => {
+  
     const { projectId, lineId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -106,9 +107,5 @@ export async function GET(
     }));
 
     return NextResponse.json({ history });
-  } catch (error: unknown) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Failed to fetch change history";
-    return NextResponse.json({ error: errorMessage }, { status: 500 });
-  }
-}
+    },
+);

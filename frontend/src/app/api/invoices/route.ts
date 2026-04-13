@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -67,12 +69,14 @@ const createInvoiceSchema = z.object({
   notes: z.string().trim().max(2000, "Notes must be at most 2000 characters").optional().nullable(),
 });
 
-export async function GET(request: Request) {
-  try {
+export const GET = withApiGuardrails(
+  "invoices#GET",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "invoices#GET", message: "Authentication required." });
     }
     const { searchParams } = new URL(request.url);
 
@@ -132,17 +136,17 @@ export async function GET(request: Request) {
     });
 
     return NextResponse.json({ data: mapped });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
-export async function POST(request: Request) {
-  try {
+export const POST = withApiGuardrails(
+  "invoices#POST",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "invoices#POST", message: "Authentication required." });
     }
     const body = await request.json();
 
@@ -201,7 +205,5 @@ export async function POST(request: Request) {
     };
 
     return NextResponse.json({ data: mapped }, { status: 201 });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

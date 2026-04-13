@@ -1,6 +1,8 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createAttachmentSchema } from "../../validation";
 import { ZodError } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -14,8 +16,10 @@ interface RouteParams {
  * GET /api/projects/[id]/change-events/[changeEventId]/attachments
  * Returns all attachments for a change event
  */
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/change-events/[changeEventId]/attachments#GET",
+  async ({ request, params }) => {
+  
     const { projectId, changeEventId } = await params;
     const serviceClient = createServiceClient();
 
@@ -70,17 +74,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         changeEvent: `/api/projects/${projectId}/change-events/${changeEventId}`,
       },
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * POST /api/projects/[id]/change-events/[changeEventId]/attachments
  * Uploads a new attachment to a change event
  */
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/change-events/[changeEventId]/attachments#POST",
+  async ({ request, params }) => {
+  
     const { projectId, changeEventId } = await params;
     const projectIdNum = parseInt(projectId, 10);
     const guard = await requirePermission(projectIdNum, "change_orders", "write");
@@ -96,7 +100,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/change-events/[changeEventId]/attachments#POST", message: "Authentication required." });
     }
 
     // Verify change event exists
@@ -227,30 +231,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     };
 
     return NextResponse.json(response, { status: 201 });
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        {
-          error: "Validation error",
-          details: error.issues.map((e) => ({
-            field: e.path.join("."),
-            message: e.message,
-          })),
-        },
-        { status: 400 },
-      );
-    }
-
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * DELETE /api/projects/[id]/change-events/[changeEventId]/attachments
  * Deletes multiple attachments (bulk delete)
  */
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  try {
+export const DELETE = withApiGuardrails(
+  "projects/[projectId]/change-events/[changeEventId]/attachments#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId, changeEventId } = await params;
     const projectIdNum = parseInt(projectId, 10);
     const guard = await requirePermission(projectIdNum, "change_orders", "admin");
@@ -267,7 +258,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/change-events/[changeEventId]/attachments#DELETE", message: "Authentication required." });
     }
 
     // Verify change event exists
@@ -359,7 +350,5 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({
       message: `${attachments?.length || 0} attachment(s) deleted successfully`,
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

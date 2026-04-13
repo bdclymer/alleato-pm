@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
@@ -31,11 +33,10 @@ const createEmailSchema = z.object({
  * GET /api/projects/[projectId]/emails
  * Fetch all emails for a project with optional filters
  */
-export async function GET(
-  request: NextRequest,
-  { params }: RouteParams,
-) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/emails#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
 
@@ -45,7 +46,7 @@ export async function GET(
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/emails#GET", message: "Authentication required." });
     }
 
     const { searchParams } = new URL(request.url);
@@ -85,20 +86,17 @@ export async function GET(
     }
 
     return NextResponse.json(data ?? []);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * POST /api/projects/[projectId]/emails
  * Create a new email
  */
-export async function POST(
-  request: NextRequest,
-  { params }: RouteParams,
-) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/emails#POST",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
 
@@ -108,7 +106,7 @@ export async function POST(
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/emails#POST", message: "Authentication required." });
     }
 
     const body = await request.json();
@@ -131,19 +129,5 @@ export async function POST(
     }
 
     return NextResponse.json(data, { status: 201 });
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        {
-          error: "Validation failed",
-          details: error.issues.map((issue) => ({
-            field: issue.path.join("."),
-            message: issue.message,
-          })),
-        },
-        { status: 400 },
-      );
-    }
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

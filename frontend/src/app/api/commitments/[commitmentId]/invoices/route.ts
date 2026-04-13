@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 
 import { apiErrorResponse } from "@/lib/api-error";
@@ -160,11 +162,10 @@ async function fetchLineItemsForCommitment(
  * SOV line-item progress. This is a view over commitment billing state, not a
  * separate owner invoice writer.
  */
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ commitmentId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ commitmentId: string }>(
+  "commitments/[commitmentId]/invoices#GET",
+  async ({ request, params }) => {
+  
     const { commitmentId } = await params;
     const supabase = await createClient();
 
@@ -260,10 +261,8 @@ export async function GET(
     };
 
     return NextResponse.json(responseData);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * POST /api/commitments/[commitmentId]/invoices
@@ -272,11 +271,10 @@ export async function GET(
  * This endpoint stays disabled to avoid writing commitment invoices into the
  * wrong tables.
  */
-export async function POST(
-  _request: Request,
-  { params }: { params: Promise<{ commitmentId: string }> },
-) {
-  try {
+export const POST = withApiGuardrails<{ commitmentId: string }>(
+  "commitments/[commitmentId]/invoices#POST",
+  async ({ request, params }) => {
+  
     const { commitmentId } = await params;
     const supabase = await createClient();
     const context = await fetchCommitmentContext(supabase, commitmentId);
@@ -292,7 +290,5 @@ export async function POST(
       },
       { status: 405 },
     );
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

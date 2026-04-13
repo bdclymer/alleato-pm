@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
@@ -18,8 +20,10 @@ const createPackageSchema = z.object({
  * GET /api/projects/[projectId]/submittals/packages
  * Returns submittal packages for the project ordered by name.
  */
-export async function GET(_req: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/submittals/packages#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
 
@@ -32,17 +36,17 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
     if (error) return apiErrorResponse(error);
 
     return NextResponse.json(data ?? []);
-  } catch (err) {
-    return apiErrorResponse(err);
-  }
-}
+    },
+);
 
 /**
  * POST /api/projects/[projectId]/submittals/packages
  * Creates a new submittal package for the project.
  */
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/submittals/packages#POST",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
 
@@ -52,7 +56,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/submittals/packages#POST", message: "Authentication required." });
     }
 
     const body = await request.json();
@@ -74,13 +78,5 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(data, { status: 201 });
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        { error: "Validation error", details: error.issues },
-        { status: 400 },
-      );
-    }
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

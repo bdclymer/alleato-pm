@@ -1,18 +1,19 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 // GET: Get a single meeting
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ projectId: string; meetingId: string }> }
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string; meetingId: string }>(
+  "projects/[projectId]/meetings/[meetingId]#GET",
+  async ({ request, params }) => {
+  
     const { projectId, meetingId } = await params;
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/meetings/[meetingId]#GET", message: "Authentication required." });
     }
 
     const { data, error } = await supabase
@@ -30,22 +31,19 @@ export async function GET(
     }
 
     return NextResponse.json({ data });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 // PUT: Update a meeting
-export async function PUT(
-  request: Request,
-  { params }: { params: Promise<{ projectId: string; meetingId: string }> }
-) {
-  try {
+export const PUT = withApiGuardrails<{ projectId: string; meetingId: string }>(
+  "projects/[projectId]/meetings/[meetingId]#PUT",
+  async ({ request, params }) => {
+  
     const { projectId, meetingId } = await params;
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/meetings/[meetingId]#PUT", message: "Authentication required." });
     }
 
     const body = await request.json();
@@ -78,22 +76,19 @@ export async function PUT(
     }
 
     return NextResponse.json({ data });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 // DELETE: Delete a meeting
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ projectId: string; meetingId: string }> }
-) {
-  try {
+export const DELETE = withApiGuardrails<{ projectId: string; meetingId: string }>(
+  "projects/[projectId]/meetings/[meetingId]#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId, meetingId } = await params;
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/meetings/[meetingId]#DELETE", message: "Authentication required." });
     }
 
     // Delete associated meeting segments first
@@ -114,7 +109,5 @@ export async function DELETE(
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

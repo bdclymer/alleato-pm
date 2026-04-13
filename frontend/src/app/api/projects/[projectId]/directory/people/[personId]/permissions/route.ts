@@ -1,13 +1,14 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { DirectoryService } from "@/services/directoryService";
 import { apiErrorResponse } from "@/lib/api-error";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string; personId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string; personId: string }>(
+  "projects/[projectId]/directory/people/[personId]/permissions#GET",
+  async ({ request, params }) => {
+  
     const { projectId, personId } = await params;
     const supabase = await createClient();
 
@@ -17,7 +18,7 @@ export async function GET(
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/directory/people/[personId]/permissions#GET", message: "Authentication required." });
     }
 
     // Get user permissions
@@ -36,16 +37,13 @@ export async function GET(
       },
       { status: 200 },
     );
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string; personId: string }> },
-) {
-  try {
+export const PATCH = withApiGuardrails<{ projectId: string; personId: string }>(
+  "projects/[projectId]/directory/people/[personId]/permissions#PATCH",
+  async ({ request, params }) => {
+  
     const { projectId, personId } = await params;
     const supabase = await createClient();
 
@@ -55,7 +53,7 @@ export async function PATCH(
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/directory/people/[personId]/permissions#PATCH", message: "Authentication required." });
     }
 
     // Parse request body
@@ -87,7 +85,5 @@ export async function PATCH(
       },
       { status: 200 },
     );
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

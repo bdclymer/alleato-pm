@@ -1,11 +1,12 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ feature: string }> },
-) {
+export const GET = withApiGuardrails<{ feature: string }>(
+  "dev-panel/comments/[feature]#GET",
+  async ({ request, params }) => {
   const { feature } = await params;
 
   if (!/^[\w-]+$/.test(feature)) {
@@ -25,12 +26,12 @@ export async function GET(
   }
 
   return NextResponse.json({ feature, comments: data ?? [] });
-}
+  },
+);
 
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ feature: string }> },
-) {
+export const POST = withApiGuardrails<{ feature: string }>(
+  "dev-panel/comments/[feature]#POST",
+  async ({ request, params }) => {
   const { feature } = await params;
 
   if (!/^[\w-]+$/.test(feature)) {
@@ -77,4 +78,5 @@ export async function POST(
   }
 
   return NextResponse.json({ comment: data }, { status: 201 });
-}
+  },
+);

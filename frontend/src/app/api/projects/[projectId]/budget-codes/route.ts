@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
@@ -54,11 +56,10 @@ const formatBudgetCode = (options: {
   return `${code}${costTypeSuffix} – ${safeDescription}${typeDescription}`;
 };
 
-export async function GET(
-  _request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/budget-codes#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const projectIdNum = Number.parseInt(projectId, 10);
 
@@ -150,16 +151,13 @@ export async function GET(
     });
 
     return NextResponse.json({ budgetCodes });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const POST = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/budget-codes#POST",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const projectIdNum = Number.parseInt(projectId, 10);
 
@@ -195,7 +193,7 @@ export async function POST(
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/budget-codes#POST", message: "Authentication required." });
     }
 
     // Resolve cost_type_id to UUID
@@ -294,7 +292,5 @@ export async function POST(
     };
 
     return NextResponse.json({ budgetCode });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

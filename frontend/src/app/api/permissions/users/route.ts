@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
@@ -10,14 +12,16 @@ import { createClient } from "@/lib/supabase/server";
  *
  * Admin only.
  */
-export async function GET() {
-  try {
+export const GET = withApiGuardrails(
+  "permissions/users#GET",
+  async () => {
+  
     const supabase = await createClient();
     const {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "permissions/users#GET", message: "Authentication required." });
     }
 
     const { data: profile } = await supabase
@@ -27,7 +31,7 @@ export async function GET() {
       .maybeSingle();
 
     if (!profile?.is_admin) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      throw new GuardrailError({ code: "FORBIDDEN", where: "permissions/users#GET", message: "Access denied." });
     }
 
     const { data: people, error: peopleError } = await supabase
@@ -118,11 +122,5 @@ export async function GET() {
     }));
 
     return NextResponse.json({ data: users });
-  } catch (error) {
-    console.error("Error loading permission users:", error);
-    return NextResponse.json(
-      { error: "Failed to load users" },
-      { status: 500 }
-    );
-  }
-}
+    },
+);

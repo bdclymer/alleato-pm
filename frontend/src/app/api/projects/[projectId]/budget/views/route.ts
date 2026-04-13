@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import type { CreateBudgetViewRequest } from "@/types/budget-views";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -6,11 +8,10 @@ import { requirePermission } from "@/lib/permissions-guard";
 
 // GET /api/projects/[id]/budget/views
 // Fetch all budget views for a project
-export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/budget/views#GET",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { projectId } = await context.params;
 
@@ -79,18 +80,15 @@ export async function GET(
     }));
 
     return NextResponse.json({ views: viewsWithSortedColumns });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 // POST /api/projects/[id]/budget/views
 // Create a new budget view
-export async function POST(
-  request: NextRequest,
-  context: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const POST = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/budget/views#POST",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { projectId } = await context.params;
     const body: CreateBudgetViewRequest = await request.json();
@@ -204,7 +202,5 @@ export async function POST(
       },
       { status: 201 },
     );
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

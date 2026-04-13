@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { DrawingService } from "@/services/DrawingService";
@@ -9,10 +11,9 @@ import { apiErrorResponse } from "@/lib/api-error";
  * GET /api/projects/[projectId]/drawings
  * List drawings with optional filters
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
+export const GET = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/drawings#GET",
+  async ({ request, params }) => {
   const { projectId } = await params;
   const supabase = await createClient();
 
@@ -21,7 +22,7 @@ export async function GET(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/drawings#GET", message: "Authentication required." });
   }
 
   // Parse query parameters
@@ -50,16 +51,16 @@ export async function GET(
   }
 
   return NextResponse.json(result.data);
-}
+  },
+);
 
 /**
  * POST /api/projects/[projectId]/drawings
  * Create a new drawing with file upload
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
+export const POST = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/drawings#POST",
+  async ({ request, params }) => {
   const { projectId } = await params;
   const supabase = await createClient();
 
@@ -68,7 +69,7 @@ export async function POST(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/drawings#POST", message: "Authentication required." });
   }
 
   try {
@@ -188,4 +189,5 @@ export async function POST(
       { status: 500 },
     );
   }
-}
+  },
+);

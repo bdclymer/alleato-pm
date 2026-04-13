@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
@@ -10,7 +12,9 @@ import { createClient } from "@/lib/supabase/server";
  * This creates/updates the user_profiles row with is_admin = true,
  * which causes PermissionService.hasPermission to bypass all checks.
  */
-export async function POST() {
+export const POST = withApiGuardrails(
+  "dev/make-admin#POST",
+  async () => {
   if (process.env.NODE_ENV !== "development") {
     return NextResponse.json(
       { error: "Only available in development" },
@@ -98,14 +102,17 @@ export async function POST() {
       { status: 500 },
     );
   }
-}
+  },
+);
 
 /**
  * GET /api/dev/make-admin
  *
  * Check current admin status.
  */
-export async function GET() {
+export const GET = withApiGuardrails(
+  "dev/make-admin#GET",
+  async () => {
   if (process.env.NODE_ENV !== "development") {
     return NextResponse.json(
       { error: "Only available in development" },
@@ -146,4 +153,5 @@ export async function GET() {
       { status: 500 },
     );
   }
-}
+  },
+);

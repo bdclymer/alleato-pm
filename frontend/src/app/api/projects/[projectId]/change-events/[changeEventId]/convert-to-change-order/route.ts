@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 
 import { requirePermission } from "@/lib/permissions-guard";
 
@@ -8,7 +10,9 @@ interface RouteParams {
 
 // Two-tier workflow enforcement:
 // Change events must go to PCO first, then approved PCOs can be converted to CO.
-export async function POST(_request: NextRequest, { params }: RouteParams) {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/change-events/[changeEventId]/convert-to-change-order#POST",
+  async ({ request, params }) => {
   const { projectId, changeEventId } = await params;
   const numericProjectId = Number.parseInt(projectId, 10);
 
@@ -29,4 +33,5 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
     },
     { status: 409 },
   );
-}
+  },
+);

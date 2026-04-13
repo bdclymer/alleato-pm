@@ -7,7 +7,9 @@
  * Supports optional PDF attachment and custom messages
  */
 
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
 interface EmailRecipient {
@@ -77,11 +79,10 @@ interface CommitmentData {
  * @note Currently logs email but actual sending requires integration with an
  *   email service (SendGrid, AWS SES, Resend, Postmark).
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ commitmentId: string }> }
-) {
-  try {
+export const POST = withApiGuardrails<{ commitmentId: string }>(
+  "commitments/[commitmentId]/email#POST",
+  async ({ request, params }) => {
+  
     const { commitmentId } = await params;
     const supabase = await createClient();
 
@@ -92,10 +93,7 @@ export async function POST(
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized - please log in" },
-        { status: 401 }
-      );
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "commitments/[commitmentId]/email#POST", message: "Authentication required." });
     }
 
     const body = await request.json();
@@ -190,17 +188,8 @@ export async function POST(
       message: `Email sent to ${emailParams.recipients.length} recipient(s)`,
       recipients: emailParams.recipients.map((r) => r.email),
     });
-  } catch (error) {
-    console.error("Email send error:", error);
-    return NextResponse.json(
-      {
-        error: "Could not send email",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
-  }
-}
+    },
+);
 
 // =============================================================================
 // DATA FETCHING

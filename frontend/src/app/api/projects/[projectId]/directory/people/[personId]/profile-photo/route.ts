@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { Buffer } from "node:buffer";
 import { NextResponse, type NextRequest } from "next/server";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
@@ -15,8 +17,10 @@ interface RouteParams {
   params: Promise<{ projectId: string; personId: string }>;
 }
 
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/directory/people/[personId]/profile-photo#POST",
+  async ({ request, params }) => {
+  
     const { projectId, personId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -32,7 +36,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/directory/people/[personId]/profile-photo#POST", message: "Authentication required." });
     }
 
     const permissionService = new PermissionService(supabase);
@@ -89,8 +93,5 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       .eq("id", personId);
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("[DirectoryAvatarUpload] Failed", error);
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

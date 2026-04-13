@@ -1,7 +1,9 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { apiErrorResponse } from "@/lib/api-error";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { requirePermission } from "@/lib/permissions-guard";
 
 interface RouteParams {
@@ -12,8 +14,10 @@ interface RouteParams {
  * DELETE /api/projects/[projectId]/contracts/[contractId]/attachments/[attachmentId]
  * Deletes an attachment from a prime contract
  */
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  try {
+export const DELETE = withApiGuardrails(
+  "projects/[projectId]/contracts/[contractId]/attachments/[attachmentId]#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId, contractId, attachmentId } = await params;
     const projectIdNum = parseInt(projectId, 10);
     const guard = await requirePermission(projectIdNum, "contracts", "admin");
@@ -28,7 +32,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/contracts/[contractId]/attachments/[attachmentId]#DELETE", message: "Authentication required." });
     }
 
     const { data: link, error: linkError } = await serviceClient
@@ -97,7 +101,5 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

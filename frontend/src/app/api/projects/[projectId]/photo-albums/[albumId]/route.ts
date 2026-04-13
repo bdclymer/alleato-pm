@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
@@ -14,8 +16,10 @@ const updateAlbumSchema = z.object({
   description: z.string().nullable().optional(),
 });
 
-export async function PATCH(request: NextRequest, { params }: RouteParams) {
-  try {
+export const PATCH = withApiGuardrails(
+  "projects/[projectId]/photo-albums/[albumId]#PATCH",
+  async ({ request, params }) => {
+  
     const { projectId, albumId } = await params;
     const supabase = await createClient();
 
@@ -24,7 +28,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/photo-albums/[albumId]#PATCH", message: "Authentication required." });
     }
 
     const body = await request.json();
@@ -41,16 +45,13 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     if (error) return apiErrorResponse(error);
     if (!data) return NextResponse.json({ error: "Album not found" }, { status: 404 });
     return NextResponse.json(data);
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json({ error: "Validation error", details: error.issues }, { status: 400 });
-    }
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
-export async function DELETE(_request: NextRequest, { params }: RouteParams) {
-  try {
+export const DELETE = withApiGuardrails(
+  "projects/[projectId]/photo-albums/[albumId]#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId, albumId } = await params;
     const supabase = await createClient();
 
@@ -59,7 +60,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/photo-albums/[albumId]#DELETE", message: "Authentication required." });
     }
 
     // Move photos in this album to "Default" before deleting
@@ -77,7 +78,5 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
 
     if (error) return apiErrorResponse(error);
     return NextResponse.json({ success: true });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

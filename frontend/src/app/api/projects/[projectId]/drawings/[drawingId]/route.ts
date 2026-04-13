@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { DrawingService } from "@/services/DrawingService";
@@ -8,10 +10,9 @@ import { apiErrorResponse } from "@/lib/api-error";
  * GET /api/projects/[projectId]/drawings/[drawingId]
  * Get a single drawing by ID with full details
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string; drawingId: string }> },
-) {
+export const GET = withApiGuardrails<{ projectId: string; drawingId: string }>(
+  "projects/[projectId]/drawings/[drawingId]#GET",
+  async ({ request, params }) => {
   const { projectId, drawingId } = await params;
   const supabase = await createClient();
 
@@ -20,7 +21,7 @@ export async function GET(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/drawings/[drawingId]#GET", message: "Authentication required." });
   }
 
   const service = new DrawingService(createServiceClient());
@@ -31,16 +32,16 @@ export async function GET(
   }
 
   return NextResponse.json(result.data);
-}
+  },
+);
 
 /**
  * PATCH /api/projects/[projectId]/drawings/[drawingId]
  * Update drawing metadata (not file - use revisions for that)
  */
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string; drawingId: string }> },
-) {
+export const PATCH = withApiGuardrails<{ projectId: string; drawingId: string }>(
+  "projects/[projectId]/drawings/[drawingId]#PATCH",
+  async ({ request, params }) => {
   const { projectId, drawingId } = await params;
   const supabase = await createClient();
 
@@ -49,7 +50,7 @@ export async function PATCH(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/drawings/[drawingId]#PATCH", message: "Authentication required." });
   }
 
   try {
@@ -79,16 +80,16 @@ export async function PATCH(
       { status: 500 },
     );
   }
-}
+  },
+);
 
 /**
  * DELETE /api/projects/[projectId]/drawings/[drawingId]
  * Delete a drawing and all associated data
  */
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string; drawingId: string }> },
-) {
+export const DELETE = withApiGuardrails<{ projectId: string; drawingId: string }>(
+  "projects/[projectId]/drawings/[drawingId]#DELETE",
+  async ({ request, params }) => {
   const { projectId, drawingId } = await params;
   const supabase = await createClient();
 
@@ -97,7 +98,7 @@ export async function DELETE(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/drawings/[drawingId]#DELETE", message: "Authentication required." });
   }
 
   const service = new DrawingService(createServiceClient());
@@ -108,4 +109,5 @@ export async function DELETE(
   }
 
   return NextResponse.json({ success: true }, { status: 200 });
-}
+  },
+);

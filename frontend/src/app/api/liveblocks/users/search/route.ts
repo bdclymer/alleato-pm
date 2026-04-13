@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { AI_USER_ID, AI_USER_INFO } from "@/lib/liveblocks/ai-user";
 
@@ -8,7 +10,9 @@ import { AI_USER_ID, AI_USER_INFO } from "@/lib/liveblocks/ai-user";
  * Returns user IDs matching the search text.
  * Called by the LiveblocksProvider's `resolveMentionSuggestions` callback.
  */
-export async function GET(request: NextRequest) {
+export const GET = withApiGuardrails(
+  "liveblocks/users/search#GET",
+  async ({ request }) => {
   const text = request.nextUrl.searchParams.get("text") ?? "";
   const normalised = text.trim().toLowerCase();
 
@@ -46,4 +50,5 @@ export async function GET(request: NextRequest) {
     console.error("[liveblocks/users/search] Error:", error);
     return NextResponse.json([]);
   }
-}
+  },
+);

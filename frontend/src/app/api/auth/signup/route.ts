@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -34,8 +36,10 @@ function getSiteUrl() {
   return "http://localhost:3000";
 }
 
-export async function POST(request: Request) {
-  try {
+export const POST = withApiGuardrails(
+  "auth/signup#POST",
+  async ({ request }) => {
+  
     const body = await request.json();
 
     // Validate input with Zod schema
@@ -119,7 +123,5 @@ export async function POST(request: Request) {
       user: existingPerson || { id: personId, email, first_name: displayName },
       emailConfirmationSent: !signUpData.session,
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
@@ -6,17 +8,16 @@ import { apiErrorResponse } from "@/lib/api-error";
 // Phase 1: logs the intent to the audit log so the Change History tab reflects
 // the user action. The actual Acumatica push hook will be wired in a follow-up
 // once the AP Bill endpoint contract is confirmed.
-export async function POST(
-  _request: NextRequest,
-  context: { params: Promise<{ projectId: string; invoiceId: string }> },
-) {
-  try {
+export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
+  "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/erp-resend#POST",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { invoiceId } = await context.params;
     const invoiceIdNum = parseInt(invoiceId, 10);
 
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!user) throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/erp-resend#POST", message: "Authentication required." });
 
     // Verify the invoice exists
     const { data: invoice, error: fetchError } = await supabase
@@ -51,7 +52,5 @@ export async function POST(
       message: "ERP resend queued",
       status: "queued",
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
@@ -25,8 +27,10 @@ const respondSchema = z.object({
  * Upserts a response for the current user on a workflow step.
  * Also advances ball_in_court to the next step's first pending user.
  */
-export async function POST(req: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/submittals/[submittalId]/workflow-steps/[stepId]/respond#POST",
+  async ({ request, params }) => {
+  
     const { submittalId, stepId } = await params;
     const supabase = await createClient();
 
@@ -36,7 +40,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/submittals/[submittalId]/workflow-steps/[stepId]/respond#POST", message: "Authentication required." });
     }
 
     const body = await req.json();
@@ -117,13 +121,5 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(response);
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        { error: "Validation error", details: error.issues },
-        { status: 400 },
-      );
-    }
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

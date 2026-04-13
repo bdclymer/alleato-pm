@@ -1,8 +1,12 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
-export async function GET(request: NextRequest) {
+export const GET = withApiGuardrails(
+  "team-chat/messages#GET",
+  async ({ request }) => {
   const supabase = await createClient();
   const { searchParams } = new URL(request.url);
   const channelId = searchParams.get("channel");
@@ -24,9 +28,12 @@ export async function GET(request: NextRequest) {
   }
 
   return NextResponse.json(data);
-}
+  },
+);
 
-export async function POST(request: NextRequest) {
+export const POST = withApiGuardrails(
+  "team-chat/messages#POST",
+  async ({ request }) => {
   const supabase = await createClient();
 
   const {
@@ -35,7 +42,7 @@ export async function POST(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "team-chat/messages#POST", message: "Authentication required." });
   }
 
   const body = await request.json();
@@ -68,4 +75,5 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json(data, { status: 201 });
-}
+  },
+);

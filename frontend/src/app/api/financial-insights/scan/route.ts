@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -20,10 +22,12 @@ type AiInsightInsert = Database["public"]["Tables"]["ai_insights"]["Insert"];
  *
  * Returns: { scanned: number, alertsGenerated: number, errors: string[] }
  */
-export async function POST() {
+export const POST = withApiGuardrails(
+  "financial-insights/scan#POST",
+  async () => {
   const user = await getApiRouteUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "financial-insights/scan#POST", message: "Authentication required." });
   }
 
   const supabase = createServiceClient();
@@ -273,4 +277,5 @@ export async function POST() {
       { status: 500 },
     );
   }
-}
+  },
+);

@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { PermissionService } from "@/services/permissionService";
 
@@ -20,8 +22,10 @@ interface EmailNotificationPreferences {
 /**
  * Get email notification preferences for a user in a project.
  */
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/directory/people/[personId]/email-notifications#GET",
+  async ({ request, params }) => {
+  
     const { projectId, personId } = await params;
     const supabase = await createClient();
 
@@ -31,7 +35,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/directory/people/[personId]/email-notifications#GET", message: "Authentication required." });
     }
 
     // Check permissions
@@ -94,23 +98,16 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       preferences,
       updated_at: data?.updated_at || null,
     });
-  } catch (error) {
-    return NextResponse.json(
-      {
-        error: "server_error",
-        message: "An unexpected error occurred",
-        code: "INTERNAL_ERROR",
-      },
-      { status: 500 },
-    );
-  }
-}
+    },
+);
 
 /**
  * Update email notification preferences for a user in a project.
  */
-export async function PATCH(request: NextRequest, { params }: RouteParams) {
-  try {
+export const PATCH = withApiGuardrails(
+  "projects/[projectId]/directory/people/[personId]/email-notifications#PATCH",
+  async ({ request, params }) => {
+  
     const { projectId, personId } = await params;
     const supabase = await createClient();
 
@@ -120,7 +117,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/directory/people/[personId]/email-notifications#PATCH", message: "Authentication required." });
     }
 
     // Check permissions - users can update their own notifications
@@ -207,14 +204,5 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       },
       updated_at: data.updated_at,
     });
-  } catch (error) {
-    return NextResponse.json(
-      {
-        error: "server_error",
-        message: "An unexpected error occurred",
-        code: "INTERNAL_ERROR",
-      },
-      { status: 500 },
-    );
-  }
-}
+    },
+);

@@ -1,15 +1,16 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
 
 // POST /api/projects/[projectId]/invoicing/owner/[invoiceId]/revise
 // Request revision of an invoice (UNDER REVIEW → REVISE AND RESUBMIT)
-export async function POST(
-  request: NextRequest,
-  context: { params: Promise<{ projectId: string; invoiceId: string }> },
-) {
-  try {
+export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
+  "projects/[projectId]/invoicing/owner/[invoiceId]/revise#POST",
+  async ({ request }) => {
+  
     const { projectId, invoiceId } = await context.params;
     const projectIdNum = parseInt(projectId, 10);
     const invoiceIdNum = parseInt(invoiceId, 10);
@@ -66,7 +67,5 @@ export async function POST(
       data: updated,
       message: "Invoice returned for revision",
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

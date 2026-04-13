@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -13,8 +15,10 @@ interface RouteParams {
  *
  * Update an existing line item.
  */
-export async function PUT(request: NextRequest, { params }: RouteParams) {
-  try {
+export const PUT = withApiGuardrails(
+  "projects/[projectId]/commitment-change-orders/[commitmentCoId]/line-items/[lineItemId]#PUT",
+  async ({ request, params }) => {
+  
     const { projectId, commitmentCoId, lineItemId } = await params;
     const projectIdNum = Number(projectId);
 
@@ -40,18 +44,18 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     if (error) return apiErrorResponse(error);
 
     return NextResponse.json({ data });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * DELETE /api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/line-items/[lineItemId]
  *
  * Delete a line item.
  */
-export async function DELETE(_request: NextRequest, { params }: RouteParams) {
-  try {
+export const DELETE = withApiGuardrails(
+  "projects/[projectId]/commitment-change-orders/[commitmentCoId]/line-items/[lineItemId]#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId, commitmentCoId, lineItemId } = await params;
     const projectIdNum = Number(projectId);
 
@@ -69,7 +73,5 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     if (error) return apiErrorResponse(error);
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

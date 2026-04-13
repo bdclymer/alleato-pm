@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -12,8 +14,10 @@ interface RouteParams {
  * POST /api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/approve
  * Approve a commitment change order. Updates status and recalculates commitment revised value.
  */
-export async function POST(_request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/commitment-change-orders/[commitmentCoId]/approve#POST",
+  async ({ request, params }) => {
+  
     const { projectId, commitmentCoId } = await params;
     const projectIdNum = Number(projectId);
     const supabase = await createClient();
@@ -24,7 +28,7 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/commitment-change-orders/[commitmentCoId]/approve#POST", message: "Authentication required." });
     }
 
     const guard = await requirePermission(projectIdNum, "contracts", "admin");
@@ -80,7 +84,5 @@ export async function POST(_request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(updated);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
@@ -12,8 +14,10 @@ interface RouteParams {
  * DELETE /api/projects/[projectId]/submittals/[submittalId]/workflow-steps/[stepId]
  * Removes a workflow step and its associated responses.
  */
-export async function DELETE(req: NextRequest, { params }: RouteParams) {
-  try {
+export const DELETE = withApiGuardrails(
+  "projects/[projectId]/submittals/[submittalId]/workflow-steps/[stepId]#DELETE",
+  async ({ request, params }) => {
+  
     const { submittalId, stepId } = await params;
     const supabase = await createClient();
 
@@ -23,7 +27,7 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/submittals/[submittalId]/workflow-steps/[stepId]#DELETE", message: "Authentication required." });
     }
 
     // Delete associated responses first
@@ -44,7 +48,5 @@ export async function DELETE(req: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

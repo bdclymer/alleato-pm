@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
@@ -6,7 +8,9 @@ import { createClient } from "@/lib/supabase/server";
  * Annotations endpoint — returns all agentation annotations for a given page route.
  * Includes both resolved and pending annotations so the team can see historical context.
  */
-export async function GET(req: Request) {
+export const GET = withApiGuardrails(
+  "dev-panel/annotations#GET",
+  async ({ request }) => {
   const { searchParams } = new URL(req.url);
   const url = searchParams.get("url") ?? "";
 
@@ -55,4 +59,5 @@ export async function GET(req: Request) {
   }));
 
   return NextResponse.json({ annotations });
-}
+  },
+);

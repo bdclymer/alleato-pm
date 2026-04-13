@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -10,8 +12,10 @@ interface RouteParams {
  * GET /api/directory/companies/[companyId]
  * Get a single company by ID
  */
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "directory/companies/[companyId]#GET",
+  async ({ request, params }) => {
+  
     const { companyId } = await params;
     const supabase = await createClient();
 
@@ -21,7 +25,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "directory/companies/[companyId]#GET", message: "Authentication required." });
     }
 
     // Get company
@@ -42,17 +46,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(company);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * PATCH /api/directory/companies/[companyId]
  * Update a company
  */
-export async function PATCH(request: NextRequest, { params }: RouteParams) {
-  try {
+export const PATCH = withApiGuardrails(
+  "directory/companies/[companyId]#PATCH",
+  async ({ request, params }) => {
+  
     const { companyId } = await params;
     const supabase = await createClient();
 
@@ -62,7 +66,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "directory/companies/[companyId]#PATCH", message: "Authentication required." });
     }
 
     // Parse request body
@@ -103,17 +107,17 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(company);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * DELETE /api/directory/companies/[companyId]
  * Delete a company
  */
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  try {
+export const DELETE = withApiGuardrails(
+  "directory/companies/[companyId]#DELETE",
+  async ({ request, params }) => {
+  
     const { companyId } = await params;
     const supabase = await createClient();
 
@@ -123,7 +127,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "directory/companies/[companyId]#DELETE", message: "Authentication required." });
     }
 
     // Check if company is used in any projects
@@ -170,7 +174,5 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       { message: "Company deleted successfully" },
       { status: 200 }
     );
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

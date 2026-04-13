@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -32,11 +34,13 @@ async function ensureBucket() {
   return { ok: true as const };
 }
 
-export async function POST(request: Request) {
-  try {
+export const POST = withApiGuardrails(
+  "company/logo#POST",
+  async ({ request }) => {
+  
     const user = await getApiRouteUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "company/logo#POST", message: "Authentication required." });
     }
 
     const bucketReady = await ensureBucket();
@@ -101,8 +105,5 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ logoUrl: publicUrl });
-  } catch (error) {
-    console.error("[CompanyLogo] Upload failed", error);
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

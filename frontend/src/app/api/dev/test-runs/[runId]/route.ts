@@ -2,20 +2,21 @@
  * /api/dev/test-runs/[runId]
  * GET — return a run with its results joined to test_cases.
  */
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ runId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ runId: string }>(
+  "dev/test-runs/[runId]#GET",
+  async ({ request, params }) => {
+  
     const { runId } = await params;
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "dev/test-runs/[runId]#GET", message: "Authentication required." });
     }
 
     const { data: run, error: runError } = await supabase
@@ -32,7 +33,5 @@ export async function GET(
     if (resultsError) throw resultsError;
 
     return NextResponse.json({ run, results: results ?? [] });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

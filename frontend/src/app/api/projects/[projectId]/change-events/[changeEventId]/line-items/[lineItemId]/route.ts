@@ -1,5 +1,7 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from '@/lib/supabase/server';
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { updateLineItemSchema } from '../../../validation';
 import { ZodError } from 'zod';
 import { apiErrorResponse } from "@/lib/api-error";
@@ -17,11 +19,10 @@ interface RouteParams {
  * GET /api/projects/[id]/change-events/[changeEventId]/line-items/[lineItemId]
  * Returns a single line item
  */
-export async function GET(
-  request: NextRequest,
-  { params }: RouteParams
-) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]#GET",
+  async ({ request, params }) => {
+  
     const { projectId, changeEventId, lineItemId } = await params;
     const supabase = await createClient();
 
@@ -83,20 +84,17 @@ export async function GET(
     };
 
     return NextResponse.json(response);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * PATCH /api/projects/[id]/change-events/[changeEventId]/line-items/[lineItemId]
  * Updates a line item
  */
-export async function PATCH(
-  request: NextRequest,
-  { params }: RouteParams
-) {
-  try {
+export const PATCH = withApiGuardrails(
+  "projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]#PATCH",
+  async ({ request, params }) => {
+  
     const { projectId, changeEventId, lineItemId } = await params;
     const projectIdNum = parseInt(projectId, 10);
     const guard = await requirePermission(projectIdNum, "change_orders", "write");
@@ -108,10 +106,7 @@ export async function PATCH(
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]#PATCH", message: "Authentication required." });
     }
 
     // Validate request body
@@ -320,33 +315,17 @@ export async function PATCH(
     };
 
     return NextResponse.json(response);
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        {
-          error: 'Validation error',
-          details: error.issues.map(e => ({
-            field: e.path.join('.'),
-            message: e.message
-          })),
-        },
-        { status: 400 }
-      );
-    }
-
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * DELETE /api/projects/[id]/change-events/[changeEventId]/line-items/[lineItemId]
  * Deletes a line item
  */
-export async function DELETE(
-  request: NextRequest,
-  { params }: RouteParams
-) {
-  try {
+export const DELETE = withApiGuardrails(
+  "projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId, changeEventId, lineItemId } = await params;
     const projectIdNum = parseInt(projectId, 10);
     const guard = await requirePermission(projectIdNum, "change_orders", "admin");
@@ -357,10 +336,7 @@ export async function DELETE(
     // Get current user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      );
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/change-events/[changeEventId]/line-items/[lineItemId]#DELETE", message: "Authentication required." });
     }
 
     // Verify change event exists and is not closed
@@ -432,7 +408,5 @@ export async function DELETE(
       });
 
     return new NextResponse(null, { status: 204 });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

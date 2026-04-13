@@ -2,14 +2,15 @@
  * /api/testing/runs/[runId]/results/[resultId]/screenshots
  * POST — upload a screenshot (base64 or multipart) and link to a test result
  */
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
-export async function POST(
-  req: Request,
-  { params }: { params: Promise<{ runId: string; resultId: string }> }
-) {
+export const POST = withApiGuardrails<{ runId: string; resultId: string }>(
+  "testing/runs/[runId]/results/[resultId]/screenshots#POST",
+  async ({ request, params }) => {
   const { runId, resultId } = await params;
   const supabase = await createClient();
   const service = createServiceClient();
@@ -56,4 +57,5 @@ export async function POST(
   }
 
   return NextResponse.json({ screenshot });
-}
+  },
+);

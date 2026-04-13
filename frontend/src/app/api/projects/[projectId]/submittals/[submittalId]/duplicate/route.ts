@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
@@ -12,8 +14,10 @@ interface RouteParams {
  * POST /api/projects/[projectId]/submittals/[submittalId]/duplicate
  * Copies a submittal row (appends " (Copy)" to title) and returns the new record.
  */
-export async function POST(_req: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/submittals/[submittalId]/duplicate#POST",
+  async ({ request, params }) => {
+  
     const { projectId, submittalId } = await params;
     const supabase = await createClient();
 
@@ -23,7 +27,7 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/submittals/[submittalId]/duplicate#POST", message: "Authentication required." });
     }
 
     // Fetch original submittal
@@ -62,7 +66,5 @@ export async function POST(_req: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(newRecord, { status: 201 });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

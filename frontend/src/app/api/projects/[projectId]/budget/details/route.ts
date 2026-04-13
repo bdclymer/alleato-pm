@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
 import type {
   BudgetDetailLineItem,
@@ -33,11 +35,10 @@ const APPROVED_DIRECT_COST_STATUSES = ["Approved"];
  * - change_events (change events)
  * - direct_costs (direct costs)
  */
-export async function GET(
-  request: NextRequest,
-  { params }: BudgetDetailParams,
-) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/budget/details#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -557,7 +558,5 @@ export async function GET(
       details,
       count: details.length,
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

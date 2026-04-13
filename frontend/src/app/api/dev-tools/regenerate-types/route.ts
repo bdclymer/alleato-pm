@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server"
 import { exec } from "child_process"
 import { promisify } from "util"
@@ -6,7 +8,9 @@ import { apiErrorResponse } from "@/lib/api-error";
 
 const execAsync = promisify(exec)
 
-export async function POST() {
+export const POST = withApiGuardrails(
+  "dev-tools/regenerate-types#POST",
+  async () => {
   // Only allow in development
   if (process.env.NODE_ENV !== "development") {
     return NextResponse.json(
@@ -40,4 +44,5 @@ export async function POST() {
   } catch (error) {
     return apiErrorResponse(error)
   }
-}
+  },
+);

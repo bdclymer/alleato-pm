@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
@@ -22,8 +24,10 @@ function toBlockQuote(text: string): string {
     .join("\n");
 }
 
-export async function POST(request: Request) {
-  try {
+export const POST = withApiGuardrails(
+  "notes/highlight#POST",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const {
       data: { user },
@@ -31,7 +35,7 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "notes/highlight#POST", message: "Authentication required." });
     }
 
     const parseResult = createHighlightedNoteSchema.safeParse(await request.json());
@@ -118,7 +122,5 @@ export async function POST(request: Request) {
       },
       { status: 201 }
     );
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

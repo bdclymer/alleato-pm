@@ -8,6 +8,8 @@
  * In production, this route is a no-op.
  */
 
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { sendEmail } from "@/lib/email/send";
@@ -68,7 +70,9 @@ const TEMPLATES: Record<
   },
 };
 
-export async function POST(req: NextRequest) {
+export const POST = withApiGuardrails(
+  "dev/test-email#POST",
+  async ({ request }) => {
   if (process.env.NODE_ENV === "production") {
     return NextResponse.json({ error: "Not available in production" }, { status: 403 });
   }
@@ -111,12 +115,16 @@ export async function POST(req: NextRequest) {
     to,
     message: `Email sent! Check ${to === "delivered@resend.dev" ? "Resend dashboard" : to} for delivery.`,
   });
-}
+  },
+);
 
-export async function GET() {
+export const GET = withApiGuardrails(
+  "dev/test-email#GET",
+  async () => {
   return NextResponse.json({
     usage: "POST /api/dev/test-email with { template, to? }",
     templates: Object.keys(TEMPLATES),
     defaultTo: "delivered@resend.dev",
   });
-}
+  },
+);

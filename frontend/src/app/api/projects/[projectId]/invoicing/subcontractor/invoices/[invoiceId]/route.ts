@@ -1,14 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 // GET /api/projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]
 // Fetch a single subcontractor invoice with line items, commitment, and billing period joins
-export async function GET(
-  request: NextRequest,
-  context: { params: Promise<{ projectId: string; invoiceId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
+  "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]#GET",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { projectId, invoiceId } = await context.params;
 
@@ -25,7 +26,7 @@ export async function GET(
     }
 
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]#GET", message: "Authentication required." });
     }
 
     const projectIdNum = parseInt(projectId, 10);
@@ -368,18 +369,15 @@ export async function GET(
         tab_counts,
       },
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 // PATCH /api/projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]
 // Update a subcontractor invoice (only when status is draft or revise_and_resubmit)
-export async function PATCH(
-  request: NextRequest,
-  context: { params: Promise<{ projectId: string; invoiceId: string }> },
-) {
-  try {
+export const PATCH = withApiGuardrails<{ projectId: string; invoiceId: string }>(
+  "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]#PATCH",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { projectId, invoiceId } = await context.params;
 
@@ -396,7 +394,7 @@ export async function PATCH(
     }
 
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]#PATCH", message: "Authentication required." });
     }
 
     const projectIdNum = parseInt(projectId, 10);
@@ -505,18 +503,15 @@ export async function PATCH(
     }
 
     return NextResponse.json({ data: updated });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 // DELETE /api/projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]
 // Delete a subcontractor invoice (blocked if status is approved or paid)
-export async function DELETE(
-  request: NextRequest,
-  context: { params: Promise<{ projectId: string; invoiceId: string }> },
-) {
-  try {
+export const DELETE = withApiGuardrails<{ projectId: string; invoiceId: string }>(
+  "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]#DELETE",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { projectId, invoiceId } = await context.params;
 
@@ -533,7 +528,7 @@ export async function DELETE(
     }
 
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]#DELETE", message: "Authentication required." });
     }
 
     const projectIdNum = parseInt(projectId, 10);
@@ -588,7 +583,5 @@ export async function DELETE(
     }
 
     return NextResponse.json({ message: "Invoice deleted successfully" });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

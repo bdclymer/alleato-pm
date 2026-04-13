@@ -1,14 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 // POST /api/projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/revise
 // Transition invoice to revise_and_resubmit. Pre-condition: must be under_review.
-export async function POST(
-  request: NextRequest,
-  context: { params: Promise<{ projectId: string; invoiceId: string }> },
-) {
-  try {
+export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
+  "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/revise#POST",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { projectId, invoiceId } = await context.params;
 
@@ -25,7 +26,7 @@ export async function POST(
     }
 
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/revise#POST", message: "Authentication required." });
     }
 
     const projectIdNum = parseInt(projectId, 10);
@@ -88,7 +89,5 @@ export async function POST(
       data: updated,
       message: "Invoice returned for revision",
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

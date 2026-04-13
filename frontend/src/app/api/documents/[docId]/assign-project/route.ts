@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -11,10 +13,9 @@ const ALLOWED_FIELDS = new Set([
   "project_id",
 ]);
 
-export async function PATCH(
-  request: Request,
-  { params }: { params: Promise<{ docId: string }> },
-) {
+export const PATCH = withApiGuardrails<{ docId: string }>(
+  "documents/[docId]/assign-project#PATCH",
+  async ({ request, params }) => {
   const supabase = await createClient();
   const {
     data: { user },
@@ -22,7 +23,7 @@ export async function PATCH(
   } = await supabase.auth.getUser();
 
   if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "documents/[docId]/assign-project#PATCH", message: "Authentication required." });
   }
 
   const { docId } = await params;
@@ -53,4 +54,5 @@ export async function PATCH(
   }
 
   return NextResponse.json({ success: true });
-}
+  },
+);

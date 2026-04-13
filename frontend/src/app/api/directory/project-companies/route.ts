@@ -1,10 +1,14 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { type NextRequest, NextResponse } from "next/server";
 
 import { apiErrorResponse } from "@/lib/api-error";
 import { createClient } from "@/lib/supabase/server";
 
-export async function GET(request: NextRequest) {
-  try {
+export const GET = withApiGuardrails(
+  "directory/project-companies#GET",
+  async ({ request }) => {
+  
     const supabase = await createClient();
 
     const {
@@ -13,7 +17,7 @@ export async function GET(request: NextRequest) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "directory/project-companies#GET", message: "Authentication required." });
     }
 
     const searchParams = request.nextUrl.searchParams;
@@ -137,14 +141,5 @@ export async function GET(request: NextRequest) {
         total_pages,
       },
     });
-  } catch (error) {
-    return NextResponse.json(
-      {
-        error: "server_error",
-        message: "An unexpected error occurred",
-        code: "INTERNAL_ERROR",
-      },
-      { status: 500 },
-    );
-  }
-}
+    },
+);

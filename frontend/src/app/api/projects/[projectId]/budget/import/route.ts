@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import * as XLSX from "xlsx";
@@ -77,11 +79,10 @@ const resolveDivisionId = (
   return divisions[0]?.id ?? null;
 };
 
-export async function POST(
-  request: NextRequest,
-  context: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const POST = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/budget/import#POST",
+  async ({ request }) => {
+  
     const { projectId } = await context.params;
     const numericProjectId = parseInt(projectId, 10);
 
@@ -447,14 +448,5 @@ export async function POST(
     }
 
     return NextResponse.json(result);
-  } catch (error) {
-    return NextResponse.json(
-      {
-        error:
-          error instanceof Error ? error.message : "Failed to import budget",
-        details: error instanceof Error ? error.stack : undefined,
-      },
-      { status: 500 },
-    );
-  }
-}
+    },
+);

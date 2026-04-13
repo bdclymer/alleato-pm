@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { PermissionService } from "@/services/permissionService";
@@ -9,8 +11,10 @@ interface RouteParams {
   params: Promise<{ projectId: string }>;
 }
 
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/directory/preferences#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
 
@@ -20,7 +24,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/directory/preferences#GET", message: "Authentication required." });
     }
 
     const permissionService = new PermissionService(supabase);
@@ -38,17 +42,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     ]);
 
     return NextResponse.json({ data: { lastFilters, columnPreferences } });
-  } catch (error) {
-    console.error("[DirectoryPreferences] Failed to fetch", error);
-    return NextResponse.json(
-      { error: "Failed to load preferences" },
-      { status: 500 },
-    );
-  }
-}
+    },
+);
 
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/directory/preferences#POST",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
 
@@ -58,7 +58,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/directory/preferences#POST", message: "Authentication required." });
     }
 
     const permissionService = new PermissionService(supabase);
@@ -87,11 +87,5 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("[DirectoryPreferences] Failed to save", error);
-    return NextResponse.json(
-      { error: "Failed to save preferences" },
-      { status: 500 },
-    );
-  }
-}
+    },
+);

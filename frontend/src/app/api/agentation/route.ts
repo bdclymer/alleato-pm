@@ -1,5 +1,7 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createServiceClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 type AgentationAnnotation = {
@@ -98,7 +100,9 @@ function resolveAnnotationId(annotation: AgentationAnnotation) {
 // POST — Create dev_annotations rows from Agentation toolbar events
 // ---------------------------------------------------------------------------
 
-export async function POST(req: NextRequest) {
+export const POST = withApiGuardrails(
+  "agentation#POST",
+  async ({ request }) => {
   const body = (await req.json()) as AgentationWebhookBody | AgentationAnnotation[] | AgentationAnnotation;
 
   // Ignore purely delete/clear events for ingestion.
@@ -244,13 +248,16 @@ export async function POST(req: NextRequest) {
   }
 
   return NextResponse.json({ created, skipped }, { status: 201 });
-}
+  },
+);
 
 // ---------------------------------------------------------------------------
 // PATCH — Bidirectional status sync (MCP resolve/dismiss → dev_annotations)
 // ---------------------------------------------------------------------------
 
-export async function PATCH(req: NextRequest) {
+export const PATCH = withApiGuardrails(
+  "agentation#PATCH",
+  async ({ request }) => {
   const body = await req.json();
   const {
     agentationId,
@@ -324,4 +331,5 @@ export async function PATCH(req: NextRequest) {
   }
 
   return NextResponse.json({ matched: true, annotationId: item.id, newStatus });
-}
+  },
+);

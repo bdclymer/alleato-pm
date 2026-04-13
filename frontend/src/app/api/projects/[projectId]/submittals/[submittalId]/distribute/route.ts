@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
@@ -18,8 +20,10 @@ const distributeSchema = z.object({
  * POST /api/projects/[projectId]/submittals/[submittalId]/distribute
  * Distributes the submittal to a list of recipients.
  */
-export async function POST(req: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/submittals/[submittalId]/distribute#POST",
+  async ({ request, params }) => {
+  
     const { submittalId } = await params;
     const supabase = await createClient();
 
@@ -29,7 +33,7 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/submittals/[submittalId]/distribute#POST", message: "Authentication required." });
     }
 
     const body = await req.json();
@@ -76,13 +80,5 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
       .eq("id", submittalId);
 
     return NextResponse.json(distribution, { status: 201 });
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        { error: "Validation error", details: error.issues },
-        { status: 400 },
-      );
-    }
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

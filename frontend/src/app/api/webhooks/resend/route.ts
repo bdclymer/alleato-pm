@@ -7,6 +7,8 @@
  * Signature verification uses the Svix-compatible headers Resend sends.
  * Configure the endpoint + secret in the Resend dashboard → Webhooks.
  */
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { getResend } from "@/lib/email/client";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -24,7 +26,9 @@ const EVENT_TO_STATUS: Record<string, string> = {
   "email.suppressed": "suppressed",
 };
 
-export async function POST(req: Request) {
+export const POST = withApiGuardrails(
+  "webhooks/resend#POST",
+  async ({ request }) => {
   const secret = process.env.RESEND_WEBHOOK_SECRET;
   if (!secret) {
     console.error("[resend-webhook] RESEND_WEBHOOK_SECRET not set");
@@ -55,7 +59,7 @@ export async function POST(req: Request) {
     event = verified as unknown as { type: string; data: Record<string, unknown> };
   } catch (err) {
     console.error("[resend-webhook] signature verification failed", err);
-    return NextResponse.json({ error: "invalid signature" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "webhooks/resend#POST", message: "Authentication required." });
   }
 
   const status = EVENT_TO_STATUS[event.type];
@@ -81,4 +85,5 @@ export async function POST(req: Request) {
   await supabase.from("email_events").update(update).eq("resend_id", emailId);
 
   return NextResponse.json({ ok: true });
-}
+  },
+);

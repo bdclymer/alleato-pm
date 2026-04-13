@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
 import { assignPermissionTemplate } from "@/lib/permissions";
 
@@ -10,8 +12,10 @@ interface RouteParams {
  * POST /api/projects/[projectId]/permissions/assign
  * Assign a permission template to a user
  */
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/permissions/assign#POST",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -45,11 +49,5 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Error assigning permission template:", error);
-    return NextResponse.json(
-      { error: "Failed to assign permission template" },
-      { status: 500 }
-    );
-  }
-}
+    },
+);

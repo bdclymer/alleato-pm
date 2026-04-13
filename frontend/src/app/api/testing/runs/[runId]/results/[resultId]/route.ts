@@ -2,13 +2,14 @@
  * /api/testing/runs/[runId]/results/[resultId]
  * PATCH — update status and/or notes for a single test result
  */
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-export async function PATCH(
-  req: Request,
-  { params }: { params: Promise<{ runId: string; resultId: string }> }
-) {
+export const PATCH = withApiGuardrails<{ runId: string; resultId: string }>(
+  "testing/runs/[runId]/results/[resultId]#PATCH",
+  async ({ request, params }) => {
   const { resultId } = await params;
   const supabase = await createClient();
 
@@ -42,4 +43,5 @@ export async function PATCH(
   }
 
   return NextResponse.json({ result: data });
-}
+  },
+);

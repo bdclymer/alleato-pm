@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
@@ -36,8 +38,10 @@ async function ensureRfq(
   return data;
 }
 
-export async function GET(_request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/change-events/rfqs/[rfqId]/responses#GET",
+  async ({ request, params }) => {
+  
     const { projectId, rfqId } = await params;
     const numericProjectId = parseInt(projectId, 10);
     if (!Number.isFinite(numericProjectId)) {
@@ -60,16 +64,13 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ data: data ?? [] });
-  } catch (error) {
-    if (error instanceof Error && error.message === "RFQ not found") {
-      return apiErrorResponse(error);
-    }
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/change-events/rfqs/[rfqId]/responses#POST",
+  async ({ request, params }) => {
+  
     const { projectId, rfqId } = await params;
     const numericProjectId = parseInt(projectId, 10);
     if (!Number.isFinite(numericProjectId)) {
@@ -97,7 +98,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/change-events/rfqs/[rfqId]/responses#POST", message: "Authentication required." });
     }
 
     const rfq = await ensureRfq(supabase, numericProjectId, rfqId);
@@ -163,10 +164,5 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       .eq("id", rfqId);
 
     return NextResponse.json({ data: response });
-  } catch (error) {
-    if (error instanceof Error && error.message === "RFQ not found") {
-      return apiErrorResponse(error);
-    }
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

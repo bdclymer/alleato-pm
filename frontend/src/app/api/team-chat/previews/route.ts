@@ -1,7 +1,11 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 
-export async function GET() {
+export const GET = withApiGuardrails(
+  "team-chat/previews#GET",
+  async () => {
   const supabase = await createClient();
 
   // Get the most recent message per channel
@@ -27,4 +31,5 @@ export async function GET() {
   }
 
   return NextResponse.json(byChannel);
-}
+  },
+);

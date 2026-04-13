@@ -8,8 +8,10 @@
  * DELETE /api/projects/[projectId]/prime-contract-pcos/[pcoId] - Delete PCO
  */
 
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
 
@@ -34,8 +36,10 @@ const updatePcoSchema = z.object({
 // GET /api/projects/[projectId]/prime-contract-pcos/[pcoId]
 // ---------------------------------------------------------------------------
 
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/prime-contract-pcos/[pcoId]#GET",
+  async ({ request, params }) => {
+  
     const { projectId, pcoId } = await params;
     const supabase = await createClient();
 
@@ -45,7 +49,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/prime-contract-pcos/[pcoId]#GET", message: "Authentication required." });
     }
 
     const projectIdNum = parseInt(projectId, 10);
@@ -132,17 +136,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     };
 
     return NextResponse.json(response);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 // ---------------------------------------------------------------------------
 // PATCH /api/projects/[projectId]/prime-contract-pcos/[pcoId]
 // ---------------------------------------------------------------------------
 
-export async function PATCH(request: NextRequest, { params }: RouteParams) {
-  try {
+export const PATCH = withApiGuardrails(
+  "projects/[projectId]/prime-contract-pcos/[pcoId]#PATCH",
+  async ({ request, params }) => {
+  
     const { projectId, pcoId } = await params;
     const supabase = await createClient();
 
@@ -152,7 +156,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/prime-contract-pcos/[pcoId]#PATCH", message: "Authentication required." });
     }
 
     const projectIdNum = parseInt(projectId, 10);
@@ -225,29 +229,17 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(data);
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        {
-          error: "Validation error",
-          details: error.issues.map((e) => ({
-            field: e.path.join("."),
-            message: e.message,
-          })),
-        },
-        { status: 400 },
-      );
-    }
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 // ---------------------------------------------------------------------------
 // DELETE /api/projects/[projectId]/prime-contract-pcos/[pcoId]
 // ---------------------------------------------------------------------------
 
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  try {
+export const DELETE = withApiGuardrails(
+  "projects/[projectId]/prime-contract-pcos/[pcoId]#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId, pcoId } = await params;
     const supabase = await createClient();
 
@@ -257,7 +249,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/prime-contract-pcos/[pcoId]#DELETE", message: "Authentication required." });
     }
 
     const projectIdNum = parseInt(projectId, 10);
@@ -313,7 +305,5 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     return new NextResponse(null, { status: 204 });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

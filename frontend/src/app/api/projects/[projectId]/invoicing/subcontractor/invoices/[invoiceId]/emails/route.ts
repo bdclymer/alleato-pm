@@ -1,14 +1,15 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 // GET → list emails sent for this invoice
 // POST → log a sent email { to_recipients[], cc_recipients?[], subject, body, email_type }
-export async function GET(
-  _request: NextRequest,
-  context: { params: Promise<{ projectId: string; invoiceId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
+  "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/emails#GET",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { invoiceId } = await context.params;
     const invoiceIdNum = parseInt(invoiceId, 10);
@@ -27,22 +28,19 @@ export async function GET(
     }
 
     return NextResponse.json({ data: data ?? [] });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
-export async function POST(
-  request: NextRequest,
-  context: { params: Promise<{ projectId: string; invoiceId: string }> },
-) {
-  try {
+export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
+  "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/emails#POST",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { invoiceId } = await context.params;
     const invoiceIdNum = parseInt(invoiceId, 10);
 
     const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!user) throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/emails#POST", message: "Authentication required." });
 
     const body = await request.json().catch(() => ({}));
     const {
@@ -98,7 +96,5 @@ export async function POST(
     });
 
     return NextResponse.json({ data });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
@@ -24,17 +26,16 @@ async function verifyInvoice(
 
 // GET /api/projects/[projectId]/invoicing/owner/[invoiceId]/line-items
 // Return all line items for an invoice
-export async function GET(
-  _request: NextRequest,
-  context: { params: Promise<{ projectId: string; invoiceId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
+  "projects/[projectId]/invoicing/owner/[invoiceId]/line-items#GET",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { projectId, invoiceId } = await context.params;
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/invoicing/owner/[invoiceId]/line-items#GET", message: "Authentication required." });
     }
 
     const projectIdNum = parseInt(projectId, 10);
@@ -58,24 +59,21 @@ export async function GET(
     }
 
     return NextResponse.json({ data: lineItems ?? [] });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 // POST /api/projects/[projectId]/invoicing/owner/[invoiceId]/line-items
 // Add a new line item to an invoice
-export async function POST(
-  request: NextRequest,
-  context: { params: Promise<{ projectId: string; invoiceId: string }> },
-) {
-  try {
+export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
+  "projects/[projectId]/invoicing/owner/[invoiceId]/line-items#POST",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { projectId, invoiceId } = await context.params;
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/invoicing/owner/[invoiceId]/line-items#POST", message: "Authentication required." });
     }
 
     const projectIdNum = parseInt(projectId, 10);
@@ -129,25 +127,22 @@ export async function POST(
     }
 
     return NextResponse.json({ data: lineItem }, { status: 201 });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 // PATCH /api/projects/[projectId]/invoicing/owner/[invoiceId]/line-items
 // Bulk update editable fields on line items
 // Body: Array of { id, work_completed_period?, materials_stored?, retainage_pct?, retainage_released? }
-export async function PATCH(
-  request: NextRequest,
-  context: { params: Promise<{ projectId: string; invoiceId: string }> },
-) {
-  try {
+export const PATCH = withApiGuardrails<{ projectId: string; invoiceId: string }>(
+  "projects/[projectId]/invoicing/owner/[invoiceId]/line-items#PATCH",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { projectId, invoiceId } = await context.params;
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/invoicing/owner/[invoiceId]/line-items#PATCH", message: "Authentication required." });
     }
 
     const projectIdNum = parseInt(projectId, 10);
@@ -217,7 +212,5 @@ export async function PATCH(
     }
 
     return NextResponse.json({ data: results });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

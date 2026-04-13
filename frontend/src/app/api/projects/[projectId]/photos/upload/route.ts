@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
@@ -14,8 +16,10 @@ interface RouteParams {
  * Uploads each file to Supabase storage, creates a photo record,
  * and returns the created records.
  */
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/photos/upload#POST",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const pid = parseInt(projectId, 10);
 
@@ -31,7 +35,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/photos/upload#POST", message: "Authentication required." });
     }
 
     const formData = await request.formData();
@@ -117,7 +121,5 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       { uploaded: created.length, photos: created },
       { status: 201 },
     );
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

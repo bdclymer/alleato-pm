@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { PermissionService } from "@/services/permissionService";
@@ -9,8 +11,10 @@ interface RouteParams {
   params: Promise<{ projectId: string }>;
 }
 
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/directory/filters#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
 
@@ -20,7 +24,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/directory/filters#GET", message: "Authentication required." });
     }
 
     const permissionService = new PermissionService(supabase);
@@ -35,14 +39,13 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const filters = await prefService.listSavedFilters(user.id, projectId);
 
     return NextResponse.json({ data: filters });
-  } catch (error) {
-    console.error("[DirectoryFilters] Failed to list filters", error);
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/directory/filters#POST",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
 
@@ -52,7 +55,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/directory/filters#POST", message: "Authentication required." });
     }
 
     const permissionService = new PermissionService(supabase);
@@ -86,14 +89,13 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     );
 
     return NextResponse.json({ data: savedFilter });
-  } catch (error) {
-    console.error("[DirectoryFilters] Failed to save filter", error);
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  try {
+export const DELETE = withApiGuardrails(
+  "projects/[projectId]/directory/filters#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
 
@@ -103,7 +105,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/directory/filters#DELETE", message: "Authentication required." });
     }
 
     const permissionService = new PermissionService(supabase);
@@ -126,8 +128,5 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     await prefService.deleteFilter(user.id, projectId, filterId);
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("[DirectoryFilters] Failed to delete filter", error);
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

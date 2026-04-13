@@ -1,5 +1,7 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 /**
  * Strict allowlist of tables accessible via the generic insert endpoint.
@@ -20,12 +22,14 @@ const TABLE_ALLOWLIST = new Set([
   "change_event_line_items", "project_cost_codes",
 ]);
 
-export async function POST(request: NextRequest) {
-  try {
+export const POST = withApiGuardrails(
+  "table-insert#POST",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "table-insert#POST", message: "Authentication required." });
     }
 
     const body = await request.json();
@@ -59,10 +63,5 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({ success: true, data: inserted });
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 },
-    );
-  }
-}
+    },
+);

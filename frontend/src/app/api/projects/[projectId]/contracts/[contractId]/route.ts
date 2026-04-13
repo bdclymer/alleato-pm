@@ -1,7 +1,9 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { apiErrorResponse, classifyError } from "@/lib/api-error";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { updateContractSchema } from "../validation";
 import { ZodError } from "zod";
 import { requirePermission } from "@/lib/permissions-guard";
@@ -14,8 +16,10 @@ interface RouteParams {
  * GET /api/projects/[id]/contracts/[contractId]
  * Returns a single prime contract by ID with calculated financial data
  */
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/contracts/[contractId]#GET",
+  async ({ request, params }) => {
+  
     const { projectId, contractId } = await params;
     const supabase = await createClient();
 
@@ -121,18 +125,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     };
 
     return NextResponse.json(enrichedContract);
-  } catch (error) {
-    console.error("[GET /contracts/:id]", error);
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * PUT /api/projects/[id]/contracts/[contractId]
  * Updates a prime contract
  */
-export async function PUT(request: NextRequest, { params }: RouteParams) {
-  try {
+export const PUT = withApiGuardrails(
+  "projects/[projectId]/contracts/[contractId]#PUT",
+  async ({ request, params }) => {
+  
     const { projectId, contractId } = await params;
     const projectIdNum = parseInt(projectId, 10);
     const guard = await requirePermission(projectIdNum, "contracts", "write");
@@ -151,7 +154,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/contracts/[contractId]#PUT", message: "Authentication required." });
     }
 
     // Check if contract exists and belongs to this project
@@ -212,31 +215,17 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(data);
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        {
-          error: "Validation error",
-          details: error.issues.map((e) => ({
-            field: e.path.join("."),
-            message: e.message,
-          })),
-        },
-        { status: 400 },
-      );
-    }
-
-    console.error("[PUT /contracts/:id]", error);
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * DELETE /api/projects/[id]/contracts/[contractId]
  * Deletes a prime contract
  */
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  try {
+export const DELETE = withApiGuardrails(
+  "projects/[projectId]/contracts/[contractId]#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId, contractId } = await params;
     const projectIdNum = parseInt(projectId, 10);
     const guard = await requirePermission(projectIdNum, "contracts", "admin");
@@ -252,7 +241,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/contracts/[contractId]#DELETE", message: "Authentication required." });
     }
 
     // Check if contract exists before deleting
@@ -305,8 +294,5 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       { message: "Contract deleted successfully" },
       { status: 200 },
     );
-  } catch (error) {
-    console.error("[DELETE /contracts/:id]", error);
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

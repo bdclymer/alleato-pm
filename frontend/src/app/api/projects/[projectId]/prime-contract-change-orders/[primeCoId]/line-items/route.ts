@@ -1,5 +1,7 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
 
@@ -11,8 +13,10 @@ interface RouteParams {
  * GET /api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/line-items
  * Returns all line items for a PCCO, ordered by created_at ASC
  */
-export async function GET(_request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/prime-contract-change-orders/[primeCoId]/line-items#GET",
+  async ({ request, params }) => {
+  
     const { projectId, primeCoId } = await params;
     const supabase = await createClient();
 
@@ -21,7 +25,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/prime-contract-change-orders/[primeCoId]/line-items#GET", message: "Authentication required." });
     }
 
     // Verify the PCCO belongs to the requested project
@@ -50,17 +54,17 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ data: lineItems ?? [] });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * POST /api/projects/[projectId]/prime-contract-change-orders/[primeCoId]/line-items
  * Create a new line item. Calculates line_amount = quantity * unit_cost.
  */
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/prime-contract-change-orders/[primeCoId]/line-items#POST",
+  async ({ request, params }) => {
+  
     const { projectId, primeCoId } = await params;
 
     const guard = await requirePermission(Number(projectId), "change_orders", "write");
@@ -73,7 +77,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/prime-contract-change-orders/[primeCoId]/line-items#POST", message: "Authentication required." });
     }
 
     // Verify the PCCO belongs to the requested project
@@ -123,7 +127,5 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ data: lineItem }, { status: 201 });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

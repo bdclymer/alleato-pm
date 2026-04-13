@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 
 import { apiErrorResponse } from "@/lib/api-error";
 import { createClient } from "@/lib/supabase/server";
@@ -7,8 +9,10 @@ interface RouteParams {
   params: Promise<{ projectId: string; changeEventId: string }>;
 }
 
-export async function GET(_request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/change-events/[changeEventId]/lineage#GET",
+  async ({ request, params }) => {
+  
     const { projectId, changeEventId } = await params;
     const projectIdNum = Number.parseInt(projectId, 10);
 
@@ -22,7 +26,7 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/change-events/[changeEventId]/lineage#GET", message: "Authentication required." });
     }
 
     const { data: links, error: linksError } = await supabase
@@ -162,8 +166,6 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
         commitment_count: rows.filter((row) => row.pco_type === "commitment").length,
       },
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 

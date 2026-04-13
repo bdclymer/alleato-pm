@@ -1,17 +1,16 @@
 import { Buffer } from "node:buffer";
-import { NextResponse, type NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { PermissionService } from "@/services/permissionService";
 import { DirectoryService } from "@/services/directoryService";
 
-interface RouteParams {
-  params: Promise<{ personId: string }>;
-}
-
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
-    const { personId } = await params;
+export const GET = withApiGuardrails(
+  "avatar/[personId]#GET",
+  async ({ request, params }) => {
+    const { personId } = params as { personId: string };
     const projectId = request.nextUrl.searchParams.get("projectId");
 
     if (!projectId) {
@@ -30,7 +29,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({
+        code: "AUTH_EXPIRED",
+        where: "avatar/[personId]#GET",
+        message: "Authentication required.",
+      });
     }
 
     const permissionService = new PermissionService(supabase);
@@ -56,7 +59,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       .maybeSingle();
 
     if (error) {
-      throw error;
+      throw new GuardrailError({
+        code: "INTERNAL_ERROR",
+        where: "avatar/[personId]#GET",
+        message: error.message,
+      });
     }
 
     if (!data) {
@@ -71,18 +78,5 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         "Cache-Control": "private, max-age=300",
       },
     });
-  } catch (error) {
-    if (error && typeof error === "object" && "status" in (error as any)) {
-      return NextResponse.json(
-        { error: (error as Error).message },
-        { status: (error as any).status },
-      );
-    }
-
-    console.error("[DirectoryAvatar] Failed to fetch avatar", error);
-    return NextResponse.json(
-      { error: "Failed to load avatar" },
-      { status: 500 },
-    );
-  }
-}
+  },
+);

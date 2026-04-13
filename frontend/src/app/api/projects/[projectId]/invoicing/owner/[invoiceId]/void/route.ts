@@ -1,15 +1,16 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
 
 // POST /api/projects/[projectId]/invoicing/owner/[invoiceId]/void
 // Void an owner invoice. Pre-condition: must not already be paid or void.
-export async function POST(
-  request: NextRequest,
-  context: { params: Promise<{ projectId: string; invoiceId: string }> },
-) {
-  try {
+export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
+  "projects/[projectId]/invoicing/owner/[invoiceId]/void#POST",
+  async ({ request }) => {
+  
     const { projectId, invoiceId } = await context.params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -101,7 +102,5 @@ export async function POST(
       data: updatedInvoice,
       message: "Invoice voided successfully",
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

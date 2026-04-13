@@ -1,4 +1,6 @@
-/** * ============================================================================= * INDIVIDUAL DIRECT COST API ENDPOINTS * ============================================================================= * * API endpoints for individual direct cost operations: * - GET: Fetch single direct cost with full details * - PUT: Update existing direct cost * - DELETE: Soft delete direct cost */ import {
+/** * ============================================================================= * INDIVIDUAL DIRECT COST API ENDPOINTS * ============================================================================= * * API endpoints for individual direct cost operations: * - GET: Fetch single direct cost with full details * - PUT: Update existing direct cost * - DELETE: Soft delete direct cost */ import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import {
   NextRequest,
   NextResponse,
 } from "next/server";
@@ -11,11 +13,10 @@ import { DirectCostService } from "@/lib/services/direct-cost-service";
 import { requirePermission } from "@/lib/permissions-guard"; // =============================================================================
 // GET - Fetch Single Direct Cost
 // =============================================================================
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string; costId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string; costId: string }>(
+  "projects/[projectId]/direct-costs/[costId]#GET",
+  async ({ request, params }) => {
+  
     const { projectId, costId } = await params;
 
     const supabase = await createClient();
@@ -27,10 +28,7 @@ export async function GET(
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized - please log in" },
-        { status: 401 }
-      );
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/direct-costs/[costId]#GET", message: "Authentication required." });
     }
 
     const service = new DirectCostService(supabase);
@@ -44,20 +42,14 @@ export async function GET(
     }
 
     return NextResponse.json(directCost);
-  } catch (error) {
-    return NextResponse.json(
-      { error: "Failed to fetch direct cost" },
-      { status: 500 },
-    );
-  }
-} // =============================================================================
+    },
+); // =============================================================================
 // PUT - Update Direct Cost
 // =============================================================================
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string; costId: string }> },
-) {
-  try {
+export const PUT = withApiGuardrails<{ projectId: string; costId: string }>(
+  "projects/[projectId]/direct-costs/[costId]#PUT",
+  async ({ request, params }) => {
+  
     const { projectId, costId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -97,44 +89,14 @@ export async function PUT(
     }
 
     return NextResponse.json(updatedCost);
-  } catch (error) {
-    // Handle specific errors
-    if (error instanceof Error) {
-      if (error.message.includes("not found")) {
-        return NextResponse.json(
-          { error: "Direct cost not found" },
-          { status: 404 },
-        );
-      }
-
-      if (error.message.includes("permission")) {
-        return NextResponse.json(
-          { error: "Insufficient permissions to update direct cost" },
-          { status: 403 },
-        );
-      }
-
-      if (error.message.includes("foreign key")) {
-        return NextResponse.json(
-          { error: "Invalid reference to budget code, vendor, or employee" },
-          { status: 400 },
-        );
-      }
-    }
-
-    return NextResponse.json(
-      { error: "Failed to update direct cost" },
-      { status: 500 },
-    );
-  }
-} // =============================================================================
+    },
+); // =============================================================================
 // DELETE - Soft Delete Direct Cost
 // =============================================================================
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string; costId: string }> },
-) {
-  try {
+export const DELETE = withApiGuardrails<{ projectId: string; costId: string }>(
+  "projects/[projectId]/direct-costs/[costId]#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId, costId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -155,26 +117,5 @@ export async function DELETE(
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    if (error instanceof Error) {
-      if (error.message.includes("not found")) {
-        return NextResponse.json(
-          { error: "Direct cost not found" },
-          { status: 404 },
-        );
-      }
-
-      if (error.message.includes("permission")) {
-        return NextResponse.json(
-          { error: "Insufficient permissions to delete direct cost" },
-          { status: 403 },
-        );
-      }
-    }
-
-    return NextResponse.json(
-      { error: "Failed to delete direct cost" },
-      { status: 500 },
-    );
-  }
-}
+    },
+);

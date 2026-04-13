@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
@@ -6,11 +8,10 @@ import { apiErrorResponse } from "@/lib/api-error";
 // Bulk-update editable SOV fields on line items of a draft / revise_and_resubmit invoice.
 // Accepts: { updates: Array<{ id: number; work_completed_period?: number; materials_stored?: number; retainage_pct?: number; materials_retainage_pct?: number }> }
 // Server recomputes derived totals (pct, total, work_retainage_amount, materials_retainage_amount, balance, net).
-export async function PATCH(
-  request: NextRequest,
-  context: { params: Promise<{ projectId: string; invoiceId: string }> },
-) {
-  try {
+export const PATCH = withApiGuardrails<{ projectId: string; invoiceId: string }>(
+  "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/line-items#PATCH",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { projectId, invoiceId } = await context.params;
 
@@ -26,7 +27,7 @@ export async function PATCH(
       );
     }
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/line-items#PATCH", message: "Authentication required." });
     }
 
     const projectIdNum = parseInt(projectId, 10);
@@ -182,7 +183,5 @@ export async function PATCH(
       { data: { results }, message: allOk ? "Line items updated" : "Some updates failed" },
       { status: allOk ? 200 : 207 },
     );
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

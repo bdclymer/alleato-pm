@@ -1,6 +1,8 @@
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 
 // Comment screenshots are sent as base64 data URLs which can be several MB
 export const maxBodySize = "10mb";
@@ -8,9 +10,6 @@ import { ADMIN_FEEDBACK_BUCKET } from "@/lib/admin-feedback/constants";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 
-function jsonError(status: number, payload: { error: string; details?: string }) {
-  return NextResponse.json(payload, { status });
-}
 
 async function requireAdminUser() {
   const requestUser = await getApiRouteUser();
@@ -35,59 +34,54 @@ const listSchema = z.object({
   feedbackItemId: z.string().uuid(),
 });
 
-export async function GET(request: Request) {
-  try {
-    const user = await requireAdminUser();
-    if (!user) return jsonError(403, { error: "Admin access required" });
+export const GET = withApiGuardrails("/api/admin/feedback/comments#GET", async ({ request }) => {
+  const user = await requireAdminUser();
+  if (!user) throw new GuardrailError({ code: "FORBIDDEN", where: "/api/admin/feedback/comments#GET", message: "Admin access required.", status: 403 });
 
-    const url = new URL(request.url);
-    const parsed = listSchema.safeParse(
-      Object.fromEntries(url.searchParams),
+  const url = new URL(request.url);
+  const parsed = listSchema.safeParse(
+    Object.fromEntries(url.searchParams),
+  );
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid query", details: parsed.error.flatten() },
+      { status: 400 },
     );
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Invalid query", details: parsed.error.flatten() },
-        { status: 400 },
-      );
-    }
-
-    const supabase = createServiceClient();
-    const { data, error } = await supabase
-      .from("admin_feedback_comments")
-      .select("id, feedback_item_id, author_id, body, mentions, screenshot_url, screenshot_path, created_at, updated_at")
-      .eq("feedback_item_id", parsed.data.feedbackItemId)
-      .order("created_at", { ascending: true });
-
-    if (error) {
-      return jsonError(500, { error: "Failed to fetch comments", details: error.message });
-    }
-
-    // Fetch author profiles for all unique author IDs
-    const authorIds = [...new Set((data ?? []).map((c) => c.author_id))];
-    let authors: Record<string, { id: string; email: string; full_name: string | null }> = {};
-
-    if (authorIds.length > 0) {
-      const { data: profiles } = await supabase
-        .from("user_profiles")
-        .select("id, email, full_name")
-        .in("id", authorIds);
-
-      if (profiles) {
-        authors = Object.fromEntries(profiles.map((p) => [p.id, p]));
-      }
-    }
-
-    const comments = (data ?? []).map((c) => ({
-      ...c,
-      author: authors[c.author_id] ?? { id: c.author_id, email: "unknown", full_name: null },
-    }));
-
-    return NextResponse.json({ comments });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return jsonError(500, { error: "Failed to fetch comments", details: message });
   }
-}
+
+  const supabase = createServiceClient();
+  const { data, error } = await supabase
+    .from("admin_feedback_comments")
+    .select("id, feedback_item_id, author_id, body, mentions, screenshot_url, screenshot_path, created_at, updated_at")
+    .eq("feedback_item_id", parsed.data.feedbackItemId)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    throw new GuardrailError({ code: "INTERNAL_ERROR", where: "/api/admin/feedback/comments#GET", message: error.message });
+  }
+
+  // Fetch author profiles for all unique author IDs
+  const authorIds = [...new Set((data ?? []).map((c) => c.author_id))];
+  let authors: Record<string, { id: string; email: string; full_name: string | null }> = {};
+
+  if (authorIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from("user_profiles")
+      .select("id, email, full_name")
+      .in("id", authorIds);
+
+    if (profiles) {
+      authors = Object.fromEntries(profiles.map((p) => [p.id, p]));
+    }
+  }
+
+  const comments = (data ?? []).map((c) => ({
+    ...c,
+    author: authors[c.author_id] ?? { id: c.author_id, email: "unknown", full_name: null },
+  }));
+
+  return NextResponse.json({ comments });
+});
 
 // ---------------------------------------------------------------------------
 // POST — Add a comment to a feedback item
@@ -155,85 +149,72 @@ async function uploadCommentScreenshot(userId: string, screenshotDataUrl: string
   return { screenshotPath: filePath, screenshotUrl: publicUrl };
 }
 
-export async function POST(request: Request) {
-  try {
-    const user = await requireAdminUser();
-    if (!user) return jsonError(403, { error: "Admin access required" });
+export const POST = withApiGuardrails("/api/admin/feedback/comments#POST", async ({ request }) => {
+  const user = await requireAdminUser();
+  if (!user) throw new GuardrailError({ code: "FORBIDDEN", where: "/api/admin/feedback/comments#POST", message: "Admin access required.", status: 403 });
 
-    const raw = await request.json();
-    const parsed = postSchema.safeParse(raw);
-    if (!parsed.success) {
-      return NextResponse.json(
-        { error: "Invalid payload", details: parsed.error.flatten() },
-        { status: 400 },
-      );
-    }
-
-    const { feedbackItemId, body, mentions = [], screenshotDataUrl } = parsed.data;
-    const supabase = createServiceClient();
-
-    // Verify the feedback item exists
-    const { data: item, error: itemError } = await supabase
-      .from("admin_feedback_items")
-      .select("id")
-      .eq("id", feedbackItemId)
-      .maybeSingle();
-
-    if (itemError || !item) {
-      return jsonError(404, { error: "Feedback item not found" });
-    }
-
-    // Upload screenshot if provided
-    let screenshotUrl: string | null = null;
-    let screenshotPath: string | null = null;
-
-    if (screenshotDataUrl) {
-      try {
-        const uploaded = await uploadCommentScreenshot(user.id, screenshotDataUrl);
-        screenshotUrl = uploaded.screenshotUrl;
-        screenshotPath = uploaded.screenshotPath;
-      } catch (err) {
-        const msg = err instanceof Error ? err.message : "Screenshot upload failed";
-        return jsonError(500, { error: "Failed to upload comment screenshot", details: msg });
-      }
-    }
-
-    // Insert comment
-    const { data: comment, error: insertError } = await supabase
-      .from("admin_feedback_comments")
-      .insert({
-        feedback_item_id: feedbackItemId,
-        author_id: user.id,
-        body,
-        mentions,
-        screenshot_url: screenshotUrl,
-        screenshot_path: screenshotPath,
-      })
-      .select("id, feedback_item_id, author_id, body, mentions, screenshot_url, screenshot_path, created_at, updated_at")
-      .single();
-
-    if (insertError) {
-      return jsonError(500, { error: "Failed to add comment", details: insertError.message });
-    }
-
-    // Fetch author profile
-    const { data: profile } = await supabase
-      .from("user_profiles")
-      .select("id, email, full_name")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    // Send notifications to mentioned users via Liveblocks-style in-app
-    // (For now, we store mentions in the DB — notification delivery can be added later)
-
-    return NextResponse.json({
-      comment: {
-        ...comment,
-        author: profile ?? { id: user.id, email: "unknown", full_name: null },
-      },
-    });
-  } catch (err) {
-    const message = err instanceof Error ? err.message : "Unknown error";
-    return jsonError(500, { error: "Failed to add comment", details: message });
+  const raw = await request.json();
+  const parsed = postSchema.safeParse(raw);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid payload", details: parsed.error.flatten() },
+      { status: 400 },
+    );
   }
-}
+
+  const { feedbackItemId, body, mentions = [], screenshotDataUrl } = parsed.data;
+  const supabase = createServiceClient();
+
+  // Verify the feedback item exists
+  const { data: item, error: itemError } = await supabase
+    .from("admin_feedback_items")
+    .select("id")
+    .eq("id", feedbackItemId)
+    .maybeSingle();
+
+  if (itemError || !item) {
+    return NextResponse.json({ error: "Feedback item not found" }, { status: 404 });
+  }
+
+  // Upload screenshot if provided
+  let screenshotUrl: string | null = null;
+  let screenshotPath: string | null = null;
+
+  if (screenshotDataUrl) {
+    const uploaded = await uploadCommentScreenshot(user.id, screenshotDataUrl);
+    screenshotUrl = uploaded.screenshotUrl;
+    screenshotPath = uploaded.screenshotPath;
+  }
+
+  // Insert comment
+  const { data: comment, error: insertError } = await supabase
+    .from("admin_feedback_comments")
+    .insert({
+      feedback_item_id: feedbackItemId,
+      author_id: user.id,
+      body,
+      mentions,
+      screenshot_url: screenshotUrl,
+      screenshot_path: screenshotPath,
+    })
+    .select("id, feedback_item_id, author_id, body, mentions, screenshot_url, screenshot_path, created_at, updated_at")
+    .single();
+
+  if (insertError) {
+    throw new GuardrailError({ code: "INTERNAL_ERROR", where: "/api/admin/feedback/comments#POST", message: insertError.message });
+  }
+
+  // Fetch author profile
+  const { data: profile } = await supabase
+    .from("user_profiles")
+    .select("id, email, full_name")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  return NextResponse.json({
+    comment: {
+      ...comment,
+      author: profile ?? { id: user.id, email: "unknown", full_name: null },
+    },
+  });
+});

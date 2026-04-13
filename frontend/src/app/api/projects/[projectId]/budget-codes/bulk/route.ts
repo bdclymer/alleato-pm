@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
@@ -16,11 +18,10 @@ import { apiErrorResponse } from "@/lib/api-error";
  *
  * Body: { cost_type_id: string, cost_code_ids: string[] }
  */
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const PUT = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/budget-codes/bulk#PUT",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const projectIdNum = Number.parseInt(projectId, 10);
 
@@ -58,7 +59,7 @@ export async function PUT(
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/budget-codes/bulk#PUT", message: "Authentication required." });
     }
 
     // Fetch ALL existing project_cost_codes for this project + cost type
@@ -147,7 +148,5 @@ export async function PUT(
       activated: toActivate.length,
       deactivated: toDeactivate.length,
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

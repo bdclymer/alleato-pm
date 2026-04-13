@@ -1,5 +1,7 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 /**
  * POST /api/initiative-cards/[cardId]/dispatch
@@ -9,10 +11,9 @@ import { NextRequest, NextResponse } from "next/server";
  * The actual execution happens client-side by copying the command
  * or triggering via the Agentation MCP server.
  */
-export async function POST(
-  _req: NextRequest,
-  { params }: { params: Promise<{ cardId: string }> },
-) {
+export const POST = withApiGuardrails<{ cardId: string }>(
+  "initiative-cards/[cardId]/dispatch#POST",
+  async ({ request, params }) => {
   const { cardId } = await params;
   const supabase = await createClient();
 
@@ -59,4 +60,5 @@ export async function POST(
     cliCommand,
     message: `Card dispatched to Claude Code. Run the command or use the Agentation MCP to execute.`,
   });
-}
+  },
+);

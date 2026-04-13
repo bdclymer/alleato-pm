@@ -1,6 +1,8 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 /**
  * GET /api/projects/[projectId]/drawings/[drawingId]/pdf-proxy
@@ -9,10 +11,9 @@ import { NextRequest, NextResponse } from "next/server";
  * HTTP Range requests without hitting Supabase signed-URL CORS/range restrictions
  * that cause a 400 "Unexpected server response" error.
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string; drawingId: string }> },
-) {
+export const GET = withApiGuardrails<{ projectId: string; drawingId: string }>(
+  "projects/[projectId]/drawings/[drawingId]/pdf-proxy#GET",
+  async ({ request, params }) => {
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
 
@@ -82,4 +83,5 @@ export async function GET(
     status: upstream.status,
     headers: responseHeaders,
   });
-}
+  },
+);

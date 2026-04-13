@@ -6,6 +6,8 @@
  * DELETE /api/projects/[projectId]/rfis/[rfiId] - Delete RFI
  */
 
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
@@ -23,8 +25,10 @@ type RouteParams = {
 /**
  * GET /api/projects/[projectId]/rfis/[rfiId]
  */
-export async function GET(request: Request, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/rfis/[rfiId]#GET",
+  async ({ request, params }) => {
+  
     const { rfiId } = await params;
     const supabase = await createClient();
 
@@ -43,16 +47,16 @@ export async function GET(request: Request, { params }: RouteParams) {
     }
 
     return NextResponse.json(data);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * PATCH /api/projects/[projectId]/rfis/[rfiId]
  */
-export async function PATCH(request: Request, { params }: RouteParams) {
-  try {
+export const PATCH = withApiGuardrails(
+  "projects/[projectId]/rfis/[rfiId]#PATCH",
+  async ({ request, params }) => {
+  
     const { rfiId } = await params;
     const supabase = await createClient();
     const body = await request.json();
@@ -62,7 +66,7 @@ export async function PATCH(request: Request, { params }: RouteParams) {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/rfis/[rfiId]#PATCH", message: "Authentication required." });
     }
 
     // Validate update data
@@ -177,16 +181,8 @@ export async function PATCH(request: Request, { params }: RouteParams) {
     }
 
     return NextResponse.json(data);
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        { error: "Validation error", issues: error.issues },
-        { status: 400 },
-      );
-    }
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 // ── RFI closed notification ────────────────────────────────────────────────
 
@@ -286,8 +282,10 @@ async function notifyRfiClosed(args: {
 /**
  * DELETE /api/projects/[projectId]/rfis/[rfiId]
  */
-export async function DELETE(request: Request, { params }: RouteParams) {
-  try {
+export const DELETE = withApiGuardrails(
+  "projects/[projectId]/rfis/[rfiId]#DELETE",
+  async ({ request, params }) => {
+  
     const { rfiId } = await params;
     const supabase = await createClient();
 
@@ -296,7 +294,7 @@ export async function DELETE(request: Request, { params }: RouteParams) {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/rfis/[rfiId]#DELETE", message: "Authentication required." });
     }
 
     const { error } = await supabase.from("rfis").delete().eq("id", rfiId);
@@ -307,7 +305,5 @@ export async function DELETE(request: Request, { params }: RouteParams) {
     }
 
     return NextResponse.json({ message: "RFI deleted successfully", id: rfiId });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

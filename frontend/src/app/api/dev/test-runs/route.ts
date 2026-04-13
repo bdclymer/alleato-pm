@@ -3,16 +3,20 @@
  * POST — start a new test run for a suite. Pre-creates one not_tested
  *        result row per case so the UI can PATCH them as the tester goes.
  */
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
-export async function POST(req: Request) {
-  try {
+export const POST = withApiGuardrails(
+  "dev/test-runs#POST",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "dev/test-runs#POST", message: "Authentication required." });
     }
 
     const body = await req.json();
@@ -51,7 +55,5 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ run });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

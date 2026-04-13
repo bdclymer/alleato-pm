@@ -8,8 +8,10 @@
  * DELETE /api/projects/[projectId]/pcos/[pcoId]/change-events - Ungroup a CE
  */
 
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
 
@@ -20,8 +22,10 @@ interface RouteParams {
 /**
  * GET - List change events grouped into this PCO
  */
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/pcos/[pcoId]/change-events#GET",
+  async ({ request, params }) => {
+  
     const { projectId, pcoId } = await params;
     const numericPcoId = parseInt(pcoId, 10);
 
@@ -64,17 +68,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     }));
 
     return NextResponse.json({ data: result });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * POST - Group a change event into this PCO
  * Body: { changeEventId: string, estimatedAmount?: number }
  */
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/pcos/[pcoId]/change-events#POST",
+  async ({ request, params }) => {
+  
     const { projectId, pcoId } = await params;
     const numericProjectId = parseInt(projectId, 10);
     const numericPcoId = parseInt(pcoId, 10);
@@ -96,7 +100,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/pcos/[pcoId]/change-events#POST", message: "Authentication required." });
     }
 
     if (!body.changeEventId) {
@@ -193,17 +197,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     });
 
     return NextResponse.json(data, { status: 201 });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * DELETE - Ungroup a change event from this PCO
  * Body: { changeEventId: string }
  */
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  try {
+export const DELETE = withApiGuardrails(
+  "projects/[projectId]/pcos/[pcoId]/change-events#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId, pcoId } = await params;
     const numericProjectId = parseInt(projectId, 10);
     const numericPcoId = parseInt(pcoId, 10);
@@ -225,7 +229,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/pcos/[pcoId]/change-events#DELETE", message: "Authentication required." });
     }
 
     if (!body.changeEventId) {
@@ -270,7 +274,5 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     });
 
     return new NextResponse(null, { status: 204 });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

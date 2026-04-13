@@ -5,6 +5,8 @@
  * POST /api/projects/[projectId]/rfis - Create new RFI
  */
 
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -19,8 +21,10 @@ type RouteParams = {
  * GET /api/projects/[projectId]/rfis
  * List RFIs with filtering, pagination, and search
  */
-export async function GET(request: Request, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/rfis#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
     const { searchParams } = new URL(request.url);
@@ -73,17 +77,17 @@ export async function GET(request: Request, { params }: RouteParams) {
         totalPages: count ? Math.ceil(count / limit) : 0,
       },
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * POST /api/projects/[projectId]/rfis
  * Create a new RFI
  */
-export async function POST(request: Request, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/rfis#POST",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
     const body = await request.json();
@@ -93,7 +97,7 @@ export async function POST(request: Request, { params }: RouteParams) {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/rfis#POST", message: "Authentication required." });
     }
 
     const numericProjectId = Number(projectId);
@@ -168,13 +172,5 @@ export async function POST(request: Request, { params }: RouteParams) {
     }
 
     return NextResponse.json(data, { status: 201 });
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        { error: "Validation error", issues: error.issues },
-        { status: 400 },
-      );
-    }
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

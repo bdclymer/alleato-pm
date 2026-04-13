@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -18,11 +20,10 @@ import { apiErrorResponse } from "@/lib/api-error";
  * - 404: Commitment not found
  * - 400: Commitment is not deleted (cannot restore)
  */
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ commitmentId: string }> },
-) {
-  try {
+export const POST = withApiGuardrails<{ commitmentId: string }>(
+  "commitments/[commitmentId]/restore#POST",
+  async ({ request, params }) => {
+  
     const { commitmentId } = await params;
     const supabase = await createClient();
 
@@ -32,7 +33,7 @@ export async function POST(
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "commitments/[commitmentId]/restore#POST", message: "Authentication required." });
     }
 
     // First determine the type from the unified view (including deleted records)
@@ -89,7 +90,5 @@ export async function POST(
         status: data?.status || existing.status || "draft",
       },
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

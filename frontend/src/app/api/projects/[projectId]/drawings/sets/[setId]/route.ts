@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { DrawingSetService } from "@/services/DrawingSetService";
@@ -8,10 +10,9 @@ import { apiErrorResponse } from "@/lib/api-error";
  * PATCH /api/projects/[projectId]/drawing-sets/[setId]
  * Update a drawing set
  */
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string; setId: string }> },
-) {
+export const PATCH = withApiGuardrails<{ projectId: string; setId: string }>(
+  "projects/[projectId]/drawings/sets/[setId]#PATCH",
+  async ({ request, params }) => {
   const { setId } = await params;
   const supabase = await createClient();
 
@@ -20,7 +21,7 @@ export async function PATCH(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/drawings/sets/[setId]#PATCH", message: "Authentication required." });
   }
 
   try {
@@ -43,16 +44,16 @@ export async function PATCH(
       { status: 500 },
     );
   }
-}
+  },
+);
 
 /**
  * POST /api/projects/[projectId]/drawing-sets/[setId]
  * Archive a drawing set (using POST with action parameter)
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string; setId: string }> },
-) {
+export const POST = withApiGuardrails<{ projectId: string; setId: string }>(
+  "projects/[projectId]/drawings/sets/[setId]#POST",
+  async ({ request, params }) => {
   const { setId } = await params;
   const supabase = await createClient();
 
@@ -61,7 +62,7 @@ export async function POST(
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/drawings/sets/[setId]#POST", message: "Authentication required." });
   }
 
   try {
@@ -92,4 +93,5 @@ export async function POST(
       { status: 500 },
     );
   }
-}
+  },
+);

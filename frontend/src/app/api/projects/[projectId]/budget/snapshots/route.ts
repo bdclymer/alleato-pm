@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
@@ -13,8 +15,10 @@ interface SnapshotsParams {
  *
  * Fetches budget snapshots (point-in-time captures)
  */
-export async function GET(request: NextRequest, { params }: SnapshotsParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/budget/snapshots#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
 
@@ -25,7 +29,7 @@ export async function GET(request: NextRequest, { params }: SnapshotsParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/budget/snapshots#GET", message: "Authentication required." });
     }
 
     // Fetch snapshots — totals are stored in the grand_totals JSON column
@@ -85,18 +89,18 @@ export async function GET(request: NextRequest, { params }: SnapshotsParams) {
       },
       count: snapshots?.length || 0,
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * POST /api/projects/[id]/budget/snapshots
  *
  * Creates a new budget snapshot
  */
-export async function POST(request: NextRequest, { params }: SnapshotsParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/budget/snapshots#POST",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
 
@@ -107,7 +111,7 @@ export async function POST(request: NextRequest, { params }: SnapshotsParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/budget/snapshots#POST", message: "Authentication required." });
     }
 
     const body = await request.json();
@@ -162,7 +166,5 @@ export async function POST(request: NextRequest, { params }: SnapshotsParams) {
     }
 
     return NextResponse.json(snapshot, { status: 201 });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

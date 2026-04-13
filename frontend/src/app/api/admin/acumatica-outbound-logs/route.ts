@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
+
 
 interface OutboundAuditRow {
   run_id: string;
@@ -338,70 +341,63 @@ async function loadLegacyLinkedRows(
   return { rows: rows.slice(0, 1000), summary };
 }
 
-export async function GET(request: Request) {
-  try {
-    const auth = await requireAdminAuth();
-    if ("error" in auth) return auth.error;
-    const { supabase } = auth;
+export const GET = withApiGuardrails("/api/admin/acumatica-outbound-logs#GET", async ({ request }) => {
+  const auth = await requireAdminAuth();
+  if ("error" in auth) return auth.error;
+  const { supabase } = auth;
 
-    const url = new URL(request.url);
-    const daysRaw = Number(url.searchParams.get("days") ?? "14");
-    const rowLimitRaw = Number(url.searchParams.get("rowLimit") ?? "5000");
-    const selectedRunId = url.searchParams.get("runId");
+  const url = new URL(request.url);
+  const daysRaw = Number(url.searchParams.get("days") ?? "14");
+  const rowLimitRaw = Number(url.searchParams.get("rowLimit") ?? "5000");
+  const selectedRunId = url.searchParams.get("runId");
 
-    const days = Number.isFinite(daysRaw) ? Math.min(Math.max(daysRaw, 1), 90) : 14;
-    const rowLimit = Number.isFinite(rowLimitRaw)
-      ? Math.min(Math.max(rowLimitRaw, 100), 10000)
-      : 5000;
+  const days = Number.isFinite(daysRaw) ? Math.min(Math.max(daysRaw, 1), 90) : 14;
+  const rowLimit = Number.isFinite(rowLimitRaw)
+    ? Math.min(Math.max(rowLimitRaw, 100), 10000)
+    : 5000;
 
-    const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
+  const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString();
 
-    const { data, error } = await (supabase as any)
-      .from("acumatica_outbound_audit_logs")
-      .select("*")
-      .gte("created_at", since)
-      .order("created_at", { ascending: false })
-      .limit(rowLimit);
+  const { data, error } = await (supabase as any)
+    .from("acumatica_outbound_audit_logs")
+    .select("*")
+    .gte("created_at", since)
+    .order("created_at", { ascending: false })
+    .limit(rowLimit);
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 500 });
-    }
-
-    const rows = (data ?? []) as OutboundAuditRow[];
-    const runs = buildRunSummaries(rows);
-    const daily = buildDailySummary(rows);
-
-    let legacy: { rows: LegacyLinkedRow[]; summary: LegacySummary; error?: string } = {
-      rows: [],
-      summary: { totalLinked: 0, byEntity: [] },
-    };
-    try {
-      const loaded = await loadLegacyLinkedRows(supabase, days);
-      legacy = { ...loaded };
-    } catch (legacyError) {
-      legacy.error =
-        legacyError instanceof Error
-          ? legacyError.message
-          : "Failed to load legacy linked rows.";
-    }
-
-    const effectiveRunId = selectedRunId ?? runs[0]?.runId ?? null;
-    const runRows = effectiveRunId ? rows.filter((r) => r.run_id === effectiveRunId) : [];
-
-    return NextResponse.json({
-      rows,
-      runs,
-      daily,
-      selectedRunId: effectiveRunId,
-      runRows,
-      legacyRows: legacy.rows,
-      legacySummary: legacy.summary,
-      legacyError: legacy.error ?? null,
-    });
-  } catch (error) {
-    return NextResponse.json(
-      { error: error instanceof Error ? error.message : "Internal server error" },
-      { status: 500 },
-    );
+  if (error) {
+    throw new GuardrailError({ code: "INTERNAL_ERROR", where: "/api/admin/acumatica-outbound-logs#GET", message: error.message });
   }
-}
+
+  const rows = (data ?? []) as OutboundAuditRow[];
+  const runs = buildRunSummaries(rows);
+  const daily = buildDailySummary(rows);
+
+  let legacy: { rows: LegacyLinkedRow[]; summary: LegacySummary; error?: string } = {
+    rows: [],
+    summary: { totalLinked: 0, byEntity: [] },
+  };
+  try {
+    const loaded = await loadLegacyLinkedRows(supabase, days);
+    legacy = { ...loaded };
+  } catch (legacyError) {
+    legacy.error =
+      legacyError instanceof Error
+        ? legacyError.message
+        : "Failed to load legacy linked rows.";
+  }
+
+  const effectiveRunId = selectedRunId ?? runs[0]?.runId ?? null;
+  const runRows = effectiveRunId ? rows.filter((r) => r.run_id === effectiveRunId) : [];
+
+  return NextResponse.json({
+    rows,
+    runs,
+    daily,
+    selectedRunId: effectiveRunId,
+    runRows,
+    legacyRows: legacy.rows,
+    legacySummary: legacy.summary,
+    legacyError: legacy.error ?? null,
+  });
+});

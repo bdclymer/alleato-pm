@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
@@ -178,15 +180,17 @@ function mapRowToCommitment(
  * @returns {object} 401 - Unauthorized (missing or invalid session)
  * @returns {object} 400/500 - Error response from database or server
  */
-export async function GET(request: Request) {
-  try {
+export const GET = withApiGuardrails(
+  "commitments#GET",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const {
       data: { user },
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "commitments#GET", message: "Authentication required." });
     }
     const { searchParams } = new URL(request.url);
 
@@ -306,10 +310,8 @@ export async function GET(request: Request) {
         "Cache-Control": "private, max-age=10, stale-while-revalidate=30",
       },
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * POST /api/commitments
@@ -322,7 +324,9 @@ export async function GET(request: Request) {
  * @route POST /api/commitments
  * @returns {object} 410 - Gone (endpoint deprecated)
  */
-export async function POST() {
+export const POST = withApiGuardrails(
+  "commitments#POST",
+  async () => {
   return NextResponse.json(
     {
       error: "Deprecated endpoint",
@@ -331,4 +335,5 @@ export async function POST() {
     },
     { status: 410 },
   );
-}
+  },
+);

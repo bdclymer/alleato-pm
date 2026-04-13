@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
@@ -12,8 +14,10 @@ interface RouteParams {
  * PATCH /api/projects/[projectId]/photos/[photoId]/restore
  * Restores a soft-deleted photo by clearing deleted_at.
  */
-export async function PATCH(_request: NextRequest, { params }: RouteParams) {
-  try {
+export const PATCH = withApiGuardrails(
+  "projects/[projectId]/photos/[photoId]/restore#PATCH",
+  async ({ request, params }) => {
+  
     const { projectId, photoId } = await params;
     const supabase = await createClient();
 
@@ -23,7 +27,7 @@ export async function PATCH(_request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/photos/[photoId]/restore#PATCH", message: "Authentication required." });
     }
 
     const { data, error } = await supabase
@@ -44,7 +48,5 @@ export async function PATCH(_request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

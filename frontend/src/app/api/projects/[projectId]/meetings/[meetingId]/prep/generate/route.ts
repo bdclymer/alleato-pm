@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { NextResponse } from "next/server";
@@ -15,8 +17,10 @@ const MODEL_ID = "anthropic/claude-sonnet-4.5";
 type RouteParams = { params: Promise<{ projectId: string; meetingId: string }> };
 
 // POST: Generate meeting prep using AI
-export async function POST(_request: Request, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/meetings/[meetingId]/prep/generate#POST",
+  async ({ request, params }) => {
+  
     const { projectId, meetingId } = await params;
     const supabase = await createClient();
     const {
@@ -24,7 +28,7 @@ export async function POST(_request: Request, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/meetings/[meetingId]/prep/generate#POST", message: "Authentication required." });
     }
 
     const numericProjectId = parseInt(projectId, 10);
@@ -161,11 +165,5 @@ export async function POST(_request: Request, { params }: RouteParams) {
     }
 
     return NextResponse.json({ data });
-  } catch (err) {
-    console.error("Meeting prep generation error:", err);
-    return NextResponse.json(
-      { error: "Failed to generate meeting prep" },
-      { status: 500 }
-    );
-  }
-}
+    },
+);

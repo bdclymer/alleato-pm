@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -13,8 +15,10 @@ interface RouteParams {
  *
  * Fetch all line items for a commitment change order, ordered by created_at ASC.
  */
-export async function GET(_request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/commitment-change-orders/[commitmentCoId]/line-items#GET",
+  async ({ request, params }) => {
+  
     const { commitmentCoId } = await params;
     const supabase = await createClient();
 
@@ -27,18 +31,18 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     if (error) return apiErrorResponse(error);
 
     return NextResponse.json({ data: data ?? [] });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * POST /api/projects/[projectId]/commitment-change-orders/[commitmentCoId]/line-items
  *
  * Create a new line item on a commitment change order.
  */
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/commitment-change-orders/[commitmentCoId]/line-items#POST",
+  async ({ request, params }) => {
+  
     const { projectId, commitmentCoId } = await params;
     const projectIdNum = Number(projectId);
 
@@ -63,7 +67,5 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     if (error) return apiErrorResponse(error);
 
     return NextResponse.json({ data }, { status: 201 });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

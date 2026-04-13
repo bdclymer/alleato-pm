@@ -1,17 +1,18 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const PATCH = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]#PATCH",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const user = await getApiRouteUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]#PATCH", message: "Authentication required." });
     }
     const supabase = createServiceClient();
     const body = await request.json();
@@ -47,20 +48,17 @@ export async function PATCH(
     }
 
     return NextResponse.json(data);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const user = await getApiRouteUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]#GET", message: "Authentication required." });
     }
 
     const supabase = createServiceClient();
@@ -75,20 +73,17 @@ export async function GET(
     }
 
     return NextResponse.json(data);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const DELETE = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const user = await getApiRouteUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]#DELETE", message: "Authentication required." });
     }
 
     const supabase = createServiceClient();
@@ -114,7 +109,5 @@ export async function DELETE(
     }
 
     return NextResponse.json(data);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

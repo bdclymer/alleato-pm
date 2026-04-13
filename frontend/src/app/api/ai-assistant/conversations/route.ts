@@ -1,5 +1,7 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { randomUUID } from "crypto";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -8,10 +10,12 @@ import { apiErrorResponse } from "@/lib/api-error";
  * GET /api/ai-assistant/conversations
  * List all non-archived conversations for the current user.
  */
-export async function GET() {
+export const GET = withApiGuardrails(
+  "ai-assistant/conversations#GET",
+  async () => {
   const user = await getApiRouteUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "ai-assistant/conversations#GET", message: "Authentication required." });
   }
 
   const supabase = createServiceClient();
@@ -27,17 +31,20 @@ export async function GET() {
   }
 
   return NextResponse.json({ conversations: data ?? [] });
-}
+  },
+);
 
 /**
  * POST /api/ai-assistant/conversations
  * Create a new conversation.
  * Body: { title?: string }
  */
-export async function POST(request: NextRequest) {
+export const POST = withApiGuardrails(
+  "ai-assistant/conversations#POST",
+  async ({ request }) => {
   const user = await getApiRouteUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "ai-assistant/conversations#POST", message: "Authentication required." });
   }
 
   const body = await request.json();
@@ -61,4 +68,5 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({ conversation: data }, { status: 201 });
-}
+  },
+);

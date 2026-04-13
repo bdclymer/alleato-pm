@@ -1,16 +1,20 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 const MAX_RESULTS = 6;
 
-export async function POST(request: NextRequest) {
-  try {
+export const POST = withApiGuardrails(
+  "docs-search#POST",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "docs-search#POST", message: "Authentication required." });
     }
 
     const { query } = await request.json().catch(() => ({}));
@@ -44,7 +48,5 @@ export async function POST(request: NextRequest) {
     }));
 
     return NextResponse.json({ hits });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

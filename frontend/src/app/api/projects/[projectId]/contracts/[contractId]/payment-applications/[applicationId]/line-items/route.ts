@@ -1,6 +1,8 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod";
 import { ZodError } from "zod";
 import { requirePermission } from "@/lib/permissions-guard";
@@ -70,8 +72,10 @@ const normalizeBatchUpdateItems = (
  * GET /api/projects/[projectId]/contracts/[contractId]/payment-applications/[applicationId]/line-items
  * Fetch all line items for a payment application, ordered by sort_order
  */
-export async function GET(_request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/contracts/[contractId]/payment-applications/[applicationId]/line-items#GET",
+  async ({ request, params }) => {
+  
     const { applicationId } = await params;
     const supabase = await createClient();
 
@@ -89,17 +93,17 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(data ?? []);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * PATCH /api/projects/[projectId]/contracts/[contractId]/payment-applications/[applicationId]/line-items
  * Batch update line items, then recalculate parent payment application totals
  */
-export async function PATCH(request: NextRequest, { params }: RouteParams) {
-  try {
+export const PATCH = withApiGuardrails(
+  "projects/[projectId]/contracts/[contractId]/payment-applications/[applicationId]/line-items#PATCH",
+  async ({ request, params }) => {
+  
     const { projectId, contractId, applicationId } = await params;
     const projectIdNum = parseInt(projectId, 10);
     const guard = await requirePermission(projectIdNum, "contracts", "write");
@@ -386,19 +390,5 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       .order("sort_order", { ascending: true });
 
     return NextResponse.json(updatedItems ?? []);
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        {
-          error: "Validation error",
-          details: error.issues.map((e) => ({
-            field: e.path.join("."),
-            message: e.message,
-          })),
-        },
-        { status: 400 },
-      );
-    }
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

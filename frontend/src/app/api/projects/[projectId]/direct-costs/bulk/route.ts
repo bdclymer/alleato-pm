@@ -10,7 +10,9 @@
  * - Detailed success/failure reporting for each item
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import {
   DirectCostBulkStatusUpdateSchema,
@@ -23,11 +25,10 @@ import { requirePermission } from "@/lib/permissions-guard";
 // POST - Perform Bulk Operations
 // =============================================================================
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> }
-) {
-  try {
+export const POST = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/direct-costs/bulk#POST",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -128,27 +129,5 @@ export async function POST(
       { error: `Unknown operation type: ${operationType}` },
       { status: 400 }
     );
-  } catch (error) {
-    // Handle specific errors
-    if (error instanceof Error) {
-      if (error.message.includes('Authentication required')) {
-        return NextResponse.json(
-          { error: 'Authentication required' },
-          { status: 401 }
-        );
-      }
-
-      if (error.message.includes('permission')) {
-        return NextResponse.json(
-          { error: 'Insufficient permissions for bulk operations' },
-          { status: 403 }
-        );
-      }
-    }
-
-    return NextResponse.json(
-      { error: 'Bulk operation failed' },
-      { status: 500 }
-    );
-  }
-}
+    },
+);

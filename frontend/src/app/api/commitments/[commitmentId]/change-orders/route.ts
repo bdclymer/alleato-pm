@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -70,11 +72,10 @@ const createCommitmentChangeOrderSchema = z.object({
  * @returns {object} 400 - Database query error
  * @returns {object} 500 - Internal server error
  */
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ commitmentId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ commitmentId: string }>(
+  "commitments/[commitmentId]/change-orders#GET",
+  async ({ request, params }) => {
+  
     const { commitmentId } = await params;
     const supabase = await createClient();
 
@@ -154,10 +155,8 @@ export async function GET(
         approved_amount: approvedAmount,
       },
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * POST /api/commitments/[commitmentId]/change-orders
@@ -182,11 +181,10 @@ export async function GET(
  * @returns {object} 404 - Commitment not found
  * @returns {object} 500 - Internal server error
  */
-export async function POST(
-  request: Request,
-  { params }: { params: Promise<{ commitmentId: string }> },
-) {
-  try {
+export const POST = withApiGuardrails<{ commitmentId: string }>(
+  "commitments/[commitmentId]/change-orders#POST",
+  async ({ request, params }) => {
+  
     const { commitmentId } = await params;
     const supabase = await createClient();
     const body = await request.json();
@@ -196,7 +194,7 @@ export async function POST(
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "commitments/[commitmentId]/change-orders#POST", message: "Authentication required." });
     }
 
     // Verify commitment exists
@@ -279,7 +277,5 @@ export async function POST(
     };
 
     return NextResponse.json(formattedChangeOrder, { status: 201 });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

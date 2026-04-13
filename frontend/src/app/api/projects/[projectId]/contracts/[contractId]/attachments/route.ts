@@ -1,7 +1,9 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { apiErrorResponse } from "@/lib/api-error";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requirePermission } from "@/lib/permissions-guard";
 
@@ -25,8 +27,10 @@ const createAttachmentSchema = z.object({
  * GET /api/projects/[id]/contracts/[contractId]/attachments
  * Returns all attachments for a prime contract
  */
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/contracts/[contractId]/attachments#GET",
+  async ({ request, params }) => {
+  
     const { projectId, contractId } = await params;
     const supabase = await createClient();
     const serviceClient = createServiceClient();
@@ -140,17 +144,17 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         contract: `/api/projects/${projectId}/contracts/${contractId}`,
       },
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * POST /api/projects/[id]/contracts/[contractId]/attachments
  * Uploads a new attachment to a prime contract
  */
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/contracts/[contractId]/attachments#POST",
+  async ({ request, params }) => {
+  
     const { projectId, contractId } = await params;
     const projectIdNum = parseInt(projectId, 10);
     const guard = await requirePermission(projectIdNum, "contracts", "write");
@@ -165,7 +169,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/contracts/[contractId]/attachments#POST", message: "Authentication required." });
     }
 
     const { data: contract } = await supabase
@@ -282,20 +286,5 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       },
       { status: 201 },
     );
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: "Validation error",
-          details: error.issues.map((e) => ({
-            field: e.path.join("."),
-            message: e.message,
-          })),
-        },
-        { status: 400 },
-      );
-    }
-
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

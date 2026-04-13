@@ -1,22 +1,23 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 /**
  * GET /api/projects/[projectId]/drawings/[drawingId]/download
  * Download the current revision of a drawing
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string; drawingId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string; drawingId: string }>(
+  "projects/[projectId]/drawings/[drawingId]/download#GET",
+  async ({ request, params }) => {
+  
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/drawings/[drawingId]/download#GET", message: "Authentication required." });
     }
 
     const { drawingId } = await params;
@@ -73,7 +74,5 @@ export async function GET(
       fileSize: revision.file_size,
       expiresAt: new Date(Date.now() + 3600 * 1000).toISOString(),
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

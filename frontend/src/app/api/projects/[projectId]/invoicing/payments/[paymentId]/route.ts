@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -15,8 +17,10 @@ async function getAuthedClient() {
 }
 
 // GET /api/projects/[projectId]/invoicing/payments/[paymentId]
-export async function GET(_request: NextRequest, context: Ctx) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/invoicing/payments/[paymentId]#GET",
+  async ({ request }) => {
+  
     const { supabase, error: authErr } = await getAuthedClient();
     if (authErr) return NextResponse.json({ error: authErr }, { status: 401 });
 
@@ -48,14 +52,14 @@ export async function GET(_request: NextRequest, context: Ctx) {
     }
 
     return NextResponse.json({ data });
-  } catch (err) {
-    return apiErrorResponse(err);
-  }
-}
+    },
+);
 
 // PATCH /api/projects/[projectId]/invoicing/payments/[paymentId]
-export async function PATCH(request: NextRequest, context: Ctx) {
-  try {
+export const PATCH = withApiGuardrails(
+  "projects/[projectId]/invoicing/payments/[paymentId]#PATCH",
+  async ({ request }) => {
+  
     const { supabase, error: authErr } = await getAuthedClient();
     if (authErr) return NextResponse.json({ error: authErr }, { status: 401 });
 
@@ -99,14 +103,14 @@ export async function PATCH(request: NextRequest, context: Ctx) {
     }
 
     return NextResponse.json({ data });
-  } catch (err) {
-    return apiErrorResponse(err);
-  }
-}
+    },
+);
 
 // DELETE /api/projects/[projectId]/invoicing/payments/[paymentId]
-export async function DELETE(_request: NextRequest, context: Ctx) {
-  try {
+export const DELETE = withApiGuardrails(
+  "projects/[projectId]/invoicing/payments/[paymentId]#DELETE",
+  async ({ request }) => {
+  
     const { supabase, error: authErr } = await getAuthedClient();
     if (authErr) return NextResponse.json({ error: authErr }, { status: 401 });
 
@@ -128,7 +132,5 @@ export async function DELETE(_request: NextRequest, context: Ctx) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (err) {
-    return apiErrorResponse(err);
-  }
-}
+    },
+);

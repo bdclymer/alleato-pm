@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
@@ -417,8 +419,10 @@ async function createPmReviewTodos(params: {
   }
 }
 
-export async function GET(_request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/commitments/[commitmentId]/subcontractor-sov#GET",
+  async ({ request, params }) => {
+  
     const { projectId, commitmentId } = await params;
     const numericProjectId = Number.parseInt(projectId, 10);
     if (Number.isNaN(numericProjectId)) {
@@ -483,13 +487,13 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
         permissions,
       },
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
-export async function PUT(request: NextRequest, { params }: RouteParams) {
-  try {
+export const PUT = withApiGuardrails(
+  "projects/[projectId]/commitments/[commitmentId]/subcontractor-sov#PUT",
+  async ({ request, params }) => {
+  
     const { projectId, commitmentId } = await params;
     const numericProjectId = Number.parseInt(projectId, 10);
     if (Number.isNaN(numericProjectId)) {
@@ -603,13 +607,13 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     if (touchError) throw touchError;
 
     return NextResponse.json({ success: true, message: "Subcontractor SOV saved." });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/commitments/[commitmentId]/subcontractor-sov#POST",
+  async ({ request, params }) => {
+  
     const { projectId, commitmentId } = await params;
     const numericProjectId = Number.parseInt(projectId, 10);
     if (Number.isNaN(numericProjectId)) {
@@ -868,7 +872,5 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ error: "Unsupported action." }, { status: 400 });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

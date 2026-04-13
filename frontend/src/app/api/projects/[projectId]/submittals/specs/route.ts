@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
@@ -12,8 +14,10 @@ interface RouteParams {
  * GET /api/projects/[projectId]/submittals/specs
  * Returns specification sections for the project ordered by section_number.
  */
-export async function GET(_req: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/submittals/specs#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
 
@@ -26,7 +30,5 @@ export async function GET(_req: NextRequest, { params }: RouteParams) {
     if (error) return apiErrorResponse(error);
 
     return NextResponse.json(data ?? []);
-  } catch (err) {
-    return apiErrorResponse(err);
-  }
-}
+    },
+);

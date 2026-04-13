@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -6,8 +8,10 @@ import { apiErrorResponse } from "@/lib/api-error";
  * Diagnostic endpoint to check admin status
  * GET /api/auth/admin-check
  */
-export async function GET() {
-  try {
+export const GET = withApiGuardrails(
+  "auth/admin-check#GET",
+  async () => {
+  
     const supabase = await createClient();
 
     // Get the current user
@@ -69,7 +73,5 @@ export async function GET() {
           : "❌ You do not have admin access",
       },
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

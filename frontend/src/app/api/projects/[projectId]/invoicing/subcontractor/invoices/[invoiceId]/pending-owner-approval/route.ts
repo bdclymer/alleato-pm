@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
@@ -6,11 +8,10 @@ import { apiErrorResponse } from "@/lib/api-error";
 // Transition invoice to pending_owner_approval. Pre-condition: must be under_review.
 // Mirrors Procore: GC has reviewed but the owner still needs to sign off before
 // the cost reflects in the budget.
-export async function POST(
-  _request: NextRequest,
-  context: { params: Promise<{ projectId: string; invoiceId: string }> },
-) {
-  try {
+export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
+  "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/pending-owner-approval#POST",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { projectId, invoiceId } = await context.params;
 
@@ -27,7 +28,7 @@ export async function POST(
     }
 
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/pending-owner-approval#POST", message: "Authentication required." });
     }
 
     const projectIdNum = parseInt(projectId, 10);
@@ -87,7 +88,5 @@ export async function POST(
       data: updated,
       message: "Invoice sent for owner approval",
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

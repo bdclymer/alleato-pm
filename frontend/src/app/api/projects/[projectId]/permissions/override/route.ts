@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
 import { setPermissionOverride, removePermissionOverride, type PermissionModule, type PermissionLevel } from "@/lib/permissions";
 
@@ -10,8 +12,10 @@ interface RouteParams {
  * POST /api/projects/[projectId]/permissions/override
  * Set a permission override for a user
  */
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/permissions/override#POST",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -67,21 +71,17 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Error setting permission override:", error);
-    return NextResponse.json(
-      { error: "Failed to set permission override" },
-      { status: 500 }
-    );
-  }
-}
+    },
+);
 
 /**
  * DELETE /api/projects/[projectId]/permissions/override
  * Remove a permission override for a user
  */
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  try {
+export const DELETE = withApiGuardrails(
+  "projects/[projectId]/permissions/override#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -129,11 +129,5 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Error removing permission override:", error);
-    return NextResponse.json(
-      { error: "Failed to remove permission override" },
-      { status: 500 }
-    );
-  }
-}
+    },
+);

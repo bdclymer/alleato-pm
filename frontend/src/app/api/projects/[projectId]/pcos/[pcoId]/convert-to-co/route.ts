@@ -15,8 +15,10 @@
  *  - API-014: Compensating rollback on partial failure; safe number parsing.
  */
 
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
 
@@ -24,8 +26,10 @@ interface RouteParams {
   params: Promise<{ projectId: string; pcoId: string }>;
 }
 
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/pcos/[pcoId]/convert-to-co#POST",
+  async ({ request, params }) => {
+  
     const { projectId, pcoId } = await params;
     const numericProjectId = parseInt(projectId, 10);
     const numericPcoId = parseInt(pcoId, 10);
@@ -46,7 +50,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/pcos/[pcoId]/convert-to-co#POST", message: "Authentication required." });
     }
 
     // 1. Fetch the PCO and verify it exists
@@ -352,7 +356,5 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
         pco: `/api/projects/${projectId}/pcos/${pcoId}`,
       },
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

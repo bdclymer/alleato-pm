@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { exec } from "child_process";
 import { promisify } from "util";
 import path from "path";
@@ -27,11 +29,9 @@ async function requireAdmin() {
   return profile?.is_admin ? user : null;
 }
 
-export async function POST(request: Request) {
+export const POST = withApiGuardrails("/api/admin/feedback/crawl#POST", async ({ request }) => {
   const admin = await requireAdmin();
-  if (!admin) {
-    return NextResponse.json({ error: "Admin access required" }, { status: 403 });
-  }
+  if (!admin) throw new GuardrailError({ code: "FORBIDDEN", where: "/api/admin/feedback/crawl#POST", message: "Admin access required.", status: 403 });
 
   const body = await request.json();
   const parsed = crawlSchema.safeParse(body);
@@ -60,33 +60,21 @@ export async function POST(request: Request) {
   const projectRoot = path.resolve(process.cwd(), "..");
   const scriptPath = path.join(projectRoot, "scripts/playwright-crawl/procore-deep-crawl.js");
 
-  try {
-    const { stdout, stderr } = await execAsync(
-      `node "${scriptPath}" ${slug}`,
-      {
-        cwd: projectRoot,
-        timeout: 120_000, // 2 minute timeout
-        env: { ...process.env },
-      },
-    );
+  const { stdout, stderr } = await execAsync(
+    `node "${scriptPath}" ${slug}`,
+    {
+      cwd: projectRoot,
+      timeout: 120_000, // 2 minute timeout
+      env: { ...process.env },
+    },
+  );
 
-    return NextResponse.json({
-      success: true,
-      tool: { id: tool.id, name: tool.name, slug: tool.slug },
-      output: stdout.slice(-2000), // Last 2000 chars of output
-      manifestPath: `.claude/procore-manifests/${slug}/manifest.json`,
-      screenshotsFolder: `.claude/procore-manifests/${slug}/screenshots/`,
-      warnings: stderr ? stderr.slice(-500) : null,
-    });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Crawl failed";
-    return NextResponse.json(
-      {
-        error: "Procore crawl failed",
-        details: message,
-        hint: `You can run this manually: node scripts/playwright-crawl/procore-deep-crawl.js ${slug}`,
-      },
-      { status: 500 },
-    );
-  }
-}
+  return NextResponse.json({
+    success: true,
+    tool: { id: tool.id, name: tool.name, slug: tool.slug },
+    output: stdout.slice(-2000), // Last 2000 chars of output
+    manifestPath: `.claude/procore-manifests/${slug}/manifest.json`,
+    screenshotsFolder: `.claude/procore-manifests/${slug}/screenshots/`,
+    warnings: stderr ? stderr.slice(-500) : null,
+  });
+});

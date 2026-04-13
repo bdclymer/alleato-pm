@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import {
   notifyCriticalIssue,
@@ -23,7 +25,9 @@ import {
  *   data: { ... kind-specific data }
  * }
  */
-export async function POST(request: NextRequest) {
+export const POST = withApiGuardrails(
+  "notifications/trigger#POST",
+  async ({ request }) => {
   // Check for service key (for cron jobs / AI agents)
   const authHeader = request.headers.get("authorization");
   const serviceKey = process.env.NOTIFICATION_SERVICE_KEY;
@@ -40,7 +44,7 @@ export async function POST(request: NextRequest) {
   }
 
   if (!isAuthorized) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "notifications/trigger#POST", message: "Authentication required." });
   }
 
   try {
@@ -91,4 +95,5 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
-}
+  },
+);

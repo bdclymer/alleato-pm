@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -34,11 +36,10 @@ import { apiErrorResponse } from "@/lib/api-error";
  * @businessRule Already approved/executed change orders return 400
  * @businessRule Void change orders cannot be approved
  */
-export async function POST(
-  _request: Request,
-  { params }: { params: Promise<{ commitmentId: string; changeOrderId: string }> },
-) {
-  try {
+export const POST = withApiGuardrails<{ commitmentId: string; changeOrderId: string }>(
+  "commitments/[commitmentId]/change-orders/[changeOrderId]/approve#POST",
+  async ({ request, params }) => {
+  
     const { commitmentId, changeOrderId } = await params;
     const supabase = await createClient();
 
@@ -47,7 +48,7 @@ export async function POST(
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "commitments/[commitmentId]/change-orders/[changeOrderId]/approve#POST", message: "Authentication required." });
     }
 
     // Verify the change order exists and belongs to this commitment
@@ -140,7 +141,5 @@ export async function POST(
         totals: totals,
       },
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

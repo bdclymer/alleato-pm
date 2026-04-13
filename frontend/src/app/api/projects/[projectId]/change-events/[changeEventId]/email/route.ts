@@ -1,5 +1,7 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { requirePermission } from "@/lib/permissions-guard";
 
@@ -210,8 +212,10 @@ function buildHtml(changeEvent: any, lineItems: any[], project: any): string {
 </html>`;
 }
 
-export async function POST(req: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/change-events/[changeEventId]/email#POST",
+  async ({ request, params }) => {
+  
     const { projectId, changeEventId } = await params;
     const projectIdNum = parseInt(projectId, 10);
     const guard = await requirePermission(projectIdNum, "change_orders", "write");
@@ -364,7 +368,5 @@ export async function POST(req: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ success: true, id: data?.id });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { SpecificationAreaService } from "@/services/SpecificationAreaService";
@@ -12,14 +14,13 @@ import { apiErrorResponse } from "@/lib/api-error";
  * GET /api/projects/[projectId]/specifications/areas
  * List all areas for a project
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
+export const GET = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/specifications/areas#GET",
+  async ({ request, params }) => {
   const { projectId } = await params;
   const user = await getApiRouteUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/specifications/areas#GET", message: "Authentication required." });
   }
 
   // Use service role client for data queries (bypasses RLS)
@@ -32,20 +33,20 @@ export async function GET(
   }
 
   return NextResponse.json(result.data);
-}
+  },
+);
 
 /**
  * POST /api/projects/[projectId]/specifications/areas
  * Create a new area
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> },
-) {
+export const POST = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/specifications/areas#POST",
+  async ({ request, params }) => {
   const { projectId } = await params;
   const user = await getApiRouteUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/specifications/areas#POST", message: "Authentication required." });
   }
 
   try {
@@ -74,4 +75,5 @@ export async function POST(
     }
     return NextResponse.json({ error: "Failed to create area" }, { status: 500 });
   }
-}
+  },
+);

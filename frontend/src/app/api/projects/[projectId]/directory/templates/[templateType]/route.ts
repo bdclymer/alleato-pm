@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
@@ -10,8 +12,10 @@ interface RouteParams {
   params: Promise<{ projectId: string; templateType: string }>;
 }
 
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/directory/templates/[templateType]#GET",
+  async ({ request, params }) => {
+  
     const { projectId, templateType } = await params;
     const projectIdNum = parseInt(projectId, 10);
     const type = (templateType as DirectoryTemplateType) || "users";
@@ -28,7 +32,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/directory/templates/[templateType]#GET", message: "Authentication required." });
     }
 
     const permissionService = new PermissionService(supabase);
@@ -48,8 +52,5 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         "Content-Disposition": `attachment; filename="directory-${type}-template.csv"`,
       },
     });
-  } catch (error) {
-    console.error("[DirectoryTemplate] Failed", error);
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

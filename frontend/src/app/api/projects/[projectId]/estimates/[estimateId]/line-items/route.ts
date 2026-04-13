@@ -7,7 +7,9 @@
  * - POST: Add a single line item or bulk-add multiple line items
  */
 
-import { NextRequest, NextResponse } from 'next/server';
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { EstimateLineItemSchema } from '@/lib/schemas/estimates';
 import { EstimateService } from '@/lib/services/estimate-service';
@@ -17,11 +19,10 @@ import { z } from 'zod';
 // POST - Add Line Item(s) to Estimate
 // =============================================================================
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string; estimateId: string }> }
-) {
-  try {
+export const POST = withApiGuardrails<{ projectId: string; estimateId: string }>(
+  "projects/[projectId]/estimates/[estimateId]/line-items#POST",
+  async ({ request, params }) => {
+  
     const { estimateId } = await params;
     const supabase = await createClient();
 
@@ -32,10 +33,7 @@ export async function POST(
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      return NextResponse.json(
-        { error: 'Unauthorized - please log in' },
-        { status: 401 }
-      );
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/estimates/[estimateId]/line-items#POST", message: "Authentication required." });
     }
 
     const estimateIdNum = parseInt(estimateId, 10);
@@ -90,26 +88,5 @@ export async function POST(
     );
 
     return NextResponse.json(lineItem, { status: 201 });
-  } catch (error) {
-    if (error instanceof Error) {
-      if (error.message.includes('not found')) {
-        return NextResponse.json(
-          { error: 'Estimate not found' },
-          { status: 404 }
-        );
-      }
-
-      if (error.message.includes('permission')) {
-        return NextResponse.json(
-          { error: 'Insufficient permissions to add line items' },
-          { status: 403 }
-        );
-      }
-    }
-
-    return NextResponse.json(
-      { error: 'Failed to add line item(s)' },
-      { status: 500 }
-    );
-  }
-}
+    },
+);

@@ -1,14 +1,15 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 // GET /api/projects/[projectId]/invoicing/payments
 // List all payments for a project, joined with owner/subcontractor invoice info.
-export async function GET(
-  _request: NextRequest,
-  context: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/invoicing/payments#GET",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { projectId } = await context.params;
 
@@ -23,7 +24,7 @@ export async function GET(
       );
     }
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/invoicing/payments#GET", message: "Authentication required." });
     }
 
     const projectIdNum = parseInt(projectId, 10);
@@ -85,18 +86,15 @@ export async function GET(
     });
 
     return NextResponse.json({ data: enriched });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 // POST /api/projects/[projectId]/invoicing/payments
 // Create a new payment. Requires exactly one of owner_invoice_id / subcontractor_invoice_id.
-export async function POST(
-  request: NextRequest,
-  context: { params: Promise<{ projectId: string }> },
-) {
-  try {
+export const POST = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/invoicing/payments#POST",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { projectId } = await context.params;
 
@@ -111,7 +109,7 @@ export async function POST(
       );
     }
     if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/invoicing/payments#POST", message: "Authentication required." });
     }
 
     const projectIdNum = parseInt(projectId, 10);
@@ -210,7 +208,5 @@ export async function POST(
     }
 
     return NextResponse.json({ data: payment }, { status: 201 });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

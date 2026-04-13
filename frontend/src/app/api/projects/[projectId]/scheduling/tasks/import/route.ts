@@ -7,7 +7,9 @@
  * Accepts an array of task data and creates them in the database.
  */
 
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { SchedulingService } from "@/lib/services/scheduling-service";
 import { ScheduleTaskCreate } from "@/types/scheduling";
@@ -31,11 +33,10 @@ interface ImportRequest {
   tasks: ImportTaskData[];
 }
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> }
-) {
-  try {
+export const POST = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/scheduling/tasks/import#POST",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
 
@@ -46,10 +47,7 @@ export async function POST(
     } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      return NextResponse.json(
-        { error: "Unauthorized - please log in" },
-        { status: 401 }
-      );
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/scheduling/tasks/import#POST", message: "Authentication required." });
     }
 
     const body: ImportRequest = await request.json();
@@ -149,11 +147,5 @@ export async function POST(
       message: `Import completed: ${results.imported} imported, ${results.failed} failed`,
       ...results,
     });
-  } catch (error) {
-    console.error("Failed to import schedule tasks:", error);
-    return NextResponse.json(
-      { error: "Failed to import schedule tasks" },
-      { status: 500 }
-    );
-  }
-}
+    },
+);

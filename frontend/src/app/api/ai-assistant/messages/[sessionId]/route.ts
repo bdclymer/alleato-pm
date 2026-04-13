@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -9,13 +11,12 @@ type RouteParams = { params: Promise<{ sessionId: string }> };
  * GET /api/ai-assistant/messages/[sessionId]
  * Load all messages for a conversation.
  */
-export async function GET(
-  _request: NextRequest,
-  { params }: RouteParams,
-) {
+export const GET = withApiGuardrails(
+  "ai-assistant/messages/[sessionId]#GET",
+  async ({ request, params }) => {
   const user = await getApiRouteUser();
   if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "ai-assistant/messages/[sessionId]#GET", message: "Authentication required." });
   }
 
   const { sessionId } = await params;
@@ -48,4 +49,5 @@ export async function GET(
   }
 
   return NextResponse.json({ messages: data ?? [] });
-}
+  },
+);

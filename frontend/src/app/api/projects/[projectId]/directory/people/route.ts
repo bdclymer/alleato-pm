@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { type NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { DirectoryService } from "@/services/directoryService";
@@ -14,8 +16,10 @@ interface RouteParams {
  * @param params - Route parameters containing `id`, the project identifier used to scope the directory query.
  * @returns The directory listing serialized as JSON on success; on failure a JSON object with an `error` message and an appropriate HTTP status code.
  */
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/directory/people#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
 
@@ -43,10 +47,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const result = await directoryService.getPeople(projectId, filters);
 
     return NextResponse.json(result);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * Create a new person in the specified project's directory.
@@ -57,8 +59,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
  * @param params.id - ID of the project to which the new person will belong
  * @returns The created person object as JSON on success. On error, returns a JSON error with status `400` (missing required fields), `401` (unauthorized), `403` (forbidden), or `500` (internal server error).
  */
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/directory/people#POST",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
 
@@ -68,7 +72,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/directory/people#POST", message: "Authentication required." });
     }
 
     // Check permissions
@@ -81,7 +85,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     );
 
     if (!hasPermission) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      throw new GuardrailError({ code: "FORBIDDEN", where: "projects/[projectId]/directory/people#POST", message: "Access denied." });
     }
 
     // Parse request body
@@ -109,7 +113,5 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     const person = await directoryService.createPerson(projectId, body);
 
     return NextResponse.json(person, { status: 201 });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

@@ -1,19 +1,20 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 
-export async function GET(request: NextRequest) {
-  // OWASP A01:2021 - Broken Access Control: require authenticated admin
+export const GET = withApiGuardrails("/api/admin/feedback/github-comments#GET", async ({ request }) => {
   const supabase = await createClient();
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "/api/admin/feedback/github-comments#GET", message: "Authentication required.", status: 401 });
   }
   const { data: profile } = await supabase.from("user_profiles").select("is_admin").eq("id", user.id).single();
   if (!profile?.is_admin) {
-    return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+    throw new GuardrailError({ code: "FORBIDDEN", where: "/api/admin/feedback/github-comments#GET", message: "Admin access required.", status: 403 });
   }
 
-  const { searchParams } = request.nextUrl;
+  const { searchParams } = new URL(request.url);
   const issueNumber = searchParams.get("issueNumber");
 
   if (!issueNumber) {
@@ -28,44 +29,31 @@ export async function GET(request: NextRequest) {
   const token = process.env.GITHUB_FEEDBACK_TOKEN;
 
   if (!owner || !repo) {
+    throw new GuardrailError({ code: "INTERNAL_ERROR", where: "/api/admin/feedback/github-comments#GET", message: "GitHub feedback repo not configured." });
+  }
+
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.github.v3+json",
+    "User-Agent": "alleato-pm-feedback",
+  };
+
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+
+  const res = await fetch(
+    `https://api.github.com/repos/${owner}/${repo}/issues/${issueNumber}/comments`,
+    { headers, next: { revalidate: 30 } },
+  );
+
+  if (!res.ok) {
+    const text = await res.text();
     return NextResponse.json(
-      { error: "GitHub feedback repo not configured" },
-      { status: 500 },
+      { error: `GitHub API error: ${res.status}`, detail: text },
+      { status: res.status },
     );
   }
 
-  try {
-    const headers: Record<string, string> = {
-      Accept: "application/vnd.github.v3+json",
-      "User-Agent": "alleato-pm-feedback",
-    };
-
-    if (token) {
-      headers.Authorization = `Bearer ${token}`;
-    }
-
-    const res = await fetch(
-      `https://api.github.com/repos/${owner}/${repo}/issues/${issueNumber}/comments`,
-      { headers, next: { revalidate: 30 } },
-    );
-
-    if (!res.ok) {
-      const text = await res.text();
-      return NextResponse.json(
-        { error: `GitHub API error: ${res.status}`, detail: text },
-        { status: res.status },
-      );
-    }
-
-    const comments = await res.json();
-    return NextResponse.json({ comments });
-  } catch (err) {
-    return NextResponse.json(
-      {
-        error: "Failed to fetch GitHub comments",
-        detail: err instanceof Error ? err.message : String(err),
-      },
-      { status: 500 },
-    );
-  }
-}
+  const comments = await res.json();
+  return NextResponse.json({ comments });
+});

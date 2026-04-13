@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { DirectoryService } from "@/services/directoryService";
@@ -17,8 +19,10 @@ interface RouteParams {
  * @param params.personId - The person identifier within the project's directory
  * @returns A NextResponse containing the person object on success; returns a JSON error with status 401 if the requester is unauthorized, 403 if the requester lacks directory read permission, or 500 on internal server error
  */
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/directory/people/[personId]#GET",
+  async ({ request, params }) => {
+  
     const { projectId, personId } = await params;
     const supabase = await createClient();
 
@@ -28,7 +32,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/directory/people/[personId]#GET", message: "Authentication required." });
     }
 
     // Check permissions
@@ -41,7 +45,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     );
 
     if (!hasPermission) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      throw new GuardrailError({ code: "FORBIDDEN", where: "projects/[projectId]/directory/people/[personId]#GET", message: "Access denied." });
     }
 
     // Get person
@@ -49,10 +53,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const person = await directoryService.getPerson(projectId, personId);
 
     return NextResponse.json(person);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * Update a person in a project's directory.
@@ -63,8 +65,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
  * @param params.personId - ID of the person to update.
  * @returns The updated person object, or an error payload on failure.
  */
-export async function PATCH(request: NextRequest, { params }: RouteParams) {
-  try {
+export const PATCH = withApiGuardrails(
+  "projects/[projectId]/directory/people/[personId]#PATCH",
+  async ({ request, params }) => {
+  
     const { projectId, personId } = await params;
     const supabase = await createClient();
 
@@ -74,7 +78,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/directory/people/[personId]#PATCH", message: "Authentication required." });
     }
 
     // Check permissions
@@ -87,7 +91,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     );
 
     if (!hasPermission) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      throw new GuardrailError({ code: "FORBIDDEN", where: "projects/[projectId]/directory/people/[personId]#PATCH", message: "Access denied." });
     }
 
     // Parse request body
@@ -102,10 +106,8 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     );
 
     return NextResponse.json(person);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * Deactivates (soft-deletes) a person in a project's directory after verifying the requester is authenticated and has write permission.
@@ -115,8 +117,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
  * @param params.personId - ID of the person to deactivate
  * @returns JSON response: `{ success: true }` on success; on failure returns an error JSON with HTTP status `401` (unauthorized), `403` (forbidden), or `500` (internal server error)
  */
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  try {
+export const DELETE = withApiGuardrails(
+  "projects/[projectId]/directory/people/[personId]#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId, personId } = await params;
     const supabase = await createClient();
 
@@ -126,7 +130,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/directory/people/[personId]#DELETE", message: "Authentication required." });
     }
 
     // Check permissions
@@ -139,7 +143,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     );
 
     if (!hasPermission) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      throw new GuardrailError({ code: "FORBIDDEN", where: "projects/[projectId]/directory/people/[personId]#DELETE", message: "Access denied." });
     }
 
     // Soft delete by deactivating
@@ -147,7 +151,5 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     await directoryService.deactivatePerson(projectId, personId);
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

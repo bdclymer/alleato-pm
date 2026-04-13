@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -54,11 +56,10 @@ const DEFAULT_SETTINGS = {
  *
  * @note Always returns 200 with defaults on database errors to ensure UI stability
  */
-export async function GET(
-  _request: Request,
-  { params }: { params: Promise<{ commitmentId: string }> }
-) {
-  try {
+export const GET = withApiGuardrails<{ commitmentId: string }>(
+  "commitments/[commitmentId]/advanced-settings#GET",
+  async ({ request, params }) => {
+  
     const { commitmentId } = await params;
     const supabase = await createClient();
 
@@ -98,12 +99,8 @@ export async function GET(
       : DEFAULT_SETTINGS;
 
     return NextResponse.json({ data: settings });
-  } catch (error) {
-    console.error("Error in GET advanced-settings:", error);
-    // Return defaults on any error
-    return NextResponse.json({ data: DEFAULT_SETTINGS });
-  }
-}
+    },
+);
 
 /**
  * PUT /api/commitments/[commitmentId]/advanced-settings
@@ -130,11 +127,10 @@ export async function GET(
  * @returns {object} 404 - Commitment not found
  * @returns {object} 500 - Internal server error
  */
-export async function PUT(
-  request: Request,
-  { params }: { params: Promise<{ commitmentId: string }> }
-) {
-  try {
+export const PUT = withApiGuardrails<{ commitmentId: string }>(
+  "commitments/[commitmentId]/advanced-settings#PUT",
+  async ({ request, params }) => {
+  
     const { commitmentId } = await params;
     const supabase = await createClient();
     const body = await request.json();
@@ -144,7 +140,7 @@ export async function PUT(
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "commitments/[commitmentId]/advanced-settings#PUT", message: "Authentication required." });
     }
 
     // Verify the commitment exists and get its type
@@ -197,7 +193,5 @@ export async function PUT(
       data: settingsToSave,
       message: "Settings saved successfully",
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

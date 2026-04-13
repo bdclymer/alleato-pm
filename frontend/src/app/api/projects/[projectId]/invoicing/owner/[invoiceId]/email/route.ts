@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { renderInvoicePdfBuffer } from "@/lib/invoice-pdf";
@@ -35,11 +37,10 @@ function getFromAddress(): string {
   );
 }
 
-export async function POST(
-  request: NextRequest,
-  context: { params: Promise<{ projectId: string; invoiceId: string }> },
-) {
-  try {
+export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
+  "projects/[projectId]/invoicing/owner/[invoiceId]/email#POST",
+  async ({ request }) => {
+  
     const { projectId, invoiceId } = await context.params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -138,7 +139,5 @@ export async function POST(
     }
 
     return NextResponse.json({ success: true, id: sendResult?.id });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

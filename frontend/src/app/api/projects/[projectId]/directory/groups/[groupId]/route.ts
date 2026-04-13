@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { DistributionGroupService } from "@/services/distributionGroupService";
 import { PermissionService } from "@/services/permissionService";
@@ -20,8 +22,10 @@ interface RouteParams {
  *
  * @returns A NextResponse with the distribution group object on success, or a JSON error object with an appropriate HTTP status code on failure.
  */
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/directory/groups/[groupId]#GET",
+  async ({ request, params }) => {
+  
     const { projectId, groupId } = await params;
     const supabase = await createClient();
 
@@ -31,7 +35,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/directory/groups/[groupId]#GET", message: "Authentication required." });
     }
 
     // Check permissions
@@ -44,7 +48,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     );
 
     if (!hasPermission) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      throw new GuardrailError({ code: "FORBIDDEN", where: "projects/[projectId]/directory/groups/[groupId]#GET", message: "Access denied." });
     }
 
     // Get group
@@ -52,10 +56,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const group = await groupService.getGroup(groupId, true);
 
     return NextResponse.json(group);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * Updates a distribution group within a project after verifying the caller's admin permission.
@@ -66,8 +68,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
  * @param params.groupId - ID of the distribution group to update.
  * @returns The updated distribution group object.
  */
-export async function PATCH(request: NextRequest, { params }: RouteParams) {
-  try {
+export const PATCH = withApiGuardrails(
+  "projects/[projectId]/directory/groups/[groupId]#PATCH",
+  async ({ request, params }) => {
+  
     const { projectId, groupId } = await params;
     const supabase = await createClient();
 
@@ -77,7 +81,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/directory/groups/[groupId]#PATCH", message: "Authentication required." });
     }
 
     // Check permissions
@@ -90,7 +94,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     );
 
     if (!hasPermission) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      throw new GuardrailError({ code: "FORBIDDEN", where: "projects/[projectId]/directory/groups/[groupId]#PATCH", message: "Access denied." });
     }
 
     // Parse request body
@@ -101,10 +105,8 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     const group = await groupService.updateGroup(groupId, body);
 
     return NextResponse.json(group);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * Deletes a distribution group within a project's directory when the authenticated user has admin permission.
@@ -114,8 +116,10 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
  * @param params.groupId - The ID of the distribution group to delete
  * @returns A JSON HTTP response: `{ success: true }` on successful deletion, or an error object with status `401` (unauthorized), `403` (forbidden), or `500` (internal server error)
  */
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  try {
+export const DELETE = withApiGuardrails(
+  "projects/[projectId]/directory/groups/[groupId]#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId, groupId } = await params;
     const supabase = await createClient();
 
@@ -125,7 +129,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/directory/groups/[groupId]#DELETE", message: "Authentication required." });
     }
 
     // Check permissions
@@ -138,7 +142,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     );
 
     if (!hasPermission) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      throw new GuardrailError({ code: "FORBIDDEN", where: "projects/[projectId]/directory/groups/[groupId]#DELETE", message: "Access denied." });
     }
 
     // Delete group
@@ -146,7 +150,5 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     await groupService.deleteGroup(groupId);
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

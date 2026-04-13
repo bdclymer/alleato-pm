@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
@@ -12,8 +14,10 @@ interface RouteParams {
   }>;
 }
 
-export async function DELETE(_: Request, { params }: RouteParams) {
-  try {
+export const DELETE = withApiGuardrails(
+  "projects/[projectId]/change-events/[changeEventId]/related-items/[relatedItemId]#DELETE",
+  async ({ params }) => {
+  
     const { projectId, changeEventId, relatedItemId } = await params;
     const parsedProjectId = Number.parseInt(projectId, 10);
     if (Number.isNaN(parsedProjectId)) {
@@ -30,7 +34,7 @@ export async function DELETE(_: Request, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/change-events/[changeEventId]/related-items/[relatedItemId]#DELETE", message: "Authentication required." });
     }
 
     const { error } = await supabase
@@ -56,7 +60,5 @@ export async function DELETE(_: Request, { params }: RouteParams) {
     }
 
     return new NextResponse(null, { status: 204 });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
 import { getPermissionAuditLog } from "@/lib/permissions";
 
@@ -10,8 +12,10 @@ interface RouteParams {
  * GET /api/projects/[projectId]/permissions/audit
  * Get the permission audit log for a project
  */
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/permissions/audit#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -23,11 +27,5 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
 
     const log = await getPermissionAuditLog(projectIdNum, limit);
     return NextResponse.json({ data: log });
-  } catch (error) {
-    console.error("Error loading audit log:", error);
-    return NextResponse.json(
-      { error: "Failed to load audit log" },
-      { status: 500 }
-    );
-  }
-}
+    },
+);

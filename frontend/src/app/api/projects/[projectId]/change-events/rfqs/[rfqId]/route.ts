@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { createClient } from "@/lib/supabase/server";
@@ -21,8 +23,10 @@ const updateRfqSchema = z.object({
  * GET /api/projects/[projectId]/change-events/rfqs/[rfqId]
  * Get a single RFQ with its responses
  */
-export async function GET(_request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/change-events/rfqs/[rfqId]#GET",
+  async ({ request, params }) => {
+  
     const { projectId, rfqId } = await params;
     const numericProjectId = parseInt(projectId, 10);
     if (!Number.isFinite(numericProjectId)) {
@@ -55,17 +59,17 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
         response_count: responses?.length ?? 0,
       },
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * PATCH /api/projects/[projectId]/change-events/rfqs/[rfqId]
  * Update an RFQ (including closing it)
  */
-export async function PATCH(request: NextRequest, { params }: RouteParams) {
-  try {
+export const PATCH = withApiGuardrails(
+  "projects/[projectId]/change-events/rfqs/[rfqId]#PATCH",
+  async ({ request, params }) => {
+  
     const { projectId, rfqId } = await params;
     const numericProjectId = parseInt(projectId, 10);
     if (!Number.isFinite(numericProjectId)) {
@@ -90,7 +94,7 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/change-events/rfqs/[rfqId]#PATCH", message: "Authentication required." });
     }
 
     // Verify the RFQ exists and belongs to the project
@@ -127,17 +131,17 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ data: updated });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * DELETE /api/projects/[projectId]/change-events/rfqs/[rfqId]
  * Delete an RFQ (only allowed in Draft status)
  */
-export async function DELETE(_request: NextRequest, { params }: RouteParams) {
-  try {
+export const DELETE = withApiGuardrails(
+  "projects/[projectId]/change-events/rfqs/[rfqId]#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId, rfqId } = await params;
     const numericProjectId = parseInt(projectId, 10);
     if (!Number.isFinite(numericProjectId)) {
@@ -153,7 +157,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
       data: { user },
     } = await supabase.auth.getUser();
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/change-events/rfqs/[rfqId]#DELETE", message: "Authentication required." });
     }
 
     const { data: existing, error: fetchError } = await supabase
@@ -187,7 +191,5 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     }
 
     return new NextResponse(null, { status: 204 });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

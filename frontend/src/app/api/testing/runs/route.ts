@@ -3,10 +3,14 @@
  * GET  ?suite=photos  — list all runs for a suite (with pass/fail counts)
  * POST               — create a new test run and seed test_results rows
  */
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 
-export async function GET(req: Request) {
+export const GET = withApiGuardrails(
+  "testing/runs#GET",
+  async ({ request }) => {
   const supabase = await createClient();
   const { searchParams } = new URL(req.url);
   const toolName = searchParams.get("suite");
@@ -76,9 +80,12 @@ export async function GET(req: Request) {
   });
 
   return NextResponse.json({ suite, runs: enriched });
-}
+  },
+);
 
-export async function POST(req: Request) {
+export const POST = withApiGuardrails(
+  "testing/runs#POST",
+  async ({ request }) => {
   const supabase = await createClient();
   const body = await req.json();
   const { suite, tester, environment, branch, notes, scenarioDepth, testType } = body as {
@@ -198,4 +205,5 @@ export async function POST(req: Request) {
     effective_depth: effectiveDepth,
     requested_depth: normalizedDepth,
   });
-}
+  },
+);

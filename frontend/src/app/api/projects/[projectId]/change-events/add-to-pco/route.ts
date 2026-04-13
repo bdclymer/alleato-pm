@@ -9,8 +9,10 @@
  * pco_line_items, and change_event_pco_links.
  */
 
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
 import { z } from "zod";
 
@@ -62,8 +64,10 @@ const bodySchema = z
     { message: "commitment_id and commitment_type are required when creating a new commitment PCO" },
   );
 
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/change-events/add-to-pco#POST",
+  async ({ request, params }) => {
+  
     const { projectId: projectIdStr } = await params;
     const projectId = parseInt(projectIdStr, 10);
     if (Number.isNaN(projectId) || projectId <= 0) {
@@ -78,7 +82,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       error: authError,
     } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/change-events/add-to-pco#POST", message: "Authentication required." });
     }
 
     // Parse & validate body
@@ -408,8 +412,5 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       },
       { status: create_new ? 201 : 200 },
     );
-  } catch (error) {
-    console.error("[add-to-pco] Unhandled error:", error);
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

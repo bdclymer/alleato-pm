@@ -1,15 +1,19 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
 type PipelinePhase = "parse" | "embed" | "extract";
 
-export async function POST(request: NextRequest) {
-  try {
+export const POST = withApiGuardrails(
+  "documents/trigger-pipeline#POST",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "documents/trigger-pipeline#POST", message: "Authentication required." });
     }
 
     const { phase, documentIds } = (await request.json()) as {
@@ -147,18 +151,18 @@ export async function POST(request: NextRequest) {
       total: jobs.length,
       results,
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 // Get count of documents ready for each phase
-export async function GET() {
-  try {
+export const GET = withApiGuardrails(
+  "documents/trigger-pipeline#GET",
+  async () => {
+  
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "documents/trigger-pipeline#GET", message: "Authentication required." });
     }
 
     // Count documents in each stage
@@ -185,7 +189,5 @@ export async function GET() {
     );
 
     return NextResponse.json({ phaseCounts: counts });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

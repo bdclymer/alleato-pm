@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -7,8 +9,10 @@ interface RouteParams {
   params: Promise<{ projectId: string; changeEventId: string }>;
 }
 
-export async function GET(_: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/change-events/[changeEventId]/prime-contract-change-orders#GET",
+  async ({ params }) => {
+  
     const { projectId, changeEventId } = await params;
     const parsedProjectId = Number.parseInt(projectId, 10);
 
@@ -126,7 +130,5 @@ export async function GET(_: NextRequest, { params }: RouteParams) {
     });
 
     return NextResponse.json({ data: response });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

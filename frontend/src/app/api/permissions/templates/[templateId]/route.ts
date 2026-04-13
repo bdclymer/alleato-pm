@@ -1,4 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import {
   updatePermissionTemplate,
@@ -30,8 +32,10 @@ async function requireAdmin(): Promise<{ ok: true } | { error: string; status: n
  * PUT /api/permissions/templates/[templateId]
  * Update an existing permission template (admin only)
  */
-export async function PUT(request: NextRequest, { params }: RouteParams) {
-  try {
+export const PUT = withApiGuardrails(
+  "permissions/templates/[templateId]#PUT",
+  async ({ request, params }) => {
+  
     const auth = await requireAdmin();
     if ("error" in auth) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
@@ -53,21 +57,17 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Error updating permission template:", error);
-    return NextResponse.json(
-      { error: "Failed to update template" },
-      { status: 500 }
-    );
-  }
-}
+    },
+);
 
 /**
  * DELETE /api/permissions/templates/[templateId]
  * Delete a permission template (admin only)
  */
-export async function DELETE(_request: NextRequest, { params }: RouteParams) {
-  try {
+export const DELETE = withApiGuardrails(
+  "permissions/templates/[templateId]#DELETE",
+  async ({ request, params }) => {
+  
     const auth = await requireAdmin();
     if ("error" in auth) {
       return NextResponse.json({ error: auth.error }, { status: auth.status });
@@ -81,11 +81,5 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Error deleting permission template:", error);
-    return NextResponse.json(
-      { error: "Failed to delete template" },
-      { status: 500 }
-    );
-  }
-}
+    },
+);

@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { z, ZodError } from "zod";
@@ -33,8 +35,10 @@ const updateTransmittalSchema = z.object({
  * GET /api/projects/[projectId]/transmittals/[transmittalId]
  * Returns a single transmittal.
  */
-export async function GET(_request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "projects/[projectId]/transmittals/[transmittalId]#GET",
+  async ({ request, params }) => {
+  
     const { projectId, transmittalId } = await params;
     const supabase = await createClient();
 
@@ -57,17 +61,17 @@ export async function GET(_request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(data);
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * PUT /api/projects/[projectId]/transmittals/[transmittalId]
  * Updates a transmittal.
  */
-export async function PUT(request: NextRequest, { params }: RouteParams) {
-  try {
+export const PUT = withApiGuardrails(
+  "projects/[projectId]/transmittals/[transmittalId]#PUT",
+  async ({ request, params }) => {
+  
     const { projectId, transmittalId } = await params;
     const supabase = await createClient();
     const body = await request.json();
@@ -78,7 +82,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/transmittals/[transmittalId]#PUT", message: "Authentication required." });
     }
 
     const validatedData = updateTransmittalSchema.parse(body);
@@ -99,29 +103,17 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json(data);
-  } catch (error) {
-    if (error instanceof ZodError) {
-      return NextResponse.json(
-        {
-          error: "Validation error",
-          details: error.issues.map((e) => ({
-            field: e.path.join("."),
-            message: e.message,
-          })),
-        },
-        { status: 400 },
-      );
-    }
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * DELETE /api/projects/[projectId]/transmittals/[transmittalId]
  * Soft-deletes a transmittal (moves to Recycle Bin).
  */
-export async function DELETE(_request: NextRequest, { params }: RouteParams) {
-  try {
+export const DELETE = withApiGuardrails(
+  "projects/[projectId]/transmittals/[transmittalId]#DELETE",
+  async ({ request, params }) => {
+  
     const { projectId, transmittalId } = await params;
     const supabase = await createClient();
 
@@ -131,7 +123,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/transmittals/[transmittalId]#DELETE", message: "Authentication required." });
     }
 
     const { error } = await supabase
@@ -147,7 +139,5 @@ export async function DELETE(_request: NextRequest, { params }: RouteParams) {
     }
 
     return NextResponse.json({ success: true });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

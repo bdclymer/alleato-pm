@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { getApiRouteUser } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
@@ -131,8 +133,10 @@ function extractStoragePathFromPublicUrl(publicUrl: string): string | null {
   return decodeURIComponent(publicUrl.slice(markerIndex + marker.length));
 }
 
-export async function POST(request: Request) {
-  try {
+export const POST = withApiGuardrails(
+  "profile/avatar#POST",
+  async ({ request }) => {
+  
     const serviceSupabase = createServiceClient();
     const bucketReady = await ensureProfileBucket();
     if (!bucketReady.ok) {
@@ -247,24 +251,13 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ avatarUrl: publicUrl }, { status: 200 });
-  } catch (error) {
-    console.error("[ProfileAvatar] Upload failed", error);
-    const message =
-      error instanceof Error ? error.message : "Failed to upload profile image";
-    const missingServiceRole = message.includes("SUPABASE_SERVICE_ROLE_KEY");
+    },
+);
 
-    return jsonError(500, {
-      error: "Avatar upload failed",
-      hint: missingServiceRole
-        ? "Set SUPABASE_SERVICE_ROLE_KEY in the deployed environment."
-        : "Check server logs for the failing avatar upload step.",
-      details: message,
-    });
-  }
-}
-
-export async function DELETE() {
-  try {
+export const DELETE = withApiGuardrails(
+  "profile/avatar#DELETE",
+  async () => {
+  
     const serviceSupabase = createServiceClient();
     const requestUser = await getApiRouteUser();
 
@@ -319,7 +312,5 @@ export async function DELETE() {
     }
 
     return NextResponse.json({ success: true }, { status: 200 });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

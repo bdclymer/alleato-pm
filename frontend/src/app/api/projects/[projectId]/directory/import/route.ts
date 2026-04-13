@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { verifyProjectAccess, isAuthError } from "@/lib/supabase/auth-guard";
@@ -13,8 +15,10 @@ interface RouteParams {
   params: Promise<{ projectId: string }>;
 }
 
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "projects/[projectId]/directory/import#POST",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -30,7 +34,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/directory/import#POST", message: "Authentication required." });
     }
 
     const permissionService = new PermissionService(supabase);
@@ -72,8 +76,5 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     );
 
     return NextResponse.json({ success: true, data: result });
-  } catch (error) {
-    console.error("[DirectoryImport] Failed", error);
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

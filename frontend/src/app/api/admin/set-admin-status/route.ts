@@ -1,9 +1,13 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
-export async function POST(request: Request) {
-  try {
+export const POST = withApiGuardrails(
+  "admin/set-admin-status#POST",
+  async ({ request }) => {
+  
     const supabase = await createClient();
 
     // Verify the requesting user is an admin
@@ -12,7 +16,7 @@ export async function POST(request: Request) {
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "admin/set-admin-status#POST", message: "Authentication required." });
     }
 
     // Check if requesting user is admin
@@ -58,7 +62,5 @@ export async function POST(request: Request) {
       success: true,
       message: `User ${is_admin ? "granted" : "removed"} admin access`,
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

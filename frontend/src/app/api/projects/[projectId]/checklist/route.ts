@@ -1,11 +1,12 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ projectId: string }> }
-) {
-  try {
+export const GET = withApiGuardrails<{ projectId: string }>(
+  "projects/[projectId]/checklist#GET",
+  async ({ request, params }) => {
+  
     const { projectId } = await params;
     const supabase = await createClient();
 
@@ -70,11 +71,5 @@ export async function GET(
     };
 
     return NextResponse.json(checklistStatus);
-  } catch (error) {
-    console.error("Error fetching checklist status:", error);
-    return NextResponse.json(
-      { error: "Failed to fetch checklist status" },
-      { status: 500 }
-    );
-  }
-}
+    },
+);

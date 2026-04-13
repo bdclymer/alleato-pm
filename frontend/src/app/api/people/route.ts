@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { type NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { apiErrorResponse } from "@/lib/api-error";
@@ -7,12 +9,14 @@ import { apiErrorResponse } from "@/lib/api-error";
  * This endpoint returns people regardless of project membership,
  * useful for assigning people to project teams.
  */
-export async function GET(request: NextRequest) {
-  try {
+export const GET = withApiGuardrails(
+  "people#GET",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "people#GET", message: "Authentication required." });
     }
 
     // Parse query parameters
@@ -79,21 +83,21 @@ export async function GET(request: NextRequest) {
         totalPages: Math.ceil((count || 0) / perPage)
       }
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * Creates a new person in the people table.
  * Required fields: first_name, last_name, person_type
  */
-export async function POST(request: NextRequest) {
-  try {
+export const POST = withApiGuardrails(
+  "people#POST",
+  async ({ request }) => {
+  
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "people#POST", message: "Authentication required." });
     }
     const body = await request.json();
 
@@ -152,7 +156,5 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(data, { status: 201 });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

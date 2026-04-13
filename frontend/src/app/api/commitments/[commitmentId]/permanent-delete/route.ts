@@ -1,3 +1,5 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { NextResponse } from "next/server";
 import { apiErrorResponse } from "@/lib/api-error";
@@ -22,11 +24,10 @@ import { apiErrorResponse } from "@/lib/api-error";
  * - 404: Commitment not found
  * - 400: Commitment not soft-deleted yet
  */
-export async function DELETE(
-  request: Request,
-  { params }: { params: Promise<{ commitmentId: string }> },
-) {
-  try {
+export const DELETE = withApiGuardrails<{ commitmentId: string }>(
+  "commitments/[commitmentId]/permanent-delete#DELETE",
+  async ({ request, params }) => {
+  
     const { commitmentId } = await params;
     const supabase = await createClient();
 
@@ -36,7 +37,7 @@ export async function DELETE(
     } = await supabase.auth.getUser();
 
     if (!user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "commitments/[commitmentId]/permanent-delete#DELETE", message: "Authentication required." });
     }
 
     // First determine the type and verify it's deleted from the unified view
@@ -76,7 +77,5 @@ export async function DELETE(
 
     // Return 204 No Content for successful deletion
     return new NextResponse(null, { status: 204 });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);

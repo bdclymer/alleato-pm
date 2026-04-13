@@ -1,6 +1,8 @@
+import { withApiGuardrails } from "@/lib/guardrails/api";
+import { GuardrailError } from "@/lib/guardrails/errors";
 import { createClient } from "@/lib/supabase/server";
 import { createServiceClient } from "@/lib/supabase/service";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { z } from "zod";
 import { apiErrorResponse } from "@/lib/api-error";
 
@@ -37,8 +39,10 @@ const createAttachmentSchema = z.object({
  * @returns {object} 400 - Database query error
  * @returns {object} 500 - Internal server error
  */
-export async function GET(request: NextRequest, { params }: RouteParams) {
-  try {
+export const GET = withApiGuardrails(
+  "commitments/[commitmentId]/attachments#GET",
+  async ({ request, params }) => {
+  
     const { commitmentId } = await params;
     const supabase = await createClient();
 
@@ -98,10 +102,8 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
         commitment: `/api/commitments/${commitmentId}`,
       },
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * POST /api/commitments/[commitmentId]/attachments
@@ -126,8 +128,10 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
  *
  * @note On database insert failure, the uploaded storage file is cleaned up
  */
-export async function POST(request: NextRequest, { params }: RouteParams) {
-  try {
+export const POST = withApiGuardrails(
+  "commitments/[commitmentId]/attachments#POST",
+  async ({ request, params }) => {
+  
     const { commitmentId } = await params;
     const supabase = await createClient();
     const serviceClient = createServiceClient();
@@ -139,7 +143,7 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "commitments/[commitmentId]/attachments#POST", message: "Authentication required." });
     }
 
     // Verify commitment exists and get project_id
@@ -255,23 +259,8 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
     };
 
     return NextResponse.json(response, { status: 201 });
-  } catch (error) {
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        {
-          error: "Validation error",
-          details: error.issues.map((e) => ({
-            field: e.path.join("."),
-            message: e.message,
-          })),
-        },
-        { status: 400 },
-      );
-    }
-
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
 
 /**
  * DELETE /api/commitments/[commitmentId]/attachments
@@ -292,8 +281,10 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
  * @returns {object} 404 - Commitment not found
  * @returns {object} 500 - Internal server error
  */
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
-  try {
+export const DELETE = withApiGuardrails(
+  "commitments/[commitmentId]/attachments#DELETE",
+  async ({ request, params }) => {
+  
     const { commitmentId } = await params;
     const supabase = await createClient();
     const body = await request.json();
@@ -305,7 +296,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      throw new GuardrailError({ code: "AUTH_EXPIRED", where: "commitments/[commitmentId]/attachments#DELETE", message: "Authentication required." });
     }
 
     // Verify commitment exists
@@ -394,7 +385,5 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     return NextResponse.json({
       message: `${attachments?.length || 0} attachment(s) deleted successfully`,
     });
-  } catch (error) {
-    return apiErrorResponse(error);
-  }
-}
+    },
+);
