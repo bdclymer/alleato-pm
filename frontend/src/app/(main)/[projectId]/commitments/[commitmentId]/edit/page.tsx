@@ -107,10 +107,12 @@ export default function EditCommitmentPage() {
       : [];
 
     if (isPO) {
+      const companyObj = r.contract_company as { id: string; name: string } | null | undefined;
       const data: PurchaseOrderInitialData = {
         contractNumber: typeof r.contract_number === "string" ? r.contract_number : "",
         title: typeof r.title === "string" ? r.title : "",
         contractCompanyId: typeof r.contract_company_id === "string" ? r.contract_company_id : undefined,
+        contractCompanyName: companyObj?.name,
         status: normalizedStatus as "Draft" | "Approved" | "Sent" | "Acknowledged" | "Completed",
         executed: typeof r.executed === "boolean" ? r.executed : false,
         defaultRetainagePercent: typeof r.default_retainage_percent === "number" ? r.default_retainage_percent : undefined,

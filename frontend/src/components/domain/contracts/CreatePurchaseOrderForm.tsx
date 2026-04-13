@@ -91,6 +91,7 @@ interface CreatePurchaseOrderFormProps {
   onCancel: () => void;
   initialData?: Partial<CreatePurchaseOrderInput> & {
     sovLines?: PurchaseOrderSovLineItem[];
+    contractCompanyName?: string;
   };
   mode?: "create" | "edit";
 }
@@ -182,9 +183,21 @@ export function CreatePurchaseOrderForm({
           id: string;
           vendor_name: string;
         }>;
-        setVendorOptions(
-          (data || []).map((v) => ({ value: v.id, label: v.vendor_name })),
-        );
+        const options = (data || []).map((v) => ({ value: v.id, label: v.vendor_name }));
+
+        // Ensure the saved company appears in options even if not in project vendors
+        if (
+          initialData?.contractCompanyId &&
+          initialData?.contractCompanyName &&
+          !options.some((o) => o.value === initialData.contractCompanyId)
+        ) {
+          options.unshift({
+            value: initialData.contractCompanyId,
+            label: initialData.contractCompanyName,
+          });
+        }
+
+        setVendorOptions(options);
       } catch {
         setVendorOptions([]);
       } finally {
@@ -192,7 +205,7 @@ export function CreatePurchaseOrderForm({
       }
     };
     fetchVendors();
-  }, [projectId]);
+  }, [projectId, initialData?.contractCompanyId, initialData?.contractCompanyName]);
 
   const form = useForm<CreatePurchaseOrderInput>({
     resolver: zodResolver(CreatePurchaseOrderSchema) as any,
