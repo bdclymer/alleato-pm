@@ -10,10 +10,10 @@ import { apiErrorResponse } from "@/lib/api-error";
 // the cost reflects in the budget.
 export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
   "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/pending-owner-approval#POST",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { projectId, invoiceId } = await context.params;
+    const { projectId, invoiceId } = params;
 
     const {
       data: { user },

@@ -10,10 +10,10 @@ import { apiErrorResponse } from "@/lib/api-error";
 // Server recomputes derived totals (pct, total, work_retainage_amount, materials_retainage_amount, balance, net).
 export const PATCH = withApiGuardrails<{ projectId: string; invoiceId: string }>(
   "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/line-items#PATCH",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { projectId, invoiceId } = await context.params;
+    const { projectId, invoiceId } = params;
 
     const {
       data: { user },

@@ -52,9 +52,9 @@ interface ExportBudgetRow {
 
 export const GET = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/budget/export#GET",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
-    const { projectId } = await context.params;
+    const { projectId } = params;
     const numericProjectId = parseInt(projectId, 10);
 
     if (Number.isNaN(numericProjectId)) {

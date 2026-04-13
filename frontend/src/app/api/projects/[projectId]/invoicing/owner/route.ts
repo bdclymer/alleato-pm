@@ -9,9 +9,9 @@ import { requirePermission } from "@/lib/permissions-guard";
 // Create a new owner invoice for a project
 export const POST = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/invoicing/owner#POST",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
-    const { projectId } = await context.params;
+    const { projectId } = params;
     const projectIdNum = parseInt(projectId, 10);
 
     const guard = await requirePermission(projectIdNum, "contracts", "write");
@@ -74,10 +74,10 @@ export const POST = withApiGuardrails<{ projectId: string }>(
 // Fetch all owner invoices for a project with their line items
 export const GET = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/invoicing/owner#GET",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { projectId } = await context.params;
+    const { projectId } = params;
 
     // Check authentication
     const {

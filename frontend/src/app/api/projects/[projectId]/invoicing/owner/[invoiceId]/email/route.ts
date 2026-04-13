@@ -39,9 +39,9 @@ function getFromAddress(): string {
 
 export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
   "projects/[projectId]/invoicing/owner/[invoiceId]/email#POST",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
-    const { projectId, invoiceId } = await context.params;
+    const { projectId, invoiceId } = params;
     const projectIdNum = parseInt(projectId, 10);
 
     const guard = await requirePermission(projectIdNum, "contracts", "write");

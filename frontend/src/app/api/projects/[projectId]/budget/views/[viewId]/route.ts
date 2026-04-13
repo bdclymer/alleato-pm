@@ -9,14 +9,14 @@ import { apiErrorResponse } from "@/lib/api-error";
 // Fetch a single budget view
 export const GET = withApiGuardrails<{ projectId: string; viewId: string }>(
   "projects/[projectId]/budget/views/[viewId]#GET",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/budget/views/[viewId]#GET", message: "Authentication required." });
     }
-    const { viewId } = await context.params;
+    const { viewId } = params;
 
     const { data: view, error } = await supabase
       .from("budget_views")
@@ -69,14 +69,14 @@ export const GET = withApiGuardrails<{ projectId: string; viewId: string }>(
 // Update a budget view
 export const PATCH = withApiGuardrails<{ projectId: string; viewId: string }>(
   "projects/[projectId]/budget/views/[viewId]#PATCH",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/budget/views/[viewId]#PATCH", message: "Authentication required." });
     }
-    const { viewId } = await context.params;
+    const { viewId } = params;
     const body: UpdateBudgetViewRequest = await request.json();
 
     // Check if view is a system view
@@ -215,14 +215,14 @@ export const PATCH = withApiGuardrails<{ projectId: string; viewId: string }>(
 // Delete a budget view
 export const DELETE = withApiGuardrails<{ projectId: string; viewId: string }>(
   "projects/[projectId]/budget/views/[viewId]#DELETE",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/budget/views/[viewId]#DELETE", message: "Authentication required." });
     }
-    const { viewId } = await context.params;
+    const { viewId } = params;
 
     // Check if view is a system view
     const { data: existingView, error: fetchError } = await supabase

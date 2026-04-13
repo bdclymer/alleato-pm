@@ -8,10 +8,10 @@ import { apiErrorResponse } from "@/lib/api-error";
 // POST → log a sent email { to_recipients[], cc_recipients?[], subject, body, email_type }
 export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
   "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/emails#GET",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { invoiceId } = await context.params;
+    const { invoiceId } = params;
     const invoiceIdNum = parseInt(invoiceId, 10);
 
     const { data, error } = await supabase
@@ -33,10 +33,10 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
 
 export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
   "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/emails#POST",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { invoiceId } = await context.params;
+    const { invoiceId } = params;
     const invoiceIdNum = parseInt(invoiceId, 10);
 
     const { data: { user } } = await supabase.auth.getUser();

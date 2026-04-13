@@ -28,10 +28,10 @@ async function verifyInvoice(
 // Return all line items for an invoice
 export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
   "projects/[projectId]/invoicing/owner/[invoiceId]/line-items#GET",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { projectId, invoiceId } = await context.params;
+    const { projectId, invoiceId } = params;
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -66,10 +66,10 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
 // Add a new line item to an invoice
 export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
   "projects/[projectId]/invoicing/owner/[invoiceId]/line-items#POST",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { projectId, invoiceId } = await context.params;
+    const { projectId, invoiceId } = params;
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
@@ -135,10 +135,10 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
 // Body: Array of { id, work_completed_period?, materials_stored?, retainage_pct?, retainage_released? }
 export const PATCH = withApiGuardrails<{ projectId: string; invoiceId: string }>(
   "projects/[projectId]/invoicing/owner/[invoiceId]/line-items#PATCH",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { projectId, invoiceId } = await context.params;
+    const { projectId, invoiceId } = params;
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {

@@ -10,10 +10,10 @@ type RouteContext = { params: Promise<{ projectId: string }> };
 // Fetches project-level billing_periods (not contract_billing_periods)
 export const GET = withApiGuardrails(
   "projects/[projectId]/billing-periods#GET",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { projectId } = await context.params;
+    const { projectId } = params;
 
     const {
       data: { user },
@@ -59,10 +59,10 @@ export const GET = withApiGuardrails(
 // POST /api/projects/[projectId]/billing-periods
 export const POST = withApiGuardrails(
   "projects/[projectId]/billing-periods#POST",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { projectId } = await context.params;
+    const { projectId } = params;
 
     const {
       data: { user },

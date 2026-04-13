@@ -108,10 +108,10 @@ export async function fetchInvoicePdfData(
 
 export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
   "projects/[projectId]/invoicing/owner/[invoiceId]/pdf#GET",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { projectId, invoiceId } = await context.params;
+    const { projectId, invoiceId } = params;
 
     const {
       data: { user },

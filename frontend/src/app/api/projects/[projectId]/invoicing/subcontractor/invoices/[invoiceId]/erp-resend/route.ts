@@ -10,10 +10,10 @@ import { apiErrorResponse } from "@/lib/api-error";
 // once the AP Bill endpoint contract is confirmed.
 export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
   "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/erp-resend#POST",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { invoiceId } = await context.params;
+    const { invoiceId } = params;
     const invoiceIdNum = parseInt(invoiceId, 10);
 
     const { data: { user } } = await supabase.auth.getUser();

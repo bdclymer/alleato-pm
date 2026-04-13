@@ -9,10 +9,10 @@ import { apiErrorResponse } from "@/lib/api-error";
 // Optional query param: is_closed=true|false
 export const GET = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/invoicing/billing-periods#GET",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { projectId } = await context.params;
+    const { projectId } = params;
 
     const {
       data: { user },
@@ -66,10 +66,10 @@ export const GET = withApiGuardrails<{ projectId: string }>(
 // Auto-assigns period_number as max(existing) + 1
 export const POST = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/invoicing/billing-periods#POST",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { projectId } = await context.params;
+    const { projectId } = params;
 
     const {
       data: { user },

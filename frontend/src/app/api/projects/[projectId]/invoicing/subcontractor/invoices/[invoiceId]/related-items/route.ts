@@ -9,10 +9,10 @@ import { apiErrorResponse } from "@/lib/api-error";
 // DELETE ?id=123 → unlink
 export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
   "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/related-items#GET",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { invoiceId } = await context.params;
+    const { invoiceId } = params;
     const invoiceIdNum = parseInt(invoiceId, 10);
 
     const { data, error } = await supabase
@@ -34,10 +34,10 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
 
 export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
   "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/related-items#POST",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { invoiceId } = await context.params;
+    const { invoiceId } = params;
     const invoiceIdNum = parseInt(invoiceId, 10);
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -77,10 +77,10 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
 
 export const DELETE = withApiGuardrails<{ projectId: string; invoiceId: string }>(
   "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/related-items#DELETE",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { invoiceId } = await context.params;
+    const { invoiceId } = params;
     const invoiceIdNum = parseInt(invoiceId, 10);
 
     const { searchParams } = new URL(request.url);

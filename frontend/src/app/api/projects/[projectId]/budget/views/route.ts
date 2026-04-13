@@ -10,10 +10,10 @@ import { requirePermission } from "@/lib/permissions-guard";
 // Fetch all budget views for a project
 export const GET = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/budget/views#GET",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { projectId } = await context.params;
+    const { projectId } = params;
 
     // Check authentication
     const {
@@ -87,10 +87,10 @@ export const GET = withApiGuardrails<{ projectId: string }>(
 // Create a new budget view
 export const POST = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/budget/views#POST",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { projectId } = await context.params;
+    const { projectId } = params;
     const body: CreateBudgetViewRequest = await request.json();
 
     const { name, description, is_default = false, columns } = body;

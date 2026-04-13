@@ -9,9 +9,9 @@ import { requirePermission } from "@/lib/permissions-guard";
 // Void an owner invoice. Pre-condition: must not already be paid or void.
 export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
   "projects/[projectId]/invoicing/owner/[invoiceId]/void#POST",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
-    const { projectId, invoiceId } = await context.params;
+    const { projectId, invoiceId } = params;
     const projectIdNum = parseInt(projectId, 10);
 
     const guard = await requirePermission(projectIdNum, "contracts", "admin");

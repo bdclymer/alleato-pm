@@ -60,12 +60,12 @@ async function requireUser() {
 // GET /api/projects/[projectId]/invoicing/settings
 export const GET = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/invoicing/settings#GET",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const { supabase, user, errorResponse } = await requireUser();
     if (!user) return errorResponse!;
 
-    const { projectId } = await context.params;
+    const { projectId } = params;
     const projectIdNum = parseInt(projectId, 10);
 
     const { data, error } = await supabase
@@ -112,12 +112,12 @@ export const GET = withApiGuardrails<{ projectId: string }>(
 // PATCH /api/projects/[projectId]/invoicing/settings
 export const PATCH = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/invoicing/settings#PATCH",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const { supabase, user, errorResponse } = await requireUser();
     if (!user) return errorResponse!;
 
-    const { projectId } = await context.params;
+    const { projectId } = params;
     const projectIdNum = parseInt(projectId, 10);
     const body = await request.json();
 

@@ -12,10 +12,10 @@ import { APP_BASE_URL } from "@/lib/email/client";
 // Transition invoice to under_review. Pre-condition: must be draft or revise_and_resubmit.
 export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
   "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/submit#POST",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { projectId, invoiceId } = await context.params;
+    const { projectId, invoiceId } = params;
 
     const {
       data: { user },

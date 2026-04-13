@@ -14,7 +14,7 @@ interface RouteContext {
 
 export const GET = withApiGuardrails(
   "projects/[projectId]/drawings/[drawingId]/revisions/[revisionId]/download#GET",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -23,7 +23,7 @@ export const GET = withApiGuardrails(
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/drawings/[drawingId]/revisions/[revisionId]/download#GET", message: "Authentication required." });
     }
 
-    const { revisionId } = await context.params;
+    const { revisionId } = params;
     
     // Get revision details
     const { data: revision, error } = await supabase

@@ -8,10 +8,10 @@ import { apiErrorResponse } from "@/lib/api-error";
 // Delete a single line item. Only allowed when invoice is draft or revise_and_resubmit.
 export const DELETE = withApiGuardrails<{ projectId: string; invoiceId: string; lineItemId: string }>(
   "projects/[projectId]/invoicing/owner/[invoiceId]/line-items/[lineItemId]#DELETE",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { projectId, invoiceId, lineItemId } = await context.params;
+    const { projectId, invoiceId, lineItemId } = params;
 
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {

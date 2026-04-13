@@ -8,10 +8,10 @@ import { apiErrorResponse } from "@/lib/api-error";
 // List all payments for a project, joined with owner/subcontractor invoice info.
 export const GET = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/invoicing/payments#GET",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { projectId } = await context.params;
+    const { projectId } = params;
 
     const {
       data: { user },
@@ -93,10 +93,10 @@ export const GET = withApiGuardrails<{ projectId: string }>(
 // Create a new payment. Requires exactly one of owner_invoice_id / subcontractor_invoice_id.
 export const POST = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/invoicing/payments#POST",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { projectId } = await context.params;
+    const { projectId } = params;
 
     const {
       data: { user },

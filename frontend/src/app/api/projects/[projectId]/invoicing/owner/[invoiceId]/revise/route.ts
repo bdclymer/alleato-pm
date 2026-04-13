@@ -9,9 +9,9 @@ import { requirePermission } from "@/lib/permissions-guard";
 // Request revision of an invoice (UNDER REVIEW → REVISE AND RESUBMIT)
 export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
   "projects/[projectId]/invoicing/owner/[invoiceId]/revise#POST",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
-    const { projectId, invoiceId } = await context.params;
+    const { projectId, invoiceId } = params;
     const projectIdNum = parseInt(projectId, 10);
     const invoiceIdNum = parseInt(invoiceId, 10);
 

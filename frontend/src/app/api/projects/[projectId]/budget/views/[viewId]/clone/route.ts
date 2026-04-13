@@ -9,14 +9,14 @@ import { apiErrorResponse } from "@/lib/api-error";
 // Clone an existing budget view
 export const POST = withApiGuardrails<{ projectId: string; viewId: string }>(
   "projects/[projectId]/budget/views/[viewId]/clone#POST",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     if (authError || !user) {
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/budget/views/[viewId]/clone#POST", message: "Authentication required." });
     }
-    const { viewId } = await context.params;
+    const { viewId } = params;
     const body: CloneBudgetViewRequest = await request.json();
 
     const { new_name, new_description } = body;

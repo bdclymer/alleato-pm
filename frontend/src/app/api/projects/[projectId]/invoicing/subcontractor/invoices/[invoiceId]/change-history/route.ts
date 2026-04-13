@@ -7,10 +7,10 @@ import { apiErrorResponse } from "@/lib/api-error";
 // GET → list audit log entries for this invoice, newest first
 export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
   "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]/change-history#GET",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { invoiceId } = await context.params;
+    const { invoiceId } = params;
     const invoiceIdNum = parseInt(invoiceId, 10);
 
     const { data, error } = await supabase

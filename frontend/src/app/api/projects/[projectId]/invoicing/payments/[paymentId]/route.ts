@@ -19,12 +19,12 @@ async function getAuthedClient() {
 // GET /api/projects/[projectId]/invoicing/payments/[paymentId]
 export const GET = withApiGuardrails(
   "projects/[projectId]/invoicing/payments/[paymentId]#GET",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const { supabase, error: authErr } = await getAuthedClient();
     if (authErr) return NextResponse.json({ error: authErr }, { status: 401 });
 
-    const { projectId, paymentId } = await context.params;
+    const { projectId, paymentId } = params;
     const projectIdNum = parseInt(projectId, 10);
     const paymentIdNum = parseInt(paymentId, 10);
 
@@ -58,12 +58,12 @@ export const GET = withApiGuardrails(
 // PATCH /api/projects/[projectId]/invoicing/payments/[paymentId]
 export const PATCH = withApiGuardrails(
   "projects/[projectId]/invoicing/payments/[paymentId]#PATCH",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const { supabase, error: authErr } = await getAuthedClient();
     if (authErr) return NextResponse.json({ error: authErr }, { status: 401 });
 
-    const { projectId, paymentId } = await context.params;
+    const { projectId, paymentId } = params;
     const projectIdNum = parseInt(projectId, 10);
     const paymentIdNum = parseInt(paymentId, 10);
 
@@ -109,12 +109,12 @@ export const PATCH = withApiGuardrails(
 // DELETE /api/projects/[projectId]/invoicing/payments/[paymentId]
 export const DELETE = withApiGuardrails(
   "projects/[projectId]/invoicing/payments/[paymentId]#DELETE",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const { supabase, error: authErr } = await getAuthedClient();
     if (authErr) return NextResponse.json({ error: authErr }, { status: 401 });
 
-    const { projectId, paymentId } = await context.params;
+    const { projectId, paymentId } = params;
     const projectIdNum = parseInt(projectId, 10);
     const paymentIdNum = parseInt(paymentId, 10);
 

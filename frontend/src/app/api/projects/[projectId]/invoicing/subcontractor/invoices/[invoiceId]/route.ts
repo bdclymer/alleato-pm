@@ -8,10 +8,10 @@ import { apiErrorResponse } from "@/lib/api-error";
 // Fetch a single subcontractor invoice with line items, commitment, and billing period joins
 export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
   "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]#GET",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { projectId, invoiceId } = await context.params;
+    const { projectId, invoiceId } = params;
 
     const {
       data: { user },
@@ -376,10 +376,10 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
 // Update a subcontractor invoice (only when status is draft or revise_and_resubmit)
 export const PATCH = withApiGuardrails<{ projectId: string; invoiceId: string }>(
   "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]#PATCH",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { projectId, invoiceId } = await context.params;
+    const { projectId, invoiceId } = params;
 
     const {
       data: { user },
@@ -510,10 +510,10 @@ export const PATCH = withApiGuardrails<{ projectId: string; invoiceId: string }>
 // Delete a subcontractor invoice (blocked if status is approved or paid)
 export const DELETE = withApiGuardrails<{ projectId: string; invoiceId: string }>(
   "projects/[projectId]/invoicing/subcontractor/invoices/[invoiceId]#DELETE",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { projectId, invoiceId } = await context.params;
+    const { projectId, invoiceId } = params;
 
     const {
       data: { user },

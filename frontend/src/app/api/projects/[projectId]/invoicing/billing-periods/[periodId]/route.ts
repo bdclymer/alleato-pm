@@ -8,10 +8,10 @@ import { apiErrorResponse } from "@/lib/api-error";
 // Fetch a single billing period
 export const GET = withApiGuardrails<{ projectId: string; periodId: string }>(
   "projects/[projectId]/invoicing/billing-periods/[periodId]#GET",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { projectId, periodId } = await context.params;
+    const { projectId, periodId } = params;
 
     const {
       data: { user },
@@ -59,10 +59,10 @@ export const GET = withApiGuardrails<{ projectId: string; periodId: string }>(
 // Update a billing period's name, start_date, end_date, due_date, or is_closed
 export const PATCH = withApiGuardrails<{ projectId: string; periodId: string }>(
   "projects/[projectId]/invoicing/billing-periods/[periodId]#PATCH",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { projectId, periodId } = await context.params;
+    const { projectId, periodId } = params;
 
     const {
       data: { user },
@@ -154,10 +154,10 @@ export const PATCH = withApiGuardrails<{ projectId: string; periodId: string }>(
 // Delete a billing period — blocked (409) if any owner or subcontractor invoices reference it
 export const DELETE = withApiGuardrails<{ projectId: string; periodId: string }>(
   "projects/[projectId]/invoicing/billing-periods/[periodId]#DELETE",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { projectId, periodId } = await context.params;
+    const { projectId, periodId } = params;
 
     const {
       data: { user },

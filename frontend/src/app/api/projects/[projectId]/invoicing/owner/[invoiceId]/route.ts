@@ -9,10 +9,10 @@ import { requirePermission } from "@/lib/permissions-guard";
 // Fetch a single owner invoice with line items
 export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
   "projects/[projectId]/invoicing/owner/[invoiceId]#GET",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
     const supabase = await createClient();
-    const { projectId, invoiceId } = await context.params;
+    const { projectId, invoiceId } = params;
 
     // Check authentication
     const {
@@ -92,9 +92,9 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
 // Update an owner invoice (only if status is draft)
 export const PATCH = withApiGuardrails<{ projectId: string; invoiceId: string }>(
   "projects/[projectId]/invoicing/owner/[invoiceId]#PATCH",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
-    const { projectId, invoiceId } = await context.params;
+    const { projectId, invoiceId } = params;
     const projectIdNum = parseInt(projectId, 10);
     const invoiceIdNum = parseInt(invoiceId, 10);
 
@@ -182,9 +182,9 @@ export const PATCH = withApiGuardrails<{ projectId: string; invoiceId: string }>
 // Delete an owner invoice (only if not approved or paid)
 export const DELETE = withApiGuardrails<{ projectId: string; invoiceId: string }>(
   "projects/[projectId]/invoicing/owner/[invoiceId]#DELETE",
-  async ({ request }) => {
+  async ({ request, params }) => {
   
-    const { projectId, invoiceId } = await context.params;
+    const { projectId, invoiceId } = params;
     const projectIdNum = parseInt(projectId, 10);
     const invoiceIdNum = parseInt(invoiceId, 10);
 
