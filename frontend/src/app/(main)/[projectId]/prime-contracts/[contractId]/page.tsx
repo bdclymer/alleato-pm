@@ -32,7 +32,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { StatusBadge } from "@/components/ds";
 import { PageTabs } from "@/components/layout/PageTabs";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import {
@@ -72,6 +71,8 @@ import type {
   VerticalMarkup,
 } from "./types";
 
+// #region Types
+
 type BudgetCodeCreateTarget =
   | { type: "line-item-form" }
   | { type: "sov-line"; lineId: string };
@@ -92,7 +93,9 @@ interface PrimeContractSettings {
   default_distribution_pco: string | null;
 }
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
+// #endregion
+
+// #region Helpers
 
 const normalizeVerticalMarkupRows = (rows: VerticalMarkup[]): VerticalMarkup[] =>
   rows.map((row) => ({
@@ -141,7 +144,9 @@ const formatStatusLabel = (status: Contract["status"]) => {
   }
 };
 
-// ─── Page Component ─────────────────────────────────────────────────────────
+// #endregion
+
+// #region Component
 
 export default function ProjectContractDetailPage() {
   const router = useRouter();
@@ -151,6 +156,8 @@ export default function ProjectContractDetailPage() {
   const contractId = params.contractId as string;
 
   useProjectTitle("Prime Contract");
+
+  // #region State
 
   // ── Core state ──────────────────────────────────────────────────────────
   const [contract, setContract] = useState<Contract | null>(null);
@@ -182,7 +189,6 @@ export default function ProjectContractDetailPage() {
 
   // ── Change orders ───────────────────────────────────────────────────────
   const [changeOrders, setChangeOrders] = useState<PrimeContractCO[]>([]);
-  const [changeOrdersLoading, setChangeOrdersLoading] = useState(false);
   const [showNewCoDialog, setShowNewCoDialog] = useState(false);
   const [coForm, setCoForm] = useState<ChangeOrderFormState>({ change_order_number: "", description: "", amount: "", status: "pending" });
   const [isSubmittingCo, setIsSubmittingCo] = useState(false);
@@ -231,9 +237,9 @@ export default function ProjectContractDetailPage() {
   const [isSyncing, setIsSyncing] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // Data Fetching
-  // ═══════════════════════════════════════════════════════════════════════
+  // #endregion
+
+  // #region Data Fetching
 
   useEffect(() => {
     const fetchContract = async () => {
@@ -296,7 +302,7 @@ export default function ProjectContractDetailPage() {
     if (!contract) return;
     const fetchChangeOrders = async () => {
       try {
-        setChangeOrdersLoading(true);
+
         const [ccoResponse, pccoResponse] = await Promise.all([
           fetch(`/api/projects/${projectId}/contracts/${contractId}/change-orders`),
           fetch(`/api/projects/${projectId}/prime-contract-change-orders`),
@@ -310,16 +316,38 @@ export default function ProjectContractDetailPage() {
             return String(item.prime_contract_id ?? item.contract_id) === String(contractId);
           })
           .map((p: unknown) => {
-            const item = p as { id: number; contract_id: string | null; prime_contract_id: string | null; pcco_number: string | null; title: string | null; total_amount: number | null; status: string | null; submitted_at: string | null; approved_at: string | null; created_at: string | null };
+            const item = p as {
+              id: number;
+              contract_id: string | null;
+              prime_contract_id: string | null;
+              pcco_number: string | null;
+              title: string | null;
+              total_amount: number | null;
+              status: string | null;
+              submitted_at: string | null;
+              approved_at: string | null;
+              created_at: string | null;
+              revision: number | null;
+              executed: boolean | null;
+              due_date: string | null;
+              review_date: string | null;
+              designated_reviewer: string | null;
+            };
             return {
               id: String(item.id),
               contract_id: String(item.prime_contract_id ?? item.contract_id ?? contractId),
               change_order_number: item.pcco_number || "",
               description: item.title || "",
+              title: item.title ?? null,
               amount: item.total_amount ?? 0,
               status: (item.status || "proposed").toLowerCase(),
+              revision: item.revision ?? null,
+              executed: item.executed ?? null,
               requested_by: null,
               requested_date: item.submitted_at || item.created_at || "",
+              due_date: item.due_date ?? null,
+              review_date: item.review_date ?? null,
+              designated_reviewer: item.designated_reviewer ?? null,
               approved_by: null,
               approved_date: item.approved_at || null,
               rejection_reason: null,
@@ -330,8 +358,6 @@ export default function ProjectContractDetailPage() {
         setChangeOrders([...ccos, ...pccos]);
       } catch (err) {
         console.error("Failed to load data:", err);
-      } finally {
-        setChangeOrdersLoading(false);
       }
     };
     fetchChangeOrders();
@@ -422,9 +448,9 @@ export default function ProjectContractDetailPage() {
     fetchAttachments();
   }, [contract, contractId, projectId]);
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // Computed values
-  // ═══════════════════════════════════════════════════════════════════════
+  // #endregion
+
+  // #region Computed Values
 
   const inclusionsList = useMemo(() => parseBulletList(contract?.inclusions), [contract?.inclusions]);
   const exclusionsList = useMemo(() => parseBulletList(contract?.exclusions), [contract?.exclusions]);
@@ -433,9 +459,9 @@ export default function ProjectContractDetailPage() {
     [lineItems],
   );
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // Handlers
-  // ═══════════════════════════════════════════════════════════════════════
+  // #endregion
+
+  // #region Handlers
 
   const handleBack = () => router.push(`/${projectId}/prime-contracts`);
 
@@ -721,9 +747,9 @@ export default function ProjectContractDetailPage() {
     } catch (err) { toast.error(err instanceof Error ? err.message : "Failed to update contract"); } finally { setIsSavingEdit(false); }
   };
 
-  // ═══════════════════════════════════════════════════════════════════════
-  // Render
-  // ═══════════════════════════════════════════════════════════════════════
+  // #endregion
+
+  // #region Render
 
   if (loading) {
     return (
@@ -865,7 +891,6 @@ export default function ProjectContractDetailPage() {
           { label: "General", href: "overview", isActive: activeTab === "overview" },
           { label: "Change Orders", href: "change-orders", isActive: activeTab === "change-orders", count: changeOrders.length || undefined },
           { label: "Commitments", href: "commitments", isActive: activeTab === "commitments" },
-          { label: "Change Events", href: "change-events", isActive: activeTab === "change-events" },
           { label: "Invoices", href: "invoices", isActive: activeTab === "invoices", count: paymentApplications.length || undefined },
           { label: "Payments Received", href: "payments", isActive: activeTab === "payments", count: payments.length || undefined },
           { label: "Emails", href: "emails", isActive: activeTab === "emails" },
@@ -876,7 +901,7 @@ export default function ProjectContractDetailPage() {
         onTabClick={(href) => setActiveTab(href as ContractTab)}
       />
 
-      <div className="pt-6">
+      <div className="pt-8">
         {activeTab === "overview" && (
           <PrimeContractOverviewTab
             contract={contract} changeOrders={changeOrders} attachments={attachments} attachmentsLoading={attachmentsLoading}
@@ -892,14 +917,19 @@ export default function ProjectContractDetailPage() {
         )}
 
         {activeTab === "change-orders" && (
-          <div className="space-y-10">
+          <div className="space-y-16">
             <PrimeContractChangeOrdersTab
-              projectId={projectId} contractId={contractId} changeOrders={changeOrders} changeOrdersLoading={changeOrdersLoading}
+              projectId={projectId} contractId={contractId} changeOrders={changeOrders}
               setChangeOrders={setChangeOrders} formatCurrency={formatCurrency}
-              onShowNewCoDialog={() => setShowNewCoDialog(true)} onStartEditCo={handleStartEditCo}
+              onStartEditCo={handleStartEditCo}
               onSetDeletingCo={setDeletingCo} onSetRejectingCoId={setRejectingCoId} onShowRejectCoDialog={() => setShowRejectCoDialog(true)}
             />
             <PrimeContractPcosSection
+              projectId={projectId}
+              contractId={contractId}
+              formatCurrency={formatCurrency}
+            />
+            <PrimeContractChangeEventsTab
               projectId={projectId}
               contractId={contractId}
               formatCurrency={formatCurrency}
@@ -914,13 +944,6 @@ export default function ProjectContractDetailPage() {
           />
         )}
 
-        {activeTab === "change-events" && (
-          <PrimeContractChangeEventsTab
-            projectId={projectId}
-            contractId={contractId}
-            formatCurrency={formatCurrency}
-          />
-        )}
 
         {activeTab === "invoices" && (
           <PrimeContractInvoicesTab
@@ -1009,4 +1032,6 @@ export default function ProjectContractDetailPage() {
       ) : null}
     </PageShell>
   );
+  // #endregion
 }
+// #endregion

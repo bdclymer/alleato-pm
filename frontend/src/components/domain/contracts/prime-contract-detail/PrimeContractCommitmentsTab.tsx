@@ -3,10 +3,9 @@
 import * as React from "react";
 import type { ReactNode } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { ChevronDown, Loader2, Plus } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -17,12 +16,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   UnifiedTablePage,
   useUnifiedTableState,
@@ -317,38 +310,8 @@ export function PrimeContractCommitmentsTab({
   return (
     <>
       <UnifiedTablePage
-        header={{
-          title: "Commitments",
-          description: "Subcontracts and purchase orders for this contract",
-          actions: (
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button size="sm">
-                  <Plus />
-                  Create
-                  <ChevronDown />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem
-                  onClick={() =>
-                    router.push(`/${projectId}/commitments/new?type=subcontract&contractId=${contractId}`)
-                  }
-                >
-                  Subcontract
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() =>
-                    router.push(`/${projectId}/commitments/new?type=purchase_order&contractId=${contractId}`)
-                  }
-                >
-                  Purchase Order
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          ),
-        }}
-        layout={{ fullBleedTable: false }}
+        header={{ title: "" }}
+        layout={{ fullBleedTable: false, containerPadding: false }}
         toolbar={{
           totalItems,
           filteredItems: totalItems,

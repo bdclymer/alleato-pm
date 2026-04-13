@@ -86,9 +86,29 @@ export const GET = withApiGuardrails(
       }
     }
 
+    // Enrich with promoted CO number (PCCO column)
+    const promotedCoIds = (pcos || [])
+      .map((p) => p.promoted_to_co_id)
+      .filter((id): id is string => id != null);
+    const promotedCoNumberMap: Record<string, string> = {};
+    if (promotedCoIds.length > 0) {
+      const { data: coRows } = await supabase
+        .from("contract_change_orders")
+        .select("id, change_order_number")
+        .in("id", promotedCoIds);
+      if (coRows) {
+        for (const co of coRows) {
+          promotedCoNumberMap[co.id] = co.change_order_number;
+        }
+      }
+    }
+
     const result = enrichedPcos.map((pco: any) => ({
       ...pco,
       linked_change_events_count: ceCountMap[pco.id] || 0,
+      promoted_co_number: pco.promoted_to_co_id
+        ? (promotedCoNumberMap[pco.promoted_to_co_id] ?? null)
+        : null,
     }));
 
     return NextResponse.json(result);

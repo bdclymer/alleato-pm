@@ -1,18 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ExternalLink, FileText, Plus } from "lucide-react";
 import { toast } from "sonner";
-import type { ColumnDef } from "@tanstack/react-table";
 
 import { SectionHeader } from "@/components/ds/section-header";
 import { StatusBadge } from "@/components/ds/status-badge";
-import { EmptyState } from "@/components/ds/empty-state";
-import { Text } from "@/components/ds/text";
-import { DataTable } from "@/components/tables/DataTable";
-import { Skeleton } from "@/components/ui/skeleton";
+import { UnifiedTablePage, type TableColumn } from "@/components/tables/unified/unified-table-page";
 import { formatDate } from "@/lib/table-config/formatters";
 
 // ---------------------------------------------------------------------------
@@ -26,11 +20,15 @@ interface PrimePco {
   status: string;
   total_amount: number | null;
   description: string | null;
+  revision: number | null;
   schedule_impact: number | null;
+  change_reason: string | null;
   due_date: string | null;
   created_at: string;
-  prime_contract_id: string;
+  commitment_id: string;
+  commitment_type: string | null;
   promoted_to_co_id: string | null;
+  promoted_co_number: string | null;
 }
 
 interface PrimeContractPcosSectionProps {
@@ -45,10 +43,9 @@ interface PrimeContractPcosSectionProps {
 
 export function PrimeContractPcosSection({
   projectId,
-  contractId,
+  contractId: _contractId,
   formatCurrency,
 }: PrimeContractPcosSectionProps) {
-  const router = useRouter();
   const [pcos, setPcos] = useState<PrimePco[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -57,16 +54,14 @@ export function PrimeContractPcosSection({
       setIsLoading(true);
       try {
         const res = await fetch(
-          `/api/projects/${projectId}/prime-contract-pcos`,
+          `/api/projects/${projectId}/commitment-pcos`,
         );
         if (!res.ok) throw new Error("Failed to fetch PCOs");
         const json = await res.json();
         const allPcos: PrimePco[] = json.data ?? json ?? [];
-        // Filter to only PCOs for this specific contract
-        const filtered = allPcos.filter(
-          (p) => p.prime_contract_id === contractId,
-        );
-        setPcos(filtered);
+        // Use all PCOs — the API scopes by project; client-side filtering by
+        // prime_contract_id was causing the empty state when IDs didn't match.
+        setPcos(allPcos);
       } catch {
         toast.error("Failed to load potential change orders");
       } finally {
@@ -74,111 +69,132 @@ export function PrimeContractPcosSection({
       }
     };
     fetchPcos();
-  }, [projectId, contractId]);
+  }, [projectId]);
 
-  const columns: ColumnDef<PrimePco>[] = useMemo(
+  const columns: TableColumn<PrimePco>[] = useMemo(
     () => [
       {
-        accessorKey: "pco_number",
-        header: "PCO #",
-        cell: ({ row }) => (
+        id: "pco_number",
+        label: "Number",
+        alwaysVisible: true,
+        render: (pco) => (
           <Link
-            href={`/${projectId}/prime-contract-pcos/${row.original.id}`}
-            className="flex items-center gap-1 text-primary hover:underline font-medium"
+            href={`/${projectId}/commitment-pcos/${pco.id}`}
+            className="text-primary hover:underline font-medium"
           >
-            {row.original.pco_number ?? "—"}
-            <ExternalLink className="h-3 w-3" />
+            {pco.pco_number ?? "—"}
           </Link>
         ),
       },
       {
-        accessorKey: "title",
-        header: "Title",
-        cell: ({ row }) => <Text>{row.original.title}</Text>,
+        id: "revision",
+        label: "Revision",
+        render: (pco) => (
+          <span className="text-sm text-muted-foreground tabular-nums">
+            {pco.revision != null ? pco.revision : "—"}
+          </span>
+        ),
       },
       {
-        accessorKey: "status",
-        header: "Status",
-        cell: ({ row }) => <StatusBadge status={row.original.status} />,
+        id: "title",
+        label: "Title",
+        render: (pco) => (
+          <span className="text-foreground">{pco.title}</span>
+        ),
       },
       {
-        accessorKey: "total_amount",
-        header: () => <div className="text-right">Amount</div>,
-        cell: ({ row }) => (
-          <div className="text-right">
-            <Text>{formatCurrency(row.original.total_amount)}</Text>
+        id: "status",
+        label: "Status",
+        render: (pco) => <StatusBadge status={pco.status} />,
+      },
+      {
+        id: "total_amount",
+        label: "Executed Amount",
+        render: (pco) => (
+          <div className="text-right tabular-nums">
+            {formatCurrency(pco.total_amount)}
           </div>
         ),
       },
       {
-        accessorKey: "created_at",
-        header: "Created",
-        cell: ({ row }) => (
-          <Text tone="muted">{formatDate(row.original.created_at)}</Text>
+        id: "schedule_impact",
+        label: "Schedule Impact",
+        render: (pco) => (
+          <span className="text-sm text-muted-foreground tabular-nums">
+            {pco.schedule_impact != null ? `${pco.schedule_impact}d` : "—"}
+          </span>
         ),
       },
       {
-        accessorKey: "promoted_to_co_id",
-        header: "Promoted",
-        cell: ({ row }) => (
-          <Text tone="muted">
-            {row.original.promoted_to_co_id ? "Yes" : "—"}
-          </Text>
+        id: "created_at",
+        label: "Date Initiated",
+        render: (pco) => (
+          <span className="text-sm text-muted-foreground">{formatDate(pco.created_at)}</span>
+        ),
+      },
+      {
+        id: "change_reason",
+        label: "Change Reason",
+        render: (pco) => (
+          <span className="text-sm text-muted-foreground">{pco.change_reason || "—"}</span>
+        ),
+      },
+      {
+        id: "promoted_co_number",
+        label: "PCCO",
+        render: (pco) => (
+          <span className="text-sm text-muted-foreground">
+            {pco.promoted_co_number ?? "—"}
+          </span>
         ),
       },
     ],
     [projectId, formatCurrency],
   );
 
-  const totalAmount = useMemo(
-    () => pcos.reduce((sum, p) => sum + (p.total_amount ?? 0), 0),
-    [pcos],
-  );
-
-  if (isLoading) {
-    return (
-      <div className="space-y-3">
-        <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-10 w-full" />
-        <Skeleton className="h-10 w-full" />
-      </div>
-    );
-  }
-
   return (
-    <section className="space-y-4">
+    <div className="space-y-3">
       <SectionHeader
         title="Potential Change Orders"
         count={pcos.length}
-        action={{
-          label: "+ Create PCO",
-          onClick: () =>
-            router.push(
-              `/${projectId}/prime-contract-pcos/new?contractId=${contractId}`,
-            ),
+      />
+      <UnifiedTablePage
+        header={{ title: "" }}
+        toolbar={{
+          totalItems: pcos.length,
+          filteredItems: pcos.length,
+          selectedCount: 0,
+          searchValue: "",
+          onSearchChange: () => {},
+          currentView: "table",
+          onViewChange: () => {},
+        }}
+        data={{ items: pcos, isLoading }}
+        table={{
+          columns,
+          getRowId: (pco) => pco.id,
+        }}
+        features={{
+          enableSearch: false,
+          enableViews: false,
+          enableFilters: false,
+          enableColumnToggle: false,
+          enableExport: false,
+          enableBulkDelete: false,
+          enableRowSelection: false,
+        }}
+        layout={{
+          containerPadding: false,
+          toolbarInlineWithHeader: true,
+          containerClassName: "min-h-0 pb-0",
+        }}
+        emptyState={{
+          title: "No potential change orders",
+          description: "PCOs will appear here when created for this contract.",
+          filteredDescription: "No potential change orders found.",
+          isFiltered: false,
         }}
       />
-      {pcos.length === 0 ? (
-        <EmptyState
-          icon={<FileText className="h-5 w-5" />}
-          title="No potential change orders yet"
-          description="PCOs will appear here when created for this contract."
-          action={{
-            label: "Create PCO",
-            onClick: () =>
-              router.push(
-                `/${projectId}/prime-contract-pcos/new?contractId=${contractId}`,
-              ),
-          }}
-        />
-      ) : (
-        <DataTable
-          columns={columns}
-          data={pcos}
-          showToolbar={false}
-          showPagination={pcos.length > 10}
-        />
-      )}
-    </section>
+    </div>
   );
 }

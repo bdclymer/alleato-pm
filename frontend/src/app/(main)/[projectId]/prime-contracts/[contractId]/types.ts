@@ -5,10 +5,16 @@ export interface PrimeContractCO {
   contract_id: string;
   change_order_number: string;
   description: string;
+  title: string | null;
   amount: number;
   status: string;
+  revision: number | null;
+  executed: boolean | null;
   requested_by: string | null;
   requested_date: string;
+  due_date: string | null;
+  review_date: string | null;
+  designated_reviewer: string | null;
   approved_by: string | null;
   approved_date: string | null;
   rejection_reason: string | null;

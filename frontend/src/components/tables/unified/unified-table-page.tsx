@@ -231,6 +231,8 @@ export interface UnifiedTablePageProps<T> {
     containerClassName?: string;
     /** Override the card-view grid className (default: grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4) */
     cardGridClassName?: string;
+    /** Remove PageContainer horizontal/vertical padding (default: true) */
+    containerPadding?: boolean;
   };
   features?: UnifiedTableFeatures;
   columnGroups?: Array<{ label: string; columnIds: string[] }>;
@@ -306,6 +308,7 @@ export function UnifiedTablePage<T>({
   const toolbarInlineWithHeader = layout?.toolbarInlineWithHeader ?? false;
   const containerMaxWidth = layout?.maxWidth ?? "full";
   const containerClassName = layout?.containerClassName;
+  const containerPadding = layout?.containerPadding !== false;
   const toolbarColumns: ColumnConfig[] = React.useMemo(
     () =>
       toolbar.columns ??
@@ -930,9 +933,9 @@ export function UnifiedTablePage<T>({
   // the side panel grid can align its top with the table, not the page header.
   const aboveTableContent = (
     <>
-      {headerContent}
+      {header.title ? headerContent : null}
       {(tabs || !toolbarInlineWithHeader) && (
-        <div className="pt-1 sm:pt-2 pb-3 flex flex-col gap-2 lg:flex-row lg:items-end lg:justify-between">
+        <div className={cn("pb-3 flex flex-col gap-2 lg:flex-row lg:items-end", containerPadding ? "pt-1 sm:pt-2" : "pt-0", tabs ? "lg:justify-between" : "lg:justify-end")}>
           {tabs && <PageTabs tabs={tabs} variant="inline" className="lg:flex-1" />}
           {!toolbarInlineWithHeader ? tableToolbar : null}
         </div>
@@ -1606,6 +1609,7 @@ export function UnifiedTablePage<T>({
     <>
       <PageContainer
         maxWidth={containerMaxWidth}
+        padding={containerPadding}
         className={cn(
           "pb-12",
           sidePanel && "pt-0 overflow-x-visible",

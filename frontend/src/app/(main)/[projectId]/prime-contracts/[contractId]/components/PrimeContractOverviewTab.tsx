@@ -203,7 +203,7 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
     value ? formatDate(value) : <span className="text-muted-foreground/60">—</span>;
 
   return (
-    <ContentSectionStack className="pb-20">
+    <ContentSectionStack className="space-y-16 pb-20">
       {/* ─── General section: 3-column layout matching Procore ─── */}
       <section>
         <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_minmax(340px,420px)] gap-x-16 gap-y-10">
