@@ -21,6 +21,7 @@ import {
   useMasterCostCodes,
   useCostCodeTypes,
   useProjectCostCodes,
+  useProjectBudgetAmounts,
   useBulkSyncCostCodes,
   type CostCode,
   type CostCodeType,
@@ -439,6 +440,7 @@ export function CostCodesTab({ projectId }: CostCodesTabProps) {
   const { data: rawCostTypes, isLoading: loadingTypes } = useCostCodeTypes();
   const { data: projectCodes, isLoading: loadingProject } =
     useProjectCostCodes(projectId);
+  const { data: existingAmounts } = useProjectBudgetAmounts(projectId);
   const bulkSync = useBulkSyncCostCodes(projectId);
 
   // Filter out "Other" cost type
@@ -463,18 +465,28 @@ export function CostCodesTab({ projectId }: CostCodesTabProps) {
   const [activeTab, setActiveTab] = useState("selected");
   const [isSaving, setIsSaving] = useState(false);
 
-  // Initialize from server data
+  // Initialize selections and amounts from server data
   useEffect(() => {
-    if (projectCodes) {
-      const keys = new Set<SelectionKey>(
-        projectCodes
-          .filter((pc) => pc.cost_type_id)
-          .map((pc) => makeKey(pc.cost_code_id, pc.cost_type_id!)),
-      );
-      setSelectedSet(keys);
-      setSavedSet(new Set(keys));
+    if (!projectCodes) return;
+    const keys = new Set<SelectionKey>(
+      projectCodes
+        .filter((pc) => pc.cost_type_id)
+        .map((pc) => makeKey(pc.cost_code_id, pc.cost_type_id!)),
+    );
+    setSelectedSet(keys);
+    setSavedSet(new Set(keys));
+
+    if (existingAmounts) {
+      const amountMap = new Map<SelectionKey, number>();
+      for (const row of existingAmounts) {
+        if (row.cost_type_id && row.original_amount > 0) {
+          amountMap.set(makeKey(row.cost_code_id, row.cost_type_id), row.original_amount);
+        }
+      }
+      setAmounts(amountMap);
+      setSavedAmounts(new Map(amountMap));
     }
-  }, [projectCodes]);
+  }, [projectCodes, existingAmounts]);
 
   const toggleCode = useCallback((costCodeId: string, costTypeId: string) => {
     setSelectedSet((prev) => {

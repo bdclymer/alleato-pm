@@ -110,6 +110,36 @@ export function useProjectCostCodes(projectId: string) {
   });
 }
 
+export interface BudgetLineAmount {
+  cost_code_id: string;
+  cost_type_id: string;
+  original_amount: number;
+}
+
+/**
+ * Fetch existing budget line amounts for a project (cost_code_id + cost_type_id → original_amount).
+ * Used to pre-populate the amount field on the cost-codes tab.
+ */
+export function useProjectBudgetAmounts(projectId: string) {
+  return useQuery({
+    queryKey: ["project-budget-amounts", projectId] as const,
+    queryFn: async () => {
+      const { createClient } = await import("@/lib/supabase/client");
+      const supabase = createClient();
+
+      const { data, error } = await supabase
+        .from("budget_lines")
+        .select("cost_code_id, cost_type_id, original_amount")
+        .eq("project_id", Number.parseInt(projectId, 10))
+        .not("cost_type_id", "is", null);
+
+      if (error) throw error;
+      return (data || []) as BudgetLineAmount[];
+    },
+    enabled: !!projectId,
+  });
+}
+
 /**
  * Bulk sync cost codes for a specific cost type
  */
