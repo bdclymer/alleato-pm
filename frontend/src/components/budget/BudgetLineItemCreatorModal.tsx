@@ -701,7 +701,8 @@ export function BudgetLineItemCreatorModal({
 
                             <td className="py-2 pr-3 align-middle">
                               <NumberInput
-                                step="0.001"
+                                step="1"
+                                decimals={0}
                                 value={row.qty}
                                 onChange={(e) => handleRowChange(index, "qty", e.target.value)}
                                 placeholder="1"
