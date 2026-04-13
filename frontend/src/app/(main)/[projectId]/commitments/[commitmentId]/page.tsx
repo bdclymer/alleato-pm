@@ -18,7 +18,7 @@ import { toast } from "sonner";
 import { AdvancedSettingsTab } from "@/components/commitments/tabs/AdvancedSettingsTab";
 import { AttachmentsTab } from "@/components/commitments/tabs/AttachmentsTab";
 import { ChangeHistoryTab } from "@/components/commitments/tabs/ChangeHistoryTab";
-import { ChangeOrdersTab } from "@/components/commitments/tabs/ChangeOrdersTab";
+import { ChangeManagementTab } from "@/components/commitments/tabs/ChangeManagementTab";
 import { EmailsTab } from "@/components/commitments/tabs/EmailsTab";
 import { InvoicesTab } from "@/components/commitments/tabs/InvoicesTab";
 import { PaymentsIssuedTab } from "@/components/commitments/tabs/PaymentsIssuedTab";
@@ -1025,7 +1025,7 @@ export default function CommitmentDetailPage() {
         )}
 
         {activeTab === "change-orders" && (
-          <ChangeOrdersTab
+          <ChangeManagementTab
             commitmentId={commitment.id}
             projectId={projectId}
           />
