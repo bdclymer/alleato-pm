@@ -781,7 +781,7 @@ export default function ProjectContractDetailPage() {
 
   return (
     <PageShell
-      variant="detailWide"
+      variant="dashboard"
       title={`#${contract.contract_number || contract.id.slice(0, 8)} — ${contract.title}`}
       description={contract.contractor ? `Contractor: ${contract.contractor.name}` : contract.vendor ? `Contractor: ${contract.vendor.name}` : "No contractor assigned"}
       onBack={() => router.back()}

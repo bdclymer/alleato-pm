@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import type { ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { ChevronDown, Loader2, Plus } from "lucide-react";
 import { toast } from "sonner";
 
@@ -135,6 +135,8 @@ export function PrimeContractCommitmentsTab({
   contractId,
 }: PrimeContractCommitmentsTabProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = React.useState(false);
@@ -144,6 +146,9 @@ export function PrimeContractCommitmentsTab({
 
   const tableState = useUnifiedTableState({
     entityKey: `commitments-tab-${contractId}`,
+    searchParams,
+    pathname,
+    router,
     defaults: {
       view: "table",
       allowedViews: ["table", "card", "list"],

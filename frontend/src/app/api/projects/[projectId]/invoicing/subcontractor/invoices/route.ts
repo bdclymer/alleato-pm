@@ -334,7 +334,7 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         subcontract_id: subcontract_id ?? null,
         purchase_order_id: purchase_order_id ?? null,
         billing_period_id: billing_period_id ?? null,
-        invoice_number: invoice_number ?? null,
+        invoice_number: invoice_number || null,
         period_start: period_start ?? null,
         period_end: period_end ?? null,
         billing_date: billing_date === "" ? null : (billing_date ?? null),
@@ -349,6 +349,24 @@ export const POST = withApiGuardrails<{ projectId: string }>(
         { error: "Failed to create subcontractor invoice", details: insertError.message },
         { status: 500 },
       );
+    }
+
+    // Auto-generate invoice number if none was supplied
+    if (!invoice_number) {
+      const contractForeignKey = subcontract_id ? "subcontract_id" : "purchase_order_id";
+      const contractIdValue = subcontract_id ?? purchase_order_id;
+      const { count: priorCount } = await supabase
+        .from("subcontractor_invoices")
+        .select("id", { count: "exact", head: true })
+        .eq(contractForeignKey, contractIdValue)
+        .lt("id", invoice.id);
+      const appNum = (priorCount ?? 0) + 1;
+      const generated = `APP-${String(appNum).padStart(2, "0")}`;
+      await supabase
+        .from("subcontractor_invoices")
+        .update({ invoice_number: generated })
+        .eq("id", invoice.id);
+      invoice.invoice_number = generated;
     }
 
     // Insert line items if provided

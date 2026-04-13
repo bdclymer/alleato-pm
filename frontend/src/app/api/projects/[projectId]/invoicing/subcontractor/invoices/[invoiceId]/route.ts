@@ -333,9 +333,20 @@ export const GET = withApiGuardrails<{ projectId: string; invoiceId: string }>(
       applicationNumber = (priorCount ?? 0) + 1;
     }
 
+    // Back-fill invoice_number for legacy records that were created without one
+    let resolvedInvoiceNumber = invoiceData.invoice_number as string | null;
+    if (!resolvedInvoiceNumber) {
+      resolvedInvoiceNumber = `APP-${String(applicationNumber).padStart(2, "0")}`;
+      await supabase
+        .from("subcontractor_invoices")
+        .update({ invoice_number: resolvedInvoiceNumber })
+        .eq("id", invoiceIdNum);
+    }
+
     return NextResponse.json({
       data: {
         ...invoiceData,
+        invoice_number: resolvedInvoiceNumber,
         subcontractor_invoice_line_items: enrichedLineItems,
         contract_number: sc?.contract_number ?? po?.contract_number ?? null,
         contract_title: sc?.title ?? po?.title ?? null,
