@@ -584,7 +584,7 @@ export default function PrimeContractCODetailPage() {
   const handleSave: SubmitHandler<FormData> = async (data) => {
     setIsSaving(true);
     try {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      // Status changes must go through approve/reject endpoints, not PUT
       const { status: _status, ...updateData } = data;
       const res = await fetch(apiBase, {
         method: "PUT",
@@ -880,6 +880,7 @@ export default function PrimeContractCODetailPage() {
                       <Select
                         onValueChange={field.onChange}
                         value={field.value}
+                        disabled
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -894,6 +895,9 @@ export default function PrimeContractCODetailPage() {
                           ))}
                         </SelectContent>
                       </Select>
+                      <p className="text-xs text-muted-foreground">
+                        Use Approve / Reject actions to change status.
+                      </p>
                       <FormMessage />
                     </FormItem>
                   )}

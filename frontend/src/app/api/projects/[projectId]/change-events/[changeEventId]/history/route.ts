@@ -142,9 +142,9 @@ function formatFieldValue(fieldName: string, value: string | null): string | nul
   // Format specific field types
   switch (fieldName) {
     case 'type':
-      return value.toUpperCase().replace(' ', '_');
+      return value.toUpperCase().replace(/\s+/g, '_');
     case 'scope':
-      return value.toUpperCase().replace(' ', '_');
+      return value.toUpperCase().replace(/\s+/g, '_');
     case 'status':
       return value.toUpperCase();
     case 'expecting_revenue':
@@ -160,7 +160,14 @@ function formatFieldValue(fieldName: string, value: string | null): string | nul
 /**
  * Generate a human-readable description of the change
  */
-function generateChangeDescription(entry: any): string {
+interface HistoryEntry {
+  change_type: string;
+  field_name: string;
+  old_value: string | null;
+  new_value: string | null;
+}
+
+function generateChangeDescription(entry: HistoryEntry): string {
   const { change_type, field_name, old_value, new_value } = entry;
 
   switch (change_type) {

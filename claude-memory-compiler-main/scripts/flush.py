@@ -183,8 +183,8 @@ def maybe_trigger_compilation() -> None:
         kwargs["start_new_session"] = True
 
     try:
-        log_handle = open(str(SCRIPTS_DIR / "compile.log"), "a")
-        _sp.Popen(cmd, stdout=log_handle, stderr=_sp.STDOUT, cwd=str(ROOT), **kwargs)
+        with open(str(SCRIPTS_DIR / "compile.log"), "a") as log_handle:
+            _sp.Popen(cmd, stdout=log_handle, stderr=_sp.STDOUT, cwd=str(ROOT), **kwargs)
     except Exception as e:
         logging.error("Failed to spawn compile.py: %s", e)
 
@@ -226,12 +226,13 @@ def main():
     response = asyncio.run(run_flush(context))
 
     # Append to daily log
-    if "FLUSH_OK" in response:
+    stripped = response.strip()
+    if stripped == "FLUSH_OK":
         logging.info("Result: FLUSH_OK")
         append_to_daily_log(
             "FLUSH_OK - Nothing worth saving from this session", "Memory Flush"
         )
-    elif "FLUSH_ERROR" in response:
+    elif stripped.startswith("FLUSH_ERROR"):
         logging.error("Result: %s", response)
         append_to_daily_log(response, "Memory Flush")
     else:

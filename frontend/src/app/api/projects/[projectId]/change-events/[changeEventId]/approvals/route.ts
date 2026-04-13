@@ -90,12 +90,16 @@ export async function POST(request: NextRequest, { params }: RouteParams) {
       );
     }
 
+    if (Number.isNaN(projectIdNum)) {
+      return NextResponse.json({ error: "Invalid project ID" }, { status: 400 });
+    }
+
     // Verify the change event exists and belongs to the project
     const { data: changeEvent, error: ceError } = await supabase
       .from("change_events")
       .select("id, project_id")
       .eq("id", changeEventId)
-      .eq("project_id", parseInt(projectId, 10))
+      .eq("project_id", projectIdNum)
       .single();
 
     if (ceError || !changeEvent) {
@@ -187,6 +191,14 @@ export async function PATCH(request: NextRequest, { params }: RouteParams) {
       return NextResponse.json(
         { error: "Only the assigned approver can update this approval" },
         { status: 403 },
+      );
+    }
+
+    // Prevent changing a decision that has already been made
+    if (existingApproval.approval_status !== "pending") {
+      return NextResponse.json(
+        { error: "Approval has already been decided and cannot be changed" },
+        { status: 409 },
       );
     }
 

@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
 import { z } from "zod";
 
 import { PageShell } from "@/components/layout";
@@ -120,7 +121,7 @@ export default function NewCommitmentCOPage() {
   const handleSubmit: SubmitHandler<FormData> = async (data) => {
     setIsSubmitting(true);
     try {
-      const res = await fetch(
+      const created = await apiFetch(
         `/api/projects/${projectId}/commitment-change-orders`,
         {
           method: "POST",
@@ -148,14 +149,8 @@ export default function NewCommitmentCOPage() {
         },
       );
 
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error((err as { error?: string }).error || "Failed to create");
-      }
-
-      const created = await res.json();
       toast.success("Change order created");
-      router.push(`/${projectId}/change-orders/commitment/${created.id}`);
+      router.push(`/${projectId}/change-orders/commitment/${(created as { id: string }).id}`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to create");
     } finally {

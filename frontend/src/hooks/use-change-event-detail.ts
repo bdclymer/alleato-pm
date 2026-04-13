@@ -91,6 +91,7 @@ export function useChangeEventDetail(
 
   const fetchChangeEventDetails = useCallback(async () => {
     try {
+      setIsLoading(true);
       setError(null);
 
       const res = await fetch(baseUrl(projectId, changeEventId));
