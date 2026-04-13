@@ -36,13 +36,13 @@ export default function DashboardLayout({
       <SidebarInset className="overflow-hidden">
         <CreateProjectDevConfigProvider>
           <SiteHeader />
-          <main
+          <div
             className="flex flex-1 flex-col overflow-auto min-w-0"
             {...feedbackTargetProps("app.main-content")}
           >
-            {children}
+            <div className="flex-1">{children}</div>
             <SiteFooter />
-          </main>
+          </div>
         </CreateProjectDevConfigProvider>
         <Overlays showChat={showChat} />
       </SidebarInset>

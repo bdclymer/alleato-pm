@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import type { ReactElement, ReactNode } from "react";
 
 import {
+  CalendarIcon,
   Columns3,
   Download,
   LayoutGrid,
@@ -43,6 +44,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 
 import { TableCountIndicator } from "./table-primitives";
@@ -237,7 +239,8 @@ function FilterFields({
   onFilterChange: (filters: Record<string, FilterValue>) => void;
 }): ReactElement {
   const selectFilters = filters.filter((filter) => filter.type === "select" && filter.options);
-  const inputFilters = filters.filter((filter) => filter.type === "date" || filter.type === "number" || filter.type === "text");
+  const dateFilters = filters.filter((filter) => filter.type === "date");
+  const inputFilters = filters.filter((filter) => filter.type === "number" || filter.type === "text");
 
   return (
     <div className="space-y-2">
@@ -278,7 +281,69 @@ function FilterFields({
         );
       })}
 
-      {selectFilters.length > 0 && inputFilters.length > 0 && <div className="h-px bg-border/70" />}
+      {selectFilters.length > 0 && (dateFilters.length > 0 || inputFilters.length > 0) && <div className="h-px bg-border/70" />}
+
+      {dateFilters.map((filter) => {
+        const currentValue =
+          typeof activeFilters[filter.id] === "string"
+            ? (activeFilters[filter.id] as string)
+            : "";
+        const selectedDate = currentValue ? new Date(currentValue + "T00:00:00") : undefined;
+
+        return (
+          <div
+            key={filter.id}
+            className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 hover:bg-muted/50"
+          >
+            <span className="text-sm text-foreground">{filter.label}</span>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "h-8 w-45 justify-start text-left text-sm font-normal",
+                    !currentValue && "text-muted-foreground",
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                  {selectedDate
+                    ? selectedDate.toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                      })
+                    : "Pick a date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={(date) => {
+                    if (date) {
+                      const yyyy = date.getFullYear();
+                      const mm = String(date.getMonth() + 1).padStart(2, "0");
+                      const dd = String(date.getDate()).padStart(2, "0");
+                      onFilterChange({
+                        ...activeFilters,
+                        [filter.id]: `${yyyy}-${mm}-${dd}`,
+                      });
+                    } else {
+                      onFilterChange({
+                        ...activeFilters,
+                        [filter.id]: undefined,
+                      });
+                    }
+                  }}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+        );
+      })}
+
+      {(selectFilters.length > 0 || dateFilters.length > 0) && inputFilters.length > 0 && <div className="h-px bg-border/70" />}
 
       {inputFilters.map((filter) => (
         <div
@@ -290,7 +355,7 @@ function FilterFields({
           </label>
           <Input
             id={`filter-${filter.id}`}
-            type={filter.type === "date" ? "date" : filter.type === "number" ? "number" : "text"}
+            type={filter.type === "number" ? "number" : "text"}
             className="h-8 w-45 text-sm"
             min={filter.type === "number" ? "0" : undefined}
             step={filter.type === "number" ? "0.01" : undefined}

@@ -21,10 +21,10 @@ export default function TablesLayout({
       <AppSidebar />
       <SidebarInset className="h-svh overflow-hidden">
         <SiteHeader />
-        <main className="flex flex-1 flex-col overflow-auto min-w-0 min-h-0">
-          {children}
+        <div className="flex flex-1 flex-col overflow-auto min-w-0 min-h-0">
+          <div className="flex-1">{children}</div>
           <SiteFooter />
-        </main>
+        </div>
         <AIChatWidgetLazy />
       </SidebarInset>
     </SidebarProvider>
