@@ -1,5 +1,3 @@
-Using workdir /Users/meganharrison/Documents/alleato-pm
-Initialising login role...
 export type Json =
   | string
   | number

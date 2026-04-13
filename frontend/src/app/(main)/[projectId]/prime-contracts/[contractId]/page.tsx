@@ -893,16 +893,16 @@ export default function ProjectContractDetailPage() {
 
         {activeTab === "change-orders" && (
           <div className="space-y-10">
-            <PrimeContractPcosSection
-              projectId={projectId}
-              contractId={contractId}
-              formatCurrency={formatCurrency}
-            />
             <PrimeContractChangeOrdersTab
               projectId={projectId} contractId={contractId} changeOrders={changeOrders} changeOrdersLoading={changeOrdersLoading}
               setChangeOrders={setChangeOrders} formatCurrency={formatCurrency}
               onShowNewCoDialog={() => setShowNewCoDialog(true)} onStartEditCo={handleStartEditCo}
               onSetDeletingCo={setDeletingCo} onSetRejectingCoId={setRejectingCoId} onShowRejectCoDialog={() => setShowRejectCoDialog(true)}
+            />
+            <PrimeContractPcosSection
+              projectId={projectId}
+              contractId={contractId}
+              formatCurrency={formatCurrency}
             />
           </div>
         )}
