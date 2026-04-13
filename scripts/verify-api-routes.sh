@@ -83,7 +83,12 @@ section "3. Async Params (Next.js 15)"
 ASYNC_ISSUES=0
 while read -r file; do
   if grep -q "params" "$file" 2>/dev/null; then
-    # Check for destructuring params without await in route handler functions
+    # withApiGuardrails routes receive params as an already-resolved object (not a Promise)
+    # — no await needed. Skip those files entirely.
+    if grep -q 'withApiGuardrails' "$file" 2>/dev/null; then
+      continue
+    fi
+    # Check for destructuring params without await in native Next.js route handler functions
     # Exclude: lines with "await params", helper functions with typed params (e.g., params: { path: string[] })
     RAW_DESTRUCTURE=$(grep -n 'const {.*} = params;' "$file" 2>/dev/null | grep -v 'await params' || true)
     if [ -n "$RAW_DESTRUCTURE" ]; then
