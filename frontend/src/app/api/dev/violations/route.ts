@@ -19,7 +19,7 @@ export const POST = withApiGuardrails(
   const { data: { user }, error: authError } = await supabase.auth.getUser();
   if (authError || !user) throw new GuardrailError({ code: "AUTH_EXPIRED", where: "dev/violations#POST", message: "Authentication required." });
 
-  const body = await req.json();
+  const body = await request.json();
   const { route, elementDescription, elementSelector, violationType, notes, screenshotDataUrl, priority } = body;
 
   if (!route || !violationType) {
@@ -67,7 +67,7 @@ export const POST = withApiGuardrails(
 export const GET = withApiGuardrails(
   "dev/violations#GET",
   async ({ request }) => {
-  const { searchParams } = new URL(req.url);
+  const { searchParams } = new URL(request.url);
   const status = searchParams.get("status") ?? "open";
   const service = createServiceClient();
 
@@ -90,7 +90,7 @@ export const GET = withApiGuardrails(
 export const PATCH = withApiGuardrails(
   "dev/violations#PATCH",
   async ({ request }) => {
-  const body = await req.json();
+  const body = await request.json();
   const { id, status, fixedInFile } = body;
   if (!id || !status) return NextResponse.json({ error: "id and status required" }, { status: 400 });
 

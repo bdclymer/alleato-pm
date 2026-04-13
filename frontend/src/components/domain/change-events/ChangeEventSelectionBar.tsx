@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { ChevronDown } from "lucide-react";
 
 import { AddToCommitmentCODialog } from "@/components/domain/change-events/AddToCommitmentCODialog";
-import { AddToPrimePCODialog } from "@/components/domain/change-events/AddToPrimePCODialog";
+
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -36,7 +36,6 @@ export function ChangeEventSelectionBar({
   onSuccess,
 }: ChangeEventSelectionBarProps) {
   const router = useRouter();
-  const [showAddToPcoDialog, setShowAddToPcoDialog] = useState(false);
   const [showAddToCommitmentCODialog, setShowAddToCommitmentCODialog] = useState(false);
 
   if (selectedCount > 0) {
@@ -86,7 +85,14 @@ export function ChangeEventSelectionBar({
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
 
-              <DropdownMenuItem onSelect={() => setShowAddToPcoDialog(true)}>
+              <DropdownMenuItem
+                onSelect={() => {
+                  const ids = selectedChangeEventIds.join(",");
+                  router.push(
+                    `/${projectId}/prime-contract-pcos/new?changeEventIds=${encodeURIComponent(ids)}`,
+                  );
+                }}
+              >
                 Add to Prime Contract PCO
               </DropdownMenuItem>
             </DropdownMenuContent>
@@ -96,16 +102,6 @@ export function ChangeEventSelectionBar({
             Send RFQ
           </Button>
         </div>
-
-        <AddToPrimePCODialog
-          open={showAddToPcoDialog}
-          onClose={() => setShowAddToPcoDialog(false)}
-          selectedChangeEventIds={selectedChangeEventIds}
-          projectId={projectId}
-          onSuccess={() => {
-            onSuccess?.();
-          }}
-        />
 
         <AddToCommitmentCODialog
           open={showAddToCommitmentCODialog}
