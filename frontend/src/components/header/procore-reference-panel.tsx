@@ -188,7 +188,7 @@ export function ProcoreReferencePanel() {
   // ── DB connection status ─────────────────────────────────────────────────
   React.useEffect(() => {
     const supabase = createClient();
-    supabase.from("projects").select("id").limit(1)
+    void Promise.resolve(supabase.from("projects").select("id").limit(1))
       .then(({ error }) => setDbOnline(!error))
       .catch(() => setDbOnline(false));
   }, []);

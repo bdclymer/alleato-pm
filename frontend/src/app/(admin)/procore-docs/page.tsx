@@ -34,6 +34,7 @@ import {
 } from "lucide-react";
 
 import { PageShell } from "@/components/layout";
+import { IconBadge } from "@/components/ds";
 
 const MessageResponse = dynamic(
   () => import("@/components/ai-elements/message").then((m) => m.MessageResponse),
@@ -298,7 +299,20 @@ export default function ProcoreDocsPage() {
     <PageShell
       variant="content"
       title="Procore Documentation"
-      description="Guides and reference for using Procore to manage projects, track costs, and collaborate with your construction teams."
+      titleContent={
+        <div>
+          <div className="mb-3 inline-flex items-center gap-2 rounded-full bg-primary/10 px-3 py-1">
+            <Sparkles className="h-3 w-3 text-primary" />
+            <span className="text-xs font-medium text-primary">AI-powered documentation</span>
+          </div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+            Procore Documentation
+          </h1>
+          <p className="mt-1.5 max-w-lg text-sm text-muted-foreground leading-relaxed">
+            Guides and reference for using Procore to manage projects, track costs, and collaborate with your construction teams.
+          </p>
+        </div>
+      }
       actions={
         <Button onClick={() => setChatOpen(true)} className="h-9 gap-2">
           <Sparkles />
@@ -416,9 +430,7 @@ export default function ProcoreDocsPage() {
                   className="group relative h-auto rounded-lg border border-border/50 bg-background p-5 text-left transition-all hover:border-border hover:bg-muted flex flex-col items-start whitespace-normal"
                 >
                   <div className="mb-3 flex items-center gap-3">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                      {card.icon}
-                    </div>
+                    <IconBadge size="md">{card.icon}</IconBadge>
                     <h3 className="text-sm font-semibold text-foreground">
                       {card.title}
                     </h3>
@@ -451,9 +463,7 @@ export default function ProcoreDocsPage() {
                         onClick={() => selectCategory(cat)}
                         className="group flex h-auto items-start gap-3 text-left justify-start"
                       >
-                        <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted text-foreground transition-colors group-hover:bg-primary/10 group-hover:text-primary">
-                          {getCategoryIcon(cat)}
-                        </div>
+                        <IconBadge size="sm" className="mt-0.5">{getCategoryIcon(cat)}</IconBadge>
                         <div>
                           <h3 className="text-sm font-medium text-foreground transition-colors group-hover:text-primary">
                             {cat}
@@ -474,9 +484,7 @@ export default function ProcoreDocsPage() {
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 {selectedCategory && !isSearching && (
-                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10 text-primary">
-                    {getCategoryIcon(selectedCategory)}
-                  </div>
+                  <IconBadge size="sm">{getCategoryIcon(selectedCategory)}</IconBadge>
                 )}
                 <div>
                   <h2 className="text-lg font-semibold text-foreground tracking-tight">
@@ -580,9 +588,7 @@ export default function ProcoreDocsPage() {
         >
           <SheetHeader className="border-b px-5 py-4">
             <div className="flex items-center gap-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary/10">
-                <Sparkles className="h-4 w-4 text-primary" />
-              </div>
+              <IconBadge size="sm"><Sparkles className="h-4 w-4" /></IconBadge>
               <div>
                 <SheetTitle className="text-sm font-semibold">
                   Documentation Assistant
@@ -599,9 +605,7 @@ export default function ProcoreDocsPage() {
             <div className="space-y-4 pb-4">
               {messages.length === 0 && (
                 <div className="py-12 text-center">
-                  <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                    <Sparkles className="h-5 w-5 text-primary" />
-                  </div>
+                  <IconBadge size="xl" className="mx-auto mb-4 rounded-full"><Sparkles className="h-5 w-5" /></IconBadge>
                   <p className="text-sm font-medium text-foreground mb-1">
                     How can I help?
                   </p>

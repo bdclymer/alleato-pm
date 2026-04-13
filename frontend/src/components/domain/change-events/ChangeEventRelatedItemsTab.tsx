@@ -145,16 +145,7 @@ export function ChangeEventRelatedItemsTab({
       <SectionHeader
         title="Related Items"
         count={relatedItems.length}
-        action={
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setShowDialog(true)}
-          >
-            <Link2 className="mr-1.5 h-4 w-4" />
-            Link Related Item
-          </Button>
-        }
+        action={{ label: "Link Related Item", onClick: () => setShowDialog(true) }}
       />
 
       {isLoading ? (
@@ -194,7 +185,7 @@ export function ChangeEventRelatedItemsTab({
         </div>
       ) : (
         <EmptyState
-          icon={Link2}
+          icon={<Link2 className="h-8 w-8 text-muted-foreground" />}
           title="No related items"
           description="Link related items such as RFIs, submittals, or other change events."
         />

@@ -16,6 +16,7 @@ import { useState } from "react";
 import { createAuthClient } from "@/lib/supabase/client-auth";
 import { validateCallbackUrl } from "@/lib/validation/callback-url";
 import { toast } from "sonner";
+import { PasswordInput } from "@/components/misc/password-input";
 
 type LoginFormProps = React.ComponentPropsWithoutRef<"div"> & {
   redirectTo?: string;
@@ -125,10 +126,9 @@ export function LoginForm({
                     Forgot your password?
                   </Link>
                 </div>
-                <Input
+                <PasswordInput
                   id="password"
                   name="password"
-                  type="password"
                   autoComplete="current-password"
                   required
                   value={password}

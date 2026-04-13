@@ -16,6 +16,7 @@ interface Props<TFieldValues extends FieldValues> {
   label: string
   placeholder?: string
   description?: string
+  min?: number
   disabled?: boolean
   allowNegative?: boolean
   showCurrency?: boolean
@@ -34,6 +35,7 @@ export function RHFMoneyField<TFieldValues extends FieldValues>({
   label,
   placeholder,
   description,
+  min,
   disabled,
   allowNegative,
   showCurrency,
@@ -50,6 +52,7 @@ export function RHFMoneyField<TFieldValues extends FieldValues>({
               value={typeof field.value === "number" ? field.value : undefined}
               onChange={(val) => field.onChange(val as never)}
               placeholder={placeholder}
+              min={min}
               disabled={disabled}
               allowNegative={allowNegative}
               showCurrency={showCurrency}

@@ -70,7 +70,7 @@ function usePrimeCOs(projectId: string) {
         `/api/projects/${projectId}/prime-contract-change-orders`,
       );
       if (!res.ok) throw new Error("Failed to fetch Prime COs");
-      return res.json();
+      return (await res.json()) as PrimeContractCO[];
     },
     enabled: !!projectId,
   });
@@ -78,15 +78,15 @@ function usePrimeCOs(projectId: string) {
 
 interface CommitmentCO {
   id: number;
-  project_id: number | null;
-  contract_id: number | null;
-  co_number: string | null;
+  project_id?: number | null;
+  contract_id?: string | null;
+  change_order_number?: string | null;
   title: string | null;
   description: string | null;
   amount: number | null;
   status: string | null;
-  due_date: string | null;
-  change_event_id: string | null;
+  requested_date?: string | null;
+  approved_at?: string | null;
   created_at: string | null;
   updated_at: string | null;
 }
@@ -104,7 +104,7 @@ function useCommitmentCOs(projectId: string) {
         .eq("project_id", Number(projectId))
         .order("created_at", { ascending: false });
       if (error) throw new Error(error.message);
-      return data ?? [];
+      return (data ?? []) as unknown as CommitmentCO[];
     },
     enabled: !!projectId,
   });
@@ -136,7 +136,7 @@ function ceToPipelineItem(ce: ChangeEvent): PipelineItem {
     number: ce.number ?? `CE-${ce.id}`,
     title: ce.title ?? "Untitled",
     status: ce.status ?? "Open",
-    value: ce.cost_rom ?? ce.rom ?? ce.total ?? 0,
+    value: Number(ce.cost_rom ?? ce.rom ?? ce.total ?? 0),
     updatedAt: ce.updated_at ?? ce.created_at ?? "",
   };
 }
@@ -157,7 +157,7 @@ function commitmentCOToPipelineItem(co: CommitmentCO): PipelineItem {
   return {
     id: `cco-${co.id}`,
     stage: "commitment_co",
-    number: co.co_number ?? `CCO-${co.id}`,
+    number: co.change_order_number ?? `CCO-${co.id}`,
     title: co.title ?? "Untitled",
     status: co.status ?? "draft",
     value: co.amount ?? 0,

@@ -145,8 +145,35 @@ export const POST = withApiGuardrails(
 
     // Parse request body
     const body = await request.json();
+    const projectIdNum = Number.parseInt(projectId, 10);
 
-    // Validate required fields
+    // ── Assign existing company by company_id ──────────────────────
+    if (body.company_id && typeof body.company_id === "string") {
+      const { data: existing } = await supabase
+        .from("project_companies")
+        .select("id")
+        .eq("project_id", projectIdNum)
+        .eq("company_id", body.company_id)
+        .maybeSingle();
+
+      if (existing) {
+        return NextResponse.json(
+          { error: "already_assigned", message: "Company is already assigned to this project.", code: "CONFLICT" },
+          { status: 409 },
+        );
+      }
+
+      const { data: pc, error: pcError } = await supabase
+        .from("project_companies")
+        .insert({ project_id: projectIdNum, company_id: body.company_id, status: "ACTIVE", company_type: "VENDOR" })
+        .select("*, company:companies(*)")
+        .single();
+
+      if (pcError) throw pcError;
+      return NextResponse.json(pc, { status: 201 });
+    }
+
+    // ── Validate required fields for new company creation ──────────
     const validationErrors: Record<string, string[]> = {};
 
     if (

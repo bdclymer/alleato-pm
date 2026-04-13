@@ -1,8 +1,10 @@
 "use client";
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { apiFetch } from "@/lib/api-client";
+import type { PunchItemListResponse } from "@/services/PunchItemService";
 import type { Database } from "@/types/database.types";
 
 type PunchItemRow = Database["public"]["Tables"]["punch_items"]["Row"];
@@ -25,7 +27,7 @@ export function usePunchItems(
   projectId: number,
   options: UsePunchItemsOptions = {},
 ) {
-  return useQuery({
+  return useQuery<PunchItemListResponse>({
     queryKey: ["punch-items", projectId, options],
     queryFn: async () => {
       const params = new URLSearchParams();
@@ -38,14 +40,9 @@ export function usePunchItems(
       if (options.page) params.set("page", String(options.page));
       if (options.page_size) params.set("page_size", String(options.page_size));
 
-      const res = await fetch(
+      return apiFetch<PunchItemListResponse>(
         `/api/projects/${projectId}/punch-items?${params.toString()}`,
       );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to fetch punch items");
-      }
-      return res.json();
     },
     enabled: !!projectId,
   });
@@ -54,16 +51,10 @@ export function usePunchItems(
 export function usePunchItem(projectId: number, punchItemId: string) {
   return useQuery<PunchItemRow>({
     queryKey: ["punch-item", projectId, punchItemId],
-    queryFn: async () => {
-      const res = await fetch(
+    queryFn: () =>
+      apiFetch<PunchItemRow>(
         `/api/projects/${projectId}/punch-items/${punchItemId}`,
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to fetch punch item");
-      }
-      return res.json();
-    },
+      ),
     enabled: !!projectId && !!punchItemId,
   });
 }
@@ -77,22 +68,13 @@ export function useCreatePunchItem(projectId: number) {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: async (
-      data: Partial<PunchItemRow> & { title: string },
-    ) => {
-      const res = await fetch(`/api/projects/${projectId}/punch-items`, {
+    mutationFn: (data: Partial<PunchItemRow> & { title: string }) =>
+      apiFetch<PunchItemRow>(`/api/projects/${projectId}/punch-items`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to create punch item");
-      }
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["punch-items", projectId] });
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["punch-items", projectId] });
       router.refresh();
       toast.success("Punch item created successfully");
     },
@@ -107,29 +89,22 @@ export function useUpdatePunchItem(projectId: number) {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       punchItemId,
       data,
     }: {
       punchItemId: string;
       data: Partial<PunchItemRow>;
-    }) => {
-      const res = await fetch(
+    }) =>
+      apiFetch<PunchItemRow>(
         `/api/projects/${projectId}/punch-items/${punchItemId}`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data),
         },
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to update punch item");
-      }
-      return res.json();
-    },
-    onSuccess: (_data, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["punch-items", projectId] });
+      ),
+    onSuccess: async (_data, variables) => {
+      await queryClient.invalidateQueries({ queryKey: ["punch-items", projectId] });
       queryClient.invalidateQueries({
         queryKey: ["punch-item", projectId, variables.punchItemId],
       });
@@ -147,21 +122,12 @@ export function useDeletePunchItem(projectId: number) {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: async (punchItemId: string) => {
-      const res = await fetch(
-        `/api/projects/${projectId}/punch-items/${punchItemId}`,
-        {
-          method: "DELETE",
-        },
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to delete punch item");
-      }
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["punch-items", projectId] });
+    mutationFn: (punchItemId: string) =>
+      apiFetch(`/api/projects/${projectId}/punch-items/${punchItemId}`, {
+        method: "DELETE",
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["punch-items", projectId] });
       router.refresh();
       toast.success("Punch item moved to recycle bin");
     },
@@ -176,23 +142,16 @@ export function useRestorePunchItem(projectId: number) {
   const router = useRouter();
 
   return useMutation({
-    mutationFn: async (punchItemId: string) => {
-      const res = await fetch(
+    mutationFn: (punchItemId: string) =>
+      apiFetch<PunchItemRow>(
         `/api/projects/${projectId}/punch-items/${punchItemId}`,
         {
           method: "PATCH",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ is_deleted: false }),
         },
-      );
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error || "Failed to restore punch item");
-      }
-      return res.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["punch-items", projectId] });
+      ),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["punch-items", projectId] });
       router.refresh();
       toast.success("Punch item restored");
     },

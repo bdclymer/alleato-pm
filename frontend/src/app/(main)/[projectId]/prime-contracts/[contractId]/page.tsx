@@ -903,7 +903,6 @@ export default function ProjectContractDetailPage() {
           <PrimeContractCommitmentsTab
             projectId={projectId}
             contractId={contractId}
-            formatCurrency={formatCurrency}
           />
         )}
 

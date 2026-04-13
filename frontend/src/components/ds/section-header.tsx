@@ -26,7 +26,7 @@ export function SectionHeader({
           {title}
         </h2>
         {count !== undefined && (
-          <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+          <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
             {count}
           </span>
         )}

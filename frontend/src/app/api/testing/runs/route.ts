@@ -12,7 +12,7 @@ export const GET = withApiGuardrails(
   "testing/runs#GET",
   async ({ request }) => {
   const supabase = await createClient();
-  const { searchParams } = new URL(req.url);
+  const { searchParams } = new URL(request.url);
   const toolName = searchParams.get("suite");
 
   if (!toolName) {
@@ -57,7 +57,7 @@ export const GET = withApiGuardrails(
     if (fallbackRuns.error) {
       return NextResponse.json({ error: fallbackRuns.error.message }, { status: 500 });
     }
-    runs = fallbackRuns.data;
+    runs = fallbackRuns.data as unknown as typeof withDepthRuns.data;
     depthAvailable = false;
   }
 
@@ -87,7 +87,7 @@ export const POST = withApiGuardrails(
   "testing/runs#POST",
   async ({ request }) => {
   const supabase = await createClient();
-  const body = await req.json();
+  const body = await request.json();
   const { suite, tester, environment, branch, notes, scenarioDepth, testType } = body as {
     suite: string;
     tester?: string;
@@ -135,7 +135,7 @@ export const POST = withApiGuardrails(
     if (fallbackCases.error) {
       return NextResponse.json({ error: fallbackCases.error.message }, { status: 500 });
     }
-    cases = fallbackCases.data;
+    cases = fallbackCases.data as unknown as typeof withDepthCases.data;
     caseDepthAvailable = false;
   }
 

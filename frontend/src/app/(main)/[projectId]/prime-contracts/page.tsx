@@ -27,6 +27,7 @@ import {
 import { useProjectTitle } from "@/hooks/useProjectTitle";
 import {
   buildPrimeContractTableColumns,
+  formatCurrency,
   primeContractColumns,
   primeContractDefaultVisibleColumns,
   primeContractFilters,
@@ -251,6 +252,21 @@ export default function ProjectContractsPage(): ReactElement {
 
     return sorted;
   }, [filteredContracts, tableColumns, tableState.sortBy, tableState.sortDirection]);
+
+  const contractTotals = React.useMemo(() => {
+    const sum = (key: keyof PrimeContract) =>
+      filteredContracts.reduce((acc, c) => acc + (Number(c[key]) || 0), 0);
+    return {
+      original_contract_value: sum("original_contract_value"),
+      approved_change_orders: sum("approved_change_orders"),
+      revised_contract_value: sum("revised_contract_value"),
+      pending_change_orders: sum("pending_change_orders"),
+      draft_change_orders: sum("draft_change_orders"),
+      invoiced_amount: sum("invoiced_amount"),
+      payments_received: sum("payments_received"),
+      remaining_balance: sum("remaining_balance"),
+    };
+  }, [filteredContracts]);
 
   const totalItems = filteredContracts.length;
   const totalPages = Math.max(1, Math.ceil(totalItems / tableState.perPage));
@@ -607,6 +623,19 @@ export default function ProjectContractsPage(): ReactElement {
               Create your first contract
             </Button>
           ),
+        }}
+        footerTotals={{
+          label: "Totals",
+          values: {
+            original_contract_value: <span className="tabular-nums">{formatCurrency(contractTotals.original_contract_value)}</span>,
+            approved_change_orders: <span className="tabular-nums">{formatCurrency(contractTotals.approved_change_orders)}</span>,
+            revised_contract_value: <span className="tabular-nums">{formatCurrency(contractTotals.revised_contract_value)}</span>,
+            pending_change_orders: <span className="tabular-nums">{formatCurrency(contractTotals.pending_change_orders)}</span>,
+            draft_change_orders: <span className="tabular-nums">{formatCurrency(contractTotals.draft_change_orders)}</span>,
+            invoiced_amount: <span className="tabular-nums">{formatCurrency(contractTotals.invoiced_amount)}</span>,
+            payments_received: <span className="tabular-nums">{formatCurrency(contractTotals.payments_received)}</span>,
+            remaining_balance: <span className="tabular-nums">{formatCurrency(contractTotals.remaining_balance)}</span>,
+          },
         }}
         pagination={{
           page: tableState.page,

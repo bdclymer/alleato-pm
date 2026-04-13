@@ -19,12 +19,12 @@ export default function TablesLayout({
   return (
     <SidebarProvider defaultOpen={false}>
       <AppSidebar />
-      <SidebarInset className="overflow-x-clip">
+      <SidebarInset className="h-svh overflow-hidden">
         <SiteHeader />
-        <main className="flex flex-1 flex-col min-w-0">
+        <main className="flex flex-1 flex-col overflow-auto min-w-0 min-h-0">
           {children}
+          <SiteFooter />
         </main>
-        <SiteFooter />
         <AIChatWidgetLazy />
       </SidebarInset>
     </SidebarProvider>

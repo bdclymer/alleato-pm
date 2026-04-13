@@ -19,7 +19,7 @@ import { PageHeader } from "./page-header-unified";
 //   <PageShell variant="content"   title="About">...</PageShell>
 //
 // Variants:
-//   dashboard — full-width, standard padding. Use for home/overview pages with KPI cards + charts.
+//   dashboard — max-w-[1800px] centered, standard padding. Use for home/overview pages with KPI cards + charts.
 //   table     — full-width, tight padding. Use for data table pages (UnifiedTablePage goes inside).
 //   form      — max-w-5xl centered, space-y-8. Use for create/edit forms. Includes optional back button.
 //   detail    — max-w-6xl centered. Use for record detail pages (tabs, line items).
@@ -45,7 +45,7 @@ export interface PageShellProps {
   titleContent?: React.ReactNode;
   actions?: React.ReactNode;
   statusBadge?: React.ReactNode;
-  tabs?: { label: string; href: string; isActive: boolean }[];
+  tabs?: { label: string; href: string; count?: number; isActive?: boolean }[];
   showExportButton?: boolean;
   onExportCSV?: () => void;
   onExportPDF?: () => void;
@@ -64,7 +64,7 @@ const variantConfig: Record<
   PageShellVariant,
   { containerMaxWidth: "full" | "sm" | "md" | "lg" | "xl" | "2xl"; contentMaxWidth?: string; spacing: string }
 > = {
-  dashboard: { containerMaxWidth: "full", spacing: "space-y-14" },
+  dashboard: { containerMaxWidth: "full", contentMaxWidth: "max-w-[1800px]", spacing: "space-y-14" },
   table:     { containerMaxWidth: "full", spacing: "space-y-4" },
   form:      { containerMaxWidth: "full", contentMaxWidth: "max-w-7xl",  spacing: "space-y-8" },
   detail:    { containerMaxWidth: "full", contentMaxWidth: "max-w-6xl",  spacing: "space-y-6" },
@@ -122,28 +122,28 @@ export function PageShell({
     return (
       <PageContainer maxWidth={config.containerMaxWidth} className={cn(className)}>
         {header}
-        <div className={cn("pb-12", contentClassName)}>{children}</div>
+        <div className={cn("pt-6 pb-12", contentClassName)}>{children}</div>
       </PageContainer>
     );
   }
 
-  // Form/detail/content: constrained inner width
+  // Form/detail/content/dashboard: constrained inner width
   if (config.contentMaxWidth) {
     return (
       <PageContainer maxWidth={config.containerMaxWidth} className={cn(className)}>
         <div className={cn("mx-auto w-full", config.contentMaxWidth)}>
           {header}
-          <div className={cn(config.spacing, "pb-12", contentClassName)}>{children}</div>
+          <div className={cn(config.spacing, "pt-6 pb-12", contentClassName)}>{children}</div>
         </div>
       </PageContainer>
     );
   }
 
-  // Dashboard (and fallback): full width
+  // Fallback: full width
   return (
     <PageContainer maxWidth={config.containerMaxWidth} className={cn(className)}>
       {header}
-      <div className={cn(config.spacing, "pt-4 pb-12", contentClassName)}>{children}</div>
+      <div className={cn(config.spacing, "pt-6 pb-12", contentClassName)}>{children}</div>
     </PageContainer>
   );
 }

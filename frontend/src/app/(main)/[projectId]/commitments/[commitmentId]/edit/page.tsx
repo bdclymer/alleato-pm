@@ -16,7 +16,10 @@ import type { CreateSubcontractInput, SovLineItem } from "@/lib/schemas/create-s
 import type { CreatePurchaseOrderInput, PurchaseOrderSovLineItem } from "@/lib/schemas/create-purchase-order-schema";
 
 type SubcontractInitialData = Partial<CreateSubcontractInput> & { sovLines?: SovLineItem[] };
-type PurchaseOrderInitialData = Partial<CreatePurchaseOrderInput> & { sovLines?: PurchaseOrderSovLineItem[] };
+type PurchaseOrderInitialData = Partial<CreatePurchaseOrderInput> & {
+  contractCompanyName?: string;
+  sovLines?: PurchaseOrderSovLineItem[];
+};
 type CommitmentAttachment = {
   fileName?: string;
   file_name?: string;
@@ -80,14 +83,16 @@ export default function EditCommitmentPage() {
     const statusKey = rawStatus.toLowerCase().replace(/_/g, " ");
     const statusMap: Record<string, string> = {
       draft: "Draft",
-      "out for signature": "Out for Signature",
+      "out for signature": "Sent",
+      "out for bid": "Draft",
       pending: "Pending",
       approved: "Approved",
-      complete: "Complete",
+      complete: "Closed",
+      terminated: "Void",
       void: "Void",
       sent: "Sent",
-      acknowledged: "Acknowledged",
-      completed: "Completed",
+      acknowledged: "Sent",
+      completed: "Closed",
     };
     const normalizedStatus = statusMap[statusKey] ?? rawStatus;
 
@@ -113,7 +118,7 @@ export default function EditCommitmentPage() {
         title: typeof r.title === "string" ? r.title : "",
         contractCompanyId: typeof r.contract_company_id === "string" ? r.contract_company_id : undefined,
         contractCompanyName: companyObj?.name,
-        status: normalizedStatus as "Draft" | "Approved" | "Sent" | "Acknowledged" | "Completed",
+        status: normalizedStatus as "Draft" | "Approved" | "Sent" | "Closed" | "Executed" | "Void",
         executed: typeof r.executed === "boolean" ? r.executed : false,
         defaultRetainagePercent: typeof r.default_retainage_percent === "number" ? r.default_retainage_percent : undefined,
         description: typeof r.description === "string" ? r.description : undefined,
@@ -140,7 +145,7 @@ export default function EditCommitmentPage() {
       contractNumber: typeof r.contract_number === "string" ? r.contract_number : "",
       title: typeof r.title === "string" ? r.title : "",
       contractCompanyId: typeof r.contract_company_id === "string" ? r.contract_company_id : "",
-      status: normalizedStatus as "Draft" | "Out for Bid" | "Out for Signature" | "Approved" | "Complete" | "Terminated" | "Void",
+      status: normalizedStatus as "Draft" | "Out for Bid" | "Out for Signature" | "Approved" | "Closed" | "Executed" | "Void",
       executed: typeof r.executed === "boolean" ? r.executed : false,
       accountingMethod,
       defaultRetainagePercent: typeof r.default_retainage_percent === "number" ? r.default_retainage_percent : undefined,
@@ -267,8 +272,11 @@ export default function EditCommitmentPage() {
         contract_company_id: data.contractCompanyId || null,
         status: data.status,
         description: data.description || null,
+        assigned_to: data.assignedTo || null,
         is_private: data.privacy?.isPrivate ?? true,
+        non_admin_user_ids: data.privacy?.nonAdminUserIds || [],
         allow_non_admin_view_sov_items: data.privacy?.allowNonAdminViewSovItems ?? false,
+        invoice_contact_ids: data.invoiceContactIds || [],
         contract_date: data.dates?.contractDate || null,
         delivery_date: data.dates?.deliveryDate || null,
       }),

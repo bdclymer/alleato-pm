@@ -8,21 +8,21 @@ import { GapsTab } from "@/components/dev-panel/GapsTab";
 import { OverviewTab } from "@/components/dev-panel/OverviewTab";
 import { ScreenshotsPageTab } from "@/components/dev-panel/ScreenshotsPageTab";
 import { SpecTab } from "@/components/dev-panel/SpecTab";
-import { TestScenariosTab } from "@/components/dev-panel/TestScenariosTab";
+import { TestCasesTab } from "@/components/dev-panel/TestCasesTab";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface Props {
   slug: string;
   description: string | null;
-  scenariosMarkdown: string | null;
 }
 
-// Height used only for constrained tabs (spec, gaps, feedback, chat, scenarios)
-const CONSTRAINED_HEIGHT = "h-[calc(100vh-320px)] min-h-[480px]";
+// Tabs that have internal sidebar+scroll layouts need an explicit height
+// so they look right. All others flow naturally with the page.
+const SCROLLABLE_TAB_HEIGHT = "min-h-[600px] h-[70vh]";
 
-const VALID_TABS = ["overview", "screenshots", "spec", "gaps", "scenarios", "feedback", "chat"];
+const VALID_TABS = ["overview", "screenshots", "spec", "gaps", "scenarios", "test-matrix", "feedback", "chat"];
 
-export function ToolDetailTabs({ slug, description, scenariosMarkdown }: Props) {
+export function ToolDetailTabs({ slug, description }: Props) {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get("tab");
   const defaultTab = VALID_TABS.includes(tabParam ?? "") ? (tabParam as string) : "scenarios";
@@ -37,14 +37,8 @@ export function ToolDetailTabs({ slug, description, scenariosMarkdown }: Props) 
 
       <Tabs defaultValue={defaultTab}>
         <TabsList className="mb-6">
-          <TabsTrigger value="scenarios">
-            Test Scenarios
-            {scenariosMarkdown && (
-              <span className="ml-1.5 rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-primary leading-none">
-                ✓
-              </span>
-            )}
-          </TabsTrigger>
+          <TabsTrigger value="scenarios">Test Scenarios</TabsTrigger>
+          <TabsTrigger value="test-matrix">Test Matrix</TabsTrigger>
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="screenshots">Screenshots</TabsTrigger>
           <TabsTrigger value="spec">Spec</TabsTrigger>
@@ -53,7 +47,15 @@ export function ToolDetailTabs({ slug, description, scenariosMarkdown }: Props) 
           <TabsTrigger value="chat">Ask AI</TabsTrigger>
         </TabsList>
 
-        {/* Overview + Screenshots — full-page scroll, no height cap */}
+        {/* Natural-height tabs — scroll with the page */}
+        <TabsContent value="scenarios" className="m-0">
+          <TestCasesTab slug={slug} type="scenario" depth="broad" />
+        </TabsContent>
+
+        <TabsContent value="test-matrix" className="m-0">
+          <TestCasesTab slug={slug} type="feature" />
+        </TabsContent>
+
         <TabsContent value="overview" className="m-0">
           <OverviewTab feature={slug} />
         </TabsContent>
@@ -62,28 +64,22 @@ export function ToolDetailTabs({ slug, description, scenariosMarkdown }: Props) 
           <ScreenshotsPageTab feature={slug} />
         </TabsContent>
 
-        {/* All other tabs keep their fixed viewport height */}
-        <div className={`overflow-hidden ${CONSTRAINED_HEIGHT}`}>
-          <TabsContent value="spec" className="h-full m-0">
-            <SpecTab feature={slug} />
-          </TabsContent>
+        {/* Sidebar-split tabs — need explicit height for their internal layout */}
+        <TabsContent value="spec" className={`m-0 overflow-hidden rounded-lg border border-border ${SCROLLABLE_TAB_HEIGHT}`}>
+          <SpecTab feature={slug} />
+        </TabsContent>
 
-          <TabsContent value="gaps" className="h-full m-0">
-            <GapsTab feature={slug} />
-          </TabsContent>
+        <TabsContent value="gaps" className={`m-0 overflow-hidden rounded-lg border border-border ${SCROLLABLE_TAB_HEIGHT}`}>
+          <GapsTab feature={slug} />
+        </TabsContent>
 
-          <TabsContent value="scenarios" className="h-full m-0">
-            <TestScenariosTab markdown={scenariosMarkdown} slug={slug} />
-          </TabsContent>
+        <TabsContent value="feedback" className={`m-0 overflow-hidden rounded-lg border border-border ${SCROLLABLE_TAB_HEIGHT}`}>
+          <FeedbackTab feature={slug} />
+        </TabsContent>
 
-          <TabsContent value="feedback" className="h-full m-0">
-            <FeedbackTab feature={slug} />
-          </TabsContent>
-
-          <TabsContent value="chat" className="h-full m-0">
-            <ChatTab feature={slug} />
-          </TabsContent>
-        </div>
+        <TabsContent value="chat" className={`m-0 overflow-hidden rounded-lg border border-border ${SCROLLABLE_TAB_HEIGHT}`}>
+          <ChatTab feature={slug} />
+        </TabsContent>
       </Tabs>
     </div>
   );

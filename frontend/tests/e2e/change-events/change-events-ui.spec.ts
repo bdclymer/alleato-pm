@@ -6,7 +6,7 @@ const basePath = `/${projectId}/change-events`;
 test.describe('Change Events UI', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(basePath, { waitUntil: 'domcontentloaded' });
-    await page.waitForLoadState('networkidle');
+    // Use element wait instead of networkidle — Liveblocks keeps WS connections open indefinitely
     await page.waitForSelector('h1:has-text("Change Events")', {
       timeout: 15_000,
     });
@@ -27,7 +27,7 @@ test.describe('Change Events UI', () => {
       await expect(toolbar).toBeVisible({ timeout: 5000 });
     }
 
-    const createButton = page.getByRole('button', { name: /New Change Event/i });
+    const createButton = page.locator('[data-testid="change-events-new-button"]');
     await expect(createButton).toBeVisible();
   });
 

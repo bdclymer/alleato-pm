@@ -31,6 +31,7 @@ interface PendingBudgetChangesModalProps {
   onClose: () => void;
   budgetLineId: string;
   projectId: string;
+  costCode?: string;
 }
 
 export function PendingBudgetChangesModal({

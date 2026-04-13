@@ -50,6 +50,7 @@ interface BudgetModificationsModalProps {
   onClose: () => void;
   budgetLineId: string;
   projectId: string;
+  costCode?: string;
   onModificationChanged?: () => void;
 }
 

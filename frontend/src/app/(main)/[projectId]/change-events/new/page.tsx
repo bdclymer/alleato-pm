@@ -5,9 +5,10 @@ import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Sparkles } from "lucide-react";
 
-import { PageShell } from "@/components/layout";
+import { apiFetch } from "@/lib/api-client";
 import { ChangeEventForm } from "@/components/domain/change-events/ChangeEventForm";
 import type { ChangeEventFormData } from "@/components/domain/change-events/ChangeEventForm";
+import { PageShell } from "@/components/layout";
 import { Button } from "@/components/ui/button";
 
 export default function NewChangeEventPage() {
@@ -57,11 +58,9 @@ export default function NewChangeEventPage() {
         .filter(Boolean)
         .join("\n\n");
 
-      const response = await fetch(`/api/projects/${projectId}/change-events`, {
+      const newEvent = await apiFetch<{ id: string }>(`/api/projects/${projectId}/change-events`, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           title: data.title,
           type: TYPE_MAP[data.type || ""] || "Owner Change",
@@ -76,24 +75,6 @@ export default function NewChangeEventPage() {
           description: mergedDescription || undefined,
         }),
       });
-
-      if (!response.ok) {
-        const text = await response.text();
-        let errorMessage = `Failed to create change event (${response.status})`;
-        try {
-          const errorData = JSON.parse(text);
-          if (errorData.details && Array.isArray(errorData.details)) {
-            errorMessage = errorData.details.map((d: { field?: string; message?: string }) => `${d.field}: ${d.message}`).join(', ');
-          } else if (errorData.error) {
-            errorMessage = errorData.error;
-          }
-        } catch {
-          errorMessage = text.slice(0, 200) || errorMessage;
-        }
-        throw new Error(errorMessage);
-      }
-
-      const newEvent = await response.json();
 
       await Promise.all(
         data.lineItems

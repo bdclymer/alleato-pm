@@ -61,4 +61,20 @@ test.describe('Auth pages', () => {
     await page.waitForURL('**/', { timeout: 15000 })
     await captureScreenshot(page, 'login-success')
   })
+
+  test('login password can be shown and hidden', async ({ page }) => {
+    await page.goto('/auth/login')
+
+    const passwordInput = page.locator('input[name="password"]')
+    const showButton = page.getByRole('button', { name: /show password/i })
+
+    await expect(passwordInput).toHaveAttribute('type', 'password')
+
+    await showButton.click()
+    await expect(passwordInput).toHaveAttribute('type', 'text')
+    await expect(page.getByRole('button', { name: /hide password/i })).toBeVisible()
+
+    await page.getByRole('button', { name: /hide password/i }).click()
+    await expect(passwordInput).toHaveAttribute('type', 'password')
+  })
 })

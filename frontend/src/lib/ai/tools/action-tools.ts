@@ -202,7 +202,7 @@ export function createActionTools(
           .from("prime_contract_change_orders")
           .insert({
             project_id: projectId,
-            contract_id: contractId ?? null,
+            contract_id: contractId != null ? String(contractId) : null,
             title,
             total_amount: totalAmount ?? 0,
             status,

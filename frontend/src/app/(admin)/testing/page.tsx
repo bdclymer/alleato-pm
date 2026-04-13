@@ -520,7 +520,7 @@ export default function TestingPage() {
                         </div>
                         <div className="flex items-center gap-2 flex-wrap">
                           <Link
-                            href={`/procore-tools/${suite.tool_name}?tab=test-scenarios`}
+                            href={`/procore-tools/${suite.tool_name}?tab=scenarios`}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-border bg-background text-muted-foreground"
                           >
                             <BookOpen className="h-3.5 w-3.5" />
@@ -565,13 +565,16 @@ export default function TestingPage() {
                             <td className="px-5 py-3 font-medium">{suite.display_name}</td>
                             <td className="px-5 py-3 text-muted-foreground">{suite.scenario_count}</td>
                             <td className="px-5 py-3 text-muted-foreground">
-                              {suite.broad_scenario_count} broad · {suite.detailed_scenario_count} detailed
+                              {suite.broad_scenario_count > 0 ? `${suite.broad_scenario_count} broad` : ""}
+                              {suite.broad_scenario_count > 0 && suite.detailed_scenario_count > 0 ? " · " : ""}
+                              {suite.detailed_scenario_count > 0 ? `${suite.detailed_scenario_count} detailed` : ""}
+                              {suite.broad_scenario_count === 0 && suite.detailed_scenario_count === 0 ? "—" : ""}
                             </td>
                             <td className="px-5 py-3 text-muted-foreground">{suite.feature_count || "—"}</td>
                             <td className="px-5 py-3">
                               <div className="flex items-center gap-2 justify-end">
                                 <Link
-                                  href={`/procore-tools/${suite.tool_name}?tab=test-scenarios`}
+                                  href={`/procore-tools/${suite.tool_name}?tab=scenarios`}
                                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-border bg-background hover:bg-muted transition-colors text-muted-foreground hover:text-foreground"
                                 >
                                   <BookOpen className="h-3.5 w-3.5" />

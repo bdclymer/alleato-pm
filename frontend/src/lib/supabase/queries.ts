@@ -60,7 +60,7 @@ export async function getProjectWithDetails(
       *,
       subcontracts (count),
       purchase_orders (count),
-      contracts (count)
+      prime_contracts (count)
     `,
     )
     .eq("id", projectId)

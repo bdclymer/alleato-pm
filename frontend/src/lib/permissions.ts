@@ -390,7 +390,7 @@ export async function getPermissionAuditLog(
     return [];
   }
 
-  return (data ?? []) as Array<{
+  return (data ?? []) as unknown as Array<{
     id: string;
     action: string;
     module: string | null;

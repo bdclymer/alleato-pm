@@ -11,7 +11,7 @@ export const GET = withApiGuardrails<{ runId: string }>(
   "testing/runs/[runId]/results#GET",
   async ({ request, params }) => {
   const { runId } = await params;
-  const { searchParams } = new URL(req.url);
+  const { searchParams } = new URL(request.url);
   const typeFilter = searchParams.get("type"); // "scenario" | "feature" | null (all)
   const supabase = await createClient();
 
@@ -47,15 +47,15 @@ export const GET = withApiGuardrails<{ runId: string }>(
     if (fallback.error) {
       return NextResponse.json({ error: fallback.error.message }, { status: 500 });
     }
-    data = fallback.data;
+    data = fallback.data as unknown as typeof withDepth.data;
   }
 
-  type ResultRow = (typeof data)[number];
+  type ResultRow = NonNullable<typeof data>[number];
   type TC = { test_number: string; test_type: string } | null;
 
   // Filter by test_type in JS (PostgREST .eq on embedded resources filters embedded rows, not parents)
   const filtered = typeFilter
-    ? (data ?? []).filter((r) => (r.test_cases as TC)?.test_type === typeFilter)
+    ? (data ?? []).filter((r) => (r.test_cases as unknown as TC)?.test_type === typeFilter)
     : (data ?? []);
 
   // Sort by test_number (e.g. "1.1.2" < "1.1.10")

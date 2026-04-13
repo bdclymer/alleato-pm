@@ -3,9 +3,26 @@
 import * as React from "react";
 import type { ReactElement } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { Download, Edit, MoreHorizontal, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+
+import {
+  PunchItemFormDialog,
+  type PunchItemFormValues,
+} from "@/components/domain/punch-items/punch-item-form-dialog";
+import {
+  PunchItemPriorityBadge,
+  PunchItemStatusBadge,
+} from "@/components/domain/punch-items/punch-item-status-badge";
+import {
+  UnifiedTablePage,
+  useUnifiedTableState,
+  type ColumnConfig,
+  type FilterConfig,
+  type FilterValue,
+  type TableColumn,
+} from "@/components/tables/unified";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,28 +30,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  UnifiedTablePage,
-  useUnifiedTableState,
-  type FilterValue,
-  type FilterConfig,
-  type ColumnConfig,
-  type TableColumn,
-} from "@/components/tables/unified";
-import {
-  usePunchItems,
   useCreatePunchItem,
-  useUpdatePunchItem,
   useDeletePunchItem,
+  usePunchItems,
   useRestorePunchItem,
+  useUpdatePunchItem,
 } from "@/hooks/use-punch-items";
-import {
-  PunchItemFormDialog,
-  type PunchItemFormValues,
-} from "@/components/domain/punch-items/punch-item-form-dialog";
-import {
-  PunchItemStatusBadge,
-  PunchItemPriorityBadge,
-} from "@/components/domain/punch-items/punch-item-status-badge";
+import { createClient } from "@/lib/supabase/client";
 import type { Database } from "@/types/database.types";
 
 type PunchItemRow = Database["public"]["Tables"]["punch_items"]["Row"];
@@ -56,8 +58,8 @@ const punchColumns: ColumnConfig[] = [
 ];
 
 const punchDefaultVisibleColumns = punchColumns
-  .filter((column) => column.defaultVisible !== false)
-  .map((column) => column.id);
+  .filter((col) => col.defaultVisible !== false)
+  .map((col) => col.id);
 
 const punchFilters: FilterConfig[] = [
   {
@@ -90,17 +92,57 @@ const EMPTY_FILTERS: PunchFilterState = {
 
 function formatDate(value: string | null): string {
   if (!value) return "-";
-  const parsed = new Date(value);
+  // Parse as local time to avoid UTC offset shifting the displayed day
+  const [year, month, day] = value.split("T")[0].split("-").map(Number);
+  const parsed = new Date(year, month - 1, day);
   if (Number.isNaN(parsed.getTime())) return "-";
   return parsed.toLocaleDateString();
 }
 
-function buildPunchColumns(): TableColumn<PunchItemRow>[] {
+function exportToCsv(items: PunchItemRow[], filename: string) {
+  const headers = ["#", "Title", "Status", "Priority", "Assignee", "Location", "Trade", "Due Date", "Description", "Reference"];
+  const escapeCsv = (v: string | number | null | undefined) => {
+    const s = String(v ?? "");
+    return s.includes(",") || s.includes('"') || s.includes("\n")
+      ? `"${s.replace(/"/g, '""')}"`
+      : s;
+  };
+  const rows = items.map((item) => [
+    item.number,
+    item.title,
+    item.status,
+    item.priority ?? "",
+    item.assignee_company ?? "",
+    item.location ?? "",
+    item.trade ?? "",
+    formatDate(item.due_date),
+    item.description ?? "",
+    item.reference ?? "",
+  ].map(escapeCsv).join(","));
+
+  const csv = [headers.join(","), ...rows].join("\n");
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function buildPunchColumns(projectId: number, router: ReturnType<typeof useRouter>): TableColumn<PunchItemRow>[] {
   return [
     {
       ...punchColumns[0],
       render: (item) => (
-        <span className="font-medium text-primary">#{item.number}</span>
+        <Button
+          variant="link"
+          size="sm"
+          className="h-auto p-0 font-medium"
+          onClick={() => router.push(`/${projectId}/punch-list/${item.id}`)}
+        >
+          #{item.number}
+        </Button>
       ),
       sortValue: (item) => item.number,
     },
@@ -148,6 +190,16 @@ export function PunchListClient({ projectId }: PunchListClientProps) {
   const searchParams = useSearchParams();
   const activeTab = searchParams.get("tab") || "items";
   const isRecycleBin = activeTab === "recycle-bin";
+  const isMyItems = activeTab === "my-items";
+
+  // Current user ID for My Items tab
+  const [currentUserId, setCurrentUserId] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user) setCurrentUserId(data.user.id);
+    });
+  }, []);
 
   const initialFilters: PunchFilterState = {
     status: searchParams.get("status") ?? undefined,
@@ -182,6 +234,7 @@ export function PunchListClient({ projectId }: PunchListClientProps) {
 
   const { data: listData, isLoading } = usePunchItems(projectId, {
     is_deleted: isRecycleBin,
+    assignee_id: isMyItems && currentUserId ? currentUserId : undefined,
     status:
       typeof (tableState.activeFilters as PunchFilterState).status === "string"
         ? String((tableState.activeFilters as PunchFilterState).status)
@@ -199,25 +252,32 @@ export function PunchListClient({ projectId }: PunchListClientProps) {
     const search = tableState.debouncedSearch.trim().toLowerCase();
     if (!search) return items;
 
-    return items.filter((item) => {
-      return (
-        String(item.number ?? "").toLowerCase().includes(search) ||
-        (item.title ?? "").toLowerCase().includes(search) ||
-        (item.assignee_company ?? "").toLowerCase().includes(search) ||
-        (item.location ?? "").toLowerCase().includes(search) ||
-        (item.trade ?? "").toLowerCase().includes(search)
-      );
-    });
+    return items.filter((item) => (
+      String(item.number ?? "").toLowerCase().includes(search) ||
+      (item.title ?? "").toLowerCase().includes(search) ||
+      (item.assignee_company ?? "").toLowerCase().includes(search) ||
+      (item.location ?? "").toLowerCase().includes(search) ||
+      (item.trade ?? "").toLowerCase().includes(search)
+    ));
   }, [items, tableState.debouncedSearch]);
 
-  const tableColumns = React.useMemo(() => buildPunchColumns(), []);
+  const tableColumns = React.useMemo(
+    () => buildPunchColumns(projectId, router),
+    [projectId, router],
+  );
 
   const tabs = [
     {
-      label: "Items",
+      label: "All Items",
       href: `/${projectId}/punch-list`,
-      count: !isRecycleBin ? filteredItems.length : undefined,
-      isActive: !isRecycleBin,
+      count: !isRecycleBin && !isMyItems ? filteredItems.length : undefined,
+      isActive: !isRecycleBin && !isMyItems,
+    },
+    {
+      label: "My Items",
+      href: `/${projectId}/punch-list?tab=my-items`,
+      count: isMyItems ? filteredItems.length : undefined,
+      isActive: isMyItems,
     },
     {
       label: "Recycle Bin",
@@ -229,9 +289,7 @@ export function PunchListClient({ projectId }: PunchListClientProps) {
 
   const handleCreate = (data: PunchItemFormValues) => {
     createMutation.mutate(data, {
-      onSuccess: () => {
-        setFormOpen(false);
-      },
+      onSuccess: () => setFormOpen(false),
     });
   };
 
@@ -239,11 +297,7 @@ export function PunchListClient({ projectId }: PunchListClientProps) {
     if (!editingItem) return;
     updateMutation.mutate(
       { punchItemId: editingItem.id, data },
-      {
-        onSuccess: () => {
-          setEditingItem(null);
-        },
-      },
+      { onSuccess: () => setEditingItem(null) },
     );
   };
 
@@ -269,6 +323,12 @@ export function PunchListClient({ projectId }: PunchListClientProps) {
     tableState.setPage(1);
   };
 
+  const handleExportCsv = () => {
+    const label = isRecycleBin ? "recycle-bin" : isMyItems ? "my-items" : "all";
+    exportToCsv(filteredItems, `punch-list-${label}-${Date.now()}.csv`);
+    toast.success(`Exported ${filteredItems.length} items`);
+  };
+
   const isFiltered =
     Boolean(tableState.searchInput) ||
     Boolean(activeFilters.status) ||
@@ -291,9 +351,13 @@ export function PunchListClient({ projectId }: PunchListClientProps) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          <DropdownMenuItem onClick={() => router.push(`/${projectId}/punch-list/${item.id}`)}>
+            <Edit className="mr-2 h-4 w-4" />
+            View / Edit
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setEditingItem(item)}>
             <Edit className="mr-2 h-4 w-4" />
-            Edit
+            Quick Edit
           </DropdownMenuItem>
           <DropdownMenuItem className="text-destructive" onClick={() => handleDelete(item.id)}>
             <Trash2 className="mr-2 h-4 w-4" />
@@ -304,6 +368,24 @@ export function PunchListClient({ projectId }: PunchListClientProps) {
     );
   };
 
+  const searchPlaceholder = isRecycleBin
+    ? "Search deleted items..."
+    : isMyItems
+    ? "Search my items..."
+    : "Search punch items...";
+
+  const emptyTitle = isRecycleBin
+    ? "Recycle Bin is empty"
+    : isMyItems
+    ? "No items assigned to you"
+    : "No punch items found";
+
+  const emptyDescription = isRecycleBin
+    ? "Deleted punch items will appear here."
+    : isMyItems
+    ? "Items assigned to you will appear here."
+    : "Create your first punch item to get started.";
+
   return (
     <>
       <UnifiedTablePage
@@ -312,10 +394,12 @@ export function PunchListClient({ projectId }: PunchListClientProps) {
           description: "Track and manage punch list items",
           actions: (
             <div className="flex items-center gap-2">
-              <Button size="sm" onClick={() => setFormOpen(true)}>
-                <Plus />
-                Create Punch Item
-              </Button>
+              {!isRecycleBin && (
+                <Button size="sm" onClick={() => setFormOpen(true)}>
+                  <Plus />
+                  Create Punch Item
+                </Button>
+              )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm">
@@ -324,8 +408,8 @@ export function PunchListClient({ projectId }: PunchListClientProps) {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem>CSV</DropdownMenuItem>
-                  <DropdownMenuItem>PDF</DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportCsv}>CSV</DropdownMenuItem>
+                  <DropdownMenuItem disabled>PDF (coming soon)</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -338,7 +422,7 @@ export function PunchListClient({ projectId }: PunchListClientProps) {
           selectedCount: 0,
           searchValue: tableState.searchInput,
           onSearchChange: tableState.setSearchInput,
-          searchPlaceholder: isRecycleBin ? "Search deleted punch items..." : "Search punch items...",
+          searchPlaceholder,
           currentView: tableState.currentView,
           onViewChange: (view) => {
             tableState.setCurrentView(view);
@@ -399,13 +483,11 @@ export function PunchListClient({ projectId }: PunchListClientProps) {
           ),
         }}
         emptyState={{
-          title: isRecycleBin ? "Recycle Bin is empty" : "No punch items found",
-          description: isRecycleBin
-            ? "Deleted punch items will appear here."
-            : "Create your first punch item to get started.",
+          title: emptyTitle,
+          description: emptyDescription,
           filteredDescription: "Try adjusting your search or filters.",
           isFiltered,
-          action: isRecycleBin ? undefined : (
+          action: isRecycleBin || isMyItems ? undefined : (
             <Button size="sm" onClick={() => setFormOpen(true)}>
               <Plus />
               Create your first punch item
@@ -424,6 +506,7 @@ export function PunchListClient({ projectId }: PunchListClientProps) {
         onSubmit={handleCreate}
         isLoading={createMutation.isPending}
         mode="create"
+        projectId={projectId}
       />
       <PunchItemFormDialog
         open={!!editingItem}
@@ -434,6 +517,7 @@ export function PunchListClient({ projectId }: PunchListClientProps) {
         defaultValues={editingItem ?? undefined}
         isLoading={updateMutation.isPending}
         mode="edit"
+        projectId={projectId}
       />
     </>
   );

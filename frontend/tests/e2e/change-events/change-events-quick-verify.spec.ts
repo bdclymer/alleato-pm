@@ -23,8 +23,8 @@ test.describe('Change Events - Quick Verification', () => {
     const pageHeader = page.getByRole('heading', { name: /Change Events/i }).first();
     await expect(pageHeader).toBeVisible({ timeout: 5000 });
 
-    // Check that "Create" button is visible
-    const createButton = page.getByRole('button', { name: /New Change Event/i });
+    // Check that "Create" button is visible (data-testid is the stable selector)
+    const createButton = page.locator('[data-testid="change-events-new-button"]');
     await expect(createButton).toBeVisible();
 
     // Take screenshot for documentation (no fullPage to avoid font-loading hang)
@@ -47,10 +47,8 @@ test.describe('Change Events - Quick Verification', () => {
 
     expect(hasError, 'Should not show webpack error overlay').toBe(false);
 
-    // Check that form loaded (data-testid is most reliable)
-    const titleInput = page.locator('[data-testid="change-event-title-input"]').or(
-      page.locator('input[name="title"]')
-    ).first();
+    // Check that form loaded — Title is a text input with placeholder "Enter title"
+    const titleInput = page.locator('input[placeholder="Enter title"]').first();
 
     // 10s is sufficient; form renders synchronously after hydration
     const formLoaded = await titleInput.isVisible({ timeout: 10000 }).catch(() => false);

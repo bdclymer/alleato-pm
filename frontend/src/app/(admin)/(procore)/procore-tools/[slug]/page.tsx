@@ -1,6 +1,3 @@
-import fs from "node:fs/promises";
-import path from "node:path";
-
 import { AppWindow, ArrowLeft, Building2, GraduationCap } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -22,27 +19,15 @@ function statusVariant(status: string | null): "default" | "secondary" | "outlin
   return "outline";
 }
 
-async function readScenariosMarkdown(slug: string): Promise<string | null> {
-  const base = path.join(process.cwd(), "..", "docs", "testing");
-  // Prefer the detailed test matrix; fall back to the guided scenario file
-  for (const name of [`${slug}-test-matrix.md`, `${slug}-scenarios.md`]) {
-    try {
-      return await fs.readFile(path.join(base, name), "utf-8");
-    } catch {
-      // try next
-    }
-  }
-  return null;
-}
-
 export default async function ProcoreToolDetailPage({ params }: Props) {
   const { slug } = await params;
   const supabase = await createClient();
 
-  const [{ data: tool }, scenariosMarkdown] = await Promise.all([
-    supabase.from("procore_tools").select("*").eq("slug", `/${slug}`).maybeSingle(),
-    readScenariosMarkdown(slug),
-  ]);
+  const { data: tool } = await supabase
+    .from("procore_tools")
+    .select("*")
+    .eq("slug", `/${slug}`)
+    .maybeSingle();
 
   if (!tool) {
     notFound();
@@ -138,11 +123,7 @@ export default async function ProcoreToolDetailPage({ params }: Props) {
         </div>
       </div>
 
-      <ToolDetailTabs
-        slug={slug}
-        description={tool.description ?? null}
-        scenariosMarkdown={scenariosMarkdown}
-      />
+      <ToolDetailTabs slug={slug} description={tool.description ?? null} />
     </PageShell>
   );
 }

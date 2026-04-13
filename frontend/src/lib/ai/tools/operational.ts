@@ -210,6 +210,7 @@ export function createOperationalTools(
         async ({ projectId, projectName }) => {
           const resolved = await resolveProject(
             supabase,
+            guardrails,
             projectId,
             projectName,
           );
@@ -373,6 +374,7 @@ export function createOperationalTools(
         async ({ projectId, projectName, role }) => {
           const resolved = await resolveProject(
             supabase,
+            guardrails,
             projectId,
             projectName,
           );
@@ -468,6 +470,7 @@ export function createOperationalTools(
           if (projectId || projectName) {
             const resolved = await resolveProject(
               supabase,
+              guardrails,
               projectId,
               projectName,
             );
@@ -625,6 +628,7 @@ export function createOperationalTools(
         async ({ projectId, projectName, status }) => {
           const resolved = await resolveProject(
             supabase,
+            guardrails,
             projectId,
             projectName,
           );
@@ -768,6 +772,7 @@ export function createOperationalTools(
         async ({ projectId, projectName, status }) => {
           const resolved = await resolveProject(
             supabase,
+            guardrails,
             projectId,
             projectName,
           );
@@ -1084,6 +1089,7 @@ export function createOperationalTools(
         async ({ projectId, projectName, months }) => {
           const resolved = await resolveProject(
             supabase,
+            guardrails,
             projectId,
             projectName,
           );
@@ -1254,6 +1260,7 @@ export function createOperationalTools(
         async ({ projectId, projectName, sortBy }) => {
           const resolved = await resolveProject(
             supabase,
+            guardrails,
             projectId,
             projectName,
           );

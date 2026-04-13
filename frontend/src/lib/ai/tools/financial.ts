@@ -354,7 +354,7 @@ export function createFinancialTools(
             commitCoQuery = commitCoQuery.ilike("status", `%${status}%`);
           }
           if (contractId) {
-            primeCoQuery = primeCoQuery.eq("contract_id", contractId);
+            primeCoQuery = primeCoQuery.eq("contract_id", String(contractId));
             // contract_change_orders.contract_id is text
             commitCoQuery = commitCoQuery.eq("contract_id", String(contractId));
           }

@@ -131,59 +131,27 @@ export default function ProjectChangeEventsPage(): ReactElement {
     searchParams.get("status") ??
     (typeof activeFilters.status === "string" ? activeFilters.status : "");
 
-  // Fetch all change events (including deleted for recycle bin tab)
-  const includeDeleted = activeTab === "recycle_bin";
+  // Server-side pagination: pass page + perPage + tab to the API.
+  // The API handles tab filtering and returns paginated results + tab counts in meta.
   const {
-    changeEvents: allChangeEvents = [],
+    changeEvents: tabFilteredEvents,
     isLoading,
     error,
+    total: serverTotal,
+    tabSummary,
     refetch: refetchChangeEvents,
   } = useProjectChangeEvents(projectId, {
     status: statusParam || undefined,
-    limit: 500,
+    page: tableState.page,
+    perPage: tableState.perPage,
+    tab: activeTab as "line_items" | "no_line_items" | "rfqs" | "recycle_bin" | "all",
     enabled: hasValidProjectId,
-    includeDeleted,
   });
 
-  // Separate active and deleted events
-  const activeEvents = React.useMemo(
-    () => allChangeEvents.filter((e) => !e.deleted_at),
-    [allChangeEvents],
-  );
-  const deletedEvents = React.useMemo(
-    () => allChangeEvents.filter((e) => e.deleted_at),
-    [allChangeEvents],
-  );
-
-  // Tab-filtered events
-  const tabFilteredEvents = React.useMemo(() => {
-    switch (activeTab) {
-      case "line_items":
-        return activeEvents.filter((e) => (e.lineItemsCount ?? 0) > 0);
-      case "no_line_items":
-        return activeEvents.filter((e) => (e.lineItemsCount ?? 0) === 0);
-      case "rfqs":
-        return activeEvents.filter((e) => e.rfq_title);
-      case "recycle_bin":
-        return deletedEvents;
-      default:
-        return activeEvents;
-    }
-  }, [activeTab, activeEvents, deletedEvents]);
-
-  // Tab counts
-  const lineItemsCount = React.useMemo(
-    () => activeEvents.filter((e) => (e.lineItemsCount ?? 0) > 0).length,
-    [activeEvents],
-  );
-  const noLineItemsCount = React.useMemo(
-    () => activeEvents.filter((e) => (e.lineItemsCount ?? 0) === 0).length,
-    [activeEvents],
-  );
-  const rfqsCount = React.useMemo(
-    () => activeEvents.filter((e) => e.rfq_title).length,
-    [activeEvents],
-  );
+  // Tab counts come from the API's tabSummary meta field
+  const lineItemsCount = tabSummary?.lineItems ?? 0;
+  const noLineItemsCount = tabSummary?.noLineItems ?? 0;
+  const rfqsCount = tabSummary?.rfqs ?? 0;
 
   // Row expansion state
   const [expandedIds, setExpandedIds] = React.useState<Set<string>>(new Set());
@@ -492,7 +460,9 @@ export default function ProjectChangeEventsPage(): ReactElement {
     [expandedIds, handleToggleExpand],
   );
 
-  const totalItems = tabFilteredEvents.length;
+  // serverTotal is the authoritative count for the active tab from the server.
+  // filteredItems reflects any additional client-side filtering on the current page.
+  const totalItems = serverTotal;
   const filteredItems = filteredEvents.length;
 
   // Procore-style tabs: Line Items | No Line Items | RFQs | Recycle Bin
@@ -525,11 +495,12 @@ export default function ProjectChangeEventsPage(): ReactElement {
       {
         label: "Recycle Bin",
         href: `/${projectId}/change-events?tab=recycle_bin`,
+        count: tabSummary?.recycleBin,
         isActive: activeTab === "recycle_bin",
         testId: "change-events-tab-recycle-bin",
       },
     ],
-    [projectId, activeTab, lineItemsCount, noLineItemsCount, rfqsCount],
+    [projectId, activeTab, lineItemsCount, noLineItemsCount, rfqsCount, tabSummary],
   );
 
   // Grand Totals — sum monetary columns
@@ -759,6 +730,20 @@ export default function ProjectChangeEventsPage(): ReactElement {
         { label: "Cost", columnIds: ["cost_rom", "rfq_title", "commitment", "commitment_title"] },
         { label: "", columnIds: ["created_at"] },
       ]}
+      pagination={{
+        page: tableState.page,
+        totalPages: Math.max(1, Math.ceil(serverTotal / tableState.perPage)),
+        perPage: tableState.perPage,
+        onPageChange: (newPage) => {
+          tableState.setPage(newPage);
+          tableState.setSearchParams({ page: String(newPage) });
+        },
+        onPerPageChange: (newPerPage) => {
+          tableState.setPerPage(Number(newPerPage));
+          tableState.setPage(1);
+          tableState.setSearchParams({ perPage: newPerPage, page: "1" });
+        },
+      }}
       features={{
         enableExport: true,
         enableBulkDelete: activeTab !== "recycle_bin",

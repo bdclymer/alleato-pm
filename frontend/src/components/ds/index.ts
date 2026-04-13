@@ -32,6 +32,8 @@ export type { TableColumn, DataTableProps } from "./data-table";
 export { EmptyState } from "./empty-state";
 export { Eyebrow } from "./eyebrow";
 export { PageBadge } from "./page-badge";
+export { IconBadge } from "./icon-badge";
+export type { IconBadgeProps, IconBadgeSize } from "./icon-badge";
 
 // Inline table primitives (SOV, line items, financial detail tables)
 export {

@@ -77,7 +77,11 @@ export function DocumentUploadDialog({
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
-  const form = useForm<DocumentUploadFormValues>({
+  const form = useForm<
+    z.input<typeof documentUploadSchema>,
+    any,
+    DocumentUploadFormValues
+  >({
     resolver: zodResolver(documentUploadSchema),
     defaultValues: {
       title: "",

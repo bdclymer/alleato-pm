@@ -38,9 +38,6 @@ export function ChangeEventSelectionBar({
   const router = useRouter();
   const [showAddToPcoDialog, setShowAddToPcoDialog] = useState(false);
   const [showAddToCommitmentCODialog, setShowAddToCommitmentCODialog] = useState(false);
-  const [commitmentScope, setCommitmentScope] = useState<"all_contracts" | "matching_cost_codes">("all_contracts");
-  const [commitmentTypeFilter, setCommitmentTypeFilter] = useState<"any" | "subcontract" | "purchase_order">("any");
-  const [isBulkDraftMode, setIsBulkDraftMode] = useState(false);
 
   if (selectedCount > 0) {
     return (
@@ -77,34 +74,13 @@ export function ChangeEventSelectionBar({
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>Add to Commitment Change Order</DropdownMenuSubTrigger>
                 <DropdownMenuSubContent>
-                  <DropdownMenuItem
-                    onSelect={() => {
-                      setCommitmentScope("matching_cost_codes");
-                      setCommitmentTypeFilter("any");
-                      setIsBulkDraftMode(false);
-                      setShowAddToCommitmentCODialog(true);
-                    }}
-                  >
+                  <DropdownMenuItem onSelect={() => setShowAddToCommitmentCODialog(true)}>
                     New Commitment Potential Change Order (PCO) - Contracts matching cost codes
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => {
-                      setCommitmentScope("all_contracts");
-                      setCommitmentTypeFilter("any");
-                      setIsBulkDraftMode(false);
-                      setShowAddToCommitmentCODialog(true);
-                    }}
-                  >
+                  <DropdownMenuItem onSelect={() => setShowAddToCommitmentCODialog(true)}>
                     New Commitment Potential Change Order (PCO) - Contracts
                   </DropdownMenuItem>
-                  <DropdownMenuItem
-                    onSelect={() => {
-                      setCommitmentScope("matching_cost_codes");
-                      setCommitmentTypeFilter("any");
-                      setIsBulkDraftMode(true);
-                      setShowAddToCommitmentCODialog(true);
-                    }}
-                  >
+                  <DropdownMenuItem onSelect={() => setShowAddToCommitmentCODialog(true)}>
                     Create Bulk Draft Commitment Potential Change Orders
                   </DropdownMenuItem>
                 </DropdownMenuSubContent>
@@ -126,9 +102,6 @@ export function ChangeEventSelectionBar({
           onClose={() => setShowAddToPcoDialog(false)}
           selectedChangeEventIds={selectedChangeEventIds}
           projectId={projectId}
-          contractScope={commitmentScope}
-          commitmentTypeFilter={commitmentTypeFilter}
-          isBulkDraftMode={isBulkDraftMode}
           onSuccess={() => {
             onSuccess?.();
           }}

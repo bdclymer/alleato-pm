@@ -1,5 +1,7 @@
 import { PunchListClient } from "./punch-list-client";
 
+// PageShell is rendered inside PunchListClient via UnifiedTablePage
+// eslint-disable-next-line design-system/require-page-shell
 export default async function PunchListPage({
   params,
 }: {

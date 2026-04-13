@@ -20,6 +20,7 @@ interface ForecastToCompleteModalProps {
   onClose: () => void;
   budgetLineId: string;
   projectId: string;
+  costCode?: string;
   currentData?: {
     forecastMethod: "lump_sum" | "manual" | "monitored";
     forecastAmount?: number;

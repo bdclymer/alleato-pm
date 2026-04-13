@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 
 interface EmptyStateProps {
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   title: string;
   description: string;
   action?: {
@@ -30,9 +30,11 @@ export function EmptyState({
         className
       )}
     >
-      <div className="mb-3 text-muted-foreground/40 [&_svg]:size-8">
-        {icon}
-      </div>
+      {icon ? (
+        <div className="mb-3 text-muted-foreground/40 [&_svg]:size-8">
+          {icon}
+        </div>
+      ) : null}
       <p className="text-sm font-medium text-foreground">{title}</p>
       <p className="mt-0.5 max-w-xs text-[13px] text-muted-foreground">
         {description}

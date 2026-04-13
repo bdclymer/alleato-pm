@@ -34,7 +34,7 @@ export type Task = Database["public"]["Tables"]["tasks"]["Row"];
 export type TaskInsert = Database["public"]["Tables"]["tasks"]["Insert"];
 export type TaskUpdate = Database["public"]["Tables"]["tasks"]["Update"];
 
-export type Contract = Database["public"]["Tables"]["contracts"]["Row"];
+export type Contract = Database["public"]["Tables"]["prime_contracts"]["Row"];
 export type Subcontract = Database["public"]["Tables"]["subcontracts"]["Row"];
 export type PurchaseOrder =
   Database["public"]["Tables"]["purchase_orders"]["Row"];

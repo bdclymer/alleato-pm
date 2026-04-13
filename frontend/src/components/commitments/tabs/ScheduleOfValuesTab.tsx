@@ -18,6 +18,7 @@ import {
   InlineTableRow,
 } from "@/components/ds/inline-table";
 import { SectionRuleHeading } from "@/components/layout";
+import { SectionHeader } from "@/components/ds";
 import { formatCurrency } from "@/config/tables";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -347,7 +348,7 @@ export function ScheduleOfValuesTab({
                 <InlineTableCell className="text-muted-foreground text-xs">
                   {index + 1}
                 </InlineTableCell>
-                <InlineTableCell className="whitespace-nowrap min-w-[200px]">
+                <InlineTableCell className="whitespace-nowrap min-w-50">
                   <Select
                     value={item.budget_code || "none"}
                     onValueChange={(value) => updateItem(item.id, "budget_code", value === "none" ? "" : value)}
@@ -373,7 +374,7 @@ export function ScheduleOfValuesTab({
                     </SelectContent>
                   </Select>
                 </InlineTableCell>
-                <InlineTableCell className="min-w-[200px]">
+                <InlineTableCell className="min-w-50">
                   <Input
                     aria-label={`Description ${index + 1}`}
                     value={item.description ?? ""}
@@ -445,7 +446,6 @@ export function ScheduleOfValuesTab({
       <div className="flex items-center gap-2">
         <Button
           size="sm"
-          variant="outline"
           onClick={handleAdd}
           disabled={isSaving}
         >
@@ -454,9 +454,10 @@ export function ScheduleOfValuesTab({
         </Button>
         <Button
           size="sm"
-          variant="outline"
+          variant="link"
           onClick={handleImport}
           disabled={isImporting || isSaving}
+          className="px-0"
         >
           {isImporting ? "Importing..." : "Import from Budget"}
         </Button>

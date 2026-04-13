@@ -1466,7 +1466,7 @@ async function loadChangeOrderBundle(
       ? supabase
           .from("prime_contracts")
           .select("id, contract_number, title, client_id, original_contract_value, revised_contract_value")
-          .eq("id", changeOrder.contract_id)
+          .eq("id", String(changeOrder.contract_id))
           .single()
       : Promise.resolve({ data: null, error: null }),
     supabase

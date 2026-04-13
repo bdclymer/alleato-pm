@@ -75,14 +75,14 @@ test.describe('Change Events Module - Browser Verification', () => {
     // Verify page elements
     await expect(page.locator('h1, h2').filter({ hasText: /Change Events/i })).toBeVisible({ timeout: 10000 });
 
-    // Verify "New Change Event" button exists
-    const createButton = page.locator('button, a').filter({ hasText: /New Change Event/i });
+    // Verify "Create" button exists
+    const createButton = page.locator('[data-testid="change-events-new-button"]');
     await expect(createButton).toBeVisible();
 
-    // Verify filter tabs exist
-    const filterTabs = ['All', 'Open', 'Pending', 'Approved'];
+    // Verify Procore-style tabs exist
+    const filterTabs = ['Line Items', 'No Line Items', 'RFQs', 'Recycle Bin'];
     for (const tab of filterTabs) {
-      const tabElement = page.locator(`button, [role="tab"]`).filter({ hasText: new RegExp(tab, 'i') });
+      const tabElement = page.locator(`a, button`).filter({ hasText: new RegExp(tab, 'i') });
       // Note: Some tabs might not be visible if no data exists
       if (await tabElement.count() > 0) {
         console.log(`✓ Filter tab found: ${tab}`);
@@ -96,16 +96,16 @@ test.describe('Change Events Module - Browser Verification', () => {
     await page.goto(`http://localhost:3000/${projectId}/change-events`, { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(1000);
 
-    // Click each filter tab and verify URL or state changes
-    const filterTabs = ['All', 'Open', 'Pending', 'Approved'];
+    // Click each Procore-style tab and verify URL or state changes
+    const filterTabs = ['Line Items', 'No Line Items', 'RFQs', 'Recycle Bin'];
 
     for (const tab of filterTabs) {
-      const tabButton = page.locator(`button, [role="tab"]`).filter({ hasText: new RegExp(tab, 'i') }).first();
+      const tabLink = page.locator(`a`).filter({ hasText: new RegExp(tab, 'i') }).first();
 
-      if (await tabButton.count() > 0 && await tabButton.isVisible()) {
-        await tabButton.click();
-        await page.waitForTimeout(500); // Wait for filter to apply
-        console.log(`✓ Clicked filter: ${tab}`);
+      if (await tabLink.count() > 0 && await tabLink.isVisible()) {
+        await tabLink.click();
+        await page.waitForTimeout(500); // Wait for tab to activate
+        console.log(`✓ Clicked tab: ${tab}`);
       }
     }
 
@@ -329,12 +329,12 @@ test.describe('Change Events Module - Browser Verification', () => {
       return;
     }
 
-    // Navigate to edit page
-    await page.goto(`http://localhost:3000/${projectId}/change-events/${createdChangeEventId}/edit`, { waitUntil: 'domcontentloaded' });
+    // Navigate to detail page with edit mode enabled via ?edit=1
+    await page.goto(`http://localhost:3000/${projectId}/change-events/${createdChangeEventId}?edit=1`, { waitUntil: 'domcontentloaded' });
     await page.waitForTimeout(2000);
 
     // Verify form pre-populates
-    const titleField = page.locator('input[placeholder*="Brief description"]').first();
+    const titleField = page.locator('input[placeholder*="Enter title"]').first();
     const titleValue = await titleField.inputValue();
 
     expect(titleValue).toContain('Browser Verification');
@@ -347,7 +347,7 @@ test.describe('Change Events Module - Browser Verification', () => {
     const saveButton = page.locator('button[type="submit"], button').filter({ hasText: /Save|Update/i }).first();
 
     const responsePromise = page.waitForResponse(
-      response => response.url().includes('/change-events') && response.request().method() === 'PUT',
+      response => response.url().includes('/change-events') && response.request().method() === 'PATCH',
       { timeout: 10000 }
     ).catch(() => null);
 

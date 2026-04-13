@@ -14,9 +14,10 @@ import {
 import { cn } from "@/lib/utils";
 import { useBudgetData } from "@/hooks/use-budget-data";
 import { useCurrentUserName } from "@/hooks/use-current-user-name";
+import { useProjectRoles } from "@/hooks/use-project-roles";
 import { KpiRow, StatusBadge, Skeleton } from "@/components/ds";
 import { ContentSectionStack } from "@/components/layout";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { RealtimeCursors } from "@/components/realtime-cursors";
@@ -278,46 +279,110 @@ function FinancialOverviewSection({
    Section: Project Team
 ───────────────────────────────────────────────────────────── */
 
-function ProjectTeamSection({
-  projectId,
-  team,
-}: {
-  projectId: string;
-  team: ProjectTeamMember[];
-}) {
+const DEFAULT_ROLES = ["Project Manager", "Superintendent", "Architect"];
+
+function ProjectTeamSection({ projectId }: { projectId: string }) {
+  const { roles, isLoading } = useProjectRoles(projectId);
+
+  // Build the display list:
+  // 1. All roles that exist in the database (assigned or not)
+  // 2. Any DEFAULT_ROLES not already in the database get appended as empty slots
+  const dbRoleNames = roles.map((r) => r.role_name);
+  const missingDefaults = DEFAULT_ROLES.filter(
+    (d) => !dbRoleNames.some((n) => n.toLowerCase() === d.toLowerCase()),
+  );
+
   return (
     <section>
-      <SectionHeading action={<ViewAllLink href={`/${projectId}/directory`} label="View Team" />}>
+      <SectionHeading
+        action={
+          <ViewAllLink href={`/${projectId}/directory`} label="Project Directory" />
+        }
+      >
         Project Team
       </SectionHeading>
 
-      {team.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No team members assigned</p>
+      {isLoading ? (
+        <div className="space-y-2 py-1">
+          {[1, 2, 3].map((i) => (
+            <div key={i} className="flex items-center gap-3 py-2.5">
+              <div className="h-8 w-8 shrink-0 rounded-full bg-muted animate-pulse" />
+              <div className="flex-1 space-y-1.5">
+                <div className="h-3 w-28 rounded bg-muted animate-pulse" />
+                <div className="h-2.5 w-20 rounded bg-muted animate-pulse" />
+              </div>
+            </div>
+          ))}
+        </div>
       ) : (
         <div>
-          {team.slice(0, 6).map((member) => {
-            const displayName = member.full_name?.trim() || "Team Member";
-            const avatarSrc = member.person_id
-              ? `/api/avatar/${member.person_id}?projectId=${projectId}`
-              : undefined;
+          {/* Existing roles from the database */}
+          {roles.map((role) => {
+            const firstMember = role.members[0] ?? null;
+            const person = firstMember?.person ?? null;
+            const displayName = person
+              ? `${person.first_name} ${person.last_name}`.trim()
+              : null;
+
             return (
               <div
-                key={member.id}
+                key={role.id}
                 className="flex items-center gap-3 border-b border-border/50 py-2.5 last:border-0"
               >
-                <Avatar className="h-8 w-8 rounded-full">
-                  <AvatarImage src={avatarSrc} alt={displayName} />
-                  <AvatarFallback className="text-xs">{initials(displayName)}</AvatarFallback>
-                </Avatar>
-                <div className="min-w-0">
-                  <p className="truncate text-sm font-medium">{displayName}</p>
-                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                    {member.role || "Team Member"}
-                  </p>
-                </div>
+                {person ? (
+                  <>
+                    <Avatar className="h-8 w-8 shrink-0 rounded-full">
+                      <AvatarFallback className="text-xs bg-primary/10 text-primary">
+                        {initials(displayName ?? role.role_name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">{displayName}</p>
+                      <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                        {role.role_name}
+                      </p>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="h-8 w-8 shrink-0 rounded-full border border-dashed border-border bg-muted" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm text-muted-foreground">Not Assigned</p>
+                      <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                        {role.role_name}
+                      </p>
+                    </div>
+                    <Link
+                      href={`/${projectId}/directory`}
+                      className="shrink-0 text-xs text-primary hover:underline"
+                    >
+                      Assign
+                    </Link>
+                  </>
+                )}
               </div>
             );
           })}
+
+          {/* Default role slots not yet created in the database */}
+          {missingDefaults.map((roleName) => (
+            <div
+              key={roleName}
+              className="flex items-center gap-3 border-b border-border/50 py-2.5 last:border-0"
+            >
+              <div className="h-8 w-8 shrink-0 rounded-full border border-dashed border-border bg-muted" />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm text-muted-foreground">Not Assigned</p>
+                <p className="mt-0.5 truncate text-xs text-muted-foreground">{roleName}</p>
+              </div>
+              <Link
+                href={`/${projectId}/directory`}
+                className="shrink-0 text-xs text-primary hover:underline"
+              >
+                Assign
+              </Link>
+            </div>
+          ))}
         </div>
       )}
     </section>
@@ -720,7 +785,6 @@ export function ProjectCommandCenter({
   contracts,
   contractLineItems = [],
   changeEvents = [],
-  team = [],
   homeAlerts,
   pendingSsovReviews = [],
 }: ProjectCommandCenterProps) {
@@ -812,15 +876,15 @@ export function ProjectCommandCenter({
       <RealtimeCursors roomName={roomName} username={currentUserName} />
 
       {/* Identity Band */}
-      <div className="px-4 py-4 sm:px-5 lg:px-7">
+      <div className="px-4 py-4 sm:px-5 lg:px-6">
         <div className="flex flex-wrap items-start justify-between gap-3 sm:gap-4">
           <div className="min-w-0 flex-1">
             {jobNumber && (
-              <div className="mb-1.5 text-xs font-semibold uppercase tracking-normal text-muted-foreground">
+              <div className="mb-1.5 text-sm font-semibold uppercase tracking-normal text-muted-foreground">
                 Job # {jobNumber}
               </div>
             )}
-            <h1 className="text-xl font-semibold leading-snug text-foreground sm:text-2xl">
+            <h1 className="text-3xl font-semibold leading-snug text-foreground sm:text-2xl">
               {project.name ?? "Untitled Project"}
             </h1>
           </div>
@@ -849,9 +913,9 @@ export function ProjectCommandCenter({
       </div>
 
       {/* Body — 2-col layout */}
-      <div className="flex-1 grid grid-cols-1 gap-y-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:gap-x-12 lg:gap-y-0">
+      <div className="flex-1 grid grid-cols-1 gap-y-8 lg:grid-cols-[minmax(0,1fr)_480px] lg:gap-x-12 lg:gap-y-0">
         {/* Left: Main */}
-        <div className="min-w-0 px-4 py-4 sm:px-5 sm:py-5 lg:px-7">
+        <div className="min-w-0 px-4 py-4 sm:px-5 sm:py-5 lg:px-6">
           <ContentSectionStack>
             <FinancialOverviewSection
               projectId={projectId}
@@ -869,7 +933,7 @@ export function ProjectCommandCenter({
               contracts={contracts}
               directCosts={grandTotals.directCosts}
             />
-            <ProjectTeamSection projectId={projectId} team={team} />
+            <ProjectTeamSection projectId={projectId} />
             <RecentMeetingsSection projectId={projectId} meetings={recentMeetings} />
             <ChangePipelineSection
               projectId={projectId}

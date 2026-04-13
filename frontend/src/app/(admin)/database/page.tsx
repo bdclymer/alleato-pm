@@ -57,6 +57,7 @@ export default async function DatabaseTablesCatalogPage() {
       primary_keys: null,
       fk_columns: null,
       table_comment: null,
+      "documentation page": null,
       notes: null,
       tools: null,
       created_at: null,

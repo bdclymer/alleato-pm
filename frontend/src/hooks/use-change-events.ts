@@ -27,6 +27,13 @@ export interface ChangeEventOption {
   eventNumber?: string;
 }
 
+interface TabSummary {
+  lineItems: number;
+  noLineItems: number;
+  rfqs: number;
+  recycleBin: number;
+}
+
 interface UseChangeEventsOptions {
   // Filter by project ID
   projectId?: number;
@@ -34,6 +41,12 @@ interface UseChangeEventsOptions {
   status?: string;
   // Limit results
   limit?: number;
+  // Page number (1-based) for server-side pagination
+  page?: number;
+  // Items per page for server-side pagination
+  perPage?: number;
+  // Tab filter for Procore-style tabs
+  tab?: "line_items" | "no_line_items" | "rfqs" | "recycle_bin" | "all";
   // Whether to auto-fetch
   enabled?: boolean;
   // Include soft deleted records
@@ -45,6 +58,8 @@ interface UseChangeEventsReturn {
   options: ChangeEventOption[];
   isLoading: boolean;
   error: Error | null;
+  total: number;
+  tabSummary: TabSummary | null;
   refetch: () => Promise<void>;
   createChangeEvent: (
     changeEvent: Partial<ChangeEvent>,
@@ -58,11 +73,13 @@ interface UseChangeEventsReturn {
 export function useChangeEvents(
   options: UseChangeEventsOptions = {},
 ): UseChangeEventsReturn {
-  const { projectId, status, limit = 100, enabled = true } = options;
+  const { projectId, status, limit = 100, page, perPage, tab, enabled = true } = options;
   const { includeDeleted = false } = options;
   const [changeEvents, setChangeEvents] = useState<ChangeEvent[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [total, setTotal] = useState(0);
+  const [tabSummary, setTabSummary] = useState<TabSummary | null>(null);
 
   const fetchChangeEvents = useCallback(async () => {
     if (!enabled) return;
@@ -75,9 +92,16 @@ export function useChangeEvents(
       // (RFQ title, commitment info, cost rollups) are consistently available.
       if (projectId) {
         const searchParams = new URLSearchParams();
-        searchParams.set("limit", String(limit));
+        // Use page/perPage for server-side pagination when provided, else fall back to limit
+        if (page !== undefined && perPage !== undefined) {
+          searchParams.set("page", String(page));
+          searchParams.set("limit", String(perPage));
+        } else {
+          searchParams.set("limit", String(limit));
+        }
         if (status) searchParams.set("status", status);
         if (includeDeleted) searchParams.set("includeDeleted", "true");
+        if (tab) searchParams.set("tab", tab);
 
         const response = await fetch(
           `/api/projects/${projectId}/change-events?${searchParams.toString()}`,
@@ -95,6 +119,8 @@ export function useChangeEvents(
 
         const payload = await response.json();
         setChangeEvents(payload.data || []);
+        setTotal(payload.meta?.total ?? 0);
+        setTabSummary(payload.meta?.tabSummary ?? null);
         return;
       }
 
@@ -119,14 +145,14 @@ export function useChangeEvents(
         throw new Error(queryError.message);
       }
 
-      setChangeEvents(data || []);
+      setChangeEvents((data as ChangeEvent[]) || []);
     } catch (err) {
       const detail = err instanceof Error ? err.message : "an unexpected error occurred";
       setError(new Error(`Could not load change events: ${detail}`));
     } finally {
       setIsLoading(false);
     }
-  }, [projectId, status, limit, enabled, includeDeleted]);
+  }, [projectId, status, limit, page, perPage, tab, enabled, includeDeleted]);
 
   useEffect(() => {
     fetchChangeEvents();
@@ -195,6 +221,8 @@ export function useChangeEvents(
     options: changeEventOptions,
     isLoading,
     error,
+    total,
+    tabSummary,
     refetch: fetchChangeEvents,
     createChangeEvent,
   };

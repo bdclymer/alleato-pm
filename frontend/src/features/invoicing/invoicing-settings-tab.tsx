@@ -46,7 +46,7 @@ export function InvoicingSettingsTab({ projectId }: Props) {
     watch,
     setValue,
     formState: { errors, isDirty },
-  } = useForm<FormValues>({
+  } = useForm<z.input<typeof schema>, any, FormValues>({
     resolver: zodResolver(schema),
     defaultValues: {
       default_billing_start_day: 1,

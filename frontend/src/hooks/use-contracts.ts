@@ -38,7 +38,7 @@ interface UseContractsOptions {
   // Filter contracts by search term
   search?: string;
   // Filter by status
-  status?: string;
+  status?: "approved" | "draft" | "terminated" | "complete" | "out_for_bid" | "out_for_signature";
   // Filter by project ID
   projectId?: number;
   // Filter by client ID

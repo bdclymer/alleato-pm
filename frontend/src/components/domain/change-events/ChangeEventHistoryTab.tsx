@@ -47,7 +47,7 @@ export function ChangeEventHistoryTab({
   if (entries.length === 0) {
     return (
       <EmptyState
-        icon={Clock}
+        icon={<Clock className="h-8 w-8 text-muted-foreground" />}
         title="No history recorded"
         description="Changes to this event will be tracked here automatically."
       />

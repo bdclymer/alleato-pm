@@ -458,7 +458,7 @@ interface AddLineItemDialogProps {
 
 function AddLineItemDialog({ open, onOpenChange, projectId, invoiceId, onSuccess }: AddLineItemDialogProps) {
   const [isSaving, setIsSaving] = useState(false);
-  const form = useForm<AddLineItemValues>({
+  const form = useForm<z.input<typeof addLineItemSchema>, any, AddLineItemValues>({
     resolver: zodResolver(addLineItemSchema),
     defaultValues: {
       description: "",

@@ -4,20 +4,17 @@ import * as React from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import {
-  UserPlus,
-  Users,
   Building2,
   MoreHorizontal,
   Pencil,
   Trash2,
   UserX,
   Package,
-  Search,
   Mail,
   Download,
-  ChevronRight,
+  Search,
   SlidersHorizontal,
-  Phone,
+  X,
 } from "lucide-react";
 import {
   PageShell,
@@ -52,8 +49,6 @@ import {
   PopoverContent,
   PopoverTrigger,
   Badge,
-  StatusBadge,
-  SectionHeader,
   Select,
   SelectContent,
   SelectItem,
@@ -69,7 +64,6 @@ import { useProjectCompanies } from "@/hooks/use-project-companies";
 import { usePermissionTemplates } from "@/hooks/use-permissions";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
-import { CompanyEditDialog } from "@/components/directory/CompanyEditDialog";
 import {
   type PermissionModule,
   type PermissionLevel,
@@ -77,7 +71,6 @@ import {
   ALL_MODULES,
   GRANULAR_FLAG_LABELS,
 } from "@/lib/permissions-shared";
-import type { PermissionTemplate } from "@/lib/permissions-shared";
 import { Check, ChevronsUpDown, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import type { PersonWithDetails } from "@/services/directoryService";
@@ -153,6 +146,146 @@ function SectionSkeleton({ rows = 3 }: { rows?: number }) {
   );
 }
 
+
+// ─── Local: Expandable search ─────────────────────────────────────
+
+function ExpandableSearch({
+  value,
+  onChange,
+  placeholder = "Search...",
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  const [expanded, setExpanded] = React.useState(false);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+
+  React.useEffect(() => {
+    if (expanded) inputRef.current?.focus();
+  }, [expanded]);
+
+  React.useEffect(() => {
+    if (value) setExpanded(true);
+  }, [value]);
+
+  if (!expanded) {
+    return (
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        aria-label="Search"
+        onClick={() => setExpanded(true)}
+        className="h-8 w-8 text-muted-foreground"
+      >
+        <Search className="h-4 w-4" />
+      </Button>
+    );
+  }
+
+  return (
+    <div className="relative flex items-center">
+      <Search className="absolute left-2.5 h-4 w-4 text-muted-foreground pointer-events-none" />
+      <Input
+        ref={inputRef}
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={() => { if (!value) setExpanded(false); }}
+        placeholder={placeholder}
+        className="h-8 w-44 pl-8 pr-7 text-sm"
+        aria-label="Search"
+      />
+      {value && (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          onClick={() => { onChange(""); inputRef.current?.focus(); }}
+          className="absolute right-0 h-7 w-7 text-muted-foreground"
+          aria-label="Clear search"
+        >
+          <X className="h-3 w-3" />
+        </Button>
+      )}
+    </div>
+  );
+}
+
+// ─── Local: Section heading row ───────────────────────────────────
+
+function SectionRow({
+  title,
+  action,
+  count,
+  search,
+  onSearch,
+  searchPlaceholder,
+  filterContent,
+}: {
+  title: string;
+  action: React.ReactNode;
+  count?: number;
+  search?: string;
+  onSearch?: (v: string) => void;
+  searchPlaceholder?: string;
+  filterContent?: React.ReactNode;
+}) {
+  const [filterOpen, setFilterOpen] = React.useState(false);
+
+  return (
+    <div className="flex items-center justify-between gap-4">
+      {/* Left: title + action */}
+      <div className="flex items-center gap-3 min-w-0">
+        <h2 className="text-lg font-semibold text-foreground shrink-0">{title}</h2>
+        {action}
+      </div>
+
+      {/* Right: search + filter + count */}
+      <div className="flex items-center gap-1 shrink-0">
+        {onSearch !== undefined && (
+          <ExpandableSearch
+            value={search ?? ""}
+            onChange={onSearch}
+            placeholder={searchPlaceholder ?? `Search ${title.toLowerCase()}...`}
+          />
+        )}
+
+        {filterContent && (
+          <Popover open={filterOpen} onOpenChange={setFilterOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                aria-label="Filters"
+                className="h-8 w-8 text-muted-foreground"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-72 p-0">
+              <div className="border-b px-3 py-2.5">
+                <p className="text-sm font-medium text-foreground">Filters</p>
+              </div>
+              <div className="p-3">{filterContent}</div>
+            </PopoverContent>
+          </Popover>
+        )}
+
+        {count !== undefined && (
+          <>
+            <div className="mx-1 h-4 w-px bg-border/60" />
+            <span className="inline-flex h-6 items-center rounded-md bg-muted/60 px-2 text-[11px] font-medium text-muted-foreground">
+              {count} {count === 1 ? "item" : "items"}
+            </span>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
 
 // ─── Dialogs ─────────────────────────────────────────────────────
 
@@ -642,8 +775,132 @@ function AddVendorDialog({
   );
 }
 
+// ─── Assign Existing Company Dialog ──────────────────────────────
+
+interface CompanyOption {
+  id: string;
+  name: string;
+  city: string | null;
+  state: string | null;
+  vendor_class: string | null;
+}
+
+function AssignExistingCompanyDialog({
+  open,
+  onOpenChange,
+  existingCompanyIds,
+  projectId,
+  onSuccess,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  existingCompanyIds: string[];
+  projectId: string;
+  onSuccess: () => void;
+}) {
+  const [allCompanies, setAllCompanies] = React.useState<CompanyOption[]>([]);
+  const [selected, setSelected] = React.useState<string | null>(null);
+  const [saving, setSaving] = React.useState(false);
+
+  React.useEffect(() => {
+    if (!open) return;
+    setSelected(null);
+    const supabase = createClient();
+    supabase
+      .from("companies")
+      .select("id, name, city, state, vendor_class")
+      .order("name")
+      .then(({ data }) => {
+        if (data) setAllCompanies(data as CompanyOption[]);
+      });
+  }, [open]);
+
+  const available = allCompanies.filter((c) => !existingCompanyIds.includes(c.id));
+
+  const handleAssign = async () => {
+    if (!selected) return;
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/projects/${projectId}/directory/companies`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ company_id: selected }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error((d as { message?: string }).message ?? "Failed to assign company");
+      }
+      toast.success("Company assigned to project");
+      onSuccess();
+      onOpenChange(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to assign company");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Assign Company</DialogTitle>
+          <DialogDescription>
+            Search and select an existing company to add to this project.
+          </DialogDescription>
+        </DialogHeader>
+        <Command className="border rounded-md">
+          <CommandInput placeholder="Search companies..." />
+          <CommandList className="max-h-64">
+            <CommandEmpty>No companies found.</CommandEmpty>
+            <CommandGroup>
+              {available.map((company) => (
+                <CommandItem
+                  key={company.id}
+                  value={`${company.name} ${company.city ?? ""} ${company.state ?? ""}`}
+                  onSelect={() => setSelected(company.id)}
+                  className="cursor-pointer"
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4 shrink-0",
+                      selected === company.id ? "opacity-100" : "opacity-0",
+                    )}
+                  />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium truncate">{company.name}</p>
+                    {(company.vendor_class || company.city || company.state) && (
+                      <p className="text-xs text-muted-foreground truncate">
+                        {[
+                          company.vendor_class,
+                          company.city && company.state
+                            ? `${company.city}, ${company.state}`
+                            : (company.city ?? company.state),
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                      </p>
+                    )}
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleAssign} disabled={!selected || saving}>
+            {saving ? "Assigning..." : "Assign Company"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ─── Project Team Section ────────────────────────────────────────
-// Shows key roles as prominent cards (like the screenshot)
 
 function ProjectTeamSection({
   projectId,
@@ -656,6 +913,7 @@ function ProjectTeamSection({
 }) {
   const { roles, isLoading, updateRoleMembers, createRole, deleteRole } =
     useProjectRoles(projectId);
+  const [search, setSearch] = React.useState("");
   const [assignDialog, setAssignDialog] = React.useState<{
     open: boolean;
     role: ProjectRole | null;
@@ -665,14 +923,25 @@ function ProjectTeamSection({
     onManageRolesOpenChange?.(open);
   };
 
-  if (isLoading) return <SectionSkeleton rows={3} />;
+  const rows: RoleRow[] = roles.flatMap((role): RoleRow[] =>
+    role.members.length > 0
+      ? role.members.map((member) => ({ id: member.id, role, member }))
+      : [{ id: role.id, role, member: null }]
+  );
+
+  const filteredRows = search
+    ? rows.filter(
+        (r) =>
+          r.role.role_name.toLowerCase().includes(search.toLowerCase()) ||
+          (r.member?.person?.full_name ?? "").toLowerCase().includes(search.toLowerCase()),
+      )
+    : rows;
 
   const handleDeleteRole = async (role: ProjectRole) => {
     const confirmed = window.confirm(
       `Delete role "${role.role_name}"? This will remove all assignments for this role.`,
     );
     if (!confirmed) return;
-
     try {
       await deleteRole(role.id);
       toast.success("Role deleted");
@@ -680,23 +949,6 @@ function ProjectTeamSection({
       toast.error(err instanceof Error ? err.message : "Failed to delete role");
     }
   };
-
-  if (roles.length === 0) {
-    return (
-      <p className="py-6 text-center text-sm text-muted-foreground">
-        No roles defined yet.{" "}
-        <button type="button" onClick={() => setCreateRoleOpen(true)} className="text-primary hover:underline">
-          Add a role
-        </button>
-      </p>
-    );
-  }
-
-  const rows: RoleRow[] = roles.flatMap((role): RoleRow[] =>
-    role.members.length > 0
-      ? role.members.map((member) => ({ id: member.id, role, member }))
-      : [{ id: role.id, role, member: null }]
-  );
 
   const teamColumns: ColumnDef<RoleRow>[] = [
     {
@@ -713,13 +965,14 @@ function ProjectTeamSection({
         const { member, role } = row.original;
         if (!member) {
           return (
-            <button
-              type="button"
+            <Button
+              variant="link"
+              size="sm"
+              className="h-auto p-0 text-sm text-primary"
               onClick={() => setAssignDialog({ open: true, role })}
-              className="text-sm text-primary hover:underline"
             >
               Assign
-            </button>
+            </Button>
           );
         }
         const p = member.person;
@@ -781,13 +1034,47 @@ function ProjectTeamSection({
 
   return (
     <>
-      <DataTable columns={teamColumns} data={rows} showToolbar={false} showPagination={false} />
+      <SectionRow
+        title="Project Team"
+        action={
+          <Button
+            variant="link"
+            size="sm"
+            className="h-auto p-0 text-sm font-medium text-primary"
+            onClick={() => setCreateRoleOpen(true)}
+          >
+            Manage Roles
+          </Button>
+        }
+        count={filteredRows.length}
+        search={search}
+        onSearch={setSearch}
+        searchPlaceholder="Search roles or members..."
+      />
+
+      <div className="mt-4">
+        {isLoading ? (
+          <SectionSkeleton rows={3} />
+        ) : roles.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">
+            No roles defined yet.{" "}
+            <Button
+              variant="link"
+              size="sm"
+              className="h-auto p-0 text-primary"
+              onClick={() => setCreateRoleOpen(true)}
+            >
+              Add a role
+            </Button>
+          </p>
+        ) : (
+          <DataTable columns={teamColumns} data={filteredRows} showToolbar={false} showPagination={false} />
+        )}
+      </div>
 
       <AssignMemberDialog
         open={assignDialog.open}
-        onOpenChange={(open) =>
-          setAssignDialog((prev) => ({ ...prev, open }))
-        }
+        onOpenChange={(open) => setAssignDialog((prev) => ({ ...prev, open }))}
         role={assignDialog.role}
         onSave={updateRoleMembers}
         projectId={projectId}
@@ -795,9 +1082,7 @@ function ProjectTeamSection({
       <CreateRoleDialog
         open={createRoleOpen}
         onOpenChange={setCreateRoleOpen}
-        onSave={async (name) => {
-          await createRole(name);
-        }}
+        onSave={async (name) => { await createRole(name); }}
       />
     </>
   );
@@ -1117,15 +1402,16 @@ function MembersDataTable({
 }
 
 // ─── External Members Section ────────────────────────────────────
-// Full table with search + filter (matches screenshot structure)
 
 function ExternalMembersSection({
   projectId,
   vendorCompanyIds,
+  onAddClick,
   onRefetch: externalRefetch,
 }: {
   projectId: string;
   vendorCompanyIds?: string[];
+  onAddClick: () => void;
   onRefetch?: () => void;
 }) {
   const {
@@ -1134,12 +1420,9 @@ function ExternalMembersSection({
     error,
     refetch,
   } = useProjectUsers(projectId, { type: "all" });
-  const [addOpen, setAddOpen] = React.useState(false);
   const [search, setSearch] = React.useState("");
-  const [companyFilter, setCompanyFilter] = React.useState("all");
-  const [removingPersonId, setRemovingPersonId] = React.useState<string | null>(
-    null,
-  );
+  const [activeFilters, setActiveFilters] = React.useState<Record<string, string | undefined>>({});
+  const [removingPersonId, setRemovingPersonId] = React.useState<string | null>(null);
   const [vendorPeople, setVendorPeople] = React.useState<PersonWithDetails[]>([]);
 
   React.useEffect(() => {
@@ -1168,19 +1451,14 @@ function ExternalMembersSection({
 
   const handleRemoveMember = async (personId: string) => {
     if (removingPersonId) return;
-
-    const confirmed = window.confirm(
-      "Remove this member from the project directory?",
-    );
+    const confirmed = window.confirm("Remove this member from the project directory?");
     if (!confirmed) return;
-
     try {
       setRemovingPersonId(personId);
       const response = await fetch(
         `/api/projects/${projectId}/directory/people/${personId}`,
         { method: "DELETE" },
       );
-
       if (!response.ok) {
         let errorMessage = "Failed to remove member";
         try {
@@ -1188,12 +1466,9 @@ function ExternalMembersSection({
           if (typeof data?.error === "string" && data.error.trim().length > 0) {
             errorMessage = data.error;
           }
-        } catch {
-          // Preserve fallback for non-JSON error responses.
-        }
+        } catch { /* keep fallback */ }
         throw new Error(errorMessage);
       }
-
       await refetch();
       toast.success("Member removed");
     } catch (err) {
@@ -1203,14 +1478,13 @@ function ExternalMembersSection({
     }
   };
 
-  // Get unique companies for filter
   const companies = React.useMemo(() => {
     const names = new Set<string>();
-    allMembers.forEach((p) => {
-      if (p.company?.name) names.add(p.company.name);
-    });
+    allMembers.forEach((p) => { if (p.company?.name) names.add(p.company.name); });
     return Array.from(names).sort();
   }, [allMembers]);
+
+  const companyFilter = activeFilters.company;
 
   const filtered = allMembers.filter((p) => {
     const q = search.toLowerCase();
@@ -1220,87 +1494,81 @@ function ExternalMembersSection({
       (p.email ?? "").toLowerCase().includes(q) ||
       (p.company?.name ?? "").toLowerCase().includes(q) ||
       (p.job_title ?? "").toLowerCase().includes(q);
-
-    const matchesCompany =
-      companyFilter === "all" || p.company?.name === companyFilter;
-
+    const matchesCompany = !companyFilter || p.company?.name === companyFilter;
     return matchesSearch && matchesCompany;
   });
 
-  if (isLoading) return <SectionSkeleton rows={5} />;
-  if (error) {
-    return (
-      <p className="text-sm text-destructive py-6">Failed to load members.</p>
-    );
-  }
+  const filterContent = companies.length > 0 ? (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <span className="text-sm text-foreground">Company</span>
+        <Select
+          value={companyFilter ?? "all"}
+          onValueChange={(v) =>
+            setActiveFilters((prev) => ({ ...prev, company: v === "all" ? undefined : v }))
+          }
+        >
+          <SelectTrigger className="h-8 w-40 text-xs">
+            <SelectValue placeholder="All" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All</SelectItem>
+            {companies.map((c) => (
+              <SelectItem key={c} value={c}>{c}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  ) : undefined;
 
-  if (allMembers.length === 0) {
-    return (
-      <>
-        <p className="py-6 text-center text-sm text-muted-foreground">
-          No members yet.{" "}
-          <button type="button" onClick={() => setAddOpen(true)} className="text-primary hover:underline">
-            Add one
-          </button>
-        </p>
-        <AddMemberDialog
-          open={addOpen}
-          onOpenChange={setAddOpen}
-          projectId={projectId}
-          onSuccess={refetch}
-        />
-      </>
-    );
-  }
+  if (isLoading) return <SectionSkeleton rows={5} />;
+  if (error) return <p className="text-sm text-destructive py-6">Failed to load members.</p>;
 
   return (
     <>
-      {/* Toolbar: search + company filter */}
-      <div className="flex items-center gap-3 mb-4">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search members by name, role or company..."
-            className="pl-9 h-9 text-sm"
-          />
-        </div>
-        <div className="ml-auto flex items-center gap-2">
-          <Select value={companyFilter} onValueChange={setCompanyFilter}>
-            <SelectTrigger className="h-9 w-44 text-sm">
-              <SelectValue placeholder="All Companies" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Companies</SelectItem>
-              {companies.map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Button variant="ghost" size="icon" className="h-9 w-9">
-            <SlidersHorizontal className="h-4 w-4" />
+      <SectionRow
+        title="All Project Members"
+        action={
+          <Button
+            variant="link"
+            size="sm"
+            className="h-auto p-0 text-sm font-medium text-primary"
+            onClick={onAddClick}
+          >
+            + Add
           </Button>
-        </div>
+        }
+        count={filtered.length}
+        search={search}
+        onSearch={setSearch}
+        searchPlaceholder="Search by name, role or company..."
+        filterContent={filterContent}
+      />
+
+      <div className="mt-4">
+        {allMembers.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">
+            No members yet.{" "}
+            <Button
+              variant="link"
+              size="sm"
+              className="h-auto p-0 text-primary"
+              onClick={onAddClick}
+            >
+              Add one
+            </Button>
+          </p>
+        ) : (
+          <MembersDataTable
+            filtered={filtered}
+            removingPersonId={removingPersonId}
+            handleRemoveMember={handleRemoveMember}
+            projectId={projectId}
+            onRefetch={() => { refetch(); externalRefetch?.(); }}
+          />
+        )}
       </div>
-
-      {/* Members table */}
-      <MembersDataTable
-        filtered={filtered}
-        removingPersonId={removingPersonId}
-        handleRemoveMember={handleRemoveMember}
-        projectId={projectId}
-        onRefetch={() => { refetch(); externalRefetch?.(); }}
-      />
-
-      <AddMemberDialog
-        open={addOpen}
-        onOpenChange={setAddOpen}
-        projectId={projectId}
-        onSuccess={refetch}
-      />
     </>
   );
 }
@@ -1423,6 +1691,7 @@ function CompaniesSection({
   companies,
   isLoading,
   error,
+  onAssignClick,
 }: {
   companies: Array<{
     id: string;
@@ -1432,7 +1701,10 @@ function CompaniesSection({
   }>;
   isLoading: boolean;
   error: Error | null;
+  onAssignClick: () => void;
 }) {
+  const [search, setSearch] = React.useState("");
+
   const companyRows = React.useMemo(
     () =>
       companies
@@ -1444,6 +1716,10 @@ function CompaniesSection({
         .sort((a, b) => a.name.localeCompare(b.name)),
     [companies],
   );
+
+  const filteredRows = search
+    ? companyRows.filter((c) => c.name.toLowerCase().includes(search.toLowerCase()))
+    : companyRows;
 
   const companiesColumns = React.useMemo<ColumnDef<{ id: string; name: string; memberCount: number }>[]>(
     () => [
@@ -1474,29 +1750,46 @@ function CompaniesSection({
     [],
   );
 
-  if (isLoading) return <SectionSkeleton rows={3} />;
-  if (error) {
-    return (
-      <p className="text-sm text-destructive py-4">Failed to load companies.</p>
-    );
-  }
-
-  if (companyRows.length === 0) {
-    return (
-      <p className="py-6 text-center text-sm text-muted-foreground">
-        No companies found.
-      </p>
-    );
-  }
-
   return (
-    <DataTable
-      columns={companiesColumns}
-      data={companyRows}
-      showToolbar={false}
-      showPagination={companyRows.length > 10}
-      onRowClick={(row) => { window.location.href = `/directory/companies/${row.id}`; }}
-    />
+    <>
+      <SectionRow
+        title="Companies"
+        action={
+          <Button
+            variant="link"
+            size="sm"
+            className="h-auto p-0 text-sm font-medium text-primary"
+            onClick={onAssignClick}
+          >
+            Assign Company
+          </Button>
+        }
+        count={filteredRows.length}
+        search={search}
+        onSearch={setSearch}
+        searchPlaceholder="Search companies..."
+      />
+
+      <div className="mt-4">
+        {isLoading ? (
+          <SectionSkeleton rows={3} />
+        ) : error ? (
+          <p className="text-sm text-destructive py-4">Failed to load companies.</p>
+        ) : filteredRows.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">
+            {search ? "No companies match your search." : "No companies found."}
+          </p>
+        ) : (
+          <DataTable
+            columns={companiesColumns}
+            data={filteredRows}
+            showToolbar={false}
+            showPagination={filteredRows.length > 10}
+            onRowClick={(row) => { window.location.href = `/directory/companies/${row.id}`; }}
+          />
+        )}
+      </div>
+    </>
   );
 }
 
@@ -1534,59 +1827,40 @@ export default function ProjectDirectoryPage() {
       title="Project Directory"
       contentClassName="space-y-8"
       actions={
-        <div className="flex items-center gap-1.5">
-          <Button variant="outline" size="sm">
-            <Download className="mr-1.5 h-3.5 w-3.5" />
-            Export
-          </Button>
-          <Button size="sm" onClick={() => setAddMemberOpen(true)}>
-            <UserPlus className="mr-1.5 h-3.5 w-3.5" />
-            Add Members
-          </Button>
-        </div>
+        <Button variant="outline" size="sm">
+          <Download className="mr-1.5 h-3.5 w-3.5" />
+          Export
+        </Button>
       }
     >
         {/* Section 1: Project Team */}
-        <section>
-          <SectionHeader
-            title="Project Team"
-            action={{ label: "Manage Roles", onClick: () => setManageRolesOpen(true) }}
-          />
-          <div className="mt-4">
-            <ProjectTeamSection
-              projectId={projectId}
-              manageRolesOpen={manageRolesOpen}
-              onManageRolesOpenChange={setManageRolesOpen}
-            />
-          </div>
-        </section>
+      <section>
+        <ProjectTeamSection
+          projectId={projectId}
+          manageRolesOpen={manageRolesOpen}
+          onManageRolesOpenChange={setManageRolesOpen}
+        />
+      </section>
 
-        {/* Section 2: Companies — full width */}
-        <section>
-          <SectionHeader
-            title="Companies"
-            action={{ label: "Add Company", onClick: () => setAddCompanyOpen(true) }}
-          />
-          <div className="mt-4">
-            <CompaniesSection
-              companies={projectCompanies}
-              isLoading={companiesLoading}
-              error={companiesError}
-            />
-          </div>
-        </section>
+      {/* Section 2: Companies */}
+      <section>
+        <CompaniesSection
+          companies={projectCompanies}
+          isLoading={companiesLoading}
+          error={companiesError}
+          onAssignClick={() => setAddCompanyOpen(true)}
+        />
+      </section>
 
-        {/* Section 3: All Project Members */}
-        <section>
-          <SectionHeader
-            title="All Project Members"
-            count={members.length}
-            action={{ label: "+ Add", onClick: () => setAddMemberOpen(true) }}
-          />
-          <div className="mt-4">
-            <ExternalMembersSection projectId={projectId} vendorCompanyIds={existingVendorIds} onRefetch={refetchMembers} />
-          </div>
-        </section>
+      {/* Section 3: All Project Members */}
+      <section>
+        <ExternalMembersSection
+          projectId={projectId}
+          vendorCompanyIds={existingVendorIds}
+          onAddClick={() => setAddMemberOpen(true)}
+          onRefetch={refetchMembers}
+        />
+      </section>
 
       <AddMemberDialog
         open={addMemberOpen}
@@ -1594,13 +1868,12 @@ export default function ProjectDirectoryPage() {
         projectId={projectId}
         onSuccess={refetchMembers}
       />
-      <CompanyEditDialog
+      <AssignExistingCompanyDialog
         open={addCompanyOpen}
         onOpenChange={setAddCompanyOpen}
+        existingCompanyIds={projectCompanies.map((c) => c.company_id)}
         projectId={projectId}
-        onSuccess={() => {
-          void refetchCompanies();
-        }}
+        onSuccess={() => { void refetchCompanies(); }}
       />
       <AddVendorDialog
         open={addVendorOpen}

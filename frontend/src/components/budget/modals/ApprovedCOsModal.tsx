@@ -36,6 +36,7 @@ interface ApprovedCOsModalProps {
   onClose: () => void;
   budgetLineId: string;
   projectId: string;
+  costCode?: string;
 }
 
 export function ApprovedCOsModal({

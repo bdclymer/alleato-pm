@@ -1,6 +1,6 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { apiErrorResponse } from "@/lib/api-error";
 
@@ -8,10 +8,10 @@ import { apiErrorResponse } from "@/lib/api-error";
 // List subcontractor invoices for a project with commitment and billing period joins
 export const GET = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/invoicing/subcontractor/invoices#GET",
-  async ({ request }) => {
-  
+  async ({ request, params }) => {
+
     const supabase = await createClient();
-    const { projectId } = await context.params;
+    const { projectId } = await params;
 
     const {
       data: { user },
@@ -240,10 +240,10 @@ export const GET = withApiGuardrails<{ projectId: string }>(
 // Create a new subcontractor invoice for a project
 export const POST = withApiGuardrails<{ projectId: string }>(
   "projects/[projectId]/invoicing/subcontractor/invoices#POST",
-  async ({ request }) => {
-  
+  async ({ request, params }) => {
+
     const supabase = await createClient();
-    const { projectId } = await context.params;
+    const { projectId } = await params;
 
     const {
       data: { user },

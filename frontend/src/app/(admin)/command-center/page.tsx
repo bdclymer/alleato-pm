@@ -521,7 +521,7 @@ export default function CommandCenterPage() {
   const densityConfig = DENSITY_CONFIG[density];
 
   return (
-    <PageShell variant="dashboard" showHeader={false} className="h-full" contentClassName="space-y-0">
+    <PageShell variant="dashboard" title="Command Center" showHeader={false} className="h-full" contentClassName="space-y-0">
       <div className="flex flex-col h-full">
       {/* Header — Notion-style: title left, icon toolbar + primary action right */}
       <div className="bg-background px-6 py-3 mx-auto w-full max-w-screen-2xl">

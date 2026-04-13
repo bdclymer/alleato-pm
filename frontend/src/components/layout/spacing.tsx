@@ -56,7 +56,7 @@ export function SectionRuleHeading({
 
 export interface LabelValueRowProps {
   label: string;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   className?: string;
   labelClassName?: string;
   valueClassName?: string;
@@ -90,7 +90,7 @@ export function LabelValueRow({
           valueClassName,
         )}
       >
-        {children}
+        {children ?? "—"}
       </dd>
     </div>
   );

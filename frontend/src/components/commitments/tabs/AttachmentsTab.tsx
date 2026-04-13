@@ -124,7 +124,7 @@ export const AttachmentsTab = memo(function AttachmentsTab({ commitmentId }: Att
             ? `${attachments.length} attachment${attachments.length === 1 ? "" : "s"}`
             : "No attachments"}
         </Text>
-        <Button type="button" size="sm" variant="outline" onClick={open} disabled={isUploading}>
+        <Button type="button" size="sm" onClick={open} disabled={isUploading}>
           <Upload className="mr-1.5 h-4 w-4" />
           Upload File
         </Button>
@@ -149,7 +149,9 @@ export const AttachmentsTab = memo(function AttachmentsTab({ commitmentId }: Att
           <>
             <Upload className="mx-auto h-8 w-8 text-muted-foreground" />
             <Text size="sm" weight="medium" className="mt-2">
-              {isDragActive ? "Drop files here" : "Drag & drop or click to browse"}
+              {isDragActive ? "Drop files here" : (
+                <>Drag & drop or <span className="text-primary underline underline-offset-2">click to browse</span></>
+              )}
             </Text>
             <Text size="xs" variant="muted" className="mt-1">
               Max 10 MB · PDF, JPG, PNG, XLSX, DOCX, DWG

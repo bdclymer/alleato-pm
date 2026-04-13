@@ -35,10 +35,10 @@ export const POST = withApiGuardrails(
     return NextResponse.json({ error: "not configured" }, { status: 500 });
   }
 
-  const payload = await req.text();
-  const svixId = req.headers.get("svix-id");
-  const svixTimestamp = req.headers.get("svix-timestamp");
-  const svixSignature = req.headers.get("svix-signature");
+  const payload = await request.text();
+  const svixId = request.headers.get("svix-id");
+  const svixTimestamp = request.headers.get("svix-timestamp");
+  const svixSignature = request.headers.get("svix-signature");
 
   if (!svixId || !svixTimestamp || !svixSignature) {
     return NextResponse.json({ error: "missing signature headers" }, { status: 400 });

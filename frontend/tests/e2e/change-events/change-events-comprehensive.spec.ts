@@ -49,10 +49,8 @@ test.describe('Change Events - Comprehensive Browser Verification', () => {
       console.log('⚠ No status filter tabs found (may be expected if empty)');
     }
 
-    // Verify "New Change Event" button exists
-    const createButton = page.locator('button, a').filter({
-      hasText: /create.*change.*event/i
-    }).first();
+    // Verify "Create" button exists
+    const createButton = page.locator('[data-testid="change-events-new-button"]');
 
     if (await createButton.count() > 0) {
       await expect(createButton).toBeVisible();
