@@ -23,6 +23,9 @@ import {
   ChevronDown,
   Pencil,
   Send,
+  Plus,
+  Trash2,
+  ChevronRight,
 } from "lucide-react";
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -90,6 +93,22 @@ interface RunDetailResult {
   };
 }
 
+interface ManagedCase {
+  id: string;
+  test_number: string;
+  category: string;
+  subcategory: string | null;
+  test_name: string;
+  context_note: string | null;
+  setup_steps: string | null;
+  steps: string | null;
+  expected_result: string | null;
+  priority: string;
+  start_url: string | null;
+  test_type: string;
+  scenario_depth: string;
+}
+
 // ─── View States ─────────────────────────────────────────────────────────────
 
 type View = "home" | "start-run" | "running" | "complete" | "history" | "run-detail";
@@ -145,6 +164,25 @@ export default function TestingPage() {
   const [editingCase, setEditingCase] = useState(false);
   const [editSaving, setEditSaving] = useState(false);
   const [editForm, setEditForm] = useState({ steps: "", setup_steps: "", context_note: "", expected_result: "", start_url: "" });
+
+  // ── Manage Cases tab state ──
+  const [manageSuite, setManageSuite] = useState<Suite | null>(null);
+  const [manageCases, setManageCases] = useState<ManagedCase[]>([]);
+  const [manageCasesLoading, setManageCasesLoading] = useState(false);
+  const [manageDepth, setManageDepth] = useState<"broad" | "detailed">("broad");
+  const [expandedCase, setExpandedCase] = useState<string | null>(null);
+  const [manageEditId, setManageEditId] = useState<string | null>(null);
+  const [manageEditForm, setManageEditForm] = useState<Partial<ManagedCase>>({});
+  const [manageEditSaving, setManageEditSaving] = useState(false);
+  const [manageDeleting, setManageDeleting] = useState<string | null>(null);
+  const [showAddCase, setShowAddCase] = useState(false);
+  const [addForm, setAddForm] = useState({
+    test_number: "", category: "", subcategory: "", test_name: "",
+    priority: "MEDIUM" as "HIGH" | "MEDIUM" | "LOW",
+    scenario_depth: "broad" as "broad" | "detailed",
+    steps: "", setup_steps: "", context_note: "", expected_result: "", start_url: "",
+  });
+  const [addSaving, setAddSaving] = useState(false);
 
   // ── Load suites + pre-fill tester name from session ──
   useEffect(() => {
@@ -226,6 +264,74 @@ export default function TestingPage() {
       setRunDetail(d.results ?? []);
     }
     setRunDetailLoading(false);
+  };
+
+  // ── Manage Cases: load cases for a suite + depth ──
+  const loadManagedCases = useCallback(async (suite: Suite, depth: "broad" | "detailed") => {
+    setManageCasesLoading(true);
+    setManageCases([]);
+    setExpandedCase(null);
+    setManageEditId(null);
+    const res = await fetch(`/api/testing/suites/${suite.tool_name}/cases?type=scenario&depth=${depth}`);
+    if (res.ok) {
+      const d = await res.json();
+      const all: ManagedCase[] = Object.values(d.grouped ?? {}).flat() as ManagedCase[];
+      setManageCases(all);
+    }
+    setManageCasesLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (manageSuite) void loadManagedCases(manageSuite, manageDepth);
+  }, [manageSuite, manageDepth, loadManagedCases]);
+
+  // ── Manage Cases: save inline edit ──
+  const saveManageEdit = async (caseId: string) => {
+    setManageEditSaving(true);
+    const res = await fetch(`/api/testing/cases/${caseId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(manageEditForm),
+    });
+    if (res.ok) {
+      const { case: updated } = await res.json();
+      setManageCases((prev) => prev.map((c) => c.id === caseId ? { ...c, ...updated } : c));
+      setManageEditId(null);
+    }
+    setManageEditSaving(false);
+  };
+
+  // ── Manage Cases: delete ──
+  const deleteCase = async (caseId: string) => {
+    setManageDeleting(caseId);
+    const res = await fetch(`/api/testing/cases/${caseId}`, { method: "DELETE" });
+    if (res.ok) {
+      setManageCases((prev) => prev.filter((c) => c.id !== caseId));
+      if (expandedCase === caseId) setExpandedCase(null);
+    }
+    setManageDeleting(null);
+  };
+
+  // ── Manage Cases: add new ──
+  const addCase = async () => {
+    if (!manageSuite) return;
+    setAddSaving(true);
+    const res = await fetch("/api/testing/cases", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ suite_id: manageSuite.id, ...addForm }),
+    });
+    if (res.ok) {
+      const { case: created } = await res.json();
+      setManageCases((prev) => [...prev, created]);
+      setShowAddCase(false);
+      setAddForm({
+        test_number: "", category: "", subcategory: "", test_name: "",
+        priority: "MEDIUM", scenario_depth: "broad",
+        steps: "", setup_steps: "", context_note: "", expected_result: "", start_url: "",
+      });
+    }
+    setAddSaving(false);
   };
 
   // ── Reset step checkboxes + close edit mode when scenario changes ──
@@ -570,6 +676,7 @@ export default function TestingPage() {
                 </span>
               )}
             </TabsTrigger>
+            <TabsTrigger value="manage">Manage Cases</TabsTrigger>
           </TabsList>
 
           {/* ── Tab: Test Scenarios ── */}
@@ -759,6 +866,300 @@ export default function TestingPage() {
                 })}
               </div>
             )}
+          </TabsContent>
+
+          {/* ── Tab: Manage Cases ── */}
+          <TabsContent value="manage" className="m-0">
+            <div className="space-y-4">
+
+              {/* Suite picker */}
+              <div className="flex items-center gap-3 flex-wrap">
+                <div className="flex flex-wrap gap-2">
+                  {suites.map((s) => (
+                    <button
+                      key={s.tool_name}
+                      type="button"
+                      onClick={() => setManageSuite(s)}
+                      className={cn(
+                        "px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors",
+                        manageSuite?.tool_name === s.tool_name
+                          ? "border-primary bg-primary/5 text-primary"
+                          : "border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground"
+                      )}
+                    >
+                      {s.display_name}
+                    </button>
+                  ))}
+                </div>
+                {manageSuite && (
+                  <div className="flex gap-1.5 ml-auto shrink-0">
+                    {(["broad", "detailed"] as const).map((d) => (
+                      <button
+                        key={d}
+                        type="button"
+                        onClick={() => setManageDepth(d)}
+                        className={cn(
+                          "px-2.5 py-1 rounded-md border text-xs transition-colors",
+                          manageDepth === d
+                            ? "border-primary bg-primary/5 text-primary"
+                            : "border-border text-muted-foreground hover:border-foreground/30"
+                        )}
+                      >
+                        {d.charAt(0).toUpperCase() + d.slice(1)}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {!manageSuite && (
+                <p className="text-sm text-muted-foreground text-center py-12">Select a suite above to manage its test cases.</p>
+              )}
+
+              {manageSuite && (
+                <>
+                  {/* Header row */}
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground">
+                      {manageCasesLoading ? "Loading…" : `${manageCases.length} cases`}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowAddCase((v) => !v)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 transition-colors"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      Add case
+                    </button>
+                  </div>
+
+                  {/* Add case form */}
+                  {showAddCase && (
+                    <div className="rounded-xl border border-primary/20 bg-primary/5 px-4 py-4 space-y-3">
+                      <p className="text-xs font-semibold text-primary uppercase tracking-wide">New test case</p>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Test number</Label>
+                          <Input value={addForm.test_number} onChange={(e) => setAddForm((f) => ({ ...f, test_number: e.target.value }))} placeholder="e.g. 1.1" className="text-sm h-8" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Category</Label>
+                          <Input value={addForm.category} onChange={(e) => setAddForm((f) => ({ ...f, category: e.target.value }))} placeholder="e.g. Budget" className="text-sm h-8" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Subcategory <span className="font-normal">(optional)</span></Label>
+                          <Input value={addForm.subcategory} onChange={(e) => setAddForm((f) => ({ ...f, subcategory: e.target.value }))} placeholder="e.g. Line Items" className="text-sm h-8" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Priority</Label>
+                          <select value={addForm.priority} onChange={(e) => setAddForm((f) => ({ ...f, priority: e.target.value as "HIGH" | "MEDIUM" | "LOW" }))} className="w-full h-8 rounded-md border border-input bg-background px-2 text-sm">
+                            <option value="HIGH">HIGH</option>
+                            <option value="MEDIUM">MEDIUM</option>
+                            <option value="LOW">LOW</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Depth</Label>
+                          <select value={addForm.scenario_depth} onChange={(e) => setAddForm((f) => ({ ...f, scenario_depth: e.target.value as "broad" | "detailed" }))} className="w-full h-8 rounded-md border border-input bg-background px-2 text-sm">
+                            <option value="broad">Broad</option>
+                            <option value="detailed">Detailed</option>
+                          </select>
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs text-muted-foreground">Start URL</Label>
+                          <Input value={addForm.start_url} onChange={(e) => setAddForm((f) => ({ ...f, start_url: e.target.value }))} placeholder="/67/budget" className="text-sm h-8 font-mono" />
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Test name</Label>
+                        <Input value={addForm.test_name} onChange={(e) => setAddForm((f) => ({ ...f, test_name: e.target.value }))} placeholder="e.g. Create a budget line item" className="text-sm h-8" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Context note</Label>
+                        <Textarea value={addForm.context_note} onChange={(e) => setAddForm((f) => ({ ...f, context_note: e.target.value }))} placeholder="What this test verifies…" className="resize-none h-16 text-sm" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Setup steps</Label>
+                        <Textarea value={addForm.setup_steps} onChange={(e) => setAddForm((f) => ({ ...f, setup_steps: e.target.value }))} placeholder="Prerequisites, one per line…" className="resize-none h-14 text-sm" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Steps (one per line)</Label>
+                        <Textarea value={addForm.steps} onChange={(e) => setAddForm((f) => ({ ...f, steps: e.target.value }))} placeholder="Click the Create button&#10;Fill in the Name field&#10;Click Save" className="resize-none h-28 text-sm font-mono" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-xs text-muted-foreground">Expected result</Label>
+                        <Textarea value={addForm.expected_result} onChange={(e) => setAddForm((f) => ({ ...f, expected_result: e.target.value }))} placeholder="The record appears in the list…" className="resize-none h-14 text-sm" />
+                      </div>
+                      <div className="flex gap-2">
+                        <Button type="button" size="sm" onClick={addCase} disabled={addSaving || !addForm.test_number || !addForm.category || !addForm.test_name} className="flex-1">
+                          {addSaving ? "Saving…" : "Add test case"}
+                        </Button>
+                        <Button type="button" size="sm" variant="outline" onClick={() => setShowAddCase(false)} disabled={addSaving}>Cancel</Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Cases list */}
+                  {!manageCasesLoading && manageCases.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-10">No {manageDepth} cases found for {manageSuite.display_name}.</p>
+                  )}
+                  <div className="space-y-1">
+                    {manageCases.map((c) => {
+                      const isExpanded = expandedCase === c.id;
+                      const isEditing = manageEditId === c.id;
+                      return (
+                        <div key={c.id} className="rounded-lg border border-border bg-card overflow-hidden">
+                          {/* Row header */}
+                          <div className="flex items-center gap-3 px-4 py-3">
+                            <button
+                              type="button"
+                              onClick={() => setExpandedCase(isExpanded ? null : c.id)}
+                              className="flex items-center gap-2 flex-1 text-left min-w-0"
+                            >
+                              <ChevronRight className={cn("h-3.5 w-3.5 text-muted-foreground shrink-0 transition-transform", isExpanded && "rotate-90")} />
+                              <span className="text-xs font-mono text-muted-foreground shrink-0">#{c.test_number}</span>
+                              <span className="text-sm font-medium truncate">{c.test_name}</span>
+                            </button>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <span className="text-[10px] text-muted-foreground">{c.category}{c.subcategory ? ` · ${c.subcategory}` : ""}</span>
+                              <span className={cn(
+                                "text-[10px] font-medium rounded-full px-2 py-0.5",
+                                c.priority === "HIGH" ? "bg-red-100 text-red-700 dark:bg-red-950/40 dark:text-red-400" :
+                                c.priority === "LOW" ? "bg-muted text-muted-foreground" :
+                                "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400"
+                              )}>{c.priority}</span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setManageEditId(isEditing ? null : c.id);
+                                  setManageEditForm({
+                                    test_number: c.test_number,
+                                    category: c.category,
+                                    subcategory: c.subcategory ?? "",
+                                    test_name: c.test_name,
+                                    priority: c.priority,
+                                    scenario_depth: c.scenario_depth as "broad" | "detailed",
+                                    steps: c.steps ?? "",
+                                    setup_steps: c.setup_steps ?? "",
+                                    context_note: c.context_note ?? "",
+                                    expected_result: c.expected_result ?? "",
+                                    start_url: c.start_url ?? "",
+                                  });
+                                  if (!isEditing) setExpandedCase(c.id);
+                                }}
+                                className={cn(
+                                  "flex items-center gap-1 text-xs px-2 py-1 rounded-md border transition-colors",
+                                  isEditing
+                                    ? "border-primary bg-primary/5 text-primary"
+                                    : "border-border text-muted-foreground hover:text-foreground hover:border-foreground/30"
+                                )}
+                              >
+                                <Pencil className="h-3 w-3" />
+                                Edit
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => { if (confirm(`Delete "${c.test_name}"?`)) void deleteCase(c.id); }}
+                                disabled={manageDeleting === c.id}
+                                className="flex items-center gap-1 text-xs px-2 py-1 rounded-md border border-border text-muted-foreground hover:text-red-600 hover:border-red-300 transition-colors"
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Expanded: view or edit */}
+                          {isExpanded && (
+                            <div className="border-t border-border px-4 py-4 space-y-3 bg-muted/20">
+                              {isEditing ? (
+                                <>
+                                  <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1">
+                                      <Label className="text-xs text-muted-foreground">Test number</Label>
+                                      <Input value={manageEditForm.test_number ?? ""} onChange={(e) => setManageEditForm((f) => ({ ...f, test_number: e.target.value }))} className="text-sm h-8" />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <Label className="text-xs text-muted-foreground">Category</Label>
+                                      <Input value={manageEditForm.category ?? ""} onChange={(e) => setManageEditForm((f) => ({ ...f, category: e.target.value }))} className="text-sm h-8" />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <Label className="text-xs text-muted-foreground">Subcategory</Label>
+                                      <Input value={(manageEditForm.subcategory as string) ?? ""} onChange={(e) => setManageEditForm((f) => ({ ...f, subcategory: e.target.value }))} className="text-sm h-8" />
+                                    </div>
+                                    <div className="space-y-1">
+                                      <Label className="text-xs text-muted-foreground">Priority</Label>
+                                      <select value={manageEditForm.priority ?? "MEDIUM"} onChange={(e) => setManageEditForm((f) => ({ ...f, priority: e.target.value }))} className="w-full h-8 rounded-md border border-input bg-background px-2 text-sm">
+                                        <option value="HIGH">HIGH</option>
+                                        <option value="MEDIUM">MEDIUM</option>
+                                        <option value="LOW">LOW</option>
+                                      </select>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <Label className="text-xs text-muted-foreground">Depth</Label>
+                                      <select value={manageEditForm.scenario_depth ?? "broad"} onChange={(e) => setManageEditForm((f) => ({ ...f, scenario_depth: e.target.value }))} className="w-full h-8 rounded-md border border-input bg-background px-2 text-sm">
+                                        <option value="broad">Broad</option>
+                                        <option value="detailed">Detailed</option>
+                                      </select>
+                                    </div>
+                                    <div className="space-y-1">
+                                      <Label className="text-xs text-muted-foreground">Start URL</Label>
+                                      <Input value={(manageEditForm.start_url as string) ?? ""} onChange={(e) => setManageEditForm((f) => ({ ...f, start_url: e.target.value }))} className="text-sm h-8 font-mono" />
+                                    </div>
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-xs text-muted-foreground">Test name</Label>
+                                    <Input value={manageEditForm.test_name ?? ""} onChange={(e) => setManageEditForm((f) => ({ ...f, test_name: e.target.value }))} className="text-sm h-8" />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-xs text-muted-foreground">Context note</Label>
+                                    <Textarea value={(manageEditForm.context_note as string) ?? ""} onChange={(e) => setManageEditForm((f) => ({ ...f, context_note: e.target.value }))} className="resize-none h-16 text-sm" />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-xs text-muted-foreground">Setup steps</Label>
+                                    <Textarea value={(manageEditForm.setup_steps as string) ?? ""} onChange={(e) => setManageEditForm((f) => ({ ...f, setup_steps: e.target.value }))} className="resize-none h-14 text-sm" />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-xs text-muted-foreground">Steps</Label>
+                                    <Textarea value={(manageEditForm.steps as string) ?? ""} onChange={(e) => setManageEditForm((f) => ({ ...f, steps: e.target.value }))} className="resize-none h-28 text-sm font-mono" />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <Label className="text-xs text-muted-foreground">Expected result</Label>
+                                    <Textarea value={(manageEditForm.expected_result as string) ?? ""} onChange={(e) => setManageEditForm((f) => ({ ...f, expected_result: e.target.value }))} className="resize-none h-14 text-sm" />
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <Button type="button" size="sm" onClick={() => void saveManageEdit(c.id)} disabled={manageEditSaving} className="flex-1">
+                                      {manageEditSaving ? "Saving…" : "Save changes"}
+                                    </Button>
+                                    <Button type="button" size="sm" variant="outline" onClick={() => setManageEditId(null)} disabled={manageEditSaving}>Cancel</Button>
+                                  </div>
+                                </>
+                              ) : (
+                                <div className="space-y-2 text-sm">
+                                  {c.context_note && <p className="text-muted-foreground"><span className="font-medium text-foreground">What it checks:</span> {c.context_note}</p>}
+                                  {c.setup_steps && <p className="text-muted-foreground"><span className="font-medium text-foreground">Setup:</span> {c.setup_steps}</p>}
+                                  {c.start_url && <p className="text-muted-foreground"><span className="font-medium text-foreground">URL:</span> <span className="font-mono text-xs">{c.start_url}</span></p>}
+                                  {c.steps && (
+                                    <div>
+                                      <p className="font-medium text-foreground mb-1">Steps</p>
+                                      <ol className="list-decimal list-inside space-y-0.5 text-muted-foreground">
+                                        {c.steps.split("\n").filter(Boolean).map((s) => (
+                                          <li key={s} className="text-xs">{s.replace(/^\d+\.\s*/, "")}</li>
+                                        ))}
+                                      </ol>
+                                    </div>
+                                  )}
+                                  {c.expected_result && <p className="text-muted-foreground"><span className="font-medium text-foreground">Expected:</span> {c.expected_result}</p>}
+                                </div>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
           </TabsContent>
         </Tabs>
       </PageShell>
