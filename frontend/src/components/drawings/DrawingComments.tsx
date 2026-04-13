@@ -84,6 +84,7 @@ function DrawingThread({ thread }: { thread: ThreadData }) {
           <Composer
             threadId={thread.id}
             className="lb-composer-alleato"
+            autoFocus
             onComposerSubmit={() => setShowReply(false)}
           />
         </div>

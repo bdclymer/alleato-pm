@@ -93,7 +93,7 @@ function ViewerWithCommentState({
   const handleCommentClick = useCallback((x: number, y: number, page: number) => {
     if (viewerProps.controlledTool === "comment") {
       setPendingPin({ x, y, page });
-      setIsPendingComposerOpen(false);
+      setIsPendingComposerOpen(true);
     } else {
       // "link" and any other tools forward to the parent handler
       parentOnCommentClick?.(x, y, page);
