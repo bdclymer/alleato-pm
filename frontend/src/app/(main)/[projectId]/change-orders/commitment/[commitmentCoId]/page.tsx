@@ -24,6 +24,7 @@ import {
 import { useMasterCostCodes, useCostCodeTypes } from "@/hooks/use-project-cost-codes";
 import { useVerticalMarkup } from "@/hooks/use-vertical-markup";
 import { ContentSectionStack, LabelValueRow, PageShell, SectionRuleHeading } from "@/components/layout";
+import { apiFetch } from "@/lib/api-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -653,16 +654,11 @@ export default function CommitmentCODetailPage() {
   const handleApprove = useCallback(async () => {
     if (!co || !contractId) return;
     try {
-      const res = await fetch(
+      const updated = await apiFetch<CommitmentCOData>(
         `/api/commitments/${contractId}/change-orders/${commitmentCoId}/approve`,
         { method: "POST" },
       );
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error((err as { error?: string }).error || "Failed to approve");
-      }
-      const updated = await res.json();
-      setCo(updated.data ?? updated);
+      setCo(updated);
       toast.success("Change order approved");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to approve");
@@ -678,21 +674,14 @@ export default function CommitmentCODetailPage() {
       return;
     }
     try {
-      // reject route does not exist at canonical path — use the projects path
-      const res = await fetch(
-        `/api/projects/${projectId}/contracts/${contractId}/change-orders/${commitmentCoId}/reject`,
+      const updated = await apiFetch<CommitmentCOData>(
+        `/api/projects/${projectId}/commitment-change-orders/${commitmentCoId}/reject`,
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ rejection_reason: rejectionReason }),
         },
       );
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error((err as { error?: string }).error || "Failed to reject");
-      }
-      const updated = await res.json();
-      setCo(updated.data ?? updated);
+      setCo(updated);
       setShowRejectDialog(false);
       setRejectionReason("");
       toast.success("Change order rejected");

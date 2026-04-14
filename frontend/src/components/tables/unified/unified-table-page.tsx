@@ -1135,10 +1135,11 @@ export function UnifiedTablePage<T>({
                           {hasContextActions ? (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
-                                <button
+                                <Button
                                   type="button"
+                                  variant="ghost"
                                   className={cn(
-                                    "flex items-center gap-1.5 bg-transparent border-0 p-0 font-medium cursor-pointer uppercase tracking-wide",
+                                    "h-auto gap-1.5 p-0 font-medium uppercase tracking-wide",
                                     "text-xs",
                                     "text-muted-foreground",
                                     headerAlignment === "left" ? "justify-start" : "justify-center",
@@ -1150,7 +1151,7 @@ export function UnifiedTablePage<T>({
                                 >
                                   <span>{column.label}</span>
                                   {isSortable && renderSortIcon(column.id)}
-                                </button>
+                                </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="start">
                                 {isSortable && (
@@ -1660,15 +1661,17 @@ export function UnifiedTablePage<T>({
 
               {/* Collapse/expand toggle button */}
               {panelCollapsible && panelMounted && (
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="icon"
                   onClick={togglePanelCollapsed}
                   className={cn(
-                    "hidden lg:flex items-center justify-center",
+                    "hidden lg:flex",
                     "fixed z-20 top-1/2 -translate-y-1/2",
-                    "h-10 w-5 bg-transparent border-0 outline-none",
+                    "h-10 w-5",
                     "text-muted-foreground",
-                    "cursor-pointer transition-colors",
+                    "transition-colors",
                     "opacity-0 hover:opacity-100 focus-visible:opacity-100",
                   )}
                   style={{
@@ -1689,7 +1692,7 @@ export function UnifiedTablePage<T>({
                       <PanelRightClose className="h-3 w-3" />
                     )}
                   </span>
-                </button>
+                </Button>
               )}
             </div>
           </>

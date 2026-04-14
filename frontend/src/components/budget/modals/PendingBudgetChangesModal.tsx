@@ -42,6 +42,7 @@ export function PendingBudgetChangesModal({
 }: PendingBudgetChangesModalProps) {
   const [changeOrders, setChangeOrders] = useState<PendingChangeOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -51,15 +52,20 @@ export function PendingBudgetChangesModal({
 
   const fetchPendingChanges = async () => {
     setLoading(true);
+    setError(null);
     try {
       const url = `/api/projects/${projectId}/budget/change-orders?budgetLineId=${budgetLineId}&status=pending`;
       const response = await fetch(url);
-      if (response.ok) {
-        const data = await response.json();
-        setChangeOrders(data.changeOrders || []);
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "Failed to fetch pending budget changes");
       }
+      const data = await response.json();
+      setChangeOrders(data.changeOrders || []);
     } catch (error) {
       console.error("Failed to fetch pending budget changes:", error);
+      setError(error instanceof Error ? error.message : "Failed to fetch pending budget changes");
+      setChangeOrders([]);
     } finally {
       setLoading(false);
     }
@@ -163,6 +169,15 @@ export function PendingBudgetChangesModal({
                     className="px-3 py-10 text-center text-muted-foreground"
                   >
                     Loading pending changes...
+                  </td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td
+                    colSpan={6}
+                    className="px-3 py-10 text-center text-destructive"
+                  >
+                    {error}
                   </td>
                 </tr>
               ) : changeOrders.length === 0 ? (

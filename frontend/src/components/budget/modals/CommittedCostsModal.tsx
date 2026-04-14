@@ -46,6 +46,7 @@ export function CommittedCostsModal({
 }: CommittedCostsModalProps) {
   const [commitments, setCommitments] = useState<Commitment[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -55,15 +56,20 @@ export function CommittedCostsModal({
 
   const fetchCommitments = async () => {
     setLoading(true);
+    setError(null);
     try {
-      const url = `/api/projects/${projectId}/budget/commitments?budgetLineId=${budgetLineId}&status=approved,complete`;
+      const url = `/api/projects/${projectId}/budget/commitments?budgetLineId=${budgetLineId}&costCode=${encodeURIComponent(costCode)}&status=approved,complete`;
       const response = await fetch(url);
-      if (response.ok) {
-        const data = await response.json();
-        setCommitments(data.commitments || []);
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "Failed to fetch committed costs");
       }
+      const data = await response.json();
+      setCommitments(data.commitments || []);
     } catch (error) {
       console.error("Failed to fetch committed costs:", error);
+      setError(error instanceof Error ? error.message : "Failed to fetch committed costs");
+      setCommitments([]);
     } finally {
       setLoading(false);
     }
@@ -133,6 +139,15 @@ export function CommittedCostsModal({
                     className="px-3 py-10 text-center text-muted-foreground"
                   >
                     Loading commitments...
+                  </td>
+                </tr>
+              ) : error ? (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="px-3 py-10 text-center text-destructive"
+                  >
+                    {error}
                   </td>
                 </tr>
               ) : commitments.length === 0 ? (

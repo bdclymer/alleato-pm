@@ -10,6 +10,11 @@ function normalizeOptionalField<T extends string | null | undefined>(value: T): 
   return typeof value === "string" && value.trim() === "" ? null : value ?? null;
 }
 
+// Persist the same fallback invoice number that the UI displays so downstream exports stay consistent.
+function buildGeneratedInvoiceNumber(invoiceId: number): string {
+  return `INV-${invoiceId}`;
+}
+
 // POST /api/projects/[projectId]/invoicing/owner
 // Create a new owner invoice for a project
 export const POST = withApiGuardrails<{ projectId: string }>(
@@ -68,6 +73,20 @@ export const POST = withApiGuardrails<{ projectId: string }>(
 
     if (insertError) {
       return apiErrorResponse(insertError);
+    }
+
+    if (!invoice.invoice_number) {
+      const generatedInvoiceNumber = buildGeneratedInvoiceNumber(invoice.id);
+      const { error: updateError } = await supabase
+        .from("owner_invoices")
+        .update({ invoice_number: generatedInvoiceNumber })
+        .eq("id", invoice.id);
+
+      if (updateError) {
+        return apiErrorResponse(updateError);
+      }
+
+      invoice.invoice_number = generatedInvoiceNumber;
     }
 
     return NextResponse.json({ data: invoice }, { status: 201 });

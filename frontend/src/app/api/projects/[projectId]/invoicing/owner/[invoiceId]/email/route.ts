@@ -62,18 +62,20 @@ export const POST = withApiGuardrails<{ projectId: string; invoiceId: string }>(
 
     const invoiceIdNum = parseInt(invoiceId, 10);
 
-    const data = await fetchInvoicePdfData(
+    const result = await fetchInvoicePdfData(
       supabase,
       projectIdNum,
       invoiceIdNum,
     );
-    if (!data) {
+    if (result.error || !result.data) {
       throw new GuardrailError({
         code: "ROUTE_BINDING_MISSING",
         where: "projects/[projectId]/invoicing/owner/[invoiceId]/email#POST",
-        message: "Invoice not found.",
+        message: result.error?.message || "Invoice not found.",
       });
     }
+
+    const data = result.data;
 
     const invoiceNumber = data.invoice_number || `INV-${data.id}`;
     const subject = body.subject?.trim() || `Invoice #${invoiceNumber}`;

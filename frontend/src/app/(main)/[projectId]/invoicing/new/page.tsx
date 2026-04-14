@@ -14,6 +14,7 @@ import { DevAutoFillButton } from "@/hooks/use-dev-autofill";
 import { TextField } from "@/components/forms/TextField";
 import { SelectField } from "@/components/forms/SelectField";
 import { DateField } from "@/components/forms/DateField";
+import { apiFetch } from "@/lib/api-client";
 
 const createInvoiceSchema = z.object({
   prime_contract_id: z.string().min(1, "Contract is required"),
@@ -29,6 +30,27 @@ interface ContractOption {
   id: string;
   contract_number: string;
   title: string | null;
+}
+
+interface ContractsResponse {
+  data?: ContractOption[];
+}
+
+// Normalize optional text values before submitting them to the API.
+function normalizeOptionalValue(value?: string) {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : null;
+}
+
+// Build a Postgres-safe create payload so blank form inputs become nulls instead of invalid dates.
+function buildCreateInvoicePayload(values: CreateInvoiceValues) {
+  return {
+    prime_contract_id: values.prime_contract_id,
+    invoice_number: normalizeOptionalValue(values.invoice_number),
+    period_start: normalizeOptionalValue(values.period_start),
+    period_end: normalizeOptionalValue(values.period_end),
+    status: values.status,
+  };
 }
 
 function toDateValue(value?: string) {
@@ -67,12 +89,12 @@ export default function NewInvoicePage() {
   useEffect(() => {
     async function loadContracts() {
       try {
-        const res = await fetch(`/api/projects/${projectId}/contracts`);
-        if (!res.ok) throw new Error("Failed to load contracts");
-        const data = await res.json();
-        setContracts(data.data ?? data ?? []);
-      } catch {
-        toast.error("Failed to load contracts");
+        const data = await apiFetch<ContractsResponse | ContractOption[]>(
+          `/api/projects/${projectId}/contracts`,
+        );
+        setContracts(Array.isArray(data) ? data : (data.data ?? []));
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Failed to load contracts");
       } finally {
         setIsLoadingContracts(false);
       }
@@ -100,16 +122,11 @@ export default function NewInvoicePage() {
   async function onSubmit(values: CreateInvoiceValues) {
     setIsSubmitting(true);
     try {
-      const res = await fetch(`/api/projects/${projectId}/invoicing/owner`, {
+      // Sensitive: this submits owner invoice data that persists to the project ledger.
+      await apiFetch(`/api/projects/${projectId}/invoicing/owner`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(values),
+        body: JSON.stringify(buildCreateInvoicePayload(values)),
       });
-
-      if (!res.ok) {
-        const body = await res.json().catch(() => ({}));
-        throw new Error(body.error ?? "Failed to create invoice");
-      }
 
       toast.success("Invoice created successfully");
       router.push(`/${projectId}/invoicing`);
@@ -135,22 +152,32 @@ export default function NewInvoicePage() {
           className="border-b-0 pb-0"
         >
           <FormGrid columns={2}>
-            <SelectField
-              label="Contract"
-              required
-              fullWidth
-              value={values.prime_contract_id || undefined}
-              onValueChange={(value) =>
-                form.setValue("prime_contract_id", value, { shouldValidate: true })
-              }
-              error={form.formState.errors.prime_contract_id?.message}
-              disabled={isLoadingContracts}
-              placeholder={isLoadingContracts ? "Loading contracts..." : "Select a contract"}
-              options={contracts.map((contract) => ({
-                value: String(contract.id),
-                label: `${contract.contract_number}${contract.title ? ` — ${contract.title}` : ""}`,
-              }))}
-            />
+            {isLoadingContracts ? (
+              <TextField
+                label="Contract"
+                required
+                fullWidth
+                value="Loading contracts..."
+                disabled
+                readOnly
+              />
+            ) : (
+              <SelectField
+                label="Contract"
+                required
+                fullWidth
+                value={values.prime_contract_id || contracts[0]?.id}
+                onValueChange={(value) =>
+                  form.setValue("prime_contract_id", value, { shouldValidate: true })
+                }
+                error={form.formState.errors.prime_contract_id?.message}
+                placeholder="Select a contract"
+                options={contracts.map((contract) => ({
+                  value: String(contract.id),
+                  label: `${contract.contract_number}${contract.title ? ` — ${contract.title}` : ""}`,
+                }))}
+              />
+            )}
 
             <TextField
               label="Invoice Number"

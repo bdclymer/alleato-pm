@@ -248,13 +248,13 @@ export function buildDocumentTableColumns(opts?: {
               </Button>
             </PopoverTrigger>
           <PopoverContent
-            className="w-[240px] p-0"
+            className="w-60 p-0"
             align="start"
             onOpenAutoFocus={(e) => e.preventDefault()}
           >
             <Command>
               <CommandInput placeholder="Search projects..." />
-              <CommandList className="max-h-[200px] overflow-y-auto">
+              <CommandList className="max-h-48 overflow-y-auto">
                 <CommandEmpty>No projects found.</CommandEmpty>
                 <CommandGroup>
                   <CommandItem

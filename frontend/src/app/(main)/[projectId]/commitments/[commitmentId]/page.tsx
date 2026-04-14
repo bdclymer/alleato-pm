@@ -29,6 +29,7 @@ import { SubcontractorSovTab } from "@/components/commitments/tabs/Subcontractor
 import { DocumentDeliveryDialog } from "@/components/documents/DocumentDeliveryDialog";
 import { KpiBlock } from "@/components/ds/kpi";
 import { StatusBadge } from "@/components/ds/status-badge";
+import { ToggleField } from "@/components/forms";
 import {
   ContentSectionStack,
   LabelValueRow,
@@ -55,6 +56,7 @@ import {
   useCommitmentDetail,
 } from "@/hooks/use-commitments-query";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
+import { apiFetch } from "@/lib/api-client";
 import { formatCurrency } from "@/lib/utils";
 import { formatDate } from "@/lib/table-config/formatters";
 import type { Commitment } from "@/types/financial";
@@ -381,13 +383,13 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
   const exclusionText = commitment.exclusions?.trim() || "";
 
   return (
-    <ContentSectionStack className="pb-20 space-y-16">
-      <section>
-        <div className="grid grid-cols-[minmax(0,1fr)_minmax(340px,420px)] gap-x-16 gap-y-10">
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-x-20 gap-y-8">
+    <ContentSectionStack className="space-y-12 pb-20">
+      <section className="space-y-10">
+        <div className="grid gap-x-16 gap-y-10 xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.85fr)]">
+          <div className="space-y-10">
+            <div className="grid gap-x-16 gap-y-10 lg:grid-cols-2">
               <div className="space-y-6">
-                <SectionRuleHeading label="Details" className="[&_span]:text-primary" />
+                <SectionRuleHeading label="Details" />
                 <dl className="space-y-4 text-sm">
                   <LabelValueRow label={isPO ? "PO #" : "Subcontract #"} missing={!safeNumber(commitment.number)}>
                     {safeNumber(commitment.number) || "Not set"}
@@ -438,23 +440,28 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
               </div>
 
               <div className="space-y-6">
-                <SectionRuleHeading label="Contract Settings" className="[&_span]:text-primary" />
+                <SectionRuleHeading label="Contract Settings" />
                 <dl className="space-y-4 text-sm">
                   <LabelValueRow label="Default Retainage">
                     {commitment.retention_percentage ?? 0}%
-                  </LabelValueRow>
-                  <LabelValueRow label="Executed">
-                    {commitment.executed === true ? "Yes" : commitment.executed === false ? "No" : "—"}
                   </LabelValueRow>
                   <LabelValueRow label="Created By" missing={!commitment.created_by_name && !commitment.created_by}>
                     {commitment.created_by_name || "—"}
                   </LabelValueRow>
                 </dl>
+                <div className="space-y-4">
+                  <ToggleField
+                    label="Executed"
+                    hint="Shows whether a signed contract has been fully executed."
+                    checked={Boolean(commitment.executed)}
+                    disabled
+                  />
+                </div>
               </div>
             </div>
 
-            <div className="space-y-4">
-              <SectionRuleHeading label="Inclusions and Exclusions" className="[&_span]:text-primary" />
+            <div className="space-y-5">
+              <SectionRuleHeading label="Inclusions and Exclusions" />
               <dl className="space-y-4 text-sm">
                 <LabelValueRow
                   label="Inclusions"
@@ -518,7 +525,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
 
           <div className="space-y-10">
             <div className="space-y-4">
-              <SectionRuleHeading label="Key Dates" className="[&_span]:text-primary" />
+              <SectionRuleHeading label="Key Dates" />
               <dl className="space-y-3 text-sm">
                 {!isPO && (
                   <LabelValueRow label="Start Date">
@@ -543,16 +550,22 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
               </dl>
             </div>
 
-            <div className="space-y-4">
-              <SectionRuleHeading label="Privacy" className="[&_span]:text-primary" />
-              <dl className="space-y-3 text-sm">
-                <LabelValueRow label="Visibility">
-                  {commitment.private ? "Private" : "Public"}
-                </LabelValueRow>
-                <LabelValueRow label="Non-Admin Can View SOV Items">
-                  {commitment.allow_non_admin_view_sov_items ? "Yes" : "No"}
-                </LabelValueRow>
-              </dl>
+            <div className="space-y-5">
+              <SectionRuleHeading label="Access and Visibility" />
+              <div className="space-y-4">
+                <ToggleField
+                  label="Private Commitment"
+                  hint="Private commitments are restricted to permitted project members."
+                  checked={commitment.private}
+                  disabled
+                />
+                <ToggleField
+                  label="Allow Non-Admin SOV Visibility"
+                  hint="Shows whether standard users can view schedule of values amounts."
+                  checked={commitment.allow_non_admin_view_sov_items}
+                  disabled
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -560,7 +573,7 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
 
       {/* Schedule of Values */}
       <div className="space-y-6">
-        <SectionRuleHeading label="Schedule of Values" className="[&_span]:text-primary" />
+        <SectionRuleHeading label="Schedule of Values" />
         <ScheduleOfValuesTab
           lineItems={commitment.line_items || []}
           projectId={projectId}
@@ -573,13 +586,13 @@ function GeneralTab({ commitment, projectId, commitmentId, onImportComplete }: G
 
       {/* Contract Summary Report */}
       <div className="space-y-4">
-        <SectionRuleHeading label="Contract Summary" className="[&_span]:text-primary" />
+        <SectionRuleHeading label="Contract Summary" />
         <ContractSummaryReportHorizontal commitment={commitment} />
       </div>
 
       {/* Attachments */}
       <div className="space-y-6">
-        <SectionRuleHeading label="Attachments" className="[&_span]:text-primary" />
+        <SectionRuleHeading label="Attachments" />
         <AttachmentsTab commitmentId={commitmentId} />
       </div>
     </ContentSectionStack>
@@ -734,13 +747,11 @@ export default function CommitmentDetailPage() {
   const fetchSubcontractorSovCount = useCallback(async () => {
     if (!commitmentId || !projectId) return;
     try {
-      const response = await fetch(
+      const payload = await apiFetch<{
+        data?: { lineItems?: Array<{ id: string }> };
+      }>(
         `/api/projects/${projectId}/commitments/${commitmentId}/subcontractor-sov`,
       );
-      if (!response.ok) return;
-      const payload = (await response.json()) as {
-        data?: { lineItems?: Array<{ id: string }> };
-      };
       setSubcontractorSovCount(payload.data?.lineItems?.length ?? 0);
     } catch {
       // no-op
@@ -797,13 +808,9 @@ export default function CommitmentDetailPage() {
       return;
 
     try {
-      const res = await fetch(`/api/commitments/${commitmentId}`, {
+      await apiFetch(`/api/commitments/${commitmentId}`, {
         method: "DELETE",
       });
-      if (!res.ok) {
-        const err = (await res.json()) as { message?: string };
-        throw new Error(err.message || "Failed to delete commitment");
-      }
       queryClient.invalidateQueries({ queryKey: commitmentKeys.lists() });
       queryClient.removeQueries({
         queryKey: commitmentKeys.detail(commitmentId),
@@ -959,18 +966,18 @@ export default function CommitmentDetailPage() {
 
   return (
     <PageShell
-      variant="dashboard"
+      variant="detailWide"
       title={commitment.title || displayNumber || "Commitment"}
       description={description}
       actions={headerActions}
       statusBadge={<StatusBadge status={commitment.status ? commitment.status.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase()) : "Draft"} />}
       onBack={() => router.back()}
-      contentClassName="space-y-4"
+      contentClassName="space-y-0"
     >
 
       <PageTabs
         variant="inline"
-        className="border-b border-border"
+        className="border-b border-border/60"
         tabs={[
           { label: "General", href: "general", isActive: activeTab === "general" },
           { label: sovLabel, href: "sov", isActive: activeTab === "sov" },
@@ -995,7 +1002,7 @@ export default function CommitmentDetailPage() {
         onTabClick={(href) => setActiveTab(href)}
       />
 
-      <div className="pt-2">
+      <div className="pt-8">
         {activeTab === "general" && (
           <GeneralTab
             commitment={commitment}

@@ -12,6 +12,7 @@ import {
   GitPullRequest,
   Plus,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 /* ============================================================
    TYPES
@@ -204,35 +205,41 @@ function LinearIssueGroupSection({
   return (
     <div>
       {/* Group Header */}
-      <button
-        onClick={() => setIsExpanded(!isExpanded)}
-        className="flex items-center gap-2 w-full px-4 py-1.5 text-left hover:bg-muted/40 transition-colors group sticky top-0 bg-background z-10"
-      >
-        <ChevronRight
-          className={cn(
-            "w-3.5 h-3.5 text-muted-foreground/60 transition-transform duration-150",
-            isExpanded && "rotate-90"
-          )}
-        />
-        <StatusIcon className={cn("w-3.5 h-3.5", statusConfig.colorClass)} />
-        <span className="text-xs font-medium text-foreground">
-          {group.label}
-        </span>
-        <span className="text-xs text-muted-foreground tabular-nums font-normal">
-          {group.issues.length}
-        </span>
-        <div className="flex-1" />
-        <button
+      <div className="group sticky top-0 z-10 flex items-center bg-background pr-2">
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => setIsExpanded(!isExpanded)}
+          className="h-auto flex-1 justify-start gap-2 px-4 py-1.5 text-left hover:bg-muted/40"
+        >
+          <ChevronRight
+            className={cn(
+              "h-3.5 w-3.5 text-muted-foreground/60 transition-transform duration-150",
+              isExpanded && "rotate-90",
+            )}
+          />
+          <StatusIcon className={cn("h-3.5 w-3.5", statusConfig.colorClass)} />
+          <span className="text-xs font-medium text-foreground">
+            {group.label}
+          </span>
+          <span className="text-xs font-normal tabular-nums text-muted-foreground">
+            {group.issues.length}
+          </span>
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
           onClick={(e) => {
             e.stopPropagation();
             onAddIssue?.(group.status);
           }}
-          className="opacity-0 group-hover:opacity-100 p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-all"
+          className="h-6 w-6 opacity-0 transition-all group-hover:opacity-100 hover:bg-muted hover:text-foreground"
           title="Add issue"
         >
-          <Plus className="w-3 h-3" />
-        </button>
-      </button>
+          <Plus className="h-3 w-3" />
+        </Button>
+      </div>
 
       {/* Issues */}
       {isExpanded && (
@@ -266,7 +273,7 @@ function LinearIssueRow({ issue, onClick }: LinearIssueRowProps) {
   return (
     <div
       onClick={onClick}
-      className="flex items-center gap-0 px-4 h-[34px] hover:bg-muted/40 cursor-pointer group transition-colors border-b border-border/30 last:border-b-0"
+      className="group flex h-8 items-center gap-0 border-b border-border/30 px-4 transition-colors last:border-b-0 hover:bg-muted/40"
     >
       {/* Drag Handle — hidden until hover */}
       <div className="w-5 opacity-0 group-hover:opacity-100 text-muted-foreground/40 cursor-grab transition-opacity flex-shrink-0 flex items-center">
@@ -275,7 +282,7 @@ function LinearIssueRow({ issue, onClick }: LinearIssueRowProps) {
 
       {/* Issue ID */}
       {issue.identifier && (
-        <span className="text-xs text-muted-foreground/70 font-mono w-[58px] flex-shrink-0 pr-1 tabular-nums">
+        <span className="w-14 flex-shrink-0 pr-1 font-mono text-xs tabular-nums text-muted-foreground/70">
           {issue.identifier}
         </span>
       )}
@@ -394,12 +401,14 @@ export function LinearFilterBar({
       <span className="text-sm text-muted-foreground tabular-nums">
         {totalIssues}
       </span>
-      <button
+      <Button
+        type="button"
+        variant="ghost"
         onClick={onFilterClick}
-        className="ml-2 px-2 py-1 text-xs text-muted-foreground hover:text-foreground hover:bg-muted rounded border border-border/50 transition-colors"
+        className="ml-2 h-auto rounded border border-border/50 px-2 py-1 text-xs text-muted-foreground hover:bg-muted hover:text-foreground"
       >
         + Filter
-      </button>
+      </Button>
     </div>
   );
 }

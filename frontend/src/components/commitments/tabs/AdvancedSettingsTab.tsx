@@ -4,15 +4,8 @@ import { useState, useEffect, useCallback, memo } from "react";
 import { toast } from "sonner";
 import { Save, Loader2 } from "lucide-react";
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { FormSection, ToggleField } from "@/components/forms";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
@@ -24,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Text } from "@/components/ds/text";
+import { ApiError, apiFetch } from "@/lib/api-client";
 
 interface CommitmentAdvancedSettings {
   // Invoicing Settings
@@ -92,23 +86,26 @@ export const AdvancedSettingsTab = memo(function AdvancedSettingsTab({
     setIsLoading(true);
 
     try {
-      const response = await fetch(
+      const data = await apiFetch<
+        CommitmentAdvancedSettings | { data?: CommitmentAdvancedSettings }
+      >(
         `/api/commitments/${commitmentId}/advanced-settings`
       );
-
-      if (response.ok) {
-        const data = await response.json();
-        const loadedSettings = data.data || data || DEFAULT_SETTINGS;
-        setSettings(loadedSettings);
-        setOriginalSettings(loadedSettings);
-      } else if (response.status === 404) {
+      const loadedSettings =
+        ("data" in data ? data.data : data) ?? DEFAULT_SETTINGS;
+      const normalizedSettings: CommitmentAdvancedSettings = {
+        ...DEFAULT_SETTINGS,
+        ...loadedSettings,
+      };
+      setSettings(normalizedSettings);
+      setOriginalSettings(normalizedSettings);
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 404) {
         // No settings saved yet, use defaults
         setSettings(DEFAULT_SETTINGS);
         setOriginalSettings(DEFAULT_SETTINGS);
-      } else {
-        throw new Error("Failed to load settings");
+        return;
       }
-    } catch (error) {
       console.error("Error loading settings:", error);
       // Use defaults on error
       setSettings(DEFAULT_SETTINGS);
@@ -145,20 +142,13 @@ export const AdvancedSettingsTab = memo(function AdvancedSettingsTab({
     setIsSaving(true);
 
     try {
-      const response = await fetch(
+      await apiFetch(
         `/api/commitments/${commitmentId}/advanced-settings`,
         {
           method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-          },
           body: JSON.stringify(settings),
         }
       );
-
-      if (!response.ok) {
-        throw new Error("Failed to save settings");
-      }
 
       setOriginalSettings(settings);
       setHasChanges(false);
@@ -178,134 +168,88 @@ export const AdvancedSettingsTab = memo(function AdvancedSettingsTab({
 
   if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Advanced Settings</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-6">
+      <div className="space-y-6">
+        <div className="space-y-2">
+          <Skeleton className="h-5 w-40" />
+          <Skeleton className="h-4 w-72" />
+        </div>
+        <div className="space-y-6">
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-10 w-full" />
           <Skeleton className="h-10 w-full" />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Invoicing Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Invoicing Settings</CardTitle>
-          <CardDescription>
-            Configure how invoices work for this commitment
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="enable_invoices"
-                checked={settings.enable_invoices}
-                onCheckedChange={(checked) =>
-                  updateSetting("enable_invoices", !!checked)
-                }
-              />
-              <Label htmlFor="enable_invoices">Enable Invoices</Label>
-            </div>
+    <div className="space-y-8">
+      <FormSection
+        title="Invoicing Settings"
+        description="Configure how invoices, comments, and payment controls behave for this commitment."
+        showDivider={false}
+      >
+        <div className="space-y-4">
+          <ToggleField
+            label="Enable invoices"
+            hint="Allows invoice creation and invoice-driven workflows for this commitment."
+            checked={settings.enable_invoices}
+            onCheckedChange={(checked) => updateSetting("enable_invoices", checked)}
+          />
+          <ToggleField
+            label="Enable comments"
+            hint="Keeps collaboration notes and approval context attached to commitment invoices."
+            checked={settings.enable_comments}
+            onCheckedChange={(checked) => updateSetting("enable_comments", checked)}
+          />
+          <ToggleField
+            label="Enable payments"
+            hint="Turns on payment issuance tracking from this commitment."
+            checked={settings.enable_payments}
+            onCheckedChange={(checked) => updateSetting("enable_payments", checked)}
+          />
+          <ToggleField
+            label="Allow overbilling"
+            hint="Permits invoices that exceed the current commitment value."
+            checked={settings.allow_overbilling}
+            onCheckedChange={(checked) => updateSetting("allow_overbilling", checked)}
+          />
+          <ToggleField
+            label="Show cost codes on invoice PDF"
+            hint="Includes budget and cost code references in exported invoice documents."
+            checked={settings.show_cost_codes_on_pdf}
+            onCheckedChange={(checked) => updateSetting("show_cost_codes_on_pdf", checked)}
+          />
+        </div>
+      </FormSection>
 
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="enable_comments"
-                checked={settings.enable_comments}
-                onCheckedChange={(checked) =>
-                  updateSetting("enable_comments", !!checked)
-                }
-              />
-              <Label htmlFor="enable_comments">Enable Comments</Label>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="enable_payments"
-                checked={settings.enable_payments}
-                onCheckedChange={(checked) =>
-                  updateSetting("enable_payments", !!checked)
-                }
-              />
-              <Label htmlFor="enable_payments">Enable Payments</Label>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="allow_overbilling"
-                checked={settings.allow_overbilling}
-                onCheckedChange={(checked) =>
-                  updateSetting("allow_overbilling", !!checked)
-                }
-              />
-              <Label htmlFor="allow_overbilling">Allow Over-billing</Label>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="show_cost_codes_on_pdf"
-                checked={settings.show_cost_codes_on_pdf}
-                onCheckedChange={(checked) =>
-                  updateSetting("show_cost_codes_on_pdf", !!checked)
-                }
-              />
-              <Label htmlFor="show_cost_codes_on_pdf">
-                Show Cost Codes on Invoice PDF
-              </Label>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Retainage Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Retainage Settings</CardTitle>
-          <CardDescription>
-            Configure retainage options for this commitment
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="enable_completed_work_retainage"
-                checked={settings.enable_completed_work_retainage}
-                onCheckedChange={(checked) =>
-                  updateSetting("enable_completed_work_retainage", !!checked)
-                }
-              />
-              <Label htmlFor="enable_completed_work_retainage">
-                Enable Completed Work Retainage
-              </Label>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="enable_stored_materials_retainage"
-                checked={settings.enable_stored_materials_retainage}
-                onCheckedChange={(checked) =>
-                  updateSetting("enable_stored_materials_retainage", !!checked)
-                }
-              />
-              <Label htmlFor="enable_stored_materials_retainage">
-                Enable Stored Materials Retainage
-              </Label>
-            </div>
-          </div>
-
-          <div className="max-w-xs">
+      <FormSection
+        title="Retainage Settings"
+        description="Set how retainage is applied and the default percentage used for billing."
+      >
+        <div className="space-y-4">
+          <ToggleField
+            label="Enable completed work retainage"
+            hint="Applies retainage to completed work billings."
+            checked={settings.enable_completed_work_retainage}
+            onCheckedChange={(checked) =>
+              updateSetting("enable_completed_work_retainage", checked)
+            }
+          />
+          <ToggleField
+            label="Enable stored materials retainage"
+            hint="Applies retainage to stored materials billing lines."
+            checked={settings.enable_stored_materials_retainage}
+            onCheckedChange={(checked) =>
+              updateSetting("enable_stored_materials_retainage", checked)
+            }
+          />
+          <div className="max-w-xs space-y-2">
             <Label htmlFor="default_retainage_percent">
               Default Retainage Percent
             </Label>
-            <div className="flex items-center gap-2 mt-1">
+            <div className="flex items-center gap-2">
               <Input
                 id="default_retainage_percent"
                 type="number"
@@ -323,145 +267,89 @@ export const AdvancedSettingsTab = memo(function AdvancedSettingsTab({
               <Text tone="muted">%</Text>
             </div>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </FormSection>
 
-      {/* SOV Settings - Only for Subcontracts */}
       {commitmentType === "subcontract" && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Schedule of Values Settings</CardTitle>
-            <CardDescription>
-              Configure SOV options for this subcontract
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="enable_subcontractor_sov"
-                  checked={settings.enable_subcontractor_sov}
-                  onCheckedChange={(checked) =>
-                    updateSetting("enable_subcontractor_sov", !!checked)
-                  }
-                />
-                <Label htmlFor="enable_subcontractor_sov">
-                  Enable Subcontractor SOV
-                </Label>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="enable_always_editable_sov"
-                  checked={settings.enable_always_editable_sov}
-                  onCheckedChange={(checked) =>
-                    updateSetting("enable_always_editable_sov", !!checked)
-                  }
-                />
-                <Label htmlFor="enable_always_editable_sov">
-                  Enable Always Editable SOV
-                </Label>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <FormSection
+          title="Schedule of Values Settings"
+          description="Control subcontractor schedule of values behavior for this commitment."
+        >
+          <div className="space-y-4">
+            <ToggleField
+              label="Enable subcontractor SOV"
+              hint="Enables the subcontractor-facing schedule of values workflow."
+              checked={settings.enable_subcontractor_sov}
+              onCheckedChange={(checked) =>
+                updateSetting("enable_subcontractor_sov", checked)
+              }
+            />
+            <ToggleField
+              label="Always editable SOV"
+              hint="Allows SOV edits even after the commitment moves forward in workflow."
+              checked={settings.enable_always_editable_sov}
+              onCheckedChange={(checked) =>
+                updateSetting("enable_always_editable_sov", checked)
+              }
+            />
+          </div>
+        </FormSection>
       )}
 
-      {/* Financial Markup Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Financial Markup Settings</CardTitle>
-          <CardDescription>
-            Configure financial markup options for change orders
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="enable_financial_markup"
-                checked={settings.enable_financial_markup}
-                onCheckedChange={(checked) =>
-                  updateSetting("enable_financial_markup", !!checked)
-                }
-              />
-              <Label htmlFor="enable_financial_markup">
-                Enable Financial Markup
-              </Label>
-            </div>
+      <FormSection
+        title="Financial Markup Settings"
+        description="Control markup behavior and whether markup rules are shown on exported change orders."
+      >
+        <div className="space-y-4">
+          <ToggleField
+            label="Enable financial markup"
+            hint="Turns on commitment markup calculations for downstream change management."
+            checked={settings.enable_financial_markup}
+            onCheckedChange={(checked) =>
+              updateSetting("enable_financial_markup", checked)
+            }
+          />
+          <ToggleField
+            label="Show markup criteria on change order PDF"
+            hint="Includes the markup basis on commitment change order exports."
+            checked={settings.show_markup_criteria_on_pdf}
+            onCheckedChange={(checked) =>
+              updateSetting("show_markup_criteria_on_pdf", checked)
+            }
+            disabled={!settings.enable_financial_markup}
+          />
+        </div>
+      </FormSection>
 
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="show_markup_criteria_on_pdf"
-                checked={settings.show_markup_criteria_on_pdf}
-                onCheckedChange={(checked) =>
-                  updateSetting("show_markup_criteria_on_pdf", !!checked)
-                }
-                disabled={!settings.enable_financial_markup}
-              />
-              <Label
-                htmlFor="show_markup_criteria_on_pdf"
-                className={
-                  !settings.enable_financial_markup
-                    ? "text-muted-foreground"
-                    : ""
-                }
-              >
-                Show Markup Criteria on Change Order PDF
-              </Label>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <FormSection
+        title="Notification Settings"
+        description="Choose which invoice and payment events trigger email notifications."
+      >
+        <div className="space-y-4">
+          <ToggleField
+            label="Send invoice approval notifications"
+            hint="Emails stakeholders when commitment invoices move through approval."
+            checked={settings.send_invoice_approval_notifications}
+            onCheckedChange={(checked) =>
+              updateSetting("send_invoice_approval_notifications", checked)
+            }
+          />
+          <ToggleField
+            label="Send payment notifications"
+            hint="Emails stakeholders when payment activity is recorded."
+            checked={settings.send_payment_notifications}
+            onCheckedChange={(checked) =>
+              updateSetting("send_payment_notifications", checked)
+            }
+          />
+        </div>
+      </FormSection>
 
-      {/* Notification Settings */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Notification Settings</CardTitle>
-          <CardDescription>
-            Configure email notifications for this commitment
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="send_invoice_approval_notifications"
-                checked={settings.send_invoice_approval_notifications}
-                onCheckedChange={(checked) =>
-                  updateSetting("send_invoice_approval_notifications", !!checked)
-                }
-              />
-              <Label htmlFor="send_invoice_approval_notifications">
-                Send Invoice Approval Notifications
-              </Label>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <Checkbox
-                id="send_payment_notifications"
-                checked={settings.send_payment_notifications}
-                onCheckedChange={(checked) =>
-                  updateSetting("send_payment_notifications", !!checked)
-                }
-              />
-              <Label htmlFor="send_payment_notifications">
-                Send Payment Notifications
-              </Label>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Billing Period */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Billing Period</CardTitle>
-          <CardDescription>
-            Set the default billing period for this commitment
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
+      <FormSection
+        title="Billing Period"
+        description="Set the default billing cadence for this commitment."
+      >
+        <div>
           <div className="max-w-xs">
             <Label htmlFor="billing_period">Billing Period</Label>
             <Select
@@ -483,11 +371,10 @@ export const AdvancedSettingsTab = memo(function AdvancedSettingsTab({
               </SelectContent>
             </Select>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </FormSection>
 
-      {/* Actions */}
-      <div className="flex items-center justify-between pt-4 border-t">
+      <div className="flex items-center justify-between border-t border-border/70 pt-4">
         <Button
           variant="outline"
           onClick={handleReset}

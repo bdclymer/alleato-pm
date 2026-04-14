@@ -96,10 +96,10 @@ export function buildKnowledgeTableColumns(options: {
       sortValue: (item) => item.title,
       render: (item) => (
         <div className="min-w-0">
-          <div className="font-medium text-foreground truncate max-w-[400px]">
+          <div className="max-w-96 truncate font-medium text-foreground">
             {item.title}
           </div>
-          <div className="text-xs text-muted-foreground truncate max-w-[400px] mt-0.5">
+          <div className="mt-0.5 max-w-96 truncate text-xs text-muted-foreground">
             {item.content.substring(0, 120)}
             {item.content.length > 120 ? "…" : ""}
           </div>
@@ -125,7 +125,7 @@ export function buildKnowledgeTableColumns(options: {
       label: "Tags",
       defaultVisible: true,
       render: (item) => (
-        <div className="flex flex-wrap gap-1 max-w-[200px]">
+        <div className="flex max-w-48 flex-wrap gap-1">
           {(item.tags ?? []).slice(0, 3).map((tag) => (
             <Badge key={tag} variant="outline" className="text-xs font-normal">
               {tag}

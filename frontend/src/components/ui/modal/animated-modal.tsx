@@ -1,5 +1,6 @@
 "use client";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 import { AnimatePresence, motion } from "framer-motion";
 import React, {
   ReactNode,
@@ -49,15 +50,17 @@ export const ModalTrigger = ({
 }) => {
   const { setOpen } = useModal();
   return (
-    <button
+    <Button
+      type="button"
+      variant="ghost"
       className={cn(
-        "px-4 py-2 rounded-md text-black dark:text-white text-center relative overflow-hidden",
+        "relative overflow-hidden rounded-md px-4 py-2 text-center text-foreground",
         className,
       )}
       onClick={() => setOpen(true)}
     >
       {children}
-    </button>
+    </Button>
   );
 };
 
@@ -194,9 +197,13 @@ const Overlay = ({ className }: { className?: string }) => {
 const CloseIcon = () => {
   const { setOpen } = useModal();
   return (
-    <button
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
       onClick={() => setOpen(false)}
-      className="absolute top-4 right-4 group"
+      className="group absolute right-4 top-4 h-8 w-8"
+      aria-label="Close modal"
     >
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -208,12 +215,12 @@ const CloseIcon = () => {
         strokeWidth="2"
         strokeLinecap="round"
         strokeLinejoin="round"
-        className="text-black dark:text-white h-4 w-4 group-hover:scale-125 group-hover:rotate-3 transition duration-200"
+        className="h-4 w-4 text-foreground transition duration-200 group-hover:rotate-3 group-hover:scale-125"
       >
         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
         <path d="M18 6l-12 12" />
         <path d="M6 6l12 12" />
       </svg>
-    </button>
+    </Button>
   );
 };
