@@ -141,6 +141,21 @@ export function useDropdownData({ projectId }: UseDropdownDataOptions) {
         }
 
         setContracts(contractList);
+
+        // Backfill any commitment vendors that aren't in the vendor list yet.
+        // contract_company_id may not be in project_vendors or marked is_vendor=true,
+        // but we still need to display (and submit) it when a commitment is selected.
+        setVendors((prev) => {
+          const existingIds = new Set(prev.map((v) => v.id));
+          const missing: VendorOption[] = [];
+          for (const c of contractList) {
+            if (c.vendorId && c.vendorName && !existingIds.has(c.vendorId)) {
+              existingIds.add(c.vendorId);
+              missing.push({ id: c.vendorId, vendor_name: c.vendorName });
+            }
+          }
+          return missing.length > 0 ? [...prev, ...missing] : prev;
+        });
       } catch {
         setContracts([]);
       }
