@@ -890,6 +890,7 @@ export default function ProjectContractDetailPage() {
           </div>
       }
     >
+      <div className="space-y-4">
       <PageTabs
         variant="inline"
         tabs={[
@@ -1011,6 +1012,7 @@ export default function ProjectContractDetailPage() {
             contractAdvancedDraft={contractAdvancedDraft} setContract={setContract}
           />
         )}
+      </div>
       </div>
 
       <PrimeContractDialogs

@@ -419,39 +419,16 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
       <section>
         <SectionRuleHeading label="Schedule of Values" className="[&_span]:text-primary" />
 
-        <div className="mt-4 flex items-center justify-end">
-          <div className="flex items-center gap-2">
-            {isSovEditing ? (
-              <>
-                <Button variant="ghost" size="sm" onClick={onCancelSovEdit}>
-                  Cancel
-                </Button>
-                <Button size="sm" onClick={onSaveSovEdit} disabled={isSavingSovChanges}>
-                  {isSavingSovChanges ? "Saving..." : "Save"}
-                </Button>
-              </>
-            ) : null}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="gap-1.5">
-                  <Plus />
-                  Add
-                  <ChevronDown className="text-muted-foreground" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={onAddSovLine}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Line Item
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={onAddSovGroup}>
-                  <Rows3 className="mr-2 h-4 w-4" />
-                  Group
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+        {isSovEditing && (
+          <div className="mt-4 flex items-center justify-end gap-2">
+            <Button variant="ghost" size="sm" onClick={onCancelSovEdit}>
+              Cancel
+            </Button>
+            <Button size="sm" onClick={onSaveSovEdit} disabled={isSavingSovChanges}>
+              {isSavingSovChanges ? "Saving..." : "Save"}
+            </Button>
           </div>
-        </div>
+        )}
 
         <div className="mt-4 space-y-4">
           {isSovEditing && (
@@ -791,28 +768,38 @@ export function PrimeContractOverviewTab(props: PrimeContractOverviewTabProps) {
             </DndContext>
           )}
 
-          {isSovEditing ? (
-            <div className="pt-4">
-              <Button
-                type="button"
-                size="default"
-                className="h-10 gap-2 px-4"
-                onClick={onAddSovLine}
-              >
-                <Plus />
-                Add Line Item
-              </Button>
-            </div>
-          ) : null}
+          <div className="pt-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="gap-1.5">
+                  <Plus />
+                  Add
+                  <ChevronDown className="text-muted-foreground" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start">
+                <DropdownMenuItem onClick={onAddSovLine}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Line Item
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onAddSovGroup}>
+                  <Rows3 className="mr-2 h-4 w-4" />
+                  Group
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
 
           {!lineItemsLoading && displayedSovItems.length > 0 ? (
-            <div className="pt-5">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Total Contract Value
-              </p>
-              <p className="mt-1 text-4xl font-semibold tabular-nums tracking-tight text-foreground">
-                {formatCurrency(displayedSovTotal)}
-              </p>
+            <div className="flex justify-end pt-5">
+              <div className="text-right">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Total Contract Value
+                </p>
+                <p className="mt-1 text-4xl font-semibold tabular-nums tracking-tight text-foreground">
+                  {formatCurrency(displayedSovTotal)}
+                </p>
+              </div>
             </div>
           ) : null}
         </div>
