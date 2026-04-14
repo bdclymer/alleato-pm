@@ -122,7 +122,7 @@ type PendingChangeOrderLinesClient = {
         like: (
           nextColumn: string,
           pattern: string,
-        ) => Promise<{ data: Record<string, unknown>[] | null; error: unknown }>;
+        ) => Promise<{ data: ChangeOrderLineItem[] | null; error: unknown }>;
       };
     };
   };
