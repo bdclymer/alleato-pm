@@ -1,0 +1,121 @@
+import {
+  EMPTY_GRAND_TOTALS,
+  reduceGrandTotals,
+  type BudgetLineItem,
+  type GrandTotals,
+} from "./compute-grand-totals";
+
+function makeLine(overrides: Partial<BudgetLineItem>): BudgetLineItem {
+  return {
+    id: "line-1",
+    description: "Test line",
+    costCode: "01-100",
+    costCodeDescription: "General Conditions",
+    costType: "L",
+    division: "01",
+    divisionTitle: "",
+    subJob: "",
+    originalBudgetAmount: 0,
+    budgetModifications: 0,
+    approvedCOs: 0,
+    revisedBudget: 0,
+    jobToDateCostDetail: 0,
+    directCosts: 0,
+    pendingChanges: 0,
+    projectedBudget: 0,
+    committedCosts: 0,
+    pendingCostChanges: 0,
+    projectedCosts: 0,
+    forecastToComplete: 0,
+    estimatedCostAtCompletion: 0,
+    projectedOverUnder: 0,
+    ...overrides,
+  };
+}
+
+describe("reduceGrandTotals", () => {
+  it("returns all zeros for an empty line-item array", () => {
+    expect(reduceGrandTotals([])).toEqual(EMPTY_GRAND_TOTALS);
+  });
+
+  it("sums every numeric field across multiple lines", () => {
+    const lines: BudgetLineItem[] = [
+      makeLine({
+        originalBudgetAmount: 100,
+        budgetModifications: 10,
+        approvedCOs: 5,
+        revisedBudget: 115,
+        jobToDateCostDetail: 40,
+        directCosts: 30,
+        pendingChanges: 2,
+        projectedBudget: 117,
+        committedCosts: 60,
+        pendingCostChanges: 3,
+        projectedCosts: 93,
+        forecastToComplete: 24,
+        estimatedCostAtCompletion: 117,
+        projectedOverUnder: 0,
+      }),
+      makeLine({
+        originalBudgetAmount: 200,
+        budgetModifications: 20,
+        approvedCOs: 10,
+        revisedBudget: 230,
+        jobToDateCostDetail: 80,
+        directCosts: 70,
+        pendingChanges: 5,
+        projectedBudget: 235,
+        committedCosts: 120,
+        pendingCostChanges: 7,
+        projectedCosts: 197,
+        forecastToComplete: 38,
+        estimatedCostAtCompletion: 235,
+        projectedOverUnder: 0,
+      }),
+    ];
+
+    const totals = reduceGrandTotals(lines);
+
+    const expected: GrandTotals = {
+      originalBudgetAmount: 300,
+      budgetModifications: 30,
+      approvedCOs: 15,
+      revisedBudget: 345,
+      jobToDateCostDetail: 120,
+      directCosts: 100,
+      pendingChanges: 7,
+      projectedBudget: 352,
+      committedCosts: 180,
+      pendingCostChanges: 10,
+      projectedCosts: 290,
+      forecastToComplete: 62,
+      estimatedCostAtCompletion: 352,
+      projectedOverUnder: 0,
+    };
+
+    expect(totals).toEqual(expected);
+  });
+
+  it("does not mutate the EMPTY_GRAND_TOTALS constant between calls", () => {
+    const snapshot = { ...EMPTY_GRAND_TOTALS };
+    reduceGrandTotals([makeLine({ revisedBudget: 999, projectedCosts: 500 })]);
+    expect(EMPTY_GRAND_TOTALS).toEqual(snapshot);
+  });
+
+  it("handles a line that produces a projectedOverUnder", () => {
+    const totals = reduceGrandTotals([
+      makeLine({
+        revisedBudget: 100,
+        projectedBudget: 100,
+        projectedCosts: 120,
+        forecastToComplete: 0,
+        estimatedCostAtCompletion: 120,
+        projectedOverUnder: -20,
+      }),
+    ]);
+
+    expect(totals.projectedOverUnder).toBe(-20);
+    expect(totals.revisedBudget).toBe(100);
+    expect(totals.projectedCosts).toBe(120);
+  });
+});
