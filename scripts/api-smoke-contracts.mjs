@@ -230,6 +230,41 @@ function assertHealthBody(body) {
   );
 }
 
+// ─── Budget forecast contract ───────────────────────────────────────────────
+// Procore-parity columns must be present in the forecast payload. If any of
+// these go missing the Forecasting tab silently drops columns (test 2.7).
+function assertForecastBody(body) {
+  if (!body || typeof body !== "object") return false;
+  const s = body.summary;
+  if (!s || typeof s !== "object") return false;
+  const requiredSummary = [
+    "totalProjectedBudget",
+    "totalProjectedCosts",
+    "totalProjectedCostToComplete",
+    "totalEstimatedCostAtCompletion",
+    "totalProjectedVariance",
+    "variancePercentage",
+  ];
+  if (!requiredSummary.every((k) => typeof s[k] === "number")) return false;
+  if (!Array.isArray(body.forecastByCostCode)) return false;
+  // If there are no items we can't verify per-row shape, but the summary check
+  // above is enough to catch a regression in the response contract.
+  if (body.forecastByCostCode.length === 0) return true;
+  const first = body.forecastByCostCode[0];
+  const requiredItem = [
+    "costCode",
+    "costCodeName",
+    "projectedBudget",
+    "projectedCosts",
+    "projectedCostToComplete",
+    "estimatedCostAtCompletion",
+    "projectedVariance",
+  ];
+  if (!requiredItem.every((k) => k in first)) return false;
+  // Date fields must exist (null is acceptable until schema migration lands)
+  return "forecastStartDate" in first && "forecastEndDate" in first;
+}
+
 // ─── Error envelope contracts ────────────────────────────────────────────────
 function hasStandardErrorEnvelope(body) {
   return (
@@ -301,6 +336,21 @@ async function run() {
     if (path === "/api/health" && status === 200 && !assertHealthBody(body)) {
       console.error(`  FAIL  200  ${method} ${path}  health body shape mismatch`);
       failures.push(`Health body contract failed: ${JSON.stringify(body)}`);
+      continue;
+    }
+
+    // Budget forecast: assert Procore-parity columns are present
+    if (
+      path.endsWith("/budget/forecast") &&
+      status === 200 &&
+      !assertForecastBody(body)
+    ) {
+      console.error(`  FAIL  200  ${method} ${path}  forecast body shape mismatch`);
+      failures.push(
+        `Forecast body contract failed: missing required summary or per-item fields ` +
+          `(totalProjectedCostToComplete, totalEstimatedCostAtCompletion, ` +
+          `projectedCostToComplete, estimatedCostAtCompletion, forecastStartDate, forecastEndDate)`,
+      );
       continue;
     }
 
