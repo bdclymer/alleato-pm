@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 
 import { createClient } from "@/lib/supabase/client";
+import { ToolReferencePanel } from "@/components/domain/testing/ToolReferencePanel";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -1533,6 +1534,13 @@ export default function TestingPage() {
           <span className="text-red-500 font-medium">{results.filter((r) => r.status === "fail").length} ✗</span>
         </div>
       </div>
+
+      {/* Tool reference panel — collapsible, lazy-loaded */}
+      {selectedSuite && (
+        <div className="mb-4">
+          <ToolReferencePanel toolName={selectedSuite.tool_name} />
+        </div>
+      )}
 
       <div className="space-y-6 pb-12">
 

@@ -1,3 +1,4 @@
+Using workdir /Users/meganharrison/Documents/github/alleato-pm
 export type Json =
   | string
   | number
@@ -6487,15 +6488,18 @@ export type Database = {
           invoiced_date: string | null
           is_private: boolean | null
           location: string | null
+          paid_date: string | null
           paid_in_full: boolean | null
           parallel_mode: boolean
           prime_change_order_id: number | null
           reference: string | null
           rejection_reason: string | null
+          request_received_from: string | null
           requested_by: string | null
           requested_date: string
           revision: number | null
           schedule_impact: number | null
+          signed_co_received_date: string | null
           status: string
           title: string | null
           updated_at: string
@@ -6521,15 +6525,18 @@ export type Database = {
           invoiced_date?: string | null
           is_private?: boolean | null
           location?: string | null
+          paid_date?: string | null
           paid_in_full?: boolean | null
           parallel_mode?: boolean
           prime_change_order_id?: number | null
           reference?: string | null
           rejection_reason?: string | null
+          request_received_from?: string | null
           requested_by?: string | null
           requested_date?: string
           revision?: number | null
           schedule_impact?: number | null
+          signed_co_received_date?: string | null
           status?: string
           title?: string | null
           updated_at?: string
@@ -6555,15 +6562,18 @@ export type Database = {
           invoiced_date?: string | null
           is_private?: boolean | null
           location?: string | null
+          paid_date?: string | null
           paid_in_full?: boolean | null
           parallel_mode?: boolean
           prime_change_order_id?: number | null
           reference?: string | null
           rejection_reason?: string | null
+          request_received_from?: string | null
           requested_by?: string | null
           requested_date?: string
           revision?: number | null
           schedule_impact?: number | null
+          signed_co_received_date?: string | null
           status?: string
           title?: string | null
           updated_at?: string
@@ -14503,8 +14513,8 @@ export type Database = {
           id: string
           is_private: boolean
           location: string | null
-          pco_number: string | null
           paid_in_full: boolean
+          pco_number: string | null
           prime_contract_id: string
           project_id: number
           promoted_at: string | null
@@ -14534,8 +14544,8 @@ export type Database = {
           id?: string
           is_private?: boolean
           location?: string | null
-          pco_number?: string | null
           paid_in_full?: boolean
+          pco_number?: string | null
           prime_contract_id: string
           project_id: number
           promoted_at?: string | null
@@ -14565,8 +14575,8 @@ export type Database = {
           id?: string
           is_private?: boolean
           location?: string | null
-          pco_number?: string | null
           paid_in_full?: boolean
+          pco_number?: string | null
           prime_contract_id?: string
           project_id?: number
           promoted_at?: string | null
@@ -15475,6 +15485,7 @@ export type Database = {
           id: number
           name: string
           new_link: string | null
+          overview: string | null
           page_layout: string | null
           procore_link: string | null
           procore_screenshot: string | null
@@ -15495,6 +15506,7 @@ export type Database = {
           id?: never
           name: string
           new_link?: string | null
+          overview?: string | null
           page_layout?: string | null
           procore_link?: string | null
           procore_screenshot?: string | null
@@ -15515,6 +15527,7 @@ export type Database = {
           id?: never
           name?: string
           new_link?: string | null
+          overview?: string | null
           page_layout?: string | null
           procore_link?: string | null
           procore_screenshot?: string | null
@@ -22082,6 +22095,7 @@ export type Database = {
           test_name: string
           test_number: string
           test_type: string
+          tool: number | null
           updated_at: string
         }
         Insert: {
@@ -22100,6 +22114,7 @@ export type Database = {
           test_name: string
           test_number: string
           test_type?: string
+          tool?: number | null
           updated_at?: string
         }
         Update: {
@@ -22118,6 +22133,7 @@ export type Database = {
           test_name?: string
           test_number?: string
           test_type?: string
+          tool?: number | null
           updated_at?: string
         }
         Relationships: [
@@ -22126,6 +22142,13 @@ export type Database = {
             columns: ["suite_id"]
             isOneToOne: false
             referencedRelation: "test_suites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "test_cases_tool_fkey"
+            columns: ["tool"]
+            isOneToOne: false
+            referencedRelation: "procore_tools"
             referencedColumns: ["id"]
           },
         ]
@@ -22497,6 +22520,94 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      tool_features: {
+        Row: {
+          category: string
+          created_at: string
+          description: string | null
+          feature_key: string
+          feature_name: string
+          id: string
+          sort_order: number
+          status: string
+          tool_id: number
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          description?: string | null
+          feature_key: string
+          feature_name: string
+          id?: string
+          sort_order?: number
+          status?: string
+          tool_id: number
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          description?: string | null
+          feature_key?: string
+          feature_name?: string
+          id?: string
+          sort_order?: number
+          status?: string
+          tool_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tool_features_tool_id_fkey"
+            columns: ["tool_id"]
+            isOneToOne: false
+            referencedRelation: "procore_tools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tool_form_fields: {
+        Row: {
+          created_at: string
+          description: string | null
+          field_name: string
+          field_type: string
+          form_name: string
+          id: string
+          required: boolean
+          sort_order: number
+          tool_id: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          field_name: string
+          field_type: string
+          form_name: string
+          id?: string
+          required?: boolean
+          sort_order?: number
+          tool_id: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          field_name?: string
+          field_type?: string
+          form_name?: string
+          id?: string
+          required?: boolean
+          sort_order?: number
+          tool_id?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tool_form_fields_tool_id_fkey"
+            columns: ["tool_id"]
+            isOneToOne: false
+            referencedRelation: "procore_tools"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       transmittal_items: {
         Row: {
