@@ -36,7 +36,7 @@ export const POST = withApiGuardrails(
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/submittals/[submittalId]/distribute#POST", message: "Authentication required." });
     }
 
-    const body = await req.json();
+    const body = await request.json();
     const { recipient_ids, message } = distributeSchema.parse(body);
 
     // Create the distribution record

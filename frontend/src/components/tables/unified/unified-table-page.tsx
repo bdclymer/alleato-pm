@@ -1023,7 +1023,7 @@ export function UnifiedTablePage<T>({
                     {hasRowSelection && (
                       <TableHead
                         style={{ width: selectionColumnWidth, minWidth: selectionColumnWidth, maxWidth: selectionColumnWidth }}
-                        className="bg-primary/[2%]"
+                        className=""
                       />
                     )}
                     {columnGroups.map((group, index) => {
@@ -1036,23 +1036,21 @@ export function UnifiedTablePage<T>({
                           key={`group-${group.label}-${group.columnIds.join("-")}`}
                           colSpan={visibleCount}
                           className={cn(
-                            "text-left text-[11px] font-semibold text-foreground/80 bg-primary/[2%]! py-0 px-2 leading-tight border-b border-border/70 normal-case",
+                            "text-left text-[11px] font-medium text-muted-foreground py-0 px-2 leading-tight border-b border-border/70 normal-case",
                             index > 0 && "border-l",
-                            !group.label && "bg-primary/[2%]!",
                           )}
                         >
                           {group.label}
                         </TableHead>
                       );
                     })}
-                    {hasRowActions && <TableHead className="w-12.5 bg-primary/[2%]!" />}
+                    {hasRowActions && <TableHead className="w-12.5" />}
                   </TableRow>
                 )}
-                <TableRow className="bg-primary/[2%]! border-border/80">
+                <TableRow className="border-border/80">
                   {hasRowSelection && (
                     <TableHead
                       className={cn(
-                        "bg-primary/[2%]!",
                         isFullBleedTable ? "pl-8 pr-2" : "px-2",
                       )}
                       style={{
@@ -1063,7 +1061,6 @@ export function UnifiedTablePage<T>({
                         position: "sticky",
                         left: 0,
                         zIndex: 3,
-                        background: "hsl(var(--primary) / 0.02)",
                       }}
                     >
                       <div
@@ -1086,10 +1083,7 @@ export function UnifiedTablePage<T>({
                       const width = columnWidths[column.id] ?? column.width;
                       const isPinnedLeft = columnPinning.left.includes(column.id);
                       const pinnedStyle = getPinnedStyle(column.id);
-                      // Header row uses bg-primary/[2%] — override pinned background to match
-                      const headerPinnedStyle = pinnedStyle
-                        ? { ...pinnedStyle, background: "hsl(var(--primary) / 0.02)" }
-                        : undefined;
+                      const headerPinnedStyle = pinnedStyle ?? undefined;
                       const columnStyle =
                         width || headerPinnedStyle
                           ? ({ width, minWidth: columnWidths[column.id] ?? undefined, maxWidth: column.width && !columnWidths[column.id] ? column.width : undefined, ...headerPinnedStyle } as React.CSSProperties)
@@ -1103,7 +1097,6 @@ export function UnifiedTablePage<T>({
                               "relative align-middle",
                               headerAlignment === "left" ? "text-left" : "text-center",
                               isSortable && "cursor-pointer select-none group/th",
-                              (table.stickyHeader !== false) && "bg-primary/[2%]!",
                             )}
                           aria-sort={
                             isSortable
@@ -1145,9 +1138,9 @@ export function UnifiedTablePage<T>({
                                 <button
                                   type="button"
                                   className={cn(
-                                    "flex items-center gap-1.5 bg-transparent border-0 p-0 font-semibold cursor-pointer uppercase tracking-wide",
+                                    "flex items-center gap-1.5 bg-transparent border-0 p-0 font-medium cursor-pointer uppercase tracking-wide",
                                     "text-xs",
-                                    "text-foreground",
+                                    "text-muted-foreground",
                                     headerAlignment === "left" ? "justify-start" : "justify-center",
                                   )}
                                   onContextMenu={(event) => {
@@ -1226,7 +1219,7 @@ export function UnifiedTablePage<T>({
                           ) : (
                             <div
                               className={cn(
-                                "flex items-center gap-1.5",
+                                "flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground",
                                 headerAlignment === "left" ? "justify-start" : "justify-center",
                               )}
                             >
@@ -1241,7 +1234,7 @@ export function UnifiedTablePage<T>({
                         </TableHead>
                       );
                     })}
-                  {hasRowActions && <TableHead className="w-[50px] bg-primary/[2%]!" />}
+                  {hasRowActions && <TableHead className="w-[50px]" />}
                 </TableRow>
               </TableHeader>
               <TableBody

@@ -1266,7 +1266,7 @@ export default function PrimeContractCODetailPage() {
   return (
     <>
       <PageShell
-        variant="detail"
+        variant="dashboard"
         title=""
         onBack={handleBack}
         titleContent={

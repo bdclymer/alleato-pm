@@ -259,19 +259,21 @@ const ComponentsAppsNotes = () => {
         }
         if (params.id) {
             //update task
-            let note: any = notesList.find((d: any) => d.id === params.id);
-            note.title = params.title;
-            note.user = params.user;
-            note.description = params.description;
-            note.tag = params.tag;
+            const note = notesList.find((d: { id: number }) => d.id === params.id);
+            if (note) {
+                note.title = params.title;
+                note.user = params.user;
+                note.description = params.description;
+                note.tag = params.tag;
+            }
         } else {
             //add note
-            let maxNoteId = notesList.reduce((max: any, character: any) => (character.id > max ? character.id : max), notesList[0].id);
+            let maxNoteId = notesList.reduce((max: number, character: { id: number }) => (character.id > max ? character.id : max), notesList[0].id);
             if (!maxNoteId) {
                 maxNoteId = 0;
             }
-            let dt = new Date();
-            let note = {
+            const dt = new Date();
+            const note = {
                 id: maxNoteId + 1,
                 title: params.title,
                 user: params.user,
@@ -296,10 +298,12 @@ const ComponentsAppsNotes = () => {
         searchNotes();
     };
 
-    const setFav = (note: any) => {
-        let list = filterdNotesList;
-        let item = list.find((d: any) => d.id === note.id);
-        item.isFav = !item.isFav;
+    const setFav = (note: { id: number }) => {
+        const list = filterdNotesList;
+        const item = list.find((d: { id: number }) => d.id === note.id);
+        if (item) {
+            item.isFav = !item.isFav;
+        }
 
         setFilterdNotesList([...list]);
         if (selectedTab !== 'all' || selectedTab === 'delete') {
@@ -307,10 +311,12 @@ const ComponentsAppsNotes = () => {
         }
     };
 
-    const setTag = (note: any, name: string = '') => {
-        let list = filterdNotesList;
-        let item = filterdNotesList.find((d: any) => d.id === note.id);
-        item.tag = name;
+    const setTag = (note: { id: number }, name: string = '') => {
+        const list = filterdNotesList;
+        const item = filterdNotesList.find((d: { id: number }) => d.id === note.id);
+        if (item) {
+            item.tag = name;
+        }
         setFilterdNotesList([...list]);
         if (selectedTab !== 'all' || selectedTab === 'delete') {
             searchNotes();
@@ -337,7 +343,7 @@ const ComponentsAppsNotes = () => {
         const json = JSON.parse(JSON.stringify(defaultParams));
         setParams(json);
         if (note) {
-            let json1 = JSON.parse(JSON.stringify(note));
+            const json1 = JSON.parse(JSON.stringify(note));
             setParams(json1);
         }
         setAddContactModal(true);

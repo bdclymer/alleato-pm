@@ -68,6 +68,93 @@ export const GET = withApiGuardrails("/api/agentation/inbox#GET", async ({ reque
 });
 
 /**
+ * POST /api/agentation/inbox
+ *
+ * Creates a new dev_annotations row from the inbox UI (manual task entry).
+ * Generates an `agentation_id` automatically so the row shows up in the inbox
+ * (the GET handler filters items without one).
+ *
+ * Body: {
+ *   title: string,              // becomes the comment summary
+ *   details?: string,           // appended to comment if provided
+ *   route?: string,             // page path; defaults to "/annotation-inbox"
+ *   pageUrl?: string,
+ *   severity?: "blocking" | "important" | "nit",
+ *   assignedAgent?: "codex" | "claude_code",
+ *   elementSelector?: string,
+ *   componentHint?: string
+ * }
+ */
+export const POST = withApiGuardrails("/api/agentation/inbox#POST", async ({ request }) => {
+  const user = await getApiRouteUser();
+  if (!user) {
+    throw new GuardrailError({ code: "AUTH_EXPIRED", where: "/api/agentation/inbox#POST", message: "Authentication required.", status: 401 });
+  }
+
+  const body = (await request.json()) as {
+    title?: string;
+    details?: string;
+    route?: string;
+    pageUrl?: string;
+    severity?: string;
+    assignedAgent?: string;
+    elementSelector?: string;
+    componentHint?: string;
+  };
+
+  const title = body.title?.trim();
+  if (!title) {
+    return NextResponse.json({ error: "title is required" }, { status: 400 });
+  }
+
+  const route = body.route?.trim() || "/annotation-inbox";
+  const details = body.details?.trim();
+  const comment = details ? `${title}\n\n${details}` : title;
+
+  const allowedSeverities = new Set(["blocking", "important", "nit"]);
+  const severity = body.severity && allowedSeverities.has(body.severity) ? body.severity : "important";
+
+  const allowedAgents = new Set(["codex", "claude_code"]);
+  const assignedAgent =
+    body.assignedAgent && allowedAgents.has(body.assignedAgent) ? body.assignedAgent : null;
+
+  const agentationId = `manual-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+  const metadata: Record<string, unknown> = {
+    severity,
+    source: "manual-inbox",
+    createdBy: user.id,
+  };
+  if (body.pageUrl?.trim()) metadata.pageUrl = body.pageUrl.trim();
+  if (assignedAgent) {
+    metadata.assignedAgent = assignedAgent;
+    metadata.assignedAt = new Date().toISOString();
+  }
+
+  const supabase = createServiceClient();
+  const { data, error } = await supabase
+    .from("dev_annotations")
+    .insert({
+      route,
+      comment,
+      element_selector: body.elementSelector?.trim() || null,
+      component_hint: body.componentHint?.trim() || null,
+      status: "open",
+      agentation_id: agentationId,
+      created_by: user.id,
+      metadata,
+    })
+    .select("id, agentation_id")
+    .single();
+
+  if (error) {
+    throw new GuardrailError({ code: "INTERNAL_ERROR", where: "/api/agentation/inbox#POST", message: error.message });
+  }
+
+  return NextResponse.json({ success: true, id: data.id, agentationId: data.agentation_id });
+});
+
+/**
  * PATCH /api/agentation/inbox
  *
  * Updates a dev_annotations row — status and/or metadata.

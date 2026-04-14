@@ -150,7 +150,7 @@ export function TableStatusDot({
         <TooltipTrigger asChild>
           <span className={cn("inline-block h-2 w-2 rounded-full flex-shrink-0", resolveStatusDotClass(status), className)} />
         </TooltipTrigger>
-        <TooltipContent className="border bg-popover px-2 py-1 text-xs text-popover-foreground">{label}</TooltipContent>
+        <TooltipContent>{label}</TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
@@ -234,12 +234,12 @@ export function TableAvatarUsers({
             </AvatarGroup>
           </div>
         </TooltipTrigger>
-        <TooltipContent className="max-w-[320px] border bg-popover p-3 text-popover-foreground shadow-sm">
+        <TooltipContent className="max-w-[320px]">
           <div className="space-y-1">
-            <p className="text-xs font-semibold text-foreground">Participants ({users.length})</p>
+            <p className="text-xs font-semibold">Participants ({users.length})</p>
             <ul className="space-y-1">
               {users.map((user) => (
-                <li key={user} className="text-xs text-muted-foreground">
+                <li key={user} className="text-xs opacity-70">
                   {formatParticipantDisplayName(user)}
                 </li>
               ))}

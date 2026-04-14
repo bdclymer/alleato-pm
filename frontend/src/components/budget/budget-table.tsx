@@ -240,9 +240,9 @@ function ColumnHeader({ lines, columnKey }: ColumnHeaderProps) {
         align="center"
         className="max-w-xs space-y-1.5 text-left text-xs leading-relaxed"
       >
-        <p className="font-medium text-foreground">{tooltip.formula}</p>
-        {tooltip.type && <p className="text-muted-foreground">{tooltip.type}</p>}
-        {(tooltip.sectionTitle || tooltip.sections?.length) && <div className="h-px w-full bg-border/60" />}
+        <p className="font-medium">{tooltip.formula}</p>
+        {tooltip.type && <p className="opacity-70">{tooltip.type}</p>}
+        {(tooltip.sectionTitle || tooltip.sections?.length) && <div className="h-px w-full bg-background/20" />}
         {tooltip.sectionTitle ? (
           <p className="font-medium">{tooltip.sectionTitle}</p>
         ) : null}
@@ -251,7 +251,7 @@ function ColumnHeader({ lines, columnKey }: ColumnHeaderProps) {
             {tooltip.sections.map((section) => (
               <div key={section.label}>
                 <p className="font-medium">{section.label}</p>
-                <ul className="list-disc space-y-0.5 pl-4">
+                <ul className="list-disc space-y-0.5 pl-4 opacity-80">
                   {section.items.map((item) => (
                     <li key={`${section.label}-${item}`}>{item}</li>
                   ))}
@@ -261,7 +261,7 @@ function ColumnHeader({ lines, columnKey }: ColumnHeaderProps) {
           </div>
         ) : null}
         {tooltip.details?.length ? (
-          <ul className="list-disc space-y-0.5 pl-4">
+          <ul className="list-disc space-y-0.5 pl-4 opacity-80">
             {tooltip.details.map((detail) => (
               <li key={detail}>{detail}</li>
             ))}

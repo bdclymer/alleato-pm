@@ -81,3 +81,14 @@
 ### Recommended Next Action
 
 Leader disposition requested. If accepted, open a fix tranche to align route/CTA behavior and add redirect/guardrails for deprecated create URLs.
+
+## Files changed (absolute paths)
+
+- `/Users/meganharrison/Documents/github/alleato-pm/docs/ops/handoffs/2026-04-14-S8-workstream.md`
+- `/Users/meganharrison/Documents/github/alleato-pm/docs/ops/orchestration/session-board.md`
+- `/Users/meganharrison/Documents/github/alleato-pm/docs/ops/orchestration/review-queue.md`
+- `/Users/meganharrison/Documents/github/alleato-pm/docs/ops/evidence/2026-04-14-S8-frontend-flow-audit-phase2/FRONTEND_FLOW_AUDIT_REPORT.md`
+
+## Handoff file path
+
+`/Users/meganharrison/Documents/github/alleato-pm/docs/ops/handoffs/2026-04-14-S8-workstream.md`

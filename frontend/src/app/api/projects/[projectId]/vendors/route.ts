@@ -1,8 +1,25 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
-import { GuardrailError } from "@/lib/guardrails/errors";
-import { type NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
+
+type VendorCompany = {
+  id: string;
+  name: string | null;
+  legal_name: string | null;
+};
+
+type ProjectVendorRow = {
+  vendor_id: string;
+  companies: VendorCompany[] | VendorCompany | null;
+};
+
+function normalizeCompany(
+  company: ProjectVendorRow["companies"],
+): VendorCompany | null {
+  if (!company) return null;
+  return Array.isArray(company) ? company[0] ?? null : company;
+}
 
 // Returns vendor companies for this project (used by form dropdowns).
 // If the project has no vendors in project_vendors, returns all vendor companies globally.
@@ -35,18 +52,18 @@ export const GET = withApiGuardrails<{ projectId: string }>(
     }
 
     return NextResponse.json(
-      (allVendors ?? []).map((c) => ({
+      (allVendors as VendorCompany[] | null)?.map((c) => ({
         id: c.id,
-        vendor_name: c.name,
+        vendor_name: c.name ?? "",
         company_id: c.id,
-        company: c.name,
+        company: c.name ?? "",
       }))
     );
   }
 
   return NextResponse.json(
-    data.map((row) => {
-      const company = row.companies as { id: string; name: string; legal_name: string | null } | null;
+    (data as ProjectVendorRow[] | null)?.map((row) => {
+      const company = normalizeCompany(row.companies);
       return {
         id: row.vendor_id,
         vendor_name: company?.name ?? "",

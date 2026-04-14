@@ -15,6 +15,7 @@ import {
   DollarSign,
   FileText,
   Image,
+  Receipt,
   TrendingDown,
   Users,
 } from "lucide-react";
@@ -33,7 +34,6 @@ import {
 } from "@/components/ui/sheet";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { RealtimeCursors } from "@/components/realtime-cursors";
 import { EditProjectSidebar } from "@/components/project/edit-project-sidebar";
 import type { Database } from "@/types/database.types";
@@ -72,6 +72,25 @@ interface Commitment {
   original_amount?: number;
 }
 
+interface OwnerInvoice {
+  id: number;
+  invoice_number: string | null;
+  status: string | null;
+  gross_amount: number | null;
+  paid_amount: number | null;
+  billing_date: string | null;
+  prime_contract_id: string | null;
+}
+
+interface SubcontractorInvoice {
+  id: number;
+  invoice_number: string | null;
+  status: Database["public"]["Enums"]["invoice_status"];
+  billing_date: string | null;
+  subcontract_id: string | null;
+  purchase_order_id: string | null;
+}
+
 interface ProjectCommandCenterProps {
   project: Project;
   tasks: Task[];
@@ -99,6 +118,8 @@ interface ProjectCommandCenterProps {
   dailyLogs?: any[];
   budget?: any[];
   sov?: any[];
+  ownerInvoices?: OwnerInvoice[];
+  subcontractorInvoices?: SubcontractorInvoice[];
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -436,115 +457,347 @@ function RecentMeetingsSection({
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Section: Change Pipeline
+   Section: Prime Contract
 ───────────────────────────────────────────────────────────── */
 
-interface ChangePipelineSectionProps {
-  projectId: string;
-  hasPipelineData: boolean;
-  actionHref: string;
-  actionLabel: string;
-  changeEvents: ChangeEvent[];
-  potentialChangeOrders: ChangeOrder[];
-  approvedChangeOrders: ChangeOrder[];
-}
-
-function ChangePipelineSection({
+function PrimeContractSection({
   projectId,
-  hasPipelineData,
-  actionHref,
-  actionLabel,
-  changeEvents,
-  potentialChangeOrders,
-  approvedChangeOrders,
-}: ChangePipelineSectionProps) {
-  const pipelineRows = [
-    ...changeEvents.map((ce) => ({
-      id: `ce-${ce.id}`,
-      href: `/${projectId}/change-events/${ce.id}`,
-      type: "CE",
-      title: ce.title ?? `Change Event #${ce.number}`,
-      amount: null as number | null,
-      status: ce.status ?? "Draft",
-    })),
-    ...potentialChangeOrders.map((co: ChangeOrder) => ({
-      id: `pco-${co.id}`,
-      href: `/${projectId}/change-orders/prime/${co.id}`,
-      type: "PCO",
-      title: co.title ?? "Untitled PCO",
-      amount: co.total_amount ?? null,
-      status: co.status ?? "Proposed",
-    })),
-    ...approvedChangeOrders.map((co: ChangeOrder) => ({
-      id: `co-${co.id}`,
-      href: Boolean(co.change_order_number)
-        ? `/${projectId}/change-orders/commitment/${co.id}`
-        : `/${projectId}/change-orders/prime/${co.id}`,
-      type: "CO",
-      title: co.title ?? "Untitled CO",
-      amount: co.amount ?? co.total_amount ?? null,
-      status: co.status ?? "Pending",
-    })),
-  ];
+  contracts,
+  contractLineItems,
+}: {
+  projectId: string;
+  contracts: Contract[];
+  contractLineItems: Pick<ContractLineItem, "contract_id" | "total_cost" | "quantity" | "unit_cost">[];
+}) {
+  const totalValue = contractLineItems.reduce((sum, li) => sum + (li.total_cost ?? 0), 0);
 
   return (
     <section>
-      <SectionHeading action={<ViewAllLink href={actionHref} label={actionLabel} />}>
-        Change Pipeline
+      <SectionHeading action={<ViewAllLink href={`/${projectId}/prime-contracts`} label="View All" />}>
+        Prime Contract
       </SectionHeading>
-
-      {!hasPipelineData ? (
-        <p className="text-sm text-muted-foreground">No pipeline items</p>
+      {contracts.length === 0 ? (
+        <Link
+          href={`/${projectId}/prime-contracts/new`}
+          className="flex items-center gap-2 rounded-md border border-dashed border-border px-3 py-3 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+        >
+          <Building2 className="h-4 w-4 shrink-0" strokeWidth={1.5} />
+          <span>No prime contract — create one</span>
+          <ChevronRight className="ml-auto h-3.5 w-3.5" />
+        </Link>
       ) : (
-        <div className="overflow-hidden rounded-md border border-border/70 bg-background">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-16 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  Type
-                </TableHead>
-                <TableHead className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  Title
-                </TableHead>
-                <TableHead className="w-28 text-right text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  Amount
-                </TableHead>
-                <TableHead className="w-36 text-right text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-                  Status
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {pipelineRows.map((row) => (
-                <TableRow key={row.id} className="hover:bg-muted/30">
-                  <TableCell className="py-2.5 align-middle">
-                    <span className="inline-flex rounded bg-muted px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase text-muted-foreground">
-                      {row.type}
-                    </span>
-                  </TableCell>
-                  <TableCell className="py-2.5 align-middle">
-                    <Link
-                      href={row.href}
-                      className="block truncate text-sm text-foreground transition-colors hover:text-primary"
-                    >
-                      {row.title}
-                    </Link>
-                  </TableCell>
-                  <TableCell className="py-2.5 text-right align-middle">
+        <div>
+          {contracts.slice(0, 3).map((c) => (
+            <Link
+              key={c.id}
+              href={`/${projectId}/prime-contracts/${c.id}`}
+              className="-mx-2 flex items-center gap-2.5 rounded-md border-b border-border/50 px-2 py-2.5 last:border-0 transition-colors hover:bg-muted/50"
+            >
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm">{c.title ?? c.contract_number ?? "Prime Contract"}</p>
+                {totalValue > 0 && (
+                  <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+                    {fmtFull(totalValue)}
+                  </p>
+                )}
+              </div>
+              <StatusBadge status={c.status ?? "Draft"} />
+            </Link>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Section: Commitments
+───────────────────────────────────────────────────────────── */
+
+function CommitmentsSection({
+  projectId,
+  commitments,
+  commitmentTotal,
+}: {
+  projectId: string;
+  commitments: Commitment[];
+  commitmentTotal: number;
+}) {
+  const byStatus = commitments.reduce<Record<string, number>>((acc, c) => {
+    const s = c.status ?? "Draft";
+    acc[s] = (acc[s] ?? 0) + 1;
+    return acc;
+  }, {});
+  const topStatuses = Object.entries(byStatus)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3);
+
+  return (
+    <section>
+      <SectionHeading action={<ViewAllLink href={`/${projectId}/commitments`} label="View All" />}>
+        Commitments
+      </SectionHeading>
+      {commitments.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No commitments</p>
+      ) : (
+        <div className="space-y-2">
+          <div className="flex items-baseline justify-between">
+            <span className="text-xl font-semibold tabular-nums">
+              {fmtCompact(commitmentTotal || null)}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {commitments.length} commitment{commitments.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {topStatuses.map(([status, count]) => (
+              <span
+                key={status}
+                className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground"
+              >
+                <span className="font-medium text-foreground">{count}</span>
+                {status}
+              </span>
+            ))}
+          </div>
+          <div className="pt-1">
+            {commitments.slice(0, 3).map((c) => (
+              <Link
+                key={c.id}
+                href={`/${projectId}/commitments/${c.id}`}
+                className="-mx-2 flex items-center gap-2.5 rounded-md border-b border-border/50 px-2 py-2 last:border-0 transition-colors hover:bg-muted/50"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm">{c.title ?? c.number ?? "Commitment"}</p>
+                </div>
+                <span className="shrink-0 text-xs tabular-nums text-muted-foreground">
+                  {fmtCompact(c.contract_amount ?? c.original_amount)}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Section: Change Events
+───────────────────────────────────────────────────────────── */
+
+function ChangeEventsSection({
+  projectId,
+  changeEvents,
+}: {
+  projectId: string;
+  changeEvents: ChangeEvent[];
+}) {
+  const open = changeEvents.filter(
+    (ce) => !["closed", "rejected", "approved"].includes((ce.status ?? "").toLowerCase()),
+  );
+  const approved = changeEvents.filter(
+    (ce) => (ce.status ?? "").toLowerCase() === "approved",
+  );
+  const recent = [...changeEvents]
+    .sort((a, b) => new Date(b.updated_at ?? b.created_at).getTime() - new Date(a.updated_at ?? a.created_at).getTime())
+    .slice(0, 3);
+
+  return (
+    <section>
+      <SectionHeading action={<ViewAllLink href={`/${projectId}/change-events`} label="View All" />}>
+        Change Events
+      </SectionHeading>
+      {changeEvents.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No change events</p>
+      ) : (
+        <div className="space-y-2">
+          <div className="flex gap-3">
+            <span className="text-xs text-muted-foreground">
+              <span className="font-semibold text-foreground">{open.length}</span> open
+            </span>
+            <span className="text-xs text-muted-foreground">
+              <span className="font-semibold text-foreground">{approved.length}</span> approved
+            </span>
+            <span className="text-xs text-muted-foreground">
+              <span className="font-semibold text-foreground">{changeEvents.length}</span> total
+            </span>
+          </div>
+          <div>
+            {recent.map((ce) => (
+              <Link
+                key={ce.id}
+                href={`/${projectId}/change-events/${ce.id}`}
+                className="-mx-2 flex items-center gap-2.5 rounded-md border-b border-border/50 px-2 py-2 last:border-0 transition-colors hover:bg-muted/50"
+              >
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm">
+                    {ce.title ?? `Change Event #${ce.number}`}
+                  </p>
+                </div>
+                <StatusBadge status={ce.status ?? "Draft"} />
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Section: Change Orders
+───────────────────────────────────────────────────────────── */
+
+function ChangeOrdersSection({
+  projectId,
+  changeOrders,
+}: {
+  projectId: string;
+  changeOrders: ChangeOrder[];
+}) {
+  const pending = changeOrders.filter(
+    (co: ChangeOrder) => !["approved", "rejected", "closed"].includes((co.status ?? "").toLowerCase()),
+  );
+  const approved = changeOrders.filter(
+    (co: ChangeOrder) => (co.status ?? "").toLowerCase() === "approved",
+  );
+  const approvedTotal = approved.reduce(
+    (sum: number, co: ChangeOrder) => sum + (co.amount ?? co.total_amount ?? 0),
+    0,
+  );
+  const recent: ChangeOrder[] = [...changeOrders]
+    .sort((a: ChangeOrder, b: ChangeOrder) =>
+      new Date(b?.updated_at ?? b?.created_at ?? 0).getTime() -
+      new Date(a?.updated_at ?? a?.created_at ?? 0).getTime(),
+    )
+    .slice(0, 3);
+
+  return (
+    <section>
+      <SectionHeading action={<ViewAllLink href={`/${projectId}/change-orders`} label="View All" />}>
+        Change Orders
+      </SectionHeading>
+      {changeOrders.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No change orders</p>
+      ) : (
+        <div className="space-y-2">
+          <div className="flex items-baseline justify-between">
+            <span className="text-xl font-semibold tabular-nums">
+              {fmtCompact(approvedTotal || null)}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {pending.length} pending · {approved.length} approved
+            </span>
+          </div>
+          <div>
+            {recent.map((co: ChangeOrder) => {
+              const isPrime = !co.change_order_number;
+              const href = isPrime
+                ? `/${projectId}/change-orders/prime/${co.id}`
+                : `/${projectId}/change-orders/commitment/${co.id}`;
+              return (
+                <Link
+                  key={co.id}
+                  href={href}
+                  className="-mx-2 flex items-center gap-2.5 rounded-md border-b border-border/50 px-2 py-2 last:border-0 transition-colors hover:bg-muted/50"
+                >
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm">{co.title ?? "Change Order"}</p>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-2">
                     <span className="text-xs tabular-nums text-muted-foreground">
-                      {row.amount == null ? "—" : fmtCompact(row.amount)}
+                      {fmtCompact(co.amount ?? co.total_amount)}
                     </span>
-                  </TableCell>
-                  <TableCell className="py-2.5 text-right align-middle">
-                    <StatusBadge
-                      status={row.status}
-                      variant={row.status.toLowerCase() === "open" ? "info" : undefined}
-                    />
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+                    <StatusBadge status={co.status ?? "Pending"} />
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Section: Invoices & Payments
+───────────────────────────────────────────────────────────── */
+
+function InvoicesPaymentsSection({
+  projectId,
+  ownerInvoices,
+  subcontractorInvoices,
+}: {
+  projectId: string;
+  ownerInvoices: OwnerInvoice[];
+  subcontractorInvoices: SubcontractorInvoice[];
+}) {
+  const totalBilled = ownerInvoices.reduce((sum, inv) => sum + (inv.gross_amount ?? 0), 0);
+  const totalPaid = ownerInvoices.reduce((sum, inv) => sum + (inv.paid_amount ?? 0), 0);
+  const subPending = subcontractorInvoices.filter(
+    (inv) => !["approved", "paid", "void"].includes((inv.status ?? "").toLowerCase()),
+  );
+  const hasAny = ownerInvoices.length > 0 || subcontractorInvoices.length > 0;
+
+  return (
+    <section>
+      <SectionHeading action={<ViewAllLink href={`/${projectId}/invoicing`} label="View All" />}>
+        Invoices &amp; Payments
+      </SectionHeading>
+      {!hasAny ? (
+        <p className="text-sm text-muted-foreground">No invoices</p>
+      ) : (
+        <div className="space-y-3">
+          {ownerInvoices.length > 0 && (
+            <div className="rounded-md bg-muted/50 px-3 py-2.5">
+              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Owner Invoices
+              </p>
+              <div className="flex gap-4">
+                <div>
+                  <p className="text-xs text-muted-foreground">Billed</p>
+                  <p className="text-sm font-semibold tabular-nums">{fmtCompact(totalBilled)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Paid</p>
+                  <p className="text-sm font-semibold tabular-nums">{fmtCompact(totalPaid)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Count</p>
+                  <p className="text-sm font-semibold">{ownerInvoices.length}</p>
+                </div>
+              </div>
+            </div>
+          )}
+          {subcontractorInvoices.length > 0 && (
+            <div className="rounded-md bg-muted/50 px-3 py-2.5">
+              <p className="mb-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Subcontractor Invoices
+              </p>
+              <div className="flex gap-4">
+                <div>
+                  <p className="text-xs text-muted-foreground">Total</p>
+                  <p className="text-sm font-semibold">{subcontractorInvoices.length}</p>
+                </div>
+                {subPending.length > 0 && (
+                  <div>
+                    <p className="text-xs text-muted-foreground">Pending</p>
+                    <p className="text-sm font-semibold text-status-warning">{subPending.length}</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          <Link
+            href={`/${projectId}/invoicing`}
+            className="flex items-center gap-2 text-xs text-primary transition-colors hover:text-primary/80"
+          >
+            <Receipt className="h-3.5 w-3.5" />
+            View invoicing dashboard
+            <ChevronRight className="h-3 w-3" />
+          </Link>
         </div>
       )}
     </section>
@@ -1061,6 +1314,8 @@ export function ProjectCommandCenter({
   budget,
   schedule,
   submittals = [],
+  ownerInvoices = [],
+  subcontractorInvoices = [],
 }: ProjectCommandCenterProps) {
   const projectId = String(project.id);
   const [isEditProjectSidebarOpen, setIsEditProjectSidebarOpen] = React.useState(false);
@@ -1082,34 +1337,6 @@ export function ProjectCommandCenter({
     0,
   );
 
-  /* ── Change pipeline ───────────────────────────────────── */
-  const sortedChangeEvents = [...changeEvents]
-    .filter((ce) => !["closed", "rejected"].includes((ce.status ?? "").toLowerCase()))
-    .sort((a, b) => new Date(b.updated_at ?? b.created_at).getTime() - new Date(a.updated_at ?? a.created_at).getTime())
-    .slice(0, 6);
-  const potentialChangeOrders = [...changeOrders]
-    .filter((co: ChangeOrder) => Boolean(co?.pcco_number))
-    .sort((a: ChangeOrder, b: ChangeOrder) =>
-      new Date(b?.updated_at ?? b?.created_at ?? 0).getTime() -
-      new Date(a?.updated_at ?? a?.created_at ?? 0).getTime(),
-    )
-    .slice(0, 6);
-  const approvedChangeOrders = [...changeOrders]
-    .filter((co: ChangeOrder) => !co?.pcco_number)
-    .sort((a: ChangeOrder, b: ChangeOrder) =>
-      new Date(b?.updated_at ?? b?.created_at ?? 0).getTime() -
-      new Date(a?.updated_at ?? a?.created_at ?? 0).getTime(),
-    )
-    .slice(0, 6);
-  const hasPipelineData =
-    sortedChangeEvents.length > 0 ||
-    potentialChangeOrders.length > 0 ||
-    approvedChangeOrders.length > 0;
-  const hasChangeEvents = changeEvents.length > 0;
-  const changeEventsHref = hasChangeEvents
-    ? `/${projectId}/change-events`
-    : `/${projectId}/change-events/new`;
-  const changeEventsActionLabel = hasChangeEvents ? "View All" : "Create Change Event";
 
   /* ── RFIs ──────────────────────────────────────────────── */
   const rfisOpen = rfis.filter((r) => r.status.toLowerCase() !== "closed");
@@ -1216,14 +1443,28 @@ export function ProjectCommandCenter({
             />
             <ProjectTeamSection projectId={projectId} />
             <RecentMeetingsSection projectId={projectId} meetings={recentMeetings} />
-            <ChangePipelineSection
+            <PrimeContractSection
               projectId={projectId}
-              hasPipelineData={hasPipelineData}
-              actionHref={changeEventsHref}
-              actionLabel={changeEventsActionLabel}
-              changeEvents={sortedChangeEvents}
-              potentialChangeOrders={potentialChangeOrders}
-              approvedChangeOrders={approvedChangeOrders}
+              contracts={contracts}
+              contractLineItems={contractLineItems}
+            />
+            <CommitmentsSection
+              projectId={projectId}
+              commitments={commitments}
+              commitmentTotal={commitmentTotal}
+            />
+            <ChangeEventsSection
+              projectId={projectId}
+              changeEvents={changeEvents}
+            />
+            <ChangeOrdersSection
+              projectId={projectId}
+              changeOrders={changeOrders}
+            />
+            <InvoicesPaymentsSection
+              projectId={projectId}
+              ownerInvoices={ownerInvoices}
+              subcontractorInvoices={subcontractorInvoices}
             />
           </ContentSectionStack>
         </div>

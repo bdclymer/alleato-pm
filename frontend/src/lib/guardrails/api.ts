@@ -15,13 +15,17 @@ export interface ErrorEnvelope {
   details?: unknown;
 }
 
-interface HandlerContext<TParams = unknown> {
+type UnwrapParams<TParams> = TParams extends Promise<infer TUnwrapped>
+  ? TUnwrapped
+  : TParams;
+
+interface HandlerContext<TParams = Record<string, string>> {
   request: NextRequest;
   params: TParams;
   requestId: string;
 }
 
-type WrappedHandler<TParams = unknown> = (
+type WrappedHandler<TParams = Record<string, string>> = (
   context: HandlerContext<TParams>,
 ) => Promise<Response>;
 
@@ -53,11 +57,14 @@ function errorEnvelopeFrom(
   };
 }
 
-export function withApiGuardrails<TParams = unknown>(
+export function withApiGuardrails<TParams = Record<string, string>>(
   where: string,
-  handler: WrappedHandler<TParams>,
+  handler: WrappedHandler<UnwrapParams<TParams>>,
 ) {
-  return async (request: NextRequest, args?: { params: TParams }): Promise<Response> => {
+  return async (
+    request: NextRequest,
+    args?: { params?: Promise<UnwrapParams<TParams>> },
+  ): Promise<Response> => {
     const startedAt = Date.now();
     const requestId = getOrCreateRequestId(request.headers);
 
@@ -76,7 +83,9 @@ export function withApiGuardrails<TParams = unknown>(
 
       const response = await handler({
         request,
-        params: (args?.params ?? ({} as TParams)),
+        params: args?.params
+          ? await args.params
+          : ({} as UnwrapParams<TParams>),
         requestId,
       });
 

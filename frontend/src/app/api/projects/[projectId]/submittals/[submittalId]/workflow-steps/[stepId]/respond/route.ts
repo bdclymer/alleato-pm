@@ -43,7 +43,7 @@ export const POST = withApiGuardrails(
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "projects/[projectId]/submittals/[submittalId]/workflow-steps/[stepId]/respond#POST", message: "Authentication required." });
     }
 
-    const body = await req.json();
+    const body = await request.json();
     const { response_status, comments } = respondSchema.parse(body);
 
     // Upsert response for this user on this step

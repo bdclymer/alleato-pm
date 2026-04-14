@@ -868,8 +868,8 @@ const ComponentsAppsMailbox = () => {
 
     const setArchive = () => {
         if (ids.length) {
-            let items = filteredMailList.filter((d: any) => ids.includes(d.id));
-            for (let item of items) {
+            const items = filteredMailList.filter((d: { id: number }) => ids.includes(d.id));
+            for (const item of items) {
                 item.type = item.type === 'archive' ? 'inbox' : 'archive';
             }
             if (selectedTab === 'archive') {
@@ -883,8 +883,8 @@ const ComponentsAppsMailbox = () => {
 
     const setSpam = () => {
         if (ids.length) {
-            let items = filteredMailList.filter((d: any) => ids.includes(d.id));
-            for (let item of items) {
+            const items = filteredMailList.filter((d: { id: number }) => ids.includes(d.id));
+            for (const item of items) {
                 item.type = item.type === 'spam' ? 'inbox' : 'spam';
             }
             if (selectedTab === 'spam') {
@@ -896,10 +896,10 @@ const ComponentsAppsMailbox = () => {
         }
     };
 
-    const setGroup = (group: any) => {
+    const setGroup = (group: string) => {
         if (ids.length) {
-            let items = mailList.filter((d: any) => ids.includes(d.id));
-            for (let item of items) {
+            const items = mailList.filter((d: { id: number }) => ids.includes(d.id));
+            for (const item of items) {
                 item.group = group;
             }
 
@@ -911,11 +911,11 @@ const ComponentsAppsMailbox = () => {
         }
     };
 
-    const setAction = (type: any) => {
+    const setAction = (type: string) => {
         if (ids.length) {
             const totalSelected = ids.length;
-            let items = filteredMailList.filter((d: any) => ids.includes(d.id));
-            for (let item of items) {
+            const items = filteredMailList.filter((d: { id: number }) => ids.includes(d.id));
+            for (const item of items) {
                 if (type === 'trash') {
                     item.type = 'trash';
                     item.group = '';
@@ -945,7 +945,7 @@ const ComponentsAppsMailbox = () => {
                     showMessage(totalSelected + ' Mail Restored.');
                     searchMails(false);
                 } else if (type === 'delete') {
-                    setMailList(mailList.filter((d: any) => d.id != item.id));
+                    setMailList(mailList.filter((d: { id: number }) => d.id != item.id));
                     showMessage(totalSelected + ' Mail Permanently Deleted.');
                     searchMails(false);
                 }
@@ -971,7 +971,7 @@ const ComponentsAppsMailbox = () => {
 
     const setStar = (mailId: number) => {
         if (mailId) {
-            let item = filteredMailList.find((d: any) => d.id === mailId);
+            const item = filteredMailList.find((d: { id: number }) => d.id === mailId);
             item.isStar = !item.isStar;
             setTimeout(() => {
                 searchMails(false);
@@ -981,7 +981,7 @@ const ComponentsAppsMailbox = () => {
 
     const setImportant = (mailId: number) => {
         if (mailId) {
-            let item = filteredMailList.find((d: any) => d.id === mailId);
+            const item = filteredMailList.find((d: { id: number }) => d.id === mailId);
             item.isImportant = !item.isImportant;
             setTimeout(() => {
                 searchMails(false);
@@ -996,7 +996,7 @@ const ComponentsAppsMailbox = () => {
             return item.time;
         } else {
             if (displayDt.getFullYear() === cDt.getFullYear()) {
-                var monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
                 return monthNames[displayDt.getMonth()] + ' ' + String(displayDt.getDate()).padStart(2, '0');
             } else {
                 return String(displayDt.getMonth() + 1).padStart(2, '0') + '/' + String(displayDt.getDate()).padStart(2, '0') + '/' + displayDt.getFullYear();
@@ -1009,7 +1009,7 @@ const ComponentsAppsMailbox = () => {
             setIsShowMailMenu(false);
             setParams(JSON.parse(JSON.stringify(defaultParams)));
         } else if (type === 'draft') {
-            let data = JSON.parse(JSON.stringify(item));
+            const data = JSON.parse(JSON.stringify(item));
             setParams({
                 ...data,
                 from: defaultParams.from,
@@ -1017,7 +1017,7 @@ const ComponentsAppsMailbox = () => {
                 displayDescription: data.email,
             });
         } else if (type === 'reply') {
-            let data = JSON.parse(JSON.stringify(item));
+            const data = JSON.parse(JSON.stringify(item));
             setParams({
                 ...data,
                 from: defaultParams.from,
@@ -1026,7 +1026,7 @@ const ComponentsAppsMailbox = () => {
                 displayDescription: 'Re: ' + data.title,
             });
         } else if (type === 'forward') {
-            let data = JSON.parse(JSON.stringify(item));
+            const data = JSON.parse(JSON.stringify(item));
             setParams({
                 ...data,
                 from: defaultParams.from,
@@ -1054,7 +1054,7 @@ const ComponentsAppsMailbox = () => {
             res = mailList.filter((d) => d.type === selectedTab);
         }
 
-        let filteredRes = res.filter(
+        const filteredRes = res.filter(
             (d) =>
                 (d.title && d.title.toLowerCase().includes(searchText)) ||
                 (d.firstName && d.firstName.toLowerCase().includes(searchText)) ||
@@ -1102,9 +1102,9 @@ const ComponentsAppsMailbox = () => {
         if (!params.id) {
             maxId = mailList.length ? mailList.reduce((max, character) => (character.id > max ? character.id : max), mailList[0].id) : 0;
         }
-        let cDt = new Date();
+        const cDt = new Date();
 
-        let obj: any = {
+        const obj = {
             id: maxId + 1,
             path: '',
             firstName: '',
@@ -1123,8 +1123,8 @@ const ComponentsAppsMailbox = () => {
         };
         if (params.file && params.file.length) {
             obj.attachments = [];
-            for (let file of params.file) {
-                let flObj = {
+            for (const file of params.file) {
+                const flObj = {
                     name: file.name,
                     size: getFileSize(file.size),
                     type: getFileType(file.type),
@@ -1447,7 +1447,7 @@ const ComponentsAppsMailbox = () => {
                                                 if (ids.length === filteredMailList.length) {
                                                     setIds([]);
                                                 } else {
-                                                    let checkedIds = filteredMailList.map((d: any) => {
+                                                    const checkedIds = filteredMailList.map((d: { id: number }) => {
                                                         return d.id;
                                                     });
                                                     setIds([...checkedIds]);

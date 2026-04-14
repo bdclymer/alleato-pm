@@ -185,7 +185,7 @@ const ComponentsAppsInvoiceList = () => {
                 setSelectedRecords([]);
                 setSearch('');
             } else {
-                let selectedRows = selectedRecords || [];
+                const selectedRows = selectedRecords || [];
                 const ids = selectedRows.map((d: any) => {
                     return d.id;
                 });

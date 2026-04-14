@@ -3,9 +3,25 @@
  * GET  — all results for a run, with case details, grouped by category
  */
 import { withApiGuardrails } from "@/lib/guardrails/api";
-import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+
+type ResultRow = {
+  test_cases: {
+    test_number: string | null;
+    test_type: string | null;
+  }[] | {
+    test_number: string | null;
+    test_type: string | null;
+  } | null;
+};
+
+function normalizeTestCase(
+  value: ResultRow["test_cases"],
+): { test_number: string | null; test_type: string | null } | null {
+  if (!value) return null;
+  return Array.isArray(value) ? value[0] ?? null : value;
+}
 
 export const GET = withApiGuardrails<{ runId: string }>(
   "testing/runs/[runId]/results#GET",
@@ -29,7 +45,7 @@ export const GET = withApiGuardrails<{ runId: string }>(
     .eq("run_id", runId)
     .order("id");
 
-  let data = withDepth.data;
+  let data: ResultRow[] | null = withDepth.data as unknown as ResultRow[] | null;
   if (withDepth.error) {
     const fallback = await supabase
       .from("test_results")
@@ -47,22 +63,20 @@ export const GET = withApiGuardrails<{ runId: string }>(
     if (fallback.error) {
       return NextResponse.json({ error: fallback.error.message }, { status: 500 });
     }
-    data = fallback.data as unknown as typeof withDepth.data;
+    data = fallback.data as unknown as ResultRow[] | null;
   }
-
-  type ResultRow = NonNullable<typeof data>[number];
-  type TC = { test_number: string; test_type: string } | null;
 
   // Filter by test_type in JS (PostgREST .eq on embedded resources filters embedded rows, not parents)
   const filtered = typeFilter
-    ? (data ?? []).filter((r) => (r.test_cases as unknown as TC)?.test_type === typeFilter)
+    ? (data ?? []).filter(
+        (row) => normalizeTestCase(row.test_cases)?.test_type === typeFilter,
+      )
     : (data ?? []);
 
   // Sort by test_number (e.g. "1.1.2" < "1.1.10")
   const sorted = filtered.sort((a: ResultRow, b: ResultRow) => {
-    const tc = (r: ResultRow) => r.test_cases as { test_number: string } | null;
-    const numA: string = tc(a)?.test_number ?? "";
-    const numB: string = tc(b)?.test_number ?? "";
+    const numA = normalizeTestCase(a.test_cases)?.test_number ?? "";
+    const numB = normalizeTestCase(b.test_cases)?.test_number ?? "";
     const partsA = numA.split(".").map(Number);
     const partsB = numB.split(".").map(Number);
     for (let i = 0; i < Math.max(partsA.length, partsB.length); i++) {

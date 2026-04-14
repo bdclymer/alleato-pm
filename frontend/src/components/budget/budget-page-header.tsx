@@ -50,7 +50,6 @@ interface BudgetPageHeaderProps {
   onUnlockBudget?: () => void;
   onImport?: () => void;
   onExport?: (format: string) => void;
-  onOpenBudgetModificationsReport?: () => void;
   onOpenBuyoutSummaryReport?: () => void;
   onOpenLegacyBudgetDetailReport?: () => void;
   onOpenMonitoredResourcesReport?: () => void;
@@ -72,7 +71,6 @@ export function BudgetPageHeader({
   onUnlockBudget,
   onImport,
   onExport,
-  onOpenBudgetModificationsReport,
   onOpenBuyoutSummaryReport,
   onOpenLegacyBudgetDetailReport,
   onOpenMonitoredResourcesReport,
@@ -188,9 +186,6 @@ export function BudgetPageHeader({
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>Budget Reports</DropdownMenuSubTrigger>
               <DropdownMenuSubContent>
-                <DropdownMenuItem onClick={onOpenBudgetModificationsReport}>
-                  Budget Modifications
-                </DropdownMenuItem>
                 <DropdownMenuItem onClick={onOpenBuyoutSummaryReport}>
                   Buyout Summary Report
                 </DropdownMenuItem>
@@ -321,9 +316,6 @@ export function BudgetPageHeader({
             <DropdownMenuSub>
               <DropdownMenuSubTrigger>Budget Reports</DropdownMenuSubTrigger>
               <DropdownMenuSubContent>
-                <DropdownMenuItem onClick={onOpenBudgetModificationsReport}>
-                  Budget Modifications
-                </DropdownMenuItem>
                 <DropdownMenuItem onClick={onOpenBuyoutSummaryReport}>
                   Buyout Summary Report
                 </DropdownMenuItem>

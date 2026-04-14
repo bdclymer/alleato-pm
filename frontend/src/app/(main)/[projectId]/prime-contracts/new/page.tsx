@@ -10,6 +10,28 @@ import type { ContractFormData } from "@/components/domain/contracts/ContractFor
 import { fetchWithTransientRouteRetry } from "@/lib/fetch-with-transient-route-retry";
 import { apiFetch } from "@/lib/api-client";
 
+const SUBMIT_REQUEST_TIMEOUT_MS = 20_000;
+
+// Prevent indefinite submit hangs by timing out stalled API requests.
+const apiFetchWithTimeout = async <T,>(url: string, init?: RequestInit) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), SUBMIT_REQUEST_TIMEOUT_MS);
+
+  try {
+    return await apiFetch<T>(url, {
+      ...init,
+      signal: controller.signal,
+    });
+  } catch (error) {
+    if (error instanceof DOMException && error.name === "AbortError") {
+      throw new Error("Request timed out while creating the prime contract");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+};
+
 export default function NewContractPage() {
   const router = useRouter();
   const params = useParams();
@@ -44,7 +66,7 @@ export default function NewContractPage() {
             : item.amount || 0),
         0,
       );
-      const newContract = await apiFetch<{ id: string }>(`/api/projects/${projectId}/contracts`, {
+      const newContract = await apiFetchWithTimeout<{ id: string }>(`/api/projects/${projectId}/contracts`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -94,7 +116,7 @@ export default function NewContractPage() {
             data.accountingMethod === "unit_quantity"
               ? item.unitCost ?? 0
               : item.amount || 0;
-          await apiFetch(
+          await apiFetchWithTimeout(
             `/api/projects/${projectId}/contracts/${newContract.id}/line-items`,
             {
               method: "POST",

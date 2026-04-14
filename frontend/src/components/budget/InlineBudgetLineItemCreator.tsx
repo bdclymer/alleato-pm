@@ -1,8 +1,16 @@
 "use client";
 
 import * as React from "react";
-import { Plus, X, Check, Search, ChevronDown, ChevronRight } from "lucide-react";
+import {
+  Plus,
+  X,
+  Check,
+  Search,
+  ChevronDown,
+  ChevronRight,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { MoneyField } from "@/components/forms/MoneyField";
 import {
@@ -27,13 +35,11 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  BudgetOverlay,
+  BudgetOverlayBody,
+  BudgetOverlayFooter,
+  BudgetOverlayHeader,
+} from "@/components/ui/budget-overlay";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
@@ -96,7 +102,9 @@ export function InlineBudgetLineItemCreator({
   const [openPopoverId, setOpenPopoverId] = React.useState<number | null>(null);
   const [searchQuery, setSearchQuery] = React.useState("");
   const [isCreating, setIsCreating] = React.useState(false);
-  const [currentRowIndex, setCurrentRowIndex] = React.useState<number | null>(null);
+  const [currentRowIndex, setCurrentRowIndex] = React.useState<number | null>(
+    null,
+  );
 
   // Budget Code creation modal state
   const [showCreateCodeModal, setShowCreateCodeModal] = React.useState(false);
@@ -109,7 +117,7 @@ export function InlineBudgetLineItemCreator({
   >([]);
   const [loadingCostCodes, setLoadingCostCodes] = React.useState(false);
   const [expandedDivisions, setExpandedDivisions] = React.useState<Set<string>>(
-    new Set()
+    new Set(),
   );
   const [groupedCostCodes, setGroupedCostCodes] = React.useState<
     Record<string, CostCodeOption[]>
@@ -164,7 +172,7 @@ export function InlineBudgetLineItemCreator({
               code,
               title
             )
-          `
+          `,
           )
           .order("id", { ascending: true });
 
@@ -203,7 +211,7 @@ export function InlineBudgetLineItemCreator({
             acc[divisionKey].push(code);
             return acc;
           },
-          {} as Record<string, CostCodeOption[]>
+          {} as Record<string, CostCodeOption[]>,
         );
 
         setGroupedCostCodes(grouped);
@@ -223,7 +231,7 @@ export function InlineBudgetLineItemCreator({
 
   const formatCurrency = (value: string): string => {
     const num = parseFloat(value) || 0;
-    return num.toLocaleString('en-US', {
+    return num.toLocaleString("en-US", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
@@ -238,7 +246,7 @@ export function InlineBudgetLineItemCreator({
   const handleRowChange = (
     index: number,
     field: keyof InlineLineItemData,
-    value: string
+    value: string,
   ) => {
     setRows(
       rows.map((row, i) => {
@@ -248,11 +256,14 @@ export function InlineBudgetLineItemCreator({
 
         // Auto-calculate amount when qty or unitCost changes
         if (field === "qty" || field === "unitCost") {
-          updatedRow.amount = calculateAmount(updatedRow.qty, updatedRow.unitCost);
+          updatedRow.amount = calculateAmount(
+            updatedRow.qty,
+            updatedRow.unitCost,
+          );
         }
 
         return updatedRow;
-      })
+      }),
     );
   };
 
@@ -261,8 +272,8 @@ export function InlineBudgetLineItemCreator({
       rows.map((row, i) =>
         i === index
           ? { ...row, budgetCodeId: code.id, budgetCodeLabel: code.fullLabel }
-          : row
-      )
+          : row,
+      ),
     );
     setOpenPopoverId(null);
   };
@@ -286,7 +297,7 @@ export function InlineBudgetLineItemCreator({
     // Auto-focus first input of new row after render
     setTimeout(() => {
       const firstInput = document.querySelector(
-        `input[tabindex="${newRowIndex * 5 + 1}"]`
+        `input[tabindex="${newRowIndex * 5 + 1}"]`,
       ) as HTMLInputElement;
       if (firstInput) {
         firstInput.focus();
@@ -302,7 +313,7 @@ export function InlineBudgetLineItemCreator({
   const handleCreateBudgetCode = async () => {
     try {
       const selectedCostCode = availableCostCodes.find(
-        (cc) => cc.id === newCodeData.costCodeId
+        (cc) => cc.id === newCodeData.costCodeId,
       );
       if (!selectedCostCode) {
         toast.error("Please select a cost code");
@@ -335,9 +346,13 @@ export function InlineBudgetLineItemCreator({
         setRows(
           rows.map((row, i) =>
             i === currentRowIndex
-              ? { ...row, budgetCodeId: createdCode.id, budgetCodeLabel: createdCode.fullLabel }
-              : row
-          )
+              ? {
+                  ...row,
+                  budgetCodeId: createdCode.id,
+                  budgetCodeLabel: createdCode.fullLabel,
+                }
+              : row,
+          ),
         );
       }
 
@@ -349,7 +364,7 @@ export function InlineBudgetLineItemCreator({
       toast.error(
         `Failed to create budget code: ${
           error instanceof Error ? error.message : "Unknown error"
-        }`
+        }`,
       );
     }
   };
@@ -357,7 +372,7 @@ export function InlineBudgetLineItemCreator({
   const handleCreate = async () => {
     // Validate all rows
     const invalidRows = rows.filter(
-      (row) => !row.budgetCodeId || parseFloat(row.amount) === 0
+      (row) => !row.budgetCodeId || parseFloat(row.amount) === 0,
     );
 
     if (invalidRows.length > 0) {
@@ -388,7 +403,7 @@ export function InlineBudgetLineItemCreator({
   };
 
   const filteredCodes = budgetCodes.filter((code) =>
-    code.fullLabel.toLowerCase().includes(searchQuery.toLowerCase())
+    code.fullLabel.toLowerCase().includes(searchQuery.toLowerCase()),
   );
 
   const toggleDivision = (division: string) => {
@@ -437,11 +452,9 @@ export function InlineBudgetLineItemCreator({
           {/* Smart Copy UOM Toggle */}
           <div className="flex gap-4 text-xs mb-2">
             <label className="flex items-center gap-2 cursor-pointer text-muted-foreground">
-              <input
-                type="checkbox"
+              <Checkbox
                 checked={smartCopyUOM}
-                onChange={(e) => setSmartCopyUOM(e.target.checked)}
-                className="rounded border-border"
+                onCheckedChange={(checked) => setSmartCopyUOM(Boolean(checked))}
               />
               <span>Copy UOM to new rows</span>
             </label>
@@ -455,7 +468,9 @@ export function InlineBudgetLineItemCreator({
                   <Label className="text-xs">Budget Code*</Label>
                   <Popover
                     open={openPopoverId === index}
-                    onOpenChange={(open) => setOpenPopoverId(open ? index : null)}
+                    onOpenChange={(open) =>
+                      setOpenPopoverId(open ? index : null)
+                    }
                   >
                     <PopoverTrigger asChild>
                       <Button
@@ -478,14 +493,18 @@ export function InlineBudgetLineItemCreator({
                         />
                         <CommandList>
                           <CommandEmpty>
-                            {loadingCodes ? "Loading..." : "No budget codes found."}
+                            {loadingCodes
+                              ? "Loading..."
+                              : "No budget codes found."}
                           </CommandEmpty>
                           <CommandGroup>
                             {filteredCodes.map((code) => (
                               <CommandItem
                                 key={code.id}
                                 value={code.fullLabel}
-                                onSelect={() => handleBudgetCodeSelect(index, code)}
+                                onSelect={() =>
+                                  handleBudgetCodeSelect(index, code)
+                                }
                               >
                                 {code.fullLabel}
                               </CommandItem>
@@ -518,9 +537,11 @@ export function InlineBudgetLineItemCreator({
                     type="number"
                     step="0.001"
                     value={row.qty}
-                    onChange={(e) => handleRowChange(index, "qty", e.target.value)}
+                    onChange={(e) =>
+                      handleRowChange(index, "qty", e.target.value)
+                    }
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
+                      if (e.key === "Enter" && !e.shiftKey) {
                         e.preventDefault();
                         addRow();
                       }
@@ -537,7 +558,9 @@ export function InlineBudgetLineItemCreator({
                   <Label className="text-xs">UOM</Label>
                   <Select
                     value={row.uom}
-                    onValueChange={(value) => handleRowChange(index, "uom", value)}
+                    onValueChange={(value) =>
+                      handleRowChange(index, "uom", value)
+                    }
                   >
                     <SelectTrigger className="h-9">
                       <SelectValue placeholder="Select" />
@@ -560,8 +583,14 @@ export function InlineBudgetLineItemCreator({
                   <Label className="text-xs">Unit Cost</Label>
                   <MoneyField
                     label="Unit Cost"
-                    value={row.unitCost ? parseFloat(String(row.unitCost)) : undefined}
-                    onChange={(val) => handleRowChange(index, "unitCost", String(val ?? ""))}
+                    value={
+                      row.unitCost
+                        ? parseFloat(String(row.unitCost))
+                        : undefined
+                    }
+                    onChange={(val) =>
+                      handleRowChange(index, "unitCost", String(val ?? ""))
+                    }
                     inline
                     showCurrency={false}
                     className="h-9"
@@ -576,8 +605,14 @@ export function InlineBudgetLineItemCreator({
                     <div className="w-full">
                       <MoneyField
                         label="Amount"
-                        value={row.amount ? parseFloat(String(row.amount)) : undefined}
-                        onChange={(val) => handleRowChange(index, "amount", String(val ?? ""))}
+                        value={
+                          row.amount
+                            ? parseFloat(String(row.amount))
+                            : undefined
+                        }
+                        onChange={(val) =>
+                          handleRowChange(index, "amount", String(val ?? ""))
+                        }
                         inline
                         showCurrency={false}
                         allowNegative
@@ -606,13 +641,15 @@ export function InlineBudgetLineItemCreator({
           {/* Running Total */}
           <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border border-blue-200 mt-4">
             <div className="flex justify-between items-center">
-              <span className="text-sm font-medium text-muted-foreground">Total Amount</span>
+              <span className="text-sm font-medium text-muted-foreground">
+                Total Amount
+              </span>
               <span className="text-2xl font-bold text-blue-900">
                 ${formatCurrency(calculateTotal().toString())}
               </span>
             </div>
             <div className="mt-2 text-xs text-muted-foreground">
-              {rows.length} line item{rows.length !== 1 ? 's' : ''}
+              {rows.length} line item{rows.length !== 1 ? "s" : ""}
             </div>
           </div>
 
@@ -630,16 +667,12 @@ export function InlineBudgetLineItemCreator({
             </Button>
 
             <div className="flex gap-2">
-              <Button
-                variant="outline"
-                onClick={onClose}
-                disabled={isCreating}
-              >
+              <Button variant="outline" onClick={onClose} disabled={isCreating}>
                 Cancel
               </Button>
               <Button
                 onClick={handleCreate}
-                disabled={isCreating || rows.every(r => !r.budgetCodeId)}
+                disabled={isCreating || rows.every((r) => !r.budgetCodeId)}
               >
                 {isCreating
                   ? "Creating..."
@@ -651,15 +684,19 @@ export function InlineBudgetLineItemCreator({
       </div>
 
       {/* Create Budget Code Modal */}
-      <Dialog open={showCreateCodeModal} onOpenChange={setShowCreateCodeModal}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Create New Budget Code</DialogTitle>
-            <DialogDescription>
-              Add a new budget code that can be used for line items in this project.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
+      <BudgetOverlay
+        open={showCreateCodeModal}
+        onOpenChange={setShowCreateCodeModal}
+        variant="dialog"
+        size="sm"
+        className="flex h-full flex-col"
+      >
+        <BudgetOverlayHeader
+          title="Create New Budget Code"
+          description="Add a new budget code that can be used for line items in this project."
+        />
+        <BudgetOverlayBody className="px-4 py-4 sm:px-6">
+          <div className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="costCode">Cost Code*</Label>
               {loadingCostCodes ? (
@@ -704,7 +741,7 @@ export function InlineBudgetLineItemCreator({
                                 className={cn(
                                   "w-full text-left px-6 py-2 text-sm hover:bg-muted transition-colors rounded-none h-auto justify-start",
                                   newCodeData.costCodeId === costCode.id &&
-                                    "bg-muted text-foreground font-medium"
+                                    "bg-muted text-foreground font-medium",
                                 )}
                               >
                                 {costCode.id} – {costCode.title}
@@ -743,8 +780,12 @@ export function InlineBudgetLineItemCreator({
                 {newCodeData.costCodeId ? (
                   <>
                     {newCodeData.costCodeId}.{newCodeData.costType} –{" "}
-                    {availableCostCodes.find((cc) => cc.id === newCodeData.costCodeId)?.title} –{" "}
-                    {getCostTypeLabel(newCodeData.costType)}
+                    {
+                      availableCostCodes.find(
+                        (cc) => cc.id === newCodeData.costCodeId,
+                      )?.title
+                    }{" "}
+                    – {getCostTypeLabel(newCodeData.costType)}
                   </>
                 ) : (
                   "Select cost code and cost type to see preview"
@@ -752,24 +793,24 @@ export function InlineBudgetLineItemCreator({
               </p>
             </div>
           </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowCreateCodeModal(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={handleCreateBudgetCode}
-              disabled={!newCodeData.costCodeId || !newCodeData.costType}
-            >
-              Create Budget Code
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </BudgetOverlayBody>
+        <BudgetOverlayFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowCreateCodeModal(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={handleCreateBudgetCode}
+            disabled={!newCodeData.costCodeId || !newCodeData.costType}
+          >
+            Create Budget Code
+          </Button>
+        </BudgetOverlayFooter>
+      </BudgetOverlay>
     </>
   );
 }

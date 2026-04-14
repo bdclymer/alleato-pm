@@ -82,11 +82,13 @@ interface StatusBadgeProps {
   status: string;
   /** Override the automatic variant if needed */
   variant?: StatusVariant;
+  /** Back-compat alias for older call sites that passed a domain type. */
+  type?: string;
   className?: string;
 }
 
-export function StatusBadge({ status, variant, className }: StatusBadgeProps) {
-  const resolved = variant ?? resolveVariant(status);
+export function StatusBadge({ status, variant, type, className }: StatusBadgeProps) {
+  const resolved = variant ?? resolveVariant(type ?? status);
   return (
     <span
       className={cn(

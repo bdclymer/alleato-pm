@@ -67,6 +67,7 @@ import {
 import { useCompanies } from "@/hooks/use-companies";
 import { useProjectUsers } from "@/hooks/use-project-users";
 import { getAutoFillData, isDevelopment } from "@/lib/dev-autofill";
+import { apiFetchWithTransientRouteRetry } from "@/lib/api-client";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { ImportFromBudgetModal } from "@/components/domain/contracts/ImportFromBudgetModal";
@@ -182,7 +183,7 @@ export function ContractForm({
     ...initialData,
   });
   const [validationErrors, setValidationErrors] = React.useState<
-    Partial<Record<"number" | "title" | "executed", string>>
+    Partial<Record<"number" | "title", string>>
   >({});
 
   // Budget code state
@@ -242,6 +243,24 @@ export function ContractForm({
   const [newCompanyName, setNewCompanyName] = React.useState("");
   const [isCreating, setIsCreating] = React.useState(false);
 
+  // Keep the contract company aligned with the selected owner/client company for downstream lookups.
+  React.useEffect(() => {
+    if (!formData.ownerCompanyId || formData.contractCompanyId === formData.ownerCompanyId) {
+      return;
+    }
+
+    setFormData((prev) => {
+      if (!prev.ownerCompanyId || prev.contractCompanyId === prev.ownerCompanyId) {
+        return prev;
+      }
+
+      return {
+        ...prev,
+        contractCompanyId: prev.ownerCompanyId,
+      };
+    });
+  }, [formData.contractCompanyId, formData.ownerCompanyId]);
+
   // Fetch budget codes for the project
   React.useEffect(() => {
     const fetchBudgetCodes = async () => {
@@ -249,19 +268,18 @@ export function ContractForm({
 
       try {
         setLoadingBudgetCodes(true);
-        const response = await fetch(`/api/projects/${projectId}/budget-codes`);
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error?.error || "Failed to load budget codes");
-        }
-
-        const { budgetCodes } = (await response.json()) as {
+        const { budgetCodes } = await apiFetchWithTransientRouteRetry<{
           budgetCodes: BudgetCode[];
-        };
+        }>(`/api/projects/${projectId}/budget-codes`);
 
         setBudgetCodes(budgetCodes || []);
       } catch (error) {
+        console.error("[ContractForm] Failed to load budget codes:", error);
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Failed to load budget codes",
+        );
         setBudgetCodes([]);
       } finally {
         setLoadingBudgetCodes(false);
@@ -325,15 +343,12 @@ export function ContractForm({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const errors: Partial<Record<"number" | "title" | "executed", string>> = {};
+    const errors: Partial<Record<"number" | "title", string>> = {};
     if (!formData.number?.trim()) {
       errors.number = "Contract # is required.";
     }
     if (!formData.title?.trim()) {
       errors.title = "Title is required.";
-    }
-    if (!formData.executed) {
-      errors.executed = "Executed must be checked.";
     }
 
     if (Object.keys(errors).length > 0) {
@@ -348,7 +363,7 @@ export function ContractForm({
     setFormData((prev) => ({ ...prev, ...updates }));
   };
 
-  const clearValidationError = (field: "number" | "title" | "executed") => {
+  const clearValidationError = (field: "number" | "title") => {
     setValidationErrors((prev) => {
       if (!prev[field]) {
         return prev;
@@ -370,7 +385,10 @@ export function ContractForm({
 
       if (newCompany) {
         // Set as owner/client in the form
-        updateFormData({ ownerCompanyId: newCompany.id });
+        updateFormData({
+          ownerCompanyId: newCompany.id,
+          contractCompanyId: newCompany.id,
+        });
         toast.success("Company created");
         setNewCompanyName("");
         setShowAddCompany(false);
@@ -708,7 +726,13 @@ export function ContractForm({
                 label="Owner/Client"
                 options={companyOptions}
                 value={formData.ownerCompanyId}
-                onValueChange={(value) => updateFormData({ ownerCompanyId: value })}
+                onValueChange={(value) =>
+                  // Keep the contract company aligned so invoice-contact lookups stay in sync.
+                  updateFormData({
+                    ownerCompanyId: value,
+                    contractCompanyId: value,
+                  })
+                }
                 placeholder="Select company"
                 searchPlaceholder="Search"
                 disabled={companiesLoading}
@@ -791,7 +815,6 @@ export function ContractForm({
                     id="executed"
                     checked={formData.executed || false}
                     onCheckedChange={(checked) => {
-                      clearValidationError("executed");
                       updateFormData({ executed: checked === true });
                     }}
                   />
@@ -799,14 +822,6 @@ export function ContractForm({
                     Contract is executed
                   </Label>
                 </div>
-                {validationErrors.executed && (
-                  <p
-                    className="text-sm text-destructive"
-                    data-testid="executed-error"
-                  >
-                    {validationErrors.executed}
-                  </p>
-                )}
               </div>
             </div>
           </FormGridRow>

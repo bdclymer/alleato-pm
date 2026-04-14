@@ -1,12 +1,5 @@
 "use client";
-
-import { useEffect } from "react";
-import {
-  Modal,
-  ModalBody,
-  ModalContent,
-  useModal,
-} from "@/components/ui/modal/animated-modal";
+import { BudgetOverlay } from "@/components/ui/budget-overlay";
 import { BudgetLineItemForm } from "./budget-line-item-form";
 
 interface BudgetLineItemModalAnimatedProps {
@@ -22,42 +15,28 @@ function ModalController({
   projectId,
   onSuccess,
 }: BudgetLineItemModalAnimatedProps) {
-  const { open: modalOpen, setOpen } = useModal();
-
-  useEffect(() => {
-    setOpen(open);
-  }, [open, setOpen]);
-
-  useEffect(() => {
-    if (!modalOpen && open) {
-      onOpenChange(false);
-    }
-  }, [modalOpen, open, onOpenChange]);
-
   return (
-    <ModalBody>
-      <ModalContent className="max-w-[1200px] max-h-[90vh] overflow-hidden">
-        <BudgetLineItemForm
-          projectId={projectId}
-          onSuccess={() => {
-            onSuccess?.();
-            setOpen(false);
-          }}
-          onCancel={() => setOpen(false)}
-        />
-      </ModalContent>
-    </ModalBody>
+    <BudgetOverlay
+      open={open}
+      onOpenChange={onOpenChange}
+      variant="sheet"
+      size="xl"
+      className="flex h-full flex-col"
+    >
+      <BudgetLineItemForm
+        projectId={projectId}
+        onSuccess={() => {
+          onSuccess?.();
+          onOpenChange(false);
+        }}
+        onCancel={() => onOpenChange(false)}
+      />
+    </BudgetOverlay>
   );
 }
 
 export function BudgetLineItemModalAnimated(
   props: BudgetLineItemModalAnimatedProps,
 ) {
-  if (!props.open) return null;
-
-  return (
-    <Modal>
-      <ModalController {...props} />
-    </Modal>
-  );
+  return <ModalController {...props} />;
 }

@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 interface ProjectCreatedModalProps {
   isOpen: boolean
   onClose: () => void
+  onViewDashboard: () => void
   projectId: string
   projectName: string
 }
@@ -19,41 +20,54 @@ const nextSteps = [
     icon: Users,
     title: 'Update Directory',
     description: 'Add team members and assign roles',
-    href: (projectId: string) => `/${projectId}/directory`,
+    path: 'directory',
   },
   {
     icon: DollarSign,
     title: 'Create Budget',
     description: 'Set up project budget and line items',
-    href: (projectId: string) => `/${projectId}/budget`,
+    path: 'budget',
   },
   {
     icon: Building2,
     title: 'Create Prime Contract',
     description: 'Establish primary contract terms',
-    href: (projectId: string) => `/${projectId}/prime-contracts`,
+    path: 'prime-contracts',
   },
   {
     icon: FileText,
     title: 'Add Specifications',
     description: 'Upload project specifications',
-    href: (projectId: string) => `/${projectId}/specifications`,
+    path: 'specifications',
   },
   {
     icon: Image,
     title: 'Upload Drawings',
     description: 'Add architectural and engineering drawings',
-    href: (projectId: string) => `/${projectId}/drawings`,
+    path: 'drawings',
   },
   {
     icon: Calendar,
     title: 'Create Schedule',
     description: 'Build project timeline and milestones',
-    href: (projectId: string) => `/${projectId}/schedule`,
+    path: 'schedule',
   },
 ]
 
-export function ProjectCreatedModal({ isOpen, onClose, projectId, projectName }: ProjectCreatedModalProps) {
+// Build canonical project-scoped paths for next-step links after project creation.
+const buildProjectPath = (projectId: string, suffix: string) => {
+  const normalizedProjectId = String(projectId).trim()
+  if (!normalizedProjectId) return '#'
+  return `/${normalizedProjectId}/${suffix}`
+}
+
+export function ProjectCreatedModal({
+  isOpen,
+  onClose,
+  onViewDashboard,
+  projectId,
+  projectName,
+}: ProjectCreatedModalProps) {
   const prefersReducedMotion = useReducedMotion()
 
   // Stamp drop: falls from above, thuds down with a slight compression on impact
@@ -165,7 +179,7 @@ export function ProjectCreatedModal({ isOpen, onClose, projectId, projectName }:
                     transition={{ delay: 0.3 + index * 0.05, duration: 0.22, ease: 'easeOut' }}
                   >
                     <Link
-                      href={step.href(projectId)}
+                      href={buildProjectPath(projectId, step.path)}
                       onClick={onClose}
                       className="group flex items-center gap-3 px-3 py-2.5 rounded-md hover:bg-accent transition-colors duration-100"
                     >
@@ -198,7 +212,7 @@ export function ProjectCreatedModal({ isOpen, onClose, projectId, projectName }:
             <p className="text-[11px] uppercase tracking-wider text-muted-foreground/60">
               Or explore your project
             </p>
-            <Button onClick={onClose} size="sm" className="gap-1.5 group">
+            <Button onClick={onViewDashboard} size="sm" className="gap-1.5 group">
               View Dashboard
               <ArrowRight className="group-hover:translate-x-0.5 transition-transform" />
             </Button>

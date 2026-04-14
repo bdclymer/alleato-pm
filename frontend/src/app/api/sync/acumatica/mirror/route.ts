@@ -14,7 +14,7 @@ import { createClient } from "@/lib/supabase/server";
  * Body: {
  *   mode: "full" | "incremental"   // default: "incremental"
  *   entities?: string[]             // optional — sync only these entities
- *   tier?: number                   // optional — sync only this tier (0-3)
+ *   tier?: number                   // optional — sync only this tier (0-2)
  * }
  */
 export const maxDuration = 300;
@@ -22,7 +22,11 @@ export const maxDuration = 300;
 const AcumaticaMirrorSyncSchema = z.object({
   mode: z.enum(["full", "incremental"]).optional(),
   entities: z.array(z.string()).optional(),
-  tier: z.number().int().min(0).max(3).optional(),
+  tier: z.union([
+    z.literal(0),
+    z.literal(1),
+    z.literal(2),
+  ]).optional(),
 });
 
 export const POST = withApiGuardrails("/api/sync/acumatica/mirror#POST", async ({ request }) => {

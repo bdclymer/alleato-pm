@@ -39,6 +39,7 @@ import {
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils";
 import type { CreateSubcontractInput } from "@/lib/schemas/create-subcontract-schema";
+import type { Database } from "@/types/database.types";
 
 interface InvoiceContactsSectionProps {
   isSubmitting: boolean;
@@ -103,17 +104,18 @@ export function InvoiceContactsSection({
     setIsSaving(true);
     try {
       const supabase = createClient();
+      const personInsert: Database["public"]["Tables"]["people"]["Insert"] = {
+        first_name: newContact.first_name,
+        last_name: newContact.last_name || "",
+        email: newContact.email || null,
+        job_title: newContact.job_title || null,
+        person_type: "contact",
+        status: "active",
+        company_id: vendorCompanyId ?? null,
+      };
       const { data, error } = await supabase
         .from("people")
-        .insert({
-          first_name: newContact.first_name,
-          last_name: newContact.last_name || null,
-          email: newContact.email || null,
-          job_title: newContact.job_title || null,
-          person_type: "contact",
-          status: "active",
-          company_id: vendorCompanyId || null,
-        })
+        .insert(personInsert)
         .select("id")
         .single();
 

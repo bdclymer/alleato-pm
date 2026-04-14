@@ -5,12 +5,11 @@ import { X, Plus, Trash2, GripVertical, Eye, EyeOff, Lock } from "lucide-react";
 import { toast } from "sonner";
 
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  BudgetOverlay,
+  BudgetOverlayBody,
+  BudgetOverlayFooter,
+  BudgetOverlayHeader,
+} from "@/components/ui/budget-overlay";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -243,21 +242,27 @@ export function BudgetViewsModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl max-h-[90vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>
-            {mode === "create"
-              ? "Create Budget View"
-              : `Edit ${view?.name || "View"}`}
-          </DialogTitle>
-          <DialogDescription>
-            {mode === "create"
-              ? "Configure which columns to display in your custom budget view"
-              : "Update your budget view configuration"}
-          </DialogDescription>
-        </DialogHeader>
+    <BudgetOverlay
+      open={open}
+      onOpenChange={onOpenChange}
+      variant="sheet"
+      size="lg"
+      className="flex h-full flex-col"
+    >
+      <BudgetOverlayHeader
+        title={
+          mode === "create"
+            ? "Create Budget View"
+            : `Edit ${view?.name || "View"}`
+        }
+        description={
+          mode === "create"
+            ? "Configure which columns to display in your custom budget view."
+            : "Update your budget view configuration."
+        }
+      />
 
+      <BudgetOverlayBody className="px-4 py-4 sm:px-6">
         <ScrollArea className="flex-1 pr-4">
           <div className="space-y-6">
             {/* View Details */}
@@ -385,11 +390,7 @@ export function BudgetViewsModal({
                           disabled={col.is_locked || view?.is_system}
                           className="h-8 w-8 p-0"
                         >
-                          {col.is_visible ? (
-                            <Eye />
-                          ) : (
-                            <EyeOff />
-                          )}
+                          {col.is_visible ? <Eye /> : <EyeOff />}
                         </Button>
                         <Button
                           variant="ghost"
@@ -408,24 +409,24 @@ export function BudgetViewsModal({
             </div>
           </div>
         </ScrollArea>
+      </BudgetOverlayBody>
 
-        <div className="flex justify-end gap-2 pt-4 border-t">
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={loading}
-          >
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} disabled={loading || view?.is_system}>
-            {loading
-              ? "Saving..."
-              : mode === "create"
-                ? "Create View"
-                : "Save Changes"}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+      <BudgetOverlayFooter>
+        <Button
+          variant="outline"
+          onClick={() => onOpenChange(false)}
+          disabled={loading}
+        >
+          Cancel
+        </Button>
+        <Button onClick={handleSubmit} disabled={loading || view?.is_system}>
+          {loading
+            ? "Saving..."
+            : mode === "create"
+              ? "Create View"
+              : "Save Changes"}
+        </Button>
+      </BudgetOverlayFooter>
+    </BudgetOverlay>
   );
 }

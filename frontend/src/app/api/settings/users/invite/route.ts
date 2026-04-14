@@ -1,7 +1,6 @@
 import { withApiGuardrails } from "@/lib/guardrails/api";
 import { GuardrailError } from "@/lib/guardrails/errors";
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
 import { sendEmail } from "@/lib/email/send";
@@ -19,7 +18,7 @@ export const POST = withApiGuardrails(
       throw new GuardrailError({ code: "AUTH_EXPIRED", where: "settings/users/invite#POST", message: "Authentication required." });
     }
 
-    const body = (await req.json()) as {
+    const body = (await request.json()) as {
       email: string;
       full_name?: string;
       role?: string;

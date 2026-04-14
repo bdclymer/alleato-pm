@@ -1,12 +1,18 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { Plus, Search, Trash2, ChevronRight, ChevronDown, AlertTriangle } from "lucide-react";
+import {
+  Plus,
+  Search,
+  Trash2,
+  ChevronRight,
+  ChevronDown,
+  AlertTriangle,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
-import { Input } from "@/components/ui/input";
 import { NumberInput } from "@/components/ui/number-input";
 import { MoneyField } from "@/components/forms/MoneyField";
 import { Label } from "@/components/ui/label";
@@ -18,13 +24,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  BudgetOverlay,
+  BudgetOverlayBody,
+  BudgetOverlayFooter,
+  BudgetOverlayHeader,
+} from "@/components/ui/budget-overlay";
 import {
   Command,
   CommandEmpty,
@@ -182,9 +186,7 @@ export function BudgetLineItemForm({
   useEffect(() => {
     if (searchQuery) {
       // Expand all divisions that have matching codes
-      const divisionsWithResults = new Set(
-        Object.keys(filteredGroupedCodes),
-      );
+      const divisionsWithResults = new Set(Object.keys(filteredGroupedCodes));
       setExpandedBudgetDivisions(divisionsWithResults);
     }
   }, [searchQuery, filteredGroupedCodes]);
@@ -271,9 +273,11 @@ export function BudgetLineItemForm({
         );
 
         setGroupedBudgetCodes(grouped);
+        setExpandedBudgetDivisions(new Set(Object.keys(grouped)));
       } catch (error) {
         setBudgetCodes([]);
         setGroupedBudgetCodes({});
+        setExpandedBudgetDivisions(new Set());
       } finally {
         setLoadingCodes(false);
       }
@@ -450,7 +454,6 @@ export function BudgetLineItemForm({
     }
   };
 
-
   const addRow = () => {
     const newRow: BudgetLineItemRow = {
       id: Date.now().toString(),
@@ -534,230 +537,251 @@ export function BudgetLineItemForm({
 
   return (
     <>
-      <div className="mb-6">
-        <h2 className="text-2xl font-semibold text-foreground dark:text-white">
-          Create Budget Line Items
-        </h2>
-        <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-1">
-          Add one or more line items to the project budget
-        </p>
-      </div>
+      <BudgetOverlayHeader
+        title="Create Budget Line Items"
+        description="Add one or more line items to the project budget."
+      />
 
-      <form onSubmit={handleSubmit} className="flex flex-col">
-        <div className="flex-1 overflow-y-auto py-4">
+      <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+        <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6">
           <div>
             <InlineTable variant="edit">
               <InlineTableHeader>
                 <InlineTableHeaderRow>
-                  <InlineTableHeaderCell className="w-12">#</InlineTableHeaderCell>
-                  <InlineTableHeaderCell className="min-w-[300px]">Budget Code*</InlineTableHeaderCell>
-                  <InlineTableHeaderCell className="w-24">Qty</InlineTableHeaderCell>
-                  <InlineTableHeaderCell className="w-28">UOM</InlineTableHeaderCell>
-                  <InlineTableHeaderCell className="w-32">Unit Cost</InlineTableHeaderCell>
-                  <InlineTableHeaderCell className="w-32">Amount*</InlineTableHeaderCell>
-                  <InlineTableHeaderCell className="w-12"><span className="sr-only">Actions</span></InlineTableHeaderCell>
+                  <InlineTableHeaderCell className="w-12">
+                    #
+                  </InlineTableHeaderCell>
+                  <InlineTableHeaderCell className="min-w-[300px]">
+                    Budget Code*
+                  </InlineTableHeaderCell>
+                  <InlineTableHeaderCell className="w-24">
+                    Qty
+                  </InlineTableHeaderCell>
+                  <InlineTableHeaderCell className="w-28">
+                    UOM
+                  </InlineTableHeaderCell>
+                  <InlineTableHeaderCell className="w-32">
+                    Unit Cost
+                  </InlineTableHeaderCell>
+                  <InlineTableHeaderCell className="w-32">
+                    Amount*
+                  </InlineTableHeaderCell>
+                  <InlineTableHeaderCell className="w-12">
+                    <span className="sr-only">Actions</span>
+                  </InlineTableHeaderCell>
                 </InlineTableHeaderRow>
               </InlineTableHeader>
               <InlineTableBody>
-                  {rows.map((row, index) => (
-                    <InlineTableRow key={row.id}>
-                      <InlineTableCell className="text-sm text-muted-foreground">
-                        {index + 1}
-                      </InlineTableCell>
+                {rows.map((row, index) => (
+                  <InlineTableRow key={row.id}>
+                    <InlineTableCell className="text-sm text-muted-foreground">
+                      {index + 1}
+                    </InlineTableCell>
 
-                      <InlineTableCell>
-                        <Popover
-                          open={openPopoverId === row.id}
-                          onOpenChange={(open) =>
-                            setOpenPopoverId(open ? row.id : null)
-                          }
-                        >
-                          <PopoverTrigger asChild>
-                            <Button
-                              variant="outline"
-                              role="combobox"
-                              className="w-full justify-between text-left font-normal h-9"
-                            >
-                              <span className="truncate">
-                                {row.budgetCodeLabel || "Select budget code..."}
-                              </span>
-                              <Search className="shrink-0 opacity-50" />
-                            </Button>
-                          </PopoverTrigger>
-                          <PopoverContent
-                            className="w-[500px] p-0"
-                            align="start"
+                    <InlineTableCell>
+                      <Popover
+                        open={openPopoverId === row.id}
+                        onOpenChange={(open) =>
+                          setOpenPopoverId(open ? row.id : null)
+                        }
+                      >
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            className="w-full justify-between text-left font-normal h-9"
+                            aria-label={`Budget Code ${index + 1}`}
                           >
-                            <Command>
-                              <CommandInput
-                                placeholder="Search budget codes..."
-                                value={searchQuery}
-                                onValueChange={setSearchQuery}
-                              />
-                              <CommandList className="max-h-[400px]">
-                                <CommandEmpty>
-                                  {loadingCodes
-                                    ? "Loading..."
-                                    : "No budget codes found."}
-                                </CommandEmpty>
-                                {Object.entries(filteredGroupedCodes)
-                                  .sort(([a], [b]) => a.localeCompare(b))
-                                  .map(([division, codes]) => (
-                                    <div key={division}>
-                                      <div
-                                        className="flex items-center justify-between px-2 py-1.5 text-sm font-semibold text-foreground hover:bg-muted cursor-pointer sticky top-0 bg-background z-10 border-b"
-                                        onClick={() =>
-                                          toggleBudgetDivision(division)
-                                        }
-                                      >
-                                        <span>{division}</span>
-                                        {expandedBudgetDivisions.has(division) ? (
-                                          <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                                        ) : (
-                                          <ChevronRight className="w-4 h-4 text-muted-foreground" />
-                                        )}
-                                      </div>
-                                      {expandedBudgetDivisions.has(division) && (
-                                        <CommandGroup>
-                                          {codes.map((code) => (
-                                            <CommandItem
-                                              key={code.id}
-                                              value={code.fullLabel}
-                                              onSelect={() =>
-                                                handleBudgetCodeSelect(
-                                                  row.id,
-                                                  code,
-                                                )
-                                              }
-                                              className="pl-8"
-                                            >
-                                              {code.fullLabel}
-                                            </CommandItem>
-                                          ))}
-                                        </CommandGroup>
+                            <span className="truncate">
+                              {row.budgetCodeLabel || "Select budget code..."}
+                            </span>
+                            <Search className="shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[500px] p-0" align="start">
+                          <Command>
+                            <CommandInput
+                              placeholder="Search budget codes..."
+                              value={searchQuery}
+                              onValueChange={setSearchQuery}
+                            />
+                            <CommandList className="max-h-[400px]">
+                              <CommandEmpty>
+                                {loadingCodes
+                                  ? "Loading..."
+                                  : "No budget codes found."}
+                              </CommandEmpty>
+                              {Object.entries(filteredGroupedCodes)
+                                .sort(([a], [b]) => a.localeCompare(b))
+                                .map(([division, codes]) => (
+                                  <div key={division}>
+                                    <div
+                                      className="flex items-center justify-between px-2 py-1.5 text-sm font-semibold text-foreground hover:bg-muted cursor-pointer sticky top-0 bg-background z-10 border-b"
+                                      onClick={() =>
+                                        toggleBudgetDivision(division)
+                                      }
+                                    >
+                                      <span>{division}</span>
+                                      {expandedBudgetDivisions.has(division) ? (
+                                        <ChevronDown className="w-4 h-4 text-muted-foreground" />
+                                      ) : (
+                                        <ChevronRight className="w-4 h-4 text-muted-foreground" />
                                       )}
                                     </div>
-                                  ))}
-                                <CommandSeparator />
-                                <CommandGroup>
-                                  <CommandItem
-                                    onSelect={() => {
-                                      setOpenPopoverId(null);
-                                      setPendingRowId(row.id);
-                                      setShowCreateCodeModal(true);
-                                    }}
-                                    className="text-primary"
-                                  >
-                                    <Plus className="mr-2 h-4 w-4" />
-                                    Create New Budget Code
-                                  </CommandItem>
-                                </CommandGroup>
-                              </CommandList>
-                            </Command>
-                          </PopoverContent>
-                        </Popover>
-                      </InlineTableCell>
+                                    {expandedBudgetDivisions.has(division) && (
+                                      <CommandGroup>
+                                        {codes.map((code) => (
+                                          <CommandItem
+                                            key={code.id}
+                                            value={code.fullLabel}
+                                            onSelect={() =>
+                                              handleBudgetCodeSelect(
+                                                row.id,
+                                                code,
+                                              )
+                                            }
+                                            className="pl-8"
+                                          >
+                                            {code.fullLabel}
+                                          </CommandItem>
+                                        ))}
+                                      </CommandGroup>
+                                    )}
+                                  </div>
+                                ))}
+                              <CommandSeparator />
+                              <CommandGroup>
+                                <CommandItem
+                                  onSelect={() => {
+                                    setOpenPopoverId(null);
+                                    setPendingRowId(row.id);
+                                    setShowCreateCodeModal(true);
+                                  }}
+                                  className="text-primary"
+                                >
+                                  <Plus className="mr-2 h-4 w-4" />
+                                  Create New Budget Code
+                                </CommandItem>
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                    </InlineTableCell>
 
-                      <InlineTableCell>
-                        <NumberInput
-                          step="0.001"
-                          value={row.qty}
-                          onChange={(e) =>
-                            handleRowChange(row.id, "qty", e.target.value)
-                          }
-                          placeholder="Quantity"
-                          className="h-9 text-center"
-                          clearZeroOnFocus={true}
-                        />
-                      </InlineTableCell>
+                    <InlineTableCell>
+                      <NumberInput
+                        step="0.001"
+                        value={row.qty}
+                        onChange={(e) =>
+                          handleRowChange(row.id, "qty", e.target.value)
+                        }
+                        placeholder="Quantity"
+                        className="h-9 text-center"
+                        clearZeroOnFocus={true}
+                        aria-label={`Quantity ${index + 1}`}
+                      />
+                    </InlineTableCell>
 
-                      <InlineTableCell>
-                        <Select
-                          value={row.uom}
-                          onValueChange={(value) =>
-                            handleRowChange(row.id, "uom", value)
-                          }
+                    <InlineTableCell>
+                      <Select
+                        value={row.uom}
+                        onValueChange={(value) =>
+                          handleRowChange(row.id, "uom", value)
+                        }
+                      >
+                        <SelectTrigger
+                          className="h-9"
+                          aria-label={`Unit of measure ${index + 1}`}
                         >
-                          <SelectTrigger className="h-9">
-                            <SelectValue placeholder="Select UOM" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="EA">EA - Each</SelectItem>
-                            <SelectItem value="HR">HR - Hour</SelectItem>
-                            <SelectItem value="DAY">DAY - Day</SelectItem>
-                            <SelectItem value="WK">WK - Week</SelectItem>
-                            <SelectItem value="MO">MO - Month</SelectItem>
-                            <SelectItem value="LS">LS - Lump Sum</SelectItem>
-                            <SelectItem value="LF">LF - Linear Foot</SelectItem>
-                            <SelectItem value="SF">SF - Square Foot</SelectItem>
-                            <SelectItem value="SY">SY - Square Yard</SelectItem>
-                            <SelectItem value="CF">CF - Cubic Foot</SelectItem>
-                            <SelectItem value="CY">CY - Cubic Yard</SelectItem>
-                            <SelectItem value="LB">LB - Pound</SelectItem>
-                            <SelectItem value="TON">TON - Ton</SelectItem>
-                            <SelectItem value="GAL">GAL - Gallon</SelectItem>
-                            <SelectItem value="KG">KG - Kilogram</SelectItem>
-                            <SelectItem value="M">M - Meter</SelectItem>
-                            <SelectItem value="M2">
-                              M² - Square Meter
-                            </SelectItem>
-                            <SelectItem value="M3">M³ - Cubic Meter</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </InlineTableCell>
+                          <SelectValue placeholder="Select UOM" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="EA">EA - Each</SelectItem>
+                          <SelectItem value="HR">HR - Hour</SelectItem>
+                          <SelectItem value="DAY">DAY - Day</SelectItem>
+                          <SelectItem value="WK">WK - Week</SelectItem>
+                          <SelectItem value="MO">MO - Month</SelectItem>
+                          <SelectItem value="LS">LS - Lump Sum</SelectItem>
+                          <SelectItem value="LF">LF - Linear Foot</SelectItem>
+                          <SelectItem value="SF">SF - Square Foot</SelectItem>
+                          <SelectItem value="SY">SY - Square Yard</SelectItem>
+                          <SelectItem value="CF">CF - Cubic Foot</SelectItem>
+                          <SelectItem value="CY">CY - Cubic Yard</SelectItem>
+                          <SelectItem value="LB">LB - Pound</SelectItem>
+                          <SelectItem value="TON">TON - Ton</SelectItem>
+                          <SelectItem value="GAL">GAL - Gallon</SelectItem>
+                          <SelectItem value="KG">KG - Kilogram</SelectItem>
+                          <SelectItem value="M">M - Meter</SelectItem>
+                          <SelectItem value="M2">M² - Square Meter</SelectItem>
+                          <SelectItem value="M3">M³ - Cubic Meter</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </InlineTableCell>
 
-                      <InlineTableCell>
+                    <InlineTableCell>
+                      <MoneyField
+                        label="Unit cost"
+                        value={
+                          row.unitCost
+                            ? parseFloat(String(row.unitCost))
+                            : undefined
+                        }
+                        onChange={(val) =>
+                          handleRowChange(row.id, "unitCost", String(val ?? ""))
+                        }
+                        inline
+                        showCurrency={false}
+                        className="h-9"
+                        id={`budget-line-item-unit-cost-${row.id}`}
+                      />
+                    </InlineTableCell>
+
+                    <InlineTableCell>
+                      <div className="space-y-2">
                         <MoneyField
-                          label="Unit cost"
-                          value={row.unitCost ? parseFloat(String(row.unitCost)) : undefined}
+                          label="Amount"
+                          value={
+                            row.amount
+                              ? parseFloat(String(row.amount))
+                              : undefined
+                          }
                           onChange={(val) =>
-                            handleRowChange(row.id, "unitCost", String(val ?? ""))
+                            handleRowChange(row.id, "amount", String(val ?? ""))
                           }
                           inline
                           showCurrency={false}
-                          className="h-9"
+                          allowNegative
+                          className="h-9 font-medium"
+                          id={`budget-line-item-amount-${row.id}`}
                         />
-                      </InlineTableCell>
-
-                      <InlineTableCell>
-                        <div className="space-y-2">
-                          <MoneyField
-                            label="Amount"
-                            value={row.amount ? parseFloat(String(row.amount)) : undefined}
-                            onChange={(val) =>
-                              handleRowChange(row.id, "amount", String(val ?? ""))
-                            }
-                            inline
-                            showCurrency={false}
-                            allowNegative
-                            className="h-9 font-medium"
-                          />
-                          {negativeAmountRows.has(row.id) && (
-                            <Alert className="bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-950/20 dark:border-amber-900 dark:text-amber-200">
-                              <AlertTriangle className="h-4 w-4" />
-                              <AlertDescription className="text-xs">
-                                Negative amounts are unusual. Please verify this is intentional before saving.
-                              </AlertDescription>
-                            </Alert>
-                          )}
-                        </div>
-                      </InlineTableCell>
-
-                      <InlineTableCell>
-                        {rows.length > 1 && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => removeRow(row.id)}
-                            className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
-                          >
-                            &times;
-                          </Button>
+                        {negativeAmountRows.has(row.id) && (
+                          <Alert className="border-status-warning/20 bg-status-warning/10 text-status-warning">
+                            <AlertTriangle className="h-4 w-4" />
+                            <AlertDescription className="text-xs">
+                              Negative amounts are unusual. Please verify this
+                              is intentional before saving.
+                            </AlertDescription>
+                          </Alert>
                         )}
-                      </InlineTableCell>
-                    </InlineTableRow>
-                  ))}
+                      </div>
+                    </InlineTableCell>
+
+                    <InlineTableCell>
+                      {rows.length > 1 && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeRow(row.id)}
+                          className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive"
+                        >
+                          &times;
+                        </Button>
+                      )}
+                    </InlineTableCell>
+                  </InlineTableRow>
+                ))}
               </InlineTableBody>
             </InlineTable>
 
@@ -774,7 +798,7 @@ export function BudgetLineItemForm({
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-4 p-4 bg-muted dark:bg-neutral-900">
+        <BudgetOverlayFooter>
           <Button type="button" variant="outline" onClick={onCancel}>
             Cancel
           </Button>
@@ -783,20 +807,23 @@ export function BudgetLineItemForm({
               ? "Creating..."
               : `Create ${rows.length} Line Item${rows.length > 1 ? "s" : ""}`}
           </Button>
-        </div>
+        </BudgetOverlayFooter>
       </form>
 
       {/* Create Budget Code Modal */}
-      <Dialog open={showCreateCodeModal} onOpenChange={setShowCreateCodeModal}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Create New Budget Code</DialogTitle>
-            <DialogDescription>
-              Add a new budget code that can be used for line items in this
-              project.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
+      <BudgetOverlay
+        open={showCreateCodeModal}
+        onOpenChange={setShowCreateCodeModal}
+        variant="dialog"
+        size="sm"
+        className="flex h-full flex-col"
+      >
+        <BudgetOverlayHeader
+          title="Create New Budget Code"
+          description="Add a new budget code that can be used for line items in this project."
+        />
+        <BudgetOverlayBody className="px-4 py-4 sm:px-6">
+          <div className="grid gap-4">
             <div className="grid gap-2">
               <Label htmlFor="costCode">Cost Code*</Label>
               {loadingCostCodes ? (
@@ -904,26 +931,26 @@ export function BudgetLineItemForm({
               </p>
             </div>
           </div>
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowCreateCodeModal(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              onClick={handleCreateBudgetCode}
-              disabled={
-                loading || !newCodeData.costCodeId || !newCodeData.costType
-              }
-            >
-              {loading ? "Creating..." : "Create Budget Code"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+        </BudgetOverlayBody>
+        <BudgetOverlayFooter>
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setShowCreateCodeModal(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="button"
+            onClick={handleCreateBudgetCode}
+            disabled={
+              loading || !newCodeData.costCodeId || !newCodeData.costType
+            }
+          >
+            {loading ? "Creating..." : "Create Budget Code"}
+          </Button>
+        </BudgetOverlayFooter>
+      </BudgetOverlay>
     </>
   );
 }

@@ -290,17 +290,19 @@ const ComponentsAppsChat = () => {
     };
     const sendMessage = () => {
         if (textMessage.trim()) {
-            let list = contactList;
-            let user: any = list.find((d) => d.userId === selectedUser.userId);
-            user.messages.push({
-                fromUserId: selectedUser.userId,
-                toUserId: 0,
-                text: textMessage,
-                time: 'Just now',
-            });
-            setFilteredItems(list);
-            setTextMessage('');
-            scrollToBottom();
+            const list = contactList;
+            const user = list.find((d: { userId: number; messages: Array<{ fromUserId: number; toUserId: number; text: string; time: string }> }) => d.userId === selectedUser.userId);
+            if (user) {
+                user.messages.push({
+                    fromUserId: selectedUser.userId,
+                    toUserId: 0,
+                    text: textMessage,
+                    time: 'Just now',
+                });
+                setFilteredItems(list);
+                setTextMessage('');
+                scrollToBottom();
+            }
         }
     };
     const sendMessageHandle = (event: any) => {

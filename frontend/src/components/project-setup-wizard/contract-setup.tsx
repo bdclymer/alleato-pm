@@ -23,6 +23,7 @@ import type { Database } from "@/types/database.types";
 import { isDevelopment, getAutoFillData } from "@/lib/dev-autofill";
 
 type Contract = Database["public"]["Tables"]["prime_contracts"]["Row"];
+type ContractDraft = Partial<Contract> & { notes?: string };
 
 export function ContractSetup({
   projectId,
@@ -33,7 +34,7 @@ export function ContractSetup({
   const [error, setError] = useState<string | null>(null);
   const [includeSOV, setIncludeSOV] = useState(false);
 
-  const [contract, setContract] = useState<Partial<Contract>>({
+  const [contract, setContract] = useState<ContractDraft>({
     project_id: parseInt(projectId),
     contract_number: "",
     title: "Prime Contract",
@@ -44,7 +45,7 @@ export function ContractSetup({
 
   const supabase = createClient();
 
-  const updateContract = (field: keyof Contract, value: any) => {
+  const updateContract = (field: keyof ContractDraft, value: string | number | boolean | null) => {
     setContract((prev) => ({
       ...prev,
       [field]: value,
@@ -94,6 +95,7 @@ export function ContractSetup({
           original_contract_value: contract.original_contract_value || 0,
           revised_contract_value: contract.original_contract_value || 0,
           client_id: contract.client_id || null,
+          description: contract.notes || null,
         })
         .select()
         .single();

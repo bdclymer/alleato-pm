@@ -67,6 +67,8 @@ export const uploadDrawingFormSchema = z.object({
   revision_number: z.string().max(10).optional(),
 
   description: z.string().max(1000).optional(),
+
+  area_id: z.string().uuid().optional(),
 });
 
 // Full schema with file (for API validation)

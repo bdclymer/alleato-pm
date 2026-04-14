@@ -215,17 +215,19 @@ const ComponentsAppsContacts = () => {
 
         if (params.id) {
             //update user
-            let user: any = filteredItems.find((d: any) => d.id === params.id);
-            user.name = params.name;
-            user.email = params.email;
-            user.phone = params.phone;
-            user.role = params.role;
-            user.location = params.location;
+            const user = filteredItems.find((d: { id: number }) => d.id === params.id);
+            if (user) {
+                user.name = params.name;
+                user.email = params.email;
+                user.phone = params.phone;
+                user.role = params.role;
+                user.location = params.location;
+            }
         } else {
             //add user
-            let maxUserId = filteredItems.length ? filteredItems.reduce((max: any, character: any) => (character.id > max ? character.id : max), filteredItems[0].id) : 0;
+            const maxUserId = filteredItems.length ? filteredItems.reduce((max: number, character: { id: number }) => (character.id > max ? character.id : max), filteredItems[0].id) : 0;
 
-            let user = {
+            const user = {
                 id: maxUserId + 1,
                 path: 'profile-35.png',
                 name: params.name,
@@ -249,7 +251,7 @@ const ComponentsAppsContacts = () => {
         const json = JSON.parse(JSON.stringify(defaultParams));
         setParams(json);
         if (user) {
-            let json1 = JSON.parse(JSON.stringify(user));
+            const json1 = JSON.parse(JSON.stringify(user));
             setParams(json1);
         }
         setAddContactModal(true);

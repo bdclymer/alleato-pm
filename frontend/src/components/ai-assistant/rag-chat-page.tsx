@@ -39,6 +39,10 @@ interface ChatHistoryMessage {
   created_at: string | null;
 }
 
+type MemoryUsage = NonNullable<
+  NonNullable<ChatHistoryMessage["metadata"]>["memory_usage"]
+>;
+
 function dbMessageToUIMessage(msg: ChatHistoryMessage): UIMessage {
   return {
     id: msg.id,
@@ -74,11 +78,8 @@ function extractSources(
 
 function extractMemoryUsage(
   messages: ChatHistoryMessage[],
-): Record<string, NonNullable<ChatHistoryMessage["metadata"]>["memory_usage"]> {
-  const usageByMessageId: Record<
-    string,
-    NonNullable<ChatHistoryMessage["metadata"]>["memory_usage"]
-  > = {};
+): Record<string, MemoryUsage> {
+  const usageByMessageId: Record<string, MemoryUsage> = {};
   messages.forEach((msg) => {
     const usage = msg.metadata?.memory_usage;
     if (usage && typeof usage.totalUsed === "number") {
@@ -122,7 +123,7 @@ function ChatWithSession({
   sourcesByMessageId: Record<string, unknown[]>;
   memoryUsageByMessageId: Record<
     string,
-    NonNullable<ChatHistoryMessage["metadata"]>["memory_usage"]
+    MemoryUsage
   >;
   responseQualityByMessageId: Record<string, ResponseQuality>;
   isLoadingMessages: boolean;
@@ -236,7 +237,7 @@ export function RagChatPage() {
     Record<string, unknown[]>
   >({});
   const [memoryUsageByMessageId, setMemoryUsageByMessageId] = useState<
-    Record<string, NonNullable<ChatHistoryMessage["metadata"]>["memory_usage"]>
+    Record<string, MemoryUsage>
   >({});
   const [responseQualityByMessageId, setResponseQualityByMessageId] = useState<
     Record<string, ResponseQuality>

@@ -170,7 +170,6 @@ export const GET = withApiGuardrails<{ projectId: string; lineId: string }>(
 export const PATCH = withApiGuardrails<{ projectId: string; lineId: string }>(
   "projects/[projectId]/budget/lines/[lineId]#PATCH",
   async ({ request, params }) => {
-  
     const { projectId, lineId } = await params;
     const projectIdNum = parseInt(projectId, 10);
 
@@ -186,6 +185,17 @@ export const PATCH = withApiGuardrails<{ projectId: string; lineId: string }>(
     if (guard.denied) return guard.response;
 
     const supabase = await createClient();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    if (userError || !user) {
+      return NextResponse.json(
+        { error: "Unauthorized - please log in" },
+        { status: 401 },
+      );
+    }
 
     // Parse and validate request body
     const body = await request.json();

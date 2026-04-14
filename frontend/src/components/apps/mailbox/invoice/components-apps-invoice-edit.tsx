@@ -54,9 +54,9 @@ const ComponentsAppsInvoiceEdit = () => {
         notes: 'It was a pleasure working with you and your team. We hope you will keep us in mind for future freelance projects. Thank You!',
     });
     useEffect(() => {
-        let dt: Date = new Date();
+        const dt: Date = new Date();
         const month = dt.getMonth() + 1 < 10 ? '0' + (dt.getMonth() + 1) : dt.getMonth() + 1;
-        let date = dt.getDate() < 10 ? '0' + dt.getDate() : dt.getDate();
+        const date = dt.getDate() < 10 ? '0' + dt.getDate() : dt.getDate();
         setParams({
             ...params,
             invoiceDate: dt.getFullYear() + '-' + month + '-' + date,

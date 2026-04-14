@@ -13,13 +13,12 @@ import {
   BudgetTable,
   BudgetDetailsTable,
   BudgetModificationModal,
-  VerticalMarkupSettings,
   CostCodesTab,
   OriginalBudgetEditModal,
   ForecastingTab,
   SnapshotsTab,
   ChangeHistoryTab,
-  BudgetModificationsTab,
+  BudgetSettingsPanel,
 } from "@/components/budget";
 import { UnlockBudgetDialog } from "@/components/budget/unlock-budget-dialog";
 import { BudgetLineItemCreatorModal, type InlineLineItemData } from "@/components/budget/BudgetLineItemCreatorModal";
@@ -49,6 +48,10 @@ import {
 import { Button } from "@/components/ui/button";
 import { budgetSnapshots, budgetGroups } from "@/config/budget";
 import { useProjectTitle } from "@/hooks/useProjectTitle";
+import {
+  formatBudgetUpdateError,
+  updateBudgetLineItem,
+} from "@/lib/budget/update-budget-line-item";
 import {
   applyQuickFilter,
   loadQuickFilterPreference,
@@ -554,10 +557,6 @@ function BudgetPageContent() {
   const showViewControls =
     activeTab === "budget" || activeTab === "budget-details";
 
-  const handleOpenBudgetModificationsReport = React.useCallback(() => {
-    router.push(`/${projectId}/budget?tab=budget-modifications`);
-  }, [router, projectId]);
-
   const handleOpenBuyoutSummaryReport = React.useCallback(() => {
     router.push(`/${projectId}/reporting?report=buyout-summary`);
   }, [router, projectId]);
@@ -883,30 +882,22 @@ function BudgetPageContent() {
     if (!selectedLineItem) return;
 
     try {
-      const response = await fetch(
-        `/api/projects/${projectId}/budget/lines/${selectedLineItem.id}`,
-        {
-          method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            quantity: data.unitQty,
-            unit_cost: data.unitCost,
-            original_amount: data.originalBudget,
-          }),
-        },
-      );
-
-      if (response.ok) {
-        toast.success("Line item updated successfully");
-        handleLineItemSuccess(); // Refresh data
-      } else {
-        const error = await response.json();
-        toast.error(error.error || "Failed to update line item");
-      }
+      // Sensitive write path: preserve actionable server errors so failed budget edits stay visible and traceable.
+      await updateBudgetLineItem(projectId, selectedLineItem.id, {
+        quantity: data.unitQty,
+        unitCost: data.unitCost,
+        originalAmount: data.originalBudget,
+      });
+      toast.success("Line item updated successfully");
+      handleLineItemSuccess(); // Refresh data
     } catch (error) {
-      toast.error("Failed to update line item");
+      toast.error("Failed to update budget", {
+        description: formatBudgetUpdateError(error),
+      });
+
+      throw error instanceof Error
+        ? error
+        : new Error("Failed to update budget");
     }
   };
 
@@ -926,7 +917,6 @@ function BudgetPageContent() {
           onUnlockBudget={handleUnlockBudget}
           onImport={handleImport}
           onExport={handleExport}
-          onOpenBudgetModificationsReport={handleOpenBudgetModificationsReport}
           onOpenBuyoutSummaryReport={handleOpenBuyoutSummaryReport}
           onOpenLegacyBudgetDetailReport={handleOpenLegacyBudgetDetailReport}
           onOpenMonitoredResourcesReport={handleOpenMonitoredResourcesReport}
@@ -960,8 +950,8 @@ function BudgetPageContent() {
 
       <div className="flex flex-1 flex-col gap-4 bg-background pl-4 pt-2 pb-6 sm:pl-6 lg:pl-8">
         {activeTab === "settings" ? (
-          <div className="flex-1">
-            <VerticalMarkupSettings projectId={projectId} />
+          <div className="flex-1 p-6">
+            <BudgetSettingsPanel projectId={projectId} />
           </div>
         ) : activeTab === "cost-codes" ? (
           <div className="flex-1 p-6">
@@ -978,14 +968,6 @@ function BudgetPageContent() {
         ) : activeTab === "change-history" ? (
           <div className="flex-1">
             <ChangeHistoryTab projectId={projectId} />
-          </div>
-        ) : activeTab === "budget-modifications" ? (
-          <div className="flex-1 p-6">
-            <BudgetModificationsTab
-              projectId={projectId}
-              onCreateClick={() => setShowModificationModal(true)}
-              refreshTrigger={loading ? 0 : 1}
-            />
           </div>
         ) : activeTab === "budget-details" ? (
           <>

@@ -334,6 +334,26 @@ export default async function ProjectHomePage({
       .limit(20),
   ]);
 
+  // Fetch invoices — owner invoices (via prime_contracts) + subcontractor invoices
+  const contractIds = (contractsResult.data || []).map((c) => c.id);
+  const [ownerInvoicesResult, subInvoicesResult] = await Promise.all([
+    contractIds.length > 0
+      ? supabase
+          .from("owner_invoices")
+          .select("id, invoice_number, status, gross_amount, paid_amount, billing_date, prime_contract_id")
+          .in("prime_contract_id", contractIds)
+          .order("billing_date", { ascending: false })
+          .limit(10)
+      : Promise.resolve({ data: [], error: null }),
+
+    supabase
+      .from("subcontractor_invoices")
+      .select("id, invoice_number, status, billing_date, subcontract_id, purchase_order_id")
+      .eq("project_id", numericProjectId)
+      .order("billing_date", { ascending: false })
+      .limit(10),
+  ]);
+
   if (projectResult.error || !projectResult.data) {
     notFound();
   }
@@ -436,6 +456,8 @@ export default async function ProjectHomePage({
     );
 
   const contracts = contractsResult.data || [];
+  const ownerInvoices = ownerInvoicesResult.data || [];
+  const subcontractorInvoices = subInvoicesResult.data || [];
   const verticalMarkupCount = verticalMarkupCountResult.count || 0;
   const homeAlerts: HomeAlerts = {
     hasPrimeContractWithoutFinancialMarkup:
@@ -485,6 +507,8 @@ export default async function ProjectHomePage({
         submittals={submittals}
         homeAlerts={homeAlerts}
         pendingSsovReviews={pendingSsovReviews}
+        ownerInvoices={ownerInvoices}
+        subcontractorInvoices={subcontractorInvoices}
       />
     </PageShell>
   );

@@ -135,13 +135,13 @@ export const ChangeOrdersTab = memo(function ChangeOrdersTab({ commitmentId, pro
       header: 'Title',
       cell: ({ row }) => <Text>{row.original.title}</Text>,
     },
-    {
-      accessorKey: 'status',
-      header: 'Status',
-      cell: ({ row }) => (
-        <StatusBadge status={row.original.status} type="change-order" />
-      ),
-    },
+      {
+        accessorKey: 'status',
+        header: 'Status',
+        cell: ({ row }) => (
+          <StatusBadge status={row.original.status} type="change-order" />
+        ),
+      },
     {
       accessorKey: 'amount',
       header: ({ column }) => (

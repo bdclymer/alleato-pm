@@ -17,7 +17,6 @@ import {
   X,
 } from "lucide-react";
 import {
-  PageShell,
   Button,
   Avatar,
   AvatarFallback,
@@ -55,6 +54,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ds";
+import { PageShell } from "@/components/layout";
 import { DataTable } from "@/components/tables/DataTable";
 import { type ColumnDef } from "@tanstack/react-table";
 import { useProjectRoles, type ProjectRole } from "@/hooks/use-project-roles";
@@ -64,6 +64,7 @@ import { useProjectCompanies } from "@/hooks/use-project-companies";
 import { usePermissionTemplates } from "@/hooks/use-permissions";
 import { createClient } from "@/lib/supabase/client";
 import { apiFetch, ApiError } from "@/lib/api-client";
+import { filterProjectMembers } from "@/lib/directory/project-members";
 import { cn } from "@/lib/utils";
 import {
   type PermissionModule,
@@ -446,7 +447,7 @@ function AssignMemberDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg w-[95vw]">
+      <DialogContent className="w-full sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Assign Members — {role?.role_name}</DialogTitle>
         </DialogHeader>
@@ -591,18 +592,10 @@ function AddMemberDialog({
     if (!selected) return;
     setSaving(true);
     try {
-      const res = await fetch(
-        `/api/projects/${projectId}/directory/people`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ person_id: selected }),
-        }
-      );
-      if (!res.ok) {
-        const d = await res.json();
-        throw new Error(d.error ?? "Failed to add member");
-      }
+      await apiFetch(`/api/projects/${projectId}/directory/people`, {
+        method: "POST",
+        body: JSON.stringify({ person_id: selected }),
+      });
       toast.success("Member added to project");
       onSuccess();
       onOpenChange(false);
@@ -617,7 +610,7 @@ function AddMemberDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-lg w-[95vw]">
+      <DialogContent className="w-full sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>Add Member</DialogTitle>
         </DialogHeader>
@@ -823,15 +816,10 @@ function AssignExistingCompanyDialog({
     if (!selected) return;
     setSaving(true);
     try {
-      const res = await fetch(`/api/projects/${projectId}/directory/companies`, {
+      await apiFetch(`/api/projects/${projectId}/directory/companies`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ company_id: selected }),
       });
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({}));
-        throw new Error((d as { message?: string }).message ?? "Failed to assign company");
-      }
       toast.success("Company assigned to project");
       onSuccess();
       onOpenChange(false);
@@ -1309,6 +1297,15 @@ function MembersDataTable({
         ),
       },
       {
+        id: "company",
+        header: "Company",
+        cell: ({ row }) => (
+          <span className="text-sm text-muted-foreground">
+            {row.original.company?.name ?? "—"}
+          </span>
+        ),
+      },
+      {
         id: "permission_template",
         header: "Permission Template",
         cell: ({ row }) => {
@@ -1399,12 +1396,10 @@ function MembersDataTable({
 
 function ExternalMembersSection({
   projectId,
-  vendorCompanyIds,
   onAddClick,
   onRefetch: externalRefetch,
 }: {
   projectId: string;
-  vendorCompanyIds?: string[];
   onAddClick: () => void;
   onRefetch?: () => void;
 }) {
@@ -1417,31 +1412,10 @@ function ExternalMembersSection({
   const [search, setSearch] = React.useState("");
   const [activeFilters, setActiveFilters] = React.useState<Record<string, string | undefined>>({});
   const [removingPersonId, setRemovingPersonId] = React.useState<string | null>(null);
-  const [vendorPeople, setVendorPeople] = React.useState<PersonWithDetails[]>([]);
-
-  React.useEffect(() => {
-    if (!vendorCompanyIds || vendorCompanyIds.length === 0) return;
-    const supabase = createClient();
-    supabase
-      .from("people")
-      .select("*, company:companies(*)")
-      .in("company_id", vendorCompanyIds)
-      .then(({ data }) => {
-        if (data) setVendorPeople(data as PersonWithDetails[]);
-      });
-  }, [vendorCompanyIds]);
 
   const allMembers = React.useMemo(() => {
-    const seen = new Set<string>();
-    const merged: PersonWithDetails[] = [];
-    for (const m of [...members, ...vendorPeople]) {
-      if (!seen.has(m.id)) {
-        seen.add(m.id);
-        merged.push(m);
-      }
-    }
-    return merged;
-  }, [members, vendorPeople]);
+    return filterProjectMembers(members);
+  }, [members]);
 
   const handleRemoveMember = async (personId: string) => {
     if (removingPersonId) return;
@@ -1449,20 +1423,10 @@ function ExternalMembersSection({
     if (!confirmed) return;
     try {
       setRemovingPersonId(personId);
-      const response = await fetch(
+      await apiFetch(
         `/api/projects/${projectId}/directory/people/${personId}`,
         { method: "DELETE" },
       );
-      if (!response.ok) {
-        let errorMessage = "Failed to remove member";
-        try {
-          const data = await response.json();
-          if (typeof data?.error === "string" && data.error.trim().length > 0) {
-            errorMessage = data.error;
-          }
-        } catch { /* keep fallback */ }
-        throw new Error(errorMessage);
-      }
       await refetch();
       toast.success("Member removed");
     } catch (err) {
@@ -1609,9 +1573,14 @@ function VendorsSection({
     return (
       <p className="py-6 text-center text-sm text-muted-foreground">
         No vendors yet.{" "}
-        <button type="button" onClick={onAddVendorClick} className="text-primary hover:underline">
+        <Button
+          type="button"
+          variant="link"
+          className="h-auto p-0 align-baseline"
+          onClick={onAddVendorClick}
+        >
           Add one
-        </button>
+        </Button>
       </p>
     );
   }
@@ -1882,8 +1851,10 @@ export default function ProjectDirectoryPage() {
   // Silently sync companies from contracts/commitments on mount
   React.useEffect(() => {
     if (!projectId) return;
-    fetch(`/api/projects/${projectId}/directory/companies/sync`, { method: "POST" })
-      .then((r) => r.ok ? r.json() : null)
+    apiFetch<{ added: number }>(
+      `/api/projects/${projectId}/directory/companies/sync`,
+      { method: "POST" },
+    )
       .then((result: { added: number } | null) => {
         if (result && result.added > 0) refetchCompanies();
       })
@@ -1928,7 +1899,6 @@ export default function ProjectDirectoryPage() {
       <section>
         <ExternalMembersSection
           projectId={projectId}
-          vendorCompanyIds={existingVendorIds}
           onAddClick={() => setAddMemberOpen(true)}
           onRefetch={refetchMembers}
         />

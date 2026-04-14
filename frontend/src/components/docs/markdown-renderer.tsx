@@ -7,7 +7,10 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 import { cn } from "@/lib/utils";
 import type { Components } from "react-markdown";
-const markdownSyntaxHighlighterStyle = oneDark as Record<string, unknown>;
+const markdownSyntaxHighlighterStyle = oneDark as Record<
+  string,
+  React.CSSProperties
+>;
 
 interface MarkdownRendererProps {
   content: string;

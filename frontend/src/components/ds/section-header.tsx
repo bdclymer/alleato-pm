@@ -1,16 +1,27 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 import { cn } from "@/lib/utils";
+
+type SectionHeaderAction = {
+  label: string;
+  href?: string;
+  onClick?: () => void;
+};
 
 interface SectionHeaderProps {
   title: string;
   count?: number;
-  action?: {
-    label: string;
-    href?: string;
-    onClick?: () => void;
-  };
+  action?: SectionHeaderAction | ReactNode;
   className?: string;
+}
+
+// Distinguish structured actions from arbitrary React nodes at runtime.
+function isSectionHeaderAction(
+  action: SectionHeaderProps["action"],
+): action is SectionHeaderAction {
+  return typeof action === "object" && action !== null && "label" in action;
 }
 
 export function SectionHeader({
@@ -32,22 +43,26 @@ export function SectionHeader({
         )}
       </div>
       {action &&
-        (action.onClick ? (
-          // eslint-disable-next-line design-system/no-design-violations -- minimal inline link-style action
-          <button
-            type="button"
-            onClick={action.onClick}
-            className="text-sm font-medium text-primary transition-colors hover:text-primary/80"
-          >
-            {action.label}
-          </button>
+        (isSectionHeaderAction(action) ? (
+          action.onClick ? (
+            // eslint-disable-next-line design-system/no-design-violations -- minimal inline link-style action
+            <button
+              type="button"
+              onClick={action.onClick}
+              className="text-sm font-medium text-primary transition-colors hover:text-primary/80"
+            >
+              {action.label}
+            </button>
+          ) : (
+            <a
+              href={action.href}
+              className="text-sm font-medium text-primary transition-colors hover:text-primary/80"
+            >
+              {action.label}
+            </a>
+          )
         ) : (
-          <a
-            href={action.href}
-            className="text-sm font-medium text-primary transition-colors hover:text-primary/80"
-          >
-            {action.label}
-          </a>
+          action
         ))}
     </div>
   );

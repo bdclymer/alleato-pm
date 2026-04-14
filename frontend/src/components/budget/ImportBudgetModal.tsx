@@ -10,13 +10,11 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  BudgetOverlay,
+  BudgetOverlayBody,
+  BudgetOverlayFooter,
+  BudgetOverlayHeader,
+} from "@/components/ui/budget-overlay";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
@@ -48,7 +46,9 @@ export function ImportBudgetModal({
   const [isImporting, setIsImporting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [isDragging, setIsDragging] = React.useState(false);
-  const [importResult, setImportResult] = React.useState<ImportResult | null>(null);
+  const [importResult, setImportResult] = React.useState<ImportResult | null>(
+    null,
+  );
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Reset state when modal closes
@@ -85,9 +85,11 @@ export function ImportBudgetModal({
     ];
     const validCsvTypes = ["text/csv", "application/csv"];
 
-    const isExcel = validExcelTypes.includes(selectedFile.type) ||
+    const isExcel =
+      validExcelTypes.includes(selectedFile.type) ||
       selectedFile.name.endsWith(".xlsx");
-    const isCsv = validCsvTypes.includes(selectedFile.type) ||
+    const isCsv =
+      validCsvTypes.includes(selectedFile.type) ||
       selectedFile.name.endsWith(".csv");
 
     if (!isExcel && !isCsv) {
@@ -174,9 +176,9 @@ export function ImportBudgetModal({
         setImportResult(result);
         throw new Error(
           result.error ||
-          result.errors?.[0] ||
-          result.message ||
-          "Failed to import budget",
+            result.errors?.[0] ||
+            result.message ||
+            "Failed to import budget",
         );
       }
 
@@ -188,8 +190,10 @@ export function ImportBudgetModal({
 
       if (result.warnings?.length || result.skippedRows) {
         const issues = [];
-        if (result.warnings?.length) issues.push(`${result.warnings.length} warnings`);
-        if (result.skippedRows) issues.push(`${result.skippedRows} skipped rows`);
+        if (result.warnings?.length)
+          issues.push(`${result.warnings.length} warnings`);
+        if (result.skippedRows)
+          issues.push(`${result.skippedRows} skipped rows`);
         message += ` (${issues.join(", ")})`;
       }
 
@@ -215,47 +219,53 @@ export function ImportBudgetModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={isImporting ? undefined : onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle>Import Budget from Excel</DialogTitle>
-          <DialogDescription className="space-y-4 pt-2">
-            <div className="flex items-start gap-2 text-amber-600 bg-amber-50 p-4 rounded-md">
-              <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
-              <div className="text-sm">
-                <p className="font-medium">Important Notes:</p>
-                <ul className="list-disc list-inside mt-1 space-y-1">
-                  <li>
-                    The budget uses the project currency and will not be
-                    converted on import
-                  </li>
-                  <li>
-                    Consider taking a snapshot before importing to preserve
-                    current budget state
-                  </li>
-                </ul>
-              </div>
+    <BudgetOverlay
+      open={open}
+      onOpenChange={(nextOpen) => {
+        if (!isImporting) onOpenChange(nextOpen);
+      }}
+      variant="dialog"
+      size="md"
+      className="flex h-full flex-col"
+    >
+      <BudgetOverlayHeader title="Import Budget from Excel" />
+      <BudgetOverlayBody className="px-4 sm:px-6">
+        <div className="space-y-4 pt-2">
+          <div className="flex items-start gap-2 rounded-md bg-warning/10 p-4 text-warning">
+            <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
+            <div className="text-sm">
+              <p className="font-medium">Important Notes:</p>
+              <ul className="list-disc list-inside mt-1 space-y-1">
+                <li>
+                  The budget uses the project currency and will not be converted
+                  on import
+                </li>
+                <li>
+                  Consider taking a snapshot before importing to preserve
+                  current budget state
+                </li>
+              </ul>
             </div>
+          </div>
 
-            <div className="text-sm text-foreground">
-              <p className="font-medium mb-2">How to import:</p>
-              <ol className="list-decimal list-inside space-y-1 ml-2">
-                <li>Download the Excel template below</li>
-                <li>Complete the template with your budget line items</li>
-                <li>Upload the completed file to populate your budget</li>
-              </ol>
-            </div>
+          <div className="text-sm text-foreground">
+            <p className="font-medium mb-2">How to import:</p>
+            <ol className="list-decimal list-inside space-y-1 ml-2">
+              <li>Download the Excel template below</li>
+              <li>Complete the template with your budget line items</li>
+              <li>Upload the completed file to populate your budget</li>
+            </ol>
+          </div>
 
-            <a
-              href="https://support.procore.com/products/online/user-guide/project-level/budget/tutorials/import-a-budget"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
-            >
-              Learn more about budget imports →
-            </a>
-          </DialogDescription>
-        </DialogHeader>
+          <a
+            href="https://support.procore.com/products/online/user-guide/project-level/budget/tutorials/import-a-budget"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+          >
+            Learn more about budget imports →
+          </a>
+        </div>
 
         <div className="space-y-4 py-4">
           {/* Download Template Section */}
@@ -264,7 +274,9 @@ export function ImportBudgetModal({
               <FileSpreadsheet className="w-8 h-8 text-green-600" />
               <div>
                 <p className="font-medium text-sm">Budget Import Template</p>
-                <p className="text-xs text-muted-foreground">Excel format (.xlsx)</p>
+                <p className="text-xs text-muted-foreground">
+                  Excel format (.xlsx)
+                </p>
               </div>
             </div>
             <Button
@@ -350,91 +362,101 @@ export function ImportBudgetModal({
           </div>
 
           {/* Import Results Section */}
-          {importResult && (importResult.warnings?.length || importResult.errors?.length) && (
-            <div className="space-y-4">
-              <h4 className="font-medium text-sm">Import Results</h4>
+          {importResult &&
+            (importResult.warnings?.length || importResult.errors?.length) && (
+              <div className="space-y-4">
+                <h4 className="font-medium text-sm">Import Results</h4>
 
-              {importResult.warnings && importResult.warnings.length > 0 && (
-                <div className="bg-amber-50 border border-amber-200 rounded-md p-4">
-                  <div className="flex items-start gap-2">
-                    <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                    <div className="space-y-2 flex-1">
-                      <p className="text-sm font-medium text-amber-800">
-                        Warnings ({importResult.warnings.length})
-                      </p>
-                      <div className="max-h-24 overflow-y-auto">
-                        <ul className="text-xs space-y-1">
-                          {importResult.warnings.slice(0, 5).map((warning, index) => (
-                            <li key={index} className="text-amber-700">{warning}</li>
-                          ))}
-                          {importResult.warnings.length > 5 && (
-                            <li className="text-amber-600 italic">
-                              +{importResult.warnings.length - 5} more warnings...
-                            </li>
-                          )}
-                        </ul>
+                {importResult.warnings && importResult.warnings.length > 0 && (
+                  <div className="rounded-md border border-warning/20 bg-warning/10 p-4">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+                      <div className="space-y-2 flex-1">
+                        <p className="text-sm font-medium text-warning">
+                          Warnings ({importResult.warnings.length})
+                        </p>
+                        <div className="max-h-24 overflow-y-auto">
+                          <ul className="text-xs space-y-1">
+                            {importResult.warnings
+                              .slice(0, 5)
+                              .map((warning, index) => (
+                                <li key={index} className="text-warning">
+                                  {warning}
+                                </li>
+                              ))}
+                            {importResult.warnings.length > 5 && (
+                              <li className="italic text-warning">
+                                +{importResult.warnings.length - 5} more
+                                warnings...
+                              </li>
+                            )}
+                          </ul>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
 
-              {importResult.errors && importResult.errors.length > 0 && (
-                <div className="bg-red-50 border border-red-200 rounded-md p-4">
-                  <div className="flex items-start gap-2">
-                    <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
-                    <div className="space-y-2 flex-1">
-                      <p className="text-sm font-medium text-red-800">
-                        Errors ({importResult.errors.length})
-                      </p>
-                      <div className="max-h-24 overflow-y-auto">
-                        <ul className="text-xs space-y-1">
-                          {importResult.errors.slice(0, 5).map((error, index) => (
-                            <li key={index} className="text-red-700">{error}</li>
-                          ))}
-                          {importResult.errors.length > 5 && (
-                            <li className="text-red-600 italic">
-                              +{importResult.errors.length - 5} more errors...
-                            </li>
-                          )}
-                        </ul>
+                {importResult.errors && importResult.errors.length > 0 && (
+                  <div className="bg-red-50 border border-red-200 rounded-md p-4">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0" />
+                      <div className="space-y-2 flex-1">
+                        <p className="text-sm font-medium text-red-800">
+                          Errors ({importResult.errors.length})
+                        </p>
+                        <div className="max-h-24 overflow-y-auto">
+                          <ul className="text-xs space-y-1">
+                            {importResult.errors
+                              .slice(0, 5)
+                              .map((error, index) => (
+                                <li key={index} className="text-red-700">
+                                  {error}
+                                </li>
+                              ))}
+                            {importResult.errors.length > 5 && (
+                              <li className="text-red-600 italic">
+                                +{importResult.errors.length - 5} more errors...
+                              </li>
+                            )}
+                          </ul>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-
-        <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isImporting}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="button"
-            onClick={handleImport}
-            disabled={!file || isImporting}
-          >
-            {isImporting ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                Importing...
-              </>
-            ) : (
-              <>
-                <Upload />
-                Import
-              </>
+                )}
+              </div>
             )}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </BudgetOverlayBody>
+
+      <BudgetOverlayFooter>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => onOpenChange(false)}
+          disabled={isImporting}
+        >
+          Cancel
+        </Button>
+        <Button
+          type="button"
+          onClick={handleImport}
+          disabled={!file || isImporting}
+        >
+          {isImporting ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+              Importing...
+            </>
+          ) : (
+            <>
+              <Upload />
+              Import
+            </>
+          )}
+        </Button>
+      </BudgetOverlayFooter>
+    </BudgetOverlay>
   );
 }

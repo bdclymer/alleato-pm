@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { PageShell } from "@/components/layout";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -14,7 +13,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Copy, ExternalLink, MessageSquare, RefreshCw, Send, Sparkles } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Copy, ExternalLink, Plus, RefreshCw, Send, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 
 type AgentTarget = "codex" | "claude_code";
@@ -183,7 +191,7 @@ export default function AnnotationInboxPage() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [assigneeFilter, setAssigneeFilter] = useState<AssigneeFilter>("all");
   const [loading, setLoading] = useState(true);
-  const [loadingComments, setLoadingComments] = useState(false);
+  const [, setLoadingComments] = useState(false);
   const [replyBody, setReplyBody] = useState("");
   const [savingReply, setSavingReply] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
@@ -191,6 +199,57 @@ export default function AnnotationInboxPage() {
   const [dispatching, setDispatching] = useState(false);
   const [resolvingCluster, setResolvingCluster] = useState(false);
   const [lastDispatchCommand, setLastDispatchCommand] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newTitle, setNewTitle] = useState("");
+  const [newDetails, setNewDetails] = useState("");
+  const [newRoute, setNewRoute] = useState("");
+  const [newSeverity, setNewSeverity] = useState<"blocking" | "important" | "nit">("important");
+  const [newAssignee, setNewAssignee] = useState<AgentTarget | "unassigned">("unassigned");
+
+  function resetCreateForm() {
+    setNewTitle("");
+    setNewDetails("");
+    setNewRoute("");
+    setNewSeverity("important");
+    setNewAssignee("unassigned");
+  }
+
+  async function createTask() {
+    const title = newTitle.trim();
+    if (!title) {
+      toast.error("Title is required");
+      return;
+    }
+    setCreating(true);
+    try {
+      const res = await fetch("/api/agentation/inbox", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          details: newDetails.trim() || undefined,
+          route: newRoute.trim() || undefined,
+          severity: newSeverity,
+          assignedAgent: newAssignee === "unassigned" ? undefined : newAssignee,
+        }),
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        throw new Error(data.error || "Failed to create task");
+      }
+      const result = (await res.json()) as { id?: string };
+      resetCreateForm();
+      setCreateOpen(false);
+      await loadItems();
+      if (result.id) setSelectedId(result.id);
+      toast.success("Task created");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to create task");
+    } finally {
+      setCreating(false);
+    }
+  }
 
   async function loadItems() {
     setLoading(true);
@@ -480,53 +539,75 @@ export default function AnnotationInboxPage() {
     }
   }
 
-  return (
-    <PageShell
-      variant="dashboard"
-      title="Annotation Inbox"
-      showHeader={false}
-      className="px-0! py-0!"
-      description="Review Agentation annotations, dispatch to Codex or Claude Code, and track execution."
-    >
-      <div className="flex h-full min-h-0 flex-col">
-        <div className="flex flex-1 min-h-0">
-          <section
-            className="flex w-full flex-col border-r border-border lg:w-auto lg:shrink-0"
-            style={{ width: 520, minWidth: 320, maxWidth: 640 }}
-          >
-            <div className="flex items-center justify-between border-b border-border px-4 py-2">
-              <span className="text-xs text-muted-foreground">
-                {counts.total} items · {counts.open} open · {counts.inProgress} in progress · {counts.unassigned} unassigned
-              </span>
-              <Button variant="ghost" size="sm" onClick={() => void loadItems()}>
-                <RefreshCw className="h-3.5 w-3.5" />
-              </Button>
-            </div>
+  // Linear-style status dot colours
+  function statusDot(status: string) {
+    const bucket = displayBucket(status);
+    if (bucket === "resolved") return "bg-green-500";
+    if (bucket === "in_progress") return "bg-primary";
+    return "bg-amber-400";
+  }
 
-            <div className="flex flex-wrap gap-2 border-b border-border px-3 py-2">
+  function severityColor(sev: string | null) {
+    if (sev === "high" || sev === "blocking") return "text-red-500";
+    if (sev === "medium" || sev === "important") return "text-amber-500";
+    return "text-muted-foreground";
+  }
+
+  return (
+    <>
+    <div className="flex h-full flex-col overflow-hidden">
+        {/* Top bar — Linear-style */}
+        <div className="flex items-center justify-between border-b border-border px-4 h-10 shrink-0">
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-medium text-foreground">Inbox</span>
+            <span className="text-xs text-muted-foreground">{counts.total}</span>
+            <div className="flex items-center gap-1">
+              {(["all", "open", "in_progress", "resolved"] as const).map((f) => {
+                const labels: Record<typeof f, string> = { all: "All", open: "Open", in_progress: "In Progress", resolved: "Done" };
+                const badge = f === "open" ? counts.open : f === "in_progress" ? counts.inProgress : f === "resolved" ? counts.resolved : null;
+                return (
+                  <Button
+                    key={f}
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setStatusFilter(f)}
+                    className={`h-6 rounded px-2 text-xs transition-colors ${statusFilter === f ? "bg-muted text-foreground font-medium" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    {labels[f]}{badge !== null && <span className="ml-1 opacity-60">{badge}</span>}
+                  </Button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="flex items-center gap-1">
+            <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={() => void loadItems()}>
+              <RefreshCw className="h-3.5 w-3.5" />
+            </Button>
+            <Button size="sm" className="h-7 px-2 text-xs" onClick={() => setCreateOpen(true)}>
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              New issue
+            </Button>
+          </div>
+        </div>
+
+        <div className="flex flex-1 min-h-0">
+          {/* Issue list */}
+          <section className="flex w-110 min-w-70 flex-col border-r border-border shrink-0">
+            {/* Search + filters */}
+            <div className="px-3 py-2 border-b border-border flex items-center gap-2">
               <Input
-                placeholder="Search title, content, or annotation ID..."
+                placeholder="Search..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="h-8 text-xs"
+                className="h-7 text-xs border-0 bg-muted/30 focus-visible:ring-0 focus-visible:ring-offset-0"
               />
-              <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
-                <SelectTrigger className="h-8 w-36 text-xs">
-                  <SelectValue placeholder="Status filter" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All statuses</SelectItem>
-                  <SelectItem value="open">Open</SelectItem>
-                  <SelectItem value="in_progress">In Progress</SelectItem>
-                  <SelectItem value="resolved">Resolved</SelectItem>
-                </SelectContent>
-              </Select>
               <Select value={assigneeFilter} onValueChange={(v) => setAssigneeFilter(v as AssigneeFilter)}>
-                <SelectTrigger className="h-8 w-36 text-xs">
-                  <SelectValue placeholder="Assignee" />
+                <SelectTrigger className="h-7 w-32 text-xs border-0 bg-muted/30 shrink-0">
+                  <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All assignees</SelectItem>
+                  <SelectItem value="all">All agents</SelectItem>
                   <SelectItem value="codex">Codex</SelectItem>
                   <SelectItem value="claude_code">Claude Code</SelectItem>
                   <SelectItem value="unassigned">Unassigned</SelectItem>
@@ -534,184 +615,109 @@ export default function AnnotationInboxPage() {
               </Select>
             </div>
 
-            <div className="flex-1 overflow-y-auto bg-muted/20">
-              {loading && <div className="p-6 text-sm text-muted-foreground">Loading annotations...</div>}
-              {!loading && filtered.length === 0 && (
-                <div className="p-6 text-sm text-muted-foreground">No annotations found.</div>
+            <div className="flex-1 overflow-y-auto">
+              {loading && (
+                <div className="flex items-center gap-2 px-4 py-3 text-xs text-muted-foreground">
+                  Loading...
+                </div>
               )}
-              {!loading &&
-                filtered.map((item) => {
-                  const duplicateCount = duplicateCounts.get(duplicateKey(item)) || 1;
-                  const score = computePriorityScore(item, duplicateCount);
-                  const assignee = getAssignedAgent(item);
-                  return (
-                    <Button
-                      key={item.id}
-                      type="button"
-                      variant="ghost"
-                      onClick={() => setSelectedId(item.id)}
-                      className={`h-auto w-full justify-start rounded-none border-b border-border px-4 py-3 text-left last:border-b-0 ${
-                        selected?.id === item.id ? "bg-muted/40" : "hover:bg-muted/20"
-                      }`}
-                    >
-                      <div className="flex w-full items-start justify-between gap-3">
-                        <div className="min-w-0 space-y-1">
-                          <p className="truncate text-sm font-medium text-foreground">{item.title}</p>
-                          <p className="line-clamp-2 text-xs text-muted-foreground">{item.comment}</p>
-                          <div className="flex flex-wrap items-center gap-2">
-                            <Badge variant="outline" className="text-xs">
-                              {displayBucket(item.status)}
-                            </Badge>
-                            <Badge variant="outline" className="text-xs">
-                              {item.severity || "medium"}
-                            </Badge>
-                            <Badge variant="secondary" className="text-xs">
-                              Score {score} · {scoreLabel(score)}
-                            </Badge>
-                            {duplicateCount > 1 && (
-                              <Badge variant="outline" className="text-xs">
-                                {duplicateCount} duplicates
-                              </Badge>
-                            )}
-                            <Badge variant="outline" className="text-xs">
-                              {assignee === "codex"
-                                ? "Codex"
-                                : assignee === "claude_code"
-                                  ? "Claude Code"
-                                  : "Unassigned"}
-                            </Badge>
-                          </div>
-                        </div>
-                        <span className="whitespace-nowrap text-xs text-muted-foreground">
-                          {relativeTime(item.updated_at)}
-                        </span>
-                      </div>
-                    </Button>
-                  );
-                })}
+              {!loading && filtered.length === 0 && (
+                <div className="px-4 py-3 text-xs text-muted-foreground">No issues found.</div>
+              )}
+              {!loading && filtered.map((item) => {
+                const duplicateCount = duplicateCounts.get(duplicateKey(item)) || 1;
+                const score = computePriorityScore(item, duplicateCount);
+                const isActive = selected?.id === item.id;
+                return (
+                  <Button
+                    key={item.id}
+                    type="button"
+                    variant="ghost"
+                    onClick={() => setSelectedId(item.id)}
+                    className={`group flex w-full items-center gap-2.5 px-3 h-9 justify-start rounded-none border-b border-border/40 last:border-0 transition-colors ${
+                      isActive ? "bg-primary/8" : ""
+                    }`}
+                  >
+                    <span className={`h-2 w-2 rounded-full shrink-0 ${statusDot(item.status)}`} />
+                    <span className="flex-1 truncate text-xs text-foreground">{item.title}</span>
+                    <span className={`shrink-0 text-[10px] font-medium ${severityColor(item.severity)}`}>
+                      {scoreLabel(score)}
+                    </span>
+                    {duplicateCount > 1 && (
+                      <span className="shrink-0 text-[10px] text-muted-foreground">{duplicateCount}×</span>
+                    )}
+                    <span className="shrink-0 text-[11px] text-muted-foreground">{relativeTime(item.updated_at)}</span>
+                  </Button>
+                );
+              })}
             </div>
           </section>
-          <section className="flex flex-1 flex-col overflow-y-auto p-4">
-            {!selected && (
-              <div className="rounded-md border border-border p-4 text-sm text-muted-foreground">
-                Select an annotation to view details.
+
+          {/* Detail panel */}
+          <section className="flex flex-1 flex-col min-w-0 overflow-hidden">
+            {!selected ? (
+              <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
+                Select an issue
               </div>
-            )}
+            ) : (
+              <div className="flex h-full min-h-0">
+                {/* Main content */}
+                <div className="flex-1 overflow-y-auto px-8 py-6 min-w-0">
+                  {/* Title */}
+                  <h1 className="text-lg font-semibold text-foreground leading-snug mb-1">{selected.title}</h1>
+                  <p className="text-sm text-muted-foreground mb-6">{selected.comment}</p>
 
-            {selected && (
-              <div className="space-y-4 rounded-md border border-border p-4">
-                <div className="space-y-2">
-                  <h2 className="text-base font-semibold text-foreground">{selected.title}</h2>
-                  <p className="text-sm text-muted-foreground">{selected.comment}</p>
-                </div>
+                  {/* Activity label */}
+                  <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-3">Activity</p>
 
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Triage Status</p>
-                    <Select
-                      value={displayBucket(selected.status)}
-                      onValueChange={(v) => void updateStatus(v as "open" | "in_progress" | "resolved")}
-                      disabled={updatingStatus}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="open">Open</SelectItem>
-                        <SelectItem value="in_progress">In Progress</SelectItem>
-                        <SelectItem value="resolved">Resolved</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Annotation ID</p>
-                    <p className="rounded-md border border-border px-2 py-2 text-xs text-foreground">
-                      {getAgentationId(selected)}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid gap-3 sm:grid-cols-2">
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Assign Agent</p>
-                    <Select value={assignedAgent} onValueChange={(v) => setAssignedAgent(v as AgentTarget)}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="codex">Codex</SelectItem>
-                        <SelectItem value="claude_code">Claude Code</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1">
-                    <p className="text-xs text-muted-foreground">Auto Priority</p>
-                    <p className="rounded-md border border-border px-2 py-2 text-xs text-foreground">
-                      {selectedScore} · {scoreLabel(selectedScore)}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  <Button variant="outline" size="sm" onClick={saveAssignment} disabled={savingAssignment}>
-                    {savingAssignment ? "Saving..." : "Save Assignment"}
-                  </Button>
-                  <Button size="sm" onClick={dispatchToAgent} disabled={dispatching}>
-                    <Send className="mr-2 h-4 w-4" />
-                    {dispatching
-                      ? "Dispatching..."
-                      : `Dispatch to ${assignedAgent === "codex" ? "Codex" : "Claude Code"}`}
-                  </Button>
-                  {selected.page_url && (
-                    <Button asChild variant="outline" size="sm">
-                      <a href={selected.page_url} target="_blank" rel="noreferrer">
-                        <ExternalLink className="mr-2 h-4 w-4" />
-                        Open Page
-                      </a>
-                    </Button>
-                  )}
-                  <Button variant="outline" size="sm" onClick={copyLastCommand} disabled={!lastDispatchCommand}>
-                    <Copy className="mr-2 h-4 w-4" />
-                    Copy Last Command
-                  </Button>
-                </div>
-
-                <div className="space-y-2 rounded-md border border-border p-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold text-foreground">Dispatch History</p>
-                    <Badge variant="outline" className="text-xs">
-                      {selectedDispatchHistory.length} dispatches
-                    </Badge>
-                  </div>
-                  {selectedDispatchHistory.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">No dispatches recorded yet.</p>
-                  ) : (
-                    <div className="max-h-32 space-y-2 overflow-auto">
+                  {/* Dispatch history */}
+                  {selectedDispatchHistory.length > 0 && (
+                    <div className="space-y-3 mb-4">
                       {selectedDispatchHistory.map((entry, idx) => (
-                        <div key={`${entry.at}-${idx}`} className="rounded-md border border-border p-2">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-xs font-medium text-foreground">{agentLabel(entry.target)}</p>
-                            <p className="text-[11px] text-muted-foreground">{relativeTime(entry.at)}</p>
+                        <div key={`${entry.at}-${idx}`} className="flex gap-3">
+                          <div className="mt-0.5 h-5 w-5 rounded-full bg-muted flex items-center justify-center shrink-0">
+                            <Send className="h-2.5 w-2.5 text-muted-foreground" />
                           </div>
-                          <p className="text-[11px] text-muted-foreground">
-                            by {entry.by} · status {entry.status}
-                          </p>
+                          <div>
+                            <p className="text-xs text-foreground">
+                              Dispatched to <span className="font-medium">{agentLabel(entry.target)}</span>
+                              {entry.by && <> by {entry.by}</>}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground">{relativeTime(entry.at)} · {entry.status}</p>
+                          </div>
                         </div>
                       ))}
                     </div>
                   )}
-                </div>
+                  {selectedDispatchHistory.length === 0 && (
+                    <p className="text-xs text-muted-foreground mb-4">No dispatches yet.</p>
+                  )}
 
-                <div className="space-y-2 rounded-md border border-border p-3">
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm font-semibold text-foreground">Duplicate Cluster</p>
-                    <Badge variant="outline" className="text-xs">
-                      {selectedDuplicateCluster.length} related
-                    </Badge>
-                  </div>
-                  {selectedDuplicateCluster.length > 1 ? (
-                    <>
-                      <div className="max-h-28 space-y-2 overflow-auto">
+                  {/* Replies */}
+                  {comments.length > 0 && (
+                    <div className="space-y-3 mb-4">
+                      {comments.map((comment) => (
+                        <div key={comment.id} className="flex gap-3">
+                          <div className="mt-0.5 h-5 w-5 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                            <span className="text-[9px] font-bold text-primary">AI</span>
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2 mb-0.5">
+                              <span className="text-xs font-medium text-foreground">{comment.author.full_name || "AI Reply"}</span>
+                              <span className="text-[11px] text-muted-foreground">{relativeTime(comment.created_at)}</span>
+                            </div>
+                            <p className="text-xs text-foreground">{comment.body}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Duplicates */}
+                  {selectedDuplicateCluster.length > 1 && (
+                    <div className="mb-4">
+                      <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">Related ({selectedDuplicateCluster.length})</p>
+                      <div className="space-y-1">
                         {selectedDuplicateCluster
                           .filter((item) => item.id !== selected.id)
                           .slice(0, 5)
@@ -719,94 +725,246 @@ export default function AnnotationInboxPage() {
                             <Button
                               key={item.id}
                               type="button"
-                              variant="outline"
+                              variant="ghost"
                               onClick={() => setSelectedId(item.id)}
-                              className="h-auto w-full justify-start px-2 py-1 text-left text-xs"
+                              className="flex items-center gap-2 w-full justify-start px-2 h-7 rounded text-xs"
                             >
-                              {item.title}
+                              <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${statusDot(item.status)}`} />
+                              <span className="text-foreground truncate">{item.title}</span>
                             </Button>
                           ))}
                       </div>
+                      <Button variant="ghost" size="sm" className="mt-2 h-7 px-2 text-xs" onClick={resolveDuplicateCluster} disabled={resolvingCluster}>
+                        <Sparkles className="h-3 w-3 mr-1.5" />
+                        {resolvingCluster ? "Resolving..." : "Resolve cluster"}
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* Reply box */}
+                  <div className="mt-4 border border-border/60 rounded-lg overflow-hidden">
+                    <Textarea
+                      placeholder="Reply..."
+                      value={replyBody}
+                      onChange={(e) => setReplyBody(e.target.value)}
+                      rows={3}
+                      className="border-0 resize-none text-xs focus-visible:ring-0 focus-visible:ring-offset-0"
+                    />
+                    <div className="flex items-center justify-between px-3 py-2 bg-muted/20 border-t border-border/60">
+                      <div className="flex gap-1">
+                        {(["rootCause", "tests", "evidence"] as const).map((key) => {
+                          const checklist = getVerificationChecklist(selected);
+                          const shortLabels = { rootCause: "Root cause", tests: "Tests", evidence: "Evidence" };
+                          const checkId = `checklist-${selected.id}-${key}`;
+                          return (
+                            <label key={key} htmlFor={checkId} className="flex items-center gap-1 cursor-pointer">
+                              <Checkbox
+                                id={checkId}
+                                checked={checklist[key]}
+                                className="h-3 w-3"
+                                onCheckedChange={(checked) =>
+                                  void toggleChecklist({ ...checklist, [key]: checked === true })
+                                }
+                              />
+                              <span className="text-[11px] text-muted-foreground">{shortLabels[key]}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                      <Button size="sm" className="h-6 px-3 text-xs" onClick={() => void submitReply()} disabled={savingReply || !replyBody.trim()}>
+                        {savingReply ? "Sending..." : "Comment"}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Properties sidebar — Linear-style right rail */}
+                <aside className="w-56 shrink-0 border-l border-border overflow-y-auto py-4 px-1">
+                  <div className="space-y-0.5">
+                    {/* Status */}
+                    <div className="flex items-center h-8 px-3 gap-3 rounded hover:bg-muted/40 group">
+                      <span className="w-20 text-xs text-muted-foreground shrink-0">Status</span>
+                      <Select
+                        value={displayBucket(selected.status)}
+                        onValueChange={(v) => void updateStatus(v as "open" | "in_progress" | "resolved")}
+                        disabled={updatingStatus}
+                      >
+                        <SelectTrigger className="h-6 border-0 p-0 text-xs bg-transparent focus:ring-0 shadow-none gap-1">
+                          <span className={`h-2 w-2 rounded-full ${statusDot(selected.status)}`} />
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="open">Open</SelectItem>
+                          <SelectItem value="in_progress">In Progress</SelectItem>
+                          <SelectItem value="resolved">Done</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Priority */}
+                    <div className="flex items-center h-8 px-3 gap-3 rounded">
+                      <span className="w-20 text-xs text-muted-foreground shrink-0">Priority</span>
+                      <span className={`text-xs font-medium ${severityColor(selected.severity)}`}>
+                        {selected.severity ?? "medium"}
+                      </span>
+                    </div>
+
+                    {/* Agent */}
+                    <div className="flex items-center h-8 px-3 gap-3 rounded hover:bg-muted/40">
+                      <span className="w-20 text-xs text-muted-foreground shrink-0">Assignee</span>
+                      <Select value={assignedAgent} onValueChange={(v) => setAssignedAgent(v as AgentTarget)}>
+                        <SelectTrigger className="h-6 border-0 p-0 text-xs bg-transparent focus:ring-0 shadow-none">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="codex">Codex</SelectItem>
+                          <SelectItem value="claude_code">Claude Code</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Score */}
+                    <div className="flex items-center h-8 px-3 gap-3 rounded">
+                      <span className="w-20 text-xs text-muted-foreground shrink-0">Score</span>
+                      <span className="text-xs text-foreground">{selectedScore} · {scoreLabel(selectedScore)}</span>
+                    </div>
+
+                    {/* Annotation ID */}
+                    <div className="flex items-center h-8 px-3 gap-3 rounded">
+                      <span className="w-20 text-xs text-muted-foreground shrink-0">ID</span>
+                      <span className="text-xs text-foreground font-mono truncate">{getAgentationId(selected)}</span>
+                    </div>
+
+                    {/* Page */}
+                    {selected.page_path && (
+                      <div className="flex items-center h-8 px-3 gap-3 rounded">
+                        <span className="w-20 text-xs text-muted-foreground shrink-0">Page</span>
+                        <span className="text-xs text-foreground truncate">{selected.page_path}</span>
+                      </div>
+                    )}
+
+                    <div className="my-2 mx-3 border-t border-border/50" />
+
+                    {/* Actions */}
+                    <div className="px-3 space-y-1.5 pt-1">
+                      <Button
+                        size="sm"
+                        className="w-full h-7 text-xs justify-start"
+                        onClick={dispatchToAgent}
+                        disabled={dispatching}
+                      >
+                        <Send className="h-3 w-3 mr-2" />
+                        {dispatching ? "Dispatching..." : `Dispatch`}
+                      </Button>
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={resolveDuplicateCluster}
-                        disabled={resolvingCluster}
+                        className="w-full h-7 text-xs justify-start"
+                        onClick={saveAssignment}
+                        disabled={savingAssignment}
                       >
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        {resolvingCluster ? "Resolving..." : "Resolve Entire Cluster"}
+                        {savingAssignment ? "Saving..." : "Save assignment"}
                       </Button>
-                    </>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">No strong duplicates detected.</p>
-                  )}
-                </div>
-
-                <div className="space-y-2 rounded-md border border-border p-3">
-                  <p className="text-sm font-semibold text-foreground">Verification Checklist</p>
-                  {(["rootCause", "tests", "evidence"] as const).map((key) => {
-                    const checklist = getVerificationChecklist(selected);
-                    const labels: Record<typeof key, string> = {
-                      rootCause: "Root cause documented",
-                      tests: "Fix validated with tests",
-                      evidence: "Evidence captured (screenshot/logs)",
-                    };
-                    return (
-                      <label key={key} className="flex items-center gap-2 text-xs text-foreground">
-                        <Checkbox
-                          checked={checklist[key]}
-                          onCheckedChange={(checked) =>
-                            void toggleChecklist({
-                              ...checklist,
-                              [key]: checked === true,
-                            })
-                          }
-                        />
-                        {labels[key]}
-                      </label>
-                    );
-                  })}
-                </div>
-
-                <div className="space-y-2">
-                  <h3 className="text-sm font-semibold text-foreground">Replies</h3>
-                  <div className="max-h-64 space-y-2 overflow-auto rounded-md border border-border p-3">
-                    {loadingComments && <p className="text-xs text-muted-foreground">Loading replies...</p>}
-                    {!loadingComments && comments.length === 0 && (
-                      <p className="text-xs text-muted-foreground">No replies yet.</p>
-                    )}
-                    {!loadingComments &&
-                      comments.map((comment) => (
-                        <div key={comment.id} className="space-y-1 rounded-md border border-border p-2">
-                          <div className="flex items-center justify-between gap-2">
-                            <p className="text-xs font-medium text-foreground">
-                              {comment.author.full_name || comment.author.email}
-                            </p>
-                            <p className="text-[11px] text-muted-foreground">{relativeTime(comment.created_at)}</p>
-                          </div>
-                          <p className="text-xs text-foreground">{comment.body}</p>
-                        </div>
-                      ))}
+                      {selected.page_url && (
+                        <Button asChild variant="ghost" size="sm" className="w-full h-7 text-xs justify-start">
+                          <a href={selected.page_url} target="_blank" rel="noreferrer">
+                            <ExternalLink className="h-3 w-3 mr-2" />
+                            Open page
+                          </a>
+                        </Button>
+                      )}
+                      {lastDispatchCommand && (
+                        <Button variant="ghost" size="sm" className="w-full h-7 text-xs justify-start" onClick={copyLastCommand}>
+                          <Copy className="h-3 w-3 mr-2" />
+                          Copy command
+                        </Button>
+                      )}
+                    </div>
                   </div>
-
-                  <div className="space-y-2">
-                    <Textarea
-                      placeholder="Reply to this annotation thread..."
-                      value={replyBody}
-                      onChange={(e) => setReplyBody(e.target.value)}
-                      rows={4}
-                    />
-                    <Button size="sm" onClick={() => void submitReply()} disabled={savingReply || !replyBody.trim()}>
-                      <MessageSquare className="mr-2 h-4 w-4" />
-                      {savingReply ? "Sending..." : "Send Reply"}
-                    </Button>
-                  </div>
-                </div>
+                </aside>
               </div>
             )}
           </section>
         </div>
       </div>
-    </PageShell>
+
+      <Dialog open={createOpen} onOpenChange={(open) => { setCreateOpen(open); if (!open) resetCreateForm(); }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>New Task</DialogTitle>
+            <DialogDescription>
+              Add a task to the annotation inbox. It will appear alongside annotations captured from the in-app overlay.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-1.5">
+              <Label htmlFor="new-task-title" className="text-xs">Title</Label>
+              <Input
+                id="new-task-title"
+                placeholder="Short summary of the task..."
+                value={newTitle}
+                onChange={(e) => setNewTitle(e.target.value)}
+                autoFocus
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="new-task-details" className="text-xs">Details (optional)</Label>
+              <Textarea
+                id="new-task-details"
+                placeholder="Context, repro steps, expected behavior..."
+                value={newDetails}
+                onChange={(e) => setNewDetails(e.target.value)}
+                rows={4}
+              />
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="new-task-route" className="text-xs">Page path (optional)</Label>
+                <Input
+                  id="new-task-route"
+                  placeholder="/767/budget"
+                  value={newRoute}
+                  onChange={(e) => setNewRoute(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Severity</Label>
+                <Select value={newSeverity} onValueChange={(v) => setNewSeverity(v as "blocking" | "important" | "nit")}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="blocking">Blocking (high)</SelectItem>
+                    <SelectItem value="important">Important (medium)</SelectItem>
+                    <SelectItem value="nit">Nit (low)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs">Assign to</Label>
+              <Select value={newAssignee} onValueChange={(v) => setNewAssignee(v as AgentTarget | "unassigned")}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                  <SelectItem value="codex">Codex</SelectItem>
+                  <SelectItem value="claude_code">Claude Code</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={creating}>
+              Cancel
+            </Button>
+            <Button onClick={() => void createTask()} disabled={creating || !newTitle.trim()}>
+              {creating ? "Creating..." : "Create Task"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

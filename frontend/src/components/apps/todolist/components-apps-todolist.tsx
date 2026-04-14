@@ -485,35 +485,49 @@ const ComponentsAppsTodoList = () => {
         });
     };
 
-    const setPriority = (task: any, name: string = '') => {
-        let item = filteredTasks.find((d: any) => d.id === task.id);
-        item.priority = name;
-        searchTasks(false);
+    const setPriority = (task: { id: number }, name: string = '') => {
+        const item = filteredTasks.find((d: { id: number }) => d.id === task.id);
+        if (item) {
+            item.priority = name;
+            searchTasks(false);
+        }
     };
 
-    const setTag = (task: any, name: string = '') => {
-        let item = filteredTasks.find((d: any) => d.id === task.id);
-        item.tag = name;
-        searchTasks(false);
+    const setTag = (task: { id: number }, name: string = '') => {
+        const item = filteredTasks.find((d: { id: number }) => d.id === task.id);
+        if (item) {
+            item.tag = name;
+            searchTasks(false);
+        }
     };
 
     const tabChanged = () => {
         setIsShowTaskMenu(false);
     };
 
-    const taskComplete = (task: any = null) => {
-        let item = filteredTasks.find((d: any) => d.id === task.id);
-        item.status = item.status === 'complete' ? '' : 'complete';
-        searchTasks(false);
+    const taskComplete = (task: { id: number } | null = null) => {
+        if (!task) {
+            return;
+        }
+        const item = filteredTasks.find((d: { id: number }) => d.id === task.id);
+        if (item) {
+            item.status = item.status === 'complete' ? '' : 'complete';
+            searchTasks(false);
+        }
     };
 
-    const setImportant = (task: any = null) => {
-        let item = filteredTasks.find((d: any) => d.id === task.id);
-        item.status = item.status === 'important' ? '' : 'important';
-        searchTasks(false);
+    const setImportant = (task: { id: number } | null = null) => {
+        if (!task) {
+            return;
+        }
+        const item = filteredTasks.find((d: { id: number }) => d.id === task.id);
+        if (item) {
+            item.status = item.status === 'important' ? '' : 'important';
+            searchTasks(false);
+        }
     };
 
-    const viewTask = (item: any = null) => {
+    const viewTask = (item: { id: number } | null = null) => {
         setSelectedTask(item);
         setTimeout(() => {
             setViewTaskModal(true);
@@ -522,10 +536,10 @@ const ComponentsAppsTodoList = () => {
 
     const addEditTask = (task: any = null) => {
         setIsShowTaskMenu(false);
-        let json = JSON.parse(JSON.stringify(defaultParams));
+        const json = JSON.parse(JSON.stringify(defaultParams));
         setParams(json);
         if (task) {
-            let json1 = JSON.parse(JSON.stringify(task));
+            const json1 = JSON.parse(JSON.stringify(task));
             setParams(json1);
         }
         setAddTaskModal(true);
@@ -566,7 +580,7 @@ const ComponentsAppsTodoList = () => {
             const mm = String(today.getMonth());
             const yyyy = today.getFullYear();
             const monthNames: any = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            let task = params;
+            const task = params;
             task.id = maxId + 1;
             task.date = monthNames[mm] + ', ' + dd + ' ' + yyyy;
             allTasks.unshift(task);

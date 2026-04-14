@@ -3,14 +3,28 @@
 import { execSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import path from "node:path";
+import { pathToFileURL } from "node:url";
 
 const baseRef = process.env.GUARDRAIL_BASE_REF || "origin/main";
 const scope = process.env.GUARDRAIL_SCOPE === "all" ? "all" : "changed";
-const enforceRawErrors = process.env.GUARDRAIL_ENFORCE_RAW_ERRORS === "true";
 const baselinePath = path.resolve(
   process.cwd(),
   process.env.GUARDRAIL_BASELINE_PATH || "scripts/guardrail-route-debt-baseline.txt",
 );
+
+export function resolveRawErrorEnforcement({
+  guardrailScope,
+  envValue,
+}) {
+  if (envValue === "true") return true;
+  if (envValue === "false") return false;
+  return guardrailScope === "changed";
+}
+
+const enforceRawErrors = resolveRawErrorEnforcement({
+  guardrailScope: scope,
+  envValue: process.env.GUARDRAIL_ENFORCE_RAW_ERRORS,
+});
 
 function run(cmd) {
   return execSync(cmd, { stdio: ["ignore", "pipe", "pipe"] })
@@ -75,64 +89,85 @@ function analyzeRoute(route) {
   };
 }
 
-const routes = scope === "all" ? getAllRoutes() : getChangedRoutes();
+export function buildGuardrailReport({
+  guardrailScope = scope,
+  rawErrorEnforced = enforceRawErrors,
+  debtBaselinePath = baselinePath,
+} = {}) {
+  const routes = guardrailScope === "all" ? getAllRoutes() : getChangedRoutes();
+  const baseline = readBaseline(debtBaselinePath);
+  const checks = routes.map(analyzeRoute);
 
-if (routes.length === 0) {
-  console.log(`No ${scope} API routes to validate.`);
-  process.exit(0);
-}
+  const noStructuredHandling = checks
+    .filter((c) => !c.hasStructuredPath)
+    .map((c) => c.route)
+    .sort();
 
-const baseline = readBaseline(baselinePath);
-const checks = routes.map(analyzeRoute);
+  const rawErrorRoutes = checks
+    .filter((c) => c.hasRawErrorResponse)
+    .map((c) => c.route)
+    .sort();
 
-const noStructuredHandling = checks
-  .filter((c) => !c.hasStructuredPath)
-  .map((c) => c.route)
-  .sort();
+  const failures = [];
+  if (guardrailScope === "changed") {
+    for (const route of noStructuredHandling) {
+      failures.push(`${route}: missing withApiGuardrails or apiErrorResponse`);
+    }
+    if (rawErrorEnforced) {
+      for (const route of rawErrorRoutes) {
+        failures.push(`${route}: raw error response detected (use shared envelope)`);
+      }
+    }
+  } else {
+    const baselineMissing = noStructuredHandling.filter((route) => !baseline.has(route));
+    const baselineResolved = [...baseline].filter(
+      (route) => route.endsWith("/route.ts") && !noStructuredHandling.includes(route),
+    );
 
-const rawErrorRoutes = checks
-  .filter((c) => c.hasRawErrorResponse)
-  .map((c) => c.route)
-  .sort();
-
-const failures = [];
-if (scope === "changed") {
-  for (const route of noStructuredHandling) {
-    failures.push(`${route}: missing withApiGuardrails or apiErrorResponse`);
-  }
-  if (enforceRawErrors) {
-    for (const route of rawErrorRoutes) {
-      failures.push(`${route}: raw error response detected (use shared envelope)`);
+    for (const route of baselineMissing) {
+      failures.push(
+        `${route}: non-compliant route is not in baseline; migrate route or explicitly add debt entry`,
+      );
+    }
+    for (const route of baselineResolved) {
+      failures.push(
+        `${route}: baseline entry is stale (route now compliant); remove it from baseline`,
+      );
     }
   }
-} else {
-  const baselineMissing = noStructuredHandling.filter((route) => !baseline.has(route));
-  const baselineResolved = [...baseline].filter(
-    (route) => route.endsWith("/route.ts") && !noStructuredHandling.includes(route),
+
+  return {
+    routes,
+    noStructuredHandling,
+    rawErrorRoutes,
+    failures,
+    rawErrorEnforced,
+    guardrailScope,
+  };
+}
+
+function main() {
+  const report = buildGuardrailReport();
+  if (report.routes.length === 0) {
+    console.log(`No ${report.guardrailScope} API routes to validate.`);
+    process.exit(0);
+  }
+
+  console.log(
+    `Guardrail report (${report.guardrailScope}): routes=${report.routes.length}, without_structured_handling=${report.noStructuredHandling.length}, raw_error_routes=${report.rawErrorRoutes.length}, enforce_raw_errors=${report.rawErrorEnforced}`,
   );
 
-  for (const route of baselineMissing) {
-    failures.push(
-      `${route}: non-compliant route is not in baseline; migrate route or explicitly add debt entry`,
-    );
+  if (report.failures.length > 0) {
+    console.error("Guardrail check failed:");
+    for (const failure of report.failures) {
+      console.error(`- ${failure}`);
+    }
+    process.exit(1);
   }
-  for (const route of baselineResolved) {
-    failures.push(
-      `${route}: baseline entry is stale (route now compliant); remove it from baseline`,
-    );
-  }
+
+  console.log(`Guardrail check passed for ${report.routes.length} ${report.guardrailScope} route(s).`);
 }
 
-console.log(
-  `Guardrail report (${scope}): routes=${routes.length}, without_structured_handling=${noStructuredHandling.length}, raw_error_routes=${rawErrorRoutes.length}, enforce_raw_errors=${enforceRawErrors}`,
-);
-
-if (failures.length > 0) {
-  console.error("Guardrail check failed:");
-  for (const failure of failures) {
-    console.error(`- ${failure}`);
-  }
-  process.exit(1);
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main();
 }
-
-console.log(`Guardrail check passed for ${routes.length} ${scope} route(s).`);

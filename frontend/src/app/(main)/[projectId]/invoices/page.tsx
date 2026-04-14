@@ -756,7 +756,7 @@ export default function ProjectInvoicesPage(): ReactElement {
   };
 
   const createInvoiceAction = (
-    <Button size="sm" onClick={() => router.push(`/${projectId}/invoicing/new`)}>
+    <Button size="sm" onClick={() => router.push(`/${projectId}/invoices/new`)}>
       <Plus />
       New Invoice
     </Button>
@@ -1312,7 +1312,7 @@ export default function ProjectInvoicesPage(): ReactElement {
         filteredDescription: "Try adjusting your search or filters.",
         isFiltered,
         action: (
-          <Button size="sm" onClick={() => router.push(`/${projectId}/invoicing/new`)}>
+          <Button size="sm" onClick={() => router.push(`/${projectId}/invoices/new`)}>
             <Plus />
             Create invoice
           </Button>

@@ -45,7 +45,7 @@ export interface PageSchemaEntry {
   fieldMappings: FieldMapping[]
 }
 
-function getFkTarget(tableName: string, columnName: string, fallback?: string): string | undefined {
+function getFkTarget(tableName: string, columnName: string, fallback: string): string {
   return PAGE_SCHEMA_FK_TARGETS[`${tableName}.${columnName}`] ?? fallback
 }
 

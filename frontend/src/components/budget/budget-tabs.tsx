@@ -18,7 +18,6 @@ interface BudgetTabsProps {
 const tabs: Tab[] = [
   { id: "budget", label: "Budget" },
   { id: "budget-details", label: "Budget Details" },
-  { id: "budget-modifications", label: "Budget Modifications" },
   { id: "cost-codes", label: "Cost Codes" },
   { id: "forecasting", label: "Forecasting" },
   { id: "snapshots", label: "Project Status Snapshots" },
@@ -37,7 +36,10 @@ export function BudgetTabs({
 }: BudgetTabsProps) {
   return (
     <div className="px-4 sm:px-6 lg:px-8">
-      <nav className="-mb-px flex items-end justify-between gap-4 border-b border-border" aria-label="Tabs">
+      <nav
+        className="-mb-px flex items-end justify-between gap-4 border-b border-border"
+        aria-label="Budget Tabs"
+      >
         <div className="flex min-w-0 flex-1 overflow-x-auto">
           <div className="flex min-w-max space-x-4 md:space-x-6">
             {tabs.map((tab) => {

@@ -468,9 +468,10 @@ function CreateProjectForm() {
         isOpen={showSuccessModal}
         onClose={() => {
           setShowSuccessModal(false);
-          if (createdProject?.id) {
-            router.push(`/${createdProject.id}/home`);
-          }
+        }}
+        onViewDashboard={() => {
+          setShowSuccessModal(false);
+          if (createdProject?.id) router.push(`/${createdProject.id}/home`);
         }}
         projectId={createdProject?.id ?? ""}
         projectName={createdProject?.name ?? ""}

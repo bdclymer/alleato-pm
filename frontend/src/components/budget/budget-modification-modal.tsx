@@ -13,13 +13,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+  BudgetOverlay,
+  BudgetOverlayBody,
+  BudgetOverlayFooter,
+  BudgetOverlayHeader,
+} from "@/components/ui/budget-overlay";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 
@@ -175,173 +173,170 @@ export function BudgetModificationModal({
   };
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent
-        side="right"
-        className="w-[85vw] max-w-[600px] sm:max-w-[600px] overflow-y-auto"
-      >
-        <SheetHeader>
-          <SheetTitle>Create Budget Modification</SheetTitle>
-          <SheetDescription>
-            Create a budget change order, transfer, or adjustment for this
-            project
-          </SheetDescription>
-        </SheetHeader>
+    <BudgetOverlay
+      open={open}
+      onOpenChange={onOpenChange}
+      variant="sheet"
+      size="md"
+      className="flex h-full flex-col"
+    >
+      <BudgetOverlayHeader
+        title="Create Budget Modification"
+        description="Create a budget change order, transfer, or adjustment for this project."
+        className="px-4 py-4 sm:px-8 sm:py-6"
+      />
 
-        <form onSubmit={handleSubmit} className="flex flex-col h-full">
-          <div className="flex-1 overflow-y-auto">
-            <div className="grid gap-4 py-4">
-              {/* Budget Item */}
-              <div className="grid gap-2">
-                <Label htmlFor="budgetItem">Budget Line Item*</Label>
-                <Select
-                  value={formData.budgetItemId}
-                  onValueChange={(value) => handleChange("budgetItemId", value)}
-                  disabled={loadingItems || !budgetItems.length}
-                >
-                  <SelectTrigger id="budgetItem">
-                    <SelectValue
-                      placeholder={
-                        loadingItems ? "Loading items..." : "Select a line item"
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {budgetItems.map((item) => (
-                      <SelectItem key={item.id} value={item.id}>
-                        {item.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {!budgetItems.length && !loadingItems && (
-                  <p className="text-sm text-muted-foreground">
-                    No budget items available. Create a line item first.
-                  </p>
-                )}
-              </div>
-
-              {/* Title */}
-              <div className="grid gap-2">
-                <Label htmlFor="title">Title*</Label>
-                <Input
-                  id="title"
-                  value={formData.title}
-                  onChange={(e) => handleChange("title", e.target.value)}
-                  placeholder="e.g., Foundation Design Change"
-                  required
-                />
-              </div>
-
-              {/* Type */}
-              <div className="grid gap-2">
-                <Label htmlFor="type">Modification Type*</Label>
-                <Select
-                  value={formData.type}
-                  onValueChange={(value) => handleChange("type", value)}
-                >
-                  <SelectTrigger id="type">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="change_order">Change Order</SelectItem>
-                    <SelectItem value="budget_transfer">
-                      Budget Transfer
+      <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+        <BudgetOverlayBody className="px-4 sm:px-8">
+          <div className="grid gap-4 py-4">
+            {/* Budget Item */}
+            <div className="grid gap-2">
+              <Label htmlFor="budgetItem">Budget Line Item*</Label>
+              <Select
+                value={formData.budgetItemId}
+                onValueChange={(value) => handleChange("budgetItemId", value)}
+                disabled={loadingItems || !budgetItems.length}
+              >
+                <SelectTrigger id="budgetItem">
+                  <SelectValue
+                    placeholder={
+                      loadingItems ? "Loading items..." : "Select a line item"
+                    }
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  {budgetItems.map((item) => (
+                    <SelectItem key={item.id} value={item.id}>
+                      {item.label}
                     </SelectItem>
-                    <SelectItem value="adjustment">
-                      Budget Adjustment
-                    </SelectItem>
-                    <SelectItem value="revision">Budget Revision</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Amount */}
-              <div className="grid gap-2">
-                <Label htmlFor="amount">Amount*</Label>
-                <Input
-                  id="amount"
-                  type="number"
-                  step="0.01"
-                  value={formData.amount}
-                  onChange={(e) => handleChange("amount", e.target.value)}
-                  placeholder=""
-                  required
-                />
+                  ))}
+                </SelectContent>
+              </Select>
+              {!budgetItems.length && !loadingItems && (
                 <p className="text-sm text-muted-foreground">
-                  Use negative values for decreases
+                  No budget items available. Create a line item first.
                 </p>
-              </div>
+              )}
+            </div>
 
-              {/* Reason */}
-              <div className="grid gap-2">
-                <Label htmlFor="reason">Reason*</Label>
-                <Textarea
-                  id="reason"
-                  value={formData.reason}
-                  onChange={(e) => handleChange("reason", e.target.value)}
-                  placeholder="Describe the reason for this budget modification..."
-                  rows={3}
-                  required
-                />
-              </div>
+            {/* Title */}
+            <div className="grid gap-2">
+              <Label htmlFor="title">Title*</Label>
+              <Input
+                id="title"
+                value={formData.title}
+                onChange={(e) => handleChange("title", e.target.value)}
+                placeholder="e.g., Foundation Design Change"
+                required
+              />
+            </div>
 
-              {/* Description */}
-              <div className="grid gap-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
-                  onChange={(e) => handleChange("description", e.target.value)}
-                  placeholder="Additional details about this modification..."
-                  rows={3}
-                />
-              </div>
+            {/* Type */}
+            <div className="grid gap-2">
+              <Label htmlFor="type">Modification Type*</Label>
+              <Select
+                value={formData.type}
+                onValueChange={(value) => handleChange("type", value)}
+              >
+                <SelectTrigger id="type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="change_order">Change Order</SelectItem>
+                  <SelectItem value="budget_transfer">
+                    Budget Transfer
+                  </SelectItem>
+                  <SelectItem value="adjustment">Budget Adjustment</SelectItem>
+                  <SelectItem value="revision">Budget Revision</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-              {/* Workflow Info */}
-              <div className="rounded-lg border border-border bg-muted p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge variant="outline" className="bg-background">
-                    Draft
-                  </Badge>
-                  <span className="text-sm text-muted-foreground">→</span>
-                  <Badge
-                    variant="outline"
-                    className="bg-warning/10 text-warning border-warning/20"
-                  >
-                    Pending
-                  </Badge>
-                  <span className="text-sm text-muted-foreground">→</span>
-                  <Badge
-                    variant="outline"
-                    className="bg-success/10 text-success border-success/20"
-                  >
-                    Approved
-                  </Badge>
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Modifications are created as drafts. Submit for approval, then
-                  approve to update budget totals.
-                </p>
+            {/* Amount */}
+            <div className="grid gap-2">
+              <Label htmlFor="amount">Amount*</Label>
+              <Input
+                id="amount"
+                type="number"
+                step="0.01"
+                value={formData.amount}
+                onChange={(e) => handleChange("amount", e.target.value)}
+                placeholder=""
+                required
+              />
+              <p className="text-sm text-muted-foreground">
+                Use negative values for decreases
+              </p>
+            </div>
+
+            {/* Reason */}
+            <div className="grid gap-2">
+              <Label htmlFor="reason">Reason*</Label>
+              <Textarea
+                id="reason"
+                value={formData.reason}
+                onChange={(e) => handleChange("reason", e.target.value)}
+                placeholder="Describe the reason for this budget modification..."
+                rows={3}
+                required
+              />
+            </div>
+
+            {/* Description */}
+            <div className="grid gap-2">
+              <Label htmlFor="description">Description</Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => handleChange("description", e.target.value)}
+                placeholder="Additional details about this modification..."
+                rows={3}
+              />
+            </div>
+
+            {/* Workflow Info */}
+            <div className="rounded-lg border border-border bg-muted p-4">
+              <div className="flex items-center gap-2 mb-2">
+                <Badge variant="outline" className="bg-background">
+                  Draft
+                </Badge>
+                <span className="text-sm text-muted-foreground">→</span>
+                <Badge
+                  variant="outline"
+                  className="bg-warning/10 text-warning border-warning/20"
+                >
+                  Pending
+                </Badge>
+                <span className="text-sm text-muted-foreground">→</span>
+                <Badge
+                  variant="outline"
+                  className="bg-success/10 text-success border-success/20"
+                >
+                  Approved
+                </Badge>
               </div>
+              <p className="text-sm text-muted-foreground">
+                Modifications are created as drafts. Submit for approval, then
+                approve to update budget totals.
+              </p>
             </div>
           </div>
+        </BudgetOverlayBody>
 
-          <SheetFooter className="flex-shrink-0">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => onOpenChange(false)}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-            <Button type="submit" disabled={loading || !formData.budgetItemId}>
-              {loading ? "Creating..." : "Create Draft Modification"}
-            </Button>
-          </SheetFooter>
-        </form>
-      </SheetContent>
-    </Sheet>
+        <BudgetOverlayFooter className="flex-shrink-0 px-4 py-4 sm:px-8 sm:py-6">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={loading}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" disabled={loading || !formData.budgetItemId}>
+            {loading ? "Creating..." : "Create Draft Modification"}
+          </Button>
+        </BudgetOverlayFooter>
+      </form>
+    </BudgetOverlay>
   );
 }

@@ -1,18 +1,20 @@
 "use client";
 
 import { ReactNode } from "react";
-import { X } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
-import { Drawer, DrawerContent } from "@/components/ui/drawer";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useIsMobile } from "@/hooks/use-mobile";
+import {
+  BudgetOverlay,
+  BudgetOverlayBody,
+  BudgetOverlayFooter,
+  BudgetOverlayHeader,
+} from "@/components/ui/budget-overlay";
 import { cn } from "@/lib/utils";
 
 interface BaseSidebarProps {
   open: boolean;
   onClose: () => void;
   title: string;
+  subtitle?: string;
   children: ReactNode;
   size?: "sm" | "md" | "lg" | "xl";
 }
@@ -29,58 +31,27 @@ export function BaseSidebar({
   open,
   onClose,
   title,
+  subtitle,
   children,
   size = "lg",
 }: BaseSidebarProps) {
-  const isMobile = useIsMobile();
-  const sizeClasses = {
-    sm: "sm:max-w-md",
-    md: "sm:max-w-lg",
-    lg: "sm:max-w-xl",
-    xl: "sm:max-w-2xl",
-  };
-
-  const sidebarHeader = (
-    <div className="bg-card px-4 py-4 sm:px-8 sm:py-6 flex-shrink-0">
-      <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold text-foreground">{title}</h2>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onClose}
-          className="text-muted-foreground"
-          aria-label="Close"
-        >
-          <X className="h-5 w-5" />
-        </Button>
-      </div>
-    </div>
-  );
-
-  if (isMobile) {
-    return (
-      <Drawer open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-        <DrawerContent className="max-h-[92dvh] min-h-[72dvh] p-0 flex flex-col bg-background">
-          {sidebarHeader}
-          {children}
-        </DrawerContent>
-      </Drawer>
-    );
-  }
-
   return (
-    <Sheet open={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <SheetContent
-        side="right"
-        showCloseButton={false}
-        className={cn("w-full p-0 flex flex-col bg-background", sizeClasses[size])}
-      >
-        {sidebarHeader}
-
-        {/* Content */}
-        {children}
-      </SheetContent>
-    </Sheet>
+    <BudgetOverlay
+      open={open}
+      onOpenChange={(isOpen) => {
+        if (!isOpen) onClose();
+      }}
+      variant="sheet"
+      size={size}
+      className="flex h-full flex-col bg-background"
+    >
+      <BudgetOverlayHeader
+        title={title}
+        subtitle={subtitle}
+        className="px-4 py-4 sm:px-8 sm:py-6"
+      />
+      <div className="flex min-h-0 flex-1 flex-col">{children}</div>
+    </BudgetOverlay>
   );
 }
 
@@ -95,7 +66,7 @@ export function SidebarBody({
   className?: string;
 }) {
   return (
-    <div className={cn("flex-1 overflow-y-auto", className)}>{children}</div>
+    <BudgetOverlayBody className={className}>{children}</BudgetOverlayBody>
   );
 }
 
@@ -110,15 +81,11 @@ export function SidebarFooter({
   className?: string;
 }) {
   return (
-    <div
-      className={cn(
-        "border-t border-border bg-muted px-4 py-4 sm:px-8 sm:py-6 flex-shrink-0",
-        "pb-[calc(1rem+env(safe-area-inset-bottom))] sm:pb-6",
-        className,
-      )}
+    <BudgetOverlayFooter
+      className={cn("bg-muted px-4 py-4 sm:px-8 sm:py-6", className)}
     >
       {children}
-    </div>
+    </BudgetOverlayFooter>
   );
 }
 
@@ -137,9 +104,16 @@ export function SidebarTabs({
   return (
     <div className="px-4 sm:px-8 flex-shrink-0">
       <Tabs value={activeTab} onValueChange={onTabChange}>
-        <TabsList variant="line" className="w-full justify-start border-b border-border">
+        <TabsList
+          variant="line"
+          className="w-full justify-start border-b border-border"
+        >
           {tabs.map((tab) => (
-            <TabsTrigger key={tab.id} value={tab.id} className="px-1.5 py-3 text-sm font-medium">
+            <TabsTrigger
+              key={tab.id}
+              value={tab.id}
+              className="px-1.5 py-3 text-sm font-medium"
+            >
               {tab.label}
             </TabsTrigger>
           ))}

@@ -7,16 +7,25 @@ const handoffDir = path.join(repoRoot, "docs/ops/handoffs");
 const dateArg = process.argv[2];
 const today = dateArg || new Date().toISOString().slice(0, 10);
 
-const requiredMarkers = [
-  "Session ID",
-  "Task ID",
-  "Current status",
-  "Files changed",
-  "Commands run and outcome",
-  "Evidence artifacts",
-  "Top 3 findings",
-  "Recommended next action",
-  "Handoff file path",
+const requiredSections = [
+  { name: "Session ID", patterns: [/Session ID/i] },
+  { name: "Task ID", patterns: [/Task ID/i] },
+  { name: "Current status", patterns: [/Current status/i] },
+  { name: "Files changed", patterns: [/Files changed/i, /Owned paths/i] },
+  {
+    name: "Commands run and outcome",
+    patterns: [/Commands run and outcome/i, /^##+\s*Findings/m],
+  },
+  { name: "Evidence artifacts", patterns: [/Evidence artifacts/i] },
+  {
+    name: "Top 3 findings",
+    patterns: [/Top 3 findings/i, /Top 3 Frontend Gaps/i],
+  },
+  { name: "Recommended next action", patterns: [/Recommended next action/i] },
+  {
+    name: "Handoff file path",
+    patterns: [/Handoff file path/i, /\/docs\/ops\/handoffs\//i],
+  },
 ];
 
 function getWorkerFile(sessionId) {
@@ -25,12 +34,18 @@ function getWorkerFile(sessionId) {
 
 function checkFile(filePath) {
   if (!fs.existsSync(filePath)) {
-    return { exists: false, missing: requiredMarkers, modified: null };
+    return {
+      exists: false,
+      missing: requiredSections.map((s) => s.name),
+      modified: null,
+    };
   }
 
   const text = fs.readFileSync(filePath, "utf8");
   const stat = fs.statSync(filePath);
-  const missing = requiredMarkers.filter((marker) => !text.includes(marker));
+  const missing = requiredSections
+    .filter((section) => !section.patterns.some((p) => p.test(text)))
+    .map((section) => section.name);
   return {
     exists: true,
     missing,

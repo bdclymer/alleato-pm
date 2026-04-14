@@ -210,7 +210,7 @@ function ChangeOrdersSection({ commitmentId, projectId }: ChangeManagementTabPro
         accessorKey: 'status',
         header: 'Status',
         cell: ({ row }) => (
-          <StatusBadge status={row.original.status} type="change-order" />
+          <StatusBadge status={row.original.status} />
         ),
       },
       {

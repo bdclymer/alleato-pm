@@ -15,7 +15,7 @@ import tailwindScrollbarHide from "tailwind-scrollbar-hide";
  */
 
 export default {
-  darkMode: ["class"],
+  darkMode: ["class", ".dark"],
   content: [
     "./src/**/*.{js,ts,jsx,tsx,mdx}",
     // Streamdown markdown renderer uses Tailwind classes ([&>p]:inline, [li_&]:pl-6)

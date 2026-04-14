@@ -109,7 +109,7 @@ const ComponentsAppsScrumBoard = () => {
                 title: '',
             });
             if (project) {
-                let projectData = JSON.parse(JSON.stringify(project));
+                const projectData = JSON.parse(JSON.stringify(project));
                 setParams(projectData);
             }
             setIsAddProjectModal(true);
@@ -139,11 +139,13 @@ const ComponentsAppsScrumBoard = () => {
 
         if (params.id) {
             //update project
-            const project = projectList.find((d: any) => d.id === params.id);
-            project.title = params.title;
+            const project = projectList.find((d: { id: number; title: string }) => d.id === params.id);
+            if (project) {
+                project.title = params.title;
+            }
         } else {
             //add project
-            const lastId = projectList.reduce((max: number, obj: any) => (obj.id > max ? obj.id : max), projectList[0].id) || 0;
+            const lastId = projectList.reduce((max: number, obj: { id: number }) => (obj.id > max ? obj.id : max), projectList[0].id) || 0;
 
             const project = {
                 id: lastId + 1,
@@ -157,21 +159,21 @@ const ComponentsAppsScrumBoard = () => {
         setIsAddProjectModal(false);
     };
 
-    const deleteProject = (project: any) => {
-        setProjectList(projectList.filter((d: any) => d.id !== project.id));
+    const deleteProject = (project: { id: number }) => {
+        setProjectList(projectList.filter((d: { id: number }) => d.id !== project.id));
         showMessage('Project has been deleted successfully.');
     };
 
-    const clearProjects = (project: any) => {
+    const clearProjects = (project: { tasks: Array<{ id: number }> }) => {
         setParamsTask((project.tasks = []));
     };
 
-    const addTaskData = (e: any) => {
+    const addTaskData = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         const { value, id } = e.target;
         setParamsTask({ ...paramsTask, [id]: value });
     };
 
-    const addEditTask = (projectId: any, task: any = null) => {
+    const addEditTask = (projectId: number, task: { projectId: number; tags?: string[] | string; [key: string]: unknown } | null = null) => {
         setParamsTask({
             projectId: projectId,
             id: null,
@@ -181,7 +183,7 @@ const ComponentsAppsScrumBoard = () => {
             date: '',
         });
         if (task) {
-            let data = JSON.parse(JSON.stringify(task));
+            const data = JSON.parse(JSON.stringify(task));
             data.projectId = projectId;
             data.tags = data.tags ? data.tags.toString() : '';
             setParamsTask(data);
@@ -194,23 +196,28 @@ const ComponentsAppsScrumBoard = () => {
             showMessage('Title is required.', 'error');
             return false;
         }
-        const project: any = projectList.find((d: any) => d.id === paramsTask.projectId);
+        const project = projectList.find((d: { id: number; tasks: Array<{ id: number; title?: string; description?: string; tags?: string[] }> }) => d.id === paramsTask.projectId);
+        if (!project) {
+            return false;
+        }
         if (paramsTask.id) {
             //update task
-            const task = project.tasks.find((d: any) => d.id === paramsTask.id);
-            task.title = paramsTask.title;
-            task.description = paramsTask.description;
-            task.tags = paramsTask.tags?.length > 0 ? paramsTask.tags.split(',') : [];
+            const task = project.tasks.find((d: { id: number }) => d.id === paramsTask.id);
+            if (task) {
+                task.title = paramsTask.title;
+                task.description = paramsTask.description;
+                task.tags = paramsTask.tags?.length > 0 ? paramsTask.tags.split(',') : [];
+            }
         } else {
             //add task
             let maxId = 0;
-            maxId = project.tasks?.length ? project.tasks.reduce((max: number, obj: any) => (obj.id > max ? obj.id : max), project.tasks[0].id) : 0;
+            maxId = project.tasks?.length ? project.tasks.reduce((max: number, obj: { id: number }) => (obj.id > max ? obj.id : max), project.tasks[0].id) : 0;
 
             const today = new Date();
             const dd = String(today.getDate()).padStart(2, '0');
             const mm = String(today.getMonth()); //January is 0!
             const yyyy = today.getFullYear();
-            const monthNames: any = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
             const task = {
                 projectId: paramsTask.projectId,
                 id: maxId + 1,
@@ -226,17 +233,19 @@ const ComponentsAppsScrumBoard = () => {
         setIsAddTaskModal(false);
     };
 
-    const deleteConfirmModal = (projectId: any, task: any = null) => {
+    const deleteConfirmModal = (projectId: number, task: { id: number; projectId: number } | null = null) => {
         setSelectedTask(task);
         setTimeout(() => {
             setIsDeleteModal(true);
         }, 10);
     };
     const deleteTask = () => {
-        let project = projectList.find((d: any) => d.id === selectedTask.projectId);
-        project.tasks = project.tasks.filter((d: any) => d.id !== selectedTask.id);
-        showMessage('Task has been deleted successfully.');
-        setIsDeleteModal(false);
+        const project = projectList.find((d: { id: number; tasks: Array<{ id: number }> }) => d.id === selectedTask.projectId);
+        if (project) {
+            project.tasks = project.tasks.filter((d: { id: number }) => d.id !== selectedTask.id);
+            showMessage('Task has been deleted successfully.');
+            setIsDeleteModal(false);
+        }
     };
 
     return (
